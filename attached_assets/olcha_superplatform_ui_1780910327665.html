@@ -1,0 +1,556 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--olcha:#00D084;--olcha2:#00A86B;--dark:#0A0F0A;--dark2:#111711;--dark3:#1A221A;
+--glass:rgba(0,208,132,0.08);--glass2:rgba(0,208,132,0.15);
+--text:#E8F5E8;--text2:#A0BFA0;--text3:#6A8F6A;
+--border:rgba(0,208,132,0.2);--border2:rgba(0,208,132,0.35);
+}
+body{background:var(--dark);font-family:'DM Sans',sans-serif;color:var(--text);overflow-x:hidden;min-height:100vh}
+
+/* ANIMATED BG */
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(0,208,132,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,208,132,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.bg-orb{position:fixed;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,208,132,0.12) 0%,transparent 70%);pointer-events:none;z-index:0;animation:orbFloat 8s ease-in-out infinite}
+.bg-orb:nth-child(2){width:400px;height:400px;right:-100px;top:60%;animation-delay:-4s;background:radial-gradient(circle,rgba(0,168,107,0.08) 0%,transparent 70%)}
+
+@keyframes orbFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+
+/* TOPBAR */
+.topbar{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:0.5px solid var(--border);background:rgba(10,15,10,0.8);backdrop-filter:blur(20px)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:var(--olcha);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#0A0F0A}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:var(--text)}
+.logo-badge{font-size:10px;padding:2px 7px;background:var(--glass2);border:0.5px solid var(--border2);border-radius:20px;color:var(--olcha);font-weight:500;margin-left:4px}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.tb-btn{padding:8px 16px;border-radius:8px;border:0.5px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif}
+.tb-btn:hover{background:var(--glass);color:var(--text)}
+.tb-btn.primary{background:var(--olcha);color:#0A0F0A;border:none;font-weight:500}
+.tb-btn.primary:hover{background:#00E896}
+.tb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--olcha),var(--olcha2));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#0A0F0A;cursor:pointer;border:2px solid var(--border2)}
+
+/* LAYOUT */
+.app-layout{position:relative;z-index:1;display:flex;height:calc(100vh - 65px)}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;border-right:0.5px solid var(--border);padding:16px 12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;background:rgba(10,15,10,0.5)}
+.nav-section{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;padding:12px 8px 6px;font-weight:500}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all 0.2s;color:var(--text2);font-size:14px}
+.nav-item:hover{background:var(--glass);color:var(--text)}
+.nav-item.active{background:var(--glass2);color:var(--olcha);border:0.5px solid var(--border2)}
+.nav-item i{font-size:17px;opacity:0.8}
+.nav-item.active i{opacity:1}
+.nav-badge{margin-left:auto;font-size:11px;padding:1px 7px;background:var(--olcha);color:#0A0F0A;border-radius:20px;font-weight:500}
+.sidebar-live{margin:auto 0 0;padding:12px;border-radius:10px;background:var(--glass);border:0.5px solid var(--border2);text-align:center}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--olcha);display:inline-block;margin-right:6px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.live-text{font-size:12px;color:var(--olcha)}
+.live-num{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin:4px 0 2px}
+.live-sub{font-size:11px;color:var(--text3)}
+
+/* MAIN FEED */
+.main-feed{flex:1;overflow-y:auto;padding:0}
+
+/* STORIES */
+.stories-bar{padding:16px 20px;border-bottom:0.5px solid var(--border);display:flex;gap:12px;overflow-x:auto;scrollbar-width:none}
+.stories-bar::-webkit-scrollbar{display:none}
+.story{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.story-ring{width:56px;height:56px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,var(--olcha),#00E5FF,#7B61FF);position:relative}
+.story-ring.add{background:var(--glass2);border:1.5px dashed var(--border2)}
+.story-inner{width:100%;height:100%;border-radius:50%;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
+.story-avatar{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:16px;color:#0A0F0A}
+.story-name{font-size:11px;color:var(--text2);max-width:60px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.story-name.you{color:var(--olcha)}
+
+/* COMPOSE */
+.compose-bar{padding:16px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:12px}
+.compose-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--olcha),var(--olcha2));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#0A0F0A;flex-shrink:0}
+.compose-input{flex:1;background:var(--glass);border:0.5px solid var(--border);border-radius:24px;padding:10px 18px;color:var(--text2);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;transition:all 0.2s}
+.compose-input:focus{border-color:var(--border2);background:var(--glass2);color:var(--text)}
+.compose-actions{display:flex;gap:6px}
+.c-act{width:34px;height:34px;border-radius:8px;border:0.5px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.c-act:hover{border-color:var(--border2);color:var(--olcha);background:var(--glass)}
+.c-act i{font-size:16px}
+
+/* FEED TABS */
+.feed-tabs{display:flex;padding:0 20px;border-bottom:0.5px solid var(--border);gap:0}
+.feed-tab{padding:12px 16px;font-size:14px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;font-weight:400;white-space:nowrap}
+.feed-tab:hover{color:var(--text2)}
+.feed-tab.active{color:var(--olcha);border-bottom-color:var(--olcha);font-weight:500}
+
+/* POSTS */
+.posts{padding:0}
+.post{padding:20px 20px 0;border-bottom:0.5px solid var(--border);transition:background 0.2s}
+.post:hover{background:rgba(0,208,132,0.02)}
+.post-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.post-av{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:16px;color:#0A0F0A}
+.post-meta{flex:1}
+.post-name{font-weight:500;font-size:15px;color:var(--text)}
+.post-handle{font-size:13px;color:var(--text3);margin-left:6px}
+.post-time{font-size:12px;color:var(--text3)}
+.post-platform{font-size:11px;padding:2px 8px;border-radius:20px;margin-left:8px;font-weight:500}
+.pp-inst{background:rgba(131,58,180,0.2);color:#E1A3FF}
+.pp-tg{background:rgba(0,136,204,0.2);color:#7ECFFF}
+.pp-tt{background:rgba(255,0,80,0.15);color:#FF7BA3}
+.pp-fb{background:rgba(66,103,178,0.2);color:#93ADFF}
+.pp-olcha{background:var(--glass2);color:var(--olcha)}
+.post-more{width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.post-more:hover{background:var(--glass);color:var(--text)}
+.post-body{font-size:15px;line-height:1.7;color:var(--text);margin-bottom:14px}
+.post-body .tag{color:var(--olcha);cursor:pointer}
+.post-media{border-radius:12px;overflow:hidden;margin-bottom:14px;border:0.5px solid var(--border)}
+.post-media-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;border-radius:12px;overflow:hidden;margin-bottom:14px}
+.media-ph{background:var(--dark3);height:200px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;position:relative}
+.media-ph i{font-size:32px;color:var(--text3)}
+.media-label{position:absolute;bottom:10px;left:12px;font-size:11px;background:rgba(0,0,0,0.6);padding:3px 8px;border-radius:6px;color:var(--text2)}
+.video-ph{background:var(--dark3);height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;position:relative}
+.video-play{width:52px;height:52px;border-radius:50%;background:rgba(0,208,132,0.2);border:1.5px solid var(--olcha);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.video-play i{font-size:24px;color:var(--olcha)}
+.video-dur{position:absolute;bottom:12px;right:14px;font-size:12px;background:rgba(0,0,0,0.7);padding:3px 8px;border-radius:6px}
+.post-actions{display:flex;gap:0;padding:4px 0 16px;margin-top:2px}
+.p-act{display:flex;align-items:center;gap:6px;padding:7px 14px 7px 0;color:var(--text3);font-size:13px;cursor:pointer;transition:all 0.2s;border:none;background:transparent;font-family:'DM Sans',sans-serif}
+.p-act i{font-size:18px}
+.p-act:hover{color:var(--text2)}
+.p-act.liked{color:var(--olcha)}
+.p-act.liked i{color:var(--olcha)}
+.repost-btn:hover{color:#00B4D8}
+.comment-btn:hover{color:#7B61FF}
+.share-btn:hover{color:var(--olcha)}
+.p-act-spacer{flex:1}
+
+/* EXPLORE CARD */
+.explore-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:var(--glass);border:0.5px solid var(--border);font-size:13px;color:var(--text2);cursor:pointer;transition:all 0.2s;margin:0 6px 8px 0}
+.explore-pill:hover{background:var(--glass2);border-color:var(--border2);color:var(--text)}
+.explore-pill i{font-size:14px;color:var(--olcha)}
+
+/* RIGHT PANEL */
+.right-panel{width:300px;flex-shrink:0;border-left:0.5px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;background:rgba(10,15,10,0.3)}
+.panel-card{border-radius:12px;border:0.5px solid var(--border);background:rgba(26,34,26,0.5);overflow:hidden}
+.panel-title{padding:14px 16px 10px;font-size:13px;font-weight:500;color:var(--text2);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title span{color:var(--text3);font-size:12px;font-weight:400;cursor:pointer}
+.panel-title span:hover{color:var(--olcha)}
+
+/* TREND ITEM */
+.trend-item{padding:10px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.2s;border-bottom:0.5px solid var(--border)}
+.trend-item:last-child{border-bottom:none}
+.trend-item:hover{background:var(--glass)}
+.trend-rank{font-size:11px;color:var(--text3);min-width:16px;font-weight:500}
+.trend-info{flex:1}
+.trend-topic{font-size:14px;color:var(--text);font-weight:500}
+.trend-count{font-size:12px;color:var(--text3)}
+.trend-arrow{font-size:14px;color:var(--olcha);opacity:0.6}
+
+/* SUGGEST USER */
+.suggest-item{padding:10px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.2s;border-bottom:0.5px solid var(--border)}
+.suggest-item:last-child{border-bottom:none}
+.suggest-item:hover{background:var(--glass)}
+.s-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#0A0F0A}
+.s-info{flex:1}
+.s-name{font-size:14px;color:var(--text);font-weight:500}
+.s-handle{font-size:12px;color:var(--text3)}
+.s-follow{padding:5px 14px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--olcha);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.s-follow:hover{background:var(--olcha);color:#0A0F0A}
+
+/* AI PANEL */
+.ai-panel{border-radius:12px;border:0.5px solid var(--border2);background:var(--glass);padding:14px 16px}
+.ai-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--olcha);background:rgba(0,208,132,0.1);border:0.5px solid var(--border2);border-radius:20px;padding:3px 10px;margin-bottom:10px;font-weight:500}
+.ai-badge i{font-size:13px}
+.ai-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+.ai-sub{font-size:12px;color:var(--text3);line-height:1.6}
+.ai-btn{margin-top:10px;width:100%;padding:8px;border-radius:8px;background:var(--glass2);border:0.5px solid var(--border2);color:var(--olcha);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.ai-btn:hover{background:var(--olcha);color:#0A0F0A}
+
+/* PLATFORM STATS */
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px}
+.stat-box{background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;text-align:center}
+.stat-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text)}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-orb"></div>
+<div class="bg-orb"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">O</div>
+    <span class="logo-text">OlCha</span>
+    <span class="logo-badge">BETA</span>
+  </div>
+  <div style="flex:1;max-width:360px;margin:0 24px;position:relative">
+    <i class="ti ti-search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px"></i>
+    <input style="width:100%;padding:9px 14px 9px 38px;border-radius:24px;border:0.5px solid var(--border);background:var(--glass);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none" placeholder="Qidirish — odamlar, postlar, mavzular...">
+  </div>
+  <div class="topbar-actions">
+    <button class="tb-btn" onclick="sendPrompt('OlCha platformasining barcha xususiyatlarini ko\'rsating')"><i class="ti ti-sparkles" style="margin-right:5px;font-size:14px"></i>Discover</button>
+    <button class="tb-btn"><i class="ti ti-bell" style="font-size:16px"></i></button>
+    <button class="tb-btn"><i class="ti ti-message" style="font-size:16px"></i></button>
+    <div class="tb-avatar">A</div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="nav-section">Asosiy</div>
+    <div class="nav-item active"><i class="ti ti-home"></i> Bosh sahifa</div>
+    <div class="nav-item"><i class="ti ti-compass"></i> Kashfiyot</div>
+    <div class="nav-item"><i class="ti ti-video"></i> Videolar <span class="nav-badge">24</span></div>
+    <div class="nav-item"><i class="ti ti-brand-instagram"></i> Reels</div>
+    <div class="nav-item"><i class="ti ti-users"></i> Jamoalar</div>
+    <div class="nav-item"><i class="ti ti-calendar-event"></i> Tadbirlar</div>
+    <div class="nav-item"><i class="ti ti-shopping-bag"></i> Bozor</div>
+    
+    <div class="nav-section">Yaratish</div>
+    <div class="nav-item"><i class="ti ti-plus-circle"></i> Yangi post</div>
+    <div class="nav-item"><i class="ti ti-camera"></i> Stories</div>
+    <div class="nav-item"><i class="ti ti-broadcast"></i> Jonli efir</div>
+
+    <div class="nav-section">AI Vositalar</div>
+    <div class="nav-item"><i class="ti ti-robot"></i> AI Yordamchi</div>
+    <div class="nav-item"><i class="ti ti-chart-dots"></i> Analytics</div>
+    <div class="nav-item"><i class="ti ti-wand"></i> AI Yaratuvchi</div>
+
+    <div class="nav-section">Men</div>
+    <div class="nav-item"><i class="ti ti-user"></i> Profil</div>
+    <div class="nav-item"><i class="ti ti-bookmark"></i> Saqlangan</div>
+    <div class="nav-item"><i class="ti ti-settings"></i> Sozlamalar</div>
+
+    <div class="sidebar-live">
+      <div><span class="live-dot"></span><span class="live-text">Jonli foydalanuvchilar</span></div>
+      <div class="live-num">2.4M</div>
+      <div class="live-sub">hozir online — dunyo bo'ylab</div>
+    </div>
+  </div>
+
+  <!-- MAIN FEED -->
+  <div class="main-feed">
+
+    <!-- STORIES -->
+    <div class="stories-bar">
+      <div class="story">
+        <div class="story-ring add">
+          <div class="story-inner"><i class="ti ti-plus" style="font-size:22px;color:var(--olcha)"></i></div>
+        </div>
+        <span class="story-name you">Sizniki</span>
+      </div>
+      <div class="story">
+        <div class="story-ring">
+          <div class="story-inner"><div class="story-avatar" style="background:#7B61FF">ZM</div></div>
+        </div>
+        <span class="story-name">Zulfiya</span>
+      </div>
+      <div class="story">
+        <div class="story-ring">
+          <div class="story-inner"><div class="story-avatar" style="background:#FF6B6B">AK</div></div>
+        </div>
+        <span class="story-name">Akbar</span>
+      </div>
+      <div class="story">
+        <div class="story-ring">
+          <div class="story-inner"><div class="story-avatar" style="background:#00B4D8">NN</div></div>
+        </div>
+        <span class="story-name">Nilufar</span>
+      </div>
+      <div class="story">
+        <div class="story-ring">
+          <div class="story-inner"><div class="story-avatar" style="background:#F77F00">SM</div></div>
+        </div>
+        <span class="story-name">Sanjar</span>
+      </div>
+      <div class="story">
+        <div class="story-ring">
+          <div class="story-inner"><div class="story-avatar" style="background:#E63946">DY</div></div>
+        </div>
+        <span class="story-name">Dilnoza</span>
+      </div>
+      <div class="story">
+        <div class="story-ring">
+          <div class="story-inner"><div class="story-avatar" style="background:#2DC653">BR</div></div>
+        </div>
+        <span class="story-name">Bobur</span>
+      </div>
+      <div class="story">
+        <div class="story-ring">
+          <div class="story-inner"><div class="story-avatar" style="background:#9B2226">MK</div></div>
+        </div>
+        <span class="story-name">Malika</span>
+      </div>
+    </div>
+
+    <!-- COMPOSE -->
+    <div class="compose-bar">
+      <div class="compose-avatar">A</div>
+      <input class="compose-input" placeholder="Nima haqida o'ylayapsiz? Dunyoga aytib bering...">
+      <div class="compose-actions">
+        <button class="c-act" title="Rasm"><i class="ti ti-photo"></i></button>
+        <button class="c-act" title="Video"><i class="ti ti-video"></i></button>
+        <button class="c-act" title="Emoji"><i class="ti ti-mood-happy"></i></button>
+        <button class="c-act" title="AI Yordamchi" style="border-color:var(--border2);color:var(--olcha)"><i class="ti ti-sparkles"></i></button>
+        <button style="padding:8px 18px;border-radius:8px;background:var(--olcha);border:none;color:#0A0F0A;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500">Joylash</button>
+      </div>
+    </div>
+
+    <!-- FEED TABS -->
+    <div class="feed-tabs">
+      <div class="feed-tab active">Sizning lentangiz</div>
+      <div class="feed-tab">Trendlar</div>
+      <div class="feed-tab">Do'stlar</div>
+      <div class="feed-tab">Video</div>
+      <div class="feed-tab">Xabarlar</div>
+      <div class="feed-tab">AI Kashf</div>
+    </div>
+
+    <!-- EXPLORE PILLS -->
+    <div style="padding:14px 20px 10px;border-bottom:0.5px solid var(--border)">
+      <div class="explore-pill"><i class="ti ti-flame"></i>#SamarkandFestival</div>
+      <div class="explore-pill"><i class="ti ti-trending-up"></i>#OlChaApp</div>
+      <div class="explore-pill"><i class="ti ti-music"></i>#UzbekPop</div>
+      <div class="explore-pill"><i class="ti ti-cpu"></i>#TechUz</div>
+      <div class="explore-pill"><i class="ti ti-movie"></i>#Kino</div>
+    </div>
+
+    <!-- POST 1 — Video -->
+    <div class="post">
+      <div class="post-header">
+        <div class="post-av" style="background:linear-gradient(135deg,#7B61FF,#9B89FF)">ZM</div>
+        <div class="post-meta">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+            <span class="post-name">Zulfiya Mirzayeva</span>
+            <span class="post-handle">@zulfiya_uz</span>
+            <span class="post-platform pp-olcha">OlCha Original</span>
+            <span class="post-platform pp-inst">Instagram</span>
+          </div>
+          <div class="post-time">2 soat oldin · Toshkent</div>
+        </div>
+        <button class="post-more"><i class="ti ti-dots"></i></button>
+      </div>
+      <div class="post-body">
+        Samarqandning Registon maydonida kechki tomoshani ko'ring — so'zlar yetar emas! 🌙✨
+        <span class="tag">#Registon</span> <span class="tag">#Samarqand</span> <span class="tag">#O'zbekiston</span>
+      </div>
+      <div class="post-media" style="border-radius:12px;overflow:hidden;margin-bottom:14px;border:0.5px solid var(--border)">
+        <div class="video-ph">
+          <div class="video-play"><i class="ti ti-player-play"></i></div>
+          <span style="font-size:13px;color:var(--text3)">Registon kechki tomoshasi</span>
+          <span class="video-dur">2:34</span>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--dark3)">
+            <div style="width:35%;height:100%;background:var(--olcha);border-radius:2px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="post-actions">
+        <button class="p-act liked"><i class="ti ti-heart-filled"></i> 12.4K</button>
+        <button class="p-act comment-btn"><i class="ti ti-message-circle"></i> 847</button>
+        <button class="p-act repost-btn"><i class="ti ti-repeat"></i> 2.1K</button>
+        <div class="p-act-spacer"></div>
+        <button class="p-act share-btn"><i class="ti ti-share"></i></button>
+        <button class="p-act"><i class="ti ti-bookmark"></i></button>
+      </div>
+    </div>
+
+    <!-- POST 2 — Multi-image -->
+    <div class="post">
+      <div class="post-header">
+        <div class="post-av" style="background:linear-gradient(135deg,#FF6B6B,#FF8E53)">AK</div>
+        <div class="post-meta">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+            <span class="post-name">Akbar Karimov</span>
+            <span class="post-handle">@akbar.dev</span>
+            <span class="post-platform pp-tg">Telegram</span>
+          </div>
+          <div class="post-time">5 soat oldin · Berlin, DE</div>
+        </div>
+        <button class="post-more"><i class="ti ti-dots"></i></button>
+      </div>
+      <div class="post-body">
+        Yangi startup fikri: <span class="tag">#OlCha</span> platformasi uchun AI-asosidagi kontent yaratuvchi. 
+        Dunyo bozori bizni kutmoqda! Kimlar join bo'ladi? 🚀
+      </div>
+      <div class="post-media-grid">
+        <div class="media-ph" style="height:160px"><i class="ti ti-photo"></i><span class="media-label">Startup pitch</span></div>
+        <div class="media-ph" style="height:160px"><i class="ti ti-chart-bar"></i><span class="media-label">Market analysis</span></div>
+      </div>
+      <div class="post-actions">
+        <button class="p-act"><i class="ti ti-heart"></i> 3.2K</button>
+        <button class="p-act comment-btn"><i class="ti ti-message-circle"></i> 219</button>
+        <button class="p-act repost-btn"><i class="ti ti-repeat"></i> 891</button>
+        <div class="p-act-spacer"></div>
+        <button class="p-act share-btn"><i class="ti ti-share"></i></button>
+        <button class="p-act"><i class="ti ti-bookmark"></i></button>
+      </div>
+    </div>
+
+    <!-- POST 3 — Text rich -->
+    <div class="post">
+      <div class="post-header">
+        <div class="post-av" style="background:linear-gradient(135deg,#00B4D8,#0077B6)">NN</div>
+        <div class="post-meta">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+            <span class="post-name">Nilufar Nazarova</span>
+            <span class="post-handle">@nilufar_writes</span>
+            <span class="post-platform pp-fb">Facebook</span>
+            <span class="post-platform pp-tt">TikTok</span>
+          </div>
+          <div class="post-time">Kecha · Namangan</div>
+        </div>
+        <button class="post-more"><i class="ti ti-dots"></i></button>
+      </div>
+      <div class="post-body">
+        "Ishq Sultoni: Rumiy" filmi haqida eng so'ngi yangilik — suratga olish Samarqandda boshlanadi! 
+        Bu tarixiy drama dunyo kinofestivallariga boradi deb ishonaman. <span class="tag">#RumiyFilm</span> <span class="tag">#O'zbekKino</span>
+      </div>
+      <div style="padding:12px 16px;border-radius:10px;border:0.5px solid var(--border);background:var(--glass);margin-bottom:14px;cursor:pointer">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px"><i class="ti ti-news" style="font-size:14px"></i> Bog'liq maqola</div>
+        <div style="font-size:14px;font-weight:500;color:var(--text)">O'zbekiston kino sanoati yangi bosqichga chiqmoqda</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">kun.uz · 3 soat oldin</div>
+      </div>
+      <div class="post-actions">
+        <button class="p-act liked"><i class="ti ti-heart-filled"></i> 7.8K</button>
+        <button class="p-act comment-btn"><i class="ti ti-message-circle"></i> 1.4K</button>
+        <button class="p-act repost-btn"><i class="ti ti-repeat"></i> 5.2K</button>
+        <div class="p-act-spacer"></div>
+        <button class="p-act share-btn"><i class="ti ti-share"></i></button>
+        <button class="p-act"><i class="ti ti-bookmark"></i></button>
+      </div>
+    </div>
+
+    <!-- LOAD MORE -->
+    <div style="padding:20px;text-align:center">
+      <button onclick="sendPrompt('OlCha platformasi uchun yana ko\'proq xususiyatlarni ko\'rsating — messages, marketplace, live streaming va AI yaratuvchi')" style="padding:10px 28px;border-radius:24px;border:0.5px solid var(--border);background:var(--glass);color:var(--text2);font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s">Yana ko'proq ko'rish ↗</button>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+
+    <!-- AI SUGGESTION -->
+    <div class="ai-panel">
+      <div class="ai-badge"><i class="ti ti-sparkles"></i> OlCha AI</div>
+      <div class="ai-title">Sizning kontent tahlili tayyor</div>
+      <div class="ai-sub">Haftaning eng yaxshi posting vaqti: Seshanba 19:00–21:00. Reels formatida 3x ko'proq reach olinmoqda.</div>
+      <button class="ai-btn" onclick="sendPrompt('OlCha AI analytics dashboard va kontent strategiyasini ko\'rsating')">To'liq tahlilni ko'rish ↗</button>
+    </div>
+
+    <!-- TRENDS -->
+    <div class="panel-card">
+      <div class="panel-title">Trendlar <span>Barchasini ko'rish</span></div>
+      <div class="trend-item">
+        <span class="trend-rank">1</span>
+        <div class="trend-info">
+          <div class="trend-topic">#SamarkandFestival</div>
+          <div class="trend-count">284K post</div>
+        </div>
+        <i class="ti ti-trending-up trend-arrow"></i>
+      </div>
+      <div class="trend-item">
+        <span class="trend-rank">2</span>
+        <div class="trend-info">
+          <div class="trend-topic">#OlChaApp</div>
+          <div class="trend-count">197K post</div>
+        </div>
+        <i class="ti ti-trending-up trend-arrow"></i>
+      </div>
+      <div class="trend-item">
+        <span class="trend-rank">3</span>
+        <div class="trend-info">
+          <div class="trend-topic">#UzbekStartup</div>
+          <div class="trend-count">143K post</div>
+        </div>
+        <i class="ti ti-trending-up trend-arrow"></i>
+      </div>
+      <div class="trend-item">
+        <span class="trend-rank">4</span>
+        <div class="trend-info">
+          <div class="trend-topic">#RumiyFilm</div>
+          <div class="trend-count">98K post</div>
+        </div>
+        <i class="ti ti-trending-up trend-arrow"></i>
+      </div>
+      <div class="trend-item">
+        <span class="trend-rank">5</span>
+        <div class="trend-info">
+          <div class="trend-topic">#TechUz2026</div>
+          <div class="trend-count">71K post</div>
+        </div>
+        <i class="ti ti-trending-up trend-arrow"></i>
+      </div>
+    </div>
+
+    <!-- SUGGESTED USERS -->
+    <div class="panel-card">
+      <div class="panel-title">Tavsiya etilganlar <span>Barchasini ko'rish</span></div>
+      <div class="suggest-item">
+        <div class="s-av" style="background:#7B61FF">ZA</div>
+        <div class="s-info">
+          <div class="s-name">Zafar Abdullayev</div>
+          <div class="s-handle">5 umumiy do'st</div>
+        </div>
+        <button class="s-follow">Kuzatish</button>
+      </div>
+      <div class="suggest-item">
+        <div class="s-av" style="background:#00B4D8">MC</div>
+        <div class="s-info">
+          <div class="s-name">Malika Choriyeva</div>
+          <div class="s-handle">OlCha Creator ✓</div>
+        </div>
+        <button class="s-follow">Kuzatish</button>
+      </div>
+      <div class="suggest-item">
+        <div class="s-av" style="background:#F77F00">BU</div>
+        <div class="s-info">
+          <div class="s-name">Bobur Umarov</div>
+          <div class="s-handle">Siz kuzatib borasiz</div>
+        </div>
+        <button class="s-follow" style="color:var(--text3);border-color:var(--border)">Kuzatilmoqda</button>
+      </div>
+    </div>
+
+    <!-- PLATFORM STATS -->
+    <div class="panel-card">
+      <div class="panel-title">OlCha Statistika</div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-val">142M</div>
+          <div class="stat-lbl">Foydalanuvchi</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">89</div>
+          <div class="stat-lbl">Mamlakat</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">2.4M</div>
+          <div class="stat-lbl">Hozir online</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">4.7B</div>
+          <div class="stat-lbl">Kunlik post</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:var(--text3);line-height:1.8;padding:0 4px">
+      OlCha · Maxfiylik siyosati · Shartlar · Yordam<br>
+      © 2026 OlCha Platform. Barcha huquqlar himoyalangan.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,22 +1,29 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: NEXUS Super Social Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: users
+  - name: posts
+  - name: reels
+  - name: stories
+  - name: messages
+  - name: groups
+  - name: notifications
+  - name: ai
+  - name: admin
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +31,1217 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── USERS ────────────────────────────────────────────────────────────────
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List / search users
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user profile
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user profile
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}/follow:
+    post:
+      operationId: followUser
+      tags: [users]
+      summary: Follow a user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowResult"
+
+  /users/{id}/followers:
+    get:
+      operationId: getUserFollowers
+      tags: [users]
+      summary: Get followers of a user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /users/stats/summary:
+    get:
+      operationId: getUserStatsSummary
+      tags: [users]
+      summary: Platform user stats (total, new today, active)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStatsSummary"
+
+  # ── POSTS ────────────────────────────────────────────────────────────────
+  /posts:
+    get:
+      operationId: listPosts
+      tags: [posts]
+      summary: Feed posts
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [photo, video, text, all]
+            default: all
+        - in: query
+          name: userId
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Post"
+    post:
+      operationId: createPost
+      tags: [posts]
+      summary: Create a post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+
+  /posts/{id}:
+    get:
+      operationId: getPost
+      tags: [posts]
+      summary: Get single post
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+    delete:
+      operationId: deletePost
+      tags: [posts]
+      summary: Delete a post
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /posts/{id}/like:
+    post:
+      operationId: likePost
+      tags: [posts]
+      summary: Like / unlike a post
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeResult"
+
+  /posts/{id}/comments:
+    get:
+      operationId: listPostComments
+      tags: [posts]
+      summary: List comments on a post
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+    post:
+      operationId: createPostComment
+      tags: [posts]
+      summary: Comment on a post
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  /posts/trending:
+    get:
+      operationId: getTrendingPosts
+      tags: [posts]
+      summary: Trending posts right now
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Post"
+
+  # ── REELS ────────────────────────────────────────────────────────────────
+  /reels:
+    get:
+      operationId: listReels
+      tags: [reels]
+      summary: Get reels feed
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 10 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reel"
+    post:
+      operationId: createReel
+      tags: [reels]
+      summary: Upload a reel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReelInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reel"
+
+  /reels/{id}/like:
+    post:
+      operationId: likeReel
+      tags: [reels]
+      summary: Like a reel
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeResult"
+
+  # ── STORIES ──────────────────────────────────────────────────────────────
+  /stories:
+    get:
+      operationId: listStories
+      tags: [stories]
+      summary: Get active stories
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Story"
+    post:
+      operationId: createStory
+      tags: [stories]
+      summary: Post a story
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+
+  /stories/{id}/view:
+    post:
+      operationId: viewStory
+      tags: [stories]
+      summary: Mark story as viewed
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViewResult"
+
+  # ── MESSAGES ─────────────────────────────────────────────────────────────
+  /conversations:
+    get:
+      operationId: listConversations
+      tags: [messages]
+      summary: List user conversations
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+    post:
+      operationId: createConversation
+      tags: [messages]
+      summary: Start a conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+
+  /conversations/{id}/messages:
+    get:
+      operationId: getConversationMessages
+      tags: [messages]
+      summary: Get messages in a conversation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  # ── GROUPS ───────────────────────────────────────────────────────────────
+  /groups:
+    get:
+      operationId: listGroups
+      tags: [groups]
+      summary: List communities/groups
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+    post:
+      operationId: createGroup
+      tags: [groups]
+      summary: Create a group/community
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+
+  /groups/{id}/join:
+    post:
+      operationId: joinGroup
+      tags: [groups]
+      summary: Join a group
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinResult"
+
+  # ── NOTIFICATIONS ─────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: Get user notifications
+      parameters:
+        - in: query
+          name: unread
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  # ── AI ────────────────────────────────────────────────────────────────────
+  /ai/feed:
+    get:
+      operationId: getAiFeed
+      tags: [ai]
+      summary: AI-personalized content feed
+      parameters:
+        - in: query
+          name: userId
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiFeed"
+
+  /ai/trending-topics:
+    get:
+      operationId: getTrendingTopics
+      tags: [ai]
+      summary: AI-detected trending topics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendingTopic"
+
+  /ai/suggestions:
+    get:
+      operationId: getAiSuggestions
+      tags: [ai]
+      summary: AI user/content suggestions
+      parameters:
+        - in: query
+          name: userId
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiSuggestions"
+
+  /ai/moderation:
+    post:
+      operationId: moderateContent
+      tags: [ai]
+      summary: AI content moderation check
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModerationInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationResult"
+
+  # ── ADMIN ─────────────────────────────────────────────────────────────────
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [admin]
+      summary: Admin dashboard overview stats
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: Admin list all users with filters
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, suspended, all]
+            default: all
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+
+  /admin/users/{id}/suspend:
+    post:
+      operationId: suspendUser
+      tags: [admin]
+      summary: Suspend or unsuspend a user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuspendInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+
+  /admin/content:
+    get:
+      operationId: adminListContent
+      tags: [admin]
+      summary: Admin list all content for moderation
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [post, reel, comment, all]
+            default: all
+        - in: query
+          name: flagged
+          schema: { type: boolean }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminContent"
+
+  /admin/analytics:
+    get:
+      operationId: getAdminAnalytics
+      tags: [admin]
+      summary: Platform analytics over time
+      parameters:
+        - in: query
+          name: period
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+            default: 7d
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAnalytics"
+
+  /admin/ai-system:
+    get:
+      operationId: getAiSystemStatus
+      tags: [admin]
+      summary: AI system health and self-improvement metrics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiSystemStatus"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
 
+    # ── User ────────────────────────────────────────────────────────────────
+    User:
+      type: object
+      required: [id, username, displayName, email, createdAt]
+      properties:
+        id: { type: integer }
+        username: { type: string }
+        displayName: { type: string }
+        email: { type: string }
+        bio: { type: ["string", "null"] }
+        avatarUrl: { type: ["string", "null"] }
+        coverUrl: { type: ["string", "null"] }
+        followersCount: { type: integer }
+        followingCount: { type: integer }
+        postsCount: { type: integer }
+        isVerified: { type: boolean }
+        isFollowing: { type: boolean }
+        status: { type: string, enum: [active, suspended] }
+        createdAt: { type: string }
+
+    UserInput:
+      type: object
+      required: [username, displayName, email]
+      properties:
+        username: { type: string }
+        displayName: { type: string }
+        email: { type: string }
+        bio: { type: string }
+        avatarUrl: { type: string }
+
+    UserUpdate:
+      type: object
+      properties:
+        displayName: { type: string }
+        bio: { type: string }
+        avatarUrl: { type: string }
+        coverUrl: { type: string }
+
+    UserStatsSummary:
+      type: object
+      required: [totalUsers, newToday, activeToday, verifiedCount]
+      properties:
+        totalUsers: { type: integer }
+        newToday: { type: integer }
+        activeToday: { type: integer }
+        verifiedCount: { type: integer }
+
+    FollowResult:
+      type: object
+      required: [following, followersCount]
+      properties:
+        following: { type: boolean }
+        followersCount: { type: integer }
+
+    # ── Post ────────────────────────────────────────────────────────────────
+    Post:
+      type: object
+      required: [id, author, content, type, likesCount, commentsCount, createdAt]
+      properties:
+        id: { type: integer }
+        author:
+          $ref: "#/components/schemas/User"
+        content: { type: string }
+        type: { type: string, enum: [photo, video, text] }
+        mediaUrl: { type: ["string", "null"] }
+        thumbnailUrl: { type: ["string", "null"] }
+        tags: { type: array, items: { type: string } }
+        likesCount: { type: integer }
+        commentsCount: { type: integer }
+        sharesCount: { type: integer }
+        isLiked: { type: boolean }
+        isFlagged: { type: boolean }
+        createdAt: { type: string }
+
+    PostInput:
+      type: object
+      required: [authorId, content, type]
+      properties:
+        authorId: { type: integer }
+        content: { type: string }
+        type: { type: string, enum: [photo, video, text] }
+        mediaUrl: { type: string }
+        tags: { type: array, items: { type: string } }
+
+    Comment:
+      type: object
+      required: [id, author, content, createdAt]
+      properties:
+        id: { type: integer }
+        author:
+          $ref: "#/components/schemas/User"
+        content: { type: string }
+        likesCount: { type: integer }
+        createdAt: { type: string }
+
+    CommentInput:
+      type: object
+      required: [authorId, content]
+      properties:
+        authorId: { type: integer }
+        content: { type: string }
+
+    LikeResult:
+      type: object
+      required: [liked, likesCount]
+      properties:
+        liked: { type: boolean }
+        likesCount: { type: integer }
+
+    # ── Reel ────────────────────────────────────────────────────────────────
+    Reel:
+      type: object
+      required: [id, author, videoUrl, caption, likesCount, viewsCount, createdAt]
+      properties:
+        id: { type: integer }
+        author:
+          $ref: "#/components/schemas/User"
+        videoUrl: { type: string }
+        thumbnailUrl: { type: ["string", "null"] }
+        caption: { type: string }
+        audioTrack: { type: ["string", "null"] }
+        duration: { type: integer }
+        likesCount: { type: integer }
+        commentsCount: { type: integer }
+        viewsCount: { type: integer }
+        isLiked: { type: boolean }
+        tags: { type: array, items: { type: string } }
+        createdAt: { type: string }
+
+    ReelInput:
+      type: object
+      required: [authorId, videoUrl, caption]
+      properties:
+        authorId: { type: integer }
+        videoUrl: { type: string }
+        thumbnailUrl: { type: string }
+        caption: { type: string }
+        audioTrack: { type: string }
+        duration: { type: integer }
+        tags: { type: array, items: { type: string } }
+
+    # ── Story ────────────────────────────────────────────────────────────────
+    Story:
+      type: object
+      required: [id, author, mediaUrl, mediaType, viewsCount, expiresAt, createdAt]
+      properties:
+        id: { type: integer }
+        author:
+          $ref: "#/components/schemas/User"
+        mediaUrl: { type: string }
+        mediaType: { type: string, enum: [photo, video] }
+        caption: { type: ["string", "null"] }
+        viewsCount: { type: integer }
+        isViewed: { type: boolean }
+        expiresAt: { type: string }
+        createdAt: { type: string }
+
+    StoryInput:
+      type: object
+      required: [authorId, mediaUrl, mediaType]
+      properties:
+        authorId: { type: integer }
+        mediaUrl: { type: string }
+        mediaType: { type: string, enum: [photo, video] }
+        caption: { type: string }
+
+    ViewResult:
+      type: object
+      required: [viewed, viewsCount]
+      properties:
+        viewed: { type: boolean }
+        viewsCount: { type: integer }
+
+    # ── Messages ─────────────────────────────────────────────────────────────
+    Conversation:
+      type: object
+      required: [id, participants, lastMessage, unreadCount, updatedAt]
+      properties:
+        id: { type: integer }
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        lastMessage: { type: ["string", "null"] }
+        unreadCount: { type: integer }
+        updatedAt: { type: string }
+
+    ConversationInput:
+      type: object
+      required: [participantIds]
+      properties:
+        participantIds:
+          type: array
+          items: { type: integer }
+
+    Message:
+      type: object
+      required: [id, conversationId, senderId, content, createdAt]
+      properties:
+        id: { type: integer }
+        conversationId: { type: integer }
+        senderId: { type: integer }
+        content: { type: string }
+        mediaUrl: { type: ["string", "null"] }
+        isRead: { type: boolean }
+        createdAt: { type: string }
+
+    MessageInput:
+      type: object
+      required: [senderId, content]
+      properties:
+        senderId: { type: integer }
+        content: { type: string }
+        mediaUrl: { type: string }
+
+    # ── Group ─────────────────────────────────────────────────────────────────
+    Group:
+      type: object
+      required: [id, name, description, membersCount, isPrivate, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        avatarUrl: { type: ["string", "null"] }
+        coverUrl: { type: ["string", "null"] }
+        membersCount: { type: integer }
+        postsCount: { type: integer }
+        isPrivate: { type: boolean }
+        isMember: { type: boolean }
+        category: { type: string }
+        createdAt: { type: string }
+
+    GroupInput:
+      type: object
+      required: [name, description]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        avatarUrl: { type: string }
+        isPrivate: { type: boolean }
+        category: { type: string }
+
+    JoinResult:
+      type: object
+      required: [joined, membersCount]
+      properties:
+        joined: { type: boolean }
+        membersCount: { type: integer }
+
+    # ── Notification ──────────────────────────────────────────────────────────
+    Notification:
+      type: object
+      required: [id, type, message, isRead, createdAt]
+      properties:
+        id: { type: integer }
+        type: { type: string, enum: [like, comment, follow, mention, group, system] }
+        message: { type: string }
+        actorName: { type: ["string", "null"] }
+        actorAvatar: { type: ["string", "null"] }
+        targetId: { type: ["integer", "null"] }
+        targetType: { type: ["string", "null"] }
+        isRead: { type: boolean }
+        createdAt: { type: string }
+
+    # ── AI ────────────────────────────────────────────────────────────────────
+    AiFeed:
+      type: object
+      required: [posts, reels, suggestedUsers]
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+        reels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reel"
+        suggestedUsers:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+
+    TrendingTopic:
+      type: object
+      required: [tag, postCount, growth]
+      properties:
+        tag: { type: string }
+        postCount: { type: integer }
+        growth: { type: number }
+        category: { type: string }
+
+    AiSuggestions:
+      type: object
+      required: [users, groups, topics]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/Group"
+        topics:
+          type: array
+          items: { type: string }
+
+    ModerationInput:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string }
+        contentType: { type: string, enum: [text, image_url] }
+
+    ModerationResult:
+      type: object
+      required: [safe, confidence, flags]
+      properties:
+        safe: { type: boolean }
+        confidence: { type: number }
+        flags:
+          type: array
+          items: { type: string }
+        recommendation: { type: string }
+
+    # ── Admin ─────────────────────────────────────────────────────────────────
+    AdminDashboard:
+      type: object
+      required: [totalUsers, totalPosts, totalReels, totalStories, totalGroups, activeNow, flaggedContent, aiAccuracy, dailyGrowth]
+      properties:
+        totalUsers: { type: integer }
+        totalPosts: { type: integer }
+        totalReels: { type: integer }
+        totalStories: { type: integer }
+        totalGroups: { type: integer }
+        activeNow: { type: integer }
+        flaggedContent: { type: integer }
+        aiAccuracy: { type: number }
+        dailyGrowth: { type: number }
+        topRegions:
+          type: array
+          items:
+            type: object
+            required: [region, users]
+            properties:
+              region: { type: string }
+              users: { type: integer }
+
+    AdminUser:
+      type: object
+      required: [id, username, displayName, email, status, postsCount, followersCount, createdAt]
+      properties:
+        id: { type: integer }
+        username: { type: string }
+        displayName: { type: string }
+        email: { type: string }
+        status: { type: string, enum: [active, suspended] }
+        postsCount: { type: integer }
+        followersCount: { type: integer }
+        isVerified: { type: boolean }
+        lastSeen: { type: ["string", "null"] }
+        createdAt: { type: string }
+
+    SuspendInput:
+      type: object
+      required: [suspend]
+      properties:
+        suspend: { type: boolean }
+        reason: { type: string }
+
+    AdminContent:
+      type: object
+      required: [id, type, authorName, preview, likesCount, isFlagged, createdAt]
+      properties:
+        id: { type: integer }
+        type: { type: string, enum: [post, reel, comment] }
+        authorName: { type: string }
+        authorAvatar: { type: ["string", "null"] }
+        preview: { type: string }
+        mediaUrl: { type: ["string", "null"] }
+        likesCount: { type: integer }
+        isFlagged: { type: boolean }
+        flagReason: { type: ["string", "null"] }
+        createdAt: { type: string }
+
+    AdminAnalytics:
+      type: object
+      required: [period, userGrowth, contentGrowth, engagementRate, topContent]
+      properties:
+        period: { type: string }
+        userGrowth:
+          type: array
+          items:
+            type: object
+            required: [date, count]
+            properties:
+              date: { type: string }
+              count: { type: integer }
+        contentGrowth:
+          type: array
+          items:
+            type: object
+            required: [date, posts, reels, stories]
+            properties:
+              date: { type: string }
+              posts: { type: integer }
+              reels: { type: integer }
+              stories: { type: integer }
+        engagementRate: { type: number }
+        topContent:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+
+    AiSystemStatus:
+      type: object
+      required: [version, accuracy, modelsRunning, lastImproved, recommendations, selfImprovementEnabled]
+      properties:
+        version: { type: string }
+        accuracy: { type: number }
+        modelsRunning: { type: integer }
+        lastImproved: { type: string }
+        selfImprovementEnabled: { type: boolean }
+        recommendations:
+          type: array
+          items:
+            type: object
+            required: [module, suggestion, impact]
+            properties:
+              module: { type: string }
+              suggestion: { type: string }
+              impact: { type: string, enum: [low, medium, high] }
+        metricsHistory:
+          type: array
+          items:
+            type: object
+            required: [date, accuracy, responseTime]
+            properties:
+              date: { type: string }
+              accuracy: { type: number }
+              responseTime: { type: integer }

@@ -1,8 +1,26 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
+import usersRouter from "./users";
+import postsRouter from "./posts";
+import reelsRouter from "./reels";
+import storiesRouter from "./stories";
+import messagesRouter from "./messages";
+import groupsRouter from "./groups";
+import notificationsRouter from "./notifications";
+import aiRouter from "./ai";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(usersRouter);
+router.use(postsRouter);
+router.use(reelsRouter);
+router.use(storiesRouter);
+router.use(messagesRouter);
+router.use(groupsRouter);
+router.use(notificationsRouter);
+router.use(aiRouter);
+router.use(adminRouter);
 
 export default router;

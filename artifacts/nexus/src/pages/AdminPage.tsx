@@ -238,36 +238,178 @@ function SafeGuardTab() {
 
 function FinanceTab() {
   const [data, setData] = useState<any>(null);
+  const [commStats, setCommStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch(`${API}/api/admin/finance`, { credentials: "include" })
-      .then(r => r.json()).then(setData).finally(() => setLoading(false));
-  }, []);
+  // Commission controls
+  const [commRate, setCommRate] = useState<number>(10);
+  const [commInput, setCommInput] = useState<string>("10");
+  const [savingComm, setSavingComm] = useState(false);
+  const [commSaved, setCommSaved] = useState(false);
+
+  const loadAll = async () => {
+    setLoading(true);
+    try {
+      const [fin, comm, stats] = await Promise.all([
+        fetch(`${API}/api/admin/finance`, { credentials: "include" }).then(r => r.json()),
+        fetch(`${API}/api/admin/commission`, { credentials: "include" }).then(r => r.json()),
+        fetch(`${API}/api/admin/commission/stats`, { credentials: "include" }).then(r => r.json()),
+      ]);
+      setData(fin);
+      setCommStats(stats);
+      setCommRate(comm.rate ?? 10);
+      setCommInput(String(comm.rate ?? 10));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadAll(); }, []);
+
+  const saveCommission = async () => {
+    const v = parseFloat(commInput);
+    if (isNaN(v) || v < 0 || v > 100) return;
+    setSavingComm(true);
+    const r = await fetch(`${API}/api/admin/commission`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      credentials: "include", body: JSON.stringify({ rate: v }),
+    });
+    const d = await r.json();
+    if (d.ok) { setCommRate(d.rate); setCommSaved(true); setTimeout(() => setCommSaved(false), 2500); }
+    setSavingComm(false);
+  };
+
+  const stepComm = (delta: number) => {
+    const cur = parseFloat(commInput) || 0;
+    const next = Math.max(0, Math.min(100, +(cur + delta).toFixed(1)));
+    setCommInput(String(next));
+  };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
-  const fmt = (v: number) => `$${(v / 100).toFixed(2)}`;
-  const TX_TYPE_ICON: Record<string, React.ElementType> = { deposit: ArrowDownLeft, withdrawal: ArrowUpRight, transfer: ArrowLeftRight };
-  const TX_TYPE_COLOR: Record<string, string> = { deposit: "text-emerald-400", withdrawal: "text-destructive", transfer: "text-primary" };
+  const fmt = (v: number) => `${(v / 100).toLocaleString("uz-UZ")} UZS`;
+  const TX_TYPE_ICON: Record<string, React.ElementType> = { deposit: ArrowDownLeft, withdrawal: ArrowUpRight, transfer_out: ArrowUpRight, transfer_in: ArrowDownLeft, content_revenue: Crown, ad_revenue: DollarSign };
+  const TX_TYPE_COLOR: Record<string, string> = { deposit: "text-emerald-400", withdrawal: "text-destructive", transfer_out: "text-destructive", transfer_in: "text-primary", content_revenue: "text-amber-400", ad_revenue: "text-cyan-400" };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-emerald-400/15 flex items-center justify-center">
-          <DollarSign className="w-5 h-5 text-emerald-400" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-400/15 flex items-center justify-center">
+            <DollarSign className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Moliyaviy boshqaruv</h2>
+            <p className="text-xs text-muted-foreground">Komissiya, hamyonlar va tranzaksiyalar</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Moliyaviy boshqaruv</h2>
-          <p className="text-xs text-muted-foreground">Barcha hamyonlar va tranzaksiyalar</p>
+        <button onClick={loadAll} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          <RotateCcw className="w-3.5 h-3.5" /> Yangilash
+        </button>
+      </div>
+
+      {/* ===== COMMISSION CONTROL ===== */}
+      <div className="bg-gradient-to-br from-amber-400/5 to-primary/5 border border-amber-400/20 rounded-2xl p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-amber-400/15 flex items-center justify-center">
+            <Crown className="w-4 h-4 text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Platforma Komissiyasi</h3>
+            <p className="text-xs text-muted-foreground">Har bir tranzaksiyadan avtomatik % olinadi</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Rate adjuster */}
+          <div className="flex items-center gap-2 bg-background border border-border rounded-xl overflow-hidden">
+            <button onClick={() => stepComm(-0.5)}
+              className="w-10 h-10 flex items-center justify-center text-lg font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+              −
+            </button>
+            <div className="relative">
+              <input
+                type="number" min={0} max={100} step={0.5}
+                value={commInput}
+                onChange={e => setCommInput(e.target.value)}
+                className="w-20 h-10 text-center font-bold text-xl text-foreground bg-transparent focus:outline-none"
+              />
+            </div>
+            <span className="text-lg font-bold text-muted-foreground pr-2">%</span>
+            <button onClick={() => stepComm(0.5)}
+              className="w-10 h-10 flex items-center justify-center text-lg font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+              +
+            </button>
+          </div>
+
+          {/* Quick presets */}
+          <div className="flex gap-1.5">
+            {[0, 5, 10, 15, 20].map(v => (
+              <button key={v} onClick={() => setCommInput(String(v))}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                  parseFloat(commInput) === v ? "bg-amber-400/20 text-amber-400" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}>
+                {v}%
+              </button>
+            ))}
+          </div>
+
+          <button onClick={saveCommission} disabled={savingComm}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              commSaved ? "bg-emerald-400/15 text-emerald-400" : "bg-amber-400 text-black hover:opacity-90"
+            } disabled:opacity-50`}>
+            {savingComm ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+              : commSaved ? <CheckCircle2 className="w-4 h-4" /> : null}
+            {savingComm ? "Saqlanmoqda..." : commSaved ? "Saqlandi!" : "Saqlash"}
+          </button>
+        </div>
+
+        <div className="flex items-start gap-2 text-xs text-muted-foreground">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+          <span>
+            Joriy komissiya: <strong className="text-amber-400">{commRate}%</strong>.
+            Misol: foydalanuvchi 10,000 UZS depozit qilsa, {(10000 * commRate / 100).toFixed(0)} UZS admin hamyoniga, {(10000 * (1 - commRate/100)).toFixed(0)} UZS foydalanuvchiga.
+          </span>
         </div>
       </div>
 
-      {/* Stats */}
+      {/* ===== ADMIN WALLET (my earnings) ===== */}
+      {commStats && (
+        <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Wallet className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">Admin Hamyoni (Mening daromadim)</h3>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { label: "Jami daromad", value: fmt(commStats.adminTotal ?? 0), color: "text-primary", bg: "bg-primary/10", icon: Crown },
+              { label: "Balans", value: fmt(commStats.adminBalance ?? 0), color: "text-emerald-400", bg: "bg-emerald-400/10", icon: Wallet },
+              { label: "Komissiya daromadi", value: fmt(commStats.adminEarnings ?? 0), color: "text-amber-400", bg: "bg-amber-400/10", icon: DollarSign },
+              { label: "Bu oydagi komissiya", value: fmt(commStats.monthlyCommission ?? 0), color: "text-cyan-400", bg: "bg-cyan-400/10", icon: TrendingUp },
+            ].map((s, i) => (
+              <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
+                className="rounded-xl border border-border p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                  <div className={`w-6 h-6 rounded-lg ${s.bg} flex items-center justify-center`}>
+                    <s.icon className={`w-3 h-3 ${s.color}`} />
+                  </div>
+                </div>
+                <p className={`text-base font-bold ${s.color}`}>{s.value}</p>
+              </motion.div>
+            ))}
+          </div>
+          <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground border-t border-border">
+            <span>Jami tranzaksiya: <strong className="text-foreground">{commStats.txCount}</strong></span>
+          </div>
+        </div>
+      )}
+
+      {/* Platform stats */}
       {data?.stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Jami balans", value: fmt(data.totals?.totalAll ?? 0), icon: Wallet, color: "text-primary", bg: "bg-primary/10" },
+            { label: "Platform balans jami", value: fmt(data.totals?.totalAll ?? 0), icon: Wallet, color: "text-primary", bg: "bg-primary/10" },
             { label: "Jami depozit", value: fmt(data.stats.totalDeposited), icon: ArrowDownLeft, color: "text-emerald-400", bg: "bg-emerald-400/10" },
             { label: "Jami yechilgan", value: fmt(data.stats.totalWithdrawn), icon: ArrowUpRight, color: "text-destructive", bg: "bg-destructive/10" },
             { label: "Tranzaksiyalar", value: data.stats.totalTransactions, icon: ArrowLeftRight, color: "text-cyan-400", bg: "bg-cyan-400/10" },
@@ -337,8 +479,8 @@ function FinanceTab() {
                   <Icon className={`w-4 h-4 ${TX_TYPE_COLOR[tx.type] ?? "text-muted-foreground"}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground capitalize">{tx.type}</p>
-                  <p className="text-xs text-muted-foreground truncate">{tx.description || tx.referenceId || "—"}</p>
+                  <p className="text-sm font-medium text-foreground">{tx.type?.replace(/_/g, " ")}</p>
+                  <p className="text-xs text-muted-foreground truncate">{tx.description || "—"}</p>
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-bold ${tx.amount > 0 ? "text-emerald-400" : "text-destructive"}`}>

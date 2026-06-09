@@ -56,7 +56,7 @@ router.get("/users/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
-    if (!user) return res.status(404).json({ error: "Not found" });
+    if (!user) { res.status(404).json({ error: "Not found" }); return; }
     const [followers] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id));
     const [following] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id));
     res.json({ ...user, followersCount: followers.count, followingCount: following.count, postsCount: 0, isFollowing: false });
@@ -71,7 +71,7 @@ router.patch("/users/:id", async (req, res) => {
     const id = Number(req.params.id);
     const { displayName, bio, avatarUrl, coverUrl } = req.body;
     const [user] = await db.update(usersTable).set({ displayName, bio, avatarUrl, coverUrl }).where(eq(usersTable.id, id)).returning();
-    if (!user) return res.status(404).json({ error: "Not found" });
+    if (!user) { res.status(404).json({ error: "Not found" }); return; }
     res.json({ ...user, followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false });
   } catch (err) {
     req.log.error(err);

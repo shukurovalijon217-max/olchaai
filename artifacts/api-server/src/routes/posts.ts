@@ -66,7 +66,7 @@ router.get("/posts/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     const [post] = await db.select().from(postsTable).where(eq(postsTable.id, id));
-    if (!post) return res.status(404).json({ error: "Not found" });
+    if (!post) { res.status(404).json({ error: "Not found" }); return; }
     res.json(await enrichPost(post));
   } catch (err) {
     req.log.error(err);

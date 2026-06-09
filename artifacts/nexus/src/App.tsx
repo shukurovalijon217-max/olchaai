@@ -1,7 +1,9 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Layout from "@/components/Layout";
 import HomePage from "@/pages/HomePage";
 import ReelsPage from "@/pages/ReelsPage";
@@ -19,20 +21,65 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 });
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      setLocation("/login");
+    }
+  }, [loading, user, setLocation]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  return <>{children}</>;
+}
+
 function Router() {
+  const { user } = useAuth();
+
   return (
     <Switch>
       <Route path="/login" component={LoginPage} />
-      <Route path="/admin" component={() => <Layout><AdminPage /></Layout>} />
-      <Route path="/reels" component={() => <Layout><ReelsPage /></Layout>} />
-      <Route path="/explore" component={() => <Layout><ExplorePage /></Layout>} />
-      <Route path="/messages" component={() => <Layout><MessagesPage /></Layout>} />
-      <Route path="/groups" component={() => <Layout><GroupsPage /></Layout>} />
-      <Route path="/profile/:id" component={({ params }) => <Layout><ProfilePage userId={Number(params.id)} /></Layout>} />
-      <Route path="/profile" component={() => <Layout><ProfilePage userId={1} /></Layout>} />
-      <Route path="/notifications" component={() => <Layout><NotificationsPage /></Layout>} />
-      <Route path="/post/:id" component={({ params }) => <Layout><PostDetailPage postId={Number(params.id)} /></Layout>} />
-      <Route path="/" component={() => <Layout><HomePage /></Layout>} />
+      <Route path="/admin" component={() => (
+        <ProtectedRoute><Layout><AdminPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/reels" component={() => (
+        <ProtectedRoute><Layout><ReelsPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/explore" component={() => (
+        <ProtectedRoute><Layout><ExplorePage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/messages" component={() => (
+        <ProtectedRoute><Layout><MessagesPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/groups" component={() => (
+        <ProtectedRoute><Layout><GroupsPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/profile/:id" component={({ params }) => (
+        <ProtectedRoute><Layout><ProfilePage userId={Number(params.id)} /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/profile" component={() => (
+        <ProtectedRoute><Layout><ProfilePage userId={user?.id ?? 1} /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/notifications" component={() => (
+        <ProtectedRoute><Layout><NotificationsPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/post/:id" component={({ params }) => (
+        <ProtectedRoute><Layout><PostDetailPage postId={Number(params.id)} /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/" component={() => (
+        <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>
+      )} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -43,7 +90,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

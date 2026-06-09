@@ -9,6 +9,7 @@ export interface AuthUser {
   avatarUrl?: string | null;
   coverUrl?: string | null;
   isVerified: boolean;
+  isAdmin: boolean;
   status: string;
   createdAt: string;
 }

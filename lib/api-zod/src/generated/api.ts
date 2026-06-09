@@ -852,6 +852,7 @@ export const AdminListUsersResponseItem = zod.object({
   "postsCount": zod.number(),
   "followersCount": zod.number(),
   "isVerified": zod.boolean().optional(),
+  "isAdmin": zod.boolean().optional(),
   "lastSeen": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -879,6 +880,7 @@ export const SuspendUserResponse = zod.object({
   "postsCount": zod.number(),
   "followersCount": zod.number(),
   "isVerified": zod.boolean().optional(),
+  "isAdmin": zod.boolean().optional(),
   "lastSeen": zod.string().nullish(),
   "createdAt": zod.string()
 })

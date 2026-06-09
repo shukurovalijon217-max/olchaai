@@ -1,7 +1,7 @@
 import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
-import { usersTable, postsTable, reelsTable, storiesTable, groupsTable } from "@workspace/db";
-import { eq, sql, desc } from "drizzle-orm";
+import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable } from "@workspace/db";
+import { eq, sql, desc, sum } from "drizzle-orm";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
 import { getStripeSync } from "../stripe/stripeClient";
 
@@ -158,6 +158,139 @@ router.get("/admin/ai-system", async (req, res) => {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+// PATCH /admin/users/:id/verify — verified badge berish/olish
+router.patch("/admin/users/:id/verify", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const [existing] = await db.select({ isVerified: usersTable.isVerified }).from(usersTable).where(eq(usersTable.id, id));
+    if (!existing) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
+    const [user] = await db.update(usersTable).set({ isVerified: !existing.isVerified }).where(eq(usersTable.id, id)).returning();
+    res.json({ ...user, postsCount: 0, followersCount: 0, lastSeen: user.createdAt.toISOString() });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
+});
+
+// PATCH /admin/users/:id/toggle-admin — admin qilish/olib tashlash
+router.patch("/admin/users/:id/toggle-admin", async (req: any, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (id === req.session.userId) { res.status(400).json({ error: "O'zingizning admin huquqingizni olmaysiz" }); return; }
+    const [existing] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, id));
+    if (!existing) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
+    const [user] = await db.update(usersTable).set({ isAdmin: !existing.isAdmin }).where(eq(usersTable.id, id)).returning();
+    res.json({ ...user, postsCount: 0, followersCount: 0, lastSeen: user.createdAt.toISOString() });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
+});
+
+// DELETE /admin/posts/:id — postni o'chirish
+router.delete("/admin/posts/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await db.delete(postsTable).where(eq(postsTable.id, id));
+    res.json({ ok: true });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
+});
+
+// GET /admin/finance — moliyaviy umumiy ko'rinish
+router.get("/admin/finance", async (req, res) => {
+  try {
+    const wallets = await db
+      .select({
+        userId: walletsTable.userId,
+        balance: walletsTable.balance,
+        earningsBalance: walletsTable.earningsBalance,
+        adRevenueBalance: walletsTable.adRevenueBalance,
+        displayName: usersTable.displayName,
+        username: usersTable.username,
+        email: usersTable.email,
+      })
+      .from(walletsTable)
+      .leftJoin(usersTable, eq(walletsTable.userId, usersTable.id))
+      .orderBy(desc(walletsTable.balance))
+      .limit(50);
+
+    const [totals] = await db
+      .select({
+        totalBalance: sql<number>`coalesce(sum(balance),0)::int`,
+        totalEarnings: sql<number>`coalesce(sum(earnings_balance),0)::int`,
+        totalAdRevenue: sql<number>`coalesce(sum(ad_revenue_balance),0)::int`,
+      })
+      .from(walletsTable);
+
+    const recentTxs = await db
+      .select()
+      .from(transactionsTable)
+      .orderBy(desc(transactionsTable.createdAt))
+      .limit(20);
+
+    const [txCount] = await db.select({ count: sql<number>`count(*)::int` }).from(transactionsTable);
+    const deposits = await db.select({ total: sql<number>`coalesce(sum(amount),0)::int` }).from(transactionsTable).where(eq(transactionsTable.type, "deposit"));
+    const withdrawals = await db.select({ total: sql<number>`coalesce(sum(abs(amount)),0)::int` }).from(transactionsTable).where(eq(transactionsTable.type, "withdrawal"));
+
+    res.json({
+      wallets,
+      totals: { ...totals, totalAll: totals.totalBalance + totals.totalEarnings + totals.totalAdRevenue },
+      recentTransactions: recentTxs,
+      stats: {
+        totalTransactions: txCount.count,
+        totalDeposited: deposits[0]?.total ?? 0,
+        totalWithdrawn: withdrawals[0]?.total ?? 0,
+      },
+    });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
+});
+
+// POST /admin/notify/broadcast — barcha yoki tanlangan foydalanuvchilarga bildirishnoma
+router.post("/admin/notify/broadcast", async (req, res) => {
+  try {
+    const { message, type = "system", targetUserIds } = req.body as { message: string; type?: string; targetUserIds?: number[] };
+    if (!message?.trim()) { res.status(400).json({ error: "Xabar bo'sh bo'lmasligi kerak" }); return; }
+
+    let userIds: number[];
+    if (targetUserIds && targetUserIds.length > 0) {
+      userIds = targetUserIds;
+    } else {
+      const allUsers = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.status, "active"));
+      userIds = allUsers.map(u => u.id);
+    }
+
+    const notifications = userIds.map(userId => ({
+      userId,
+      type,
+      message,
+      actorName: "OlCha Admin",
+      targetId: null,
+      isRead: false,
+    }));
+
+    if (notifications.length > 0) {
+      await db.insert(notificationsTable).values(notifications);
+    }
+    res.json({ ok: true, sent: notifications.length });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
+});
+
+// GET /admin/settings
+router.get("/admin/settings", async (req, res) => {
+  res.json({
+    maintenanceMode: false,
+    registrationOpen: true,
+    contentModerationEnabled: true,
+    aiModerationThreshold: 0.7,
+    maxPostLength: 2000,
+    maxFileSize: 100,
+    premiumEnabled: true,
+    adsEnabled: true,
+    platform: "OlCha",
+    version: "1.0.0",
+  });
+});
+
+// PATCH /admin/settings  
+router.patch("/admin/settings", async (req, res) => {
+  // In production these would be stored in a settings table
+  res.json({ ok: true, settings: req.body });
 });
 
 router.post("/admin/stripe/seed", async (req, res) => {

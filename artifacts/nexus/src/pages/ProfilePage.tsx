@@ -99,7 +99,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             { label: "Following", value: user.followingCount },
           ].map(({ label, value }) => (
             <div key={label} className="text-center">
-              <p className="text-xl font-bold text-foreground">{value.toLocaleString()}</p>
+              <p className="text-xl font-bold text-foreground">{(value ?? 0).toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">{label}</p>
             </div>
           ))}

@@ -1164,6 +1164,7 @@ components:
         postsCount: { type: integer }
         followersCount: { type: integer }
         isVerified: { type: boolean }
+        isAdmin: { type: boolean }
         lastSeen: { type: ["string", "null"] }
         createdAt: { type: string }
 

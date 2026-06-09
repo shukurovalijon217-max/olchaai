@@ -16,6 +16,7 @@ export interface AdminUser {
   postsCount: number;
   followersCount: number;
   isVerified?: boolean;
+  isAdmin?: boolean;
   /** @nullable */
   lastSeen?: string | null;
   createdAt: string;

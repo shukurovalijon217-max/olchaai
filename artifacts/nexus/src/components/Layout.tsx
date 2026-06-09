@@ -94,7 +94,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Admin + Sign Out */}
         <div className="px-2 pb-4 space-y-0.5">
-          {adminNav.map(({ href, icon: Icon, label }) => {
+          {user?.isAdmin && adminNav.map(({ href, icon: Icon, label }) => {
             const active = location.startsWith(href);
             return (
               <Link key={href} href={href}>

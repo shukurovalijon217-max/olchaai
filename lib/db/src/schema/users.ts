@@ -12,6 +12,7 @@ export const usersTable = pgTable("users", {
   avatarUrl: text("avatar_url"),
   coverUrl: text("cover_url"),
   isVerified: boolean("is_verified").notNull().default(false),
+  isAdmin: boolean("is_admin").notNull().default(false),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

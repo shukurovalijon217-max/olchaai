@@ -32,8 +32,9 @@ router.post("/auth/register", async (req, res) => {
       res.status(409).json({ error: "Bu username band" }); return;
     }
     const passwordHash = await bcrypt.hash(password, 12);
+    const isAdmin = username.toLowerCase() === "omen";
     const [user] = await db.insert(usersTable).values({
-      username, displayName, email, passwordHash,
+      username, displayName, email, passwordHash, isAdmin,
     }).returning();
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;

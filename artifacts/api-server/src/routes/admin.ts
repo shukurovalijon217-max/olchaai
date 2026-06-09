@@ -1,9 +1,19 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
 import { usersTable, postsTable, reelsTable, storiesTable, groupsTable } from "@workspace/db";
 import { eq, sql, desc } from "drizzle-orm";
 
 const router = Router();
+
+const requireAdmin: RequestHandler = async (req, res, next) => {
+  const userId = req.session.userId;
+  if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+  const [user] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, userId));
+  if (!user?.isAdmin) { res.status(403).json({ error: "Admin huquqi talab qilinadi" }); return; }
+  next();
+};
+
+router.use("/admin", requireAdmin);
 
 router.get("/admin/dashboard", async (req, res) => {
   try {

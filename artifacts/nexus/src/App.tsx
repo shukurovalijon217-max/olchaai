@@ -18,6 +18,7 @@ import PremiumPage from "@/pages/PremiumPage";
 import SettingsPage from "@/pages/SettingsPage";
 import PostDetailPage from "@/pages/PostDetailPage";
 import LoginPage from "@/pages/LoginPage";
+import WalletPage from "@/pages/WalletPage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -107,6 +108,9 @@ function Router() {
       )} />
       <Route path="/settings" component={() => (
         <ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/wallet" component={() => (
+        <ProtectedRoute><Layout><WalletPage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

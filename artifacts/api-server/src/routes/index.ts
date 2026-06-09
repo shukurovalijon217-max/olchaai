@@ -14,6 +14,7 @@ import stripeRouter from "./stripe";
 import moderationRouter from "./moderation";
 import goRouter from "./go";
 import mediaRouter from "./media";
+import walletRouter from "./wallet";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(stripeRouter);
 router.use(moderationRouter);
 router.use("/go", goRouter);
 router.use("/media", mediaRouter);
+router.use(walletRouter);
 
 export default router;

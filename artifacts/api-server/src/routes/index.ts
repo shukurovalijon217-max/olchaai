@@ -12,6 +12,8 @@ import aiRouter from "./ai";
 import adminRouter from "./admin";
 import stripeRouter from "./stripe";
 import moderationRouter from "./moderation";
+import goRouter from "./go";
+import mediaRouter from "./media";
 
 const router: IRouter = Router();
 
@@ -28,5 +30,7 @@ router.use(aiRouter);
 router.use(adminRouter);
 router.use(stripeRouter);
 router.use(moderationRouter);
+router.use("/go", goRouter);
+router.use("/media", mediaRouter);
 
 export default router;

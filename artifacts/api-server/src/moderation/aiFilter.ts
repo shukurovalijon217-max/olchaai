@@ -1,9 +1,12 @@
+import { tfScanContent } from "./tfEngine.js";
+
 export interface AiScanResult {
   score: number;
   categories: Record<string, number>;
   verdict: "clean" | "suspicious" | "violation";
   autoBlock: boolean;
   topCategory: string | null;
+  engine?: "rules" | "tensorflow" | "hybrid";
 }
 
 const RULES: Array<{
@@ -73,7 +76,8 @@ const RULES: Array<{
   },
 ];
 
-export function scanContent(text: string): AiScanResult {
+/** Rule-based scan (synchronous, always available) */
+function rulesScan(text: string): Omit<AiScanResult, "engine"> {
   if (!text || text.trim().length === 0) {
     return { score: 0, categories: {}, verdict: "clean", autoBlock: false, topCategory: null };
   }
@@ -103,19 +107,67 @@ export function scanContent(text: string): AiScanResult {
     1.0
   );
   const finalScore = Math.round(combinedScore * 100) / 100;
+  const verdict: "clean" | "suspicious" | "violation" =
+    finalScore >= 0.7 ? "violation" : finalScore >= 0.35 ? "suspicious" : "clean";
 
-  let verdict: "clean" | "suspicious" | "violation";
-  if (finalScore >= 0.7) verdict = "violation";
-  else if (finalScore >= 0.35) verdict = "suspicious";
-  else verdict = "clean";
+  return { score: finalScore, categories, verdict, autoBlock: finalScore >= 0.85, topCategory };
+}
+
+/** Hybrid scan: TF.js + rules, merged for higher accuracy */
+export async function scanContentAsync(text: string): Promise<AiScanResult> {
+  if (!text || text.trim().length === 0) {
+    return { score: 0, categories: {}, verdict: "clean", autoBlock: false, topCategory: null, engine: "rules" };
+  }
+
+  const rulesResult = rulesScan(text);
+
+  // Try TF.js engine
+  let tfResult = null;
+  try {
+    tfResult = await tfScanContent(text);
+  } catch (_) {
+    // TF unavailable — fall back to rules only
+  }
+
+  if (!tfResult) {
+    return { ...rulesResult, engine: "rules" };
+  }
+
+  // Merge: rules (weight 0.55) + TF (weight 0.45) hybrid
+  const mergedCategories: Record<string, number> = { ...rulesResult.categories };
+  for (const [cat, tfScore] of Object.entries(tfResult.categories)) {
+    const existing = mergedCategories[cat] ?? 0;
+    mergedCategories[cat] = Math.round(Math.max(existing, tfScore * 0.9) * 100) / 100;
+  }
+
+  const hybridScore = Math.min(
+    Math.round((rulesResult.score * 0.55 + tfResult.score * 0.45) * 100) / 100,
+    1.0
+  );
+  const finalScore = Math.max(hybridScore, rulesResult.score); // never lower than rules alone
+
+  const verdict: "clean" | "suspicious" | "violation" =
+    finalScore >= 0.7 ? "violation" : finalScore >= 0.35 ? "suspicious" : "clean";
+
+  let topCategory: string | null = null;
+  let topVal = 0;
+  for (const [cat, val] of Object.entries(mergedCategories)) {
+    if (val > topVal) { topVal = val; topCategory = cat; }
+  }
 
   return {
     score: finalScore,
-    categories,
+    categories: mergedCategories,
     verdict,
     autoBlock: finalScore >= 0.85,
     topCategory,
+    engine: "hybrid",
   };
+}
+
+/** Synchronous scan (backward-compat, rules only) */
+export function scanContent(text: string): AiScanResult {
+  return { ...rulesScan(text), engine: "rules" };
 }
 
 export function scanContentBatch(texts: string[]): AiScanResult[] {

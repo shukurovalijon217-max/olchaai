@@ -5,7 +5,7 @@ import {
   postsTable, usersTable
 } from "@workspace/db";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { scanContent } from "../moderation/aiFilter";
+import { scanContent, scanContentAsync } from "../moderation/aiFilter";
 
 const router = Router();
 
@@ -25,7 +25,8 @@ const requireAdmin = async (req: any, res: any, next: any) => {
 router.post("/moderation/scan", requireAdmin, async (req, res) => {
   const { text } = req.body;
   if (!text) { res.status(400).json({ error: "text talab qilinadi" }); return; }
-  res.json(scanContent(text));
+  const result = await scanContentAsync(text);
+  res.json(result);
 });
 
 // User reports content

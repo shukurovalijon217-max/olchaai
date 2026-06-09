@@ -104,7 +104,7 @@ function Router() {
         <ProtectedRoute><Layout><PostDetailPage postId={Number(params.id)} /></Layout></ProtectedRoute>
       )} />
       <Route path="/premium" component={() => (
-        <ProtectedRoute><Layout><PremiumPage /></Layout></ProtectedRoute>
+        <Layout><PremiumPage /></Layout>
       )} />
       <Route path="/settings" component={() => (
         <ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>

@@ -27,36 +27,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-full w-16 lg:w-56 flex flex-col border-r border-border bg-sidebar z-40">
-        {/* Logo */}
+
+        {/* ── Logo area ── */}
         <Link href="/">
-          <div className="flex items-center gap-3 px-3 py-4 lg:px-4 cursor-pointer">
-            {/* Small icon-only on collapsed sidebar */}
-            <div className="lg:hidden">
-              <NexusLogo size="sm" showText={false} />
+          <div className="flex items-center justify-center lg:justify-start gap-2 px-0 lg:px-4 py-4 cursor-pointer">
+            {/* Collapsed sidebar: icon only (40 px) */}
+            <div className="lg:hidden flex items-center justify-center w-16">
+              <NexusLogo ringSize={40} showText={false} />
             </div>
-            {/* Full logo on expanded sidebar */}
+            {/* Expanded sidebar: icon + text */}
             <div className="hidden lg:flex items-center gap-3">
-              <NexusLogo size="sm" showText={false} />
-              <span
-                style={{
-                  fontFamily: "'Georgia', 'Times New Roman', serif",
-                  letterSpacing: "0.18em",
-                  fontWeight: 400,
-                  background: "linear-gradient(180deg, #c8a882 0%, #9a6840 35%, #c8a070 60%, #5a3020 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  fontSize: "1.1rem",
-                }}
-              >
-                NEXUS
-              </span>
+              <NexusLogo ringSize={40} showText={true} fontSize="1.05rem" letterSpacing="0.2em" />
             </div>
           </div>
         </Link>
 
+        {/* Thin divider */}
+        <div className="mx-3 mb-2 h-px bg-border opacity-50" />
+
         {/* Main Nav */}
-        <nav className="flex-1 px-2 space-y-1 mt-1">
+        <nav className="flex-1 px-2 space-y-0.5">
           {nav.map(({ href, icon: Icon, label }) => {
             const active = location === href || (href !== "/" && location.startsWith(href));
             return (
@@ -84,8 +74,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Admin + bottom */}
-        <div className="px-2 pb-4 space-y-1">
+        {/* Admin + Sign Out */}
+        <div className="px-2 pb-4 space-y-0.5">
           {adminNav.map(({ href, icon: Icon, label }) => {
             const active = location.startsWith(href);
             return (

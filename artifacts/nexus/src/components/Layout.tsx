@@ -5,15 +5,16 @@ import {
   User, ShieldCheck, LogOut
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
+import { useAuth } from "@/context/AuthContext";
 
 const nav = [
   { href: "/", icon: Home, label: "Feed" },
   { href: "/reels", icon: Play, label: "Reels" },
   { href: "/explore", icon: Compass, label: "Explore" },
   { href: "/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/groups", icon: Users, label: "Communities" },
-  { href: "/notifications", icon: Bell, label: "Notifications" },
-  { href: "/profile", icon: User, label: "Profile" },
+  { href: "/groups", icon: Users, label: "Jamoalar" },
+  { href: "/notifications", icon: Bell, label: "Bildirishnomalar" },
+  { href: "/profile", icon: User, label: "Profil" },
 ];
 
 const adminNav = [
@@ -22,28 +23,45 @@ const adminNav = [
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-full w-16 lg:w-56 flex flex-col border-r border-border bg-sidebar z-40">
 
-        {/* ── Logo area ── */}
+        {/* Logo */}
         <Link href="/">
           <div className="flex items-center justify-center lg:justify-start gap-2 px-0 lg:px-4 py-4 cursor-pointer">
-            {/* Collapsed sidebar: icon only (40 px) */}
             <div className="lg:hidden flex items-center justify-center w-16">
               <NexusLogo ringSize={40} showText={false} />
             </div>
-            {/* Expanded sidebar: icon + text */}
             <div className="hidden lg:flex items-center gap-3">
               <NexusLogo ringSize={40} showText={true} fontSize="1.05rem" letterSpacing="0.2em" />
             </div>
           </div>
         </Link>
 
-        {/* Thin divider */}
         <div className="mx-3 mb-2 h-px bg-border opacity-50" />
+
+        {/* User chip (expanded only) */}
+        {user && (
+          <Link href="/profile">
+            <div className="hidden lg:flex items-center gap-2 mx-3 mb-3 px-3 py-2 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer">
+              <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">
+                {user.displayName[0].toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground truncate">{user.displayName}</p>
+                <p className="text-[10px] text-muted-foreground truncate">@{user.username}</p>
+              </div>
+            </div>
+          </Link>
+        )}
 
         {/* Main Nav */}
         <nav className="flex-1 px-2 space-y-0.5">
@@ -94,12 +112,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
-          <Link href="/login">
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-colors">
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              <span className="hidden lg:block text-sm font-medium">Sign Out</span>
-            </div>
-          </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-colors"
+          >
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden lg:block text-sm font-medium">Chiqish</span>
+          </button>
         </div>
       </aside>
 

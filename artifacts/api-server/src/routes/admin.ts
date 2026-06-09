@@ -59,7 +59,7 @@ router.post("/admin/users/:id/suspend", async (req, res) => {
     const id = Number(req.params.id);
     const { suspend } = req.body;
     const [user] = await db.update(usersTable).set({ status: suspend ? "suspended" : "active" }).where(eq(usersTable.id, id)).returning();
-    if (!user) return res.status(404).json({ error: "Not found" });
+    if (!user) { res.status(404).json({ error: "Not found" }); return; }
     res.json({ ...user, postsCount: 0, followersCount: 0, lastSeen: user.createdAt.toISOString() });
   } catch (err) {
     req.log.error(err);

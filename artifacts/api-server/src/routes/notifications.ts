@@ -25,7 +25,7 @@ router.post("/notifications/:id/read", async (req, res) => {
   try {
     const id = Number(req.params.id);
     const [notif] = await db.update(notificationsTable).set({ isRead: true }).where(eq(notificationsTable.id, id)).returning();
-    if (!notif) return res.status(404).json({ error: "Not found" });
+    if (!notif) { res.status(404).json({ error: "Not found" }); return; }
     res.json(notif);
   } catch (err) {
     req.log.error(err);

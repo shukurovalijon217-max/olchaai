@@ -10,6 +10,7 @@ import groupsRouter from "./groups";
 import notificationsRouter from "./notifications";
 import aiRouter from "./ai";
 import adminRouter from "./admin";
+import stripeRouter from "./stripe";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(groupsRouter);
 router.use(notificationsRouter);
 router.use(aiRouter);
 router.use(adminRouter);
+router.use(stripeRouter);
 
 export default router;

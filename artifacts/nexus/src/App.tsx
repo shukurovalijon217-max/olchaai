@@ -13,6 +13,7 @@ import GroupsPage from "@/pages/GroupsPage";
 import ProfilePage from "@/pages/ProfilePage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import AdminPage from "@/pages/AdminPage";
+import PremiumPage from "@/pages/PremiumPage";
 import PostDetailPage from "@/pages/PostDetailPage";
 import LoginPage from "@/pages/LoginPage";
 import NotFound from "@/pages/not-found";
@@ -98,6 +99,9 @@ function Router() {
       )} />
       <Route path="/post/:id" component={({ params }) => (
         <ProtectedRoute><Layout><PostDetailPage postId={Number(params.id)} /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/premium" component={() => (
+        <ProtectedRoute><Layout><PremiumPage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

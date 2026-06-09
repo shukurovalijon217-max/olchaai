@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
 import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable } from "@workspace/db";
 import { eq, sql, desc, sum } from "drizzle-orm";
+import { getCommissionRate, setCommissionRate } from "../lib/commission";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
 import { getStripeSync } from "../stripe/stripeClient";
 
@@ -271,6 +272,78 @@ router.post("/admin/notify/broadcast", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
 });
 
+// GET /admin/commission — joriy komissiya foizini olish
+router.get("/admin/commission", async (req, res) => {
+  try {
+    const rate = await getCommissionRate();
+    res.json({ rate });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Xato" });
+  }
+});
+
+// PATCH /admin/commission — komissiya foizini o'zgartirish
+router.patch("/admin/commission", async (req, res) => {
+  try {
+    const { rate } = req.body as { rate: number };
+    if (typeof rate !== "number" || rate < 0 || rate > 100) {
+      res.status(400).json({ error: "rate 0–100 orasida bo'lishi kerak" }); return;
+    }
+    await setCommissionRate(rate);
+    res.json({ ok: true, rate });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Xato" });
+  }
+});
+
+// GET /admin/commission/stats — komissiya statistikasi (admin hamyoni daromadi)
+router.get("/admin/commission/stats", async (req, res) => {
+  try {
+    const { usersTable: ut, walletsTable: wt, transactionsTable: tt } = await import("@workspace/db");
+    const [admin] = await db
+      .select({ id: ut.id })
+      .from(ut)
+      .where(eq(ut.isAdmin, true))
+      .limit(1);
+
+    if (!admin) { res.json({ totalCommission: 0, adminBalance: 0, adminEarnings: 0, monthlyCommission: 0, txCount: 0 }); return; }
+
+    const [adminWallet] = await db
+      .select({ balance: wt.balance, earningsBalance: wt.earningsBalance, adRevenueBalance: wt.adRevenueBalance, id: wt.id })
+      .from(wt)
+      .where(eq(wt.userId, admin.id))
+      .limit(1);
+
+    if (!adminWallet) { res.json({ totalCommission: 0, adminBalance: 0, adminEarnings: 0, monthlyCommission: 0, txCount: 0 }); return; }
+
+    const [total] = await db
+      .select({ total: sql<number>`coalesce(sum(amount),0)::int`, count: sql<number>`count(*)::int` })
+      .from(tt)
+      .where(eq(tt.walletId, adminWallet.id));
+
+    const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+    const [monthly] = await db
+      .select({ total: sql<number>`coalesce(sum(amount),0)::int` })
+      .from(tt)
+      .where(sql`${tt.walletId} = ${adminWallet.id} AND ${tt.createdAt} >= ${monthStart}`);
+
+    res.json({
+      totalCommission: total?.total ?? 0,
+      txCount: total?.count ?? 0,
+      monthlyCommission: monthly?.total ?? 0,
+      adminBalance: adminWallet.balance,
+      adminEarnings: adminWallet.earningsBalance,
+      adminAdRevenue: adminWallet.adRevenueBalance,
+      adminTotal: adminWallet.balance + adminWallet.earningsBalance + adminWallet.adRevenueBalance,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Xato" });
+  }
+});
+
 // GET /admin/settings
 router.get("/admin/settings", async (req, res) => {
   res.json({
@@ -289,7 +362,6 @@ router.get("/admin/settings", async (req, res) => {
 
 // PATCH /admin/settings  
 router.patch("/admin/settings", async (req, res) => {
-  // In production these would be stored in a settings table
   res.json({ ok: true, settings: req.body });
 });
 

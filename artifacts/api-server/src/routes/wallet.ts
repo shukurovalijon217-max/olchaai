@@ -5,6 +5,7 @@ import {
 } from "@workspace/db";
 import { eq, desc, and } from "drizzle-orm";
 import { z } from "zod";
+import { applyCommission, getCommissionRate } from "../lib/commission";
 
 const router = Router();
 
@@ -28,7 +29,8 @@ async function getOrCreateWallet(userId: number) {
 router.get("/wallet", requireAuth, async (req: any, res) => {
   try {
     const wallet = await getOrCreateWallet(req.session.userId);
-    res.json({ wallet });
+    const commissionRate = await getCommissionRate();
+    res.json({ wallet, commissionRate });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Hamyon ma'lumotlarini olishda xato" });
@@ -54,7 +56,7 @@ router.get("/wallet/transactions", requireAuth, async (req: any, res) => {
 
 // POST /api/wallet/deposit
 const depositSchema = z.object({
-  amount: z.number().int().min(100).max(100_000_000_00), // tiyin
+  amount: z.number().int().min(100).max(100_000_000_00),
   paymentMethod: z.enum(["visa", "mastercard", "click", "payme", "global"]),
   description: z.string().optional(),
 });
@@ -67,34 +69,34 @@ router.post("/wallet/deposit", requireAuth, async (req: any, res) => {
     }
     const { amount, paymentMethod, description } = parsed.data;
     const wallet = await getOrCreateWallet(req.session.userId);
+    const commissionRate = await getCommissionRate();
+    const commission = Math.floor(amount * commissionRate / 100);
+    const netAmount = amount - commission;
 
-    // Simulate payment processing delay
     await new Promise(r => setTimeout(r, 300));
 
-    // Update wallet balance
     const [updatedWallet] = await db
       .update(walletsTable)
-      .set({
-        balance: wallet.balance + amount,
-        updatedAt: new Date(),
-      })
+      .set({ balance: wallet.balance + netAmount, updatedAt: new Date() })
       .where(eq(walletsTable.id, wallet.id))
       .returning();
 
-    // Create transaction record
     const ref = `DEP-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const [tx] = await db.insert(transactionsTable).values({
       userId: req.session.userId,
       walletId: wallet.id,
       type: "deposit",
-      amount,
+      amount: netAmount,
       paymentMethod,
       status: "completed",
-      description: description ?? `${paymentMethod.toUpperCase()} orqali to'ldirish`,
+      description: description ?? `${paymentMethod.toUpperCase()} orqali to'ldirish (komissiya ${commissionRate}% = ${(commission / 100).toFixed(0)} UZS)`,
       reference: ref,
     }).returning();
 
-    res.json({ wallet: updatedWallet, transaction: tx });
+    // Credit commission to admin wallet (non-fatal)
+    await applyCommission(req.session.userId, amount, "deposit", ref);
+
+    res.json({ wallet: updatedWallet, transaction: tx, commission, commissionRate });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "To'ldirish amalga oshirilmadi" });
@@ -117,14 +119,18 @@ router.post("/wallet/withdraw", requireAuth, async (req: any, res) => {
     }
     const { amount, paymentMethod, description } = parsed.data;
     const wallet = await getOrCreateWallet(req.session.userId);
+    const commissionRate = await getCommissionRate();
+    const commission = Math.floor(amount * commissionRate / 100);
+    const totalNeeded = amount + commission;
 
     const totalAvailable = wallet.balance + wallet.earningsBalance + wallet.adRevenueBalance;
-    if (totalAvailable < amount) {
-      res.status(400).json({ error: "Balans yetarli emas" }); return;
+    if (totalAvailable < totalNeeded) {
+      res.status(400).json({
+        error: `Balans yetarli emas. Yechish uchun ${(totalNeeded / 100).toFixed(0)} UZS kerak (${commissionRate}% komissiya bilan)`,
+      }); return;
     }
 
-    // Deduct from balance (personal first, then earnings, then ad revenue)
-    let remaining = amount;
+    let remaining = totalNeeded;
     let newBalance = wallet.balance;
     let newEarnings = wallet.earningsBalance;
     let newAdRevenue = wallet.adRevenueBalance;
@@ -135,9 +141,7 @@ router.post("/wallet/withdraw", requireAuth, async (req: any, res) => {
       const fromEarnings = Math.min(remaining, newEarnings);
       newEarnings -= fromEarnings; remaining -= fromEarnings;
     }
-    if (remaining > 0) {
-      newAdRevenue -= remaining;
-    }
+    if (remaining > 0) newAdRevenue -= remaining;
 
     const [updatedWallet] = await db
       .update(walletsTable)
@@ -153,11 +157,13 @@ router.post("/wallet/withdraw", requireAuth, async (req: any, res) => {
       amount: -amount,
       paymentMethod,
       status: "completed",
-      description: description ?? `${paymentMethod.toUpperCase()} orqali yechish`,
+      description: description ?? `${paymentMethod.toUpperCase()} orqali yechish (komissiya ${commissionRate}%)`,
       reference: ref,
     }).returning();
 
-    res.json({ wallet: updatedWallet, transaction: tx });
+    await applyCommission(req.session.userId, amount, "withdrawal", ref);
+
+    res.json({ wallet: updatedWallet, transaction: tx, commission, commissionRate });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Yechish amalga oshirilmadi" });
@@ -182,15 +188,21 @@ router.post("/wallet/transfer", requireAuth, async (req: any, res) => {
       res.status(400).json({ error: "O'zingizga pul o'tkaza olmaysiz" }); return;
     }
 
+    const commissionRate = await getCommissionRate();
+    const commission = Math.floor(amount * commissionRate / 100);
+    const totalNeeded = amount + commission;
+
     const fromWallet = await getOrCreateWallet(req.session.userId);
-    if (fromWallet.balance < amount) {
-      res.status(400).json({ error: "Shaxsiy balans yetarli emas" }); return;
+    if (fromWallet.balance < totalNeeded) {
+      res.status(400).json({
+        error: `Shaxsiy balans yetarli emas. ${commissionRate}% komissiya bilan ${(totalNeeded / 100).toFixed(0)} UZS kerak`,
+      }); return;
     }
     const toWallet = await getOrCreateWallet(toUserId);
 
     const [updatedFrom] = await db
       .update(walletsTable)
-      .set({ balance: fromWallet.balance - amount, updatedAt: new Date() })
+      .set({ balance: fromWallet.balance - totalNeeded, updatedAt: new Date() })
       .where(eq(walletsTable.id, fromWallet.id))
       .returning();
 
@@ -203,9 +215,9 @@ router.post("/wallet/transfer", requireAuth, async (req: any, res) => {
     await db.insert(transactionsTable).values([
       {
         userId: req.session.userId, walletId: fromWallet.id,
-        type: "transfer_out", amount: -amount, status: "completed",
+        type: "transfer_out", amount: -(amount + commission), status: "completed",
         paymentMethod: "internal",
-        description: description ?? "Pul o'tkazish",
+        description: description ?? `O'tkazma (${commissionRate}% komissiya: ${(commission / 100).toFixed(0)} UZS)`,
         reference: ref,
       },
       {
@@ -217,7 +229,9 @@ router.post("/wallet/transfer", requireAuth, async (req: any, res) => {
       },
     ]);
 
-    res.json({ wallet: updatedFrom });
+    await applyCommission(req.session.userId, amount, "transfer", ref);
+
+    res.json({ wallet: updatedFrom, commission, commissionRate });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "O'tkazma amalga oshirilmadi" });
@@ -256,15 +270,12 @@ router.post("/wallet/payment-methods", requireAuth, async (req: any, res) => {
       res.status(400).json({ error: "Noto'g'ri ma'lumot" }); return;
     }
     const data = parsed.data;
-
-    // If isDefault, unset others
     if (data.isDefault) {
       await db
         .update(paymentMethodsTable)
         .set({ isDefault: false })
         .where(eq(paymentMethodsTable.userId, req.session.userId));
     }
-
     const [method] = await db.insert(paymentMethodsTable).values({
       userId: req.session.userId,
       type: data.type,
@@ -274,7 +285,6 @@ router.post("/wallet/payment-methods", requireAuth, async (req: any, res) => {
       expiryDate: data.expiryDate,
       isDefault: data.isDefault ?? false,
     }).returning();
-
     res.json({ paymentMethod: method });
   } catch (err) {
     req.log.error(err);
@@ -296,10 +306,10 @@ router.delete("/wallet/payment-methods/:id", requireAuth, async (req: any, res) 
   }
 });
 
-// POST /api/wallet/simulate-ad-revenue (for demo: simulate ad revenue credit)
+// POST /api/wallet/simulate-ad-revenue
 router.post("/wallet/simulate-ad-revenue", requireAuth, async (req: any, res) => {
   try {
-    const amount = Math.floor(Math.random() * 50000) + 10000; // 100–600 UZS random
+    const amount = Math.floor(Math.random() * 50000) + 10000;
     const wallet = await getOrCreateWallet(req.session.userId);
     const [updated] = await db
       .update(walletsTable)
@@ -323,7 +333,7 @@ router.post("/wallet/simulate-ad-revenue", requireAuth, async (req: any, res) =>
   }
 });
 
-// POST /api/wallet/simulate-earnings (demo: simulate content earnings)
+// POST /api/wallet/simulate-earnings
 router.post("/wallet/simulate-earnings", requireAuth, async (req: any, res) => {
   try {
     const amount = Math.floor(Math.random() * 100000) + 20000;

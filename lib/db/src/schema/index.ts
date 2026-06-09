@@ -7,3 +7,4 @@ export * from "./groups";
 export * from "./notifications";
 export * from "./moderation";
 export * from "./wallet";
+export * from "./platform";

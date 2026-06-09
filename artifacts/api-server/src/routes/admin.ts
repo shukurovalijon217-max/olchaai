@@ -2,6 +2,8 @@ import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
 import { usersTable, postsTable, reelsTable, storiesTable, groupsTable } from "@workspace/db";
 import { eq, sql, desc } from "drizzle-orm";
+import { getUncachableStripeClient } from "../stripe/stripeClient";
+import { getStripeSync } from "../stripe/stripeClient";
 
 const router = Router();
 
@@ -155,6 +157,37 @@ router.get("/admin/ai-system", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/admin/stripe/seed", async (req, res) => {
+  try {
+    const stripe = await getUncachableStripeClient();
+    const existing = await stripe.products.search({ query: "name:'OlCha Premium' AND active:'true'" });
+    if (existing.data.length > 0) {
+      const prices = await stripe.prices.list({ product: existing.data[0].id, active: true });
+      const stripeSync = await getStripeSync();
+      await stripeSync.syncBackfill();
+      res.json({ message: "Mahsulot allaqachon mavjud, sinxronlashtirildi", productId: existing.data[0].id, prices: prices.data });
+      return;
+    }
+    const product = await stripe.products.create({
+      name: "OlCha Premium",
+      description: "Reklama yo'q, eksklyuziv badge, kengaytirilgan tahlil va boshqa premium xususiyatlar.",
+      metadata: { app: "olcha" },
+    });
+    const monthly = await stripe.prices.create({
+      product: product.id, unit_amount: 999, currency: "usd", recurring: { interval: "month" },
+    });
+    const yearly = await stripe.prices.create({
+      product: product.id, unit_amount: 7999, currency: "usd", recurring: { interval: "year" },
+    });
+    const stripeSync = await getStripeSync();
+    await stripeSync.syncBackfill();
+    res.json({ message: "OlCha Premium yaratildi va sinxronlashtirildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Stripe mahsulot yaratishda xato" });
   }
 });
 

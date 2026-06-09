@@ -14,6 +14,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import AdminPage from "@/pages/AdminPage";
 import PremiumPage from "@/pages/PremiumPage";
+import SettingsPage from "@/pages/SettingsPage";
 import PostDetailPage from "@/pages/PostDetailPage";
 import LoginPage from "@/pages/LoginPage";
 import NotFound from "@/pages/not-found";
@@ -102,6 +103,9 @@ function Router() {
       )} />
       <Route path="/premium" component={() => (
         <ProtectedRoute><Layout><PremiumPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/settings" component={() => (
+        <ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

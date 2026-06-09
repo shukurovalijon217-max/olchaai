@@ -95,4 +95,65 @@ router.get("/auth/me", async (req, res) => {
   }
 });
 
+router.patch("/auth/profile", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+
+    const { displayName, bio, avatarUrl, coverUrl } = req.body as {
+      displayName?: string; bio?: string; avatarUrl?: string; coverUrl?: string;
+    };
+
+    const updates: Record<string, any> = {};
+    if (displayName !== undefined) {
+      if (!displayName.trim()) { res.status(400).json({ error: "Ism bo'sh bo'lishi mumkin emas" }); return; }
+      updates.displayName = displayName.trim();
+    }
+    if (bio !== undefined) updates.bio = bio.trim() || null;
+    if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl.trim() || null;
+    if (coverUrl !== undefined) updates.coverUrl = coverUrl.trim() || null;
+
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ error: "Hech narsa o'zgartirilmadi" }); return;
+    }
+
+    const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
+    const { passwordHash: _, ...safeUser } = updated;
+    res.json(safeUser);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
+router.patch("/auth/password", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+
+    const { currentPassword, newPassword } = req.body as {
+      currentPassword?: string; newPassword?: string;
+    };
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: "Joriy va yangi parol kiritilishi shart" }); return;
+    }
+    if (newPassword.length < 6) {
+      res.status(400).json({ error: "Yangi parol kamida 6 ta belgidan iborat bo'lishi kerak" }); return;
+    }
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    if (!user?.passwordHash) { res.status(401).json({ error: "Foydalanuvchi topilmadi" }); return; }
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) { res.status(401).json({ error: "Joriy parol noto'g'ri" }); return; }
+
+    const newHash = await bcrypt.hash(newPassword, 12);
+    await db.update(usersTable).set({ passwordHash: newHash }).where(eq(usersTable.id, userId));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
 export default router;

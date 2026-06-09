@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { reelsTable, reelLikesTable, usersTable } from "@workspace/db";
+import { reelsTable, reelLikesTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, desc, and } from "drizzle-orm";
+import { scanContentAsync } from "../moderation/aiFilter";
 
 const router = Router();
 
@@ -31,8 +32,29 @@ router.get("/reels", async (req, res) => {
 router.post("/reels", async (req, res) => {
   try {
     const { authorId, videoUrl, thumbnailUrl, caption, audioTrack, duration, tags } = req.body;
+
+    // AI scan caption before saving
+    const scan = await scanContentAsync(caption ?? "");
+    if (scan.autoBlock) {
+      res.status(422).json({
+        error: "Reel avtomatik bloklandi — qoidalarga zid material aniqlandi.",
+        categories: scan.categories,
+      }); return;
+    }
+
     const [reel] = await db.insert(reelsTable).values({ authorId, videoUrl, thumbnailUrl, caption, audioTrack, duration, tags }).returning();
-    res.status(201).json(await enrichReel(reel));
+
+    if (scan.verdict !== "clean") {
+      await db.insert(moderationQueueTable).values({
+        contentType: "reel", contentId: reel.id, contentText: caption ?? "",
+        authorId: authorId ?? null,
+        aiScore: scan.score, aiCategories: scan.categories,
+        aiVerdict: scan.verdict, autoFlagged: true, autoBlocked: false,
+        status: "pending",
+      }).catch(() => {});
+    }
+
+    res.status(201).json({ ...(await enrichReel(reel)), aiScan: scan.verdict !== "clean" ? scan : undefined });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

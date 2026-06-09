@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   ShieldCheck, Users, FileText, BarChart3, Cpu, TrendingUp,
   TrendingDown, Activity, AlertTriangle, CheckCircle2, XCircle,
-  UserX, Eye, RefreshCw, Zap
+  UserX, Eye, RefreshCw, Zap, ShieldAlert, Trash2, ThumbsUp, RotateCcw
 } from "lucide-react";
 import {
   useGetAdminDashboard, useAdminListUsers, useAdminListContent,
@@ -16,7 +16,7 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar
 } from "recharts";
 
-type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai";
+type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "safeguard";
 
 const TABS: { id: AdminTab; label: string; icon: React.ElementType }[] = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
@@ -24,7 +24,279 @@ const TABS: { id: AdminTab; label: string; icon: React.ElementType }[] = [
   { id: "content", label: "Content", icon: FileText },
   { id: "analytics", label: "Analytics", icon: TrendingUp },
   { id: "ai", label: "AI System", icon: Cpu },
+  { id: "safeguard", label: "SafeGuard AI", icon: ShieldAlert },
 ];
+
+const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+const VERDICT_COLOR: Record<string, string> = {
+  clean: "bg-emerald-400/15 text-emerald-400",
+  suspicious: "bg-amber-400/15 text-amber-400",
+  violation: "bg-destructive/15 text-destructive",
+};
+const STATUS_COLOR: Record<string, string> = {
+  pending: "bg-amber-400/15 text-amber-400",
+  approved: "bg-emerald-400/15 text-emerald-400",
+  rejected: "bg-destructive/15 text-destructive",
+  escalated: "bg-violet-400/15 text-violet-400",
+};
+
+function SafeGuardTab() {
+  const [queueStatus, setQueueStatus] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [items, setItems] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [acting, setActing] = useState<number | null>(null);
+  const [scanText, setScanText] = useState("");
+  const [scanResult, setScanResult] = useState<any>(null);
+  const [scanning, setScanning] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [q, s] = await Promise.all([
+        fetch(`${API}/api/admin/moderation/queue?status=${queueStatus}&limit=50`, { credentials: "include" }).then(r => r.json()),
+        fetch(`${API}/api/admin/moderation/stats`, { credentials: "include" }).then(r => r.json()),
+      ]);
+      setItems(q.items ?? []);
+      setStats(s);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useState(() => { load(); });
+
+  const resolve = async (id: number, action: string, note?: string) => {
+    setActing(id);
+    await fetch(`${API}/api/admin/moderation/${id}/resolve`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
+      body: JSON.stringify({ action, note }),
+    });
+    setActing(null);
+    load();
+  };
+
+  const deleteContent = async (id: number) => {
+    setActing(id);
+    await fetch(`${API}/api/admin/moderation/${id}/delete-content`, { method: "DELETE", credentials: "include" });
+    setActing(null);
+    load();
+  };
+
+  const rescan = async (id: number) => {
+    setActing(id);
+    await fetch(`${API}/api/admin/moderation/${id}/rescan`, { method: "POST", credentials: "include" });
+    setActing(null);
+    load();
+  };
+
+  const doScan = async () => {
+    if (!scanText.trim()) return;
+    setScanning(true);
+    const r = await fetch(`${API}/api/moderation/scan`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+      body: JSON.stringify({ text: scanText }),
+    });
+    setScanResult(await r.json());
+    setScanning(false);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-destructive/15 flex items-center justify-center">
+            <ShieldAlert className="w-5 h-5 text-destructive" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">SafeGuard AI</h2>
+            <p className="text-xs text-muted-foreground">Kontent moderatsiya tizimi</p>
+          </div>
+        </div>
+        <button onClick={load} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          <RotateCcw className="w-3.5 h-3.5" /> Yangilash
+        </button>
+      </div>
+
+      {/* Stats */}
+      {stats && (
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { label: "Jami", value: stats.total, color: "text-foreground" },
+            { label: "Kutmoqda", value: stats.pending, color: "text-amber-400" },
+            { label: "Tasdiqlangan", value: stats.approved, color: "text-emerald-400" },
+            { label: "Rad etilgan", value: stats.rejected, color: "text-destructive" },
+            { label: "Auto bloklangan", value: stats.autoBlocked, color: "text-red-400" },
+            { label: "Shikoyatlar", value: stats.totalReports, color: "text-violet-400" },
+          ].map(s => (
+            <div key={s.label} className="bg-card border border-border rounded-xl p-3 text-center">
+              <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* AI Scan tester */}
+      <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <Zap className="w-4 h-4 text-primary" /> AI Skaner — Kontent sinash
+        </h3>
+        <div className="flex gap-2">
+          <textarea
+            value={scanText}
+            onChange={e => setScanText(e.target.value)}
+            rows={2}
+            placeholder="Tekshirmoqchi bo'lgan matnni kiriting..."
+            className="flex-1 px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <button
+            onClick={doScan}
+            disabled={scanning || !scanText.trim()}
+            className="px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {scanning ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Eye className="w-4 h-4" />}
+            Skanla
+          </button>
+        </div>
+        {scanResult && (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-xl bg-muted/50 space-y-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${VERDICT_COLOR[scanResult.verdict] ?? "bg-muted text-muted-foreground"}`}>
+                {scanResult.verdict === "clean" ? "✓ Toza" : scanResult.verdict === "suspicious" ? "⚠ Shubhali" : "✗ Qoidabuzarlik"}
+              </span>
+              <span className="text-xs text-muted-foreground">Xavf darajasi: <strong className="text-foreground">{Math.round(scanResult.score * 100)}%</strong></span>
+              {scanResult.autoBlock && <span className="px-2 py-0.5 rounded-full bg-destructive text-white text-xs font-bold">AUTO BLOKLANGAN</span>}
+            </div>
+            {Object.keys(scanResult.categories ?? {}).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(scanResult.categories).map(([cat, score]) => (
+                  <span key={cat} className="px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-xs">
+                    {cat.replace("_", " ")}: {Math.round((score as number) * 100)}%
+                  </span>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </div>
+
+      {/* Queue filter tabs */}
+      <div className="flex gap-1">
+        {(["pending", "approved", "rejected", "all"] as const).map(s => (
+          <button key={s} onClick={() => { setQueueStatus(s); setTimeout(load, 50); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${queueStatus === s ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"}`}>
+            {s === "pending" ? "Kutmoqda" : s === "approved" ? "Tasdiqlangan" : s === "rejected" ? "Rad etilgan" : "Barchasi"}
+          </button>
+        ))}
+      </div>
+
+      {/* Queue items */}
+      {loading ? (
+        <div className="flex justify-center py-12"><div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <CheckCircle2 className="w-10 h-10 mx-auto mb-3 opacity-25" />
+          <p className="text-sm">Navbat bo'sh — hamma kontent toza</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item, i) => (
+            <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+              className={`bg-card border rounded-2xl p-4 space-y-3 ${
+                item.aiVerdict === "violation" ? "border-destructive/30" : item.aiVerdict === "suspicious" ? "border-amber-400/30" : "border-border"
+              }`}>
+
+              {/* Top row */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground font-medium">{item.contentType} #{item.contentId}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${VERDICT_COLOR[item.aiVerdict] ?? ""}`}>
+                      AI: {item.aiVerdict}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLOR[item.status] ?? ""}`}>
+                      {item.status}
+                    </span>
+                    {item.autoFlagged && <span className="px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-400 text-xs">Auto flagged</span>}
+                    {item.autoBlocked && <span className="px-2 py-0.5 rounded-full bg-destructive text-white text-xs font-bold">Auto blocked</span>}
+                    {item.reportCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-violet-400/10 text-violet-400 text-xs">
+                        {item.reportCount} shikoyat
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-2 break-all">{item.contentText || "(matn yo'q)"}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-2xl font-bold text-foreground">{Math.round(item.aiScore * 100)}<span className="text-sm font-normal text-muted-foreground">%</span></p>
+                  <p className="text-xs text-muted-foreground">xavf</p>
+                </div>
+              </div>
+
+              {/* Categories */}
+              {item.aiCategories && Object.keys(item.aiCategories).length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(item.aiCategories).map(([cat, score]) => (
+                    <span key={cat} className="px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-xs">
+                      {cat.replace(/_/g, " ")}: {Math.round((score as number) * 100)}%
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* AI score bar */}
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }} animate={{ width: `${Math.round(item.aiScore * 100)}%` }}
+                  transition={{ duration: 0.5, delay: i * 0.03 }}
+                  className={`h-full rounded-full ${item.aiScore >= 0.7 ? "bg-destructive" : item.aiScore >= 0.35 ? "bg-amber-400" : "bg-emerald-400"}`}
+                />
+              </div>
+
+              {/* Actions */}
+              {item.status === "pending" && (
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => resolve(item.id, "approved")}
+                    disabled={acting === item.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-400/15 text-emerald-400 text-xs font-semibold hover:bg-emerald-400/25 transition disabled:opacity-50"
+                  >
+                    <ThumbsUp className="w-3.5 h-3.5" /> Tasdiqlash
+                  </button>
+                  <button
+                    onClick={() => resolve(item.id, "rejected", "Admin tomonidan rad etildi")}
+                    disabled={acting === item.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-destructive/15 text-destructive text-xs font-semibold hover:bg-destructive/25 transition disabled:opacity-50"
+                  >
+                    <XCircle className="w-3.5 h-3.5" /> Rad etish
+                  </button>
+                  <button
+                    onClick={() => deleteContent(item.id)}
+                    disabled={acting === item.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-900/30 text-red-400 text-xs font-semibold hover:bg-red-900/50 transition disabled:opacity-50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> O'chirish
+                  </button>
+                  <button
+                    onClick={() => rescan(item.id)}
+                    disabled={acting === item.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted text-muted-foreground text-xs hover:bg-muted/80 transition disabled:opacity-50 ml-auto"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Qayta skanla
+                  </button>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleString("uz-UZ")}</p>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+}
 
 export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>("dashboard");
@@ -306,6 +578,8 @@ export default function AdminPage() {
             </div>
           </motion.div>
         )}
+
+        {tab === "safeguard" && <SafeGuardTab />}
 
         {tab === "ai" && aiStatus && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">

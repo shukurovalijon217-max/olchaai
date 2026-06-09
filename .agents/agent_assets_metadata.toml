@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "VNLlqjtvdbDbAXIwp7izt"
+uri = "file://artifacts/olcha-mobile/assets/images/icon.png"
+type = "image"
+title = "olcha-app-icon"
+
+[[generated]]
+id = "PC4U6zfc7RpBDFqvaFtxg"
+uri = "file://artifacts/olcha-mobile/assets/images/splash.png"
+type = "image"
+title = "olcha-splash"
+
+[[generated]]
+id = "IPtgPdeG-ghHYe6eAFX8A"
+uri = "file://artifacts/olcha-mobile/assets/images/placeholder.png"
+type = "image"
+title = "olcha-placeholder"

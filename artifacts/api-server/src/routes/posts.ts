@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { postsTable, postLikesTable, commentsTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, desc, and } from "drizzle-orm";
-import { scanContent } from "../moderation/aiFilter";
+import { scanContentAsync } from "../moderation/aiFilter";
 
 const router = Router();
 
@@ -45,8 +45,8 @@ router.post("/posts", async (req, res) => {
   try {
     const { authorId, content, type, mediaUrl, tags } = req.body;
 
-    // AI scan before saving
-    const scan = scanContent(content ?? "");
+    // AI scan before saving (TF.js hybrid engine)
+    const scan = await scanContentAsync(content ?? "");
     const isFlagged = scan.verdict === "violation";
 
     const [post] = await db.insert(postsTable).values({

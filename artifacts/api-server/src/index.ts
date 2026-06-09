@@ -2,6 +2,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./stripe/stripeClient";
+import { initTFEngine } from "./moderation/tfEngine";
 
 async function initStripe() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -35,6 +36,11 @@ const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) throw new Error(`Invalid PORT value: "${rawPort}"`);
 
 await initStripe();
+
+// TensorFlow.js neural toxicity engine (non-fatal if unavailable)
+initTFEngine()
+  .then(() => logger.info("TensorFlow.js engine ready"))
+  .catch((err) => logger.warn({ err }, "TF engine unavailable — using rule-based only"));
 
 app.listen(port, (err) => {
   if (err) {

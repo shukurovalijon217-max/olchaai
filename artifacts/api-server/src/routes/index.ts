@@ -11,6 +11,7 @@ import notificationsRouter from "./notifications";
 import aiRouter from "./ai";
 import adminRouter from "./admin";
 import stripeRouter from "./stripe";
+import moderationRouter from "./moderation";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(notificationsRouter);
 router.use(aiRouter);
 router.use(adminRouter);
 router.use(stripeRouter);
+router.use(moderationRouter);
 
 export default router;

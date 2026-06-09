@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { postsTable, postLikesTable, commentsTable, usersTable } from "@workspace/db";
+import { postsTable, postLikesTable, commentsTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, desc, and } from "drizzle-orm";
+import { scanContent } from "../moderation/aiFilter";
 
 const router = Router();
 
@@ -43,8 +44,35 @@ router.get("/posts", async (req, res) => {
 router.post("/posts", async (req, res) => {
   try {
     const { authorId, content, type, mediaUrl, tags } = req.body;
-    const [post] = await db.insert(postsTable).values({ authorId, content, type: type || "text", mediaUrl, tags }).returning();
-    res.status(201).json(await enrichPost(post));
+
+    // AI scan before saving
+    const scan = scanContent(content ?? "");
+    const isFlagged = scan.verdict === "violation";
+
+    const [post] = await db.insert(postsTable).values({
+      authorId, content, type: type || "text", mediaUrl, tags, isFlagged,
+    }).returning();
+
+    // Auto-add to moderation queue if suspicious or worse
+    if (scan.verdict !== "clean") {
+      await db.insert(moderationQueueTable).values({
+        contentType: "post", contentId: post.id, contentText: content,
+        authorId: authorId ?? null,
+        aiScore: scan.score, aiCategories: scan.categories,
+        aiVerdict: scan.verdict, autoFlagged: true,
+        autoBlocked: scan.autoBlock,
+        status: scan.autoBlock ? "rejected" : "pending",
+      }).catch(() => {}); // non-fatal
+    }
+
+    if (scan.autoBlock) {
+      res.status(422).json({
+        error: "Kontent avtomatik bloklandi — qoidalarga zid material aniqlandi.",
+        categories: scan.categories,
+      }); return;
+    }
+
+    res.status(201).json({ ...(await enrichPost(post)), aiScan: scan.verdict !== "clean" ? scan : undefined });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

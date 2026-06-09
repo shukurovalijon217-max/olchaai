@@ -152,8 +152,30 @@ router.post("/posts/:id/comments", async (req, res) => {
   try {
     const postId = Number(req.params.id);
     const { authorId, content } = req.body;
+
+    // AI scan comment before saving
+    const scan = await scanContentAsync(content ?? "");
+    if (scan.autoBlock) {
+      res.status(422).json({
+        error: "Izoh avtomatik bloklandi — qoidalarga zid material aniqlandi.",
+        categories: scan.categories,
+      }); return;
+    }
+
     const [comment] = await db.insert(commentsTable).values({ postId, authorId, content }).returning();
     await db.update(postsTable).set({ commentsCount: sql`${postsTable.commentsCount} + 1` }).where(eq(postsTable.id, postId));
+
+    // Add suspicious comments to moderation queue
+    if (scan.verdict !== "clean") {
+      await db.insert(moderationQueueTable).values({
+        contentType: "comment", contentId: comment.id, contentText: content,
+        authorId: authorId ?? null,
+        aiScore: scan.score, aiCategories: scan.categories,
+        aiVerdict: scan.verdict, autoFlagged: true, autoBlocked: false,
+        status: "pending",
+      }).catch(() => {});
+    }
+
     const [author] = await db.select().from(usersTable).where(eq(usersTable.id, comment.authorId));
     res.status(201).json({ ...comment, author: { ...(author || {}), followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false } });
   } catch (err) {

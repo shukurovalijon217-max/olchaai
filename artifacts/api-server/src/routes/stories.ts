@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { storiesTable, storyViewsTable, usersTable } from "@workspace/db";
+import { storiesTable, storyViewsTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, gt, and } from "drizzle-orm";
+import { scanContentAsync } from "../moderation/aiFilter";
 
 const router = Router();
 
@@ -23,8 +24,29 @@ router.get("/stories", async (req, res) => {
 router.post("/stories", async (req, res) => {
   try {
     const { authorId, mediaUrl, mediaType, caption } = req.body;
+
+    // AI scan caption before saving
+    const scan = await scanContentAsync(caption ?? "");
+    if (scan.autoBlock) {
+      res.status(422).json({
+        error: "Story avtomatik bloklandi — qoidalarga zid material aniqlandi.",
+        categories: scan.categories,
+      }); return;
+    }
+
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const [story] = await db.insert(storiesTable).values({ authorId, mediaUrl, mediaType: mediaType || "photo", caption, expiresAt }).returning();
+
+    if (scan.verdict !== "clean") {
+      await db.insert(moderationQueueTable).values({
+        contentType: "story", contentId: story.id, contentText: caption ?? "",
+        authorId: authorId ?? null,
+        aiScore: scan.score, aiCategories: scan.categories,
+        aiVerdict: scan.verdict, autoFlagged: true, autoBlocked: false,
+        status: "pending",
+      }).catch(() => {});
+    }
+
     const [author] = await db.select().from(usersTable).where(eq(usersTable.id, story.authorId));
     res.status(201).json({ ...story, author: { ...(author || {}), followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }, isViewed: false });
   } catch (err) {

@@ -91,7 +91,7 @@ export default function NexusLogo({
         <circle cx="50" cy="50" r="36" fill="none" stroke="#ff200020" strokeWidth="2" />
       </svg>
 
-      {/* NEXUS text */}
+      {/* OlCha text */}
       {showText && (
         <span style={{
           fontFamily: "'Georgia', 'Times New Roman', serif",
@@ -104,7 +104,7 @@ export default function NexusLogo({
           backgroundClip: "text",
           lineHeight: 1,
         }}>
-          NEXUS
+          OlCha
         </span>
       )}
     </div>

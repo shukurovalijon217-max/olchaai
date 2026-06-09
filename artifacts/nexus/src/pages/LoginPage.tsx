@@ -30,7 +30,7 @@ export default function LoginPage() {
             <NexusLogo ringSize={130} showText={false} />
           </motion.div>
 
-          {/* "NEXUS" text below the sphere — big serif, metallic */}
+          {/* "OlCha" text below the sphere — big serif, metallic */}
           <motion.div
             initial={{ y: 16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -47,7 +47,7 @@ export default function LoginPage() {
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
             }}>
-              NEXUS
+              OlCha
             </span>
           </motion.div>
 
@@ -169,7 +169,7 @@ export default function LoginPage() {
                   letterSpacing: "0.08em",
                 }}
               >
-                {tab === "login" ? "Enter NEXUS" : "Join NEXUS"}
+                {tab === "login" ? "OlCha ga kirish" : "OlCha ga qo'shilish"}
               </motion.button>
             </Link>
           </div>

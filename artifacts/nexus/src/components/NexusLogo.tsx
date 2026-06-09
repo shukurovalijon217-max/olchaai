@@ -1,111 +1,109 @@
 interface NexusLogoProps {
-  size?: "sm" | "md" | "lg" | "xl";
+  ringSize?: number;
   showText?: boolean;
-  textOnly?: boolean;
+  fontSize?: string;
+  letterSpacing?: string;
 }
 
-const SIZES = {
-  sm: { ring: 32, text: "text-base" },
-  md: { ring: 44, text: "text-xl" },
-  lg: { ring: 64, text: "text-3xl" },
-  xl: { ring: 96, text: "text-5xl" },
-};
-
-export default function NexusLogo({ size = "md", showText = true, textOnly = false }: NexusLogoProps) {
-  const s = SIZES[size];
-  const r = s.ring;
+export default function NexusLogo({
+  ringSize = 48,
+  showText = true,
+  fontSize = "1.1rem",
+  letterSpacing = "0.22em",
+}: NexusLogoProps) {
+  const r = ringSize;
 
   return (
-    <div className="flex flex-col items-center gap-2 select-none">
-      {!textOnly && (
-        <div style={{ width: r, height: r, position: "relative", flexShrink: 0 }}>
-          {/* Outer metallic ring */}
-          <svg
-            width={r}
-            height={r}
-            viewBox="0 0 100 100"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            style={{ position: "absolute", inset: 0 }}
-          >
-            <defs>
-              {/* Metallic ring gradient */}
-              <linearGradient id="ringGradOuter" x1="20" y1="10" x2="80" y2="90" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#9a8070" />
-                <stop offset="25%" stopColor="#c8a882" />
-                <stop offset="50%" stopColor="#6b5040" />
-                <stop offset="75%" stopColor="#b89070" />
-                <stop offset="100%" stopColor="#5a3a2a" />
-              </linearGradient>
-              <linearGradient id="ringGradInner" x1="30" y1="15" x2="70" y2="85" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#2a1a10" />
-                <stop offset="40%" stopColor="#3d2418" />
-                <stop offset="100%" stopColor="#1a0a05" />
-              </linearGradient>
-              {/* Red sphere gradient */}
-              <radialGradient id="sphereGrad" cx="38%" cy="32%" r="60%" fx="38%" fy="32%">
-                <stop offset="0%" stopColor="#ff6060" />
-                <stop offset="30%" stopColor="#e02020" />
-                <stop offset="65%" stopColor="#b00000" />
-                <stop offset="100%" stopColor="#600000" />
-              </radialGradient>
-              {/* Sphere rim glow */}
-              <radialGradient id="sphereRimGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="70%" stopColor="transparent" />
-                <stop offset="100%" stopColor="#cc000044" />
-              </radialGradient>
-              {/* Highlight on sphere */}
-              <radialGradient id="sphereHighlight" cx="38%" cy="28%" r="35%">
-                <stop offset="0%" stopColor="#ff9090" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#ff4040" stopOpacity="0" />
-              </radialGradient>
-              {/* Drop shadow filter */}
-              <filter id="sphereShadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#cc0000" floodOpacity="0.5" />
-              </filter>
-              <filter id="ringShadow" x="-5%" y="-5%" width="110%" height="110%">
-                <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity="0.8" />
-              </filter>
-            </defs>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, userSelect: "none" }}>
+      {/* The red-sphere-in-ring icon */}
+      <svg
+        width={r}
+        height={r}
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ flexShrink: 0 }}
+      >
+        <defs>
+          {/* Outer ring — bronze/gold metallic */}
+          <linearGradient id="nx-ring1" x1="15%" y1="10%" x2="85%" y2="90%">
+            <stop offset="0%"   stopColor="#d4a96a" />
+            <stop offset="22%"  stopColor="#f0c87a" />
+            <stop offset="45%"  stopColor="#7a4a28" />
+            <stop offset="68%"  stopColor="#c89060" />
+            <stop offset="100%" stopColor="#4a2810" />
+          </linearGradient>
 
-            {/* Outer ring border */}
-            <circle cx="50" cy="50" r="47" fill="url(#ringGradOuter)" filter="url(#ringShadow)" />
+          {/* Ring channel — dark inner */}
+          <radialGradient id="nx-channel" cx="50%" cy="40%" r="55%">
+            <stop offset="0%"   stopColor="#2a1408" />
+            <stop offset="100%" stopColor="#0d0603" />
+          </radialGradient>
 
-            {/* Ring inner dark channel */}
-            <circle cx="50" cy="50" r="43" fill="url(#ringGradInner)" />
+          {/* Red sphere */}
+          <radialGradient id="nx-sphere" cx="36%" cy="30%" r="65%" fx="36%" fy="30%">
+            <stop offset="0%"   stopColor="#ff7060" />
+            <stop offset="28%"  stopColor="#e01a10" />
+            <stop offset="60%"  stopColor="#a80000" />
+            <stop offset="100%" stopColor="#500000" />
+          </radialGradient>
 
-            {/* Inner metallic shine */}
-            <circle cx="50" cy="50" r="43" fill="none" stroke="url(#ringGradOuter)" strokeWidth="1.5" opacity="0.6" />
+          {/* Gloss highlight on sphere */}
+          <radialGradient id="nx-gloss" cx="36%" cy="26%" r="38%">
+            <stop offset="0%"   stopColor="rgba(255,200,180,0.75)" />
+            <stop offset="60%"  stopColor="rgba(255,80,60,0.15)" />
+            <stop offset="100%" stopColor="rgba(255,0,0,0)" />
+          </radialGradient>
 
-            {/* Red sphere */}
-            <circle cx="50" cy="50" r="36" fill="url(#sphereGrad)" filter="url(#sphereShadow)" />
+          {/* Glow filter around sphere */}
+          <filter id="nx-glow" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
 
-            {/* Sphere highlight (top-left gloss) */}
-            <circle cx="50" cy="50" r="36" fill="url(#sphereHighlight)" />
+          {/* Drop shadow on ring */}
+          <filter id="nx-shadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000" floodOpacity="0.9" />
+          </filter>
+        </defs>
 
-            {/* Subtle rim glow around sphere */}
-            <circle cx="50" cy="50" r="36" fill="none" stroke="#cc0000" strokeWidth="1" opacity="0.4" />
+        {/* Outer metallic ring (outermost) */}
+        <circle cx="50" cy="50" r="48" fill="url(#nx-ring1)" filter="url(#nx-shadow)" />
 
-            {/* Top-left specular highlight */}
-            <ellipse cx="40" cy="37" rx="10" ry="7" fill="white" opacity="0.18" transform="rotate(-20 40 37)" />
-          </svg>
-        </div>
-      )}
+        {/* Dark inner channel */}
+        <circle cx="50" cy="50" r="43" fill="url(#nx-channel)" />
 
+        {/* Inner metallic rim highlight */}
+        <circle cx="50" cy="50" r="43" fill="none" stroke="#c8905050" strokeWidth="1.5" />
+
+        {/* Red sphere with glow */}
+        <circle cx="50" cy="50" r="36" fill="url(#nx-sphere)" filter="url(#nx-glow)" />
+
+        {/* Gloss overlay */}
+        <ellipse cx="44" cy="38" rx="15" ry="11"
+          fill="url(#nx-gloss)"
+          transform="rotate(-18 44 38)"
+        />
+
+        {/* Inner ring edge highlight */}
+        <circle cx="50" cy="50" r="36" fill="none" stroke="#ff200020" strokeWidth="2" />
+      </svg>
+
+      {/* NEXUS text */}
       {showText && (
-        <span
-          style={{
-            fontFamily: "'Georgia', 'Times New Roman', serif",
-            letterSpacing: "0.18em",
-            fontWeight: 400,
-            background: "linear-gradient(180deg, #c8a882 0%, #9a6840 35%, #c8a070 60%, #5a3020 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            textShadow: "none",
-          }}
-          className={s.text}
-        >
+        <span style={{
+          fontFamily: "'Georgia', 'Times New Roman', serif",
+          letterSpacing,
+          fontWeight: 400,
+          fontSize,
+          background: "linear-gradient(180deg, #d4a96a 0%, #f0c060 30%, #a06030 65%, #6a3a18 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+          lineHeight: 1,
+        }}>
           NEXUS
         </span>
       )}

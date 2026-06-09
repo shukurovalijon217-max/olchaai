@@ -1,24 +1,20 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import {
   User, Lock, Bell, Palette, Shield, Crown,
-  Check, Loader2, Eye, EyeOff, Camera, ChevronRight
+  Check, Loader2, Eye, EyeOff, Camera, ChevronRight, Globe, Search, X
 } from "lucide-react";
 import { Link } from "wouter";
+import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
+import i18n from "i18next";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy";
-
-const TABS: { id: Tab; icon: typeof User; label: string }[] = [
-  { id: "profile", icon: User, label: "Profil" },
-  { id: "account", icon: Lock, label: "Akkaunt" },
-  { id: "notifications", icon: Bell, label: "Bildirishnomalar" },
-  { id: "appearance", icon: Palette, label: "Ko'rinish" },
-  { id: "privacy", icon: Shield, label: "Maxfiylik" },
-];
+type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | "language";
 
 function ProfileTab() {
+  const { t } = useTranslation();
   const { user, refetch } = useAuth();
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
@@ -45,7 +41,7 @@ function ProfileTab() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch {
-      setError("Tarmoq xatosi");
+      setError(t("common.network_error"));
     } finally {
       setSaving(false);
     }
@@ -58,7 +54,6 @@ function ProfileTab() {
         <p className="text-sm text-muted-foreground">Boshqalar ko'radigan ma'lumotlaringizni tahrirlang</p>
       </div>
 
-      {/* Avatar preview */}
       <div className="flex items-center gap-4">
         <div className="relative">
           {avatarUrl ? (
@@ -83,7 +78,6 @@ function ProfileTab() {
         </div>
       </div>
 
-      {/* Fields */}
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-foreground mb-1.5">Ism *</label>
@@ -141,13 +135,14 @@ function ProfileTab() {
         className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
       >
         {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-        Saqlash
+        {t("common.save")}
       </button>
     </div>
   );
 }
 
 function AccountTab() {
+  const { t } = useTranslation();
   const [current, setCurrent] = useState("");
   const [newPass, setNewPass] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -177,7 +172,7 @@ function AccountTab() {
       setCurrent(""); setNewPass(""); setConfirm("");
       setTimeout(() => setSuccess(false), 3000);
     } catch {
-      setError("Tarmoq xatosi");
+      setError(t("common.network_error"));
     } finally {
       setSaving(false);
     }
@@ -186,18 +181,16 @@ function AccountTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-1">Akkaunt sozlamalari</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-1">{t("settings.account")}</h2>
         <p className="text-sm text-muted-foreground">Email va parolingizni boshqaring</p>
       </div>
 
-      {/* Email (read-only) */}
       <div className="p-4 rounded-xl border border-border bg-muted/20">
         <p className="text-xs text-muted-foreground mb-0.5">Email manzil</p>
         <p className="text-sm font-medium text-foreground">{user?.email}</p>
         <p className="text-xs text-muted-foreground mt-1">Email o'zgartirilmaydi</p>
       </div>
 
-      {/* Password change */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-foreground">Parolni o'zgartirish</h3>
         <div className="relative">
@@ -209,11 +202,7 @@ function AccountTab() {
             className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
             placeholder="••••••••"
           />
-          <button
-            type="button"
-            onClick={() => setShowCurrent(v => !v)}
-            className="absolute right-3 top-9 text-muted-foreground hover:text-foreground"
-          >
+          <button type="button" onClick={() => setShowCurrent(v => !v)} className="absolute right-3 top-9 text-muted-foreground hover:text-foreground">
             {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
@@ -226,11 +215,7 @@ function AccountTab() {
             className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
             placeholder="••••••••"
           />
-          <button
-            type="button"
-            onClick={() => setShowNew(v => !v)}
-            className="absolute right-3 top-9 text-muted-foreground hover:text-foreground"
-          >
+          <button type="button" onClick={() => setShowNew(v => !v)} className="absolute right-3 top-9 text-muted-foreground hover:text-foreground">
             {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
@@ -246,9 +231,7 @@ function AccountTab() {
         </div>
       </div>
 
-      {error && (
-        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>
-      )}
+      {error && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>}
       {success && (
         <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2">
           <Check className="w-4 h-4" /> Parol muvaffaqiyatli o'zgartirildi!
@@ -288,10 +271,11 @@ function ToggleSetting({ label, description, defaultChecked = false }: {
 }
 
 function NotificationsTab() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-1">Bildirishnomalar</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-1">{t("settings.notifications")}</h2>
         <p className="text-sm text-muted-foreground">Qaysi bildirishnomalarni olishni tanlang</p>
       </div>
       <div className="p-4 rounded-xl border border-border bg-card space-y-0">
@@ -307,10 +291,11 @@ function NotificationsTab() {
 }
 
 function AppearanceTab() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-1">Ko'rinish</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-1">{t("settings.appearance")}</h2>
         <p className="text-sm text-muted-foreground">Ilova ko'rinishini sozlang</p>
       </div>
       <div className="p-4 rounded-xl border border-border bg-card space-y-0">
@@ -327,7 +312,7 @@ function AppearanceTab() {
           </div>
           <Link href="/premium">
             <button className="text-xs text-yellow-400 font-medium flex items-center gap-1 hover:opacity-80 transition">
-              Premium <ChevronRight className="w-3 h-3" />
+              {t("nav.premium")} <ChevronRight className="w-3 h-3" />
             </button>
           </Link>
         </div>
@@ -337,10 +322,11 @@ function AppearanceTab() {
 }
 
 function PrivacyTab() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-1">Maxfiylik</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-1">{t("settings.privacy")}</h2>
         <p className="text-sm text-muted-foreground">Kim nimani ko'rishini boshqaring</p>
       </div>
       <div className="p-4 rounded-xl border border-border bg-card space-y-0">
@@ -361,8 +347,158 @@ function PrivacyTab() {
   );
 }
 
+const POPULAR_LANGS: LangCode[] = ["uz", "en", "ru", "zh", "ar", "es", "fr", "hi", "tr", "de", "ja", "ko"];
+
+function LanguageTab() {
+  const { t, i18n: i18nInst } = useTranslation();
+  const [search, setSearch] = useState("");
+  const [applied, setApplied] = useState(false);
+  const currentCode = i18nInst.language.split("-")[0] as LangCode;
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    if (!q) return LANGUAGES;
+    return LANGUAGES.filter(l =>
+      l.name.toLowerCase().includes(q) ||
+      l.native.toLowerCase().includes(q) ||
+      l.code.includes(q)
+    );
+  }, [search]);
+
+  const popularLangs = LANGUAGES.filter(l => POPULAR_LANGS.includes(l.code));
+  const otherLangs = filtered.filter(l => !POPULAR_LANGS.includes(l.code));
+  const filteredPopular = search ? filtered.filter(l => POPULAR_LANGS.includes(l.code)) : popularLangs;
+
+  const handleChange = (code: LangCode) => {
+    i18n.changeLanguage(code);
+    applyRTL(code);
+    setApplied(true);
+    setTimeout(() => setApplied(false), 2000);
+  };
+
+  const currentLang = LANGUAGES.find(l => l.code === currentCode) ?? LANGUAGES[0];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-1">{t("lang.title")}</h2>
+        <p className="text-sm text-muted-foreground">{t("lang.subtitle")}</p>
+      </div>
+
+      {/* Current language card */}
+      <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 flex items-center gap-3">
+        <span className="text-3xl">{currentLang.flag}</span>
+        <div className="flex-1">
+          <p className="text-xs text-muted-foreground mb-0.5">{t("lang.current")}</p>
+          <p className="text-sm font-semibold text-foreground">{currentLang.native}</p>
+          <p className="text-xs text-muted-foreground">{currentLang.name}</p>
+        </div>
+        {currentLang.rtl && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">RTL</span>
+        )}
+        <Check className="w-5 h-5 text-primary" />
+      </div>
+
+      {applied && (
+        <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2">
+          <Check className="w-4 h-4" /> {t("lang.applied")}
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={t("lang.search")}
+          className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Popular */}
+      {filteredPopular.length > 0 && (
+        <div>
+          {!search && <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t("lang.popular")}</p>}
+          <div className="grid grid-cols-1 gap-1.5">
+            {filteredPopular.map(lang => (
+              <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All others */}
+      {otherLangs.length > 0 && (
+        <div>
+          {!search && <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t("lang.all")}</p>}
+          <div className="grid grid-cols-1 gap-1.5">
+            {otherLangs.map(lang => (
+              <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filtered.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground text-sm">
+          <Globe className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <p>Til topilmadi</p>
+        </div>
+      )}
+
+      <p className="text-xs text-muted-foreground text-center">
+        {LANGUAGES.length} ta til qo'llab-quvvatlanadi
+      </p>
+    </div>
+  );
+}
+
+function LangRow({ lang, current, onSelect }: {
+  lang: typeof LANGUAGES[0];
+  current: LangCode;
+  onSelect: (code: LangCode) => void;
+}) {
+  const isSelected = lang.code === current;
+  return (
+    <button
+      onClick={() => onSelect(lang.code)}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left w-full group ${
+        isSelected
+          ? "bg-primary/10 border border-primary/30"
+          : "border border-transparent hover:bg-muted/50 hover:border-border"
+      }`}
+    >
+      <span className="text-xl w-8 text-center flex-shrink-0">{lang.flag}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">{lang.native}</p>
+        <p className="text-xs text-muted-foreground truncate">{lang.name}</p>
+      </div>
+      {lang.rtl && (
+        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 flex-shrink-0">RTL</span>
+      )}
+      {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+    </button>
+  );
+}
+
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>("profile");
+
+  const TABS: { id: Tab; icon: typeof User; label: string }[] = [
+    { id: "profile", icon: User, label: t("settings.profile") },
+    { id: "account", icon: Lock, label: t("settings.account") },
+    { id: "notifications", icon: Bell, label: t("settings.notifications") },
+    { id: "appearance", icon: Palette, label: t("settings.appearance") },
+    { id: "privacy", icon: Shield, label: t("settings.privacy") },
+    { id: "language", icon: Globe, label: t("settings.language") },
+  ];
 
   const Content = {
     profile: ProfileTab,
@@ -370,19 +506,20 @@ export default function SettingsPage() {
     notifications: NotificationsTab,
     appearance: AppearanceTab,
     privacy: PrivacyTab,
+    language: LanguageTab,
   }[activeTab];
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Sozlamalar</h1>
-          <p className="text-muted-foreground text-sm mt-1">Akkauntingizni boshqaring</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("settings.title")}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{t("settings.subtitle")}</p>
         </div>
 
         <div className="flex gap-6">
           {/* Sidebar tabs */}
-          <aside className="w-48 flex-shrink-0 hidden sm:block">
+          <aside className="w-52 flex-shrink-0 hidden sm:block">
             <nav className="space-y-0.5">
               {TABS.map(({ id, icon: Icon, label }) => (
                 <button

@@ -58,37 +58,28 @@ const t = {
     nav: { home: "Bosh sahifa", explore: "Kashf qilish", reels: "Reels", messages: "Xabarlar", groups: "Guruhlar", notifications: "Bildirishnomalar", profile: "Profil", settings: "Sozlamalar", admin: "Admin", premium: "Premium" },
     auth: { login: "Kirish", register: "Ro'yxatdan o'tish", email: "Email", password: "Parol", username: "Foydalanuvchi nomi", logout: "Chiqish", welcome: "Qaytganingizdan xursandmiz", sign_in: "Kirish", no_account: "Akkaunt yo'qmi?", have_account: "Akkaunt bormi?" },
     post: { like: "Yoqtirish", comment: "Izoh", share: "Ulashish", report: "Shikoyat", follow: "Obuna", unfollow: "Obunani bekor qilish", save: "Saqlash", more: "Ko'proq" },
-    settings: {
-      title: "Sozlamalar", subtitle: "Akkauntingizni boshqaring",
-      profile: "Profil", account: "Akkaunt", notifications: "Bildirishnomalar",
-      appearance: "Ko'rinish", privacy: "Maxfiylik", language: "Til",
-    },
+    settings: { title: "Sozlamalar", subtitle: "Akkauntingizni boshqaring", profile: "Profil", account: "Akkaunt", notifications: "Bildirishnomalar", appearance: "Ko'rinish", privacy: "Maxfiylik", language: "Til" },
     lang: { title: "Til", subtitle: "Interfeys tilini tanlang", search: "Tilni qidirish...", current: "Joriy til", popular: "Mashhur tillar", all: "Barcha tillar", applied: "Til o'zgartirildi!" },
     common: { save: "Saqlash", cancel: "Bekor qilish", loading: "Yuklanmoqda...", error: "Xato", success: "Muvaffaqiyat", network_error: "Tarmoq xatosi", try_again: "Qayta urinib ko'ring", close: "Yopish", search: "Qidirish", back: "Orqaga" },
+    profile: { posts: "Postlar", followers: "Kuzatuvchilar", following: "Kuzatilmoqda", go_live: "Jonli Efir", subscription: "Obuna", following_btn: "Kuzatmoqda", follow_btn: "Kuzatish", subscribed: "Obuna", subscribe_btn: "Obuna bo'l", view: "Ko'rish", no_posts: "Hali post yo'q", no_reels: "Hali reel yo'q", live_title: "Jonli efirni boshlash", live_subtitle: "Efir nomini kiriting", start: "Boshlash", plans_title: "Obuna rejalari", no_plans: "Hali obuna rejalari yo'q", new_plan: "Yangi reja", create_plan: "Yaratish", subscribe_error: "Obuna bo'lishda xato", plans_count: "{{count}} ta obuna rejasi", subscribers_count: "{{count}} obunachi" },
   },
   en: {
     nav: { home: "Home", explore: "Explore", reels: "Reels", messages: "Messages", groups: "Groups", notifications: "Notifications", profile: "Profile", settings: "Settings", admin: "Admin", premium: "Premium" },
     auth: { login: "Login", register: "Register", email: "Email", password: "Password", username: "Username", logout: "Logout", welcome: "Welcome back", sign_in: "Sign in", no_account: "No account?", have_account: "Have an account?" },
     post: { like: "Like", comment: "Comment", share: "Share", report: "Report", follow: "Follow", unfollow: "Unfollow", save: "Save", more: "More" },
-    settings: {
-      title: "Settings", subtitle: "Manage your account",
-      profile: "Profile", account: "Account", notifications: "Notifications",
-      appearance: "Appearance", privacy: "Privacy", language: "Language",
-    },
+    settings: { title: "Settings", subtitle: "Manage your account", profile: "Profile", account: "Account", notifications: "Notifications", appearance: "Appearance", privacy: "Privacy", language: "Language" },
     lang: { title: "Language", subtitle: "Choose your interface language", search: "Search language...", current: "Current language", popular: "Popular", all: "All languages", applied: "Language changed!" },
     common: { save: "Save", cancel: "Cancel", loading: "Loading...", error: "Error", success: "Success", network_error: "Network error", try_again: "Try again", close: "Close", search: "Search", back: "Back" },
+    profile: { posts: "Posts", followers: "Followers", following: "Following", go_live: "Go Live", subscription: "Subscription", following_btn: "Following", follow_btn: "Follow", subscribed: "Subscribed", subscribe_btn: "Subscribe", view: "View", no_posts: "No posts yet", no_reels: "No reels yet", live_title: "Start Live Stream", live_subtitle: "Enter stream title", start: "Start", plans_title: "Subscription Plans", no_plans: "No subscription plans yet", new_plan: "New Plan", create_plan: "Create", subscribe_error: "Error subscribing", plans_count: "{{count}} subscription plans", subscribers_count: "{{count}} subscribers" },
   },
   ru: {
     nav: { home: "Главная", explore: "Обзор", reels: "Reels", messages: "Сообщения", groups: "Группы", notifications: "Уведомления", profile: "Профиль", settings: "Настройки", admin: "Админ", premium: "Премиум" },
     auth: { login: "Войти", register: "Регистрация", email: "Email", password: "Пароль", username: "Имя пользователя", logout: "Выйти", welcome: "Добро пожаловать", sign_in: "Войти", no_account: "Нет аккаунта?", have_account: "Есть аккаунт?" },
     post: { like: "Нравится", comment: "Комментарий", share: "Поделиться", report: "Пожаловаться", follow: "Подписаться", unfollow: "Отписаться", save: "Сохранить", more: "Ещё" },
-    settings: {
-      title: "Настройки", subtitle: "Управление аккаунтом",
-      profile: "Профиль", account: "Аккаунт", notifications: "Уведомления",
-      appearance: "Внешний вид", privacy: "Конфиденциальность", language: "Язык",
-    },
+    settings: { title: "Настройки", subtitle: "Управление аккаунтом", profile: "Профиль", account: "Аккаунт", notifications: "Уведомления", appearance: "Внешний вид", privacy: "Конфиденциальность", language: "Язык" },
     lang: { title: "Язык", subtitle: "Выберите язык интерфейса", search: "Поиск языка...", current: "Текущий язык", popular: "Популярные", all: "Все языки", applied: "Язык изменён!" },
     common: { save: "Сохранить", cancel: "Отмена", loading: "Загрузка...", error: "Ошибка", success: "Успех", network_error: "Ошибка сети", try_again: "Попробуйте снова", close: "Закрыть", search: "Поиск", back: "Назад" },
+    profile: { posts: "Публикации", followers: "Подписчики", following: "Подписки", go_live: "Прямой эфир", subscription: "Подписка", following_btn: "Подписан", follow_btn: "Подписаться", subscribed: "Подписан", subscribe_btn: "Подписаться", view: "Смотреть", no_posts: "Публикаций пока нет", no_reels: "Reels пока нет", live_title: "Начать эфир", live_subtitle: "Введите название", start: "Начать", plans_title: "Планы подписки", no_plans: "Планов пока нет", new_plan: "Новый план", create_plan: "Создать", subscribe_error: "Ошибка подписки", plans_count: "{{count}} плана подписки", subscribers_count: "{{count}} подписчиков" },
   },
   zh: {
     nav: { home: "主页", explore: "探索", reels: "短视频", messages: "消息", groups: "群组", notifications: "通知", profile: "个人资料", settings: "设置", admin: "管理员", premium: "高级版" },
@@ -97,6 +88,7 @@ const t = {
     settings: { title: "设置", subtitle: "管理您的账号", profile: "个人资料", account: "账号", notifications: "通知", appearance: "外观", privacy: "隐私", language: "语言" },
     lang: { title: "语言", subtitle: "选择界面语言", search: "搜索语言...", current: "当前语言", popular: "热门", all: "所有语言", applied: "语言已更改！" },
     common: { save: "保存", cancel: "取消", loading: "加载中...", error: "错误", success: "成功", network_error: "网络错误", try_again: "重试", close: "关闭", search: "搜索", back: "返回" },
+    profile: { posts: "帖子", followers: "粉丝", following: "关注", go_live: "开播", subscription: "订阅", following_btn: "已关注", follow_btn: "关注", subscribed: "已订阅", subscribe_btn: "订阅", view: "查看", no_posts: "暂无帖子", no_reels: "暂无短视频", live_title: "开始直播", live_subtitle: "输入直播标题", start: "开始", plans_title: "订阅计划", no_plans: "暂无订阅计划", new_plan: "新计划", create_plan: "创建", subscribe_error: "订阅失败", plans_count: "{{count}} 个订阅计划", subscribers_count: "{{count}} 订阅者" },
   },
   ar: {
     nav: { home: "الرئيسية", explore: "استكشاف", reels: "ريلز", messages: "رسائل", groups: "مجموعات", notifications: "إشعارات", profile: "الملف الشخصي", settings: "الإعدادات", admin: "المسؤول", premium: "مميز" },
@@ -105,6 +97,7 @@ const t = {
     settings: { title: "الإعدادات", subtitle: "إدارة حسابك", profile: "الملف الشخصي", account: "الحساب", notifications: "الإشعارات", appearance: "المظهر", privacy: "الخصوصية", language: "اللغة" },
     lang: { title: "اللغة", subtitle: "اختر لغة الواجهة", search: "ابحث عن لغة...", current: "اللغة الحالية", popular: "الأكثر شيوعاً", all: "جميع اللغات", applied: "تم تغيير اللغة!" },
     common: { save: "حفظ", cancel: "إلغاء", loading: "جار التحميل...", error: "خطأ", success: "نجاح", network_error: "خطأ في الشبكة", try_again: "حاول مجدداً", close: "إغلاق", search: "بحث", back: "رجوع" },
+    profile: { posts: "منشورات", followers: "متابعون", following: "متابَعون", go_live: "بث مباشر", subscription: "اشتراك", following_btn: "متابَع", follow_btn: "متابعة", subscribed: "مشترك", subscribe_btn: "اشتراك", view: "عرض", no_posts: "لا منشورات بعد", no_reels: "لا ريلز بعد", live_title: "بدء البث المباشر", live_subtitle: "أدخل عنوان البث", start: "بدء", plans_title: "خطط الاشتراك", no_plans: "لا خطط بعد", new_plan: "خطة جديدة", create_plan: "إنشاء", subscribe_error: "خطأ في الاشتراك", plans_count: "{{count}} خطة اشتراك", subscribers_count: "{{count}} مشترك" },
   },
   es: {
     nav: { home: "Inicio", explore: "Explorar", reels: "Reels", messages: "Mensajes", groups: "Grupos", notifications: "Notificaciones", profile: "Perfil", settings: "Ajustes", admin: "Admin", premium: "Premium" },
@@ -113,6 +106,7 @@ const t = {
     settings: { title: "Ajustes", subtitle: "Gestiona tu cuenta", profile: "Perfil", account: "Cuenta", notifications: "Notificaciones", appearance: "Apariencia", privacy: "Privacidad", language: "Idioma" },
     lang: { title: "Idioma", subtitle: "Elige el idioma de la interfaz", search: "Buscar idioma...", current: "Idioma actual", popular: "Populares", all: "Todos los idiomas", applied: "¡Idioma cambiado!" },
     common: { save: "Guardar", cancel: "Cancelar", loading: "Cargando...", error: "Error", success: "Éxito", network_error: "Error de red", try_again: "Inténtalo de nuevo", close: "Cerrar", search: "Buscar", back: "Atrás" },
+    profile: { posts: "Publicaciones", followers: "Seguidores", following: "Seguidos", go_live: "En vivo", subscription: "Suscripción", following_btn: "Siguiendo", follow_btn: "Seguir", subscribed: "Suscrito", subscribe_btn: "Suscribirse", view: "Ver", no_posts: "Sin publicaciones aún", no_reels: "Sin reels aún", live_title: "Iniciar transmisión", live_subtitle: "Ingresa el título", start: "Iniciar", plans_title: "Planes de suscripción", no_plans: "Sin planes aún", new_plan: "Nuevo plan", create_plan: "Crear", subscribe_error: "Error al suscribirse", plans_count: "{{count}} planes de suscripción", subscribers_count: "{{count}} suscriptores" },
   },
   fr: {
     nav: { home: "Accueil", explore: "Explorer", reels: "Reels", messages: "Messages", groups: "Groupes", notifications: "Notifications", profile: "Profil", settings: "Paramètres", admin: "Admin", premium: "Premium" },
@@ -121,6 +115,7 @@ const t = {
     settings: { title: "Paramètres", subtitle: "Gérez votre compte", profile: "Profil", account: "Compte", notifications: "Notifications", appearance: "Apparence", privacy: "Confidentialité", language: "Langue" },
     lang: { title: "Langue", subtitle: "Choisissez la langue de l'interface", search: "Rechercher une langue...", current: "Langue actuelle", popular: "Populaires", all: "Toutes les langues", applied: "Langue modifiée !" },
     common: { save: "Enregistrer", cancel: "Annuler", loading: "Chargement...", error: "Erreur", success: "Succès", network_error: "Erreur réseau", try_again: "Réessayer", close: "Fermer", search: "Rechercher", back: "Retour" },
+    profile: { posts: "Publications", followers: "Abonnés", following: "Abonnements", go_live: "En direct", subscription: "Abonnement", following_btn: "Abonné", follow_btn: "Suivre", subscribed: "Abonné", subscribe_btn: "S'abonner", view: "Voir", no_posts: "Aucune publication", no_reels: "Aucun reel", live_title: "Démarrer un live", live_subtitle: "Entrez le titre", start: "Démarrer", plans_title: "Plans d'abonnement", no_plans: "Aucun plan", new_plan: "Nouveau plan", create_plan: "Créer", subscribe_error: "Erreur d'abonnement", plans_count: "{{count}} plans d'abonnement", subscribers_count: "{{count}} abonnés" },
   },
   hi: {
     nav: { home: "होम", explore: "एक्सप्लोर", reels: "रील्स", messages: "संदेश", groups: "समूह", notifications: "सूचनाएं", profile: "प्रोफ़ाइल", settings: "सेटिंग्स", admin: "एडमिन", premium: "प्रीमियम" },
@@ -129,6 +124,7 @@ const t = {
     settings: { title: "सेटिंग्स", subtitle: "अपना खाता प्रबंधित करें", profile: "प्रोफ़ाइल", account: "खाता", notifications: "सूचनाएं", appearance: "दिखावट", privacy: "गोपनीयता", language: "भाषा" },
     lang: { title: "भाषा", subtitle: "इंटरफ़ेस भाषा चुनें", search: "भाषा खोजें...", current: "वर्तमान भाषा", popular: "लोकप्रिय", all: "सभी भाषाएं", applied: "भाषा बदल गई!" },
     common: { save: "सेव", cancel: "रद्द", loading: "लोड हो रहा है...", error: "त्रुटि", success: "सफलता", network_error: "नेटवर्क त्रुटि", try_again: "पुनः प्रयास", close: "बंद", search: "खोज", back: "वापस" },
+    profile: { posts: "पोस्ट", followers: "फॉलोअर", following: "फॉलोइंग", go_live: "लाइव जाएं", subscription: "सदस्यता", following_btn: "फॉलो कर रहे हैं", follow_btn: "फॉलो करें", subscribed: "सदस्य", subscribe_btn: "सदस्य बनें", view: "देखें", no_posts: "अभी कोई पोस्ट नहीं", no_reels: "अभी कोई रील नहीं", live_title: "लाइव शुरू करें", live_subtitle: "स्ट्रीम शीर्षक दर्ज करें", start: "शुरू", plans_title: "सदस्यता योजनाएं", no_plans: "कोई योजना नहीं", new_plan: "नई योजना", create_plan: "बनाएं", subscribe_error: "सदस्यता में त्रुटि", plans_count: "{{count}} सदस्यता योजनाएं", subscribers_count: "{{count}} सदस्य" },
   },
   pt: {
     nav: { home: "Início", explore: "Explorar", reels: "Reels", messages: "Mensagens", groups: "Grupos", notifications: "Notificações", profile: "Perfil", settings: "Configurações", admin: "Admin", premium: "Premium" },
@@ -137,6 +133,7 @@ const t = {
     settings: { title: "Configurações", subtitle: "Gerencie sua conta", profile: "Perfil", account: "Conta", notifications: "Notificações", appearance: "Aparência", privacy: "Privacidade", language: "Idioma" },
     lang: { title: "Idioma", subtitle: "Escolha o idioma da interface", search: "Buscar idioma...", current: "Idioma atual", popular: "Populares", all: "Todos os idiomas", applied: "Idioma alterado!" },
     common: { save: "Salvar", cancel: "Cancelar", loading: "Carregando...", error: "Erro", success: "Sucesso", network_error: "Erro de rede", try_again: "Tentar novamente", close: "Fechar", search: "Buscar", back: "Voltar" },
+    profile: { posts: "Publicações", followers: "Seguidores", following: "Seguindo", go_live: "Ao vivo", subscription: "Assinatura", following_btn: "Seguindo", follow_btn: "Seguir", subscribed: "Assinante", subscribe_btn: "Assinar", view: "Ver", no_posts: "Sem publicações ainda", no_reels: "Sem reels ainda", live_title: "Iniciar transmissão", live_subtitle: "Digite o título", start: "Iniciar", plans_title: "Planos de assinatura", no_plans: "Sem planos ainda", new_plan: "Novo plano", create_plan: "Criar", subscribe_error: "Erro ao assinar", plans_count: "{{count}} planos de assinatura", subscribers_count: "{{count}} assinantes" },
   },
   de: {
     nav: { home: "Startseite", explore: "Entdecken", reels: "Reels", messages: "Nachrichten", groups: "Gruppen", notifications: "Benachrichtigungen", profile: "Profil", settings: "Einstellungen", admin: "Admin", premium: "Premium" },
@@ -145,6 +142,7 @@ const t = {
     settings: { title: "Einstellungen", subtitle: "Konto verwalten", profile: "Profil", account: "Konto", notifications: "Benachrichtigungen", appearance: "Erscheinungsbild", privacy: "Datenschutz", language: "Sprache" },
     lang: { title: "Sprache", subtitle: "Oberflächensprache wählen", search: "Sprache suchen...", current: "Aktuelle Sprache", popular: "Beliebt", all: "Alle Sprachen", applied: "Sprache geändert!" },
     common: { save: "Speichern", cancel: "Abbrechen", loading: "Laden...", error: "Fehler", success: "Erfolg", network_error: "Netzwerkfehler", try_again: "Erneut versuchen", close: "Schließen", search: "Suchen", back: "Zurück" },
+    profile: { posts: "Beiträge", followers: "Follower", following: "Folge ich", go_live: "Live gehen", subscription: "Abonnement", following_btn: "Folge ich", follow_btn: "Folgen", subscribed: "Abonniert", subscribe_btn: "Abonnieren", view: "Ansehen", no_posts: "Noch keine Beiträge", no_reels: "Noch keine Reels", live_title: "Live starten", live_subtitle: "Streamtitel eingeben", start: "Starten", plans_title: "Abonnementpläne", no_plans: "Noch keine Pläne", new_plan: "Neuer Plan", create_plan: "Erstellen", subscribe_error: "Fehler beim Abonnieren", plans_count: "{{count}} Abonnementpläne", subscribers_count: "{{count}} Abonnenten" },
   },
   ja: {
     nav: { home: "ホーム", explore: "探索", reels: "リール", messages: "メッセージ", groups: "グループ", notifications: "通知", profile: "プロフィール", settings: "設定", admin: "管理者", premium: "プレミアム" },
@@ -153,6 +151,7 @@ const t = {
     settings: { title: "設定", subtitle: "アカウントを管理", profile: "プロフィール", account: "アカウント", notifications: "通知", appearance: "外観", privacy: "プライバシー", language: "言語" },
     lang: { title: "言語", subtitle: "インターフェース言語を選択", search: "言語を検索...", current: "現在の言語", popular: "人気", all: "すべての言語", applied: "言語が変更されました！" },
     common: { save: "保存", cancel: "キャンセル", loading: "読み込み中...", error: "エラー", success: "成功", network_error: "ネットワークエラー", try_again: "もう一度試す", close: "閉じる", search: "検索", back: "戻る" },
+    profile: { posts: "投稿", followers: "フォロワー", following: "フォロー中", go_live: "ライブ", subscription: "サブスクリプション", following_btn: "フォロー中", follow_btn: "フォロー", subscribed: "登録済み", subscribe_btn: "登録する", view: "見る", no_posts: "まだ投稿がありません", no_reels: "まだリールがありません", live_title: "ライブを開始", live_subtitle: "タイトルを入力", start: "開始", plans_title: "サブスクプラン", no_plans: "プランはまだありません", new_plan: "新しいプラン", create_plan: "作成", subscribe_error: "登録エラー", plans_count: "{{count}} 件のプラン", subscribers_count: "{{count}} 人の登録者" },
   },
   ko: {
     nav: { home: "홈", explore: "탐색", reels: "릴스", messages: "메시지", groups: "그룹", notifications: "알림", profile: "프로필", settings: "설정", admin: "관리자", premium: "프리미엄" },
@@ -161,6 +160,7 @@ const t = {
     settings: { title: "설정", subtitle: "계정 관리", profile: "프로필", account: "계정", notifications: "알림", appearance: "외관", privacy: "개인정보", language: "언어" },
     lang: { title: "언어", subtitle: "인터페이스 언어 선택", search: "언어 검색...", current: "현재 언어", popular: "인기", all: "모든 언어", applied: "언어가 변경되었습니다!" },
     common: { save: "저장", cancel: "취소", loading: "로딩 중...", error: "오류", success: "성공", network_error: "네트워크 오류", try_again: "다시 시도", close: "닫기", search: "검색", back: "뒤로" },
+    profile: { posts: "게시물", followers: "팔로워", following: "팔로잉", go_live: "라이브", subscription: "구독", following_btn: "팔로잉", follow_btn: "팔로우", subscribed: "구독 중", subscribe_btn: "구독하기", view: "보기", no_posts: "게시물이 없습니다", no_reels: "릴스가 없습니다", live_title: "라이브 시작", live_subtitle: "제목을 입력하세요", start: "시작", plans_title: "구독 플랜", no_plans: "구독 플랜이 없습니다", new_plan: "새 플랜", create_plan: "만들기", subscribe_error: "구독 오류", plans_count: "{{count}}개의 구독 플랜", subscribers_count: "{{count}}명의 구독자" },
   },
   it: {
     nav: { home: "Home", explore: "Esplora", reels: "Reels", messages: "Messaggi", groups: "Gruppi", notifications: "Notifiche", profile: "Profilo", settings: "Impostazioni", admin: "Admin", premium: "Premium" },
@@ -169,6 +169,7 @@ const t = {
     settings: { title: "Impostazioni", subtitle: "Gestisci il tuo account", profile: "Profilo", account: "Account", notifications: "Notifiche", appearance: "Aspetto", privacy: "Privacy", language: "Lingua" },
     lang: { title: "Lingua", subtitle: "Scegli la lingua dell'interfaccia", search: "Cerca lingua...", current: "Lingua attuale", popular: "Popolari", all: "Tutte le lingue", applied: "Lingua cambiata!" },
     common: { save: "Salva", cancel: "Annulla", loading: "Caricamento...", error: "Errore", success: "Successo", network_error: "Errore di rete", try_again: "Riprova", close: "Chiudi", search: "Cerca", back: "Indietro" },
+    profile: { posts: "Post", followers: "Follower", following: "Seguiti", go_live: "In diretta", subscription: "Abbonamento", following_btn: "Seguendo", follow_btn: "Segui", subscribed: "Abbonato", subscribe_btn: "Abbonati", view: "Vedi", no_posts: "Ancora nessun post", no_reels: "Ancora nessun reel", live_title: "Inizia la diretta", live_subtitle: "Inserisci il titolo", start: "Inizia", plans_title: "Piani di abbonamento", no_plans: "Nessun piano ancora", new_plan: "Nuovo piano", create_plan: "Crea", subscribe_error: "Errore abbonamento", plans_count: "{{count}} piani di abbonamento", subscribers_count: "{{count}} abbonati" },
   },
   tr: {
     nav: { home: "Ana Sayfa", explore: "Keşfet", reels: "Reels", messages: "Mesajlar", groups: "Gruplar", notifications: "Bildirimler", profile: "Profil", settings: "Ayarlar", admin: "Admin", premium: "Premium" },
@@ -177,6 +178,7 @@ const t = {
     settings: { title: "Ayarlar", subtitle: "Hesabınızı yönetin", profile: "Profil", account: "Hesap", notifications: "Bildirimler", appearance: "Görünüm", privacy: "Gizlilik", language: "Dil" },
     lang: { title: "Dil", subtitle: "Arayüz dilini seçin", search: "Dil ara...", current: "Mevcut dil", popular: "Popüler", all: "Tüm diller", applied: "Dil değiştirildi!" },
     common: { save: "Kaydet", cancel: "İptal", loading: "Yükleniyor...", error: "Hata", success: "Başarı", network_error: "Ağ hatası", try_again: "Tekrar dene", close: "Kapat", search: "Ara", back: "Geri" },
+    profile: { posts: "Gönderiler", followers: "Takipçiler", following: "Takip edilenler", go_live: "Canlı Yayın", subscription: "Abonelik", following_btn: "Takip ediliyor", follow_btn: "Takip et", subscribed: "Abone", subscribe_btn: "Abone ol", view: "Görüntüle", no_posts: "Henüz gönderi yok", no_reels: "Henüz reel yok", live_title: "Canlı yayın başlat", live_subtitle: "Başlık girin", start: "Başlat", plans_title: "Abonelik planları", no_plans: "Henüz plan yok", new_plan: "Yeni plan", create_plan: "Oluştur", subscribe_error: "Abonelik hatası", plans_count: "{{count}} abonelik planı", subscribers_count: "{{count}} abone" },
   },
   nl: {
     nav: { home: "Home", explore: "Verkennen", reels: "Reels", messages: "Berichten", groups: "Groepen", notifications: "Meldingen", profile: "Profiel", settings: "Instellingen", admin: "Admin", premium: "Premium" },
@@ -185,6 +187,7 @@ const t = {
     settings: { title: "Instellingen", subtitle: "Beheer uw account", profile: "Profiel", account: "Account", notifications: "Meldingen", appearance: "Uiterlijk", privacy: "Privacy", language: "Taal" },
     lang: { title: "Taal", subtitle: "Kies de interfacetaal", search: "Taal zoeken...", current: "Huidige taal", popular: "Populair", all: "Alle talen", applied: "Taal gewijzigd!" },
     common: { save: "Opslaan", cancel: "Annuleren", loading: "Laden...", error: "Fout", success: "Succes", network_error: "Netwerkfout", try_again: "Opnieuw proberen", close: "Sluiten", search: "Zoeken", back: "Terug" },
+    profile: { posts: "Berichten", followers: "Volgers", following: "Volgend", go_live: "Live gaan", subscription: "Abonnement", following_btn: "Volgend", follow_btn: "Volgen", subscribed: "Geabonneerd", subscribe_btn: "Abonneren", view: "Bekijken", no_posts: "Nog geen berichten", no_reels: "Nog geen reels", live_title: "Live starten", live_subtitle: "Voer een titel in", start: "Starten", plans_title: "Abonnementenplannen", no_plans: "Nog geen plannen", new_plan: "Nieuw plan", create_plan: "Aanmaken", subscribe_error: "Abonnementsfout", plans_count: "{{count}} abonnementenplannen", subscribers_count: "{{count}} abonnees" },
   },
   pl: {
     nav: { home: "Strona główna", explore: "Odkryj", reels: "Reels", messages: "Wiadomości", groups: "Grupy", notifications: "Powiadomienia", profile: "Profil", settings: "Ustawienia", admin: "Admin", premium: "Premium" },
@@ -193,6 +196,7 @@ const t = {
     settings: { title: "Ustawienia", subtitle: "Zarządzaj swoim kontem", profile: "Profil", account: "Konto", notifications: "Powiadomienia", appearance: "Wygląd", privacy: "Prywatność", language: "Język" },
     lang: { title: "Język", subtitle: "Wybierz język interfejsu", search: "Szukaj języka...", current: "Aktualny język", popular: "Popularne", all: "Wszystkie języki", applied: "Język zmieniony!" },
     common: { save: "Zapisz", cancel: "Anuluj", loading: "Ładowanie...", error: "Błąd", success: "Sukces", network_error: "Błąd sieci", try_again: "Spróbuj ponownie", close: "Zamknij", search: "Szukaj", back: "Wstecz" },
+    profile: { posts: "Posty", followers: "Obserwujący", following: "Obserwowani", go_live: "Na żywo", subscription: "Subskrypcja", following_btn: "Obserwujesz", follow_btn: "Obserwuj", subscribed: "Subskrybent", subscribe_btn: "Subskrybuj", view: "Zobacz", no_posts: "Brak postów", no_reels: "Brak reelów", live_title: "Rozpocznij transmisję", live_subtitle: "Wpisz tytuł", start: "Rozpocznij", plans_title: "Plany subskrypcji", no_plans: "Brak planów", new_plan: "Nowy plan", create_plan: "Utwórz", subscribe_error: "Błąd subskrypcji", plans_count: "{{count}} plany subskrypcji", subscribers_count: "{{count}} subskrybentów" },
   },
   fa: {
     nav: { home: "خانه", explore: "کاوش", reels: "ریلز", messages: "پیام‌ها", groups: "گروه‌ها", notifications: "اعلان‌ها", profile: "پروفایل", settings: "تنظیمات", admin: "مدیر", premium: "پریمیوم" },
@@ -201,6 +205,7 @@ const t = {
     settings: { title: "تنظیمات", subtitle: "حساب خود را مدیریت کنید", profile: "پروفایل", account: "حساب", notifications: "اعلان‌ها", appearance: "ظاهر", privacy: "حریم خصوصی", language: "زبان" },
     lang: { title: "زبان", subtitle: "زبان رابط کاربری را انتخاب کنید", search: "جستجوی زبان...", current: "زبان فعلی", popular: "محبوب", all: "همه زبان‌ها", applied: "زبان تغییر کرد!" },
     common: { save: "ذخیره", cancel: "لغو", loading: "در حال بارگذاری...", error: "خطا", success: "موفقیت", network_error: "خطای شبکه", try_again: "دوباره تلاش کنید", close: "بستن", search: "جستجو", back: "بازگشت" },
+    profile: { posts: "پست‌ها", followers: "دنبال‌کنندگان", following: "دنبال‌شوندگان", go_live: "پخش زنده", subscription: "اشتراک", following_btn: "دنبال می‌کنید", follow_btn: "دنبال کردن", subscribed: "مشترک", subscribe_btn: "مشترک شوید", view: "مشاهده", no_posts: "هنوز پستی نیست", no_reels: "هنوز ریلی نیست", live_title: "شروع پخش زنده", live_subtitle: "عنوان را وارد کنید", start: "شروع", plans_title: "طرح‌های اشتراک", no_plans: "هنوز طرحی نیست", new_plan: "طرح جدید", create_plan: "ایجاد", subscribe_error: "خطا در اشتراک", plans_count: "{{count}} طرح اشتراک", subscribers_count: "{{count}} مشترک" },
   },
   bn: {
     nav: { home: "হোম", explore: "অন্বেষণ", reels: "রিলস", messages: "বার্তা", groups: "গ্রুপ", notifications: "বিজ্ঞপ্তি", profile: "প্রোফাইল", settings: "সেটিংস", admin: "অ্যাডমিন", premium: "প্রিমিয়াম" },
@@ -209,6 +214,7 @@ const t = {
     settings: { title: "সেটিংস", subtitle: "আপনার অ্যাকাউন্ট পরিচালনা করুন", profile: "প্রোফাইল", account: "অ্যাকাউন্ট", notifications: "বিজ্ঞপ্তি", appearance: "চেহারা", privacy: "গোপনীয়তা", language: "ভাষা" },
     lang: { title: "ভাষা", subtitle: "ইন্টারফেস ভাষা বেছে নিন", search: "ভাষা খুঁজুন...", current: "বর্তমান ভাষা", popular: "জনপ্রিয়", all: "সব ভাষা", applied: "ভাষা পরিবর্তিত হয়েছে!" },
     common: { save: "সেভ", cancel: "বাতিল", loading: "লোড হচ্ছে...", error: "ত্রুটি", success: "সফলতা", network_error: "নেটওয়ার্ক ত্রুটি", try_again: "আবার চেষ্টা", close: "বন্ধ", search: "খোঁজ", back: "পেছনে" },
+    profile: { posts: "পোস্ট", followers: "ফলোয়ার", following: "ফলোইং", go_live: "লাইভ যান", subscription: "সদস্যতা", following_btn: "অনুসরণ করছেন", follow_btn: "অনুসরণ করুন", subscribed: "সদস্য", subscribe_btn: "সদস্য হন", view: "দেখুন", no_posts: "এখনো কোনো পোস্ট নেই", no_reels: "এখনো কোনো রিল নেই", live_title: "লাইভ শুরু করুন", live_subtitle: "শিরোনাম লিখুন", start: "শুরু", plans_title: "সদস্যতা পরিকল্পনা", no_plans: "কোনো পরিকল্পনা নেই", new_plan: "নতুন পরিকল্পনা", create_plan: "তৈরি", subscribe_error: "সদস্যতায় ত্রুটি", plans_count: "{{count}} সদস্যতা পরিকল্পনা", subscribers_count: "{{count}} সদস্য" },
   },
   id: {
     nav: { home: "Beranda", explore: "Jelajahi", reels: "Reels", messages: "Pesan", groups: "Grup", notifications: "Notifikasi", profile: "Profil", settings: "Pengaturan", admin: "Admin", premium: "Premium" },
@@ -217,6 +223,7 @@ const t = {
     settings: { title: "Pengaturan", subtitle: "Kelola akun Anda", profile: "Profil", account: "Akun", notifications: "Notifikasi", appearance: "Tampilan", privacy: "Privasi", language: "Bahasa" },
     lang: { title: "Bahasa", subtitle: "Pilih bahasa antarmuka", search: "Cari bahasa...", current: "Bahasa saat ini", popular: "Populer", all: "Semua bahasa", applied: "Bahasa diubah!" },
     common: { save: "Simpan", cancel: "Batal", loading: "Memuat...", error: "Kesalahan", success: "Berhasil", network_error: "Kesalahan jaringan", try_again: "Coba lagi", close: "Tutup", search: "Cari", back: "Kembali" },
+    profile: { posts: "Postingan", followers: "Pengikut", following: "Mengikuti", go_live: "Siaran Langsung", subscription: "Langganan", following_btn: "Sedang Mengikuti", follow_btn: "Ikuti", subscribed: "Berlangganan", subscribe_btn: "Berlangganan", view: "Lihat", no_posts: "Belum ada postingan", no_reels: "Belum ada reels", live_title: "Mulai siaran", live_subtitle: "Masukkan judul", start: "Mulai", plans_title: "Paket langganan", no_plans: "Belum ada paket", new_plan: "Paket baru", create_plan: "Buat", subscribe_error: "Gagal berlangganan", plans_count: "{{count}} paket langganan", subscribers_count: "{{count}} pelanggan" },
   },
   vi: {
     nav: { home: "Trang chủ", explore: "Khám phá", reels: "Reels", messages: "Tin nhắn", groups: "Nhóm", notifications: "Thông báo", profile: "Hồ sơ", settings: "Cài đặt", admin: "Quản trị", premium: "Cao cấp" },
@@ -225,6 +232,7 @@ const t = {
     settings: { title: "Cài đặt", subtitle: "Quản lý tài khoản", profile: "Hồ sơ", account: "Tài khoản", notifications: "Thông báo", appearance: "Giao diện", privacy: "Quyền riêng tư", language: "Ngôn ngữ" },
     lang: { title: "Ngôn ngữ", subtitle: "Chọn ngôn ngữ giao diện", search: "Tìm ngôn ngữ...", current: "Ngôn ngữ hiện tại", popular: "Phổ biến", all: "Tất cả ngôn ngữ", applied: "Đã thay đổi ngôn ngữ!" },
     common: { save: "Lưu", cancel: "Hủy", loading: "Đang tải...", error: "Lỗi", success: "Thành công", network_error: "Lỗi mạng", try_again: "Thử lại", close: "Đóng", search: "Tìm kiếm", back: "Quay lại" },
+    profile: { posts: "Bài viết", followers: "Người theo dõi", following: "Đang theo dõi", go_live: "Phát trực tiếp", subscription: "Đăng ký", following_btn: "Đang theo dõi", follow_btn: "Theo dõi", subscribed: "Đã đăng ký", subscribe_btn: "Đăng ký", view: "Xem", no_posts: "Chưa có bài viết", no_reels: "Chưa có reels", live_title: "Bắt đầu phát sóng", live_subtitle: "Nhập tiêu đề", start: "Bắt đầu", plans_title: "Gói đăng ký", no_plans: "Chưa có gói", new_plan: "Gói mới", create_plan: "Tạo", subscribe_error: "Lỗi đăng ký", plans_count: "{{count}} gói đăng ký", subscribers_count: "{{count}} người đăng ký" },
   },
   th: {
     nav: { home: "หน้าหลัก", explore: "สำรวจ", reels: "รีลส์", messages: "ข้อความ", groups: "กลุ่ม", notifications: "การแจ้งเตือน", profile: "โปรไฟล์", settings: "การตั้งค่า", admin: "ผู้ดูแล", premium: "พรีเมียม" },
@@ -233,6 +241,7 @@ const t = {
     settings: { title: "การตั้งค่า", subtitle: "จัดการบัญชีของคุณ", profile: "โปรไฟล์", account: "บัญชี", notifications: "การแจ้งเตือน", appearance: "รูปลักษณ์", privacy: "ความเป็นส่วนตัว", language: "ภาษา" },
     lang: { title: "ภาษา", subtitle: "เลือกภาษาสำหรับอินเทอร์เฟซ", search: "ค้นหาภาษา...", current: "ภาษาปัจจุบัน", popular: "ยอดนิยม", all: "ทุกภาษา", applied: "เปลี่ยนภาษาแล้ว!" },
     common: { save: "บันทึก", cancel: "ยกเลิก", loading: "กำลังโหลด...", error: "ข้อผิดพลาด", success: "สำเร็จ", network_error: "ข้อผิดพลาดเครือข่าย", try_again: "ลองอีกครั้ง", close: "ปิด", search: "ค้นหา", back: "กลับ" },
+    profile: { posts: "โพสต์", followers: "ผู้ติดตาม", following: "กำลังติดตาม", go_live: "ถ่ายทอดสด", subscription: "สมาชิก", following_btn: "ติดตามอยู่", follow_btn: "ติดตาม", subscribed: "สมาชิก", subscribe_btn: "สมัครสมาชิก", view: "ดู", no_posts: "ยังไม่มีโพสต์", no_reels: "ยังไม่มีรีลส์", live_title: "เริ่มไลฟ์", live_subtitle: "ใส่ชื่อสตรีม", start: "เริ่ม", plans_title: "แพ็กเกจสมาชิก", no_plans: "ยังไม่มีแพ็กเกจ", new_plan: "แพ็กเกจใหม่", create_plan: "สร้าง", subscribe_error: "เกิดข้อผิดพลาดในการสมัคร", plans_count: "{{count}} แพ็กเกจสมาชิก", subscribers_count: "{{count}} สมาชิก" },
   },
   uk: {
     nav: { home: "Головна", explore: "Огляд", reels: "Рілс", messages: "Повідомлення", groups: "Групи", notifications: "Сповіщення", profile: "Профіль", settings: "Налаштування", admin: "Адмін", premium: "Преміум" },
@@ -241,6 +250,7 @@ const t = {
     settings: { title: "Налаштування", subtitle: "Керуйте акаунтом", profile: "Профіль", account: "Акаунт", notifications: "Сповіщення", appearance: "Вигляд", privacy: "Конфіденційність", language: "Мова" },
     lang: { title: "Мова", subtitle: "Оберіть мову інтерфейсу", search: "Пошук мови...", current: "Поточна мова", popular: "Популярні", all: "Усі мови", applied: "Мову змінено!" },
     common: { save: "Зберегти", cancel: "Скасувати", loading: "Завантаження...", error: "Помилка", success: "Успіх", network_error: "Помилка мережі", try_again: "Спробуйте знову", close: "Закрити", search: "Пошук", back: "Назад" },
+    profile: { posts: "Публікації", followers: "Підписники", following: "Підписки", go_live: "Прямий ефір", subscription: "Підписка", following_btn: "Підписані", follow_btn: "Підписатися", subscribed: "Підписано", subscribe_btn: "Підписатися", view: "Переглянути", no_posts: "Публікацій поки немає", no_reels: "Reels поки немає", live_title: "Розпочати ефір", live_subtitle: "Введіть назву", start: "Розпочати", plans_title: "Плани підписки", no_plans: "Планів поки немає", new_plan: "Новий план", create_plan: "Створити", subscribe_error: "Помилка підписки", plans_count: "{{count}} плани підписки", subscribers_count: "{{count}} підписників" },
   },
   sv: {
     nav: { home: "Hem", explore: "Utforska", reels: "Reels", messages: "Meddelanden", groups: "Grupper", notifications: "Aviseringar", profile: "Profil", settings: "Inställningar", admin: "Admin", premium: "Premium" },
@@ -249,6 +259,7 @@ const t = {
     settings: { title: "Inställningar", subtitle: "Hantera ditt konto", profile: "Profil", account: "Konto", notifications: "Aviseringar", appearance: "Utseende", privacy: "Integritet", language: "Språk" },
     lang: { title: "Språk", subtitle: "Välj gränssnittsspråk", search: "Sök språk...", current: "Nuvarande språk", popular: "Populära", all: "Alla språk", applied: "Språk ändrat!" },
     common: { save: "Spara", cancel: "Avbryt", loading: "Läser in...", error: "Fel", success: "Framgång", network_error: "Nätverksfel", try_again: "Försök igen", close: "Stäng", search: "Sök", back: "Tillbaka" },
+    profile: { posts: "Inlägg", followers: "Följare", following: "Följer", go_live: "Sändning", subscription: "Prenumeration", following_btn: "Följer", follow_btn: "Följ", subscribed: "Prenumerant", subscribe_btn: "Prenumerera", view: "Visa", no_posts: "Inga inlägg ännu", no_reels: "Inga reels ännu", live_title: "Starta direktsändning", live_subtitle: "Ange titel", start: "Starta", plans_title: "Prenumerationsplaner", no_plans: "Inga planer ännu", new_plan: "Ny plan", create_plan: "Skapa", subscribe_error: "Prenumerationsfel", plans_count: "{{count}} prenumerationsplaner", subscribers_count: "{{count}} prenumeranter" },
   },
   no: {
     nav: { home: "Hjem", explore: "Utforsk", reels: "Reels", messages: "Meldinger", groups: "Grupper", notifications: "Varsler", profile: "Profil", settings: "Innstillinger", admin: "Admin", premium: "Premium" },
@@ -257,6 +268,7 @@ const t = {
     settings: { title: "Innstillinger", subtitle: "Administrer kontoen din", profile: "Profil", account: "Konto", notifications: "Varsler", appearance: "Utseende", privacy: "Personvern", language: "Språk" },
     lang: { title: "Språk", subtitle: "Velg grensesnittspråk", search: "Søk etter språk...", current: "Gjeldende språk", popular: "Populære", all: "Alle språk", applied: "Språk endret!" },
     common: { save: "Lagre", cancel: "Avbryt", loading: "Laster...", error: "Feil", success: "Suksess", network_error: "Nettverksfeil", try_again: "Prøv igjen", close: "Lukk", search: "Søk", back: "Tilbake" },
+    profile: { posts: "Innlegg", followers: "Følgere", following: "Følger", go_live: "Direktesending", subscription: "Abonnement", following_btn: "Følger", follow_btn: "Følg", subscribed: "Abonnent", subscribe_btn: "Abonner", view: "Vis", no_posts: "Ingen innlegg ennå", no_reels: "Ingen reels ennå", live_title: "Start direktesending", live_subtitle: "Skriv inn tittel", start: "Start", plans_title: "Abonnementplaner", no_plans: "Ingen planer ennå", new_plan: "Ny plan", create_plan: "Opprett", subscribe_error: "Abonnementsfeil", plans_count: "{{count}} abonnementplaner", subscribers_count: "{{count}} abonnenter" },
   },
   da: {
     nav: { home: "Hjem", explore: "Udforsk", reels: "Reels", messages: "Beskeder", groups: "Grupper", notifications: "Notifikationer", profile: "Profil", settings: "Indstillinger", admin: "Admin", premium: "Premium" },
@@ -265,6 +277,7 @@ const t = {
     settings: { title: "Indstillinger", subtitle: "Administrer din konto", profile: "Profil", account: "Konto", notifications: "Notifikationer", appearance: "Udseende", privacy: "Privatliv", language: "Sprog" },
     lang: { title: "Sprog", subtitle: "Vælg grænsefladesprog", search: "Søg efter sprog...", current: "Nuværende sprog", popular: "Populære", all: "Alle sprog", applied: "Sprog ændret!" },
     common: { save: "Gem", cancel: "Annuller", loading: "Indlæser...", error: "Fejl", success: "Succes", network_error: "Netværksfejl", try_again: "Prøv igen", close: "Luk", search: "Søg", back: "Tilbage" },
+    profile: { posts: "Opslag", followers: "Følgere", following: "Følger", go_live: "Direkte", subscription: "Abonnement", following_btn: "Følger", follow_btn: "Følg", subscribed: "Abonnent", subscribe_btn: "Abonner", view: "Se", no_posts: "Ingen opslag endnu", no_reels: "Ingen reels endnu", live_title: "Start direktesendelse", live_subtitle: "Angiv titel", start: "Start", plans_title: "Abonnementplaner", no_plans: "Ingen planer endnu", new_plan: "Ny plan", create_plan: "Opret", subscribe_error: "Abonnementsfejl", plans_count: "{{count}} abonnementplaner", subscribers_count: "{{count}} abonnenter" },
   },
   fi: {
     nav: { home: "Koti", explore: "Tutustu", reels: "Reels", messages: "Viestit", groups: "Ryhmät", notifications: "Ilmoitukset", profile: "Profiili", settings: "Asetukset", admin: "Admin", premium: "Premium" },
@@ -273,6 +286,7 @@ const t = {
     settings: { title: "Asetukset", subtitle: "Hallitse tiliäsi", profile: "Profiili", account: "Tili", notifications: "Ilmoitukset", appearance: "Ulkoasu", privacy: "Yksityisyys", language: "Kieli" },
     lang: { title: "Kieli", subtitle: "Valitse käyttöliittymän kieli", search: "Hae kieltä...", current: "Nykyinen kieli", popular: "Suositut", all: "Kaikki kielet", applied: "Kieli vaihdettu!" },
     common: { save: "Tallenna", cancel: "Peruuta", loading: "Ladataan...", error: "Virhe", success: "Menestys", network_error: "Verkkovirhe", try_again: "Yritä uudelleen", close: "Sulje", search: "Hae", back: "Takaisin" },
+    profile: { posts: "Julkaisut", followers: "Seuraajat", following: "Seurataan", go_live: "Lähetys", subscription: "Tilaus", following_btn: "Seurataan", follow_btn: "Seuraa", subscribed: "Tilaaja", subscribe_btn: "Tilaa", view: "Näytä", no_posts: "Ei julkaisuja vielä", no_reels: "Ei reelsiä vielä", live_title: "Aloita lähetys", live_subtitle: "Syötä otsikko", start: "Aloita", plans_title: "Tilaussuunnitelmat", no_plans: "Ei suunnitelmia vielä", new_plan: "Uusi suunnitelma", create_plan: "Luo", subscribe_error: "Tilausvirhe", plans_count: "{{count}} tilaussuunnitelmaa", subscribers_count: "{{count}} tilaajaa" },
   },
   el: {
     nav: { home: "Αρχική", explore: "Εξερεύνηση", reels: "Reels", messages: "Μηνύματα", groups: "Ομάδες", notifications: "Ειδοποιήσεις", profile: "Προφίλ", settings: "Ρυθμίσεις", admin: "Διαχειριστής", premium: "Πριμ" },
@@ -281,6 +295,7 @@ const t = {
     settings: { title: "Ρυθμίσεις", subtitle: "Διαχείριση λογαριασμού", profile: "Προφίλ", account: "Λογαριασμός", notifications: "Ειδοποιήσεις", appearance: "Εμφάνιση", privacy: "Απόρρητο", language: "Γλώσσα" },
     lang: { title: "Γλώσσα", subtitle: "Επιλέξτε γλώσσα διεπαφής", search: "Αναζήτηση γλώσσας...", current: "Τρέχουσα γλώσσα", popular: "Δημοφιλείς", all: "Όλες οι γλώσσες", applied: "Η γλώσσα άλλαξε!" },
     common: { save: "Αποθήκευση", cancel: "Ακύρωση", loading: "Φόρτωση...", error: "Σφάλμα", success: "Επιτυχία", network_error: "Σφάλμα δικτύου", try_again: "Δοκιμάστε ξανά", close: "Κλείσιμο", search: "Αναζήτηση", back: "Πίσω" },
+    profile: { posts: "Αναρτήσεις", followers: "Ακόλουθοι", following: "Ακολουθώ", go_live: "Ζωντανά", subscription: "Συνδρομή", following_btn: "Ακολουθώ", follow_btn: "Ακολούθησε", subscribed: "Συνδρομητής", subscribe_btn: "Εγγραφή", view: "Δες", no_posts: "Δεν υπάρχουν αναρτήσεις", no_reels: "Δεν υπάρχουν reels", live_title: "Έναρξη ζωντανής μετάδοσης", live_subtitle: "Εισάγετε τίτλο", start: "Έναρξη", plans_title: "Πλάνα συνδρομής", no_plans: "Δεν υπάρχουν πλάνα", new_plan: "Νέο πλάνο", create_plan: "Δημιουργία", subscribe_error: "Σφάλμα εγγραφής", plans_count: "{{count}} πλάνα συνδρομής", subscribers_count: "{{count}} συνδρομητές" },
   },
   cs: {
     nav: { home: "Domů", explore: "Prozkoumat", reels: "Reels", messages: "Zprávy", groups: "Skupiny", notifications: "Oznámení", profile: "Profil", settings: "Nastavení", admin: "Admin", premium: "Premium" },
@@ -289,6 +304,7 @@ const t = {
     settings: { title: "Nastavení", subtitle: "Spravujte svůj účet", profile: "Profil", account: "Účet", notifications: "Oznámení", appearance: "Vzhled", privacy: "Soukromí", language: "Jazyk" },
     lang: { title: "Jazyk", subtitle: "Vyberte jazyk rozhraní", search: "Hledat jazyk...", current: "Aktuální jazyk", popular: "Populární", all: "Všechny jazyky", applied: "Jazyk změněn!" },
     common: { save: "Uložit", cancel: "Zrušit", loading: "Načítání...", error: "Chyba", success: "Úspěch", network_error: "Chyba sítě", try_again: "Zkuste znovu", close: "Zavřít", search: "Hledat", back: "Zpět" },
+    profile: { posts: "Příspěvky", followers: "Sledující", following: "Sleduje", go_live: "Živé vysílání", subscription: "Předplatné", following_btn: "Sledujete", follow_btn: "Sledovat", subscribed: "Předplatitel", subscribe_btn: "Odebírat", view: "Zobrazit", no_posts: "Zatím žádné příspěvky", no_reels: "Zatím žádné reels", live_title: "Spustit živé vysílání", live_subtitle: "Zadejte název", start: "Spustit", plans_title: "Plány předplatného", no_plans: "Zatím žádné plány", new_plan: "Nový plán", create_plan: "Vytvořit", subscribe_error: "Chyba předplatného", plans_count: "{{count}} plány předplatného", subscribers_count: "{{count}} předplatitelů" },
   },
   hu: {
     nav: { home: "Főoldal", explore: "Felfedezés", reels: "Reels", messages: "Üzenetek", groups: "Csoportok", notifications: "Értesítések", profile: "Profil", settings: "Beállítások", admin: "Admin", premium: "Prémium" },
@@ -297,6 +313,7 @@ const t = {
     settings: { title: "Beállítások", subtitle: "Fiók kezelése", profile: "Profil", account: "Fiók", notifications: "Értesítések", appearance: "Megjelenés", privacy: "Adatvédelem", language: "Nyelv" },
     lang: { title: "Nyelv", subtitle: "Válassza ki a felületi nyelvet", search: "Keresés...", current: "Jelenlegi nyelv", popular: "Népszerű", all: "Összes nyelv", applied: "Nyelv megváltozott!" },
     common: { save: "Mentés", cancel: "Mégse", loading: "Betöltés...", error: "Hiba", success: "Siker", network_error: "Hálózati hiba", try_again: "Próbálja újra", close: "Bezárás", search: "Keresés", back: "Vissza" },
+    profile: { posts: "Bejegyzések", followers: "Követők", following: "Követések", go_live: "Élő adás", subscription: "Előfizetés", following_btn: "Követve", follow_btn: "Követés", subscribed: "Előfizető", subscribe_btn: "Előfizetés", view: "Megtekintés", no_posts: "Még nincsenek bejegyzések", no_reels: "Még nincsenek reelsek", live_title: "Élő adás indítása", live_subtitle: "Adja meg a címet", start: "Indítás", plans_title: "Előfizetési tervek", no_plans: "Még nincsenek tervek", new_plan: "Új terv", create_plan: "Létrehozás", subscribe_error: "Előfizetési hiba", plans_count: "{{count}} előfizetési terv", subscribers_count: "{{count}} előfizető" },
   },
   ro: {
     nav: { home: "Acasă", explore: "Explorează", reels: "Reels", messages: "Mesaje", groups: "Grupuri", notifications: "Notificări", profile: "Profil", settings: "Setări", admin: "Admin", premium: "Premium" },
@@ -305,6 +322,7 @@ const t = {
     settings: { title: "Setări", subtitle: "Gestionați contul", profile: "Profil", account: "Cont", notifications: "Notificări", appearance: "Aspect", privacy: "Confidențialitate", language: "Limbă" },
     lang: { title: "Limbă", subtitle: "Alegeți limba interfeței", search: "Căutați o limbă...", current: "Limba curentă", popular: "Populare", all: "Toate limbile", applied: "Limba schimbată!" },
     common: { save: "Salvare", cancel: "Anulare", loading: "Se încarcă...", error: "Eroare", success: "Succes", network_error: "Eroare de rețea", try_again: "Încercați din nou", close: "Închidere", search: "Căutare", back: "Înapoi" },
+    profile: { posts: "Postări", followers: "Urmăritori", following: "Urmărite", go_live: "Live", subscription: "Abonament", following_btn: "Urmărit", follow_btn: "Urmărire", subscribed: "Abonat", subscribe_btn: "Abonare", view: "Vizualizare", no_posts: "Nicio postare încă", no_reels: "Niciun reel încă", live_title: "Pornire live", live_subtitle: "Introduceți titlul", start: "Pornire", plans_title: "Planuri de abonament", no_plans: "Niciun plan încă", new_plan: "Plan nou", create_plan: "Creare", subscribe_error: "Eroare abonament", plans_count: "{{count}} planuri de abonament", subscribers_count: "{{count}} abonați" },
   },
   he: {
     nav: { home: "בית", explore: "גלה", reels: "ריילס", messages: "הודעות", groups: "קבוצות", notifications: "התראות", profile: "פרופיל", settings: "הגדרות", admin: "מנהל", premium: "פרמיום" },
@@ -313,6 +331,7 @@ const t = {
     settings: { title: "הגדרות", subtitle: "נהל את חשבונך", profile: "פרופיל", account: "חשבון", notifications: "התראות", appearance: "מראה", privacy: "פרטיות", language: "שפה" },
     lang: { title: "שפה", subtitle: "בחר שפת ממשק", search: "חפש שפה...", current: "שפה נוכחית", popular: "פופולרי", all: "כל השפות", applied: "השפה שונתה!" },
     common: { save: "שמור", cancel: "ביטול", loading: "טוען...", error: "שגיאה", success: "הצלחה", network_error: "שגיאת רשת", try_again: "נסה שוב", close: "סגור", search: "חפש", back: "חזור" },
+    profile: { posts: "פוסטים", followers: "עוקבים", following: "נעקב", go_live: "שידור חי", subscription: "מנוי", following_btn: "עוקב", follow_btn: "עקוב", subscribed: "מנוי", subscribe_btn: "הירשם", view: "הצג", no_posts: "אין פוסטים עדיין", no_reels: "אין ריילס עדיין", live_title: "התחל שידור חי", live_subtitle: "הזן כותרת", start: "התחל", plans_title: "תוכניות מנוי", no_plans: "אין תוכניות עדיין", new_plan: "תוכנית חדשה", create_plan: "צור", subscribe_error: "שגיאת הרשמה", plans_count: "{{count}} תוכניות מנוי", subscribers_count: "{{count}} מנויים" },
   },
   ms: {
     nav: { home: "Laman Utama", explore: "Terokai", reels: "Reels", messages: "Mesej", groups: "Kumpulan", notifications: "Pemberitahuan", profile: "Profil", settings: "Tetapan", admin: "Admin", premium: "Premium" },
@@ -321,6 +340,7 @@ const t = {
     settings: { title: "Tetapan", subtitle: "Urus akaun anda", profile: "Profil", account: "Akaun", notifications: "Pemberitahuan", appearance: "Penampilan", privacy: "Privasi", language: "Bahasa" },
     lang: { title: "Bahasa", subtitle: "Pilih bahasa antara muka", search: "Cari bahasa...", current: "Bahasa semasa", popular: "Popular", all: "Semua bahasa", applied: "Bahasa ditukar!" },
     common: { save: "Simpan", cancel: "Batal", loading: "Memuatkan...", error: "Ralat", success: "Berjaya", network_error: "Ralat rangkaian", try_again: "Cuba lagi", close: "Tutup", search: "Cari", back: "Kembali" },
+    profile: { posts: "Siaran", followers: "Pengikut", following: "Diikuti", go_live: "Siaran Langsung", subscription: "Langganan", following_btn: "Sedang Ikuti", follow_btn: "Ikuti", subscribed: "Melanggan", subscribe_btn: "Langgan", view: "Lihat", no_posts: "Tiada siaran lagi", no_reels: "Tiada reels lagi", live_title: "Mulakan siaran", live_subtitle: "Masukkan tajuk", start: "Mula", plans_title: "Pelan langganan", no_plans: "Tiada pelan lagi", new_plan: "Pelan baru", create_plan: "Cipta", subscribe_error: "Ralat langganan", plans_count: "{{count}} pelan langganan", subscribers_count: "{{count}} pelanggan" },
   },
   sw: {
     nav: { home: "Nyumbani", explore: "Gundua", reels: "Reels", messages: "Ujumbe", groups: "Vikundi", notifications: "Arifa", profile: "Wasifu", settings: "Mipangilio", admin: "Admin", premium: "Premium" },
@@ -329,6 +349,7 @@ const t = {
     settings: { title: "Mipangilio", subtitle: "Simamia akaunti yako", profile: "Wasifu", account: "Akaunti", notifications: "Arifa", appearance: "Muonekano", privacy: "Faragha", language: "Lugha" },
     lang: { title: "Lugha", subtitle: "Chagua lugha ya kiolesura", search: "Tafuta lugha...", current: "Lugha ya sasa", popular: "Maarufu", all: "Lugha zote", applied: "Lugha imebadilishwa!" },
     common: { save: "Hifadhi", cancel: "Ghairi", loading: "Inapakia...", error: "Hitilafu", success: "Mafanikio", network_error: "Hitilafu ya mtandao", try_again: "Jaribu tena", close: "Funga", search: "Tafuta", back: "Rudi" },
+    profile: { posts: "Machapisho", followers: "Wafuatao", following: "Wanaofuatwa", go_live: "Moja kwa Moja", subscription: "Usajili", following_btn: "Unafuata", follow_btn: "Fuata", subscribed: "Umejiandikisha", subscribe_btn: "Jiandikishe", view: "Tazama", no_posts: "Bado hakuna machapisho", no_reels: "Bado hakuna reels", live_title: "Anza matangazo", live_subtitle: "Ingiza kichwa", start: "Anza", plans_title: "Mipango ya usajili", no_plans: "Bado hakuna mipango", new_plan: "Mpango mpya", create_plan: "Tengeneza", subscribe_error: "Hitilafu ya usajili", plans_count: "Mipango {{count}} ya usajili", subscribers_count: "Wanachama {{count}}" },
   },
   tl: {
     nav: { home: "Home", explore: "I-explore", reels: "Reels", messages: "Mga Mensahe", groups: "Mga Grupo", notifications: "Mga Abiso", profile: "Profile", settings: "Mga Setting", admin: "Admin", premium: "Premium" },
@@ -337,6 +358,7 @@ const t = {
     settings: { title: "Mga Setting", subtitle: "Pamahalaan ang iyong account", profile: "Profile", account: "Account", notifications: "Mga Abiso", appearance: "Hitsura", privacy: "Privacy", language: "Wika" },
     lang: { title: "Wika", subtitle: "Piliin ang wika ng interface", search: "Maghanap ng wika...", current: "Kasalukuyang wika", popular: "Sikat", all: "Lahat ng wika", applied: "Nabago na ang wika!" },
     common: { save: "I-save", cancel: "Kanselahin", loading: "Naglo-load...", error: "Error", success: "Matagumpay", network_error: "Network error", try_again: "Subukang muli", close: "Isara", search: "Hanapin", back: "Bumalik" },
+    profile: { posts: "Mga Post", followers: "Mga Tagasunod", following: "Sinusundan", go_live: "Live", subscription: "Subscription", following_btn: "Sinusundan", follow_btn: "Sundan", subscribed: "Naka-subscribe", subscribe_btn: "Mag-subscribe", view: "Tingnan", no_posts: "Wala pang mga post", no_reels: "Wala pang mga reel", live_title: "Simulan ang live", live_subtitle: "Ilagay ang pamagat", start: "Simulan", plans_title: "Mga plano ng subscription", no_plans: "Wala pang mga plano", new_plan: "Bagong plano", create_plan: "Gumawa", subscribe_error: "May error sa pag-subscribe", plans_count: "{{count}} na plano ng subscription", subscribers_count: "{{count}} na subscriber" },
   },
   az: {
     nav: { home: "Ana Səhifə", explore: "Kəşf Et", reels: "Reels", messages: "Mesajlar", groups: "Qruplar", notifications: "Bildirişlər", profile: "Profil", settings: "Parametrlər", admin: "Admin", premium: "Premium" },
@@ -345,6 +367,7 @@ const t = {
     settings: { title: "Parametrlər", subtitle: "Hesabınızı idarə edin", profile: "Profil", account: "Hesab", notifications: "Bildirişlər", appearance: "Görünüş", privacy: "Məxfilik", language: "Dil" },
     lang: { title: "Dil", subtitle: "İnterfeys dilini seçin", search: "Dil axtar...", current: "Cari dil", popular: "Populyar", all: "Bütün dillər", applied: "Dil dəyişdirildi!" },
     common: { save: "Saxla", cancel: "Ləğv et", loading: "Yüklənir...", error: "Xəta", success: "Uğur", network_error: "Şəbəkə xətası", try_again: "Yenidən cəhd edin", close: "Bağla", search: "Axtar", back: "Geri" },
+    profile: { posts: "Paylaşımlar", followers: "İzləyicilər", following: "İzlənilənlər", go_live: "Canlı yayım", subscription: "Abunəlik", following_btn: "İzlənilir", follow_btn: "İzlə", subscribed: "Abunə", subscribe_btn: "Abunə ol", view: "Bax", no_posts: "Hələ paylaşım yoxdur", no_reels: "Hələ reel yoxdur", live_title: "Canlı yayımı başlat", live_subtitle: "Başlıq daxil edin", start: "Başlat", plans_title: "Abunəlik planları", no_plans: "Hələ plan yoxdur", new_plan: "Yeni plan", create_plan: "Yarat", subscribe_error: "Abunəlik xətası", plans_count: "{{count}} abunəlik planı", subscribers_count: "{{count}} abunə" },
   },
   kk: {
     nav: { home: "Басты бет", explore: "Зерттеу", reels: "Reels", messages: "Хабарлар", groups: "Топтар", notifications: "Хабарландырулар", profile: "Профиль", settings: "Баптаулар", admin: "Әкімші", premium: "Премиум" },
@@ -353,6 +376,7 @@ const t = {
     settings: { title: "Баптаулар", subtitle: "Аккаунтыңызды басқарыңыз", profile: "Профиль", account: "Аккаунт", notifications: "Хабарландырулар", appearance: "Сыртқы түр", privacy: "Құпиялылық", language: "Тіл" },
     lang: { title: "Тіл", subtitle: "Интерфейс тілін таңдаңыз", search: "Тіл іздеу...", current: "Ағымдағы тіл", popular: "Танымал", all: "Барлық тілдер", applied: "Тіл өзгертілді!" },
     common: { save: "Сақтау", cancel: "Болдырмау", loading: "Жүктелуде...", error: "Қате", success: "Сәтті", network_error: "Желі қатесі", try_again: "Қайталап көріңіз", close: "Жабу", search: "Іздеу", back: "Артқа" },
+    profile: { posts: "Жарияланымдар", followers: "Жазылушылар", following: "Кіндек", go_live: "Тікелей эфир", subscription: "Жазылым", following_btn: "Жазылған", follow_btn: "Жазылу", subscribed: "Жазылған", subscribe_btn: "Жазылу", view: "Қарау", no_posts: "Жарияланымдар жоқ", no_reels: "Reels жоқ", live_title: "Тікелей эфир бастау", live_subtitle: "Тақырып енгізу", start: "Бастау", plans_title: "Жазылым жоспарлары", no_plans: "Жоспарлар жоқ", new_plan: "Жаңа жоспар", create_plan: "Жасау", subscribe_error: "Жазылым қатесі", plans_count: "{{count}} жазылым жоспары", subscribers_count: "{{count}} жазылушы" },
   },
   ky: {
     nav: { home: "Башкы бет", explore: "Изилдөө", reels: "Reels", messages: "Билдирүүлөр", groups: "Топтор", notifications: "Эскертмелер", profile: "Профиль", settings: "Жөндөөлөр", admin: "Администратор", premium: "Премиум" },
@@ -361,6 +385,7 @@ const t = {
     settings: { title: "Жөндөөлөр", subtitle: "Аккаунтуңузду башкаруу", profile: "Профиль", account: "Аккаунт", notifications: "Эскертмелер", appearance: "Көрүнүш", privacy: "Купуялуулук", language: "Тил" },
     lang: { title: "Тил", subtitle: "Интерфейс тилин тандаңыз", search: "Тил издөө...", current: "Азыркы тил", popular: "Популярдуу", all: "Бардык тилдер", applied: "Тил өзгөртүлдү!" },
     common: { save: "Сактоо", cancel: "Жокко чыгаруу", loading: "Жүктөлүүдө...", error: "Ката", success: "Ийгилик", network_error: "Тармак катасы", try_again: "Кайра аракет кылыңыз", close: "Жабуу", search: "Издөө", back: "Артка" },
+    profile: { posts: "Жарыялоолор", followers: "Жазылуучулар", following: "Байкалуучулар", go_live: "Түздөн-түз эфир", subscription: "Жазылым", following_btn: "Байкалуу", follow_btn: "Байкоо", subscribed: "Жазылган", subscribe_btn: "Жазылуу", view: "Көрүү", no_posts: "Жарыялоолор жок", no_reels: "Reels жок", live_title: "Эфир баштоо", live_subtitle: "Аталышты киргизиңиз", start: "Баштоо", plans_title: "Жазылым пландары", no_plans: "Пландар жок", new_plan: "Жаңы план", create_plan: "Жасоо", subscribe_error: "Жазылым катасы", plans_count: "{{count}} жазылым планы", subscribers_count: "{{count}} жазылуучу" },
   },
   tk: {
     nav: { home: "Baş sahypa", explore: "Açmak", reels: "Reels", messages: "Habarlar", groups: "Toparlar", notifications: "Habarlamalar", profile: "Profil", settings: "Sazlamalar", admin: "Admin", premium: "Premium" },
@@ -369,6 +394,7 @@ const t = {
     settings: { title: "Sazlamalar", subtitle: "Hasabyňyzy dolandyrmak", profile: "Profil", account: "Hasap", notifications: "Habarlamalar", appearance: "Görnüş", privacy: "Gizlinlik", language: "Dil" },
     lang: { title: "Dil", subtitle: "Interfeýs dilini saýlaň", search: "Dil gözlemek...", current: "Häzirki dil", popular: "Meşhur", all: "Ähli diller", applied: "Dil üýtgedildi!" },
     common: { save: "Saklamak", cancel: "Ýatyrymak", loading: "Ýüklenýär...", error: "Ýalňyşlyk", success: "Üstünlik", network_error: "Tor ýalňyşlygy", try_again: "Täzeden synanyşyň", close: "Ýapmak", search: "Gözlemek", back: "Yza" },
+    profile: { posts: "Paýlaşymlar", followers: "Yzarlaýjylar", following: "Yzarlanylýanlar", go_live: "Göni ýaýlym", subscription: "Abuna", following_btn: "Yzarlanylýar", follow_btn: "Yzarlamak", subscribed: "Abone", subscribe_btn: "Abone bolmak", view: "Görmek", no_posts: "Heniz paýlaşym ýok", no_reels: "Heniz reel ýok", live_title: "Göni ýaýlym başlatmak", live_subtitle: "Başlyk giriziň", start: "Başlatmak", plans_title: "Abuna meýilnamalary", no_plans: "Heniz meýilnama ýok", new_plan: "Täze meýilnama", create_plan: "Döretmek", subscribe_error: "Abuna bolmakdaky ýalňyşlyk", plans_count: "{{count}} abuna meýilnamasy", subscribers_count: "{{count}} abune" },
   },
   tg: {
     nav: { home: "Саҳифаи асосӣ", explore: "Кашф кардан", reels: "Reels", messages: "Паёмҳо", groups: "Гурӯҳҳо", notifications: "Огоҳиҳо", profile: "Профил", settings: "Танзимот", admin: "Маъмур", premium: "Премиум" },
@@ -377,6 +403,7 @@ const t = {
     settings: { title: "Танзимот", subtitle: "Аккаунтатонро идора кунед", profile: "Профил", account: "Аккаунт", notifications: "Огоҳиҳо", appearance: "Намуд", privacy: "Махфият", language: "Забон" },
     lang: { title: "Забон", subtitle: "Забони интерфейсро интихоб кунед", search: "Ҷустуҷӯи забон...", current: "Забони ҷорӣ", popular: "Маъмул", all: "Ҳамаи забонҳо", applied: "Забон тағйир ёфт!" },
     common: { save: "Нигоҳ доштан", cancel: "Бекор кардан", loading: "Бор шудан...", error: "Хато", success: "Муваффақият", network_error: "Хатои шабака", try_again: "Дубора кӯшиш кунед", close: "Бастан", search: "Ҷустуҷӯ", back: "Бозгашт" },
+    profile: { posts: "Нашрияҳо", followers: "Пайравон", following: "Пайравишавандагон", go_live: "Эфири зинда", subscription: "Обуна", following_btn: "Пайравӣ карда истодед", follow_btn: "Пайравӣ кардан", subscribed: "Обунавӣ", subscribe_btn: "Обуна шавед", view: "Дидан", no_posts: "Ҳоло нашрияе нест", no_reels: "Ҳоло реелс нест", live_title: "Эфири зинда оғоз кунед", live_subtitle: "Унвонро ворид кунед", start: "Оғоз", plans_title: "Нақшаҳои обуна", no_plans: "Ҳоло нақша нест", new_plan: "Нақшаи нав", create_plan: "Эҷод", subscribe_error: "Хатои обуна", plans_count: "{{count}} нақшаи обуна", subscribers_count: "{{count}} обунавӣ" },
   },
   mn: {
     nav: { home: "Нүүр", explore: "Судлах", reels: "Reels", messages: "Мессеж", groups: "Бүлгүүд", notifications: "Мэдэгдэл", profile: "Профайл", settings: "Тохиргоо", admin: "Админ", premium: "Премиум" },
@@ -385,6 +412,7 @@ const t = {
     settings: { title: "Тохиргоо", subtitle: "Дансаа удирдах", profile: "Профайл", account: "Данс", notifications: "Мэдэгдэл", appearance: "Харагдах байдал", privacy: "Нууцлал", language: "Хэл" },
     lang: { title: "Хэл", subtitle: "Интерфейсийн хэлийг сонгоно уу", search: "Хэл хайх...", current: "Одоогийн хэл", popular: "Алдартай", all: "Бүх хэлүүд", applied: "Хэл өөрчлөгдлөө!" },
     common: { save: "Хадгалах", cancel: "Цуцлах", loading: "Ачааллаж байна...", error: "Алдаа", success: "Амжилт", network_error: "Сүлжээний алдаа", try_again: "Дахин оролдоно уу", close: "Хаах", search: "Хайх", back: "Буцах" },
+    profile: { posts: "Нийтлэлүүд", followers: "Дагагчид", following: "Дагаж байна", go_live: "Шууд дамжуулалт", subscription: "Бүртгэл", following_btn: "Дагаж байна", follow_btn: "Дагах", subscribed: "Бүртгүүлсэн", subscribe_btn: "Бүртгүүлэх", view: "Харах", no_posts: "Нийтлэл байхгүй", no_reels: "Reels байхгүй", live_title: "Шууд дамжуулалт эхлэх", live_subtitle: "Гарчиг оруулах", start: "Эхлэх", plans_title: "Бүртгэлийн төлөвлөгөө", no_plans: "Төлөвлөгөө байхгүй", new_plan: "Шинэ төлөвлөгөө", create_plan: "Үүсгэх", subscribe_error: "Бүртгэлийн алдаа", plans_count: "{{count}} бүртгэлийн төлөвлөгөө", subscribers_count: "{{count}} дагагч" },
   },
 };
 

@@ -540,18 +540,18 @@ export default function SettingsPage() {
 
           {/* Mobile tab bar */}
           <div className="sm:hidden w-full mb-4">
-            <div className="flex gap-1 overflow-x-auto pb-1">
+            <div className="flex flex-col gap-1">
               {TABS.map(({ id, icon: Icon, label }) => (
                 <button
                   key={id}
                   onClick={() => setActiveTab(id)}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center justify-start gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                     activeTab === id
                       ? "bg-primary/15 text-primary"
                       : "text-muted-foreground hover:bg-muted/50"
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-4 h-4 flex-shrink-0" />
                   {label}
                 </button>
               ))}

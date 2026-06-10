@@ -1,6 +1,6 @@
 // OlCha — Go Real-Time Microservice
-// High-performance WebSocket hub + feed ranking engine
-// Serves: /ws/* (WebSocket), /go/health, /go/rank, /go/trending
+// High-performance WebSocket hub + feed ranking engine + live stream signaling
+// Serves: /go/ws (WebSocket), /go/health, /go/rank, /go/trending, /go/live/rooms
 package main
 
 import (
@@ -68,7 +68,7 @@ func (h *Hub) count() int {
 	return total
 }
 
-func (h *Hub) broadcast(userID int, msg []byte) {
+func (h *Hub) sendTo(userID int, msg []byte) {
 	h.mu.RLock()
 	targets := h.clients[userID]
 	h.mu.RUnlock()
@@ -78,6 +78,10 @@ func (h *Hub) broadcast(userID int, msg []byte) {
 		default:
 		}
 	}
+}
+
+func (h *Hub) broadcast(userID int, msg []byte) {
+	h.sendTo(userID, msg)
 }
 
 func (h *Hub) broadcastAll(msg []byte) {
@@ -93,13 +97,254 @@ func (h *Hub) broadcastAll(msg []byte) {
 	}
 }
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin:     func(r *http.Request) bool { return true },
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+// ─── Live Room Management ─────────────────────────────────────────────────────
+
+type LiveRoom struct {
+	ID        string       `json:"id"`
+	HostID    int          `json:"hostId"`
+	Title     string       `json:"title"`
+	StartedAt time.Time    `json:"startedAt"`
+	ViewerIDs map[int]bool `json:"-"`
+	mu        sync.RWMutex
 }
 
-func serveWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func (r *LiveRoom) addViewer(id int) {
+	r.mu.Lock()
+	r.ViewerIDs[id] = true
+	r.mu.Unlock()
+}
+
+func (r *LiveRoom) removeViewer(id int) {
+	r.mu.Lock()
+	delete(r.ViewerIDs, id)
+	r.mu.Unlock()
+}
+
+func (r *LiveRoom) viewerCount() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return len(r.ViewerIDs)
+}
+
+type LiveHub struct {
+	mu    sync.RWMutex
+	rooms map[string]*LiveRoom
+}
+
+func newLiveHub() *LiveHub {
+	return &LiveHub{rooms: make(map[string]*LiveRoom)}
+}
+
+func (lh *LiveHub) create(roomID string, hostID int, title string) *LiveRoom {
+	room := &LiveRoom{
+		ID:        roomID,
+		HostID:    hostID,
+		Title:     title,
+		StartedAt: time.Now(),
+		ViewerIDs: make(map[int]bool),
+	}
+	lh.mu.Lock()
+	lh.rooms[roomID] = room
+	lh.mu.Unlock()
+	return room
+}
+
+func (lh *LiveHub) get(roomID string) (*LiveRoom, bool) {
+	lh.mu.RLock()
+	defer lh.mu.RUnlock()
+	r, ok := lh.rooms[roomID]
+	return r, ok
+}
+
+func (lh *LiveHub) remove(roomID string) {
+	lh.mu.Lock()
+	delete(lh.rooms, roomID)
+	lh.mu.Unlock()
+}
+
+func (lh *LiveHub) list() []map[string]any {
+	lh.mu.RLock()
+	defer lh.mu.RUnlock()
+	out := make([]map[string]any, 0, len(lh.rooms))
+	for _, r := range lh.rooms {
+		out = append(out, map[string]any{
+			"id":          r.ID,
+			"hostId":      r.HostID,
+			"title":       r.Title,
+			"startedAt":   r.StartedAt,
+			"viewerCount": r.viewerCount(),
+		})
+	}
+	return out
+}
+
+// ─── WebSocket Message Routing ────────────────────────────────────────────────
+
+type WSMessage struct {
+	Type    string          `json:"type"`
+	RoomID  string          `json:"roomId,omitempty"`
+	ToID    int             `json:"toId,omitempty"`
+	Payload json.RawMessage `json:"payload,omitempty"`
+}
+
+func relay(hub *Hub, toID int, msgType string, roomID string, fromID int, payload json.RawMessage) {
+	out, _ := json.Marshal(map[string]any{
+		"type":    msgType,
+		"roomId":  roomID,
+		"fromId":  fromID,
+		"payload": payload,
+		"ts":      time.Now().UnixMilli(),
+	})
+	hub.sendTo(toID, out)
+}
+
+func handleWSMessage(hub *Hub, liveHub *LiveHub, c *Client, raw []byte) {
+	var msg WSMessage
+	if err := json.Unmarshal(raw, &msg); err != nil {
+		return
+	}
+	switch msg.Type {
+
+	case "live_start":
+		var p struct {
+			RoomID string `json:"roomId"`
+			Title  string `json:"title"`
+		}
+		json.Unmarshal(msg.Payload, &p)
+		if p.RoomID == "" {
+			return
+		}
+		liveHub.create(p.RoomID, c.userID, p.Title)
+		ack, _ := json.Marshal(map[string]any{"type": "live_started", "roomId": p.RoomID, "ts": time.Now().UnixMilli()})
+		hub.sendTo(c.userID, ack)
+		log.Info().Str("room", p.RoomID).Int("host", c.userID).Msg("live:started")
+
+	case "live_end":
+		room, ok := liveHub.get(msg.RoomID)
+		if !ok || room.HostID != c.userID {
+			return
+		}
+		ended, _ := json.Marshal(map[string]any{"type": "live_ended", "roomId": msg.RoomID, "ts": time.Now().UnixMilli()})
+		room.mu.RLock()
+		for vid := range room.ViewerIDs {
+			hub.sendTo(vid, ended)
+		}
+		room.mu.RUnlock()
+		liveHub.remove(msg.RoomID)
+		log.Info().Str("room", msg.RoomID).Msg("live:ended")
+
+	case "live_join":
+		room, ok := liveHub.get(msg.RoomID)
+		if !ok {
+			notFound, _ := json.Marshal(map[string]any{"type": "live_not_found", "roomId": msg.RoomID})
+			hub.sendTo(c.userID, notFound)
+			return
+		}
+		room.addViewer(c.userID)
+		viewerJoined, _ := json.Marshal(map[string]any{
+			"type":     "live_viewer_joined",
+			"roomId":   msg.RoomID,
+			"viewerId": c.userID,
+			"viewers":  room.viewerCount(),
+			"ts":       time.Now().UnixMilli(),
+		})
+		hub.sendTo(room.HostID, viewerJoined)
+		joinedAck, _ := json.Marshal(map[string]any{
+			"type":   "live_joined",
+			"roomId": msg.RoomID,
+			"hostId": room.HostID,
+			"ts":     time.Now().UnixMilli(),
+		})
+		hub.sendTo(c.userID, joinedAck)
+		log.Info().Str("room", msg.RoomID).Int("viewer", c.userID).Msg("live:viewer_joined")
+
+	case "live_leave":
+		room, ok := liveHub.get(msg.RoomID)
+		if !ok {
+			return
+		}
+		room.removeViewer(c.userID)
+		viewerLeft, _ := json.Marshal(map[string]any{
+			"type":     "live_viewer_left",
+			"roomId":   msg.RoomID,
+			"viewerId": c.userID,
+			"viewers":  room.viewerCount(),
+			"ts":       time.Now().UnixMilli(),
+		})
+		hub.sendTo(room.HostID, viewerLeft)
+
+	case "live_offer":
+		if msg.ToID == 0 {
+			return
+		}
+		relay(hub, msg.ToID, "live_offer", msg.RoomID, c.userID, msg.Payload)
+
+	case "live_answer":
+		if msg.ToID == 0 {
+			return
+		}
+		relay(hub, msg.ToID, "live_answer", msg.RoomID, c.userID, msg.Payload)
+
+	case "live_ice":
+		if msg.ToID == 0 {
+			return
+		}
+		relay(hub, msg.ToID, "live_ice", msg.RoomID, c.userID, msg.Payload)
+
+	case "live_comment":
+		room, ok := liveHub.get(msg.RoomID)
+		if !ok {
+			return
+		}
+		commentMsg, _ := json.Marshal(map[string]any{
+			"type":    "live_comment",
+			"roomId":  msg.RoomID,
+			"fromId":  c.userID,
+			"payload": msg.Payload,
+			"ts":      time.Now().UnixMilli(),
+		})
+		hub.sendTo(room.HostID, commentMsg)
+		room.mu.RLock()
+		for vid := range room.ViewerIDs {
+			if vid != c.userID {
+				hub.sendTo(vid, commentMsg)
+			}
+		}
+		room.mu.RUnlock()
+
+	case "live_react":
+		room, ok := liveHub.get(msg.RoomID)
+		if !ok {
+			return
+		}
+		reactMsg, _ := json.Marshal(map[string]any{
+			"type":    "live_react",
+			"roomId":  msg.RoomID,
+			"fromId":  c.userID,
+			"payload": msg.Payload,
+			"ts":      time.Now().UnixMilli(),
+		})
+		hub.sendTo(room.HostID, reactMsg)
+		room.mu.RLock()
+		for vid := range room.ViewerIDs {
+			hub.sendTo(vid, reactMsg)
+		}
+		room.mu.RUnlock()
+
+	default:
+		log.Debug().Int("userID", c.userID).Str("type", msg.Type).Msg("ws:unknown_msg")
+	}
+}
+
+// ─── WebSocket Upgrade ────────────────────────────────────────────────────────
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin:     func(r *http.Request) bool { return true },
+	ReadBufferSize:  4096,
+	WriteBufferSize: 4096,
+}
+
+func serveWS(hub *Hub, liveHub *LiveHub, w http.ResponseWriter, r *http.Request) {
 	userIDStr := r.URL.Query().Get("userId")
 	userID, _ := strconv.Atoi(userIDStr)
 
@@ -109,10 +354,9 @@ func serveWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := &Client{userID: userID, conn: conn, send: make(chan []byte, 64)}
+	c := &Client{userID: userID, conn: conn, send: make(chan []byte, 128)}
 	hub.register(c)
 
-	// Writer
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer func() { ticker.Stop(); conn.Close() }()
@@ -136,21 +380,20 @@ func serveWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Reader
 	defer hub.unregister(c)
-	conn.SetReadLimit(4096)
+	conn.SetReadLimit(32768)
 	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	conn.SetPongHandler(func(string) error {
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
 	for {
-		_, msg, err := conn.ReadMessage()
+		_, raw, err := conn.ReadMessage()
 		if err != nil {
 			break
 		}
-		// Echo event back (client can subscribe/unsubscribe rooms)
-		log.Debug().Int("userID", userID).Str("msg", string(msg)).Msg("ws:recv")
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		handleWSMessage(hub, liveHub, c, raw)
 	}
 }
 
@@ -167,31 +410,23 @@ type Post struct {
 	Score     float64   `json:"score"`
 }
 
-// OlCha ranking formula (Wilson score + recency + engagement velocity)
 func rankScore(p Post) float64 {
 	now := time.Now()
 	ageH := now.Sub(p.CreatedAt).Hours()
 	if ageH < 0 {
 		ageH = 0
 	}
-
-	// Engagement signals
 	engagement := float64(p.Likes)*1.0 + float64(p.Comments)*3.0 + float64(p.Shares)*5.0
 	views := math.Max(float64(p.Views), 1)
 	engRate := engagement / views
-
-	// Recency decay: exponential half-life of 12h
 	decay := math.Exp(-0.693 * ageH / 12.0)
-
-	// Wilson lower bound for like ratio
 	n := float64(p.Likes + p.Views)
 	if n < 1 {
 		n = 1
 	}
 	p_hat := float64(p.Likes) / n
-	z := 1.96 // 95% confidence
+	z := 1.96
 	wilson := (p_hat + z*z/(2*n) - z*math.Sqrt((p_hat*(1-p_hat)+z*z/(4*n))/n)) / (1 + z*z/n)
-
 	score := (wilson*0.4 + engRate*0.3 + decay*0.3) * 1000
 	return math.Round(score*100) / 100
 }
@@ -203,12 +438,10 @@ func handleRank(db *sql.DB) http.HandlerFunc {
 			http.Error(w, `{"error":"invalid json"}`, http.StatusBadRequest)
 			return
 		}
-
 		for i := range posts {
 			posts[i].Score = rankScore(posts[i])
 		}
 		sort.Slice(posts, func(i, j int) bool { return posts[i].Score > posts[j].Score })
-
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
 			"ranked": posts,
@@ -221,16 +454,15 @@ func handleRank(db *sql.DB) http.HandlerFunc {
 // ─── Trending Topics ──────────────────────────────────────────────────────────
 
 type Trend struct {
-	Tag    string  `json:"tag"`
-	Count  int     `json:"count"`
-	Score  float64 `json:"score"`
-	Delta  float64 `json:"delta"`
+	Tag   string  `json:"tag"`
+	Count int     `json:"count"`
+	Score float64 `json:"score"`
+	Delta float64 `json:"delta"`
 }
 
 func handleTrending(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if db == nil {
-			// Return mock trending when DB not available
 			trends := []Trend{
 				{Tag: "#OlCha", Count: 4820, Score: 98.2, Delta: 12.4},
 				{Tag: "#TechUz", Count: 3100, Score: 87.5, Delta: 8.1},
@@ -245,7 +477,6 @@ func handleTrending(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(map[string]any{"trending": trends, "engine": "OlCha-Go-TrendV1"})
 			return
 		}
-
 		rows, err := db.Query(`
 			SELECT tag, COUNT(*) as cnt
 			FROM post_hashtags
@@ -257,7 +488,6 @@ func handleTrending(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		defer rows.Close()
-
 		var trends []Trend
 		for rows.Next() {
 			var t Trend
@@ -270,7 +500,7 @@ func handleTrending(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// ─── Stats ────────────────────────────────────────────────────────────────────
+// ─── Stats ─────────────────────────────────────────────────────────────────────
 
 func handleStats(hub *Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -289,7 +519,7 @@ func handleStats(hub *Hub) http.HandlerFunc {
 	}
 }
 
-// ─── Notify endpoint ─────────────────────────────────────────────────────────
+// ─── Notify endpoint ───────────────────────────────────────────────────────────
 
 type NotifyReq struct {
 	UserID  int             `json:"userId"`
@@ -319,9 +549,51 @@ func handleNotify(hub *Hub) http.HandlerFunc {
 	}
 }
 
+// ─── Live Rooms List ───────────────────────────────────────────────────────────
+
+func handleLiveRooms(liveHub *LiveHub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rooms := liveHub.list()
+		if rooms == nil {
+			rooms = []map[string]any{}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"rooms": rooms, "count": len(rooms)})
+	}
+}
+
+// ─── Force-end a live room (called by Express after DB update) ─────────────────
+
+func handleLiveForceEnd(hub *Hub, liveHub *LiveHub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			RoomID string `json:"roomId"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RoomID == "" {
+			http.Error(w, `{"error":"roomId required"}`, http.StatusBadRequest)
+			return
+		}
+		room, ok := liveHub.get(req.RoomID)
+		if !ok {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]any{"ok": true, "note": "room not found"})
+			return
+		}
+		ended, _ := json.Marshal(map[string]any{"type": "live_ended", "roomId": req.RoomID, "ts": time.Now().UnixMilli()})
+		room.mu.RLock()
+		for vid := range room.ViewerIDs {
+			hub.sendTo(vid, ended)
+		}
+		room.mu.RUnlock()
+		liveHub.remove(req.RoomID)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"ok": true})
+	}
+}
+
 var startTime = time.Now()
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Main ──────────────────────────────────────────────────────────────────────
 
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -352,9 +624,9 @@ func main() {
 	}
 
 	hub := newHub()
+	liveHub := newLiveHub()
 	mux := http.NewServeMux()
 
-	// Health
 	mux.HandleFunc("/go/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
@@ -363,22 +635,16 @@ func main() {
 		})
 	})
 
-	// WebSocket
 	mux.HandleFunc("/go/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWS(hub, w, r)
+		serveWS(hub, liveHub, w, r)
 	})
 
-	// Feed ranking
 	mux.HandleFunc("/go/rank", handleRank(db))
-
-	// Trending
 	mux.HandleFunc("/go/trending", handleTrending(db))
-
-	// Real-time notify (called by Node API server)
 	mux.HandleFunc("/go/notify", handleNotify(hub))
-
-	// WS stats
 	mux.HandleFunc("/go/stats", handleStats(hub))
+	mux.HandleFunc("/go/live/rooms", handleLiveRooms(liveHub))
+	mux.HandleFunc("/go/live/end-room", handleLiveForceEnd(hub, liveHub))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
-import { BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon, Camera, Loader2 } from "lucide-react";
-import { useGetUser, useListPosts, useFollowUser, useUpdateUser, getGetUserQueryKey } from "@workspace/api-client-react";
+import { BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon, Camera, Loader2, Radio, Users } from "lucide-react";
+import { useGetUser, useListPosts, useFollowUser, useUpdateUser, getGetUserQueryKey, useListReels, useStartLive } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { useLocation } from "wouter";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -13,15 +14,22 @@ interface ProfilePageProps { userId: number; }
 export default function ProfilePage({ userId }: ProfilePageProps) {
   const { data: user, isLoading } = useGetUser(userId, { query: { queryKey: getGetUserQueryKey(userId) } });
   const { data: posts = [] } = useListPosts({ userId });
+  const { data: reels = [] } = useListReels({ userId });
   const [following, setFollowing] = useState(false);
   const follow = useFollowUser();
   const updateUser = useUpdateUser();
+  const startLive = useStartLive();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"posts" | "reels">("posts");
   const { user: me } = useAuth();
   const isOwner = me?.id === userId;
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [, navigate] = useLocation();
+  const [showGoLive, setShowGoLive] = useState(false);
+  const [liveTitle, setLiveTitle] = useState("");
+  const [liveStarting, setLiveStarting] = useState(false);
+
   const { uploadFile: upAvatar, isUploading: avatarUploading } = useMediaUpload({
     onSuccess: r => updateUser.mutate({ id: userId, data: { avatarUrl: r.serveUrl } }, {
       onSuccess: () => { qc.invalidateQueries({ queryKey: getGetUserQueryKey(userId) }); },
@@ -36,6 +44,17 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const handleFollow = () => {
     setFollowing(!following);
     follow.mutate({ id: userId }, { onSuccess: () => qc.invalidateQueries({ queryKey: getGetUserQueryKey(userId) }) });
+  };
+
+  const handleGoLive = async () => {
+    if (!liveTitle.trim()) return;
+    setLiveStarting(true);
+    try {
+      const stream = await startLive.mutateAsync({ data: { title: liveTitle.trim() } });
+      navigate(`/live/${stream.id}`);
+    } catch {
+      setLiveStarting(false);
+    }
   };
 
   if (isLoading) {
@@ -110,7 +129,21 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             )}
           </div>
           <div className="flex gap-2 pb-1">
-            {userId !== 1 ? (
+            {isOwner ? (
+              <div className="flex gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowGoLive(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors"
+                >
+                  <Radio className="w-4 h-4" />
+                  Jonli Efir
+                </motion.button>
+                <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-muted text-muted-foreground text-sm font-semibold hover:bg-card transition-colors">
+                  <Settings className="w-4 h-4" /> Tahrirlash
+                </button>
+              </div>
+            ) : (
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleFollow}
@@ -120,12 +153,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     : "bg-primary text-primary-foreground hover:opacity-90"
                 }`}
               >
-                {following ? <><UserCheck className="w-4 h-4" /> Following</> : <><UserPlus className="w-4 h-4" /> Follow</>}
+                {following ? <><UserCheck className="w-4 h-4" /> Kuzatmoqda</> : <><UserPlus className="w-4 h-4" /> Kuzatish</>}
               </motion.button>
-            ) : (
-              <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-muted text-muted-foreground text-sm font-semibold hover:bg-card transition-colors">
-                <Settings className="w-4 h-4" /> Edit Profile
-              </button>
             )}
           </div>
         </div>
@@ -142,9 +171,9 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 py-4 border-y border-border mb-5">
           {[
-            { label: "Posts", value: myPosts.length },
-            { label: "Followers", value: user.followersCount },
-            { label: "Following", value: user.followingCount },
+            { label: "Postlar", value: myPosts.length },
+            { label: "Kuzatuvchilar", value: user.followersCount },
+            { label: "Kuzatilmoqda", value: user.followingCount },
           ].map(({ label, value }) => (
             <div key={label} className="text-center">
               <p className="text-xl font-bold text-foreground">{(value ?? 0).toLocaleString()}</p>
@@ -155,46 +184,126 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-4 bg-muted rounded-xl p-1">
-          {([["posts", Grid3X3], ["reels", Play]] as const).map(([t, Icon]) => (
+          {([["posts", Grid3X3, "Postlar"], ["reels", Play, "Reels"]] as const).map(([t, Icon, label]) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all ${tab === t ? "bg-card text-foreground" : "text-muted-foreground"}`}
             >
               <Icon className="w-4 h-4" />
-              {t.charAt(0).toUpperCase() + t.slice(1)}
+              {label}
             </button>
           ))}
         </div>
 
-        {/* Posts grid */}
-        {myPosts.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <BookmarkIcon className="w-8 h-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No posts yet</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-2">
-            {myPosts.map((post, i) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.04 }}
-                className="aspect-square rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/30 transition-colors"
-              >
-                {post.mediaUrl ? (
-                  <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center p-3">
-                    <p className="text-xs text-foreground line-clamp-4 text-center">{post.content}</p>
+        {/* Posts tab */}
+        {tab === "posts" && (
+          myPosts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <BookmarkIcon className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Hali post yo'q</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {myPosts.map((post, i) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="aspect-square rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/30 transition-colors"
+                >
+                  {post.mediaUrl ? (
+                    <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center p-3">
+                      <p className="text-xs text-foreground line-clamp-4 text-center">{post.content}</p>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Reels tab */}
+        {tab === "reels" && (
+          reels.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Play className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Hali reel yo'q</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {reels.map((reel, i) => (
+                <motion.div
+                  key={reel.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="aspect-[9/16] rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/30 transition-colors relative group"
+                >
+                  {reel.thumbnailUrl ? (
+                    <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                  ) : reel.videoUrl ? (
+                    <video src={reel.videoUrl} className="w-full h-full object-cover" muted preload="none"
+                      onMouseEnter={e => (e.target as HTMLVideoElement).play()}
+                      onMouseLeave={e => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center">
+                      <Play className="w-8 h-8 text-primary/40" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Play className="w-8 h-8 text-white fill-white" />
                   </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
+                  <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-xs">
+                    <Play className="w-3 h-3 fill-white" />
+                    {(reel.viewsCount ?? 0) > 1000 ? `${((reel.viewsCount ?? 0) / 1000).toFixed(1)}K` : reel.viewsCount ?? 0}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )
         )}
       </div>
+
+      {/* Go Live modal */}
+      {showGoLive && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card rounded-2xl p-6 w-full max-w-sm border border-border shadow-2xl"
+          >
+            <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
+              <Radio className="w-5 h-5 text-red-500" />
+              Jonli efirni boshlash
+            </h2>
+            <p className="text-xs text-muted-foreground mb-4">Efir nomini kiriting</p>
+            <input
+              value={liveTitle}
+              onChange={e => setLiveTitle(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleGoLive(); }}
+              placeholder="Masalan: Yangi kecha muzikasi 🎵"
+              className="w-full bg-muted rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 ring-red-500 mb-4"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button onClick={() => setShowGoLive(false)}
+                className="flex-1 py-2.5 rounded-xl bg-muted text-muted-foreground font-semibold text-sm hover:bg-muted/70">
+                Bekor
+              </button>
+              <button onClick={handleGoLive} disabled={!liveTitle.trim() || liveStarting}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 disabled:opacity-50 flex items-center justify-center gap-2">
+                {liveStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
+                Boshlash
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,4 +9,5 @@
 export type ListReelsParams = {
 limit?: number;
 offset?: number;
+userId?: number;
 };

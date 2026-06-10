@@ -374,7 +374,8 @@ export const listReelsQueryOffsetDefault = 0;
 
 export const ListReelsQueryParams = zod.object({
   "limit": zod.coerce.number().default(listReelsQueryLimitDefault),
-  "offset": zod.coerce.number().default(listReelsQueryOffsetDefault)
+  "offset": zod.coerce.number().default(listReelsQueryOffsetDefault),
+  "userId": zod.coerce.number().optional()
 })
 
 export const ListReelsResponseItem = zod.object({
@@ -1012,6 +1013,90 @@ export const GetAiSystemStatusResponse = zod.object({
   "accuracy": zod.number(),
   "responseTime": zod.number()
 })).optional()
+})
+
+
+/**
+ * @summary Start a live stream
+ */
+export const StartLiveBody = zod.object({
+  "title": zod.string(),
+  "thumbnailUrl": zod.string().optional()
+})
+
+
+/**
+ * @summary Get active live streams
+ */
+export const ListActiveLivesResponseItem = zod.object({
+  "id": zod.number(),
+  "hostId": zod.number(),
+  "title": zod.string(),
+  "thumbnailUrl": zod.string().nullish(),
+  "status": zod.enum(['active', 'ended']),
+  "viewerCount": zod.number(),
+  "startedAt": zod.string(),
+  "endedAt": zod.string().nullish(),
+  "host": zod.object({
+  "id": zod.number().optional(),
+  "username": zod.string().optional(),
+  "displayName": zod.string().optional(),
+  "avatarUrl": zod.string().nullish(),
+  "isVerified": zod.boolean().optional()
+}).optional()
+})
+export const ListActiveLivesResponse = zod.array(ListActiveLivesResponseItem)
+
+
+/**
+ * @summary Get a live stream by ID
+ */
+export const GetLiveParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLiveResponse = zod.object({
+  "id": zod.number(),
+  "hostId": zod.number(),
+  "title": zod.string(),
+  "thumbnailUrl": zod.string().nullish(),
+  "status": zod.enum(['active', 'ended']),
+  "viewerCount": zod.number(),
+  "startedAt": zod.string(),
+  "endedAt": zod.string().nullish(),
+  "host": zod.object({
+  "id": zod.number().optional(),
+  "username": zod.string().optional(),
+  "displayName": zod.string().optional(),
+  "avatarUrl": zod.string().nullish(),
+  "isVerified": zod.boolean().optional()
+}).optional()
+})
+
+
+/**
+ * @summary End a live stream
+ */
+export const EndLiveParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const EndLiveResponse = zod.object({
+  "id": zod.number(),
+  "hostId": zod.number(),
+  "title": zod.string(),
+  "thumbnailUrl": zod.string().nullish(),
+  "status": zod.enum(['active', 'ended']),
+  "viewerCount": zod.number(),
+  "startedAt": zod.string(),
+  "endedAt": zod.string().nullish(),
+  "host": zod.object({
+  "id": zod.number().optional(),
+  "username": zod.string().optional(),
+  "displayName": zod.string().optional(),
+  "avatarUrl": zod.string().nullish(),
+  "isVerified": zod.boolean().optional()
+}).optional()
 })
 
 

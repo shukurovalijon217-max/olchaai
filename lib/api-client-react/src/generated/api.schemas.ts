@@ -444,6 +444,42 @@ export interface AiSystemStatus {
   metricsHistory?: AiSystemStatusMetricsHistoryItem[];
 }
 
+export interface LiveStreamInput {
+  title: string;
+  thumbnailUrl?: string;
+}
+
+export type LiveStreamStatus = typeof LiveStreamStatus[keyof typeof LiveStreamStatus];
+
+
+export const LiveStreamStatus = {
+  active: 'active',
+  ended: 'ended',
+} as const;
+
+export type LiveStreamHost = {
+  id?: number;
+  username?: string;
+  displayName?: string;
+  /** @nullable */
+  avatarUrl?: string | null;
+  isVerified?: boolean;
+};
+
+export interface LiveStream {
+  id: number;
+  hostId: number;
+  title: string;
+  /** @nullable */
+  thumbnailUrl?: string | null;
+  status: LiveStreamStatus;
+  viewerCount: number;
+  startedAt: string;
+  /** @nullable */
+  endedAt?: string | null;
+  host?: LiveStreamHost;
+}
+
 export interface UploadUrlRequest {
   /** @minLength 1 */
   name: string;
@@ -485,6 +521,7 @@ export const ListPostsType = {
 export type ListReelsParams = {
 limit?: number;
 offset?: number;
+userId?: number;
 };
 
 export type ListGroupsParams = {

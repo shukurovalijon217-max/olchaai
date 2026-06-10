@@ -49,29 +49,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => { fetchMe(); }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await fetch(`${API}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) return { error: data.error ?? "Kirish xatosi" };
-    setUser(data);
-    return {};
+    try {
+      const res = await fetch(`${API}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) return { error: data.error ?? "Kirish xatosi" };
+      setUser(data);
+      return {};
+    } catch {
+      return { error: "Server bilan aloqa xatosi" };
+    }
   };
 
   const register = async (username: string, displayName: string, email: string, password: string) => {
-    const res = await fetch(`${API}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ username, displayName, email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) return { error: data.error ?? "Ro'yxatdan o'tish xatosi" };
-    setUser(data);
-    return {};
+    try {
+      const res = await fetch(`${API}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, displayName, email, password }),
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) return { error: data.error ?? "Ro'yxatdan o'tish xatosi" };
+      setUser(data);
+      return {};
+    } catch {
+      return { error: "Server bilan aloqa xatosi" };
+    }
   };
 
   const logout = async () => {

@@ -47,6 +47,8 @@ import type {
   ListPostsParams,
   ListReelsParams,
   ListUsersParams,
+  LiveStream,
+  LiveStreamInput,
   Message,
   MessageInput,
   ModerationInput,
@@ -3266,6 +3268,301 @@ export function useGetAiSystemStatus<TData = Awaited<ReturnType<typeof getAiSyst
 
 
 
+
+export const getStartLiveUrl = () => {
+
+
+
+
+  return `/api/live/start`
+}
+
+/**
+ * @summary Start a live stream
+ */
+export const startLive = async (liveStreamInput: LiveStreamInput, options?: RequestInit): Promise<LiveStream> => {
+
+  return customFetch<LiveStream>(getStartLiveUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      liveStreamInput,)
+  }
+);}
+
+
+
+
+export const getStartLiveMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startLive>>, TError,{data: BodyType<LiveStreamInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startLive>>, TError,{data: BodyType<LiveStreamInput>}, TContext> => {
+
+const mutationKey = ['startLive'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startLive>>, {data: BodyType<LiveStreamInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  startLive(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartLiveMutationResult = NonNullable<Awaited<ReturnType<typeof startLive>>>
+    export type StartLiveMutationBody = BodyType<LiveStreamInput>
+    export type StartLiveMutationError = ErrorType<void>
+
+    /**
+ * @summary Start a live stream
+ */
+export const useStartLive = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startLive>>, TError,{data: BodyType<LiveStreamInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startLive>>,
+        TError,
+        {data: BodyType<LiveStreamInput>},
+        TContext
+      > => {
+      return useMutation(getStartLiveMutationOptions(options));
+    }
+
+export const getListActiveLivesUrl = () => {
+
+
+
+
+  return `/api/live/active`
+}
+
+/**
+ * @summary Get active live streams
+ */
+export const listActiveLives = async ( options?: RequestInit): Promise<LiveStream[]> => {
+
+  return customFetch<LiveStream[]>(getListActiveLivesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListActiveLivesQueryKey = () => {
+    return [
+    `/api/live/active`
+    ] as const;
+    }
+
+
+export const getListActiveLivesQueryOptions = <TData = Awaited<ReturnType<typeof listActiveLives>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listActiveLives>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListActiveLivesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listActiveLives>>> = ({ signal }) => listActiveLives({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listActiveLives>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListActiveLivesQueryResult = NonNullable<Awaited<ReturnType<typeof listActiveLives>>>
+export type ListActiveLivesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get active live streams
+ */
+
+export function useListActiveLives<TData = Awaited<ReturnType<typeof listActiveLives>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listActiveLives>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListActiveLivesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetLiveUrl = (id: number,) => {
+
+
+
+
+  return `/api/live/${id}`
+}
+
+/**
+ * @summary Get a live stream by ID
+ */
+export const getLive = async (id: number, options?: RequestInit): Promise<LiveStream> => {
+
+  return customFetch<LiveStream>(getGetLiveUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLiveQueryKey = (id: number,) => {
+    return [
+    `/api/live/${id}`
+    ] as const;
+    }
+
+
+export const getGetLiveQueryOptions = <TData = Awaited<ReturnType<typeof getLive>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLive>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLiveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLive>>> = ({ signal }) => getLive(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLive>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLiveQueryResult = NonNullable<Awaited<ReturnType<typeof getLive>>>
+export type GetLiveQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a live stream by ID
+ */
+
+export function useGetLive<TData = Awaited<ReturnType<typeof getLive>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLive>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLiveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getEndLiveUrl = (id: number,) => {
+
+
+
+
+  return `/api/live/${id}/end`
+}
+
+/**
+ * @summary End a live stream
+ */
+export const endLive = async (id: number, options?: RequestInit): Promise<LiveStream> => {
+
+  return customFetch<LiveStream>(getEndLiveUrl(id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+export const getEndLiveMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof endLive>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof endLive>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['endLive'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof endLive>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  endLive(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EndLiveMutationResult = NonNullable<Awaited<ReturnType<typeof endLive>>>
+
+    export type EndLiveMutationError = ErrorType<void>
+
+    /**
+ * @summary End a live stream
+ */
+export const useEndLive = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof endLive>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof endLive>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getEndLiveMutationOptions(options));
+    }
 
 export const getRequestUploadUrlUrl = () => {
 

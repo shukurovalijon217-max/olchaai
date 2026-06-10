@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Home, Play, Compass, MessageCircle, Users, Bell,
-  User, ShieldCheck, LogOut, Crown, Settings, Wallet
+  User, ShieldCheck, LogOut, Crown, Settings, Wallet, Radio
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import { useAuth } from "@/context/AuthContext";
@@ -11,6 +11,7 @@ const nav = [
   { href: "/", icon: Home, label: "Feed" },
   { href: "/reels", icon: Play, label: "Reels" },
   { href: "/explore", icon: Compass, label: "Explore" },
+  { href: "/live-explore", icon: Radio, label: "Jonli Efir" },
   { href: "/messages", icon: MessageCircle, label: "Messages" },
   { href: "/groups", icon: Users, label: "Jamoalar" },
   { href: "/notifications", icon: Bell, label: "Bildirishnomalar" },

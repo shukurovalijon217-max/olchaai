@@ -19,6 +19,8 @@ import SettingsPage from "@/pages/SettingsPage";
 import PostDetailPage from "@/pages/PostDetailPage";
 import LoginPage from "@/pages/LoginPage";
 import WalletPage from "@/pages/WalletPage";
+import LivePage from "@/pages/LivePage";
+import LiveExplorePage from "@/pages/LiveExplorePage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -111,6 +113,12 @@ function Router() {
       )} />
       <Route path="/wallet" component={() => (
         <ProtectedRoute><Layout><WalletPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/live/:id" component={({ params }) => (
+        <ProtectedRoute><LivePage liveId={Number(params.id)} /></ProtectedRoute>
+      )} />
+      <Route path="/live-explore" component={() => (
+        <ProtectedRoute><Layout><LiveExplorePage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

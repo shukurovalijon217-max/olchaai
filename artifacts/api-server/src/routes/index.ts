@@ -16,6 +16,7 @@ import moderationRouter from "./moderation";
 import goRouter from "./go";
 import mediaRouter from "./media";
 import walletRouter from "./wallet";
+import liveRouter from "./live";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(moderationRouter);
 router.use("/go", goRouter);
 router.use("/media", mediaRouter);
 router.use(walletRouter);
+router.use(liveRouter);
 
 export default router;

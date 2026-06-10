@@ -20,7 +20,11 @@ router.get("/reels", async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 10, 50);
     const offset = Number(req.query.offset) || 0;
-    const reels = await db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(limit).offset(offset);
+    const userId = req.query.userId ? Number(req.query.userId) : null;
+    const query = db.select().from(reelsTable);
+    const reels = await (userId
+      ? query.where(eq(reelsTable.authorId, userId)).orderBy(desc(reelsTable.createdAt)).limit(limit).offset(offset)
+      : query.orderBy(desc(reelsTable.viewsCount)).limit(limit).offset(offset));
     const enriched = await Promise.all(reels.map(r => enrichReel(r)));
     res.json(enriched);
   } catch (err) {

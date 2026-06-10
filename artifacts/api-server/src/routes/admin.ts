@@ -161,6 +161,18 @@ router.get("/admin/ai-system", async (req, res) => {
   }
 });
 
+// PATCH /admin/users/:id/toggle-premium — premium berish/olish
+router.patch("/admin/users/:id/toggle-premium", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const [existing] = await db.select({ isPremium: usersTable.isPremium }).from(usersTable).where(eq(usersTable.id, id));
+    if (!existing) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
+    const [user] = await db.update(usersTable).set({ isPremium: !existing.isPremium }).where(eq(usersTable.id, id)).returning();
+    const [counts] = await db.select({ postsCount: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id));
+    res.json({ ...user, postsCount: counts?.postsCount ?? 0, followersCount: 0, lastSeen: user.createdAt.toISOString() });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
+});
+
 // PATCH /admin/users/:id/verify — verified badge berish/olish
 router.patch("/admin/users/:id/verify", async (req, res) => {
   try {

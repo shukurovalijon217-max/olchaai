@@ -11,6 +11,7 @@ import {
 import {
   useGetAdminDashboard, useAdminListUsers, useAdminListContent,
   useGetAdminAnalytics, useGetAiSystemStatus, useSuspendUser,
+  useTogglePremium,
   getAdminListUsersQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -741,10 +742,17 @@ export default function AdminPage() {
   const { data: analytics } = useGetAdminAnalytics({ period: "7d" });
   const { data: aiStatus } = useGetAiSystemStatus();
   const suspend = useSuspendUser();
+  const togglePremium = useTogglePremium();
   const qc = useQueryClient();
 
   const handleSuspend = (id: number, isSuspended: boolean) => {
     suspend.mutate({ id, data: { suspend: !isSuspended } }, {
+      onSuccess: () => qc.invalidateQueries({ queryKey: getAdminListUsersQueryKey() }),
+    });
+  };
+
+  const handleTogglePremium = (id: number) => {
+    togglePremium.mutate({ id }, {
       onSuccess: () => qc.invalidateQueries({ queryKey: getAdminListUsersQueryKey() }),
     });
   };
@@ -862,7 +870,7 @@ export default function AdminPage() {
               <table className="w-full min-w-[700px]">
                 <thead>
                   <tr className="border-b border-border">
-                    {["Foydalanuvchi", "Status", "Verified", "Admin", "Qo'shilgan", "Amallar"].map(h => (
+                    {["Foydalanuvchi", "Status", "Verified", "Admin", "Premium", "Qo'shilgan", "Amallar"].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
@@ -877,6 +885,7 @@ export default function AdminPage() {
                             <p className="text-sm font-semibold text-foreground">{user.displayName}</p>
                             {user.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-primary" />}
                             {user.isAdmin && <Crown className="w-3.5 h-3.5 text-amber-400" />}
+                            {user.isPremium && <Zap className="w-3.5 h-3.5 text-yellow-400" />}
                           </div>
                           <p className="text-xs text-muted-foreground">@{user.username}</p>
                         </div>
@@ -899,6 +908,11 @@ export default function AdminPage() {
                           {user.isAdmin ? "✓ Ha" : "Yo'q"}
                         </span>
                       </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`flex items-center gap-1 ${user.isPremium ? "text-yellow-400 font-semibold" : "text-muted-foreground"}`}>
+                          {user.isPremium ? <><Zap className="w-3.5 h-3.5" /> Ha</> : "Yo'q"}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(user.createdAt).toLocaleDateString("uz-UZ")}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -910,6 +924,15 @@ export default function AdminPage() {
                             }`}>
                             <UserX className="w-3 h-3" />
                             {user.status === "suspended" ? "Tiklash" : "Bloklash"}
+                          </button>
+                          <button onClick={() => handleTogglePremium(user.id)}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                              user.isPremium
+                                ? "bg-yellow-400/20 text-yellow-400 hover:bg-yellow-400/30"
+                                : "bg-muted text-muted-foreground hover:bg-muted/70"
+                            }`}>
+                            <Zap className="w-3 h-3" />
+                            {user.isPremium ? "Premium olish" : "Premium berish"}
                           </button>
                           <button onClick={() => handleVerify(user.id)}
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${

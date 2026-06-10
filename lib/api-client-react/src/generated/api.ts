@@ -2880,6 +2880,76 @@ export function useAdminListUsers<TData = Awaited<ReturnType<typeof adminListUse
 
 
 
+export const getTogglePremiumUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/users/${id}/toggle-premium`
+}
+
+/**
+ * @summary Grant or revoke premium access for a user
+ */
+export const togglePremium = async (id: number, options?: RequestInit): Promise<AdminUser> => {
+
+  return customFetch<AdminUser>(getTogglePremiumUrl(id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+export const getTogglePremiumMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof togglePremium>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof togglePremium>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['togglePremium'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof togglePremium>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  togglePremium(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TogglePremiumMutationResult = NonNullable<Awaited<ReturnType<typeof togglePremium>>>
+
+    export type TogglePremiumMutationError = ErrorType<void>
+
+    /**
+ * @summary Grant or revoke premium access for a user
+ */
+export const useTogglePremium = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof togglePremium>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof togglePremium>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getTogglePremiumMutationOptions(options));
+    }
+
 export const getSuspendUserUrl = (id: number,) => {
 
 

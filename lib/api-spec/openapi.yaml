@@ -712,6 +712,26 @@ paths:
                 items:
                   $ref: "#/components/schemas/AdminUser"
 
+  /admin/users/{id}/toggle-premium:
+    patch:
+      operationId: togglePremium
+      tags: [admin]
+      summary: Grant or revoke premium access for a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "404":
+          description: User not found
+
   /admin/users/{id}/suspend:
     post:
       operationId: suspendUser
@@ -1189,6 +1209,7 @@ components:
         followersCount: { type: integer }
         isVerified: { type: boolean }
         isAdmin: { type: boolean }
+        isPremium: { type: boolean }
         lastSeen: { type: ["string", "null"] }
         createdAt: { type: string }
 

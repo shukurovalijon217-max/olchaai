@@ -357,6 +357,7 @@ export interface AdminUser {
   followersCount: number;
   isVerified?: boolean;
   isAdmin?: boolean;
+  isPremium?: boolean;
   /** @nullable */
   lastSeen?: string | null;
   createdAt: string;

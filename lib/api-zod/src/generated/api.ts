@@ -853,10 +853,34 @@ export const AdminListUsersResponseItem = zod.object({
   "followersCount": zod.number(),
   "isVerified": zod.boolean().optional(),
   "isAdmin": zod.boolean().optional(),
+  "isPremium": zod.boolean().optional(),
   "lastSeen": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const AdminListUsersResponse = zod.array(AdminListUsersResponseItem)
+
+
+/**
+ * @summary Grant or revoke premium access for a user
+ */
+export const TogglePremiumParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const TogglePremiumResponse = zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "email": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
+  "postsCount": zod.number(),
+  "followersCount": zod.number(),
+  "isVerified": zod.boolean().optional(),
+  "isAdmin": zod.boolean().optional(),
+  "isPremium": zod.boolean().optional(),
+  "lastSeen": zod.string().nullish(),
+  "createdAt": zod.string()
+})
 
 
 /**
@@ -881,6 +905,7 @@ export const SuspendUserResponse = zod.object({
   "followersCount": zod.number(),
   "isVerified": zod.boolean().optional(),
   "isAdmin": zod.boolean().optional(),
+  "isPremium": zod.boolean().optional(),
   "lastSeen": zod.string().nullish(),
   "createdAt": zod.string()
 })

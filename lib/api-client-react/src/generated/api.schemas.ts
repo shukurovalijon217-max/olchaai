@@ -549,6 +549,130 @@ export interface UploadUrlResponse {
   metadata?: UploadUrlRequest;
 }
 
+export type SearchResultsUsersItem = { [key: string]: unknown };
+
+export type SearchResultsPostsItem = { [key: string]: unknown };
+
+export type SearchResultsReelsItem = { [key: string]: unknown };
+
+export type SearchResultsProductsItem = { [key: string]: unknown };
+
+export interface SearchResults {
+  query?: string;
+  users?: SearchResultsUsersItem[];
+  posts?: SearchResultsPostsItem[];
+  reels?: SearchResultsReelsItem[];
+  products?: SearchResultsProductsItem[];
+}
+
+export interface MarketplaceCategory {
+  id: string;
+  label: string;
+}
+
+export type ProductSeller = {
+  id?: number;
+  displayName?: string;
+  username?: string;
+  avatarUrl?: string | null;
+  isVerified?: boolean | null;
+} | null;
+
+export interface Product {
+  id: number;
+  sellerId: number;
+  title: string;
+  description?: string | null;
+  price: number;
+  originalPrice?: number | null;
+  category: string;
+  condition: string;
+  mediaUrls?: string[];
+  thumbnailUrl?: string | null;
+  status: string;
+  stock: number;
+  location?: string | null;
+  tags?: string[];
+  viewsCount: number;
+  ordersCount: number;
+  rating: number;
+  reviewsCount: number;
+  createdAt: string;
+  seller?: ProductSeller;
+}
+
+export interface ProductInput {
+  title: string;
+  description?: string;
+  price: number;
+  originalPrice?: number;
+  category?: string;
+  condition?: string;
+  mediaUrls?: string[];
+  thumbnailUrl?: string;
+  stock?: number;
+  location?: string;
+  tags?: string[];
+  status?: string;
+}
+
+export interface BuyProductInput {
+  quantity?: number;
+  deliveryMethod?: string;
+  deliveryAddress?: string;
+  notes?: string;
+}
+
+export type ProductOrderProduct = {
+  id?: number;
+  title?: string;
+  thumbnailUrl?: string | null;
+} | null;
+
+export interface ProductOrder {
+  id: number;
+  buyerId: number;
+  sellerId: number;
+  productId: number;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  status: string;
+  deliveryMethod?: string;
+  deliveryAddress?: string | null;
+  notes?: string | null;
+  trackingInfo?: string | null;
+  createdAt: string;
+  product?: ProductOrderProduct;
+}
+
+export type ProductReviewReviewer = {
+  id?: number;
+  displayName?: string;
+  avatarUrl?: string | null;
+} | null;
+
+export interface ProductReview {
+  id: number;
+  reviewerId: number;
+  productId: number;
+  orderId?: number | null;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+  reviewer?: ProductReviewReviewer;
+}
+
+export interface ProductReviewInput {
+  rating: number;
+  comment?: string;
+  orderId?: number;
+}
+
+export interface UpdateOrderStatusInput {
+  status: string;
+}
+
 export type ListUsersParams = {
 search?: string;
 limit?: number;
@@ -662,4 +786,55 @@ export type ListMySubscribers200 = {
 export type CheckCreatorSubscription200 = {
   isSubscribed?: boolean;
 };
+
+export type SearchAllParams = {
+q: string;
+type?: SearchAllType;
+limit?: number;
+};
+
+export type SearchAllType = typeof SearchAllType[keyof typeof SearchAllType];
+
+
+export const SearchAllType = {
+  all: 'all',
+  users: 'users',
+  posts: 'posts',
+  reels: 'reels',
+  products: 'products',
+} as const;
+
+export type ListProductsParams = {
+q?: string;
+category?: string;
+condition?: string;
+minPrice?: number;
+maxPrice?: number;
+sellerId?: number;
+sort?: string;
+limit?: number;
+offset?: number;
+};
+
+export type ListProducts200 = {
+  products?: Product[];
+  total?: number;
+};
+
+export type BuyProduct201 = {
+  order?: ProductOrder;
+  newBalance?: number;
+};
+
+export type ListOrdersParams = {
+role?: ListOrdersRole;
+};
+
+export type ListOrdersRole = typeof ListOrdersRole[keyof typeof ListOrdersRole];
+
+
+export const ListOrdersRole = {
+  buyer: 'buyer',
+  seller: 'seller',
+} as const;
 

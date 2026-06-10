@@ -21,6 +21,11 @@ import LoginPage from "@/pages/LoginPage";
 import WalletPage from "@/pages/WalletPage";
 import LivePage from "@/pages/LivePage";
 import LiveExplorePage from "@/pages/LiveExplorePage";
+import SearchPage from "@/pages/SearchPage";
+import MarketplacePage from "@/pages/MarketplacePage";
+import ProductDetailPage from "@/pages/ProductDetailPage";
+import SellPage from "@/pages/SellPage";
+import MyShopPage from "@/pages/MyShopPage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -119,6 +124,21 @@ function Router() {
       )} />
       <Route path="/live-explore" component={() => (
         <ProtectedRoute><Layout><LiveExplorePage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/search" component={() => (
+        <ProtectedRoute><Layout><SearchPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/bozor/sotish" component={() => (
+        <ProtectedRoute><Layout><SellPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/bozor/do-kon" component={() => (
+        <ProtectedRoute><Layout><MyShopPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/bozor/:id" component={({ params }) => (
+        <ProtectedRoute><Layout><ProductDetailPage productId={Number(params.id)} /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/bozor" component={() => (
+        <ProtectedRoute><Layout><MarketplacePage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

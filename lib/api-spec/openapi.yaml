@@ -19,6 +19,10 @@ tags:
   - name: admin
   - name: storage
   - name: live
+  - name: search
+  - name: marketplace
+  - name: gifts
+  - name: creator
 
 paths:
   /healthz:
@@ -1096,6 +1100,285 @@ paths:
                 properties:
                   isSubscribed: { type: boolean }
 
+  /search:
+    get:
+      operationId: searchAll
+      tags: [search]
+      summary: Search users, posts, reels, and products
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema: { type: string }
+        - in: query
+          name: type
+          schema: { type: string, enum: [all, users, posts, reels, products] }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResults"
+
+  /marketplace/categories:
+    get:
+      operationId: listMarketplaceCategories
+      tags: [marketplace]
+      summary: Get product categories
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketplaceCategory"
+
+  /marketplace/products:
+    get:
+      operationId: listProducts
+      tags: [marketplace]
+      summary: List marketplace products
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: condition
+          schema: { type: string }
+        - in: query
+          name: minPrice
+          schema: { type: integer }
+        - in: query
+          name: maxPrice
+          schema: { type: integer }
+        - in: query
+          name: sellerId
+          schema: { type: integer }
+        - in: query
+          name: sort
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: offset
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  total: { type: integer }
+    post:
+      operationId: createProduct
+      tags: [marketplace]
+      summary: Create a product listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /marketplace/products/my:
+    get:
+      operationId: listMyProducts
+      tags: [marketplace]
+      summary: Get my product listings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+  /marketplace/products/{id}:
+    get:
+      operationId: getProduct
+      tags: [marketplace]
+      summary: Get a product by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    patch:
+      operationId: updateProduct
+      tags: [marketplace]
+      summary: Update a product listing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [marketplace]
+      summary: Delete a product listing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+
+  /marketplace/products/{id}/buy:
+    post:
+      operationId: buyProduct
+      tags: [marketplace]
+      summary: Buy a product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuyProductInput"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order:
+                    $ref: "#/components/schemas/ProductOrder"
+                  newBalance: { type: integer }
+
+  /marketplace/products/{id}/reviews:
+    get:
+      operationId: listProductReviews
+      tags: [marketplace]
+      summary: Get product reviews
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductReview"
+    post:
+      operationId: createProductReview
+      tags: [marketplace]
+      summary: Add a product review
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductReviewInput"
+      responses:
+        "201":
+          description: Review created
+
+  /marketplace/orders:
+    get:
+      operationId: listOrders
+      tags: [marketplace]
+      summary: Get my orders
+      parameters:
+        - in: query
+          name: role
+          schema: { type: string, enum: [buyer, seller] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductOrder"
+
+  /marketplace/orders/{id}/status:
+    patch:
+      operationId: updateOrderStatus
+      tags: [marketplace]
+      summary: Update order status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrderStatusInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductOrder"
+
   /storage/uploads/request-url:
     post:
       tags: [storage]
@@ -1694,3 +1977,151 @@ components:
           type: string
         metadata:
           $ref: '#/components/schemas/UploadUrlRequest'
+
+    SearchResults:
+      type: object
+      properties:
+        query: { type: string }
+        users:
+          type: array
+          items: { type: object }
+        posts:
+          type: array
+          items: { type: object }
+        reels:
+          type: array
+          items: { type: object }
+        products:
+          type: array
+          items: { type: object }
+
+    MarketplaceCategory:
+      type: object
+      required: [id, label]
+      properties:
+        id: { type: string }
+        label: { type: string }
+
+    Product:
+      type: object
+      required: [id, sellerId, title, price, category, condition, status, stock, viewsCount, ordersCount, rating, reviewsCount, createdAt]
+      properties:
+        id: { type: integer }
+        sellerId: { type: integer }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        price: { type: integer }
+        originalPrice: { type: integer, nullable: true }
+        category: { type: string }
+        condition: { type: string }
+        mediaUrls:
+          type: array
+          items: { type: string }
+        thumbnailUrl: { type: string, nullable: true }
+        status: { type: string }
+        stock: { type: integer }
+        location: { type: string, nullable: true }
+        tags:
+          type: array
+          items: { type: string }
+        viewsCount: { type: integer }
+        ordersCount: { type: integer }
+        rating: { type: integer }
+        reviewsCount: { type: integer }
+        createdAt: { type: string }
+        seller:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer }
+            displayName: { type: string }
+            username: { type: string }
+            avatarUrl: { type: string, nullable: true }
+            isVerified: { type: boolean, nullable: true }
+
+    ProductInput:
+      type: object
+      required: [title, price]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        price: { type: integer }
+        originalPrice: { type: integer }
+        category: { type: string }
+        condition: { type: string }
+        mediaUrls:
+          type: array
+          items: { type: string }
+        thumbnailUrl: { type: string }
+        stock: { type: integer }
+        location: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        status: { type: string }
+
+    BuyProductInput:
+      type: object
+      properties:
+        quantity: { type: integer }
+        deliveryMethod: { type: string }
+        deliveryAddress: { type: string }
+        notes: { type: string }
+
+    ProductOrder:
+      type: object
+      required: [id, buyerId, sellerId, productId, quantity, unitPrice, totalPrice, status, createdAt]
+      properties:
+        id: { type: integer }
+        buyerId: { type: integer }
+        sellerId: { type: integer }
+        productId: { type: integer }
+        quantity: { type: integer }
+        unitPrice: { type: integer }
+        totalPrice: { type: integer }
+        status: { type: string }
+        deliveryMethod: { type: string }
+        deliveryAddress: { type: string, nullable: true }
+        notes: { type: string, nullable: true }
+        trackingInfo: { type: string, nullable: true }
+        createdAt: { type: string }
+        product:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer }
+            title: { type: string }
+            thumbnailUrl: { type: string, nullable: true }
+
+    ProductReview:
+      type: object
+      required: [id, reviewerId, productId, rating, createdAt]
+      properties:
+        id: { type: integer }
+        reviewerId: { type: integer }
+        productId: { type: integer }
+        orderId: { type: integer, nullable: true }
+        rating: { type: integer }
+        comment: { type: string, nullable: true }
+        createdAt: { type: string }
+        reviewer:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer }
+            displayName: { type: string }
+            avatarUrl: { type: string, nullable: true }
+
+    ProductReviewInput:
+      type: object
+      required: [rating]
+      properties:
+        rating: { type: integer }
+        comment: { type: string }
+        orderId: { type: integer }
+
+    UpdateOrderStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string }

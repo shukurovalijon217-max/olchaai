@@ -19,6 +19,8 @@ import walletRouter from "./wallet";
 import liveRouter from "./live";
 import giftsRouter from "./gifts";
 import creatorRouter from "./creator";
+import searchRouter from "./search";
+import marketplaceRouter from "./marketplace";
 
 const router: IRouter = Router();
 
@@ -42,5 +44,7 @@ router.use(walletRouter);
 router.use(liveRouter);
 router.use(giftsRouter);
 router.use(creatorRouter);
+router.use(searchRouter);
+router.use(marketplaceRouter);
 
 export default router;

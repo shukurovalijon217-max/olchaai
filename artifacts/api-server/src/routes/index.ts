@@ -21,6 +21,8 @@ import giftsRouter from "./gifts";
 import creatorRouter from "./creator";
 import searchRouter from "./search";
 import marketplaceRouter from "./marketplace";
+import openaiChatRouter from "./openai-chat";
+import libraryRouter from "./library";
 
 const router: IRouter = Router();
 
@@ -46,5 +48,7 @@ router.use(giftsRouter);
 router.use(creatorRouter);
 router.use(searchRouter);
 router.use(marketplaceRouter);
+router.use(openaiChatRouter);
+router.use(libraryRouter);
 
 export default router;

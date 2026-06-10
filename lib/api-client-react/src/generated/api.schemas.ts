@@ -254,6 +254,60 @@ export interface JoinResult {
   membersCount: number;
 }
 
+export interface LiveGiftInput {
+  giftType: string;
+}
+
+export interface LiveGift {
+  id: number;
+  liveStreamId: number;
+  senderId: number;
+  receiverId: number;
+  giftType: string;
+  giftEmoji: string;
+  coinValue: number;
+  createdAt: string;
+}
+
+export interface GiftCatalogItem {
+  type: string;
+  emoji: string;
+  value: number;
+  label: string;
+}
+
+export interface CreatorPlan {
+  id: number;
+  creatorId: number;
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  price: number;
+  perks?: string[];
+  isActive: boolean;
+  subscriberCount: number;
+  createdAt: string;
+}
+
+export interface CreatorPlanInput {
+  name: string;
+  description?: string;
+  price: number;
+  perks?: string[];
+}
+
+export interface CreatorSubscription {
+  id: number;
+  subscriberId: number;
+  creatorId: number;
+  planId: number;
+  status: string;
+  startedAt: string;
+  expiresAt: string;
+  lastPaymentAt?: string;
+  nextPaymentAt?: string;
+}
+
 export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
 
 
@@ -584,4 +638,28 @@ export const GetAdminAnalyticsPeriod = {
   '30d': '30d',
   '90d': '90d',
 } as const;
+
+export type SendLiveGift200 = {
+  ok?: boolean;
+  newBalance?: number;
+};
+
+export type ListLiveGifts200 = {
+  gifts?: LiveGift[];
+  totalValue?: number;
+};
+
+export type SubscribeToCreator201 = {
+  subscription?: CreatorSubscription;
+  newBalance?: number;
+};
+
+export type ListMySubscribers200 = {
+  subscribers?: CreatorSubscription[];
+  count?: number;
+};
+
+export type CheckCreatorSubscription200 = {
+  isSubscribed?: boolean;
+};
 

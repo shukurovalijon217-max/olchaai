@@ -897,6 +897,205 @@ paths:
         "403":
           description: Forbidden
 
+  /live/{id}/gift:
+    post:
+      operationId: sendLiveGift
+      tags: [live]
+      summary: Send a gift during a live stream
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LiveGiftInput"
+      responses:
+        "200":
+          description: Gift sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  newBalance: { type: integer }
+        "400":
+          description: Insufficient balance
+
+  /live/{id}/gifts:
+    get:
+      operationId: listLiveGifts
+      tags: [live]
+      summary: Get gifts leaderboard for a live stream
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gifts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LiveGift"
+                  totalValue: { type: integer }
+
+  /gifts/catalog:
+    get:
+      operationId: listGiftCatalog
+      tags: [gifts]
+      summary: Get the gift catalog
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GiftCatalogItem"
+
+  /creator/plans:
+    post:
+      operationId: createCreatorPlan
+      tags: [creator]
+      summary: Create a subscription plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatorPlanInput"
+      responses:
+        "201":
+          description: Plan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatorPlan"
+
+  /creator/plans/{creatorId}:
+    get:
+      operationId: listCreatorPlans
+      tags: [creator]
+      summary: Get subscription plans for a creator
+      parameters:
+        - in: path
+          name: creatorId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CreatorPlan"
+
+  /creator/subscribe/{planId}:
+    post:
+      operationId: subscribeToCreator
+      tags: [creator]
+      summary: Subscribe to a creator plan
+      parameters:
+        - in: path
+          name: planId
+          required: true
+          schema: { type: integer }
+      responses:
+        "201":
+          description: Subscribed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription:
+                    $ref: "#/components/schemas/CreatorSubscription"
+                  newBalance: { type: integer }
+        "400":
+          description: Insufficient balance
+        "409":
+          description: Already subscribed
+    delete:
+      operationId: unsubscribeFromCreator
+      tags: [creator]
+      summary: Cancel a creator subscription
+      parameters:
+        - in: path
+          name: planId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Cancelled
+
+  /creator/subscriptions:
+    get:
+      operationId: listMySubscriptions
+      tags: [creator]
+      summary: Get my active subscriptions
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CreatorSubscription"
+
+  /creator/subscribers:
+    get:
+      operationId: listMySubscribers
+      tags: [creator]
+      summary: Get my subscribers (as creator)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscribers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CreatorSubscription"
+                  count: { type: integer }
+
+  /creator/check-subscription/{creatorId}:
+    get:
+      operationId: checkCreatorSubscription
+      tags: [creator]
+      summary: Check if I am subscribed to a creator
+      parameters:
+        - in: path
+          name: creatorId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isSubscribed: { type: boolean }
+
   /storage/uploads/request-url:
     post:
       tags: [storage]
@@ -1176,6 +1375,77 @@ components:
       properties:
         joined: { type: boolean }
         membersCount: { type: integer }
+
+    # ── Live Gifts ────────────────────────────────────────────────────────────
+    LiveGiftInput:
+      type: object
+      required: [giftType]
+      properties:
+        giftType: { type: string }
+
+    LiveGift:
+      type: object
+      required: [id, liveStreamId, senderId, receiverId, giftType, giftEmoji, coinValue, createdAt]
+      properties:
+        id: { type: integer }
+        liveStreamId: { type: integer }
+        senderId: { type: integer }
+        receiverId: { type: integer }
+        giftType: { type: string }
+        giftEmoji: { type: string }
+        coinValue: { type: integer }
+        createdAt: { type: string }
+
+    GiftCatalogItem:
+      type: object
+      required: [type, emoji, value, label]
+      properties:
+        type: { type: string }
+        emoji: { type: string }
+        value: { type: integer }
+        label: { type: string }
+
+    # ── Creator ───────────────────────────────────────────────────────────────
+    CreatorPlan:
+      type: object
+      required: [id, creatorId, name, price, isActive, subscriberCount, createdAt]
+      properties:
+        id: { type: integer }
+        creatorId: { type: integer }
+        name: { type: string }
+        description: { type: ["string", "null"] }
+        price: { type: integer }
+        perks:
+          type: array
+          items: { type: string }
+        isActive: { type: boolean }
+        subscriberCount: { type: integer }
+        createdAt: { type: string }
+
+    CreatorPlanInput:
+      type: object
+      required: [name, price]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        price: { type: integer }
+        perks:
+          type: array
+          items: { type: string }
+
+    CreatorSubscription:
+      type: object
+      required: [id, subscriberId, creatorId, planId, status, startedAt, expiresAt]
+      properties:
+        id: { type: integer }
+        subscriberId: { type: integer }
+        creatorId: { type: integer }
+        planId: { type: integer }
+        status: { type: string }
+        startedAt: { type: string }
+        expiresAt: { type: string }
+        lastPaymentAt: { type: string }
+        nextPaymentAt: { type: string }
 
     # ── Notification ──────────────────────────────────────────────────────────
     Notification:

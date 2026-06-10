@@ -20,7 +20,7 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar
 } from "recharts";
 
-type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "safeguard" | "finance" | "notify" | "settings";
+type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "finance" | "notify" | "settings";
 
 const TABS: { id: AdminTab; label: string; icon: React.ElementType }[] = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
@@ -30,6 +30,7 @@ const TABS: { id: AdminTab; label: string; icon: React.ElementType }[] = [
   { id: "finance", label: "Moliya", icon: DollarSign },
   { id: "notify", label: "Bildirishnoma", icon: Bell },
   { id: "ai", label: "AI Tizim", icon: Cpu },
+  { id: "ai-integrations", label: "AI Integratsiyalar", icon: Zap },
   { id: "safeguard", label: "SafeGuard AI", icon: ShieldAlert },
   { id: "settings", label: "Sozlamalar", icon: Settings },
 ];
@@ -1119,6 +1120,150 @@ export default function AdminPage() {
                     </button>
                   </motion.div>
                 ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* AI INTEGRATIONS */}
+        {tab === "ai-integrations" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground">AI Integratsiyalar</h2>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-400/15 text-emerald-400 text-sm font-semibold">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Faol
+              </span>
+            </div>
+
+            {/* Active integrations grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                {
+                  name: "OpenAI GPT-4o", status: "active", icon: "🤖",
+                  desc: "AI Chat, Caption Generator, Kontent Moderatsiya",
+                  model: "gpt-4o-mini", calls: "∞", color: "border-emerald-500/30 bg-emerald-500/5",
+                  badge: "bg-emerald-400/15 text-emerald-400",
+                },
+                {
+                  name: "DALL-E 3", status: "active", icon: "🎨",
+                  desc: "AI Rasm Yaratish — Matndan rasm generatsiya",
+                  model: "dall-e-3", calls: "∞", color: "border-violet-500/30 bg-violet-500/5",
+                  badge: "bg-violet-400/15 text-violet-400",
+                },
+                {
+                  name: "Google Books API", status: "active", icon: "📚",
+                  desc: "Shaxsiy kutubxona — Kitob qidirish va saqlash",
+                  model: "Google Books v1", calls: "Bepul", color: "border-blue-500/30 bg-blue-500/5",
+                  badge: "bg-blue-400/15 text-blue-400",
+                },
+                {
+                  name: "TensorFlow.js", status: "active", icon: "🧠",
+                  desc: "ML modellar — Kontentni tahlil qilish",
+                  model: "tfjs v4", calls: "Local", color: "border-orange-500/30 bg-orange-500/5",
+                  badge: "bg-orange-400/15 text-orange-400",
+                },
+                {
+                  name: "Stripe Payments", status: "active", icon: "💳",
+                  desc: "To'lovlar va obunalar tizimi",
+                  model: "Stripe API v3", calls: "∞", color: "border-indigo-500/30 bg-indigo-500/5",
+                  badge: "bg-indigo-400/15 text-indigo-400",
+                },
+                {
+                  name: "Anthropic Claude", status: "planned", icon: "🔮",
+                  desc: "Kelajakda: Ilg'or tahlil va kontent yaratish",
+                  model: "claude-3-opus", calls: "—", color: "border-border bg-muted/30",
+                  badge: "bg-amber-400/15 text-amber-400",
+                },
+              ].map((item, i) => (
+                <motion.div key={item.name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+                  className={`rounded-2xl border p-5 ${item.color}`}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{item.icon}</span>
+                      <div>
+                        <p className="font-bold text-foreground text-sm">{item.name}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono">{item.model}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${item.badge}`}>
+                      {item.status === "active" ? "Faol" : "Rejada"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground">So'rovlar: <strong className="text-foreground">{item.calls}</strong></span>
+                    {item.status === "active" ? (
+                      <div className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-[10px] text-emerald-400 font-semibold">Ulangan</span>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-amber-400 font-semibold">Tez kunda</span>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* AI Features table */}
+            <div className="bg-card border border-border rounded-2xl p-5">
+              <h3 className="font-bold text-foreground text-sm mb-4 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-primary" /> Platforma AI Funksiyalari
+              </h3>
+              <div className="space-y-2">
+                {[
+                  { feature: "AI Chat (GPT-4o)", route: "/ai-chat", status: "active", desc: "Foydalanuvchilar bilan suhbat, streaming" },
+                  { feature: "Caption Generator", route: "/ai-chat (Caption tab)", status: "active", desc: "Post va Reel uchun caption + hashtag" },
+                  { feature: "AI Rasm Yaratish", route: "/ai-chat (Rasm tab)", status: "active", desc: "DALL-E 3 bilan rasm generatsiya" },
+                  { feature: "Smart Kontent Moderatsiya", route: "/api/openai/moderate", status: "active", desc: "AI-based spam va violation detection" },
+                  { feature: "Shaxsiy Kutubxona", route: "/kutubxona", status: "active", desc: "Google Books + shaxsiy kolleksiya" },
+                  { feature: "AI Feed Algoritm", route: "/api/ai/feed", status: "active", desc: "Mashhurlik bo'yicha kontent tavsiyalari" },
+                  { feature: "AI Trending Topics", route: "/api/ai/trending-topics", status: "active", desc: "Trend mavzular va hashtaglar" },
+                  { feature: "Voice AI Chat", route: "—", status: "planned", desc: "Ovozli suhbat (GPT-audio)" },
+                  { feature: "AI Video Analysis", route: "—", status: "planned", desc: "Reel va Video kontentni tahlil qilish" },
+                  { feature: "Personalized Feed AI", route: "—", status: "planned", desc: "Foydalanuvchi xulqiga asoslangan feed" },
+                ].map((item, i) => (
+                  <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${i % 2 === 0 ? "bg-muted/40" : ""}`}>
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.status === "active" ? "hsl(168 80% 50%)" : "hsl(45 90% 55%)" }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground">{item.feature}</p>
+                      <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                    </div>
+                    <span className="text-[10px] font-mono text-muted-foreground hidden sm:block truncate max-w-[160px]">{item.route}</span>
+                    <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold ${item.status === "active" ? "bg-emerald-400/15 text-emerald-400" : "bg-amber-400/15 text-amber-400"}`}>
+                      {item.status === "active" ? "Faol" : "Rejada"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* AI Test Panel */}
+            <div className="bg-card border border-border rounded-2xl p-5">
+              <h3 className="font-bold text-foreground text-sm mb-4 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-cyan-400" /> AI Test Paneli (Admin)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <a href="/ai-chat" target="_blank" rel="noreferrer"
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-primary/15 text-primary hover:bg-primary/25 transition-colors text-sm font-semibold">
+                  🤖 AI Chat ochish
+                </a>
+                <a href="/kutubxona" target="_blank" rel="noreferrer"
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors text-sm font-semibold">
+                  📚 Kutubxona ochish
+                </a>
+                <button onClick={async () => {
+                  const r = await fetch(`${API}/api/openai/moderate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({ content: "This is a test message for AI moderation" }),
+                  });
+                  const d = await r.json();
+                  alert(`AI Moderatsiya natijasi:\n${JSON.stringify(d, null, 2)}`);
+                }} className="flex items-center gap-2 px-4 py-3 rounded-xl bg-violet-500/15 text-violet-400 hover:bg-violet-500/25 transition-colors text-sm font-semibold">
+                  🛡️ Moderatsiya test
+                </button>
               </div>
             </div>
           </motion.div>

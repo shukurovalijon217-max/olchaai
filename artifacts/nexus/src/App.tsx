@@ -26,6 +26,8 @@ import MarketplacePage from "@/pages/MarketplacePage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import SellPage from "@/pages/SellPage";
 import MyShopPage from "@/pages/MyShopPage";
+import AIChatPage from "@/pages/AIChatPage";
+import LibraryPage from "@/pages/LibraryPage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -139,6 +141,12 @@ function Router() {
       )} />
       <Route path="/bozor" component={() => (
         <ProtectedRoute><Layout><MarketplacePage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/ai-chat" component={() => (
+        <ProtectedRoute><Layout><AIChatPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/kutubxona" component={() => (
+        <ProtectedRoute><Layout><LibraryPage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

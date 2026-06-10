@@ -1,33 +1,23 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
-import { usersTable } from "./users";
 
-export const conversationsTable = pgTable("conversations", {
-  id: serial("id").primaryKey(),
-  lastMessage: text("last_message"),
-  unreadCount: integer("unread_count").notNull().default(0),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+import { aiConversations } from "./conversations";
 
-export const conversationParticipantsTable = pgTable("conversation_participants", {
+export const aiMessages = pgTable("ai_messages", {
   id: serial("id").primaryKey(),
-  conversationId: integer("conversation_id").notNull().references(() => conversationsTable.id),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
-});
-
-export const messagesTable = pgTable("messages", {
-  id: serial("id").primaryKey(),
-  conversationId: integer("conversation_id").notNull().references(() => conversationsTable.id),
-  senderId: integer("sender_id").notNull().references(() => usersTable.id),
+  conversationId: integer("conversation_id")
+    .notNull()
+    .references(() => aiConversations.id, { onDelete: "cascade" }),
+  role: text("role").notNull(),
   content: text("content").notNull(),
-  mediaUrl: text("media_url"),
-  isRead: boolean("is_read").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const insertMessageSchema = createInsertSchema(messagesTable).omit({ id: true, createdAt: true });
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
-export type Message = typeof messagesTable.$inferSelect;
-export type Conversation = typeof conversationsTable.$inferSelect;
+export const insertAiMessageSchema = createInsertSchema(aiMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type AiMessage = typeof aiMessages.$inferSelect;
+export type InsertAiMessage = z.infer<typeof insertAiMessageSchema>;

@@ -14,12 +14,14 @@ import { useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 interface ProfilePageProps { userId: number; }
 
 export default function ProfilePage({ userId }: ProfilePageProps) {
+  const { t } = useTranslation();
   const { data: user, isLoading } = useGetUser(userId, { query: { queryKey: getGetUserQueryKey(userId) } });
   const { data: posts = [] } = useListPosts({ userId });
   const { data: reels = [] } = useListReels({ userId });
@@ -88,7 +90,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       await refetchSub();
       setShowPlansModal(false);
     } catch (err: any) {
-      setSubError(err?.response?.data?.error ?? "Obuna bo'lishda xato");
+      setSubError(err?.response?.data?.error ?? t("profile.subscribe_error"));
     } finally {
       setSubscribingPlanId(null);
     }
@@ -183,11 +185,11 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               <div className="flex gap-2">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowGoLive(true)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors">
-                  <Radio className="w-4 h-4" /> Jonli Efir
+                  <Radio className="w-4 h-4" /> {t("profile.go_live")}
                 </motion.button>
                 <button onClick={() => setShowCreatePlan(true)}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-sm font-semibold hover:from-yellow-500/30 hover:to-orange-500/30 transition-all">
-                  <Sparkles className="w-4 h-4" /> Obuna
+                  <Sparkles className="w-4 h-4" /> {t("profile.subscription")}
                 </button>
                 <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted text-muted-foreground text-sm font-semibold hover:bg-card transition-colors">
                   <Settings className="w-4 h-4" />
@@ -197,11 +199,11 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               <div className="flex gap-2">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={handleFollow}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${following ? "bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
-                  {following ? <><UserCheck className="w-4 h-4" /> Kuzatmoqda</> : <><UserPlus className="w-4 h-4" /> Kuzatish</>}
+                  {following ? <><UserCheck className="w-4 h-4" /> {t("profile.following_btn")}</> : <><UserPlus className="w-4 h-4" /> {t("profile.follow_btn")}</>}
                 </motion.button>
                 <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowPlansModal(true)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${isSubscribed ? "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/40 text-yellow-600 dark:text-yellow-400" : "bg-muted text-muted-foreground hover:border-yellow-400/40 hover:text-yellow-600 dark:hover:text-yellow-400"} border border-transparent`}>
-                  {isSubscribed ? <><Check className="w-4 h-4" /> Obuna</> : <><Bell className="w-4 h-4" /> Obuna bo'l</>}
+                  {isSubscribed ? <><Check className="w-4 h-4" /> {t("profile.subscribed")}</> : <><Bell className="w-4 h-4" /> {t("profile.subscribe_btn")}</>}
                 </motion.button>
               </div>
             )}
@@ -220,9 +222,9 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 py-4 border-y border-border mb-5">
           {[
-            { label: "Postlar", value: myPosts.length },
-            { label: "Kuzatuvchilar", value: user.followersCount },
-            { label: "Kuzatilmoqda", value: user.followingCount },
+            { label: t("profile.posts"), value: myPosts.length },
+            { label: t("profile.followers"), value: user.followersCount },
+            { label: t("profile.following"), value: user.followingCount },
           ].map(({ label, value }) => (
             <div key={label} className="text-center">
               <p className="text-xl font-bold text-foreground">{(value ?? 0).toLocaleString()}</p>
@@ -236,18 +238,18 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Star className="w-4 h-4 text-yellow-500" />
-              <span className="text-sm font-semibold text-foreground">{plans.length} ta obuna rejasi</span>
-              <span className="text-xs text-muted-foreground">· {plans.reduce((s, p) => s + (p.subscriberCount ?? 0), 0)} obunachi</span>
+              <span className="text-sm font-semibold text-foreground">{t("profile.plans_count", { count: plans.length })}</span>
+              <span className="text-xs text-muted-foreground">· {t("profile.subscribers_count", { count: plans.reduce((s, p) => s + (p.subscriberCount ?? 0), 0) })}</span>
             </div>
-            <button onClick={() => setShowPlansModal(true)} className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold hover:underline">Ko'rish</button>
+            <button onClick={() => setShowPlansModal(true)} className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold hover:underline">{t("profile.view")}</button>
           </div>
         )}
 
         {/* Tabs */}
         <div className="flex gap-1 mb-4 bg-muted rounded-xl p-1">
-          {([["posts", Grid3X3, "Postlar"], ["reels", Play, "Reels"]] as const).map(([t, Icon, label]) => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all ${tab === t ? "bg-card text-foreground" : "text-muted-foreground"}`}>
+          {([["posts", Grid3X3, t("profile.posts")], ["reels", Play, "Reels"]] as const).map(([tabId, Icon, label]) => (
+            <button key={tabId} onClick={() => setTab(tabId)}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all ${tab === tabId ? "bg-card text-foreground" : "text-muted-foreground"}`}>
               <Icon className="w-4 h-4" /> {label}
             </button>
           ))}
@@ -258,7 +260,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           myPosts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <BookmarkIcon className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Hali post yo'q</p>
+              <p className="text-sm">{t("profile.no_posts")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
@@ -280,7 +282,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           reels.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Play className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Hali reel yo'q</p>
+              <p className="text-sm">{t("profile.no_reels")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
@@ -314,17 +316,17 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
             className="bg-card rounded-2xl p-6 w-full max-w-sm border border-border shadow-2xl">
-            <h2 className="text-lg font-bold mb-1 flex items-center gap-2"><Radio className="w-5 h-5 text-red-500" /> Jonli efirni boshlash</h2>
-            <p className="text-xs text-muted-foreground mb-4">Efir nomini kiriting</p>
+            <h2 className="text-lg font-bold mb-1 flex items-center gap-2"><Radio className="w-5 h-5 text-red-500" /> {t("profile.live_title")}</h2>
+            <p className="text-xs text-muted-foreground mb-4">{t("profile.live_subtitle")}</p>
             <input value={liveTitle} onChange={e => setLiveTitle(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") handleGoLive(); }}
               placeholder="Masalan: Yangi kecha muzikasi 🎵"
               className="w-full bg-muted rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 ring-red-500 mb-4" autoFocus />
             <div className="flex gap-3">
-              <button onClick={() => setShowGoLive(false)} className="flex-1 py-2.5 rounded-xl bg-muted text-muted-foreground font-semibold text-sm">Bekor</button>
+              <button onClick={() => setShowGoLive(false)} className="flex-1 py-2.5 rounded-xl bg-muted text-muted-foreground font-semibold text-sm">{t("common.cancel")}</button>
               <button onClick={handleGoLive} disabled={!liveTitle.trim() || liveStarting}
                 className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 disabled:opacity-50 flex items-center justify-center gap-2">
-                {liveStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />} Boshlash
+                {liveStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />} {t("profile.start")}
               </button>
             </div>
           </motion.div>
@@ -339,7 +341,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               className="bg-card rounded-t-3xl sm:rounded-2xl w-full max-w-sm border border-border shadow-2xl max-h-[80vh] overflow-y-auto">
               <div className="sticky top-0 bg-card px-5 pt-5 pb-3 border-b border-border flex items-center justify-between">
                 <h2 className="text-base font-bold flex items-center gap-2">
-                  <Star className="w-4 h-4 text-yellow-500" /> Obuna rejalari
+                  <Star className="w-4 h-4 text-yellow-500" /> {t("profile.plans_title")}
                 </h2>
                 <button onClick={() => { setShowPlansModal(false); setSubError(null); }} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
               </div>
@@ -348,7 +350,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                 {plans.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Star className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Hali obuna rejalari yo'q</p>
+                    <p className="text-sm">{t("profile.no_plans")}</p>
                   </div>
                 ) : plans.map(plan => (
                   <div key={plan.id} className="border border-border rounded-2xl p-4 bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -374,19 +376,19 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                       </ul>
                     )}
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{plan.subscriberCount ?? 0} obunachi</span>
+                      <span className="text-xs text-muted-foreground">{t("profile.subscribers_count", { count: plan.subscriberCount ?? 0 })}</span>
                       {!isOwner && (
                         isSubscribed ? (
                           <button onClick={() => handleUnsubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive transition-colors">
                             {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <BellOff className="w-3 h-3" />}
-                            Bekor qilish
+                            {t("common.cancel")}
                           </button>
                         ) : (
                           <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleSubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
                             className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-400 hover:to-orange-400 transition-all disabled:opacity-50">
                             {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3" />}
-                            Obuna bo'l
+                            {t("profile.subscribe_btn")}
                           </motion.button>
                         )
                       )}
@@ -406,7 +408,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="bg-card rounded-2xl w-full max-w-sm border border-border shadow-2xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-500" /> Yangi reja</h2>
+                <h2 className="text-base font-bold flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-500" /> {t("profile.new_plan")}</h2>
                 <button onClick={() => setShowCreatePlan(false)}><X className="w-5 h-5 text-muted-foreground" /></button>
               </div>
               <div className="space-y-3">
@@ -422,10 +424,10 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                   rows={3} className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500 resize-none" />
               </div>
               <div className="flex gap-3 mt-4">
-                <button onClick={() => setShowCreatePlan(false)} className="flex-1 py-2.5 rounded-xl bg-muted text-muted-foreground text-sm font-semibold">Bekor</button>
+                <button onClick={() => setShowCreatePlan(false)} className="flex-1 py-2.5 rounded-xl bg-muted text-muted-foreground text-sm font-semibold">{t("common.cancel")}</button>
                 <button onClick={handleCreatePlan} disabled={!newPlanName.trim() || !newPlanPrice || creatingPlan}
                   className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm font-bold hover:from-yellow-400 hover:to-orange-400 disabled:opacity-50 flex items-center justify-center gap-2">
-                  {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} Yaratish
+                  {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} {t("profile.create_plan")}
                 </button>
               </div>
             </motion.div>

@@ -10,6 +10,8 @@ config.resolver.blockList = [
   /node_modules\/\.pnpm\/.*_tmp_[^/]+\//,
   // Any other stale watch paths
   /node_modules\/\.cache\//,
+  // Replit agent skill directories (may contain deleted/stale sub-paths)
+  /\.local[/\\]skills[/\\]/,
 ];
 
 // Workspace root so Metro can resolve monorepo packages

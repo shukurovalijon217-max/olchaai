@@ -5,6 +5,7 @@ import {
   Home, Play, Compass, MessageCircle, Users, Bell,
   User, ShieldCheck, LogOut, Crown, Settings, Wallet, Radio,
   Search, ShoppingBag, Bot, BookOpen, ChevronRight, ChevronLeft,
+  MoreHorizontal, X,
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import { useAuth } from "@/context/AuthContext";
@@ -34,12 +35,11 @@ const adminNav = [
   { href: "/admin", icon: ShieldCheck, label: "Admin Panel" },
 ];
 
-const mobileNav = [
+const mobileNavMain = [
   { href: "/", icon: Home, label: "Feed" },
   { href: "/explore", icon: Compass, label: "Explore" },
-  { href: "/ai-chat", icon: Bot, label: "AI Chat" },
+  { href: "/ai-chat", icon: Bot, label: "AI" },
   { href: "/messages", icon: MessageCircle, label: "Xabar" },
-  { href: "/profile", icon: User, label: "Profil" },
 ];
 
 const Y_KEY = "olcha_nav_y";
@@ -58,6 +58,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(loadOpen);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [maxY, setMaxY] = useState(600);
   const y = useMotionValue(loadY());
   const dragControls = useDragControls();
@@ -69,6 +70,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  // close more sheet when navigating
+  useEffect(() => { setMoreOpen(false); }, [location]);
+
   const saveY = () => {
     try { localStorage.setItem(Y_KEY, String(Math.round(y.get()))); } catch {}
   };
@@ -78,6 +82,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     setIsOpen(next);
     try { localStorage.setItem(OPEN_KEY, String(next)); } catch {}
   };
+
+  const allMobileNav = [
+    ...nav,
+    ...bottomNav,
+    ...(user?.isAdmin ? adminNav : []),
+  ];
 
   return (
     <div className="bg-background min-h-screen">
@@ -111,7 +121,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   backdropFilter: "blur(20px)",
                 }}
               >
-                {/* ── Drag handle header ── */}
+                {/* Drag handle header */}
                 <div
                   onPointerDown={(e) => dragControls.start(e)}
                   className="flex items-center justify-between px-3 py-2.5 border-b border-border/30 cursor-grab active:cursor-grabbing"
@@ -120,7 +130,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Link href="/">
                     <NexusLogo ringSize={30} showText={true} fontSize="0.85rem" letterSpacing="0.15em" />
                   </Link>
-                  {/* Grip dots */}
                   <div className="flex flex-col gap-[3px] pr-0.5">
                     {[0, 1, 2].map((i) => (
                       <div key={i} className="flex gap-[3px]">
@@ -150,7 +159,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </Link>
                 )}
 
-                {/* Nav items — scrollable */}
+                {/* Nav items */}
                 <nav className="flex-1 px-1.5 py-1 space-y-0.5 overflow-y-auto scrollbar-none">
                   {nav.map(({ href, icon: Icon, label }) => {
                     const active = location === href || (href !== "/" && location.startsWith(href));
@@ -168,10 +177,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           <Icon className="w-4 h-4 flex-shrink-0" />
                           <span className="font-medium">{label}</span>
                           {active && (
-                            <motion.div
-                              layoutId="nav-dot"
-                              className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
-                            />
+                            <motion.div layoutId="nav-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
                           )}
                         </motion.div>
                       </Link>
@@ -188,9 +194,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <motion.div
                           whileHover={{ x: 2 }}
                           className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-colors text-sm ${
-                            active
-                              ? "bg-primary/15 text-primary"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent"
+                            active ? "bg-primary/15 text-primary" : "text-sidebar-foreground hover:bg-sidebar-accent"
                           }`}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
@@ -211,9 +215,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )}
           </AnimatePresence>
 
-          {/* ── Toggle tab + vertical drag strip ── */}
+          {/* Toggle tab + drag strip */}
           <div className="flex flex-col items-center mt-3 gap-1">
-            {/* Toggle button */}
             <motion.button
               onClick={toggle}
               whileHover={{ scale: 1.08, x: isOpen ? -1 : 1 }}
@@ -227,7 +230,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 : <ChevronRight className="w-3.5 h-3.5 text-sidebar-foreground" />}
             </motion.button>
 
-            {/* Drag handle strip — hold & drag vertically */}
             <div
               onPointerDown={(e) => { e.stopPropagation(); dragControls.start(e); }}
               className="flex flex-col items-center gap-[3px] py-2 px-1.5 rounded-r-lg cursor-ns-resize border border-border/40 border-l-0 shadow"
@@ -243,15 +245,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ── MOBILE BOTTOM NAV ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 flex items-center justify-around py-2 px-2"
-        style={{ background: "hsl(var(--sidebar) / 0.95)", backdropFilter: "blur(20px)" }}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 flex items-center justify-around py-1.5 px-1"
+        style={{ background: "hsl(var(--sidebar) / 0.97)", backdropFilter: "blur(20px)" }}
       >
-        {mobileNav.map(({ href, icon: Icon, label }) => {
+        {mobileNavMain.map(({ href, icon: Icon, label }) => {
           const active = location === href || (href !== "/" && location.startsWith(href));
           return (
             <Link key={href} href={href}>
               <motion.div
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.88 }}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
@@ -263,7 +266,116 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
+
+        {/* Ko'proq button */}
+        <motion.button
+          whileTap={{ scale: 0.88 }}
+          onClick={() => setMoreOpen(true)}
+          className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors ${
+            moreOpen ? "text-primary" : "text-muted-foreground"
+          }`}
+        >
+          <MoreHorizontal className="w-5 h-5" />
+          <span className="text-[9px] font-semibold">Ko'proq</span>
+        </motion.button>
       </nav>
+
+      {/* ── MOBILE "KO'PROQ" BOTTOM SHEET ── */}
+      <AnimatePresence>
+        {moreOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMoreOpen(false)}
+              className="md:hidden fixed inset-0 z-[60] bg-black/60"
+            />
+
+            {/* Sheet */}
+            <motion.div
+              key="sheet"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 350, damping: 35 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl overflow-hidden"
+              style={{
+                background: "hsl(var(--sidebar))",
+                paddingBottom: "calc(env(safe-area-inset-bottom) + 4rem)",
+              }}
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border/30">
+                <p className="font-bold text-foreground text-base">Barcha bo'limlar</p>
+                <button
+                  onClick={() => setMoreOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-muted/60 hover:bg-muted transition-colors"
+                >
+                  <X className="w-4 h-4 text-foreground" />
+                </button>
+              </div>
+
+              {/* All nav items grid */}
+              <div className="px-4 pt-3 pb-2 grid grid-cols-3 gap-2">
+                {allMobileNav.map(({ href, icon: Icon, label }) => {
+                  const active = location === href || (href !== "/" && location.startsWith(href));
+                  return (
+                    <Link key={href} href={href}>
+                      <motion.div
+                        whileTap={{ scale: 0.93 }}
+                        className={`flex flex-col items-center gap-1.5 px-2 py-3 rounded-2xl transition-colors ${
+                          active
+                            ? "bg-primary/15 text-primary"
+                            : "bg-muted/40 text-foreground hover:bg-muted/70"
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="text-[10px] font-semibold text-center leading-tight">{label}</span>
+                      </motion.div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* User + logout */}
+              {user && (
+                <div className="px-4 py-3 border-t border-border/30 mt-1 flex items-center justify-between">
+                  <Link href="/profile" onClick={() => setMoreOpen(false)}>
+                    <div className="flex items-center gap-2.5">
+                      {user.avatarUrl ? (
+                        <img src={user.avatarUrl} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary/25 flex items-center justify-center text-xs font-bold text-primary">
+                          {user.displayName[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{user.displayName}</p>
+                        <p className="text-[10px] text-muted-foreground">@{user.username}</p>
+                      </div>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-xs font-semibold"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Chiqish
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ── MAIN CONTENT ── */}
       <main className="min-h-screen pl-8 pb-20 md:pl-8 md:pb-0">

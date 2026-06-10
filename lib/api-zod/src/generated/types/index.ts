@@ -64,6 +64,8 @@ export * from './storyInputMediaType';
 export * from './storyMediaType';
 export * from './suspendInput';
 export * from './trendingTopic';
+export * from './uploadUrlRequest';
+export * from './uploadUrlResponse';
 export * from './user';
 export * from './userInput';
 export * from './userStatsSummary';

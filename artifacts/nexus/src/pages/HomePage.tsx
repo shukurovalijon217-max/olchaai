@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, Flame, Plus } from "lucide-react";
-import { useListPosts, useListStories, useGetTrendingTopics, useGetAiFeed } from "@workspace/api-client-react";
+import { useListPosts, useGetTrendingTopics, useGetAiFeed } from "@workspace/api-client-react";
 import PostCard from "@/components/PostCard";
 import StoriesBar from "@/components/StoriesBar";
+import CreateContentModal from "@/components/CreateContentModal";
 
 export default function HomePage() {
   const { data: feed } = useGetAiFeed();
   const { data: posts = [], isLoading } = useListPosts();
   const { data: topics = [] } = useGetTrendingTopics();
+  const [createOpen, setCreateOpen] = useState(false);
 
   const displayPosts = feed?.posts?.length ? feed.posts : posts;
 
@@ -16,7 +19,7 @@ export default function HomePage() {
       {/* Main Feed */}
       <div className="flex-1 max-w-2xl space-y-5">
         {/* Stories */}
-        <StoriesBar />
+        <StoriesBar onCreateStory={() => setCreateOpen(true)} />
 
         {/* Feed Header */}
         <div className="flex items-center justify-between">
@@ -24,7 +27,10 @@ export default function HomePage() {
             <Flame className="w-4 h-4 text-orange-400" />
             For You
           </h2>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity">
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
+          >
             <Plus className="w-3.5 h-3.5" />
             Create Post
           </button>
@@ -116,6 +122,8 @@ export default function HomePage() {
           </div>
         )}
       </aside>
+
+      <CreateContentModal open={createOpen} onClose={() => setCreateOpen(false)} defaultTab="post" />
     </div>
   );
 }

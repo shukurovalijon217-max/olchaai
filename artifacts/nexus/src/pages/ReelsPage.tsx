@@ -1,13 +1,15 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Share2, Music, BadgeCheck, ChevronUp, ChevronDown } from "lucide-react";
+import { Heart, MessageCircle, Share2, Music, BadgeCheck, ChevronUp, ChevronDown, Plus } from "lucide-react";
 import { useListReels, useLikeReel, getListReelsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import CreateContentModal from "@/components/CreateContentModal";
 
 export default function ReelsPage() {
   const { data: reels = [], isLoading } = useListReels();
   const [current, setCurrent] = useState(0);
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
+  const [createOpen, setCreateOpen] = useState(false);
   const likeReel = useLikeReel();
   const qc = useQueryClient();
 
@@ -137,7 +139,22 @@ export default function ReelsPage() {
             ))}
           </div>
         )}
+
+        {/* Create Reel button */}
+        <div className="flex justify-center mt-5">
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setCreateOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
+          >
+            <Plus className="w-4 h-4" />
+            Reel yaratish
+          </motion.button>
+        </div>
       </div>
+
+      <CreateContentModal open={createOpen} onClose={() => setCreateOpen(false)} defaultTab="reel" />
     </div>
   );
 }

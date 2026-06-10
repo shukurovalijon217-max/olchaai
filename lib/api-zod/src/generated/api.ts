@@ -1101,6 +1101,153 @@ export const EndLiveResponse = zod.object({
 
 
 /**
+ * @summary Send a gift during a live stream
+ */
+export const SendLiveGiftParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SendLiveGiftBody = zod.object({
+  "giftType": zod.string()
+})
+
+export const SendLiveGiftResponse = zod.object({
+  "ok": zod.boolean().optional(),
+  "newBalance": zod.number().optional()
+})
+
+
+/**
+ * @summary Get gifts leaderboard for a live stream
+ */
+export const ListLiveGiftsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListLiveGiftsResponse = zod.object({
+  "gifts": zod.array(zod.object({
+  "id": zod.number(),
+  "liveStreamId": zod.number(),
+  "senderId": zod.number(),
+  "receiverId": zod.number(),
+  "giftType": zod.string(),
+  "giftEmoji": zod.string(),
+  "coinValue": zod.number(),
+  "createdAt": zod.string()
+})).optional(),
+  "totalValue": zod.number().optional()
+})
+
+
+/**
+ * @summary Get the gift catalog
+ */
+export const ListGiftCatalogResponseItem = zod.object({
+  "type": zod.string(),
+  "emoji": zod.string(),
+  "value": zod.number(),
+  "label": zod.string()
+})
+export const ListGiftCatalogResponse = zod.array(ListGiftCatalogResponseItem)
+
+
+/**
+ * @summary Create a subscription plan
+ */
+export const CreateCreatorPlanBody = zod.object({
+  "name": zod.string(),
+  "description": zod.string().optional(),
+  "price": zod.number(),
+  "perks": zod.array(zod.string()).optional()
+})
+
+
+/**
+ * @summary Get subscription plans for a creator
+ */
+export const ListCreatorPlansParams = zod.object({
+  "creatorId": zod.coerce.number()
+})
+
+export const ListCreatorPlansResponseItem = zod.object({
+  "id": zod.number(),
+  "creatorId": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "price": zod.number(),
+  "perks": zod.array(zod.string()).optional(),
+  "isActive": zod.boolean(),
+  "subscriberCount": zod.number(),
+  "createdAt": zod.string()
+})
+export const ListCreatorPlansResponse = zod.array(ListCreatorPlansResponseItem)
+
+
+/**
+ * @summary Subscribe to a creator plan
+ */
+export const SubscribeToCreatorParams = zod.object({
+  "planId": zod.coerce.number()
+})
+
+
+/**
+ * @summary Cancel a creator subscription
+ */
+export const UnsubscribeFromCreatorParams = zod.object({
+  "planId": zod.coerce.number()
+})
+
+
+/**
+ * @summary Get my active subscriptions
+ */
+export const ListMySubscriptionsResponseItem = zod.object({
+  "id": zod.number(),
+  "subscriberId": zod.number(),
+  "creatorId": zod.number(),
+  "planId": zod.number(),
+  "status": zod.string(),
+  "startedAt": zod.string(),
+  "expiresAt": zod.string(),
+  "lastPaymentAt": zod.string().optional(),
+  "nextPaymentAt": zod.string().optional()
+})
+export const ListMySubscriptionsResponse = zod.array(ListMySubscriptionsResponseItem)
+
+
+/**
+ * @summary Get my subscribers (as creator)
+ */
+export const ListMySubscribersResponse = zod.object({
+  "subscribers": zod.array(zod.object({
+  "id": zod.number(),
+  "subscriberId": zod.number(),
+  "creatorId": zod.number(),
+  "planId": zod.number(),
+  "status": zod.string(),
+  "startedAt": zod.string(),
+  "expiresAt": zod.string(),
+  "lastPaymentAt": zod.string().optional(),
+  "nextPaymentAt": zod.string().optional()
+})).optional(),
+  "count": zod.number().optional()
+})
+
+
+/**
+ * @summary Check if I am subscribed to a creator
+ */
+export const CheckCreatorSubscriptionParams = zod.object({
+  "creatorId": zod.coerce.number()
+})
+
+export const CheckCreatorSubscriptionResponse = zod.object({
+  "isSubscribed": zod.boolean().optional()
+})
+
+
+/**
  * @summary Request a presigned URL for file upload
  */
 

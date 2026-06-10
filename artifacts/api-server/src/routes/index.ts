@@ -17,6 +17,8 @@ import goRouter from "./go";
 import mediaRouter from "./media";
 import walletRouter from "./wallet";
 import liveRouter from "./live";
+import giftsRouter from "./gifts";
+import creatorRouter from "./creator";
 
 const router: IRouter = Router();
 
@@ -38,5 +40,7 @@ router.use("/go", goRouter);
 router.use("/media", mediaRouter);
 router.use(walletRouter);
 router.use(liveRouter);
+router.use(giftsRouter);
+router.use(creatorRouter);
 
 export default router;

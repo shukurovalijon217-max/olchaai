@@ -1,0 +1,2 @@
+- [OlCha platform stack](olcha-stack.md) — Go real-time (:8099/go/*), Express API (:8080/api/*), Nexus web (/), Expo mobile; always rebuild Go binary after changes.
+- [Orval codegen conflict fix](orval-codegen-conflict.md) — inline OpenAPI request body schemas cause duplicate type exports; always use $ref to component schemas for request bodies.

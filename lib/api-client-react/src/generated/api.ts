@@ -29,24 +29,32 @@ import type {
   AiFeed,
   AiSuggestions,
   AiSystemStatus,
+  CheckCreatorSubscription200,
   Comment,
   CommentInput,
   Conversation,
   ConversationInput,
+  CreatorPlan,
+  CreatorPlanInput,
+  CreatorSubscription,
   FollowResult,
   GetAdminAnalyticsParams,
   GetAiFeedParams,
   GetAiSuggestionsParams,
+  GiftCatalogItem,
   Group,
   GroupInput,
   HealthStatus,
   JoinResult,
   LikeResult,
   ListGroupsParams,
+  ListLiveGifts200,
+  ListMySubscribers200,
   ListNotificationsParams,
   ListPostsParams,
   ListReelsParams,
   ListUsersParams,
+  LiveGiftInput,
   LiveStream,
   LiveStreamInput,
   Message,
@@ -58,8 +66,10 @@ import type {
   PostInput,
   Reel,
   ReelInput,
+  SendLiveGift200,
   Story,
   StoryInput,
+  SubscribeToCreator201,
   SuspendInput,
   TrendingTopic,
   UploadUrlRequest,
@@ -3563,6 +3573,751 @@ export const useEndLive = <TError = ErrorType<void>,
       > => {
       return useMutation(getEndLiveMutationOptions(options));
     }
+
+export const getSendLiveGiftUrl = (id: number,) => {
+
+
+
+
+  return `/api/live/${id}/gift`
+}
+
+/**
+ * @summary Send a gift during a live stream
+ */
+export const sendLiveGift = async (id: number,
+    liveGiftInput: LiveGiftInput, options?: RequestInit): Promise<SendLiveGift200> => {
+
+  return customFetch<SendLiveGift200>(getSendLiveGiftUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      liveGiftInput,)
+  }
+);}
+
+
+
+
+export const getSendLiveGiftMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendLiveGift>>, TError,{id: number;data: BodyType<LiveGiftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendLiveGift>>, TError,{id: number;data: BodyType<LiveGiftInput>}, TContext> => {
+
+const mutationKey = ['sendLiveGift'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendLiveGift>>, {id: number;data: BodyType<LiveGiftInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  sendLiveGift(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendLiveGiftMutationResult = NonNullable<Awaited<ReturnType<typeof sendLiveGift>>>
+    export type SendLiveGiftMutationBody = BodyType<LiveGiftInput>
+    export type SendLiveGiftMutationError = ErrorType<void>
+
+    /**
+ * @summary Send a gift during a live stream
+ */
+export const useSendLiveGift = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendLiveGift>>, TError,{id: number;data: BodyType<LiveGiftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendLiveGift>>,
+        TError,
+        {id: number;data: BodyType<LiveGiftInput>},
+        TContext
+      > => {
+      return useMutation(getSendLiveGiftMutationOptions(options));
+    }
+
+export const getListLiveGiftsUrl = (id: number,) => {
+
+
+
+
+  return `/api/live/${id}/gifts`
+}
+
+/**
+ * @summary Get gifts leaderboard for a live stream
+ */
+export const listLiveGifts = async (id: number, options?: RequestInit): Promise<ListLiveGifts200> => {
+
+  return customFetch<ListLiveGifts200>(getListLiveGiftsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListLiveGiftsQueryKey = (id: number,) => {
+    return [
+    `/api/live/${id}/gifts`
+    ] as const;
+    }
+
+
+export const getListLiveGiftsQueryOptions = <TData = Awaited<ReturnType<typeof listLiveGifts>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLiveGifts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListLiveGiftsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLiveGifts>>> = ({ signal }) => listLiveGifts(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listLiveGifts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListLiveGiftsQueryResult = NonNullable<Awaited<ReturnType<typeof listLiveGifts>>>
+export type ListLiveGiftsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get gifts leaderboard for a live stream
+ */
+
+export function useListLiveGifts<TData = Awaited<ReturnType<typeof listLiveGifts>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLiveGifts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListLiveGiftsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListGiftCatalogUrl = () => {
+
+
+
+
+  return `/api/gifts/catalog`
+}
+
+/**
+ * @summary Get the gift catalog
+ */
+export const listGiftCatalog = async ( options?: RequestInit): Promise<GiftCatalogItem[]> => {
+
+  return customFetch<GiftCatalogItem[]>(getListGiftCatalogUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListGiftCatalogQueryKey = () => {
+    return [
+    `/api/gifts/catalog`
+    ] as const;
+    }
+
+
+export const getListGiftCatalogQueryOptions = <TData = Awaited<ReturnType<typeof listGiftCatalog>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGiftCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListGiftCatalogQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listGiftCatalog>>> = ({ signal }) => listGiftCatalog({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGiftCatalog>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListGiftCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof listGiftCatalog>>>
+export type ListGiftCatalogQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the gift catalog
+ */
+
+export function useListGiftCatalog<TData = Awaited<ReturnType<typeof listGiftCatalog>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGiftCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListGiftCatalogQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateCreatorPlanUrl = () => {
+
+
+
+
+  return `/api/creator/plans`
+}
+
+/**
+ * @summary Create a subscription plan
+ */
+export const createCreatorPlan = async (creatorPlanInput: CreatorPlanInput, options?: RequestInit): Promise<CreatorPlan> => {
+
+  return customFetch<CreatorPlan>(getCreateCreatorPlanUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      creatorPlanInput,)
+  }
+);}
+
+
+
+
+export const getCreateCreatorPlanMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCreatorPlan>>, TError,{data: BodyType<CreatorPlanInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCreatorPlan>>, TError,{data: BodyType<CreatorPlanInput>}, TContext> => {
+
+const mutationKey = ['createCreatorPlan'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCreatorPlan>>, {data: BodyType<CreatorPlanInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCreatorPlan(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCreatorPlanMutationResult = NonNullable<Awaited<ReturnType<typeof createCreatorPlan>>>
+    export type CreateCreatorPlanMutationBody = BodyType<CreatorPlanInput>
+    export type CreateCreatorPlanMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a subscription plan
+ */
+export const useCreateCreatorPlan = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCreatorPlan>>, TError,{data: BodyType<CreatorPlanInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCreatorPlan>>,
+        TError,
+        {data: BodyType<CreatorPlanInput>},
+        TContext
+      > => {
+      return useMutation(getCreateCreatorPlanMutationOptions(options));
+    }
+
+export const getListCreatorPlansUrl = (creatorId: number,) => {
+
+
+
+
+  return `/api/creator/plans/${creatorId}`
+}
+
+/**
+ * @summary Get subscription plans for a creator
+ */
+export const listCreatorPlans = async (creatorId: number, options?: RequestInit): Promise<CreatorPlan[]> => {
+
+  return customFetch<CreatorPlan[]>(getListCreatorPlansUrl(creatorId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCreatorPlansQueryKey = (creatorId: number,) => {
+    return [
+    `/api/creator/plans/${creatorId}`
+    ] as const;
+    }
+
+
+export const getListCreatorPlansQueryOptions = <TData = Awaited<ReturnType<typeof listCreatorPlans>>, TError = ErrorType<unknown>>(creatorId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCreatorPlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCreatorPlansQueryKey(creatorId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCreatorPlans>>> = ({ signal }) => listCreatorPlans(creatorId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(creatorId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCreatorPlans>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCreatorPlansQueryResult = NonNullable<Awaited<ReturnType<typeof listCreatorPlans>>>
+export type ListCreatorPlansQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get subscription plans for a creator
+ */
+
+export function useListCreatorPlans<TData = Awaited<ReturnType<typeof listCreatorPlans>>, TError = ErrorType<unknown>>(
+ creatorId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCreatorPlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCreatorPlansQueryOptions(creatorId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getSubscribeToCreatorUrl = (planId: number,) => {
+
+
+
+
+  return `/api/creator/subscribe/${planId}`
+}
+
+/**
+ * @summary Subscribe to a creator plan
+ */
+export const subscribeToCreator = async (planId: number, options?: RequestInit): Promise<SubscribeToCreator201> => {
+
+  return customFetch<SubscribeToCreator201>(getSubscribeToCreatorUrl(planId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSubscribeToCreatorMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeToCreator>>, TError,{planId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof subscribeToCreator>>, TError,{planId: number}, TContext> => {
+
+const mutationKey = ['subscribeToCreator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof subscribeToCreator>>, {planId: number}> = (props) => {
+          const {planId} = props ?? {};
+
+          return  subscribeToCreator(planId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubscribeToCreatorMutationResult = NonNullable<Awaited<ReturnType<typeof subscribeToCreator>>>
+
+    export type SubscribeToCreatorMutationError = ErrorType<void>
+
+    /**
+ * @summary Subscribe to a creator plan
+ */
+export const useSubscribeToCreator = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeToCreator>>, TError,{planId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof subscribeToCreator>>,
+        TError,
+        {planId: number},
+        TContext
+      > => {
+      return useMutation(getSubscribeToCreatorMutationOptions(options));
+    }
+
+export const getUnsubscribeFromCreatorUrl = (planId: number,) => {
+
+
+
+
+  return `/api/creator/subscribe/${planId}`
+}
+
+/**
+ * @summary Cancel a creator subscription
+ */
+export const unsubscribeFromCreator = async (planId: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getUnsubscribeFromCreatorUrl(planId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getUnsubscribeFromCreatorMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsubscribeFromCreator>>, TError,{planId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unsubscribeFromCreator>>, TError,{planId: number}, TContext> => {
+
+const mutationKey = ['unsubscribeFromCreator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unsubscribeFromCreator>>, {planId: number}> = (props) => {
+          const {planId} = props ?? {};
+
+          return  unsubscribeFromCreator(planId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnsubscribeFromCreatorMutationResult = NonNullable<Awaited<ReturnType<typeof unsubscribeFromCreator>>>
+
+    export type UnsubscribeFromCreatorMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Cancel a creator subscription
+ */
+export const useUnsubscribeFromCreator = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsubscribeFromCreator>>, TError,{planId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unsubscribeFromCreator>>,
+        TError,
+        {planId: number},
+        TContext
+      > => {
+      return useMutation(getUnsubscribeFromCreatorMutationOptions(options));
+    }
+
+export const getListMySubscriptionsUrl = () => {
+
+
+
+
+  return `/api/creator/subscriptions`
+}
+
+/**
+ * @summary Get my active subscriptions
+ */
+export const listMySubscriptions = async ( options?: RequestInit): Promise<CreatorSubscription[]> => {
+
+  return customFetch<CreatorSubscription[]>(getListMySubscriptionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMySubscriptionsQueryKey = () => {
+    return [
+    `/api/creator/subscriptions`
+    ] as const;
+    }
+
+
+export const getListMySubscriptionsQueryOptions = <TData = Awaited<ReturnType<typeof listMySubscriptions>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMySubscriptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMySubscriptionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMySubscriptions>>> = ({ signal }) => listMySubscriptions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMySubscriptions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMySubscriptionsQueryResult = NonNullable<Awaited<ReturnType<typeof listMySubscriptions>>>
+export type ListMySubscriptionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get my active subscriptions
+ */
+
+export function useListMySubscriptions<TData = Awaited<ReturnType<typeof listMySubscriptions>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMySubscriptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMySubscriptionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListMySubscribersUrl = () => {
+
+
+
+
+  return `/api/creator/subscribers`
+}
+
+/**
+ * @summary Get my subscribers (as creator)
+ */
+export const listMySubscribers = async ( options?: RequestInit): Promise<ListMySubscribers200> => {
+
+  return customFetch<ListMySubscribers200>(getListMySubscribersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMySubscribersQueryKey = () => {
+    return [
+    `/api/creator/subscribers`
+    ] as const;
+    }
+
+
+export const getListMySubscribersQueryOptions = <TData = Awaited<ReturnType<typeof listMySubscribers>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMySubscribers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMySubscribersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMySubscribers>>> = ({ signal }) => listMySubscribers({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMySubscribers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMySubscribersQueryResult = NonNullable<Awaited<ReturnType<typeof listMySubscribers>>>
+export type ListMySubscribersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get my subscribers (as creator)
+ */
+
+export function useListMySubscribers<TData = Awaited<ReturnType<typeof listMySubscribers>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMySubscribers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMySubscribersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCheckCreatorSubscriptionUrl = (creatorId: number,) => {
+
+
+
+
+  return `/api/creator/check-subscription/${creatorId}`
+}
+
+/**
+ * @summary Check if I am subscribed to a creator
+ */
+export const checkCreatorSubscription = async (creatorId: number, options?: RequestInit): Promise<CheckCreatorSubscription200> => {
+
+  return customFetch<CheckCreatorSubscription200>(getCheckCreatorSubscriptionUrl(creatorId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCheckCreatorSubscriptionQueryKey = (creatorId: number,) => {
+    return [
+    `/api/creator/check-subscription/${creatorId}`
+    ] as const;
+    }
+
+
+export const getCheckCreatorSubscriptionQueryOptions = <TData = Awaited<ReturnType<typeof checkCreatorSubscription>>, TError = ErrorType<unknown>>(creatorId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof checkCreatorSubscription>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckCreatorSubscriptionQueryKey(creatorId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkCreatorSubscription>>> = ({ signal }) => checkCreatorSubscription(creatorId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(creatorId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkCreatorSubscription>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type CheckCreatorSubscriptionQueryResult = NonNullable<Awaited<ReturnType<typeof checkCreatorSubscription>>>
+export type CheckCreatorSubscriptionQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Check if I am subscribed to a creator
+ */
+
+export function useCheckCreatorSubscription<TData = Awaited<ReturnType<typeof checkCreatorSubscription>>, TError = ErrorType<unknown>>(
+ creatorId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof checkCreatorSubscription>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getCheckCreatorSubscriptionQueryOptions(creatorId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getRequestUploadUrlUrl = () => {
 

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Flag, X, AlertTriangle } from "lucide-react";
-import { useLikePost } from "@workspace/api-client-react";
+import { Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Flag, X, AlertTriangle, Trash2, Music } from "lucide-react";
+import { useLikePost, useDeletePost } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListPostsQueryKey, getGetTrendingPostsQueryKey } from "@workspace/api-client-react";
 import type { Post } from "@workspace/api-client-react";
@@ -43,8 +43,10 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const likePost = useLikePost();
+  const deletePost = useDeletePost();
   const qc = useQueryClient();
   const { user } = useAuth();
+  const isOwner = user?.id === post.author.id;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -63,6 +65,17 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
       onSuccess: (data) => {
         setLiked(data.liked);
         setCount(data.likesCount);
+        qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
+        qc.invalidateQueries({ queryKey: getGetTrendingPostsQueryKey() });
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    if (!confirm("Postni o'chirishni tasdiqlaysizmi?")) return;
+    setMenuOpen(false);
+    deletePost.mutate({ id: post.id }, {
+      onSuccess: () => {
         qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
         qc.invalidateQueries({ queryKey: getGetTrendingPostsQueryKey() });
       },
@@ -147,6 +160,15 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                   transition={{ duration: 0.12 }}
                   className="absolute right-0 top-8 z-50 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
                 >
+                  {isOwner && (
+                    <button
+                      onClick={handleDelete}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      O'chirish
+                    </button>
+                  )}
                   <button
                     onClick={() => { setMenuOpen(false); setReportOpen(true); }}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -161,11 +183,29 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         </div>
 
         {/* Media */}
-        {post.mediaUrl && (
-          <div className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden`}>
-            <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
-          </div>
-        )}
+        {post.mediaUrl && (() => {
+          const url = post.mediaUrl;
+          const isAudio = url.match(/\.(mp3|wav|ogg|aac|m4a)(\?|$)/i) !== null;
+          const isVideo = post.type === "video" && !isAudio;
+          if (isAudio) return (
+            <div className="flex items-center gap-3 px-4 py-3 bg-muted/50">
+              <div className="w-9 h-9 rounded-xl bg-amber-400/15 flex items-center justify-center flex-shrink-0">
+                <Music className="w-4 h-4 text-amber-400" />
+              </div>
+              <audio controls src={url} className="flex-1 h-8 min-w-0" style={{ accentColor: "var(--primary)" }} />
+            </div>
+          );
+          if (isVideo) return (
+            <div className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden`}>
+              <video src={url} className="w-full h-full object-cover" controls muted playsInline />
+            </div>
+          );
+          return (
+            <div className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden`}>
+              <img src={url} alt="" className="w-full h-full object-cover" />
+            </div>
+          );
+        })()}
 
         {/* Content */}
         <div className="px-4 pt-3 pb-1">

@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
-import { BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon } from "lucide-react";
-import { useGetUser, useListPosts, useFollowUser, getGetUserQueryKey } from "@workspace/api-client-react";
+import { BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon, Camera, Loader2 } from "lucide-react";
+import { useGetUser, useListPosts, useFollowUser, useUpdateUser, getGetUserQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
+
+const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 interface ProfilePageProps { userId: number; }
 
@@ -11,8 +15,23 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const { data: posts = [] } = useListPosts({ userId });
   const [following, setFollowing] = useState(false);
   const follow = useFollowUser();
+  const updateUser = useUpdateUser();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"posts" | "reels">("posts");
+  const { user: me } = useAuth();
+  const isOwner = me?.id === userId;
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const { uploadFile: upAvatar, isUploading: avatarUploading } = useMediaUpload({
+    onSuccess: r => updateUser.mutate({ id: userId, data: { avatarUrl: r.serveUrl } }, {
+      onSuccess: () => { qc.invalidateQueries({ queryKey: getGetUserQueryKey(userId) }); },
+    }),
+  });
+  const { uploadFile: upCover, isUploading: coverUploading } = useMediaUpload({
+    onSuccess: r => updateUser.mutate({ id: userId, data: { coverUrl: r.serveUrl } }, {
+      onSuccess: () => { qc.invalidateQueries({ queryKey: getGetUserQueryKey(userId) }); },
+    }),
+  });
 
   const handleFollow = () => {
     setFollowing(!following);
@@ -37,17 +56,34 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   return (
     <div className="max-w-2xl mx-auto pb-10">
       {/* Cover */}
-      <div className="h-40 bg-gradient-to-br from-primary/30 via-accent/20 to-background overflow-hidden relative">
+      <div className="h-40 bg-gradient-to-br from-primary/30 via-accent/20 to-background overflow-hidden relative group">
         {user.coverUrl && <img src={user.coverUrl} alt="" className="w-full h-full object-cover" />}
         <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+        {isOwner && (
+          <>
+            <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) upCover(f); e.target.value = ""; }} />
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/50 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+            >
+              {coverUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+              Cover
+            </button>
+          </>
+        )}
       </div>
 
       {/* Profile info */}
       <div className="px-5">
         <div className="flex items-end justify-between -mt-10 mb-4">
-          <div className="relative">
+          <div className="relative group/avatar">
             <div className="w-20 h-20 rounded-2xl border-4 border-background bg-gradient-to-br from-primary/40 to-accent/40 overflow-hidden">
-              {user.avatarUrl ? (
+              {avatarUploading ? (
+                <div className="w-full h-full flex items-center justify-center bg-muted">
+                  <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                </div>
+              ) : user.avatarUrl ? (
                 <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -55,6 +91,18 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                 </div>
               )}
             </div>
+            {isOwner && (
+              <>
+                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="absolute inset-0 rounded-2xl bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity"
+                >
+                  <Camera className="w-5 h-5 text-white" />
+                </button>
+              </>
+            )}
             {user.isVerified && (
               <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-background flex items-center justify-center">
                 <BadgeCheck className="w-5 h-5 text-primary" />

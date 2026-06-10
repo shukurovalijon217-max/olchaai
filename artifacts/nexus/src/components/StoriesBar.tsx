@@ -2,7 +2,11 @@ import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useListStories } from "@workspace/api-client-react";
 
-export default function StoriesBar() {
+interface Props {
+  onCreateStory?: () => void;
+}
+
+export default function StoriesBar({ onCreateStory }: Props) {
   const { data: stories = [] } = useListStories();
 
   return (
@@ -12,12 +16,13 @@ export default function StoriesBar() {
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={onCreateStory}
           className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer"
         >
-          <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-border">
-            <Plus className="w-5 h-5 text-muted-foreground" />
+          <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-primary/50 hover:border-primary transition-colors">
+            <Plus className="w-5 h-5 text-primary" />
           </div>
-          <span className="text-xs text-muted-foreground font-medium w-14 text-center truncate">Your Story</span>
+          <span className="text-xs text-muted-foreground font-medium w-14 text-center truncate">Story</span>
         </motion.div>
 
         {/* Stories */}
@@ -47,7 +52,7 @@ export default function StoriesBar() {
         ))}
 
         {stories.length === 0 && (
-          <div className="flex items-center text-xs text-muted-foreground py-2">No active stories yet</div>
+          <div className="flex items-center text-xs text-muted-foreground py-2">Hali story yo'q</div>
         )}
       </div>
     </div>

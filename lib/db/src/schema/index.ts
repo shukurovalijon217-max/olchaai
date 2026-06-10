@@ -10,3 +10,4 @@ export * from "./wallet";
 export * from "./platform";
 export * from "./live";
 export * from "./gifts";
+export * from "./marketplace";

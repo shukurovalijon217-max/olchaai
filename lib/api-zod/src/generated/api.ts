@@ -1248,6 +1248,356 @@ export const CheckCreatorSubscriptionResponse = zod.object({
 
 
 /**
+ * @summary Search users, posts, reels, and products
+ */
+export const SearchAllQueryParams = zod.object({
+  "q": zod.coerce.string(),
+  "type": zod.enum(['all', 'users', 'posts', 'reels', 'products']).optional(),
+  "limit": zod.coerce.number().optional()
+})
+
+export const SearchAllResponse = zod.object({
+  "query": zod.string().optional(),
+  "users": zod.array(zod.object({
+
+}).passthrough()).optional(),
+  "posts": zod.array(zod.object({
+
+}).passthrough()).optional(),
+  "reels": zod.array(zod.object({
+
+}).passthrough()).optional(),
+  "products": zod.array(zod.object({
+
+}).passthrough()).optional()
+})
+
+
+/**
+ * @summary Get product categories
+ */
+export const ListMarketplaceCategoriesResponseItem = zod.object({
+  "id": zod.string(),
+  "label": zod.string()
+})
+export const ListMarketplaceCategoriesResponse = zod.array(ListMarketplaceCategoriesResponseItem)
+
+
+/**
+ * @summary List marketplace products
+ */
+export const ListProductsQueryParams = zod.object({
+  "q": zod.coerce.string().optional(),
+  "category": zod.coerce.string().optional(),
+  "condition": zod.coerce.string().optional(),
+  "minPrice": zod.coerce.number().optional(),
+  "maxPrice": zod.coerce.number().optional(),
+  "sellerId": zod.coerce.number().optional(),
+  "sort": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().optional(),
+  "offset": zod.coerce.number().optional()
+})
+
+export const ListProductsResponse = zod.object({
+  "products": zod.array(zod.object({
+  "id": zod.number(),
+  "sellerId": zod.number(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "price": zod.number(),
+  "originalPrice": zod.number().nullish(),
+  "category": zod.string(),
+  "condition": zod.string(),
+  "mediaUrls": zod.array(zod.string()).optional(),
+  "thumbnailUrl": zod.string().nullish(),
+  "status": zod.string(),
+  "stock": zod.number(),
+  "location": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "viewsCount": zod.number(),
+  "ordersCount": zod.number(),
+  "rating": zod.number(),
+  "reviewsCount": zod.number(),
+  "createdAt": zod.string(),
+  "seller": zod.object({
+  "id": zod.number().optional(),
+  "displayName": zod.string().optional(),
+  "username": zod.string().optional(),
+  "avatarUrl": zod.string().nullish(),
+  "isVerified": zod.boolean().nullish()
+}).nullish()
+})).optional(),
+  "total": zod.number().optional()
+})
+
+
+/**
+ * @summary Create a product listing
+ */
+export const CreateProductBody = zod.object({
+  "title": zod.string(),
+  "description": zod.string().optional(),
+  "price": zod.number(),
+  "originalPrice": zod.number().optional(),
+  "category": zod.string().optional(),
+  "condition": zod.string().optional(),
+  "mediaUrls": zod.array(zod.string()).optional(),
+  "thumbnailUrl": zod.string().optional(),
+  "stock": zod.number().optional(),
+  "location": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "status": zod.string().optional()
+})
+
+
+/**
+ * @summary Get my product listings
+ */
+export const ListMyProductsResponseItem = zod.object({
+  "id": zod.number(),
+  "sellerId": zod.number(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "price": zod.number(),
+  "originalPrice": zod.number().nullish(),
+  "category": zod.string(),
+  "condition": zod.string(),
+  "mediaUrls": zod.array(zod.string()).optional(),
+  "thumbnailUrl": zod.string().nullish(),
+  "status": zod.string(),
+  "stock": zod.number(),
+  "location": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "viewsCount": zod.number(),
+  "ordersCount": zod.number(),
+  "rating": zod.number(),
+  "reviewsCount": zod.number(),
+  "createdAt": zod.string(),
+  "seller": zod.object({
+  "id": zod.number().optional(),
+  "displayName": zod.string().optional(),
+  "username": zod.string().optional(),
+  "avatarUrl": zod.string().nullish(),
+  "isVerified": zod.boolean().nullish()
+}).nullish()
+})
+export const ListMyProductsResponse = zod.array(ListMyProductsResponseItem)
+
+
+/**
+ * @summary Get a product by ID
+ */
+export const GetProductParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetProductResponse = zod.object({
+  "id": zod.number(),
+  "sellerId": zod.number(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "price": zod.number(),
+  "originalPrice": zod.number().nullish(),
+  "category": zod.string(),
+  "condition": zod.string(),
+  "mediaUrls": zod.array(zod.string()).optional(),
+  "thumbnailUrl": zod.string().nullish(),
+  "status": zod.string(),
+  "stock": zod.number(),
+  "location": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "viewsCount": zod.number(),
+  "ordersCount": zod.number(),
+  "rating": zod.number(),
+  "reviewsCount": zod.number(),
+  "createdAt": zod.string(),
+  "seller": zod.object({
+  "id": zod.number().optional(),
+  "displayName": zod.string().optional(),
+  "username": zod.string().optional(),
+  "avatarUrl": zod.string().nullish(),
+  "isVerified": zod.boolean().nullish()
+}).nullish()
+})
+
+
+/**
+ * @summary Update a product listing
+ */
+export const UpdateProductParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateProductBody = zod.object({
+  "title": zod.string(),
+  "description": zod.string().optional(),
+  "price": zod.number(),
+  "originalPrice": zod.number().optional(),
+  "category": zod.string().optional(),
+  "condition": zod.string().optional(),
+  "mediaUrls": zod.array(zod.string()).optional(),
+  "thumbnailUrl": zod.string().optional(),
+  "stock": zod.number().optional(),
+  "location": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "status": zod.string().optional()
+})
+
+export const UpdateProductResponse = zod.object({
+  "id": zod.number(),
+  "sellerId": zod.number(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "price": zod.number(),
+  "originalPrice": zod.number().nullish(),
+  "category": zod.string(),
+  "condition": zod.string(),
+  "mediaUrls": zod.array(zod.string()).optional(),
+  "thumbnailUrl": zod.string().nullish(),
+  "status": zod.string(),
+  "stock": zod.number(),
+  "location": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "viewsCount": zod.number(),
+  "ordersCount": zod.number(),
+  "rating": zod.number(),
+  "reviewsCount": zod.number(),
+  "createdAt": zod.string(),
+  "seller": zod.object({
+  "id": zod.number().optional(),
+  "displayName": zod.string().optional(),
+  "username": zod.string().optional(),
+  "avatarUrl": zod.string().nullish(),
+  "isVerified": zod.boolean().nullish()
+}).nullish()
+})
+
+
+/**
+ * @summary Delete a product listing
+ */
+export const DeleteProductParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Buy a product
+ */
+export const BuyProductParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const BuyProductBody = zod.object({
+  "quantity": zod.number().optional(),
+  "deliveryMethod": zod.string().optional(),
+  "deliveryAddress": zod.string().optional(),
+  "notes": zod.string().optional()
+})
+
+
+/**
+ * @summary Get product reviews
+ */
+export const ListProductReviewsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListProductReviewsResponseItem = zod.object({
+  "id": zod.number(),
+  "reviewerId": zod.number(),
+  "productId": zod.number(),
+  "orderId": zod.number().nullish(),
+  "rating": zod.number(),
+  "comment": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "reviewer": zod.object({
+  "id": zod.number().optional(),
+  "displayName": zod.string().optional(),
+  "avatarUrl": zod.string().nullish()
+}).nullish()
+})
+export const ListProductReviewsResponse = zod.array(ListProductReviewsResponseItem)
+
+
+/**
+ * @summary Add a product review
+ */
+export const CreateProductReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateProductReviewBody = zod.object({
+  "rating": zod.number(),
+  "comment": zod.string().optional(),
+  "orderId": zod.number().optional()
+})
+
+
+/**
+ * @summary Get my orders
+ */
+export const ListOrdersQueryParams = zod.object({
+  "role": zod.enum(['buyer', 'seller']).optional()
+})
+
+export const ListOrdersResponseItem = zod.object({
+  "id": zod.number(),
+  "buyerId": zod.number(),
+  "sellerId": zod.number(),
+  "productId": zod.number(),
+  "quantity": zod.number(),
+  "unitPrice": zod.number(),
+  "totalPrice": zod.number(),
+  "status": zod.string(),
+  "deliveryMethod": zod.string().optional(),
+  "deliveryAddress": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "trackingInfo": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "product": zod.object({
+  "id": zod.number().optional(),
+  "title": zod.string().optional(),
+  "thumbnailUrl": zod.string().nullish()
+}).nullish()
+})
+export const ListOrdersResponse = zod.array(ListOrdersResponseItem)
+
+
+/**
+ * @summary Update order status
+ */
+export const UpdateOrderStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateOrderStatusBody = zod.object({
+  "status": zod.string()
+})
+
+export const UpdateOrderStatusResponse = zod.object({
+  "id": zod.number(),
+  "buyerId": zod.number(),
+  "sellerId": zod.number(),
+  "productId": zod.number(),
+  "quantity": zod.number(),
+  "unitPrice": zod.number(),
+  "totalPrice": zod.number(),
+  "status": zod.string(),
+  "deliveryMethod": zod.string().optional(),
+  "deliveryAddress": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "trackingInfo": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "product": zod.object({
+  "id": zod.number().optional(),
+  "title": zod.string().optional(),
+  "thumbnailUrl": zod.string().nullish()
+}).nullish()
+})
+
+
+/**
  * @summary Request a presigned URL for file upload
  */
 

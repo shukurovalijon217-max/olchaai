@@ -81,34 +81,43 @@ router.delete("/library/books/:id", async (req, res) => {
   }
 });
 
+function olCover(coverId: number | null | undefined, size = "M"): string | null {
+  if (!coverId) return null;
+  return `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`;
+}
+
+function mapOpenLibDoc(doc: Record<string, unknown>) {
+  const coverId = doc.cover_i as number | undefined;
+  const authors = (doc.author_name as string[] | undefined) ?? [];
+  const isbns = (doc.isbn as string[] | undefined) ?? [];
+  const langs = (doc.language as string[] | undefined) ?? [];
+  const subjects = (doc.subject as string[] | undefined) ?? [];
+  return {
+    id: String(doc.key ?? doc.edition_key ?? Math.random()),
+    title: String(doc.title ?? "Nomsiz"),
+    authors,
+    description: (doc.first_sentence as string | undefined) ?? null,
+    thumbnailUrl: olCover(coverId),
+    publishedDate: doc.first_publish_year ? String(doc.first_publish_year) : null,
+    pageCount: (doc.number_of_pages_median as number | undefined) ?? null,
+    categories: subjects.slice(0, 5),
+    language: langs[0] ?? null,
+    isbn: isbns[0] ?? null,
+  };
+}
+
 router.get("/library/search", async (req, res) => {
   if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const { q, maxResults = "20" } = req.query as { q?: string; maxResults?: string };
   if (!q) { res.status(400).json({ error: "q required" }); return; }
   try {
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=${maxResults}&langRestrict=uz&orderBy=relevance`;
-    const response = await fetch(url);
-    const data = await response.json() as { items?: unknown[]; totalItems?: number };
+    const limit = Math.min(Number(maxResults), 40);
+    const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(q as string)}&limit=${limit}&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,language,isbn,first_sentence`;
+    const response = await fetch(url, { headers: { "User-Agent": "OlCha/1.0 (social platform)" } });
+    const data = await response.json() as { docs?: unknown[]; numFound?: number };
     res.json({
-      items: (data.items || []).map((item: unknown) => {
-        const i = item as Record<string, unknown>;
-        const vi = (i.volumeInfo || {}) as Record<string, unknown>;
-        const il = (vi.imageLinks || {}) as Record<string, string>;
-        return {
-          id: i.id,
-          title: vi.title || "Nomsiz",
-          authors: vi.authors || [],
-          description: vi.description || null,
-          thumbnailUrl: il.thumbnail || il.smallThumbnail || null,
-          publishedDate: vi.publishedDate || null,
-          pageCount: vi.pageCount || null,
-          categories: vi.categories || [],
-          language: vi.language || "uz",
-          isbn: (((vi.industryIdentifiers as unknown[]) || []) as Array<{ type: string; identifier: string }>)
-            .find(x => x.type === "ISBN_13")?.identifier || null,
-        };
-      }),
-      totalItems: data.totalItems || 0,
+      items: (data.docs ?? []).map(d => mapOpenLibDoc(d as Record<string, unknown>)),
+      totalItems: data.numFound ?? 0,
     });
   } catch (err) {
     req.log.error(err);
@@ -118,24 +127,24 @@ router.get("/library/search", async (req, res) => {
 
 router.get("/library/search/popular", async (req, res) => {
   if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const queries = ["o'zbek adabiyoti", "islom karimov", "science fiction", "python programming", "biznes"];
-  const q = queries[Math.floor(Math.random() * queries.length)];
+  const subjects = ["novel", "science_fiction", "self-help", "programming", "history", "biography"];
+  const subject = subjects[Math.floor(Math.random() * subjects.length)];
   try {
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=12&orderBy=relevance`;
-    const response = await fetch(url);
-    const data = await response.json() as { items?: unknown[] };
-    const items = (data.items || []).map((item: unknown) => {
-      const i = item as Record<string, unknown>;
-      const vi = (i.volumeInfo || {}) as Record<string, unknown>;
-      const il = (vi.imageLinks || {}) as Record<string, string>;
+    const url = `https://openlibrary.org/subjects/${subject}.json?limit=12`;
+    const response = await fetch(url, { headers: { "User-Agent": "OlCha/1.0 (social platform)" } });
+    const data = await response.json() as { works?: unknown[] };
+    const items = (data.works ?? []).map((w: unknown) => {
+      const work = w as Record<string, unknown>;
+      const coverId = work.cover_id as number | undefined;
+      const authors = ((work.authors as Array<{ name: string }>) ?? []).map(a => a.name);
       return {
-        id: i.id,
-        title: vi.title || "Nomsiz",
-        authors: vi.authors || [],
-        thumbnailUrl: il.thumbnail || il.smallThumbnail || null,
-        publishedDate: vi.publishedDate || null,
-        categories: vi.categories || [],
-        language: vi.language || null,
+        id: String(work.key ?? Math.random()),
+        title: String(work.title ?? "Nomsiz"),
+        authors,
+        thumbnailUrl: olCover(coverId),
+        publishedDate: work.first_publish_year ? String(work.first_publish_year) : null,
+        categories: [],
+        language: null,
       };
     });
     res.json({ items });

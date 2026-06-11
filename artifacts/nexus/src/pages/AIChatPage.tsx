@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Send, Plus, Trash2, MessageSquare, Sparkles, Image, FileText, Wand2, ChevronRight, X } from "lucide-react";
+import {
+  Bot, Send, Plus, Trash2, MessageSquare, Sparkles, Image, FileText,
+  Wand2, ChevronRight, Mic, MicOff, Volume2, Loader2, StopCircle,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -15,6 +18,13 @@ const QUICK_ACTIONS = [
   { icon: Image, label: "Rasm prompt", prompt: "DALL-E uchun ajoyib rasm prompt yoz: " },
 ];
 
+const TABS = [
+  { id: "chat", label: "Suhbat" },
+  { id: "voice", label: "🎙 Ovoz" },
+  { id: "caption", label: "Caption" },
+  { id: "image", label: "Rasm" },
+];
+
 export default function AIChatPage() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -26,11 +36,21 @@ export default function AIChatPage() {
   const [captionTopic, setCaptionTopic] = useState("");
   const [captionResult, setCaptionResult] = useState("");
   const [captionLoading, setCaptionLoading] = useState(false);
-  const [tab, setTab] = useState<"chat" | "caption" | "image">("chat");
+  const [tab, setTab] = useState<"chat" | "voice" | "caption" | "image">("chat");
   const [imagePrompt, setImagePrompt] = useState("");
   const [imageResult, setImageResult] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceLoading, setVoiceLoading] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState("");
+  const [voiceResponse, setVoiceResponse] = useState("");
+  const [voiceAudio, setVoiceAudio] = useState<string | null>(null);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     loadConversations();
@@ -40,6 +60,12 @@ export default function AIChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs, streaming]);
 
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   async function loadConversations() {
     setLoadingConvs(true);
     try {
@@ -47,9 +73,7 @@ export default function AIChatPage() {
       if (r.ok) {
         const data = await r.json();
         setConversations(data);
-        if (data.length > 0 && !activeConv) {
-          openConversation(data[data.length - 1].id);
-        }
+        if (data.length > 0 && !activeConv) openConversation(data[data.length - 1].id);
       }
     } finally {
       setLoadingConvs(false);
@@ -137,6 +161,70 @@ export default function AIChatPage() {
     }
   }
 
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm" });
+      recorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      recorder.onstop = processVoice;
+      recorder.start(100);
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      setVoiceTranscript("");
+      setVoiceResponse("");
+      setVoiceAudio(null);
+      timerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000);
+    } catch {
+      alert("Mikrofon ruxsati kerak. Brauzer sozlamalarida mikrofonga ruxsat bering.");
+    }
+  }
+
+  function stopRecording() {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current?.stream.getTracks().forEach(t => t.stop());
+    setIsRecording(false);
+    setVoiceLoading(true);
+  }
+
+  async function processVoice() {
+    try {
+      const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const arrayBuffer = await blob.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+      const r = await fetch(`${API}/api/openai/voice-chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ audioBase64: base64 }),
+      });
+
+      if (r.ok) {
+        const data = await r.json();
+        setVoiceTranscript(data.transcript ?? "");
+        setVoiceResponse(data.response ?? "");
+        setVoiceAudio(data.audioBase64 ?? null);
+        if (data.audioBase64) {
+          const audio = new Audio(`data:audio/mp3;base64,${data.audioBase64}`);
+          audio.play().catch(() => {});
+        }
+      }
+    } catch {
+      setVoiceResponse("Xato yuz berdi. Qayta urinib ko'ring.");
+    } finally {
+      setVoiceLoading(false);
+    }
+  }
+
+  function playVoiceResponse() {
+    if (!voiceAudio) return;
+    const audio = new Audio(`data:audio/mp3;base64,${voiceAudio}`);
+    audio.play().catch(() => {});
+  }
+
   async function generateCaption() {
     if (!captionTopic.trim()) return;
     setCaptionLoading(true);
@@ -181,8 +269,8 @@ export default function AIChatPage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
             </div>
@@ -191,10 +279,10 @@ export default function AIChatPage() {
               <p className="text-[11px] text-muted-foreground">GPT-4o bilan ishlaydi</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
-            {[{ id: "chat", label: "Suhbat" }, { id: "caption", label: "Caption" }, { id: "image", label: "Rasm" }].map(t => (
-              <button key={t.id} onClick={() => setTab(t.id as "chat" | "caption" | "image")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+          <div className="flex items-center gap-1 bg-muted rounded-xl p-1 overflow-x-auto">
+            {TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id as typeof tab)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                 {t.label}
               </button>
             ))}
@@ -207,7 +295,6 @@ export default function AIChatPage() {
         {/* ── Chat Tab ── */}
         {tab === "chat" && (
           <>
-            {/* Sidebar: Conversations */}
             <div className="hidden md:flex w-56 flex-col gap-2 flex-shrink-0">
               <button onClick={newConversation}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/15 text-primary hover:bg-primary/25 transition-colors text-sm font-semibold">
@@ -232,7 +319,6 @@ export default function AIChatPage() {
               </div>
             </div>
 
-            {/* Chat area */}
             <div className="flex-1 flex flex-col min-w-0">
               {!activeConv ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-6 py-16">
@@ -269,9 +355,7 @@ export default function AIChatPage() {
                             {m.role === "user" ? (user?.displayName?.[0] || "U") : <Bot className="w-4 h-4 text-white" />}
                           </div>
                           <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-                            m.role === "user"
-                              ? "bg-primary text-primary-foreground rounded-tr-sm"
-                              : "bg-card border border-border text-foreground rounded-tl-sm"
+                            m.role === "user" ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-card border border-border text-foreground rounded-tl-sm"
                           }`}>
                             {m.content || (streaming && m.role === "assistant" ? (
                               <span className="flex gap-1">
@@ -304,6 +388,114 @@ export default function AIChatPage() {
               )}
             </div>
           </>
+        )}
+
+        {/* ── Voice Tab ── */}
+        {tab === "voice" && (
+          <div className="flex-1 flex flex-col items-center justify-start gap-6 py-8 max-w-lg mx-auto w-full">
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-foreground mb-1">AI bilan ovozli suhbat</h2>
+              <p className="text-sm text-muted-foreground">Whisper STT + GPT-4o + TTS</p>
+            </div>
+
+            {/* Mic button */}
+            <div className="relative flex items-center justify-center">
+              {isRecording && (
+                <>
+                  <div className="absolute w-36 h-36 rounded-full bg-red-500/15 animate-ping" />
+                  <div className="absolute w-28 h-28 rounded-full bg-red-500/20 animate-pulse" />
+                </>
+              )}
+              <motion.button
+                whileTap={{ scale: 0.93 }}
+                onClick={() => { if (isRecording) stopRecording(); else startRecording(); }}
+                disabled={voiceLoading}
+                className={`relative w-24 h-24 rounded-full flex items-center justify-center shadow-xl transition-all duration-200 ${
+                  isRecording
+                    ? "bg-red-500 hover:bg-red-600 shadow-red-500/30"
+                    : voiceLoading
+                    ? "bg-muted cursor-not-allowed"
+                    : "bg-gradient-to-br from-violet-500 to-blue-600 hover:from-violet-400 hover:to-blue-500 shadow-violet-500/30"
+                }`}
+              >
+                {voiceLoading ? (
+                  <Loader2 className="w-10 h-10 text-white animate-spin" />
+                ) : isRecording ? (
+                  <StopCircle className="w-10 h-10 text-white" />
+                ) : (
+                  <Mic className="w-10 h-10 text-white" />
+                )}
+              </motion.button>
+            </div>
+
+            <p className="text-sm text-muted-foreground text-center">
+              {isRecording
+                ? `🔴 Yozilmoqda… ${recordingSeconds}s (to'xtatish uchun bosing)`
+                : voiceLoading
+                ? "⏳ AI tahlil qilmoqda..."
+                : voiceTranscript
+                ? "✅ Qayta yozish uchun bosing"
+                : "👆 Bosing va gapirib bering"}
+            </p>
+
+            {/* Transcript */}
+            <AnimatePresence>
+              {voiceTranscript && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-full bg-card border border-border rounded-2xl p-4 space-y-1"
+                >
+                  <p className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
+                    <MicOff className="w-3 h-3" /> Siz aytdingiz:
+                  </p>
+                  <p className="text-sm text-foreground leading-relaxed">{voiceTranscript}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* AI Response */}
+            <AnimatePresence>
+              {voiceResponse && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-full bg-gradient-to-br from-violet-500/10 to-blue-500/10 border border-violet-500/20 rounded-2xl p-4 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-violet-400 font-semibold flex items-center gap-1">
+                      <Bot className="w-3.5 h-3.5" /> OlCha AI:
+                    </p>
+                    {voiceAudio && (
+                      <button
+                        onClick={playVoiceResponse}
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-violet-500/20 text-violet-400 text-xs font-semibold hover:bg-violet-500/30 transition-colors"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" /> Tinglash
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed">{voiceResponse}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Tips */}
+            {!voiceTranscript && !voiceLoading && (
+              <div className="w-full grid grid-cols-2 gap-2 mt-2">
+                {[
+                  "O'zbek tilida gapiring",
+                  "Ingliz yoki rus tilida ham ishlaydi",
+                  "Savol bering",
+                  "G'oya so'rang",
+                ].map(tip => (
+                  <div key={tip} className="bg-muted/50 rounded-xl px-3 py-2 text-xs text-muted-foreground text-center">
+                    {tip}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* ── Caption Tab ── */}

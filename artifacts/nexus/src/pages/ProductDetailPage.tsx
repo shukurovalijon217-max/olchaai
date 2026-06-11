@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, Star, MapPin, Package, ShoppingCart, MessageCircle, Share2, Heart, ChevronLeft, ChevronRight, Store, Shield, Truck, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useGetProduct, useListProductReviews, useBuyProduct } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -17,16 +18,8 @@ function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
   );
 }
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Kutilmoqda", color: "text-yellow-400" },
-  paid: { label: "To'langan", color: "text-blue-400" },
-  processing: { label: "Tayyorlanmoqda", color: "text-indigo-400" },
-  shipped: { label: "Jo'natildi", color: "text-cyan-400" },
-  delivered: { label: "Yetkazildi ✓", color: "text-emerald-400" },
-  cancelled: { label: "Bekor qilindi", color: "text-red-400" },
-};
-
 export default function ProductDetailPage({ productId }: { productId: number }) {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [imageIdx, setImageIdx] = useState(0);
@@ -50,7 +43,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
     );
   }
   if (!product) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Mahsulot topilmadi</div>;
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">{t("product_detail.not_found")}</div>;
   }
 
   const images = (product as any).mediaUrls?.length ? (product as any).mediaUrls : [product.thumbnailUrl].filter(Boolean);
@@ -58,6 +51,12 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
   const totalPrice = product.price * quantity;
   const discount = product.originalPrice && product.originalPrice > product.price
     ? Math.round((1 - product.price / product.originalPrice) * 100) : null;
+
+  const conditionLabel = product.condition === "new"
+    ? t("product_detail.cond_new")
+    : product.condition === "digital"
+      ? t("product_detail.cond_digital")
+      : t("product_detail.cond_used");
 
   const handleBuy = async () => {
     setBuyError("");
@@ -69,7 +68,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
       setOrderDone(res);
       setBuying(false);
     } catch (e: any) {
-      setBuyError(e?.response?.data?.error ?? "Sotib olishda xato");
+      setBuyError(e?.response?.data?.error ?? t("common.error"));
     }
   };
 
@@ -94,9 +93,9 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
       {orderDone && (
         <div className="mx-4 mt-4 p-4 bg-emerald-900/30 border border-emerald-700/40 rounded-xl">
           <div className="flex items-center gap-2 text-emerald-400 font-semibold mb-1">
-            <Shield className="w-5 h-5" /> Buyurtma muvaffaqiyatli!
+            <Shield className="w-5 h-5" /> {t("product_detail.order_success")}
           </div>
-          <p className="text-sm text-emerald-300">Buyurtma qabul qilindi. Sotuvchi bilan bog'laning yoki Do'kon bo'limidan kuzating.</p>
+          <p className="text-sm text-emerald-300">{t("product_detail.order_accepted")}</p>
         </div>
       )}
 
@@ -152,7 +151,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
           <div className="flex items-start justify-between gap-2">
             <h1 className="text-xl font-bold leading-tight flex-1">{product.title}</h1>
             <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${product.condition === "new" ? "bg-emerald-900/50 text-emerald-400" : product.condition === "digital" ? "bg-blue-900/50 text-blue-400" : "bg-amber-900/50 text-amber-400"}`}>
-              {product.condition === "new" ? "Yangi" : product.condition === "digital" ? "💻 Raqamli" : "Ishlatilgan"}
+              {conditionLabel}
             </span>
           </div>
           <div className="flex items-center gap-3 mt-2">
@@ -163,14 +162,14 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
           </div>
           <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground">
             {product.location && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{product.location}</span>}
-            <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" />{product.stock} ta zaxira</span>
-            <span>👁 {product.viewsCount} ko'rish</span>
+            <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" />{product.stock} {t("product_detail.reserve")}</span>
+            <span>👁 {product.viewsCount} {t("product_detail.views")}</span>
           </div>
           {product.rating > 0 && (
             <div className="flex items-center gap-2 mt-2">
               <StarRating rating={product.rating} />
               <span className="text-amber-400 font-semibold text-sm">{(product.rating / 100).toFixed(1)}</span>
-              <span className="text-muted-foreground text-sm">({product.reviewsCount} sharh)</span>
+              <span className="text-muted-foreground text-sm">({product.reviewsCount} {t("product_detail.reviews").toLowerCase()})</span>
             </div>
           )}
         </div>
@@ -189,7 +188,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
                 {(product as any).seller.displayName}
                 {(product as any).seller.isVerified && <span className="text-amber-500 text-xs">✓</span>}
               </div>
-              <div className="text-xs text-muted-foreground flex items-center gap-1"><Store className="w-3 h-3" /> Sotuvchi profiliga o'tish</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1"><Store className="w-3 h-3" /> {t("product_detail.seller_profile")}</div>
             </div>
             <span className="text-amber-500 text-sm">→</span>
           </button>
@@ -198,7 +197,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
         {/* Description */}
         {product.description && (
           <div>
-            <h3 className="font-semibold text-sm mb-2 text-amber-300">Tavsif</h3>
+            <h3 className="font-semibold text-sm mb-2 text-amber-300">{t("product_detail.description")}</h3>
             <p className="text-sm leading-relaxed text-muted-foreground">{product.description}</p>
           </div>
         )}
@@ -215,9 +214,9 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
         {/* Delivery features */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { icon: Shield, label: "Xavfsiz to'lov", desc: "Hamyon orqali" },
-            { icon: Truck, label: "Yetkazib berish", desc: "Kelishiladi" },
-            { icon: MessageCircle, label: "Sotuvchi bilan", desc: "Muloqot" },
+            { icon: Shield, label: t("product_detail.safe_pay"), desc: t("product_detail.via_wallet") },
+            { icon: Truck, label: t("product_detail.delivery"), desc: t("product_detail.agreed") },
+            { icon: MessageCircle, label: t("product_detail.contact_seller"), desc: t("product_detail.chat") },
           ].map(({ icon: Icon, label, desc }) => (
             <div key={label} className="flex flex-col items-center gap-1 p-2 rounded-xl bg-amber-950/20 text-center">
               <Icon className="w-5 h-5 text-amber-500" />
@@ -230,7 +229,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
         {/* Reviews */}
         {reviews.length > 0 && (
           <div>
-            <h3 className="font-semibold text-sm mb-3 text-amber-300">Sharhlar ({reviews.length})</h3>
+            <h3 className="font-semibold text-sm mb-3 text-amber-300">{t("product_detail.reviews")} ({reviews.length})</h3>
             <div className="space-y-3">
               {(reviews as any[]).map((r) => (
                 <div key={r.id} className="p-3 rounded-xl bg-amber-950/20 border border-amber-900/20">
@@ -258,7 +257,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
         <div className="fixed inset-0 z-50 bg-black/70 flex items-end">
           <div className="w-full bg-card rounded-t-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg">Sotib olish</h3>
+              <h3 className="font-bold text-lg">{t("product_detail.buy_title")}</h3>
               <button onClick={() => setBuying(false)} className="p-1.5 hover:bg-amber-950/40 rounded-full">✕</button>
             </div>
             {buyError && (
@@ -272,7 +271,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
             </div>
             {/* Quantity */}
             <div className="flex items-center justify-between">
-              <span className="text-sm">Miqdor</span>
+              <span className="text-sm">{t("product_detail.qty")}</span>
               <div className="flex items-center gap-3">
                 <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-8 h-8 rounded-full bg-amber-950/40 flex items-center justify-center font-bold text-lg">-</button>
                 <span className="w-8 text-center font-bold">{quantity}</span>
@@ -281,9 +280,9 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
             </div>
             {/* Delivery */}
             <div>
-              <div className="text-sm font-medium mb-2">Yetkazib berish usuli</div>
+              <div className="text-sm font-medium mb-2">{t("product_detail.delivery_method")}</div>
               <div className="grid grid-cols-2 gap-2">
-                {[{ id: "pickup", label: "O'z qo'lga olish 🤝" }, { id: "delivery", label: "Yetkazib berish 🚚" }].map(d => (
+                {[{ id: "pickup", label: t("product_detail.pickup") }, { id: "delivery", label: t("product_detail.home_delivery") }].map(d => (
                   <button key={d.id} onClick={() => setDeliveryMethod(d.id)}
                     className={`py-2.5 rounded-xl text-sm border transition-colors ${deliveryMethod === d.id ? "bg-amber-700/50 border-amber-600 text-white" : "bg-amber-950/20 border-amber-900/30"}`}>
                     {d.label}
@@ -292,17 +291,17 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
               </div>
             </div>
             {deliveryMethod === "delivery" && (
-              <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Yetkazib berish manzili..."
+              <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder={t("product_detail.delivery_address_ph")}
                 className="w-full bg-amber-950/20 border border-amber-900/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-600" />
             )}
             {/* Total */}
             <div className="flex items-center justify-between py-2 border-t border-amber-900/30">
-              <span className="font-semibold">Jami</span>
+              <span className="font-semibold">{t("product_detail.total")}</span>
               <span className="text-amber-400 font-bold text-xl">{(totalPrice / 100).toLocaleString()} so'm</span>
             </div>
             <button onClick={handleBuy} disabled={isBuying}
               className="w-full bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-colors">
-              {isBuying ? "Sotib olinmoqda..." : `${(totalPrice / 100).toLocaleString()} so'm to'lash`}
+              {isBuying ? t("product_detail.buying") : `${(totalPrice / 100).toLocaleString()} so'm ${t("product_detail.pay")}`}
             </button>
           </div>
         </div>
@@ -315,13 +314,13 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
             onClick={() => navigate(`/messages`)}
             className="flex items-center gap-2 px-4 py-3 rounded-xl border border-amber-700 text-amber-400 text-sm font-medium hover:bg-amber-950/30"
           >
-            <MessageCircle className="w-4 h-4" /> Sotuvchi
+            <MessageCircle className="w-4 h-4" /> {t("product_detail.contact_btn")}
           </button>
           <button
             onClick={() => { setBuyError(""); setBuying(true); }}
             className="flex-1 flex items-center justify-center gap-2 bg-amber-700 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-colors"
           >
-            <ShoppingCart className="w-5 h-5" /> Sotib olish
+            <ShoppingCart className="w-5 h-5" /> {t("product_detail.buy_btn")}
           </button>
         </div>
       )}
@@ -329,7 +328,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
         <div className="fixed bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur border-t border-amber-900/20 px-4 py-3">
           <button onClick={() => navigate("/bozor/do-kon")}
             className="w-full flex items-center justify-center gap-2 bg-amber-700 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-colors">
-            <Store className="w-5 h-5" /> Do'konimni boshqarish
+            <Store className="w-5 h-5" /> {t("product_detail.manage_shop")}
           </button>
         </div>
       )}

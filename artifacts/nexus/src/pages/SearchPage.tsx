@@ -1,17 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Users, FileText, Play, ShoppingBag, X, TrendingUp } from "lucide-react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useSearchAll } from "@workspace/api-client-react";
 
-const TABS = [
-  { id: "all", label: "Hammasi", icon: TrendingUp },
-  { id: "users", label: "Foydalanuvchilar", icon: Users },
-  { id: "posts", label: "Postlar", icon: FileText },
-  { id: "reels", label: "Reels", icon: Play },
-  { id: "products", label: "Mahsulotlar", icon: ShoppingBag },
-] as const;
-
-type TabId = (typeof TABS)[number]["id"];
+type TabId = "all" | "users" | "posts" | "reels" | "products";
 
 function Avatar({ url, name, size = 40 }: { url?: string | null; name?: string; size?: number }) {
   return url ? (
@@ -24,11 +17,20 @@ function Avatar({ url, name, size = 40 }: { url?: string | null; name?: string; 
 }
 
 export default function SearchPage() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const [query, setQuery] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("all");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const TABS = [
+    { id: "all" as TabId, label: t("search.tab_all"), icon: TrendingUp },
+    { id: "users" as TabId, label: t("search.tab_users"), icon: Users },
+    { id: "posts" as TabId, label: t("search.tab_posts"), icon: FileText },
+    { id: "reels" as TabId, label: "Reels", icon: Play },
+    { id: "products" as TabId, label: t("search.tab_products"), icon: ShoppingBag },
+  ];
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(query.trim()), 400);
@@ -61,7 +63,7 @@ export default function SearchPage() {
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Qidirish... foydalanuvchilar, postlar, mahsulotlar"
+            placeholder={t("search.ph")}
             className="w-full bg-amber-950/30 border border-amber-900/40 rounded-full pl-10 pr-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-600"
           />
           {query && (
@@ -97,7 +99,7 @@ export default function SearchPage() {
             <div className="w-16 h-16 rounded-full bg-amber-900/30 flex items-center justify-center">
               <Search className="w-7 h-7 text-amber-500" />
             </div>
-            <p className="text-muted-foreground text-sm">Qidirmoqchi bo'lgan narsangizni kiriting</p>
+            <p className="text-muted-foreground text-sm">{t("search.hint")}</p>
           </div>
         )}
 
@@ -111,7 +113,7 @@ export default function SearchPage() {
         {/* No results */}
         {enabled && !showLoading && !hasResults && (
           <div className="flex flex-col items-center py-16 gap-2 text-center">
-            <p className="text-muted-foreground text-sm">"{debouncedQ}" bo'yicha hech narsa topilmadi</p>
+            <p className="text-muted-foreground text-sm">"{debouncedQ}" {t("search.no_results")}</p>
           </div>
         )}
 
@@ -122,7 +124,7 @@ export default function SearchPage() {
             {(activeTab === "all" || activeTab === "users") && users.length > 0 && (
               <section>
                 <h3 className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5" /> Foydalanuvchilar ({users.length})
+                  <Users className="w-3.5 h-3.5" /> {t("search.tab_users")} ({users.length})
                 </h3>
                 <div className="space-y-2">
                   {users.map((u: any) => (
@@ -141,7 +143,7 @@ export default function SearchPage() {
                         {u.bio && <div className="text-xs text-muted-foreground mt-0.5 truncate">{u.bio}</div>}
                       </div>
                       <div className="text-right flex-shrink-0">
-                        {u.isVerified && <span className="text-amber-500 text-xs">✓ Tasdiqlangan</span>}
+                        {u.isVerified && <span className="text-amber-500 text-xs">✓ {t("search.verified")}</span>}
                       </div>
                     </button>
                   ))}
@@ -153,7 +155,7 @@ export default function SearchPage() {
             {(activeTab === "all" || activeTab === "posts") && posts.length > 0 && (
               <section>
                 <h3 className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <FileText className="w-3.5 h-3.5" /> Postlar ({posts.length})
+                  <FileText className="w-3.5 h-3.5" /> {t("search.tab_posts")} ({posts.length})
                 </h3>
                 <div className="space-y-2">
                   {posts.map((p: any) => (
@@ -217,7 +219,7 @@ export default function SearchPage() {
             {(activeTab === "all" || activeTab === "products") && products.length > 0 && (
               <section>
                 <h3 className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <ShoppingBag className="w-3.5 h-3.5" /> Mahsulotlar ({products.length})
+                  <ShoppingBag className="w-3.5 h-3.5" /> {t("search.tab_products")} ({products.length})
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
                   {products.map((p: any) => (

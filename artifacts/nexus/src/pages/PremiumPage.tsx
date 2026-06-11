@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import {
   Crown, Check, X, Zap, Shield, Star, Loader2,
@@ -24,34 +25,6 @@ interface Product {
 }
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-const PLAN_FEATURES = [
-  { icon: Megaphone,    label: "Reklama",              free: "Reklamalar bor",   premium: "Reklama yo'q" },
-  { icon: Image,        label: "Story yuklash",        free: "Kuniga 5 ta",      premium: "Cheksiz" },
-  { icon: BarChart3,    label: "Tahlil va statistika", free: "Asosiy",           premium: "Chuqur tahlil" },
-  { icon: Bot,          label: "AI yordamchi",         free: "Cheklangan",       premium: "To'liq kirish" },
-  { icon: Eye,          label: "Ko'rganlar ro'yxati",  free: false,              premium: true },
-  { icon: BadgeCheck,   label: "Oltin badge 👑",       free: false,              premium: true },
-  { icon: TrendingUp,   label: "Tavsiya algoritmi",    free: "Standart",         premium: "Priority" },
-  { icon: MessageSquare,label: "Xabar yuborish",       free: "Cheklangan",       premium: "Cheksiz" },
-  { icon: Play,         label: "Reels monetizatsiya",  free: false,              premium: true },
-  { icon: Headphones,   label: "Qo'llab-quvvatlash",  free: "Umumiy",           premium: "Priority 24/7" },
-  { icon: Shield,       label: "Hisob himoyasi",       free: "Standart",         premium: "Kuchaytirilgan" },
-  { icon: Lock,         label: "Eksklyuziv kontent",   free: false,              premium: true },
-];
-
-const TESTIMONIALS = [
-  { name: "Dildora T.", handle: "@dildora_art", avatar: "D", text: "Premium ga o'tganimdan keyin followerlarim 3x o'sdi. AI tavsiyalar juda kuchli!", stars: 5 },
-  { name: "Jasur M.", handle: "@jasur_tech", avatar: "J", text: "Reklama yo'q bo'lgani juda yaxshi. Toza va qulay platforma.", stars: 5 },
-  { name: "Nilufar K.", handle: "@nilufar_blog", avatar: "N", text: "Chuqur statistika mening kontent strategiyamni to'liq o'zgartirdi.", stars: 5 },
-];
-
-const FAQS = [
-  { q: "Premium qanday ishlaydi?", a: "Obunaga yozilgach darhol barcha Premium imkoniyatlar faollashadi. Oylik yoki yillik reja tanlashingiz mumkin." },
-  { q: "Bekor qilsam nima bo'ladi?", a: "Istalgan vaqt bekor qilishingiz mumkin. To'lov davri tugaguncha Premium imkoniyatlardan foydalanishda davom etasiz." },
-  { q: "Qaytarib olish mumkinmi?", a: "Ha, 7 kun ichida bekor qilsangiz to'liq qaytarib olasiz." },
-  { q: "Bir nechta qurilmada ishlatsa bo'ladimi?", a: "Ha, hisobingizga kirgan barcha qurilmalarda ishlaydi." },
-];
 
 function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase(), minimumFractionDigits: 0 }).format(amount / 100);
@@ -81,6 +54,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export default function PremiumPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [products, setProducts] = useState<Product[]>([]);
@@ -89,7 +63,34 @@ export default function PremiumPage() {
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [billing, setBilling] = useState<"month" | "year">("month");
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const PLAN_FEATURES = [
+    { icon: Megaphone,     label: t("premium.feat_ads"),       free: t("premium.free_ads"),         premium: t("premium.no_ads") },
+    { icon: Image,         label: t("premium.feat_story"),     free: t("premium.stories_daily"),    premium: t("premium.unlimited") },
+    { icon: BarChart3,     label: t("premium.feat_analytics"), free: t("premium.analytics_basic"),  premium: t("premium.analytics_deep") },
+    { icon: Bot,           label: t("premium.feat_ai"),        free: t("premium.ai_limited"),       premium: t("premium.ai_full") },
+    { icon: Eye,           label: t("premium.feat_viewers"),   free: false,                         premium: true },
+    { icon: BadgeCheck,    label: t("premium.feat_badge"),     free: false,                         premium: true },
+    { icon: TrendingUp,    label: t("premium.feat_algo"),      free: t("premium.algo_standard"),    premium: t("premium.algo_priority") },
+    { icon: MessageSquare, label: t("premium.feat_msg"),       free: t("premium.msg_limited"),      premium: t("premium.msg_unlimited") },
+    { icon: Play,          label: t("premium.feat_reels"),     free: false,                         premium: true },
+    { icon: Headphones,    label: t("premium.feat_support"),   free: t("premium.support_general"),  premium: t("premium.support_priority") },
+    { icon: Shield,        label: t("premium.feat_security"),  free: t("premium.security_standard"),premium: t("premium.security_enhanced") },
+    { icon: Lock,          label: t("premium.feat_exclusive"), free: false,                         premium: true },
+  ];
+
+  const TESTIMONIALS = [
+    { name: t("premium.t1_name"), handle: "@dildora_art", avatar: "D", text: t("premium.t1_text"), stars: 5 },
+    { name: t("premium.t2_name"), handle: "@jasur_tech",  avatar: "J", text: t("premium.t2_text"), stars: 5 },
+    { name: t("premium.t3_name"), handle: "@nilufar_blog",avatar: "N", text: t("premium.t3_text"), stars: 5 },
+  ];
+
+  const FAQS = [
+    { q: t("premium.faq1_q"), a: t("premium.faq1_a") },
+    { q: t("premium.faq2_q"), a: t("premium.faq2_a") },
+    { q: t("premium.faq3_q"), a: t("premium.faq3_a") },
+    { q: t("premium.faq4_q"), a: t("premium.faq4_a") },
+  ];
 
   const searchParams = new URLSearchParams(window.location.search);
   const success = searchParams.get("success");
@@ -119,8 +120,8 @@ export default function PremiumPage() {
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
-      else setError(data.error ?? "Checkout xatosi");
-    } catch { setError("Tarmoq xatosi"); } finally { setCheckingOut(null); }
+      else setError(data.error ?? t("premium.checkout_err"));
+    } catch { setError(t("common.network_error")); } finally { setCheckingOut(null); }
   };
 
   const handlePortal = async () => {
@@ -128,7 +129,7 @@ export default function PremiumPage() {
       const res = await fetch(`${API}/api/stripe/portal`, { method: "POST", credentials: "include" });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
-    } catch { setError("Portal xatosi"); }
+    } catch { setError(t("premium.portal_err")); }
   };
 
   const premiumProduct = products[0];
@@ -153,12 +154,12 @@ export default function PremiumPage() {
           {success && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
               className="mb-8 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-green-500/10 border border-green-500/30 text-green-400 font-medium">
-              🎉 Premium obunangiz faollashtirildi! Xush kelibsiz.
+              🎉 {t("premium.activated")}
             </motion.div>
           )}
           {canceled && (
             <div className="mb-8 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400">
-              To'lov bekor qilindi. Istalgan vaqt qaytib kelishingiz mumkin.
+              {t("premium.canceled_msg")}
             </div>
           )}
 
@@ -175,11 +176,10 @@ export default function PremiumPage() {
               <Sparkles className="w-3.5 h-3.5" /> OlCha Premium
             </div>
             <h1 className="text-4xl sm:text-5xl font-black text-foreground mb-4 leading-tight">
-              Ijtimoiy tarmoqda<br />
-              <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">ustunlikka ega bo'ling</span>
+              <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">{t("premium.hero_title")}</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
-              Reklama yo'q, cheksiz imkoniyatlar, AI yordamchi va eksklyuziv xususiyatlar bilan platformadan to'liq foydalaning.
+              {t("premium.hero_sub")}
             </p>
           </motion.div>
 
@@ -188,12 +188,14 @@ export default function PremiumPage() {
             <div className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-yellow-500/15 to-orange-500/15 border border-yellow-500/30 max-w-md mx-auto">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <Crown className="w-5 h-5 text-yellow-400" />
-                <span className="font-bold text-foreground">Siz Premium foydalanuvchisiz!</span>
+                <span className="font-bold text-foreground">{t("premium.you_are_premium")}</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-4">Holat: <span className="text-green-400 font-medium">Faol</span></p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t("premium.status")} <span className="text-green-400 font-medium">{t("premium.active")}</span>
+              </p>
               <button onClick={handlePortal}
                 className="px-5 py-2 rounded-xl border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10 transition text-sm font-medium">
-                Obunani boshqarish
+                {t("premium.manage")}
               </button>
             </div>
           )}
@@ -203,12 +205,12 @@ export default function PremiumPage() {
             <div className="inline-flex items-center bg-muted/40 border border-border rounded-2xl p-1 mb-10">
               <button onClick={() => setBilling("month")}
                 className={`px-5 py-2 rounded-xl text-sm font-medium transition ${billing === "month" ? "bg-card text-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}>
-                Oylik
+                {t("premium.monthly")}
               </button>
               <button onClick={() => setBilling("year")}
                 className={`px-5 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 ${billing === "year" ? "bg-card text-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}>
-                Yillik
-                <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-semibold">{savings}% tejash</span>
+                {t("premium.yearly")}
+                <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-semibold">{savings}% {t("premium.savings")}</span>
               </button>
             </div>
           )}
@@ -225,15 +227,15 @@ export default function PremiumPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="p-6 rounded-2xl border border-border bg-card">
               <div className="mb-5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Bepul</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("premium.free_label")}</p>
                 <div className="flex items-end gap-1">
                   <span className="text-4xl font-black text-foreground">0</span>
-                  <span className="text-muted-foreground mb-1">so'm</span>
+                  <span className="text-muted-foreground mb-1">{t("premium.som", { defaultValue: "UZS" })}</span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">Asosiy imkoniyatlar</p>
+                <p className="text-sm text-muted-foreground mt-1">{t("premium.basic_features")}</p>
               </div>
               <button disabled className="w-full py-3 rounded-xl border border-border text-muted-foreground text-sm font-medium cursor-default">
-                Hozirgi reja
+                {t("premium.current_plan")}
               </button>
             </motion.div>
 
@@ -242,11 +244,11 @@ export default function PremiumPage() {
               className="p-6 rounded-2xl border-2 border-yellow-500/50 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="absolute -top-px left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-b-xl text-black text-xs font-black">
-                ✨ TAVSIYA ETILADI
+                ✨ {t("premium.recommended")}
               </div>
 
               {loading ? (
-                <div className="flex items-center gap-2 mt-5 mb-5"><Loader2 className="w-5 h-5 animate-spin text-yellow-400" /><span className="text-sm text-muted-foreground">Narxlar yuklanmoqda...</span></div>
+                <div className="flex items-center gap-2 mt-5 mb-5"><Loader2 className="w-5 h-5 animate-spin text-yellow-400" /><span className="text-sm text-muted-foreground">{t("premium.loading_prices")}</span></div>
               ) : (
                 <div className="mb-5 mt-2">
                   <p className="text-xs font-semibold text-yellow-500 uppercase tracking-wider mb-2">Premium</p>
@@ -261,18 +263,18 @@ export default function PremiumPage() {
                             monthlyPrice?.currency ?? "usd"
                           )}
                         </span>
-                        <span className="text-muted-foreground mb-1">/ oy</span>
+                        <span className="text-muted-foreground mb-1">/ {t("premium.per_month")}</span>
                       </div>
                       {billing === "year" && yearlyPrice && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          {formatPrice(yearlyPrice.unitAmount, yearlyPrice.currency)} yiliga to'lanadi
+                          {formatPrice(yearlyPrice.unitAmount, yearlyPrice.currency)} {t("premium.billed_yearly")}
                         </p>
                       )}
                     </>
                   ) : (
                     <div className="flex items-end gap-1">
                       <span className="text-4xl font-black text-foreground">49 900</span>
-                      <span className="text-muted-foreground mb-1">so'm / oy</span>
+                      <span className="text-muted-foreground mb-1">{t("premium.som", { defaultValue: "UZS" })} / {t("premium.per_month")}</span>
                     </div>
                   )}
                 </div>
@@ -285,12 +287,12 @@ export default function PremiumPage() {
                   onClick={() => {
                     const price = billing === "month" ? monthlyPrice : yearlyPrice;
                     if (price) handleCheckout(price.id);
-                    else setError("To'lov rejalari hali sozlanmagan");
+                    else setError(t("premium.not_configured"));
                   }}
                   disabled={!!checkingOut}
                   className="w-full py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-black hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-60 text-sm">
                   {checkingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
-                  Premium olish
+                  {t("premium.get")}
                   {!checkingOut && <ArrowRight className="w-4 h-4" />}
                 </button>
               ) : (
@@ -298,13 +300,13 @@ export default function PremiumPage() {
                   onClick={() => navigate("/")}
                   className="w-full py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-black hover:opacity-90 transition flex items-center justify-center gap-2 text-sm">
                   <Rocket className="w-4 h-4" />
-                  Boshlash uchun kiring
+                  {t("premium.login_to_start")}
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}
 
               <p className="text-center text-xs text-muted-foreground mt-3">
-                Istalgan vaqt bekor qilish mumkin
+                {t("premium.cancel_anytime")}
               </p>
             </motion.div>
           </div>
@@ -312,13 +314,13 @@ export default function PremiumPage() {
 
         {/* Feature comparison table */}
         <div className="mb-16">
-          <h2 className="text-2xl font-black text-foreground text-center mb-2">Nima qo'shimcha olasiz?</h2>
-          <p className="text-muted-foreground text-center text-sm mb-8">Bepul va Premium rejalari taqqoslash</p>
+          <h2 className="text-2xl font-black text-foreground text-center mb-2">{t("premium.comparison_title")}</h2>
+          <p className="text-muted-foreground text-center text-sm mb-8">{t("premium.comparison_sub")}</p>
 
           <div className="rounded-2xl border border-border overflow-hidden">
             <div className="grid grid-cols-3 bg-muted/30 border-b border-border px-5 py-3">
-              <span className="text-xs font-semibold text-muted-foreground">Xususiyat</span>
-              <span className="text-xs font-semibold text-muted-foreground text-center">Bepul</span>
+              <span className="text-xs font-semibold text-muted-foreground">{t("premium.feature_col")}</span>
+              <span className="text-xs font-semibold text-muted-foreground text-center">{t("premium.free_label")}</span>
               <span className="text-xs font-semibold text-yellow-500 text-center flex items-center justify-center gap-1"><Crown className="w-3 h-3" />Premium</span>
             </div>
             {PLAN_FEATURES.map(({ icon: Icon, label, free, premium }, i) => (
@@ -336,21 +338,21 @@ export default function PremiumPage() {
 
         {/* Testimonials */}
         <div className="mb-16">
-          <h2 className="text-2xl font-black text-foreground text-center mb-2">Foydalanuvchilar nima deydi</h2>
-          <p className="text-muted-foreground text-center text-sm mb-8">Premium foydalanuvchilarning fikrlari</p>
+          <h2 className="text-2xl font-black text-foreground text-center mb-2">{t("premium.testimonials_title")}</h2>
+          <p className="text-muted-foreground text-center text-sm mb-8">{t("premium.testimonials_sub")}</p>
           <div className="grid md:grid-cols-3 gap-4">
-            {TESTIMONIALS.map((t, i) => (
+            {TESTIMONIALS.map((testimonial, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i }}
                 className="p-5 rounded-2xl border border-border bg-card">
-                <StarRating n={t.stars} />
-                <p className="text-sm text-muted-foreground my-3 leading-relaxed">"{t.text}"</p>
+                <StarRating n={testimonial.stars} />
+                <p className="text-sm text-muted-foreground my-3 leading-relaxed">"{testimonial.text}"</p>
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/40 to-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
-                    {t.avatar}
+                    {testimonial.avatar}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.handle}</p>
+                    <p className="text-xs font-semibold text-foreground">{testimonial.name}</p>
+                    <p className="text-xs text-muted-foreground">{testimonial.handle}</p>
                   </div>
                   <BadgeCheck className="w-4 h-4 text-yellow-400 ml-auto" />
                 </div>
@@ -362,9 +364,9 @@ export default function PremiumPage() {
         {/* Stats */}
         <div className="mb-16 grid grid-cols-3 gap-4">
           {[
-            { value: "500K+", label: "Faol foydalanuvchi" },
-            { value: "98%",   label: "Qoniqish darajasi" },
-            { value: "3x",    label: "Ko'proq ko'rinish" },
+            { value: "500K+", label: t("premium.active_users") },
+            { value: "98%",   label: t("premium.satisfaction") },
+            { value: "3x",    label: t("premium.more_views") },
           ].map((s, i) => (
             <div key={i} className="p-5 rounded-2xl border border-border bg-card text-center">
               <p className="text-3xl font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent mb-1">{s.value}</p>
@@ -375,8 +377,8 @@ export default function PremiumPage() {
 
         {/* FAQ */}
         <div className="mb-16">
-          <h2 className="text-2xl font-black text-foreground text-center mb-2">Ko'p so'raladigan savollar</h2>
-          <p className="text-muted-foreground text-center text-sm mb-8">Bilmoqchi bo'lgan narsangiz</p>
+          <h2 className="text-2xl font-black text-foreground text-center mb-2">{t("premium.faq_title")}</h2>
+          <p className="text-muted-foreground text-center text-sm mb-8">{t("premium.faq_sub")}</p>
           <div className="space-y-3 max-w-2xl mx-auto">
             {FAQS.map((f, i) => <FaqItem key={i} q={f.q} a={f.a} />)}
           </div>
@@ -387,8 +389,8 @@ export default function PremiumPage() {
           <div className="relative overflow-hidden p-8 rounded-3xl bg-gradient-to-br from-yellow-500/15 to-orange-500/10 border border-yellow-500/30 text-center">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-yellow-500/20 blur-3xl rounded-full" />
             <Crown className="w-12 h-12 text-yellow-400 mx-auto mb-4 relative" />
-            <h3 className="text-2xl font-black text-foreground mb-2 relative">Bugun boshlang</h3>
-            <p className="text-muted-foreground text-sm mb-6 relative">7 kun ichida bekor qilsangiz to'liq qaytarib olasiz</p>
+            <h3 className="text-2xl font-black text-foreground mb-2 relative">{t("premium.start_today")}</h3>
+            <p className="text-muted-foreground text-sm mb-6 relative">{t("premium.refund_msg")}</p>
             {user ? (
               <button
                 onClick={() => {
@@ -398,18 +400,18 @@ export default function PremiumPage() {
                 disabled={!!checkingOut}
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-black hover:opacity-90 transition text-sm relative disabled:opacity-60">
                 {checkingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
-                Premium Olish
+                {t("premium.get_premium")}
               </button>
             ) : (
               <button
                 onClick={() => navigate("/")}
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-black hover:opacity-90 transition text-sm relative">
                 <Rocket className="w-4 h-4" />
-                Kirish va Boshlash
+                {t("premium.login_start")}
                 <ArrowRight className="w-4 h-4" />
               </button>
             )}
-            <p className="text-xs text-muted-foreground mt-4 relative">To'lovlar Stripe orqali xavfsiz amalga oshiriladi</p>
+            <p className="text-xs text-muted-foreground mt-4 relative">{t("premium.stripe_secure")}</p>
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Send, Heart, BadgeCheck, Loader2, Mic } from "lucide-react";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import {
   useGetPost, useListPostComments, useCreatePostComment,
   getListPostCommentsQueryKey, getGetPostQueryKey,
@@ -33,6 +34,7 @@ interface VoiceCommentData {
 }
 
 export default function PostDetailPage({ postId }: PostDetailPageProps) {
+  const { t } = useTranslation();
   const { data: post } = useGetPost(postId, { query: { queryKey: getGetPostQueryKey(postId) } });
   const { data: comments = [] } = useListPostComments(postId, { query: { queryKey: getListPostCommentsQueryKey(postId) } });
   const [text, setText] = useState("");
@@ -105,14 +107,14 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
             <ArrowLeft className="w-4 h-4" />
           </button>
         </Link>
-        <h1 className="font-bold text-foreground">Post</h1>
+        <h1 className="font-bold text-foreground">{t("post_detail.title")}</h1>
       </div>
 
       {post && <PostCard post={post} />}
 
       {/* Comments section */}
       <div className="mt-6 space-y-4">
-        <h2 className="font-bold text-foreground text-sm">{comments.length} ta izoh</h2>
+        <h2 className="font-bold text-foreground text-sm">{comments.length} {t("post_detail.comments_count")}</h2>
 
         {/* Text comment input */}
         <div className="flex items-center gap-3">
@@ -127,7 +129,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) handleComment(); }}
-              placeholder="Izoh qo'shish..."
+              placeholder={t("post_detail.comment_ph")}
               className="flex-1 px-4 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 transition-colors"
             />
             <motion.button
@@ -144,7 +146,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
           </div>
         </div>
 
-        {/* Voice recorder — USP "Ovozli Iplari" */}
+        {/* Voice recorder */}
         {user && (
           <div className="flex items-center gap-3 pl-11">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500/25 to-blue-500/25 flex-shrink-0 flex items-center justify-center border border-violet-500/20 shrink-0">
@@ -156,7 +158,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
 
         {addComment.isError && (
           <p className="text-xs text-destructive bg-destructive/10 rounded-xl px-3 py-2">
-            {(addComment.error as any)?.response?.data?.error ?? "Izoh yuborishda xato"}
+            {(addComment.error as any)?.response?.data?.error ?? t("post_detail.comment_error")}
           </p>
         )}
 
@@ -166,7 +168,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
             <div className="flex items-center gap-2 px-1">
               <Mic className="w-3 h-3 text-violet-400" />
               <span className="text-xs font-semibold text-violet-400">
-                {voiceComments.length} ta ovozli izoh
+                {voiceComments.length} {t("post_detail.voice_count")}
               </span>
             </div>
             {voiceComments.map((vc, i) => {
@@ -245,7 +247,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
                   <span className="text-sm font-semibold text-foreground">{comment.author.displayName}</span>
                   {comment.author.isVerified && <BadgeCheck className="w-3 h-3 text-primary" />}
                   <span className="text-xs text-muted-foreground ml-auto">
-                    {new Date(comment.createdAt).toLocaleDateString("uz-UZ", { month: "short", day: "numeric" })}
+                    {new Date(comment.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 <p className="text-sm text-foreground leading-relaxed">{comment.content}</p>
@@ -261,7 +263,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
 
         {comments.length === 0 && voiceComments.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            <p className="text-sm">Hali izoh yo'q. Birinchi bo'ling!</p>
+            <p className="text-sm">{t("post_detail.no_comments")}</p>
           </div>
         )}
       </div>

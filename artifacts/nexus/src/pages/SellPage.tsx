@@ -1,34 +1,36 @@
 import { useState, useRef } from "react";
-import { ArrowLeft, Camera, X, ShoppingBag, Tag, MapPin, Package, Info, ChevronDown } from "lucide-react";
+import { ArrowLeft, Camera, X, ShoppingBag, Tag, MapPin, Package, Info } from "lucide-react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useCreateProduct, useRequestUploadUrl } from "@workspace/api-client-react";
-
-const CATEGORIES = [
-  { id: "electronics", label: "Elektronika 📱" },
-  { id: "clothing", label: "Kiyim 👗" },
-  { id: "food", label: "Oziq-ovqat 🍎" },
-  { id: "services", label: "Xizmatlar 🛠️" },
-  { id: "digital", label: "Raqamli 💻" },
-  { id: "beauty", label: "Go'zallik 💄" },
-  { id: "sport", label: "Sport ⚽" },
-  { id: "home", label: "Uy-ro'zg'or 🏠" },
-  { id: "automotive", label: "Avtomobil 🚗" },
-  { id: "books", label: "Kitoblar 📚" },
-  { id: "other", label: "Boshqa 📦" },
-];
-
-const CONDITIONS = [
-  { id: "new", label: "Yangi", desc: "Hech ishlatilmagan, original qadoqlangan" },
-  { id: "used", label: "Ishlatilgan", desc: "Oldin ishlatilgan, yaxshi holda" },
-  { id: "digital", label: "Raqamli", desc: "Elektron tovar, fayl yoki kod" },
-];
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export default function SellPage() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { mutateAsync: createProduct, isPending } = useCreateProduct();
   const { mutateAsync: requestUpload } = useRequestUploadUrl();
+
+  const CATEGORIES = [
+    { id: "electronics", label: "Elektronika 📱" },
+    { id: "clothing", label: "Kiyim 👗" },
+    { id: "food", label: "Oziq-ovqat 🍎" },
+    { id: "services", label: "Xizmatlar 🛠️" },
+    { id: "digital", label: "Raqamli 💻" },
+    { id: "beauty", label: "Go'zallik 💄" },
+    { id: "sport", label: "Sport ⚽" },
+    { id: "home", label: "Uy-ro'zg'or 🏠" },
+    { id: "automotive", label: "Avtomobil 🚗" },
+    { id: "books", label: "Kitoblar 📚" },
+    { id: "other", label: "Boshqa 📦" },
+  ];
+
+  const CONDITIONS = [
+    { id: "new", label: t("sell.cond_new"), desc: t("sell.cond_new_desc") },
+    { id: "used", label: t("sell.cond_used"), desc: t("sell.cond_used_desc") },
+    { id: "digital", label: t("sell.cond_digital"), desc: t("sell.cond_digital_desc") },
+  ];
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -47,7 +49,7 @@ export default function SellPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = async (files: FileList) => {
-    if (mediaUrls.length + files.length > 6) { setError("Maksimal 6 ta rasm"); return; }
+    if (mediaUrls.length + files.length > 6) { setError(t("sell.err_max_img")); return; }
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
@@ -57,7 +59,7 @@ export default function SellPage() {
         setMediaUrls(prev => [...prev, publicUrl]);
       }
     } catch {
-      setError("Rasm yuklashda xato");
+      setError(t("sell.err_upload"));
     } finally {
       setUploading(false);
     }
@@ -65,8 +67,8 @@ export default function SellPage() {
 
   const handleSubmit = async () => {
     setError("");
-    if (!title.trim()) { setError("Mahsulot nomini kiriting"); return; }
-    if (!price || Number(price) < 1) { setError("Narxni kiriting"); return; }
+    if (!title.trim()) { setError(t("sell.err_title")); return; }
+    if (!price || Number(price) < 1) { setError(t("sell.err_price")); return; }
 
     try {
       const priceTiyin = Math.round(Number(price) * 100);
@@ -90,7 +92,7 @@ export default function SellPage() {
       setSuccess(true);
       setTimeout(() => navigate(`/bozor/${(product as any).id}`), 1200);
     } catch (e: any) {
-      setError(e?.response?.data?.error ?? "Xato yuz berdi");
+      setError(e?.response?.data?.error ?? t("common.error"));
     }
   };
 
@@ -101,8 +103,8 @@ export default function SellPage() {
           <div className="w-16 h-16 rounded-full bg-emerald-700/30 flex items-center justify-center mx-auto">
             <ShoppingBag className="w-8 h-8 text-emerald-400" />
           </div>
-          <h2 className="text-xl font-bold">Mahsulot qo'shildi! 🎉</h2>
-          <p className="text-muted-foreground text-sm">Mahsulot sahifasiga o'tilmoqda...</p>
+          <h2 className="text-xl font-bold">{t("sell.success_title")}</h2>
+          <p className="text-muted-foreground text-sm">{t("sell.success_sub")}</p>
         </div>
       </div>
     );
@@ -115,13 +117,13 @@ export default function SellPage() {
         <button onClick={() => navigate("/bozor")} className="p-1.5 rounded-full hover:bg-amber-950/40">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="font-bold text-lg flex-1">Sotish e'loni</h1>
+        <h1 className="font-bold text-lg flex-1">{t("sell.header")}</h1>
         <button
           onClick={handleSubmit}
           disabled={isPending || uploading}
           className="bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors"
         >
-          {isPending ? "Qo'shilmoqda..." : "E'lon berish"}
+          {isPending ? t("sell.submitting") : t("sell.submit")}
         </button>
       </div>
 
@@ -134,12 +136,14 @@ export default function SellPage() {
 
         {/* Photos */}
         <div>
-          <label className="block text-sm font-semibold mb-2 text-amber-300">Rasmlar <span className="text-muted-foreground font-normal">(maks. 6 ta)</span></label>
+          <label className="block text-sm font-semibold mb-2 text-amber-300">
+            {t("sell.photos")} <span className="text-muted-foreground font-normal">({t("sell.photos_max")})</span>
+          </label>
           <div className="grid grid-cols-3 gap-2">
             {mediaUrls.map((url, i) => (
               <div key={url} className="relative aspect-square rounded-xl overflow-hidden bg-amber-950/30">
                 <img src={url} alt="" className="w-full h-full object-cover" />
-                {i === 0 && <span className="absolute top-1 left-1 bg-amber-700 text-white text-xs px-1.5 py-0.5 rounded">Bosh</span>}
+                {i === 0 && <span className="absolute top-1 left-1 bg-amber-700 text-white text-xs px-1.5 py-0.5 rounded">{t("sell.main")}</span>}
                 <button
                   onClick={() => setMediaUrls(prev => prev.filter((_, j) => j !== i))}
                   className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center"
@@ -159,7 +163,7 @@ export default function SellPage() {
                 ) : (
                   <>
                     <Camera className="w-6 h-6 text-amber-600" />
-                    <span className="text-xs text-muted-foreground">Rasm</span>
+                    <span className="text-xs text-muted-foreground">{t("sell.photo_btn")}</span>
                   </>
                 )}
               </button>
@@ -170,7 +174,7 @@ export default function SellPage() {
 
         {/* Title */}
         <div>
-          <label className="block text-sm font-semibold mb-2 text-amber-300">Mahsulot nomi *</label>
+          <label className="block text-sm font-semibold mb-2 text-amber-300">{t("sell.title_label")}</label>
           <input
             type="text"
             value={title}
@@ -183,7 +187,7 @@ export default function SellPage() {
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-semibold mb-2 text-amber-300">Tavsif</label>
+          <label className="block text-sm font-semibold mb-2 text-amber-300">{t("sell.desc_label")}</label>
           <textarea
             value={description}
             onChange={e => setDescription(e.target.value)}
@@ -197,7 +201,7 @@ export default function SellPage() {
         {/* Price */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-amber-300">Narx (so'm) *</label>
+            <label className="block text-sm font-semibold mb-2 text-amber-300">{t("sell.price_label")}</label>
             <input
               type="number"
               value={price}
@@ -208,7 +212,7 @@ export default function SellPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-muted-foreground text-sm">Asl narx (ixtiyoriy)</label>
+            <label className="block text-sm font-semibold mb-2 text-muted-foreground text-sm">{t("sell.orig_price")}</label>
             <input
               type="number"
               value={originalPrice}
@@ -222,7 +226,7 @@ export default function SellPage() {
 
         {/* Category */}
         <div>
-          <label className="block text-sm font-semibold mb-2 text-amber-300">Kategoriya</label>
+          <label className="block text-sm font-semibold mb-2 text-amber-300">{t("sell.category")}</label>
           <div className="grid grid-cols-2 gap-2">
             {CATEGORIES.map(c => (
               <button
@@ -238,7 +242,7 @@ export default function SellPage() {
 
         {/* Condition */}
         <div>
-          <label className="block text-sm font-semibold mb-2 text-amber-300">Holati</label>
+          <label className="block text-sm font-semibold mb-2 text-amber-300">{t("sell.condition")}</label>
           <div className="space-y-2">
             {CONDITIONS.map(c => (
               <button
@@ -261,7 +265,7 @@ export default function SellPage() {
         {/* Stock & Location */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-amber-300 flex items-center gap-1"><Package className="w-3.5 h-3.5" /> Zaxira miqdori</label>
+            <label className="block text-sm font-semibold mb-2 text-amber-300 flex items-center gap-1"><Package className="w-3.5 h-3.5" /> {t("sell.stock")}</label>
             <input
               type="number"
               value={stock}
@@ -271,12 +275,12 @@ export default function SellPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-amber-300 flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> Joylashuv</label>
+            <label className="block text-sm font-semibold mb-2 text-amber-300 flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {t("sell.location")}</label>
             <input
               type="text"
               value={location}
               onChange={e => setLocation(e.target.value)}
-              placeholder="Toshkent, Chilonzor"
+              placeholder={t("sell.location_ph")}
               className="w-full bg-amber-950/20 border border-amber-900/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-600"
             />
           </div>
@@ -284,12 +288,14 @@ export default function SellPage() {
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-semibold mb-2 text-amber-300 flex items-center gap-1"><Tag className="w-3.5 h-3.5" /> Teglar <span className="text-muted-foreground font-normal text-xs">(vergul bilan ajrating)</span></label>
+          <label className="block text-sm font-semibold mb-2 text-amber-300 flex items-center gap-1">
+            <Tag className="w-3.5 h-3.5" /> {t("sell.tags_label")} <span className="text-muted-foreground font-normal text-xs">({t("sell.tags_hint")})</span>
+          </label>
           <input
             type="text"
             value={tags}
             onChange={e => setTags(e.target.value)}
-            placeholder="iphone, apple, smartfon"
+            placeholder={t("sell.tags_ph")}
             className="w-full bg-amber-950/20 border border-amber-900/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-600"
           />
         </div>
@@ -299,7 +305,7 @@ export default function SellPage() {
           disabled={isPending || uploading}
           className="w-full bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-colors text-sm"
         >
-          {isPending ? "E'lon qo'shilmoqda..." : "🛍️ E'lon berish"}
+          {isPending ? t("sell.submitting") : `🛍️ ${t("sell.submit")}`}
         </button>
       </div>
     </div>

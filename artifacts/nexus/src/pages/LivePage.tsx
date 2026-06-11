@@ -4,6 +4,7 @@ import {
   Video, VideoOff, Mic, MicOff, Users, Send, Heart, X,
   Radio, Loader2, PhoneOff, Eye, Gift
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { useGetLive, useEndLive, useSendLiveGift } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
@@ -32,6 +33,7 @@ interface GiftAnimation { id: number; emoji: string; senderName: string; label: 
 interface LivePageProps { liveId: number; }
 
 export default function LivePage({ liveId }: LivePageProps) {
+  const { t } = useTranslation();
   const { user: me } = useAuth();
   const { data: stream, isLoading } = useGetLive(liveId);
   const endLiveMutation = useEndLive();
@@ -171,12 +173,12 @@ export default function LivePage({ liveId }: LivePageProps) {
           id: msg.ts ?? Date.now(),
           fromId: p.senderId ?? 0,
           fromName: p.senderName ?? "Kimdir",
-          text: `${catalog?.emoji ?? "🎁"} ${catalog?.label ?? "Sovg'a"} yubordi!`,
+          text: `${catalog?.emoji ?? "🎁"} ${catalog?.label ?? "Sovg'a"} ${t("live_page.gift_sent")}`,
         });
         break;
       }
     }
-  }, [isHost, roomId, createPeer, drainIceQueue]);
+  }, [isHost, roomId, createPeer, drainIceQueue, t]);
 
   useEffect(() => {
     if (!me || !stream) return;
@@ -235,7 +237,7 @@ export default function LivePage({ liveId }: LivePageProps) {
       if (catalog) addGiftAnimation(catalog.emoji, me?.displayName ?? "Siz", catalog.label);
       setShowGiftPanel(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.error ?? "Sovg'a yuborishda xato";
+      const msg = err?.response?.data?.error ?? t("live_page.gift_error");
       setGiftError(msg);
     } finally {
       setSendingGift(null);
@@ -251,7 +253,7 @@ export default function LivePage({ liveId }: LivePageProps) {
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
-  if (!stream) return <div className="flex items-center justify-center h-screen text-muted-foreground">Topilmadi</div>;
+  if (!stream) return <div className="flex items-center justify-center h-screen text-muted-foreground">{t("live_page.not_found")}</div>;
 
   return (
     <div className="relative w-full h-screen bg-black flex flex-col overflow-hidden max-w-2xl mx-auto">
@@ -268,7 +270,7 @@ export default function LivePage({ liveId }: LivePageProps) {
         <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-              <Radio className="w-3 h-3 animate-pulse" /> JONLI EFIR
+              <Radio className="w-3 h-3 animate-pulse" /> {t("live_page.live_badge")}
             </div>
             <div className="flex items-center gap-1 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full">
               <Eye className="w-3 h-3" /> {viewers}
@@ -336,7 +338,7 @@ export default function LivePage({ liveId }: LivePageProps) {
                 <span className="text-xl">{g.emoji}</span>
                 <div>
                   <p className="text-white text-xs font-bold leading-none">{g.senderName}</p>
-                  <p className="text-yellow-100 text-[10px] leading-none">{g.label} yubordi!</p>
+                  <p className="text-yellow-100 text-[10px] leading-none">{g.label} {t("live_page.gift_sent")}</p>
                 </div>
               </motion.div>
             ))}
@@ -355,7 +357,7 @@ export default function LivePage({ liveId }: LivePageProps) {
             >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-white text-sm font-bold flex items-center gap-2">
-                  <Gift className="w-4 h-4 text-yellow-400" /> Sovg'a yuborish
+                  <Gift className="w-4 h-4 text-yellow-400" /> {t("live_page.send_gift")}
                 </h3>
                 <button onClick={() => { setShowGiftPanel(false); setGiftError(null); }} className="text-white/60 hover:text-white">
                   <X className="w-4 h-4" />
@@ -387,7 +389,7 @@ export default function LivePage({ liveId }: LivePageProps) {
                 })}
               </div>
               <p className="text-white/40 text-xs text-center mt-3">
-                Hamyon: <span className="text-yellow-400 font-semibold">{(balance / 100).toLocaleString()} so'm</span>
+                {t("live_page.wallet")} <span className="text-yellow-400 font-semibold">{(balance / 100).toLocaleString()} so'm</span>
               </p>
             </motion.div>
           )}
@@ -397,8 +399,8 @@ export default function LivePage({ liveId }: LivePageProps) {
         {liveEnded && (
           <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-4">
             <Radio className="w-12 h-12 text-muted-foreground" />
-            <p className="text-white text-xl font-bold">Jonli efir tugadi</p>
-            <button onClick={() => navigate("/")} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-semibold">Orqaga</button>
+            <p className="text-white text-xl font-bold">{t("live_page.live_ended")}</p>
+            <button onClick={() => navigate("/")} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-semibold">{t("live_page.back")}</button>
           </div>
         )}
       </div>
@@ -423,7 +425,7 @@ export default function LivePage({ liveId }: LivePageProps) {
             value={commentInput}
             onChange={e => setCommentInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") sendComment(); }}
-            placeholder="Fikr yozing..."
+            placeholder={t("live_page.comment_ph")}
             className="flex-1 bg-transparent text-white text-sm placeholder-white/40 outline-none"
           />
           <button onClick={sendComment} className="text-primary"><Send className="w-4 h-4" /></button>

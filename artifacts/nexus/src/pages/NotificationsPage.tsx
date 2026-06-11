@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Bell, Heart, MessageCircle, UserPlus, AtSign, Users, Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useListNotifications, useMarkNotificationRead, getListNotificationsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -22,6 +23,7 @@ const TYPE_COLOR: Record<string, string> = {
 };
 
 export default function NotificationsPage() {
+  const { t } = useTranslation();
   const { data: notifs = [], isLoading } = useListNotifications();
   const mark = useMarkNotificationRead();
   const qc = useQueryClient();
@@ -37,7 +39,7 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
           <Bell className="w-5 h-5 text-primary" />
-          Notifications
+          {t("notif.title")}
           {unreadCount > 0 && (
             <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-xs font-bold">
               {unreadCount}
@@ -49,7 +51,7 @@ export default function NotificationsPage() {
             onClick={() => notifs.filter(n => !n.isRead).forEach(n => handleRead(n.id))}
             className="text-xs text-primary hover:underline font-semibold"
           >
-            Mark all read
+            {t("notif.mark_read")}
           </button>
         )}
       </div>
@@ -69,7 +71,7 @@ export default function NotificationsPage() {
       ) : notifs.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <Bell className="w-10 h-10 mx-auto mb-3 opacity-20" />
-          <p>All caught up!</p>
+          <p>{t("notif.all_caught")}</p>
         </div>
       ) : (
         <div className="space-y-2">

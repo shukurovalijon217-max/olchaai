@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, Flame, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useListPosts, useGetTrendingTopics, useGetAiFeed } from "@workspace/api-client-react";
 import PostCard from "@/components/PostCard";
 import StoriesBar from "@/components/StoriesBar";
 import CreateContentModal from "@/components/CreateContentModal";
 
 export default function HomePage() {
+  const { t } = useTranslation();
   const { data: feed } = useGetAiFeed();
   const { data: posts = [], isLoading } = useListPosts();
   const { data: topics = [] } = useGetTrendingTopics();
@@ -25,14 +27,14 @@ export default function HomePage() {
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-foreground flex items-center gap-2">
             <Flame className="w-4 h-4 text-orange-400" />
-            For You
+            {t("home.for_you")}
           </h2>
           <button
             onClick={() => setCreateOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-3.5 h-3.5" />
-            Create Post
+            {t("home.create_post")}
           </button>
         </div>
 
@@ -56,7 +58,7 @@ export default function HomePage() {
         ) : displayPosts.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
             <Flame className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p>No posts yet. Be the first!</p>
+            <p>{t("home.no_posts")}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -73,7 +75,7 @@ export default function HomePage() {
         <div className="bg-card border border-border rounded-2xl p-4">
           <h3 className="font-bold text-sm mb-4 flex items-center gap-2 text-foreground">
             <TrendingUp className="w-4 h-4 text-primary" />
-            Trending Topics
+            {t("home.trending")}
           </h3>
           <div className="space-y-3">
             {topics.slice(0, 6).map((topic, i) => (
@@ -87,7 +89,7 @@ export default function HomePage() {
                 <div>
                   <p className="text-xs text-muted-foreground">{topic.category}</p>
                   <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">#{topic.tag}</p>
-                  <p className="text-xs text-muted-foreground">{topic.postCount.toLocaleString()} posts</p>
+                  <p className="text-xs text-muted-foreground">{topic.postCount.toLocaleString()} {t("home.posts")}</p>
                 </div>
                 <span className={`text-xs font-bold ${topic.growth > 15 ? "text-emerald-400" : "text-muted-foreground"}`}>
                   +{topic.growth.toFixed(1)}%
@@ -100,7 +102,7 @@ export default function HomePage() {
         {/* Suggested Users */}
         {feed?.suggestedUsers && feed.suggestedUsers.length > 0 && (
           <div className="bg-card border border-border rounded-2xl p-4">
-            <h3 className="font-bold text-sm mb-4 text-foreground">Suggested for You</h3>
+            <h3 className="font-bold text-sm mb-4 text-foreground">{t("home.suggested")}</h3>
             <div className="space-y-3">
               {feed.suggestedUsers.slice(0, 4).map((user) => (
                 <div key={user.id} className="flex items-center gap-3">
@@ -115,7 +117,7 @@ export default function HomePage() {
                     <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>
                     <p className="text-xs text-muted-foreground">@{user.username}</p>
                   </div>
-                  <button className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">Follow</button>
+                  <button className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">{t("home.follow")}</button>
                 </div>
               ))}
             </div>

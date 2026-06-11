@@ -235,4 +235,33 @@ Faqat JSON qaytargin, boshqa matn yo'q.`,
   }
 });
 
+// ── Translation (MyMemory free API) ─────────────────────────────────────────
+router.get("/library/translate", async (req, res) => {
+  if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const { q, from = "auto", to = "en" } = req.query as { q?: string; from?: string; to?: string };
+  if (!q?.trim()) { res.status(400).json({ error: "q required" }); return; }
+
+  try {
+    const langpair = from === "auto" ? `${from}|${to}` : `${from}|${to}`;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${langpair}&de=olcha@olcha.uz`;
+    const resp = await fetch(url, { headers: { "User-Agent": "OlCha/1.0" } });
+    if (!resp.ok) { res.status(502).json({ error: "Translation service unavailable" }); return; }
+    const data = await resp.json() as {
+      responseData?: { translatedText?: string; detectedLanguage?: string; match?: number };
+      responseStatus?: number;
+      matches?: { translation?: string; quality?: string }[];
+    };
+    if (data.responseStatus === 429) { res.status(429).json({ error: "Tarjima cheklovi. Keyinroq urinib ko'ring." }); return; }
+
+    res.json({
+      translatedText: data.responseData?.translatedText ?? "",
+      detectedLanguage: data.responseData?.detectedLanguage ?? from,
+      quality: data.responseData?.match ?? 0,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Tarjima xatosi" });
+  }
+});
+
 export default router;

@@ -3,8 +3,142 @@ import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from
 import {
   BookOpen, Search, Plus, Star, BookMarked, CheckCircle2,
   Clock, Heart, X, BookX, Sparkles, Globe, ExternalLink,
-  ArrowRight, Zap, Hash, BookCopy
+  ArrowRight, Zap, Hash, BookCopy, Languages, Mic, MicOff,
+  Volume2, VolumeX, Copy, Check, ArrowLeftRight, ChevronDown,
+  Loader2
 } from "lucide-react";
+
+/* ── World Languages ────────────────────────────────────────────────────── */
+const LANGUAGES = [
+  { code: "uz", name: "O'zbek", flag: "🇺🇿" },
+  { code: "ru", name: "Русский", flag: "🇷🇺" },
+  { code: "en", name: "English", flag: "🇬🇧" },
+  { code: "ar", name: "العربية", flag: "🇸🇦" },
+  { code: "zh-CN", name: "中文(简体)", flag: "🇨🇳" },
+  { code: "zh-TW", name: "中文(繁體)", flag: "🇹🇼" },
+  { code: "de", name: "Deutsch", flag: "🇩🇪" },
+  { code: "fr", name: "Français", flag: "🇫🇷" },
+  { code: "es", name: "Español", flag: "🇪🇸" },
+  { code: "it", name: "Italiano", flag: "🇮🇹" },
+  { code: "ja", name: "日本語", flag: "🇯🇵" },
+  { code: "ko", name: "한국어", flag: "🇰🇷" },
+  { code: "tr", name: "Türkçe", flag: "🇹🇷" },
+  { code: "fa", name: "فارسی", flag: "🇮🇷" },
+  { code: "hi", name: "हिन्दी", flag: "🇮🇳" },
+  { code: "pt", name: "Português", flag: "🇧🇷" },
+  { code: "nl", name: "Nederlands", flag: "🇳🇱" },
+  { code: "pl", name: "Polski", flag: "🇵🇱" },
+  { code: "kk", name: "Қазақша", flag: "🇰🇿" },
+  { code: "ky", name: "Кыргызча", flag: "🇰🇬" },
+  { code: "tg", name: "Тоҷикӣ", flag: "🇹🇯" },
+  { code: "tk", name: "Türkmençe", flag: "🇹🇲" },
+  { code: "az", name: "Azərbaycanca", flag: "🇦🇿" },
+  { code: "uk", name: "Українська", flag: "🇺🇦" },
+  { code: "be", name: "Беларуская", flag: "🇧🇾" },
+  { code: "sv", name: "Svenska", flag: "🇸🇪" },
+  { code: "no", name: "Norsk", flag: "🇳🇴" },
+  { code: "da", name: "Dansk", flag: "🇩🇰" },
+  { code: "fi", name: "Suomi", flag: "🇫🇮" },
+  { code: "cs", name: "Čeština", flag: "🇨🇿" },
+  { code: "sk", name: "Slovenčina", flag: "🇸🇰" },
+  { code: "ro", name: "Română", flag: "🇷🇴" },
+  { code: "hu", name: "Magyar", flag: "🇭🇺" },
+  { code: "el", name: "Ελληνικά", flag: "🇬🇷" },
+  { code: "he", name: "עברית", flag: "🇮🇱" },
+  { code: "id", name: "Bahasa Indonesia", flag: "🇮🇩" },
+  { code: "ms", name: "Bahasa Melayu", flag: "🇲🇾" },
+  { code: "th", name: "ภาษาไทย", flag: "🇹🇭" },
+  { code: "vi", name: "Tiếng Việt", flag: "🇻🇳" },
+  { code: "bn", name: "বাংলা", flag: "🇧🇩" },
+  { code: "ta", name: "தமிழ்", flag: "🇱🇰" },
+  { code: "ur", name: "اردو", flag: "🇵🇰" },
+  { code: "sw", name: "Kiswahili", flag: "🇰🇪" },
+  { code: "af", name: "Afrikaans", flag: "🇿🇦" },
+  { code: "sq", name: "Shqip", flag: "🇦🇱" },
+  { code: "hr", name: "Hrvatski", flag: "🇭🇷" },
+  { code: "sr", name: "Српски", flag: "🇷🇸" },
+  { code: "bg", name: "Български", flag: "🇧🇬" },
+  { code: "lt", name: "Lietuvių", flag: "🇱🇹" },
+  { code: "lv", name: "Latviešu", flag: "🇱🇻" },
+  { code: "et", name: "Eesti", flag: "🇪🇪" },
+  { code: "ka", name: "ქართული", flag: "🇬🇪" },
+  { code: "hy", name: "Հայերեն", flag: "🇦🇲" },
+  { code: "mn", name: "Монгол", flag: "🇲🇳" },
+  { code: "my", name: "မြန်မာ", flag: "🇲🇲" },
+  { code: "km", name: "ខ្មែរ", flag: "🇰🇭" },
+  { code: "lo", name: "ລາວ", flag: "🇱🇦" },
+  { code: "si", name: "සිංහල", flag: "🇱🇰" },
+  { code: "ne", name: "नेपाली", flag: "🇳🇵" },
+  { code: "am", name: "አማርኛ", flag: "🇪🇹" },
+  { code: "yo", name: "Yorùbá", flag: "🇳🇬" },
+  { code: "ig", name: "Igbo", flag: "🇳🇬" },
+  { code: "ha", name: "Hausa", flag: "🇳🇬" },
+  { code: "so", name: "Soomaali", flag: "🇸🇴" },
+  { code: "zu", name: "isiZulu", flag: "🇿🇦" },
+  { code: "mt", name: "Malti", flag: "🇲🇹" },
+  { code: "is", name: "Íslenska", flag: "🇮🇸" },
+  { code: "ga", name: "Gaeilge", flag: "🇮🇪" },
+  { code: "cy", name: "Cymraeg", flag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿" },
+  { code: "eu", name: "Euskara", flag: "🇪🇸" },
+  { code: "gl", name: "Galego", flag: "🇪🇸" },
+  { code: "ca", name: "Català", flag: "🇪🇸" },
+  { code: "mk", name: "Македонски", flag: "🇲🇰" },
+  { code: "bs", name: "Bosanski", flag: "🇧🇦" },
+  { code: "sl", name: "Slovenščina", flag: "🇸🇮" },
+];
+
+/* ── Language Picker ─────────────────────────────────────────────────────── */
+function LangPicker({ value, onChange, showAuto = false }: {
+  value: string; onChange: (code: string) => void; showAuto?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const filtered = LANGUAGES.filter(l =>
+    l.name.toLowerCase().includes(q.toLowerCase()) ||
+    l.code.toLowerCase().includes(q.toLowerCase())
+  );
+  const selected = value === "auto" ? null : LANGUAGES.find(l => l.code === value);
+
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted border border-border text-sm font-semibold text-foreground hover:bg-muted/80 transition-colors min-w-[130px]">
+        <span className="text-base leading-none">{value === "auto" ? "🌐" : (selected?.flag ?? "🌐")}</span>
+        <span className="flex-1 text-xs truncate">{value === "auto" ? "Auto-aniqlash" : (selected?.name ?? value)}</span>
+        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+            <motion.div initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.97 }}
+              className="absolute top-full mt-1 left-0 z-50 w-56 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="p-2 border-b border-border">
+                <input value={q} onChange={e => setQ(e.target.value)} placeholder="Til qidirish..."
+                  className="w-full bg-muted rounded-lg px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none" />
+              </div>
+              <div className="max-h-56 overflow-y-auto">
+                {showAuto && (
+                  <button onClick={() => { onChange("auto"); setOpen(false); setQ(""); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors ${value === "auto" ? "bg-primary/10 text-primary" : "text-foreground"}`}>
+                    <span className="text-sm">🌐</span> Auto-aniqlash
+                  </button>
+                )}
+                {filtered.map(l => (
+                  <button key={l.code} onClick={() => { onChange(l.code); setOpen(false); setQ(""); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors ${value === l.code ? "bg-primary/10 text-primary font-semibold" : "text-foreground"}`}>
+                    <span className="text-sm">{l.flag}</span> {l.name}
+                    <span className="ml-auto text-[10px] text-muted-foreground uppercase">{l.code}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 /* ── 3D Search Engine Card ──────────────────────────────────────────────── */
 function SearchEngineCard3D({ label, href, logo, className = "", textColor = "text-foreground" }: { label: string; href: string; logo: React.ReactNode; className?: string; textColor?: string }) {
@@ -171,7 +305,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: ElementType; color: s
 };
 
 export default function LibraryPage() {
-  const [tab, setTab] = useState<"library" | "search" | "popular">("library");
+  const [tab, setTab] = useState<"library" | "search" | "popular" | "translate">("library");
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -182,6 +316,19 @@ export default function LibraryPage() {
   const [aiResult, setAiResult] = useState<AiSearchResult | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  // ── Translation state ──
+  const [srcLang, setSrcLang] = useState("auto");
+  const [tgtLang, setTgtLang] = useState("uz");
+  const [srcText, setSrcText] = useState("");
+  const [tgtText, setTgtText] = useState("");
+  const [translateLoading, setTranslateLoading] = useState(false);
+  const [translateError, setTranslateError] = useState("");
+  const [detectedLang, setDetectedLang] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [ttsTarget, setTtsTarget] = useState<"src" | "tgt" | null>(null);
+  const recognitionRef = useRef<unknown>(null);
   const [popular, setPopular] = useState<SearchResult[]>([]);
   const [popularLoading, setPopularLoading] = useState(false);
   const [selected, setSelected] = useState<Book | null>(null);
@@ -207,6 +354,91 @@ export default function LibraryPage() {
       const r = await fetch(`${API}/api/library/search/popular`, { credentials: "include" });
       if (r.ok) { const d = await r.json(); setPopular(d.items || []); }
     } finally { setPopularLoading(false); }
+  }
+
+  // ── Translation helpers ────────────────────────────────────────────────
+  async function doTranslate(textOverride?: string, tgtOverride?: string) {
+    const q = (textOverride ?? srcText).trim();
+    const to = tgtOverride ?? tgtLang;
+    if (!q) return;
+    setTranslateLoading(true); setTranslateError(""); setTgtText("");
+    try {
+      const r = await fetch(
+        `${API}/api/library/translate?q=${encodeURIComponent(q)}&from=${srcLang}&to=${to}`,
+        { credentials: "include" }
+      );
+      const d = await r.json();
+      if (!r.ok) { setTranslateError(d.error ?? "Xato"); return; }
+      setTgtText(d.translatedText ?? "");
+      if (d.detectedLanguage && d.detectedLanguage !== "auto") setDetectedLang(d.detectedLanguage);
+    } catch { setTranslateError("Tarjima serveriga ulanib bo'lmadi"); }
+    finally { setTranslateLoading(false); }
+  }
+
+  function speakText(text: string, lang: string, which: "src" | "tgt") {
+    if (!text.trim()) return;
+    if (isSpeaking && ttsTarget === which) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false); setTtsTarget(null); return;
+    }
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    const langCode = lang === "auto" ? "en" : lang.split("-")[0];
+    // Try to find a voice matching the language
+    const voices = window.speechSynthesis.getVoices();
+    const match = voices.find(v => v.lang.startsWith(langCode));
+    if (match) utt.voice = match;
+    utt.lang = lang === "auto" ? "en" : lang;
+    utt.rate = 0.9;
+    utt.onend = () => { setIsSpeaking(false); setTtsTarget(null); };
+    utt.onerror = () => { setIsSpeaking(false); setTtsTarget(null); };
+    window.speechSynthesis.speak(utt);
+    setIsSpeaking(true); setTtsTarget(which);
+  }
+
+  function toggleListen() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRec) { alert("Brauzeringiz ovozli kiritishni qo'llab-quvvatlamaydi"); return; }
+    if (isListening) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (recognitionRef.current as any)?.stop();
+      setIsListening(false); return;
+    }
+    const rec = new SpeechRec();
+    rec.lang = srcLang === "auto" ? "uz-UZ" : srcLang;
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rec.onresult = (e: any) => {
+      const transcript: string = e.results[0][0].transcript;
+      setSrcText(transcript);
+      setIsListening(false);
+      doTranslate(transcript);
+    };
+    rec.onerror = () => setIsListening(false);
+    rec.onend = () => setIsListening(false);
+    rec.start();
+    recognitionRef.current = rec;
+    setIsListening(true);
+  }
+
+  function swapLangs() {
+    if (srcLang === "auto") return;
+    const newSrc = tgtLang;
+    const newTgt = srcLang;
+    const newSrcText = tgtText;
+    setSrcLang(newSrc); setTgtLang(newTgt);
+    setSrcText(newSrcText); setTgtText("");
+    setDetectedLang("");
+    if (newSrcText.trim()) setTimeout(() => doTranslate(newSrcText, newTgt), 50);
+  }
+
+  function copyTranslation() {
+    if (!tgtText) return;
+    navigator.clipboard.writeText(tgtText).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
+    });
   }
 
   async function doSearch(source?: SearchSource, queryOverride?: string) {
@@ -313,10 +545,15 @@ export default function LibraryPage() {
               <p className="text-[11px] text-muted-foreground">{stats.total} kitob · {stats.completed} o'qildi</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
-            {[{ id: "library", label: "Mening" }, { id: "search", label: "Qidirish" }, { id: "popular", label: "Mashhur" }].map(t => (
-              <button key={t.id} onClick={() => setTab(t.id as "library" | "search" | "popular")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+          <div className="flex items-center gap-0.5 bg-muted rounded-xl p-1">
+            {([
+              { id: "library", label: "Mening" },
+              { id: "search", label: "Qidirish" },
+              { id: "popular", label: "Mashhur" },
+              { id: "translate", label: "🌐 Tarjima" },
+            ] as { id: "library"|"search"|"popular"|"translate"; label: string }[]).map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                 {t.label}
               </button>
             ))}
@@ -765,6 +1002,187 @@ export default function LibraryPage() {
             )}
           </div>
         )}
+
+        {/* ── Translate Tab ── */}
+        {tab === "translate" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg">
+                <Languages className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="font-bold text-foreground">Jahon Tarjimon</h2>
+                <p className="text-[11px] text-muted-foreground">75+ til · Ovozli kirish/chiqish</p>
+              </div>
+            </div>
+
+            {/* Language pair selector */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <LangPicker value={srcLang} onChange={v => { setSrcLang(v); setDetectedLang(""); }} showAuto />
+              </div>
+              <button onClick={swapLangs} disabled={srcLang === "auto"}
+                className="w-9 h-9 rounded-xl bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-90">
+                <ArrowLeftRight className="w-4 h-4" />
+              </button>
+              <div className="flex-1">
+                <LangPicker value={tgtLang} onChange={v => { setTgtLang(v); if (srcText.trim()) doTranslate(undefined, v); }} />
+              </div>
+            </div>
+
+            {/* Source text */}
+            <div className="relative bg-card border border-border rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-2 px-3 pt-3 pb-1">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                  {srcLang === "auto"
+                    ? (detectedLang ? `Aniqlandi: ${LANGUAGES.find(l => l.code === detectedLang)?.name ?? detectedLang}` : "Manba matn")
+                    : (LANGUAGES.find(l => l.code === srcLang)?.name ?? srcLang)}
+                </span>
+                {detectedLang && srcLang === "auto" && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-semibold">
+                    {LANGUAGES.find(l => l.code === detectedLang)?.flag} Auto
+                  </span>
+                )}
+              </div>
+              <textarea
+                value={srcText}
+                onChange={e => setSrcText(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && e.ctrlKey) doTranslate(); }}
+                placeholder="Matn kiriting yoki mikrofon tugmasini bosing..."
+                rows={5}
+                className="w-full px-3 pb-2 bg-transparent text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none leading-relaxed"
+              />
+              <div className="flex items-center justify-between px-3 pb-3 border-t border-border/50 pt-2">
+                <div className="flex items-center gap-1.5">
+                  {/* Mic / Voice input */}
+                  <button onClick={toggleListen}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${isListening
+                      ? "bg-red-500 text-white animate-pulse"
+                      : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"}`}>
+                    {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                    {isListening ? "To'xtatish" : "Ovoz"}
+                  </button>
+                  {/* TTS for source */}
+                  {srcText && (
+                    <button onClick={() => speakText(srcText, srcLang === "auto" ? "en" : srcLang, "src")}
+                      className={`p-1.5 rounded-xl transition-all ${isSpeaking && ttsTarget === "src" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                      {isSpeaking && ttsTarget === "src" ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground">{srcText.length}/5000</span>
+              </div>
+            </div>
+
+            {/* Translate button */}
+            <motion.button
+              onClick={() => doTranslate()}
+              disabled={!srcText.trim() || translateLoading}
+              whileTap={{ scale: 0.97 }}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-violet-600 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
+            >
+              {translateLoading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Tarjima qilinmoqda...</>
+              ) : (
+                <><Languages className="w-4 h-4" /> Tarjima qilish</>
+              )}
+            </motion.button>
+
+            {/* Error */}
+            {translateError && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
+                ⚠️ {translateError}
+              </motion.div>
+            )}
+
+            {/* Target text */}
+            <AnimatePresence>
+              {(tgtText || translateLoading) && (
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="relative bg-gradient-to-br from-blue-500/5 to-violet-600/5 border border-blue-500/20 rounded-2xl overflow-hidden">
+                  <div className="flex items-center justify-between px-3 pt-3 pb-1">
+                    <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide">
+                      {LANGUAGES.find(l => l.code === tgtLang)?.flag} {LANGUAGES.find(l => l.code === tgtLang)?.name ?? tgtLang}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {tgtText && (
+                        <>
+                          <button onClick={() => speakText(tgtText, tgtLang, "tgt")}
+                            className={`p-1.5 rounded-lg transition-all ${isSpeaking && ttsTarget === "tgt" ? "text-violet-400 bg-violet-400/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                            {isSpeaking && ttsTarget === "tgt" ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                          </button>
+                          <button onClick={copyTranslation}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
+                            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="px-3 pb-3 min-h-[80px]">
+                    {translateLoading ? (
+                      <div className="flex items-center gap-2 py-6">
+                        <div className="flex gap-1">
+                          {[0,1,2].map(i => (
+                            <motion.div key={i} animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}
+                              className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                          ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground">Tarjima qilinmoqda...</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{tgtText}</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Quick language suggestions */}
+            {!srcText && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+                <p className="text-xs text-muted-foreground font-medium">Tez tarjima tillari:</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { from: "uz", to: "en", label: "O'zbek → English" },
+                    { from: "en", to: "uz", label: "English → O'zbek" },
+                    { from: "ru", to: "uz", label: "Русский → O'zbek" },
+                    { from: "uz", to: "ru", label: "O'zbek → Русский" },
+                    { from: "en", to: "ru", label: "English → Русский" },
+                    { from: "ar", to: "uz", label: "عربي → O'zbek" },
+                  ].map(pair => (
+                    <button key={`${pair.from}-${pair.to}`}
+                      onClick={() => { setSrcLang(pair.from); setTgtLang(pair.to); }}
+                      className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${srcLang === pair.from && tgtLang === pair.to
+                        ? "bg-primary/10 border-primary/30 text-primary"
+                        : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"}`}>
+                      {pair.label}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Tips */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { icon: "🎤", title: "Ovozli kirish", desc: "Mikrofon tugmasi orqali gapiring" },
+                { icon: "🔊", title: "Ovozli o'qish", desc: "Natijani eshitish uchun bosing" },
+                { icon: "⌨️", title: "Tez tarjima", desc: "Ctrl+Enter bilan tarjima" },
+              ].map(tip => (
+                <div key={tip.title} className="bg-muted/50 rounded-xl p-2.5 text-center">
+                  <div className="text-lg mb-1">{tip.icon}</div>
+                  <p className="text-[10px] font-semibold text-foreground mb-0.5">{tip.title}</p>
+                  <p className="text-[9px] text-muted-foreground leading-tight">{tip.desc}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
       </div>
 
       {/* Book Detail Modal */}

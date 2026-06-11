@@ -1,7 +1,7 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
 import {
   BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon,
-  Camera, Loader2, Radio, Bell, BellOff, Star, Check, X, Sparkles
+  Camera, Loader2, Radio, Bell, BellOff, Star, Check, X, Sparkles,
 } from "lucide-react";
 import {
   useGetUser, useListPosts, useFollowUser, useUpdateUser, getGetUserQueryKey,
@@ -10,7 +10,7 @@ import {
   getListCreatorPlansQueryKey, getCheckCreatorSubscriptionQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { useLocation } from "wouter";
@@ -19,6 +19,192 @@ import { useTranslation } from "react-i18next";
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 interface ProfilePageProps { userId: number; }
+
+const ORBIT_PARTICLES = [
+  { radius: 64, color: "#a78bfa", glow: "#7c3aed", size: 9, dur: 5.5, delay: 0 },
+  { radius: 72, color: "#60a5fa", glow: "#3b82f6", size: 7, dur: 7.5, delay: 1.8 },
+  { radius: 80, color: "#34d399", glow: "#10b981", size: 6, dur: 9.5, delay: 3.5 },
+];
+
+function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, onUploadClick }: {
+  avatarUrl?: string | null;
+  displayName: string;
+  isVerified?: boolean;
+  isUploading: boolean;
+  isOwner: boolean;
+  onUploadClick: () => void;
+}) {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const rotateX = useSpring(useTransform(mouseY, [-60, 60], [18, -18]), { stiffness: 260, damping: 20 });
+  const rotateY = useSpring(useTransform(mouseX, [-60, 60], [-18, 18]), { stiffness: 260, damping: 20 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set(e.clientX - rect.left - rect.width / 2);
+    mouseY.set(e.clientY - rect.top - rect.height / 2);
+  }, [mouseX, mouseY]);
+
+  const handleMouseLeave = useCallback(() => {
+    mouseX.set(0);
+    mouseY.set(0);
+  }, [mouseX, mouseY]);
+
+  return (
+    <div
+      className="relative"
+      style={{ perspective: "900px", width: 112, height: 112 }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <motion.div
+        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+        className="relative w-28 h-28"
+      >
+        {/* Pulsing glow aura */}
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.45, 0.75, 0.45] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -inset-6 rounded-full pointer-events-none"
+          style={{
+            background: "radial-gradient(circle, rgba(124,58,237,0.4) 0%, rgba(59,130,246,0.25) 50%, transparent 75%)",
+            filter: "blur(10px)",
+          }}
+        />
+
+        {/* Activity rings — SVG */}
+        <svg
+          className="absolute pointer-events-none"
+          style={{ top: -32, left: -32, width: 176, height: 176, overflow: "visible" }}
+          viewBox="0 0 176 176"
+        >
+          <defs>
+            <linearGradient id="gr1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#7c3aed" /><stop offset="100%" stopColor="#a78bfa" />
+            </linearGradient>
+            <linearGradient id="gr2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#3b82f6" /><stop offset="100%" stopColor="#67e8f9" />
+            </linearGradient>
+            <linearGradient id="gr3" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#34d399" />
+            </linearGradient>
+          </defs>
+          {/* Ring tracks */}
+          <circle cx="88" cy="88" r="82" fill="none" stroke="#7c3aed12" strokeWidth="5" />
+          <circle cx="88" cy="88" r="72" fill="none" stroke="#3b82f612" strokeWidth="4.5" />
+          <circle cx="88" cy="88" r="62" fill="none" stroke="#10b98112" strokeWidth="4" />
+          {/* Animated ring fills */}
+          <motion.circle cx="88" cy="88" r="82" fill="none" stroke="url(#gr1)" strokeWidth="5"
+            strokeLinecap="round" strokeDasharray="515 515"
+            animate={{ strokeDashoffset: [515, 90, 515] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            style={{ rotate: "-90deg", transformOrigin: "88px 88px" }}
+          />
+          <motion.circle cx="88" cy="88" r="72" fill="none" stroke="url(#gr2)" strokeWidth="4.5"
+            strokeLinecap="round" strokeDasharray="452 452"
+            animate={{ strokeDashoffset: [452, 70, 452] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+            style={{ rotate: "-90deg", transformOrigin: "88px 88px" }}
+          />
+          <motion.circle cx="88" cy="88" r="62" fill="none" stroke="url(#gr3)" strokeWidth="4"
+            strokeLinecap="round" strokeDasharray="389 389"
+            animate={{ strokeDashoffset: [389, 55, 389] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+            style={{ rotate: "-90deg", transformOrigin: "88px 88px" }}
+          />
+        </svg>
+
+        {/* Orbiting particles */}
+        {ORBIT_PARTICLES.map(({ radius, color, glow, size, dur, delay }, i) => (
+          <motion.div
+            key={i}
+            className="absolute"
+            style={{ top: "50%", left: "50%", width: 0, height: 0 }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: dur, repeat: Infinity, ease: "linear", delay }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                width: size,
+                height: size,
+                borderRadius: "50%",
+                background: color,
+                boxShadow: `0 0 ${size * 2}px ${glow}, 0 0 ${size * 4}px ${glow}60`,
+                top: -radius - size / 2,
+                left: -size / 2,
+              }}
+            />
+          </motion.div>
+        ))}
+
+        {/* Spinning conic gradient border */}
+        <div
+          className="absolute inset-0 rounded-[22px] overflow-hidden"
+          style={{ padding: "2.5px" }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute"
+            style={{
+              width: "180%", height: "180%",
+              top: "-40%", left: "-40%",
+              background: "conic-gradient(from 0deg, #7c3aed, #818cf8, #3b82f6, #06b6d4, #34d399, #f59e0b, #7c3aed)",
+            }}
+          />
+          <div className="relative w-full h-full rounded-[20px] overflow-hidden bg-background z-10 group/av cursor-pointer"
+               onClick={isOwner ? onUploadClick : undefined}>
+            {isUploading ? (
+              <div className="w-full h-full flex items-center justify-center bg-muted">
+                <Loader2 className="w-7 h-7 text-primary animate-spin" />
+              </div>
+            ) : avatarUrl ? (
+              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500/20 via-blue-500/15 to-cyan-500/20">
+                <span className="text-3xl font-black text-primary">{displayName[0]}</span>
+              </div>
+            )}
+            {isOwner && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/av:opacity-100 transition-opacity rounded-[20px]">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 3D "lifted" light sheen */}
+        <motion.div
+          animate={{ opacity: [0.15, 0.35, 0.15] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 rounded-[22px] pointer-events-none z-20"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 50%)",
+            transform: "translateZ(18px)",
+          }}
+        />
+
+        {/* Verified / Premium badge */}
+        {isVerified && (
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.4 }}
+            className="absolute -bottom-2 -right-2 z-30"
+            style={{ transform: "translateZ(24px)" }}
+          >
+            <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center shadow-lg shadow-primary/30">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
+                <BadgeCheck className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
 
 export default function ProfilePage({ userId }: ProfilePageProps) {
   const { t } = useTranslation();
@@ -91,9 +277,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       setShowPlansModal(false);
     } catch (err: any) {
       setSubError(err?.response?.data?.error ?? t("profile.subscribe_error"));
-    } finally {
-      setSubscribingPlanId(null);
-    }
+    } finally { setSubscribingPlanId(null); }
   };
 
   const handleUnsubscribe = async (planId: number) => {
@@ -121,8 +305,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-6 animate-pulse space-y-4">
-        <div className="h-40 bg-card rounded-2xl" />
-        <div className="flex gap-4"><div className="w-20 h-20 rounded-full bg-muted -mt-10 ml-4" /></div>
+        <div className="h-44 bg-card rounded-2xl" />
+        <div className="flex gap-4"><div className="w-28 h-28 rounded-full bg-muted -mt-14 ml-4" /></div>
       </div>
     );
   }
@@ -133,9 +317,26 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   return (
     <div className="max-w-2xl mx-auto pb-10">
       {/* Cover */}
-      <div className="h-40 bg-gradient-to-br from-primary/30 via-accent/20 to-background overflow-hidden relative group">
-        {user.coverUrl && <img src={user.coverUrl} alt="" className="w-full h-full object-cover" />}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+      <div className="h-44 overflow-hidden relative group rounded-b-3xl">
+        {user.coverUrl
+          ? <img src={user.coverUrl} alt="" className="w-full h-full object-cover" />
+          : (
+            <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-violet-900/80 via-blue-900/60 to-background">
+              <motion.div
+                animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-20 -left-20 w-64 h-64 rounded-full opacity-30"
+                style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 70%)" }}
+              />
+              <motion.div
+                animate={{ x: [0, -25, 0], y: [0, 15, 0] }}
+                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full opacity-25"
+                style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }}
+              />
+            </div>
+          )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
         {isOwner && (
           <>
             <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
@@ -151,32 +352,19 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
       {/* Profile info */}
       <div className="px-5">
-        <div className="flex items-end justify-between -mt-10 mb-4">
-          <div className="relative group/avatar">
-            <div className="w-20 h-20 rounded-2xl border-4 border-background bg-gradient-to-br from-primary/40 to-accent/40 overflow-hidden">
-              {avatarUploading ? (
-                <div className="w-full h-full flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
-              ) : user.avatarUrl ? (
-                <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center"><span className="text-2xl font-black text-primary">{user.displayName[0]}</span></div>
-              )}
-            </div>
-            {isOwner && (
-              <>
-                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
-                <button onClick={() => avatarInputRef.current?.click()}
-                  className="absolute inset-0 rounded-2xl bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-                  <Camera className="w-5 h-5 text-white" />
-                </button>
-              </>
-            )}
-            {user.isVerified && (
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-background flex items-center justify-center">
-                <BadgeCheck className="w-5 h-5 text-primary" />
-              </div>
-            )}
+        {/* Avatar row */}
+        <div className="flex items-end justify-between mb-4" style={{ marginTop: -44 }}>
+          <div className="relative z-10">
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
+            <Avatar3D
+              avatarUrl={user.avatarUrl}
+              displayName={user.displayName}
+              isVerified={user.isVerified}
+              isUploading={avatarUploading}
+              isOwner={isOwner}
+              onUploadClick={() => avatarInputRef.current?.click()}
+            />
           </div>
 
           {/* Action buttons */}
@@ -184,7 +372,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             {isOwner ? (
               <div className="flex gap-2">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowGoLive(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors">
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors shadow-lg shadow-red-500/25">
                   <Radio className="w-4 h-4" /> {t("profile.go_live")}
                 </motion.button>
                 <button onClick={() => setShowCreatePlan(true)}
@@ -198,7 +386,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             ) : (
               <div className="flex gap-2">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={handleFollow}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${following ? "bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${following ? "bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive" : "bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/25"}`}>
                   {following ? <><UserCheck className="w-4 h-4" /> {t("profile.following_btn")}</> : <><UserPlus className="w-4 h-4" /> {t("profile.follow_btn")}</>}
                 </motion.button>
                 <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowPlansModal(true)}
@@ -210,26 +398,38 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           </div>
         </div>
 
-        <div className="mb-4">
+        {/* Name / bio */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-4 pl-1"
+        >
           <div className="flex items-center gap-2 mb-0.5">
             <h1 className="text-xl font-bold text-foreground">{user.displayName}</h1>
             {user.isVerified && <BadgeCheck className="w-4 h-4 text-primary" />}
           </div>
           <p className="text-sm text-muted-foreground mb-2">@{user.username}</p>
           {user.bio && <p className="text-sm text-foreground leading-relaxed">{user.bio}</p>}
-        </div>
+        </motion.div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 py-4 border-y border-border mb-5">
+        <div className="grid grid-cols-3 gap-3 py-4 border-y border-border mb-5">
           {[
-            { label: t("profile.posts"), value: myPosts.length },
-            { label: t("profile.followers"), value: user.followersCount },
-            { label: t("profile.following"), value: user.followingCount },
-          ].map(({ label, value }) => (
-            <div key={label} className="text-center">
-              <p className="text-xl font-bold text-foreground">{(value ?? 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">{label}</p>
-            </div>
+            { label: t("profile.posts"), value: myPosts.length, color: "text-primary" },
+            { label: t("profile.followers"), value: user.followersCount, color: "text-violet-400" },
+            { label: t("profile.following"), value: user.followingCount, color: "text-blue-400" },
+          ].map(({ label, value, color }, i) => (
+            <motion.div
+              key={label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 + i * 0.08 }}
+              className="text-center"
+            >
+              <p className={`text-xl font-bold ${color}`}>{(value ?? 0).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+            </motion.div>
           ))}
         </div>
 
@@ -249,7 +449,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         <div className="flex gap-1 mb-4 bg-muted rounded-xl p-1">
           {([["posts", Grid3X3, t("profile.posts")], ["reels", Play, "Reels"]] as const).map(([tabId, Icon, label]) => (
             <button key={tabId} onClick={() => setTab(tabId)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all ${tab === tabId ? "bg-card text-foreground" : "text-muted-foreground"}`}>
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all ${tab === tabId ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>
               <Icon className="w-4 h-4" /> {label}
             </button>
           ))}
@@ -266,7 +466,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             <div className="grid grid-cols-3 gap-2">
               {myPosts.map((post, i) => (
                 <motion.div key={post.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
-                  className="aspect-square rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/30 transition-colors">
+                  className="aspect-square rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/30 hover:scale-[1.02] transition-all">
                   {post.mediaUrl
                     ? <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
                     : <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center p-3"><p className="text-xs text-foreground line-clamp-4 text-center">{post.content}</p></div>
@@ -288,7 +488,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             <div className="grid grid-cols-3 gap-2">
               {reels.map((reel, i) => (
                 <motion.div key={reel.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
-                  className="aspect-[9/16] rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/30 transition-colors relative group">
+                  className="aspect-[9/16] rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/30 hover:scale-[1.02] transition-all relative group">
                   {reel.thumbnailUrl ? <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                     : reel.videoUrl ? (
                       <video src={reel.videoUrl} className="w-full h-full object-cover" muted preload="none"
@@ -401,7 +601,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         )}
       </AnimatePresence>
 
-      {/* Create Plan Modal (owner only) */}
+      {/* Create Plan Modal */}
       <AnimatePresence>
         {showCreatePlan && (
           <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
@@ -416,18 +616,18 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                   className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500" />
                 <input value={newPlanDesc} onChange={e => setNewPlanDesc(e.target.value)} placeholder="Tavsif (ixtiyoriy)"
                   className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500" />
-                <input value={newPlanPrice} onChange={e => setNewPlanPrice(e.target.value)} placeholder="Narx (so'mda, masalan: 15000)"
-                  type="number" min="100"
-                  className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500" />
-                <textarea value={newPlanPerks} onChange={e => setNewPlanPerks(e.target.value)}
-                  placeholder={"Imtiyozlar (har biri yangi qatorda):\nExklyuziv kontent\nDirect xabar\nOdatdan erta kirish"}
-                  rows={3} className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500 resize-none" />
-              </div>
-              <div className="flex gap-3 mt-4">
-                <button onClick={() => setShowCreatePlan(false)} className="flex-1 py-2.5 rounded-xl bg-muted text-muted-foreground text-sm font-semibold">{t("common.cancel")}</button>
+                <div className="relative">
+                  <input type="number" value={newPlanPrice} onChange={e => setNewPlanPrice(e.target.value)} placeholder="Narx (so'm)"
+                    className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500 pr-12" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">so'm</span>
+                </div>
+                <textarea value={newPlanPerks} onChange={e => setNewPlanPerks(e.target.value)} rows={3}
+                  placeholder="Imtiyozlar (har bir qatorda bir imtiyoz)"
+                  className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500 resize-none" />
                 <button onClick={handleCreatePlan} disabled={!newPlanName.trim() || !newPlanPrice || creatingPlan}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm font-bold hover:from-yellow-400 hover:to-orange-400 disabled:opacity-50 flex items-center justify-center gap-2">
-                  {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} {t("profile.create_plan")}
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold text-sm hover:from-yellow-400 hover:to-orange-400 disabled:opacity-50 flex items-center justify-center gap-2">
+                  {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+                  {t("profile.create_plan")}
                 </button>
               </div>
             </motion.div>

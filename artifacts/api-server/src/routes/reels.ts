@@ -68,7 +68,8 @@ router.post("/reels", async (req, res) => {
 router.post("/reels/:id/like", async (req, res) => {
   try {
     const reelId = Number(req.params.id);
-    const userId = 1;
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
     const existing = await db.select().from(reelLikesTable).where(and(eq(reelLikesTable.reelId, reelId), eq(reelLikesTable.userId, userId)));
     if (existing.length > 0) {
       await db.delete(reelLikesTable).where(and(eq(reelLikesTable.reelId, reelId), eq(reelLikesTable.userId, userId)));

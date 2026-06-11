@@ -1,17 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Flag, X, AlertTriangle, Trash2, Music } from "lucide-react";
-import { useLikePost, useDeletePost } from "@workspace/api-client-react";
+import {
+  Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Flag, X,
+  AlertTriangle, Trash2, Music, Sparkles, Brain, Tag, Loader2, Check,
+} from "lucide-react";
+import { useLikePost, useDeletePost, getListPostsQueryKey, getGetTrendingPostsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListPostsQueryKey, getGetTrendingPostsQueryKey } from "@workspace/api-client-react";
 import type { Post } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 
-interface PostCardProps {
-  post: Post;
-  index?: number;
-}
+interface PostCardProps { post: Post; index?: number; }
 
 const GRADIENT_COLORS = [
   "from-violet-600/20 to-purple-900/10",
@@ -29,7 +28,25 @@ const REPORT_REASONS = [
   { value: "other", label: "Boshqa sabab" },
 ];
 
+const SENTIMENT_COLOR: Record<string, string> = {
+  positive: "text-emerald-400",
+  neutral: "text-muted-foreground",
+  negative: "text-red-400",
+};
+const SENTIMENT_LABEL: Record<string, string> = {
+  positive: "✅ Ijobiy",
+  neutral: "😐 Neytral",
+  negative: "⚠️ Salbiy",
+};
+
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+interface Analysis {
+  tags?: string[];
+  category?: string;
+  summary?: string;
+  sentiment?: string;
+}
 
 export default function PostCard({ post, index = 0 }: PostCardProps) {
   const [liked, setLiked] = useState(post.isLiked);
@@ -40,6 +57,10 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const [reportDesc, setReportDesc] = useState("");
   const [reporting, setReporting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
+  const [shared, setShared] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const likePost = useLikePost();
@@ -48,19 +69,28 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const { user } = useAuth();
   const isOwner = user?.id === post.author.id;
 
+  const grad = GRADIENT_COLORS[index % GRADIENT_COLORS.length];
+
+  /* Close menu on outside click */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     };
     if (menuOpen) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
+  /* Sync liked/count when post prop changes */
+  useEffect(() => {
+    setLiked(post.isLiked);
+    setCount(post.likesCount);
+  }, [post.isLiked, post.likesCount]);
+
+  /* ── Like ── */
   const handleLike = () => {
-    setLiked(!liked);
-    setCount(liked ? count - 1 : count + 1);
+    if (!user) return;
+    setLiked(v => !v);
+    setCount(v => liked ? v - 1 : v + 1);
     likePost.mutate({ id: post.id }, {
       onSuccess: (data) => {
         setLiked(data.liked);
@@ -68,9 +98,60 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
         qc.invalidateQueries({ queryKey: getGetTrendingPostsQueryKey() });
       },
+      onError: () => {
+        setLiked(v => !v);
+        setCount(v => liked ? v + 1 : v - 1);
+      },
     });
   };
 
+  /* ── Share ── */
+  const handleShare = async () => {
+    const url = `${window.location.origin}/post/${post.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: post.author.displayName, text: post.content ?? "", url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      }
+    } catch {
+      try { await navigator.clipboard.writeText(url); setShared(true); setTimeout(() => setShared(false), 2000); }
+      catch { /* silent */ }
+    }
+    /* Log interaction */
+    fetch(`${API}/api/interactions`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+      body: JSON.stringify({ contentType: "post", contentId: post.id, interactionType: "share" }),
+    }).catch(() => {});
+  };
+
+  /* ── AI Analyze ── */
+  const handleAnalyze = async () => {
+    if (analysis) { setShowAnalysis(v => !v); return; }
+    setAnalyzing(true);
+    try {
+      /* Only pass imageUrl for actual images (not video/audio) */
+      const isImage = post.mediaUrl && post.type !== "video" && !post.mediaUrl.match(/\.(mp3|wav|ogg|aac|m4a|mp4|webm|mov)(\?|$)/i);
+      const res = await fetch(`${API}/api/ai/analyze-content`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({
+          contentId: post.id, contentType: "post",
+          caption: post.content ?? "",
+          imageUrl: isImage ? post.mediaUrl : undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAnalysis(data);
+        setShowAnalysis(true);
+      }
+    } catch { /* silent */ }
+    finally { setAnalyzing(false); }
+  };
+
+  /* ── Delete ── */
   const handleDelete = () => {
     if (!confirm("Postni o'chirishni tasdiqlaysizmi?")) return;
     setMenuOpen(false);
@@ -82,29 +163,20 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
     });
   };
 
+  /* ── Report ── */
   const handleReport = async () => {
     if (!reportReason || !user) return;
     setReporting(true);
     try {
       await fetch(`${API}/api/moderation/report`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          contentType: "post", contentId: post.id,
-          reason: reportReason, description: reportDesc,
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ contentType: "post", contentId: post.id, reason: reportReason, description: reportDesc }),
       });
       setReportDone(true);
       setTimeout(() => { setReportOpen(false); setReportDone(false); setReportReason(""); setReportDesc(""); }, 2000);
-    } catch {
-      // silent
-    } finally {
-      setReporting(false);
-    }
+    } catch { /* silent */ }
+    finally { setReporting(false); }
   };
-
-  const grad = GRADIENT_COLORS[index % GRADIENT_COLORS.length];
 
   return (
     <>
@@ -128,11 +200,10 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         <div className="flex items-center gap-3 p-4">
           <Link href={`/profile/${post.author.id}`}>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center flex-shrink-0 cursor-pointer overflow-hidden">
-              {post.author.avatarUrl ? (
-                <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm font-bold text-primary">{post.author.displayName?.[0]?.toUpperCase()}</span>
-              )}
+              {post.author.avatarUrl
+                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                : <span className="text-sm font-bold text-primary">{post.author.displayName?.[0]?.toUpperCase()}</span>
+              }
             </div>
           </Link>
           <div className="flex-1 min-w-0">
@@ -145,36 +216,24 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
 
           {/* More menu */}
           <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(v => !v)}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted"
-            >
+            <button onClick={() => setMenuOpen(v => !v)}
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted">
               <MoreHorizontal className="w-4 h-4" />
             </button>
             <AnimatePresence>
               {menuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: -4 }}
-                  transition={{ duration: 0.12 }}
-                  className="absolute right-0 top-8 z-50 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
-                >
+                <motion.div initial={{ opacity: 0, scale: 0.9, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: -4 }} transition={{ duration: 0.12 }}
+                  className="absolute right-0 top-8 z-50 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden">
                   {isOwner && (
-                    <button
-                      onClick={handleDelete}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      O'chirish
+                    <button onClick={handleDelete}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors">
+                      <Trash2 className="w-4 h-4" /> O'chirish
                     </button>
                   )}
-                  <button
-                    onClick={() => { setMenuOpen(false); setReportOpen(true); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    <Flag className="w-4 h-4" />
-                    Shikoyat qilish
+                  <button onClick={() => { setMenuOpen(false); setReportOpen(true); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                    <Flag className="w-4 h-4" /> Shikoyat qilish
                   </button>
                 </motion.div>
               )}
@@ -219,48 +278,101 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
           )}
         </div>
 
+        {/* AI Analysis panel */}
+        <AnimatePresence>
+          {showAnalysis && analysis && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+              className="mx-4 mb-2 rounded-xl bg-muted/60 border border-border/60 overflow-hidden">
+              <div className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Brain className="w-3.5 h-3.5 text-violet-400" />
+                    <span className="text-xs font-semibold text-foreground">AI Tahlil</span>
+                    {analysis.category && (
+                      <span className="px-1.5 py-0.5 rounded-md bg-violet-500/20 text-violet-400 text-[10px] font-semibold">
+                        {analysis.category}
+                      </span>
+                    )}
+                    {analysis.sentiment && (
+                      <span className={`text-[10px] font-semibold ${SENTIMENT_COLOR[analysis.sentiment] ?? "text-muted-foreground"}`}>
+                        {SENTIMENT_LABEL[analysis.sentiment] ?? analysis.sentiment}
+                      </span>
+                    )}
+                  </div>
+                  <button onClick={() => setShowAnalysis(false)}>
+                    <X className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                  </button>
+                </div>
+                {analysis.summary && (
+                  <p className="text-xs text-muted-foreground leading-relaxed">{analysis.summary}</p>
+                )}
+                {analysis.tags && analysis.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {analysis.tags.map(tag => (
+                      <span key={tag} className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px]">
+                        <Tag className="w-2.5 h-2.5" />#{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Actions */}
-        <div className="flex items-center gap-1 px-3 py-3">
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={handleLike}
+        <div className="flex items-center gap-1 px-3 pb-3 pt-1">
+          {/* Like */}
+          <motion.button whileTap={{ scale: 0.85 }} onClick={handleLike}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               liked ? "text-pink-400 bg-pink-400/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-          >
-            <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
+            }`}>
+            <Heart className={`w-4 h-4 transition-transform ${liked ? "fill-current scale-110" : ""}`} />
             <span>{count}</span>
           </motion.button>
+
+          {/* Comment */}
           <Link href={`/post/${post.id}`}>
             <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <MessageCircle className="w-4 h-4" />
               <span>{post.commentsCount}</span>
             </button>
           </Link>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-            <Share2 className="w-4 h-4" />
-            <span>{post.sharesCount}</span>
-          </button>
+
+          {/* Share */}
+          <motion.button whileTap={{ scale: 0.85 }} onClick={handleShare}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              shared ? "text-emerald-400 bg-emerald-400/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}>
+            {shared ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+            <span>{shared ? "Nusxalandi" : (post.sharesCount ?? 0)}</span>
+          </motion.button>
+
+          {/* AI Analyze */}
+          <motion.button whileTap={{ scale: 0.85 }} onClick={handleAnalyze} disabled={analyzing}
+            title="AI Tahlil"
+            className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              showAnalysis ? "text-violet-400 bg-violet-400/10" : "text-muted-foreground hover:text-violet-400 hover:bg-violet-400/10"
+            }`}>
+            {analyzing
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <Sparkles className="w-4 h-4" />
+            }
+            <span className="hidden sm:inline">AI</span>
+          </motion.button>
         </div>
       </motion.div>
 
       {/* Report modal */}
       <AnimatePresence>
         {reportOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={e => { if (e.target === e.currentTarget) setReportOpen(false); }}
-          >
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm shadow-2xl"
-            >
+            onClick={e => { if (e.target === e.currentTarget) setReportOpen(false); }}>
+            <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }} transition={{ duration: 0.18 }}
+              className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm shadow-2xl">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Flag className="w-4 h-4 text-destructive" />
@@ -270,7 +382,6 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-
               {reportDone ? (
                 <div className="text-center py-4">
                   <div className="w-12 h-12 rounded-full bg-emerald-400/15 flex items-center justify-center mx-auto mb-3">
@@ -284,31 +395,21 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                   <p className="text-xs text-muted-foreground mb-3">Nega shikoyat qilyapsiz?</p>
                   <div className="space-y-1.5 mb-4">
                     {REPORT_REASONS.map(r => (
-                      <button
-                        key={r.value}
-                        onClick={() => setReportReason(r.value)}
+                      <button key={r.value} onClick={() => setReportReason(r.value)}
                         className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-colors ${
                           reportReason === r.value
                             ? "bg-destructive/15 text-destructive border border-destructive/30"
                             : "text-foreground hover:bg-muted border border-transparent"
-                        }`}
-                      >
+                        }`}>
                         {r.label}
                       </button>
                     ))}
                   </div>
-                  <textarea
-                    value={reportDesc}
-                    onChange={e => setReportDesc(e.target.value)}
-                    rows={2}
+                  <textarea value={reportDesc} onChange={e => setReportDesc(e.target.value)} rows={2}
                     placeholder="Qo'shimcha izoh (ixtiyoriy)..."
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-destructive/40 mb-3"
-                  />
-                  <button
-                    onClick={handleReport}
-                    disabled={!reportReason || reporting}
-                    className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-destructive/40 mb-3" />
+                  <button onClick={handleReport} disabled={!reportReason || reporting}
+                    className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2">
                     {reporting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                     Shikoyat yuborish
                   </button>

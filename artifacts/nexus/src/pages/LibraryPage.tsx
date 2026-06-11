@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, ElementType } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, useMotionTemplate } from "framer-motion";
 import {
   BookOpen, Search, Plus, Star, BookMarked, CheckCircle2,
   Clock, Heart, X, BookX, Sparkles, Globe, ExternalLink,
@@ -86,6 +86,195 @@ const LANGUAGES = [
   { code: "bs", name: "Bosanski", flag: "🇧🇦" },
   { code: "sl", name: "Slovenščina", flag: "🇸🇮" },
 ];
+
+/* ── 3D Mic Button ───────────────────────────────────────────────────────── */
+function MicButton3D({ isListening, onClick }: { isListening: boolean; onClick: () => void }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rotX = useSpring(useTransform(my, [-0.5, 0.5], [22, -22]), { stiffness: 500, damping: 25 });
+  const rotY = useSpring(useTransform(mx, [-0.5, 0.5], [-22, 22]), { stiffness: 500, damping: 25 });
+  const glareX = useTransform(mx, [-0.5, 0.5], ["5%", "95%"]);
+  const glareY = useTransform(my, [-0.5, 0.5], ["5%", "95%"]);
+  const shadowColor = useMotionTemplate`${useTransform(mx, [-0.5,0.5], [-10,10])}px ${useTransform(my, [-0.5,0.5], [-10,10])}px 28px ${isListening ? "rgba(239,68,68,0.55)" : "rgba(0,0,0,0.45)"}`;
+  const onMove = (e: React.MouseEvent) => {
+    const r = wrapRef.current!.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  };
+  return (
+    <div ref={wrapRef} onMouseMove={onMove} onMouseLeave={() => { mx.set(0); my.set(0); }}
+      style={{ perspective: 600 }} className="relative flex flex-col items-center gap-1.5">
+      {/* Pulse rings */}
+      {isListening && [0,1,2].map(i => (
+        <motion.div key={i} className="absolute inset-0 rounded-[22px] border-2 border-red-400 pointer-events-none"
+          initial={{ scale: 1, opacity: 0.8 }}
+          animate={{ scale: 2 + i * 0.55, opacity: 0 }}
+          transition={{ duration: 1.5, delay: i * 0.48, repeat: Infinity, ease: "easeOut" }} />
+      ))}
+      <motion.button onClick={onClick} whileTap={{ scale: 0.84 }}
+        style={{ rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d", boxShadow: shadowColor as unknown as string }}
+        className="relative w-[68px] h-[68px] rounded-[22px] overflow-hidden select-none">
+        {/* Surface gradient */}
+        <div className={`absolute inset-0 transition-all duration-300 ${isListening
+          ? "bg-gradient-to-br from-red-400 via-rose-500 to-red-700"
+          : "bg-gradient-to-br from-slate-500 via-slate-600 to-slate-800"}`} />
+        {/* Top edge shine */}
+        <div className="absolute inset-x-0 top-0 h-px bg-white/40" />
+        {/* Inner top gloss */}
+        <div className="absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-white/22 to-transparent rounded-t-[22px]" />
+        {/* Bottom depth edge */}
+        <div className={`absolute inset-x-0 bottom-0 h-1.5 ${isListening ? "bg-red-900/60" : "bg-black/40"}`} />
+        {/* Moving glare */}
+        <motion.div style={{ left: glareX, top: glareY, x: "-50%", y: "-50%" }}
+          className="absolute w-14 h-14 rounded-full bg-white/28 blur-lg pointer-events-none" />
+        {/* Icon layer with Z depth */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px]"
+          style={{ transform: "translateZ(14px)" }}>
+          {isListening
+            ? <MicOff className="w-6 h-6 text-white drop-shadow-sm" />
+            : <Mic className="w-6 h-6 text-white drop-shadow-sm" />}
+          <span className="text-[7px] font-extrabold text-white/75 tracking-[0.18em] uppercase">
+            {isListening ? "STOP" : "OVOZ"}
+          </span>
+        </div>
+      </motion.button>
+      <span className="text-[10px] text-muted-foreground font-medium">Ovozli kirish</span>
+    </div>
+  );
+}
+
+/* ── 3D Speak Button ─────────────────────────────────────────────────────── */
+function SpeakButton3D({ text, lang, isActive, onClick, label = "O'qish" }: {
+  text: string; lang: string; isActive: boolean; onClick: () => void; label?: string;
+}) {
+  void lang;
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rotX = useSpring(useTransform(my, [-0.5, 0.5], [22, -22]), { stiffness: 500, damping: 25 });
+  const rotY = useSpring(useTransform(mx, [-0.5, 0.5], [-22, 22]), { stiffness: 500, damping: 25 });
+  const glareX = useTransform(mx, [-0.5, 0.5], ["5%", "95%"]);
+  const glareY = useTransform(my, [-0.5, 0.5], ["5%", "95%"]);
+  const shadowColor = useMotionTemplate`${useTransform(mx, [-0.5,0.5], [-10,10])}px ${useTransform(my, [-0.5,0.5], [-10,10])}px 28px ${isActive ? "rgba(139,92,246,0.55)" : "rgba(0,0,0,0.45)"}`;
+  const onMove = (e: React.MouseEvent) => {
+    const r = wrapRef.current!.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  };
+  return (
+    <div ref={wrapRef} onMouseMove={onMove} onMouseLeave={() => { mx.set(0); my.set(0); }}
+      style={{ perspective: 600 }} className="relative flex flex-col items-center gap-1.5">
+      <motion.button onClick={onClick} disabled={!text.trim()} whileTap={{ scale: 0.84 }}
+        style={{ rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d", boxShadow: shadowColor as unknown as string }}
+        className="relative w-[68px] h-[68px] rounded-[22px] overflow-hidden select-none disabled:opacity-35">
+        {/* Surface */}
+        <div className={`absolute inset-0 transition-all duration-300 ${isActive
+          ? "bg-gradient-to-br from-blue-400 via-violet-500 to-purple-700"
+          : "bg-gradient-to-br from-slate-500 via-slate-600 to-slate-800"}`} />
+        <div className="absolute inset-x-0 top-0 h-px bg-white/40" />
+        <div className="absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-white/22 to-transparent rounded-t-[22px]" />
+        <div className={`absolute inset-x-0 bottom-0 h-1.5 ${isActive ? "bg-purple-900/60" : "bg-black/40"}`} />
+        <motion.div style={{ left: glareX, top: glareY, x: "-50%", y: "-50%" }}
+          className="absolute w-14 h-14 rounded-full bg-white/28 blur-lg pointer-events-none" />
+        {/* Content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px]"
+          style={{ transform: "translateZ(14px)" }}>
+          {isActive ? (
+            <div className="flex items-end gap-[3px] h-6">
+              {[0.55, 1.0, 0.7, 1.0, 0.55].map((h, i) => (
+                <motion.div key={i} className="w-1 rounded-full bg-white"
+                  animate={{ scaleY: [h * 0.35, h, h * 0.35] }}
+                  transition={{ duration: 0.45 + i * 0.09, delay: i * 0.07, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ height: 20, originY: 1 }} />
+              ))}
+            </div>
+          ) : (
+            <Volume2 className="w-6 h-6 text-white drop-shadow-sm" />
+          )}
+          <span className="text-[7px] font-extrabold text-white/75 tracking-[0.18em] uppercase">
+            {isActive ? "STOP" : "O'QI"}
+          </span>
+        </div>
+      </motion.button>
+      <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
+    </div>
+  );
+}
+
+/* ── 3D Translate Button ─────────────────────────────────────────────────── */
+function TranslateButton3D({ loading, disabled, onClick }: {
+  loading: boolean; disabled: boolean; onClick: () => void;
+}) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rotX = useSpring(useTransform(my, [-0.5, 0.5], [7, -7]), { stiffness: 380, damping: 32 });
+  const rotY = useSpring(useTransform(mx, [-0.5, 0.5], [-7, 7]), { stiffness: 380, damping: 32 });
+  const glareX = useTransform(mx, [-0.5, 0.5], ["-10%", "110%"]);
+  const glareY = useTransform(my, [-0.5, 0.5], ["-10%", "110%"]);
+  const shimX = useMotionValue(-150);
+  const onMove = (e: React.MouseEvent) => {
+    const r = wrapRef.current!.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  };
+  const onHoverStart = () => {
+    shimX.set(-150);
+    let v = -150;
+    const tick = () => { v += 10; shimX.set(v); if (v < 250) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  };
+  return (
+    <div ref={wrapRef} onMouseMove={onMove} onMouseLeave={() => { mx.set(0); my.set(0); }}
+      style={{ perspective: 900 }} className="relative">
+      {/* Depth shadow blob */}
+      <div className="absolute inset-x-8 bottom-0 translate-y-3 h-full rounded-2xl bg-indigo-700/50 blur-2xl pointer-events-none" />
+      <motion.button onClick={onClick} disabled={disabled || loading} onHoverStart={onHoverStart}
+        whileTap={{ scale: 0.975, rotateX: 5 }}
+        style={{ rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }}
+        className="relative w-full py-[18px] rounded-2xl overflow-hidden select-none disabled:opacity-50 disabled:cursor-not-allowed">
+        {/* Main gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-600" />
+        {/* Top edge line */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" />
+        {/* Bottom depth */}
+        <div className="absolute inset-x-0 bottom-0 h-[6px] bg-gradient-to-b from-transparent to-black/35 rounded-b-2xl" />
+        {/* Inner top gloss */}
+        <div className="absolute inset-x-0 top-0 h-[48%] bg-gradient-to-b from-white/18 to-transparent" />
+        {/* Sweep shimmer */}
+        <motion.div style={{ x: shimX, skewX: -12 }}
+          className="absolute top-0 w-24 h-full bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+        {/* Mouse glare */}
+        <motion.div style={{ left: glareX, top: glareY, x: "-50%", y: "-50%" }}
+          className="absolute w-40 h-40 rounded-full bg-white/12 blur-2xl pointer-events-none" />
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-center gap-2.5"
+          style={{ transform: "translateZ(14px)" }}>
+          {loading ? (
+            <>
+              <div className="relative w-5 h-5 flex-shrink-0">
+                {[0,1,2,3,4,5].map(i => (
+                  <motion.div key={i} className="absolute w-[5px] h-[5px] rounded-full bg-white"
+                    style={{ left: 7.5 + Math.cos(i * Math.PI / 3) * 8, top: 7.5 + Math.sin(i * Math.PI / 3) * 8 }}
+                    animate={{ opacity: [1, 0.15, 1] }}
+                    transition={{ duration: 0.9, delay: i * 0.13, repeat: Infinity }} />
+                ))}
+              </div>
+              <span className="text-white font-bold text-[15px] tracking-wide drop-shadow">Tarjima qilinmoqda...</span>
+            </>
+          ) : (
+            <>
+              <Languages className="w-5 h-5 text-white drop-shadow-md flex-shrink-0" />
+              <span className="text-white font-bold text-[15px] tracking-wide drop-shadow">Tarjima qilish</span>
+              <ArrowRight className="w-4 h-4 text-white/65 flex-shrink-0" />
+            </>
+          )}
+        </div>
+      </motion.button>
+    </div>
+  );
+}
 
 /* ── Language Picker ─────────────────────────────────────────────────────── */
 function LangPicker({ value, onChange, showAuto = false }: {
@@ -1055,40 +1244,35 @@ export default function LibraryPage() {
                 className="w-full px-3 pb-2 bg-transparent text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none leading-relaxed"
               />
               <div className="flex items-center justify-between px-3 pb-3 border-t border-border/50 pt-2">
-                <div className="flex items-center gap-1.5">
-                  {/* Mic / Voice input */}
-                  <button onClick={toggleListen}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${isListening
-                      ? "bg-red-500 text-white animate-pulse"
-                      : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"}`}>
-                    {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                    {isListening ? "To'xtatish" : "Ovoz"}
-                  </button>
-                  {/* TTS for source */}
-                  {srcText && (
-                    <button onClick={() => speakText(srcText, srcLang === "auto" ? "en" : srcLang, "src")}
-                      className={`p-1.5 rounded-xl transition-all ${isSpeaking && ttsTarget === "src" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
-                      {isSpeaking && ttsTarget === "src" ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                    </button>
-                  )}
-                </div>
                 <span className="text-[10px] text-muted-foreground">{srcText.length}/5000</span>
+                <span className="text-[9px] text-muted-foreground/60">Ctrl+Enter — tez tarjima</span>
               </div>
             </div>
 
-            {/* Translate button */}
-            <motion.button
-              onClick={() => doTranslate()}
-              disabled={!srcText.trim() || translateLoading}
-              whileTap={{ scale: 0.97 }}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-violet-600 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
-            >
-              {translateLoading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Tarjima qilinmoqda...</>
-              ) : (
-                <><Languages className="w-4 h-4" /> Tarjima qilish</>
-              )}
-            </motion.button>
+            {/* 3D Action buttons row */}
+            <div className="flex items-start justify-between gap-3 py-1">
+              {/* Mic 3D */}
+              <MicButton3D isListening={isListening} onClick={toggleListen} />
+
+              {/* Translate 3D (center, stretches) */}
+              <div className="flex-1 flex flex-col items-center gap-1.5">
+                <TranslateButton3D
+                  loading={translateLoading}
+                  disabled={!srcText.trim()}
+                  onClick={() => doTranslate()}
+                />
+                <span className="text-[10px] text-muted-foreground font-medium">Tez tarjima</span>
+              </div>
+
+              {/* Speak source 3D */}
+              <SpeakButton3D
+                text={srcText}
+                lang={srcLang === "auto" ? "en" : srcLang}
+                isActive={isSpeaking && ttsTarget === "src"}
+                onClick={() => speakText(srcText, srcLang === "auto" ? "en" : srcLang, "src")}
+                label="Manba o'qi"
+              />
+            </div>
 
             {/* Error */}
             {translateError && (
@@ -1107,17 +1291,24 @@ export default function LibraryPage() {
                     <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide">
                       {LANGUAGES.find(l => l.code === tgtLang)?.flag} {LANGUAGES.find(l => l.code === tgtLang)?.name ?? tgtLang}
                     </span>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       {tgtText && (
                         <>
-                          <button onClick={() => speakText(tgtText, tgtLang, "tgt")}
-                            className={`p-1.5 rounded-lg transition-all ${isSpeaking && ttsTarget === "tgt" ? "text-violet-400 bg-violet-400/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
-                            {isSpeaking && ttsTarget === "tgt" ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                          </button>
-                          <button onClick={copyTranslation}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
-                            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
+                          <SpeakButton3D
+                            text={tgtText}
+                            lang={tgtLang}
+                            isActive={isSpeaking && ttsTarget === "tgt"}
+                            onClick={() => speakText(tgtText, tgtLang, "tgt")}
+                            label=""
+                          />
+                          <motion.button onClick={copyTranslation} whileTap={{ scale: 0.88 }}
+                            className="flex flex-col items-center gap-[3px] group">
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${copied
+                              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                              : "bg-muted text-muted-foreground hover:text-foreground border border-border"}`}>
+                              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            </div>
+                          </motion.button>
                         </>
                       )}
                     </div>

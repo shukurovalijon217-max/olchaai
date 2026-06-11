@@ -87,20 +87,44 @@ export class ObjectStorageService {
     return null;
   }
 
-  async downloadObject(file: File, cacheTtlSec: number = 3600): Promise<Response> {
+  async downloadObject(
+    file: File,
+    options?: { range?: { start: number; end?: number }; cacheTtlSec?: number } | number,
+  ): Promise<Response> {
+    /* Backwards-compatible: old callers may pass cacheTtlSec as a plain number */
+    const cacheTtlSec = typeof options === "number" ? options : (options?.cacheTtlSec ?? 3600);
+    const range = typeof options === "number" ? undefined : options?.range;
+
     const [metadata] = await file.getMetadata();
     const aclPolicy = await getObjectAclPolicy(file);
     const isPublic = aclPolicy?.visibility === "public";
+    const totalSize = metadata.size ? Number(metadata.size) : undefined;
 
-    const nodeStream = file.createReadStream();
+    const streamOptions: { start?: number; end?: number } = {};
+    if (range) {
+      streamOptions.start = range.start;
+      if (range.end !== undefined) streamOptions.end = range.end;
+    }
+
+    const nodeStream = file.createReadStream(streamOptions);
     const webStream = Readable.toWeb(nodeStream) as ReadableStream;
 
     const headers: Record<string, string> = {
       "Content-Type": (metadata.contentType as string) || "application/octet-stream",
       "Cache-Control": `${isPublic ? "public" : "private"}, max-age=${cacheTtlSec}`,
+      "Accept-Ranges": "bytes",
     };
-    if (metadata.size) {
-      headers["Content-Length"] = String(metadata.size);
+
+    if (range && totalSize !== undefined) {
+      const start = range.start;
+      const end = range.end ?? totalSize - 1;
+      headers["Content-Range"] = `bytes ${start}-${end}/${totalSize}`;
+      headers["Content-Length"] = String(end - start + 1);
+      return new Response(webStream, { status: 206, headers });
+    }
+
+    if (totalSize !== undefined) {
+      headers["Content-Length"] = String(totalSize);
     }
 
     return new Response(webStream, { headers });

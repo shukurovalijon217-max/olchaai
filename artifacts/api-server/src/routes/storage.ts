@@ -91,22 +91,20 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
     const objectPath = `/objects/${wildcardPath}`;
     const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
 
-    // --- Protected route example (uncomment when using replit-auth) ---
-    // if (!req.isAuthenticated()) {
-    //   res.status(401).json({ error: "Unauthorized" });
-    //   return;
-    // }
-    // const canAccess = await objectStorageService.canAccessObjectEntity({
-    //   userId: req.user.id,
-    //   objectFile,
-    //   requestedPermission: ObjectPermission.READ,
-    // });
-    // if (!canAccess) {
-    //   res.status(403).json({ error: "Forbidden" });
-    //   return;
-    // }
+    /* Parse Range header for video seek support */
+    const rangeHeader = req.headers.range;
+    let rangeOption: { start: number; end?: number } | undefined;
+    if (rangeHeader) {
+      const match = /bytes=(\d+)-(\d*)/.exec(rangeHeader);
+      if (match) {
+        rangeOption = {
+          start: parseInt(match[1], 10),
+          end: match[2] ? parseInt(match[2], 10) : undefined,
+        };
+      }
+    }
 
-    const response = await objectStorageService.downloadObject(objectFile);
+    const response = await objectStorageService.downloadObject(objectFile, { range: rangeOption });
 
     res.status(response.status);
     response.headers.forEach((value, key) => res.setHeader(key, value));

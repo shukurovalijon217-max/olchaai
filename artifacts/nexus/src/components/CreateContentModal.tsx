@@ -60,25 +60,19 @@ function UploadZone({
       <input ref={inputRef} type="file" accept={accept} className="hidden"
         onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
 
-      {/* Preview */}
+      {/* Preview — preview is always a blob: URL from createObjectURL, works in all src attrs */}
       {preview && !isUploading && (
         <div className="absolute inset-0">
-          {preview.startsWith("data:image") || preview.includes("/storage/") ? (
-            file?.type?.startsWith("audio") ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-3">
-                <Music className="w-10 h-10 text-primary" />
-                <p className="text-sm font-medium text-foreground truncate px-4">{file.name}</p>
-                <audio controls src={preview} className="w-48" />
-              </div>
-            ) : file?.type?.startsWith("video") ? (
-              <video src={preview} className="w-full h-full object-cover" muted playsInline />
-            ) : (
-              <img src={preview} alt="" className="w-full h-full object-cover" />
-            )
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted">
-              <p className="text-xs text-muted-foreground">{file?.name}</p>
+          {file?.type?.startsWith("audio") ? (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-3">
+              <Music className="w-10 h-10 text-primary" />
+              <p className="text-sm font-medium text-foreground truncate px-4">{file.name}</p>
+              <audio controls src={preview} className="w-48" />
             </div>
+          ) : file?.type?.startsWith("video") ? (
+            <video src={preview} className="w-full h-full object-cover" muted playsInline controls />
+          ) : (
+            <img src={preview} alt="" className="w-full h-full object-cover" />
           )}
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
             <Upload className="w-6 h-6 text-white" />

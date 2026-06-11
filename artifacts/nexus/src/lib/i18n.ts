@@ -56,7 +56,7 @@ export const RTL_LANGS = new Set(LANGUAGES.filter(l => l.rtl).map(l => l.code));
 const t = {
   uz: {
     nav: { home: "Bosh sahifa", explore: "Kashf qilish", reels: "Reels", messages: "Xabarlar", groups: "Guruhlar", notifications: "Bildirishnomalar", profile: "Profil", settings: "Sozlamalar", admin: "Admin", premium: "Premium", search: "Qidiruv", marketplace: "Bozor", ai_chat: "AI Chat", library: "Kutubxona", live: "Jonli Efir", wallet: "Hamyon", more: "Ko'proq" },
-    auth: { login: "Kirish", register: "Ro'yxatdan o'tish", email: "Email", password: "Parol", username: "Foydalanuvchi nomi", logout: "Chiqish", welcome: "Qaytganingizdan xursandmiz", sign_in: "Kirish", no_account: "Akkaunt yo'qmi?", have_account: "Akkaunt bormi?" },
+    auth: { login: "Kirish", register: "Ro'yxatdan o'tish", email: "Email", password: "Parol", username: "Foydalanuvchi nomi", logout: "Chiqish", welcome: "Qaytganingizdan xursandmiz", sign_in: "Kirish", no_account: "Akkaunt yo'qmi?", have_account: "Akkaunt bormi?", full_name: "Ism Familiya", join: "OlCha ga qo'shilish", enter: "OlCha ga kirish", tagline: "Yagona AI-powered ijtimoiy koinot. Har bir platforma. Bitta signal.", username_req: "Username kiritilishi shart", name_req: "Ism kiritilishi shart" },
     post: { like: "Yoqtirish", comment: "Izoh", share: "Ulashish", report: "Shikoyat", follow: "Obuna", unfollow: "Obunani bekor qilish", save: "Saqlash", more: "Ko'proq" },
     settings: { title: "Sozlamalar", subtitle: "Akkauntingizni boshqaring", profile: "Profil", account: "Akkaunt", notifications: "Bildirishnomalar", appearance: "Ko'rinish", privacy: "Maxfiylik", language: "Til" },
     lang: { title: "Til", subtitle: "Interfeys tilini tanlang", search: "Tilni qidirish...", current: "Joriy til", popular: "Mashhur tillar", all: "Barcha tillar", applied: "Til o'zgartirildi!" },
@@ -69,7 +69,7 @@ const t = {
   },
   en: {
     nav: { home: "Home", explore: "Explore", reels: "Reels", messages: "Messages", groups: "Groups", notifications: "Notifications", profile: "Profile", settings: "Settings", admin: "Admin", premium: "Premium", search: "Search", marketplace: "Market", ai_chat: "AI Chat", library: "Library", live: "Live", wallet: "Wallet", more: "More" },
-    auth: { login: "Login", register: "Register", email: "Email", password: "Password", username: "Username", logout: "Logout", welcome: "Welcome back", sign_in: "Sign in", no_account: "No account?", have_account: "Have an account?" },
+    auth: { login: "Login", register: "Register", email: "Email", password: "Password", username: "Username", logout: "Logout", welcome: "Welcome back", sign_in: "Sign in", no_account: "No account?", have_account: "Have an account?", full_name: "Full Name", join: "Join OlCha", enter: "Sign in to OlCha", tagline: "One AI-powered social universe. Every platform. One signal.", username_req: "Username is required", name_req: "Full name is required" },
     post: { like: "Like", comment: "Comment", share: "Share", report: "Report", follow: "Follow", unfollow: "Unfollow", save: "Save", more: "More" },
     settings: { title: "Settings", subtitle: "Manage your account", profile: "Profile", account: "Account", notifications: "Notifications", appearance: "Appearance", privacy: "Privacy", language: "Language" },
     lang: { title: "Language", subtitle: "Choose your interface language", search: "Search language...", current: "Current language", popular: "Popular", all: "All languages", applied: "Language changed!" },
@@ -82,7 +82,7 @@ const t = {
   },
   ru: {
     nav: { home: "Главная", explore: "Обзор", reels: "Reels", messages: "Сообщения", groups: "Группы", notifications: "Уведомления", profile: "Профиль", settings: "Настройки", admin: "Админ", premium: "Премиум", search: "Поиск", marketplace: "Рынок", ai_chat: "ИИ Чат", library: "Библиотека", live: "Прямой эфир", wallet: "Кошелёк", more: "Ещё" },
-    auth: { login: "Войти", register: "Регистрация", email: "Email", password: "Пароль", username: "Имя пользователя", logout: "Выйти", welcome: "Добро пожаловать", sign_in: "Войти", no_account: "Нет аккаунта?", have_account: "Есть аккаунт?" },
+    auth: { login: "Войти", register: "Регистрация", email: "Email", password: "Пароль", username: "Имя пользователя", logout: "Выйти", welcome: "Добро пожаловать", sign_in: "Войти", no_account: "Нет аккаунта?", have_account: "Есть аккаунт?", full_name: "Полное имя", join: "Присоединиться к OlCha", enter: "Войти в OlCha", tagline: "Единая AI-социальная вселенная. Каждая платформа. Один сигнал.", username_req: "Имя пользователя обязательно", name_req: "Полное имя обязательно" },
     post: { like: "Нравится", comment: "Комментарий", share: "Поделиться", report: "Пожаловаться", follow: "Подписаться", unfollow: "Отписаться", save: "Сохранить", more: "Ещё" },
     settings: { title: "Настройки", subtitle: "Управление аккаунтом", profile: "Профиль", account: "Аккаунт", notifications: "Уведомления", appearance: "Внешний вид", privacy: "Конфиденциальность", language: "Язык" },
     lang: { title: "Язык", subtitle: "Выберите язык интерфейса", search: "Поиск языка...", current: "Текущий язык", popular: "Популярные", all: "Все языки", applied: "Язык изменён!" },
@@ -95,7 +95,7 @@ const t = {
   },
   zh: {
     nav: { home: "主页", explore: "探索", reels: "短视频", messages: "消息", groups: "群组", notifications: "通知", profile: "个人资料", settings: "设置", admin: "管理员", premium: "高级版", search: "搜索", marketplace: "市场", ai_chat: "AI聊天", library: "图书馆", live: "直播", wallet: "钱包", more: "更多" },
-    auth: { login: "登录", register: "注册", email: "邮箱", password: "密码", username: "用户名", logout: "退出", welcome: "欢迎回来", sign_in: "登录", no_account: "没有账号？", have_account: "已有账号？" },
+    auth: { login: "登录", register: "注册", email: "邮箱", password: "密码", username: "用户名", logout: "退出", welcome: "欢迎回来", sign_in: "登录", no_account: "没有账号？", have_account: "已有账号？", full_name: "全名", join: "加入OlCha", enter: "登录OlCha", tagline: "统一的AI社交宇宙。每个平台。一个信号。", username_req: "用户名是必填项", name_req: "全名是必填项" },
     post: { like: "点赞", comment: "评论", share: "分享", report: "举报", follow: "关注", unfollow: "取消关注", save: "收藏", more: "更多" },
     settings: { title: "设置", subtitle: "管理您的账号", profile: "个人资料", account: "账号", notifications: "通知", appearance: "外观", privacy: "隐私", language: "语言" },
     lang: { title: "语言", subtitle: "选择界面语言", search: "搜索语言...", current: "当前语言", popular: "热门", all: "所有语言", applied: "语言已更改！" },
@@ -108,7 +108,7 @@ const t = {
   },
   ar: {
     nav: { home: "الرئيسية", explore: "استكشاف", reels: "ريلز", messages: "رسائل", groups: "مجموعات", notifications: "إشعارات", profile: "الملف الشخصي", settings: "الإعدادات", admin: "المسؤول", premium: "مميز", search: "بحث", marketplace: "السوق", ai_chat: "محادثة AI", library: "مكتبة", live: "بث مباشر", wallet: "المحفظة", more: "المزيد" },
-    auth: { login: "تسجيل الدخول", register: "إنشاء حساب", email: "البريد الإلكتروني", password: "كلمة المرور", username: "اسم المستخدم", logout: "تسجيل الخروج", welcome: "مرحباً بعودتك", sign_in: "دخول", no_account: "ليس لديك حساب؟", have_account: "لديك حساب؟" },
+    auth: { login: "تسجيل الدخول", register: "إنشاء حساب", email: "البريد الإلكتروني", password: "كلمة المرور", username: "اسم المستخدم", logout: "تسجيل الخروج", welcome: "مرحباً بعودتك", sign_in: "دخول", no_account: "ليس لديك حساب؟", have_account: "لديك حساب؟", full_name: "الاسم الكامل", join: "انضم إلى OlCha", enter: "الدخول إلى OlCha", tagline: "كون اجتماعي واحد بالذكاء الاصطناعي. كل منصة. إشارة واحدة.", username_req: "اسم المستخدم مطلوب", name_req: "الاسم الكامل مطلوب" },
     post: { like: "إعجاب", comment: "تعليق", share: "مشاركة", report: "إبلاغ", follow: "متابعة", unfollow: "إلغاء المتابعة", save: "حفظ", more: "المزيد" },
     settings: { title: "الإعدادات", subtitle: "إدارة حسابك", profile: "الملف الشخصي", account: "الحساب", notifications: "الإشعارات", appearance: "المظهر", privacy: "الخصوصية", language: "اللغة" },
     lang: { title: "اللغة", subtitle: "اختر لغة الواجهة", search: "ابحث عن لغة...", current: "اللغة الحالية", popular: "الأكثر شيوعاً", all: "جميع اللغات", applied: "تم تغيير اللغة!" },
@@ -121,7 +121,7 @@ const t = {
   },
   es: {
     nav: { home: "Inicio", explore: "Explorar", reels: "Reels", messages: "Mensajes", groups: "Grupos", notifications: "Notificaciones", profile: "Perfil", settings: "Ajustes", admin: "Admin", premium: "Premium", search: "Buscar", marketplace: "Mercado", ai_chat: "Chat IA", library: "Biblioteca", live: "En vivo", wallet: "Cartera", more: "Más" },
-    auth: { login: "Iniciar sesión", register: "Registrarse", email: "Correo", password: "Contraseña", username: "Usuario", logout: "Salir", welcome: "Bienvenido de vuelta", sign_in: "Entrar", no_account: "¿Sin cuenta?", have_account: "¿Tienes cuenta?" },
+    auth: { login: "Iniciar sesión", register: "Registrarse", email: "Correo", password: "Contraseña", username: "Usuario", logout: "Salir", welcome: "Bienvenido de vuelta", sign_in: "Entrar", no_account: "¿Sin cuenta?", have_account: "¿Tienes cuenta?", full_name: "Nombre completo", join: "Únete a OlCha", enter: "Entrar en OlCha", tagline: "Un universo social con IA. Cada plataforma. Una señal.", username_req: "El nombre de usuario es obligatorio", name_req: "El nombre completo es obligatorio" },
     post: { like: "Me gusta", comment: "Comentar", share: "Compartir", report: "Reportar", follow: "Seguir", unfollow: "Dejar de seguir", save: "Guardar", more: "Más" },
     settings: { title: "Ajustes", subtitle: "Gestiona tu cuenta", profile: "Perfil", account: "Cuenta", notifications: "Notificaciones", appearance: "Apariencia", privacy: "Privacidad", language: "Idioma" },
     lang: { title: "Idioma", subtitle: "Elige el idioma de la interfaz", search: "Buscar idioma...", current: "Idioma actual", popular: "Populares", all: "Todos los idiomas", applied: "¡Idioma cambiado!" },
@@ -134,7 +134,7 @@ const t = {
   },
   fr: {
     nav: { home: "Accueil", explore: "Explorer", reels: "Reels", messages: "Messages", groups: "Groupes", notifications: "Notifications", profile: "Profil", settings: "Paramètres", admin: "Admin", premium: "Premium", search: "Rechercher", marketplace: "Marché", ai_chat: "Chat IA", library: "Bibliothèque", live: "En direct", wallet: "Portefeuille", more: "Plus" },
-    auth: { login: "Connexion", register: "S'inscrire", email: "Email", password: "Mot de passe", username: "Nom d'utilisateur", logout: "Déconnexion", welcome: "Bon retour", sign_in: "Se connecter", no_account: "Pas de compte ?", have_account: "Déjà un compte ?" },
+    auth: { login: "Connexion", register: "S'inscrire", email: "Email", password: "Mot de passe", username: "Nom d'utilisateur", logout: "Déconnexion", welcome: "Bon retour", sign_in: "Se connecter", no_account: "Pas de compte ?", have_account: "Déjà un compte ?", full_name: "Nom complet", join: "Rejoindre OlCha", enter: "Entrer dans OlCha", tagline: "Un univers social IA. Chaque plateforme. Un signal.", username_req: "Le nom d'utilisateur est obligatoire", name_req: "Le nom complet est obligatoire" },
     post: { like: "J'aime", comment: "Commenter", share: "Partager", report: "Signaler", follow: "Suivre", unfollow: "Ne plus suivre", save: "Enregistrer", more: "Plus" },
     settings: { title: "Paramètres", subtitle: "Gérez votre compte", profile: "Profil", account: "Compte", notifications: "Notifications", appearance: "Apparence", privacy: "Confidentialité", language: "Langue" },
     lang: { title: "Langue", subtitle: "Choisissez la langue de l'interface", search: "Rechercher une langue...", current: "Langue actuelle", popular: "Populaires", all: "Toutes les langues", applied: "Langue modifiée !" },
@@ -147,7 +147,7 @@ const t = {
   },
   hi: {
     nav: { home: "होम", explore: "एक्सप्लोर", reels: "रील्स", messages: "संदेश", groups: "समूह", notifications: "सूचनाएं", profile: "प्रोफ़ाइल", settings: "सेटिंग्स", admin: "एडमिन", premium: "प्रीमियम", search: "खोजें", marketplace: "बाज़ार", ai_chat: "AI चैट", library: "पुस्तकालय", live: "लाइव", wallet: "वॉलेट", more: "और" },
-    auth: { login: "लॉगिन", register: "रजिस्टर", email: "ईमेल", password: "पासवर्ड", username: "उपयोगकर्ता नाम", logout: "लॉगआउट", welcome: "वापस स्वागत है", sign_in: "साइन इन", no_account: "खाता नहीं है?", have_account: "खाता है?" },
+    auth: { login: "लॉगिन", register: "रजिस्टर", email: "ईमेल", password: "पासवर्ड", username: "उपयोगकर्ता नाम", logout: "लॉगआउट", welcome: "वापस स्वागत है", sign_in: "साइन इन", no_account: "खाता नहीं है?", have_account: "खाता है?", full_name: "पूरा नाम", join: "OlCha में शामिल हों", enter: "OlCha में साइन इन", tagline: "एक AI सामाजिक ब्रह्माण्ड। हर प्लेटफॉर्म। एक सिग्नल।", username_req: "उपयोगकर्ता नाम आवश्यक है", name_req: "पूरा नाम आवश्यक है" },
     post: { like: "पसंद", comment: "टिप्पणी", share: "शेयर", report: "रिपोर्ट", follow: "फ़ॉलो", unfollow: "अनफ़ॉलो", save: "सेव", more: "और" },
     settings: { title: "सेटिंग्स", subtitle: "अपना खाता प्रबंधित करें", profile: "प्रोफ़ाइल", account: "खाता", notifications: "सूचनाएं", appearance: "दिखावट", privacy: "गोपनीयता", language: "भाषा" },
     lang: { title: "भाषा", subtitle: "इंटरफ़ेस भाषा चुनें", search: "भाषा खोजें...", current: "वर्तमान भाषा", popular: "लोकप्रिय", all: "सभी भाषाएं", applied: "भाषा बदल गई!" },
@@ -160,7 +160,7 @@ const t = {
   },
   pt: {
     nav: { home: "Início", explore: "Explorar", reels: "Reels", messages: "Mensagens", groups: "Grupos", notifications: "Notificações", profile: "Perfil", settings: "Configurações", admin: "Admin", premium: "Premium", search: "Pesquisar", marketplace: "Mercado", ai_chat: "Chat IA", library: "Biblioteca", live: "Ao vivo", wallet: "Carteira", more: "Mais" },
-    auth: { login: "Entrar", register: "Registrar", email: "Email", password: "Senha", username: "Nome de usuário", logout: "Sair", welcome: "Bem-vindo de volta", sign_in: "Entrar", no_account: "Sem conta?", have_account: "Tem conta?" },
+    auth: { login: "Entrar", register: "Registrar", email: "Email", password: "Senha", username: "Nome de usuário", logout: "Sair", welcome: "Bem-vindo de volta", sign_in: "Entrar", no_account: "Sem conta?", have_account: "Tem conta?", full_name: "Nome completo", join: "Entrar no OlCha", enter: "Entrar no OlCha", tagline: "Um universo social com IA. Cada plataforma. Um sinal.", username_req: "Nome de usuário é obrigatório", name_req: "Nome completo é obrigatório" },
     post: { like: "Curtir", comment: "Comentar", share: "Compartilhar", report: "Denunciar", follow: "Seguir", unfollow: "Deixar de seguir", save: "Salvar", more: "Mais" },
     settings: { title: "Configurações", subtitle: "Gerencie sua conta", profile: "Perfil", account: "Conta", notifications: "Notificações", appearance: "Aparência", privacy: "Privacidade", language: "Idioma" },
     lang: { title: "Idioma", subtitle: "Escolha o idioma da interface", search: "Buscar idioma...", current: "Idioma atual", popular: "Populares", all: "Todos os idiomas", applied: "Idioma alterado!" },
@@ -173,7 +173,7 @@ const t = {
   },
   de: {
     nav: { home: "Startseite", explore: "Entdecken", reels: "Reels", messages: "Nachrichten", groups: "Gruppen", notifications: "Benachrichtigungen", profile: "Profil", settings: "Einstellungen", admin: "Admin", premium: "Premium", search: "Suchen", marketplace: "Marktplatz", ai_chat: "KI-Chat", library: "Bibliothek", live: "Live", wallet: "Geldbörse", more: "Mehr" },
-    auth: { login: "Anmelden", register: "Registrieren", email: "E-Mail", password: "Passwort", username: "Benutzername", logout: "Abmelden", welcome: "Willkommen zurück", sign_in: "Einloggen", no_account: "Kein Konto?", have_account: "Konto vorhanden?" },
+    auth: { login: "Anmelden", register: "Registrieren", email: "E-Mail", password: "Passwort", username: "Benutzername", logout: "Abmelden", welcome: "Willkommen zurück", sign_in: "Einloggen", no_account: "Kein Konto?", have_account: "Konto vorhanden?", full_name: "Vollständiger Name", join: "OlCha beitreten", enter: "Anmelden bei OlCha", tagline: "Ein KI-soziales Universum. Jede Plattform. Ein Signal.", username_req: "Benutzername ist erforderlich", name_req: "Vollständiger Name ist erforderlich" },
     post: { like: "Gefällt mir", comment: "Kommentar", share: "Teilen", report: "Melden", follow: "Folgen", unfollow: "Entfolgen", save: "Speichern", more: "Mehr" },
     settings: { title: "Einstellungen", subtitle: "Konto verwalten", profile: "Profil", account: "Konto", notifications: "Benachrichtigungen", appearance: "Erscheinungsbild", privacy: "Datenschutz", language: "Sprache" },
     lang: { title: "Sprache", subtitle: "Oberflächensprache wählen", search: "Sprache suchen...", current: "Aktuelle Sprache", popular: "Beliebt", all: "Alle Sprachen", applied: "Sprache geändert!" },
@@ -186,7 +186,7 @@ const t = {
   },
   ja: {
     nav: { home: "ホーム", explore: "探索", reels: "リール", messages: "メッセージ", groups: "グループ", notifications: "通知", profile: "プロフィール", settings: "設定", admin: "管理者", premium: "プレミアム", search: "検索", marketplace: "マーケット", ai_chat: "AIチャット", library: "ライブラリ", live: "ライブ", wallet: "ウォレット", more: "もっと" },
-    auth: { login: "ログイン", register: "新規登録", email: "メール", password: "パスワード", username: "ユーザー名", logout: "ログアウト", welcome: "おかえりなさい", sign_in: "サインイン", no_account: "アカウントがない？", have_account: "アカウントをお持ちですか？" },
+    auth: { login: "ログイン", register: "新規登録", email: "メール", password: "パスワード", username: "ユーザー名", logout: "ログアウト", welcome: "おかえりなさい", sign_in: "サインイン", no_account: "アカウントがない？", have_account: "アカウントをお持ちですか？", full_name: "フルネーム", join: "OlChaに参加", enter: "OlChaにサインイン", tagline: "AIソーシャルユニバース。すべてのプラットフォーム。一つのシグナル。", username_req: "ユーザー名は必須です", name_req: "フルネームは必須です" },
     post: { like: "いいね", comment: "コメント", share: "シェア", report: "報告", follow: "フォロー", unfollow: "フォロー解除", save: "保存", more: "もっと" },
     settings: { title: "設定", subtitle: "アカウントを管理", profile: "プロフィール", account: "アカウント", notifications: "通知", appearance: "外観", privacy: "プライバシー", language: "言語" },
     lang: { title: "言語", subtitle: "インターフェース言語を選択", search: "言語を検索...", current: "現在の言語", popular: "人気", all: "すべての言語", applied: "言語が変更されました！" },
@@ -199,7 +199,7 @@ const t = {
   },
   ko: {
     nav: { home: "홈", explore: "탐색", reels: "릴스", messages: "메시지", groups: "그룹", notifications: "알림", profile: "프로필", settings: "설정", admin: "관리자", premium: "프리미엄", search: "검색", marketplace: "마켓", ai_chat: "AI 채팅", library: "도서관", live: "라이브", wallet: "지갑", more: "더보기" },
-    auth: { login: "로그인", register: "회원가입", email: "이메일", password: "비밀번호", username: "사용자명", logout: "로그아웃", welcome: "다시 오신 것을 환영합니다", sign_in: "로그인", no_account: "계정이 없으신가요?", have_account: "계정이 있으신가요?" },
+    auth: { login: "로그인", register: "회원가입", email: "이메일", password: "비밀번호", username: "사용자명", logout: "로그아웃", welcome: "다시 오신 것을 환영합니다", sign_in: "로그인", no_account: "계정이 없으신가요?", have_account: "계정이 있으신가요?", full_name: "성함", join: "OlCha 가입", enter: "OlCha에 로그인", tagline: "AI 기반 소셜 유니버스. 모든 플랫폼. 하나의 신호.", username_req: "사용자 이름이 필요합니다", name_req: "성함이 필요합니다" },
     post: { like: "좋아요", comment: "댓글", share: "공유", report: "신고", follow: "팔로우", unfollow: "팔로우 취소", save: "저장", more: "더보기" },
     settings: { title: "설정", subtitle: "계정 관리", profile: "프로필", account: "계정", notifications: "알림", appearance: "외관", privacy: "개인정보", language: "언어" },
     lang: { title: "언어", subtitle: "인터페이스 언어 선택", search: "언어 검색...", current: "현재 언어", popular: "인기", all: "모든 언어", applied: "언어가 변경되었습니다!" },
@@ -212,7 +212,7 @@ const t = {
   },
   it: {
     nav: { home: "Home", explore: "Esplora", reels: "Reels", messages: "Messaggi", groups: "Gruppi", notifications: "Notifiche", profile: "Profilo", settings: "Impostazioni", admin: "Admin", premium: "Premium", search: "Cerca", marketplace: "Mercato", ai_chat: "Chat AI", library: "Biblioteca", live: "Live", wallet: "Portafoglio", more: "Altro" },
-    auth: { login: "Accedi", register: "Registrati", email: "Email", password: "Password", username: "Nome utente", logout: "Esci", welcome: "Bentornato", sign_in: "Accedi", no_account: "Nessun account?", have_account: "Hai un account?" },
+    auth: { login: "Accedi", register: "Registrati", email: "Email", password: "Password", username: "Nome utente", logout: "Esci", welcome: "Bentornato", sign_in: "Accedi", no_account: "Nessun account?", have_account: "Hai un account?", full_name: "Nome completo", join: "Unisciti a OlCha", enter: "Accedi a OlCha", tagline: "Un universo sociale AI. Ogni piattaforma. Un segnale.", username_req: "Nome utente obbligatorio", name_req: "Nome completo obbligatorio" },
     post: { like: "Mi piace", comment: "Commenta", share: "Condividi", report: "Segnala", follow: "Segui", unfollow: "Non seguire", save: "Salva", more: "Altro" },
     settings: { title: "Impostazioni", subtitle: "Gestisci il tuo account", profile: "Profilo", account: "Account", notifications: "Notifiche", appearance: "Aspetto", privacy: "Privacy", language: "Lingua" },
     lang: { title: "Lingua", subtitle: "Scegli la lingua dell'interfaccia", search: "Cerca lingua...", current: "Lingua attuale", popular: "Popolari", all: "Tutte le lingue", applied: "Lingua cambiata!" },
@@ -225,7 +225,7 @@ const t = {
   },
   tr: {
     nav: { home: "Ana Sayfa", explore: "Keşfet", reels: "Reels", messages: "Mesajlar", groups: "Gruplar", notifications: "Bildirimler", profile: "Profil", settings: "Ayarlar", admin: "Admin", premium: "Premium", search: "Ara", marketplace: "Pazar", ai_chat: "AI Sohbet", library: "Kütüphane", live: "Canlı", wallet: "Cüzdan", more: "Daha fazla" },
-    auth: { login: "Giriş Yap", register: "Kayıt Ol", email: "E-posta", password: "Şifre", username: "Kullanıcı adı", logout: "Çıkış", welcome: "Tekrar hoş geldiniz", sign_in: "Giriş", no_account: "Hesabın yok mu?", have_account: "Hesabın var mı?" },
+    auth: { login: "Giriş Yap", register: "Kayıt Ol", email: "E-posta", password: "Şifre", username: "Kullanıcı adı", logout: "Çıkış", welcome: "Tekrar hoş geldiniz", sign_in: "Giriş", no_account: "Hesabın yok mu?", have_account: "Hesabın var mı?", full_name: "Tam ad", join: "OlCha katıl", enter: "OlCha giriş", tagline: "Yapay zeka destekli sosyal evren. Her platform. Bir sinyal.", username_req: "Kullanıcı adı gereklidir", name_req: "Tam ad gereklidir" },
     post: { like: "Beğen", comment: "Yorum", share: "Paylaş", report: "Şikayet", follow: "Takip Et", unfollow: "Takibi Bırak", save: "Kaydet", more: "Daha Fazla" },
     settings: { title: "Ayarlar", subtitle: "Hesabınızı yönetin", profile: "Profil", account: "Hesap", notifications: "Bildirimler", appearance: "Görünüm", privacy: "Gizlilik", language: "Dil" },
     lang: { title: "Dil", subtitle: "Arayüz dilini seçin", search: "Dil ara...", current: "Mevcut dil", popular: "Popüler", all: "Tüm diller", applied: "Dil değiştirildi!" },
@@ -238,7 +238,7 @@ const t = {
   },
   nl: {
     nav: { home: "Home", explore: "Verkennen", reels: "Reels", messages: "Berichten", groups: "Groepen", notifications: "Meldingen", profile: "Profiel", settings: "Instellingen", admin: "Admin", premium: "Premium", search: "Zoeken", marketplace: "Marktplaats", ai_chat: "AI Chat", library: "Bibliotheek", live: "Live", wallet: "Portemonnee", more: "Meer" },
-    auth: { login: "Inloggen", register: "Registreren", email: "E-mail", password: "Wachtwoord", username: "Gebruikersnaam", logout: "Uitloggen", welcome: "Welkom terug", sign_in: "Aanmelden", no_account: "Geen account?", have_account: "Al een account?" },
+    auth: { login: "Inloggen", register: "Registreren", email: "E-mail", password: "Wachtwoord", username: "Gebruikersnaam", logout: "Uitloggen", welcome: "Welkom terug", sign_in: "Aanmelden", no_account: "Geen account?", have_account: "Al een account?", full_name: "Volledige naam", join: "Doe mee met OlCha", enter: "Inloggen bij OlCha", tagline: "Één AI-aangedreven sociaal universum. Elk platform. Één signaal.", username_req: "Gebruikersnaam is vereist", name_req: "Volledige naam is vereist" },
     post: { like: "Vind ik leuk", comment: "Reageren", share: "Delen", report: "Melden", follow: "Volgen", unfollow: "Ontvolgen", save: "Opslaan", more: "Meer" },
     settings: { title: "Instellingen", subtitle: "Beheer uw account", profile: "Profiel", account: "Account", notifications: "Meldingen", appearance: "Uiterlijk", privacy: "Privacy", language: "Taal" },
     lang: { title: "Taal", subtitle: "Kies de interfacetaal", search: "Taal zoeken...", current: "Huidige taal", popular: "Populair", all: "Alle talen", applied: "Taal gewijzigd!" },
@@ -251,7 +251,7 @@ const t = {
   },
   pl: {
     nav: { home: "Strona główna", explore: "Odkryj", reels: "Reels", messages: "Wiadomości", groups: "Grupy", notifications: "Powiadomienia", profile: "Profil", settings: "Ustawienia", admin: "Admin", premium: "Premium", search: "Szukaj", marketplace: "Rynek", ai_chat: "Czat AI", library: "Biblioteka", live: "Na żywo", wallet: "Portfel", more: "Więcej" },
-    auth: { login: "Zaloguj się", register: "Zarejestruj się", email: "Email", password: "Hasło", username: "Nazwa użytkownika", logout: "Wyloguj", welcome: "Witaj z powrotem", sign_in: "Zaloguj", no_account: "Brak konta?", have_account: "Masz konto?" },
+    auth: { login: "Zaloguj się", register: "Zarejestruj się", email: "Email", password: "Hasło", username: "Nazwa użytkownika", logout: "Wyloguj", welcome: "Witaj z powrotem", sign_in: "Zaloguj", no_account: "Brak konta?", have_account: "Masz konto?", full_name: "Pełne imię", join: "Dołącz do OlCha", enter: "Zaloguj się do OlCha", tagline: "Jedno AI społeczne uniwersum. Każda platforma. Jeden sygnał.", username_req: "Nazwa użytkownika jest wymagana", name_req: "Pełne imię jest wymagane" },
     post: { like: "Lubię to", comment: "Komentarz", share: "Udostępnij", report: "Zgłoś", follow: "Obserwuj", unfollow: "Przestań obserwować", save: "Zapisz", more: "Więcej" },
     settings: { title: "Ustawienia", subtitle: "Zarządzaj swoim kontem", profile: "Profil", account: "Konto", notifications: "Powiadomienia", appearance: "Wygląd", privacy: "Prywatność", language: "Język" },
     lang: { title: "Język", subtitle: "Wybierz język interfejsu", search: "Szukaj języka...", current: "Aktualny język", popular: "Popularne", all: "Wszystkie języki", applied: "Język zmieniony!" },
@@ -264,7 +264,7 @@ const t = {
   },
   fa: {
     nav: { home: "خانه", explore: "کاوش", reels: "ریلز", messages: "پیام‌ها", groups: "گروه‌ها", notifications: "اعلان‌ها", profile: "پروفایل", settings: "تنظیمات", admin: "مدیر", premium: "پریمیوم", search: "جستجو", marketplace: "بازار", ai_chat: "چت AI", library: "کتابخانه", live: "زنده", wallet: "کیف پول", more: "بیشتر" },
-    auth: { login: "ورود", register: "ثبت نام", email: "ایمیل", password: "رمز عبور", username: "نام کاربری", logout: "خروج", welcome: "خوش آمدید", sign_in: "ورود", no_account: "حساب ندارید؟", have_account: "حساب دارید؟" },
+    auth: { login: "ورود", register: "ثبت نام", email: "ایمیل", password: "رمز عبور", username: "نام کاربری", logout: "خروج", welcome: "خوش آمدید", sign_in: "ورود", no_account: "حساب ندارید؟", have_account: "حساب دارید؟", full_name: "نام کامل", join: "به OlCha بپیوندید", enter: "ورود به OlCha", tagline: "یک جهان اجتماعی هوش مصنوعی. هر پلتفرم. یک سیگنال.", username_req: "نام کاربری الزامی است", name_req: "نام کامل الزامی است" },
     post: { like: "پسندیدن", comment: "نظر", share: "اشتراک", report: "گزارش", follow: "دنبال کردن", unfollow: "لغو دنبال کردن", save: "ذخیره", more: "بیشتر" },
     settings: { title: "تنظیمات", subtitle: "حساب خود را مدیریت کنید", profile: "پروفایل", account: "حساب", notifications: "اعلان‌ها", appearance: "ظاهر", privacy: "حریم خصوصی", language: "زبان" },
     lang: { title: "زبان", subtitle: "زبان رابط کاربری را انتخاب کنید", search: "جستجوی زبان...", current: "زبان فعلی", popular: "محبوب", all: "همه زبان‌ها", applied: "زبان تغییر کرد!" },
@@ -277,7 +277,7 @@ const t = {
   },
   bn: {
     nav: { home: "হোম", explore: "অন্বেষণ", reels: "রিলস", messages: "বার্তা", groups: "গ্রুপ", notifications: "বিজ্ঞপ্তি", profile: "প্রোফাইল", settings: "সেটিংস", admin: "অ্যাডমিন", premium: "প্রিমিয়াম", search: "খুঁজুন", marketplace: "বাজার", ai_chat: "AI চ্যাট", library: "লাইব্রেরি", live: "লাইভ", wallet: "ওয়ালেট", more: "আরও" },
-    auth: { login: "লগইন", register: "নিবন্ধন", email: "ইমেইল", password: "পাসওয়ার্ড", username: "ব্যবহারকারী নাম", logout: "লগআউট", welcome: "স্বাগতম", sign_in: "সাইন ইন", no_account: "অ্যাকাউন্ট নেই?", have_account: "অ্যাকাউন্ট আছে?" },
+    auth: { login: "লগইন", register: "নিবন্ধন", email: "ইমেইল", password: "পাসওয়ার্ড", username: "ব্যবহারকারী নাম", logout: "লগআউট", welcome: "স্বাগতম", sign_in: "সাইন ইন", no_account: "অ্যাকাউন্ট নেই?", have_account: "অ্যাকাউন্ট আছে?", full_name: "পূর্ণ নাম", join: "OlCha যোগ দিন", enter: "OlCha সাইন ইন", tagline: "একটি AI সামাজিক মহাবিশ্ব। প্রতিটি প্ল্যাটফর্ম। একটি সংকেত।", username_req: "ব্যবহারকারীর নাম আবশ্যক", name_req: "পূর্ণ নাম আবশ্যক" },
     post: { like: "পছন্দ", comment: "মন্তব্য", share: "শেয়ার", report: "রিপোর্ট", follow: "অনুসরণ", unfollow: "আনফলো", save: "সেভ", more: "আরও" },
     settings: { title: "সেটিংস", subtitle: "আপনার অ্যাকাউন্ট পরিচালনা করুন", profile: "প্রোফাইল", account: "অ্যাকাউন্ট", notifications: "বিজ্ঞপ্তি", appearance: "চেহারা", privacy: "গোপনীয়তা", language: "ভাষা" },
     lang: { title: "ভাষা", subtitle: "ইন্টারফেস ভাষা বেছে নিন", search: "ভাষা খুঁজুন...", current: "বর্তমান ভাষা", popular: "জনপ্রিয়", all: "সব ভাষা", applied: "ভাষা পরিবর্তিত হয়েছে!" },
@@ -290,7 +290,7 @@ const t = {
   },
   id: {
     nav: { home: "Beranda", explore: "Jelajahi", reels: "Reels", messages: "Pesan", groups: "Grup", notifications: "Notifikasi", profile: "Profil", settings: "Pengaturan", admin: "Admin", premium: "Premium", search: "Cari", marketplace: "Pasar", ai_chat: "Chat AI", library: "Perpustakaan", live: "Siaran", wallet: "Dompet", more: "Lainnya" },
-    auth: { login: "Masuk", register: "Daftar", email: "Email", password: "Kata sandi", username: "Nama pengguna", logout: "Keluar", welcome: "Selamat datang kembali", sign_in: "Masuk", no_account: "Belum punya akun?", have_account: "Sudah punya akun?" },
+    auth: { login: "Masuk", register: "Daftar", email: "Email", password: "Kata sandi", username: "Nama pengguna", logout: "Keluar", welcome: "Selamat datang kembali", sign_in: "Masuk", no_account: "Belum punya akun?", have_account: "Sudah punya akun?", full_name: "Nama lengkap", join: "Bergabung OlCha", enter: "Masuk ke OlCha", tagline: "Semesta sosial bertenaga AI. Setiap platform. Satu sinyal.", username_req: "Nama pengguna diperlukan", name_req: "Nama lengkap diperlukan" },
     post: { like: "Suka", comment: "Komentar", share: "Bagikan", report: "Laporkan", follow: "Ikuti", unfollow: "Berhenti ikuti", save: "Simpan", more: "Lainnya" },
     settings: { title: "Pengaturan", subtitle: "Kelola akun Anda", profile: "Profil", account: "Akun", notifications: "Notifikasi", appearance: "Tampilan", privacy: "Privasi", language: "Bahasa" },
     lang: { title: "Bahasa", subtitle: "Pilih bahasa antarmuka", search: "Cari bahasa...", current: "Bahasa saat ini", popular: "Populer", all: "Semua bahasa", applied: "Bahasa diubah!" },
@@ -303,7 +303,7 @@ const t = {
   },
   vi: {
     nav: { home: "Trang chủ", explore: "Khám phá", reels: "Reels", messages: "Tin nhắn", groups: "Nhóm", notifications: "Thông báo", profile: "Hồ sơ", settings: "Cài đặt", admin: "Quản trị", premium: "Cao cấp", search: "Tìm kiếm", marketplace: "Chợ", ai_chat: "Chat AI", library: "Thư viện", live: "Trực tiếp", wallet: "Ví", more: "Thêm" },
-    auth: { login: "Đăng nhập", register: "Đăng ký", email: "Email", password: "Mật khẩu", username: "Tên người dùng", logout: "Đăng xuất", welcome: "Chào mừng trở lại", sign_in: "Đăng nhập", no_account: "Chưa có tài khoản?", have_account: "Đã có tài khoản?" },
+    auth: { login: "Đăng nhập", register: "Đăng ký", email: "Email", password: "Mật khẩu", username: "Tên người dùng", logout: "Đăng xuất", welcome: "Chào mừng trở lại", sign_in: "Đăng nhập", no_account: "Chưa có tài khoản?", have_account: "Đã có tài khoản?", full_name: "Họ và tên", join: "Tham gia OlCha", enter: "Đăng nhập OlCha", tagline: "Vũ trụ xã hội AI. Mọi nền tảng. Một tín hiệu.", username_req: "Tên người dùng là bắt buộc", name_req: "Họ và tên là bắt buộc" },
     post: { like: "Thích", comment: "Bình luận", share: "Chia sẻ", report: "Báo cáo", follow: "Theo dõi", unfollow: "Bỏ theo dõi", save: "Lưu", more: "Thêm" },
     settings: { title: "Cài đặt", subtitle: "Quản lý tài khoản", profile: "Hồ sơ", account: "Tài khoản", notifications: "Thông báo", appearance: "Giao diện", privacy: "Quyền riêng tư", language: "Ngôn ngữ" },
     lang: { title: "Ngôn ngữ", subtitle: "Chọn ngôn ngữ giao diện", search: "Tìm ngôn ngữ...", current: "Ngôn ngữ hiện tại", popular: "Phổ biến", all: "Tất cả ngôn ngữ", applied: "Đã thay đổi ngôn ngữ!" },
@@ -316,7 +316,7 @@ const t = {
   },
   th: {
     nav: { home: "หน้าหลัก", explore: "สำรวจ", reels: "รีลส์", messages: "ข้อความ", groups: "กลุ่ม", notifications: "การแจ้งเตือน", profile: "โปรไฟล์", settings: "การตั้งค่า", admin: "ผู้ดูแล", premium: "พรีเมียม", search: "ค้นหา", marketplace: "ตลาด", ai_chat: "แชท AI", library: "ห้องสมุด", live: "สด", wallet: "กระเป๋าเงิน", more: "เพิ่มเติม" },
-    auth: { login: "เข้าสู่ระบบ", register: "ลงทะเบียน", email: "อีเมล", password: "รหัสผ่าน", username: "ชื่อผู้ใช้", logout: "ออกจากระบบ", welcome: "ยินดีต้อนรับกลับ", sign_in: "ลงชื่อเข้าใช้", no_account: "ไม่มีบัญชี?", have_account: "มีบัญชีแล้ว?" },
+    auth: { login: "เข้าสู่ระบบ", register: "ลงทะเบียน", email: "อีเมล", password: "รหัสผ่าน", username: "ชื่อผู้ใช้", logout: "ออกจากระบบ", welcome: "ยินดีต้อนรับกลับ", sign_in: "ลงชื่อเข้าใช้", no_account: "ไม่มีบัญชี?", have_account: "มีบัญชีแล้ว?", full_name: "ชื่อเต็ม", join: "เข้าร่วม OlCha", enter: "เข้าสู่ระบบ OlCha", tagline: "จักรวาลสังคม AI ทุกแพลตฟอร์ม หนึ่งสัญญาณ", username_req: "ต้องระบุชื่อผู้ใช้", name_req: "ต้องระบุชื่อเต็ม" },
     post: { like: "ถูกใจ", comment: "แสดงความคิดเห็น", share: "แชร์", report: "รายงาน", follow: "ติดตาม", unfollow: "เลิกติดตาม", save: "บันทึก", more: "เพิ่มเติม" },
     settings: { title: "การตั้งค่า", subtitle: "จัดการบัญชีของคุณ", profile: "โปรไฟล์", account: "บัญชี", notifications: "การแจ้งเตือน", appearance: "รูปลักษณ์", privacy: "ความเป็นส่วนตัว", language: "ภาษา" },
     lang: { title: "ภาษา", subtitle: "เลือกภาษาของอินเทอร์เฟซ", search: "ค้นหาภาษา...", current: "ภาษาปัจจุบัน", popular: "ยอดนิยม", all: "ภาษาทั้งหมด", applied: "เปลี่ยนภาษาแล้ว!" },
@@ -329,7 +329,7 @@ const t = {
   },
   uk: {
     nav: { home: "Головна", explore: "Огляд", reels: "Reels", messages: "Повідомлення", groups: "Групи", notifications: "Сповіщення", profile: "Профіль", settings: "Налаштування", admin: "Адмін", premium: "Преміум", search: "Пошук", marketplace: "Ринок", ai_chat: "ШІ Чат", library: "Бібліотека", live: "Прямий ефір", wallet: "Гаманець", more: "Більше" },
-    auth: { login: "Увійти", register: "Реєстрація", email: "Email", password: "Пароль", username: "Ім'я користувача", logout: "Вийти", welcome: "Ласкаво просимо", sign_in: "Увійти", no_account: "Немає акаунту?", have_account: "Є акаунт?" },
+    auth: { login: "Увійти", register: "Реєстрація", email: "Email", password: "Пароль", username: "Ім'я користувача", logout: "Вийти", welcome: "Ласкаво просимо", sign_in: "Увійти", no_account: "Немає акаунту?", have_account: "Є акаунт?", full_name: "Повне ім'я", join: "Приєднатися до OlCha", enter: "Увійти в OlCha", tagline: "Єдиний AI соціальний всесвіт. Кожна платформа. Один сигнал.", username_req: "Ім'я користувача обов'язкове", name_req: "Повне ім'я обов'язкове" },
     post: { like: "Подобається", comment: "Коментар", share: "Поділитися", report: "Поскаржитися", follow: "Підписатися", unfollow: "Відписатися", save: "Зберегти", more: "Ще" },
     settings: { title: "Налаштування", subtitle: "Керування акаунтом", profile: "Профіль", account: "Акаунт", notifications: "Сповіщення", appearance: "Зовнішній вигляд", privacy: "Конфіденційність", language: "Мова" },
     lang: { title: "Мова", subtitle: "Оберіть мову інтерфейсу", search: "Пошук мови...", current: "Поточна мова", popular: "Популярні", all: "Всі мови", applied: "Мову змінено!" },
@@ -342,7 +342,7 @@ const t = {
   },
   sv: {
     nav: { home: "Hem", explore: "Utforska", reels: "Reels", messages: "Meddelanden", groups: "Grupper", notifications: "Aviseringar", profile: "Profil", settings: "Inställningar", admin: "Admin", premium: "Premium", search: "Sök", marketplace: "Marknad", ai_chat: "AI-chatt", library: "Bibliotek", live: "Live", wallet: "Plånbok", more: "Mer" },
-    auth: { login: "Logga in", register: "Registrera", email: "E-post", password: "Lösenord", username: "Användarnamn", logout: "Logga ut", welcome: "Välkommen tillbaka", sign_in: "Logga in", no_account: "Inget konto?", have_account: "Har du ett konto?" },
+    auth: { login: "Logga in", register: "Registrera", email: "E-post", password: "Lösenord", username: "Användarnamn", logout: "Logga ut", welcome: "Välkommen tillbaka", sign_in: "Logga in", no_account: "Inget konto?", have_account: "Har du ett konto?", full_name: "Fullständigt namn", join: "Gå med i OlCha", enter: "Logga in på OlCha", tagline: "Ett AI-drivet socialt universum. Varje plattform. En signal.", username_req: "Användarnamn krävs", name_req: "Fullständigt namn krävs" },
     post: { like: "Gilla", comment: "Kommentera", share: "Dela", report: "Rapportera", follow: "Följ", unfollow: "Sluta följa", save: "Spara", more: "Mer" },
     settings: { title: "Inställningar", subtitle: "Hantera ditt konto", profile: "Profil", account: "Konto", notifications: "Aviseringar", appearance: "Utseende", privacy: "Sekretess", language: "Språk" },
     lang: { title: "Språk", subtitle: "Välj gränssnittsspråk", search: "Sök språk...", current: "Nuvarande språk", popular: "Populärt", all: "Alla språk", applied: "Språket ändrat!" },
@@ -355,7 +355,7 @@ const t = {
   },
   no: {
     nav: { home: "Hjem", explore: "Utforsk", reels: "Reels", messages: "Meldinger", groups: "Grupper", notifications: "Varsler", profile: "Profil", settings: "Innstillinger", admin: "Admin", premium: "Premium", search: "Søk", marketplace: "Marked", ai_chat: "AI-chat", library: "Bibliotek", live: "Direkte", wallet: "Lommebok", more: "Mer" },
-    auth: { login: "Logg inn", register: "Registrer", email: "E-post", password: "Passord", username: "Brukernavn", logout: "Logg ut", welcome: "Velkommen tilbake", sign_in: "Logg inn", no_account: "Ingen konto?", have_account: "Har du konto?" },
+    auth: { login: "Logg inn", register: "Registrer", email: "E-post", password: "Passord", username: "Brukernavn", logout: "Logg ut", welcome: "Velkommen tilbake", sign_in: "Logg inn", no_account: "Ingen konto?", have_account: "Har du konto?", full_name: "Fullt navn", join: "Bli med i OlCha", enter: "Logg inn på OlCha", tagline: "Et AI-drevet sosialt univers. Hver plattform. Ett signal.", username_req: "Brukernavn er påkrevd", name_req: "Fullt navn er påkrevd" },
     post: { like: "Lik", comment: "Kommenter", share: "Del", report: "Rapporter", follow: "Følg", unfollow: "Slutt å følge", save: "Lagre", more: "Mer" },
     settings: { title: "Innstillinger", subtitle: "Administrer kontoen din", profile: "Profil", account: "Konto", notifications: "Varsler", appearance: "Utseende", privacy: "Personvern", language: "Språk" },
     lang: { title: "Språk", subtitle: "Velg grensesnittsspråk", search: "Søk etter språk...", current: "Nåværende språk", popular: "Populære", all: "Alle språk", applied: "Språket er endret!" },
@@ -368,7 +368,7 @@ const t = {
   },
   da: {
     nav: { home: "Hjem", explore: "Udforsk", reels: "Reels", messages: "Beskeder", groups: "Grupper", notifications: "Notifikationer", profile: "Profil", settings: "Indstillinger", admin: "Admin", premium: "Premium", search: "Søg", marketplace: "Marked", ai_chat: "AI-chat", library: "Bibliotek", live: "Live", wallet: "Tegnebog", more: "Mere" },
-    auth: { login: "Log ind", register: "Tilmeld", email: "E-mail", password: "Adgangskode", username: "Brugernavn", logout: "Log ud", welcome: "Velkommen tilbage", sign_in: "Log ind", no_account: "Ingen konto?", have_account: "Har du en konto?" },
+    auth: { login: "Log ind", register: "Tilmeld", email: "E-mail", password: "Adgangskode", username: "Brugernavn", logout: "Log ud", welcome: "Velkommen tilbage", sign_in: "Log ind", no_account: "Ingen konto?", have_account: "Har du en konto?", full_name: "Fuldt navn", join: "Bliv medlem af OlCha", enter: "Log ind på OlCha", tagline: "Et AI-drevet socialt univers. Hver platform. Ét signal.", username_req: "Brugernavn er påkrævet", name_req: "Fuldt navn er påkrævet" },
     post: { like: "Synes godt om", comment: "Kommenter", share: "Del", report: "Rapporter", follow: "Følg", unfollow: "Hold op med at følge", save: "Gem", more: "Mere" },
     settings: { title: "Indstillinger", subtitle: "Administrer din konto", profile: "Profil", account: "Konto", notifications: "Notifikationer", appearance: "Udseende", privacy: "Privatliv", language: "Sprog" },
     lang: { title: "Sprog", subtitle: "Vælg grænseflades sprog", search: "Søg efter sprog...", current: "Nuværende sprog", popular: "Populære", all: "Alle sprog", applied: "Sproget er ændret!" },
@@ -381,7 +381,7 @@ const t = {
   },
   fi: {
     nav: { home: "Etusivu", explore: "Tutustu", reels: "Reels", messages: "Viestit", groups: "Ryhmät", notifications: "Ilmoitukset", profile: "Profiili", settings: "Asetukset", admin: "Admin", premium: "Premium", search: "Etsi", marketplace: "Kauppapaikka", ai_chat: "AI-chat", library: "Kirjasto", live: "Live", wallet: "Lompakko", more: "Lisää" },
-    auth: { login: "Kirjaudu", register: "Rekisteröidy", email: "Sähköposti", password: "Salasana", username: "Käyttäjänimi", logout: "Kirjaudu ulos", welcome: "Tervetuloa takaisin", sign_in: "Kirjaudu sisään", no_account: "Ei tiliä?", have_account: "Onko sinulla tili?" },
+    auth: { login: "Kirjaudu", register: "Rekisteröidy", email: "Sähköposti", password: "Salasana", username: "Käyttäjänimi", logout: "Kirjaudu ulos", welcome: "Tervetuloa takaisin", sign_in: "Kirjaudu sisään", no_account: "Ei tiliä?", have_account: "Onko sinulla tili?", full_name: "Koko nimi", join: "Liity OlChaan", enter: "Kirjaudu OlChaan", tagline: "Yksi AI sosiaalinen universumi. Jokainen alusta. Yksi signaali.", username_req: "Käyttäjänimi vaaditaan", name_req: "Koko nimi vaaditaan" },
     post: { like: "Tykkää", comment: "Kommentoi", share: "Jaa", report: "Ilmianna", follow: "Seuraa", unfollow: "Lopeta seuraaminen", save: "Tallenna", more: "Lisää" },
     settings: { title: "Asetukset", subtitle: "Hallinnoi tiliäsi", profile: "Profiili", account: "Tili", notifications: "Ilmoitukset", appearance: "Ulkoasu", privacy: "Tietosuoja", language: "Kieli" },
     lang: { title: "Kieli", subtitle: "Valitse käyttöliittymän kieli", search: "Hae kieltä...", current: "Nykyinen kieli", popular: "Suositut", all: "Kaikki kielet", applied: "Kieli vaihdettu!" },
@@ -394,7 +394,7 @@ const t = {
   },
   el: {
     nav: { home: "Αρχική", explore: "Εξερεύνηση", reels: "Reels", messages: "Μηνύματα", groups: "Ομάδες", notifications: "Ειδοποιήσεις", profile: "Προφίλ", settings: "Ρυθμίσεις", admin: "Διαχειριστής", premium: "Premium", search: "Αναζήτηση", marketplace: "Αγορά", ai_chat: "Συνομιλία AI", library: "Βιβλιοθήκη", live: "Ζωντανά", wallet: "Πορτοφόλι", more: "Περισσότερα" },
-    auth: { login: "Σύνδεση", register: "Εγγραφή", email: "Email", password: "Κωδικός", username: "Όνομα χρήστη", logout: "Αποσύνδεση", welcome: "Καλωσήρθατε πάλι", sign_in: "Είσοδος", no_account: "Δεν έχετε λογαριασμό;", have_account: "Έχετε λογαριασμό;" },
+    auth: { login: "Σύνδεση", register: "Εγγραφή", email: "Email", password: "Κωδικός", username: "Όνομα χρήστη", logout: "Αποσύνδεση", welcome: "Καλωσήρθατε πάλι", sign_in: "Είσοδος", no_account: "Δεν έχετε λογαριασμό;", have_account: "Έχετε λογαριασμό;", full_name: "Πλήρες όνομα", join: "Γίνε μέλος OlCha", enter: "Σύνδεση στο OlCha", tagline: "Ένα AI κοινωνικό σύμπαν. Κάθε πλατφόρμα. Ένα σήμα.", username_req: "Απαιτείται όνομα χρήστη", name_req: "Απαιτείται πλήρες όνομα" },
     post: { like: "Μου αρέσει", comment: "Σχόλιο", share: "Κοινοποίηση", report: "Αναφορά", follow: "Ακολουθήστε", unfollow: "Διακοπή παρακολούθησης", save: "Αποθήκευση", more: "Περισσότερα" },
     settings: { title: "Ρυθμίσεις", subtitle: "Διαχειριστείτε τον λογαριασμό σας", profile: "Προφίλ", account: "Λογαριασμός", notifications: "Ειδοποιήσεις", appearance: "Εμφάνιση", privacy: "Απόρρητο", language: "Γλώσσα" },
     lang: { title: "Γλώσσα", subtitle: "Επιλέξτε γλώσσα διεπαφής", search: "Αναζήτηση γλώσσας...", current: "Τρέχουσα γλώσσα", popular: "Δημοφιλείς", all: "Όλες οι γλώσσες", applied: "Η γλώσσα άλλαξε!" },
@@ -407,7 +407,7 @@ const t = {
   },
   cs: {
     nav: { home: "Domů", explore: "Prozkoumat", reels: "Reels", messages: "Zprávy", groups: "Skupiny", notifications: "Oznámení", profile: "Profil", settings: "Nastavení", admin: "Admin", premium: "Premium", search: "Hledat", marketplace: "Tržiště", ai_chat: "AI Chat", library: "Knihovna", live: "Živě", wallet: "Peněženka", more: "Více" },
-    auth: { login: "Přihlásit se", register: "Registrovat se", email: "Email", password: "Heslo", username: "Uživatelské jméno", logout: "Odhlásit se", welcome: "Vítejte zpět", sign_in: "Přihlásit", no_account: "Nemáte účet?", have_account: "Máte účet?" },
+    auth: { login: "Přihlásit se", register: "Registrovat se", email: "Email", password: "Heslo", username: "Uživatelské jméno", logout: "Odhlásit se", welcome: "Vítejte zpět", sign_in: "Přihlásit", no_account: "Nemáte účet?", have_account: "Máte účet?", full_name: "Celé jméno", join: "Připojit se k OlCha", enter: "Přihlásit se do OlCha", tagline: "Jeden AI sociální vesmír. Každá platforma. Jeden signál.", username_req: "Uživatelské jméno je povinné", name_req: "Celé jméno je povinné" },
     post: { like: "Líbí se mi", comment: "Komentář", share: "Sdílet", report: "Nahlásit", follow: "Sledovat", unfollow: "Přestat sledovat", save: "Uložit", more: "Více" },
     settings: { title: "Nastavení", subtitle: "Spravujte svůj účet", profile: "Profil", account: "Účet", notifications: "Oznámení", appearance: "Vzhled", privacy: "Soukromí", language: "Jazyk" },
     lang: { title: "Jazyk", subtitle: "Zvolte jazyk rozhraní", search: "Hledat jazyk...", current: "Aktuální jazyk", popular: "Oblíbené", all: "Všechny jazyky", applied: "Jazyk změněn!" },
@@ -420,7 +420,7 @@ const t = {
   },
   hu: {
     nav: { home: "Kezdőlap", explore: "Felfedezés", reels: "Reels", messages: "Üzenetek", groups: "Csoportok", notifications: "Értesítések", profile: "Profil", settings: "Beállítások", admin: "Admin", premium: "Prémium", search: "Keresés", marketplace: "Piactér", ai_chat: "AI Chat", library: "Könyvtár", live: "Élő", wallet: "Tárca", more: "Több" },
-    auth: { login: "Bejelentkezés", register: "Regisztráció", email: "Email", password: "Jelszó", username: "Felhasználónév", logout: "Kijelentkezés", welcome: "Üdvözöljük visszatérőként", sign_in: "Belépés", no_account: "Nincs fiókja?", have_account: "Van fiókja?" },
+    auth: { login: "Bejelentkezés", register: "Regisztráció", email: "Email", password: "Jelszó", username: "Felhasználónév", logout: "Kijelentkezés", welcome: "Üdvözöljük visszatérőként", sign_in: "Belépés", no_account: "Nincs fiókja?", have_account: "Van fiókja?", full_name: "Teljes név", join: "Csatlakozz OlCha-hoz", enter: "Belépés OlCha-ba", tagline: "Egy AI szociális univerzum. Minden platform. Egy jel.", username_req: "Felhasználónév kötelező", name_req: "Teljes név kötelező" },
     post: { like: "Tetszik", comment: "Hozzászólás", share: "Megosztás", report: "Bejelentés", follow: "Követés", unfollow: "Követés megszüntetése", save: "Mentés", more: "Több" },
     settings: { title: "Beállítások", subtitle: "Fiók kezelése", profile: "Profil", account: "Fiók", notifications: "Értesítések", appearance: "Megjelenés", privacy: "Adatvédelem", language: "Nyelv" },
     lang: { title: "Nyelv", subtitle: "Válassza ki a felület nyelvét", search: "Nyelv keresése...", current: "Aktuális nyelv", popular: "Népszerű", all: "Minden nyelv", applied: "A nyelv megváltozott!" },
@@ -433,7 +433,7 @@ const t = {
   },
   ro: {
     nav: { home: "Acasă", explore: "Explorare", reels: "Reels", messages: "Mesaje", groups: "Grupuri", notifications: "Notificări", profile: "Profil", settings: "Setări", admin: "Admin", premium: "Premium", search: "Căutare", marketplace: "Piață", ai_chat: "Chat AI", library: "Bibliotecă", live: "Live", wallet: "Portofel", more: "Mai mult" },
-    auth: { login: "Autentificare", register: "Înregistrare", email: "Email", password: "Parolă", username: "Nume utilizator", logout: "Deconectare", welcome: "Bun venit înapoi", sign_in: "Conectare", no_account: "Fără cont?", have_account: "Ai cont?" },
+    auth: { login: "Autentificare", register: "Înregistrare", email: "Email", password: "Parolă", username: "Nume utilizator", logout: "Deconectare", welcome: "Bun venit înapoi", sign_in: "Conectare", no_account: "Fără cont?", have_account: "Ai cont?", full_name: "Nume complet", join: "Alătură-te OlCha", enter: "Conectare la OlCha", tagline: "Un univers social AI. Fiecare platformă. Un semnal.", username_req: "Numele de utilizator este obligatoriu", name_req: "Numele complet este obligatoriu" },
     post: { like: "Apreciez", comment: "Comentariu", share: "Distribuie", report: "Raportează", follow: "Urmărire", unfollow: "Nu mai urmări", save: "Salvare", more: "Mai mult" },
     settings: { title: "Setări", subtitle: "Gestionați contul dvs.", profile: "Profil", account: "Cont", notifications: "Notificări", appearance: "Aspect", privacy: "Confidențialitate", language: "Limbă" },
     lang: { title: "Limbă", subtitle: "Alegeți limba interfeței", search: "Căutare limbă...", current: "Limba curentă", popular: "Populare", all: "Toate limbile", applied: "Limba a fost schimbată!" },
@@ -446,7 +446,7 @@ const t = {
   },
   he: {
     nav: { home: "בית", explore: "גלה", reels: "ריילס", messages: "הודעות", groups: "קבוצות", notifications: "התראות", profile: "פרופיל", settings: "הגדרות", admin: "מנהל", premium: "פרמיום", search: "חיפוש", marketplace: "שוק", ai_chat: "צ'אט AI", library: "ספרייה", live: "שידור חי", wallet: "ארנק", more: "עוד" },
-    auth: { login: "התחברות", register: "הרשמה", email: "אימייל", password: "סיסמה", username: "שם משתמש", logout: "התנתקות", welcome: "ברוך שובך", sign_in: "כניסה", no_account: "אין חשבון?", have_account: "יש חשבון?" },
+    auth: { login: "התחברות", register: "הרשמה", email: "אימייל", password: "סיסמה", username: "שם משתמש", logout: "התנתקות", welcome: "ברוך שובך", sign_in: "כניסה", no_account: "אין חשבון?", have_account: "יש חשבון?", full_name: "שם מלא", join: "הצטרף ל-OlCha", enter: "התחבר ל-OlCha", tagline: "יקום חברתי אחד עם בינה מלאכותית. כל פלטפורמה. אות אחד.", username_req: "שם משתמש הוא חובה", name_req: "שם מלא הוא חובה" },
     post: { like: "אהבתי", comment: "תגובה", share: "שיתוף", report: "דיווח", follow: "עקוב", unfollow: "הפסק לעקוב", save: "שמור", more: "עוד" },
     settings: { title: "הגדרות", subtitle: "נהל את החשבון שלך", profile: "פרופיל", account: "חשבון", notifications: "התראות", appearance: "מראה", privacy: "פרטיות", language: "שפה" },
     lang: { title: "שפה", subtitle: "בחר את שפת הממשק", search: "חפש שפה...", current: "שפה נוכחית", popular: "פופולרי", all: "כל השפות", applied: "השפה שונתה!" },
@@ -459,7 +459,7 @@ const t = {
   },
   ms: {
     nav: { home: "Laman Utama", explore: "Terokai", reels: "Reels", messages: "Mesej", groups: "Kumpulan", notifications: "Pemberitahuan", profile: "Profil", settings: "Tetapan", admin: "Admin", premium: "Premium", search: "Cari", marketplace: "Pasaran", ai_chat: "Chat AI", library: "Perpustakaan", live: "Langsung", wallet: "Dompet", more: "Lagi" },
-    auth: { login: "Log masuk", register: "Daftar", email: "E-mel", password: "Kata laluan", username: "Nama pengguna", logout: "Log keluar", welcome: "Selamat kembali", sign_in: "Log masuk", no_account: "Tiada akaun?", have_account: "Ada akaun?" },
+    auth: { login: "Log masuk", register: "Daftar", email: "E-mel", password: "Kata laluan", username: "Nama pengguna", logout: "Log keluar", welcome: "Selamat kembali", sign_in: "Log masuk", no_account: "Tiada akaun?", have_account: "Ada akaun?", full_name: "Nama penuh", join: "Sertai OlCha", enter: "Log masuk ke OlCha", tagline: "Satu alam sosial berkuasa AI. Setiap platform. Satu isyarat.", username_req: "Nama pengguna diperlukan", name_req: "Nama penuh diperlukan" },
     post: { like: "Suka", comment: "Komen", share: "Kongsi", report: "Laporkan", follow: "Ikuti", unfollow: "Berhenti ikut", save: "Simpan", more: "Lagi" },
     settings: { title: "Tetapan", subtitle: "Urus akaun anda", profile: "Profil", account: "Akaun", notifications: "Pemberitahuan", appearance: "Penampilan", privacy: "Privasi", language: "Bahasa" },
     lang: { title: "Bahasa", subtitle: "Pilih bahasa antara muka", search: "Cari bahasa...", current: "Bahasa semasa", popular: "Popular", all: "Semua bahasa", applied: "Bahasa ditukar!" },
@@ -472,7 +472,7 @@ const t = {
   },
   sw: {
     nav: { home: "Nyumbani", explore: "Chunguza", reels: "Reels", messages: "Ujumbe", groups: "Vikundi", notifications: "Arifa", profile: "Wasifu", settings: "Mipangilio", admin: "Msimamizi", premium: "Premium", search: "Tafuta", marketplace: "Soko", ai_chat: "Mazungumzo ya AI", library: "Maktaba", live: "Moja kwa moja", wallet: "Mkoba", more: "Zaidi" },
-    auth: { login: "Ingia", register: "Jisajili", email: "Barua pepe", password: "Neno la siri", username: "Jina la mtumiaji", logout: "Toka", welcome: "Karibu tena", sign_in: "Ingia", no_account: "Huna akaunti?", have_account: "Una akaunti?" },
+    auth: { login: "Ingia", register: "Jisajili", email: "Barua pepe", password: "Neno la siri", username: "Jina la mtumiaji", logout: "Toka", welcome: "Karibu tena", sign_in: "Ingia", no_account: "Huna akaunti?", have_account: "Una akaunti?", full_name: "Jina kamili", join: "Jiunge na OlCha", enter: "Ingia kwenye OlCha", tagline: "Ulimwengu mmoja wa kijamii wa AI. Kila jukwaa. Ishara moja.", username_req: "Jina la mtumiaji linahitajika", name_req: "Jina kamili linahitajika" },
     post: { like: "Penda", comment: "Maoni", share: "Shiriki", report: "Ripoti", follow: "Fuata", unfollow: "Acha kufuata", save: "Hifadhi", more: "Zaidi" },
     settings: { title: "Mipangilio", subtitle: "Simamia akaunti yako", profile: "Wasifu", account: "Akaunti", notifications: "Arifa", appearance: "Mwonekano", privacy: "Faragha", language: "Lugha" },
     lang: { title: "Lugha", subtitle: "Chagua lugha ya kiolesura", search: "Tafuta lugha...", current: "Lugha ya sasa", popular: "Maarufu", all: "Lugha zote", applied: "Lugha imebadilishwa!" },
@@ -485,7 +485,7 @@ const t = {
   },
   tl: {
     nav: { home: "Home", explore: "I-explore", reels: "Reels", messages: "Mga Mensahe", groups: "Mga Grupo", notifications: "Mga Abiso", profile: "Profile", settings: "Mga Setting", admin: "Admin", premium: "Premium", search: "Hanapin", marketplace: "Palengke", ai_chat: "AI Chat", library: "Aklatan", live: "Live", wallet: "Pitaka", more: "Higit pa" },
-    auth: { login: "Mag-login", register: "Mag-rehistro", email: "Email", password: "Password", username: "Username", logout: "Mag-logout", welcome: "Maligayang pagbabalik", sign_in: "Mag-sign in", no_account: "Wala pang account?", have_account: "Mayroon nang account?" },
+    auth: { login: "Mag-login", register: "Mag-rehistro", email: "Email", password: "Password", username: "Username", logout: "Mag-logout", welcome: "Maligayang pagbabalik", sign_in: "Mag-sign in", no_account: "Wala pang account?", have_account: "Mayroon nang account?", full_name: "Buong pangalan", join: "Sumali sa OlCha", enter: "Mag-sign in sa OlCha", tagline: "Isang AI social universe. Bawat platform. Isang signal.", username_req: "Kinakailangan ang username", name_req: "Kinakailangan ang buong pangalan" },
     post: { like: "I-like", comment: "Mag-komento", share: "I-share", report: "I-report", follow: "Sundan", unfollow: "Alisin sa sundan", save: "I-save", more: "Higit pa" },
     settings: { title: "Mga Setting", subtitle: "Pamahalaan ang iyong account", profile: "Profile", account: "Account", notifications: "Mga Abiso", appearance: "Hitsura", privacy: "Privacy", language: "Wika" },
     lang: { title: "Wika", subtitle: "Piliin ang wika ng interface", search: "Maghanap ng wika...", current: "Kasalukuyang wika", popular: "Sikat", all: "Lahat ng wika", applied: "Nabago na ang wika!" },
@@ -498,7 +498,7 @@ const t = {
   },
   az: {
     nav: { home: "Ana Səhifə", explore: "Kəşf Et", reels: "Reels", messages: "Mesajlar", groups: "Qruplar", notifications: "Bildirişlər", profile: "Profil", settings: "Parametrlər", admin: "Admin", premium: "Premium", search: "Axtar", marketplace: "Bazar", ai_chat: "AI Söhbəti", library: "Kitabxana", live: "Canlı Yayım", wallet: "Cüzdan", more: "Daha çox" },
-    auth: { login: "Daxil ol", register: "Qeydiyyat", email: "E-poçt", password: "Şifrə", username: "İstifadəçi adı", logout: "Çıxış", welcome: "Xoş gəlmisiniz", sign_in: "Giriş", no_account: "Hesabınız yoxdur?", have_account: "Hesabınız var?" },
+    auth: { login: "Daxil ol", register: "Qeydiyyat", email: "E-poçt", password: "Şifrə", username: "İstifadəçi adı", logout: "Çıxış", welcome: "Xoş gəlmisiniz", sign_in: "Giriş", no_account: "Hesabınız yoxdur?", have_account: "Hesabınız var?", full_name: "Ad Soyad", join: "OlCha qoşul", enter: "OlCha daxil ol", tagline: "Vahid AI sosial kainat. Hər platforma. Bir siqnal.", username_req: "İstifadəçi adı tələb olunur", name_req: "Ad soyad tələb olunur" },
     post: { like: "Bəyən", comment: "Şərh", share: "Paylaş", report: "Şikayət", follow: "İzlə", unfollow: "İzləməyi dayandır", save: "Saxla", more: "Daha çox" },
     settings: { title: "Parametrlər", subtitle: "Hesabınızı idarə edin", profile: "Profil", account: "Hesab", notifications: "Bildirişlər", appearance: "Görünüş", privacy: "Məxfilik", language: "Dil" },
     lang: { title: "Dil", subtitle: "İnterfeys dilini seçin", search: "Dil axtar...", current: "Cari dil", popular: "Populyar", all: "Bütün dillər", applied: "Dil dəyişdirildi!" },
@@ -511,7 +511,7 @@ const t = {
   },
   kk: {
     nav: { home: "Басты бет", explore: "Зерттеу", reels: "Reels", messages: "Хабарлар", groups: "Топтар", notifications: "Хабарландырулар", profile: "Профиль", settings: "Баптаулар", admin: "Әкімші", premium: "Премиум", search: "Іздеу", marketplace: "Базар", ai_chat: "AI Чат", library: "Кітапхана", live: "Тікелей эфир", wallet: "Әмиян", more: "Көбірек" },
-    auth: { login: "Кіру", register: "Тіркелу", email: "Email", password: "Құпия сөз", username: "Пайдаланушы аты", logout: "Шығу", welcome: "Қош келдіңіз", sign_in: "Кіру", no_account: "Аккаунт жоқ па?", have_account: "Аккаунт бар ма?" },
+    auth: { login: "Кіру", register: "Тіркелу", email: "Email", password: "Құпия сөз", username: "Пайдаланушы аты", logout: "Шығу", welcome: "Қош келдіңіз", sign_in: "Кіру", no_account: "Аккаунт жоқ па?", have_account: "Аккаунт бар ма?", full_name: "Толық аты", join: "OlCha қосылу", enter: "OlCha кіру", tagline: "Бірыңғай AI әлеуметтік әлем. Әр платформа. Бір сигнал.", username_req: "Пайдаланушы аты қажет", name_req: "Толық ат қажет" },
     post: { like: "Ұнату", comment: "Пікір", share: "Бөлісу", report: "Шағым", follow: "Жазылу", unfollow: "Жазылымды болдырмау", save: "Сақтау", more: "Көбірек" },
     settings: { title: "Баптаулар", subtitle: "Аккаунтыңызды басқарыңыз", profile: "Профиль", account: "Аккаунт", notifications: "Хабарландырулар", appearance: "Сыртқы түр", privacy: "Құпиялылық", language: "Тіл" },
     lang: { title: "Тіл", subtitle: "Интерфейс тілін таңдаңыз", search: "Тіл іздеу...", current: "Ағымдағы тіл", popular: "Танымал", all: "Барлық тілдер", applied: "Тіл өзгертілді!" },
@@ -524,7 +524,7 @@ const t = {
   },
   ky: {
     nav: { home: "Башкы бет", explore: "Изилдөө", reels: "Reels", messages: "Билдирүүлөр", groups: "Топтор", notifications: "Эскертмелер", profile: "Профиль", settings: "Жөндөөлөр", admin: "Администратор", premium: "Премиум", search: "Издөө", marketplace: "Базар", ai_chat: "AI Чат", library: "Китепкана", live: "Түздөн-түз эфир", wallet: "Капчык", more: "Дагы" },
-    auth: { login: "Кирүү", register: "Катталуу", email: "Email", password: "Сырсөз", username: "Колдонуучу аты", logout: "Чыгуу", welcome: "Кайра кош келдиңиз", sign_in: "Кирүү", no_account: "Аккаунт жокпу?", have_account: "Аккаунт барбы?" },
+    auth: { login: "Кирүү", register: "Катталуу", email: "Email", password: "Сырсөз", username: "Колдонуучу аты", logout: "Чыгуу", welcome: "Кайра кош келдиңиз", sign_in: "Кирүү", no_account: "Аккаунт жокпу?", have_account: "Аккаунт барбы?", full_name: "Толук аты", join: "OlCha кошулуу", enter: "OlCha кирүү", tagline: "Бирдиктүү AI социалдык дүйнө. Ар платформа. Бир сигнал.", username_req: "Колдонуучу аты талап кылынат", name_req: "Толук ат талап кылынат" },
     post: { like: "Жактыруу", comment: "Комментарий", share: "Бөлүшүү", report: "Арыз", follow: "Жазылуу", unfollow: "Жазылымдан чыгуу", save: "Сактоо", more: "Дагы" },
     settings: { title: "Жөндөөлөр", subtitle: "Аккаунтуңузду башкаруу", profile: "Профиль", account: "Аккаунт", notifications: "Эскертмелер", appearance: "Көрүнүш", privacy: "Купуялуулук", language: "Тил" },
     lang: { title: "Тил", subtitle: "Интерфейс тилин тандаңыз", search: "Тил издөө...", current: "Азыркы тил", popular: "Популярдуу", all: "Бардык тилдер", applied: "Тил өзгөртүлдү!" },
@@ -537,7 +537,7 @@ const t = {
   },
   tk: {
     nav: { home: "Baş sahypa", explore: "Açmak", reels: "Reels", messages: "Habarlar", groups: "Toparlar", notifications: "Habarlamalar", profile: "Profil", settings: "Sazlamalar", admin: "Admin", premium: "Premium", search: "Gözleg", marketplace: "Bazar", ai_chat: "AI Söhbet", library: "Kitaphana", live: "Göni ýaýlym", wallet: "Gapjyk", more: "Koprak" },
-    auth: { login: "Giriş", register: "Hasap açmak", email: "Email", password: "Parol", username: "Ulanyjy ady", logout: "Çykmak", welcome: "Hoş geldiňiz", sign_in: "Giriş", no_account: "Hasabyňyz ýokmy?", have_account: "Hasabyňyz barmy?" },
+    auth: { login: "Giriş", register: "Hasap açmak", email: "Email", password: "Parol", username: "Ulanyjy ady", logout: "Çykmak", welcome: "Hoş geldiňiz", sign_in: "Giriş", no_account: "Hasabyňyz ýokmy?", have_account: "Hasabyňyz barmy?", full_name: "Doly ady", join: "OlCha goşulyň", enter: "OlCha giriň", tagline: "Ýeke AI sosial älem. Her platforma. Bir signal.", username_req: "Ulanyjy ady gerek", name_req: "Doly at gerek" },
     post: { like: "Halaýaryn", comment: "Teswir", share: "Paýlaşmak", report: "Şikaýat", follow: "Yzarlamak", unfollow: "Yzarlamagy bes etmek", save: "Saklamak", more: "Koprak" },
     settings: { title: "Sazlamalar", subtitle: "Hasabyňyzy dolandyrmak", profile: "Profil", account: "Hasap", notifications: "Habarlamalar", appearance: "Görnüş", privacy: "Gizlinlik", language: "Dil" },
     lang: { title: "Dil", subtitle: "Interfeýs dilini saýlaň", search: "Dil gözlemek...", current: "Häzirki dil", popular: "Meşhur", all: "Ähli diller", applied: "Dil üýtgedildi!" },
@@ -550,7 +550,7 @@ const t = {
   },
   tg: {
     nav: { home: "Саҳифаи асосӣ", explore: "Кашф кардан", reels: "Reels", messages: "Паёмҳо", groups: "Гурӯҳҳо", notifications: "Огоҳиҳо", profile: "Профил", settings: "Танзимот", admin: "Маъмур", premium: "Премиум", search: "Ҷустуҷӯ", marketplace: "Бозор", ai_chat: "Чати AI", library: "Китобхона", live: "Эфири зинда", wallet: "Кисапул", more: "Бештар" },
-    auth: { login: "Воридшавӣ", register: "Сабти ном", email: "Email", password: "Рамз", username: "Номи корбар", logout: "Баромадан", welcome: "Хуш омадед", sign_in: "Ворид шудан", no_account: "Аккаунт надоред?", have_account: "Аккаунт доред?" },
+    auth: { login: "Воридшавӣ", register: "Сабти ном", email: "Email", password: "Рамз", username: "Номи корбар", logout: "Баромадан", welcome: "Хуш омадед", sign_in: "Ворид шудан", no_account: "Аккаунт надоред?", have_account: "Аккаунт доред?", full_name: "Номи пурра", join: "Ба OlCha ҳамроҳ шавед", enter: "Ба OlCha ворид шавед", tagline: "Олами ягонаи иҷтимоии AI. Ҳар платформа. Як сигнал.", username_req: "Номи корбар лозим аст", name_req: "Номи пурра лозим аст" },
     post: { like: "Писандидан", comment: "Шарҳ", share: "Мубодила", report: "Шикоят", follow: "Пайравӣ", unfollow: "Бекор кардан", save: "Нигоҳ доштан", more: "Бештар" },
     settings: { title: "Танзимот", subtitle: "Аккаунтатонро идора кунед", profile: "Профил", account: "Аккаунт", notifications: "Огоҳиҳо", appearance: "Намуд", privacy: "Махфият", language: "Забон" },
     lang: { title: "Забон", subtitle: "Забони интерфейсро интихоб кунед", search: "Ҷустуҷӯи забон...", current: "Забони ҷорӣ", popular: "Маъмул", all: "Ҳамаи забонҳо", applied: "Забон тағйир ёфт!" },
@@ -563,7 +563,7 @@ const t = {
   },
   mn: {
     nav: { home: "Нүүр", explore: "Судлах", reels: "Reels", messages: "Мессеж", groups: "Бүлгүүд", notifications: "Мэдэгдэл", profile: "Профайл", settings: "Тохиргоо", admin: "Админ", premium: "Премиум", search: "Хайх", marketplace: "Зах зээл", ai_chat: "AI Чат", library: "Номын сан", live: "Шууд", wallet: "Түрийвч", more: "Дэлгэрэнгүй" },
-    auth: { login: "Нэвтрэх", register: "Бүртгүүлэх", email: "Имэйл", password: "Нууц үг", username: "Хэрэглэгчийн нэр", logout: "Гарах", welcome: "Тавтай морил", sign_in: "Нэвтрэх", no_account: "Бүртгэл байхгүй?", have_account: "Бүртгэл байна уу?" },
+    auth: { login: "Нэвтрэх", register: "Бүртгүүлэх", email: "Имэйл", password: "Нууц үг", username: "Хэрэглэгчийн нэр", logout: "Гарах", welcome: "Тавтай морил", sign_in: "Нэвтрэх", no_account: "Бүртгэл байхгүй?", have_account: "Бүртгэл байна уу?", full_name: "Бүтэн нэр", join: "OlCha-д нэгдэх", enter: "OlCha нэвтрэх", tagline: "Нэгдсэн AI нийгмийн орчлон. Бүх платформ. Нэг дохио.", username_req: "Хэрэглэгчийн нэр шаардлагатай", name_req: "Бүтэн нэр шаардлагатай" },
     post: { like: "Таалах", comment: "Сэтгэгдэл", share: "Хуваалцах", report: "Мэдээлэх", follow: "Дагах", unfollow: "Дагахаа болих", save: "Хадгалах", more: "Дэлгэрэнгүй" },
     settings: { title: "Тохиргоо", subtitle: "Дансаа удирдах", profile: "Профайл", account: "Данс", notifications: "Мэдэгдэл", appearance: "Харагдах байдал", privacy: "Нууцлал", language: "Хэл" },
     lang: { title: "Хэл", subtitle: "Интерфейсийн хэлийг сонгоно уу", search: "Хэл хайх...", current: "Одоогийн хэл", popular: "Алдартай", all: "Бүх хэлүүд", applied: "Хэл өөрчлөгдлөө!" },

@@ -186,4 +186,58 @@ router.post("/openai/moderate", async (req, res) => {
   }
 });
 
+router.post("/openai/voice-chat", async (req, res) => {
+  if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const { audioBase64 } = req.body;
+  if (!audioBase64) { res.status(400).json({ error: "audioBase64 required" }); return; }
+
+  try {
+    const buffer = Buffer.from(audioBase64, "base64");
+    const file = new File([buffer], "audio.webm", { type: "audio/webm" });
+
+    const transcription = await openai.audio.transcriptions.create({
+      model: "whisper-1",
+      file,
+    });
+    const transcript = transcription.text?.trim() ?? "";
+
+    if (!transcript) {
+      res.json({ transcript: "", response: "Ovoz aniqlanmadi. Iltimos qayta urinib ko'ring.", audioBase64: null });
+      return;
+    }
+
+    const chatResponse = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      max_completion_tokens: 350,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Siz OlCha platformasining ovozli AI yordamchisisiz. Qisqa, aniq va foydali javoblar bering. Foydalanuvchi qaysi tilda gapirsa, o'sha tilda javob bering.",
+        },
+        { role: "user", content: transcript },
+      ],
+    });
+    const aiText =
+      chatResponse.choices[0]?.message?.content ?? "Kechirasiz, javob bera olmadim.";
+
+    const ttsResponse = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "nova",
+      input: aiText,
+      response_format: "mp3",
+    });
+    const audioBuffer = Buffer.from(await ttsResponse.arrayBuffer());
+
+    res.json({
+      transcript,
+      response: aiText,
+      audioBase64: audioBuffer.toString("base64"),
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ovozli suhbat xatosi" });
+  }
+});
+
 export default router;

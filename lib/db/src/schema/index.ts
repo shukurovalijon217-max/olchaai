@@ -12,5 +12,5 @@ export * from "./live";
 export * from "./gifts";
 export * from "./marketplace";
 export * from "./conversations";
-export * from "./messages";
 export * from "./library";
+export * from "./interactions";

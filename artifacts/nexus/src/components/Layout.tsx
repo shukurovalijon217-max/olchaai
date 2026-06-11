@@ -6,7 +6,7 @@ import {
   Home, Play, Compass, MessageCircle, Users, Bell,
   User, ShieldCheck, LogOut, Crown, Settings, Wallet, Radio,
   Search, ShoppingBag, Bot, BookOpen, ChevronRight, ChevronLeft,
-  MoreHorizontal, X, Zap,
+  MoreHorizontal, X, Zap, Trophy, Ghost, Send,
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import { useAuth } from "@/context/AuthContext";
@@ -29,6 +29,8 @@ const NAV_GLOW: Record<string, { a: string; b: string; shadow: string }> = {
   "/wallet":       { a: "#22c55e", b: "#86efac", shadow: "rgba(34,197,94,0.65)" },
   "/settings":     { a: "#94a3b8", b: "#cbd5e1", shadow: "rgba(148,163,184,0.65)" },
   "/admin":        { a: "#dc2626", b: "#fca5a5", shadow: "rgba(220,38,38,0.65)" },
+  "/quests":       { a: "#f59e0b", b: "#fbbf24", shadow: "rgba(245,158,11,0.65)" },
+  "/anon":         { a: "#64748b", b: "#94a3b8", shadow: "rgba(100,116,139,0.65)" },
 };
 
 function getGlow(href: string) {
@@ -253,6 +255,8 @@ const navItems = [
   { href: "/profile", icon: User, key: "nav.profile" },
   { href: "/premium", icon: Crown, key: "nav.premium" },
   { href: "/wallet", icon: Wallet, key: "nav.wallet" },
+  { href: "/quests", icon: Trophy, key: "nav.quests" },
+  { href: "/anon", icon: Ghost, key: "nav.anon" },
 ];
 
 const bottomNavItems = [
@@ -269,6 +273,152 @@ const mobileNavMainItems = [
   { href: "/ai-chat", icon: Bot, key: "nav.ai_chat" },
   { href: "/messages", icon: MessageCircle, key: "nav.messages" },
 ];
+
+/* ─── Jarvis AI Floating Panel ───────────────────────────────── */
+const API_BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+
+function JarvisPanel() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [msgs, setMsgs] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  const SUGGESTS = ["suggest_1", "suggest_2", "suggest_3", "suggest_4"];
+
+  const send = async (text: string) => {
+    if (!text.trim() || loading) return;
+    const userMsg = { role: "user" as const, content: text.trim() };
+    setMsgs(prev => [...prev, userMsg]);
+    setInput("");
+    setLoading(true);
+    setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    try {
+      const res = await fetch(`${API_BASE}/api/ai/chat`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text.trim(), conversationId: null }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMsgs(prev => [...prev, { role: "assistant", content: data.response ?? data.message ?? "..." }]);
+      }
+    } catch { /* silent */ }
+    finally {
+      setLoading(false);
+      setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    }
+  };
+
+  return (
+    <>
+      {/* Toggle button */}
+      <motion.button
+        onClick={() => setOpen(v => !v)}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-20 right-4 z-[80] md:bottom-6 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center"
+        style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)", boxShadow: "0 0 24px rgba(124,58,237,0.6), 0 0 48px rgba(59,130,246,0.3)" }}
+      >
+        <AnimatePresence mode="wait">
+          {open ? (
+            <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+              <X className="w-5 h-5 text-white" />
+            </motion.div>
+          ) : (
+            <motion.div key="bot" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+              <Zap className="w-5 h-5 text-white" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {!open && (
+          <motion.div className="absolute inset-0 rounded-full" animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+            style={{ background: "radial-gradient(circle, rgba(124,58,237,0.5), transparent)", pointerEvents: "none" }} />
+        )}
+      </motion.button>
+
+      {/* Chat panel */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            className="fixed bottom-36 right-4 z-[79] md:bottom-24 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            style={{ background: "hsl(var(--card))", border: "1px solid rgba(124,58,237,0.25)", boxShadow: "0 0 60px rgba(124,58,237,0.2), 0 24px 48px rgba(0,0,0,0.4)", maxHeight: "60vh" }}
+          >
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-border/30 flex items-center gap-2.5"
+              style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(59,130,246,0.08))" }}>
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center shadow-[0_0_12px_rgba(124,58,237,0.5)]">
+                <Zap className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">{t("jarvis.title")}</p>
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] text-emerald-400 font-medium">Online</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+              {msgs.length === 0 && (
+                <div className="text-center py-4">
+                  <p className="text-xs text-muted-foreground mb-3">{t("jarvis.welcome")}</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {SUGGESTS.map(k => (
+                      <button key={k} onClick={() => send(t(`jarvis.${k}`))}
+                        className="px-3 py-2 rounded-xl text-xs font-medium bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition text-left border border-violet-500/20">
+                        {t(`jarvis.${k}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {msgs.map((m, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
+                    m.role === "user" ? "bg-violet-600 text-white" : "bg-muted text-foreground"
+                  }`}>
+                    {m.content}
+                  </div>
+                </motion.div>
+              ))}
+              {loading && (
+                <div className="flex justify-start">
+                  <div className="px-3 py-2 rounded-2xl bg-muted text-xs flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              )}
+              <div ref={endRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-3 py-2.5 border-t border-border/30 flex gap-2">
+              <input value={input} onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && !e.shiftKey && send(input)}
+                placeholder={t("jarvis.placeholder")}
+                className="flex-1 px-3 py-2 rounded-xl bg-muted text-xs outline-none focus:ring-2 ring-violet-500/50" />
+              <motion.button whileTap={{ scale: 0.88 }} onClick={() => send(input)}
+                className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center text-white hover:bg-violet-700 transition flex-shrink-0">
+                <Send className="w-3.5 h-3.5" />
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
 
 const Y_KEY = "olcha_nav_y";
 const OPEN_KEY = "olcha_nav_open";
@@ -612,6 +762,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </motion.div>
       </main>
+
+      {/* ── JARVIS FLOATING AI ── */}
+      <JarvisPanel />
     </div>
   );
 }

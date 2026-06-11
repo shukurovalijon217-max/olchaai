@@ -16,3 +16,6 @@ export * from "./library";
 export * from "./interactions";
 export * from "./voiceComments";
 export * from "./premiumConfig";
+export * from "./gamification";
+export * from "./coview";
+export * from "./anonZones";

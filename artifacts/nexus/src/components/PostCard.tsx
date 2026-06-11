@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Flag, X,
   AlertTriangle, Trash2, Music, Sparkles, Brain, Tag, Loader2, Check, Download,
+  Mic, Gift, Tv2, StopCircle,
 } from "lucide-react";
 import { useLikePost, useDeletePost, getListPostsQueryKey, getGetTrendingPostsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -65,7 +66,23 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
+  /* Voice comments */
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceComments, setVoiceComments] = useState<any[]>([]);
+  const [voiceLoaded, setVoiceLoaded] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [sendingVoice, setSendingVoice] = useState(false);
+  /* Tip */
+  const [tipOpen, setTipOpen] = useState(false);
+  const [tipAmount, setTipAmount] = useState(5000);
+  const [tipCustom, setTipCustom] = useState("");
+  const [tipMsg, setTipMsg] = useState("");
+  const [tipping, setTipping] = useState(false);
+  const [tipDone, setTipDone] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [, navigate] = useLocation();
 
   const likePost = useLikePost();
   const deletePost = useDeletePost();
@@ -184,6 +201,75 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         qc.invalidateQueries({ queryKey: getGetTrendingPostsQueryKey() });
       },
     });
+  };
+
+  /* ── Voice Comments ── */
+  const loadVoiceComments = async () => {
+    if (voiceLoaded) { setVoiceOpen(v => !v); return; }
+    setVoiceOpen(true);
+    try {
+      const res = await fetch(`${API}/api/voice-comments?postId=${post.id}`, { credentials: "include" });
+      if (res.ok) { const data = await res.json(); setVoiceComments(data.comments ?? []); }
+    } catch { /* silent */ }
+    setVoiceLoaded(true);
+  };
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = e => chunksRef.current.push(e.data);
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        if (blob.size < 1000) return;
+        setSendingVoice(true);
+        try {
+          const fd = new FormData();
+          fd.append("audio", blob, "voice.webm");
+          fd.append("postId", post.id.toString());
+          const res = await fetch(`${API}/api/voice-comments`, { method: "POST", credentials: "include", body: fd });
+          if (res.ok) {
+            const data = await res.json();
+            setVoiceComments(prev => [...prev, data]);
+          }
+        } catch { /* silent */ }
+        finally { setSendingVoice(false); }
+      };
+      recorderRef.current = mr;
+      mr.start();
+      setRecording(true);
+      setTimeout(() => { if (recorderRef.current?.state === "recording") { recorderRef.current.stop(); setRecording(false); } }, 10000);
+    } catch { /* mic permission denied */ }
+  };
+  const stopRecording = () => {
+    if (recorderRef.current?.state === "recording") { recorderRef.current.stop(); setRecording(false); }
+  };
+
+  /* ── Tip ── */
+  const handleTip = async () => {
+    const amount = tipCustom ? parseInt(tipCustom) : tipAmount;
+    if (!amount || amount < 100) return;
+    setTipping(true);
+    try {
+      const res = await fetch(`${API}/api/wallet/tip`, {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipientId: post.author.id, amount, message: tipMsg || undefined }),
+      });
+      if (res.ok) { setTipDone(true); setTimeout(() => { setTipOpen(false); setTipDone(false); setTipCustom(""); setTipMsg(""); }, 2000); }
+    } catch { /* silent */ }
+    finally { setTipping(false); }
+  };
+
+  /* ── CoView ── */
+  const handleCoView = async () => {
+    try {
+      const res = await fetch(`${API}/api/coview/rooms`, {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: "post", contentId: post.id }),
+      });
+      if (res.ok) { const data = await res.json(); navigate(`/coview/${data.room?.inviteCode ?? data.inviteCode}`); }
+    } catch { /* silent */ }
   };
 
   /* ── Report ── */
@@ -392,8 +478,136 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-amber-400 hover:bg-amber-400/10 disabled:opacity-50">
             {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           </motion.button>
+
+          {/* Voice Comments */}
+          {user && (
+            <motion.button whileTap={{ scale: 0.85 }} onClick={loadVoiceComments}
+              title={t("voice.title")}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                voiceOpen ? "text-rose-400 bg-rose-400/10" : "text-muted-foreground hover:text-rose-400 hover:bg-rose-400/10"
+              }`}>
+              <Mic className="w-4 h-4" />
+            </motion.button>
+          )}
+
+          {/* Tip */}
+          {user && user.id !== post.author.id && (
+            <motion.button whileTap={{ scale: 0.85 }} onClick={() => setTipOpen(true)}
+              title={t("tip.title")}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-yellow-400 hover:bg-yellow-400/10">
+              <Gift className="w-4 h-4" />
+            </motion.button>
+          )}
+
+          {/* CoView */}
+          {user && (
+            <motion.button whileTap={{ scale: 0.85 }} onClick={handleCoView}
+              title={t("coview.watch_together")}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-blue-400 hover:bg-blue-400/10">
+              <Tv2 className="w-4 h-4" />
+            </motion.button>
+          )}
         </div>
+
+        {/* Voice Comments Panel */}
+        <AnimatePresence>
+          {voiceOpen && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+              className="border-t border-border/40 overflow-hidden">
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Mic className="w-3.5 h-3.5 text-rose-400" />
+                    {t("voice.title")} ({voiceComments.length})
+                  </span>
+                  <motion.button whileTap={{ scale: 0.88 }}
+                    onClick={recording ? stopRecording : startRecording}
+                    disabled={sendingVoice}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                      recording ? "bg-rose-500 text-white animate-pulse" : "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
+                    }`}>
+                    {sendingVoice ? <Loader2 className="w-3 h-3 animate-spin" />
+                      : recording ? <><StopCircle className="w-3 h-3" />{t("voice.stop")}</>
+                      : <><Mic className="w-3 h-3" />{t("voice.record")}</>}
+                  </motion.button>
+                </div>
+                {voiceComments.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-2">{t("voice.no_voices")}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {voiceComments.map((vc: any) => (
+                      <div key={vc.id} className="flex items-center gap-2 p-2 rounded-xl bg-muted/40">
+                        <div className="w-6 h-6 rounded-full bg-rose-400/15 flex items-center justify-center flex-shrink-0">
+                          <Mic className="w-3 h-3 text-rose-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-medium text-foreground">{vc.user?.displayName ?? "User"}</p>
+                          <audio src={vc.audioUrl} controls className="h-6 w-full mt-0.5" style={{ accentColor: "var(--primary)" }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
+
+      {/* Tip modal */}
+      <AnimatePresence>
+        {tipOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={e => { if (e.target === e.currentTarget) setTipOpen(false); }}>
+            <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }} transition={{ duration: 0.18 }}
+              className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Gift className="w-4 h-4 text-yellow-400" />
+                  <h3 className="font-semibold text-foreground">{t("tip.title")}</h3>
+                </div>
+                <button onClick={() => setTipOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+              </div>
+              {tipDone ? (
+                <div className="text-center py-6">
+                  <div className="text-3xl mb-2">🎉</div>
+                  <p className="text-sm font-semibold text-emerald-400">{t("tip.success")}</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground mb-3">{t("tip.subtitle")}</p>
+                  <p className="text-xs font-medium text-foreground mb-2">{t("tip.amount_label")}</p>
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    {[1000, 5000, 10000, 50000].map(a => (
+                      <button key={a} onClick={() => { setTipAmount(a); setTipCustom(""); }}
+                        className={`py-2 rounded-xl text-xs font-bold transition-colors ${
+                          !tipCustom && tipAmount === a ? "bg-yellow-400/20 text-yellow-400 border border-yellow-400/40" : "bg-muted text-muted-foreground hover:text-foreground"
+                        }`}>
+                        {(a / 1000).toFixed(0)}K
+                      </button>
+                    ))}
+                  </div>
+                  <input value={tipCustom} onChange={e => setTipCustom(e.target.value.replace(/\D/g, ""))}
+                    placeholder={t("tip.custom")} inputMode="numeric"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-input text-sm mb-3 outline-none focus:ring-2 ring-yellow-400/40" />
+                  <textarea value={tipMsg} onChange={e => setTipMsg(e.target.value)} rows={2}
+                    placeholder={t("tip.msg_ph")}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-input text-sm resize-none outline-none focus:ring-2 ring-yellow-400/40 mb-3" />
+                  <button onClick={handleTip} disabled={tipping || (!tipCustom && !tipAmount)}
+                    className="w-full py-2.5 rounded-xl bg-yellow-500 text-black text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50 flex items-center justify-center gap-2">
+                    {tipping && <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
+                    <Gift className="w-4 h-4" />
+                    {tipping ? t("tip.sending") : t("tip.send")}
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Report modal */}
       <AnimatePresence>

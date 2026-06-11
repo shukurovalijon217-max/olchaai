@@ -1,0 +1,26 @@
+1. Multi-Formatli Kontent (Matn, Video, Ovoz birlashmasi)
+Faqatgina video yoki faqat rasm bilan cheklanmang. Foydalanuvchiga bitta joyning oʻzida barcha formatlarni qulay boshqarish imkonini bering.
+• "Ovozli fikrlar" (Voice Threads): Postlar tagiga nafaqat matn, balki 5-10 soniyalik ovozli xabarlar (kommentariya) qoldirish imkoniyati. Bu muloqotni yanada jonli qiladi.
+• Matnni videoga aylantirish: Oddiy post yozganda, tizim orqa fonga chiroyli musiqa va vizual effektlarni AI yordamida oʻzi tanlab, uni dinamik kontentga aylantirib berishi.
+2. Gamifikatsiya (Oʻyin elementlari)
+Odamlar ijtimoiy tarmoqda shunchaki vaqt oʻtkazishni emas, qandaydir yutuqlarga erishishni yaxshi koʻrishadi.
+• Reyting va Loyallik tizimi: Platformada qiziqarli post yozgan, koʻp vaqt oʻtkazgan yoki doʻstlarini taklif qilgan foydalanuvchilarga virtual ballar (koinalar) yoki maxsus "unvonlar" berish.
+• Kundalik topshiriqlar (Quests): "Bugun 3 ta kreativ video koʻr va 1 ta fikr qoldir" kabi kichik vazifalar orqali foydalanuvchini har kuni ilovaga kirishga majbur qilish.
+3. "Aqlli" va Shaxsiy AI Yordamchi (Jarvis uslubida)
+Har bir foydalanuvchining ilova ichida oʻzining shaxsiy sunʼiy intellekt yordamchisi boʻlsin.
+• Ushbu AI foydalanuvchining kayfiyatiga qarab unga musiqa, video yoki postlar tavsiya qiladi.
+• Foydalanuvchi qidirayotgan ma'lumotini (masalan: "Menga trading haqidagi eng zoʻr qisqa videolarni topib ber") AI chatiga yozish orqali bir soniyada topadi.
+4. Birgalikda Tomosha Qilish (Co-viewing & Co-creation)
+Masofadan turib ham odamlarni birlashtiradigan funksiyalar hozir juda ommabop.
+• "Birga koʻramiz" xonasi: Doʻstlar guruh boʻlib yigʻilib, videolarni onlayn tarzda birgalikda koʻrib, parallel ravishda mikrofonda gaplashib yoki chatda muhokama qilib oʻtirishi.
+• Dual-Kontent (Birgalikda ijod): Ikki xil foydalanuvchi dunyoning ikki chekkasida turib, bitta videoni birgalikda jonli efirda yoki split-ekran (ekranni ikkiga boʻlgan holda) rejimida yaratishi.
+5. Ichki Raqamli Hamyon va Instant Eko-tizim
+Hozirgi foydalanuvchilar ijtimoiy tarmoqning oʻzidan chiqmay turib hamma ishni bitirishni xohlashadi.
+• Kreatorlarni qoʻllab-quvvatlash (Tipping): Yoqqan videoga yoki foydali postga bir marta bosish orqali virtual sovgʻa yoki toʻgʻridan-toʻgʻri pul yuborish tizimi.
+• P2P oʻtkazmalar: Chatning oʻzida doʻstiga tezkor pul oʻtkazish yoki platforma ichidagi doʻkonlardan xarid qilish imkoniyati.
+6. Maxfiylik va "Vaqtinchalik" Hududlar (Ghost Mode)
+Zamonaviy yoshlar oʻz shaxsiy hayoti va yozishmalari xavfsiz boʻlishini juda qattiq istashadi.
+• Mutloq maxfiy chatlar: Oʻqilgandan keyin oʻchib ketadigan, skrinshot olib boʻlmaydigan va ekran videosiga tushmaydigan xabarlar.
+• Anonim hududlar: Foydalanuvchilar oʻz ismlarini yashirgan holda maʼlum mavzularda (falsafa, sanʼat, biznes) erkin va ochiq bahslasha oladigan maxsus guruhlar.
+Muvaffaqiyat poydevori: Minimalizm va Tezlik
+Bu funksiyalarning hammasini qoʻshganda ham, dizayn juda sodda, tushunarli va koʻzni charchatmaydigan boʻlishi kerak. Ilova har qanday smartfonda (hatto internet sekin boʻlsa ham) "uchib" ishlashi shart. Odamlar birinchi 3 soniyada ilovangizga bogʻlanib qolishi kerak.

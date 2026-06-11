@@ -24,6 +24,9 @@ import marketplaceRouter from "./marketplace";
 import openaiChatRouter from "./openai-chat";
 import libraryRouter from "./library";
 import voiceCommentsRouter from "./voiceComments";
+import gamificationRouter from "./gamification";
+import coviewRouter from "./coview";
+import anonRouter from "./anon";
 
 const router: IRouter = Router();
 
@@ -52,5 +55,8 @@ router.use(marketplaceRouter);
 router.use(openaiChatRouter);
 router.use(libraryRouter);
 router.use(voiceCommentsRouter);
+router.use(gamificationRouter);
+router.use(coviewRouter);
+router.use(anonRouter);
 
 export default router;

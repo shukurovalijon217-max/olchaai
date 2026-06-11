@@ -333,6 +333,55 @@ router.post("/wallet/simulate-ad-revenue", requireAuth, async (req: any, res) =>
   }
 });
 
+// POST /api/wallet/tip
+const tipSchema = z.object({
+  toUserId: z.number().int().positive(),
+  amount: z.number().int().min(100).max(10_000_000_00),
+  message: z.string().max(200).optional(),
+  postId: z.number().int().optional(),
+});
+
+router.post("/wallet/tip", requireAuth, async (req: any, res) => {
+  try {
+    const data = tipSchema.parse(req.body);
+    if (data.toUserId === req.session.userId) {
+      res.status(400).json({ error: "O'zingizga tip yubora olmaysiz" }); return;
+    }
+    const fromWallet = await getOrCreateWallet(req.session.userId);
+    if (fromWallet.balance < data.amount) {
+      res.status(400).json({ error: "Hamyonda yetarli mablag' yo'q" }); return;
+    }
+    const toWallet = await getOrCreateWallet(data.toUserId);
+
+    await db.update(walletsTable)
+      .set({ balance: fromWallet.balance - data.amount, updatedAt: new Date() })
+      .where(eq(walletsTable.id, fromWallet.id));
+    await db.insert(transactionsTable).values({
+      userId: req.session.userId, walletId: fromWallet.id,
+      type: "transfer_out", amount: -data.amount, status: "completed",
+      paymentMethod: "internal",
+      description: data.message ?? "Kreatorga sovg'a",
+      reference: `TIP-${Date.now()}`,
+    });
+
+    await db.update(walletsTable)
+      .set({ earningsBalance: toWallet.earningsBalance + data.amount, updatedAt: new Date() })
+      .where(eq(walletsTable.id, toWallet.id));
+    await db.insert(transactionsTable).values({
+      userId: data.toUserId, walletId: toWallet.id,
+      type: "transfer_in", amount: data.amount, status: "completed",
+      paymentMethod: "internal",
+      description: `Tip: ${data.message ?? "Sovg'a"}`,
+      reference: `TIP-${Date.now()}-IN`,
+    });
+
+    res.json({ success: true, amount: data.amount });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Tip yuborishda xato" });
+  }
+});
+
 // POST /api/wallet/simulate-earnings
 router.post("/wallet/simulate-earnings", requireAuth, async (req: any, res) => {
   try {

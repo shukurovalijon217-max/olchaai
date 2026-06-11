@@ -1,15 +1,242 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { motion, AnimatePresence, useMotionValue, useDragControls } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useDragControls, useSpring, useTransform } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
   Home, Play, Compass, MessageCircle, Users, Bell,
   User, ShieldCheck, LogOut, Crown, Settings, Wallet, Radio,
   Search, ShoppingBag, Bot, BookOpen, ChevronRight, ChevronLeft,
-  MoreHorizontal, X,
+  MoreHorizontal, X, Zap,
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import { useAuth } from "@/context/AuthContext";
+
+/* ─── Icon color palette ─────────────────────────────────────── */
+const NAV_GLOW: Record<string, { a: string; b: string; shadow: string }> = {
+  "/":             { a: "#7c3aed", b: "#a78bfa", shadow: "rgba(124,58,237,0.65)" },
+  "/reels":        { a: "#ef4444", b: "#f87171", shadow: "rgba(239,68,68,0.65)" },
+  "/explore":      { a: "#f59e0b", b: "#fbbf24", shadow: "rgba(245,158,11,0.65)" },
+  "/search":       { a: "#06b6d4", b: "#67e8f9", shadow: "rgba(6,182,212,0.65)" },
+  "/bozor":        { a: "#10b981", b: "#34d399", shadow: "rgba(16,185,129,0.65)" },
+  "/ai-chat":      { a: "#3b82f6", b: "#93c5fd", shadow: "rgba(59,130,246,0.65)" },
+  "/kutubxona":    { a: "#6366f1", b: "#a5b4fc", shadow: "rgba(99,102,241,0.65)" },
+  "/live-explore": { a: "#dc2626", b: "#f87171", shadow: "rgba(220,38,38,0.65)" },
+  "/messages":     { a: "#0ea5e9", b: "#7dd3fc", shadow: "rgba(14,165,233,0.65)" },
+  "/groups":       { a: "#14b8a6", b: "#5eead4", shadow: "rgba(20,184,166,0.65)" },
+  "/notifications":{ a: "#f97316", b: "#fdba74", shadow: "rgba(249,115,22,0.65)" },
+  "/profile":      { a: "#8b5cf6", b: "#c4b5fd", shadow: "rgba(139,92,246,0.65)" },
+  "/premium":      { a: "#eab308", b: "#fde047", shadow: "rgba(234,179,8,0.65)" },
+  "/wallet":       { a: "#22c55e", b: "#86efac", shadow: "rgba(34,197,94,0.65)" },
+  "/settings":     { a: "#94a3b8", b: "#cbd5e1", shadow: "rgba(148,163,184,0.65)" },
+  "/admin":        { a: "#dc2626", b: "#fca5a5", shadow: "rgba(220,38,38,0.65)" },
+};
+
+function getGlow(href: string) {
+  return NAV_GLOW[href] ?? { a: "#7c3aed", b: "#a78bfa", shadow: "rgba(124,58,237,0.65)" };
+}
+
+/* ─── 9D Icon Orb (desktop sidebar) ─────────────────────────── */
+function NavOrb3D({ href, icon: Icon, label, active }: { href: string; icon: React.ElementType; label: string; active: boolean }) {
+  const glow = getGlow(href);
+  const ref = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rotX = useSpring(useTransform(my, [-30, 30], [10, -10]), { stiffness: 300, damping: 22 });
+  const rotY = useSpring(useTransform(mx, [-30, 30], [-10, 10]), { stiffness: 300, damping: 22 });
+
+  const handleMouse = (e: React.MouseEvent) => {
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return;
+    mx.set(e.clientX - r.left - r.width / 2);
+    my.set(e.clientY - r.top - r.height / 2);
+  };
+  const resetMouse = () => { mx.set(0); my.set(0); };
+
+  return (
+    <div ref={ref} onMouseMove={handleMouse} onMouseLeave={resetMouse} style={{ perspective: 400 }}>
+      <motion.div
+        style={{ rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.92 }}
+        className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-colors text-sm relative overflow-visible ${
+          active ? "text-white" : "text-sidebar-foreground hover:text-white"
+        }`}
+      >
+        {/* Active background with 9D glow */}
+        <AnimatePresence>
+          {active && (
+            <motion.div
+              layoutId="sidebar-active-bg"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{ type: "spring", stiffness: 420, damping: 34 }}
+              className="absolute inset-0 rounded-xl"
+              style={{
+                background: `linear-gradient(135deg, ${glow.a}cc, ${glow.b}88)`,
+                boxShadow: `0 0 20px ${glow.shadow}, 0 0 40px ${glow.shadow}55, inset 0 1px 0 rgba(255,255,255,0.25)`,
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Hover glow (non-active) */}
+        {!active && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileHover={{ opacity: 1 }}
+            className="absolute inset-0 rounded-xl"
+            style={{
+              background: `linear-gradient(135deg, ${glow.a}30, ${glow.b}18)`,
+              boxShadow: `0 0 12px ${glow.shadow}30`,
+            }}
+          />
+        )}
+
+        {/* Icon with depth translate */}
+        <div className="relative z-10" style={{ transform: "translateZ(8px)" }}>
+          <div className={`relative flex items-center justify-center ${active ? "w-5 h-5" : "w-4 h-4"}`}>
+            <Icon className={active ? "w-5 h-5 drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]" : "w-4 h-4"} />
+            {/* Pulsing glow dot on icon when active */}
+            {active && (
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                animate={{ scale: [1, 1.8, 1], opacity: [0.7, 0, 0.7] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                style={{ background: `radial-gradient(circle, ${glow.a}99 0%, transparent 70%)`, filter: "blur(3px)" }}
+              />
+            )}
+          </div>
+        </div>
+
+        <span className="font-semibold relative z-10" style={{ transform: "translateZ(4px)" }}>{label}</span>
+
+        {/* Active floating orb */}
+        {active && (
+          <motion.div
+            className="ml-auto relative z-10"
+            animate={{ y: [-2, 2, -2], scale: [1, 1.2, 1] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)]" />
+          </motion.div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
+/* ─── 9D Mobile Bottom Button ────────────────────────────────── */
+function MobileNavBtn({ href, icon: Icon, label, active }: { href: string; icon: React.ElementType; label: string; active: boolean }) {
+  const glow = getGlow(href);
+  return (
+    <Link href={href}>
+      <motion.div
+        whileTap={{ scale: 0.82, rotateX: 12 }}
+        whileHover={{ scale: 1.1 }}
+        style={{ perspective: 300, transformStyle: "preserve-3d" }}
+        className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl relative"
+      >
+        {/* Active bg orb */}
+        <AnimatePresence>
+          {active && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className="absolute inset-0 rounded-2xl"
+              style={{
+                background: `radial-gradient(circle at center, ${glow.a}55, ${glow.b}22)`,
+                boxShadow: `0 0 18px ${glow.shadow}50, 0 0 36px ${glow.shadow}25`,
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Icon */}
+        <motion.div
+          animate={active ? { y: [-1.5, 1.5, -1.5], scale: [1, 1.12, 1] } : {}}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          className="relative z-10"
+        >
+          <Icon
+            className="w-5 h-5 transition-colors"
+            style={{ color: active ? glow.a : undefined, filter: active ? `drop-shadow(0 0 6px ${glow.shadow})` : undefined }}
+          />
+        </motion.div>
+
+        <span className="text-[9px] font-bold z-10 transition-colors" style={{ color: active ? glow.a : undefined }}>
+          {label}
+        </span>
+
+        {/* Bottom glow line */}
+        {active && (
+          <motion.div
+            layoutId="mob-line"
+            className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full"
+            style={{ width: 24, height: 3, background: `linear-gradient(90deg, ${glow.a}, ${glow.b})`, boxShadow: `0 0 8px ${glow.shadow}` }}
+          />
+        )}
+      </motion.div>
+    </Link>
+  );
+}
+
+/* ─── 9D Mobile Sheet Grid Button ────────────────────────────── */
+function SheetGridBtn({ href, icon: Icon, label, active, onClick }: {
+  href: string; icon: React.ElementType; label: string; active: boolean; onClick?: () => void;
+}) {
+  const glow = getGlow(href);
+  return (
+    <Link href={href}>
+      <motion.div
+        onClick={onClick}
+        whileTap={{ scale: 0.88, rotateX: 8 }}
+        whileHover={{ scale: 1.06, translateY: -3 }}
+        style={{ perspective: 300, transformStyle: "preserve-3d" }}
+        className={`flex flex-col items-center gap-1.5 px-2 py-3 rounded-2xl cursor-pointer relative overflow-hidden ${
+          active ? "text-white" : "text-foreground"
+        }`}
+      >
+        {/* Card background */}
+        <div
+          className="absolute inset-0 rounded-2xl transition-all"
+          style={active ? {
+            background: `linear-gradient(145deg, ${glow.a}cc, ${glow.b}88)`,
+            boxShadow: `0 4px 20px ${glow.shadow}55, 0 0 0 1px ${glow.a}40, inset 0 1px 0 rgba(255,255,255,0.25)`,
+          } : {
+            background: "hsl(var(--muted) / 0.45)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06)",
+          }}
+        />
+
+        {/* Holographic shimmer on active */}
+        {active && (
+          <motion.div
+            className="absolute inset-0 rounded-2xl pointer-events-none"
+            animate={{ x: ["-100%", "200%"] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.5 }}
+            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent)", skewX: -15 }}
+          />
+        )}
+
+        {/* Icon glow orb */}
+        <div className="relative z-10" style={{ transform: "translateZ(6px)" }}>
+          <div className="relative">
+            <Icon className={`w-5 h-5 ${active ? "drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]" : ""}`} />
+            {!active && (
+              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100"
+                style={{ background: `radial-gradient(circle, ${glow.a}40, transparent)`, filter: "blur(4px)" }} />
+            )}
+          </div>
+        </div>
+
+        <span className="text-[10px] font-bold text-center leading-tight z-10">{label}</span>
+      </motion.div>
+    </Link>
+  );
+}
 
 const navItems = [
   { href: "/", icon: Home, key: "nav.home" },
@@ -119,7 +346,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 style={{
                   maxHeight: "calc(100vh - 24px)",
                   background: "hsl(var(--sidebar))",
-                  backdropFilter: "blur(20px)",
+                  backdropFilter: "blur(24px)",
+                  boxShadow: "4px 0 40px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.05)",
                 }}
               >
                 {/* Drag handle header */}
@@ -144,43 +372,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 {/* User chip */}
                 {user && (
                   <Link href="/profile">
-                    <div className="flex items-center gap-2 mx-2 my-1.5 px-2.5 py-1.5 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer">
+                    <motion.div
+                      whileHover={{ scale: 1.02, x: 2 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex items-center gap-2 mx-2 my-1.5 px-2.5 py-1.5 rounded-xl bg-muted/40 hover:bg-gradient-to-r hover:from-violet-500/15 hover:to-blue-500/10 cursor-pointer transition-all border border-transparent hover:border-violet-500/20"
+                    >
                       {user.avatarUrl ? (
-                        <img src={user.avatarUrl} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                        <div className="relative">
+                          <img src={user.avatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-violet-500/40" />
+                          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-sidebar" />
+                        </div>
                       ) : (
-                        <div className="w-6 h-6 rounded-full bg-primary/25 flex items-center justify-center text-[10px] font-bold text-primary flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center text-[11px] font-black text-white flex-shrink-0 ring-1 ring-violet-500/40 shadow-[0_0_8px_rgba(124,58,237,0.4)]">
                           {user.displayName[0].toUpperCase()}
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-foreground truncate">{user.displayName}</p>
+                        <p className="text-xs font-bold text-foreground truncate">{user.displayName}</p>
                         <p className="text-[10px] text-muted-foreground truncate">@{user.username}</p>
                       </div>
-                    </div>
+                    </motion.div>
                   </Link>
                 )}
 
                 {/* Nav items */}
                 <nav className="flex-1 px-1.5 py-1 space-y-0.5 overflow-y-auto scrollbar-none">
-                  {navItems.map(({ href, icon: Icon, key }) => {
+                  {navItems.map(({ href, icon, key }) => {
                     const active = location === href || (href !== "/" && location.startsWith(href));
                     return (
                       <Link key={href} href={href}>
-                        <motion.div
-                          whileHover={{ x: 2 }}
-                          whileTap={{ scale: 0.97 }}
-                          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-colors text-sm ${
-                            active
-                              ? "bg-primary/15 text-primary"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-medium">{t(key)}</span>
-                          {active && (
-                            <motion.div layoutId="nav-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
-                          )}
-                        </motion.div>
+                        <NavOrb3D href={href} icon={icon} label={t(key)} active={active} />
                       </Link>
                     );
                   })}
@@ -188,29 +409,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
                 {/* Bottom actions */}
                 <div className="px-1.5 pb-2 pt-1 border-t border-border/30 space-y-0.5">
-                  {[...bottomNavItems, ...(user?.isAdmin ? adminNavItems : [])].map(({ href, icon: Icon, key }) => {
+                  {[...bottomNavItems, ...(user?.isAdmin ? adminNavItems : [])].map(({ href, icon, key }) => {
                     const active = location.startsWith(href);
                     return (
                       <Link key={href} href={href}>
-                        <motion.div
-                          whileHover={{ x: 2 }}
-                          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-colors text-sm ${
-                            active ? "bg-primary/15 text-primary" : "text-sidebar-foreground hover:bg-sidebar-accent"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-medium">{t(key)}</span>
-                        </motion.div>
+                        <NavOrb3D href={href} icon={icon} label={t(key)} active={active} />
                       </Link>
                     );
                   })}
-                  <button
+                  <motion.button
                     onClick={logout}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-colors text-sm"
+                    whileHover={{ x: 2, scale: 1.01 }}
+                    whileTap={{ scale: 0.96 }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-colors text-sm"
                   >
                     <LogOut className="w-4 h-4 flex-shrink-0" />
                     <span className="font-medium">{t("auth.logout")}</span>
-                  </button>
+                  </motion.button>
                 </div>
               </motion.aside>
             )}
@@ -220,15 +435,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex flex-col items-center mt-3 gap-1">
             <motion.button
               onClick={toggle}
-              whileHover={{ scale: 1.08, x: isOpen ? -1 : 1 }}
-              whileTap={{ scale: 0.92 }}
-              className="flex items-center justify-center w-6 h-12 rounded-r-xl shadow-xl border border-border/50 border-l-0 transition-colors"
+              whileHover={{ scale: 1.12 }}
+              whileTap={{ scale: 0.9 }}
+              className="flex items-center justify-center w-6 h-12 rounded-r-xl shadow-xl border border-border/50 border-l-0 transition-colors overflow-hidden relative"
               style={{ background: "hsl(var(--sidebar))", backdropFilter: "blur(16px)" }}
               title={isOpen ? t("common.close") : t("common.open")}
             >
-              {isOpen
-                ? <ChevronLeft className="w-3.5 h-3.5 text-sidebar-foreground" />
-                : <ChevronRight className="w-3.5 h-3.5 text-sidebar-foreground" />}
+              <motion.div animate={{ x: isOpen ? 0 : [0, 2, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                {isOpen
+                  ? <ChevronLeft className="w-3.5 h-3.5 text-sidebar-foreground" />
+                  : <ChevronRight className="w-3.5 h-3.5 text-sidebar-foreground" />}
+              </motion.div>
             </motion.button>
 
             <div
@@ -246,37 +463,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ── MOBILE BOTTOM NAV ── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 flex items-center justify-around py-1.5 px-1"
-        style={{ background: "hsl(var(--sidebar) / 0.97)", backdropFilter: "blur(20px)" }}
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/30 flex items-center justify-around py-1 px-1"
+        style={{
+          background: "hsl(var(--sidebar) / 0.92)",
+          backdropFilter: "blur(32px)",
+          boxShadow: "0 -8px 32px rgba(0,0,0,0.25), 0 -1px 0 rgba(255,255,255,0.05)",
+        }}
       >
-        {mobileNavMainItems.map(({ href, icon: Icon, key }) => {
+        {mobileNavMainItems.map(({ href, icon, key }) => {
           const active = location === href || (href !== "/" && location.startsWith(href));
-          return (
-            <Link key={href} href={href}>
-              <motion.div
-                whileTap={{ scale: 0.88 }}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors ${
-                  active ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-[9px] font-semibold">{t(key)}</span>
-                {active && <motion.div layoutId="mob-dot" className="w-1 h-1 rounded-full bg-primary" />}
-              </motion.div>
-            </Link>
-          );
+          return <MobileNavBtn key={href} href={href} icon={icon} label={t(key)} active={active} />;
         })}
 
         {/* Ko'proq button */}
         <motion.button
-          whileTap={{ scale: 0.88 }}
+          whileTap={{ scale: 0.82 }}
+          whileHover={{ scale: 1.08 }}
           onClick={() => setMoreOpen(true)}
-          className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors ${
-            moreOpen ? "text-primary" : "text-muted-foreground"
-          }`}
+          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl relative"
         >
-          <MoreHorizontal className="w-5 h-5" />
-          <span className="text-[9px] font-semibold">{t("nav.more")}</span>
+          <motion.div
+            animate={moreOpen ? { rotate: 90 } : { rotate: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 22 }}
+          >
+            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+          </motion.div>
+          <span className="text-[9px] font-bold text-muted-foreground">{t("nav.more")}</span>
         </motion.button>
       </nav>
 
@@ -284,92 +496,103 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <AnimatePresence>
         {moreOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMoreOpen(false)}
-              className="md:hidden fixed inset-0 z-[60] bg-black/60"
+              className="md:hidden fixed inset-0 z-[60] bg-black/70 backdrop-blur-[2px]"
             />
 
-            {/* Sheet */}
             <motion.div
               key="sheet"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 350, damping: 35 }}
-              className="md:hidden fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl overflow-hidden"
+              transition={{ type: "spring", stiffness: 380, damping: 36 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 z-[61] rounded-t-[28px] overflow-hidden"
               style={{
                 background: "hsl(var(--sidebar))",
-                paddingBottom: "calc(env(safe-area-inset-bottom) + 4rem)",
+                paddingBottom: "calc(env(safe-area-inset-bottom) + 4.5rem)",
+                boxShadow: "0 -20px 60px rgba(0,0,0,0.4), 0 -1px 0 rgba(255,255,255,0.08)",
               }}
             >
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+                <motion.div
+                  animate={{ width: [32, 48, 32] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  className="h-1 rounded-full bg-muted-foreground/30"
+                />
               </div>
 
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border/30">
-                <p className="font-bold text-foreground text-base">{t("common.all_sections")}</p>
-                <button
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border/25">
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Zap className="w-4 h-4 text-violet-400" />
+                  </motion.div>
+                  <p className="font-bold text-foreground text-base">{t("common.all_sections")}</p>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.88, rotate: 90 }}
                   onClick={() => setMoreOpen(false)}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-muted/60 hover:bg-muted transition-colors"
                 >
                   <X className="w-4 h-4 text-foreground" />
-                </button>
+                </motion.button>
               </div>
 
               {/* All nav items grid */}
               <div className="px-4 pt-3 pb-2 grid grid-cols-3 gap-2">
-                {allMobileNav.map(({ href, icon: Icon, key }) => {
+                {allMobileNav.map(({ href, icon, key }) => {
                   const active = location === href || (href !== "/" && location.startsWith(href));
                   return (
-                    <Link key={href} href={href}>
-                      <motion.div
-                        whileTap={{ scale: 0.93 }}
-                        className={`flex flex-col items-center gap-1.5 px-2 py-3 rounded-2xl transition-colors ${
-                          active
-                            ? "bg-primary/15 text-primary"
-                            : "bg-muted/40 text-foreground hover:bg-muted/70"
-                        }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span className="text-[10px] font-semibold text-center leading-tight">{t(key)}</span>
-                      </motion.div>
-                    </Link>
+                    <SheetGridBtn
+                      key={href}
+                      href={href}
+                      icon={icon}
+                      label={t(key)}
+                      active={active}
+                      onClick={() => setMoreOpen(false)}
+                    />
                   );
                 })}
               </div>
 
               {/* User + logout */}
               {user && (
-                <div className="px-4 py-3 border-t border-border/30 mt-1 flex items-center justify-between">
+                <div className="px-4 py-3 border-t border-border/25 mt-1 flex items-center justify-between">
                   <Link href="/profile" onClick={() => setMoreOpen(false)}>
-                    <div className="flex items-center gap-2.5">
+                    <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-2.5">
                       {user.avatarUrl ? (
-                        <img src={user.avatarUrl} className="w-8 h-8 rounded-full object-cover" />
+                        <div className="relative">
+                          <img src={user.avatarUrl} className="w-9 h-9 rounded-full object-cover ring-2 ring-violet-500/30" />
+                          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-sidebar" />
+                        </div>
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-primary/25 flex items-center justify-center text-xs font-bold text-primary">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center text-sm font-black text-white ring-2 ring-violet-500/30 shadow-[0_0_12px_rgba(124,58,237,0.4)]">
                           {user.displayName[0].toUpperCase()}
                         </div>
                       )}
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{user.displayName}</p>
+                        <p className="text-sm font-bold text-foreground">{user.displayName}</p>
                         <p className="text-[10px] text-muted-foreground">@{user.username}</p>
                       </div>
-                    </div>
+                    </motion.div>
                   </Link>
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.93 }}
                     onClick={logout}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-xs font-semibold"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-xs font-bold border border-red-500/20"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     {t("auth.logout")}
-                  </button>
+                  </motion.button>
                 </div>
               )}
             </motion.div>
@@ -380,9 +603,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── MAIN CONTENT ── */}
       <main className="min-h-screen pl-8 pb-20 md:pl-8 md:pb-0">
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
+          key={location}
+          initial={{ opacity: 0, y: 10, scale: 0.995 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           className="min-h-screen"
         >
           {children}

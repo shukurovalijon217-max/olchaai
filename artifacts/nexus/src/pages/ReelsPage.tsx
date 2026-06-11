@@ -10,6 +10,7 @@ import { useListReels, useLikeReel, getListReelsQueryKey } from "@workspace/api-
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import CreateContentModal from "@/components/CreateContentModal";
+import { useTranslation } from "react-i18next";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -22,6 +23,40 @@ interface ReelComment {
 
 const SENTIMENT_LABEL: Record<string, string> = { positive: "✅ Ijobiy", neutral: "😐 Neytral", negative: "⚠️ Salbiy" };
 const SENTIMENT_COLOR: Record<string, string> = { positive: "text-emerald-400", neutral: "text-white/60", negative: "text-red-400" };
+
+function VideoErrorMsg({ thumbnailUrl }: { thumbnailUrl?: string | null }) {
+  const { t } = useTranslation();
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 pointer-events-none gap-3">
+      {thumbnailUrl && <img src={thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />}
+      <p className="text-white/80 text-xs bg-black/60 px-4 py-2 rounded-full z-10">{t("reels.video_na")}</p>
+    </div>
+  );
+}
+
+function CommentsCountLabel({ count }: { count: number }) {
+  const { t } = useTranslation();
+  return <span className="text-white font-semibold text-sm">{count} {t("reels.comments")}</span>;
+}
+
+function ShareToastLabel() {
+  const { t } = useTranslation();
+  return <>{t("reels.link_copied")}</>;
+}
+
+function AIAnalyzeLabel({ className }: { className?: string }) {
+  const { t } = useTranslation();
+  return <span className={className}>{t("reels.ai_analyze")}</span>;
+}
+
+function NoCommentsMsg() {
+  const { t } = useTranslation();
+  return (
+    <div className="text-center py-8">
+      <p className="text-white/40 text-sm">{t("reels.no_comments")}</p>
+    </div>
+  );
+}
 
 /* ─── Video Player ─────────────────────────────────────────── */
 function ReelVideo({ videoUrl, thumbnailUrl, isActive, muted, onTap }: {
@@ -73,10 +108,7 @@ function ReelVideo({ videoUrl, thumbnailUrl, isActive, muted, onTap }: {
         </div>
       )}
       {error && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 pointer-events-none gap-3">
-          {thumbnailUrl && <img src={thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />}
-          <p className="text-white/80 text-xs bg-black/60 px-4 py-2 rounded-full z-10">Video mavjud emas</p>
-        </div>
+        <VideoErrorMsg thumbnailUrl={thumbnailUrl} />
       )}
       <AnimatePresence>
         {paused && !loading && !error && (
@@ -98,6 +130,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
   reelId: number; commentsCount: number; onClose: () => void;
   user: { id: number; displayName?: string; avatarUrl?: string | null } | null;
 }) {
+  const { t } = useTranslation();
   const [comments, setComments] = useState<ReelComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
@@ -150,7 +183,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
-          <span className="text-white font-semibold text-sm">{count} ta izoh</span>
+          <CommentsCountLabel count={count} />
           <button onClick={onClose} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
             <X className="w-3.5 h-3.5 text-white/70" />
           </button>
@@ -163,9 +196,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
               <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-white animate-spin" />
             </div>
           ) : comments.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-white/40 text-sm">Hali izoh yo'q. Birinchi bo'ling!</p>
-            </div>
+            <NoCommentsMsg />
           ) : (
             comments.map((c, i) => (
               <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -202,7 +233,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
           <div className="flex-1 flex items-center gap-2">
             <input value={text} onChange={e => setText(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) handleSend(); }}
-              placeholder="Izoh yozing..."
+              placeholder={t("reels.comment_ph")}
               className="flex-1 px-3.5 py-2 rounded-2xl bg-white/10 text-white text-sm placeholder:text-white/30 border border-white/10 focus:outline-none focus:border-violet-500/50 transition-colors"
             />
             <motion.button whileTap={{ scale: 0.88 }} onClick={handleSend}
@@ -229,7 +260,7 @@ function ShareToast({ visible }: { visible: boolean }) {
           exit={{ opacity: 0, y: 20, scale: 0.9 }} transition={{ type: "spring", damping: 20 }}
           className="absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-black/80 backdrop-blur-md border border-white/20 text-white text-sm font-medium whitespace-nowrap z-20 pointer-events-none">
           <Check className="w-4 h-4 text-emerald-400" />
-          Havola nusxalandi
+          <ShareToastLabel />
         </motion.div>
       )}
     </AnimatePresence>
@@ -279,7 +310,7 @@ function ReelSlide({
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
             : <Sparkles className="w-3.5 h-3.5 text-violet-300" />
           }
-          AI Tahlil
+          <AIAnalyzeLabel />
         </motion.button>
         {/* placeholder right */}
         <div className="w-9" />
@@ -296,7 +327,7 @@ function ReelSlide({
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5">
                     <Brain className="w-3.5 h-3.5 text-violet-400" />
-                    <span className="text-xs text-white font-semibold">AI Tahlil</span>
+                    <AIAnalyzeLabel className="text-xs text-white font-semibold" />
                   </div>
                   {analysis.category && (
                     <span className="px-2 py-0.5 rounded-lg bg-violet-500/30 text-violet-300 text-[10px] font-semibold">

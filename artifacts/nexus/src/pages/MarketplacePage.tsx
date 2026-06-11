@@ -1,24 +1,11 @@
 import { useState } from "react";
-import { Plus, Search, SlidersHorizontal, ShoppingBag, Star, MapPin, Package, X, ChevronDown } from "lucide-react";
+import { Plus, Search, SlidersHorizontal, ShoppingBag, Star, MapPin } from "lucide-react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useListProducts, useListMarketplaceCategories } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 
-const CONDITIONS = [
-  { id: "", label: "Barchasi" },
-  { id: "new", label: "Yangi" },
-  { id: "used", label: "Ishlatilgan" },
-  { id: "digital", label: "Raqamli" },
-];
-
-const SORTS = [
-  { id: "newest", label: "Eng yangi" },
-  { id: "popular", label: "Mashhur" },
-  { id: "price_asc", label: "Arzon avval" },
-  { id: "price_desc", label: "Qimmat avval" },
-];
-
-function ProductCard({ product, onClick }: { product: any; onClick: () => void }) {
+function ProductCard({ product, onClick, t }: { product: any; onClick: () => void; t: (k: string) => string }) {
   const discount = product.originalPrice && product.originalPrice > product.price
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : null;
@@ -42,21 +29,21 @@ function ProductCard({ product, onClick }: { product: any; onClick: () => void }
           </span>
         )}
         {product.condition === "new" && (
-          <span className="absolute top-2 right-2 bg-emerald-700/90 text-white text-xs px-2 py-0.5 rounded-full">Yangi</span>
+          <span className="absolute top-2 right-2 bg-emerald-700/90 text-white text-xs px-2 py-0.5 rounded-full">{t("market.new_badge")}</span>
         )}
         {product.condition === "digital" && (
-          <span className="absolute top-2 right-2 bg-blue-700/90 text-white text-xs px-2 py-0.5 rounded-full">💻 Raqamli</span>
+          <span className="absolute top-2 right-2 bg-blue-700/90 text-white text-xs px-2 py-0.5 rounded-full">💻 {t("market.digital_badge")}</span>
         )}
         {product.stock === 0 && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="bg-black/80 text-white text-xs px-3 py-1 rounded-full">Tugadi</span>
+            <span className="bg-black/80 text-white text-xs px-3 py-1 rounded-full">{t("market.out_of_stock")}</span>
           </div>
         )}
       </div>
       <div className="p-2.5">
         <p className="text-sm font-medium line-clamp-2 leading-tight">{product.title}</p>
         <div className="flex items-center gap-1.5 mt-1.5">
-          <span className="text-amber-400 font-bold text-sm">{(product.price / 100).toLocaleString()} so'm</span>
+          <span className="text-amber-400 font-bold text-sm">{(product.price / 100).toLocaleString()} {t("market.som")}</span>
           {product.originalPrice && product.originalPrice > product.price && (
             <span className="text-muted-foreground text-xs line-through">{(product.originalPrice / 100).toLocaleString()}</span>
           )}
@@ -87,13 +74,28 @@ function ProductCard({ product, onClick }: { product: any; onClick: () => void }
 }
 
 export default function MarketplacePage() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [searchQ, setSearchQ] = useState("");
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
   const [sort, setSort] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
+
+  const CONDITIONS = [
+    { id: "", label: t("market.all") },
+    { id: "new", label: t("market.new_cond") },
+    { id: "used", label: t("market.used") },
+    { id: "digital", label: t("market.digital") },
+  ];
+
+  const SORTS = [
+    { id: "newest", label: t("market.newest") },
+    { id: "popular", label: t("market.popular") },
+    { id: "price_asc", label: t("market.cheap") },
+    { id: "price_desc", label: t("market.expensive") },
+  ];
 
   const { data: categoriesData = [] } = useListMarketplaceCategories();
   const { data, isLoading } = useListProducts({
@@ -113,13 +115,13 @@ export default function MarketplacePage() {
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-2 flex-1">
             <ShoppingBag className="w-5 h-5 text-amber-500" />
-            <h1 className="font-bold text-lg">Bozor</h1>
+            <h1 className="font-bold text-lg">{t("market.title")}</h1>
           </div>
           <button
             onClick={() => navigate("/bozor/sotish")}
             className="flex items-center gap-1.5 bg-amber-700 hover:bg-amber-600 text-white text-sm font-medium px-3 py-1.5 rounded-full transition-colors"
           >
-            <Plus className="w-4 h-4" /> Sotish
+            <Plus className="w-4 h-4" /> {t("market.sell")}
           </button>
         </div>
 
@@ -130,7 +132,7 @@ export default function MarketplacePage() {
             type="text"
             value={searchQ}
             onChange={e => setSearchQ(e.target.value)}
-            placeholder="Mahsulot qidirish..."
+            placeholder={t("market.search_ph")}
             className="w-full bg-amber-950/30 border border-amber-900/40 rounded-full pl-9 pr-10 py-2 text-sm focus:outline-none focus:border-amber-600"
           />
           <button
@@ -144,9 +146,8 @@ export default function MarketplacePage() {
         {/* Filter panel */}
         {showFilters && (
           <div className="mt-3 p-3 rounded-xl bg-amber-950/30 border border-amber-900/30 space-y-3">
-            {/* Condition */}
             <div>
-              <div className="text-xs text-muted-foreground mb-1.5">Holati</div>
+              <div className="text-xs text-muted-foreground mb-1.5">{t("market.condition")}</div>
               <div className="flex gap-2 flex-wrap">
                 {CONDITIONS.map(c => (
                   <button key={c.id} onClick={() => setCondition(c.id === condition ? "" : c.id)}
@@ -156,9 +157,8 @@ export default function MarketplacePage() {
                 ))}
               </div>
             </div>
-            {/* Sort */}
             <div>
-              <div className="text-xs text-muted-foreground mb-1.5">Saralash</div>
+              <div className="text-xs text-muted-foreground mb-1.5">{t("market.sort_label")}</div>
               <div className="flex gap-2 flex-wrap">
                 {SORTS.map(s => (
                   <button key={s.id} onClick={() => setSort(s.id)}
@@ -177,7 +177,7 @@ export default function MarketplacePage() {
             onClick={() => setCategory("")}
             className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors ${!category ? "bg-amber-700 text-white" : "bg-amber-950/30 text-muted-foreground hover:text-foreground border border-amber-900/30"}`}
           >
-            Barchasi
+            {t("market.all")}
           </button>
           {categoriesData.map((cat: any) => (
             <button
@@ -211,24 +211,26 @@ export default function MarketplacePage() {
               <ShoppingBag className="w-9 h-9 text-amber-700/60" />
             </div>
             <div>
-              <p className="font-semibold text-lg">Mahsulotlar topilmadi</p>
+              <p className="font-semibold text-lg">{t("market.not_found")}</p>
               <p className="text-muted-foreground text-sm mt-1">
-                {searchQ ? `"${searchQ}" bo'yicha hech narsa yo'q` : "Hali mahsulotlar qo'shilmagan"}
+                {searchQ
+                  ? `"${searchQ}" ${t("market.no_results")}`
+                  : t("market.no_products_yet")}
               </p>
             </div>
             <button
               onClick={() => navigate("/bozor/sotish")}
               className="bg-amber-700 hover:bg-amber-600 text-white px-6 py-2.5 rounded-full text-sm font-medium"
             >
-              Birinchi mahsulotni qo'shing
+              {t("market.add_first")}
             </button>
           </div>
         ) : (
           <>
-            <p className="text-xs text-muted-foreground mb-3">{data?.total ?? products.length} ta mahsulot</p>
+            <p className="text-xs text-muted-foreground mb-3">{data?.total ?? products.length} {t("market.products_count")}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {products.map((p: any) => (
-                <ProductCard key={p.id} product={p} onClick={() => navigate(`/bozor/${p.id}`)} />
+                <ProductCard key={p.id} product={p} t={t} onClick={() => navigate(`/bozor/${p.id}`)} />
               ))}
             </div>
           </>

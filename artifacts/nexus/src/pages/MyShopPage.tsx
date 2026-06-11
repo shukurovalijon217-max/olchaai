@@ -1,27 +1,14 @@
 import { useState } from "react";
-import { Plus, Package, ShoppingBag, Star, Eye, BarChart3, ArrowLeft, Edit2, Trash2, CheckCircle, Clock, Truck } from "lucide-react";
+import { Plus, Package, ShoppingBag, Eye, ArrowLeft, Edit2, Trash2, CheckCircle, Truck } from "lucide-react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useListMyProducts, useListOrders, useUpdateOrderStatus, useDeleteProduct } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 
-const STATUS_LABELS: Record<string, { label: string; color: string; icon?: any }> = {
-  pending: { label: "Kutilmoqda", color: "text-yellow-400" },
-  paid: { label: "To'langan", color: "text-blue-400" },
-  processing: { label: "Tayyorlanmoqda", color: "text-indigo-400" },
-  shipped: { label: "Jo'natildi", color: "text-cyan-400", icon: Truck },
-  delivered: { label: "Yetkazildi ✓", color: "text-emerald-400", icon: CheckCircle },
-  cancelled: { label: "Bekor qilindi", color: "text-red-400" },
-};
-
-const TABS = [
-  { id: "products", label: "Mahsulotlarim", icon: ShoppingBag },
-  { id: "selling", label: "Buyurtmalar (sotuvchi)", icon: Package },
-  { id: "buying", label: "Buyurtmalarim (xaridor)", icon: ShoppingBag },
-] as const;
-
-type Tab = (typeof TABS)[number]["id"];
+type Tab = "products" | "selling" | "buying";
 
 export default function MyShopPage() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("products");
@@ -40,6 +27,21 @@ export default function MyShopPage() {
   const totalSales = selling.filter((o: any) => o.status !== "cancelled").length;
   const totalViews = products.reduce((s: number, p: any) => s + (p.viewsCount ?? 0), 0);
 
+  const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+    pending: { label: t("myshop.status_pending"), color: "text-yellow-400" },
+    paid: { label: t("myshop.status_paid"), color: "text-blue-400" },
+    processing: { label: t("myshop.status_processing"), color: "text-indigo-400" },
+    shipped: { label: t("myshop.status_shipped"), color: "text-cyan-400" },
+    delivered: { label: t("myshop.status_delivered"), color: "text-emerald-400" },
+    cancelled: { label: t("myshop.status_cancelled"), color: "text-red-400" },
+  };
+
+  const TABS = [
+    { id: "products" as Tab, label: t("myshop.tab_products"), icon: ShoppingBag },
+    { id: "selling" as Tab, label: t("myshop.tab_selling"), icon: Package },
+    { id: "buying" as Tab, label: t("myshop.tab_buying"), icon: ShoppingBag },
+  ];
+
   const handleStatusUpdate = async (orderId: number, status: string) => {
     try {
       await updateStatus({ id: orderId, data: { status } as any });
@@ -47,7 +49,7 @@ export default function MyShopPage() {
   };
 
   const handleDelete = async (productId: number) => {
-    if (!confirm("Mahsulotni o'chirishni xohlaysizmi?")) return;
+    if (!confirm(t("myshop.delete_confirm"))) return;
     try { await deleteProduct({ id: productId }); } catch { }
   };
 
@@ -59,19 +61,19 @@ export default function MyShopPage() {
           <button onClick={() => navigate("/bozor")} className="p-1.5 rounded-full hover:bg-amber-950/40">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-bold text-lg flex-1">Mening Do'konim</h1>
+          <h1 className="font-bold text-lg flex-1">{t("myshop.title")}</h1>
           <button onClick={() => navigate("/bozor/sotish")}
             className="flex items-center gap-1.5 bg-amber-700 hover:bg-amber-600 text-white text-sm px-3 py-1.5 rounded-full">
-            <Plus className="w-4 h-4" /> Qo'shish
+            <Plus className="w-4 h-4" /> {t("myshop.add")}
           </button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
-            { label: "Faol e'lonlar", value: activeProducts, icon: ShoppingBag, color: "text-amber-400" },
-            { label: "Umumiy sotuv", value: totalSales, icon: CheckCircle, color: "text-emerald-400" },
-            { label: "Ko'rishlar", value: totalViews.toLocaleString(), icon: Eye, color: "text-blue-400" },
+            { label: t("myshop.stat_active"), value: activeProducts, icon: ShoppingBag, color: "text-amber-400" },
+            { label: t("myshop.stat_sales"), value: totalSales, icon: CheckCircle, color: "text-emerald-400" },
+            { label: t("myshop.stat_views"), value: totalViews.toLocaleString(), icon: Eye, color: "text-blue-400" },
           ].map(({ label, value, icon: Icon, color }) => (
             <div key={label} className="bg-amber-950/20 rounded-xl p-2.5 text-center">
               <Icon className={`w-4 h-4 ${color} mx-auto mb-1`} />
@@ -112,12 +114,12 @@ export default function MyShopPage() {
                 <ShoppingBag className="w-7 h-7 text-amber-600/50" />
               </div>
               <div>
-                <p className="font-semibold">Hali e'lonlar yo'q</p>
-                <p className="text-muted-foreground text-sm mt-1">Birinchi mahsulotingizni qo'shing va daromad oling</p>
+                <p className="font-semibold">{t("myshop.no_products")}</p>
+                <p className="text-muted-foreground text-sm mt-1">{t("myshop.no_products_sub")}</p>
               </div>
               <button onClick={() => navigate("/bozor/sotish")}
                 className="bg-amber-700 text-white px-6 py-2.5 rounded-full text-sm font-medium">
-                E'lon qo'shish
+                {t("myshop.add_listing")}
               </button>
             </div>
           ) : (
@@ -134,7 +136,7 @@ export default function MyShopPage() {
                         </div>
                       )}
                       <span className={`absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-medium ${p.status === "active" ? "bg-emerald-800/80 text-emerald-300" : p.status === "sold" ? "bg-red-800/80 text-red-300" : "bg-gray-800/80 text-gray-300"}`}>
-                        {p.status === "active" ? "Faol" : p.status === "sold" ? "Sotildi" : "Saqlangan"}
+                        {p.status === "active" ? t("myshop.active_badge") : p.status === "sold" ? t("myshop.sold_badge") : t("myshop.draft_badge")}
                       </span>
                     </div>
                     <div className="p-2">
@@ -149,10 +151,10 @@ export default function MyShopPage() {
                   </button>
                   <div className="flex border-t border-amber-900/20">
                     <button onClick={() => navigate(`/bozor/sotish?edit=${p.id}`)} className="flex-1 py-2 text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1">
-                      <Edit2 className="w-3 h-3" /> Tahrirlash
+                      <Edit2 className="w-3 h-3" /> {t("myshop.edit")}
                     </button>
                     <button onClick={() => handleDelete(p.id)} className="flex-1 py-2 text-xs text-red-400 hover:text-red-300 flex items-center justify-center gap-1 border-l border-amber-900/20">
-                      <Trash2 className="w-3 h-3" /> O'chirish
+                      <Trash2 className="w-3 h-3" /> {t("myshop.delete")}
                     </button>
                   </div>
                 </div>
@@ -168,7 +170,7 @@ export default function MyShopPage() {
           ) : selling.length === 0 ? (
             <div className="flex flex-col items-center py-20 gap-3 text-center">
               <Package className="w-12 h-12 text-amber-700/30" />
-              <p className="text-muted-foreground">Hali buyurtmalar yo'q</p>
+              <p className="text-muted-foreground">{t("myshop.no_selling")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -180,36 +182,35 @@ export default function MyShopPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{o.product?.title ?? "Mahsulot"}</p>
-                      <p className="text-xs text-muted-foreground">Xaridor: {o.buyer?.displayName ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">{t("myshop.buyer")} {o.buyer?.displayName ?? "—"}</p>
                       <p className="text-amber-400 text-xs font-bold">{(o.totalPrice / 100).toLocaleString()} so'm × {o.quantity}</p>
                     </div>
                     <span className={`text-xs font-medium flex-shrink-0 ${STATUS_LABELS[o.status]?.color ?? "text-muted-foreground"}`}>
                       {STATUS_LABELS[o.status]?.label ?? o.status}
                     </span>
                   </div>
-                  {/* Status actions */}
                   {o.status === "pending" && (
                     <div className="flex gap-2 mt-2">
                       <button onClick={() => handleStatusUpdate(o.id, "processing")}
                         className="flex-1 py-1.5 text-xs bg-amber-700/50 hover:bg-amber-700 text-white rounded-lg transition-colors">
-                        Tasdiqlash
+                        {t("myshop.confirm")}
                       </button>
                       <button onClick={() => handleStatusUpdate(o.id, "cancelled")}
                         className="flex-1 py-1.5 text-xs bg-red-900/40 hover:bg-red-900/60 text-red-300 rounded-lg transition-colors">
-                        Bekor qilish
+                        {t("myshop.cancel_order")}
                       </button>
                     </div>
                   )}
                   {o.status === "processing" && (
                     <button onClick={() => handleStatusUpdate(o.id, "shipped")}
                       className="w-full mt-2 py-1.5 text-xs bg-cyan-900/40 hover:bg-cyan-900/60 text-cyan-300 rounded-lg flex items-center justify-center gap-1">
-                      <Truck className="w-3.5 h-3.5" /> Jo'natildi deb belgilash
+                      <Truck className="w-3.5 h-3.5" /> {t("myshop.mark_shipped")}
                     </button>
                   )}
                   {o.status === "shipped" && (
                     <button onClick={() => handleStatusUpdate(o.id, "delivered")}
                       className="w-full mt-2 py-1.5 text-xs bg-emerald-900/40 hover:bg-emerald-900/60 text-emerald-300 rounded-lg flex items-center justify-center gap-1">
-                      <CheckCircle className="w-3.5 h-3.5" /> Yetkazildi deb belgilash
+                      <CheckCircle className="w-3.5 h-3.5" /> {t("myshop.mark_delivered")}
                     </button>
                   )}
                 </div>
@@ -225,9 +226,9 @@ export default function MyShopPage() {
           ) : buying.length === 0 ? (
             <div className="flex flex-col items-center py-20 gap-3 text-center">
               <ShoppingBag className="w-12 h-12 text-amber-700/30" />
-              <p className="text-muted-foreground">Hali xaridlar yo'q</p>
+              <p className="text-muted-foreground">{t("myshop.no_buying")}</p>
               <button onClick={() => navigate("/bozor")} className="bg-amber-700 text-white px-6 py-2.5 rounded-full text-sm">
-                Bozorga o'tish
+                {t("myshop.go_market")}
               </button>
             </div>
           ) : (
@@ -240,7 +241,7 @@ export default function MyShopPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{o.product?.title ?? "Mahsulot"}</p>
-                      <p className="text-xs text-muted-foreground">Sotuvchi: {o.seller?.displayName ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">{t("myshop.seller")} {o.seller?.displayName ?? "—"}</p>
                       <p className="text-amber-400 text-xs font-bold">{(o.totalPrice / 100).toLocaleString()} so'm</p>
                     </div>
                     <span className={`text-xs font-medium flex-shrink-0 ${STATUS_LABELS[o.status]?.color ?? "text-muted-foreground"}`}>

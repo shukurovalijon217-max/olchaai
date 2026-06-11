@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Search, TrendingUp, BadgeCheck, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useListPosts, useGetTrendingTopics, useGetAiSuggestions, useListGroups, useListUsers } from "@workspace/api-client-react";
 
 export default function ExplorePage() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const { data: posts = [] } = useListPosts();
   const { data: topics = [] } = useGetTrendingTopics();
@@ -21,7 +23,7 @@ export default function ExplorePage() {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search people, posts, groups..."
+          placeholder={t("explore.search_ph")}
           className="w-full pl-10 pr-4 py-3 rounded-2xl bg-card border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
         />
       </div>
@@ -30,7 +32,7 @@ export default function ExplorePage() {
       <section>
         <h2 className="font-bold text-foreground mb-4 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-primary" />
-          Trending Topics
+          {t("explore.trending")}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {topics.map((topic, i) => (
@@ -44,7 +46,7 @@ export default function ExplorePage() {
             >
               <p className="text-xs text-muted-foreground mb-1">{topic.category}</p>
               <p className="font-bold text-foreground">#{topic.tag}</p>
-              <p className="text-xs text-muted-foreground mt-1">{topic.postCount.toLocaleString()} posts</p>
+              <p className="text-xs text-muted-foreground mt-1">{topic.postCount.toLocaleString()} {t("home.posts")}</p>
               <span className="text-xs font-bold text-emerald-400 mt-1 block">+{topic.growth.toFixed(1)}%</span>
             </motion.div>
           ))}
@@ -54,7 +56,7 @@ export default function ExplorePage() {
       {/* Photo Grid */}
       {photoPosts.length > 0 && (
         <section>
-          <h2 className="font-bold text-foreground mb-4">Explore Posts</h2>
+          <h2 className="font-bold text-foreground mb-4">{t("explore.explore_posts")}</h2>
           <div className="grid grid-cols-3 gap-2">
             {photoPosts.slice(0, 9).map((post, i) => (
               <motion.div
@@ -83,7 +85,7 @@ export default function ExplorePage() {
         <section>
           <h2 className="font-bold text-foreground mb-4 flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
-            People to Follow
+            {t("explore.people_to_follow")}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {suggestions.users.map((user, i) => (
@@ -107,7 +109,7 @@ export default function ExplorePage() {
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">@{user.username}</p>
                 <button className="w-full py-1.5 rounded-xl bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-colors">
-                  Follow
+                  {t("explore.follow")}
                 </button>
               </motion.div>
             ))}
@@ -118,7 +120,7 @@ export default function ExplorePage() {
       {/* Groups */}
       {groups.length > 0 && (
         <section>
-          <h2 className="font-bold text-foreground mb-4">Popular Communities</h2>
+          <h2 className="font-bold text-foreground mb-4">{t("explore.popular_communities")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {groups.slice(0, 4).map((group, i) => (
               <motion.div
@@ -137,10 +139,10 @@ export default function ExplorePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground text-sm truncate">{group.name}</p>
-                  <p className="text-xs text-muted-foreground">{group.membersCount.toLocaleString()} members · {group.category}</p>
+                  <p className="text-xs text-muted-foreground">{group.membersCount.toLocaleString()} {t("groups.members")} · {group.category}</p>
                 </div>
                 <button className="px-3 py-1.5 rounded-xl bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-colors flex-shrink-0">
-                  Join
+                  {t("explore.join")}
                 </button>
               </motion.div>
             ))}

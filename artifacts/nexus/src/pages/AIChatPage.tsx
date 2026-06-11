@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   Bot, Send, Plus, Trash2, MessageSquare, Sparkles, Image, FileText,
   Wand2, ChevronRight, Mic, MicOff, Volume2, Loader2, StopCircle,
@@ -11,21 +12,8 @@ const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 interface Message { id: number; role: "user" | "assistant"; content: string; createdAt: string; }
 interface Conversation { id: number; title: string; createdAt: string; }
 
-const QUICK_ACTIONS = [
-  { icon: Wand2, label: "Caption yoz", prompt: "Instagram uchun jozibali caption yoz: " },
-  { icon: FileText, label: "Matn tahrir", prompt: "Quyidagi matnni yaxshila: " },
-  { icon: Sparkles, label: "G'oya ber", prompt: "OlCha uchun kontent g'oyalar ber" },
-  { icon: Image, label: "Rasm prompt", prompt: "DALL-E uchun ajoyib rasm prompt yoz: " },
-];
-
-const TABS = [
-  { id: "chat", label: "Suhbat" },
-  { id: "voice", label: "🎙 Ovoz" },
-  { id: "caption", label: "Caption" },
-  { id: "image", label: "Rasm" },
-];
-
 export default function AIChatPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConv, setActiveConv] = useState<number | null>(null);
@@ -51,6 +39,20 @@ export default function AIChatPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const QUICK_ACTIONS = [
+    { icon: Wand2, label: t("ai.quick_caption"), prompt: "Instagram uchun jozibali caption yoz: " },
+    { icon: FileText, label: t("ai.quick_edit"), prompt: "Quyidagi matnni yaxshila: " },
+    { icon: Sparkles, label: t("ai.quick_idea"), prompt: "OlCha uchun kontent g'oyalar ber" },
+    { icon: Image, label: t("ai.quick_prompt"), prompt: "DALL-E uchun ajoyib rasm prompt yoz: " },
+  ];
+
+  const TABS = [
+    { id: "chat", label: t("ai.tab_chat") },
+    { id: "voice", label: `🎙 ${t("ai.tab_voice")}` },
+    { id: "caption", label: "Caption" },
+    { id: "image", label: t("ai.tab_image") },
+  ];
 
   useEffect(() => {
     loadConversations();
@@ -90,7 +92,7 @@ export default function AIChatPage() {
   }
 
   async function newConversation() {
-    const title = `Suhbat ${new Date().toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}`;
+    const title = `${t("ai.tab_chat")} ${new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`;
     const r = await fetch(`${API}/api/openai/conversations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -177,14 +179,14 @@ export default function AIChatPage() {
       setVoiceAudio(null);
       timerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000);
     } catch {
-      alert("Mikrofon ruxsati kerak. Brauzer sozlamalarida mikrofonga ruxsat bering.");
+      alert(t("ai.mic_error"));
     }
   }
 
   function stopRecording() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     mediaRecorderRef.current?.stop();
-    mediaRecorderRef.current?.stream.getTracks().forEach(t => t.stop());
+    mediaRecorderRef.current?.stream.getTracks().forEach(tr => tr.stop());
     setIsRecording(false);
     setVoiceLoading(true);
   }
@@ -213,7 +215,7 @@ export default function AIChatPage() {
         }
       }
     } catch {
-      setVoiceResponse("Xato yuz berdi. Qayta urinib ko'ring.");
+      setVoiceResponse(t("ai.voice_error"));
     } finally {
       setVoiceLoading(false);
     }
@@ -276,14 +278,14 @@ export default function AIChatPage() {
             </div>
             <div>
               <h1 className="text-base font-bold text-foreground">OlCha AI</h1>
-              <p className="text-[11px] text-muted-foreground">GPT-4o bilan ishlaydi</p>
+              <p className="text-[11px] text-muted-foreground">{t("ai.subtitle")}</p>
             </div>
           </div>
           <div className="flex items-center gap-1 bg-muted rounded-xl p-1 overflow-x-auto">
-            {TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id as typeof tab)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                {t.label}
+            {TABS.map(tab_ => (
+              <button key={tab_.id} onClick={() => setTab(tab_.id as typeof tab)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${tab === tab_.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                {tab_.label}
               </button>
             ))}
           </div>
@@ -298,13 +300,13 @@ export default function AIChatPage() {
             <div className="hidden md:flex w-56 flex-col gap-2 flex-shrink-0">
               <button onClick={newConversation}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/15 text-primary hover:bg-primary/25 transition-colors text-sm font-semibold">
-                <Plus className="w-4 h-4" /> Yangi suhbat
+                <Plus className="w-4 h-4" /> {t("ai.new_chat")}
               </button>
               <div className="flex-1 space-y-1 overflow-y-auto">
                 {loadingConvs ? (
-                  <div className="text-xs text-muted-foreground px-2">Yuklanmoqda...</div>
+                  <div className="text-xs text-muted-foreground px-2">{t("common.loading")}</div>
                 ) : conversations.length === 0 ? (
-                  <div className="text-xs text-muted-foreground px-2">Suhbatlar yo'q</div>
+                  <div className="text-xs text-muted-foreground px-2">{t("ai.no_chats")}</div>
                 ) : (
                   conversations.slice().reverse().map(c => (
                     <button key={c.id} onClick={() => openConversation(c.id)}
@@ -326,8 +328,8 @@ export default function AIChatPage() {
                     <Sparkles className="w-8 h-8 text-violet-400" />
                   </div>
                   <div className="text-center">
-                    <h2 className="text-xl font-bold text-foreground mb-1">OlCha AI bilan suhbat</h2>
-                    <p className="text-sm text-muted-foreground">Savollar bering, g'oyalar oling, matnlar yarating</p>
+                    <h2 className="text-xl font-bold text-foreground mb-1">{t("ai.welcome_title")}</h2>
+                    <p className="text-sm text-muted-foreground">{t("ai.welcome_sub")}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 max-w-sm w-full">
                     {QUICK_ACTIONS.map(a => (
@@ -341,7 +343,7 @@ export default function AIChatPage() {
                   </div>
                   <button onClick={newConversation}
                     className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
-                    Suhbat boshlash
+                    {t("ai.start_chat")}
                   </button>
                 </div>
               ) : (
@@ -375,7 +377,7 @@ export default function AIChatPage() {
                       value={input}
                       onChange={e => setInput(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                      placeholder="Xabar yozing... (Enter — yuborish)"
+                      placeholder={t("ai.placeholder")}
                       rows={2}
                       className="flex-1 bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary/50"
                     />
@@ -394,7 +396,7 @@ export default function AIChatPage() {
         {tab === "voice" && (
           <div className="flex-1 flex flex-col items-center justify-start gap-6 py-8 max-w-lg mx-auto w-full">
             <div className="text-center">
-              <h2 className="text-xl font-bold text-foreground mb-1">AI bilan ovozli suhbat</h2>
+              <h2 className="text-xl font-bold text-foreground mb-1">{t("ai.voice_title")}</h2>
               <p className="text-sm text-muted-foreground">Whisper STT + GPT-4o + TTS</p>
             </div>
 
@@ -430,15 +432,14 @@ export default function AIChatPage() {
 
             <p className="text-sm text-muted-foreground text-center">
               {isRecording
-                ? `🔴 Yozilmoqda… ${recordingSeconds}s (to'xtatish uchun bosing)`
+                ? `🔴 ${t("ai.recording")} ${recordingSeconds}s`
                 : voiceLoading
-                ? "⏳ AI tahlil qilmoqda..."
+                ? `⏳ ${t("ai.analyzing")}`
                 : voiceTranscript
-                ? "✅ Qayta yozish uchun bosing"
-                : "👆 Bosing va gapirib bering"}
+                ? `✅ ${t("ai.retry")}`
+                : `👆 ${t("ai.press_speak")}`}
             </p>
 
-            {/* Transcript */}
             <AnimatePresence>
               {voiceTranscript && (
                 <motion.div
@@ -447,14 +448,13 @@ export default function AIChatPage() {
                   className="w-full bg-card border border-border rounded-2xl p-4 space-y-1"
                 >
                   <p className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
-                    <MicOff className="w-3 h-3" /> Siz aytdingiz:
+                    <MicOff className="w-3 h-3" /> {t("ai.you_said")}
                   </p>
                   <p className="text-sm text-foreground leading-relaxed">{voiceTranscript}</p>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* AI Response */}
             <AnimatePresence>
               {voiceResponse && (
                 <motion.div
@@ -471,7 +471,7 @@ export default function AIChatPage() {
                         onClick={playVoiceResponse}
                         className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-violet-500/20 text-violet-400 text-xs font-semibold hover:bg-violet-500/30 transition-colors"
                       >
-                        <Volume2 className="w-3.5 h-3.5" /> Tinglash
+                        <Volume2 className="w-3.5 h-3.5" /> {t("ai.listen")}
                       </button>
                     )}
                   </div>
@@ -480,14 +480,13 @@ export default function AIChatPage() {
               )}
             </AnimatePresence>
 
-            {/* Tips */}
             {!voiceTranscript && !voiceLoading && (
               <div className="w-full grid grid-cols-2 gap-2 mt-2">
                 {[
-                  "O'zbek tilida gapiring",
-                  "Ingliz yoki rus tilida ham ishlaydi",
-                  "Savol bering",
-                  "G'oya so'rang",
+                  t("ai.tab_chat"),
+                  "GPT-4o + Whisper",
+                  "OlCha AI",
+                  "DALL-E 3",
                 ].map(tip => (
                   <div key={tip} className="bg-muted/50 rounded-xl px-3 py-2 text-xs text-muted-foreground text-center">
                     {tip}
@@ -508,30 +507,30 @@ export default function AIChatPage() {
                 </div>
                 <div>
                   <h2 className="font-bold text-foreground">AI Caption Generator</h2>
-                  <p className="text-xs text-muted-foreground">Post uchun jozibali matn va hashtaglar</p>
+                  <p className="text-xs text-muted-foreground">{t("ai.caption_sub")}</p>
                 </div>
               </div>
               <textarea
                 value={captionTopic}
                 onChange={e => setCaptionTopic(e.target.value)}
-                placeholder="Mavzuni kiriting: masalan, yangi kafe ochildi, tog'ga sayohat..."
+                placeholder={t("ai.topic_ph")}
                 rows={3}
                 className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary/50"
               />
               <button onClick={generateCaption} disabled={captionLoading || !captionTopic.trim()}
                 className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-50 hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4" />
-                {captionLoading ? "Yaratilmoqda..." : "Caption yaratish"}
+                {captionLoading ? t("ai.creating") : `Caption ${t("ai.generate")}`}
               </button>
             </div>
             {captionResult && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 className="bg-card border border-border rounded-2xl p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-foreground text-sm">Natija</h3>
+                  <h3 className="font-semibold text-foreground text-sm">{t("ai.result")}</h3>
                   <button onClick={() => { navigator.clipboard.writeText(captionResult); }}
                     className="text-xs text-primary hover:text-primary/80 transition-colors font-semibold">
-                    Nusxalash
+                    {t("ai.copy")}
                   </button>
                 </div>
                 <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{captionResult}</p>
@@ -549,28 +548,28 @@ export default function AIChatPage() {
                   <Image className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-foreground">AI Rasm Yaratish</h2>
-                  <p className="text-xs text-muted-foreground">DALL-E 3 bilan rasm yarating</p>
+                  <h2 className="font-bold text-foreground">{t("ai.image_title")}</h2>
+                  <p className="text-xs text-muted-foreground">{t("ai.image_sub")}</p>
                 </div>
               </div>
               <textarea
                 value={imagePrompt}
                 onChange={e => setImagePrompt(e.target.value)}
-                placeholder="Rasmni tasvirlab bering: masalan, tog'lar orasida uy, kechki shahar manzarasi..."
+                placeholder={t("ai.image_ph")}
                 rows={3}
                 className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary/50"
               />
               <button onClick={generateImage} disabled={imageLoading || !imagePrompt.trim()}
                 className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-50 hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4" />
-                {imageLoading ? "Rasm yaratilmoqda..." : "Rasm yaratish"}
+                {imageLoading ? t("ai.image_creating") : t("ai.create_image")}
               </button>
             </div>
             {imageLoading && (
               <div className="flex items-center justify-center py-16">
                 <div className="space-y-3 text-center">
                   <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
-                  <p className="text-sm text-muted-foreground">AI rasm yaratmoqda...</p>
+                  <p className="text-sm text-muted-foreground">{t("ai.ai_creating")}</p>
                 </div>
               </div>
             )}
@@ -580,7 +579,7 @@ export default function AIChatPage() {
                 <img src={`data:image/png;base64,${imageResult}`} alt="AI generated" className="w-full rounded-xl" />
                 <a href={`data:image/png;base64,${imageResult}`} download="olcha-ai-image.png"
                   className="block w-full text-center py-2.5 rounded-xl bg-primary/15 text-primary text-sm font-semibold hover:bg-primary/25 transition-colors">
-                  Yuklab olish
+                  {t("ai.download")}
                 </a>
               </motion.div>
             )}

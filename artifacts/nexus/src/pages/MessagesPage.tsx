@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Send, Search, Plus, MessageCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useListConversations, useGetConversationMessages, useSendMessage, getGetConversationMessagesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const ME_ID = 1;
 
 export default function MessagesPage() {
+  const { t } = useTranslation();
   const { data: convs = [], isLoading } = useListConversations();
   const [activeId, setActiveId] = useState<number | null>(null);
   const [text, setText] = useState("");
@@ -40,14 +42,17 @@ export default function MessagesPage() {
       <div className="w-72 flex-shrink-0 border-r border-border bg-sidebar flex flex-col">
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-foreground">Messages</h2>
+            <h2 className="font-bold text-foreground">{t("msg.title")}</h2>
             <button className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
               <Plus className="w-4 h-4" />
             </button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <input placeholder="Search messages..." className="w-full pl-8 pr-3 py-2 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 transition-colors" />
+            <input
+              placeholder={t("msg.search_ph")}
+              className="w-full pl-8 pr-3 py-2 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 transition-colors"
+            />
           </div>
         </div>
 
@@ -63,7 +68,7 @@ export default function MessagesPage() {
               </div>
             ))
           ) : convs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">No conversations yet</div>
+            <div className="text-center py-8 text-muted-foreground text-sm">{t("msg.no_convs")}</div>
           ) : (
             convs.map((conv) => {
               const other = getOtherParticipant(conv);
@@ -84,7 +89,7 @@ export default function MessagesPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{other?.displayName || "Unknown"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{conv.lastMessage || "Start a conversation"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{conv.lastMessage || t("msg.start_conv")}</p>
                   </div>
                   {conv.unreadCount > 0 && (
                     <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -112,7 +117,7 @@ export default function MessagesPage() {
             </div>
             <div>
               <p className="font-semibold text-foreground text-sm">{getOtherParticipant(activeConv)?.displayName}</p>
-              <p className="text-xs text-emerald-400">Active now</p>
+              <p className="text-xs text-emerald-400">{t("msg.active")}</p>
             </div>
           </div>
 
@@ -141,7 +146,7 @@ export default function MessagesPage() {
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground text-sm py-12">
                 <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                Say hello!
+                {t("msg.say_hello")}
               </div>
             )}
           </div>
@@ -153,7 +158,7 @@ export default function MessagesPage() {
                 value={text}
                 onChange={e => setText(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSend()}
-                placeholder="Message..."
+                placeholder={t("msg.msg_ph")}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 transition-colors"
               />
               <motion.button
@@ -170,7 +175,7 @@ export default function MessagesPage() {
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
           <MessageCircle className="w-12 h-12 opacity-20" />
-          <p className="text-sm">Select a conversation</p>
+          <p className="text-sm">{t("msg.select_conv")}</p>
         </div>
       )}
     </div>

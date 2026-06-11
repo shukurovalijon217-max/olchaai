@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Users, Lock, Plus, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useListGroups, useJoinGroup, getListGroupsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function GroupsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const { data: groups = [], isLoading } = useListGroups({ search: search || undefined });
   const join = useJoinGroup();
@@ -32,11 +34,11 @@ export default function GroupsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
           <Users className="w-5 h-5 text-primary" />
-          Communities
+          {t("groups.title")}
         </h1>
         <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" />
-          Create
+          {t("groups.create")}
         </button>
       </div>
 
@@ -46,7 +48,7 @@ export default function GroupsPage() {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search communities..."
+          placeholder={t("groups.search_ph")}
           className="w-full pl-10 pr-4 py-3 rounded-2xl bg-card border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
         />
       </div>
@@ -67,7 +69,7 @@ export default function GroupsPage() {
       ) : groups.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p>No communities found</p>
+          <p>{t("groups.not_found")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -91,7 +93,7 @@ export default function GroupsPage() {
                   {group.isPrivate && (
                     <div className="absolute top-2 right-2 bg-black/50 rounded-lg px-2 py-1 flex items-center gap-1">
                       <Lock className="w-3 h-3 text-white" />
-                      <span className="text-xs text-white font-medium">Private</span>
+                      <span className="text-xs text-white font-medium">{t("groups.private")}</span>
                     </div>
                   )}
                 </div>
@@ -111,13 +113,13 @@ export default function GroupsPage() {
                           : "bg-primary/15 text-primary hover:bg-primary/25"
                       }`}
                     >
-                      {isMember ? "Leave" : "Join"}
+                      {isMember ? t("groups.leave") : t("groups.join")}
                     </motion.button>
                   </div>
                   <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{group.description}</p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Users className="w-3 h-3" />{group.membersCount.toLocaleString()} members</span>
-                    <span>{group.postsCount} posts</span>
+                    <span className="flex items-center gap-1"><Users className="w-3 h-3" />{group.membersCount.toLocaleString()} {t("groups.members")}</span>
+                    <span>{group.postsCount} {t("groups.posts")}</span>
                   </div>
                 </div>
               </motion.div>

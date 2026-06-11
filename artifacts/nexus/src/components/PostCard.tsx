@@ -11,6 +11,7 @@ import type { Post } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 import { useDwellTracker } from "@/hooks/useDwellTracker";
 import { generateShareCard, downloadShareCard } from "@/utils/shareCard";
+import { useTranslation } from "react-i18next";
 
 interface PostCardProps { post: Post; index?: number; }
 
@@ -21,24 +22,10 @@ const GRADIENT_COLORS = [
   "from-emerald-600/20 to-teal-900/10",
 ];
 
-const REPORT_REASONS = [
-  { value: "spam", label: "Spam yoki reklama" },
-  { value: "hate", label: "Nafrat nutqi" },
-  { value: "adult", label: "Kattalar uchun kontent" },
-  { value: "violence", label: "Zo'ravonlik" },
-  { value: "fake", label: "Yolg'on ma'lumot" },
-  { value: "other", label: "Boshqa sabab" },
-];
-
 const SENTIMENT_COLOR: Record<string, string> = {
   positive: "text-emerald-400",
   neutral: "text-muted-foreground",
   negative: "text-red-400",
-};
-const SENTIMENT_LABEL: Record<string, string> = {
-  positive: "✅ Ijobiy",
-  neutral: "😐 Neytral",
-  negative: "⚠️ Salbiy",
 };
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -51,6 +38,20 @@ interface Analysis {
 }
 
 export default function PostCard({ post, index = 0 }: PostCardProps) {
+  const { t } = useTranslation();
+  const REPORT_REASONS = [
+    { value: "spam", label: t("post.reason_spam") },
+    { value: "hate", label: t("post.reason_hate") },
+    { value: "adult", label: t("post.reason_adult") },
+    { value: "violence", label: t("post.reason_violence") },
+    { value: "fake", label: t("post.reason_fake") },
+    { value: "other", label: t("post.reason_other") },
+  ];
+  const SENTIMENT_LABEL: Record<string, string> = {
+    positive: t("post.sentiment_positive"),
+    neutral: t("post.sentiment_neutral"),
+    negative: t("post.sentiment_negative"),
+  };
   const [liked, setLiked] = useState(post.isLiked);
   const [count, setCount] = useState(post.likesCount);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -175,7 +176,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
 
   /* ── Delete ── */
   const handleDelete = () => {
-    if (!confirm("Postni o'chirishni tasdiqlaysizmi?")) return;
+    if (!confirm(t("common.delete_confirm"))) return;
     setMenuOpen(false);
     deletePost.mutate({ id: post.id }, {
       onSuccess: () => {
@@ -215,7 +216,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         {(post as any).isFlagged && (
           <div className="flex items-center gap-2 px-4 py-2 bg-destructive/10 border-b border-destructive/20">
             <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
-            <span className="text-xs text-destructive font-medium">Bu kontent AI tomonidan belgilangan</span>
+            <span className="text-xs text-destructive font-medium">{t("post.flagged")}</span>
           </div>
         )}
 
@@ -251,12 +252,12 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                   {isOwner && (
                     <button onClick={handleDelete}
                       className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors">
-                      <Trash2 className="w-4 h-4" /> O'chirish
+                      <Trash2 className="w-4 h-4" /> {t("post.delete")}
                     </button>
                   )}
                   <button onClick={() => { setMenuOpen(false); setReportOpen(true); }}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
-                    <Flag className="w-4 h-4" /> Shikoyat qilish
+                    <Flag className="w-4 h-4" /> {t("post.report")}
                   </button>
                 </motion.div>
               )}
@@ -311,7 +312,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Brain className="w-3.5 h-3.5 text-violet-400" />
-                    <span className="text-xs font-semibold text-foreground">AI Tahlil</span>
+                    <span className="text-xs font-semibold text-foreground">{t("post.ai_analysis")}</span>
                     {analysis.category && (
                       <span className="px-1.5 py-0.5 rounded-md bg-violet-500/20 text-violet-400 text-[10px] font-semibold">
                         {analysis.category}
@@ -369,12 +370,12 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
               shared ? "text-emerald-400 bg-emerald-400/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}>
             {shared ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-            <span>{shared ? "Nusxalandi" : (post.sharesCount ?? 0)}</span>
+            <span>{shared ? t("common.copied") : (post.sharesCount ?? 0)}</span>
           </motion.button>
 
           {/* AI Analyze */}
           <motion.button whileTap={{ scale: 0.85 }} onClick={handleAnalyze} disabled={analyzing}
-            title="AI Tahlil"
+            title={t("post.ai_analysis")}
             className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               showAnalysis ? "text-violet-400 bg-violet-400/10" : "text-muted-foreground hover:text-violet-400 hover:bg-violet-400/10"
             }`}>
@@ -387,7 +388,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
 
           {/* Share Card */}
           <motion.button whileTap={{ scale: 0.85 }} onClick={handleShareCard} disabled={sharing}
-            title="Karta sifatida yuklab olish"
+            title={t("post.download_card")}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-amber-400 hover:bg-amber-400/10 disabled:opacity-50">
             {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           </motion.button>
@@ -406,7 +407,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Flag className="w-4 h-4 text-destructive" />
-                  <h3 className="font-semibold text-foreground">Shikoyat qilish</h3>
+                  <h3 className="font-semibold text-foreground">{t("post.report")}</h3>
                 </div>
                 <button onClick={() => setReportOpen(false)} className="text-muted-foreground hover:text-foreground">
                   <X className="w-4 h-4" />
@@ -417,12 +418,12 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                   <div className="w-12 h-12 rounded-full bg-emerald-400/15 flex items-center justify-center mx-auto mb-3">
                     <AlertTriangle className="w-6 h-6 text-emerald-400" />
                   </div>
-                  <p className="text-sm font-medium text-foreground">Shikoyat qabul qilindi</p>
-                  <p className="text-xs text-muted-foreground mt-1">Moderatorlar ko'rib chiqadi</p>
+                  <p className="text-sm font-medium text-foreground">{t("post.report_accepted")}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("post.report_note")}</p>
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-muted-foreground mb-3">Nega shikoyat qilyapsiz?</p>
+                  <p className="text-xs text-muted-foreground mb-3">{t("post.report_why")}</p>
                   <div className="space-y-1.5 mb-4">
                     {REPORT_REASONS.map(r => (
                       <button key={r.value} onClick={() => setReportReason(r.value)}
@@ -436,12 +437,12 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                     ))}
                   </div>
                   <textarea value={reportDesc} onChange={e => setReportDesc(e.target.value)} rows={2}
-                    placeholder="Qo'shimcha izoh (ixtiyoriy)..."
+                    placeholder={t("post.report_desc_ph")}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-destructive/40 mb-3" />
                   <button onClick={handleReport} disabled={!reportReason || reporting}
                     className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2">
                     {reporting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                    Shikoyat yuborish
+                    {t("post.report_submit")}
                   </button>
                 </>
               )}

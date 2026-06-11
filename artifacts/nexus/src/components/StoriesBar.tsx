@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useListStories } from "@workspace/api-client-react";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   onCreateStory?: () => void;
 }
 
 export default function StoriesBar({ onCreateStory }: Props) {
+  const { t } = useTranslation();
   const { data: stories = [] } = useListStories();
 
   return (
@@ -52,7 +54,7 @@ export default function StoriesBar({ onCreateStory }: Props) {
         ))}
 
         {stories.length === 0 && (
-          <div className="flex items-center text-xs text-muted-foreground py-2">Hali story yo'q</div>
+          <div className="flex items-center text-xs text-muted-foreground py-2">{t("home.no_stories")}</div>
         )}
       </div>
     </div>

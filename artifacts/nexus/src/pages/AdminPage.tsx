@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   ShieldCheck, Users, FileText, BarChart3, Cpu, TrendingUp,
   TrendingDown, Activity, AlertTriangle, CheckCircle2, XCircle,
@@ -22,17 +23,17 @@ import {
 
 type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "finance" | "notify" | "settings";
 
-const TABS: { id: AdminTab; label: string; icon: React.ElementType }[] = [
-  { id: "dashboard", label: "Dashboard", icon: BarChart3 },
-  { id: "users", label: "Foydalanuvchilar", icon: Users },
-  { id: "content", label: "Kontent", icon: FileText },
-  { id: "analytics", label: "Tahlil", icon: TrendingUp },
-  { id: "finance", label: "Moliya", icon: DollarSign },
-  { id: "notify", label: "Bildirishnoma", icon: Bell },
-  { id: "ai", label: "AI Tizim", icon: Cpu },
-  { id: "ai-integrations", label: "AI Integratsiyalar", icon: Zap },
-  { id: "safeguard", label: "SafeGuard AI", icon: ShieldAlert },
-  { id: "settings", label: "Sozlamalar", icon: Settings },
+const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
+  { id: "dashboard", key: "admin.dashboard", icon: BarChart3 },
+  { id: "users", key: "admin.users", icon: Users },
+  { id: "content", key: "admin.content", icon: FileText },
+  { id: "analytics", key: "admin.analytics", icon: TrendingUp },
+  { id: "finance", key: "admin.finance", icon: DollarSign },
+  { id: "notify", key: "nav.notifications", icon: Bell },
+  { id: "ai", key: "admin.ai", icon: Cpu },
+  { id: "ai-integrations", key: "admin.ai_integrations", icon: Zap },
+  { id: "safeguard", key: "admin.safeguard", icon: ShieldAlert },
+  { id: "settings", key: "nav.settings", icon: Settings },
 ];
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -933,6 +934,7 @@ function SettingsTab() {
 }
 
 export default function AdminPage() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const { data: dash } = useGetAdminDashboard();
   const { data: users = [], refetch: refetchUsers } = useAdminListUsers();
@@ -981,13 +983,13 @@ export default function AdminPage() {
           <span className="text-sm font-bold text-foreground">Admin Panel</span>
         </div>
         <nav className="space-y-1">
-          {TABS.map(({ id, label, icon: Icon }) => (
+          {TABS.map(({ id, key, icon: Icon }) => (
             <button key={id} onClick={() => setTab(id)}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
                 tab === id ? "bg-accent/15 text-accent" : "text-sidebar-foreground hover:bg-sidebar-accent"
               }`}>
               <Icon className="w-4 h-4 flex-shrink-0" />
-              {label}
+              {t(key)}
             </button>
           ))}
         </nav>

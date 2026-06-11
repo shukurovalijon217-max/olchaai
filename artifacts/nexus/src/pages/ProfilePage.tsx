@@ -3,7 +3,9 @@ import {
   BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon,
   Camera, Loader2, Radio, Bell, BellOff, Star, Check, X, Sparkles,
   ChevronRight, Pencil, Shield, HelpCircle, Globe, Users, Plus, Zap,
+  Heart, MessageCircle,
 } from "lucide-react";
+import { Link } from "wouter";
 import {
   useGetUser, useListPosts, useFollowUser, useUpdateUser, getGetUserQueryKey,
   useListReels, useStartLive, useListCreatorPlans, useCheckCreatorSubscription,
@@ -601,28 +603,91 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   return (
     <div className="max-w-2xl mx-auto pb-10">
       {/* Cover */}
-      <div className="h-44 overflow-hidden relative group rounded-b-3xl">
-        {user.coverUrl
-          ? <img src={user.coverUrl} alt="" className="w-full h-full object-cover" />
-          : (
-            <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-violet-900/80 via-blue-900/60 to-background">
-              <motion.div animate={{ x: [0, 30, 0], y: [0, -20, 0] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-20 -left-20 w-64 h-64 rounded-full opacity-30"
-                style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 70%)" }} />
-              <motion.div animate={{ x: [0, -25, 0], y: [0, 15, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full opacity-25"
-                style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }} />
-            </div>
+      <div className="h-52 overflow-hidden relative group/cover rounded-b-3xl">
+        {/* Background */}
+        <AnimatePresence mode="wait">
+          {user.coverUrl ? (
+            <motion.img key="cover-img" src={user.coverUrl} alt=""
+              initial={{ scale: 1.06, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="absolute inset-0 w-full h-full object-cover" />
+          ) : (
+            <motion.div key="cover-default" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="absolute inset-0 overflow-hidden bg-[#0d0d1a]">
+              {/* Aurora blobs */}
+              <motion.div animate={{ x: [0, 40, -10, 0], y: [0, -25, 10, 0], scale: [1, 1.15, 0.95, 1] }}
+                transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-24 -left-24 w-80 h-80 rounded-full"
+                style={{ background: "radial-gradient(circle, rgba(124,58,237,0.55) 0%, transparent 70%)", filter: "blur(24px)" }} />
+              <motion.div animate={{ x: [0, -30, 15, 0], y: [0, 20, -15, 0], scale: [1, 0.9, 1.1, 1] }}
+                transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
+                className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full"
+                style={{ background: "radial-gradient(circle, rgba(59,130,246,0.50) 0%, transparent 70%)", filter: "blur(20px)" }} />
+              <motion.div animate={{ x: [0, 20, -20, 0], y: [0, 15, -10, 0] }}
+                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute top-1/3 left-1/3 w-40 h-40 rounded-full"
+                style={{ background: "radial-gradient(circle, rgba(52,211,153,0.30) 0%, transparent 70%)", filter: "blur(16px)" }} />
+              {/* Floating dots */}
+              {[
+                { left: "12%", top: "25%", dur: 3.2, del: 0 },
+                { left: "35%", top: "55%", dur: 4.1, del: 0.8 },
+                { left: "58%", top: "20%", dur: 2.8, del: 1.5 },
+                { left: "75%", top: "65%", dur: 3.6, del: 0.4 },
+                { left: "88%", top: "35%", dur: 2.5, del: 2 },
+              ].map((dot, i) => (
+                <motion.div key={i} className="absolute w-1 h-1 rounded-full bg-white/30"
+                  style={{ left: dot.left, top: dot.top }}
+                  animate={{ y: [-4, 4, -4], opacity: [0.2, 0.7, 0.2] }}
+                  transition={{ duration: dot.dur, repeat: Infinity, delay: dot.del }} />
+              ))}
+              {/* Subtle grid */}
+              <div className="absolute inset-0 opacity-[0.04]"
+                style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+            </motion.div>
           )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
+        </AnimatePresence>
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent pointer-events-none" />
+
+        {/* Owner: input + overlays */}
         {isOwner && (
           <>
             <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) upCover(f); e.target.value = ""; }} />
-            <button onClick={() => coverInputRef.current?.click()}
-              className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/50 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70">
-              {coverUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />} Cover
-            </button>
+
+            {/* Upload progress */}
+            <AnimatePresence>
+              {coverUploading && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/55 backdrop-blur-[3px] flex flex-col items-center justify-center gap-2.5 z-20">
+                  <motion.div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/8 to-transparent"
+                    animate={{ x: ["-100%", "200%"] }} transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }}
+                    style={{ skewX: "-15deg" }} />
+                  <div className="w-11 h-11 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  </div>
+                  <p className="text-white/80 text-xs font-semibold tracking-wide">Cover yuklanmoqda…</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Hover edit overlay */}
+            {!coverUploading && (
+              <div onClick={() => coverInputRef.current?.click()}
+                className="absolute inset-0 opacity-0 group-hover/cover:opacity-100 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-2.5 z-10"
+                style={{ background: "rgba(0,0,0,0.32)", backdropFilter: "blur(1px)" }}>
+                <motion.div whileHover={{ scale: 1.12, rotate: 5 }} whileTap={{ scale: 0.93 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 18 }}
+                  className="w-12 h-12 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md flex items-center justify-center shadow-xl">
+                  <Camera className="w-6 h-6 text-white" />
+                </motion.div>
+                <motion.p initial={{ opacity: 0, y: 4 }} whileHover={{ opacity: 1, y: 0 }}
+                  className="text-white text-xs font-semibold drop-shadow-md tracking-wide">
+                  Cover rasmini o'zgartirish
+                </motion.p>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -717,14 +782,44 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               <p className="text-sm">Hali post yo'q</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5">
               {myPosts.map((post, i) => (
-                <motion.div key={post.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
-                  className="aspect-square rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/30 hover:scale-[1.02] transition-all">
-                  {post.mediaUrl
-                    ? <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
-                    : <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center p-3"><p className="text-xs text-foreground line-clamp-4 text-center">{post.content}</p></div>
-                  }
+                <motion.div key={post.id}
+                  initial={{ opacity: 0, scale: 0.88 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.04, type: "spring", stiffness: 260, damping: 22 }}>
+                  <Link href={`/post/${post.id}`}>
+                    <div className="aspect-square rounded-xl overflow-hidden bg-card border border-border/60 cursor-pointer relative group/post transition-transform hover:scale-[1.03] hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10">
+                      {/* Media or text */}
+                      {post.mediaUrl && post.type !== "video" ? (
+                        <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+                      ) : post.mediaUrl && post.type === "video" ? (
+                        <div className="w-full h-full relative bg-black">
+                          <video src={post.mediaUrl} className="w-full h-full object-cover" muted preload="none" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Play className="w-8 h-8 text-white fill-white drop-shadow-lg" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary/15 via-accent/10 to-primary/5 flex items-center justify-center p-3">
+                          <p className="text-xs text-foreground/80 line-clamp-4 text-center leading-relaxed">{post.content}</p>
+                        </div>
+                      )}
+                      {/* Hover stats overlay */}
+                      <motion.div
+                        initial={false}
+                        className="absolute inset-0 bg-black/55 opacity-0 group-hover/post:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-4">
+                        <div className="flex items-center gap-1.5 text-white">
+                          <Heart className="w-4 h-4 fill-white" />
+                          <span className="text-sm font-bold">{post.likesCount ?? 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-white">
+                          <MessageCircle className="w-4 h-4 fill-white" />
+                          <span className="text-sm font-bold">{post.commentsCount ?? 0}</span>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>
@@ -738,24 +833,59 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               <p className="text-sm">Hali reel yo'q</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5">
               {reels.map((reel, i) => (
-                <motion.div key={reel.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
-                  className="aspect-[9/16] rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/30 hover:scale-[1.02] transition-all relative group">
-                  {reel.thumbnailUrl ? <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-                    : reel.videoUrl ? (
-                      <video src={reel.videoUrl} className="w-full h-full object-cover" muted preload="none"
-                        onMouseEnter={e => (e.target as HTMLVideoElement).play()}
-                        onMouseLeave={e => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }} />
-                    ) : <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center"><Play className="w-8 h-8 text-primary/40" /></div>
-                  }
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Play className="w-8 h-8 text-white fill-white" />
-                  </div>
-                  <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-xs">
-                    <Play className="w-3 h-3 fill-white" />
-                    {(reel.viewsCount ?? 0) > 1000 ? `${((reel.viewsCount ?? 0) / 1000).toFixed(1)}K` : reel.viewsCount ?? 0}
-                  </div>
+                <motion.div key={reel.id}
+                  initial={{ opacity: 0, scale: 0.88 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.04, type: "spring", stiffness: 260, damping: 22 }}>
+                  <Link href={`/reels`}>
+                    <div className="aspect-[9/16] rounded-xl overflow-hidden bg-card border border-border/60 cursor-pointer relative group/reel transition-transform hover:scale-[1.03] hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10">
+                      {/* Thumbnail or video preview */}
+                      {reel.thumbnailUrl ? (
+                        <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                      ) : reel.videoUrl ? (
+                        <video src={reel.videoUrl} className="w-full h-full object-cover" muted preload="none"
+                          onMouseEnter={e => (e.target as HTMLVideoElement).play().catch(() => {})}
+                          onMouseLeave={e => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }} />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center">
+                          <Play className="w-8 h-8 text-primary/40" />
+                        </div>
+                      )}
+
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/reel:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-3">
+                        <motion.div whileHover={{ scale: 1.15 }}
+                          className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center backdrop-blur-sm">
+                          <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                        </motion.div>
+                      </div>
+
+                      {/* Bottom stats bar */}
+                      <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-white">
+                          <Play className="w-2.5 h-2.5 fill-white opacity-80" />
+                          <span className="text-[10px] font-semibold opacity-90">
+                            {(reel.viewsCount ?? 0) >= 1000
+                              ? `${((reel.viewsCount ?? 0) / 1000).toFixed(1)}K`
+                              : reel.viewsCount ?? 0}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-white">
+                          <Heart className="w-2.5 h-2.5 fill-white opacity-80" />
+                          <span className="text-[10px] font-semibold opacity-90">{reel.likesCount ?? 0}</span>
+                        </div>
+                      </div>
+
+                      {/* Video indicator badge (if has thumbnail, show play icon top-right) */}
+                      {reel.thumbnailUrl && (
+                        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-md bg-black/50 flex items-center justify-center">
+                          <Play className="w-2.5 h-2.5 text-white fill-white" />
+                        </div>
+                      )}
+                    </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>

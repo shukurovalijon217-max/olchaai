@@ -6,7 +6,7 @@ import {
   UserX, Eye, RefreshCw, Zap, ShieldAlert, Trash2, ThumbsUp,
   RotateCcw, BadgeCheck, Crown, DollarSign, Bell, Settings,
   Wallet, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send,
-  ToggleLeft, ToggleRight, Lock, Unlock, Globe, Megaphone
+  ToggleLeft, ToggleRight, Lock, Unlock, Globe, Megaphone, Sparkles, Percent
 } from "lucide-react";
 import {
   useGetAdminDashboard, useAdminListUsers, useAdminListContent,
@@ -249,18 +249,41 @@ function FinanceTab() {
   const [savingComm, setSavingComm] = useState(false);
   const [commSaved, setCommSaved] = useState(false);
 
+  // Premium pricing controls
+  const [premMonthly, setPremMonthly] = useState<number>(999);
+  const [premMonthlyInput, setPremMonthlyInput] = useState<string>("9.99");
+  const [premDiscount, setPremDiscount] = useState<number>(20);
+  const [premDiscountInput, setPremDiscountInput] = useState<string>("20");
+  const [premStripePriceIds, setPremStripePriceIds] = useState<{ monthly?: string; yearly?: string }>({});
+  const [savingPrem, setSavingPrem] = useState(false);
+  const [premSaved, setPremSaved] = useState(false);
+  const [premError, setPremError] = useState<string | null>(null);
+
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [fin, comm, stats] = await Promise.all([
-        fetch(`${API}/api/admin/finance`, { credentials: "include" }).then(r => r.json()),
-        fetch(`${API}/api/admin/commission`, { credentials: "include" }).then(r => r.json()),
-        fetch(`${API}/api/admin/commission/stats`, { credentials: "include" }).then(r => r.json()),
+      const safeJson = async (url: string) => {
+        const r = await fetch(url, { credentials: "include" });
+        if (!r.ok) return null;
+        return r.json().catch(() => null);
+      };
+      const [fin, comm, stats, prem] = await Promise.all([
+        safeJson(`${API}/api/admin/finance`),
+        safeJson(`${API}/api/admin/commission`),
+        safeJson(`${API}/api/admin/commission/stats`),
+        safeJson(`${API}/api/admin/premium-config`),
       ]);
       setData(fin);
       setCommStats(stats);
-      setCommRate(comm.rate ?? 10);
-      setCommInput(String(comm.rate ?? 10));
+      setCommRate(comm?.rate ?? 10);
+      setCommInput(String(comm?.rate ?? 10));
+      if (prem?.config) {
+        setPremMonthly(prem.config.monthlyPriceCents);
+        setPremMonthlyInput((prem.config.monthlyPriceCents / 100).toFixed(2));
+        setPremDiscount(prem.config.yearlyDiscountPercent);
+        setPremDiscountInput(String(prem.config.yearlyDiscountPercent));
+        setPremStripePriceIds({ monthly: prem.config.monthlyStripePriceId ?? undefined, yearly: prem.config.yearlyStripePriceId ?? undefined });
+      }
     } finally {
       setLoading(false);
     }
@@ -285,6 +308,44 @@ function FinanceTab() {
     const cur = parseFloat(commInput) || 0;
     const next = Math.max(0, Math.min(100, +(cur + delta).toFixed(1)));
     setCommInput(String(next));
+  };
+
+  const savePremium = async () => {
+    const monthly = Math.round(parseFloat(premMonthlyInput) * 100);
+    const discount = parseInt(premDiscountInput, 10);
+    if (isNaN(monthly) || monthly < 100 || monthly > 99900) { setPremError("Oylik narx $1–$999 orasida bo'lishi kerak"); return; }
+    if (isNaN(discount) || discount < 0 || discount > 90) { setPremError("Chegirma 0–90% orasida bo'lishi kerak"); return; }
+    setSavingPrem(true); setPremError(null);
+    try {
+      const r = await fetch(`${API}/api/admin/premium-config`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        credentials: "include", body: JSON.stringify({ monthlyPriceCents: monthly, yearlyDiscountPercent: discount }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setPremError(d.error ?? "Xato"); return; }
+      setPremMonthly(d.config.monthlyPriceCents);
+      setPremDiscount(d.config.yearlyDiscountPercent);
+      setPremStripePriceIds({ monthly: d.stripeMonthlyPriceId, yearly: d.stripeYearlyPriceId });
+      setPremSaved(true); setTimeout(() => setPremSaved(false), 3000);
+    } catch { setPremError("Tarmoq xatosi"); } finally { setSavingPrem(false); }
+  };
+
+  const stepPremMonthly = (delta: number) => {
+    const cur = parseFloat(premMonthlyInput) || 0;
+    const next = Math.max(1, +(cur + delta).toFixed(2));
+    setPremMonthlyInput(next.toFixed(2));
+  };
+
+  const stepPremDiscount = (delta: number) => {
+    const cur = parseInt(premDiscountInput) || 0;
+    const next = Math.max(0, Math.min(90, cur + delta));
+    setPremDiscountInput(String(next));
+  };
+
+  const computedYearly = () => {
+    const monthly = parseFloat(premMonthlyInput) || 0;
+    const disc = parseInt(premDiscountInput) || 0;
+    return (monthly * 12 * (1 - disc / 100)).toFixed(2);
   };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -372,6 +433,142 @@ function FinanceTab() {
             Joriy komissiya: <strong className="text-amber-400">{commRate}%</strong>.
             Misol: foydalanuvchi 10,000 UZS depozit qilsa, {(10000 * commRate / 100).toFixed(0)} UZS admin hamyoniga, {(10000 * (1 - commRate/100)).toFixed(0)} UZS foydalanuvchiga.
           </span>
+        </div>
+      </div>
+
+      {/* ===== PREMIUM PRICING CONTROL ===== */}
+      <div className="bg-gradient-to-br from-yellow-500/5 to-orange-500/5 border border-yellow-500/20 rounded-2xl p-5 space-y-5">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-yellow-400/15 flex items-center justify-center">
+            <Crown className="w-4 h-4 text-yellow-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Premium Obuna Narxlari</h3>
+            <p className="text-xs text-muted-foreground">Stripe'da yangi narxlar yaratiladi, eski narxlar arxivlanadi</p>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          {/* Monthly price */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-yellow-400" /> Oylik narx (USD)
+            </label>
+            <div className="flex items-center gap-2 bg-background border border-border rounded-xl overflow-hidden">
+              <button onClick={() => stepPremMonthly(-1)}
+                className="w-10 h-10 flex items-center justify-center text-lg font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                −
+              </button>
+              <div className="flex items-center flex-1 justify-center gap-1">
+                <span className="text-sm font-bold text-muted-foreground">$</span>
+                <input
+                  type="number" min={1} max={999} step={1}
+                  value={premMonthlyInput}
+                  onChange={e => setPremMonthlyInput(e.target.value)}
+                  className="w-20 h-10 text-center font-bold text-xl text-foreground bg-transparent focus:outline-none"
+                />
+              </div>
+              <button onClick={() => stepPremMonthly(1)}
+                className="w-10 h-10 flex items-center justify-center text-lg font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                +
+              </button>
+            </div>
+            <div className="flex gap-1.5">
+              {[4.99, 9.99, 14.99, 19.99].map(v => (
+                <button key={v} onClick={() => setPremMonthlyInput(v.toFixed(2))}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-colors ${
+                    parseFloat(premMonthlyInput) === v ? "bg-yellow-400/20 text-yellow-400" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}>
+                  ${v}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Yearly discount */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Percent className="w-3 h-3 text-green-400" /> Yillik chegirma (%)
+            </label>
+            <div className="flex items-center gap-2 bg-background border border-border rounded-xl overflow-hidden">
+              <button onClick={() => stepPremDiscount(-5)}
+                className="w-10 h-10 flex items-center justify-center text-lg font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                −
+              </button>
+              <div className="relative flex-1 flex items-center justify-center">
+                <input
+                  type="number" min={0} max={90} step={5}
+                  value={premDiscountInput}
+                  onChange={e => setPremDiscountInput(e.target.value)}
+                  className="w-16 h-10 text-center font-bold text-xl text-foreground bg-transparent focus:outline-none"
+                />
+                <span className="text-lg font-bold text-muted-foreground">%</span>
+              </div>
+              <button onClick={() => stepPremDiscount(5)}
+                className="w-10 h-10 flex items-center justify-center text-lg font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                +
+              </button>
+            </div>
+            <div className="flex gap-1.5">
+              {[10, 20, 25, 33].map(v => (
+                <button key={v} onClick={() => setPremDiscountInput(String(v))}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-colors ${
+                    parseInt(premDiscountInput) === v ? "bg-green-400/20 text-green-400" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}>
+                  {v}%
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Preview */}
+        <div className="bg-background/60 border border-border/60 rounded-xl px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Oylik:</span>
+            <span className="font-bold text-foreground">${premMonthlyInput}/oy</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Yillik jami:</span>
+            <span className="font-bold text-foreground">${computedYearly()}/yil</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Yillik (oyiga):</span>
+            <span className="font-bold text-green-400">
+              ${((parseFloat(premMonthlyInput) || 0) * (1 - (parseInt(premDiscountInput) || 0) / 100)).toFixed(2)}/oy
+            </span>
+          </div>
+          <div className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-400/10 text-green-400 text-xs font-semibold">
+            {premDiscountInput}% tejash
+          </div>
+        </div>
+
+        {premStripePriceIds.monthly && (
+          <div className="text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
+            <span>Oylik Stripe ID: <code className="text-primary font-mono">{premStripePriceIds.monthly}</code></span>
+            {premStripePriceIds.yearly && <span>Yillik Stripe ID: <code className="text-primary font-mono">{premStripePriceIds.yearly}</code></span>}
+          </div>
+        )}
+
+        {premError && (
+          <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 rounded-xl px-3 py-2">
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" /> {premError}
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={savePremium} disabled={savingPrem}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              premSaved ? "bg-emerald-400/15 text-emerald-400" : "bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:opacity-90"
+            } disabled:opacity-50`}>
+            {savingPrem ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+              : premSaved ? <CheckCircle2 className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
+            {savingPrem ? "Stripe'ga saqlanmoqda..." : premSaved ? "Saqlandi! Stripe yangilandi ✓" : "Narxlarni Saqlash"}
+          </button>
+          <p className="text-xs text-muted-foreground">
+            <AlertTriangle className="w-3 h-3 inline text-yellow-400 mr-1" />
+            Saqlashda Stripe'da yangi narxlar yaratiladi
+          </p>
         </div>
       </div>
 

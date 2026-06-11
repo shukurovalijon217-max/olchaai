@@ -1,6 +1,6 @@
 import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
-import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable } from "@workspace/db";
+import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable } from "@workspace/db";
 import { eq, sql, desc, sum } from "drizzle-orm";
 import { getCommissionRate, setCommissionRate } from "../lib/commission";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
@@ -375,6 +375,104 @@ router.get("/admin/settings", async (req, res) => {
 // PATCH /admin/settings  
 router.patch("/admin/settings", async (req, res) => {
   res.json({ ok: true, settings: req.body });
+});
+
+// ===== PREMIUM CONFIG =====
+router.get("/admin/premium-config", async (req, res) => {
+  try {
+    const rows = await db.select().from(premiumConfigTable).where(eq(premiumConfigTable.id, 1));
+    let config = rows[0];
+    if (!config) {
+      await db.insert(premiumConfigTable).values({ id: 1, monthlyPriceCents: 999, yearlyDiscountPercent: 20 }).onConflictDoNothing();
+      const r2 = await db.select().from(premiumConfigTable).where(eq(premiumConfigTable.id, 1));
+      config = r2[0];
+    }
+    const monthly = config.monthlyPriceCents;
+    const yearlyTotal = Math.round(monthly * 12 * (1 - config.yearlyDiscountPercent / 100));
+    res.json({ config, computed: { yearlyTotalCents: yearlyTotal, monthlyEquivCents: Math.round(yearlyTotal / 12) } });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Konfiguratsiyani o'qishda xato" });
+  }
+});
+
+router.put("/admin/premium-config", async (req: any, res) => {
+  try {
+    const { monthlyPriceCents, yearlyDiscountPercent } = req.body as { monthlyPriceCents?: number; yearlyDiscountPercent?: number };
+    if (monthlyPriceCents !== undefined && (typeof monthlyPriceCents !== "number" || monthlyPriceCents < 100 || monthlyPriceCents > 99900)) {
+      res.status(400).json({ error: "monthlyPriceCents 100–99900 orasida bo'lishi kerak" }); return;
+    }
+    if (yearlyDiscountPercent !== undefined && (typeof yearlyDiscountPercent !== "number" || yearlyDiscountPercent < 0 || yearlyDiscountPercent > 90)) {
+      res.status(400).json({ error: "yearlyDiscountPercent 0–90 orasida bo'lishi kerak" }); return;
+    }
+
+    const rows = await db.select().from(premiumConfigTable).where(eq(premiumConfigTable.id, 1));
+    const current = rows[0] ?? { monthlyPriceCents: 999, yearlyDiscountPercent: 20, monthlyStripePriceId: null, yearlyStripePriceId: null, stripeProductId: null };
+
+    const newMonthly = monthlyPriceCents ?? current.monthlyPriceCents;
+    const newDiscount = yearlyDiscountPercent ?? current.yearlyDiscountPercent;
+    const newYearlyTotal = Math.round(newMonthly * 12 * (1 - newDiscount / 100));
+
+    // Get or find the Stripe product
+    const stripe = await getUncachableStripeClient();
+    let productId = current.stripeProductId;
+    if (!productId) {
+      const existing = await stripe.products.search({ query: "name:'OlCha Premium' AND active:'true'" });
+      productId = existing.data[0]?.id ?? null;
+    }
+    if (!productId) {
+      res.status(400).json({ error: "Stripe mahsulot topilmadi. Avval /api/admin/stripe/seed ni ishga tushiring" }); return;
+    }
+
+    // Create new prices in Stripe
+    const [newMonthlyPrice, newYearlyPrice] = await Promise.all([
+      stripe.prices.create({ product: productId, unit_amount: newMonthly, currency: "usd", recurring: { interval: "month" } }),
+      stripe.prices.create({ product: productId, unit_amount: newYearlyTotal, currency: "usd", recurring: { interval: "year" } }),
+    ]);
+
+    // Archive old prices
+    await Promise.allSettled([
+      current.monthlyStripePriceId ? stripe.prices.update(current.monthlyStripePriceId, { active: false }) : Promise.resolve(),
+      current.yearlyStripePriceId ? stripe.prices.update(current.yearlyStripePriceId, { active: false }) : Promise.resolve(),
+    ]);
+
+    // Update config in DB
+    const updatedRows = await db.insert(premiumConfigTable).values({
+      id: 1,
+      monthlyPriceCents: newMonthly,
+      yearlyDiscountPercent: newDiscount,
+      monthlyStripePriceId: newMonthlyPrice.id,
+      yearlyStripePriceId: newYearlyPrice.id,
+      stripeProductId: productId,
+      updatedAt: new Date(),
+      updatedBy: req.session.userId,
+    }).onConflictDoUpdate({
+      target: premiumConfigTable.id,
+      set: {
+        monthlyPriceCents: newMonthly,
+        yearlyDiscountPercent: newDiscount,
+        monthlyStripePriceId: newMonthlyPrice.id,
+        yearlyStripePriceId: newYearlyPrice.id,
+        stripeProductId: productId,
+        updatedAt: new Date(),
+        updatedBy: req.session.userId,
+      },
+    }).returning();
+
+    // Sync Stripe data to local DB
+    try { const s = await getStripeSync(); await s.syncBackfill(); } catch { /* non-fatal */ }
+
+    res.json({
+      ok: true,
+      config: updatedRows[0],
+      computed: { yearlyTotalCents: newYearlyTotal, monthlyEquivCents: Math.round(newYearlyTotal / 12) },
+      stripeMonthlyPriceId: newMonthlyPrice.id,
+      stripeYearlyPriceId: newYearlyPrice.id,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Narxlarni yangilashda xato" });
+  }
 });
 
 router.post("/admin/stripe/seed", async (req, res) => {

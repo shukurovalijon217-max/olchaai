@@ -19,6 +19,7 @@ async function enrichPost(post: typeof postsTable.$inferSelect, viewerId = 0) {
 
 router.get("/posts", async (req, res) => {
   try {
+    const viewerId = (req.session as any)?.userId as number | undefined;
     const type = req.query.type as string;
     const userId = req.query.userId ? Number(req.query.userId) : undefined;
     const limit = Math.min(Number(req.query.limit) || 20, 100);
@@ -33,7 +34,7 @@ router.get("/posts", async (req, res) => {
       posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
     }
 
-    const enriched = await Promise.all(posts.map(p => enrichPost(p)));
+    const enriched = await Promise.all(posts.map(p => enrichPost(p, viewerId)));
     res.json(enriched);
   } catch (err) {
     req.log.error(err);
@@ -116,7 +117,8 @@ router.delete("/posts/:id", async (req, res) => {
 router.post("/posts/:id/like", async (req, res) => {
   try {
     const postId = Number(req.params.id);
-    const userId = 1;
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
     const existing = await db.select().from(postLikesTable).where(and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, userId)));
     if (existing.length > 0) {
       await db.delete(postLikesTable).where(and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, userId)));

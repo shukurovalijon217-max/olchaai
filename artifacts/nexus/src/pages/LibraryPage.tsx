@@ -1,10 +1,117 @@
 import { useState, useEffect, useRef, ElementType } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
 import {
   BookOpen, Search, Plus, Star, BookMarked, CheckCircle2,
-  Clock, Heart, X, BookX, Globe, Sparkles, ExternalLink,
-  ArrowRight, Zap, Hash, Lightbulb, BookCopy, ChevronRight
+  Clock, Heart, X, BookX, Sparkles, Globe, ExternalLink,
+  ArrowRight, Zap, Hash, BookCopy
 } from "lucide-react";
+
+/* ── 3D Search Engine Card ──────────────────────────────────────────────── */
+function SearchEngineCard3D({ label, href, logo, className = "", textColor = "text-foreground" }: { label: string; href: string; logo: React.ReactNode; className?: string; textColor?: string }) {
+  const cardRef = useRef<HTMLAnchorElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rotateX = useSpring(useTransform(my, [-1, 1], [12, -12]), { stiffness: 300, damping: 30 });
+  const rotateY = useSpring(useTransform(mx, [-1, 1], [-12, 12]), { stiffness: 300, damping: 30 });
+  const glareX = useTransform(mx, [-1, 1], ["-30%", "130%"]);
+  const glareY = useTransform(my, [-1, 1], ["-30%", "130%"]);
+
+  function onMouseMove(e: React.MouseEvent<HTMLAnchorElement>) {
+    const r = cardRef.current?.getBoundingClientRect();
+    if (!r) return;
+    mx.set(((e.clientX - r.left) / r.width - 0.5) * 2);
+    my.set(((e.clientY - r.top) / r.height - 0.5) * 2);
+  }
+  function onMouseLeave() { mx.set(0); my.set(0); }
+
+  return (
+    <motion.a
+      ref={cardRef}
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      style={{ rotateX, rotateY, transformPerspective: 600, transformStyle: "preserve-3d" }}
+      whileHover={{ scale: 1.08 }}
+      whileTap={{ scale: 0.96 }}
+      className={`relative flex flex-col items-center justify-center gap-2.5 py-5 px-3 rounded-2xl cursor-pointer overflow-hidden select-none border ${className}`}
+    >
+      {/* Glare highlight */}
+      <motion.div
+        className="absolute w-28 h-28 rounded-full pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)",
+          left: glareX,
+          top: glareY,
+          translateX: "-50%",
+          translateY: "-50%",
+        }}
+      />
+      {/* Logo layer — lifted in Z */}
+      <motion.div style={{ translateZ: 20, transformStyle: "preserve-3d" as const }} className="relative z-10">
+        {logo}
+      </motion.div>
+      {/* Label */}
+      <motion.span style={{ translateZ: 12 }} className={`text-xs font-bold tracking-wide relative z-10 ${textColor}`}>
+        {label}
+      </motion.span>
+    </motion.a>
+  );
+}
+
+/* ── Google G logo ── */
+const GoogleLogo = () => (
+  <div style={{
+    width: 44, height: 44, borderRadius: 12,
+    background: "linear-gradient(135deg, #fff 0%, #f1f3f4 100%)",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.28), 0 1px 3px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.9)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  }}>
+    <svg width="26" height="26" viewBox="0 0 48 48">
+      <path fill="#4285F4" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+      <path fill="#34A853" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/>
+      <path fill="#FBBC05" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+      <path fill="#EA4335" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+    </svg>
+  </div>
+);
+
+/* ── Yandex Y logo ── */
+const YandexLogo = () => (
+  <div style={{
+    width: 44, height: 44, borderRadius: 12,
+    background: "linear-gradient(135deg, #FF3C00 0%, #cc2200 100%)",
+    boxShadow: "0 4px 16px rgba(255,60,0,0.45), 0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,140,100,0.4)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  }}>
+    <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+      <text x="6" y="24" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="22" fill="white">Я</text>
+    </svg>
+  </div>
+);
+
+/* ── Scholar cap logo ── */
+const ScholarLogo = () => (
+  <div style={{
+    width: 44, height: 44, borderRadius: 12,
+    background: "linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%)",
+    boxShadow: "0 4px 16px rgba(26,115,232,0.45), 0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(100,180,255,0.3)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  }}>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3z" fill="white"/>
+      <path d="M18.5 12.57l-6.5 3.57-6.5-3.57V16l6.5 3.5 6.5-3.5v-3.43z" fill="rgba(255,255,255,0.6)"/>
+    </svg>
+  </div>
+);
+
+/* ── Web search engines config ── */
+const WEB_ENGINES = [
+  { label: "Google",  bg: "bg-white/5 border-white/10",        textColor: "text-slate-200", Logo: GoogleLogo  },
+  { label: "Yandex",  bg: "bg-red-500/10 border-red-500/20",   textColor: "text-red-300",   Logo: YandexLogo  },
+  { label: "Scholar", bg: "bg-blue-500/10 border-blue-500/20", textColor: "text-blue-300",  Logo: ScholarLogo },
+];
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -379,24 +486,29 @@ export default function LibraryPage() {
               </button>
             </div>
 
-            {/* ── Quick web-search buttons (show when query entered, no results yet) ── */}
+            {/* ── Quick 3D web-search cards (show when query entered, no results yet) ── */}
             <AnimatePresence>
               {searchQ.trim() && !searchLoading && searchResults.length === 0 && !aiResult && (
                 <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                   className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: "Google", url: `https://www.google.com/search?q=${encodeURIComponent(searchQ)}`, icon: Globe, color: "text-blue-400", bg: "from-blue-500/10 to-blue-600/5", border: "border-blue-500/20" },
-                    { label: "Yandex", url: `https://yandex.com/search/?text=${encodeURIComponent(searchQ)}`, icon: ExternalLink, color: "text-red-400", bg: "from-red-500/10 to-red-600/5", border: "border-red-500/20" },
-                    { label: "Scholar", url: `https://scholar.google.com/scholar?q=${encodeURIComponent(searchQ)}`, icon: Lightbulb, color: "text-emerald-400", bg: "from-emerald-500/10 to-emerald-600/5", border: "border-emerald-500/20" },
-                  ].map((item, i) => (
-                    <motion.a key={item.label} href={item.url} target="_blank" rel="noopener noreferrer"
-                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                      whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border bg-gradient-to-br ${item.bg} ${item.border} transition-all cursor-pointer`}>
-                      <item.icon className={`w-5 h-5 ${item.color}`} />
-                      <span className={`text-xs font-semibold ${item.color}`}>{item.label}</span>
-                    </motion.a>
-                  ))}
+                  {WEB_ENGINES.map((eng, i) => {
+                    const urls = [
+                      `https://www.google.com/search?q=${encodeURIComponent(searchQ)}`,
+                      `https://yandex.com/search/?text=${encodeURIComponent(searchQ)}`,
+                      `https://scholar.google.com/scholar?q=${encodeURIComponent(searchQ)}`,
+                    ];
+                    return (
+                      <motion.div key={eng.label} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+                        <SearchEngineCard3D
+                          label={eng.label}
+                          href={urls[i]}
+                          logo={<eng.Logo />}
+                          className={eng.bg}
+                          textColor={eng.textColor}
+                        />
+                      </motion.div>
+                    );
+                  })}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -492,19 +604,26 @@ export default function LibraryPage() {
                     </motion.div>
                   )}
 
-                  {/* Web search quick links — always shown */}
+                  {/* Web search 3D cards — always shown */}
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
                     className="grid grid-cols-3 gap-2 pt-1">
-                    {[
-                      { label: "Google", href: aiResult.webSearches.google, icon: Globe, color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/20 hover:bg-blue-400/20" },
-                      { label: "Yandex", href: aiResult.webSearches.yandex, icon: ExternalLink, color: "text-red-400", bg: "bg-red-400/10 border-red-400/20 hover:bg-red-400/20" },
-                      { label: "Scholar", href: aiResult.webSearches.scholar, icon: Lightbulb, color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20 hover:bg-emerald-400/20" },
-                    ].map(item => (
-                      <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer"
-                        className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border text-xs font-semibold transition-colors ${item.bg} ${item.color}`}>
-                        <item.icon className="w-3.5 h-3.5" /> {item.label}
-                      </a>
-                    ))}
+                    {WEB_ENGINES.map((eng, i) => {
+                      const hrefs = [
+                        aiResult.webSearches.google,
+                        aiResult.webSearches.yandex,
+                        aiResult.webSearches.scholar,
+                      ];
+                      return (
+                        <SearchEngineCard3D
+                          key={eng.label}
+                          label={eng.label}
+                          href={hrefs[i]}
+                          logo={<eng.Logo />}
+                          className={eng.bg}
+                          textColor={eng.textColor}
+                        />
+                      );
+                    })}
                   </motion.div>
                 </motion.div>
               )}

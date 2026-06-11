@@ -2,6 +2,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from
 import {
   BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon,
   Camera, Loader2, Radio, Bell, BellOff, Star, Check, X, Sparkles,
+  ChevronRight, Pencil, Shield, HelpCircle, Globe, Users, Plus, Zap,
 } from "lucide-react";
 import {
   useGetUser, useListPosts, useFollowUser, useUpdateUser, getGetUserQueryKey,
@@ -10,13 +11,11 @@ import {
   getListCreatorPlansQueryKey, getCheckCreatorSubscriptionQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 interface ProfilePageProps { userId: number; }
 
@@ -26,13 +25,38 @@ const ORBIT_PARTICLES = [
   { radius: 80, color: "#34d399", glow: "#10b981", size: 6, dur: 9.5, delay: 3.5 },
 ];
 
+/* ─── Reusable bottom sheet ─────────────────────────────────── */
+function BottomSheet({ open, onClose, children }: { open: boolean; onClose: () => void; children: ReactNode }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 480, damping: 42 }}
+            className="relative w-full max-w-sm z-10 rounded-t-[28px] bg-card border-t border-x border-border/60 shadow-2xl overflow-hidden"
+          >
+            <div className="flex justify-center pt-2.5 pb-1">
+              <div className="w-9 h-[3px] rounded-full bg-muted-foreground/25" />
+            </div>
+            {children}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ─── 3D Avatar ─────────────────────────────────────────────── */
 function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, onUploadClick }: {
-  avatarUrl?: string | null;
-  displayName: string;
-  isVerified?: boolean;
-  isUploading: boolean;
-  isOwner: boolean;
-  onUploadClick: () => void;
+  avatarUrl?: string | null; displayName: string; isVerified?: boolean;
+  isUploading: boolean; isOwner: boolean; onUploadClick: () => void;
 }) {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -45,120 +69,52 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
     mouseY.set(e.clientY - rect.top - rect.height / 2);
   }, [mouseX, mouseY]);
 
-  const handleMouseLeave = useCallback(() => {
-    mouseX.set(0);
-    mouseY.set(0);
-  }, [mouseX, mouseY]);
-
   return (
-    <div
-      className="relative"
-      style={{ perspective: "900px", width: 112, height: 112 }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
-      <motion.div
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className="relative w-28 h-28"
-      >
-        {/* Pulsing glow aura */}
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.45, 0.75, 0.45] }}
+    <div style={{ perspective: "900px", width: 112, height: 112 }} className="relative"
+      onMouseMove={handleMouseMove} onMouseLeave={() => { mouseX.set(0); mouseY.set(0); }}>
+      <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="relative w-28 h-28">
+        {/* Glow */}
+        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.45, 0.75, 0.45] }}
           transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -inset-6 rounded-full pointer-events-none"
-          style={{
-            background: "radial-gradient(circle, rgba(124,58,237,0.4) 0%, rgba(59,130,246,0.25) 50%, transparent 75%)",
-            filter: "blur(10px)",
-          }}
-        />
-
-        {/* Activity rings — SVG */}
-        <svg
-          className="absolute pointer-events-none"
-          style={{ top: -32, left: -32, width: 176, height: 176, overflow: "visible" }}
-          viewBox="0 0 176 176"
-        >
+          style={{ background: "radial-gradient(circle, rgba(124,58,237,0.4) 0%, rgba(59,130,246,0.25) 50%, transparent 75%)", filter: "blur(10px)" }} />
+        {/* Activity rings */}
+        <svg className="absolute pointer-events-none" style={{ top: -32, left: -32, width: 176, height: 176, overflow: "visible" }} viewBox="0 0 176 176">
           <defs>
-            <linearGradient id="gr1" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#7c3aed" /><stop offset="100%" stopColor="#a78bfa" />
-            </linearGradient>
-            <linearGradient id="gr2" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#3b82f6" /><stop offset="100%" stopColor="#67e8f9" />
-            </linearGradient>
-            <linearGradient id="gr3" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#34d399" />
-            </linearGradient>
+            <linearGradient id="gr1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#7c3aed" /><stop offset="100%" stopColor="#a78bfa" /></linearGradient>
+            <linearGradient id="gr2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#3b82f6" /><stop offset="100%" stopColor="#67e8f9" /></linearGradient>
+            <linearGradient id="gr3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#34d399" /></linearGradient>
           </defs>
-          {/* Ring tracks */}
           <circle cx="88" cy="88" r="82" fill="none" stroke="#7c3aed12" strokeWidth="5" />
           <circle cx="88" cy="88" r="72" fill="none" stroke="#3b82f612" strokeWidth="4.5" />
           <circle cx="88" cy="88" r="62" fill="none" stroke="#10b98112" strokeWidth="4" />
-          {/* Animated ring fills */}
-          <motion.circle cx="88" cy="88" r="82" fill="none" stroke="url(#gr1)" strokeWidth="5"
-            strokeLinecap="round" strokeDasharray="515 515"
-            animate={{ strokeDashoffset: [515, 90, 515] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            style={{ rotate: "-90deg", transformOrigin: "88px 88px" }}
-          />
-          <motion.circle cx="88" cy="88" r="72" fill="none" stroke="url(#gr2)" strokeWidth="4.5"
-            strokeLinecap="round" strokeDasharray="452 452"
-            animate={{ strokeDashoffset: [452, 70, 452] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-            style={{ rotate: "-90deg", transformOrigin: "88px 88px" }}
-          />
-          <motion.circle cx="88" cy="88" r="62" fill="none" stroke="url(#gr3)" strokeWidth="4"
-            strokeLinecap="round" strokeDasharray="389 389"
-            animate={{ strokeDashoffset: [389, 55, 389] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-            style={{ rotate: "-90deg", transformOrigin: "88px 88px" }}
-          />
+          <motion.circle cx="88" cy="88" r="82" fill="none" stroke="url(#gr1)" strokeWidth="5" strokeLinecap="round" strokeDasharray="515 515"
+            animate={{ strokeDashoffset: [515, 90, 515] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            style={{ rotate: "-90deg", transformOrigin: "88px 88px" }} />
+          <motion.circle cx="88" cy="88" r="72" fill="none" stroke="url(#gr2)" strokeWidth="4.5" strokeLinecap="round" strokeDasharray="452 452"
+            animate={{ strokeDashoffset: [452, 70, 452] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+            style={{ rotate: "-90deg", transformOrigin: "88px 88px" }} />
+          <motion.circle cx="88" cy="88" r="62" fill="none" stroke="url(#gr3)" strokeWidth="4" strokeLinecap="round" strokeDasharray="389 389"
+            animate={{ strokeDashoffset: [389, 55, 389] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+            style={{ rotate: "-90deg", transformOrigin: "88px 88px" }} />
         </svg>
-
-        {/* Orbiting particles */}
+        {/* Particles */}
         {ORBIT_PARTICLES.map(({ radius, color, glow, size, dur, delay }, i) => (
-          <motion.div
-            key={i}
-            className="absolute"
-            style={{ top: "50%", left: "50%", width: 0, height: 0 }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: dur, repeat: Infinity, ease: "linear", delay }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                width: size,
-                height: size,
-                borderRadius: "50%",
-                background: color,
-                boxShadow: `0 0 ${size * 2}px ${glow}, 0 0 ${size * 4}px ${glow}60`,
-                top: -radius - size / 2,
-                left: -size / 2,
-              }}
-            />
+          <motion.div key={i} className="absolute" style={{ top: "50%", left: "50%", width: 0, height: 0 }}
+            animate={{ rotate: 360 }} transition={{ duration: dur, repeat: Infinity, ease: "linear", delay }}>
+            <div style={{ position: "absolute", width: size, height: size, borderRadius: "50%", background: color,
+              boxShadow: `0 0 ${size * 2}px ${glow}, 0 0 ${size * 4}px ${glow}60`, top: -radius - size / 2, left: -size / 2 }} />
           </motion.div>
         ))}
-
-        {/* Spinning conic gradient border */}
-        <div
-          className="absolute inset-0 rounded-[22px] overflow-hidden"
-          style={{ padding: "2.5px" }}
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            className="absolute"
-            style={{
-              width: "180%", height: "180%",
-              top: "-40%", left: "-40%",
-              background: "conic-gradient(from 0deg, #7c3aed, #818cf8, #3b82f6, #06b6d4, #34d399, #f59e0b, #7c3aed)",
-            }}
-          />
+        {/* Spinning gradient border */}
+        <div className="absolute inset-0 rounded-[22px] overflow-hidden" style={{ padding: "2.5px" }}>
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute" style={{ width: "180%", height: "180%", top: "-40%", left: "-40%",
+              background: "conic-gradient(from 0deg, #7c3aed, #818cf8, #3b82f6, #06b6d4, #34d399, #f59e0b, #7c3aed)" }} />
           <div className="relative w-full h-full rounded-[20px] overflow-hidden bg-background z-10 group/av cursor-pointer"
                onClick={isOwner ? onUploadClick : undefined}>
             {isUploading ? (
-              <div className="w-full h-full flex items-center justify-center bg-muted">
-                <Loader2 className="w-7 h-7 text-primary animate-spin" />
-              </div>
+              <div className="w-full h-full flex items-center justify-center bg-muted"><Loader2 className="w-7 h-7 text-primary animate-spin" /></div>
             ) : avatarUrl ? (
               <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -173,27 +129,15 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
             )}
           </div>
         </div>
-
-        {/* 3D "lifted" light sheen */}
-        <motion.div
-          animate={{ opacity: [0.15, 0.35, 0.15] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        {/* Sheen */}
+        <motion.div animate={{ opacity: [0.15, 0.35, 0.15] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           className="absolute inset-0 rounded-[22px] pointer-events-none z-20"
-          style={{
-            background: "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 50%)",
-            transform: "translateZ(18px)",
-          }}
-        />
-
-        {/* Verified / Premium badge */}
+          style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 50%)", transform: "translateZ(18px)" }} />
+        {/* Verified badge */}
         {isVerified && (
-          <motion.div
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
+          <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.4 }}
-            className="absolute -bottom-2 -right-2 z-30"
-            style={{ transform: "translateZ(24px)" }}
-          >
+            className="absolute -bottom-2 -right-2 z-30" style={{ transform: "translateZ(24px)" }}>
             <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center shadow-lg shadow-primary/30">
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
                 <BadgeCheck className="w-4 h-4 text-white" />
@@ -206,6 +150,350 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
   );
 }
 
+/* ─── Live Sheet ─────────────────────────────────────────────── */
+const LIVE_CATS = ["🎵 Musiqa", "🎮 O'yin", "💬 Suhbat", "⚽ Sport", "🎨 San'at", "📚 Ta'lim"];
+
+function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }: {
+  open: boolean; onClose: () => void; liveTitle: string;
+  setLiveTitle: (v: string) => void; onStart: () => void; starting: boolean;
+}) {
+  const [category, setCategory] = useState("🎵 Musiqa");
+  const [audience, setAudience] = useState<"public" | "subscribers">("public");
+
+  return (
+    <BottomSheet open={open} onClose={onClose}>
+      {/* Header */}
+      <div className="px-5 pt-1 pb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-400 animate-ping" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500" />
+            <Radio className="w-5 h-5 text-red-500" />
+          </div>
+          <h2 className="text-base font-bold">Jonli efir</h2>
+        </div>
+        <button onClick={onClose} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Camera preview simulation */}
+      <div className="mx-5 mb-4 h-28 rounded-2xl overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
+        <motion.div animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 2, repeat: Infinity }}
+          className="absolute inset-0 flex items-center justify-center flex-col gap-1.5">
+          <div className="w-10 h-10 rounded-full border-2 border-white/30 flex items-center justify-center">
+            <Camera className="w-5 h-5 text-white/50" />
+          </div>
+          <span className="text-white/40 text-xs font-medium">Kamera</span>
+        </motion.div>
+        {/* LIVE badge */}
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 bg-red-600 rounded-md px-2 py-0.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          <span className="text-white text-[10px] font-black tracking-widest">LIVE</span>
+        </div>
+        {/* Viewer count placeholder */}
+        <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-black/50 rounded-md px-2 py-0.5">
+          <Users className="w-3 h-3 text-white/70" />
+          <span className="text-white/70 text-[10px] font-semibold">0</span>
+        </div>
+      </div>
+
+      <div className="px-5 pb-6 space-y-4">
+        {/* Title */}
+        <div>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Efir nomi</label>
+          <input value={liveTitle} onChange={e => setLiveTitle(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") onStart(); }}
+            placeholder="Masalan: Yangi kecha muzikasi 🎵"
+            maxLength={80}
+            className="w-full bg-muted rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 ring-red-500/60 placeholder:text-muted-foreground/50" autoFocus />
+          <p className="text-right text-[10px] text-muted-foreground/50 mt-1">{liveTitle.length}/80</p>
+        </div>
+
+        {/* Categories */}
+        <div>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 block">Kategoriya</label>
+          <div className="flex flex-wrap gap-1.5">
+            {LIVE_CATS.map(cat => (
+              <motion.button key={cat} whileTap={{ scale: 0.93 }} onClick={() => setCategory(cat)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${category === cat
+                  ? "bg-red-500 text-white shadow-md shadow-red-500/30"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"}`}>
+                {cat}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        {/* Audience */}
+        <div>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 block">Auditoriya</label>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              ["public", Globe, "Hammaga", "Ochiq efir"],
+              ["subscribers", Star, "Obunachilarga", "Maxsus efir"],
+            ] as const).map(([val, Icon, label, sub]) => (
+              <motion.button key={val} whileTap={{ scale: 0.97 }} onClick={() => setAudience(val)}
+                className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all ${audience === val
+                  ? "border-red-500/60 bg-red-500/8 text-foreground"
+                  : "border-border bg-muted/40 text-muted-foreground hover:border-border/80"}`}>
+                <Icon className={`w-4 h-4 shrink-0 ${audience === val ? "text-red-500" : ""}`} />
+                <div>
+                  <p className="text-xs font-semibold">{label}</p>
+                  <p className="text-[10px] opacity-60">{sub}</p>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        {/* Start button */}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onStart}
+          disabled={!liveTitle.trim() || starting}
+          className="w-full h-11 rounded-2xl bg-gradient-to-r from-red-600 to-rose-500 text-white font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2 shadow-lg shadow-red-500/30 relative overflow-hidden"
+        >
+          {!starting && (
+            <motion.div className="absolute inset-0 bg-white/10"
+              animate={{ x: ["-100%", "200%"] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              style={{ skewX: -20 }} />
+          )}
+          {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
+          {starting ? "Ulanmoqda…" : "Efirni boshlash"}
+        </motion.button>
+      </div>
+    </BottomSheet>
+  );
+}
+
+/* ─── Subscription Sheet ─────────────────────────────────────── */
+function SubscriptionSheet({ open, onClose, isOwner, plans, isSubscribed, subscribingPlanId, subError,
+  onSubscribe, onUnsubscribe, onCreatePlan, newPlanName, setNewPlanName, newPlanDesc, setNewPlanDesc,
+  newPlanPrice, setNewPlanPrice, newPlanPerks, setNewPlanPerks, creatingPlan }: {
+  open: boolean; onClose: () => void; isOwner: boolean;
+  plans: Array<{ id: number; name: string; description?: string | null; price?: number | null; perks?: string[] | null; subscriberCount?: number | null }>;
+  isSubscribed: boolean; subscribingPlanId: number | null; subError: string | null;
+  onSubscribe: (id: number) => void; onUnsubscribe: (id: number) => void;
+  onCreatePlan: () => void;
+  newPlanName: string; setNewPlanName: (v: string) => void;
+  newPlanDesc: string; setNewPlanDesc: (v: string) => void;
+  newPlanPrice: string; setNewPlanPrice: (v: string) => void;
+  newPlanPerks: string; setNewPlanPerks: (v: string) => void;
+  creatingPlan: boolean;
+}) {
+  const [creating, setCreating] = useState(false);
+  const totalSubs = plans.reduce((s, p) => s + (p.subscriberCount ?? 0), 0);
+  const monthlyRev = plans.reduce((s, p) => s + ((p.price ?? 0) / 100) * (p.subscriberCount ?? 0), 0);
+
+  return (
+    <BottomSheet open={open} onClose={onClose}>
+      {/* Header */}
+      <div className="px-5 pt-1 pb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+            <Star className="w-3.5 h-3.5 text-white fill-white" />
+          </div>
+          <h2 className="text-base font-bold">{isOwner ? "Obuna rejalari" : "Obuna"}</h2>
+        </div>
+        <button onClick={onClose} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="px-5 pb-6 max-h-[65vh] overflow-y-auto space-y-3">
+        {/* Owner revenue card */}
+        {isOwner && plans.length > 0 && (
+          <div className="rounded-2xl bg-gradient-to-br from-yellow-500/15 to-orange-500/10 border border-yellow-500/20 p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Oylik daromad</p>
+              <p className="text-lg font-black text-yellow-600 dark:text-yellow-400">{monthlyRev.toLocaleString()} so'm</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Obunachi</p>
+              <p className="text-lg font-black text-foreground">{totalSubs}</p>
+            </div>
+          </div>
+        )}
+
+        {subError && (
+          <p className="text-red-500 text-xs text-center bg-red-500/10 rounded-xl py-2">{subError}</p>
+        )}
+
+        {plans.length === 0 && !creating ? (
+          <div className="py-8 text-center text-muted-foreground">
+            <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-3 flex items-center justify-center">
+              <Star className="w-6 h-6 opacity-30" />
+            </div>
+            <p className="text-sm font-medium">{isOwner ? "Hali reja yo'q" : "Hozircha obuna yo'q"}</p>
+            <p className="text-xs mt-1 opacity-60">{isOwner ? "Birinchi rejangizni yarating" : "Kreator hali reja qo'shmagan"}</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {plans.map((plan, idx) => (
+              <motion.div key={plan.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }}
+                className="rounded-2xl border border-border/60 bg-muted/30 p-3.5">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-yellow-400/20 to-orange-500/20 border border-yellow-500/20 flex items-center justify-center">
+                      <Star className="w-4 h-4 text-yellow-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{plan.name}</p>
+                      {plan.description && <p className="text-[10px] text-muted-foreground">{plan.description}</p>}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-2">
+                    <p className="text-sm font-black text-yellow-600 dark:text-yellow-400">{((plan.price ?? 0) / 100).toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground">so'm/oy</p>
+                  </div>
+                </div>
+                {plan.perks && plan.perks.length > 0 && (
+                  <ul className="space-y-1 mb-2.5">
+                    {plan.perks.map((perk, i) => (
+                      <li key={i} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <Check className="w-3 h-3 text-green-500 shrink-0" /> {perk}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="flex items-center justify-between pt-1 border-t border-border/40">
+                  <span className="text-[10px] text-muted-foreground">{plan.subscriberCount ?? 0} obunachi</span>
+                  {!isOwner && (
+                    isSubscribed ? (
+                      <motion.button whileTap={{ scale: 0.93 }} onClick={() => onUnsubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
+                        className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors">
+                        {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <BellOff className="w-3 h-3" />} Bekor
+                      </motion.button>
+                    ) : (
+                      <motion.button whileTap={{ scale: 0.93 }} onClick={() => onSubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-black bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-md shadow-yellow-500/25 disabled:opacity-50">
+                        {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3 fill-white" />} Obuna
+                      </motion.button>
+                    )
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Create new plan (owner) */}
+        {isOwner && (
+          creating ? (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-4 space-y-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm font-bold flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-yellow-500" /> Yangi reja</p>
+                <button onClick={() => setCreating(false)} className="text-muted-foreground"><X className="w-4 h-4" /></button>
+              </div>
+              <input value={newPlanName} onChange={e => setNewPlanName(e.target.value)} placeholder="Reja nomi (masalan: Oltin ⭐)"
+                className="w-full bg-muted rounded-xl px-3.5 py-2 text-sm outline-none focus:ring-2 ring-yellow-500/60" />
+              <input value={newPlanDesc} onChange={e => setNewPlanDesc(e.target.value)} placeholder="Qisqacha tavsif"
+                className="w-full bg-muted rounded-xl px-3.5 py-2 text-sm outline-none focus:ring-2 ring-yellow-500/60" />
+              <div className="relative">
+                <input type="number" value={newPlanPrice} onChange={e => setNewPlanPrice(e.target.value)} placeholder="Oylik narx"
+                  className="w-full bg-muted rounded-xl px-3.5 py-2 text-sm outline-none focus:ring-2 ring-yellow-500/60 pr-14" />
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">so'm</span>
+              </div>
+              <textarea value={newPlanPerks} onChange={e => setNewPlanPerks(e.target.value)} rows={2}
+                placeholder="Imtiyozlar (har qatorda bir imtiyoz)"
+                className="w-full bg-muted rounded-xl px-3.5 py-2 text-sm outline-none focus:ring-2 ring-yellow-500/60 resize-none" />
+              <motion.button whileTap={{ scale: 0.97 }} onClick={onCreatePlan} disabled={!newPlanName.trim() || !newPlanPrice || creatingPlan}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Yaratish
+              </motion.button>
+            </motion.div>
+          ) : (
+            <motion.button whileTap={{ scale: 0.97 }} onClick={() => setCreating(true)}
+              className="w-full py-2.5 rounded-2xl border-2 border-dashed border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-yellow-500/5 transition-colors">
+              <Plus className="w-4 h-4" /> Yangi reja qo'shish
+            </motion.button>
+          )
+        )}
+      </div>
+    </BottomSheet>
+  );
+}
+
+/* ─── Settings Sheet ─────────────────────────────────────────── */
+function SettingsSheet({ open, onClose, user, isOwner, onAvatarClick, onCoverClick, onOpenSubscription }: {
+  open: boolean; onClose: () => void;
+  user: { displayName: string; username: string; avatarUrl?: string | null };
+  isOwner: boolean; onAvatarClick: () => void; onCoverClick: () => void;
+  onOpenSubscription: () => void;
+}) {
+  const rows = [
+    { icon: Pencil, label: "Profilni tahrirlash", sub: "Ism, bio, avatar", color: "text-violet-400", onClick: onAvatarClick },
+    { icon: Bell, label: "Bildirishnomalar", sub: "Push, email, SMS", color: "text-blue-400", onClick: () => {} },
+    { icon: Shield, label: "Maxfiylik", sub: "Kim ko'ra oladi", color: "text-green-400", onClick: () => {} },
+    ...(isOwner ? [{ icon: Sparkles, label: "Obuna rejalari", sub: "Daromad va rejalar", color: "text-yellow-400", onClick: () => { onClose(); onOpenSubscription(); } }] : []),
+    { icon: Zap, label: "Premium", sub: "Kengaytirilgan imkoniyatlar", color: "text-orange-400", onClick: () => {} },
+    { icon: HelpCircle, label: "Yordam", sub: "FAQ va qo'llab-quvvatlash", color: "text-muted-foreground", onClick: () => {} },
+  ];
+
+  return (
+    <BottomSheet open={open} onClose={onClose}>
+      {/* User card */}
+      <div className="px-5 pt-1 pb-4 flex items-center gap-3">
+        <div className="w-11 h-11 rounded-2xl overflow-hidden bg-muted border border-border/60 shrink-0">
+          {user.avatarUrl ? (
+            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500/20 to-blue-500/20">
+              <span className="text-lg font-black text-primary">{user.displayName[0]}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-foreground truncate">{user.displayName}</p>
+          <p className="text-xs text-muted-foreground">@{user.username}</p>
+        </div>
+        <button onClick={onClose} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Settings rows */}
+      <div className="px-3 pb-6 space-y-0.5">
+        {rows.map(({ icon: Icon, label, sub, color, onClick }, i) => (
+          <motion.button key={i} whileTap={{ scale: 0.985 }} onClick={onClick}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-muted/60 transition-colors text-left">
+            <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center shrink-0">
+              <Icon className={`w-4 h-4 ${color}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">{label}</p>
+              <p className="text-[10px] text-muted-foreground">{sub}</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+          </motion.button>
+        ))}
+
+        {/* Divider + cover change */}
+        {isOwner && (
+          <>
+            <div className="h-px bg-border/40 my-1.5 mx-3" />
+            <motion.button whileTap={{ scale: 0.985 }} onClick={onCoverClick}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-muted/60 transition-colors text-left">
+              <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                <Camera className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Muqova rasmini o'zgartirish</p>
+                <p className="text-[10px] text-muted-foreground">Profil banneringiz</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+            </motion.button>
+          </>
+        )}
+      </div>
+    </BottomSheet>
+  );
+}
+
+/* ─── Main page ──────────────────────────────────────────────── */
 export default function ProfilePage({ userId }: ProfilePageProps) {
   const { t } = useTranslation();
   const { data: user, isLoading } = useGetUser(userId, { query: { queryKey: getGetUserQueryKey(userId) } });
@@ -222,11 +510,14 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [, navigate] = useLocation();
-  const [showGoLive, setShowGoLive] = useState(false);
+
+  const [showLive, setShowLive] = useState(false);
+  const [showSub, setShowSub] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
   const [liveTitle, setLiveTitle] = useState("");
   const [liveStarting, setLiveStarting] = useState(false);
-  const [showPlansModal, setShowPlansModal] = useState(false);
-  const [showCreatePlan, setShowCreatePlan] = useState(false);
+
   const [newPlanName, setNewPlanName] = useState("");
   const [newPlanDesc, setNewPlanDesc] = useState("");
   const [newPlanPrice, setNewPlanPrice] = useState("");
@@ -269,23 +560,19 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   };
 
   const handleSubscribe = async (planId: number) => {
-    setSubError(null);
-    setSubscribingPlanId(planId);
+    setSubError(null); setSubscribingPlanId(planId);
     try {
       await subscribeMutation.mutateAsync({ planId });
-      await refetchSub();
-      setShowPlansModal(false);
+      await refetchSub(); setShowSub(false);
     } catch (err: any) {
-      setSubError(err?.response?.data?.error ?? t("profile.subscribe_error"));
+      setSubError(err?.response?.data?.error ?? "Xatolik yuz berdi");
     } finally { setSubscribingPlanId(null); }
   };
 
   const handleUnsubscribe = async (planId: number) => {
     setSubscribingPlanId(planId);
-    try {
-      await unsubscribeMutation.mutateAsync({ planId });
-      await refetchSub();
-    } catch {} finally { setSubscribingPlanId(null); }
+    try { await unsubscribeMutation.mutateAsync({ planId }); await refetchSub(); }
+    catch {} finally { setSubscribingPlanId(null); }
   };
 
   const handleCreatePlan = async () => {
@@ -293,11 +580,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
     setCreatingPlan(true);
     try {
       const perks = newPlanPerks.split("\n").map(p => p.trim()).filter(Boolean);
-      await createPlanMutation.mutateAsync({
-        data: { name: newPlanName.trim(), description: newPlanDesc.trim() || undefined, price: Math.round(parseFloat(newPlanPrice) * 100), perks }
-      });
-      qc.invalidateQueries({ queryKey: ["listCreatorPlans"] });
-      setShowCreatePlan(false);
+      await createPlanMutation.mutateAsync({ data: { name: newPlanName.trim(), description: newPlanDesc.trim() || undefined, price: Math.round(parseFloat(newPlanPrice) * 100), perks } });
+      qc.invalidateQueries({ queryKey: getListCreatorPlansQueryKey(userId) });
       setNewPlanName(""); setNewPlanDesc(""); setNewPlanPrice(""); setNewPlanPerks("");
     } catch {} finally { setCreatingPlan(false); }
   };
@@ -322,18 +606,12 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           ? <img src={user.coverUrl} alt="" className="w-full h-full object-cover" />
           : (
             <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-violet-900/80 via-blue-900/60 to-background">
-              <motion.div
-                animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
-                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+              <motion.div animate={{ x: [0, 30, 0], y: [0, -20, 0] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute -top-20 -left-20 w-64 h-64 rounded-full opacity-30"
-                style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 70%)" }}
-              />
-              <motion.div
-                animate={{ x: [0, -25, 0], y: [0, 15, 0] }}
-                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 70%)" }} />
+              <motion.div animate={{ x: [0, -25, 0], y: [0, 15, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
                 className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full opacity-25"
-                style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }}
-              />
+                style={{ background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }} />
             </div>
           )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
@@ -343,8 +621,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               onChange={e => { const f = e.target.files?.[0]; if (f) upCover(f); e.target.value = ""; }} />
             <button onClick={() => coverInputRef.current?.click()}
               className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/50 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70">
-              {coverUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
-              Cover
+              {coverUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />} Cover
             </button>
           </>
         )}
@@ -352,102 +629,80 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
       {/* Profile info */}
       <div className="px-5">
-        {/* Avatar row */}
+        {/* Avatar + actions row */}
         <div className="flex items-end justify-between mb-4" style={{ marginTop: -44 }}>
           <div className="relative z-10">
             <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
-            <Avatar3D
-              avatarUrl={user.avatarUrl}
-              displayName={user.displayName}
-              isVerified={user.isVerified}
-              isUploading={avatarUploading}
-              isOwner={isOwner}
-              onUploadClick={() => avatarInputRef.current?.click()}
-            />
+            <Avatar3D avatarUrl={user.avatarUrl} displayName={user.displayName} isVerified={user.isVerified}
+              isUploading={avatarUploading} isOwner={isOwner} onUploadClick={() => avatarInputRef.current?.click()} />
           </div>
 
-          {/* Action buttons */}
-          <div className="flex gap-2 pb-1">
+          {/* Compact action buttons */}
+          <div className="flex items-center gap-1.5 pb-1">
             {isOwner ? (
-              <div className="flex gap-2">
-                <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowGoLive(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors shadow-lg shadow-red-500/25">
-                  <Radio className="w-4 h-4" /> {t("profile.go_live")}
+              <>
+                {/* Live button */}
+                <motion.button whileTap={{ scale: 0.92 }} onClick={() => setShowLive(true)}
+                  className="relative flex items-center gap-1.5 h-8 px-3 rounded-full bg-gradient-to-r from-red-600 to-rose-500 text-white text-xs font-bold shadow-lg shadow-red-600/30">
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-300 animate-ping" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-400" />
+                  <Radio className="w-3 h-3" /> Efir
                 </motion.button>
-                <button onClick={() => setShowCreatePlan(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-sm font-semibold hover:from-yellow-500/30 hover:to-orange-500/30 transition-all">
-                  <Sparkles className="w-4 h-4" /> {t("profile.subscription")}
-                </button>
-                <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted text-muted-foreground text-sm font-semibold hover:bg-card transition-colors">
-                  <Settings className="w-4 h-4" />
-                </button>
-              </div>
+                {/* Plans button */}
+                <motion.button whileTap={{ scale: 0.92 }} onClick={() => setShowSub(true)}
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-xs font-bold hover:from-yellow-500/30 hover:to-orange-500/30 transition-all">
+                  <Star className="w-3 h-3" /> Obuna
+                </motion.button>
+                {/* Settings button */}
+                <motion.button whileTap={{ scale: 0.92 }} onClick={() => setShowSettings(true)}
+                  className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors">
+                  <Settings className="w-3.5 h-3.5" />
+                </motion.button>
+              </>
             ) : (
-              <div className="flex gap-2">
-                <motion.button whileTap={{ scale: 0.95 }} onClick={handleFollow}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${following ? "bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive" : "bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/25"}`}>
-                  {following ? <><UserCheck className="w-4 h-4" /> {t("profile.following_btn")}</> : <><UserPlus className="w-4 h-4" /> {t("profile.follow_btn")}</>}
+              <>
+                <motion.button whileTap={{ scale: 0.93 }} onClick={handleFollow}
+                  className={`flex items-center gap-1.5 h-8 px-4 rounded-full text-xs font-bold transition-all ${following ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground shadow-md shadow-primary/25"}`}>
+                  {following ? <><UserCheck className="w-3.5 h-3.5" /> Kuzatmoqda</> : <><UserPlus className="w-3.5 h-3.5" /> Kuzatish</>}
                 </motion.button>
-                <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowPlansModal(true)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${isSubscribed ? "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/40 text-yellow-600 dark:text-yellow-400" : "bg-muted text-muted-foreground hover:border-yellow-400/40 hover:text-yellow-600 dark:hover:text-yellow-400"} border border-transparent`}>
-                  {isSubscribed ? <><Check className="w-4 h-4" /> {t("profile.subscribed")}</> : <><Bell className="w-4 h-4" /> {t("profile.subscribe_btn")}</>}
+                <motion.button whileTap={{ scale: 0.93 }} onClick={() => setShowSub(true)}
+                  className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold transition-all border ${isSubscribed ? "bg-yellow-500/15 border-yellow-500/30 text-yellow-600 dark:text-yellow-400" : "bg-muted border-border/60 text-muted-foreground"}`}>
+                  {isSubscribed ? <><Check className="w-3.5 h-3.5" /> Obuna</> : <><Bell className="w-3.5 h-3.5" /> Obuna</>}
                 </motion.button>
-              </div>
+              </>
             )}
           </div>
         </div>
 
         {/* Name / bio */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-4 pl-1"
-        >
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-4 pl-0.5">
           <div className="flex items-center gap-2 mb-0.5">
             <h1 className="text-xl font-bold text-foreground">{user.displayName}</h1>
             {user.isVerified && <BadgeCheck className="w-4 h-4 text-primary" />}
           </div>
-          <p className="text-sm text-muted-foreground mb-2">@{user.username}</p>
+          <p className="text-sm text-muted-foreground mb-1.5">@{user.username}</p>
           {user.bio && <p className="text-sm text-foreground leading-relaxed">{user.bio}</p>}
         </motion.div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 py-4 border-y border-border mb-5">
           {[
-            { label: t("profile.posts"), value: myPosts.length, color: "text-primary" },
-            { label: t("profile.followers"), value: user.followersCount, color: "text-violet-400" },
-            { label: t("profile.following"), value: user.followingCount, color: "text-blue-400" },
+            { label: "Post", value: myPosts.length, color: "text-primary" },
+            { label: "Obunachi", value: user.followersCount, color: "text-violet-400" },
+            { label: "Kuzatish", value: user.followingCount, color: "text-blue-400" },
           ].map(({ label, value, color }, i) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 + i * 0.08 }}
-              className="text-center"
-            >
+            <motion.div key={label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 + i * 0.08 }} className="text-center">
               <p className={`text-xl font-bold ${color}`}>{(value ?? 0).toLocaleString()}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
             </motion.div>
           ))}
         </div>
 
-        {/* Creator plans banner (owner view) */}
-        {isOwner && plans.length > 0 && (
-          <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Star className="w-4 h-4 text-yellow-500" />
-              <span className="text-sm font-semibold text-foreground">{t("profile.plans_count", { count: plans.length })}</span>
-              <span className="text-xs text-muted-foreground">· {t("profile.subscribers_count", { count: plans.reduce((s, p) => s + (p.subscriberCount ?? 0), 0) })}</span>
-            </div>
-            <button onClick={() => setShowPlansModal(true)} className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold hover:underline">{t("profile.view")}</button>
-          </div>
-        )}
-
         {/* Tabs */}
         <div className="flex gap-1 mb-4 bg-muted rounded-xl p-1">
-          {([["posts", Grid3X3, t("profile.posts")], ["reels", Play, "Reels"]] as const).map(([tabId, Icon, label]) => (
+          {([["posts", Grid3X3, "Postlar"], ["reels", Play, "Reels"]] as const).map(([tabId, Icon, label]) => (
             <button key={tabId} onClick={() => setTab(tabId)}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all ${tab === tabId ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>
               <Icon className="w-4 h-4" /> {label}
@@ -455,12 +710,11 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           ))}
         </div>
 
-        {/* Posts tab */}
         {tab === "posts" && (
           myPosts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <BookmarkIcon className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">{t("profile.no_posts")}</p>
+              <p className="text-sm">Hali post yo'q</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
@@ -477,12 +731,11 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           )
         )}
 
-        {/* Reels tab */}
         {tab === "reels" && (
           reels.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Play className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">{t("profile.no_reels")}</p>
+              <p className="text-sm">Hali reel yo'q</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
@@ -493,8 +746,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     : reel.videoUrl ? (
                       <video src={reel.videoUrl} className="w-full h-full object-cover" muted preload="none"
                         onMouseEnter={e => (e.target as HTMLVideoElement).play()}
-                        onMouseLeave={e => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
-                      />
+                        onMouseLeave={e => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }} />
                     ) : <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center"><Play className="w-8 h-8 text-primary/40" /></div>
                   }
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -511,129 +763,27 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         )}
       </div>
 
-      {/* Go Live modal */}
-      {showGoLive && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className="bg-card rounded-2xl p-6 w-full max-w-sm border border-border shadow-2xl">
-            <h2 className="text-lg font-bold mb-1 flex items-center gap-2"><Radio className="w-5 h-5 text-red-500" /> {t("profile.live_title")}</h2>
-            <p className="text-xs text-muted-foreground mb-4">{t("profile.live_subtitle")}</p>
-            <input value={liveTitle} onChange={e => setLiveTitle(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleGoLive(); }}
-              placeholder="Masalan: Yangi kecha muzikasi 🎵"
-              className="w-full bg-muted rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 ring-red-500 mb-4" autoFocus />
-            <div className="flex gap-3">
-              <button onClick={() => setShowGoLive(false)} className="flex-1 py-2.5 rounded-xl bg-muted text-muted-foreground font-semibold text-sm">{t("common.cancel")}</button>
-              <button onClick={handleGoLive} disabled={!liveTitle.trim() || liveStarting}
-                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 disabled:opacity-50 flex items-center justify-center gap-2">
-                {liveStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />} {t("profile.start")}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      {/* ── Bottom Sheets ── */}
+      <LiveSheet open={showLive} onClose={() => setShowLive(false)}
+        liveTitle={liveTitle} setLiveTitle={setLiveTitle}
+        onStart={handleGoLive} starting={liveStarting} />
 
-      {/* Creator Plans Modal */}
-      <AnimatePresence>
-        {showPlansModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 flex items-end justify-center p-0 sm:items-center sm:p-4">
-            <motion.div initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 60 }}
-              className="bg-card rounded-t-3xl sm:rounded-2xl w-full max-w-sm border border-border shadow-2xl max-h-[80vh] overflow-y-auto">
-              <div className="sticky top-0 bg-card px-5 pt-5 pb-3 border-b border-border flex items-center justify-between">
-                <h2 className="text-base font-bold flex items-center gap-2">
-                  <Star className="w-4 h-4 text-yellow-500" /> {t("profile.plans_title")}
-                </h2>
-                <button onClick={() => { setShowPlansModal(false); setSubError(null); }} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
-              </div>
-              <div className="p-5 space-y-3">
-                {subError && <p className="text-red-500 text-xs text-center bg-red-500/10 rounded-lg py-2">{subError}</p>}
-                {plans.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Star className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">{t("profile.no_plans")}</p>
-                  </div>
-                ) : plans.map(plan => (
-                  <div key={plan.id} className="border border-border rounded-2xl p-4 bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-bold text-foreground flex items-center gap-2">
-                          <Star className="w-4 h-4 text-yellow-500" /> {plan.name}
-                        </h3>
-                        {plan.description && <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-yellow-600 dark:text-yellow-400">{((plan.price ?? 0) / 100).toLocaleString()} so'm</p>
-                        <p className="text-xs text-muted-foreground">/ oy</p>
-                      </div>
-                    </div>
-                    {plan.perks && plan.perks.length > 0 && (
-                      <ul className="space-y-1 mb-3">
-                        {plan.perks.map((perk, i) => (
-                          <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Check className="w-3 h-3 text-green-500 shrink-0" /> {perk}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{t("profile.subscribers_count", { count: plan.subscriberCount ?? 0 })}</span>
-                      {!isOwner && (
-                        isSubscribed ? (
-                          <button onClick={() => handleUnsubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive transition-colors">
-                            {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <BellOff className="w-3 h-3" />}
-                            {t("common.cancel")}
-                          </button>
-                        ) : (
-                          <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleSubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
-                            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-400 hover:to-orange-400 transition-all disabled:opacity-50">
-                            {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3" />}
-                            {t("profile.subscribe_btn")}
-                          </motion.button>
-                        )
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <SubscriptionSheet open={showSub} onClose={() => { setShowSub(false); setSubError(null); }}
+        isOwner={isOwner} plans={plans} isSubscribed={isSubscribed}
+        subscribingPlanId={subscribingPlanId} subError={subError}
+        onSubscribe={handleSubscribe} onUnsubscribe={handleUnsubscribe}
+        onCreatePlan={handleCreatePlan}
+        newPlanName={newPlanName} setNewPlanName={setNewPlanName}
+        newPlanDesc={newPlanDesc} setNewPlanDesc={setNewPlanDesc}
+        newPlanPrice={newPlanPrice} setNewPlanPrice={setNewPlanPrice}
+        newPlanPerks={newPlanPerks} setNewPlanPerks={setNewPlanPerks}
+        creatingPlan={creatingPlan} />
 
-      {/* Create Plan Modal */}
-      <AnimatePresence>
-        {showCreatePlan && (
-          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-card rounded-2xl w-full max-w-sm border border-border shadow-2xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-500" /> {t("profile.new_plan")}</h2>
-                <button onClick={() => setShowCreatePlan(false)}><X className="w-5 h-5 text-muted-foreground" /></button>
-              </div>
-              <div className="space-y-3">
-                <input value={newPlanName} onChange={e => setNewPlanName(e.target.value)} placeholder="Reja nomi (masalan: Oltin ⭐)"
-                  className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500" />
-                <input value={newPlanDesc} onChange={e => setNewPlanDesc(e.target.value)} placeholder="Tavsif (ixtiyoriy)"
-                  className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500" />
-                <div className="relative">
-                  <input type="number" value={newPlanPrice} onChange={e => setNewPlanPrice(e.target.value)} placeholder="Narx (so'm)"
-                    className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500 pr-12" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">so'm</span>
-                </div>
-                <textarea value={newPlanPerks} onChange={e => setNewPlanPerks(e.target.value)} rows={3}
-                  placeholder="Imtiyozlar (har bir qatorda bir imtiyoz)"
-                  className="w-full bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-yellow-500 resize-none" />
-                <button onClick={handleCreatePlan} disabled={!newPlanName.trim() || !newPlanPrice || creatingPlan}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold text-sm hover:from-yellow-400 hover:to-orange-400 disabled:opacity-50 flex items-center justify-center gap-2">
-                  {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
-                  {t("profile.create_plan")}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <SettingsSheet open={showSettings} onClose={() => setShowSettings(false)}
+        user={user} isOwner={isOwner}
+        onAvatarClick={() => { setShowSettings(false); avatarInputRef.current?.click(); }}
+        onCoverClick={() => { setShowSettings(false); coverInputRef.current?.click(); }}
+        onOpenSubscription={() => setShowSub(true)} />
     </div>
   );
 }

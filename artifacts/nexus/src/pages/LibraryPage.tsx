@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, ElementType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Search, Plus, Star, BookMarked, CheckCircle2,
-  Clock, Heart, ChevronRight, X, BookX, Globe, BarChart2
+  Clock, Heart, X, BookX, Globe, Sparkles, ExternalLink,
+  ArrowRight, Zap, Hash, Lightbulb, BookCopy, ChevronRight
 } from "lucide-react";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -39,7 +40,23 @@ interface SearchResult {
   isbn?: string | null;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+interface AiSearchResult {
+  query: string;
+  ai: {
+    summary?: string;
+    topics?: string[];
+    suggestedSearches?: string[];
+    bookTypes?: string[];
+    webQuery?: string;
+  };
+  aiAvailable?: boolean;
+  books: SearchResult[];
+  webSearches: { google: string; yandex: string; scholar: string };
+}
+
+type SearchSource = "all" | "library" | "google" | "yandex" | "ai";
+
+const STATUS_CONFIG: Record<string, { label: string; icon: ElementType; color: string }> = {
   want_to_read: { label: "O'qimoqchi", icon: BookMarked, color: "text-blue-400" },
   reading: { label: "O'qilmoqda", icon: Clock, color: "text-amber-400" },
   completed: { label: "O'qildi", icon: CheckCircle2, color: "text-emerald-400" },
@@ -54,6 +71,10 @@ export default function LibraryPage() {
   const [searchQ, setSearchQ] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [searchSource, setSearchSource] = useState<SearchSource>("all");
+  const [aiResult, setAiResult] = useState<AiSearchResult | null>(null);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [popular, setPopular] = useState<SearchResult[]>([]);
   const [popularLoading, setPopularLoading] = useState(false);
   const [selected, setSelected] = useState<Book | null>(null);
@@ -81,12 +102,39 @@ export default function LibraryPage() {
     } finally { setPopularLoading(false); }
   }
 
-  async function doSearch() {
-    if (!searchQ.trim()) return;
+  async function doSearch(source?: SearchSource, queryOverride?: string) {
+    const q = (queryOverride ?? searchQ).trim();
+    if (!q) return;
+    const src = source ?? searchSource;
     setSearchLoading(true);
+    setAiResult(null);
+    setSearchResults([]);
     try {
-      const r = await fetch(`${API}/api/library/search?q=${encodeURIComponent(searchQ)}`, { credentials: "include" });
-      if (r.ok) { const d = await r.json(); setSearchResults(d.items || []); }
+      if (src === "google") {
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, "_blank");
+        setSearchLoading(false); return;
+      }
+      if (src === "yandex") {
+        window.open(`https://yandex.com/search/?text=${encodeURIComponent(q)}`, "_blank");
+        setSearchLoading(false); return;
+      }
+      if (src === "ai" || src === "all") {
+        const r = await fetch(`${API}/api/library/ai-search?q=${encodeURIComponent(q)}`, { credentials: "include" });
+        if (r.ok) {
+          const d: AiSearchResult = await r.json();
+          setAiResult(d);
+          if (d.books.length > 0) {
+            setSearchResults(d.books);
+          } else if (d.ai.webQuery) {
+            // Fallback: search Open Library with English query from AI
+            const fb = await fetch(`${API}/api/library/search?q=${encodeURIComponent(d.ai.webQuery)}`, { credentials: "include" });
+            if (fb.ok) { const fd = await fb.json(); setSearchResults(fd.items || []); }
+          }
+        }
+      } else {
+        const r = await fetch(`${API}/api/library/search?q=${encodeURIComponent(q)}`, { credentials: "include" });
+        if (r.ok) { const d = await r.json(); setSearchResults(d.items || []); }
+      }
     } finally { setSearchLoading(false); }
   }
 
@@ -263,62 +311,283 @@ export default function LibraryPage() {
 
         {/* ── Search Tab ── */}
         {tab === "search" && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input value={searchQ} onChange={e => setSearchQ(e.target.value)} onKeyDown={e => e.key === "Enter" && doSearch()}
-                  placeholder="Kitob nomi, muallif..."
-                  className="w-full bg-muted border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50" />
-              </div>
-              <button onClick={doSearch} disabled={searchLoading || !searchQ.trim()}
-                className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 hover:bg-primary/90 transition-colors">
-                {searchLoading ? "..." : "Qidirish"}
+          <div className="space-y-5">
+
+            {/* ── Hero search bar ── */}
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+              className="relative">
+              <motion.div
+                animate={searchFocused ? {
+                  boxShadow: "0 0 0 3px rgba(var(--primary-rgb, 214 90 50) / 0.25), 0 0 30px rgba(var(--primary-rgb, 214 90 50) / 0.12)"
+                } : { boxShadow: "0 0 0 1px transparent" }}
+                transition={{ duration: 0.25 }}
+                className="relative flex items-center gap-2 bg-card border border-border rounded-2xl px-4 py-3">
+                <motion.div
+                  animate={searchLoading ? { rotate: 360 } : { rotate: 0 }}
+                  transition={searchLoading ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}>
+                  {searchLoading
+                    ? <Zap className="w-5 h-5 text-primary" />
+                    : <Search className="w-5 h-5 text-muted-foreground" />}
+                </motion.div>
+                <input
+                  ref={searchInputRef}
+                  value={searchQ}
+                  onChange={e => setSearchQ(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && doSearch()}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  placeholder="Kitob, mavzu, muallif... har qanday narsani qidiring"
+                  className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground text-sm focus:outline-none"
+                />
+                {searchQ && (
+                  <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }}
+                    onClick={() => { setSearchQ(""); setSearchResults([]); setAiResult(null); }}
+                    className="text-muted-foreground hover:text-foreground transition-colors">
+                    <X className="w-4 h-4" />
+                  </motion.button>
+                )}
+              </motion.div>
+            </motion.div>
+
+            {/* ── Source selector ── */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {([
+                { id: "all",     label: "Hammasi",    icon: Zap,        color: "text-primary",    bg: "bg-primary/10",    border: "border-primary/30" },
+                { id: "library", label: "Kutubxona",  icon: BookCopy,   color: "text-amber-400",  bg: "bg-amber-400/10",  border: "border-amber-400/30" },
+                { id: "ai",      label: "AI Tahlil",  icon: Sparkles,   color: "text-violet-400", bg: "bg-violet-400/10", border: "border-violet-400/30" },
+                { id: "google",  label: "Google",     icon: Globe,      color: "text-blue-400",   bg: "bg-blue-400/10",   border: "border-blue-400/30" },
+                { id: "yandex",  label: "Yandex",     icon: ExternalLink,color: "text-red-400",   bg: "bg-red-400/10",    border: "border-red-400/30" },
+              ] as { id: SearchSource; label: string; icon: ElementType; color: string; bg: string; border: string }[]).map(s => (
+                <motion.button key={s.id} whileTap={{ scale: 0.95 }}
+                  onClick={() => { setSearchSource(s.id); if (searchQ.trim()) doSearch(s.id); }}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                    searchSource === s.id
+                      ? `${s.bg} ${s.border} ${s.color}`
+                      : "border-border text-muted-foreground hover:text-foreground hover:border-border/80"
+                  }`}>
+                  <s.icon className="w-3.5 h-3.5" />
+                  {s.label}
+                </motion.button>
+              ))}
+
+              <button onClick={() => doSearch()} disabled={searchLoading || !searchQ.trim()}
+                className="flex-shrink-0 ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-all active:scale-95">
+                {searchLoading ? (
+                  <div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                ) : <ArrowRight className="w-3.5 h-3.5" />}
+                Qidirish
               </button>
             </div>
-            {!searchLoading && searchQ.trim() && searchResults.length === 0 && (
-              <div className="text-center py-12 space-y-2">
-                <Search className="w-10 h-10 text-muted-foreground mx-auto opacity-30" />
-                <p className="text-sm text-muted-foreground">
-                  "<span className="font-semibold text-foreground">{searchQ}</span>" bo'yicha kitob topilmadi
-                </p>
-                <p className="text-xs text-muted-foreground">Boshqa kalit so'z bilan urinib ko'ring</p>
+
+            {/* ── Quick web-search buttons (show when query entered, no results yet) ── */}
+            <AnimatePresence>
+              {searchQ.trim() && !searchLoading && searchResults.length === 0 && !aiResult && (
+                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: "Google", url: `https://www.google.com/search?q=${encodeURIComponent(searchQ)}`, icon: Globe, color: "text-blue-400", bg: "from-blue-500/10 to-blue-600/5", border: "border-blue-500/20" },
+                    { label: "Yandex", url: `https://yandex.com/search/?text=${encodeURIComponent(searchQ)}`, icon: ExternalLink, color: "text-red-400", bg: "from-red-500/10 to-red-600/5", border: "border-red-500/20" },
+                    { label: "Scholar", url: `https://scholar.google.com/scholar?q=${encodeURIComponent(searchQ)}`, icon: Lightbulb, color: "text-emerald-400", bg: "from-emerald-500/10 to-emerald-600/5", border: "border-emerald-500/20" },
+                  ].map((item, i) => (
+                    <motion.a key={item.label} href={item.url} target="_blank" rel="noopener noreferrer"
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
+                      whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border bg-gradient-to-br ${item.bg} ${item.border} transition-all cursor-pointer`}>
+                      <item.icon className={`w-5 h-5 ${item.color}`} />
+                      <span className={`text-xs font-semibold ${item.color}`}>{item.label}</span>
+                    </motion.a>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Loading skeleton ── */}
+            {searchLoading && (
+              <div className="space-y-4">
+                <div className="h-28 rounded-2xl bg-muted animate-pulse" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="aspect-[2/3] rounded-xl bg-muted animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+                      <div className="h-3 rounded bg-muted animate-pulse w-3/4" />
+                      <div className="h-2.5 rounded bg-muted animate-pulse w-1/2" />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            {searchResults.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {searchResults.map(item => {
-                  const inLib = books.some(b => b.googleBookId === item.id);
-                  return (
-                    <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="group">
-                      <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted mb-2 border border-border">
-                        {item.thumbnailUrl ? (
-                          <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <BookOpen className="w-8 h-8 text-muted-foreground opacity-40" />
-                          </div>
-                        )}
-                        <button onClick={() => !inLib && addBook(item)} disabled={inLib || addingId === item.id}
-                          className={`absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${inLib ? "" : "bg-background/70 backdrop-blur-sm"}`}>
-                          {inLib ? (
-                            <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" /> Qo'shilgan
-                            </span>
-                          ) : (
-                            <span className="px-2 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
-                              <Plus className="w-3 h-3" /> {addingId === item.id ? "..." : "Qo'shish"}
-                            </span>
-                          )}
-                        </button>
-                      </div>
-                      <p className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">{item.title}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{item.authors?.join(", ")}</p>
+
+            {/* ── AI / Web Result card ── */}
+            <AnimatePresence>
+              {!searchLoading && aiResult && (
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className={`rounded-2xl border p-5 space-y-4 ${
+                    aiResult.aiAvailable
+                      ? "border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-primary/5"
+                      : "border-border bg-card"
+                  }`}>
+
+                  {/* Header */}
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      aiResult.aiAvailable ? "bg-violet-500/15" : "bg-muted"
+                    }`}>
+                      <Sparkles className={`w-4 h-4 ${aiResult.aiAvailable ? "text-violet-400" : "text-muted-foreground"}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">
+                        {aiResult.aiAvailable ? "AI Tahlil" : "Qidiruv natijalari"}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        «{aiResult.query}» so'rovi bo'yicha
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* AI unavailable notice */}
+                  {!aiResult.aiAvailable && (
+                    <p className="text-xs text-muted-foreground bg-muted/50 rounded-xl px-3 py-2">
+                      AI tahlil vaqtincha mavjud emas. Quyidagi manbalarda qidirishingiz mumkin:
+                    </p>
+                  )}
+
+                  {/* Summary (only when AI available) */}
+                  {aiResult.aiAvailable && aiResult.ai.summary && (
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+                      className="text-sm text-foreground/90 leading-relaxed">
+                      {aiResult.ai.summary}
+                    </motion.p>
+                  )}
+
+                  {/* Topics (only when AI available) */}
+                  {aiResult.aiAvailable && (aiResult.ai.topics?.length ?? 0) > 0 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+                      className="flex flex-wrap gap-2">
+                      {aiResult.ai.topics!.map((t, i) => (
+                        <motion.button key={t} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.15 + i * 0.05 }}
+                          onClick={() => { setSearchQ(t); doSearch(undefined, t); }}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-400/10 border border-violet-400/20 text-violet-400 text-xs font-medium hover:bg-violet-400/20 transition-colors">
+                          <Hash className="w-2.5 h-2.5" /> {t}
+                        </motion.button>
+                      ))}
                     </motion.div>
-                  );
-                })}
-              </div>
+                  )}
+
+                  {/* Suggested searches (only when AI available) */}
+                  {aiResult.aiAvailable && (aiResult.ai.suggestedSearches?.length ?? 0) > 0 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+                      className="space-y-1.5">
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        Tavsiya etilgan qidiruvlar
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {aiResult.ai.suggestedSearches!.map((s, i) => (
+                          <motion.button key={s} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.06 }}
+                            onClick={() => { setSearchQ(s); doSearch(undefined, s); }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted/60 border border-border text-xs text-foreground/80 hover:text-foreground hover:bg-muted transition-colors">
+                            <Search className="w-3 h-3 text-muted-foreground" /> {s}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Web search quick links — always shown */}
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+                    className="grid grid-cols-3 gap-2 pt-1">
+                    {[
+                      { label: "Google", href: aiResult.webSearches.google, icon: Globe, color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/20 hover:bg-blue-400/20" },
+                      { label: "Yandex", href: aiResult.webSearches.yandex, icon: ExternalLink, color: "text-red-400", bg: "bg-red-400/10 border-red-400/20 hover:bg-red-400/20" },
+                      { label: "Scholar", href: aiResult.webSearches.scholar, icon: Lightbulb, color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20 hover:bg-emerald-400/20" },
+                    ].map(item => (
+                      <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer"
+                        className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border text-xs font-semibold transition-colors ${item.bg} ${item.color}`}>
+                        <item.icon className="w-3.5 h-3.5" /> {item.label}
+                      </a>
+                    ))}
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Book results ── */}
+            {!searchLoading && searchResults.length > 0 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <BookCopy className="w-4 h-4 text-amber-400" />
+                  <span className="text-sm font-semibold text-foreground">Kitoblar</span>
+                  <span className="text-xs text-muted-foreground ml-auto">{searchResults.length} natija</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {searchResults.map((item, idx) => {
+                    const inLib = books.some(b => b.googleBookId === item.id);
+                    return (
+                      <motion.div key={item.id}
+                        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.04 }}
+                        className="group">
+                        <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted mb-2 border border-border">
+                          {item.thumbnailUrl ? (
+                            <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <BookOpen className="w-8 h-8 text-muted-foreground opacity-40" />
+                            </div>
+                          )}
+                          <button onClick={() => !inLib && addBook(item)} disabled={inLib || addingId === item.id}
+                            className={`absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${inLib ? "" : "bg-background/70 backdrop-blur-sm"}`}>
+                            {inLib ? (
+                              <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> Qo'shilgan
+                              </span>
+                            ) : (
+                              <motion.span whileTap={{ scale: 0.95 }}
+                                className="px-2 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
+                                <Plus className="w-3 h-3" /> {addingId === item.id ? "..." : "Qo'shish"}
+                              </motion.span>
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">{item.title}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{item.authors?.join(", ")}</p>
+                        {item.publishedDate && (
+                          <p className="text-[10px] text-muted-foreground/60">{item.publishedDate.slice(0, 4)}</p>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
             )}
+
+            {/* ── Empty state ── */}
+            {!searchLoading && !aiResult && searchResults.length === 0 && !searchQ.trim() && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="text-center py-16 space-y-4">
+                <div className="relative mx-auto w-20 h-20">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-violet-500/20 animate-pulse" />
+                  <div className="absolute inset-2 rounded-full bg-card flex items-center justify-center">
+                    <Search className="w-8 h-8 text-primary/60" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-foreground font-semibold text-sm">Universal qidiruv</p>
+                  <p className="text-muted-foreground text-xs mt-1 max-w-xs mx-auto">
+                    Kitob nomi, mavzu yoki muallif kiriting. Google, Yandex va AI orqali qidiring.
+                  </p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {["Python dasturlash", "Tarix kitoblari", "Motivatsiya", "Ilm-fan"].map((hint, i) => (
+                    <motion.button key={hint} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 + i * 0.07 }}
+                      onClick={() => { setSearchQ(hint); doSearch(undefined, hint); }}
+                      className="px-3 py-1.5 rounded-full bg-muted border border-border text-xs text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
+                      {hint}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
           </div>
         )}
 

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { userBooksTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
+import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
 
@@ -151,6 +152,86 @@ router.get("/library/search/popular", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Xato" });
+  }
+});
+
+// ── AI Search ──────────────────────────────────────────────────────────────
+router.get("/library/ai-search", async (req, res) => {
+  if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const { q } = req.query as { q?: string };
+  if (!q?.trim()) { res.status(400).json({ error: "q required" }); return; }
+
+  try {
+    // Run OpenAI analysis and Open Library search in parallel
+    const [aiResult, olResult] = await Promise.allSettled([
+      openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `Sen kutubxona va kitob tavsiyachisi AI assistantsan. Foydalanuvchi qidiruv so'rovi berayotgan. 
+JSON formatda quyidagilarni qaytar:
+{
+  "summary": "2-3 jumlali qisqa tavsif (o'zbek tilida)",
+  "topics": ["tegishli mavzu 1", "mavzu 2", "mavzu 3"],
+  "suggestedSearches": ["aniqroq qidiruv 1", "qidiruv 2", "qidiruv 3"],
+  "bookTypes": ["kitob turi 1", "kitob turi 2"],
+  "webQuery": "optimallashtirilgan web qidiruv so'rovi (inglizcha)"
+}
+Faqat JSON qaytargin, boshqa matn yo'q.`,
+          },
+          { role: "user", content: `Qidiruv so'rovi: "${q}"` },
+        ],
+        max_tokens: 400,
+        response_format: { type: "json_object" },
+      }),
+      fetch(
+        `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=6&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,language,isbn,first_sentence`,
+        { headers: { "User-Agent": "OlCha/1.0" } }
+      ).then(r => r.json() as Promise<{ docs?: unknown[]; numFound?: number }>),
+    ]);
+
+    let aiData: Record<string, unknown> = {};
+    let aiAvailable = false;
+    if (aiResult.status === "fulfilled") {
+      try {
+        const content = aiResult.value.choices[0]?.message?.content ?? "{}";
+        aiData = JSON.parse(content);
+        aiAvailable = Object.keys(aiData).length > 0;
+      } catch { /* ignore */ }
+    } else {
+      req.log.warn({ code: (aiResult.reason as Record<string, unknown>)?.code }, "openai unavailable");
+    }
+
+    let books = olResult.status === "fulfilled"
+      ? (olResult.value.docs ?? []).map(d => mapOpenLibDoc(d as Record<string, unknown>))
+      : [];
+
+    // If no books found with original query and AI gave us an English webQuery, retry with it
+    if (books.length === 0 && aiData.webQuery && String(aiData.webQuery) !== q) {
+      try {
+        const fbUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(String(aiData.webQuery))}&limit=6&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,language,isbn,first_sentence`;
+        const fbResp = await fetch(fbUrl, { headers: { "User-Agent": "OlCha/1.0" } });
+        const fbData = await fbResp.json() as { docs?: unknown[] };
+        books = (fbData.docs ?? []).map(d => mapOpenLibDoc(d as Record<string, unknown>));
+      } catch { /* ignore */ }
+    }
+
+    const webQ = String(aiData.webQuery ?? q);
+    res.json({
+      query: q,
+      ai: aiData,
+      aiAvailable,
+      books,
+      webSearches: {
+        google: `https://www.google.com/search?q=${encodeURIComponent(webQ)}`,
+        yandex: `https://yandex.com/search/?text=${encodeURIComponent(webQ)}`,
+        scholar: `https://scholar.google.com/scholar?q=${encodeURIComponent(webQ)}`,
+      },
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "AI qidiruv xatosi" });
   }
 });
 

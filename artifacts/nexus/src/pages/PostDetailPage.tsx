@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Heart, BadgeCheck, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { ArrowLeft, Send, Heart, BadgeCheck, Loader2, Mic } from "lucide-react";
 import { Link } from "wouter";
 import {
   useGetPost, useListPostComments, useCreatePostComment,
@@ -8,9 +8,29 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import PostCard from "@/components/PostCard";
+import VoiceRecorder from "@/components/VoiceRecorder";
 import { useAuth } from "@/context/AuthContext";
 
 interface PostDetailPageProps { postId: number; }
+
+const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+interface VoiceCommentData {
+  id: number;
+  postId: number;
+  authorId: number;
+  audioUrl: string;
+  durationMs: number;
+  waveformData?: string | null;
+  createdAt: string;
+  author?: {
+    id: number;
+    username: string;
+    displayName: string;
+    avatarUrl?: string | null;
+    isVerified?: boolean;
+  } | null;
+}
 
 export default function PostDetailPage({ postId }: PostDetailPageProps) {
   const { data: post } = useGetPost(postId, { query: { queryKey: getGetPostQueryKey(postId) } });
@@ -19,6 +39,17 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
   const addComment = useCreatePostComment();
   const qc = useQueryClient();
   const { user } = useAuth();
+
+  const [voiceComments, setVoiceComments] = useState<VoiceCommentData[]>([]);
+  const [playingId, setPlayingId] = useState<number | null>(null);
+  const audioCache = useState(() => new Map<number, HTMLAudioElement>())[0];
+
+  useEffect(() => {
+    fetch(`${API}/api/posts/${postId}/voice-comments`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : [])
+      .then(setVoiceComments)
+      .catch(() => {});
+  }, [postId]);
 
   const handleComment = () => {
     if (!text.trim() || !user) return;
@@ -29,6 +60,40 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
         setText("");
       },
     });
+  };
+
+  const handleVoiceComment = async (audioUrl: string, durationMs: number, waveformData?: string) => {
+    if (!user) return;
+    try {
+      const r = await fetch(`${API}/api/posts/${postId}/voice-comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ audioUrl, durationMs, waveformData }),
+      });
+      if (r.ok) {
+        const vc = await r.json() as VoiceCommentData;
+        setVoiceComments(prev => [vc, ...prev]);
+      }
+    } catch { /* silent */ }
+  };
+
+  const toggleAudio = (vc: VoiceCommentData) => {
+    if (playingId === vc.id) {
+      audioCache.get(vc.id)?.pause();
+      setPlayingId(null);
+      return;
+    }
+    if (!audioCache.has(vc.id)) {
+      const audio = new Audio(vc.audioUrl);
+      audio.onended = () => setPlayingId(null);
+      audioCache.set(vc.id, audio);
+    }
+    if (playingId !== null) {
+      audioCache.get(playingId)?.pause();
+    }
+    audioCache.get(vc.id)?.play().catch(() => {});
+    setPlayingId(vc.id);
   };
 
   return (
@@ -49,7 +114,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
       <div className="mt-6 space-y-4">
         <h2 className="font-bold text-foreground text-sm">{comments.length} ta izoh</h2>
 
-        {/* Add comment */}
+        {/* Text comment input */}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center flex-shrink-0 overflow-hidden border border-border/60">
             {user?.avatarUrl
@@ -79,14 +144,87 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
           </div>
         </div>
 
-        {/* Error feedback */}
+        {/* Voice recorder — USP "Ovozli Iplari" */}
+        {user && (
+          <div className="flex items-center gap-3 pl-11">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500/25 to-blue-500/25 flex-shrink-0 flex items-center justify-center border border-violet-500/20 shrink-0">
+              <Mic className="w-3.5 h-3.5 text-violet-400" />
+            </div>
+            <VoiceRecorder onVoiceComment={handleVoiceComment} />
+          </div>
+        )}
+
         {addComment.isError && (
           <p className="text-xs text-destructive bg-destructive/10 rounded-xl px-3 py-2">
             {(addComment.error as any)?.response?.data?.error ?? "Izoh yuborishda xato"}
           </p>
         )}
 
-        {/* Comment list */}
+        {/* Voice comments list */}
+        {voiceComments.length > 0 && (
+          <div className="space-y-2 pt-1">
+            <div className="flex items-center gap-2 px-1">
+              <Mic className="w-3 h-3 text-violet-400" />
+              <span className="text-xs font-semibold text-violet-400">
+                {voiceComments.length} ta ovozli izoh
+              </span>
+            </div>
+            {voiceComments.map((vc, i) => {
+              let bars: number[];
+              try { bars = JSON.parse(vc.waveformData ?? "[]"); } catch { bars = []; }
+              if (bars.length < 10) bars = Array(20).fill(8);
+              const isPlaying = playingId === vc.id;
+              return (
+                <motion.div key={vc.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="flex gap-3 items-center px-1">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500/25 to-blue-500/25 flex-shrink-0 flex items-center justify-center overflow-hidden border border-violet-500/20">
+                    {vc.author?.avatarUrl
+                      ? <img src={vc.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      : <span className="text-xs font-bold text-violet-400">{vc.author?.displayName?.[0]?.toUpperCase() ?? "?"}</span>
+                    }
+                  </div>
+                  <div className="flex-1 bg-violet-500/6 border border-violet-500/15 rounded-2xl px-3 py-2 flex items-center gap-2.5 min-w-0">
+                    <button onClick={() => toggleAudio(vc)}
+                      className="w-7 h-7 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-400 hover:bg-violet-500/30 transition-colors shrink-0">
+                      {isPlaying ? (
+                        <motion.div animate={{ scale: [1, 1.35, 1], opacity: [1, 0.65, 1] }}
+                          transition={{ duration: 0.55, repeat: Infinity }}
+                          className="w-2 h-2 bg-violet-400 rounded-sm" />
+                      ) : (
+                        <svg className="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      )}
+                    </button>
+                    <div className="flex items-end gap-[2px] flex-1 h-7 overflow-hidden">
+                      {bars.slice(0, 20).map((h, idx) => (
+                        <motion.div key={idx}
+                          animate={isPlaying
+                            ? { height: [h, Math.max(3, Math.round(h * (0.4 + Math.random() * 0.8))), h] }
+                            : { height: Math.max(3, h) }
+                          }
+                          transition={isPlaying ? { duration: 0.3, repeat: Infinity, delay: idx * 0.025 } : { duration: 0 }}
+                          className={`w-[2px] rounded-full shrink-0 transition-colors ${isPlaying ? "bg-violet-400" : "bg-violet-400/40"}`}
+                          style={{ minHeight: 3, maxHeight: 28 }} />
+                      ))}
+                    </div>
+                    <div className="flex flex-col items-end shrink-0 gap-0.5">
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {(vc.durationMs / 1000).toFixed(1)}s
+                      </span>
+                      <span className="text-[9px] text-muted-foreground/60">
+                        {vc.author?.displayName}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Text comment list */}
         <div className="space-y-3">
           {comments.map((comment, i) => (
             <motion.div
@@ -121,7 +259,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
           ))}
         </div>
 
-        {comments.length === 0 && (
+        {comments.length === 0 && voiceComments.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <p className="text-sm">Hali izoh yo'q. Birinchi bo'ling!</p>
           </div>

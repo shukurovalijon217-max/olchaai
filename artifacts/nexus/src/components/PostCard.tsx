@@ -3,12 +3,14 @@ import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Flag, X,
-  AlertTriangle, Trash2, Music, Sparkles, Brain, Tag, Loader2, Check,
+  AlertTriangle, Trash2, Music, Sparkles, Brain, Tag, Loader2, Check, Download,
 } from "lucide-react";
 import { useLikePost, useDeletePost, getListPostsQueryKey, getGetTrendingPostsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Post } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
+import { useDwellTracker } from "@/hooks/useDwellTracker";
+import { generateShareCard, downloadShareCard } from "@/utils/shareCard";
 
 interface PostCardProps { post: Post; index?: number; }
 
@@ -58,6 +60,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const [reporting, setReporting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [shared, setShared] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
@@ -68,6 +71,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const isOwner = user?.id === post.author.id;
+  const dwellRef = useDwellTracker("post", post.id, !!user);
 
   const grad = GRADIENT_COLORS[index % GRADIENT_COLORS.length];
 
@@ -151,6 +155,24 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
     finally { setAnalyzing(false); }
   };
 
+  /* ── Share Card ── */
+  const handleShareCard = async () => {
+    setSharing(true);
+    try {
+      const blob = await generateShareCard({
+        authorName: post.author.displayName ?? post.author.username ?? "User",
+        content: post.content ?? "",
+        mediaUrl: post.mediaUrl ?? undefined,
+        type: post.type,
+        likesCount: count,
+        commentsCount: post.commentsCount,
+        tags: post.tags ?? [],
+      });
+      downloadShareCard(blob, `olcha-${post.id}.png`);
+    } catch { /* silent */ }
+    finally { setSharing(false); }
+  };
+
   /* ── Delete ── */
   const handleDelete = () => {
     if (!confirm("Postni o'chirishni tasdiqlaysizmi?")) return;
@@ -181,6 +203,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   return (
     <>
       <motion.div
+        ref={dwellRef as any}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.05 }}
@@ -360,6 +383,13 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
               : <Sparkles className="w-4 h-4" />
             }
             <span className="hidden sm:inline">AI</span>
+          </motion.button>
+
+          {/* Share Card */}
+          <motion.button whileTap={{ scale: 0.85 }} onClick={handleShareCard} disabled={sharing}
+            title="Karta sifatida yuklab olish"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-amber-400 hover:bg-amber-400/10 disabled:opacity-50">
+            {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           </motion.button>
         </div>
       </motion.div>

@@ -3,3 +3,5 @@
 - [Nexus frontend import conventions](nexus-imports.md) — Nexus pages must import hooks from @workspace/api-client-react and user from useAuth(), not api-zod or useCurrentUser.
 - [OpenAI integration setup](openai-integration.md) — Uses OPENAI_API_KEY directly (not Replit proxy); ai_conversations/ai_messages tables; image gen uses dall-e-3 with response_format b64_json.
 - [DB schema naming conflicts](db-schema-conflicts.md) — Template conversations/messages clash with chat route; renamed to aiConversations/aiMessages; chat uses inline pgTable definitions.
+- [Voice comments feature](voice-comments.md) — voice_comments table (id, post_id, author_id, audio_url, duration_ms, waveform_data); routes at GET/POST /api/posts/:id/voice-comments; waveform stored as JSON string; max 10s recording.
+- [Dwell time algorithm](dwell-time-algorithm.md) — useDwellTracker hook uses IntersectionObserver (threshold 0.5); sends view interaction with durationMs on leave/unmount; AI feed weights view by 1+(durationMs/10000) up to 4; also adds freshness decay boost.

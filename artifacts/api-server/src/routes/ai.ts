@@ -22,18 +22,12 @@ router.get("/ai/feed", async (req, res) => {
       const interactions = await db
         .select()
         .from(userInteractionsTable)
-        .where(
-          and(
-            eq(userInteractionsTable.userId, userId),
-            inArray(userInteractionsTable.interactionType, ["like", "comment", "share"])
-          )
-        )
+        .where(eq(userInteractionsTable.userId, userId))
         .orderBy(desc(userInteractionsTable.createdAt))
-        .limit(50);
+        .limit(120);
 
-      const weights: Record<string, number> = { like: 3, comment: 2, share: 2, view: 1 };
-      const postIds = interactions.filter(i => i.contentType === "post").map(i => i.contentId);
-      const reelIds = interactions.filter(i => i.contentType === "reel").map(i => i.contentId);
+      const postIds = [...new Set(interactions.filter(i => i.contentType === "post").map(i => i.contentId))];
+      const reelIds = [...new Set(interactions.filter(i => i.contentType === "reel").map(i => i.contentId))];
 
       const interactedPosts = postIds.length > 0
         ? await db.select().from(postsTable).where(inArray(postsTable.id, postIds))
@@ -46,7 +40,16 @@ router.get("/ai/feed", async (req, res) => {
       const reelTagMap = new Map(interactedReels.map(r => [r.id, r.tags ?? []]));
 
       for (const interaction of interactions) {
-        const w = weights[interaction.interactionType] ?? 1;
+        // Dwell-time aware weights: longer view = stronger signal
+        let w: number;
+        if (interaction.interactionType === "like") w = 3;
+        else if (interaction.interactionType === "comment") w = 2.5;
+        else if (interaction.interactionType === "share") w = 2;
+        else if (interaction.interactionType === "view") {
+          // 0ms → 1pt, 5s → 1.5pt, 15s → 2pt, 30s+ → 4pt
+          w = 1 + Math.min((interaction.durationMs ?? 0) / 10000, 3);
+        } else w = 1;
+
         const tags =
           interaction.contentType === "post"
             ? (postTagMap.get(interaction.contentId) ?? [])
@@ -65,12 +68,15 @@ router.get("/ai/feed", async (req, res) => {
         const tags = p.tags ?? [];
         const personalScore = tags.reduce((s, tag) => s + (tagScores[tag] ?? 0), 0);
         const popularScore = p.likesCount * 0.1 + p.commentsCount * 0.2;
+        // Freshness boost: content under 24h gets up to +3 pts; decays linearly
+        const ageHours = (Date.now() - new Date(p.createdAt).getTime()) / 3_600_000;
+        const freshnessBoost = Math.max(0, 3 - ageHours / 8);
         return {
           ...p,
           author: enrichUser((author ?? {}) as Record<string, unknown>),
           tags,
           isLiked: false,
-          _score: personalScore + popularScore,
+          _score: personalScore + popularScore + freshnessBoost,
         };
       })
     );

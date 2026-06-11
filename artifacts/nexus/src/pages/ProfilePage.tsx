@@ -291,14 +291,20 @@ function TabBtn({ active, icon: Icon, label, onClick }: { active: boolean; icon:
 }
 
 /* ─── Live Sheet ─────────────────────────────────────────────── */
-const LIVE_CATS = ["🎵 Musiqa", "🎮 O'yin", "💬 Suhbat", "⚽ Sport", "🎨 San'at", "📚 Ta'lim"];
-
 function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }: {
   open: boolean; onClose: () => void; liveTitle: string;
   setLiveTitle: (v: string) => void; onStart: () => void; starting: boolean;
 }) {
   const { t } = useTranslation();
-  const [category, setCategory] = useState("🎵 Musiqa");
+  const LIVE_CATS = [
+    t("live_explore.cat_music"),
+    t("live_explore.cat_gaming"),
+    t("live_explore.cat_talk"),
+    t("live_explore.cat_sports"),
+    t("live_explore.cat_art"),
+    t("live_explore.cat_edu"),
+  ];
+  const [category, setCategory] = useState("");
   const [audience, setAudience] = useState<"public" | "subscribers">("public");
 
   return (
@@ -328,7 +334,7 @@ function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }
           <div className="w-10 h-10 rounded-full border-2 border-white/25 flex items-center justify-center">
             <Camera className="w-5 h-5 text-white/50" />
           </div>
-          <span className="text-white/40 text-xs font-medium">Kamera</span>
+          <span className="text-white/40 text-xs font-medium">{t("live_explore.camera")}</span>
         </motion.div>
         <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 bg-red-600 rounded-md px-2 py-0.5 shadow-[0_0_12px_rgba(220,38,38,0.6)]">
           <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -341,15 +347,15 @@ function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }
 
       <div className="px-5 pb-6 space-y-4">
         <div>
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Efir nomi</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">{t("live_explore.stream_title_label")}</label>
           <input value={liveTitle} onChange={e => setLiveTitle(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") onStart(); }}
-            placeholder="Masalan: Yangi kecha muzikasi 🎵" maxLength={80}
+            placeholder={t("live_explore.name_placeholder")} maxLength={80}
             className="w-full bg-muted rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 ring-red-500/60 placeholder:text-muted-foreground/50" autoFocus />
           <p className="text-right text-[10px] text-muted-foreground/50 mt-1">{liveTitle.length}/80</p>
         </div>
         <div>
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 block">Kategoriya</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 block">{t("live_explore.category")}</label>
           <div className="flex flex-wrap gap-1.5">
             {LIVE_CATS.map(cat => (
               <motion.button key={cat} whileTap={{ scale: 0.92 }} onClick={() => setCategory(cat)}
@@ -405,6 +411,7 @@ function SubscriptionSheet({ open, onClose, isOwner, plans, isSubscribed, subscr
   newPlanPerks: string; setNewPlanPerks: (v: string) => void;
   creatingPlan: boolean;
 }) {
+  const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
   const totalSubs = plans.reduce((s, p) => s + (p.subscriberCount ?? 0), 0);
   const monthlyRev = plans.reduce((s, p) => s + ((p.price ?? 0) / 100) * (p.subscriberCount ?? 0), 0);
@@ -419,7 +426,7 @@ function SubscriptionSheet({ open, onClose, isOwner, plans, isSubscribed, subscr
             className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-[0_0_12px_rgba(234,179,8,0.5)]">
             <Star className="w-3.5 h-3.5 text-white fill-white" />
           </motion.div>
-          <h2 className="text-base font-bold">{isOwner ? "Obuna rejalari" : "Obuna"}</h2>
+          <h2 className="text-base font-bold">{isOwner ? t("profile.plans_title") : t("profile.subscription")}</h2>
         </div>
         <motion.button whileTap={{ scale: 0.88, rotate: 90 }} onClick={onClose} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
           <X className="w-4 h-4" />
@@ -431,11 +438,11 @@ function SubscriptionSheet({ open, onClose, isOwner, plans, isSubscribed, subscr
           <div className="rounded-2xl border border-yellow-500/25 p-3.5 flex items-center justify-between"
             style={{ background: "linear-gradient(135deg, rgba(234,179,8,0.15), rgba(249,115,22,0.08))", boxShadow: "0 0 20px rgba(234,179,8,0.12)" }}>
             <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Oylik daromad</p>
-              <p className="text-lg font-black text-yellow-500" style={{ textShadow: "0 0 12px rgba(234,179,8,0.5)" }}>{monthlyRev.toLocaleString()} so'm</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">{t("profile.monthly_revenue")}</p>
+              <p className="text-lg font-black text-yellow-500" style={{ textShadow: "0 0 12px rgba(234,179,8,0.5)" }}>{monthlyRev.toLocaleString()} {t("market.som")}</p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Obunachi</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">{t("profile.stat_followers")}</p>
               <p className="text-lg font-black text-foreground">{totalSubs}</p>
             </div>
           </div>
@@ -449,8 +456,8 @@ function SubscriptionSheet({ open, onClose, isOwner, plans, isSubscribed, subscr
               className="w-12 h-12 rounded-full bg-yellow-500/10 mx-auto mb-3 flex items-center justify-center border border-yellow-500/20">
               <Star className="w-6 h-6 text-yellow-500/50" />
             </motion.div>
-            <p className="text-sm font-medium">{isOwner ? "Hali reja yo'q" : "Hozircha obuna yo'q"}</p>
-            <p className="text-xs mt-1 opacity-60">{isOwner ? "Birinchi rejangizni yarating" : "Kreator hali reja qo'shmagan"}</p>
+            <p className="text-sm font-medium">{isOwner ? t("profile.no_plans_yet") : t("profile.no_subs_yet")}</p>
+            <p className="text-xs mt-1 opacity-60">{isOwner ? t("profile.create_first_plan") : t("profile.creator_no_plans")}</p>
           </div>
         ) : (
           <div className="space-y-2.5">
@@ -471,7 +478,7 @@ function SubscriptionSheet({ open, onClose, isOwner, plans, isSubscribed, subscr
                   </div>
                   <div className="text-right shrink-0 ml-2">
                     <p className="text-sm font-black text-yellow-500">{((plan.price ?? 0) / 100).toLocaleString()}</p>
-                    <p className="text-[10px] text-muted-foreground">so'm/oy</p>
+                    <p className="text-[10px] text-muted-foreground">{t("profile.per_month")}</p>
                   </div>
                 </div>
                 {plan.perks && plan.perks.length > 0 && (
@@ -484,18 +491,18 @@ function SubscriptionSheet({ open, onClose, isOwner, plans, isSubscribed, subscr
                   </ul>
                 )}
                 <div className="flex items-center justify-between pt-1 border-t border-border/30">
-                  <span className="text-[10px] text-muted-foreground">{plan.subscriberCount ?? 0} obunachi</span>
+                  <span className="text-[10px] text-muted-foreground">{plan.subscriberCount ?? 0} {t("profile.sub_count")}</span>
                   {!isOwner && (
                     isSubscribed ? (
                       <motion.button whileTap={{ scale: 0.93 }} onClick={() => onUnsubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
                         className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-colors">
-                        {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <BellOff className="w-3 h-3" />} Bekor
+                        {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <BellOff className="w-3 h-3" />} {t("profile.cancel_sub")}
                       </motion.button>
                     ) : (
                       <NeonBtn onClick={() => onSubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
                         gradient="linear-gradient(135deg, #f59e0b, #f97316)"
                         glow="rgba(245,158,11,0.55)" className="h-7 text-[11px]">
-                        {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3 fill-white" />} Obuna
+                        {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3 fill-white" />} {t("profile.subscribe_label")}
                       </NeonBtn>
                     )
                   )}
@@ -510,31 +517,31 @@ function SubscriptionSheet({ open, onClose, isOwner, plans, isSubscribed, subscr
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-4 space-y-2.5">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-sm font-bold flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-yellow-500" /> Yangi reja</p>
+                <p className="text-sm font-bold flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-yellow-500" /> {t("profile.new_plan")}</p>
                 <motion.button whileTap={{ rotate: 90 }} onClick={() => setCreating(false)} className="text-muted-foreground"><X className="w-4 h-4" /></motion.button>
               </div>
-              <input value={newPlanName} onChange={e => setNewPlanName(e.target.value)} placeholder="Reja nomi (masalan: Oltin ⭐)"
+              <input value={newPlanName} onChange={e => setNewPlanName(e.target.value)} placeholder={t("profile.plan_name_ph")}
                 className="w-full bg-muted rounded-xl px-3.5 py-2 text-sm outline-none focus:ring-2 ring-yellow-500/60" />
-              <input value={newPlanDesc} onChange={e => setNewPlanDesc(e.target.value)} placeholder="Qisqacha tavsif"
+              <input value={newPlanDesc} onChange={e => setNewPlanDesc(e.target.value)} placeholder={t("profile.plan_desc_ph")}
                 className="w-full bg-muted rounded-xl px-3.5 py-2 text-sm outline-none focus:ring-2 ring-yellow-500/60" />
               <div className="relative">
-                <input type="number" value={newPlanPrice} onChange={e => setNewPlanPrice(e.target.value)} placeholder="Oylik narx"
+                <input type="number" value={newPlanPrice} onChange={e => setNewPlanPrice(e.target.value)} placeholder={t("profile.plan_price_ph")}
                   className="w-full bg-muted rounded-xl px-3.5 py-2 text-sm outline-none focus:ring-2 ring-yellow-500/60 pr-14" />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">so'm</span>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{t("market.som")}</span>
               </div>
               <textarea value={newPlanPerks} onChange={e => setNewPlanPerks(e.target.value)} rows={2}
-                placeholder="Imtiyozlar (har qatorda bir imtiyoz)"
+                placeholder={t("profile.plan_perks_ph")}
                 className="w-full bg-muted rounded-xl px-3.5 py-2 text-sm outline-none focus:ring-2 ring-yellow-500/60 resize-none" />
               <NeonBtn onClick={onCreatePlan} disabled={!newPlanName.trim() || !newPlanPrice || creatingPlan}
                 gradient="linear-gradient(135deg, #f59e0b, #f97316)" glow="rgba(245,158,11,0.55)"
                 className="w-full h-10 justify-center rounded-xl text-sm">
-                {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Yaratish
+                {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} {t("profile.create_plan")}
               </NeonBtn>
             </motion.div>
           ) : (
             <motion.button whileTap={{ scale: 0.96 }} onClick={() => setCreating(true)}
               className="w-full py-2.5 rounded-2xl border-2 border-dashed border-yellow-500/30 text-yellow-500 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-yellow-500/8 transition-colors">
-              <Plus className="w-4 h-4" /> Yangi reja qo'shish
+              <Plus className="w-4 h-4" /> {t("profile.add_plan")}
             </motion.button>
           )
         )}
@@ -550,13 +557,14 @@ function SettingsSheet({ open, onClose, user, isOwner, onAvatarClick, onCoverCli
   isOwner: boolean; onAvatarClick: () => void; onCoverClick: () => void;
   onOpenSubscription: () => void;
 }) {
+  const { t } = useTranslation();
   const rows = [
-    { icon: Pencil, label: "Profilni tahrirlash", sub: "Ism, bio, avatar", color: "#a78bfa", glow: "rgba(167,139,250,0.4)", onClick: onAvatarClick },
-    { icon: Bell, label: "Bildirishnomalar", sub: "Push, email, SMS", color: "#60a5fa", glow: "rgba(96,165,250,0.4)", onClick: () => {} },
-    { icon: Shield, label: "Maxfiylik", sub: "Kim ko'ra oladi", color: "#34d399", glow: "rgba(52,211,153,0.4)", onClick: () => {} },
-    ...(isOwner ? [{ icon: Sparkles, label: "Obuna rejalari", sub: "Daromad va rejalar", color: "#fbbf24", glow: "rgba(251,191,36,0.4)", onClick: () => { onClose(); onOpenSubscription(); } }] : []),
-    { icon: Zap, label: "Premium", sub: "Kengaytirilgan imkoniyatlar", color: "#fb923c", glow: "rgba(251,146,60,0.4)", onClick: () => {} },
-    { icon: HelpCircle, label: "Yordam", sub: "FAQ va qo'llab-quvvatlash", color: "#94a3b8", glow: "rgba(148,163,184,0.3)", onClick: () => {} },
+    { icon: Pencil, label: t("settings.edit_profile"), sub: t("settings.edit_profile_sub"), color: "#a78bfa", glow: "rgba(167,139,250,0.4)", onClick: onAvatarClick },
+    { icon: Bell, label: t("settings.notifications"), sub: t("settings.notifications_sub"), color: "#60a5fa", glow: "rgba(96,165,250,0.4)", onClick: () => {} },
+    { icon: Shield, label: t("settings.privacy"), sub: t("settings.privacy_sub"), color: "#34d399", glow: "rgba(52,211,153,0.4)", onClick: () => {} },
+    ...(isOwner ? [{ icon: Sparkles, label: t("settings.subs_plans"), sub: t("settings.subs_plans_sub"), color: "#fbbf24", glow: "rgba(251,191,36,0.4)", onClick: () => { onClose(); onOpenSubscription(); } }] : []),
+    { icon: Zap, label: t("nav.premium"), sub: t("settings.premium_sub"), color: "#fb923c", glow: "rgba(251,146,60,0.4)", onClick: () => {} },
+    { icon: HelpCircle, label: t("settings.title"), sub: t("settings.help_sub"), color: "#94a3b8", glow: "rgba(148,163,184,0.3)", onClick: () => {} },
   ];
 
   return (
@@ -609,8 +617,8 @@ function SettingsSheet({ open, onClose, user, isOwner, onAvatarClick, onCoverCli
                 <Camera className="w-4 h-4 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">Muqova rasmini o'zgartirish</p>
-                <p className="text-[10px] text-muted-foreground">Profil banneringiz</p>
+                <p className="text-sm font-semibold text-foreground">{t("settings.change_cover")}</p>
+                <p className="text-[10px] text-muted-foreground">{t("settings.cover_sub")}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/35 shrink-0 group-hover:translate-x-0.5 transition-all" />
             </motion.button>
@@ -805,7 +813,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                   <div className="w-11 h-11 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm flex items-center justify-center">
                     <Loader2 className="w-5 h-5 text-white animate-spin" />
                   </div>
-                  <p className="text-white/80 text-xs font-semibold tracking-wide">Cover yuklanmoqda…</p>
+                  <p className="text-white/80 text-xs font-semibold tracking-wide">{t("settings.cover_uploading")}</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -819,7 +827,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                   style={{ boxShadow: "0 0 20px rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.3)" }}>
                   <Camera className="w-6 h-6 text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]" />
                 </motion.div>
-                <p className="text-white text-xs font-semibold drop-shadow-md tracking-wide">Cover rasmini o'zgartirish</p>
+                <p className="text-white text-xs font-semibold drop-shadow-md tracking-wide">{t("settings.cover_change_btn")}</p>
               </div>
             )}
           </>
@@ -847,12 +855,12 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                   <motion.span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-300"
                     animate={{ scale: [1, 1.8, 1], opacity: [0.8, 0, 0.8] }} transition={{ duration: 1.2, repeat: Infinity }} />
                   <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-400" />
-                  <Radio className="w-3 h-3" /> Efir
+                  <Radio className="w-3 h-3" /> {t("profile.live_btn")}
                 </NeonBtn>
                 <NeonBtn onClick={() => setShowSub(true)}
                   gradient="linear-gradient(135deg, rgba(234,179,8,0.3), rgba(249,115,22,0.25))"
                   glow="rgba(234,179,8,0.4)" className="h-8 border border-yellow-500/30 text-yellow-500">
-                  <Star className="w-3 h-3" /> Obuna
+                  <Star className="w-3 h-3" /> {t("profile.plans_title")}
                 </NeonBtn>
                 <motion.button whileTap={{ scale: 0.88, rotate: 90 }} whileHover={{ scale: 1.1, rotate: 30 }}
                   transition={{ type: "spring", stiffness: 300, damping: 18 }}
@@ -870,7 +878,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     : "linear-gradient(135deg, #7c3aed, #3b82f6)"}
                   glow={following ? "rgba(148,163,184,0.3)" : "rgba(124,58,237,0.6)"}
                   className={`h-8 ${following ? "border border-border/50 text-muted-foreground" : ""}`}>
-                  {following ? <><UserCheck className="w-3.5 h-3.5" /> Kuzatmoqda</> : <><UserPlus className="w-3.5 h-3.5" /> Kuzatish</>}
+                  {following ? <><UserCheck className="w-3.5 h-3.5" /> {t("profile.following_btn")}</> : <><UserPlus className="w-3.5 h-3.5" /> {t("profile.follow_btn")}</>}
                 </NeonBtn>
                 <NeonBtn onClick={() => setShowSub(true)}
                   gradient={isSubscribed
@@ -878,7 +886,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     : "linear-gradient(135deg, rgba(100,116,139,0.3), rgba(148,163,184,0.2))"}
                   glow={isSubscribed ? "rgba(234,179,8,0.35)" : "rgba(148,163,184,0.2)"}
                   className={`h-8 border ${isSubscribed ? "border-yellow-500/30 text-yellow-500" : "border-border/40 text-muted-foreground"}`}>
-                  {isSubscribed ? <><Check className="w-3.5 h-3.5" /> Obuna</> : <><Bell className="w-3.5 h-3.5" /> Obuna</>}
+                  {isSubscribed ? <><Check className="w-3.5 h-3.5" /> {t("profile.subscribed")}</> : <><Bell className="w-3.5 h-3.5" /> {t("profile.subscription")}</>}
                 </NeonBtn>
               </>
             )}
@@ -902,9 +910,9 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 pb-5 border-b border-border/40 mb-5">
-          <StatCard label={t("profile.posts") || "Post"} value={myPosts.length} color="#a78bfa" glow="#7c3aed" delay={0.22} />
-          <StatCard label="Obunachi" value={user.followersCount ?? 0} color="#818cf8" glow="#6366f1" delay={0.30} />
-          <StatCard label="Kuzatish" value={user.followingCount ?? 0} color="#60a5fa" glow="#3b82f6" delay={0.38} />
+          <StatCard label={t("profile.posts")} value={myPosts.length} color="#a78bfa" glow="#7c3aed" delay={0.22} />
+          <StatCard label={t("profile.stat_followers")} value={user.followersCount ?? 0} color="#818cf8" glow="#6366f1" delay={0.30} />
+          <StatCard label={t("profile.stat_following")} value={user.followingCount ?? 0} color="#60a5fa" glow="#3b82f6" delay={0.38} />
         </div>
 
         {/* Tabs */}
@@ -989,7 +997,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                 className="w-14 h-14 rounded-2xl bg-muted mx-auto mb-3 flex items-center justify-center">
                 <Play className="w-7 h-7 opacity-40" />
               </motion.div>
-              <p className="text-sm font-medium">Hali reel yo'q</p>
+              <p className="text-sm font-medium">{t("profile.no_reels")}</p>
             </motion.div>
           ) : (
             <div className="grid grid-cols-3 gap-1.5">
@@ -1061,12 +1069,12 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           const topReel = [...reels].sort((a, b) => (b.viewsCount ?? 0) - (a.viewsCount ?? 0))[0];
 
           const statCards = [
-            { icon: Heart, label: "Jami Like", value: totalLikes.toLocaleString(), color: "#f472b6", glow: "rgba(244,114,182,0.55)" },
-            { icon: MessageCircle, label: "Jami Izoh", value: totalComments.toLocaleString(), color: "#60a5fa", glow: "rgba(96,165,250,0.55)" },
-            { icon: Eye, label: "Ko'rishlar", value: totalViews.toLocaleString(), color: "#c084fc", glow: "rgba(192,132,252,0.55)" },
-            { icon: Share2, label: "Ulashlar", value: totalShares.toLocaleString(), color: "#34d399", glow: "rgba(52,211,153,0.55)" },
-            { icon: TrendingUp, label: "O'rt. Engagement", value: `${avgEng}`, color: "#fbbf24", glow: "rgba(251,191,36,0.55)" },
-            { icon: BarChart2, label: "Jami Kontent", value: totalContent.toString(), color: "#67e8f9", glow: "rgba(103,232,249,0.55)" },
+            { icon: Heart, label: t("profile.total_likes"), value: totalLikes.toLocaleString(), color: "#f472b6", glow: "rgba(244,114,182,0.55)" },
+            { icon: MessageCircle, label: t("profile.total_comments"), value: totalComments.toLocaleString(), color: "#60a5fa", glow: "rgba(96,165,250,0.55)" },
+            { icon: Eye, label: t("profile.total_views"), value: totalViews.toLocaleString(), color: "#c084fc", glow: "rgba(192,132,252,0.55)" },
+            { icon: Share2, label: t("profile.total_shares"), value: totalShares.toLocaleString(), color: "#34d399", glow: "rgba(52,211,153,0.55)" },
+            { icon: TrendingUp, label: t("profile.avg_engagement"), value: `${avgEng}`, color: "#fbbf24", glow: "rgba(251,191,36,0.55)" },
+            { icon: BarChart2, label: t("profile.total_content"), value: totalContent.toString(), color: "#67e8f9", glow: "rgba(103,232,249,0.55)" },
           ];
 
           return (
@@ -1117,7 +1125,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     <motion.div animate={{ rotate: [0, 20, -20, 0] }} transition={{ duration: 3, repeat: Infinity }}>
                       <Star className="w-3.5 h-3.5 text-yellow-500" />
                     </motion.div>
-                    <span className="text-xs font-bold text-foreground">Eng yaxshi post</span>
+                    <span className="text-xs font-bold text-foreground">{t("profile.top_post")}</span>
                   </div>
                   <p className="text-sm text-foreground/80 line-clamp-2 mb-2">{topPost.content}</p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -1135,7 +1143,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
                       <Play className="w-3.5 h-3.5 text-violet-400 fill-violet-400" />
                     </motion.div>
-                    <span className="text-xs font-bold text-foreground">Eng ko'p ko'rilgan reel</span>
+                    <span className="text-xs font-bold text-foreground">{t("profile.top_reel")}</span>
                   </div>
                   <p className="text-sm text-foreground/80 line-clamp-2 mb-2">{topReel.caption ?? "Reel"}</p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -1150,7 +1158,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                   <motion.div animate={{ y: [-4, 4, -4] }} transition={{ duration: 3, repeat: Infinity }}>
                     <BarChart2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
                   </motion.div>
-                  <p className="text-sm">Hali kontent yo'q</p>
+                  <p className="text-sm">{t("profile.no_content")}</p>
                 </motion.div>
               )}
             </motion.div>

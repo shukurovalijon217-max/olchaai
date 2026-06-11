@@ -198,7 +198,7 @@ func relay(hub *Hub, toID int, msgType string, roomID string, fromID int, payloa
         hub.sendTo(toID, out)
 }
 
-func handleWSMessage(hub *Hub, liveHub *LiveHub, c *Client, raw []byte) {
+func handleWSMessage(hub *Hub, liveHub *LiveHub, coViewHub *CoViewHub, c *Client, raw []byte) {
         var msg WSMessage
         if err := json.Unmarshal(raw, &msg); err != nil {
                 return
@@ -351,8 +351,141 @@ func handleWSMessage(hub *Hub, liveHub *LiveHub, c *Client, raw []byte) {
                 room.mu.RUnlock()
                 log.Info().Str("room", msg.RoomID).Int("from", c.userID).Msg("live:gift")
 
+        case "coview_join":
+                room := coViewHub.getOrCreate(msg.RoomID, c.userID)
+                room.add(c.userID)
+                ack, _ := json.Marshal(map[string]any{
+                        "type":      "coview_joined",
+                        "roomId":    msg.RoomID,
+                        "isPlaying": room.IsPlaying,
+                        "syncTime":  room.SyncTime,
+                        "ts":        time.Now().UnixMilli(),
+                })
+                hub.sendTo(c.userID, ack)
+                joined, _ := json.Marshal(map[string]any{
+                        "type":     "coview_member_joined",
+                        "roomId":   msg.RoomID,
+                        "memberId": c.userID,
+                        "ts":       time.Now().UnixMilli(),
+                })
+                coViewHub.broadcastRoom(hub, msg.RoomID, joined, c.userID)
+                log.Info().Str("room", msg.RoomID).Int("user", c.userID).Msg("coview:joined")
+
+        case "coview_leave":
+                room, ok := coViewHub.get(msg.RoomID)
+                if !ok {
+                        return
+                }
+                room.remove(c.userID)
+                left, _ := json.Marshal(map[string]any{
+                        "type":     "coview_member_left",
+                        "roomId":   msg.RoomID,
+                        "memberId": c.userID,
+                        "ts":       time.Now().UnixMilli(),
+                })
+                coViewHub.broadcastRoom(hub, msg.RoomID, left, c.userID)
+
+        case "coview_sync":
+                room, ok := coViewHub.get(msg.RoomID)
+                if !ok {
+                        return
+                }
+                if room.HostID != c.userID {
+                        return
+                }
+                var p struct {
+                        Playing bool    `json:"playing"`
+                        Time    float64 `json:"time"`
+                }
+                json.Unmarshal(msg.Payload, &p)
+                room.mu.Lock()
+                room.IsPlaying = p.Playing
+                room.SyncTime = p.Time
+                room.mu.Unlock()
+                syncMsg, _ := json.Marshal(map[string]any{
+                        "type":    "coview_sync",
+                        "roomId":  msg.RoomID,
+                        "fromId":  c.userID,
+                        "payload": msg.Payload,
+                        "ts":      time.Now().UnixMilli(),
+                })
+                coViewHub.broadcastRoom(hub, msg.RoomID, syncMsg, c.userID)
+
+        case "coview_chat":
+                chatMsg, _ := json.Marshal(map[string]any{
+                        "type":    "coview_chat",
+                        "roomId":  msg.RoomID,
+                        "fromId":  c.userID,
+                        "payload": msg.Payload,
+                        "ts":      time.Now().UnixMilli(),
+                })
+                coViewHub.broadcastRoom(hub, msg.RoomID, chatMsg, c.userID)
+
         default:
                 log.Debug().Int("userID", c.userID).Str("type", msg.Type).Msg("ws:unknown_msg")
+        }
+}
+
+// ─── CoView Hub ───────────────────────────────────────────────────────────────
+
+type CoViewRoom struct {
+        HostID    int
+        Members   map[int]bool
+        IsPlaying bool
+        SyncTime  float64
+        mu        sync.RWMutex
+}
+
+func (r *CoViewRoom) add(id int) {
+        r.mu.Lock()
+        r.Members[id] = true
+        r.mu.Unlock()
+}
+
+func (r *CoViewRoom) remove(id int) {
+        r.mu.Lock()
+        delete(r.Members, id)
+        r.mu.Unlock()
+}
+
+type CoViewHub struct {
+        mu    sync.RWMutex
+        rooms map[string]*CoViewRoom
+}
+
+func newCoViewHub() *CoViewHub { return &CoViewHub{rooms: make(map[string]*CoViewRoom)} }
+
+func (cv *CoViewHub) getOrCreate(code string, hostID int) *CoViewRoom {
+        cv.mu.Lock()
+        defer cv.mu.Unlock()
+        if r, ok := cv.rooms[code]; ok {
+                return r
+        }
+        r := &CoViewRoom{HostID: hostID, Members: make(map[int]bool)}
+        cv.rooms[code] = r
+        return r
+}
+
+func (cv *CoViewHub) get(code string) (*CoViewRoom, bool) {
+        cv.mu.RLock()
+        defer cv.mu.RUnlock()
+        r, ok := cv.rooms[code]
+        return r, ok
+}
+
+func (cv *CoViewHub) broadcastRoom(hub *Hub, code string, msg []byte, excludeID int) {
+        cv.mu.RLock()
+        room, ok := cv.rooms[code]
+        cv.mu.RUnlock()
+        if !ok {
+                return
+        }
+        room.mu.RLock()
+        defer room.mu.RUnlock()
+        for uid := range room.Members {
+                if uid != excludeID {
+                        hub.sendTo(uid, msg)
+                }
         }
 }
 
@@ -364,7 +497,7 @@ var upgrader = websocket.Upgrader{
         WriteBufferSize: 4096,
 }
 
-func serveWS(hub *Hub, liveHub *LiveHub, w http.ResponseWriter, r *http.Request) {
+func serveWS(hub *Hub, liveHub *LiveHub, coViewHub *CoViewHub, w http.ResponseWriter, r *http.Request) {
         userIDStr := r.URL.Query().Get("userId")
         userID, _ := strconv.Atoi(userIDStr)
 
@@ -413,7 +546,7 @@ func serveWS(hub *Hub, liveHub *LiveHub, w http.ResponseWriter, r *http.Request)
                         break
                 }
                 conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-                handleWSMessage(hub, liveHub, c, raw)
+                handleWSMessage(hub, liveHub, coViewHub, c, raw)
         }
 }
 
@@ -645,6 +778,7 @@ func main() {
 
         hub := newHub()
         liveHub := newLiveHub()
+        coViewHub := newCoViewHub()
         mux := http.NewServeMux()
 
         mux.HandleFunc("/go/health", func(w http.ResponseWriter, r *http.Request) {
@@ -656,7 +790,7 @@ func main() {
         })
 
         mux.HandleFunc("/go/ws", func(w http.ResponseWriter, r *http.Request) {
-                serveWS(hub, liveHub, w, r)
+                serveWS(hub, liveHub, coViewHub, w, r)
         })
 
         mux.HandleFunc("/go/rank", handleRank(db))

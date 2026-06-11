@@ -28,6 +28,9 @@ import SellPage from "@/pages/SellPage";
 import MyShopPage from "@/pages/MyShopPage";
 import AIChatPage from "@/pages/AIChatPage";
 import LibraryPage from "@/pages/LibraryPage";
+import QuestsPage from "@/pages/QuestsPage";
+import CoViewPage from "@/pages/CoViewPage";
+import AnonZonesPage from "@/pages/AnonZonesPage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -147,6 +150,18 @@ function Router() {
       )} />
       <Route path="/kutubxona" component={() => (
         <ProtectedRoute><Layout><LibraryPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/quests" component={() => (
+        <ProtectedRoute><Layout><QuestsPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/coview/new" component={() => (
+        <ProtectedRoute><Layout><CoViewPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/coview/:code" component={() => (
+        <ProtectedRoute><Layout><CoViewPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/anon" component={() => (
+        <ProtectedRoute><Layout><AnonZonesPage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

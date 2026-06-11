@@ -276,6 +276,15 @@ export default function LibraryPage() {
                 {searchLoading ? "..." : "Qidirish"}
               </button>
             </div>
+            {!searchLoading && searchQ.trim() && searchResults.length === 0 && (
+              <div className="text-center py-12 space-y-2">
+                <Search className="w-10 h-10 text-muted-foreground mx-auto opacity-30" />
+                <p className="text-sm text-muted-foreground">
+                  "<span className="font-semibold text-foreground">{searchQ}</span>" bo'yicha kitob topilmadi
+                </p>
+                <p className="text-xs text-muted-foreground">Boshqa kalit so'z bilan urinib ko'ring</p>
+              </div>
+            )}
             {searchResults.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {searchResults.map(item => {

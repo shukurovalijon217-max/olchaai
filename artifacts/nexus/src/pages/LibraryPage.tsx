@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, ElementType } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, useMotionTemplate } from "framer-motion";
 import {
   BookOpen, Search, Plus, Star, BookMarked, CheckCircle2,
@@ -487,13 +488,14 @@ interface AiSearchResult {
 type SearchSource = "all" | "library" | "google" | "yandex" | "ai";
 
 const STATUS_CONFIG: Record<string, { label: string; icon: ElementType; color: string }> = {
-  want_to_read: { label: "O'qimoqchi", icon: BookMarked, color: "text-blue-400" },
-  reading: { label: "O'qilmoqda", icon: Clock, color: "text-amber-400" },
-  completed: { label: "O'qildi", icon: CheckCircle2, color: "text-emerald-400" },
-  dropped: { label: "To'xtatildi", icon: BookX, color: "text-destructive" },
+  want_to_read: { label: "library.want_to_read", icon: BookMarked, color: "text-blue-400" },
+  reading:      { label: "library.reading",      icon: Clock,       color: "text-amber-400" },
+  completed:    { label: "library.completed",    icon: CheckCircle2, color: "text-emerald-400" },
+  dropped:      { label: "library.dropped",      icon: BookX,       color: "text-destructive" },
 };
 
 export default function LibraryPage() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<"library" | "search" | "popular" | "translate">("library");
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -730,20 +732,20 @@ export default function LibraryPage() {
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-foreground">Kutubxona</h1>
-              <p className="text-[11px] text-muted-foreground">{stats.total} kitob · {stats.completed} o'qildi</p>
+              <h1 className="text-base font-bold text-foreground">{t("library.title")}</h1>
+              <p className="text-[11px] text-muted-foreground">{stats.total} · {stats.completed} {t("library.completed").toLowerCase()}</p>
             </div>
           </div>
           <div className="flex items-center gap-0.5 bg-muted rounded-xl p-1">
             {([
-              { id: "library", label: "Mening" },
-              { id: "search", label: "Qidirish" },
-              { id: "popular", label: "Mashhur" },
-              { id: "translate", label: "🌐 Tarjima" },
-            ] as { id: "library"|"search"|"popular"|"translate"; label: string }[]).map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                {t.label}
+              { id: "library", label: t("library.my") },
+              { id: "search", label: t("library.popular").slice(0, 0) || "🔍" },
+              { id: "popular", label: t("library.popular") },
+              { id: "translate", label: t("library.translate_tab") },
+            ] as { id: "library"|"search"|"popular"|"translate"; label: string }[]).map(tabItem => (
+              <button key={tabItem.id} onClick={() => setTab(tabItem.id)}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === tabItem.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                {tabItem.id === "search" ? "🔍" : tabItem.label}
               </button>
             ))}
           </div>
@@ -758,10 +760,10 @@ export default function LibraryPage() {
             {/* Stats */}
             <div className="grid grid-cols-4 gap-3">
               {[
-                { label: "Jami", value: stats.total, icon: BookOpen, color: "text-primary" },
-                { label: "O'qilmoqda", value: stats.reading, icon: Clock, color: "text-amber-400" },
-                { label: "O'qildi", value: stats.completed, icon: CheckCircle2, color: "text-emerald-400" },
-                { label: "Sevimli", value: stats.fav, icon: Heart, color: "text-rose-400" },
+                { label: t("library.total"),     value: stats.total,     icon: BookOpen,     color: "text-primary" },
+                { label: t("library.reading"),    value: stats.reading,   icon: Clock,        color: "text-amber-400" },
+                { label: t("library.completed"),  value: stats.completed, icon: CheckCircle2, color: "text-emerald-400" },
+                { label: t("library.favorite"),   value: stats.fav,       icon: Heart,        color: "text-rose-400" },
               ].map(s => (
                 <div key={s.label} className="bg-card border border-border rounded-2xl p-3 text-center">
                   <s.icon className={`w-4 h-4 ${s.color} mx-auto mb-1`} />
@@ -774,12 +776,12 @@ export default function LibraryPage() {
             {/* Filter chips */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {[
-                { id: "all", label: "Hammasi" },
-                { id: "reading", label: "O'qilmoqda" },
-                { id: "want_to_read", label: "O'qimoqchi" },
-                { id: "completed", label: "O'qildi" },
-                { id: "fav", label: "Sevimlilar" },
-                { id: "dropped", label: "To'xtatildi" },
+                { id: "all",          label: t("library.all") },
+                { id: "reading",      label: t("library.reading") },
+                { id: "want_to_read", label: t("library.want_to_read") },
+                { id: "completed",    label: t("library.completed") },
+                { id: "fav",          label: t("library.favorites") },
+                { id: "dropped",      label: t("library.dropped") },
               ].map(f => (
                 <button key={f.id} onClick={() => setFilter(f.id)}
                   className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${filter === f.id ? "bg-primary/15 border-primary/40 text-primary" : "border-border text-muted-foreground hover:border-border hover:text-foreground"}`}>
@@ -796,12 +798,12 @@ export default function LibraryPage() {
               <div className="text-center py-16 space-y-3">
                 <BookOpen className="w-12 h-12 text-muted-foreground mx-auto opacity-40" />
                 <p className="text-muted-foreground text-sm">
-                  {books.length === 0 ? "Kutubxonangiz bo'sh. Kitob qidiring!" : "Bu filtrdagi kitoblar yo'q"}
+                  {books.length === 0 ? t("library.empty") : t("library.no_filter")}
                 </p>
                 {books.length === 0 && (
                   <button onClick={() => setTab("search")}
                     className="px-4 py-2 rounded-xl bg-primary/15 text-primary text-sm font-semibold hover:bg-primary/25 transition-colors">
-                    Kitob qidirish
+                    {t("library.search_books")}
                   </button>
                 )}
               </div>
@@ -822,7 +824,7 @@ export default function LibraryPage() {
                         )}
                         {book.isFavorite && <Heart className="absolute top-2 right-2 w-4 h-4 text-rose-400 fill-rose-400" />}
                         <div className={`absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-background/80 backdrop-blur text-[10px] font-semibold ${cfg.color}`}>
-                          <cfg.icon className="w-2.5 h-2.5" /> {cfg.label}
+                          <cfg.icon className="w-2.5 h-2.5" /> {t(cfg.label)}
                         </div>
                       </div>
                       <p className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">{book.title}</p>
@@ -1411,7 +1413,7 @@ export default function LibraryPage() {
                     {Object.entries(STATUS_CONFIG).map(([id, cfg]) => (
                       <button key={id} onClick={() => updateBook(selected.id, { status: id })}
                         className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${selected.status === id ? "border-primary/40 bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-border hover:text-foreground"}`}>
-                        <cfg.icon className={`w-3.5 h-3.5 ${cfg.color}`} /> {cfg.label}
+                        <cfg.icon className={`w-3.5 h-3.5 ${cfg.color}`} /> {t(cfg.label)}
                       </button>
                     ))}
                   </div>
@@ -1454,7 +1456,7 @@ export default function LibraryPage() {
                 <button onClick={() => updateBook(selected.id, { isFavorite: !selected.isFavorite })}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${selected.isFavorite ? "border-rose-500/40 bg-rose-500/10 text-rose-400" : "border-border text-muted-foreground hover:text-foreground"}`}>
                   <Heart className={`w-3.5 h-3.5 ${selected.isFavorite ? "fill-rose-400" : ""}`} />
-                  {selected.isFavorite ? "Sevimlilardan chiqarish" : "Sevimlilarga qo'shish"}
+                  {selected.isFavorite ? t("library.remove_fav") : t("library.add_fav")}
                 </button>
 
                 {/* Review */}
@@ -1472,7 +1474,7 @@ export default function LibraryPage() {
                 {/* Delete */}
                 <button onClick={() => deleteBook(selected.id)}
                   className="w-full py-2 rounded-xl border border-destructive/30 text-destructive text-xs font-semibold hover:bg-destructive/10 transition-colors">
-                  Kutubxonadan o'chirish
+                  {t("library.remove_book")}
                 </button>
               </div>
             </motion.div>

@@ -4,8 +4,10 @@ import { Radio, Users, Play, Loader2 } from "lucide-react";
 import { useListActiveLives, useStartLive } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export default function LiveExplorePage() {
+  const { t } = useTranslation();
   const { data: lives = [], isLoading } = useListActiveLives();
   const startLive = useStartLive();
   const [, navigate] = useLocation();
@@ -32,9 +34,9 @@ export default function LiveExplorePage() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Radio className="w-6 h-6 text-red-500 animate-pulse" />
-            Jonli Efirlar
+            {t("live_explore.title")}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Hozir jonli efirda</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("live_explore.subtitle")}</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
@@ -42,7 +44,7 @@ export default function LiveExplorePage() {
           className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 transition-colors"
         >
           <Radio className="w-4 h-4" />
-          Efirga chiq
+          {t("live_explore.go_live")}
         </motion.button>
       </div>
 
@@ -56,25 +58,25 @@ export default function LiveExplorePage() {
           >
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Radio className="w-5 h-5 text-red-500" />
-              Jonli efirni boshlash
+              {t("live_explore.start_title")}
             </h2>
             <input
               value={title}
               onChange={e => setTitle(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") handleStart(); }}
-              placeholder="Efir nomini yozing..."
+              placeholder={t("live_explore.name_placeholder")}
               className="w-full bg-muted rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 ring-primary mb-4"
               autoFocus
             />
             <div className="flex gap-3">
               <button onClick={() => setShowStart(false)}
                 className="flex-1 py-2.5 rounded-xl bg-muted text-muted-foreground font-semibold text-sm hover:bg-muted/70">
-                Bekor
+                {t("live_explore.cancel")}
               </button>
               <button onClick={handleStart} disabled={!title.trim() || starting}
                 className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 disabled:opacity-50 flex items-center justify-center gap-2">
                 {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
-                Boshlash
+                {t("live_explore.start")}
               </button>
             </div>
           </motion.div>
@@ -89,8 +91,8 @@ export default function LiveExplorePage() {
       ) : lives.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">
           <Radio className="w-12 h-12 mx-auto mb-3 opacity-20" />
-          <p className="font-medium">Hozircha jonli efir yo'q</p>
-          <p className="text-sm mt-1">Birinchi bo'lib efirga chiqing!</p>
+          <p className="font-medium">{t("live_explore.no_live")}</p>
+          <p className="text-sm mt-1">{t("live_explore.be_first")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">

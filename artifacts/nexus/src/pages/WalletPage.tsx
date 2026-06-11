@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Wallet, ArrowDownCircle, ArrowUpCircle, ArrowLeftRight,
@@ -24,13 +25,13 @@ const PAYMENT_PROVIDERS = [
 ];
 
 const TX_TYPE_META: Record<string, { label: string; icon: typeof ArrowDownCircle; color: string }> = {
-  deposit:         { label: "To'ldirish",       icon: ArrowDownCircle,  color: "text-green-400" },
-  withdrawal:      { label: "Yechish",          icon: ArrowUpCircle,    color: "text-red-400" },
-  transfer_in:     { label: "Qabul qilish",     icon: ArrowDownCircle,  color: "text-blue-400" },
-  transfer_out:    { label: "O'tkazma",         icon: ArrowLeftRight,   color: "text-orange-400" },
-  ad_revenue:      { label: "Reklama daromadi", icon: Megaphone,        color: "text-yellow-400" },
-  content_revenue: { label: "Kontent daromadi", icon: TrendingUp,       color: "text-emerald-400" },
-  referral:        { label: "Referal bonus",    icon: CheckCircle2,     color: "text-purple-400" },
+  deposit:         { label: "wallet.deposit",        icon: ArrowDownCircle, color: "text-green-400" },
+  withdrawal:      { label: "wallet.withdraw",       icon: ArrowUpCircle,   color: "text-red-400" },
+  transfer_in:     { label: "wallet.receive",        icon: ArrowDownCircle, color: "text-blue-400" },
+  transfer_out:    { label: "wallet.transfer",       icon: ArrowLeftRight,  color: "text-orange-400" },
+  ad_revenue:      { label: "wallet.ad_revenue",     icon: Megaphone,       color: "text-yellow-400" },
+  content_revenue: { label: "wallet.content_revenue",icon: TrendingUp,      color: "text-emerald-400" },
+  referral:        { label: "wallet.referral",       icon: CheckCircle2,    color: "text-purple-400" },
 };
 
 const PM_ICONS: Record<string, string> = {
@@ -64,6 +65,7 @@ function usePaymentMethods() {
 
 // ─── Deposit Modal ────────────────────────────────────────────────────────────
 function DepositModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [step, setStep] = useState<"amount" | "method" | "processing" | "done">("amount");
   const [amount, setAmount] = useState("");
@@ -99,11 +101,11 @@ function DepositModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <ModalShell onClose={onClose} title="Hamyonni to'ldirish">
+    <ModalShell onClose={onClose} title={t("wallet.deposit_title")}>
       {step === "amount" && (
         <div className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Miqdor (so'm)</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t("wallet.amount_label")}</label>
             <div className="relative">
               <input
                 type="number"
@@ -127,14 +129,14 @@ function DepositModal({ onClose }: { onClose: () => void }) {
             disabled={!amount || parseInt(amount) < 1}
             onClick={() => setStep("method")}
             className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition disabled:opacity-40">
-            Davom etish →
+            {t("common.save")} →
           </button>
         </div>
       )}
 
       {step === "method" && (
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">To'lov usulini tanlang</p>
+          <p className="text-sm text-muted-foreground">{t("wallet.payment_methods")}</p>
           <div className="space-y-2">
             {PAYMENT_PROVIDERS.map(p => (
               <button key={p.id} onClick={() => setMethod(p.id)}
@@ -153,10 +155,10 @@ function DepositModal({ onClose }: { onClose: () => void }) {
             <span className="text-lg font-bold text-foreground">{parseInt(amount || "0").toLocaleString()} so'm</span>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => setStep("amount")} className="flex-1 py-3 rounded-xl border border-border text-foreground text-sm font-medium hover:bg-muted/50 transition">← Orqaga</button>
+            <button onClick={() => setStep("amount")} className="flex-1 py-3 rounded-xl border border-border text-foreground text-sm font-medium hover:bg-muted/50 transition">← {t("common.back")}</button>
             <button disabled={!method} onClick={handlePay}
               className="flex-2 flex-grow-[2] py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition disabled:opacity-40">
-              To'lash
+              {t("wallet.deposit")}
             </button>
           </div>
         </div>
@@ -165,7 +167,7 @@ function DepositModal({ onClose }: { onClose: () => void }) {
       {step === "processing" && (
         <div className="py-12 flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-          <p className="text-base font-semibold text-foreground">To'lov qayta ishlanmoqda...</p>
+          <p className="text-base font-semibold text-foreground">{t("common.loading")}</p>
           <p className="text-sm text-muted-foreground">{PAYMENT_PROVIDERS.find(p => p.id === method)?.label} ulanmoqda</p>
         </div>
       )}
@@ -176,14 +178,14 @@ function DepositModal({ onClose }: { onClose: () => void }) {
             <CheckCircle2 className="w-8 h-8 text-green-400" />
           </div>
           <div>
-            <p className="text-xl font-bold text-foreground">Muvaffaqiyatli!</p>
-            <p className="text-sm text-muted-foreground mt-1">Hamyoningizga {fmt(result.transaction?.amount ?? 0)} qo'shildi</p>
+            <p className="text-xl font-bold text-foreground">{t("common.success")}!</p>
+            <p className="text-sm text-muted-foreground mt-1">+{fmt(result.transaction?.amount ?? 0)}</p>
           </div>
           <div className="w-full p-4 rounded-xl bg-muted/30 border border-border text-left text-xs space-y-1">
             <p><span className="text-muted-foreground">Ref: </span><span className="font-mono text-foreground">{result.transaction?.reference}</span></p>
-            <p><span className="text-muted-foreground">Yangi balans: </span><span className="font-semibold text-foreground">{fmt(result.wallet?.balance ?? 0)}</span></p>
+            <p><span className="text-muted-foreground">{t("wallet.total_balance")}: </span><span className="font-semibold text-foreground">{fmt(result.wallet?.balance ?? 0)}</span></p>
           </div>
-          <button onClick={onClose} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition">Yopish</button>
+          <button onClick={onClose} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition">{t("common.close")}</button>
         </div>
       )}
     </ModalShell>
@@ -443,6 +445,7 @@ function ModalShell({ children, title, onClose }: { children: React.ReactNode; t
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function WalletPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data: walletData, isLoading: wLoading } = useWallet();
   const { data: txData } = useTransactions();
@@ -492,8 +495,8 @@ export default function WalletPage() {
               <Wallet className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Hamyon</h1>
-              <p className="text-xs text-muted-foreground">OlCha balans tizimi</p>
+              <h1 className="text-2xl font-bold text-foreground">{t("wallet.title")}</h1>
+              <p className="text-xs text-muted-foreground">{t("wallet.subtitle")}</p>
             </div>
           </div>
           <button onClick={() => setHideBalance(v => !v)} className="text-muted-foreground hover:text-foreground transition">
@@ -507,16 +510,16 @@ export default function WalletPage() {
             <div className="absolute top-4 right-8 w-32 h-32 rounded-full bg-white" />
             <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white" />
           </div>
-          <p className="text-primary-foreground/70 text-sm font-medium mb-1">Umumiy balans</p>
+          <p className="text-primary-foreground/70 text-sm font-medium mb-1">{t("wallet.total_balance")}</p>
           <p className="text-4xl font-black text-primary-foreground mb-4">{totalDisplay}</p>
           <div className="flex gap-3">
             <button onClick={() => setModal("deposit")}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-primary-foreground text-sm font-semibold transition backdrop-blur">
-              <ArrowDownCircle className="w-4 h-4" /> To'ldirish
+              <ArrowDownCircle className="w-4 h-4" /> {t("wallet.deposit")}
             </button>
             <button onClick={() => setModal("withdraw")}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-primary-foreground text-sm font-semibold transition backdrop-blur">
-              <ArrowUpCircle className="w-4 h-4" /> Yechish
+              <ArrowUpCircle className="w-4 h-4" /> {t("wallet.withdraw")}
             </button>
           </div>
         </div>
@@ -524,7 +527,7 @@ export default function WalletPage() {
         {/* Three balance cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <BalanceCard
-            title="Shaxsiy balans"
+            title={t("wallet.personal_balance")}
             amount={balanceDisplay}
             icon={<Wallet className="w-5 h-5" />}
             gradient="from-blue-600/20 to-cyan-600/20"
@@ -533,42 +536,42 @@ export default function WalletPage() {
             iconColor="text-blue-400"
           />
           <BalanceCard
-            title="Daromad hisobi"
+            title={t("wallet.earnings")}
             amount={earningsDisplay}
             icon={<TrendingUp className="w-5 h-5" />}
             gradient="from-emerald-600/20 to-green-600/20"
             border="border-emerald-500/20"
             iconBg="bg-emerald-500/20"
             iconColor="text-emerald-400"
-            action={{ label: "Simulyatsiya", onClick: () => simulateEarnings.mutate(), loading: simulateEarnings.isPending }}
+            action={{ label: t("wallet.simulate"), onClick: () => simulateEarnings.mutate(), loading: simulateEarnings.isPending }}
           />
           <BalanceCard
-            title="Reklama daromadi"
+            title={t("wallet.ad_revenue")}
             amount={adDisplay}
             icon={<Megaphone className="w-5 h-5" />}
             gradient="from-orange-600/20 to-yellow-600/20"
             border="border-orange-500/20"
             iconBg="bg-orange-500/20"
             iconColor="text-orange-400"
-            action={{ label: "Simulyatsiya", onClick: () => simulateAd.mutate(), loading: simulateAd.isPending }}
+            action={{ label: t("wallet.simulate"), onClick: () => simulateAd.mutate(), loading: simulateAd.isPending }}
           />
         </div>
 
         {/* Payment methods */}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-foreground">To'lov usullari</h2>
+            <h2 className="text-base font-bold text-foreground">{t("wallet.payment_methods")}</h2>
             <button onClick={() => setModal("add-method")}
               className="flex items-center gap-1.5 text-sm text-primary font-medium hover:opacity-80 transition">
-              <Plus className="w-4 h-4" /> Qo'shish
+              <Plus className="w-4 h-4" /> {t("wallet.add")}
             </button>
           </div>
 
           {paymentMethods.length === 0 ? (
             <div className="p-8 rounded-2xl border border-dashed border-border bg-muted/20 text-center">
               <CreditCard className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-              <p className="text-sm text-muted-foreground">To'lov usuli qo'shilmagan</p>
-              <button onClick={() => setModal("add-method")} className="mt-3 text-sm text-primary font-medium hover:opacity-80 transition">+ Qo'shish</button>
+              <p className="text-sm text-muted-foreground">{t("wallet.no_methods")}</p>
+              <button onClick={() => setModal("add-method")} className="mt-3 text-sm text-primary font-medium hover:opacity-80 transition">+ {t("wallet.add")}</button>
             </div>
           ) : (
             <div className="space-y-2">
@@ -607,7 +610,7 @@ export default function WalletPage() {
         {/* Transactions */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-foreground">Tranzaksiyalar</h2>
+            <h2 className="text-base font-bold text-foreground">{t("wallet.transactions")}</h2>
             <button onClick={() => { qc.invalidateQueries({ queryKey: ["wallet-txs"] }); }}
               className="text-muted-foreground hover:text-foreground transition">
               <RefreshCw className="w-4 h-4" />
@@ -617,7 +620,7 @@ export default function WalletPage() {
           {transactions.length === 0 ? (
             <div className="p-10 rounded-2xl border border-dashed border-border bg-muted/20 text-center">
               <ArrowLeftRight className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-              <p className="text-sm text-muted-foreground">Tranzaksiyalar yo'q</p>
+              <p className="text-sm text-muted-foreground">{t("wallet.no_tx")}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -631,7 +634,7 @@ export default function WalletPage() {
                       <TxIcon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{meta.label}</p>
+                      <p className="text-sm font-semibold text-foreground">{t(meta.label)}</p>
                       <div className="flex items-center gap-2">
                         <p className="text-xs text-muted-foreground truncate">{tx.description ?? tx.reference ?? ""}</p>
                         {tx.paymentMethod && tx.paymentMethod !== "internal" && (

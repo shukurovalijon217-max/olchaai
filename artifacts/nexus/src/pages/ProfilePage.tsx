@@ -159,6 +159,7 @@ function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }
   open: boolean; onClose: () => void; liveTitle: string;
   setLiveTitle: (v: string) => void; onStart: () => void; starting: boolean;
 }) {
+  const { t } = useTranslation();
   const [category, setCategory] = useState("🎵 Musiqa");
   const [audience, setAudience] = useState<"public" | "subscribers">("public");
 
@@ -172,7 +173,7 @@ function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }
             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500" />
             <Radio className="w-5 h-5 text-red-500" />
           </div>
-          <h2 className="text-base font-bold">Jonli efir</h2>
+          <h2 className="text-base font-bold">{t("live_explore.start_title")}</h2>
         </div>
         <button onClick={onClose} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground">
           <X className="w-4 h-4" />
@@ -230,11 +231,11 @@ function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }
 
         {/* Audience */}
         <div>
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 block">Auditoriya</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 block">{t("live_explore.audience")}</label>
           <div className="grid grid-cols-2 gap-2">
             {([
-              ["public", Globe, "Hammaga", "Ochiq efir"],
-              ["subscribers", Star, "Obunachilarga", "Maxsus efir"],
+              ["public", Globe, t("live_explore.public"), t("live_explore.public_sub")],
+              ["subscribers", Star, t("live_explore.subs_only"), t("live_explore.subs_sub")],
             ] as const).map(([val, Icon, label, sub]) => (
               <motion.button key={val} whileTap={{ scale: 0.97 }} onClick={() => setAudience(val)}
                 className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all ${audience === val
@@ -263,7 +264,7 @@ function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }
               style={{ skewX: -20 }} />
           )}
           {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
-          {starting ? "Ulanmoqda…" : "Efirni boshlash"}
+          {starting ? t("live_explore.connecting") : t("live_explore.go_live")}
         </motion.button>
       </div>
     </BottomSheet>
@@ -768,9 +769,9 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         {/* Tabs */}
         <div className="flex gap-1 mb-4 bg-muted rounded-xl p-1">
           {([
-            ["posts", Grid3X3, "Postlar"],
+            ["posts", Grid3X3, t("profile.posts") || "Posts"],
             ["reels", Play, "Reels"],
-            ...(isOwner ? [["analytics", BarChart2, "Tahlil"]] : []),
+            ...(isOwner ? [["analytics", BarChart2, t("admin.analytics")]] : []),
           ] as [string, ElementType, string][]).map(([tabId, Icon, label]) => (
             <button key={tabId} onClick={() => setTab(tabId as "posts" | "reels" | "analytics")}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all ${tab === tabId ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>
@@ -783,7 +784,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           myPosts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <BookmarkIcon className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Hali post yo'q</p>
+              <p className="text-sm">{t("profile.no_posts") || "No posts yet"}</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-1.5">

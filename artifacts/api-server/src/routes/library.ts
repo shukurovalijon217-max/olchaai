@@ -237,7 +237,6 @@ Faqat JSON qaytargin, boshqa matn yo'q.`,
 
 // ── Translation (MyMemory free API) ─────────────────────────────────────────
 router.get("/library/translate", async (req, res) => {
-  if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const { q, from = "auto", to = "en" } = req.query as { q?: string; from?: string; to?: string };
   if (!q?.trim()) { res.status(400).json({ error: "q required" }); return; }
 

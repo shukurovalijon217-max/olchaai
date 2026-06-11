@@ -23,6 +23,7 @@ import searchRouter from "./search";
 import marketplaceRouter from "./marketplace";
 import openaiChatRouter from "./openai-chat";
 import libraryRouter from "./library";
+import voiceCommentsRouter from "./voiceComments";
 
 const router: IRouter = Router();
 
@@ -50,5 +51,6 @@ router.use(searchRouter);
 router.use(marketplaceRouter);
 router.use(openaiChatRouter);
 router.use(libraryRouter);
+router.use(voiceCommentsRouter);
 
 export default router;

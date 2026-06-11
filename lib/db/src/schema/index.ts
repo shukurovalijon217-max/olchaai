@@ -14,3 +14,4 @@ export * from "./marketplace";
 export * from "./conversations";
 export * from "./library";
 export * from "./interactions";
+export * from "./voiceComments";

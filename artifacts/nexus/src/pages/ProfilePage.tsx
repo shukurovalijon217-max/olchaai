@@ -3,7 +3,7 @@ import {
   BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon,
   Camera, Loader2, Radio, Bell, BellOff, Star, Check, X, Sparkles,
   ChevronRight, Pencil, Shield, HelpCircle, Globe, Users, Plus, Zap,
-  Heart, MessageCircle,
+  Heart, MessageCircle, BarChart2, TrendingUp, Eye, Share2,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -13,7 +13,7 @@ import {
   getListCreatorPlansQueryKey, getCheckCreatorSubscriptionQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState, useRef, useCallback, ReactNode } from "react";
+import { useState, useRef, useCallback, ReactNode, ElementType } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { useLocation } from "wouter";
@@ -506,7 +506,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const updateUser = useUpdateUser();
   const startLive = useStartLive();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"posts" | "reels">("posts");
+  const [tab, setTab] = useState<"posts" | "reels" | "analytics">("posts");
   const { user: me } = useAuth();
   const isOwner = me?.id === userId;
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -767,8 +767,12 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-4 bg-muted rounded-xl p-1">
-          {([["posts", Grid3X3, "Postlar"], ["reels", Play, "Reels"]] as const).map(([tabId, Icon, label]) => (
-            <button key={tabId} onClick={() => setTab(tabId)}
+          {([
+            ["posts", Grid3X3, "Postlar"],
+            ["reels", Play, "Reels"],
+            ...(isOwner ? [["analytics", BarChart2, "Tahlil"]] : []),
+          ] as [string, ElementType, string][]).map(([tabId, Icon, label]) => (
+            <button key={tabId} onClick={() => setTab(tabId as "posts" | "reels" | "analytics")}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all ${tab === tabId ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>
               <Icon className="w-4 h-4" /> {label}
             </button>
@@ -891,6 +895,87 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             </div>
           )
         )}
+        {/* Analytics tab */}
+        {tab === "analytics" && isOwner && (() => {
+          const totalLikes = myPosts.reduce((s, p) => s + (p.likesCount ?? 0), 0)
+            + reels.reduce((s, r) => s + (r.likesCount ?? 0), 0);
+          const totalComments = myPosts.reduce((s, p) => s + (p.commentsCount ?? 0), 0);
+          const totalViews = reels.reduce((s, r) => s + (r.viewsCount ?? 0), 0);
+          const totalShares = myPosts.reduce((s, p) => s + ((p as any).sharesCount ?? 0), 0);
+          const totalContent = myPosts.length + reels.length;
+          const avgEng = totalContent > 0 ? Math.round((totalLikes + totalComments) / totalContent * 10) / 10 : 0;
+          const topPost = [...myPosts].sort((a, b) => ((b.likesCount ?? 0) + (b.commentsCount ?? 0)) - ((a.likesCount ?? 0) + (a.commentsCount ?? 0)))[0];
+          const topReel = [...reels].sort((a, b) => (b.viewsCount ?? 0) - (a.viewsCount ?? 0))[0];
+
+          const statCards = [
+            { icon: Heart, label: "Jami Like", value: totalLikes.toLocaleString(), color: "text-pink-400", bg: "bg-pink-400/10 border-pink-400/20" },
+            { icon: MessageCircle, label: "Jami Izoh", value: totalComments.toLocaleString(), color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/20" },
+            { icon: Eye, label: "Ko'rishlar", value: totalViews.toLocaleString(), color: "text-violet-400", bg: "bg-violet-400/10 border-violet-400/20" },
+            { icon: Share2, label: "Ulashlar", value: totalShares.toLocaleString(), color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20" },
+            { icon: TrendingUp, label: "O'rt. Engagement", value: `${avgEng}`, color: "text-amber-400", bg: "bg-amber-400/10 border-amber-400/20" },
+            { icon: BarChart2, label: "Jami Kontent", value: totalContent.toString(), color: "text-cyan-400", bg: "bg-cyan-400/10 border-cyan-400/20" },
+          ];
+
+          return (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pb-6">
+              {/* Stat grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {statCards.map(({ icon: Icon, label, value, color, bg }, i) => (
+                  <motion.div key={label}
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.06 }}
+                    className={`rounded-2xl border p-3.5 ${bg} flex items-center gap-3`}>
+                    <div className={`w-9 h-9 rounded-xl bg-card/60 flex items-center justify-center shrink-0`}>
+                      <Icon className={`w-4 h-4 ${color}`} />
+                    </div>
+                    <div>
+                      <p className={`text-lg font-bold ${color}`}>{value}</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{label}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Top post */}
+              {topPost && (
+                <div className="rounded-2xl border border-border bg-card/50 p-4">
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <Star className="w-3.5 h-3.5 text-yellow-500" />
+                    <span className="text-xs font-semibold text-foreground">Eng yaxshi post</span>
+                  </div>
+                  <p className="text-sm text-foreground/80 line-clamp-2 mb-2">{topPost.content}</p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-pink-400" />{topPost.likesCount ?? 0}</span>
+                    <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3 text-blue-400" />{topPost.commentsCount ?? 0}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Top reel */}
+              {topReel && (
+                <div className="rounded-2xl border border-border bg-card/50 p-4">
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <Play className="w-3.5 h-3.5 text-violet-500" />
+                    <span className="text-xs font-semibold text-foreground">Eng ko'p ko'rilgan reel</span>
+                  </div>
+                  <p className="text-sm text-foreground/80 line-clamp-2 mb-2">{topReel.caption ?? "Reel"}</p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-violet-400" />{(topReel.viewsCount ?? 0).toLocaleString()}</span>
+                    <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-pink-400" />{topReel.likesCount ?? 0}</span>
+                  </div>
+                </div>
+              )}
+
+              {totalContent === 0 && (
+                <div className="text-center py-10 text-muted-foreground">
+                  <BarChart2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Hali kontent yo'q</p>
+                </div>
+              )}
+            </motion.div>
+          );
+        })()}
       </div>
 
       {/* ── Bottom Sheets ── */}

@@ -25,6 +25,16 @@ export const reelLikesTable = pgTable("reel_likes", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const reelCommentsTable = pgTable("reel_comments", {
+  id: serial("id").primaryKey(),
+  reelId: integer("reel_id").notNull().references(() => reelsTable.id, { onDelete: "cascade" }),
+  authorId: integer("author_id").notNull().references(() => usersTable.id),
+  content: text("content").notNull(),
+  likesCount: integer("likes_count").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertReelSchema = createInsertSchema(reelsTable).omit({ id: true, createdAt: true, likesCount: true, commentsCount: true, viewsCount: true });
 export type InsertReel = z.infer<typeof insertReelSchema>;
 export type Reel = typeof reelsTable.$inferSelect;
+export type ReelComment = typeof reelCommentsTable.$inferSelect;

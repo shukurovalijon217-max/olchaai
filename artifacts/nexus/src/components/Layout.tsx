@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence, useMotionValue, useDragControls } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   Home, Play, Compass, MessageCircle, Users, Bell,
   User, ShieldCheck, LogOut, Crown, Settings, Wallet, Radio,
@@ -10,36 +11,36 @@ import {
 import NexusLogo from "@/components/NexusLogo";
 import { useAuth } from "@/context/AuthContext";
 
-const nav = [
-  { href: "/", icon: Home, label: "Feed" },
-  { href: "/reels", icon: Play, label: "Reels" },
-  { href: "/explore", icon: Compass, label: "Explore" },
-  { href: "/search", icon: Search, label: "Qidiruv" },
-  { href: "/bozor", icon: ShoppingBag, label: "Bozor" },
-  { href: "/ai-chat", icon: Bot, label: "AI Chat" },
-  { href: "/kutubxona", icon: BookOpen, label: "Kutubxona" },
-  { href: "/live-explore", icon: Radio, label: "Jonli Efir" },
-  { href: "/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/groups", icon: Users, label: "Jamoalar" },
-  { href: "/notifications", icon: Bell, label: "Bildirishnomalar" },
-  { href: "/profile", icon: User, label: "Profil" },
-  { href: "/premium", icon: Crown, label: "Premium" },
-  { href: "/wallet", icon: Wallet, label: "Hamyon" },
+const navItems = [
+  { href: "/", icon: Home, key: "nav.home" },
+  { href: "/reels", icon: Play, key: "nav.reels" },
+  { href: "/explore", icon: Compass, key: "nav.explore" },
+  { href: "/search", icon: Search, key: "nav.search" },
+  { href: "/bozor", icon: ShoppingBag, key: "nav.marketplace" },
+  { href: "/ai-chat", icon: Bot, key: "nav.ai_chat" },
+  { href: "/kutubxona", icon: BookOpen, key: "nav.library" },
+  { href: "/live-explore", icon: Radio, key: "nav.live" },
+  { href: "/messages", icon: MessageCircle, key: "nav.messages" },
+  { href: "/groups", icon: Users, key: "nav.groups" },
+  { href: "/notifications", icon: Bell, key: "nav.notifications" },
+  { href: "/profile", icon: User, key: "nav.profile" },
+  { href: "/premium", icon: Crown, key: "nav.premium" },
+  { href: "/wallet", icon: Wallet, key: "nav.wallet" },
 ];
 
-const bottomNav = [
-  { href: "/settings", icon: Settings, label: "Sozlamalar" },
+const bottomNavItems = [
+  { href: "/settings", icon: Settings, key: "nav.settings" },
 ];
 
-const adminNav = [
-  { href: "/admin", icon: ShieldCheck, label: "Admin Panel" },
+const adminNavItems = [
+  { href: "/admin", icon: ShieldCheck, key: "nav.admin" },
 ];
 
-const mobileNavMain = [
-  { href: "/", icon: Home, label: "Feed" },
-  { href: "/explore", icon: Compass, label: "Explore" },
-  { href: "/ai-chat", icon: Bot, label: "AI" },
-  { href: "/messages", icon: MessageCircle, label: "Xabar" },
+const mobileNavMainItems = [
+  { href: "/", icon: Home, key: "nav.home" },
+  { href: "/explore", icon: Compass, key: "nav.explore" },
+  { href: "/ai-chat", icon: Bot, key: "nav.ai_chat" },
+  { href: "/messages", icon: MessageCircle, key: "nav.messages" },
 ];
 
 const Y_KEY = "olcha_nav_y";
@@ -57,6 +58,7 @@ function loadOpen() {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(loadOpen);
   const [moreOpen, setMoreOpen] = useState(false);
   const [maxY, setMaxY] = useState(600);
@@ -70,7 +72,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  // close more sheet when navigating
   useEffect(() => { setMoreOpen(false); }, [location]);
 
   const saveY = () => {
@@ -84,9 +85,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const allMobileNav = [
-    ...nav,
-    ...bottomNav,
-    ...(user?.isAdmin ? adminNav : []),
+    ...navItems,
+    ...bottomNavItems,
+    ...(user?.isAdmin ? adminNavItems : []),
   ];
 
   return (
@@ -161,7 +162,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
                 {/* Nav items */}
                 <nav className="flex-1 px-1.5 py-1 space-y-0.5 overflow-y-auto scrollbar-none">
-                  {nav.map(({ href, icon: Icon, label }) => {
+                  {navItems.map(({ href, icon: Icon, key }) => {
                     const active = location === href || (href !== "/" && location.startsWith(href));
                     return (
                       <Link key={href} href={href}>
@@ -175,7 +176,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           }`}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-medium">{label}</span>
+                          <span className="font-medium">{t(key)}</span>
                           {active && (
                             <motion.div layoutId="nav-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
                           )}
@@ -187,7 +188,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
                 {/* Bottom actions */}
                 <div className="px-1.5 pb-2 pt-1 border-t border-border/30 space-y-0.5">
-                  {[...bottomNav, ...(user?.isAdmin ? adminNav : [])].map(({ href, icon: Icon, label }) => {
+                  {[...bottomNavItems, ...(user?.isAdmin ? adminNavItems : [])].map(({ href, icon: Icon, key }) => {
                     const active = location.startsWith(href);
                     return (
                       <Link key={href} href={href}>
@@ -198,7 +199,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           }`}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-medium">{label}</span>
+                          <span className="font-medium">{t(key)}</span>
                         </motion.div>
                       </Link>
                     );
@@ -208,7 +209,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-colors text-sm"
                   >
                     <LogOut className="w-4 h-4 flex-shrink-0" />
-                    <span className="font-medium">Chiqish</span>
+                    <span className="font-medium">{t("auth.logout")}</span>
                   </button>
                 </div>
               </motion.aside>
@@ -223,7 +224,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               whileTap={{ scale: 0.92 }}
               className="flex items-center justify-center w-6 h-12 rounded-r-xl shadow-xl border border-border/50 border-l-0 transition-colors"
               style={{ background: "hsl(var(--sidebar))", backdropFilter: "blur(16px)" }}
-              title={isOpen ? "Yopish" : "Ochish"}
+              title={isOpen ? t("common.close") : t("common.open")}
             >
               {isOpen
                 ? <ChevronLeft className="w-3.5 h-3.5 text-sidebar-foreground" />
@@ -234,7 +235,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               onPointerDown={(e) => { e.stopPropagation(); dragControls.start(e); }}
               className="flex flex-col items-center gap-[3px] py-2 px-1.5 rounded-r-lg cursor-ns-resize border border-border/40 border-l-0 shadow"
               style={{ background: "hsl(var(--sidebar) / 0.85)", backdropFilter: "blur(12px)" }}
-              title="Yuqori-pastga suring"
             >
               {[0, 1, 2, 3].map((i) => (
                 <div key={i} className="w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
@@ -249,7 +249,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 flex items-center justify-around py-1.5 px-1"
         style={{ background: "hsl(var(--sidebar) / 0.97)", backdropFilter: "blur(20px)" }}
       >
-        {mobileNavMain.map(({ href, icon: Icon, label }) => {
+        {mobileNavMainItems.map(({ href, icon: Icon, key }) => {
           const active = location === href || (href !== "/" && location.startsWith(href));
           return (
             <Link key={href} href={href}>
@@ -260,7 +260,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <Icon className="w-5 h-5" />
-                <span className="text-[9px] font-semibold">{label}</span>
+                <span className="text-[9px] font-semibold">{t(key)}</span>
                 {active && <motion.div layoutId="mob-dot" className="w-1 h-1 rounded-full bg-primary" />}
               </motion.div>
             </Link>
@@ -276,7 +276,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           }`}
         >
           <MoreHorizontal className="w-5 h-5" />
-          <span className="text-[9px] font-semibold">Ko'proq</span>
+          <span className="text-[9px] font-semibold">{t("nav.more")}</span>
         </motion.button>
       </nav>
 
@@ -314,7 +314,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-border/30">
-                <p className="font-bold text-foreground text-base">Barcha bo'limlar</p>
+                <p className="font-bold text-foreground text-base">{t("common.all_sections")}</p>
                 <button
                   onClick={() => setMoreOpen(false)}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-muted/60 hover:bg-muted transition-colors"
@@ -325,7 +325,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
               {/* All nav items grid */}
               <div className="px-4 pt-3 pb-2 grid grid-cols-3 gap-2">
-                {allMobileNav.map(({ href, icon: Icon, label }) => {
+                {allMobileNav.map(({ href, icon: Icon, key }) => {
                   const active = location === href || (href !== "/" && location.startsWith(href));
                   return (
                     <Link key={href} href={href}>
@@ -338,7 +338,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         }`}
                       >
                         <Icon className="w-5 h-5" />
-                        <span className="text-[10px] font-semibold text-center leading-tight">{label}</span>
+                        <span className="text-[10px] font-semibold text-center leading-tight">{t(key)}</span>
                       </motion.div>
                     </Link>
                   );
@@ -368,7 +368,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors text-xs font-semibold"
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    Chiqish
+                    {t("auth.logout")}
                   </button>
                 </div>
               )}

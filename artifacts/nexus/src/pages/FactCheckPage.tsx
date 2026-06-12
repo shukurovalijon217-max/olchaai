@@ -111,7 +111,7 @@ export default function FactCheckPage() {
       fetch(`${API}/api/credibility/leaderboard`, { credentials: "include" }).then(r => r.json()),
       user ? fetch(`${API}/api/credibility/${user.id}`, { credentials: "include" }).then(r => r.json()) : Promise.resolve(null),
     ]).then(([lb, me]) => {
-      setLeaderboard(lb ?? []);
+      setLeaderboard(Array.isArray(lb) ? lb : []);
       setMyScore(me);
     }).finally(() => setLoading(false));
   }, [user]);

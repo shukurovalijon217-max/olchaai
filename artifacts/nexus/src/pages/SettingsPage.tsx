@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
-import i18n from "i18next";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -370,7 +369,8 @@ function LanguageTab() {
   const filteredPopular = search ? filtered.filter(l => POPULAR_LANGS.includes(l.code)) : popularLangs;
 
   const handleChange = (code: LangCode) => {
-    i18n.changeLanguage(code);
+    localStorage.setItem("olcha_lang", code);
+    i18nInst.changeLanguage(code);
     applyRTL(code);
     setApplied(true);
     setTimeout(() => setApplied(false), 2000);

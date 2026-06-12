@@ -6,7 +6,6 @@ import NexusLogo from "@/components/NexusLogo";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
-import i18n from "i18next";
 
 /* ─── Popular languages shown first ──────────────────────────── */
 const POPULAR = ["uz", "en", "ru", "zh", "ar", "es", "fr", "hi", "tr", "de", "ja", "ko"];
@@ -46,7 +45,8 @@ function LangSwitcher() {
   const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
   const handleSelect = (code: LangCode) => {
-    i18n.changeLanguage(code);
+    localStorage.setItem("olcha_lang", code);
+    i18nInst.changeLanguage(code);
     applyRTL(code);
     setOpen(false);
     setSearch("");

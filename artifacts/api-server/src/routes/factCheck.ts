@@ -83,14 +83,6 @@ Respond in JSON format:
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server xatosi" }); }
 });
 
-router.get("/credibility/:userId", async (req: any, res) => {
-  try {
-    const userId = parseInt(req.params.userId);
-    const cred = await getOrCreateCredibility(userId);
-    res.json(cred);
-  } catch (err) { req.log.error(err); res.status(500).json({ error: "Server xatosi" }); }
-});
-
 router.get("/credibility/leaderboard", async (req: any, res) => {
   try {
     const rows = await db
@@ -109,6 +101,15 @@ router.get("/credibility/leaderboard", async (req: any, res) => {
       .orderBy(desc(credibilityScoresTable.score))
       .limit(50);
     res.json(rows);
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Server xatosi" }); }
+});
+
+router.get("/credibility/:userId", async (req: any, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    if (isNaN(userId)) { res.status(400).json({ error: "Noto'g'ri ID" }); return; }
+    const cred = await getOrCreateCredibility(userId);
+    res.json(cred);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server xatosi" }); }
 });
 

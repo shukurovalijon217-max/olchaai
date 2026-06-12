@@ -27,6 +27,11 @@ import voiceCommentsRouter from "./voiceComments";
 import gamificationRouter from "./gamification";
 import coviewRouter from "./coview";
 import anonRouter from "./anon";
+import scenariosRouter from "./scenarios";
+import moodRouter from "./mood";
+import aiTwinRouter from "./aiTwin";
+import factCheckRouter from "./factCheck";
+import coSpacesRouter from "./coSpaces";
 
 const router: IRouter = Router();
 
@@ -58,5 +63,10 @@ router.use(voiceCommentsRouter);
 router.use(gamificationRouter);
 router.use(coviewRouter);
 router.use(anonRouter);
+router.use(scenariosRouter);
+router.use(moodRouter);
+router.use(aiTwinRouter);
+router.use(factCheckRouter);
+router.use(coSpacesRouter);
 
 export default router;

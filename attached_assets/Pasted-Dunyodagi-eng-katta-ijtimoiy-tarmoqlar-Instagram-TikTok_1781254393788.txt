@@ -1,0 +1,22 @@
+Dunyodagi eng katta ijtimoiy tarmoqlar (Instagram, TikTok, Facebook) hammasi bir-birini takrorlashni boshladi: hamma joyda reels, hamma joyda storis, hamma joyda bir xil layklar. Odamlar zerikdi.
+Agar siz hali hech kim qilmagan yoki endigina poydevor qoʻyilayotgan mutloq yangi gʻoyalarni olib kirsangiz, dunyo miqyosida inqilob qilishingiz mumkin. Quyida hali biror bir yirik ijtimoiy tarmoq toʻliq va mukammal joriy etmagan, kelajak avlod uchun moʻljallangan 5 ta inqilobiy funksiya gʻoyasini taqdim etaman:
+1. "Multi-Ssenariy" Kontent (Foydalanuvchi tanlovi bilan rivojlanadigan videolar)
+Hozir TikTok yoki Instagram'da videoni shunchaki passiv tomosha qilasiz. Kontent qanday yozilgan boʻlsa, shunday tugaydi.
+• Yangi funksiya: Videoni koʻrayotgan paytda ekranda tanlov tugmalari chiqadi (xuddi interaktiv oʻyinlardagidek). Masalan, sayohatchi bloger video olyapti: "Men hozir oʻng tomondagi gʻorga kiraymi yoki chap tomondagi togʻgami?". Foydalanuvchi qaysi tugmani bossa, video oʻsha ssenariy boʻyicha davom etadi.
+• Bu kontent yaratuvchilarga bitta video ichida bir nechta parallel syujetlar yuklash imkonini beradi. Odamlar bir dasturni oʻzida turli qarorlar qabul qilib, soatlab vaqt oʻtkazishadi.
+2. "Hissiyotlar va Energetika" xaritasi (Mood-Based Networking)
+Hozirgi tarmoqlar sizni qiziqishlaringiz (trading, sport, goʻzallik) boʻyicha guruhlaydi. Lekin inson ruhiyati va hissiyotlariga moslashmaydi.
+• Yangi funksiya: Smartfon kamerasi yoki sensorlar orqali (yoki shunchaki foydalanuvchining xohishi bilan) oʻsha paytdagi ichki holat (charchoq, motivatsiya, xotirjamlik, chuqur fikrlash) aniqlanadi.
+• Ilova sizni xuddi oʻsha soniyada siz kabi his qilayotgan odamlar bilan global "Hissiyotlar xaritasi"da birlashtiradi. Agar kayfiyatingiz falsafiy boʻlsa, tizim sizga falsafiy postlar va ayni paytda Rumi sheʼriyatini muhokama qilayotgan guruhlarni chiqaradi. Agar energetikangiz yuqori boʻlsa, dinamik startap yoki trading muhokamalariga ulaydi.
+3. "AI Twin" (Siz uxlayotganingizda ishlaydigan virtual nusxa)
+Hozir tarmoqda boʻlmasangiz, profilingiz "oʻlik" holatda turadi. Hech qanday harakat boʻlmaydi.
+• Yangi funksiya: Tizim ichida sizning fikrlash tarzingiz, yozish uslubingiz va bilimlaringiz asosida shakllangan shaxsiy AI Egizagingiz (AI Twin) boʻladi.
+• Siz tarmoqda yoʻqligingizda (masalan, uxlayotganingizda), doʻstlaringiz yoki boshqa foydalanuvchilar sizning profilingizga kirib, raqamli egizagingiz bilan xuddi oʻzingiz bilan gaplashgandek muloqot qilishlari, fikr almashishlari mumkin. Ertalab tursangiz, egizagingiz sizga hisobot beradi: "Kecha tunda Navoiydan 3 ta treyder kirdi, ular bilan tillo narxi boʻyicha sizning strategiyangiz asosida suhbatlashdim va kelishib qoʻydim".
+4. "Haqiqat va Fakt-Cheking" Reytingi (Anti-Feyk)
+Hozirgi ijtimoiy tarmoqlarning eng katta muammosi — yolgʻon maʼlumotlar, feyk xabarlar va odamlarni aldash (ayniqsa moliya va yangiliklar sohasida).
+• Yangi funksiya: Platformaga oʻrnatilgan neyron tarmoq (AI) har bir post ostidagi maʼlumotlarni real vaqtda tekshiradi.
+• Agar kimdur yolgʻon yoki isbotlanmagan gap yozsa, AI post tepasiga "Diqqat, bu maʼlumot feyk boʻlishi mumkin" deb isbotlarni ilova qiladi. Har bir foydalanuvchining platformada "Haqiqat reytingi" (Credibility Score) boʻladi. Bu ijtimoiy tarmoqni shunchaki vaqt oʻtkazish joyi emas, dunyodagi eng ishonchli bilim va maʼlumotlar markaziga aylantiradi.
+5. "Kollektiv Ong" Loyihalari (Co-Creation Spaces)
+Hozir odamlar ijtimoiy tarmoqda alohida-alohida kontent yaratadi va tarqatadi. Hamkorlik faqat duet yoki kommentariya bilan cheklangan.
+• Yangi funksiya: Dunyoning turli chekkasidagi minglab odamlarni bitta katta gʻoya atrofida birlashtiruvchi "Kollektiv xonalar".
+• Masalan, "Yangi ijtimoiy tarmoq poydevorini quramiz" degan xonaga 500 ta dasturchi, dizayner va marketolog yigʻiladi. Tizim ularga umumiy ish maydoni (Canvas va kod muharrirlari integratsiyasi) beradi. Ular real vaqtda birgalikda global mahsulotlar yaratishadi, daromad esa tizim tomonidan aqlli kontraktlar (smart-contracts) orqali ularning qoʻshgan hissasiga qarab avtomatik taqsimlanadi.

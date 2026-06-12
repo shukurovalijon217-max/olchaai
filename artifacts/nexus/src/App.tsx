@@ -31,6 +31,11 @@ import LibraryPage from "@/pages/LibraryPage";
 import QuestsPage from "@/pages/QuestsPage";
 import CoViewPage from "@/pages/CoViewPage";
 import AnonZonesPage from "@/pages/AnonZonesPage";
+import MultiScenePage from "@/pages/MultiScenePage";
+import MoodMapPage from "@/pages/MoodMapPage";
+import AITwinPage from "@/pages/AITwinPage";
+import FactCheckPage from "@/pages/FactCheckPage";
+import CoSpacesPage from "@/pages/CoSpacesPage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -162,6 +167,21 @@ function Router() {
       )} />
       <Route path="/anon" component={() => (
         <ProtectedRoute><Layout><AnonZonesPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/multiscene" component={() => (
+        <ProtectedRoute><Layout><MultiScenePage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/mood" component={() => (
+        <ProtectedRoute><Layout><MoodMapPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/twin" component={() => (
+        <ProtectedRoute><Layout><AITwinPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/factcheck" component={() => (
+        <ProtectedRoute><Layout><FactCheckPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/spaces" component={() => (
+        <ProtectedRoute><Layout><CoSpacesPage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

@@ -62,6 +62,7 @@ function MoodBubble({ entry, index }: { entry: MoodEntry; index: number }) {
 }
 
 function MoodStats({ entries }: { entries: MoodEntry[] }) {
+  const { t } = useTranslation();
   const counts = MOODS.map(m => ({ ...m, count: entries.filter(e => e.mood === m.key).length }))
     .filter(m => m.count > 0)
     .sort((a, b) => b.count - a.count);
@@ -72,7 +73,7 @@ function MoodStats({ entries }: { entries: MoodEntry[] }) {
       {counts.map(m => (
         <div key={m.key} className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
           <span className="text-sm">{m.emoji}</span>
-          <span className="text-white/70 text-xs">{m.label}</span>
+          <span className="text-white/70 text-xs">{t(`mood.${m.key}`)}</span>
           <span className="text-xs font-bold" style={{ color: m.color }}>{m.count}</span>
         </div>
       ))}
@@ -81,6 +82,7 @@ function MoodStats({ entries }: { entries: MoodEntry[] }) {
 }
 
 export default function MoodMapPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [myMood, setMyMood] = useState<MoodEntry | null>(null);
@@ -127,9 +129,9 @@ export default function MoodMapPage() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-white font-bold text-xl flex items-center gap-2">
-              <Globe className="w-5 h-5 text-cyan-400" /> Hissiyot Xaritasi
+              <Globe className="w-5 h-5 text-cyan-400" /> {t("mood.title")}
             </h1>
-            <p className="text-white/40 text-xs mt-0.5">{entries.length} kishi onlayn</p>
+            <p className="text-white/40 text-xs mt-0.5">{entries.length} {t("mood.subtitle_online")}</p>
           </div>
           <div className="flex items-center gap-2">
             <motion.button whileTap={{ scale: 0.9 }} onClick={fetchData}
@@ -152,14 +154,14 @@ export default function MoodMapPage() {
               <>
                 <span className="text-2xl">{currentMoodInfo.emoji}</span>
                 <div className="flex-1 text-left">
-                  <div className="text-white text-sm font-medium">Hozirgim: {currentMoodInfo.label}</div>
-                  <div className="text-white/50 text-xs">Energiya: {myMood?.energyLevel}/10 • O'zgartirish uchun bosing</div>
+                  <div className="text-white text-sm font-medium">{t("mood.current")} {t(`mood.${myMood?.mood}`)}</div>
+                  <div className="text-white/50 text-xs">{t("mood.energy")}: {myMood?.energyLevel}/10 • {t("mood.click_change")}</div>
                 </div>
               </>
             ) : (
               <>
                 <Heart className="w-5 h-5 text-cyan-400" />
-                <span className="text-white/60 text-sm">Hozirgi kayfiyatingizni ulashing...</span>
+                <span className="text-white/60 text-sm">{t("mood.share_mood")}</span>
               </>
             )}
           </motion.button>
@@ -184,16 +186,16 @@ export default function MoodMapPage() {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
                   <div>
                     <div className="flex justify-between text-xs text-white/60 mb-1">
-                      <span>Energiya</span><span className="font-bold" style={{ color: MOOD_MAP[selectedMood]?.color }}>{energy}/10</span>
+                      <span>{t("mood.energy")}</span><span className="font-bold" style={{ color: MOOD_MAP[selectedMood]?.color }}>{energy}/10</span>
                     </div>
                     <input type="range" min={1} max={10} value={energy} onChange={e => setEnergy(+e.target.value)}
                       className="w-full accent-violet-500" />
                   </div>
-                  <input value={note} onChange={e => setNote(e.target.value)} placeholder="Izoh (ixtiyoriy)..."
+                  <input value={note} onChange={e => setNote(e.target.value)} placeholder={t("mood.note_ph")}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-cyan-500/60" />
                   <motion.button whileTap={{ scale: 0.95 }} onClick={saveMood} disabled={saving}
                     className="w-full py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-colors disabled:opacity-50">
-                    {saving ? "Saqlanmoqda..." : "🌍 Xaritaga qo'shish"}
+                    {saving ? t("mood.saving") : `🌍 ${t("mood.add_to_map")}`}
                   </motion.button>
                 </motion.div>
               )}
@@ -216,18 +218,18 @@ export default function MoodMapPage() {
             {entries.length === 0 ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                 <Globe className="w-16 h-16 text-cyan-400/20 mb-4" />
-                <p className="text-white/30 text-sm">Hali hech kim kayfiyatini ulashmagan</p>
+                <p className="text-white/30 text-sm">{t("mood.no_moods")}</p>
               </div>
             ) : (
               entries.map((e, i) => <MoodBubble key={e.id} entry={e} index={i} />)
             )}
-            <div className="absolute bottom-4 right-4 text-white/20 text-xs">Xarita • Real vaqt</div>
+            <div className="absolute bottom-4 right-4 text-white/20 text-xs">{t("mood.map_realtime")}</div>
           </div>
         ) : (
           <div className="overflow-y-auto h-full px-4 pb-4 space-y-2">
             {entries.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-48 text-center">
-                <p className="text-white/30 text-sm">Hali hech kim kayfiyatini ulashmagan</p>
+                <p className="text-white/30 text-sm">{t("mood.no_moods")}</p>
               </div>
             ) : (
               entries.map(e => {
@@ -248,7 +250,7 @@ export default function MoodMapPage() {
                         <span className="text-white/40 text-xs">@{e.username}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs" style={{ color: mood.color }}>{mood.label}</span>
+                        <span className="text-xs" style={{ color: mood.color }}>{t(`mood.${e.mood}`)}</span>
                         <span className="text-white/30 text-xs">•</span>
                         <div className="flex gap-0.5">
                           {Array.from({ length: 10 }).map((_, i) => (

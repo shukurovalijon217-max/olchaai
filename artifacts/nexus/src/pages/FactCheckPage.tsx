@@ -19,10 +19,11 @@ const VERDICT_CONFIG = {
 };
 
 function CredibilityBadge({ score }: { score: number }) {
-  const level = score >= 80 ? { label: "Ishonchli Muharrir", color: "#10b981", icon: "🏆" }
-    : score >= 60 ? { label: "Faol Tekshiruvchi", color: "#3b82f6", icon: "⭐" }
-    : score >= 40 ? { label: "O'rta", color: "#f59e0b", icon: "📊" }
-    : { label: "Past Reyting", color: "#ef4444", icon: "⚡" };
+  const { t } = useTranslation();
+  const level = score >= 80 ? { label: t("factcheck.trusted"), color: "#10b981", icon: "🏆" }
+    : score >= 60 ? { label: t("factcheck.active"), color: "#3b82f6", icon: "⭐" }
+    : score >= 40 ? { label: t("factcheck.average"), color: "#f59e0b", icon: "📊" }
+    : { label: t("factcheck.low"), color: "#ef4444", icon: "⚡" };
 
   return (
     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs" style={{ borderColor: `${level.color}40`, background: `${level.color}15`, color: level.color }}>
@@ -32,6 +33,7 @@ function CredibilityBadge({ score }: { score: number }) {
 }
 
 function FactCheckResult({ postId, onClose }: { postId: string; onClose: () => void }) {
+  const { t } = useTranslation();
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -82,15 +84,15 @@ function FactCheckResult({ postId, onClose }: { postId: string; onClose: () => v
           </div>
         ) : (
           <div className="text-center py-4">
-            <p className="text-white/50 text-sm mb-4">Bu post hali tekshirilmagan</p>
+            <p className="text-white/50 text-sm mb-4">{t("factcheck.not_checked")}</p>
             <motion.button whileTap={{ scale: 0.95 }} onClick={check} disabled={checking}
               className="px-6 py-2.5 rounded-xl bg-emerald-500 text-white text-sm hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto">
-              {checking ? <><Loader2 className="w-4 h-4 animate-spin" /> AI tekshirmoqda...</> : <><ShieldCheck className="w-4 h-4" /> AI bilan tekshirish</>}
+              {checking ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("factcheck.ai_checking")}</> : <><ShieldCheck className="w-4 h-4" /> {t("factcheck.ai_check")}</>}
             </motion.button>
           </div>
         )}
         <button onClick={onClose} className="mt-4 w-full py-2 rounded-xl bg-white/5 text-white/60 text-sm hover:bg-white/10 transition-colors">
-          Yopish
+          {t("factcheck.close")}
         </button>
       </motion.div>
     </motion.div>
@@ -98,6 +100,7 @@ function FactCheckResult({ postId, onClose }: { postId: string; onClose: () => v
 }
 
 export default function FactCheckPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [leaderboard, setLeaderboard] = useState<CredibilityEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,26 +127,26 @@ export default function FactCheckPage() {
 
       <div className="p-4 pb-2">
         <h1 className="text-white font-bold text-xl flex items-center gap-2 mb-1">
-          <ShieldCheck className="w-5 h-5 text-emerald-400" /> Haqiqat Reytingi
+          <ShieldCheck className="w-5 h-5 text-emerald-400" /> {t("factcheck.title")}
         </h1>
-        <p className="text-white/40 text-xs mb-4">AI bilan post tekshirish va ishonch reytingi</p>
+        <p className="text-white/40 text-xs mb-4">{t("factcheck.subtitle")}</p>
 
         {myScore && (
           <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 mb-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-white/60 text-xs mb-1">Mening reyingim</div>
+                <div className="text-white/60 text-xs mb-1">{t("factcheck.my_score")}</div>
                 <div className="text-4xl font-bold text-white">{Math.round(myScore.score)}<span className="text-white/30 text-lg">/100</span></div>
                 <div className="mt-1"><CredibilityBadge score={myScore.score} /></div>
               </div>
               <div className="text-right space-y-2">
                 <div className="flex items-center gap-2 justify-end">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span className="text-white/70 text-sm">{myScore.trueCount} to'g'ri</span>
+                  <span className="text-white/70 text-sm">{myScore.trueCount} {t("factcheck.correct")}</span>
                 </div>
                 <div className="flex items-center gap-2 justify-end">
                   <XCircle className="w-4 h-4 text-red-400" />
-                  <span className="text-white/70 text-sm">{(myScore.totalChecked - myScore.trueCount)} noto'g'ri</span>
+                  <span className="text-white/70 text-sm">{(myScore.totalChecked - myScore.trueCount)} {t("factcheck.incorrect")}</span>
                 </div>
               </div>
             </div>
@@ -156,11 +159,11 @@ export default function FactCheckPage() {
 
         <div className="flex gap-2 mb-4">
           <input value={postId} onChange={e => setPostId(e.target.value)} onKeyDown={e => e.key === "Enter" && postId && setShowResult(true)}
-            placeholder="Post ID kiriting..."
+            placeholder={t("factcheck.post_ph")}
             className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-emerald-500/60" />
           <motion.button whileTap={{ scale: 0.9 }} onClick={() => postId && setShowResult(true)} disabled={!postId}
             className="px-4 py-2.5 rounded-xl bg-emerald-500 text-white text-sm hover:bg-emerald-600 transition-colors disabled:opacity-40 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4" /> Tekshir
+            <ShieldCheck className="w-4 h-4" /> {t("factcheck.check_btn")}
           </motion.button>
         </div>
       </div>
@@ -168,14 +171,14 @@ export default function FactCheckPage() {
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         <div className="flex items-center gap-2 mb-3">
           <Trophy className="w-4 h-4 text-amber-400" />
-          <h2 className="text-white font-semibold text-sm">Eng ishonchli foydalanuvchilar</h2>
+          <h2 className="text-white font-semibold text-sm">{t("factcheck.leaderboard")}</h2>
         </div>
         {loading ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-emerald-400 animate-spin" /></div>
         ) : leaderboard.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-center">
             <ShieldCheck className="w-12 h-12 text-emerald-400/20 mb-3" />
-            <p className="text-white/30 text-sm">Hali hech kim tekshiruvdan o'tmagan</p>
+            <p className="text-white/30 text-sm">{t("factcheck.no_checked")}</p>
           </div>
         ) : (
           <div className="space-y-2">

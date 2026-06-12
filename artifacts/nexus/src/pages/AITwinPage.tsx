@@ -15,6 +15,7 @@ interface Message { id: number; role: string; content: string; createdAt: string
 interface TwinUser { id: number; username: string; displayName: string; avatar: string | null; }
 
 function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => void }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatId, setChatId] = useState<number | null>(null);
@@ -67,8 +68,8 @@ function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => 
           <Bot className="absolute -bottom-1 -right-1 w-4 h-4 text-blue-400 bg-[#0a0604] rounded-full p-0.5" />
         </div>
         <div>
-          <div className="font-semibold text-white text-sm">{twinUser.displayName} <span className="text-blue-400 text-xs">AI Egizak</span></div>
-          <div className="text-white/40 text-xs">@{twinUser.username} ning raqamli nusxasi</div>
+          <div className="font-semibold text-white text-sm">{twinUser.displayName} <span className="text-blue-400 text-xs">{t("twin.ai_badge")}</span></div>
+          <div className="text-white/40 text-xs">@{twinUser.username} {t("twin.digital_copy")}</div>
         </div>
       </div>
 
@@ -78,7 +79,7 @@ function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => 
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-center">
             <Bot className="w-12 h-12 text-blue-400/30 mb-3" />
-            <p className="text-white/40 text-sm">{twinUser.displayName}ning egizagi bilan suhbat boshlang</p>
+            <p className="text-white/40 text-sm">{twinUser.displayName} — {t("twin.start_chat")}</p>
           </div>
         ) : (
           messages.map(msg => (
@@ -113,20 +114,21 @@ function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => 
       <div className="px-4 pb-4 pt-2 border-t border-white/10">
         <div className="flex gap-2">
           <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-            placeholder="Egizakka yozing..."
+            placeholder={t("twin.write_ph")}
             className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-blue-500/60" />
           <motion.button whileTap={{ scale: 0.9 }} onClick={send} disabled={!input.trim() || sending}
             className="p-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 transition-colors disabled:opacity-40">
             <Send className="w-4 h-4 text-white" />
           </motion.button>
         </div>
-        <p className="text-white/25 text-[10px] text-center mt-2">AI javoblar {twinUser.displayName} nomidan</p>
+        <p className="text-white/25 text-[10px] text-center mt-2">{t("twin.ai_responds")} {twinUser.displayName} {t("twin.ai_responds_sfx")}</p>
       </div>
     </div>
   );
 }
 
 function MyTwinSetup({ config, onSaved }: { config: TwinConfig | null; onSaved: () => void }) {
+  const { t } = useTranslation();
   const [isEnabled, setIsEnabled] = useState(config?.isEnabled ?? false);
   const [personality, setPersonality] = useState(config?.personality ?? "");
   const [topics, setTopics] = useState(config?.topics ?? "");
@@ -149,8 +151,8 @@ function MyTwinSetup({ config, onSaved }: { config: TwinConfig | null; onSaved: 
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20">
         <div>
-          <div className="text-white font-medium text-sm">AI Egizak faolligi</div>
-          <div className="text-white/50 text-xs mt-0.5">Siz yo'qligingizda do'stlaringiz bilan gaplashadi</div>
+          <div className="text-white font-medium text-sm">{t("twin.active_label")}</div>
+          <div className="text-white/50 text-xs mt-0.5">{t("twin.active_desc")}</div>
         </div>
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setIsEnabled(!isEnabled)}
           className={`w-12 h-6 rounded-full transition-colors relative ${isEnabled ? "bg-blue-500" : "bg-white/20"}`}>
@@ -162,21 +164,21 @@ function MyTwinSetup({ config, onSaved }: { config: TwinConfig | null; onSaved: 
       {isEnabled && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
           <div>
-            <label className="text-white/60 text-xs mb-1.5 block">Shaxsiyatingiz (AI qanday gaplashadi?)</label>
+            <label className="text-white/60 text-xs mb-1.5 block">{t("twin.personality_label")}</label>
             <textarea value={personality} onChange={e => setPersonality(e.target.value)} rows={2}
-              placeholder="Masalan: Men doim optimistik, samimiy va hazilkash odamman..."
+              placeholder={t("twin.personality_ph")}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-blue-500/60 resize-none" />
           </div>
           <div>
-            <label className="text-white/60 text-xs mb-1.5 block">Qiziqishlaringiz</label>
+            <label className="text-white/60 text-xs mb-1.5 block">{t("twin.interests_label")}</label>
             <input value={topics} onChange={e => setTopics(e.target.value)}
-              placeholder="Masalan: texnologiya, musiqa, tadbirkorlik, falsafa..."
+              placeholder={t("twin.interests_ph")}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-blue-500/60" />
           </div>
           <div>
-            <label className="text-white/60 text-xs mb-1.5 block">Qisqa bio</label>
+            <label className="text-white/60 text-xs mb-1.5 block">{t("twin.bio_label")}</label>
             <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2}
-              placeholder="Masalan: Dasturchi, sayyoh, musiqachi..."
+              placeholder={t("twin.bio_ph")}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-blue-500/60 resize-none" />
           </div>
         </motion.div>
@@ -186,24 +188,25 @@ function MyTwinSetup({ config, onSaved }: { config: TwinConfig | null; onSaved: 
         <div className="flex gap-4 text-center">
           <div className="flex-1 p-3 rounded-xl bg-white/5 border border-white/10">
             <div className="text-white font-bold text-xl">{config.totalChats}</div>
-            <div className="text-white/50 text-xs">Suhbat</div>
+            <div className="text-white/50 text-xs">{t("twin.chats_label")}</div>
           </div>
           <div className="flex-1 p-3 rounded-xl bg-white/5 border border-white/10">
             <div className="text-blue-400 font-bold text-xl">{isEnabled ? "🟢" : "🔴"}</div>
-            <div className="text-white/50 text-xs">Holat</div>
+            <div className="text-white/50 text-xs">{t("twin.status_label")}</div>
           </div>
         </div>
       )}
 
       <motion.button whileTap={{ scale: 0.95 }} onClick={save} disabled={saving}
         className="w-full py-3 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors disabled:opacity-50">
-        {saving ? "Saqlanmoqda..." : "💾 Saqlash"}
+        {saving ? t("twin.saving") : t("twin.save")}
       </motion.button>
     </div>
   );
 }
 
 export default function AITwinPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [tab, setTab] = useState<"explore" | "mine">("explore");
   const [config, setConfig] = useState<TwinConfig | null>(null);
@@ -226,8 +229,8 @@ export default function AITwinPage() {
     try {
       const res = await fetch(`${API}/api/twin/${searchUser.trim()}`, { credentials: "include" });
       if (res.ok) setTwinUser(await res.json().then((d: any) => d.user));
-      else setSearchError("Bu foydalanuvchining AI egizagi faol emas");
-    } catch { setSearchError("Qidirish xatosi"); }
+      else setSearchError(t("twin.not_active"));
+    } catch { setSearchError(t("twin.search_error")); }
     finally { setSearching(false); }
   }
 
@@ -237,15 +240,15 @@ export default function AITwinPage() {
     <div className="h-full flex flex-col bg-[#0a0604]">
       <div className="p-4 pb-2">
         <h1 className="text-white font-bold text-xl flex items-center gap-2 mb-1">
-          <Bot className="w-5 h-5 text-blue-400" /> AI Egizak
+          <Bot className="w-5 h-5 text-blue-400" /> {t("twin.title")}
         </h1>
-        <p className="text-white/40 text-xs mb-3">Siz uxlayotganda ishlaydi</p>
+        <p className="text-white/40 text-xs mb-3">{t("twin.subtitle")}</p>
 
         <div className="flex gap-2">
-          {(["explore", "mine"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${tab === t ? "bg-blue-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>
-              {t === "explore" ? "🔍 Qidirish" : "⚙️ Mening Egizagim"}
+          {(["explore", "mine"] as const).map(tabKey => (
+            <button key={tabKey} onClick={() => setTab(tabKey)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${tab === tabKey ? "bg-blue-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>
+              {tabKey === "explore" ? t("twin.search_tab") : t("twin.mine_tab")}
             </button>
           ))}
         </div>
@@ -256,23 +259,20 @@ export default function AITwinPage() {
           <div className="p-4 space-y-4">
             <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-900/30 to-violet-900/20 border border-blue-500/20">
               <Brain className="w-8 h-8 text-blue-400 mb-2" />
-              <h3 className="text-white font-semibold text-sm">AI Egizak nima?</h3>
-              <p className="text-white/50 text-xs mt-1 leading-relaxed">
-                Sizning fikrlash tarzi, uslubingiz va bilimlaringiz asosida yaratilgan virtual nusxa.
-                Siz tarmoqda bo'lmasangiz ham, do'stlaringiz sizning egizagingiz bilan gaplashishi mumkin.
-              </p>
+              <h3 className="text-white font-semibold text-sm">{t("twin.what_is")}</h3>
+              <p className="text-white/50 text-xs mt-1 leading-relaxed">{t("twin.what_is_desc")}</p>
             </div>
 
             <div>
-              <label className="text-white/60 text-xs mb-2 block">Foydalanuvchi ID yoki raqamini kiriting</label>
+              <label className="text-white/60 text-xs mb-2 block">{t("twin.search_label")}</label>
               <div className="flex gap-2">
                 <input value={searchUser} onChange={e => setSearchUser(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && searchTwin()}
-                  placeholder="Masalan: 1"
+                  placeholder={t("twin.search_ph")}
                   className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-blue-500/60" />
                 <motion.button whileTap={{ scale: 0.9 }} onClick={searchTwin} disabled={searching}
                   className="px-4 py-2.5 rounded-xl bg-blue-500 text-white text-sm hover:bg-blue-600 transition-colors disabled:opacity-50">
-                  {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Qidirish"}
+                  {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : t("twin.search_btn")}
                 </motion.button>
               </div>
               {searchError && <p className="text-red-400 text-xs mt-2">{searchError}</p>}
@@ -295,7 +295,7 @@ export default function AITwinPage() {
                   </div>
                   <motion.button whileTap={{ scale: 0.95 }} onClick={() => setChatTarget(twinUser)}
                     className="w-full py-2.5 rounded-xl bg-blue-500 text-white text-sm hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                    <MessageCircle className="w-4 h-4" /> Egizak bilan suhbat
+                    <MessageCircle className="w-4 h-4" /> {t("twin.start_chat")}
                   </motion.button>
                 </motion.div>
               )}
@@ -309,7 +309,7 @@ export default function AITwinPage() {
           ) : (
             <div className="flex flex-col items-center justify-center h-48 text-center p-8">
               <Bot className="w-12 h-12 text-blue-400/30 mb-3" />
-              <p className="text-white/40 text-sm">Kirish qiling</p>
+              <p className="text-white/40 text-sm">{t("twin.login")}</p>
             </div>
           )
         )}

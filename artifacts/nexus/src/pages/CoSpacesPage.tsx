@@ -57,6 +57,7 @@ function TaskItem({ task, members, onUpdate }: { task: Task; members: Member[]; 
 }
 
 function SpaceDetail({ space: initialSpace, onBack }: { space: Space; onBack: () => void }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [space, setSpace] = useState(initialSpace);
   const [joining, setJoining] = useState(false);
@@ -129,14 +130,14 @@ function SpaceDetail({ space: initialSpace, onBack }: { space: Space; onBack: ()
         </motion.button>
         <div className="flex-1 min-w-0">
           <h2 className="font-bold text-white text-sm line-clamp-1">{space.name}</h2>
-          <div className="text-white/40 text-xs">{space.memberCount} a'zo • {cat.label}</div>
+          <div className="text-white/40 text-xs">{space.memberCount} {t("spaces.members_label")} • {t(`spaces.cat_${space.category}`)}</div>
         </div>
         {user && !isMember && (
           <motion.button whileTap={{ scale: 0.9 }} onClick={join} disabled={joining}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs"
             style={{ background: `${cat.color}cc` }}>
             {joining ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
-            Qo'shilish
+            {t("spaces.join")}
           </motion.button>
         )}
       </div>
@@ -150,20 +151,20 @@ function SpaceDetail({ space: initialSpace, onBack }: { space: Space; onBack: ()
           <div className="flex gap-2 overflow-x-auto">
             <div className="flex-shrink-0 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-center">
               <div className="text-white font-bold">{members.length}</div>
-              <div className="text-white/40 text-xs">A'zolar</div>
+              <div className="text-white/40 text-xs">{t("spaces.members_label")}</div>
             </div>
             <div className="flex-shrink-0 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-center">
               <div className="text-emerald-400 font-bold">{doneTasks.length}</div>
-              <div className="text-white/40 text-xs">Bajarildi</div>
+              <div className="text-white/40 text-xs">{t("spaces.done")}</div>
             </div>
             <div className="flex-shrink-0 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-center">
               <div className="text-amber-400 font-bold">{openTasks.length}</div>
-              <div className="text-white/40 text-xs">Jarayonda</div>
+              <div className="text-white/40 text-xs">{t("spaces.in_progress")}</div>
             </div>
           </div>
 
           <div>
-            <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wide mb-2">A'zolar</h3>
+            <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wide mb-2">{t("spaces.members_label")}</h3>
             <div className="flex flex-wrap gap-2">
               {members.slice(0, 12).map(m => (
                 <div key={m.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10">
@@ -181,12 +182,12 @@ function SpaceDetail({ space: initialSpace, onBack }: { space: Space; onBack: ()
 
           <div>
             <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-2">
-              Vazifalar <span className="bg-white/10 text-white/60 text-[10px] px-1.5 py-0.5 rounded-full">{tasks.length}</span>
+              {t("spaces.tasks_label")} <span className="bg-white/10 text-white/60 text-[10px] px-1.5 py-0.5 rounded-full">{tasks.length}</span>
             </h3>
             {isMember && (
               <div className="flex gap-2 mb-3">
                 <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === "Enter" && addTask()}
-                  placeholder="Yangi vazifa..."
+                  placeholder={t("spaces.task_ph")}
                   className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-white/30" />
                 <motion.button whileTap={{ scale: 0.9 }} onClick={addTask} disabled={addingTask || !newTask.trim()}
                   className="p-2 rounded-xl text-white disabled:opacity-40" style={{ background: cat.color }}>
@@ -195,29 +196,29 @@ function SpaceDetail({ space: initialSpace, onBack }: { space: Space; onBack: ()
               </div>
             )}
             <div className="space-y-2">
-              {openTasks.map(t => <TaskItem key={t.id} task={t} members={members} onUpdate={updateTask} />)}
+              {openTasks.map(task => <TaskItem key={task.id} task={task} members={members} onUpdate={updateTask} />)}
               {doneTasks.length > 0 && (
                 <div className="border-t border-white/5 pt-2 mt-2">
-                  <div className="text-white/30 text-xs mb-2">Bajarilgan</div>
-                  {doneTasks.map(t => <TaskItem key={t.id} task={t} members={members} onUpdate={updateTask} />)}
+                  <div className="text-white/30 text-xs mb-2">{t("spaces.done_tasks")}</div>
+                  {doneTasks.map(task => <TaskItem key={task.id} task={task} members={members} onUpdate={updateTask} />)}
                 </div>
               )}
-              {tasks.length === 0 && <p className="text-white/25 text-sm text-center py-4">Hali vazifalar yo'q</p>}
+              {tasks.length === 0 && <p className="text-white/25 text-sm text-center py-4">{t("spaces.no_tasks")}</p>}
             </div>
           </div>
 
           <div>
-            <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wide mb-2">Umumiy kenglik (Canvas)</h3>
+            <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wide mb-2">{t("spaces.canvas_label")}</h3>
             <textarea value={canvasText} onChange={e => setCanvasText(e.target.value)}
               readOnly={!isMember}
               rows={6}
-              placeholder={isMember ? "G'oyalar, rejalar, kod parchalari..." : "Canvas bo'sh"}
+              placeholder={isMember ? t("spaces.canvas_ph") : t("spaces.canvas_empty")}
               className="w-full bg-white/3 border border-white/10 rounded-xl px-3 py-2.5 text-white/80 placeholder:text-white/20 text-sm font-mono resize-none focus:outline-none focus:border-white/20" />
             {isMember && (
               <motion.button whileTap={{ scale: 0.95 }} onClick={saveCanvas} disabled={savingCanvas}
                 className="mt-2 px-4 py-2 rounded-xl text-white text-xs hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
                 style={{ background: cat.color }}>
-                {savingCanvas ? <><Loader2 className="w-3 h-3 animate-spin" /> Saqlanmoqda</> : <>💾 Saqlash</>}
+                {savingCanvas ? <><Loader2 className="w-3 h-3 animate-spin" /> {t("spaces.saving")}</> : <>{t("spaces.save")}</>}
               </motion.button>
             )}
           </div>
@@ -228,6 +229,7 @@ function SpaceDetail({ space: initialSpace, onBack }: { space: Space; onBack: ()
 }
 
 function CreateSpaceModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("general");
@@ -253,26 +255,26 @@ function CreateSpaceModal({ onClose, onCreated }: { onClose: () => void; onCreat
       <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
         className="bg-[#18181b] border border-white/10 rounded-2xl p-6 w-full max-w-md"
         onClick={e => e.stopPropagation()}>
-        <h3 className="text-white font-bold text-lg mb-4">Yangi Ko'llektiv Xona</h3>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Xona nomi..."
+        <h3 className="text-white font-bold text-lg mb-4">{t("spaces.new_space")}</h3>
+        <input value={name} onChange={e => setName(e.target.value)} placeholder={t("spaces.space_name_ph")}
           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-3 focus:outline-none focus:border-violet-500/60" />
-        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Maqsad va tavsif..." rows={2}
+        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("spaces.space_desc_ph")} rows={2}
           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-3 focus:outline-none focus:border-violet-500/60 resize-none" />
         <div className="grid grid-cols-3 gap-2 mb-4">
           {CATEGORIES.map(c => (
             <button key={c.key} onClick={() => setCategory(c.key)}
               className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border text-xs transition-all ${category === c.key ? "border-white/30 bg-white/10 text-white" : "border-white/10 text-white/50 hover:border-white/20"}`}>
               <c.icon className="w-4 h-4" style={{ color: category === c.key ? c.color : undefined }} />
-              {c.label}
+              {t(`spaces.cat_${c.key}`)}
             </button>
           ))}
         </div>
         <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-white/5 text-white/60 text-sm">Bekor</button>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-white/5 text-white/60 text-sm">{t("spaces.cancel")}</button>
           <motion.button whileTap={{ scale: 0.95 }} onClick={create} disabled={loading || !name.trim()}
             className="flex-1 py-2.5 rounded-xl text-white text-sm disabled:opacity-50"
             style={{ background: CAT_MAP[category]?.color ?? "#6366f1" }}>
-            {loading ? "Yaratilmoqda..." : "Yaratish"}
+            {loading ? t("spaces.creating") : t("spaces.create")}
           </motion.button>
         </div>
       </motion.div>
@@ -281,6 +283,7 @@ function CreateSpaceModal({ onClose, onCreated }: { onClose: () => void; onCreat
 }
 
 export default function CoSpacesPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [loading, setLoading] = useState(true);
@@ -316,14 +319,14 @@ export default function CoSpacesPage() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-white font-bold text-xl flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-400" /> Kollektiv Ong
+              <Users className="w-5 h-5 text-indigo-400" /> {t("spaces.title")}
             </h1>
-            <p className="text-white/40 text-xs mt-0.5">Hamkorlikdagi ijod xonalari</p>
+            <p className="text-white/40 text-xs mt-0.5">{t("spaces.subtitle")}</p>
           </div>
           {user && (
             <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowCreate(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-500 text-white text-sm hover:bg-indigo-600 transition-colors">
-              <Plus className="w-4 h-4" /> Xona
+              <Plus className="w-4 h-4" /> {t("spaces.room_btn")}
             </motion.button>
           )}
         </div>
@@ -331,13 +334,13 @@ export default function CoSpacesPage() {
         <div className="flex gap-2 overflow-x-auto pb-1">
           <button onClick={() => setSelectedCat("all")}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCat === "all" ? "bg-indigo-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>
-            Barchasi
+            {t("spaces.all")}
           </button>
           {CATEGORIES.map(c => (
             <button key={c.key} onClick={() => setSelectedCat(c.key)}
               className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCat === c.key ? "text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}
               style={selectedCat === c.key ? { background: c.color } : {}}>
-              <c.icon className="w-3 h-3" /> {c.label}
+              <c.icon className="w-3 h-3" /> {t(`spaces.cat_${c.key}`)}
             </button>
           ))}
         </div>
@@ -349,10 +352,10 @@ export default function CoSpacesPage() {
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <Users className="w-16 h-16 text-indigo-400/20 mb-4" />
-            <p className="text-white/30 text-sm">Hali xonalar yo'q</p>
+            <p className="text-white/30 text-sm">{t("spaces.no_rooms")}</p>
             {user && <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowCreate(true)}
               className="mt-4 px-4 py-2 rounded-xl bg-indigo-500 text-white text-sm">
-              Birinchi xonani oching!
+              {t("spaces.be_first")}
             </motion.button>}
           </div>
         ) : (
@@ -371,7 +374,7 @@ export default function CoSpacesPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-white text-sm">{space.name}</h3>
                         <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: `${cat.color}22`, color: cat.color }}>
-                          {cat.label}
+                          {t(`spaces.cat_${space.category}`)}
                         </span>
                       </div>
                       {space.description && <p className="text-white/40 text-xs mt-0.5 line-clamp-2">{space.description}</p>}
@@ -379,7 +382,7 @@ export default function CoSpacesPage() {
                         <div className="flex items-center gap-1"><Users className="w-3 h-3" /> {space.memberCount}</div>
                         <div className="flex items-center gap-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                          {space.status === "open" ? "Ochiq" : "Yopiq"}
+                          {space.status === "open" ? t("spaces.open") : t("spaces.closed")}
                         </div>
                         <div>@{space.creatorUsername}</div>
                       </div>

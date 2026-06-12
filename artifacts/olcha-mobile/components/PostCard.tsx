@@ -72,7 +72,7 @@ export function PostCard({ post }: Props) {
           <Text style={[styles.actionText, { color: colors.mutedForeground }]}>{post.commentsCount ?? 0}</Text>
         </Pressable>
         <Pressable style={styles.action}>
-          <Feather name="repeat-2" size={20} color={colors.mutedForeground} />
+          <Feather name="repeat" size={20} color={colors.mutedForeground} />
         </Pressable>
         <Pressable style={styles.action}>
           <Feather name="share-2" size={20} color={colors.mutedForeground} />

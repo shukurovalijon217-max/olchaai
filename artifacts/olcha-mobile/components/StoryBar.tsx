@@ -13,12 +13,12 @@ interface Props {
 export function StoryBar({ stories, onAddStory }: Props) {
   const colors = useColors();
 
-  const DEMO_STORIES = [
-    { id: 1, user: { id: 1, username: "dilnoza_uz", displayName: "Dilnoza", avatarUrl: null, isVerified: true, bio: null } },
-    { id: 2, user: { id: 2, username: "sardor_b", displayName: "Sardor", avatarUrl: null, isVerified: false, bio: null } },
-    { id: 3, user: { id: 3, username: "malika_m", displayName: "Malika", avatarUrl: null, isVerified: true, bio: null } },
-    { id: 4, user: { id: 4, username: "jasur_art", displayName: "Jasur", avatarUrl: null, isVerified: false, bio: null } },
-    { id: 5, user: { id: 5, username: "nilufar_n", displayName: "Nilufar", avatarUrl: null, isVerified: true, bio: null } },
+  const DEMO_STORIES: Story[] = [
+    { id: 1, userId: 1, mediaUrl: "", type: "image", expiresAt: new Date().toISOString(), user: { id: 1, username: "dilnoza_uz", displayName: "Dilnoza", avatarUrl: null, isVerified: true, bio: null } },
+    { id: 2, userId: 2, mediaUrl: "", type: "image", expiresAt: new Date().toISOString(), user: { id: 2, username: "sardor_b", displayName: "Sardor", avatarUrl: null, isVerified: false, bio: null } },
+    { id: 3, userId: 3, mediaUrl: "", type: "image", expiresAt: new Date().toISOString(), user: { id: 3, username: "malika_m", displayName: "Malika", avatarUrl: null, isVerified: true, bio: null } },
+    { id: 4, userId: 4, mediaUrl: "", type: "image", expiresAt: new Date().toISOString(), user: { id: 4, username: "jasur_art", displayName: "Jasur", avatarUrl: null, isVerified: false, bio: null } },
+    { id: 5, userId: 5, mediaUrl: "", type: "image", expiresAt: new Date().toISOString(), user: { id: 5, username: "nilufar_n", displayName: "Nilufar", avatarUrl: null, isVerified: true, bio: null } },
   ];
 
   const displayStories = stories.length > 0 ? stories : DEMO_STORIES;

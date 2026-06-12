@@ -6,7 +6,7 @@ import {
   Home, Play, Compass, MessageCircle, Users, Bell,
   User, ShieldCheck, LogOut, Crown, Settings, Wallet, Radio,
   Search, ShoppingBag, Bot, BookOpen, ChevronRight, ChevronLeft,
-  MoreHorizontal, X, Zap, Trophy, Ghost, Send,
+  MoreHorizontal, X, Zap, Trophy, Ghost, Send, GitBranch, Globe, Brain, Sparkles,
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import { useAuth } from "@/context/AuthContext";
@@ -31,6 +31,11 @@ const NAV_GLOW: Record<string, { a: string; b: string; shadow: string }> = {
   "/admin":        { a: "#dc2626", b: "#fca5a5", shadow: "rgba(220,38,38,0.65)" },
   "/quests":       { a: "#f59e0b", b: "#fbbf24", shadow: "rgba(245,158,11,0.65)" },
   "/anon":         { a: "#64748b", b: "#94a3b8", shadow: "rgba(100,116,139,0.65)" },
+  "/multiscene":   { a: "#7c3aed", b: "#a78bfa", shadow: "rgba(124,58,237,0.65)" },
+  "/mood":         { a: "#06b6d4", b: "#67e8f9", shadow: "rgba(6,182,212,0.65)" },
+  "/twin":         { a: "#3b82f6", b: "#93c5fd", shadow: "rgba(59,130,246,0.65)" },
+  "/factcheck":    { a: "#10b981", b: "#34d399", shadow: "rgba(16,185,129,0.65)" },
+  "/spaces":       { a: "#6366f1", b: "#a5b4fc", shadow: "rgba(99,102,241,0.65)" },
 };
 
 function getGlow(href: string) {
@@ -257,6 +262,11 @@ const navItems = [
   { href: "/wallet", icon: Wallet, key: "nav.wallet" },
   { href: "/quests", icon: Trophy, key: "nav.quests" },
   { href: "/anon", icon: Ghost, key: "nav.anon" },
+  { href: "/multiscene", icon: GitBranch, key: "nav.multiscene" },
+  { href: "/mood", icon: Globe, key: "nav.mood" },
+  { href: "/twin", icon: Brain, key: "nav.twin" },
+  { href: "/factcheck", icon: ShieldCheck, key: "nav.factcheck" },
+  { href: "/spaces", icon: Sparkles, key: "nav.spaces" },
 ];
 
 const bottomNavItems = [

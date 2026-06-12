@@ -274,10 +274,10 @@ const mobileNavMainItems = [
   { href: "/messages", icon: MessageCircle, key: "nav.messages" },
 ];
 
-/* ─── Jarvis AI Floating Panel ───────────────────────────────── */
+/* ─── Muni AI Floating Panel ────────────────────────────────── */
 const API_BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
-function JarvisPanel() {
+function MuniPanel() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
@@ -763,8 +763,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </motion.div>
       </main>
 
-      {/* ── JARVIS FLOATING AI ── */}
-      <JarvisPanel />
+      {/* ── MUNI FLOATING AI ── */}
+      <MuniPanel />
     </div>
   );
 }

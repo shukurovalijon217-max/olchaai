@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, Languages, Volume2, ChevronDown, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { LANGUAGES } from "@/lib/i18n";
+import { useTranslation } from "react-i18next";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -85,6 +86,7 @@ function LangPicker({ value, onChange, label }: { value: string; onChange: (v: s
 
 /* ─── Voice profile badge ─────────────────────────────────────── */
 function ProfileBadge({ profile }: { profile: VoiceProfile }) {
+  const { t } = useTranslation("voice_translate");
   const energyColors: Record<string, string> = {
     calm: "bg-blue-500/15 text-blue-400 border-blue-500/30",
     moderate: "bg-violet-500/15 text-violet-400 border-violet-500/30",
@@ -95,18 +97,28 @@ function ProfileBadge({ profile }: { profile: VoiceProfile }) {
     casual: "bg-pink-500/15 text-pink-400 border-pink-500/30",
     mixed: "bg-amber-500/15 text-amber-400 border-amber-500/30",
   };
+  const energyLabel: Record<string, string> = {
+    calm: t("energy_calm"),
+    energetic: t("energy_energetic"),
+    moderate: t("energy_moderate"),
+  };
+  const formalLabel: Record<string, string> = {
+    formal: t("formal_formal"),
+    casual: t("formal_casual"),
+    mixed: t("formal_mixed"),
+  };
   return (
     <div className="bg-card border border-border rounded-2xl p-4">
       <div className="flex items-center gap-2 mb-3">
         <Wand2 className="w-3.5 h-3.5 text-primary" />
-        <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Ovoz Profili</p>
+        <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">{t("voice_profile")}</p>
       </div>
       <div className="flex flex-wrap gap-2 mb-3">
         <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${energyColors[profile.energy] ?? ""}`}>
-          {profile.energy === "calm" ? "Sokin" : profile.energy === "energetic" ? "Energik" : "O'rtacha"}
+          {energyLabel[profile.energy] ?? profile.energy}
         </span>
         <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${formalColors[profile.formality] ?? ""}`}>
-          {profile.formality === "formal" ? "Rasmiy" : profile.formality === "casual" ? "Erkin" : "Aralash"}
+          {formalLabel[profile.formality] ?? profile.formality}
         </span>
         <span className="text-xs px-2.5 py-1 rounded-full border bg-cyan-500/15 text-cyan-400 border-cyan-500/30 font-medium">
           TTS: {profile.ttsVoice}
@@ -120,6 +132,7 @@ function ProfileBadge({ profile }: { profile: VoiceProfile }) {
 }
 
 export default function VoiceTranslatorPage() {
+  const { t } = useTranslation("voice_translate");
   const [recording, setRecording] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<TranslateResult | null>(null);
@@ -148,10 +161,10 @@ export default function VoiceTranslatorPage() {
       mr.start();
       mediaRef.current = mr;
       setRecording(true);
-    } catch (e) {
-      setError("Mikrofon ruxsati berilmadi");
+    } catch {
+      setError(t("mic_error"));
     }
-  }, []);
+  }, [t]);
 
   const stopRecording = useCallback(() => {
     mediaRef.current?.stop();
@@ -174,14 +187,14 @@ export default function VoiceTranslatorPage() {
         body: JSON.stringify({ audioBase64: base64, targetLang, sourceLang }),
       });
       const data = await resp.json() as TranslateResult & { error?: string };
-      if (!resp.ok || !data.success) { setError(data.error ?? "Tarjima xatosi"); return; }
+      if (!resp.ok || !data.success) { setError(data.error ?? t("translate_error")); return; }
       setResult(data);
-    } catch (e) {
-      setError("Tarjima xatosi. Qayta urinib ko'ring.");
+    } catch {
+      setError(t("translate_error_retry"));
     } finally {
       setProcessing(false);
     }
-  }, [targetLang, sourceLang]);
+  }, [targetLang, sourceLang, t]);
 
   const translateText = useCallback(async () => {
     if (!textInput.trim()) return;
@@ -197,9 +210,9 @@ export default function VoiceTranslatorPage() {
       });
       const data = await resp.json() as { originalText: string; translatedText: string; audioBase64: string; targetLang: string };
       setResult({ success: true, voiceProfile: null, ...data });
-    } catch { setError("Tarjima xatosi"); }
+    } catch { setError(t("translate_error")); }
     finally { setProcessing(false); }
-  }, [textInput, targetLang]);
+  }, [textInput, targetLang, t]);
 
   const playAudio = useCallback(() => {
     if (!result?.audioBase64) return;
@@ -219,15 +232,15 @@ export default function VoiceTranslatorPage() {
               <Languages className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Kvant Ovoz Tarjimon</h1>
-              <p className="text-xs text-muted-foreground">Ovoz tembri va uslubini saqlab tarjima qiladi</p>
+              <h1 className="text-xl font-bold text-foreground">{t("title")}</h1>
+              <p className="text-xs text-muted-foreground">{t("subtitle")}</p>
             </div>
           </div>
         </div>
 
         {/* Language pair */}
         <div className="flex items-center gap-3 mb-6 flex-wrap">
-          <LangPicker value={sourceLang} onChange={setSourceLang} label="Manba til" />
+          <LangPicker value={sourceLang} onChange={setSourceLang} label={t("source_lang")} />
           <motion.div
             animate={{ rotate: processing ? 360 : 0 }}
             transition={{ duration: 1, repeat: processing ? Infinity : 0, ease: "linear" }}
@@ -235,18 +248,18 @@ export default function VoiceTranslatorPage() {
           >
             <Sparkles className="w-5 h-5" />
           </motion.div>
-          <LangPicker value={targetLang} onChange={setTargetLang} label="Maqsad til" />
+          <LangPicker value={targetLang} onChange={setTargetLang} label={t("target_lang")} />
         </div>
 
         {/* Mode toggle */}
         <div className="flex gap-2 mb-6">
           <button onClick={() => setTextMode(false)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${!textMode ? "bg-primary/15 border border-primary/30 text-primary" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}>
-            <Mic className="w-3.5 h-3.5 inline mr-2" />Ovoz yozish
+            <Mic className="w-3.5 h-3.5 inline mr-2" />{t("voice_mode")}
           </button>
           <button onClick={() => setTextMode(true)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${textMode ? "bg-primary/15 border border-primary/30 text-primary" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}>
-            Matn kiritish
+            {t("text_mode")}
           </button>
         </div>
 
@@ -276,7 +289,7 @@ export default function VoiceTranslatorPage() {
                   }
                 </motion.button>
                 <p className="text-sm text-muted-foreground">
-                  {processing ? "AI ovozingizni tahlil qilmoqda..." : recording ? "To'xtatish uchun bosing..." : "Gapirish uchun bosing"}
+                  {processing ? t("processing") : recording ? t("stop_hint") : t("press_speak")}
                 </p>
               </div>
             </motion.div>
@@ -286,7 +299,7 @@ export default function VoiceTranslatorPage() {
                 <textarea
                   value={textInput}
                   onChange={e => setTextInput(e.target.value)}
-                  placeholder="Tarjima qilmoqchi bo'lgan matnni yozing..."
+                  placeholder={t("text_placeholder")}
                   rows={4}
                   className="w-full bg-transparent text-foreground placeholder-muted-foreground text-sm resize-none outline-none leading-relaxed"
                 />
@@ -296,7 +309,7 @@ export default function VoiceTranslatorPage() {
                     disabled={!textInput.trim() || processing}
                     className="px-5 py-2 bg-primary/15 border border-primary/30 text-primary rounded-xl text-sm font-medium hover:bg-primary/25 transition-colors disabled:opacity-40"
                   >
-                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Tarjima qilish"}
+                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : t("translate_btn")}
                   </button>
                 </div>
               </div>
@@ -323,18 +336,18 @@ export default function VoiceTranslatorPage() {
             >
               {/* Original */}
               <div className="bg-card border border-border rounded-2xl p-5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Asl ovoz</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("original")}</p>
                 <p className="text-foreground text-sm leading-relaxed">{result.originalText}</p>
               </div>
 
               {/* Translated */}
               <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-primary/70 uppercase tracking-wider">Tarjima</p>
+                  <p className="text-xs font-semibold text-primary/70 uppercase tracking-wider">{t("translation")}</p>
                   {result.audioBase64 && (
                     <button onClick={playAudio}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/15 border border-primary/30 rounded-xl text-xs text-primary font-medium hover:bg-primary/25 transition-colors">
-                      <Volume2 className="w-3.5 h-3.5" /> Eshitish
+                      <Volume2 className="w-3.5 h-3.5" /> {t("listen")}
                     </button>
                   )}
                 </div>

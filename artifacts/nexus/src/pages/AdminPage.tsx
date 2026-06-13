@@ -1457,26 +1457,26 @@ function AiAutopilotTab() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-card border border-border rounded-xl p-3">
               <p className="text-xs text-muted-foreground mb-1">Joriy RPS</p>
-              <p className={`text-base font-bold ${scale.rps.pressure === "ok" ? "text-emerald-400" : "text-amber-400"}`}>
-                {scale.rps.current.toLocaleString()}
+              <p className={`text-base font-bold ${scale.rps?.pressure === "ok" ? "text-emerald-400" : "text-amber-400"}`}>
+                {(scale.rps?.current ?? 0).toLocaleString()}
               </p>
-              <p className="text-xs text-muted-foreground">/ {scale.rps.warnAt.toLocaleString()} chegara</p>
+              <p className="text-xs text-muted-foreground">/ {(scale.rps?.warnAt ?? 0).toLocaleString()} chegara</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-3">
               <p className="text-xs text-muted-foreground mb-1">Eng yuqori RPS</p>
-              <p className="text-base font-bold text-foreground">{scale.rps.peak.toLocaleString()}</p>
+              <p className="text-base font-bold text-foreground">{(scale.rps?.peak ?? 0).toLocaleString()}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-3">
               <p className="text-xs text-muted-foreground mb-1">RAM foydalanish</p>
-              <p className={`text-base font-bold ${scale.memory.pressure === "ok" ? "text-emerald-400" : "text-amber-400"}`}>
-                {scale.memory.heapUsedMB} MB
+              <p className={`text-base font-bold ${scale.memory?.pressure === "ok" ? "text-emerald-400" : "text-amber-400"}`}>
+                {scale.memory?.heapUsedMB ?? 0} MB
               </p>
-              <p className="text-xs text-muted-foreground">/ {scale.memory.warnAt} MB chegara</p>
+              <p className="text-xs text-muted-foreground">/ {scale.memory?.warnAt ?? 0} MB chegara</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-3">
               <p className="text-xs text-muted-foreground mb-1">Throttle darajasi</p>
-              <p className="text-base font-bold text-foreground">{scale.requests.throttleRate}%</p>
-              <p className="text-xs text-muted-foreground">{scale.requests.throttled} ta cheklangan</p>
+              <p className="text-base font-bold text-foreground">{scale.requests?.throttleRate ?? 0}%</p>
+              <p className="text-xs text-muted-foreground">{scale.requests?.throttled ?? 0} ta cheklangan</p>
             </div>
           </div>
         </div>

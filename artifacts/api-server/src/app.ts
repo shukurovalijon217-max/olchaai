@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -53,15 +54,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const isProd = process.env["NODE_ENV"] === "production";
+const PgSession = connectPgSimple(session);
 
 app.use(session({
+  store: new PgSession({
+    conString: process.env["DATABASE_URL"],
+    tableName: "user_sessions",
+    createTableIfMissing: true,
+    pruneSessionInterval: 60 * 60, // prune expired sessions every hour
+  }),
   secret: process.env["SESSION_SECRET"] ?? "olcha-secret-2024",
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
     secure: isProd,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     sameSite: isProd ? "none" : "lax",
   },
 }));

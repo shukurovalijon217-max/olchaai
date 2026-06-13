@@ -109,6 +109,11 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
     res.status(response.status);
     response.headers.forEach((value, key) => res.setHeader(key, value));
 
+    /* Aggressive caching for media — 7 days browser, 1 day CDN */
+    if (response.status === 200 || response.status === 206) {
+      res.setHeader("Cache-Control", "public, max-age=604800, s-maxage=86400, stale-while-revalidate=86400");
+    }
+
     if (response.body) {
       const nodeStream = Readable.fromWeb(response.body as ReadableStream<Uint8Array>);
       nodeStream.pipe(res);

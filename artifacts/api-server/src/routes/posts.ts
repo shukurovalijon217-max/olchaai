@@ -1,23 +1,62 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { postsTable, postLikesTable, commentsTable, usersTable, moderationQueueTable } from "@workspace/db";
-import { eq, sql, desc, and } from "drizzle-orm";
+import { eq, sql, desc, and, inArray } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 
 const router = Router();
 
-async function enrichPost(post: typeof postsTable.$inferSelect, viewerId = 0) {
-  const [author] = await db.select().from(usersTable).where(eq(usersTable.id, post.authorId));
-  const liked = viewerId ? await db.select().from(postLikesTable).where(and(eq(postLikesTable.postId, post.id), eq(postLikesTable.userId, viewerId))) : [];
-  return {
-    ...post,
-    author: { ...(author || {}), followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false, isVerified: author?.isVerified || false },
-    tags: post.tags || [],
-    isLiked: liked.length > 0,
-  };
+/* ── Batch enrich: 2 queries for ALL posts (not 2×N) ────────── */
+async function batchEnrichPosts(
+  posts: (typeof postsTable.$inferSelect)[],
+  viewerId = 0,
+) {
+  if (posts.length === 0) return [];
+
+  const authorIds = [...new Set(posts.map(p => p.authorId).filter(Boolean))] as number[];
+  const postIds = posts.map(p => p.id);
+
+  const [authors, likedRows] = await Promise.all([
+    authorIds.length > 0
+      ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
+      : Promise.resolve([]),
+    viewerId && postIds.length > 0
+      ? db
+          .select({ postId: postLikesTable.postId })
+          .from(postLikesTable)
+          .where(and(inArray(postLikesTable.postId, postIds), eq(postLikesTable.userId, viewerId)))
+      : Promise.resolve([]),
+  ]);
+
+  const authorMap = new Map(authors.map(a => [a.id, a]));
+  const likedSet = new Set((likedRows as { postId: number }[]).map(l => l.postId));
+
+  return posts.map(post => {
+    const author = authorMap.get(post.authorId as number);
+    return {
+      ...post,
+      likesCount: post.likesCount ?? 0,
+      commentsCount: post.commentsCount ?? 0,
+      sharesCount: (post as any).sharesCount ?? 0,
+      author: {
+        id: author?.id ?? post.authorId,
+        username: author?.username ?? "deleted",
+        displayName: author?.displayName ?? "Deleted User",
+        avatarUrl: author?.avatarUrl ?? null,
+        isVerified: author?.isVerified ?? false,
+        followersCount: 0,
+        followingCount: 0,
+        postsCount: 0,
+        isFollowing: false,
+      },
+      tags: post.tags || [],
+      isLiked: likedSet.has(post.id),
+    };
+  });
 }
 
+/* ── GET /posts ─────────────────────────────────────────────── */
 router.get("/posts", async (req, res) => {
   try {
     const viewerId = (req.session as any)?.userId as number | undefined;
@@ -35,76 +74,83 @@ router.get("/posts", async (req, res) => {
       posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
     }
 
-    const enriched = await Promise.all(posts.map(p => enrichPost(p, viewerId)));
-    res.json(enriched);
+    res.json(await batchEnrichPosts(posts, viewerId));
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
+/* ── POST /posts — instant response, AI scan in background ─── */
 router.post("/posts", async (req: any, res) => {
   try {
     const { authorId, content, type, mediaUrl, tags } = req.body;
     const sessionUserId: number | undefined = req.session?.userId;
 
-    // AI scan (OpenAI Moderation + rules hybrid)
-    const scan = await scanContentAsync(content ?? "");
-    const isFlagged = scan.verdict === "violation" || scan.verdict === "suspicious";
+    const [post] = await db
+      .insert(postsTable)
+      .values({ authorId, content, type: type || "text", mediaUrl, tags, isFlagged: false })
+      .returning();
 
-    const [post] = await db.insert(postsTable).values({
-      authorId, content, type: type || "text", mediaUrl, tags, isFlagged,
-    }).returning();
+    const [enriched] = await batchEnrichPosts([post], sessionUserId);
+    res.status(201).json(enriched);
 
-    // Auto-add to moderation queue if suspicious or worse
-    if (scan.verdict !== "clean") {
-      await db.insert(moderationQueueTable).values({
-        contentType: "post", contentId: post.id, contentText: content,
-        authorId: authorId ?? null,
-        aiScore: scan.score, aiCategories: scan.categories,
-        aiVerdict: scan.verdict, autoFlagged: true,
-        autoBlocked: scan.autoBlock,
-        status: scan.autoBlock ? "rejected" : "pending",
-      }).catch(() => {});
-    }
+    /* AI scan & autopilot — fire-and-forget, never blocks response */
+    void (async () => {
+      try {
+        const scan = await scanContentAsync(content ?? "");
+        if (scan.verdict === "clean") return;
 
-    // AI Autopilot: warnings, bans, event logging
-    const decision = await applyAutopilotDecision({
-      scan, authorId: sessionUserId ?? authorId ?? null,
-      contentType: "post", contentId: post.id, contentText: content ?? "",
-    });
+        await db.update(postsTable)
+          .set({ isFlagged: true })
+          .where(eq(postsTable.id, post.id))
+          .catch(() => {});
 
-    if (decision.isBanned || scan.autoBlock) {
-      // Delete the just-created post
-      await db.delete(postsTable).where(eq(postsTable.id, post.id)).catch(() => {});
-      res.status(422).json({
-        error: decision.message ?? "Kontent avtomatik bloklandi — qoidalarga zid material aniqlandi.",
-        action: decision.action,
-        categories: scan.categories,
-        warningCount: decision.warningCount,
-      }); return;
-    }
+        await db.insert(moderationQueueTable).values({
+          contentType: "post", contentId: post.id, contentText: content,
+          authorId: authorId ?? null,
+          aiScore: scan.score, aiCategories: scan.categories,
+          aiVerdict: scan.verdict, autoFlagged: true,
+          autoBlocked: scan.autoBlock,
+          status: scan.autoBlock ? "rejected" : "pending",
+        }).catch(() => {});
 
-    if (decision.action === "warned") {
-      // Post published but with warning
-      res.status(201).json({
-        ...(await enrichPost(post)),
-        warning: decision.message,
-        aiScan: scan,
-      }); return;
-    }
+        const decision = await applyAutopilotDecision({
+          scan, authorId: sessionUserId ?? authorId ?? null,
+          contentType: "post", contentId: post.id, contentText: content ?? "",
+        });
 
-    res.status(201).json({ ...(await enrichPost(post)), aiScan: scan.verdict !== "clean" ? scan : undefined });
+        if (decision.isBanned || scan.autoBlock) {
+          await db.delete(postsTable).where(eq(postsTable.id, post.id)).catch(() => {});
+        }
+      } catch { /* silent */ }
+    })();
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
+/* ── GET /posts/trending ────────────────────────────────────── */
 router.get("/posts/trending", async (req, res) => {
   try {
+    const viewerId = (req.session as any)?.userId as number | undefined;
     const posts = await db.select().from(postsTable).orderBy(desc(postsTable.likesCount)).limit(10);
-    const enriched = await Promise.all(posts.map(p => enrichPost(p)));
+    res.json(await batchEnrichPosts(posts, viewerId));
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── GET /posts/:id ─────────────────────────────────────────── */
+router.get("/posts/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const viewerId = (req.session as any)?.userId as number | undefined;
+    const [post] = await db.select().from(postsTable).where(eq(postsTable.id, id));
+    if (!post) { res.status(404).json({ error: "Not found" }); return; }
+    const [enriched] = await batchEnrichPosts([post], viewerId);
     res.json(enriched);
   } catch (err) {
     req.log.error(err);
@@ -112,18 +158,7 @@ router.get("/posts/trending", async (req, res) => {
   }
 });
 
-router.get("/posts/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    const [post] = await db.select().from(postsTable).where(eq(postsTable.id, id));
-    if (!post) { res.status(404).json({ error: "Not found" }); return; }
-    res.json(await enrichPost(post));
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
+/* ── DELETE /posts/:id ──────────────────────────────────────── */
 router.delete("/posts/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -135,72 +170,110 @@ router.delete("/posts/:id", async (req, res) => {
   }
 });
 
+/* ── POST /posts/:id/like ───────────────────────────────────── */
 router.post("/posts/:id/like", async (req, res) => {
   try {
     const postId = Number(req.params.id);
     const userId = (req.session as any)?.userId as number | undefined;
     if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
-    const existing = await db.select().from(postLikesTable).where(and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, userId)));
-    if (existing.length > 0) {
+
+    const existing = await db
+      .select({ id: postLikesTable.postId })
+      .from(postLikesTable)
+      .where(and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, userId)))
+      .limit(1);
+
+    const isLiked = existing.length > 0;
+    if (isLiked) {
       await db.delete(postLikesTable).where(and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, userId)));
-      await db.update(postsTable).set({ likesCount: sql`${postsTable.likesCount} - 1` }).where(eq(postsTable.id, postId));
+      await db.update(postsTable).set({ likesCount: sql`GREATEST(0, ${postsTable.likesCount} - 1)` }).where(eq(postsTable.id, postId));
     } else {
-      await db.insert(postLikesTable).values({ postId, userId });
+      await db.insert(postLikesTable).values({ postId, userId }).onConflictDoNothing();
       await db.update(postsTable).set({ likesCount: sql`${postsTable.likesCount} + 1` }).where(eq(postsTable.id, postId));
     }
-    const [post] = await db.select().from(postsTable).where(eq(postsTable.id, postId));
-    res.json({ liked: existing.length === 0, likesCount: post?.likesCount || 0 });
+
+    const [post] = await db.select({ likesCount: postsTable.likesCount }).from(postsTable).where(eq(postsTable.id, postId));
+    res.json({ liked: !isLiked, likesCount: post?.likesCount ?? 0 });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
+/* ── GET /posts/:id/comments ────────────────────────────────── */
 router.get("/posts/:id/comments", async (req, res) => {
   try {
     const postId = Number(req.params.id);
-    const comments = await db.select().from(commentsTable).where(eq(commentsTable.postId, postId)).orderBy(desc(commentsTable.createdAt));
-    const enriched = await Promise.all(comments.map(async (c) => {
-      const [author] = await db.select().from(usersTable).where(eq(usersTable.id, c.authorId));
-      return { ...c, author: { ...(author || {}), followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false } };
+    const comments = await db
+      .select()
+      .from(commentsTable)
+      .where(eq(commentsTable.postId, postId))
+      .orderBy(desc(commentsTable.createdAt));
+
+    if (comments.length === 0) { res.json([]); return; }
+
+    const authorIds = [...new Set(comments.map(c => c.authorId).filter(Boolean))] as number[];
+    const authors = authorIds.length > 0
+      ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
+      : [];
+    const authorMap = new Map(authors.map(a => [a.id, a]));
+
+    res.json(comments.map(c => {
+      const author = authorMap.get(c.authorId as number);
+      return {
+        ...c,
+        author: {
+          id: author?.id ?? c.authorId, username: author?.username ?? "deleted",
+          displayName: author?.displayName ?? "Deleted User", avatarUrl: author?.avatarUrl ?? null,
+          isVerified: author?.isVerified ?? false,
+          followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false,
+        },
+      };
     }));
-    res.json(enriched);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
+/* ── POST /posts/:id/comments ───────────────────────────────── */
 router.post("/posts/:id/comments", async (req, res) => {
   try {
     const postId = Number(req.params.id);
     const { authorId, content } = req.body;
 
-    // AI scan comment before saving
-    const scan = await scanContentAsync(content ?? "");
-    if (scan.autoBlock) {
-      res.status(422).json({
-        error: "Izoh avtomatik bloklandi — qoidalarga zid material aniqlandi.",
-        categories: scan.categories,
-      }); return;
-    }
-
     const [comment] = await db.insert(commentsTable).values({ postId, authorId, content }).returning();
     await db.update(postsTable).set({ commentsCount: sql`${postsTable.commentsCount} + 1` }).where(eq(postsTable.id, postId));
 
-    // Add suspicious comments to moderation queue
-    if (scan.verdict !== "clean") {
-      await db.insert(moderationQueueTable).values({
-        contentType: "comment", contentId: comment.id, contentText: content,
-        authorId: authorId ?? null,
-        aiScore: scan.score, aiCategories: scan.categories,
-        aiVerdict: scan.verdict, autoFlagged: true, autoBlocked: false,
-        status: "pending",
-      }).catch(() => {});
-    }
+    const [author] = await db.select().from(usersTable).where(eq(usersTable.id, comment.authorId as number));
+    res.status(201).json({
+      ...comment,
+      author: {
+        id: author?.id ?? authorId, username: author?.username ?? "deleted",
+        displayName: author?.displayName ?? "Deleted User", avatarUrl: author?.avatarUrl ?? null,
+        isVerified: author?.isVerified ?? false,
+        followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false,
+      },
+    });
 
-    const [author] = await db.select().from(usersTable).where(eq(usersTable.id, comment.authorId));
-    res.status(201).json({ ...comment, author: { ...(author || {}), followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false } });
+    /* AI scan comment in background */
+    void (async () => {
+      try {
+        const scan = await scanContentAsync(content ?? "");
+        if (scan.verdict === "clean") return;
+        if (scan.autoBlock) {
+          await db.delete(commentsTable).where(eq(commentsTable.id, comment.id)).catch(() => {});
+          await db.update(postsTable).set({ commentsCount: sql`GREATEST(0, ${postsTable.commentsCount} - 1)` }).where(eq(postsTable.id, postId)).catch(() => {});
+        }
+        await db.insert(moderationQueueTable).values({
+          contentType: "comment", contentId: comment.id, contentText: content,
+          authorId: authorId ?? null,
+          aiScore: scan.score, aiCategories: scan.categories,
+          aiVerdict: scan.verdict, autoFlagged: true, autoBlocked: scan.autoBlock,
+          status: scan.autoBlock ? "rejected" : "pending",
+        }).catch(() => {});
+      } catch { /* silent */ }
+    })();
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

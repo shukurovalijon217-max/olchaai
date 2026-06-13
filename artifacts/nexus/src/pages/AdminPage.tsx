@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
   ShieldCheck, Users, FileText, BarChart3, Cpu, TrendingUp,
@@ -237,6 +237,355 @@ function SafeGuardTab() {
         </div>
       )}
     </motion.div>
+  );
+}
+
+/* ─── Platform Operating Costs Section ───────────────────────── */
+const EXPENSE_CATS: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+  hosting:           { label: "Hosting",            icon: Activity,     color: "text-blue-400 bg-blue-500/10" },
+  ai_api:            { label: "AI API",              icon: Cpu,          color: "text-violet-400 bg-violet-500/10" },
+  payment_processor: { label: "To'lov tizimi",       icon: DollarSign,   color: "text-emerald-400 bg-emerald-500/10" },
+  storage:           { label: "Saqlash",             icon: BadgeCheck,   color: "text-cyan-400 bg-cyan-500/10" },
+  other:             { label: "Boshqa",              icon: Wallet,       color: "text-amber-400 bg-amber-500/10" },
+};
+
+const PERIOD_LABEL: Record<string, string> = {
+  monthly: "/oy", annual: "/yil", one_time: "bir martalik",
+};
+
+function PlatformCostsSection() {
+  const [summary, setSummary] = useState<any>(null);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [requesting, setRequesting] = useState(false);
+  const [approving, setApproving] = useState<number | null>(null);
+  const [form, setForm] = useState({ name: "", category: "hosting", amountCents: "", period: "monthly", description: "" });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const loadAll = async () => {
+    setLoadingSummary(true);
+    try {
+      const [s, r] = await Promise.all([
+        fetch(`${API}/api/admin/platform-expenses/summary`, { credentials: "include" }).then(x => x.json()),
+        fetch(`${API}/api/admin/platform-expenses/deduction-requests`, { credentials: "include" }).then(x => x.json()),
+      ]);
+      setSummary(s);
+      setRequests(r.requests ?? []);
+    } catch {}
+    setLoadingSummary(false);
+  };
+
+  useEffect(() => { void loadAll(); }, []);
+
+  const addExpense = async () => {
+    const cents = Math.round(parseFloat(form.amountCents) * 100);
+    if (!form.name || !form.category || isNaN(cents) || cents <= 0) {
+      setError("Iltimos barcha maydonlarni to'ldiring"); return;
+    }
+    setSaving(true); setError(null);
+    try {
+      const r = await fetch(`${API}/api/admin/platform-expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ ...form, amountCents: cents }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setError(d.error ?? "Xato"); return; }
+      setShowAddForm(false);
+      setForm({ name: "", category: "hosting", amountCents: "", period: "monthly", description: "" });
+      setSuccess("Xarajat qo'shildi ✓"); setTimeout(() => setSuccess(null), 2500);
+      void loadAll();
+    } catch { setError("Tarmoq xatosi"); }
+    finally { setSaving(false); }
+  };
+
+  const deleteExpense = async (id: number) => {
+    await fetch(`${API}/api/admin/platform-expenses/${id}`, { method: "DELETE", credentials: "include" });
+    void loadAll();
+  };
+
+  const toggleActive = async (id: number, isActive: boolean) => {
+    await fetch(`${API}/api/admin/platform-expenses/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ isActive }),
+    });
+    void loadAll();
+  };
+
+  const createDeductionRequest = async () => {
+    setRequesting(true); setError(null);
+    try {
+      const r = await fetch(`${API}/api/admin/platform-expenses/deduction-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({}),
+      });
+      const d = await r.json();
+      if (!r.ok) { setError(d.error ?? "Xato"); return; }
+      setSuccess("Chegirma so'rovi yaratildi — tasdiqlash kutilmoqda ✓"); setTimeout(() => setSuccess(null), 3000);
+      void loadAll();
+    } catch { setError("Tarmoq xatosi"); }
+    finally { setRequesting(false); }
+  };
+
+  const processRequest = async (id: number, action: "approve" | "reject") => {
+    setApproving(id);
+    try {
+      const r = await fetch(`${API}/api/admin/platform-expenses/deduction-requests/${id}/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({}),
+      });
+      const d = await r.json();
+      if (!r.ok) { setError(d.error ?? "Xato"); return; }
+      setSuccess(action === "approve" ? "✅ Tasdiqlandi — hamyondan ushlab qolindi!" : "❌ Rad etildi");
+      setTimeout(() => setSuccess(null), 3000);
+      void loadAll();
+    } catch { setError("Tarmoq xatosi"); }
+    finally { setApproving(null); }
+  };
+
+  const fmtUsd = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const pendingRequests = requests.filter(r => r.status === "pending");
+  const historyRequests = requests.filter(r => r.status !== "pending");
+
+  return (
+    <div className="bg-gradient-to-br from-blue-500/5 to-violet-500/5 border border-blue-500/20 rounded-2xl p-5 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center">
+            <TrendingDown className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Ish Xarajatlari Boshqaruvi</h3>
+            <p className="text-xs text-muted-foreground">Daromaddan avtomatik ushlab qolish — admin ruxsatidan keyin</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => void loadAll()} className="px-3 py-1.5 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
+            <RefreshCw className="w-3 h-3" /> Yangilash
+          </button>
+          <button onClick={() => setShowAddForm(!showAddForm)} className="px-3 py-1.5 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-medium hover:bg-blue-500/25 transition-colors">
+            {showAddForm ? "✕ Yopish" : "+ Xarajat qo'shish"}
+          </button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs">
+          <XCircle className="w-4 h-4 flex-shrink-0" /> {error}
+        </div>
+      )}
+      {success && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs">
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> {success}
+        </div>
+      )}
+
+      {/* Summary cards */}
+      {!loadingSummary && summary && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-card border border-border rounded-xl p-3">
+            <p className="text-xs text-muted-foreground mb-1">Brutto Daromad</p>
+            <p className="text-base font-bold text-emerald-400">{fmtUsd(summary.grossRevenueCents ?? 0)}</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-3">
+            <p className="text-xs text-muted-foreground mb-1">Oylik Xarajat</p>
+            <p className="text-base font-bold text-destructive">{fmtUsd(summary.totalMonthlyExpenseCents ?? 0)}</p>
+          </div>
+          <div className={`border rounded-xl p-3 ${(summary.netProfitCents ?? 0) >= 0 ? "bg-emerald-500/8 border-emerald-500/25" : "bg-destructive/8 border-destructive/25"}`}>
+            <p className="text-xs text-muted-foreground mb-1">Sof Foyda</p>
+            <p className={`text-base font-bold ${(summary.netProfitCents ?? 0) >= 0 ? "text-emerald-400" : "text-destructive"}`}>
+              {fmtUsd(summary.netProfitCents ?? 0)}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Add expense form */}
+      <AnimatePresence>
+        {showAddForm && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden">
+            <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Yangi Xarajat</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Nomi</p>
+                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Masalan: Replit hosting"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Kategoriya</p>
+                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                    {Object.entries(EXPENSE_CATS).map(([k, v]) => (
+                      <option key={k} value={k}>{v.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Miqdor (USD)</p>
+                  <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-input">
+                    <span className="text-sm text-muted-foreground">$</span>
+                    <input type="number" min={0} step={0.01} value={form.amountCents}
+                      onChange={e => setForm(f => ({ ...f, amountCents: e.target.value }))}
+                      placeholder="0.00"
+                      className="flex-1 bg-transparent text-foreground text-sm focus:outline-none" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Davr</p>
+                  <select value={form.period} onChange={e => setForm(f => ({ ...f, period: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                    <option value="monthly">Oylik</option>
+                    <option value="annual">Yillik</option>
+                    <option value="one_time">Bir martalik</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Tavsif (ixtiyoriy)</p>
+                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Qisqacha izoh..."
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <button onClick={addExpense} disabled={saving}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/20 border border-blue-500/30 text-blue-400 text-sm font-medium hover:bg-blue-500/30 transition-colors disabled:opacity-50">
+                {saving ? <div className="w-3.5 h-3.5 border-2 border-blue-400/40 border-t-blue-400 rounded-full animate-spin" /> : null}
+                {saving ? "Saqlanmoqda..." : "💾 Qo'shish"}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Expense list */}
+      {!loadingSummary && (summary?.expenses ?? []).length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Faol Xarajatlar ({summary.expenses.length})</p>
+          {(summary.expenses as any[]).map((exp) => {
+            const cat = EXPENSE_CATS[exp.category] ?? EXPENSE_CATS.other!;
+            const Icon = cat.icon;
+            return (
+              <div key={exp.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${exp.isActive ? "bg-card border-border" : "bg-muted/30 border-border/50 opacity-60"}`}>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${cat.color}`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{exp.name}</p>
+                  <p className="text-xs text-muted-foreground">{cat.label}{exp.description ? ` · ${exp.description}` : ""}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-foreground">{fmtUsd(exp.amountCents)}<span className="text-xs font-normal text-muted-foreground ml-1">{PERIOD_LABEL[exp.period]}</span></p>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button onClick={() => toggleActive(exp.id, !exp.isActive)}
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${exp.isActive ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}>
+                    {exp.isActive ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
+                  </button>
+                  <button onClick={() => deleteExpense(exp.id)} className="w-8 h-8 rounded-xl flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Request deduction button */}
+      {!loadingSummary && (summary?.totalMonthlyExpenseCents ?? 0) > 0 && (
+        <div className="border border-dashed border-blue-500/30 rounded-2xl p-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Chegirma So'rovi Yaratish</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Oylik xarajatlar ({fmtUsd(summary.totalMonthlyExpenseCents)}) daromaddan ({fmtUsd(summary.grossRevenueCents)}) ushlab qolinadi — admin tasdiqidan so'ng
+            </p>
+          </div>
+          <button onClick={createDeductionRequest} disabled={requesting || (summary.grossRevenueCents ?? 0) < (summary.totalMonthlyExpenseCents ?? 1)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-40 flex-shrink-0">
+            {requesting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <ArrowUpRight className="w-4 h-4" />}
+            So'rov yuborish
+          </button>
+        </div>
+      )}
+
+      {/* Pending requests — need approval */}
+      {pendingRequests.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+            <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Tasdiqlash Kutilmoqda ({pendingRequests.length})</p>
+          </div>
+          {pendingRequests.map(req => (
+            <motion.div key={req.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+              className="bg-amber-500/8 border border-amber-500/30 rounded-2xl p-4">
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    Xarajat chegirmasi — <span className="text-destructive">{fmtUsd(req.totalExpenseCents)}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Daromad: <span className="text-emerald-400">{fmtUsd(req.totalRevenueCents)}</span>
+                    {" "}→ Chegirmadan keyin: <span className={(req.netProfitCents ?? 0) >= 0 ? "text-emerald-400" : "text-destructive"}>{fmtUsd(req.netProfitCents)}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{new Date(req.createdAt).toLocaleString("uz-UZ")}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => processRequest(req.id, "reject")} disabled={approving === req.id}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-destructive/15 border border-destructive/30 text-destructive text-xs font-semibold hover:bg-destructive/25 transition-colors disabled:opacity-50">
+                    <XCircle className="w-3.5 h-3.5" /> Rad etish
+                  </button>
+                  <button onClick={() => processRequest(req.id, "approve")} disabled={approving === req.id}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 transition-colors disabled:opacity-50">
+                    {approving === req.id
+                      ? <div className="w-3.5 h-3.5 border-2 border-emerald-400/40 border-t-emerald-400 rounded-full animate-spin" />
+                      : <CheckCircle2 className="w-3.5 h-3.5" />
+                    }
+                    Tasdiqlash
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* History */}
+      {historyRequests.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tarix</p>
+          {historyRequests.slice(0, 5).map(req => (
+            <div key={req.id} className="flex items-center gap-3 text-xs py-2 px-3 rounded-xl bg-card border border-border">
+              <span className={`px-2 py-0.5 rounded-full border font-medium ${
+                req.status === "approved" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-destructive/15 text-destructive border-destructive/30"
+              }`}>{req.status === "approved" ? "✓ Tasdiqlangan" : "✕ Rad etilgan"}</span>
+              <span className="text-muted-foreground">{fmtUsd(req.totalExpenseCents)}</span>
+              <span className="text-muted-foreground ml-auto">{new Date(req.createdAt).toLocaleDateString("uz-UZ")}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {loadingSummary && (
+        <div className="flex justify-center py-8">
+          <div className="w-6 h-6 rounded-full border-2 border-blue-400/40 border-t-blue-400 animate-spin" />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -663,6 +1012,9 @@ function FinanceTab() {
           <div className="text-center py-10 text-muted-foreground text-sm">Hamyon ma'lumotlari yo'q</div>
         )}
       </div>
+
+      {/* ===== PLATFORM OPERATING COSTS ===== */}
+      <PlatformCostsSection />
 
       {/* Recent transactions */}
       <div className="bg-card border border-border rounded-2xl overflow-hidden">

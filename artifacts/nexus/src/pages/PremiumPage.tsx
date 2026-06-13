@@ -26,6 +26,49 @@ interface Product {
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+// ── Currency detection from browser locale ─────────────────────────────────
+const LANG_TO_CURRENCY: Record<string, string> = {
+  "uz": "UZS", "ru": "RUB", "ko": "KRW", "ja": "JPY",
+  "zh": "CNY", "tr": "TRY", "de": "EUR", "fr": "EUR",
+  "it": "EUR", "es": "EUR", "pt": "EUR", "nl": "EUR",
+  "pl": "PLN", "kk": "KZT", "az": "AZN", "ka": "GEL",
+  "ar": "AED", "en": "USD",
+  "en-gb": "GBP", "en-au": "AUD", "en-ca": "CAD",
+};
+function getLocalCurrency(): string {
+  const lang = (navigator.language || "en").toLowerCase();
+  return LANG_TO_CURRENCY[lang] ?? LANG_TO_CURRENCY[lang.split("-")[0]] ?? "USD";
+}
+
+// Rates: 1 USD = X major units of currency
+const USD_TO: Record<string, number> = {
+  USD: 1,   EUR: 0.92, GBP: 0.79, RUB: 91.5, CNY: 7.24,
+  KRW: 1340, JPY: 154, TRY: 32.5, KZT: 450,  AED: 3.67,
+  AZN: 1.70, GEL: 2.67, PLN: 3.96, CAD: 1.37, AUD: 1.54,
+  UZS: 12800,
+};
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$", EUR: "€", GBP: "£", RUB: "₽", CNY: "¥",
+  KRW: "₩", JPY: "¥", TRY: "₺", KZT: "₸", AED: "د.إ",
+  AZN: "₼", GEL: "₾", PLN: "zł", CAD: "CA$", AUD: "A$",
+  UZS: " so'm",
+};
+const NO_DECIMAL = new Set(["KRW", "JPY", "UZS", "KZT"]);
+
+function convertUsdCents(usdCents: number, currency: string): string {
+  const rate = USD_TO[currency.toUpperCase()] ?? 1;
+  const sym = CURRENCY_SYMBOLS[currency.toUpperCase()] ?? currency;
+  const noDecimal = NO_DECIMAL.has(currency.toUpperCase());
+  const major = (usdCents / 100) * rate;
+  const formatted = major.toLocaleString("en-US", {
+    minimumFractionDigits: noDecimal ? 0 : 2,
+    maximumFractionDigits: noDecimal ? 0 : 2,
+  });
+  // Put symbol before or after depending on currency
+  const isPost = ["UZS", "PLN", "KZT"].includes(currency.toUpperCase());
+  return isPost ? `${formatted}${sym}` : `${sym}${formatted}`;
+}
+
 function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase(), minimumFractionDigits: 0 }).format(amount / 100);
 }
@@ -110,13 +153,16 @@ export default function PremiumPage() {
     load();
   }, [user]);
 
+  const localCurrency = getLocalCurrency();
+
   const handleCheckout = async (priceId: string) => {
     if (!user) { navigate("/"); return; }
     setCheckingOut(priceId); setError(null);
     try {
       const res = await fetch(`${API}/api/stripe/checkout`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        credentials: "include", body: JSON.stringify({ priceId }),
+        credentials: "include",
+        body: JSON.stringify({ priceId, currency: localCurrency }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
@@ -252,26 +298,32 @@ export default function PremiumPage() {
               ) : (
                 <div className="mb-5 mt-2">
                   <p className="text-xs font-semibold text-yellow-500 uppercase tracking-wider mb-2">Premium</p>
-                  {(billing === "month" ? monthlyPrice : yearlyPrice) ? (
-                    <>
-                      <div className="flex items-end gap-1">
-                        <span className="text-4xl font-black text-foreground">
-                          {formatPrice(
-                            billing === "year" && yearlyPrice
-                              ? Math.round(yearlyPrice.unitAmount / 12)
-                              : (monthlyPrice?.unitAmount ?? 0),
-                            monthlyPrice?.currency ?? "usd"
-                          )}
-                        </span>
-                        <span className="text-muted-foreground mb-1">/ {t("premium.per_month")}</span>
-                      </div>
-                      {billing === "year" && yearlyPrice && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {formatPrice(yearlyPrice.unitAmount, yearlyPrice.currency)} {t("premium.billed_yearly")}
-                        </p>
-                      )}
-                    </>
-                  ) : (
+                  {(billing === "month" ? monthlyPrice : yearlyPrice) ? (() => {
+                    const baseUsdCents = billing === "year" && yearlyPrice
+                      ? Math.round(yearlyPrice.unitAmount / 12)
+                      : (monthlyPrice?.unitAmount ?? 0);
+                    const isLocal = localCurrency !== (monthlyPrice?.currency ?? "usd").toUpperCase();
+                    return (
+                      <>
+                        <div className="flex items-end gap-1">
+                          <span className="text-4xl font-black text-foreground">
+                            {convertUsdCents(baseUsdCents, localCurrency)}
+                          </span>
+                          <span className="text-muted-foreground mb-1">/ {t("premium.per_month")}</span>
+                        </div>
+                        {isLocal && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            ≈ {formatPrice(baseUsdCents, monthlyPrice?.currency ?? "usd")} USD
+                          </p>
+                        )}
+                        {billing === "year" && yearlyPrice && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {convertUsdCents(yearlyPrice.unitAmount, localCurrency)} {t("premium.billed_yearly")}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })() : (
                     <div className="flex items-end gap-1">
                       <span className="text-4xl font-black text-foreground">49 900</span>
                       <span className="text-muted-foreground mb-1">{t("premium.som", { defaultValue: "UZS" })} / {t("premium.per_month")}</span>

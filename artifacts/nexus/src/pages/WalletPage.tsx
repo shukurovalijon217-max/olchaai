@@ -16,6 +16,11 @@ const fmt = (tiyin: number) =>
 const fmtSigned = (tiyin: number) =>
   (tiyin >= 0 ? "+" : "") + fmt(Math.abs(tiyin));
 
+const fmtUSD = (tiyin: number, uzsPerUsd: number) => {
+  const usd = (tiyin / 100) / uzsPerUsd;
+  return "≈ $" + usd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
 const PAYMENT_PROVIDERS = [
   { id: "visa",       label: "Visa",                   logo: "💳", color: "#1a1f71", textColor: "#fff", desc: "Visa debet/kredit karta" },
   { id: "mastercard", label: "Mastercard",             logo: "🔴", color: "#eb001b", textColor: "#fff", desc: "Mastercard karta" },
@@ -41,9 +46,10 @@ const PM_ICONS: Record<string, string> = {
 type WalletData = { balance: number; earningsBalance: number; adRevenueBalance: number; currency: string };
 type TxData = { id: number; type: string; amount: number; paymentMethod: string | null; description: string | null; status: string; createdAt: string; reference: string | null };
 type PMData = { id: number; type: string; title: string; maskedNumber: string | null; holderName: string | null; expiryDate: string | null; isDefault: boolean };
+type Rates = { uzsPerUsd: number; uzsPerEur: number };
 
 function useWallet() {
-  return useQuery<{ wallet: WalletData }>({
+  return useQuery<{ wallet: WalletData; rates?: Rates }>({
     queryKey: ["wallet"],
     queryFn: () => fetch(`${API}/api/wallet`, { credentials: "include" }).then(r => r.json()),
   });
@@ -455,6 +461,7 @@ export default function WalletPage() {
   const [hideBalance, setHideBalance] = useState(false);
 
   const wallet = walletData?.wallet;
+  const uzsPerUsd = walletData?.rates?.uzsPerUsd ?? 12800;
   const transactions = txData?.transactions ?? [];
   const paymentMethods = pmData?.paymentMethods ?? [];
 
@@ -479,10 +486,12 @@ export default function WalletPage() {
     );
   }
 
+  const totalTiyin = (wallet?.balance ?? 0) + (wallet?.earningsBalance ?? 0) + (wallet?.adRevenueBalance ?? 0);
   const balanceDisplay = hideBalance ? "••••••" : fmt(wallet?.balance ?? 0);
   const earningsDisplay = hideBalance ? "••••••" : fmt(wallet?.earningsBalance ?? 0);
   const adDisplay = hideBalance ? "••••••" : fmt(wallet?.adRevenueBalance ?? 0);
-  const totalDisplay = hideBalance ? "••••••" : fmt((wallet?.balance ?? 0) + (wallet?.earningsBalance ?? 0) + (wallet?.adRevenueBalance ?? 0));
+  const totalDisplay = hideBalance ? "••••••" : fmt(totalTiyin);
+  const totalUsdDisplay = hideBalance ? "••••" : fmtUSD(totalTiyin, uzsPerUsd);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -511,7 +520,8 @@ export default function WalletPage() {
             <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white" />
           </div>
           <p className="text-primary-foreground/70 text-sm font-medium mb-1">{t("wallet.total_balance")}</p>
-          <p className="text-4xl font-black text-primary-foreground mb-4">{totalDisplay}</p>
+          <p className="text-4xl font-black text-primary-foreground">{totalDisplay}</p>
+          <p className="text-primary-foreground/55 text-sm mb-4 mt-0.5">{totalUsdDisplay}</p>
           <div className="flex gap-3">
             <button onClick={() => setModal("deposit")}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-primary-foreground text-sm font-semibold transition backdrop-blur">

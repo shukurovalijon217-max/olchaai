@@ -6,6 +6,7 @@ import {
 import { eq, desc, and } from "drizzle-orm";
 import { z } from "zod";
 import { applyCommission, getCommissionRate } from "../lib/commission";
+import { USD_TO_MAJOR } from "../lib/currency";
 
 const router = Router();
 
@@ -30,7 +31,13 @@ router.get("/wallet", requireAuth, async (req: any, res) => {
   try {
     const wallet = await getOrCreateWallet(req.session.userId);
     const commissionRate = await getCommissionRate();
-    res.json({ wallet, commissionRate });
+    // Include key exchange rates so frontend can show dual-currency display
+    const rates = {
+      USD: USD_TO_MAJOR.USD,   // 1 UZS per 1 USD → use 1/(UZS rate)
+      uzsPerUsd: USD_TO_MAJOR.UZS,  // 12800
+      uzsPerEur: USD_TO_MAJOR.UZS / USD_TO_MAJOR.EUR,
+    };
+    res.json({ wallet, commissionRate, rates });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Hamyon ma'lumotlarini olishda xato" });

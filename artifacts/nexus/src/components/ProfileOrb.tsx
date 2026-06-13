@@ -23,12 +23,17 @@ import {
   CheckCheck, Loader2, Plus, BookOpen, RefreshCw,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import Picker from "@emoji-mart/react";
+import emojiData from "@emoji-mart/data";
 import {
   useListConversations,
   useGetConversationMessages,
   useSendMessage,
   useCreateConversation,
+  useDeleteMessage,
+  useDeleteConversation,
   getGetConversationMessagesQueryKey,
+  getListConversationsQueryKey,
   useListPosts,
   useLikePost,
   useCreatePost,
@@ -285,11 +290,26 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
     query:{ enabled:true, queryKey:getGetConversationMessagesQueryKey(convId), refetchInterval:4000 },
   });
   const send = useSendMessage();
+  const delMsg = useDeleteMessage();
   const [text, setText] = useState("");
-  const [deleted, setDeleted] = useState<Set<number>>(new Set());
+  const [showEmoji, setShowEmoji] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
 
   useEffect(()=>{ bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages.length]);
+
+  /* close emoji picker on outside click */
+  useEffect(() => {
+    if (!showEmoji) return;
+    const handler = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setShowEmoji(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showEmoji]);
 
   const handleSend = () => {
     if (!text.trim()) return;
@@ -298,7 +318,24 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
     });
   };
 
-  const visible = messages.filter(m => !deleted.has(m.id));
+  const handleDeleteMsg = (msgId: number) => {
+    delMsg.mutate({ id:convId, msgId }, {
+      onSuccess:()=>{ qc.invalidateQueries({ queryKey:getGetConversationMessagesQueryKey(convId) }); },
+    });
+  };
+
+  const handleEmojiSelect = (emoji: { native: string }) => {
+    const input = inputRef.current;
+    if (!input) { setText(t => t + emoji.native); return; }
+    const start = input.selectionStart ?? text.length;
+    const end = input.selectionEnd ?? text.length;
+    const newText = text.slice(0, start) + emoji.native + text.slice(end);
+    setText(newText);
+    requestAnimationFrame(() => {
+      input.focus();
+      input.setSelectionRange(start + emoji.native.length, start + emoji.native.length);
+    });
+  };
 
   return (
     <>
@@ -307,17 +344,17 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
       <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5" style={{ minHeight:0 }}>
         {isLoading
           ? <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 text-muted-foreground animate-spin"/></div>
-          : visible.length === 0
+          : messages.length === 0
           ? <div className="text-center py-6 text-muted-foreground text-xs"><MessageSquare className="w-6 h-6 mx-auto mb-1 opacity-20"/>Xabarlar yo'q</div>
-          : visible.map((m, i) => {
+          : messages.map((m, i) => {
               const isMe = m.senderId === meId;
               return (
                 <motion.div key={m.id}
                   initial={{ opacity:0, y:8, scale:0.93 }} animate={{ opacity:1, y:0, scale:1 }}
                   transition={{ delay:Math.min(i*0.03,0.2), type:"spring", stiffness:440, damping:32 }}>
                   <SwipeableRow id={m.id}
-                    onDelete={()=>setDeleted(p=>new Set([...p,m.id]))}
-                    onArchive={()=>setDeleted(p=>new Set([...p,m.id]))}
+                    onDelete={()=>handleDeleteMsg(m.id)}
+                    onArchive={()=>handleDeleteMsg(m.id)}
                     archiveLabel="Saqlash">
                     <div className={`flex ${isMe?"justify-end":"justify-start"} py-0.5`}>
                       <div className={`max-w-[82%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
@@ -339,14 +376,41 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
         }
         <div ref={bottomRef}/>
       </div>
+      {/* Emoji picker */}
+      <AnimatePresence>
+        {showEmoji && (
+          <motion.div ref={emojiRef}
+            initial={{ opacity:0, y:12, scale:0.93 }} animate={{ opacity:1, y:0, scale:1 }}
+            exit={{ opacity:0, y:12, scale:0.93 }}
+            transition={{ type:"spring", stiffness:420, damping:30 }}
+            style={{ position:"absolute", bottom:58, right:4, zIndex:999 }}>
+            <Picker
+              data={emojiData}
+              onEmojiSelect={handleEmojiSelect}
+              theme="dark"
+              locale="uz"
+              previewPosition="none"
+              skinTonePosition="none"
+              set="native"
+              perLine={7}
+              emojiSize={22}
+              emojiButtonSize={34}
+              maxFrequentRows={2}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Input */}
       <div className="px-2.5 py-2 border-t border-white/8 flex-shrink-0">
         <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-2xl border border-white/10 bg-white/5">
-          <input value={text} onChange={e=>setText(e.target.value)}
+          <input ref={inputRef} value={text} onChange={e=>setText(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),handleSend())}
             placeholder="Xabar…" maxLength={1000}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none py-1.5"/>
-          <button className="opacity-55 hover:opacity-90"><Smile className="w-4 h-4 text-foreground"/></button>
+          <motion.button whileTap={{ scale:0.85 }} onClick={()=>setShowEmoji(v=>!v)}
+            className={`transition-colors ${showEmoji?"text-yellow-400 opacity-100":"opacity-55 hover:opacity-90"}`}>
+            <Smile className="w-4 h-4 text-current"/>
+          </motion.button>
           <motion.button whileTap={{ scale:0.85 }} onClick={handleSend}
             disabled={!text.trim()||send.isPending}
             className="w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-30"

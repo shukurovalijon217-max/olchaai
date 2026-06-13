@@ -918,14 +918,6 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
       </AnimatePresence>
 
       {/* ── Main orb ───────────────────────────────────────────── */}
-      {/* Continuous floating drift wrapper — tepaga, pastga, chapga, o'ngga */}
-      <motion.div
-        animate={{
-          x: [0,  7, -5,  9, -7,  4, -9,  5, 0],
-          y: [0, -9,  6,-11,  4,-13,  7, -8, 0],
-        }}
-        transition={{ duration:5.5, repeat:Infinity, ease:"easeInOut", repeatType:"mirror" }}
-        style={{ position:"absolute", top:0, left:0, width:ORB, height:ORB }}>
       <motion.div ref={tiltRef} animate={pulse}
         onClick={handleOrbClick}
         onMouseMove={e=>{
@@ -995,7 +987,6 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
           </motion.div>
         )}
       </motion.div>
-      </motion.div>{/* /float wrapper */}
     </motion.div>
   );
 }

@@ -18,6 +18,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import ProfileOrb from "@/components/ProfileOrb";
 
 interface ProfilePageProps { userId: number; }
 
@@ -1187,6 +1188,16 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         onAvatarClick={() => { setShowSettings(false); avatarInputRef.current?.click(); }}
         onCoverClick={() => { setShowSettings(false); coverInputRef.current?.click(); }}
         onOpenSubscription={() => setShowSub(true)} />
+
+      {/* ── Profile Orb — floating radial action menu ── */}
+      <ProfileOrb
+        targetUser={{
+          displayName: user.displayName,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+        }}
+        isOwner={isOwner}
+      />
     </div>
   );
 }

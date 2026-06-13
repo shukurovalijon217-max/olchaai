@@ -196,23 +196,27 @@ export default function FloatingAvatar() {
                 transition={{ duration: 1.9 + i * 0.6, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
               />
             ))}
-            {/* Avatar / gradient fill */}
+            {/* Red sphere */}
             <div style={{
-              position: "absolute", inset: 0, borderRadius: "50%", overflow: "hidden",
-              background: user.avatarUrl ? undefined : "linear-gradient(135deg,#7c3aed,#db2777)",
-            }}>
-              {user.avatarUrl
-                ? <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : null}
-            </div>
-            {/* Glow overlay */}
+              position: "absolute", inset: 0, borderRadius: "50%",
+              background: "radial-gradient(circle at 35% 28%, #ff6b6b 0%, #e53e3e 35%, #c53030 65%, #742a2a 100%)",
+              boxShadow: "inset -2px 2px 5px rgba(0,0,0,0.4), inset 1px -1px 3px rgba(255,255,255,0.15)",
+            }} />
+            {/* Sphere highlight */}
+            <div style={{
+              position: "absolute", top: "14%", left: "18%",
+              width: "38%", height: "32%",
+              borderRadius: "50%",
+              background: "radial-gradient(ellipse, rgba(255,255,255,0.65) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }} />
+            {/* Glow */}
             <motion.div
               style={{
                 position: "absolute", inset: 0, borderRadius: "50%",
-                background: "radial-gradient(circle at 38% 30%, rgba(220,60,255,0.6), rgba(120,20,200,0.5))",
-                boxShadow: "0 0 16px rgba(185,40,250,0.7)",
+                boxShadow: "0 0 14px rgba(229,62,62,0.8)",
               }}
-              animate={{ opacity: [0.55, 1, 0.55] }}
+              animate={{ opacity: [0.6, 1, 0.6] }}
               transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
             />
           </motion.div>

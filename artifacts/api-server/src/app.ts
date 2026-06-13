@@ -6,6 +6,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { WebhookHandlers } from "./stripe/webhookHandlers";
 import { systemMonitor, normalisePath } from "./lib/systemMonitor";
+import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 
 const app: Express = express();
 
@@ -64,6 +65,9 @@ app.use(session({
     sameSite: isProd ? "none" : "lax",
   },
 }));
+
+/* ── AI Auto-Scale: rate limiting + memory pressure management ─── */
+app.use("/api", aiAutoScaleMiddleware);
 
 /* ── NEXUS Core: Self-Healing middleware ─────────────────────────
    1. If circuit breaker is OPEN for this endpoint → 503 immediately

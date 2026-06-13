@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { postsTable, postLikesTable, commentsTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, desc, and } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter";
+import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 
 const router = Router();
 
@@ -42,13 +43,14 @@ router.get("/posts", async (req, res) => {
   }
 });
 
-router.post("/posts", async (req, res) => {
+router.post("/posts", async (req: any, res) => {
   try {
     const { authorId, content, type, mediaUrl, tags } = req.body;
+    const sessionUserId: number | undefined = req.session?.userId;
 
-    // AI scan before saving (TF.js hybrid engine)
+    // AI scan (OpenAI Moderation + rules hybrid)
     const scan = await scanContentAsync(content ?? "");
-    const isFlagged = scan.verdict === "violation";
+    const isFlagged = scan.verdict === "violation" || scan.verdict === "suspicious";
 
     const [post] = await db.insert(postsTable).values({
       authorId, content, type: type || "text", mediaUrl, tags, isFlagged,
@@ -63,13 +65,32 @@ router.post("/posts", async (req, res) => {
         aiVerdict: scan.verdict, autoFlagged: true,
         autoBlocked: scan.autoBlock,
         status: scan.autoBlock ? "rejected" : "pending",
-      }).catch(() => {}); // non-fatal
+      }).catch(() => {});
     }
 
-    if (scan.autoBlock) {
+    // AI Autopilot: warnings, bans, event logging
+    const decision = await applyAutopilotDecision({
+      scan, authorId: sessionUserId ?? authorId ?? null,
+      contentType: "post", contentId: post.id, contentText: content ?? "",
+    });
+
+    if (decision.isBanned || scan.autoBlock) {
+      // Delete the just-created post
+      await db.delete(postsTable).where(eq(postsTable.id, post.id)).catch(() => {});
       res.status(422).json({
-        error: "Kontent avtomatik bloklandi — qoidalarga zid material aniqlandi.",
+        error: decision.message ?? "Kontent avtomatik bloklandi — qoidalarga zid material aniqlandi.",
+        action: decision.action,
         categories: scan.categories,
+        warningCount: decision.warningCount,
+      }); return;
+    }
+
+    if (decision.action === "warned") {
+      // Post published but with warning
+      res.status(201).json({
+        ...(await enrichPost(post)),
+        warning: decision.message,
+        aiScan: scan,
       }); return;
     }
 

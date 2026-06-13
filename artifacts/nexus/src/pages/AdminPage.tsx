@@ -7,7 +7,8 @@ import {
   UserX, Eye, RefreshCw, Zap, ShieldAlert, Trash2, ThumbsUp,
   RotateCcw, BadgeCheck, Crown, DollarSign, Bell, Settings,
   Wallet, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send,
-  ToggleLeft, ToggleRight, Lock, Unlock, Globe, Megaphone, Sparkles, Percent
+  ToggleLeft, ToggleRight, Lock, Unlock, Globe, Megaphone, Sparkles, Percent,
+  Bot, BrainCircuit, Gauge, MemoryStick, Radio, UserCheck, ShieldX
 } from "lucide-react";
 import {
   useGetAdminDashboard, useAdminListUsers, useAdminListContent,
@@ -21,7 +22,7 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar
 } from "recharts";
 
-type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "finance" | "notify" | "settings" | "nexus-core";
+type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "finance" | "notify" | "settings" | "nexus-core" | "ai-autopilot";
 
 const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "dashboard", key: "admin.dashboard", icon: BarChart3 },
@@ -35,6 +36,7 @@ const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "safeguard", key: "admin.safeguard", icon: ShieldAlert },
   { id: "settings", key: "nav.settings", icon: Settings },
   { id: "nexus-core", key: "admin.nexus_core", icon: Activity },
+  { id: "ai-autopilot", key: "admin.ai_autopilot", icon: Bot },
 ];
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -1286,6 +1288,298 @@ function SettingsTab() {
   );
 }
 
+/* ─── AI Autopilot Tab ───────────────────────────────────────── */
+const ACTION_COLOR: Record<string, string> = {
+  none:    "bg-muted/50 text-muted-foreground",
+  flagged: "bg-amber-500/15 text-amber-400",
+  deleted: "bg-destructive/15 text-destructive",
+  warned:  "bg-orange-500/15 text-orange-400",
+  banned:  "bg-destructive/20 text-destructive font-bold",
+};
+const ACTION_LABEL: Record<string, string> = {
+  none:    "O'tdi",
+  flagged: "Belgilandi",
+  deleted: "O'chirildi",
+  warned:  "Ogohlantirish",
+  banned:  "Bloklandi",
+};
+const ENGINE_COLOR: Record<string, string> = {
+  "openai+rules": "text-violet-400",
+  hybrid:         "text-cyan-400",
+  rules:          "text-amber-400",
+  tensorflow:     "text-blue-400",
+};
+
+function AiAutopilotTab() {
+  const [stats, setStats] = useState<any>(null);
+  const [scale, setScale] = useState<any>(null);
+  const [bannedUsers, setBannedUsers] = useState<any[]>([]);
+  const [warnedUsers, setWarnedUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [liveEvents, setLiveEvents] = useState<any[]>([]);
+  const [sseConnected, setSseConnected] = useState(false);
+  const [actingUser, setActingUser] = useState<number | null>(null);
+  const [activeSection, setActiveSection] = useState<"feed" | "banned" | "warned">("feed");
+
+  const loadAll = async () => {
+    setLoading(true);
+    try {
+      const [s, sc, b, w] = await Promise.all([
+        fetch(`${API}/api/admin/ai/stats`, { credentials: "include" }).then(r => r.json()),
+        fetch(`${API}/api/admin/ai/scale`, { credentials: "include" }).then(r => r.json()),
+        fetch(`${API}/api/admin/ai/banned-users`, { credentials: "include" }).then(r => r.json()),
+        fetch(`${API}/api/admin/ai/warned-users`, { credentials: "include" }).then(r => r.json()),
+      ]);
+      setStats(s);
+      setScale(sc);
+      setBannedUsers(b.users ?? []);
+      setWarnedUsers(w.users ?? []);
+    } catch {}
+    setLoading(false);
+  };
+
+  useEffect(() => { void loadAll(); }, []);
+
+  // SSE Live feed
+  useEffect(() => {
+    const evSource = new EventSource(`${API}/api/admin/ai/events/stream`, { withCredentials: true });
+    evSource.onopen = () => setSseConnected(true);
+    evSource.onerror = () => setSseConnected(false);
+    evSource.onmessage = (e) => {
+      try {
+        const ev = JSON.parse(e.data);
+        setLiveEvents(prev => [ev, ...prev].slice(0, 100));
+      } catch {}
+    };
+    return () => evSource.close();
+  }, []);
+
+  const unbanUser = async (userId: number) => {
+    setActingUser(userId);
+    await fetch(`${API}/api/admin/ai/unban/${userId}`, { method: "POST", credentials: "include" });
+    await loadAll();
+    setActingUser(null);
+  };
+
+  const resetWarnings = async (userId: number) => {
+    setActingUser(userId);
+    await fetch(`${API}/api/admin/ai/reset-warnings/${userId}`, { method: "POST", credentials: "include" });
+    await loadAll();
+    setActingUser(null);
+  };
+
+  const healthColor = (h: string) =>
+    h === "healthy" ? "text-emerald-400" : h === "degraded" ? "text-amber-400" : "text-destructive";
+
+  if (loading) return (
+    <div className="flex justify-center items-center py-20">
+      <div className="w-8 h-8 rounded-full border-2 border-violet-400/40 border-t-violet-400 animate-spin" />
+    </div>
+  );
+
+  const eventFeed = liveEvents.length > 0 ? liveEvents : (stats?.recentEvents ?? []);
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-violet-500/15 flex items-center justify-center">
+            <Bot className="w-6 h-6 text-violet-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">AI Avtopilot Boshqaruvi</h2>
+            <p className="text-xs text-muted-foreground">Platformani 100% AI boshqaradi — inson ta'misiz</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ${sseConnected ? "bg-emerald-500/15 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
+            <Radio className={`w-3 h-3 ${sseConnected ? "animate-pulse" : ""}`} />
+            {sseConnected ? "Real-vaqt ulanish" : "Oflayn"}
+          </div>
+          <button onClick={() => void loadAll()} className="p-2 rounded-xl border border-border hover:bg-muted transition-colors">
+            <RefreshCw className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+      </div>
+
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Bugungi hodisalar", value: stats?.todayEvents ?? 0, icon: Activity, color: "text-blue-400 bg-blue-500/10" },
+          { label: "Avtomatik bloklangan", value: stats?.autoBlocked ?? 0, icon: ShieldX, color: "text-destructive bg-destructive/10" },
+          { label: "Ogohlantirishlar", value: stats?.warned ?? 0, icon: AlertTriangle, color: "text-amber-400 bg-amber-500/10" },
+          { label: "Bloklangan foydalanuvchilar", value: stats?.bannedUsers ?? 0, icon: UserX, color: "text-rose-400 bg-rose-500/10" },
+        ].map(c => (
+          <div key={c.label} className="bg-card border border-border rounded-2xl p-4">
+            <div className={`w-8 h-8 rounded-xl ${c.color} flex items-center justify-center mb-3`}>
+              <c.icon className="w-4 h-4" />
+            </div>
+            <p className="text-2xl font-bold text-foreground">{c.value.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">{c.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* AI Engine status */}
+      <div className="bg-gradient-to-br from-violet-500/8 to-blue-500/8 border border-violet-500/20 rounded-2xl p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <BrainCircuit className="w-5 h-5 text-violet-400" />
+          <span className="text-sm font-bold text-foreground">AI Dvigatel Holati</span>
+          <span className="ml-auto px-3 py-1 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 text-xs font-semibold">OpenAI + Rules Hybrid</span>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <p className="text-lg font-bold text-violet-400">{stats?.total ?? 0}</p>
+            <p className="text-xs text-muted-foreground">Jami tekshiruv</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-bold text-destructive">{stats?.violations ?? 0}</p>
+            <p className="text-xs text-muted-foreground">Buzilish</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-bold text-amber-400">{stats?.suspicious ?? 0}</p>
+            <p className="text-xs text-muted-foreground">Shubhali</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Auto-scale metrics */}
+      {scale && (
+        <div className="bg-gradient-to-br from-cyan-500/8 to-emerald-500/8 border border-cyan-500/20 rounded-2xl p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <Gauge className="w-5 h-5 text-cyan-400" />
+            <span className="text-sm font-bold text-foreground">Auto-Scale AI Tizimi</span>
+            <span className={`ml-auto text-sm font-bold ${healthColor(scale.health)}`}>
+              {scale.health === "healthy" ? "✅ Sog'lom" : scale.health === "degraded" ? "⚠️ Yuklanmoqda" : "🔴 Ortiqcha yuklama"}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-card border border-border rounded-xl p-3">
+              <p className="text-xs text-muted-foreground mb-1">Joriy RPS</p>
+              <p className={`text-base font-bold ${scale.rps.pressure === "ok" ? "text-emerald-400" : "text-amber-400"}`}>
+                {scale.rps.current.toLocaleString()}
+              </p>
+              <p className="text-xs text-muted-foreground">/ {scale.rps.warnAt.toLocaleString()} chegara</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-3">
+              <p className="text-xs text-muted-foreground mb-1">Eng yuqori RPS</p>
+              <p className="text-base font-bold text-foreground">{scale.rps.peak.toLocaleString()}</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-3">
+              <p className="text-xs text-muted-foreground mb-1">RAM foydalanish</p>
+              <p className={`text-base font-bold ${scale.memory.pressure === "ok" ? "text-emerald-400" : "text-amber-400"}`}>
+                {scale.memory.heapUsedMB} MB
+              </p>
+              <p className="text-xs text-muted-foreground">/ {scale.memory.warnAt} MB chegara</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-3">
+              <p className="text-xs text-muted-foreground mb-1">Throttle darajasi</p>
+              <p className="text-base font-bold text-foreground">{scale.requests.throttleRate}%</p>
+              <p className="text-xs text-muted-foreground">{scale.requests.throttled} ta cheklangan</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Section tabs */}
+      <div className="flex gap-2">
+        {([["feed", "📡 Jonli Lenta"], ["banned", `🚫 Bloklanganlar (${bannedUsers.length})`], ["warned", `⚠️ Ogohlantirilganlar (${warnedUsers.length})`]] as const).map(([s, label]) => (
+          <button key={s} onClick={() => setActiveSection(s as any)}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${activeSection === s ? "bg-violet-500/15 border border-violet-500/30 text-violet-400" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Live event feed */}
+      {activeSection === "feed" && (
+        <div className="space-y-1.5">
+          {eventFeed.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground text-sm">Hali hodisalar yo'q</div>
+          ) : eventFeed.map((ev: any, i: number) => (
+            <motion.div key={ev.id ?? i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3 px-4 py-2.5 bg-card border border-border rounded-xl text-xs">
+              <span className={`px-2 py-0.5 rounded-full border text-xs ${ACTION_COLOR[ev.action_taken ?? ev.action] ?? ACTION_COLOR.none}`}>
+                {ACTION_LABEL[ev.action_taken ?? ev.action] ?? ev.action_taken ?? ev.action}
+              </span>
+              <span className="text-muted-foreground w-16 flex-shrink-0">{ev.content_type ?? ev.contentType}</span>
+              <span className={`text-xs ${VERDICT_COLOR[ev.ai_verdict ?? ev.aiVerdict] ?? "text-muted-foreground"}`}>
+                {ev.ai_verdict ?? ev.aiVerdict}
+              </span>
+              <span className="text-muted-foreground flex-1 truncate">{ev.content_preview ?? ev.contentPreview ?? "—"}</span>
+              <span className={`text-xs flex-shrink-0 ${ENGINE_COLOR[ev.engine ?? "rules"]}`}>{ev.engine}</span>
+              <span className="text-muted-foreground flex-shrink-0">
+                {new Date(ev.created_at ?? ev.createdAt ?? Date.now()).toLocaleTimeString("uz-UZ")}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Banned users */}
+      {activeSection === "banned" && (
+        <div className="space-y-2">
+          {bannedUsers.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground text-sm">Bloklangan foydalanuvchilar yo'q</div>
+          ) : bannedUsers.map((u: any) => (
+            <div key={u.id} className="flex items-center gap-3 px-4 py-3 bg-card border border-destructive/20 rounded-2xl">
+              <div className="w-9 h-9 rounded-xl bg-destructive/15 flex items-center justify-center flex-shrink-0">
+                <UserX className="w-4 h-4 text-destructive" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">@{u.username}</p>
+                <p className="text-xs text-muted-foreground truncate">{u.banned_reason ?? "Sabab ko'rsatilmagan"}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-xs text-muted-foreground">{u.banned_at ? new Date(u.banned_at).toLocaleDateString("uz-UZ") : "—"}</p>
+                <p className="text-xs text-destructive">{u.warning_count} ta ogohlantirish</p>
+              </div>
+              <button onClick={() => unbanUser(u.id)} disabled={actingUser === u.id}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 transition-colors disabled:opacity-50 flex-shrink-0">
+                {actingUser === u.id ? <div className="w-3 h-3 rounded-full border border-emerald-400/40 border-t-emerald-400 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
+                Tiklash
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Warned users */}
+      {activeSection === "warned" && (
+        <div className="space-y-2">
+          {warnedUsers.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground text-sm">Ogohlantirilgan foydalanuvchilar yo'q</div>
+          ) : warnedUsers.map((u: any) => (
+            <div key={u.id} className="flex items-center gap-3 px-4 py-3 bg-card border border-amber-500/20 rounded-2xl">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">@{u.username}</p>
+                <p className="text-xs text-muted-foreground">{u.display_name}</p>
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                {[1, 2, 3].map(n => (
+                  <div key={n} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs ${n <= (u.warning_count ?? 0) ? "bg-amber-500/30 border-amber-400 text-amber-400" : "border-border"}`}>
+                    {n <= (u.warning_count ?? 0) ? "!" : ""}
+                  </div>
+                ))}
+              </div>
+              <span className="text-xs text-amber-400 font-bold flex-shrink-0">{u.warning_count}/3</span>
+              <button onClick={() => resetWarnings(u.id)} disabled={actingUser === u.id}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted border border-border text-muted-foreground text-xs font-semibold hover:text-foreground transition-colors disabled:opacity-50 flex-shrink-0">
+                {actingUser === u.id ? <div className="w-3 h-3 rounded-full border border-muted-foreground/40 border-t-muted-foreground animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                Tozalash
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 /* ─── NEXUS Core Self-Healing Admin Tab ──────────────────────── */
 function NexusCoreTab() {
   const [health, setHealth] = useState<any>(null);
@@ -2005,6 +2299,9 @@ export default function AdminPage() {
 
         {/* NEXUS CORE */}
         {tab === "nexus-core" && <NexusCoreTab />}
+
+        {/* AI AUTOPILOT */}
+        {tab === "ai-autopilot" && <AiAutopilotTab />}
 
       </div>
     </div>

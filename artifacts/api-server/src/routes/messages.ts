@@ -3,6 +3,8 @@ import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { eq, desc, sql } from "drizzle-orm";
 import { pgTable, serial, integer, text, timestamp } from "drizzle-orm/pg-core";
+import { scanContentAsync } from "../moderation/aiFilter.js";
+import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 
 const chatConversationsTable = pgTable("chat_conversations", {
   id: serial("id").primaryKey(),
@@ -75,13 +77,37 @@ router.get("/conversations/:id/messages", async (req, res) => {
   }
 });
 
-router.post("/conversations/:id/messages", async (req, res) => {
+router.post("/conversations/:id/messages", async (req: any, res) => {
   try {
-    const conversationId = Number(req.params.id);
+    const conversationId = Number(req.params["id"]);
     const { senderId, content, mediaUrl } = req.body;
+    const sessionUserId: number | undefined = req.session?.userId;
+
+    // AI scan on every outgoing message
+    const scan = await scanContentAsync(content ?? "");
+
     const [msg] = await db.insert(chatMessagesTable).values({ conversationId, senderId, content, mediaUrl }).returning();
+
+    // AI Autopilot decision (warnings/bans/logging)
+    const decision = await applyAutopilotDecision({
+      scan, authorId: sessionUserId ?? senderId ?? null,
+      contentType: "message", contentId: msg.id, contentText: content ?? "",
+    });
+
     await db.update(chatConversationsTable).set({ lastMessage: content, updatedAt: new Date() }).where(eq(chatConversationsTable.id, conversationId));
-    res.status(201).json(msg);
+
+    if (decision.isBanned || scan.autoBlock) {
+      res.status(422).json({
+        error: decision.message ?? "Xabar avtomatik bloklandi — qoidalarga zid kontent.",
+        action: decision.action,
+        warningCount: decision.warningCount,
+      }); return;
+    }
+
+    res.status(201).json({
+      ...msg,
+      ...(decision.action === "warned" ? { warning: decision.message } : {}),
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

@@ -23,8 +23,8 @@ import {
   CheckCheck, Loader2, Plus, BookOpen, RefreshCw,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import Picker from "@emoji-mart/react";
-import emojiData from "@emoji-mart/data";
+import { OlchaEmojiPicker } from "./OlchaEmojiPicker";
+import { EmojiText } from "./EmojiText";
 import {
   useListConversations,
   useGetConversationMessages,
@@ -360,7 +360,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
                       <div className={`max-w-[82%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
                         isMe ? "rounded-br-sm text-white" : "rounded-bl-sm text-foreground bg-white/8 border border-white/10"
                       }`} style={isMe?{ background:"linear-gradient(135deg,#7c3aed,#a855f7)", boxShadow:"0 2px 12px rgba(124,58,237,0.35)" }:{}}>
-                        {m.content}
+                        <EmojiText text={m.content} />
                         <div className={`flex items-center gap-1 mt-0.5 ${isMe?"justify-end":""}`}>
                           <span className="text-[10px] opacity-45">
                             {new Date(m.createdAt).toLocaleTimeString("uz-UZ",{ hour:"2-digit", minute:"2-digit" })}
@@ -379,25 +379,9 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
       {/* Emoji picker */}
       <AnimatePresence>
         {showEmoji && (
-          <motion.div ref={emojiRef}
-            initial={{ opacity:0, y:12, scale:0.93 }} animate={{ opacity:1, y:0, scale:1 }}
-            exit={{ opacity:0, y:12, scale:0.93 }}
-            transition={{ type:"spring", stiffness:420, damping:30 }}
-            style={{ position:"absolute", bottom:58, right:4, zIndex:999 }}>
-            <Picker
-              data={emojiData}
-              onEmojiSelect={handleEmojiSelect}
-              theme="dark"
-              locale="uz"
-              previewPosition="none"
-              skinTonePosition="search"
-              set="twitter"
-              perLine={7}
-              emojiSize={22}
-              emojiButtonSize={34}
-              maxFrequentRows={2}
-            />
-          </motion.div>
+          <div ref={emojiRef} style={{ position:"absolute", bottom:58, right:4, zIndex:999 }}>
+            <OlchaEmojiPicker onEmojiSelect={handleEmojiSelect} />
+          </div>
         )}
       </AnimatePresence>
       {/* Input */}
@@ -589,6 +573,28 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
   const addComment = useCreatePostComment();
   const [text, setText] = useState("");
   const [deleted, setDeleted] = useState<Set<number>>(new Set());
+  const [showEmoji, setShowEmoji] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showEmoji) return;
+    const h = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmoji(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [showEmoji]);
+
+  const handleEmojiSelectComment = (emoji: { native: string }) => {
+    const inp = inputRef.current;
+    if (!inp) { setText(t => t + emoji.native); return; }
+    const s = inp.selectionStart ?? text.length;
+    const e2 = inp.selectionEnd ?? text.length;
+    const next = text.slice(0, s) + emoji.native + text.slice(e2);
+    setText(next);
+    requestAnimationFrame(() => { inp.focus(); inp.setSelectionRange(s + emoji.native.length, s + emoji.native.length); });
+  };
 
   const handleSend = () => {
     if (!text.trim()||!postId||!me) return;
@@ -634,7 +640,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                             <p className="text-[10px] font-semibold text-violet-400 mb-0.5">
                               {c.author?.id===me?.id?"Siz":`@${c.author?.username??"?"}`}
                             </p>
-                            <p className="text-sm text-foreground leading-relaxed">{c.content}</p>
+                            <EmojiText text={c.content} className="text-sm text-foreground leading-relaxed" />
                           </div>
                         </div>
                       </div>
@@ -643,12 +649,23 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                 ))
               }
             </div>
-            <div className="px-2.5 py-2 border-t border-white/8 flex-shrink-0">
+            <div className="px-2.5 py-2 border-t border-white/8 flex-shrink-0 relative">
+              <AnimatePresence>
+                {showEmoji && (
+                  <div ref={emojiRef} style={{ position:"absolute", bottom:52, right:4, zIndex:999 }}>
+                    <OlchaEmojiPicker onEmojiSelect={handleEmojiSelectComment} />
+                  </div>
+                )}
+              </AnimatePresence>
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-2xl border border-white/10 bg-white/5">
-                <input value={text} onChange={e=>setText(e.target.value)}
+                <input ref={inputRef} value={text} onChange={e=>setText(e.target.value)}
                   onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),handleSend())}
                   placeholder="Kommentariy…" maxLength={500}
                   className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none py-1.5"/>
+                <motion.button whileTap={{ scale:0.85 }} onClick={()=>setShowEmoji(v=>!v)}
+                  className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/8 transition-colors">
+                  <Smile className="w-4 h-4 text-yellow-400/70"/>
+                </motion.button>
                 <motion.button whileTap={{ scale:0.85 }} onClick={handleSend}
                   disabled={!text.trim()||addComment.isPending}
                   className="w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-30"
@@ -703,6 +720,27 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
   const [archived, setArchived] = useState<Set<number>>(new Set());
   const [composing, setComposing] = useState(false);
   const [draft, setDraft] = useState("");
+  const [showEmoji, setShowEmoji] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showEmoji) return;
+    const h = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmoji(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [showEmoji]);
+
+  const handleEmojiSelectPost = (emoji: { native: string }) => {
+    const ta = textareaRef.current;
+    if (!ta) { setDraft(d => d + emoji.native); return; }
+    const s = ta.selectionStart ?? draft.length;
+    const e2 = ta.selectionEnd ?? draft.length;
+    setDraft(draft.slice(0, s) + emoji.native + draft.slice(e2));
+    requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(s + emoji.native.length, s + emoji.native.length); });
+  };
 
   const handlePost = () => {
     if (!draft.trim()||!me) return;
@@ -729,12 +767,23 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
             <div className="flex-1 p-3 flex gap-2.5">
               <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold text-white"
                 style={{ background:"linear-gradient(135deg,#7c3aed,#db2777)" }}>{targetUser.displayName.charAt(0)}</div>
-              <textarea value={draft} onChange={e=>setDraft(e.target.value)} autoFocus
+              <textarea ref={textareaRef} value={draft} onChange={e=>setDraft(e.target.value)} autoFocus
                 placeholder="Nima o'ylayapsiz?" rows={4}
                 className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none"/>
             </div>
-            <div className="p-2.5 border-t border-white/8 flex items-center gap-2 flex-shrink-0">
+            <div className="p-2.5 border-t border-white/8 flex items-center gap-2 flex-shrink-0 relative">
+              <AnimatePresence>
+                {showEmoji && (
+                  <div ref={emojiRef} style={{ position:"absolute", bottom:52, left:4, zIndex:999 }}>
+                    <OlchaEmojiPicker onEmojiSelect={handleEmojiSelectPost} />
+                  </div>
+                )}
+              </AnimatePresence>
               <button className="p-2 rounded-xl hover:bg-white/8"><ImageIcon className="w-4 h-4 text-muted-foreground"/></button>
+              <motion.button whileTap={{ scale:0.85 }} onClick={()=>setShowEmoji(v=>!v)}
+                className="p-2 rounded-xl hover:bg-white/8 transition-colors">
+                <Smile className="w-4 h-4 text-yellow-400/70"/>
+              </motion.button>
               <div className="flex-1"/>
               <motion.button whileTap={{ scale:0.9 }} onClick={handlePost}
                 disabled={!draft.trim()||createPost.isPending}
@@ -770,7 +819,7 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
                       onArchive={()=>setArchived(v=>new Set([...v,p.id]))}
                       archiveLabel="Arxiv">
                       <div className="p-3 rounded-2xl border border-white/8 bg-white/4">
-                        <p className="text-sm text-foreground leading-relaxed mb-2">{p.content}</p>
+                        <EmojiText text={p.content} className="text-sm text-foreground leading-relaxed mb-2" />
                         <div className="flex items-center gap-3 text-xs">
                           <motion.button whileTap={{ scale:0.75 }} onClick={()=>{
                             setLiked(l=>({ ...l,[p.id]:!l[p.id] }));

@@ -218,11 +218,11 @@ function SmsRadialConvs({
           return (
             <motion.button key={conv.id}
               initial={{ x:0, y:0, scale:0, opacity:0 }}
-              animate={{ x:tx, y:ty, scale:1, opacity:1 }}
-              exit={{ x:0, y:0, scale:0, opacity:0, transition:{ duration:0.18, delay: i * 0.03 } }}
-              transition={{ type:"spring", stiffness:460, damping:30, delay: i * 0.06 }}
+              animate={{ x:[0,tx], y:[0,ty], scale:[0,1.22,1], opacity:1 }}
+              exit={{ x:0, y:0, scale:0, opacity:0, transition:{ type:"spring", stiffness:900, damping:20, delay: i * 0.015 } }}
+              transition={{ type:"spring", stiffness:820, damping:16, delay: i * 0.025 }}
               onClick={e => { e.stopPropagation(); onSelect(conv.id, other?.displayName ?? "Chat"); }}
-              whileHover={{ scale:1.18 }} whileTap={{ scale:0.85 }}
+              whileHover={{ scale:1.22 }} whileTap={{ scale:0.82 }}
               style={{
                 position:"absolute",
                 top:28 - 22, left:28 - 22,   // centre on orb
@@ -237,9 +237,14 @@ function SmsRadialConvs({
               }}>
               {initials}
               {/* Pulse ring */}
-              <motion.div animate={{ scale:[1,1.6,1], opacity:[0.4,0,0.4] }}
-                transition={{ duration:2.2, repeat:Infinity, delay: i * 0.3 }}
-                style={{ position:"absolute", inset:-6, borderRadius:"50%", background:`hsla(${hue},70%,50%,0.18)`, pointerEvents:"none" }} />
+              <motion.div animate={{ scale:[1,1.7,1], opacity:[0.5,0,0.5] }}
+                transition={{ duration:1.4, repeat:Infinity, delay: i * 0.22 }}
+                style={{ position:"absolute", inset:-6, borderRadius:"50%", background:`hsla(${hue},70%,50%,0.22)`, pointerEvents:"none" }} />
+              {/* Float drift after appear */}
+              <motion.div
+                animate={{ y:[0, -5*(i%2===0?1:-1), 4*(i%3===0?-1:1), 0], x:[0, 3*(i%2===0?-1:1), -4*(i%3===0?1:-1), 0] }}
+                transition={{ duration: 2.2 + i*0.3, repeat:Infinity, ease:"easeInOut", delay: i*0.18 + 0.4 }}
+                style={{ position:"absolute", inset:0, borderRadius:"50%", pointerEvents:"none" }} />
               {/* Name label */}
               <motion.span initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay: i * 0.06 + 0.15 }}
                 style={{ position:"absolute", bottom:-18, left:"50%", transform:"translateX(-50%)", fontSize:9, fontWeight:700, color:`hsl(${hue},70%,62%)`, textShadow:`0 0 8px hsla(${hue},70%,50%,0.8)`, whiteSpace:"nowrap", pointerEvents:"none" }}>
@@ -870,22 +875,26 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
       <AnimatePresence>
         {isMenu && PAGES.map((item,idx)=>{
           const rad = ((idx/PAGES.length)*2*Math.PI) - Math.PI/2;
-          const tx = Math.cos(rad)*88;
-          const ty = Math.sin(rad)*88;
+          const tx = Math.cos(rad)*92;
+          const ty = Math.sin(rad)*92;
           const Icon = item.icon;
           return (
             <motion.button key={item.id}
               initial={{ x:0, y:0, scale:0, opacity:0 }}
-              animate={{ x:tx, y:ty, scale:1, opacity:1 }}
-              exit={{ x:0, y:0, scale:0, opacity:0, transition:{ duration:0.18, delay:idx*0.03 } }}
-              transition={{ type:"spring", stiffness:480, damping:30, delay:idx*0.055 }}
+              animate={{ x:[0,tx], y:[0,ty], scale:[0,1.28,1], opacity:1 }}
+              exit={{ x:0, y:0, scale:0, opacity:0, transition:{ type:"spring", stiffness:900, damping:20, delay:idx*0.01 } }}
+              transition={{ type:"spring", stiffness:860, damping:16, delay:idx*0.02 }}
               onClick={()=>handleMenuItemClick(item.id)}
-              whileHover={{ scale:1.2 }} whileTap={{ scale:0.88 }}
-              style={{ position:"absolute", top:ORB/2-20, left:ORB/2-20, width:40, height:40, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", background:item.bg, boxShadow:`0 0 20px ${item.color}88, 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.28)`, border:"1.5px solid rgba(255,255,255,0.18)", cursor:"pointer", zIndex:10 }}>
-              <motion.div animate={{ scale:[1,1.55,1], opacity:[0.4,0,0.4] }} transition={{ duration:2, repeat:Infinity, delay:idx*0.2 }}
-                style={{ position:"absolute", inset:-5, borderRadius:"50%", background:`${item.color}1a`, pointerEvents:"none" }}/>
-              <Icon style={{ width:17, height:17, color:"#fff", filter:"drop-shadow(0 0 4px rgba(255,255,255,0.5))" }}/>
-              <motion.span initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:idx*0.055+0.15 }}
+              whileHover={{ scale:1.22 }} whileTap={{ scale:0.86 }}
+              style={{ position:"absolute", top:ORB/2-20, left:ORB/2-20, width:40, height:40, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", background:item.bg, boxShadow:`0 0 22px ${item.color}99, 0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.28)`, border:"1.5px solid rgba(255,255,255,0.2)", cursor:"pointer", zIndex:10 }}>
+              <motion.div
+                animate={{ y:[0, -4*(idx%2===0?1:-1), 3*(idx%3===0?-1:1), 0], x:[0, 3*(idx%2===0?-1:1), -3*(idx%3===0?1:-1), 0] }}
+                transition={{ duration:1.8+idx*0.25, repeat:Infinity, ease:"easeInOut", delay:idx*0.15+0.35 }}
+                style={{ position:"absolute", inset:0, borderRadius:"50%", pointerEvents:"none" }}/>
+              <motion.div animate={{ scale:[1,1.65,1], opacity:[0.45,0,0.45] }} transition={{ duration:1.3, repeat:Infinity, delay:idx*0.18 }}
+                style={{ position:"absolute", inset:-5, borderRadius:"50%", background:`${item.color}22`, pointerEvents:"none" }}/>
+              <Icon style={{ width:17, height:17, color:"#fff", filter:"drop-shadow(0 0 5px rgba(255,255,255,0.6))" }}/>
+              <motion.span initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:idx*0.02+0.12 }}
                 style={{ position:"absolute", bottom:-18, left:"50%", transform:"translateX(-50%)", fontSize:9, fontWeight:700, color:item.color, textShadow:`0 0 8px ${item.color}`, whiteSpace:"nowrap", pointerEvents:"none" }}>
                 {item.label}
               </motion.span>
@@ -909,6 +918,14 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
       </AnimatePresence>
 
       {/* ── Main orb ───────────────────────────────────────────── */}
+      {/* Continuous floating drift wrapper — tepaga, pastga, chapga, o'ngga */}
+      <motion.div
+        animate={{
+          x: [0,  7, -5,  9, -7,  4, -9,  5, 0],
+          y: [0, -9,  6,-11,  4,-13,  7, -8, 0],
+        }}
+        transition={{ duration:5.5, repeat:Infinity, ease:"easeInOut", repeatType:"mirror" }}
+        style={{ position:"absolute", top:0, left:0, width:ORB, height:ORB }}>
       <motion.div ref={tiltRef} animate={pulse}
         onClick={handleOrbClick}
         onMouseMove={e=>{
@@ -978,6 +995,7 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
           </motion.div>
         )}
       </motion.div>
+      </motion.div>{/* /float wrapper */}
     </motion.div>
   );
 }

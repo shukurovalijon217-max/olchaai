@@ -390,8 +390,8 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
               theme="dark"
               locale="uz"
               previewPosition="none"
-              skinTonePosition="none"
-              set="native"
+              skinTonePosition="search"
+              set="twitter"
               perLine={7}
               emojiSize={22}
               emojiButtonSize={34}

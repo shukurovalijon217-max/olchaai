@@ -94,7 +94,7 @@ export default function LivePage({ liveId }: LivePageProps) {
     const pc = new RTCPeerConnection({ iceServers: STUN });
     peersRef.current.set(peerId, pc);
     pc.onicecandidate = ({ candidate }) => {
-      if (!candidate || !wsRef.current) return;
+      if (!candidate || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
       wsRef.current.send(JSON.stringify({ type: "live_ice", toId: peerId, roomId, payload: candidate.toJSON() }));
     };
     pc.onconnectionstatechange = () => {
@@ -193,7 +193,7 @@ export default function LivePage({ liveId }: LivePageProps) {
     ws.onmessage = (e) => handleMessage(e.data);
     ws.onclose = () => setWsReady(false);
     return () => {
-      if (!isHost) ws.send(JSON.stringify({ type: "live_leave", roomId }));
+      if (!isHost && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "live_leave", roomId }));
       ws.close();
       peersRef.current.forEach(pc => pc.close());
       peersRef.current.clear();
@@ -215,6 +215,7 @@ export default function LivePage({ liveId }: LivePageProps) {
 
   const sendComment = () => {
     if (!commentInput.trim() || !wsRef.current) return;
+    if (wsRef.current.readyState !== WebSocket.OPEN) return;
     const text = commentInput.trim();
     wsRef.current.send(JSON.stringify({ type: "live_comment", roomId, payload: { text, username: me?.displayName ?? me?.username } }));
     addComment({ id: Date.now(), fromId: me?.id ?? 0, fromName: me?.displayName ?? "Siz", text });
@@ -222,7 +223,7 @@ export default function LivePage({ liveId }: LivePageProps) {
   };
 
   const sendReaction = (emoji: string) => {
-    if (!wsRef.current) return;
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     wsRef.current.send(JSON.stringify({ type: "live_react", roomId, payload: { emoji } }));
     addReaction(emoji);
   };

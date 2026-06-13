@@ -33,6 +33,9 @@ import aiTwinRouter from "./aiTwin";
 import factCheckRouter from "./factCheck";
 import coSpacesRouter from "./coSpaces";
 import translateRouter from "./translate";
+import muniAiRouter from "./muniAi";
+import voiceTranslateRouter from "./voiceTranslate";
+import nexusCoreRouter from "./nexusCore";
 
 const router: IRouter = Router();
 
@@ -70,5 +73,8 @@ router.use(aiTwinRouter);
 router.use(factCheckRouter);
 router.use(coSpacesRouter);
 router.use(translateRouter);
+router.use(muniAiRouter);
+router.use(voiceTranslateRouter);
+router.use(nexusCoreRouter);
 
 export default router;

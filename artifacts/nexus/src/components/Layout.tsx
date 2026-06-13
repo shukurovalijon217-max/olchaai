@@ -6,7 +6,7 @@ import {
   Home, Play, Compass, MessageCircle, Users, Bell,
   User, ShieldCheck, LogOut, Crown, Settings, Wallet, Radio,
   Search, ShoppingBag, Bot, BookOpen, ChevronRight, ChevronLeft,
-  MoreHorizontal, X, Zap, Trophy, Ghost, Send, GitBranch, Globe, Brain, Sparkles,
+  MoreHorizontal, X, Zap, Trophy, Ghost, Send, GitBranch, Globe, Brain, Sparkles, Star, Languages,
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import FloatingAvatar from "@/components/FloatingAvatar";
@@ -37,7 +37,9 @@ const NAV_GLOW: Record<string, { a: string; b: string; shadow: string }> = {
   "/mood":         { a: "#06b6d4", b: "#67e8f9", shadow: "rgba(6,182,212,0.65)" },
   "/twin":         { a: "#3b82f6", b: "#93c5fd", shadow: "rgba(59,130,246,0.65)" },
   "/factcheck":    { a: "#10b981", b: "#34d399", shadow: "rgba(16,185,129,0.65)" },
-  "/spaces":       { a: "#6366f1", b: "#a5b4fc", shadow: "rgba(99,102,241,0.65)" },
+  "/spaces":          { a: "#6366f1", b: "#a5b4fc", shadow: "rgba(99,102,241,0.65)" },
+  "/muni":            { a: "#f59e0b", b: "#fbbf24", shadow: "rgba(245,158,11,0.65)" },
+  "/voice-translate": { a: "#ec4899", b: "#f9a8d4", shadow: "rgba(236,72,153,0.65)" },
 };
 
 function getGlow(href: string) {
@@ -269,6 +271,8 @@ const navItems = [
   { href: "/twin", icon: Brain, key: "nav.twin" },
   { href: "/factcheck", icon: ShieldCheck, key: "nav.factcheck" },
   { href: "/spaces", icon: Sparkles, key: "nav.spaces" },
+  { href: "/muni", icon: Star, key: "nav.muni" },
+  { href: "/voice-translate", icon: Languages, key: "nav.voice_translate" },
 ];
 
 const bottomNavItems = [

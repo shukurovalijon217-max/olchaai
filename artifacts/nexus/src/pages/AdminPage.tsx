@@ -21,7 +21,7 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar
 } from "recharts";
 
-type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "finance" | "notify" | "settings";
+type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "finance" | "notify" | "settings" | "nexus-core";
 
 const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "dashboard", key: "admin.dashboard", icon: BarChart3 },
@@ -34,6 +34,7 @@ const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "ai-integrations", key: "admin.ai_integrations", icon: Zap },
   { id: "safeguard", key: "admin.safeguard", icon: ShieldAlert },
   { id: "settings", key: "nav.settings", icon: Settings },
+  { id: "nexus-core", key: "admin.nexus_core", icon: Activity },
 ];
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -933,6 +934,182 @@ function SettingsTab() {
   );
 }
 
+/* ─── NEXUS Core Self-Healing Admin Tab ──────────────────────── */
+function NexusCoreTab() {
+  const [health, setHealth] = useState<any>(null);
+  const [traffic, setTraffic] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [h, tr] = await Promise.all([
+          fetch(`${API}/api/admin/nexus/health`, { credentials: "include" }).then(r => r.json()),
+          fetch(`${API}/api/admin/nexus/traffic`, { credentials: "include" }).then(r => r.json()),
+        ]);
+        setHealth(h);
+        setTraffic(tr);
+      } catch {}
+      setLoading(false);
+    };
+    void load();
+    const iv = setInterval(load, 10_000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const resetCircuit = async (endpoint: string) => {
+    await fetch(`${API}/api/admin/nexus/reset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ endpoint }),
+    });
+    const h = await fetch(`${API}/api/admin/nexus/health`, { credentials: "include" }).then(r => r.json());
+    setHealth(h);
+  };
+
+  const reloadAll = async () => {
+    const [h, tr] = await Promise.all([
+      fetch(`${API}/api/admin/nexus/health`, { credentials: "include" }).then(r => r.json()),
+      fetch(`${API}/api/admin/nexus/traffic`, { credentials: "include" }).then(r => r.json()),
+    ]);
+    setHealth(h);
+    setTraffic(tr);
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-48">
+      <div className="w-8 h-8 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+    </div>
+  );
+
+  const statusColor = health?.status === "healthy"
+    ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
+    : health?.status === "degraded"
+      ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
+      : "text-red-400 bg-red-500/10 border-red-500/30";
+
+  const trafficData: { hour: string; requests: number }[] = (traffic?.hourlyBuckets ?? []).map(
+    (v: number, i: number) => ({ hour: `${i}h`, requests: v })
+  );
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+      {/* Status cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className={`border rounded-2xl p-4 ${statusColor}`}>
+          <p className="text-xs opacity-70 mb-1">Tizim holati</p>
+          <p className="text-lg font-bold">{(health?.status ?? "unknown").toUpperCase()}</p>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Uptime</p>
+          <p className="text-lg font-bold text-foreground">
+            {Math.floor((health?.uptimeSec ?? 0) / 3600)}h {Math.floor(((health?.uptimeSec ?? 0) % 3600) / 60)}m
+          </p>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Xato darajasi</p>
+          <p className="text-lg font-bold text-foreground">{health?.globalErrorRate ?? 0}%</p>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Joriy RPM</p>
+          <p className="text-lg font-bold text-foreground">{traffic?.currentRpm ?? 0}</p>
+        </div>
+      </div>
+
+      {/* Traffic chart */}
+      {trafficData.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <h3 className="font-bold text-sm text-foreground mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-primary" /> 24 soatlik trafik (UTC)
+          </h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={trafficData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="hour" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.3)" }} interval={3} />
+              <YAxis tick={{ fontSize: 9, fill: "rgba(255,255,255,0.3)" }} />
+              <Tooltip
+                contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
+              />
+              <Bar dataKey="requests" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
+            {traffic?.peakHour !== undefined && <span>⬆ Eng yuqori: {traffic.peakHour}:00 UTC</span>}
+            {traffic?.valleyHour !== undefined && <span>⬇ Eng past: {traffic.valleyHour}:00 UTC</span>}
+            {traffic?.recommendedCacheTtlSec !== undefined && (
+              <span>💡 Tavsiya etilgan cache TTL: {traffic.recommendedCacheTtlSec}s</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Endpoint health table */}
+      {(health?.endpoints ?? []).length > 0 && (
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <h3 className="font-bold text-sm text-foreground mb-4 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" /> Endpoint sog'ligi ({health.endpoints.length})
+          </h3>
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {(health.endpoints as any[]).map((ep) => (
+              <div key={ep.endpoint} className="flex items-center gap-3 py-2 px-3 rounded-xl bg-background/50 border border-border/50 text-xs">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                  ep.circuitState === "closed" ? "bg-emerald-400" :
+                  ep.circuitState === "half-open" ? "bg-amber-400" : "bg-red-400"
+                }`} />
+                <span className="flex-1 font-mono text-muted-foreground truncate">{ep.endpoint}</span>
+                <span className="text-muted-foreground">{ep.avgLatencyMs}ms</span>
+                <span className="text-muted-foreground">{ep.errorCount} xato</span>
+                {ep.circuitState !== "closed" && (
+                  <button
+                    onClick={() => resetCircuit(ep.endpoint as string)}
+                    className="px-2 py-1 bg-primary/15 text-primary rounded-lg hover:bg-primary/25 transition-colors flex-shrink-0 text-xs"
+                  >
+                    Tiklash
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Healing events */}
+      {(health?.healingEvents ?? []).length > 0 && (
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <h3 className="font-bold text-sm text-foreground mb-4 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-amber-400" /> O'z-o'zini davolash hodisalari
+          </h3>
+          <div className="space-y-2 max-h-52 overflow-y-auto">
+            {[...(health.healingEvents as any[])].reverse().slice(0, 30).map((ev, i) => (
+              <div key={i} className="flex items-center gap-3 text-xs">
+                <span className={`flex-shrink-0 px-2 py-0.5 rounded-full border font-medium ${
+                  ev.action === "circuit_opened"   ? "bg-red-500/15 text-red-400 border-red-500/30" :
+                  ev.action === "auto_healed"       ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" :
+                  ev.action === "half_open_probe"   ? "bg-amber-500/15 text-amber-400 border-amber-500/30" :
+                                                      "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                }`}>{ev.action}</span>
+                <span className="text-muted-foreground font-mono truncate flex-1">{ev.endpoint}</span>
+                <span className="text-muted-foreground flex-shrink-0">{new Date(ev.at).toLocaleTimeString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-end">
+        <button
+          onClick={reloadAll}
+          className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+        >
+          <RefreshCw className="w-3.5 h-3.5" /> Yangilash
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function AdminPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState<AdminTab>("dashboard");
@@ -1473,6 +1650,9 @@ export default function AdminPage() {
 
         {/* SETTINGS */}
         {tab === "settings" && <SettingsTab />}
+
+        {/* NEXUS CORE */}
+        {tab === "nexus-core" && <NexusCoreTab />}
 
       </div>
     </div>

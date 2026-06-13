@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { storage } from "../stripe/storage";
 import { stripeService } from "../stripe/stripeService";
+import {
+  currencyFromAcceptLanguage,
+  usdCentsToSubunits,
+  isStripeSupported,
+  USD_TO_MAJOR,
+} from "../lib/currency";
 
 const router = Router();
 
@@ -40,6 +46,11 @@ router.get("/stripe/products", async (req, res) => {
   }
 });
 
+// GET /api/currency/rates — returns USD_TO_MAJOR rates for frontend use
+router.get("/currency/rates", (_req, res) => {
+  res.json({ rates: USD_TO_MAJOR, base: "USD" });
+});
+
 router.get("/stripe/subscription", requireAuth, async (req: any, res) => {
   try {
     const user = await storage.getUser(req.session.userId);
@@ -59,8 +70,12 @@ router.post("/stripe/checkout", requireAuth, async (req: any, res) => {
     const user = await storage.getUser(req.session.userId);
     if (!user) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
 
-    const { priceId } = req.body;
+    const { priceId, currency: requestedCurrency } = req.body;
     if (!priceId) { res.status(400).json({ error: "priceId talab qilinadi" }); return; }
+
+    // Detect target currency from request body or Accept-Language header
+    const targetCurrency = (requestedCurrency?.toUpperCase() ||
+      currencyFromAcceptLanguage(req.headers["accept-language"])).toUpperCase();
 
     let customerId = (user as any).stripeCustomerId;
     if (!customerId) {
@@ -71,10 +86,40 @@ router.post("/stripe/checkout", requireAuth, async (req: any, res) => {
 
     const domain = process.env.REPLIT_DOMAINS?.split(',')[0] ?? req.get('host');
     const baseUrl = `https://${domain}`;
+
+    // Fetch price from DB
+    const priceRow = await storage.getPrice(priceId);
+    const priceBaseCurrency = (priceRow?.currency ?? "USD").toUpperCase();
+
+    let priceParam: string | import("../stripe/stripeService").PriceData;
+
+    if (!priceRow || targetCurrency === priceBaseCurrency || !isStripeSupported(targetCurrency)) {
+      // Same currency OR unsupported target — use priceId directly
+      priceParam = priceId;
+    } else {
+      // Convert from base currency (USD) to target currency
+      const baseAmountInUsdCents = priceBaseCurrency === "USD"
+        ? priceRow.unit_amount
+        : Math.round(priceRow.unit_amount / (USD_TO_MAJOR[priceBaseCurrency] ?? 1) * 100);
+
+      const convertedSubunits = usdCentsToSubunits(baseAmountInUsdCents, targetCurrency);
+      const recurring = priceRow.recurring
+        ? { interval: priceRow.recurring.interval ?? priceRow.recurring }
+        : null;
+
+      priceParam = {
+        currency: targetCurrency.toLowerCase(),
+        product: priceRow.product,
+        unit_amount: convertedSubunits,
+        recurring,
+      };
+    }
+
     const session = await stripeService.createCheckoutSession(
-      customerId, priceId,
+      customerId,
+      priceParam,
       `${baseUrl}/premium?success=true`,
-      `${baseUrl}/premium?canceled=true`
+      `${baseUrl}/premium?canceled=true`,
     );
 
     res.json({ url: session.url });

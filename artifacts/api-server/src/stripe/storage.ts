@@ -52,6 +52,13 @@ export class Storage {
     return result.rows[0] || null;
   }
 
+  async getPrice(priceId: string) {
+    const result = await db.execute(
+      sql`SELECT id, product, unit_amount, currency, recurring, active FROM stripe.prices WHERE id = ${priceId}`
+    );
+    return result.rows[0] as { id: string; product: string; unit_amount: number; currency: string; recurring: any; active: boolean } | undefined;
+  }
+
   async getUser(id: number) {
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
     return user;

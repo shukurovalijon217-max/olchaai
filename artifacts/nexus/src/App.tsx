@@ -36,6 +36,8 @@ import MoodMapPage from "@/pages/MoodMapPage";
 import AITwinPage from "@/pages/AITwinPage";
 import FactCheckPage from "@/pages/FactCheckPage";
 import CoSpacesPage from "@/pages/CoSpacesPage";
+import MuniAIPage from "@/pages/MuniAIPage";
+import VoiceTranslatorPage from "@/pages/VoiceTranslatorPage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -182,6 +184,12 @@ function Router() {
       )} />
       <Route path="/spaces" component={() => (
         <ProtectedRoute><Layout><CoSpacesPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/muni" component={() => (
+        <ProtectedRoute><Layout><MuniAIPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/voice-translate" component={() => (
+        <ProtectedRoute><Layout><VoiceTranslatorPage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

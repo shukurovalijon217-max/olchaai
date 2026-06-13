@@ -1,10 +1,11 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import session from "express-session";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { WebhookHandlers } from "./stripe/webhookHandlers";
+import { systemMonitor, normalisePath } from "./lib/systemMonitor";
 
 const app: Express = express();
 
@@ -63,6 +64,28 @@ app.use(session({
     sameSite: isProd ? "none" : "lax",
   },
 }));
+
+/* ── NEXUS Core: Self-Healing middleware ─────────────────────────
+   1. If circuit breaker is OPEN for this endpoint → 503 immediately
+   2. Record every request's status + latency for health analytics
+──────────────────────────────────────────────────────────────── */
+app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+  const key = normalisePath(req.method, req.path);
+  if (systemMonitor.isOpen(key)) {
+    res.status(503).json({
+      error: "Service temporarily unavailable",
+      message: "NEXUS Core circuit breaker active — auto-healing in 30s",
+      endpoint: key,
+      retryAfterMs: 30_000,
+    });
+    return;
+  }
+  const start = Date.now();
+  res.on("finish", () => {
+    systemMonitor.record(key, res.statusCode, Date.now() - start);
+  });
+  next();
+});
 
 app.use("/api", router);
 

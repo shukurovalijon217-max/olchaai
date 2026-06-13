@@ -100,8 +100,9 @@ router.patch("/auth/profile", async (req, res) => {
     const userId = req.session.userId;
     if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
 
-    const { displayName, bio, avatarUrl, coverUrl } = req.body as {
+    const { displayName, bio, avatarUrl, coverUrl, country, timezone } = req.body as {
       displayName?: string; bio?: string; avatarUrl?: string; coverUrl?: string;
+      country?: string; timezone?: string;
     };
 
     const updates: Record<string, any> = {};
@@ -112,6 +113,8 @@ router.patch("/auth/profile", async (req, res) => {
     if (bio !== undefined) updates.bio = bio.trim() || null;
     if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl.trim() || null;
     if (coverUrl !== undefined) updates.coverUrl = coverUrl.trim() || null;
+    if (country !== undefined) updates.country = country.trim() || null;
+    if (timezone !== undefined) updates.timezone = timezone.trim() || null;
 
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ error: "Hech narsa o'zgartirilmadi" }); return;

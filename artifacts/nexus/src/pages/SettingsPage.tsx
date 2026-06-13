@@ -3,14 +3,16 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import {
   User, Lock, Bell, Palette, Shield, Crown,
-  Check, Loader2, Eye, EyeOff, Camera, ChevronRight, Globe, Search, X
+  Check, Loader2, Eye, EyeOff, Camera, ChevronRight, Globe, Search, X,
+  MapPin,
 } from "lucide-react";
 import { Link } from "wouter";
 import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
+import { COUNTRIES, countryFlag, getCountryByCode } from "@/lib/countries";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | "language";
+type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | "language" | "location";
 
 function ProfileTab() {
   const { t } = useTranslation();
@@ -487,6 +489,166 @@ function LangRow({ lang, current, onSelect }: {
   );
 }
 
+/* ── Location / Country Tab ──────────────────────────────────── */
+function LocationTab() {
+  const { user, refetch } = useAuth();
+  const [search, setSearch] = useState("");
+  const [selectedCode, setSelectedCode] = useState(user?.country ?? "");
+  const [selectedTz, setSelectedTz] = useState(user?.timezone ?? "");
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    if (!q) return COUNTRIES;
+    return COUNTRIES.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.nameEn.toLowerCase().includes(q) ||
+      c.code.toLowerCase().includes(q)
+    );
+  }, [search]);
+
+  const selectedCountry = getCountryByCode(selectedCode);
+  const tzOptions = selectedCountry?.timezones ?? [];
+
+  const handleSelect = (code: string) => {
+    setSelectedCode(code);
+    const c = COUNTRIES.find(x => x.code === code);
+    if (c?.timezones.length) setSelectedTz(c.timezones[0]);
+    setSearch("");
+  };
+
+  const handleSave = async () => {
+    if (!selectedCode) { setError("Davlat tanlang"); return; }
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+    try {
+      const res = await fetch(`${API}/api/auth/profile`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ country: selectedCode, timezone: selectedTz }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Saqlashda xato"); return; }
+      await refetch();
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch {
+      setError("Tarmoq xatosi");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-1">Joylashuv</h2>
+        <p className="text-sm text-muted-foreground">Davlat va vaqt zonangizni belgilang — sidebar'da ko'rsatiladi</p>
+      </div>
+
+      {/* Current selection */}
+      {selectedCountry && (
+        <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 flex items-center gap-3">
+          <span className="text-3xl">{countryFlag(selectedCountry.code)}</span>
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground mb-0.5">Tanlangan davlat</p>
+            <p className="text-sm font-semibold text-foreground">{selectedCountry.name}</p>
+            <p className="text-xs text-muted-foreground">{selectedCountry.nameEn} · {selectedCode}</p>
+          </div>
+          <Check className="w-5 h-5 text-primary" />
+        </div>
+      )}
+
+      {/* Timezone selector (if multiple) */}
+      {tzOptions.length > 1 && (
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1.5">Vaqt zonasi</label>
+          <select
+            value={selectedTz}
+            onChange={e => setSelectedTz(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+          >
+            {tzOptions.map(tz => (
+              <option key={tz} value={tz}>{tz}</option>
+            ))}
+          </select>
+        </div>
+      )}
+      {tzOptions.length === 1 && (
+        <div className="p-3 rounded-xl bg-muted/30 border border-border flex items-center gap-2 text-xs text-muted-foreground">
+          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+          Vaqt zonasi: <span className="text-foreground font-medium">{tzOptions[0]}</span>
+        </div>
+      )}
+
+      {/* Country search */}
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1.5">Davlat qidirish</label>
+        <div className="relative mb-2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Davlat nomi..."
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        <div className="max-h-60 overflow-y-auto rounded-xl border border-border bg-card divide-y divide-border/50">
+          {filtered.map(c => (
+            <button
+              key={c.code}
+              onClick={() => handleSelect(c.code)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/50 ${
+                c.code === selectedCode ? "bg-primary/10" : ""
+              }`}
+            >
+              <span className="text-xl w-8 text-center flex-shrink-0">{countryFlag(c.code)}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{c.nameEn}</p>
+              </div>
+              {c.code === selectedCode && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+            </button>
+          ))}
+          {filtered.length === 0 && (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              <Globe className="w-6 h-6 mx-auto mb-1.5 opacity-40" />
+              Davlat topilmadi
+            </div>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>
+      )}
+      {success && (
+        <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2">
+          <Check className="w-4 h-4" /> Joylashuv saqlandi! Sidebar'da ko'rinadi.
+        </div>
+      )}
+
+      <button
+        onClick={handleSave}
+        disabled={saving || !selectedCode}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+      >
+        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+        Saqlash
+      </button>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>("profile");
@@ -498,6 +660,7 @@ export default function SettingsPage() {
     { id: "appearance", icon: Palette, label: t("settings.appearance") },
     { id: "privacy", icon: Shield, label: t("settings.privacy") },
     { id: "language", icon: Globe, label: t("settings.language") },
+    { id: "location", icon: MapPin, label: "Joylashuv" },
   ];
 
   const Content = {
@@ -507,6 +670,7 @@ export default function SettingsPage() {
     appearance: AppearanceTab,
     privacy: PrivacyTab,
     language: LanguageTab,
+    location: LocationTab,
   }[activeTab];
 
   return (

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Sparkles, TrendingUp, Send, RotateCcw, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -71,6 +72,7 @@ function MuniMessage({ msg, streaming }: { msg: Msg; streaming: boolean }) {
 }
 
 export default function MuniAIPage() {
+  const { t, i18n } = useTranslation("jarvis");
   const [mode, setMode] = useState<Mode>("wisdom");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -147,6 +149,8 @@ export default function MuniAIPage() {
     }
   }, [input, streaming, mode, messages]);
 
+  const quoteText = i18n.language.startsWith("uz") ? quote.uz : quote.en;
+
   return (
     <div className="min-h-screen bg-[#0a0805] text-white flex flex-col relative overflow-hidden">
       {/* Ambient particles */}
@@ -169,7 +173,7 @@ export default function MuniAIPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-amber-100 tracking-wide">Muni AI</h1>
-                <p className="text-xs text-amber-400/60">Ruhoniy Donishmand</p>
+                <p className="text-xs text-amber-400/60">{t("subtitle")}</p>
               </div>
             </div>
             <button onClick={clearChat} className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors">
@@ -184,7 +188,7 @@ export default function MuniAIPage() {
             animate={{ opacity: 1 }}
             className="bg-amber-500/8 border border-amber-500/20 rounded-2xl px-5 py-4 mb-5"
           >
-            <p className="text-amber-200/80 text-sm italic leading-relaxed">"{quote.uz}"</p>
+            <p className="text-amber-200/80 text-sm italic leading-relaxed">"{quoteText}"</p>
             <p className="text-amber-400/50 text-xs mt-2 text-right">— {quote.author}</p>
           </motion.div>
 
@@ -198,7 +202,7 @@ export default function MuniAIPage() {
                   : "bg-white/5 border border-white/10 text-white/50 hover:text-white/70"
               }`}
             >
-              <Brain className="w-3.5 h-3.5" /> Hikmat
+              <Brain className="w-3.5 h-3.5" /> {t("mode_wisdom")}
             </button>
             <button
               onClick={() => setMode("trader")}
@@ -208,7 +212,7 @@ export default function MuniAIPage() {
                   : "bg-white/5 border border-white/10 text-white/50 hover:text-white/70"
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5" /> Savdogar Psixologiyasi
+              <TrendingUp className="w-3.5 h-3.5" /> {t("mode_trader")}
             </button>
           </div>
         </div>
@@ -231,9 +235,7 @@ export default function MuniAIPage() {
                 </div>
                 <div>
                   <p className="text-white/40 text-sm">
-                    {mode === "wisdom"
-                      ? "Har qanday savol bering — hayot, qalb, yo'nalish..."
-                      : "Bozor, savdo psixologiyasi, intuitsiya haqida so'rang..."}
+                    {mode === "wisdom" ? t("wisdom_hint") : t("trader_hint")}
                   </p>
                 </div>
               </motion.div>
@@ -257,7 +259,7 @@ export default function MuniAIPage() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-            placeholder={mode === "wisdom" ? "Qalbingizni oching..." : "Bozor haqida so'rang..."}
+            placeholder={mode === "wisdom" ? t("wisdom_ph") : t("trader_ph")}
             className="flex-1 bg-white/5 border border-amber-900/30 focus:border-amber-500/40 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none transition-colors"
           />
           <button

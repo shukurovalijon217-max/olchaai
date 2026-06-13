@@ -1196,6 +1196,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           username: user.username,
           avatarUrl: user.avatarUrl,
         }}
+        targetUserId={userId}
         isOwner={isOwner}
       />
     </div>

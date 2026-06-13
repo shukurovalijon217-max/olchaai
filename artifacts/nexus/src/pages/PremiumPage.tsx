@@ -8,8 +8,8 @@ import {
   MessageSquare, BarChart3, Headphones, ChevronDown,
   ArrowRight, Play, Image, Megaphone, Bot, Lock
 } from "lucide-react";
-import logoImg from "@assets/image_1781005493710.png";
 import { motion } from "framer-motion";
+import PremiumHeroLogo from "@/components/PremiumHeroLogo";
 
 interface Price {
   id: string;
@@ -209,12 +209,13 @@ export default function PremiumPage() {
             </div>
           )}
 
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}
-            className="mx-auto mb-6 relative w-24 h-24">
-            <img src={logoImg} alt="OlCha" className="w-24 h-24 rounded-full object-cover shadow-2xl shadow-yellow-900/40" />
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg">
-              <Crown className="w-4 h-4 text-black" />
-            </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="mx-auto mb-4 flex items-center justify-center"
+          >
+            <PremiumHeroLogo size={180} />
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>

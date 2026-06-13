@@ -9,6 +9,7 @@ import {
   MoreHorizontal, X, Zap, Trophy, Ghost, Send, GitBranch, Globe, Brain, Sparkles,
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
+import FloatingAvatar from "@/components/FloatingAvatar";
 import { useAuth } from "@/context/AuthContext";
 
 /* ─── Icon color palette ─────────────────────────────────────── */
@@ -772,6 +773,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </motion.div>
       </main>
+
+      {/* ── FLOATING USER AVATAR BUBBLE ── */}
+      <FloatingAvatar />
 
       {/* ── MUNI FLOATING AI ── */}
       <MuniPanel />

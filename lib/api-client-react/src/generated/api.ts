@@ -84,6 +84,8 @@ import type {
   StoryInput,
   SubscribeToCreator201,
   SuspendInput,
+  TranslateInput,
+  TranslateResult,
   TrendingTopic,
   UpdateOrderStatusInput,
   UploadUrlRequest,
@@ -106,6 +108,77 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
+
+export const getTranslateTextUrl = () => {
+
+
+
+
+  return `/api/translate`
+}
+
+/**
+ * @summary AI-powered text translation (supports 20+ languages; premium unlocks all)
+ */
+export const translateText = async (translateInput: TranslateInput, options?: RequestInit): Promise<TranslateResult> => {
+
+  return customFetch<TranslateResult>(getTranslateTextUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      translateInput,)
+  }
+);}
+
+
+
+
+export const getTranslateTextMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof translateText>>, TError,{data: BodyType<TranslateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof translateText>>, TError,{data: BodyType<TranslateInput>}, TContext> => {
+
+const mutationKey = ['translateText'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof translateText>>, {data: BodyType<TranslateInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  translateText(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TranslateTextMutationResult = NonNullable<Awaited<ReturnType<typeof translateText>>>
+    export type TranslateTextMutationBody = BodyType<TranslateInput>
+    export type TranslateTextMutationError = ErrorType<unknown>
+
+    /**
+ * @summary AI-powered text translation (supports 20+ languages; premium unlocks all)
+ */
+export const useTranslateText = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof translateText>>, TError,{data: BodyType<TranslateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof translateText>>,
+        TError,
+        {data: BodyType<TranslateInput>},
+        TContext
+      > => {
+      return useMutation(getTranslateTextMutationOptions(options));
+    }
 
 export const getHealthCheckUrl = () => {
 

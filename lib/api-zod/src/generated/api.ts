@@ -9,6 +9,20 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary AI-powered text translation (supports 20+ languages; premium unlocks all)
+ */
+export const TranslateTextBody = zod.object({
+  "text": zod.string(),
+  "targetLang": zod.string().describe('ISO 639-1 target language code (en, uz, ru, zh, ...)')
+})
+
+export const TranslateTextResponse = zod.object({
+  "translation": zod.string(),
+  "detectedLang": zod.string().describe('Detected source language ISO 639-1 code')
+})
+
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({

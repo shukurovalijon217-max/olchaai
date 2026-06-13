@@ -25,6 +25,25 @@ tags:
   - name: creator
 
 paths:
+  /translate:
+    post:
+      operationId: translateText
+      tags: [ai]
+      summary: AI-powered text translation (supports 20+ languages; premium unlocks all)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TranslateInput"
+      responses:
+        "200":
+          description: Translation result with detected source language
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TranslateResult"
+
   /healthz:
     get:
       operationId: healthCheck
@@ -2157,3 +2176,17 @@ components:
       required: [status]
       properties:
         status: { type: string }
+
+    TranslateInput:
+      type: object
+      required: [text, targetLang]
+      properties:
+        text: { type: string }
+        targetLang: { type: string, description: "ISO 639-1 target language code (en, uz, ru, zh, ...)" }
+
+    TranslateResult:
+      type: object
+      required: [translation, detectedLang]
+      properties:
+        translation: { type: string }
+        detectedLang: { type: string, description: "Detected source language ISO 639-1 code" }

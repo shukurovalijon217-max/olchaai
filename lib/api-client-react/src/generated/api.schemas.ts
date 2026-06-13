@@ -673,6 +673,18 @@ export interface UpdateOrderStatusInput {
   status: string;
 }
 
+export interface TranslateInput {
+  text: string;
+  /** ISO 639-1 target language code (en, uz, ru, zh, ...) */
+  targetLang: string;
+}
+
+export interface TranslateResult {
+  translation: string;
+  /** Detected source language ISO 639-1 code */
+  detectedLang: string;
+}
+
 export type ListUsersParams = {
 search?: string;
 limit?: number;

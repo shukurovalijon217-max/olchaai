@@ -20,7 +20,7 @@ import {
   PhoneIncoming, PhoneMissed, PhoneOutgoing,
   X, ChevronLeft, Send, Camera, Mic, MicOff, CameraOff,
   Heart, MoreHorizontal, Smile, ImageIcon, Trash2, Archive, Bookmark,
-  CheckCheck, Loader2, Plus, BookOpen, RefreshCw,
+  CheckCheck, Loader2, Plus, BookOpen, RefreshCw, Globe,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { OlchaEmojiPicker } from "./OlchaEmojiPicker";
@@ -39,6 +39,7 @@ import {
   useCreatePost,
   useListPostComments,
   useCreatePostComment,
+  useTranslateText,
   type Conversation,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -281,35 +282,96 @@ function SmsRadialConvs({
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SMS THREAD PANEL
+   SMS THREAD PANEL — AI Translation
 ══════════════════════════════════════════════════════════════ */
+const FREE_LANGS = [
+  { code:"uz", label:"O'zbek",   flag:"🇺🇿" },
+  { code:"en", label:"English",  flag:"🇺🇸" },
+  { code:"ru", label:"Русский",  flag:"🇷🇺" },
+  { code:"zh", label:"中文",      flag:"🇨🇳" },
+  { code:"ar", label:"العربية",  flag:"🇸🇦" },
+];
+const PREMIUM_LANGS = [
+  ...FREE_LANGS,
+  { code:"tr", label:"Türkçe",       flag:"🇹🇷" },
+  { code:"ko", label:"한국어",        flag:"🇰🇷" },
+  { code:"ja", label:"日本語",        flag:"🇯🇵" },
+  { code:"de", label:"Deutsch",      flag:"🇩🇪" },
+  { code:"fr", label:"Français",     flag:"🇫🇷" },
+  { code:"es", label:"Español",      flag:"🇪🇸" },
+  { code:"hi", label:"हिन्दी",       flag:"🇮🇳" },
+  { code:"kk", label:"Қазақша",      flag:"🇰🇿" },
+  { code:"ky", label:"Кыргызча",     flag:"🇰🇬" },
+  { code:"tg", label:"Тоҷикӣ",       flag:"🇹🇯" },
+  { code:"az", label:"Azərbaycanca", flag:"🇦🇿" },
+  { code:"fa", label:"فارسی",        flag:"🇮🇷" },
+  { code:"uk", label:"Українська",   flag:"🇺🇦" },
+  { code:"pt", label:"Português",    flag:"🇧🇷" },
+  { code:"it", label:"Italiano",     flag:"🇮🇹" },
+];
+
 function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
   { convId:number; meId:number; convName:string; onBack:()=>void; onClose:()=>void }) {
   const qc = useQueryClient();
+  const { user: me } = useAuth();
+  const isPremium = me?.isPremium ?? false;
   const { data:messages=[], isLoading } = useGetConversationMessages(convId, {
     query:{ enabled:true, queryKey:getGetConversationMessagesQueryKey(convId), refetchInterval:4000 },
   });
   const send = useSendMessage();
   const delMsg = useDeleteMessage();
+  const translateMut = useTranslateText();
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
 
+  /* Translation */
+  const [targetLang, setTargetLang] = useState("uz");
+  const [autoTranslate, setAutoTranslate] = useState(false);
+  const [translations, setTranslations] = useState<Record<number,string>>({});
+  const [detectedLangs, setDetectedLangs] = useState<Record<number,string>>({});
+  const [translating, setTranslating] = useState<Set<number>>(new Set());
+  const langs = isPremium ? PREMIUM_LANGS : FREE_LANGS;
+  const langObj = langs.find(l => l.code === targetLang) ?? langs[0];
+
   useEffect(()=>{ bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages.length]);
 
-  /* close emoji picker on outside click */
   useEffect(() => {
     if (!showEmoji) return;
     const handler = (e: MouseEvent) => {
-      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
-        setShowEmoji(false);
-      }
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmoji(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [showEmoji]);
+
+  /* Auto-translate: premium only */
+  useEffect(() => {
+    if (!autoTranslate || !isPremium) return;
+    messages
+      .filter(m => m.senderId !== meId && !translations[m.id] && !translating.has(m.id))
+      .forEach(m => doTranslate(m.id, m.content));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, autoTranslate, targetLang]);
+
+  const doTranslate = (msgId: number, content: string) => {
+    if (translating.has(msgId)) return;
+    setTranslating(prev => new Set([...prev, msgId]));
+    translateMut.mutate(
+      { data: { text: content, targetLang } },
+      {
+        onSuccess: r => {
+          setTranslations(prev => ({ ...prev, [msgId]: r.translation }));
+          setDetectedLangs(prev => ({ ...prev, [msgId]: r.detectedLang }));
+        },
+        onSettled: () => {
+          setTranslating(prev => { const s = new Set(prev); s.delete(msgId); return s; });
+        },
+      }
+    );
+  };
 
   const handleSend = () => {
     if (!text.trim()) return;
@@ -329,8 +391,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
     if (!input) { setText(t => t + emoji.native); return; }
     const start = input.selectionStart ?? text.length;
     const end = input.selectionEnd ?? text.length;
-    const newText = text.slice(0, start) + emoji.native + text.slice(end);
-    setText(newText);
+    setText(text.slice(0, start) + emoji.native + text.slice(end));
     requestAnimationFrame(() => {
       input.focus();
       input.setSelectionRange(start + emoji.native.length, start + emoji.native.length);
@@ -341,13 +402,54 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
     <>
       <PanelHeader title={convName} color="#f59e0b" bg="linear-gradient(135deg,#f59e0b,#d97706)"
         Icon={MessageSquare} onBack={onBack} onClose={onClose} />
-      <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5" style={{ minHeight:0 }}>
+
+      {/* ── AI Translation toolbar ──────────────────────────── */}
+      <div className="px-2.5 py-1.5 flex items-center gap-1.5 flex-shrink-0"
+        style={{ background:"rgba(59,130,246,0.06)", borderBottom:"1px solid rgba(59,130,246,0.13)" }}>
+        <Globe className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 opacity-80" />
+        <select
+          value={targetLang}
+          onChange={e => { setTargetLang(e.target.value); setTranslations({}); setDetectedLangs({}); }}
+          className="flex-1 bg-transparent text-xs text-foreground outline-none cursor-pointer min-w-0"
+          style={{ fontFamily:"inherit" }}>
+          {langs.map(l => (
+            <option key={l.code} value={l.code} style={{ background:"#0a0618" }}>
+              {l.flag} {l.label}
+            </option>
+          ))}
+        </select>
+        {!isPremium && (
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold text-amber-400 flex-shrink-0"
+            style={{ border:"1px solid rgba(251,191,36,0.3)" }}>
+            ✦ PRO +{PREMIUM_LANGS.length - FREE_LANGS.length}
+          </span>
+        )}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <span className="text-[9px] text-muted-foreground">Auto</span>
+          <motion.button
+            onClick={() => isPremium && setAutoTranslate(v => !v)}
+            title={isPremium ? "Avtomatik tarjima" : "Faqat Premium"}
+            className={`relative w-7 h-3.5 rounded-full transition-colors flex-shrink-0 ${!isPremium ? "opacity-35 cursor-not-allowed" : "cursor-pointer"}`}
+            style={{ background: autoTranslate && isPremium ? "rgb(59,130,246)" : "rgba(255,255,255,0.15)" }}>
+            <motion.div
+              animate={{ x: autoTranslate && isPremium ? 14 : 2 }}
+              transition={{ type:"spring", stiffness:500, damping:35 }}
+              className="absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white" />
+          </motion.button>
+        </div>
+      </div>
+
+      {/* ── Messages ─────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto p-2.5 space-y-2" style={{ minHeight:0 }}>
         {isLoading
           ? <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 text-muted-foreground animate-spin"/></div>
           : messages.length === 0
           ? <div className="text-center py-6 text-muted-foreground text-xs"><MessageSquare className="w-6 h-6 mx-auto mb-1 opacity-20"/>Xabarlar yo'q</div>
           : messages.map((m, i) => {
               const isMe = m.senderId === meId;
+              const isTr = translating.has(m.id);
+              const translated = translations[m.id];
+              const srcLang = detectedLangs[m.id];
               return (
                 <motion.div key={m.id}
                   initial={{ opacity:0, y:8, scale:0.93 }} animate={{ opacity:1, y:0, scale:1 }}
@@ -356,7 +458,8 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
                     onDelete={()=>handleDeleteMsg(m.id)}
                     onArchive={()=>handleDeleteMsg(m.id)}
                     archiveLabel="Saqlash">
-                    <div className={`flex ${isMe?"justify-end":"justify-start"} py-0.5`}>
+                    <div className={`flex flex-col ${isMe?"items-end":"items-start"} py-0.5 gap-0.5`}>
+                      {/* Original bubble */}
                       <div className={`max-w-[82%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
                         isMe ? "rounded-br-sm text-white" : "rounded-bl-sm text-foreground bg-white/8 border border-white/10"
                       }`} style={isMe?{ background:"linear-gradient(135deg,#7c3aed,#a855f7)", boxShadow:"0 2px 12px rgba(124,58,237,0.35)" }:{}}>
@@ -368,6 +471,45 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
                           {isMe && <CheckCheck className="w-3 h-3 text-blue-300 opacity-55"/>}
                         </div>
                       </div>
+                      {/* Translate button — received messages only */}
+                      {!isMe && (
+                        <motion.button whileTap={{ scale:0.85 }}
+                          onClick={() => doTranslate(m.id, m.content)}
+                          disabled={isTr}
+                          className="flex items-center gap-1 text-[10px] text-blue-400/65 hover:text-blue-400 transition-colors ml-1 disabled:opacity-50">
+                          {isTr
+                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : <Globe className="w-3 h-3" />}
+                          <span>{translated ? `${langObj.flag} Qayta` : `${langObj.flag} Tarjima`}</span>
+                          {srcLang && srcLang !== targetLang && (
+                            <span className="opacity-45">· {srcLang}</span>
+                          )}
+                        </motion.button>
+                      )}
+                      {/* AI Translation bubble */}
+                      <AnimatePresence>
+                        {translated && (
+                          <motion.div
+                            initial={{ opacity:0, scaleY:0.7, height:0 }}
+                            animate={{ opacity:1, scaleY:1, height:"auto" }}
+                            exit={{ opacity:0, scaleY:0.7, height:0 }}
+                            transition={{ type:"spring", stiffness:420, damping:32 }}
+                            className="max-w-[82%] px-3 py-1.5 rounded-xl text-xs italic ml-1 origin-top"
+                            style={{
+                              background: isMe ? "rgba(168,85,247,0.12)" : "rgba(59,130,246,0.08)",
+                              border: `1px solid ${isMe ? "rgba(168,85,247,0.2)" : "rgba(59,130,246,0.16)"}`,
+                            }}>
+                            <div className="flex items-center gap-1 mb-0.5 not-italic">
+                              <Globe className="w-2.5 h-2.5 text-blue-400" />
+                              <span className="text-[9px] text-blue-400 font-semibold">AI tarjima · {langObj.flag}</span>
+                              {autoTranslate && isPremium && (
+                                <span className="text-[8px] text-amber-400 font-bold">PRO auto</span>
+                              )}
+                            </div>
+                            <EmojiText text={translated} className="text-foreground/80 not-italic" />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </SwipeableRow>
                 </motion.div>
@@ -376,6 +518,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
         }
         <div ref={bottomRef}/>
       </div>
+
       {/* Emoji picker */}
       <AnimatePresence>
         {showEmoji && (

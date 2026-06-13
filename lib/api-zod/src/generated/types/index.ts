@@ -100,6 +100,8 @@ export * from './storyInputMediaType';
 export * from './storyMediaType';
 export * from './subscribeToCreator201';
 export * from './suspendInput';
+export * from './translateInput';
+export * from './translateResult';
 export * from './trendingTopic';
 export * from './updateOrderStatusInput';
 export * from './uploadUrlRequest';

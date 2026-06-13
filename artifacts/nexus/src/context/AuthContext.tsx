@@ -10,6 +10,7 @@ export interface AuthUser {
   coverUrl?: string | null;
   isVerified: boolean;
   isAdmin: boolean;
+  isPremium: boolean;
   status: string;
   country?: string | null;
   timezone?: string | null;

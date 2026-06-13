@@ -32,6 +32,7 @@ import moodRouter from "./mood";
 import aiTwinRouter from "./aiTwin";
 import factCheckRouter from "./factCheck";
 import coSpacesRouter from "./coSpaces";
+import translateRouter from "./translate";
 
 const router: IRouter = Router();
 
@@ -68,5 +69,6 @@ router.use(moodRouter);
 router.use(aiTwinRouter);
 router.use(factCheckRouter);
 router.use(coSpacesRouter);
+router.use(translateRouter);
 
 export default router;

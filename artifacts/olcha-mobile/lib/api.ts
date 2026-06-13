@@ -16,6 +16,20 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export async function apiDelete(path: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, { method: "DELETE" });
+  if (!res.ok && res.status !== 204) throw new Error(`${res.status}`);
+}
+
+export interface ChatMessage {
+  id: number;
+  conversationId: number;
+  senderId: number;
+  content: string;
+  mediaUrl: string | null;
+  createdAt: string;
+}
+
 export interface Post {
   id: number;
   userId: number;

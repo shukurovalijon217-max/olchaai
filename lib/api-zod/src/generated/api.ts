@@ -564,6 +564,23 @@ export const SendMessageBody = zod.object({
 
 
 /**
+ * @summary Delete a message
+ */
+export const DeleteMessageParams = zod.object({
+  "id": zod.coerce.number(),
+  "msgId": zod.coerce.number()
+})
+
+
+/**
+ * @summary Delete a conversation
+ */
+export const DeleteConversationParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
  * @summary List communities/groups
  */
 export const listGroupsQueryLimitDefault = 20;

@@ -88,4 +88,28 @@ router.post("/conversations/:id/messages", async (req, res) => {
   }
 });
 
+router.delete("/conversations/:id/messages/:msgId", async (req, res) => {
+  try {
+    const msgId = Number(req.params.msgId);
+    await db.delete(chatMessagesTable).where(eq(chatMessagesTable.id, msgId));
+    res.status(204).end();
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/conversations/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await db.delete(chatMessagesTable).where(eq(chatMessagesTable.conversationId, id));
+    await db.delete(chatParticipantsTable).where(eq(chatParticipantsTable.conversationId, id));
+    await db.delete(chatConversationsTable).where(eq(chatConversationsTable.id, id));
+    res.status(204).end();
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

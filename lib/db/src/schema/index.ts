@@ -24,3 +24,4 @@ export * from "./moods";
 export * from "./aiTwin";
 export * from "./factCheck";
 export * from "./coSpaces";
+export * from "./platformCosts";

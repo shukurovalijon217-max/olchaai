@@ -36,6 +36,7 @@ import translateRouter from "./translate";
 import muniAiRouter from "./muniAi";
 import voiceTranslateRouter from "./voiceTranslate";
 import nexusCoreRouter from "./nexusCore";
+import platformCostsRouter from "./platformCosts";
 
 const router: IRouter = Router();
 
@@ -76,5 +77,6 @@ router.use(translateRouter);
 router.use(muniAiRouter);
 router.use(voiceTranslateRouter);
 router.use(nexusCoreRouter);
+router.use(platformCostsRouter);
 
 export default router;

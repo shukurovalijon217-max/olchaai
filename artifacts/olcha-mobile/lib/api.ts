@@ -65,3 +65,23 @@ export interface Story {
   expiresAt: string;
   user?: UserItem;
 }
+
+export interface TrendingTopic {
+  tag: string;
+  postCount: number;
+  growth: number;
+  category: string;
+}
+
+export interface Group {
+  id: number;
+  name: string;
+  description: string | null;
+  avatarUrl: string | null;
+  membersCount: number;
+  postsCount: number;
+  isPrivate: boolean;
+  category: string | null;
+  createdAt: string;
+  isMember: boolean;
+}

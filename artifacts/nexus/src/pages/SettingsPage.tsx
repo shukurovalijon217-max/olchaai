@@ -489,15 +489,96 @@ function LangRow({ lang, current, onSelect }: {
   );
 }
 
+/* ── All major IANA timezones ───────────────────────────────── */
+const ALL_TIMEZONES: { label: string; value: string }[] = [
+  { label: "UTC+05:00 — Toshkent, Samarqand (O'zbekiston)",   value: "Asia/Tashkent" },
+  { label: "UTC+05:00 — Samarqand",                           value: "Asia/Samarkand" },
+  { label: "UTC+06:00 — Olmaota (Qozog'iston)",               value: "Asia/Almaty" },
+  { label: "UTC+05:00 — Bishkek (Qirg'iziston)",              value: "Asia/Bishkek" },
+  { label: "UTC+05:00 — Dushanbe (Tojikiston)",               value: "Asia/Dushanbe" },
+  { label: "UTC+05:00 — Ashgabat (Turkmaniston)",             value: "Asia/Ashgabat" },
+  { label: "UTC+04:00 — Boku (Ozarbayjon)",                   value: "Asia/Baku" },
+  { label: "UTC+04:00 — Tbilisi (Gruziya)",                   value: "Asia/Tbilisi" },
+  { label: "UTC+04:00 — Yerevan (Armaniston)",                value: "Asia/Yerevan" },
+  { label: "UTC+03:00 — Moskva, Sankt-Peterburg (Rossiya)",   value: "Europe/Moscow" },
+  { label: "UTC+04:00 — Samara (Rossiya)",                    value: "Europe/Samara" },
+  { label: "UTC+05:00 — Yekaterinburg (Rossiya)",             value: "Asia/Yekaterinburg" },
+  { label: "UTC+06:00 — Omsk (Rossiya)",                      value: "Asia/Omsk" },
+  { label: "UTC+07:00 — Krasnoyarsk (Rossiya)",               value: "Asia/Krasnoyarsk" },
+  { label: "UTC+08:00 — Irkutsk (Rossiya)",                   value: "Asia/Irkutsk" },
+  { label: "UTC+09:00 — Yakutsk (Rossiya)",                   value: "Asia/Yakutsk" },
+  { label: "UTC+10:00 — Vladivostok (Rossiya)",               value: "Asia/Vladivostok" },
+  { label: "UTC+03:00 — Istanbul (Turkiya)",                  value: "Europe/Istanbul" },
+  { label: "UTC+02:00 — Kyiv (Ukraina)",                      value: "Europe/Kyiv" },
+  { label: "UTC+03:00 — Minsk (Belarus)",                     value: "Europe/Minsk" },
+  { label: "UTC+04:30 — Kobul (Afg'oniston)",                 value: "Asia/Kabul" },
+  { label: "UTC+03:30 — Tehran (Eron)",                       value: "Asia/Tehran" },
+  { label: "UTC+05:00 — Karachi (Pokiston)",                  value: "Asia/Karachi" },
+  { label: "UTC+05:30 — Mumbai, Dehli (Hindiston)",           value: "Asia/Kolkata" },
+  { label: "UTC+05:45 — Katmandu (Nepal)",                    value: "Asia/Kathmandu" },
+  { label: "UTC+06:00 — Daka (Bangladesh)",                   value: "Asia/Dhaka" },
+  { label: "UTC+06:30 — Yangon (Myanma)",                     value: "Asia/Rangoon" },
+  { label: "UTC+07:00 — Bangkok (Tailand)",                   value: "Asia/Bangkok" },
+  { label: "UTC+07:00 — Ho Chi Minh (Vyetnam)",               value: "Asia/Ho_Chi_Minh" },
+  { label: "UTC+07:00 — Jakarta (Indoneziya)",                value: "Asia/Jakarta" },
+  { label: "UTC+08:00 — Pekin, Shanghai (Xitoy)",             value: "Asia/Shanghai" },
+  { label: "UTC+08:00 — Kuala Lumpur (Malayziya)",            value: "Asia/Kuala_Lumpur" },
+  { label: "UTC+08:00 — Singapur",                            value: "Asia/Singapore" },
+  { label: "UTC+08:00 — Manila (Filippin)",                   value: "Asia/Manila" },
+  { label: "UTC+09:00 — Tokio (Yaponiya)",                    value: "Asia/Tokyo" },
+  { label: "UTC+09:00 — Seul (Janubiy Koreya)",               value: "Asia/Seoul" },
+  { label: "UTC+08:00 — Ulaanbaatar (Mo'g'uliston)",          value: "Asia/Ulaanbaatar" },
+  { label: "UTC+03:00 — Riyadh (Saudiya Arabistoni)",         value: "Asia/Riyadh" },
+  { label: "UTC+04:00 — Dubai (BAA)",                         value: "Asia/Dubai" },
+  { label: "UTC+02:00 — Quddus (Isroil)",                     value: "Asia/Jerusalem" },
+  { label: "UTC+03:00 — Bagdad (Iroq)",                       value: "Asia/Baghdad" },
+  { label: "UTC+02:00 — Qohira (Misr)",                       value: "Africa/Cairo" },
+  { label: "UTC+01:00 — Kasablanka (Marokash)",               value: "Africa/Casablanca" },
+  { label: "UTC+01:00 — Tunis",                               value: "Africa/Tunis" },
+  { label: "UTC+01:00 — Jazoir",                              value: "Africa/Algiers" },
+  { label: "UTC+02:00 — Tripoli (Liviya)",                    value: "Africa/Tripoli" },
+  { label: "UTC+01:00 — Lagos (Nigeriya)",                    value: "Africa/Lagos" },
+  { label: "UTC+03:00 — Nairobi (Keniya)",                    value: "Africa/Nairobi" },
+  { label: "UTC+02:00 — Johanesburg (Janubiy Afrika)",        value: "Africa/Johannesburg" },
+  { label: "UTC+00:00 — London (Buyuk Britaniya)",            value: "Europe/London" },
+  { label: "UTC+01:00 — Berlin (Germaniya)",                  value: "Europe/Berlin" },
+  { label: "UTC+01:00 — Paris (Fransiya)",                    value: "Europe/Paris" },
+  { label: "UTC+01:00 — Rim (Italiya)",                       value: "Europe/Rome" },
+  { label: "UTC+01:00 — Madrid (Ispaniya)",                   value: "Europe/Madrid" },
+  { label: "UTC+01:00 — Amsterdam (Niderlandiya)",            value: "Europe/Amsterdam" },
+  { label: "UTC+01:00 — Varshava (Polsha)",                   value: "Europe/Warsaw" },
+  { label: "UTC+02:00 — Afina (Gretsiya)",                    value: "Europe/Athens" },
+  { label: "UTC+01:00 — Vena (Avstriya)",                     value: "Europe/Vienna" },
+  { label: "UTC+01:00 — Syurih (Shveytsariya)",               value: "Europe/Zurich" },
+  { label: "UTC-05:00 — Nyu-York (AQSh Sharq)",               value: "America/New_York" },
+  { label: "UTC-06:00 — Chikago (AQSh Markaziy)",             value: "America/Chicago" },
+  { label: "UTC-07:00 — Denver (AQSh Tog')",                  value: "America/Denver" },
+  { label: "UTC-08:00 — Los-Anjeles (AQSh G'arb)",            value: "America/Los_Angeles" },
+  { label: "UTC-05:00 — Toronto (Kanada)",                    value: "America/Toronto" },
+  { label: "UTC-08:00 — Vankuver (Kanada)",                   value: "America/Vancouver" },
+  { label: "UTC-06:00 — Mexiko-siti (Meksika)",               value: "America/Mexico_City" },
+  { label: "UTC-03:00 — San-Paulu (Braziliya)",               value: "America/Sao_Paulo" },
+  { label: "UTC-03:00 — Buenos-Ayres (Argentina)",            value: "America/Argentina/Buenos_Aires" },
+  { label: "UTC+10:00 — Sidney (Avstraliya)",                 value: "Australia/Sydney" },
+  { label: "UTC+08:00 — Pert (Avstraliya)",                   value: "Australia/Perth" },
+  { label: "UTC+12:00 — Oklend (Yangi Zelandiya)",            value: "Pacific/Auckland" },
+  { label: "UTC+00:00 — UTC",                                 value: "UTC" },
+];
+
 /* ── Location / Country Tab ──────────────────────────────────── */
 function LocationTab() {
   const { user, refetch } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedCode, setSelectedCode] = useState(user?.country ?? "");
-  const [selectedTz, setSelectedTz] = useState(user?.timezone ?? "");
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /* Auto-detect timezone default */
+  const autoTz = useMemo(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return "UTC"; }
+  }, []);
+  const [selectedTz, setSelectedTz] = useState(user?.timezone || autoTz);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -510,17 +591,16 @@ function LocationTab() {
   }, [search]);
 
   const selectedCountry = getCountryByCode(selectedCode);
-  const tzOptions = selectedCountry?.timezones ?? [];
 
   const handleSelect = (code: string) => {
     setSelectedCode(code);
     const c = COUNTRIES.find(x => x.code === code);
+    /* Suggest country's first timezone, but user can still override */
     if (c?.timezones.length) setSelectedTz(c.timezones[0]);
     setSearch("");
   };
 
   const handleSave = async () => {
-    if (!selectedCode) { setError("Davlat tanlang"); return; }
     setSaving(true);
     setError(null);
     setSuccess(false);
@@ -529,7 +609,10 @@ function LocationTab() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ country: selectedCode, timezone: selectedTz }),
+        body: JSON.stringify({
+          ...(selectedCode ? { country: selectedCode } : {}),
+          timezone: selectedTz,
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Saqlashda xato"); return; }
@@ -543,57 +626,93 @@ function LocationTab() {
     }
   };
 
+  /* Live preview clock using selected timezone */
+  const [previewTime, setPreviewTime] = useState(() => new Date());
+  useMemo(() => { /* refresh every render is fine for a preview */ }, []);
+  const previewStr = useMemo(() => {
+    try {
+      const t = previewTime.toLocaleTimeString("en-GB", { timeZone: selectedTz, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+      const d = previewTime.toLocaleDateString("en-GB", { timeZone: selectedTz, day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, ".");
+      return `${t}  ${d}`;
+    } catch { return "—"; }
+  }, [previewTime, selectedTz]);
+
+  /* Tick every second for preview */
+  useState(() => {
+    const id = setInterval(() => setPreviewTime(new Date()), 1000);
+    return () => clearInterval(id);
+  });
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-1">Joylashuv</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-1">Joylashuv va vaqt</h2>
         <p className="text-sm text-muted-foreground">Davlat va vaqt zonangizni belgilang — sidebar'da ko'rsatiladi</p>
       </div>
 
-      {/* Current selection */}
-      {selectedCountry && (
-        <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 flex items-center gap-3">
-          <span className="text-3xl">{countryFlag(selectedCountry.code)}</span>
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground mb-0.5">Tanlangan davlat</p>
-            <p className="text-sm font-semibold text-foreground">{selectedCountry.name}</p>
-            <p className="text-xs text-muted-foreground">{selectedCountry.nameEn} · {selectedCode}</p>
-          </div>
-          <Check className="w-5 h-5 text-primary" />
+      {/* Live preview */}
+      <div className="p-4 rounded-xl border border-violet-500/30 bg-violet-500/5">
+        <p className="text-xs text-muted-foreground mb-1">Ko'rinishi (jonli):</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          {selectedCountry && (
+            <span className="text-base">{countryFlag(selectedCountry.code)}</span>
+          )}
+          {selectedCountry && (
+            <span className="text-sm font-semibold text-foreground">{selectedCountry.name}</span>
+          )}
+          <span className="text-sm font-mono text-violet-400">{previewStr}</span>
         </div>
-      )}
+      </div>
 
-      {/* Timezone selector (if multiple) */}
-      {tzOptions.length > 1 && (
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Vaqt zonasi</label>
-          <select
-            value={selectedTz}
-            onChange={e => setSelectedTz(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-          >
-            {tzOptions.map(tz => (
-              <option key={tz} value={tz}>{tz}</option>
-            ))}
-          </select>
-        </div>
-      )}
-      {tzOptions.length === 1 && (
-        <div className="p-3 rounded-xl bg-muted/30 border border-border flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-          Vaqt zonasi: <span className="text-foreground font-medium">{tzOptions[0]}</span>
-        </div>
-      )}
-
-      {/* Country search */}
+      {/* ── Vaqt zonasi (always visible) ── */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1.5">Davlat qidirish</label>
+        <label className="block text-sm font-medium text-foreground mb-1.5">
+          Vaqt zonasi (UTC offset)
+        </label>
+        <p className="text-xs text-muted-foreground mb-2">
+          Avtomatik aniqlangan: <span className="text-foreground font-medium">{autoTz}</span>
+        </p>
+        <select
+          value={selectedTz}
+          onChange={e => setSelectedTz(e.target.value)}
+          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+        >
+          {ALL_TIMEZONES.map(tz => (
+            <option key={tz.value} value={tz.value}>{tz.label}</option>
+          ))}
+          {/* If current tz not in list, show it */}
+          {!ALL_TIMEZONES.find(t => t.value === selectedTz) && (
+            <option value={selectedTz}>{selectedTz}</option>
+          )}
+        </select>
+      </div>
+
+      {/* ── Davlat tanlash ── */}
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1.5">
+          Davlat <span className="text-muted-foreground font-normal">(ixtiyoriy)</span>
+        </label>
+        {selectedCountry && (
+          <div className="mb-2 p-3 rounded-xl border border-primary/30 bg-primary/5 flex items-center gap-2">
+            <span className="text-xl">{countryFlag(selectedCountry.code)}</span>
+            <div className="flex-1">
+              <span className="text-sm font-semibold text-foreground">{selectedCountry.name}</span>
+              <span className="text-xs text-muted-foreground ml-2">{selectedCountry.nameEn}</span>
+            </div>
+            <button
+              onClick={() => setSelectedCode("")}
+              className="text-muted-foreground hover:text-foreground p-1"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
         <div className="relative mb-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Davlat nomi..."
+            placeholder="Davlat nomi bilan qidiring..."
             className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
           />
           {search && (
@@ -602,16 +721,16 @@ function LocationTab() {
             </button>
           )}
         </div>
-        <div className="max-h-60 overflow-y-auto rounded-xl border border-border bg-card divide-y divide-border/50">
-          {filtered.map(c => (
+        <div className="max-h-52 overflow-y-auto rounded-xl border border-border bg-card divide-y divide-border/40">
+          {filtered.slice(0, search ? 50 : 10).map(c => (
             <button
               key={c.code}
               onClick={() => handleSelect(c.code)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/50 ${
+              className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-muted/50 ${
                 c.code === selectedCode ? "bg-primary/10" : ""
               }`}
             >
-              <span className="text-xl w-8 text-center flex-shrink-0">{countryFlag(c.code)}</span>
+              <span className="text-lg w-7 text-center flex-shrink-0">{countryFlag(c.code)}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{c.nameEn}</p>
@@ -619,9 +738,14 @@ function LocationTab() {
               {c.code === selectedCode && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
             </button>
           ))}
+          {!search && filtered.length > 10 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+              Qidirish orqali barchani ko'ring ({filtered.length} ta davlat)
+            </div>
+          )}
           {filtered.length === 0 && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              <Globe className="w-6 h-6 mx-auto mb-1.5 opacity-40" />
+            <div className="py-5 text-center text-sm text-muted-foreground">
+              <Globe className="w-5 h-5 mx-auto mb-1 opacity-40" />
               Davlat topilmadi
             </div>
           )}
@@ -633,13 +757,13 @@ function LocationTab() {
       )}
       {success && (
         <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2">
-          <Check className="w-4 h-4" /> Joylashuv saqlandi! Sidebar'da ko'rinadi.
+          <Check className="w-4 h-4" /> Saqlandi! Sidebar'da darhol ko'rinadi.
         </div>
       )}
 
       <button
         onClick={handleSave}
-        disabled={saving || !selectedCode}
+        disabled={saving}
         className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
       >
         {saving && <Loader2 className="w-4 h-4 animate-spin" />}

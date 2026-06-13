@@ -23,6 +23,7 @@ import {
   CheckCheck, Loader2, Plus, BookOpen, RefreshCw, Globe,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { OlchaEmojiPicker } from "./OlchaEmojiPicker";
 import { EmojiText } from "./EmojiText";
 import {
@@ -73,8 +74,10 @@ const PAGES = [
    SWIPEABLE ROW  (chapga = o'chirish, o'ngga = arxiv)
 ══════════════════════════════════════════════════════════════ */
 const SWP = 78;
-function SwipeableRow({ id, children, onDelete, onArchive, archiveLabel = "Arxiv" }:
+function SwipeableRow({ id, children, onDelete, onArchive, archiveLabel }:
   { id: string|number; children: React.ReactNode; onDelete?:()=>void; onArchive?:()=>void; archiveLabel?: string }) {
+  const { t } = useTranslation();
+  const _archiveLabel = archiveLabel ?? t("orb.archive");
   const x = useMotionValue(0);
   const [gone, setGone] = useState<null|"del"|"arc">(null);
 
@@ -100,12 +103,12 @@ function SwipeableRow({ id, children, onDelete, onArchive, archiveLabel = "Arxiv
     <div key={id} style={{ position:"relative", overflow:"hidden", borderRadius:16 }}>
       <motion.div style={{ backgroundColor:delBg }} className="absolute inset-0 flex items-center justify-end pr-4 rounded-2xl pointer-events-none z-0">
         <motion.div style={{ scale:delSc }} className="flex flex-col items-center gap-0.5">
-          <Trash2 className="w-4 h-4 text-white"/><span className="text-[9px] font-bold text-white/90">O'chirish</span>
+          <Trash2 className="w-4 h-4 text-white"/><span className="text-[9px] font-bold text-white/90">{t("orb.delete")}</span>
         </motion.div>
       </motion.div>
       <motion.div style={{ backgroundColor:arcBg }} className="absolute inset-0 flex items-center justify-start pl-4 rounded-2xl pointer-events-none z-0">
         <motion.div style={{ scale:arcSc }} className="flex flex-col items-center gap-0.5">
-          <Archive className="w-4 h-4 text-white"/><span className="text-[9px] font-bold text-white/90">{archiveLabel}</span>
+          <Archive className="w-4 h-4 text-white"/><span className="text-[9px] font-bold text-white/90">{_archiveLabel}</span>
         </motion.div>
       </motion.div>
       <AnimatePresence>
@@ -194,6 +197,7 @@ function SmsRadialConvs({
   isCreating: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const items = convs.slice(0, 6);
   const count = items.length;
   const R = 100;
@@ -274,7 +278,7 @@ function SmsRadialConvs({
         {isCreating ? <Loader2 className="w-4 h-4 text-white animate-spin"/> : <Plus className="w-4 h-4 text-white"/>}
         <motion.span initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.25 }}
           style={{ position:"absolute", bottom:-16, left:"50%", transform:"translateX(-50%)", fontSize:9, fontWeight:700, color:"#f59e0b", textShadow:"0 0 8px rgba(245,158,11,0.8)", whiteSpace:"nowrap", pointerEvents:"none" }}>
-          Yangi
+          {t("orb.new_conv")}
         </motion.span>
       </motion.button>
     </>
@@ -312,6 +316,7 @@ const PREMIUM_LANGS = [
 
 function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
   { convId:number; meId:number; convName:string; onBack:()=>void; onClose:()=>void }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { user: me } = useAuth();
   const isPremium = me?.isPremium ?? false;
@@ -425,10 +430,10 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
           </span>
         )}
         <div className="flex items-center gap-1 flex-shrink-0">
-          <span className="text-[9px] text-muted-foreground">Auto</span>
+          <span className="text-[9px] text-muted-foreground">{t("orb.auto")}</span>
           <motion.button
             onClick={() => isPremium && setAutoTranslate(v => !v)}
-            title={isPremium ? "Avtomatik tarjima" : "Faqat Premium"}
+            title={isPremium ? t("orb.auto_translate_title") : t("orb.premium_only")}
             className={`relative w-7 h-3.5 rounded-full transition-colors flex-shrink-0 ${!isPremium ? "opacity-35 cursor-not-allowed" : "cursor-pointer"}`}
             style={{ background: autoTranslate && isPremium ? "rgb(59,130,246)" : "rgba(255,255,255,0.15)" }}>
             <motion.div
@@ -444,7 +449,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
         {isLoading
           ? <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 text-muted-foreground animate-spin"/></div>
           : messages.length === 0
-          ? <div className="text-center py-6 text-muted-foreground text-xs"><MessageSquare className="w-6 h-6 mx-auto mb-1 opacity-20"/>Xabarlar yo'q</div>
+          ? <div className="text-center py-6 text-muted-foreground text-xs"><MessageSquare className="w-6 h-6 mx-auto mb-1 opacity-20"/>{t("orb.no_msgs")}</div>
           : messages.map((m, i) => {
               const isMe = m.senderId === meId;
               const isTr = translating.has(m.id);
@@ -457,7 +462,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
                   <SwipeableRow id={m.id}
                     onDelete={()=>handleDeleteMsg(m.id)}
                     onArchive={()=>handleDeleteMsg(m.id)}
-                    archiveLabel="Saqlash">
+                    archiveLabel={t("orb.save")}>
                     <div className={`flex flex-col ${isMe?"items-end":"items-start"} py-0.5 gap-0.5`}>
                       {/* Original bubble */}
                       <div className={`max-w-[82%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
@@ -480,7 +485,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
                           {isTr
                             ? <Loader2 className="w-3 h-3 animate-spin" />
                             : <Globe className="w-3 h-3" />}
-                          <span>{translated ? `${langObj.flag} Qayta` : `${langObj.flag} Tarjima`}</span>
+                          <span>{translated ? `${langObj.flag} ${t("orb.retranslate")}` : `${langObj.flag} ${t("orb.translate")}`}</span>
                           {srcLang && srcLang !== targetLang && (
                             <span className="opacity-45">· {srcLang}</span>
                           )}
@@ -501,9 +506,9 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
                             }}>
                             <div className="flex items-center gap-1 mb-0.5 not-italic">
                               <Globe className="w-2.5 h-2.5 text-blue-400" />
-                              <span className="text-[9px] text-blue-400 font-semibold">AI tarjima · {langObj.flag}</span>
+                              <span className="text-[9px] text-blue-400 font-semibold">{t("orb.ai_translation")} · {langObj.flag}</span>
                               {autoTranslate && isPremium && (
-                                <span className="text-[8px] text-amber-400 font-bold">PRO auto</span>
+                                <span className="text-[8px] text-amber-400 font-bold">{t("orb.pro_auto")}</span>
                               )}
                             </div>
                             <EmojiText text={translated} className="text-foreground/80 not-italic" />
@@ -532,7 +537,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
         <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-2xl border border-white/10 bg-white/5">
           <input ref={inputRef} value={text} onChange={e=>setText(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),handleSend())}
-            placeholder="Xabar…" maxLength={1000}
+            placeholder={t("orb.msg_ph")} maxLength={1000}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none py-1.5"/>
           <motion.button whileTap={{ scale:0.85 }} onClick={()=>setShowEmoji(v=>!v)}
             className={`transition-colors ${showEmoji?"text-yellow-400 opacity-100":"opacity-55 hover:opacity-90"}`}>
@@ -561,26 +566,27 @@ const INIT_CALLS = [
   { id:5, name:"Sanjar U.",  time:"Kecha", dur:"8:02", type:"incoming" as const },
 ];
 function CallPanelContent({ onClose }:{ onClose:()=>void }) {
+  const { t } = useTranslation();
   const [calls, setCalls] = useState(INIT_CALLS);
   const [calling, setCalling] = useState<number|null>(null);
-  const typeIcon = (t:"incoming"|"missed"|"outgoing") =>
-    t==="incoming"?<PhoneIncoming className="w-3 h-3 text-emerald-400"/>
-    :t==="missed"?<PhoneMissed className="w-3 h-3 text-red-400"/>
+  const typeIcon = (callType:"incoming"|"missed"|"outgoing") =>
+    callType==="incoming"?<PhoneIncoming className="w-3 h-3 text-emerald-400"/>
+    :callType==="missed"?<PhoneMissed className="w-3 h-3 text-red-400"/>
     :<PhoneOutgoing className="w-3 h-3 text-blue-400"/>;
   return (
     <>
-      <PanelHeader title="Qo'ng'iroqlar" color="#22c55e" bg="linear-gradient(135deg,#22c55e,#16a34a)"
+      <PanelHeader title={t("orb.calls_title")} color="#22c55e" bg="linear-gradient(135deg,#22c55e,#16a34a)"
         Icon={Phone} onClose={onClose}/>
       <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5" style={{ minHeight:0 }}>
         {calls.length===0
-          ? <div className="text-center py-6 text-muted-foreground text-xs"><Phone className="w-6 h-6 mx-auto mb-1 opacity-20"/>Yo'q</div>
+          ? <div className="text-center py-6 text-muted-foreground text-xs"><Phone className="w-6 h-6 mx-auto mb-1 opacity-20"/>{t("orb.no_calls")}</div>
           : calls.map((c,i)=>(
             <motion.div key={c.id} initial={{ x:-24, opacity:0 }} animate={{ x:0, opacity:1 }}
               transition={{ delay:i*0.06, type:"spring", stiffness:420, damping:30 }}>
               <SwipeableRow id={c.id}
                 onDelete={()=>setCalls(p=>p.filter(x=>x.id!==c.id))}
                 onArchive={()=>setCalls(p=>p.filter(x=>x.id!==c.id))}
-                archiveLabel="Saqlash">
+                archiveLabel={t("orb.save")}>
                 <div className={`flex items-center gap-3 p-3 rounded-2xl border ${
                   c.type==="incoming"?"border-emerald-500/20 bg-emerald-500/5"
                   :c.type==="missed"?"border-red-500/20 bg-red-500/5"
@@ -625,7 +631,7 @@ function CallPanelContent({ onClose }:{ onClose:()=>void }) {
               animate={{ scale:[1,1.22,1] }} transition={{ duration:1.2, repeat:Infinity }}>
               <Phone className="w-4 h-4 text-emerald-400"/>
             </motion.div>
-            <p className="text-xs font-bold text-emerald-400">{calls.find(c=>c.id===calling)?.name} ga qo'ng'iroq…</p>
+            <p className="text-xs font-bold text-emerald-400">{t("orb.calling", { name: calls.find(c=>c.id===calling)?.name })}</p>
           </motion.div>
         )}
       </div>
@@ -637,6 +643,7 @@ function CallPanelContent({ onClose }:{ onClose:()=>void }) {
    VIDEO PANEL
 ══════════════════════════════════════════════════════════════ */
 function VideoPanelContent({ targetUser, onClose }:{ targetUser:OrbUser; onClose:()=>void }) {
+  const { t } = useTranslation();
   const [micOn,  setMic ] = useState(true);
   const [camOn,  setCam ] = useState(true);
   const [connected,setConnected]=useState(false);
@@ -649,7 +656,7 @@ function VideoPanelContent({ targetUser, onClose }:{ targetUser:OrbUser; onClose
   const fmt=(s:number)=>`${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
   return (
     <>
-      <PanelHeader title="Video Qo'ng'iroq" color="#3b82f6" bg="linear-gradient(135deg,#3b82f6,#2563eb)"
+      <PanelHeader title={t("orb.video_call_title")} color="#3b82f6" bg="linear-gradient(135deg,#3b82f6,#2563eb)"
         Icon={Video} onClose={onClose}/>
       <div className="flex-1 flex flex-col p-3 gap-3">
         <motion.div initial={{ scale:0.9, opacity:0 }} animate={{ scale:1, opacity:1 }}
@@ -665,7 +672,7 @@ function VideoPanelContent({ targetUser, onClose }:{ targetUser:OrbUser; onClose
             {connected
               ? <p className="text-emerald-400 text-xs font-mono">{fmt(elapsed)}</p>
               : <motion.p animate={{ opacity:[1,0.4,1] }} transition={{ duration:1.4, repeat:Infinity }}
-                  className="text-blue-300 text-xs">Ulanmoqda…</motion.p>
+                  className="text-blue-300 text-xs">{t("orb.connecting")}</motion.p>
             }
           </div>
           {!connected&&[0,1].map(i=>(
@@ -678,7 +685,7 @@ function VideoPanelContent({ targetUser, onClose }:{ targetUser:OrbUser; onClose
             className="absolute bottom-2 right-2 w-14 h-20 rounded-xl overflow-hidden"
             style={{ background:"linear-gradient(135deg,#1e293b,#0f172a)", border:"1px solid rgba(255,255,255,0.1)" }}>
             <div className="w-full h-full flex items-center justify-center">
-              {camOn ? <span className="text-white/30 text-xs">Kamera</span> : <CameraOff className="w-4 h-4 text-white/25"/>}
+              {camOn ? <span className="text-white/30 text-xs">{t("orb.camera")}</span> : <CameraOff className="w-4 h-4 text-white/25"/>}
             </div>
           </motion.div>
         </motion.div>
@@ -709,6 +716,7 @@ function VideoPanelContent({ targetUser, onClose }:{ targetUser:OrbUser; onClose
 ══════════════════════════════════════════════════════════════ */
 function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
   { targetUserId:number; postId?:number; onSelectPost:(id:number)=>void; onClose:()=>void }) {
+  const { t } = useTranslation();
   const { user:me } = useAuth();
   const qc = useQueryClient();
   const { data:posts=[], isLoading:loadPosts } = useListPosts({ userId:targetUserId });
@@ -751,7 +759,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
   return (
     <>
       <PanelHeader
-        title={selectedPost?`Post #${selectedPost.id} · Kommentariy`:"Kommentariy"}
+        title={selectedPost?`Post #${selectedPost.id} · ${t("orb.comment_title")}`:t("orb.comment_title")}
         color="#a855f7" bg="linear-gradient(135deg,#a855f7,#7c3aed)"
         Icon={MessageCircle}
         onClose={onClose}/>
@@ -772,7 +780,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                     <SwipeableRow id={c.id}
                       onDelete={()=>setDeleted(p=>new Set([...p,c.id]))}
                       onArchive={()=>setDeleted(p=>new Set([...p,c.id]))}
-                      archiveLabel="Saqlash">
+                      archiveLabel={t("orb.save")}>
                       <div className="flex gap-2 py-0.5">
                         <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
                           style={{ background:`hsl(${(c.id*53)%360},65%,48%)` }}>
@@ -781,7 +789,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                         <div className="flex-1">
                           <div className="inline-block px-3 py-2 rounded-2xl rounded-tl-sm bg-white/8 border border-white/10">
                             <p className="text-[10px] font-semibold text-violet-400 mb-0.5">
-                              {c.author?.id===me?.id?"Siz":`@${c.author?.username??"?"}`}
+                              {c.author?.id===me?.id?t("orb.mine"):`@${c.author?.username??"?"}`}
                             </p>
                             <EmojiText text={c.content} className="text-sm text-foreground leading-relaxed" />
                           </div>
@@ -803,7 +811,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-2xl border border-white/10 bg-white/5">
                 <input ref={inputRef} value={text} onChange={e=>setText(e.target.value)}
                   onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),handleSend())}
-                  placeholder="Kommentariy…" maxLength={500}
+                  placeholder={t("orb.comment_ph")} maxLength={500}
                   className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none py-1.5"/>
                 <motion.button whileTap={{ scale:0.85 }} onClick={()=>setShowEmoji(v=>!v)}
                   className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/8 transition-colors">
@@ -827,7 +835,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
             {loadPosts
               ? <div className="flex justify-center py-5"><Loader2 className="w-4 h-4 text-muted-foreground animate-spin"/></div>
               : posts.length===0
-              ? <div className="text-center py-6 text-muted-foreground text-xs"><FileText className="w-6 h-6 mx-auto mb-1 opacity-20"/>Hali post yo'q</div>
+              ? <div className="text-center py-6 text-muted-foreground text-xs"><FileText className="w-6 h-6 mx-auto mb-1 opacity-20"/>{t("orb.no_posts")}</div>
               : posts.map((p,i)=>(
                 <motion.button key={p.id} onClick={()=>onSelectPost(p.id)}
                   initial={{ y:14, opacity:0 }} animate={{ y:0, opacity:1 }}
@@ -853,6 +861,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
 ══════════════════════════════════════════════════════════════ */
 function PostPanelContent({ targetUser, targetUserId, onClose }:
   { targetUser:OrbUser; targetUserId:number; onClose:()=>void }) {
+  const { t } = useTranslation();
   const { user:me } = useAuth();
   const qc = useQueryClient();
   const { data:posts=[], isLoading, refetch } = useListPosts({ userId:targetUserId });
@@ -896,7 +905,7 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
 
   return (
     <>
-      <PanelHeader title={composing?"Yangi post":"Postlar"} color="#ec4899"
+      <PanelHeader title={composing?t("orb.new_post"):t("orb.posts")} color="#ec4899"
         bg="linear-gradient(135deg,#ec4899,#be185d)" Icon={FileText}
         onBack={composing?()=>setComposing(false):undefined} onClose={onClose}/>
 
@@ -911,7 +920,7 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
               <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold text-white"
                 style={{ background:"linear-gradient(135deg,#7c3aed,#db2777)" }}>{targetUser.displayName.charAt(0)}</div>
               <textarea ref={textareaRef} value={draft} onChange={e=>setDraft(e.target.value)} autoFocus
-                placeholder="Nima o'ylayapsiz?" rows={4}
+                placeholder={t("orb.whats_on_mind")} rows={4}
                 className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none"/>
             </div>
             <div className="p-2.5 border-t border-white/8 flex items-center gap-2 flex-shrink-0 relative">
@@ -932,7 +941,7 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
                 disabled={!draft.trim()||createPost.isPending}
                 className="px-4 py-1.5 rounded-full text-xs font-bold text-white disabled:opacity-40"
                 style={{ background:"linear-gradient(135deg,#ec4899,#be185d)" }}>
-                {createPost.isPending?<Loader2 className="w-3.5 h-3.5 animate-spin"/>:"Yuborish"}
+                {createPost.isPending?<Loader2 className="w-3.5 h-3.5 animate-spin"/>:t("orb.submit")}
               </motion.button>
             </div>
           </motion.div>
@@ -947,20 +956,19 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-pink-500/25 bg-pink-500/6 hover:bg-pink-500/10 transition-colors text-left mb-1">
                 <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
                   style={{ background:"linear-gradient(135deg,#7c3aed,#db2777)" }}>{targetUser.displayName.charAt(0)}</div>
-                <span className="text-sm text-muted-foreground flex-1">Nima o'ylayapsiz?</span>
+                <span className="text-sm text-muted-foreground flex-1">{t("orb.whats_on_mind")}</span>
                 <Plus className="w-4 h-4 text-pink-400"/>
               </motion.button>
               {isLoading
                 ? <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 text-muted-foreground animate-spin"/></div>
                 : visible.length===0
-                ? <div className="text-center py-4 text-muted-foreground text-xs"><FileText className="w-6 h-6 mx-auto mb-1 opacity-20"/>Postlar yo'q</div>
+                ? <div className="text-center py-4 text-muted-foreground text-xs"><FileText className="w-6 h-6 mx-auto mb-1 opacity-20"/>{t("orb.no_posts")}</div>
                 : visible.map((p,i)=>(
                   <motion.div key={p.id} initial={{ y:16, opacity:0 }} animate={{ y:0, opacity:1 }}
                     transition={{ delay:Math.min(i*0.07,0.35), type:"spring", stiffness:380, damping:28 }}>
                     <SwipeableRow id={p.id}
                       onDelete={()=>setDeleted(v=>new Set([...v,p.id]))}
-                      onArchive={()=>setArchived(v=>new Set([...v,p.id]))}
-                      archiveLabel="Arxiv">
+                      onArchive={()=>setArchived(v=>new Set([...v,p.id]))}>
                       <div className="p-3 rounded-2xl border border-white/8 bg-white/4">
                         <EmojiText text={p.content} className="text-sm text-foreground leading-relaxed mb-2" />
                         <div className="flex items-center gap-3 text-xs">
@@ -1013,9 +1021,18 @@ function loadPos() {
    MAIN: ProfileOrb
 ══════════════════════════════════════════════════════════════ */
 export default function ProfileOrb({ targetUser, targetUserId, isOwner }: ProfileOrbProps) {
+  const { t } = useTranslation();
   const { user:me } = useAuth();
   const meId = me?.id ?? 0;
   const qc = useQueryClient();
+
+  const pageLabels: Record<typeof PAGES[number]["id"], string> = {
+    call:    t("orb.page_call"),
+    video:   t("orb.page_video"),
+    sms:     t("orb.page_sms"),
+    comment: t("orb.page_comment"),
+    post:    t("orb.page_post"),
+  };
 
   const [mode, setMode] = useState<OrbMode>("idle");
   const [commentPostId, setCommentPostId] = useState<number|undefined>();
@@ -1089,7 +1106,7 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
 
   const handleNewConv = () => {
     createConv.mutate({ data:{ participantIds:[meId, targetUserId] } }, {
-      onSuccess:(c)=>{ qc.invalidateQueries({ queryKey:["listConversations"] }); setMode({ panel:"sms-thread", convId:c.id, convName:"Yangi suhbat" }); },
+      onSuccess:(c)=>{ qc.invalidateQueries({ queryKey:["listConversations"] }); setMode({ panel:"sms-thread", convId:c.id, convName:t("orb.new_conversation") }); },
     });
   };
 
@@ -1152,7 +1169,7 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
               <Icon style={{ width:17, height:17, color:"#fff", filter:"drop-shadow(0 0 5px rgba(255,255,255,0.6))" }}/>
               <motion.span initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:idx*0.02+0.12 }}
                 style={{ position:"absolute", bottom:-18, left:"50%", transform:"translateX(-50%)", fontSize:9, fontWeight:700, color:item.color, textShadow:`0 0 8px ${item.color}`, whiteSpace:"nowrap", pointerEvents:"none" }}>
-                {item.label}
+                {pageLabels[item.id]}
               </motion.span>
             </motion.button>
           );

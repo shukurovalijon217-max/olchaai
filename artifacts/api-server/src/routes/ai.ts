@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import {
-  postsTable, reelsTable, usersTable,
+  postsTable, reelsTable, usersTable, postLikesTable,
   userInteractionsTable, contentAnalysisTable,
 } from "@workspace/db";
 import { desc, eq, and, inArray } from "drizzle-orm";
@@ -58,46 +58,77 @@ router.get("/ai/feed", async (req, res) => {
       }
     }
 
-    const posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(30);
-    const reels = await db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(10);
-    const users = await db.select().from(usersTable).limit(5);
+    const [posts, reels] = await Promise.all([
+      db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(30),
+      db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(10),
+    ]);
 
-    const enrichedPosts = await Promise.all(
-      posts.map(async p => {
-        const [author] = await db.select().from(usersTable).where(eq(usersTable.id, p.authorId));
-        const tags = p.tags ?? [];
-        const personalScore = tags.reduce((s, tag) => s + (tagScores[tag] ?? 0), 0);
-        const popularScore = p.likesCount * 0.1 + p.commentsCount * 0.2;
-        // Freshness boost: content under 24h gets up to +3 pts; decays linearly
-        const ageHours = (Date.now() - new Date(p.createdAt).getTime()) / 3_600_000;
-        const freshnessBoost = Math.max(0, 3 - ageHours / 8);
-        return {
-          ...p,
-          author: enrichUser((author ?? {}) as Record<string, unknown>),
-          tags,
-          isLiked: false,
-          _score: personalScore + popularScore + freshnessBoost,
-        };
-      })
-    );
+    /* Batch fetch all authors in 1 query (not N queries) */
+    const allAuthorIds = [...new Set([
+      ...posts.map(p => p.authorId),
+      ...reels.map(r => r.authorId),
+    ].filter(Boolean))] as number[];
+
+    const authors = allAuthorIds.length > 0
+      ? await db.select().from(usersTable).where(inArray(usersTable.id, allAuthorIds))
+      : [];
+    const authorMap = new Map(authors.map(a => [a.id, a]));
+
+    /* Batch fetch liked status if logged in */
+    const viewerId = userId;
+    let likedPostIds = new Set<number>();
+    if (viewerId && posts.length > 0) {
+      const liked = await db
+        .select({ postId: postLikesTable.postId })
+        .from(postLikesTable)
+        .where(and(
+          inArray(postLikesTable.postId, posts.map(p => p.id)),
+          eq(postLikesTable.userId, viewerId),
+        ));
+      likedPostIds = new Set(liked.map(l => l.postId));
+    }
+
+    const enrichedPosts = posts.map(p => {
+      const author = authorMap.get(p.authorId as number) ?? {};
+      const tags = p.tags ?? [];
+      const personalScore = tags.reduce((s, tag) => s + (tagScores[tag] ?? 0), 0);
+      const popularScore = (p.likesCount ?? 0) * 0.1 + (p.commentsCount ?? 0) * 0.2;
+      const ageHours = (Date.now() - new Date(p.createdAt).getTime()) / 3_600_000;
+      const freshnessBoost = Math.max(0, 3 - ageHours / 8);
+      return {
+        ...p,
+        likesCount: p.likesCount ?? 0,
+        commentsCount: p.commentsCount ?? 0,
+        author: enrichUser(author as Record<string, unknown>),
+        tags,
+        isLiked: likedPostIds.has(p.id),
+        _score: personalScore + popularScore + freshnessBoost,
+      };
+    });
     enrichedPosts.sort((a, b) => b._score - a._score);
 
-    const enrichedReels = await Promise.all(
-      reels.map(async r => {
-        const [author] = await db.select().from(usersTable).where(eq(usersTable.id, r.authorId));
-        return {
-          ...r,
-          author: enrichUser((author ?? {}) as Record<string, unknown>),
-          tags: r.tags ?? [],
-          isLiked: false,
-        };
-      })
-    );
+    const enrichedReels = reels.map(r => {
+      const author = authorMap.get(r.authorId as number) ?? {};
+      return {
+        ...r,
+        likesCount: r.likesCount ?? 0,
+        commentsCount: r.commentsCount ?? 0,
+        author: enrichUser(author as Record<string, unknown>),
+        tags: r.tags ?? [],
+        isLiked: false,
+      };
+    });
+
+    /* Suggested users: only real accounts (exclude viewer themselves) */
+    const suggestedUsers = authors
+      .filter(u => u.id !== userId)
+      .slice(0, 5)
+      .map(u => enrichUser(u as Record<string, unknown>));
 
     res.json({
       posts: enrichedPosts,
       reels: enrichedReels,
-      suggestedUsers: users.map(u => enrichUser(u as Record<string, unknown>)),
+      suggestedUsers,
     });
   } catch (err) {
     req.log.error(err);

@@ -304,28 +304,6 @@ export default function LoginPage() {
           >
             {t("auth.tagline")}
           </motion.p>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.65 }}
-            className="flex flex-wrap gap-2 justify-center"
-          >
-            {["Instagram", "TikTok", "Facebook", "Snapchat", "Telegram"].map((p, i) => (
-              <motion.span
-                key={p}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.65 + i * 0.07 }}
-                style={{
-                  padding: "3px 10px", borderRadius: 8,
-                  border: "1px solid #3a2010", background: "rgba(60,30,10,0.4)",
-                  color: "#7a5030", fontSize: "0.72rem", fontWeight: 500,
-                }}
-              >
-                {p}
-              </motion.span>
-            ))}
-          </motion.div>
         </div>
       </div>
 
@@ -344,15 +322,40 @@ export default function LoginPage() {
           {/* Tab */}
           <div className="flex rounded-xl p-1 mb-7" style={{ background: "rgba(40,20,8,0.8)", border: "1px solid #2a1408" }}>
             {(["login", "signup"] as const).map(tabKey => (
-              <button key={tabKey} type="button" onClick={() => { setTab(tabKey); setError(""); }}
-                className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
+              <motion.button
+                key={tabKey}
+                type="button"
+                onClick={() => { setTab(tabKey); setError(""); }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.96 }}
+                className="flex-1 py-2 rounded-lg text-sm font-semibold relative overflow-hidden"
                 style={tab === tabKey
-                  ? { background: "rgba(80,40,16,0.9)", color: "#d4a96a", border: "1px solid #4a2810" }
-                  : { color: "#5a3a20", border: "1px solid transparent" }
+                  ? {
+                      background: "linear-gradient(135deg, rgba(100,48,16,0.95) 0%, rgba(80,38,12,0.9) 100%)",
+                      color: "#d4a96a",
+                      border: "1px solid rgba(160,90,30,0.5)",
+                      boxShadow: "0 0 14px rgba(180,90,20,0.25), inset 0 1px 0 rgba(255,180,80,0.1)",
+                    }
+                  : {
+                      color: "#5a3a20",
+                      border: "1px solid transparent",
+                    }
                 }
               >
-                {tabKey === "login" ? t("auth.login") : t("auth.register")}
-              </button>
+                {tab === tabKey && (
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: "linear-gradient(90deg, transparent 0%, rgba(255,200,100,0.18) 50%, transparent 100%)",
+                    }}
+                    animate={{ x: ["-110%", "210%"] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.4 }}
+                  />
+                )}
+                <span style={{ position: "relative", zIndex: 1 }}>
+                  {tabKey === "login" ? t("auth.login") : t("auth.register")}
+                </span>
+              </motion.button>
             ))}
           </div>
 
@@ -451,34 +454,92 @@ export default function LoginPage() {
                 )}
               </AnimatePresence>
 
-              <motion.button
-                type="submit"
-                disabled={loading}
-                whileHover={{ scale: loading ? 1 : 1.015 }}
-                whileTap={{ scale: loading ? 1 : 0.975 }}
-                className="w-full py-3 rounded-xl font-bold text-sm transition-all mt-2 relative overflow-hidden"
-                style={{
-                  background: loading
-                    ? "rgba(80,20,0,0.5)"
-                    : "linear-gradient(135deg, #8a1800 0%, #c02000 50%, #8a1800 100%)",
-                  color: "#ffcca0",
-                  border: "1px solid #aa2800",
-                  boxShadow: loading ? "none" : "0 0 18px rgba(180,20,0,0.35)",
-                  letterSpacing: "0.06em",
-                  cursor: loading ? "not-allowed" : "pointer",
-                }}
-              >
-                {/* Shimmer when loading */}
-                {loading && (
+              {/* Floating sparkle particles above button */}
+              <div style={{ position: "relative", marginTop: 8 }}>
+                {!loading && [0, 1, 2, 3, 4].map(i => (
                   <motion.div
-                    className="absolute inset-0"
-                    style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,200,100,0.08) 50%, transparent 100%)" }}
-                    animate={{ x: ["-100%", "200%"] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    key={i}
+                    style={{
+                      position: "absolute",
+                      width: 5,
+                      height: 5,
+                      borderRadius: "50%",
+                      background: i % 2 === 0 ? "#ffc850" : "#ff9040",
+                      boxShadow: `0 0 7px 4px ${i % 2 === 0 ? "rgba(255,190,60,0.75)" : "rgba(255,130,40,0.7)"}`,
+                      left: `${12 + i * 18}%`,
+                      bottom: "90%",
+                      pointerEvents: "none",
+                      zIndex: 10,
+                    }}
+                    animate={{
+                      y: [0, -22, -5],
+                      opacity: [0, 1, 0],
+                      scale: [0.4, 1.3, 0.4],
+                      x: [0, i % 2 === 0 ? -7 : 7, 0],
+                    }}
+                    transition={{
+                      duration: 2.2,
+                      repeat: Infinity,
+                      delay: i * 0.38,
+                      ease: "easeOut",
+                    }}
                   />
-                )}
-                {loading ? t("common.loading") : tab === "login" ? t("auth.enter") : t("auth.join")}
-              </motion.button>
+                ))}
+
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  whileHover={loading ? {} : {
+                    scale: 1.018,
+                    boxShadow: "0 0 32px rgba(210,40,0,0.65), 0 0 70px rgba(180,20,0,0.22), inset 0 1px 0 rgba(255,160,100,0.2)",
+                  }}
+                  whileTap={loading ? {} : { scale: 0.972 }}
+                  className="w-full py-3 rounded-xl font-bold text-sm relative overflow-hidden"
+                  style={{
+                    background: loading
+                      ? "rgba(70,18,0,0.55)"
+                      : "linear-gradient(135deg, #7a1400 0%, #bf1e00 32%, #e83500 54%, #bf1e00 76%, #7a1400 100%)",
+                    color: "#ffcca0",
+                    border: loading ? "1px solid rgba(100,30,0,0.4)" : "1px solid rgba(190,70,20,0.55)",
+                    boxShadow: loading
+                      ? "none"
+                      : "0 0 22px rgba(190,25,0,0.42), inset 0 1px 0 rgba(255,140,90,0.12)",
+                    letterSpacing: "0.07em",
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {/* Continuous shimmer sweep */}
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: "linear-gradient(90deg, transparent 0%, rgba(255,210,130,0.22) 50%, transparent 100%)",
+                    }}
+                    animate={{ x: ["-110%", "210%"] }}
+                    transition={{
+                      duration: loading ? 1.2 : 1.9,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      repeatDelay: loading ? 0 : 0.25,
+                    }}
+                  />
+
+                  {/* Radial glow pulse */}
+                  {!loading && (
+                    <motion.div
+                      className="absolute inset-0 pointer-events-none rounded-xl"
+                      style={{
+                        background: "radial-gradient(ellipse at 50% 50%, rgba(255,110,50,0.18) 0%, transparent 65%)",
+                      }}
+                      animate={{ opacity: [0.25, 0.85, 0.25] }}
+                      transition={{ duration: 1.9, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  )}
+
+                  <span style={{ position: "relative", zIndex: 1 }}>
+                    {loading ? t("common.loading") : tab === "login" ? t("auth.enter") : t("auth.join")}
+                  </span>
+                </motion.button>
+              </div>
             </motion.form>
           </AnimatePresence>
 

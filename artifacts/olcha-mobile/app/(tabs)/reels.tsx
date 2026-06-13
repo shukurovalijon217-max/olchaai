@@ -111,6 +111,12 @@ export default function ReelsScreen() {
         decelerationRate="fast"
         onViewableItemsChanged={onViewableItemsChanged.current}
         viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
+        removeClippedSubviews
+        maxToRenderPerBatch={2}
+        updateCellsBatchingPeriod={50}
+        windowSize={3}
+        initialNumToRender={2}
+        getItemLayout={(_, index) => ({ length: itemHeight, offset: itemHeight * index, index })}
       />
     </View>
   );

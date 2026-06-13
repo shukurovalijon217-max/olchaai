@@ -324,3 +324,8 @@ em-emoji-picker {
   0%, 100% { opacity: 0.5; transform: scale(1); }
   50%       { opacity: 1;   transform: scale(1.2); }
 }
+
+@keyframes media-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}

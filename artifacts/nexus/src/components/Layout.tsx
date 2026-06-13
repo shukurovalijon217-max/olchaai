@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence, useMotionValue, useDragControls, useSpring, useTransform } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ import {
 import NexusLogo from "@/components/NexusLogo";
 import FloatingAvatar from "@/components/FloatingAvatar";
 import { useAuth } from "@/context/AuthContext";
+import { countryFlag, getCountryByCode, getCountryByTimezone } from "@/lib/countries";
 
 /* ─── Icon color palette ─────────────────────────────────────── */
 const NAV_GLOW: Record<string, { a: string; b: string; shadow: string }> = {
@@ -449,6 +450,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(loadOpen);
   const [moreOpen, setMoreOpen] = useState(false);
+
+  /* ── Live clock ──────────────────────────────────────────────── */
+  const [clockNow, setClockNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setClockNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const userTz = user?.timezone || undefined;
+  const clockTime = useMemo(() => {
+    try {
+      return clockNow.toLocaleTimeString("en-GB", { timeZone: userTz, hour: "2-digit", minute: "2-digit", hour12: false });
+    } catch { return clockNow.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }); }
+  }, [clockNow, userTz]);
+  const clockDate = useMemo(() => {
+    try {
+      return clockNow.toLocaleDateString("en-GB", { timeZone: userTz, day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, ".");
+    } catch { return clockNow.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "."); }
+  }, [clockNow, userTz]);
+  const countryDisplay = useMemo(() => {
+    if (user?.country) {
+      const c = getCountryByCode(user.country);
+      if (c) return `${countryFlag(c.code)} ${c.name}`;
+    }
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const c = getCountryByTimezone(tz);
+      if (c) return `${countryFlag(c.code)} ${c.name}`;
+    } catch { /* ignore */ }
+    return null;
+  }, [user?.country]);
   const [maxY, setMaxY] = useState(600);
   const y = useMotionValue(loadY());
   const dragControls = useDragControls();
@@ -740,16 +771,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           {user.displayName[0].toUpperCase()}
                         </div>
                       )}
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{user.displayName}</p>
-                        <p className="text-[10px] text-muted-foreground">@{user.username}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-foreground truncate">{user.displayName}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span className="text-[10px] text-muted-foreground">@{user.username}</span>
+                          <span className="text-[10px] text-violet-400 font-mono tracking-tight">{clockTime}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">{clockDate}</span>
+                        </div>
+                        {countryDisplay && (
+                          <p className="text-[10px] text-muted-foreground/80 mt-0.5 truncate">{countryDisplay}</p>
+                        )}
                       </div>
                     </motion.div>
                   </Link>
                   <motion.button
                     whileTap={{ scale: 0.93 }}
                     onClick={logout}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-xs font-bold border border-red-500/20"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-xs font-bold border border-red-500/20 flex-shrink-0"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     {t("auth.logout")}

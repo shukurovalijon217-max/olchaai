@@ -11,6 +11,8 @@ export interface AuthUser {
   isVerified: boolean;
   isAdmin: boolean;
   status: string;
+  country?: string | null;
+  timezone?: string | null;
   createdAt: string;
 }
 

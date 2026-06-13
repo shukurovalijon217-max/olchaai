@@ -71,7 +71,10 @@ function ReelVideo({ videoUrl, thumbnailUrl, isActive, muted, onTap }: {
   useEffect(() => {
     const v = ref.current; if (!v) return;
     if (isActive) {
-      v.currentTime = 0; setLoading(true); setPaused(false); setError(false);
+      v.currentTime = 0;
+      setPaused(false); setError(false);
+      /* Skip spinner when video is already preloaded (readyState ≥ HAVE_FUTURE_DATA) */
+      setLoading(v.readyState < 3);
       v.play().catch(() => setPaused(true));
     } else { v.pause(); v.currentTime = 0; }
   }, [isActive]);
@@ -88,7 +91,7 @@ function ReelVideo({ videoUrl, thumbnailUrl, isActive, muted, onTap }: {
   if (!videoUrl) return (
     <div className="absolute inset-0 cursor-pointer" onClick={handleTap}>
       {thumbnailUrl
-        ? <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
+        ? <img src={thumbnailUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
         : <div className="w-full h-full bg-gradient-to-br from-violet-900 via-indigo-900 to-black" />
       }
     </div>
@@ -96,20 +99,25 @@ function ReelVideo({ videoUrl, thumbnailUrl, isActive, muted, onTap }: {
 
   return (
     <div className="absolute inset-0 cursor-pointer" onClick={handleTap}>
+      {/* Thumbnail shown instantly while video buffers */}
+      {thumbnailUrl && loading && !error && (
+        <img src={thumbnailUrl} alt="" loading="eager"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+      )}
       <video ref={ref} src={videoUrl} poster={thumbnailUrl ?? undefined}
         className="w-full h-full object-cover" loop playsInline muted={muted} preload="auto"
         onLoadedData={() => setLoading(false)} onCanPlay={() => setLoading(false)}
         onWaiting={() => setLoading(true)} onPlaying={() => { setLoading(false); setPaused(false); }}
         onError={() => { setError(true); setLoading(false); }}
+        style={{ opacity: loading ? 0 : 1, transition: "opacity 150ms ease" }}
       />
-      {loading && !error && (
+      {/* Only show spinner when NO thumbnail is available */}
+      {loading && !error && !thumbnailUrl && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
           <div className="w-12 h-12 rounded-full border-2 border-white/20 border-t-white animate-spin" />
         </div>
       )}
-      {error && (
-        <VideoErrorMsg thumbnailUrl={thumbnailUrl} />
-      )}
+      {error && <VideoErrorMsg thumbnailUrl={thumbnailUrl} />}
       <AnimatePresence>
         {paused && !loading && !error && (
           <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
@@ -562,6 +570,26 @@ export default function ReelsPage() {
             <motion.button key={i} onClick={() => setCurrent(i)}
               className={`h-1 rounded-full transition-all duration-300 ${i === current ? "bg-white w-6" : "bg-white/25 w-1.5"}`} />
           ))}
+        </div>
+      )}
+
+      {/* ── Hidden video preloaders (prev, next+1, next+2) ──────────
+          Keeps adjacent videos warm in browser's media cache so
+          navigation feels instant — no spinner on the next reel.
+      ─────────────────────────────────────────────────────────── */}
+      {reels.length > 0 && (
+        <div style={{ display: "none" }} aria-hidden="true">
+          {[current - 1, current + 1, current + 2].map(idx => {
+            const r = reels[idx];
+            if (!r?.videoUrl) return null;
+            return <video key={r.id} src={r.videoUrl} preload="metadata" muted playsInline loop />;
+          })}
+          {/* Preload thumbnails for all adjacent reels */}
+          {[current - 1, current + 1, current + 2, current + 3].map(idx => {
+            const r = reels[idx];
+            if (!r?.thumbnailUrl) return null;
+            return <img key={`thumb-${r.id}`} src={r.thumbnailUrl} loading="eager" alt="" />;
+          })}
         </div>
       )}
 

@@ -7,6 +7,7 @@ import {
   Mic, Gift, Tv2, StopCircle,
 } from "lucide-react";
 import { useLikePost, useDeletePost, getListPostsQueryKey, getGetTrendingPostsQueryKey } from "@workspace/api-client-react";
+import { FastImage, FastVideo } from "@/components/FastMedia";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Post } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
@@ -366,12 +367,12 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
           );
           if (isVideo) return (
             <div className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden`}>
-              <video src={url} className="w-full h-full object-cover" controls muted playsInline />
+              <FastVideo src={url} className="absolute inset-0 w-full h-full" />
             </div>
           );
           return (
             <div className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden`}>
-              <img src={url} alt="" className="w-full h-full object-cover" />
+              <FastImage src={url} className="absolute inset-0 w-full h-full" />
             </div>
           );
         })()}

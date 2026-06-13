@@ -57,7 +57,14 @@ export function PostCard({ post }: Props) {
       ) : null}
 
       {post.mediaUrl ? (
-        <Image source={{ uri: post.mediaUrl }} style={[styles.media, { backgroundColor: colors.card }]} resizeMode="cover" />
+        <Image
+          source={{ uri: post.mediaUrl }}
+          style={[styles.media, { backgroundColor: colors.card }]}
+          resizeMode="cover"
+          progressiveRenderingEnabled
+          fadeDuration={150}
+          defaultSource={require("@/assets/images/icon.png")}
+        />
       ) : null}
 
       <View style={[styles.divider, { backgroundColor: colors.border }]} />

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable } from "@workspace/db";
-import { eq, sql, desc, and, inArray } from "drizzle-orm";
+import { eq, sql, desc, and, inArray, not } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter";
 
 const router = Router();
@@ -68,6 +68,40 @@ router.get("/reels", async (req, res) => {
       : db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(limit).offset(offset));
 
     res.json(await batchEnrichReels(reels, viewerId));
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── GET /reels/similar — semantic tag overlap ──────────────── */
+router.get("/reels/similar", async (req, res) => {
+  try {
+    const viewerId = (req.session as any)?.userId as number | undefined;
+    const tagsParam = String(req.query.tags ?? "");
+    const excludeParam = String(req.query.excludeIds ?? "");
+    const limit = Math.min(Number(req.query.limit) || 8, 20);
+
+    const tags = tagsParam.split(",").map(t => t.trim()).filter(Boolean);
+    const excludeIds = excludeParam.split(",").map(Number).filter(n => !isNaN(n) && n > 0);
+
+    if (tags.length === 0) { res.json([]); return; }
+
+    /* Build parameterized array-overlap condition */
+    const overlap = sql`${reelsTable.tags} && ARRAY[${sql.join(tags.map(t => sql`${t}`), sql`, `)}]::text[]`;
+
+    const rows = await db
+      .select()
+      .from(reelsTable)
+      .where(
+        excludeIds.length > 0
+          ? and(overlap, not(inArray(reelsTable.id, excludeIds)))
+          : overlap,
+      )
+      .orderBy(desc(reelsTable.viewsCount))
+      .limit(limit);
+
+    res.json(await batchEnrichReels(rows, viewerId));
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

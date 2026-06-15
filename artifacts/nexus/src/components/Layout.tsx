@@ -1048,13 +1048,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                               {user.displayName[0].toUpperCase()}
                             </div>
                           )}
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="text-sm font-bold text-white truncate">{user.displayName}</p>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] text-violet-400/80">@{user.username}</span>
-                              <span className="text-[10px] text-violet-300 font-mono">{clockTime}</span>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              <span className="text-[10px] font-semibold" style={{ color: "rgba(167,139,250,0.9)" }}>@{user.username}</span>
+                              <span className="text-[10px] font-mono" style={{ color: "rgba(125,211,252,0.85)" }}>{clockTime}</span>
+                              <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>{clockDate}</span>
                             </div>
-                            {countryDisplay && <p className="text-[10px] text-slate-400 mt-0.5 truncate">{countryDisplay}</p>}
+                            {countryDisplay ? (
+                              <p className="text-[10px] mt-0.5 truncate font-medium" style={{ color: "rgba(134,239,172,0.85)" }}>{countryDisplay}</p>
+                            ) : (
+                              <p className="text-[10px] mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.28)" }}>uz O'zbekiston</p>
+                            )}
                           </div>
                         </motion.div>
                       </Link>

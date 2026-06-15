@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
@@ -2263,9 +2263,117 @@ function NexusCoreTab() {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════
+   PANEL SYSTEM  (Settings sahifasidek animatsion panellar)
+════════════════════════════════════════════════════════════ */
+const ADMIN_COLOR: Record<string, {
+  icon: string; border: string; glow: string;
+  badge: string; ring: string; scanFrom: string;
+}> = {
+  violet:  { icon: "bg-violet-500/20 text-violet-400",   border: "border-violet-500/50",  glow: "shadow-[0_0_30px_-5px_rgba(139,92,246,0.35)]",  badge: "bg-violet-500/20 text-violet-300",   ring: "ring-violet-500/30",  scanFrom: "from-violet-500/30"  },
+  blue:    { icon: "bg-blue-500/20 text-blue-400",       border: "border-blue-500/50",    glow: "shadow-[0_0_30px_-5px_rgba(59,130,246,0.35)]",   badge: "bg-blue-500/20 text-blue-300",     ring: "ring-blue-500/30",    scanFrom: "from-blue-500/30"    },
+  amber:   { icon: "bg-amber-500/20 text-amber-400",     border: "border-amber-500/50",   glow: "shadow-[0_0_30px_-5px_rgba(245,158,11,0.35)]",   badge: "bg-amber-500/20 text-amber-300",   ring: "ring-amber-500/30",   scanFrom: "from-amber-500/30"   },
+  rose:    { icon: "bg-rose-500/20 text-rose-400",       border: "border-rose-500/50",    glow: "shadow-[0_0_30px_-5px_rgba(244,63,94,0.35)]",    badge: "bg-rose-500/20 text-rose-300",     ring: "ring-rose-500/30",    scanFrom: "from-rose-500/30"    },
+  emerald: { icon: "bg-emerald-500/20 text-emerald-400", border: "border-emerald-500/50", glow: "shadow-[0_0_30px_-5px_rgba(16,185,129,0.35)]",   badge: "bg-emerald-500/20 text-emerald-300",ring:"ring-emerald-500/30", scanFrom: "from-emerald-500/30" },
+  cyan:    { icon: "bg-cyan-500/20 text-cyan-400",       border: "border-cyan-500/50",    glow: "shadow-[0_0_30px_-5px_rgba(6,182,212,0.35)]",    badge: "bg-cyan-500/20 text-cyan-300",     ring: "ring-cyan-500/30",    scanFrom: "from-cyan-500/30"    },
+  orange:  { icon: "bg-orange-500/20 text-orange-400",   border: "border-orange-500/50",  glow: "shadow-[0_0_30px_-5px_rgba(249,115,22,0.35)]",   badge: "bg-orange-500/20 text-orange-300", ring: "ring-orange-500/30",  scanFrom: "from-orange-500/30"  },
+  indigo:  { icon: "bg-indigo-500/20 text-indigo-400",   border: "border-indigo-500/50",  glow: "shadow-[0_0_30px_-5px_rgba(99,102,241,0.35)]",   badge: "bg-indigo-500/20 text-indigo-300", ring: "ring-indigo-500/30",  scanFrom: "from-indigo-500/30"  },
+};
+
+const aSC = { hidden: {}, show: { transition: { staggerChildren: 0.055, delayChildren: 0.05 } } };
+const aSI = {
+  hidden: { opacity: 0, y: 10, filter: "blur(4px)" },
+  show:   { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring" as const, stiffness: 380, damping: 28 } },
+};
+const aPE = {
+  hidden: { opacity: 0, y: 20, scale: 0.97 },
+  show:   { opacity: 1, y: 0, scale: 1, transition: { type: "spring" as const, stiffness: 380, damping: 28 } },
+};
+
+function AdminScanLine({ color }: { color: string }) {
+  const c = ADMIN_COLOR[color]!;
+  return (
+    <motion.div
+      className={`absolute inset-x-0 top-0 h-12 bg-gradient-to-b ${c.scanFrom} to-transparent pointer-events-none`}
+      initial={{ y: 0, opacity: 1 }} animate={{ y: "300%", opacity: 0 }}
+      transition={{ duration: 0.55, ease: "easeOut" }}
+    />
+  );
+}
+
+function AdminPanel({
+  color, icon: Icon, label, preview, isOpen, onToggle, children,
+}: {
+  color: string; icon: React.ElementType; label: string; preview?: string;
+  isOpen: boolean; onToggle: () => void; children: React.ReactNode;
+}) {
+  const c = ADMIN_COLOR[color]!;
+  const bodyRef = useRef<HTMLDivElement>(null);
+  return (
+    <motion.div layout className={`relative rounded-2xl border transition-all duration-300 overflow-hidden ${
+      isOpen
+        ? `${c.border} ${c.glow} bg-white/[0.04] ring-1 ${c.ring}`
+        : "border-white/8 bg-white/[0.025] hover:bg-white/[0.04] hover:border-white/15"
+    }`}>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className={`absolute inset-0 bg-gradient-to-br ${c.scanFrom} to-transparent pointer-events-none`}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          />
+        )}
+      </AnimatePresence>
+      <button onClick={onToggle} className="relative z-10 w-full flex items-center gap-4 px-5 py-4 text-left">
+        <motion.div
+          animate={{ scale: isOpen ? 1.08 : 1, rotate: isOpen ? 5 : 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${c.icon} ${isOpen ? "shadow-lg" : ""}`}>
+          <Icon className="w-5 h-5" />
+        </motion.div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-white leading-tight">{label}</p>
+          {preview && !isOpen && <p className="text-xs text-white/40 mt-0.5 truncate">{preview}</p>}
+        </div>
+        <motion.div
+          animate={{ rotate: isOpen ? 45 : 0, scale: isOpen ? 1.1 : 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isOpen ? c.badge : "bg-white/8 text-white/40"}`}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </motion.div>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div key="content"
+            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 320, damping: 35, mass: 0.8 }}
+            className="overflow-hidden relative">
+            <AdminScanLine color={color} />
+            <div className="mx-5 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <motion.div ref={bodyRef} variants={aSC} initial="hidden" animate="show" className="relative z-10 px-5 py-5">
+              {children}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function AdminSF({ children }: { children: React.ReactNode }) {
+  return <motion.div variants={aSI}>{children}</motion.div>;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN ADMIN PAGE
+════════════════════════════════════════════════════════════ */
 export default function AdminPage() {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<AdminTab>("dashboard");
+  const [openPanel, setOpenPanel] = useState<AdminTab | null>("dashboard");
+  const toggle = (id: AdminTab) => setOpenPanel(prev => prev === id ? null : id);
   const { data: dash } = useGetAdminDashboard();
   const { data: users = [], refetch: refetchUsers } = useAdminListUsers();
   const { data: content = [], refetch: refetchContent } = useAdminListContent();
@@ -2303,516 +2411,502 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Admin Sidebar */}
-      <aside className="w-52 flex-shrink-0 border-r border-border bg-sidebar flex flex-col py-5 px-3">
-        <div className="flex items-center gap-2 px-2 mb-6">
-          <div className="w-7 h-7 rounded-lg bg-accent/20 flex items-center justify-center">
-            <ShieldCheck className="w-4 h-4 text-accent" />
+    <div className="min-h-screen bg-[#080810]">
+      {/* Ambient background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/3 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/4 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-0 w-64 h-64 bg-cyan-500/3 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 max-w-3xl mx-auto px-4 py-8 pb-28">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-8">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-8 h-8 rounded-lg bg-white/8 flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4 text-white/60" />
+            </div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Admin Panel</h1>
           </div>
-          <span className="text-sm font-bold text-foreground">Admin Panel</span>
-        </div>
-        <nav className="space-y-1">
-          {TABS.map(({ id, key, icon: Icon }) => (
-            <button key={id} onClick={() => setTab(id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
-                tab === id ? "bg-accent/15 text-accent" : "text-sidebar-foreground hover:bg-sidebar-accent"
-              }`}>
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {t(key)}
-            </button>
-          ))}
-        </nav>
-      </aside>
+          <p className="text-sm text-white/35 ml-11">Platforma boshqaruvi va nazorat</p>
+        </motion.div>
 
-      {/* Main content */}
-      <div className="flex-1 overflow-auto p-6">
+        {/* Panel stack */}
+        <motion.div className="space-y-2" initial="hidden" animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.065 } } }}>
 
-        {/* DASHBOARD */}
-        {tab === "dashboard" && dash && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            <h2 className="text-xl font-bold text-foreground">Platform Overview</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total Users", value: dash.totalUsers.toLocaleString(), icon: Users, color: "text-primary", bg: "bg-primary/10" },
-                { label: "Total Posts", value: dash.totalPosts.toLocaleString(), icon: FileText, color: "text-cyan-400", bg: "bg-cyan-400/10" },
-                { label: "Active Now", value: dash.activeNow.toLocaleString(), icon: Activity, color: "text-emerald-400", bg: "bg-emerald-400/10" },
-                { label: "AI Accuracy", value: `${dash.aiAccuracy}%`, icon: Cpu, color: "text-violet-400", bg: "bg-violet-400/10" },
-              ].map((s, i) => (
-                <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                  className="bg-card border border-border rounded-2xl p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-muted-foreground font-medium">{s.label}</span>
-                    <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center`}>
-                      <s.icon className={`w-4 h-4 ${s.color}`} />
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">{s.value}</p>
-                  <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" /> +{dash.dailyGrowth}% bugun
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Reels", value: dash.totalReels },
-                { label: "Stories", value: dash.totalStories },
-                { label: "Jamoalar", value: dash.totalGroups },
-                { label: "Flaglangan kontent", value: dash.flaggedContent, alert: true },
-              ].map((s) => (
-                <div key={s.label} className={`bg-card border rounded-2xl p-4 ${s.alert ? "border-destructive/30" : "border-border"}`}>
-                  <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
-                  <p className={`text-xl font-bold ${s.alert ? "text-destructive" : "text-foreground"}`}>{s.value.toLocaleString()}</p>
+          {/* ── DASHBOARD ─────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="violet" icon={BarChart3} label="Dashboard"
+              preview={dash ? `${dash.totalUsers.toLocaleString()} foydalanuvchi · ${dash.totalPosts.toLocaleString()} post` : "Platform ko'rsatkichlari"}
+              isOpen={openPanel === "dashboard"} onToggle={() => toggle("dashboard")}>
+              {!dash ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-5 h-5 rounded-full border-2 border-violet-400/30 border-t-violet-400 animate-spin" />
                 </div>
-              ))}
-            </div>
-            {dash.topRegions && (
-              <div className="bg-card border border-border rounded-2xl p-5">
-                <h3 className="font-bold text-foreground text-sm mb-4">Mintaqalar bo'yicha foydalanuvchilar</h3>
-                <div className="space-y-3">
-                  {dash.topRegions.map((r) => {
-                    const pct = Math.round((r.users / dash.totalUsers) * 100);
-                    return (
-                      <div key={r.region}>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-foreground font-medium">{r.region}</span>
-                          <span className="text-muted-foreground">{r.users.toLocaleString()} ({pct}%)</span>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: "Total Users",  value: dash.totalUsers.toLocaleString(),  icon: Users,    color: "text-violet-400", bg: "bg-violet-500/10" },
+                      { label: "Total Posts",  value: dash.totalPosts.toLocaleString(),  icon: FileText, color: "text-cyan-400",   bg: "bg-cyan-500/10"   },
+                      { label: "Active Now",   value: dash.activeNow.toLocaleString(),   icon: Activity, color: "text-emerald-400",bg: "bg-emerald-500/10"},
+                      { label: "AI Accuracy",  value: `${dash.aiAccuracy}%`,            icon: Cpu,      color: "text-violet-400", bg: "bg-violet-500/10" },
+                    ].map(s => (
+                      <AdminSF key={s.label}>
+                        <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[11px] text-white/40 font-medium">{s.label}</span>
+                            <div className={`w-7 h-7 rounded-lg ${s.bg} flex items-center justify-center`}>
+                              <s.icon className={`w-3.5 h-3.5 ${s.color}`} />
+                            </div>
+                          </div>
+                          <p className="text-xl font-bold text-white">{s.value}</p>
+                          <p className="text-xs text-emerald-400 mt-0.5 flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3" /> +{dash.dailyGrowth}% bugun
+                          </p>
                         </div>
-                        <div className="h-2 rounded-full bg-muted overflow-hidden">
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.7, delay: 0.2 }}
-                            className="h-full rounded-full bg-gradient-to-r from-primary to-accent" />
+                      </AdminSF>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: "Reels",       value: dash.totalReels     },
+                      { label: "Stories",     value: dash.totalStories   },
+                      { label: "Jamoalar",    value: dash.totalGroups    },
+                      { label: "Flaglangan",  value: dash.flaggedContent, alert: true },
+                    ].map(s => (
+                      <AdminSF key={s.label}>
+                        <div className={`rounded-2xl p-3 border ${"alert" in s && s.alert ? "border-red-500/25 bg-red-500/8" : "border-white/8 bg-white/[0.025]"}`}>
+                          <p className="text-[11px] text-white/40 mb-1">{s.label}</p>
+                          <p className={`text-lg font-bold ${"alert" in s && s.alert ? "text-red-400" : "text-white"}`}>{s.value.toLocaleString()}</p>
+                        </div>
+                      </AdminSF>
+                    ))}
+                  </div>
+                  {dash.topRegions && (
+                    <AdminSF>
+                      <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
+                        <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Mintaqalar</p>
+                        <div className="space-y-2.5">
+                          {dash.topRegions.map((r: { region: string; users: number }) => {
+                            const pct = Math.round((r.users / dash.totalUsers) * 100);
+                            return (
+                              <div key={r.region}>
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className="text-white/70 font-medium">{r.region}</span>
+                                  <span className="text-white/40">{r.users.toLocaleString()} ({pct}%)</span>
+                                </div>
+                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                  <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.7, delay: 0.2 }}
+                                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500" />
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* USERS */}
-        {tab === "users" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            <h2 className="text-xl font-bold text-foreground">Foydalanuvchilarni Boshqarish</h2>
-            <div className="bg-card border border-border rounded-2xl overflow-auto">
-              <table className="w-full min-w-[700px]">
-                <thead>
-                  <tr className="border-b border-border">
-                    {["Foydalanuvchi", "Status", "Verified", "Admin", "Premium", "Qo'shilgan", "Amallar"].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user, i) => (
-                    <motion.tr key={user.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                      className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
-                      <td className="px-4 py-3">
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <p className="text-sm font-semibold text-foreground">{user.displayName}</p>
-                            {user.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-primary" />}
-                            {user.isAdmin && <Crown className="w-3.5 h-3.5 text-amber-400" />}
-                            {user.isPremium && <Zap className="w-3.5 h-3.5 text-yellow-400" />}
-                          </div>
-                          <p className="text-xs text-muted-foreground">@{user.username}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          user.status === "active" ? "bg-emerald-400/15 text-emerald-400" : "bg-destructive/15 text-destructive"
-                        }`}>
-                          {user.status === "active" ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                          {user.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={user.isVerified ? "text-primary font-semibold" : "text-muted-foreground"}>
-                          {user.isVerified ? "✓ Ha" : "Yo'q"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={user.isAdmin ? "text-amber-400 font-semibold" : "text-muted-foreground"}>
-                          {user.isAdmin ? "✓ Ha" : "Yo'q"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`flex items-center gap-1 ${user.isPremium ? "text-yellow-400 font-semibold" : "text-muted-foreground"}`}>
-                          {user.isPremium ? <><Zap className="w-3.5 h-3.5" /> Ha</> : "Yo'q"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(user.createdAt).toLocaleDateString("uz-UZ")}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <button onClick={() => handleSuspend(user.id, user.status === "suspended")}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                              user.status === "suspended"
-                                ? "bg-emerald-400/15 text-emerald-400 hover:bg-emerald-400/25"
-                                : "bg-destructive/15 text-destructive hover:bg-destructive/25"
-                            }`}>
-                            <UserX className="w-3 h-3" />
-                            {user.status === "suspended" ? "Tiklash" : "Bloklash"}
-                          </button>
-                          <button onClick={() => handleTogglePremium(user.id)}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                              user.isPremium
-                                ? "bg-yellow-400/20 text-yellow-400 hover:bg-yellow-400/30"
-                                : "bg-muted text-muted-foreground hover:bg-muted/70"
-                            }`}>
-                            <Zap className="w-3 h-3" />
-                            {user.isPremium ? "Premium olish" : "Premium berish"}
-                          </button>
-                          <button onClick={() => handleVerify(user.id)}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                              user.isVerified ? "bg-primary/20 text-primary hover:bg-primary/30" : "bg-muted text-muted-foreground hover:bg-muted/70"
-                            }`}>
-                            <BadgeCheck className="w-3 h-3" />
-                            {user.isVerified ? "Unverify" : "Verify"}
-                          </button>
-                          <button onClick={() => handleToggleAdmin(user.id)}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                              user.isAdmin ? "bg-amber-400/20 text-amber-400 hover:bg-amber-400/30" : "bg-muted text-muted-foreground hover:bg-muted/70"
-                            }`}>
-                            <Crown className="w-3 h-3" />
-                            {user.isAdmin ? "Unadmin" : "Admin"}
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
-        )}
-
-        {/* CONTENT */}
-        {tab === "content" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            <h2 className="text-xl font-bold text-foreground">Kontent Moderatsiyasi</h2>
-            <div className="space-y-3">
-              {content.map((item, i) => (
-                <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                  className={`bg-card border rounded-2xl p-4 flex gap-4 ${item.isFlagged ? "border-destructive/30" : "border-border"}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-semibold text-foreground">{item.authorName}</span>
-                      <span className="px-1.5 py-0.5 rounded bg-muted text-xs text-muted-foreground">{item.type}</span>
-                      {item.isFlagged && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/15 text-destructive text-xs font-semibold">
-                          <AlertTriangle className="w-3 h-3" /> Flagged
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{item.preview}</p>
-                    {item.flagReason && <p className="text-xs text-destructive mt-1">{item.flagReason}</p>}
-                  </div>
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <span className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString("uz-UZ")}</span>
-                    <div className="flex gap-2">
-                      <button className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-muted text-muted-foreground text-xs hover:bg-card transition-colors">
-                        <Eye className="w-3 h-3" /> Ko'rish
-                      </button>
-                      <button onClick={() => handleDeletePost(item.id)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-destructive/15 text-destructive text-xs hover:bg-destructive/25 transition-colors">
-                        <Trash2 className="w-3 h-3" /> O'chirish
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-              {content.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Hamma kontent toza</p>
+                    </AdminSF>
+                  )}
                 </div>
               )}
-            </div>
+            </AdminPanel>
           </motion.div>
-        )}
 
-        {/* ANALYTICS */}
-        {tab === "analytics" && analytics && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
-            <h2 className="text-xl font-bold text-foreground">Platform Tahlili (7 kun)</h2>
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" /> Foydalanuvchi o'sishi
-              </h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={analytics.userGrowth}>
-                  <defs>
-                    <linearGradient id="ugGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(252 100% 68%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(252 100% 68%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 30% 15%)" />
-                  <XAxis dataKey="date" tick={{ fill: "hsl(215 20% 55%)", fontSize: 11 }} tickLine={false} />
-                  <YAxis tick={{ fill: "hsl(215 20% 55%)", fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={{ background: "hsl(222 40% 8%)", border: "1px solid hsl(220 30% 14%)", borderRadius: 12, color: "hsl(210 40% 95%)" }} />
-                  <Area type="monotone" dataKey="count" stroke="hsl(252 100% 68%)" fill="url(#ugGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-cyan-400" /> Kontent hajmi
-              </h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={analytics.contentGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 30% 15%)" />
-                  <XAxis dataKey="date" tick={{ fill: "hsl(215 20% 55%)", fontSize: 11 }} tickLine={false} />
-                  <YAxis tick={{ fill: "hsl(215 20% 55%)", fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={{ background: "hsl(222 40% 8%)", border: "1px solid hsl(220 30% 14%)", borderRadius: 12, color: "hsl(210 40% 95%)" }} />
-                  <Bar dataKey="posts" fill="hsl(252 100% 68%)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="reels" fill="hsl(280 90% 60%)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="stories" fill="hsl(168 80% 50%)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between">
-              <span className="text-sm text-muted-foreground font-medium">O'rtacha Engagement</span>
-              <span className="text-2xl font-bold aurora-text">{analytics.engagementRate}%</span>
-            </div>
-          </motion.div>
-        )}
-
-        {/* FINANCE */}
-        {tab === "finance" && <FinanceTab />}
-
-        {/* NOTIFY */}
-        {tab === "notify" && <NotifyTab />}
-
-        {/* AI SYSTEM */}
-        {tab === "ai" && aiStatus && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-foreground">AI Tizim Holati</h2>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-400/15 text-emerald-400 text-sm font-semibold">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                {aiStatus.selfImprovementEnabled ? "O'z-o'zini yaxshilamoqda" : "Barqaror"}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Versiya", value: aiStatus.version, icon: Zap, color: "text-primary" },
-                { label: "Aniqlik", value: `${aiStatus.accuracy}%`, icon: Activity, color: "text-emerald-400" },
-                { label: "Modellar", value: aiStatus.modelsRunning.toString(), icon: Cpu, color: "text-cyan-400" },
-                { label: "Oxirgi yangilanish", value: new Date(aiStatus.lastImproved).toLocaleTimeString("uz-UZ"), icon: RefreshCw, color: "text-violet-400" },
-              ].map((m, i) => (
-                <motion.div key={m.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                  className="bg-card border border-border rounded-2xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <m.icon className={`w-4 h-4 ${m.color}`} />
-                    <span className="text-xs text-muted-foreground">{m.label}</span>
-                  </div>
-                  <p className="text-base font-bold text-foreground">{m.value}</p>
-                </motion.div>
-              ))}
-            </div>
-            {aiStatus.metricsHistory && (
-              <div className="bg-card border border-border rounded-2xl p-5">
-                <h3 className="font-semibold text-foreground text-sm mb-4">Aniqlik tarixi</h3>
-                <ResponsiveContainer width="100%" height={160}>
-                  <LineChart data={aiStatus.metricsHistory}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 30% 15%)" />
-                    <XAxis dataKey="date" tick={{ fill: "hsl(215 20% 55%)", fontSize: 10 }} tickLine={false} />
-                    <YAxis domain={[94, 100]} tick={{ fill: "hsl(215 20% 55%)", fontSize: 10 }} tickLine={false} axisLine={false} />
-                    <Tooltip contentStyle={{ background: "hsl(222 40% 8%)", border: "1px solid hsl(220 30% 14%)", borderRadius: 12, color: "hsl(210 40% 95%)" }} />
-                    <Line type="monotone" dataKey="accuracy" stroke="hsl(168 80% 50%)" strokeWidth={2.5} dot={{ fill: "hsl(168 80% 50%)", r: 3 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <h3 className="font-bold text-foreground text-sm mb-4 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-primary" /> AI Tavsiyalar
-              </h3>
+          {/* ── USERS ─────────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="blue" icon={Users} label={t("admin.users")}
+              preview={`${users.length} foydalanuvchi ro'yxatda`}
+              isOpen={openPanel === "users"} onToggle={() => toggle("users")}>
               <div className="space-y-3">
-                {aiStatus.recommendations?.map((rec, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-muted">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 mt-0.5 ${
-                      rec.impact === "high" ? "bg-destructive/20 text-destructive"
-                        : rec.impact === "medium" ? "bg-amber-400/20 text-amber-400"
-                        : "bg-muted-foreground/20 text-muted-foreground"
-                    }`}>{rec.impact}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{rec.module}</p>
-                      <p className="text-xs text-muted-foreground">{rec.suggestion}</p>
-                    </div>
-                    <button className="ml-auto flex-shrink-0 px-2.5 py-1 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-colors">
-                      Qo'llash
-                    </button>
-                  </motion.div>
-                ))}
+                <div className="overflow-x-auto rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <table className="w-full text-sm min-w-[700px]">
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                        {["Foydalanuvchi", "Status", "Verified", "Admin", "Premium", "Sana", "Amallar"].map(h => (
+                          <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold text-white/40 uppercase tracking-wider">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {users.map((user: any) => (
+                        <motion.tr key={user.id} variants={aSI} className="hover:bg-white/[0.02] transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-white/10 overflow-hidden flex-shrink-0">
+                                {user.avatarUrl && <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-white text-xs">{user.displayName || user.username}</p>
+                                <p className="text-[10px] text-white/40">@{user.username}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${user.status === "suspended" ? "bg-red-500/15 text-red-400" : "bg-emerald-500/15 text-emerald-400"}`}>
+                              {user.status === "suspended" ? "Bloklangan" : "Faol"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs">
+                            <span className={user.isVerified ? "text-blue-400 font-semibold" : "text-white/30"}>
+                              {user.isVerified ? "✓ Ha" : "Yo'q"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs">
+                            <span className={user.isAdmin ? "text-amber-400 font-semibold" : "text-white/30"}>
+                              {user.isAdmin ? "✓ Ha" : "Yo'q"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs">
+                            <span className={`flex items-center gap-1 ${user.isPremium ? "text-yellow-400 font-semibold" : "text-white/30"}`}>
+                              {user.isPremium ? <><Zap className="w-3 h-3" /> Ha</> : "Yo'q"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-[11px] text-white/40">{new Date(user.createdAt).toLocaleDateString("uz-UZ")}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <button onClick={() => handleSuspend(user.id, user.status === "suspended")}
+                                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                                  user.status === "suspended"
+                                    ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25"
+                                    : "bg-red-500/15 text-red-400 hover:bg-red-500/25"
+                                }`}><UserX className="w-3 h-3" />{user.status === "suspended" ? "Tiklash" : "Blok"}</button>
+                              <button onClick={() => handleTogglePremium(user.id)}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-white/8 text-white/50 hover:text-yellow-400 hover:bg-yellow-500/15 transition-colors">
+                                <Zap className="w-3 h-3" />{user.isPremium ? "Olib olish" : "Berish"}
+                              </button>
+                              <button onClick={() => handleVerify(user.id)}
+                                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${user.isVerified ? "bg-blue-500/20 text-blue-400" : "bg-white/8 text-white/50 hover:text-blue-400 hover:bg-blue-500/15"}`}>
+                                <BadgeCheck className="w-3 h-3" />Verify
+                              </button>
+                              <button onClick={() => handleToggleAdmin(user.id)}
+                                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${user.isAdmin ? "bg-amber-500/20 text-amber-400" : "bg-white/8 text-white/50 hover:text-amber-400 hover:bg-amber-500/15"}`}>
+                                <Crown className="w-3 h-3" />{user.isAdmin ? "Unadmin" : "Admin"}
+                              </button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {users.length === 0 && (
+                  <div className="text-center py-10 text-white/30 text-sm">Foydalanuvchilar topilmadi</div>
+                )}
               </div>
-            </div>
+            </AdminPanel>
           </motion.div>
-        )}
 
-        {/* AI INTEGRATIONS */}
-        {tab === "ai-integrations" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-foreground">AI Integratsiyalar</h2>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-400/15 text-emerald-400 text-sm font-semibold">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Faol
-              </span>
-            </div>
-
-            {/* Active integrations grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                {
-                  name: "OpenAI GPT-4o", status: "active", icon: "🤖",
-                  desc: "AI Chat, Caption Generator, Kontent Moderatsiya",
-                  model: "gpt-4o-mini", calls: "∞", color: "border-emerald-500/30 bg-emerald-500/5",
-                  badge: "bg-emerald-400/15 text-emerald-400",
-                },
-                {
-                  name: "DALL-E 3", status: "active", icon: "🎨",
-                  desc: "AI Rasm Yaratish — Matndan rasm generatsiya",
-                  model: "dall-e-3", calls: "∞", color: "border-violet-500/30 bg-violet-500/5",
-                  badge: "bg-violet-400/15 text-violet-400",
-                },
-                {
-                  name: "Google Books API", status: "active", icon: "📚",
-                  desc: "Shaxsiy kutubxona — Kitob qidirish va saqlash",
-                  model: "Google Books v1", calls: "Bepul", color: "border-blue-500/30 bg-blue-500/5",
-                  badge: "bg-blue-400/15 text-blue-400",
-                },
-                {
-                  name: "TensorFlow.js", status: "active", icon: "🧠",
-                  desc: "ML modellar — Kontentni tahlil qilish",
-                  model: "tfjs v4", calls: "Local", color: "border-orange-500/30 bg-orange-500/5",
-                  badge: "bg-orange-400/15 text-orange-400",
-                },
-                {
-                  name: "Stripe Payments", status: "active", icon: "💳",
-                  desc: "To'lovlar va obunalar tizimi",
-                  model: "Stripe API v3", calls: "∞", color: "border-indigo-500/30 bg-indigo-500/5",
-                  badge: "bg-indigo-400/15 text-indigo-400",
-                },
-                {
-                  name: "Anthropic Claude", status: "planned", icon: "🔮",
-                  desc: "Kelajakda: Ilg'or tahlil va kontent yaratish",
-                  model: "claude-3-opus", calls: "—", color: "border-border bg-muted/30",
-                  badge: "bg-amber-400/15 text-amber-400",
-                },
-              ].map((item, i) => (
-                <motion.div key={item.name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-                  className={`rounded-2xl border p-5 ${item.color}`}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{item.icon}</span>
-                      <div>
-                        <p className="font-bold text-foreground text-sm">{item.name}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono">{item.model}</p>
+          {/* ── CONTENT ───────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="cyan" icon={FileText} label={t("admin.content")}
+              preview="Kontent moderatsiyasi"
+              isOpen={openPanel === "content"} onToggle={() => toggle("content")}>
+              <div className="space-y-3">
+                {content.map((item: any) => (
+                  <AdminSF key={item.id}>
+                    <div className={`rounded-2xl p-4 flex gap-4 border ${item.isFlagged ? "border-red-500/25 bg-red-500/5" : "border-white/8 bg-white/[0.025]"}`}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-sm font-semibold text-white">{item.authorName}</span>
+                          <span className="px-2 py-0.5 rounded-lg bg-white/10 text-xs text-white/50">{item.type}</span>
+                          {item.isFlagged && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 text-xs font-semibold">
+                              <AlertTriangle className="w-3 h-3" /> Flagged
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-white/50 line-clamp-2">{item.preview}</p>
+                        {item.flagReason && <p className="text-xs text-red-400 mt-1">{item.flagReason}</p>}
+                      </div>
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <span className="text-xs text-white/30">{new Date(item.createdAt).toLocaleDateString("uz-UZ")}</span>
+                        <div className="flex gap-2">
+                          <button className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/8 text-white/50 text-xs hover:text-white/80 transition-colors">
+                            <Eye className="w-3 h-3" /> Ko'rish
+                          </button>
+                          <button onClick={() => handleDeletePost(item.id)}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 text-xs hover:bg-red-500/25 transition-colors">
+                            <Trash2 className="w-3 h-3" /> O'chirish
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${item.badge}`}>
-                      {item.status === "active" ? "Faol" : "Rejada"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">So'rovlar: <strong className="text-foreground">{item.calls}</strong></span>
-                    {item.status === "active" ? (
-                      <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-[10px] text-emerald-400 font-semibold">Ulangan</span>
-                      </div>
-                    ) : (
-                      <span className="text-[10px] text-amber-400 font-semibold">Tez kunda</span>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* AI Features table */}
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <h3 className="font-bold text-foreground text-sm mb-4 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-primary" /> Platforma AI Funksiyalari
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { feature: "AI Chat (GPT-4o)", route: "/ai-chat", status: "active", desc: "Foydalanuvchilar bilan suhbat, streaming" },
-                  { feature: "Caption Generator", route: "/ai-chat (Caption tab)", status: "active", desc: "Post va Reel uchun caption + hashtag" },
-                  { feature: "AI Rasm Yaratish", route: "/ai-chat (Rasm tab)", status: "active", desc: "DALL-E 3 bilan rasm generatsiya" },
-                  { feature: "Smart Kontent Moderatsiya", route: "/api/openai/moderate", status: "active", desc: "AI-based spam va violation detection" },
-                  { feature: "Shaxsiy Kutubxona", route: "/kutubxona", status: "active", desc: "Google Books + shaxsiy kolleksiya" },
-                  { feature: "AI Feed Algoritm", route: "/api/ai/feed", status: "active", desc: "Mashhurlik bo'yicha kontent tavsiyalari" },
-                  { feature: "AI Trending Topics", route: "/api/ai/trending-topics", status: "active", desc: "Trend mavzular va hashtaglar" },
-                  { feature: "Voice AI Chat", route: "—", status: "planned", desc: "Ovozli suhbat (GPT-audio)" },
-                  { feature: "AI Video Analysis", route: "—", status: "planned", desc: "Reel va Video kontentni tahlil qilish" },
-                  { feature: "Personalized Feed AI", route: "—", status: "planned", desc: "Foydalanuvchi xulqiga asoslangan feed" },
-                ].map((item, i) => (
-                  <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${i % 2 === 0 ? "bg-muted/40" : ""}`}>
-                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.status === "active" ? "hsl(168 80% 50%)" : "hsl(45 90% 55%)" }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-foreground">{item.feature}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.desc}</p>
-                    </div>
-                    <span className="text-[10px] font-mono text-muted-foreground hidden sm:block truncate max-w-[160px]">{item.route}</span>
-                    <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold ${item.status === "active" ? "bg-emerald-400/15 text-emerald-400" : "bg-amber-400/15 text-amber-400"}`}>
-                      {item.status === "active" ? "Faol" : "Rejada"}
-                    </span>
-                  </div>
+                  </AdminSF>
                 ))}
+                {content.length === 0 && (
+                  <div className="text-center py-10 text-white/30 text-sm">
+                    <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    Hamma kontent toza
+                  </div>
+                )}
               </div>
-            </div>
-
-            {/* AI Test Panel */}
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <h3 className="font-bold text-foreground text-sm mb-4 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-cyan-400" /> AI Test Paneli (Admin)
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <a href="/ai-chat" target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-primary/15 text-primary hover:bg-primary/25 transition-colors text-sm font-semibold">
-                  🤖 AI Chat ochish
-                </a>
-                <a href="/kutubxona" target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors text-sm font-semibold">
-                  📚 Kutubxona ochish
-                </a>
-                <button onClick={async () => {
-                  const r = await fetch(`${API}/api/openai/moderate`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({ content: "This is a test message for AI moderation" }),
-                  });
-                  const d = await r.json();
-                  alert(`AI Moderatsiya natijasi:\n${JSON.stringify(d, null, 2)}`);
-                }} className="flex items-center gap-2 px-4 py-3 rounded-xl bg-violet-500/15 text-violet-400 hover:bg-violet-500/25 transition-colors text-sm font-semibold">
-                  🛡️ Moderatsiya test
-                </button>
-              </div>
-            </div>
+            </AdminPanel>
           </motion.div>
-        )}
 
-        {/* SAFEGUARD */}
-        {tab === "safeguard" && <SafeGuardTab />}
+          {/* ── ANALYTICS ─────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="emerald" icon={TrendingUp} label={t("admin.analytics")}
+              preview="7 kunlik platform tahlili"
+              isOpen={openPanel === "analytics"} onToggle={() => toggle("analytics")}>
+              {!analytics ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-5 h-5 rounded-full border-2 border-emerald-400/30 border-t-emerald-400 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <AdminSF>
+                    <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
+                      <p className="text-xs font-semibold text-white/40 mb-3 flex items-center gap-2">
+                        <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Foydalanuvchi o'sishi
+                      </p>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <AreaChart data={analytics.userGrowth}>
+                          <defs>
+                            <linearGradient id="ugGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="rgba(139,92,246,1)" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="rgba(139,92,246,1)" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                          <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} />
+                          <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={{ background: "rgba(8,8,16,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff" }} />
+                          <Area type="monotone" dataKey="users" stroke="rgba(139,92,246,1)" strokeWidth={2.5} fill="url(#ugGrad)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </AdminSF>
+                  <AdminSF>
+                    <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
+                      <p className="text-xs font-semibold text-white/40 mb-3 flex items-center gap-2">
+                        <FileText className="w-3.5 h-3.5 text-cyan-400" /> Kontent aktivligi
+                      </p>
+                      <ResponsiveContainer width="100%" height={160}>
+                        <BarChart data={analytics.contentGrowth}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                          <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} />
+                          <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={{ background: "rgba(8,8,16,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff" }} />
+                          <Bar dataKey="posts" fill="rgba(6,182,212,0.7)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </AdminSF>
+                </div>
+              )}
+            </AdminPanel>
+          </motion.div>
 
-        {/* SETTINGS */}
-        {tab === "settings" && <SettingsTab />}
+          {/* ── FINANCE ───────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="amber" icon={DollarSign} label={t("admin.finance")}
+              preview="Moliyaviy boshqaruv"
+              isOpen={openPanel === "finance"} onToggle={() => toggle("finance")}>
+              <FinanceTab />
+            </AdminPanel>
+          </motion.div>
 
-        {/* NEXUS CORE */}
-        {tab === "nexus-core" && <NexusCoreTab />}
+          {/* ── MONETIZATION ──────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="rose" icon={CircleDollarSign} label={t("admin.monetization")}
+              preview="Kreator daromad dasturi"
+              isOpen={openPanel === "monetization"} onToggle={() => toggle("monetization")}>
+              <MonetizationTab />
+            </AdminPanel>
+          </motion.div>
 
-        {/* AI AUTOPILOT */}
-        {tab === "ai-autopilot" && <AiAutopilotTab />}
+          {/* ── NOTIFICATIONS ─────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="orange" icon={Bell} label={t("nav.notifications")}
+              preview="Xabarnomalar yuborish"
+              isOpen={openPanel === "notify"} onToggle={() => toggle("notify")}>
+              <NotifyTab />
+            </AdminPanel>
+          </motion.div>
 
-        {/* MONETIZATION */}
-        {tab === "monetization" && <MonetizationTab />}
+          {/* ── AI SYSTEM ─────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="violet" icon={Cpu} label={t("admin.ai")}
+              preview={aiStatus ? `v${aiStatus.version} · ${aiStatus.accuracy}% aniqlik` : "AI tizim holati"}
+              isOpen={openPanel === "ai"} onToggle={() => toggle("ai")}>
+              {!aiStatus ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-5 h-5 rounded-full border-2 border-violet-400/30 border-t-violet-400 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: "Versiya",    value: aiStatus.version,                                         icon: Zap,       color: "text-violet-400" },
+                      { label: "Aniqlik",    value: `${aiStatus.accuracy}%`,                                  icon: Activity,  color: "text-emerald-400" },
+                      { label: "Modellar",   value: aiStatus.modelsRunning.toString(),                        icon: Cpu,       color: "text-cyan-400" },
+                      { label: "Yangilanish",value: new Date(aiStatus.lastImproved).toLocaleTimeString("uz-UZ"), icon: RefreshCw, color: "text-violet-400" },
+                    ].map(m => (
+                      <AdminSF key={m.label}>
+                        <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <m.icon className={`w-3.5 h-3.5 ${m.color}`} />
+                            <span className="text-[11px] text-white/40">{m.label}</span>
+                          </div>
+                          <p className="text-sm font-bold text-white">{m.value}</p>
+                        </div>
+                      </AdminSF>
+                    ))}
+                  </div>
+                  {aiStatus.metricsHistory && (
+                    <AdminSF>
+                      <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
+                        <p className="text-xs font-semibold text-white/40 mb-3">Aniqlik tarixi</p>
+                        <ResponsiveContainer width="100%" height={160}>
+                          <LineChart data={aiStatus.metricsHistory}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                            <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} />
+                            <YAxis domain={[94, 100]} tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} />
+                            <Tooltip contentStyle={{ background: "rgba(8,8,16,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff" }} />
+                            <Line type="monotone" dataKey="accuracy" stroke="rgba(139,92,246,1)" strokeWidth={2.5} dot={{ fill: "rgba(139,92,246,1)", r: 3 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </AdminSF>
+                  )}
+                  <AdminSF>
+                    <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
+                      <p className="text-xs font-semibold text-white/40 mb-3 flex items-center gap-2">
+                        <Zap className="w-3.5 h-3.5 text-violet-400" /> AI Tavsiyalar
+                      </p>
+                      <div className="space-y-2">
+                        {aiStatus.recommendations?.map((rec: any, i: number) => (
+                          <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 mt-0.5 ${
+                              rec.impact === "high"   ? "bg-red-500/20 text-red-400" :
+                              rec.impact === "medium" ? "bg-amber-500/20 text-amber-400" : "bg-white/10 text-white/50"
+                            }`}>{rec.impact}</span>
+                            <div>
+                              <p className="text-sm font-semibold text-white">{rec.module}</p>
+                              <p className="text-xs text-white/40">{rec.suggestion}</p>
+                            </div>
+                            <button className="ml-auto flex-shrink-0 px-2.5 py-1 rounded-lg bg-violet-500/15 text-violet-400 text-xs font-semibold hover:bg-violet-500/25 transition-colors">
+                              Qo'llash
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </AdminSF>
+                </div>
+              )}
+            </AdminPanel>
+          </motion.div>
 
+          {/* ── AI INTEGRATIONS ───────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="indigo" icon={Zap} label={t("admin.ai_integrations")}
+              preview="OpenAI, DALL-E, Google Books va boshqalar"
+              isOpen={openPanel === "ai-integrations"} onToggle={() => toggle("ai-integrations")}>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { name: "OpenAI GPT-4o",    status: "active",  icon: "🤖", desc: "AI Chat, Caption Generator, Kontent Moderatsiya", model: "gpt-4o-mini",       color: "border-emerald-500/25 bg-emerald-500/5", badge: "bg-emerald-400/15 text-emerald-400" },
+                    { name: "DALL-E 3",          status: "active",  icon: "🎨", desc: "AI Rasm Yaratish — Matndan rasm generatsiya",      model: "dall-e-3",          color: "border-violet-500/25 bg-violet-500/5",  badge: "bg-violet-400/15 text-violet-400"  },
+                    { name: "Google Books",      status: "active",  icon: "📚", desc: "Shaxsiy kutubxona — Kitob qidirish va saqlash",    model: "Google Books v1",   color: "border-blue-500/25 bg-blue-500/5",      badge: "bg-blue-400/15 text-blue-400"      },
+                    { name: "TensorFlow.js",     status: "active",  icon: "🧠", desc: "ML modellar — Kontentni tahlil qilish",            model: "tfjs v4",           color: "border-orange-500/25 bg-orange-500/5",  badge: "bg-orange-400/15 text-orange-400"  },
+                    { name: "Stripe",            status: "active",  icon: "💳", desc: "To'lovlar va obunalar tizimi",                      model: "Stripe API v3",     color: "border-indigo-500/25 bg-indigo-500/5",  badge: "bg-indigo-400/15 text-indigo-400"  },
+                    { name: "Anthropic Claude",  status: "planned", icon: "🔮", desc: "Kelajakda: Ilg'or tahlil va kontent",              model: "claude-3-opus",     color: "border-white/8 bg-white/[0.02]",        badge: "bg-amber-400/15 text-amber-400"    },
+                  ].map(item => (
+                    <AdminSF key={item.name}>
+                      <div className={`rounded-2xl border p-4 ${item.color}`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xl">{item.icon}</span>
+                            <div>
+                              <p className="font-bold text-white text-xs">{item.name}</p>
+                              <p className="text-[10px] text-white/40 font-mono">{item.model}</p>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${item.badge}`}>
+                            {item.status === "active" ? "Faol" : "Rejada"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
+                        {item.status === "active" && (
+                          <div className="mt-2.5 flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-[10px] text-emerald-400 font-semibold">Ulangan</span>
+                          </div>
+                        )}
+                      </div>
+                    </AdminSF>
+                  ))}
+                </div>
+                <AdminSF>
+                  <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
+                    <p className="text-xs font-semibold text-white/40 mb-3 flex items-center gap-2">
+                      <Activity className="w-3.5 h-3.5 text-cyan-400" /> AI Test Paneli
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <a href="/ai-chat" target="_blank" rel="noreferrer"
+                        className="flex items-center gap-2 px-4 py-3 rounded-xl bg-violet-500/15 text-violet-400 hover:bg-violet-500/25 transition-colors text-sm font-semibold">
+                        🤖 AI Chat ochish
+                      </a>
+                      <a href="/kutubxona" target="_blank" rel="noreferrer"
+                        className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors text-sm font-semibold">
+                        📚 Kutubxona ochish
+                      </a>
+                      <button onClick={async () => {
+                        const r = await fetch(`${API}/api/openai/moderate`, {
+                          method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+                          body: JSON.stringify({ content: "This is a test message for AI moderation" }),
+                        });
+                        const d = await r.json();
+                        alert(`AI Moderatsiya:\n${JSON.stringify(d, null, 2)}`);
+                      }} className="flex items-center gap-2 px-4 py-3 rounded-xl bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25 transition-colors text-sm font-semibold">
+                        🛡️ Moderatsiya test
+                      </button>
+                    </div>
+                  </div>
+                </AdminSF>
+              </div>
+            </AdminPanel>
+          </motion.div>
+
+          {/* ── SAFEGUARD ─────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="rose" icon={ShieldAlert} label={t("admin.safeguard")}
+              preview="Kontent xavfsizligi va moderatsiya"
+              isOpen={openPanel === "safeguard"} onToggle={() => toggle("safeguard")}>
+              <SafeGuardTab />
+            </AdminPanel>
+          </motion.div>
+
+          {/* ── SETTINGS ──────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="blue" icon={Settings} label={t("nav.settings")}
+              preview="Platforma sozlamalari"
+              isOpen={openPanel === "settings"} onToggle={() => toggle("settings")}>
+              <SettingsTab />
+            </AdminPanel>
+          </motion.div>
+
+          {/* ── NEXUS CORE ────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="emerald" icon={Activity} label={t("admin.nexus_core")}
+              preview="Tizim sog'ligi va monitoring"
+              isOpen={openPanel === "nexus-core"} onToggle={() => toggle("nexus-core")}>
+              <NexusCoreTab />
+            </AdminPanel>
+          </motion.div>
+
+          {/* ── AI AUTOPILOT ──────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="cyan" icon={Bot} label={t("admin.ai_autopilot")}
+              preview="Avtomatik AI boshqaruv"
+              isOpen={openPanel === "ai-autopilot"} onToggle={() => toggle("ai-autopilot")}>
+              <AiAutopilotTab />
+            </AdminPanel>
+          </motion.div>
+
+        </motion.div>
       </div>
     </div>
   );

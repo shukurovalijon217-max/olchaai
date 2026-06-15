@@ -140,7 +140,7 @@ function requireAuth(req: any, res: any, next: any) {
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── GET /api/admin/monetization/config ─────────────────────── */
-router.get("/api/admin/monetization/config", requireAdmin, async (req, res) => {
+router.get("/admin/monetization/config", requireAdmin, async (req, res) => {
   try {
     const cfg = await getConfig();
     res.json(cfg ?? {});
@@ -148,7 +148,7 @@ router.get("/api/admin/monetization/config", requireAdmin, async (req, res) => {
 });
 
 /* ── PUT /api/admin/monetization/config ─────────────────────── */
-router.put("/api/admin/monetization/config", requireAdmin, async (req, res) => {
+router.put("/admin/monetization/config", requireAdmin, async (req, res) => {
   try {
     const adminId = (req.session as any)?.userId as number;
     const {
@@ -184,7 +184,7 @@ router.put("/api/admin/monetization/config", requireAdmin, async (req, res) => {
 });
 
 /* ── GET /api/admin/monetization/stats ─────────────────────── */
-router.get("/api/admin/monetization/stats", requireAdmin, async (req, res) => {
+router.get("/admin/monetization/stats", requireAdmin, async (req, res) => {
   try {
     const [totals] = await db
       .select({
@@ -219,7 +219,7 @@ router.get("/api/admin/monetization/stats", requireAdmin, async (req, res) => {
 });
 
 /* ── GET /api/admin/monetization/top-content ────────────────── */
-router.get("/api/admin/monetization/top-content", requireAdmin, async (req, res) => {
+router.get("/admin/monetization/top-content", requireAdmin, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const rows = await db
@@ -242,7 +242,7 @@ router.get("/api/admin/monetization/top-content", requireAdmin, async (req, res)
 });
 
 /* ── GET /api/admin/monetization/payouts ────────────────────── */
-router.get("/api/admin/monetization/payouts", requireAdmin, async (req, res) => {
+router.get("/admin/monetization/payouts", requireAdmin, async (req, res) => {
   try {
     const status = String(req.query.status || "pending");
     const limit  = Math.min(Number(req.query.limit) || 50, 200);
@@ -268,7 +268,7 @@ router.get("/api/admin/monetization/payouts", requireAdmin, async (req, res) => 
 });
 
 /* ── PATCH /api/admin/monetization/payouts/:id ──────────────── */
-router.patch("/api/admin/monetization/payouts/:id", requireAdmin, async (req, res) => {
+router.patch("/admin/monetization/payouts/:id", requireAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
     const adminId = (req.session as any)?.userId as number;
@@ -317,7 +317,7 @@ router.patch("/api/admin/monetization/payouts/:id", requireAdmin, async (req, re
 });
 
 /* ── GET /api/admin/monetization/applications ───────────────── */
-router.get("/api/admin/monetization/applications", requireAdmin, async (req, res) => {
+router.get("/admin/monetization/applications", requireAdmin, async (req, res) => {
   try {
     const status = String(req.query.status || "applied");
     const limit  = Math.min(Number(req.query.limit) || 50, 200);
@@ -360,7 +360,7 @@ router.get("/api/admin/monetization/applications", requireAdmin, async (req, res
 });
 
 /* ── PATCH /api/admin/monetization/applications/:id ─────────── */
-router.patch("/api/admin/monetization/applications/:id", requireAdmin, async (req, res) => {
+router.patch("/admin/monetization/applications/:id", requireAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
     const adminId = (req.session as any)?.userId as number;
@@ -389,7 +389,7 @@ router.patch("/api/admin/monetization/applications/:id", requireAdmin, async (re
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── GET /api/creator/monetization/eligibility ──────────────── */
-router.get("/api/creator/monetization/eligibility", requireAuth, async (req, res) => {
+router.get("/creator/monetization/eligibility", requireAuth, async (req, res) => {
   try {
     const userId = (req.session as any).userId as number;
     const cfg = await getConfig();
@@ -453,7 +453,7 @@ router.get("/api/creator/monetization/eligibility", requireAuth, async (req, res
 });
 
 /* ── POST /api/creator/monetization/apply ───────────────────── */
-router.post("/api/creator/monetization/apply", requireAuth, async (req, res) => {
+router.post("/creator/monetization/apply", requireAuth, async (req, res) => {
   try {
     const userId = (req.session as any).userId as number;
     const cfg = await getConfig();
@@ -526,7 +526,7 @@ router.post("/api/creator/monetization/apply", requireAuth, async (req, res) => 
 });
 
 /* ── GET /api/creator/monetization ──────────────────────────── */
-router.get("/api/creator/monetization", requireAuth, async (req, res) => {
+router.get("/creator/monetization", requireAuth, async (req, res) => {
   try {
     const userId = (req.session as any).userId as number;
 
@@ -581,7 +581,7 @@ router.get("/api/creator/monetization", requireAuth, async (req, res) => {
 });
 
 /* ── POST /api/creator/monetization/payout ──────────────────── */
-router.post("/api/creator/monetization/payout", requireAuth, async (req, res) => {
+router.post("/creator/monetization/payout", requireAuth, async (req, res) => {
   try {
     const userId = (req.session as any).userId as number;
 

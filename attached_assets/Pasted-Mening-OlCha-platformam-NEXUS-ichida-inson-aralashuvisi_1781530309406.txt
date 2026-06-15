@@ -1,0 +1,23 @@
+Mening "OlCha" platformam (NEXUS) ichida inson aralashuvisiz (zero human intervention) ishlaydigan, xizmatlarni markazlashgan holda boshqaruvchi, o'ta engil vaznli (Ultra-lightweight) va ultra-xavfsiz "Fully Autonomous AI Core" (To'liq avtonom AI mag'zi) arxitekturasini loyihala va kodini alohida xizmat sifatida yoz.
+
+Ushbu tizim quyidagi mikro-agentlar zanjiri (Multi-Agent System) va arxitektura qoidalari asosida ishlashi shart:
+
+1. Central AI Orchestrator (Markaziy Boshqaruvchi AI): 
+Barcha ichki AI funksiyalarini (content moderation, auto-scale tahlili, foydalanuvchi so'rovlari va lentalarni) bitta markaziy nuqtadan boshqaradi. Internet orqali OpenAI (yoki Replit Secrets ichidagi OPENAI_API_KEY) API-siga ulanadi, fonda doimiy faol (Daemon process) turadi va platformadagi barcha boshqa AI jarayonlariga o'zi avtomatik buyruq berib, javoblarni taqsimlaydi.
+
+2. Self-Healing, DevOps & Hyper-Security Agent (Kiber-Qalqon):
+Tizim xavfsizligi eng yuqori harbiy darajada bo'lishi shart. Server loglarini va tashqi so'rovlarni millisekundlar ulushida fonda kuzatadi. Biror bir hakerlik hujumi, Brute-Force, anomal yuklama yoki tashqi serverlar tomonidan bloklash/cheklovlar (Rate-limit/IP-ban) aniqlangan zahoti, millisekundlar ichida (millisecond-level failover) xatolarni va hujumlarni bartaraf etadi. Proxies/Rotational API Keys yoki shifrlangan zaxira kanallariga o'tadi. Bu jarayon platformada va foydalanuvchilarga mutlaqo sezilmasligi (Zero-downtime) shart.
+
+3. Content & Moderation Agent: 
+Foydalanuvchilar tomonidan yuklanayotgan postlar, izohlar va kontentlarni soniyaning millisekund ulushlarida qonuniylikka tekshiradi, avtomatik bloklaydi yoki o'chiradi.
+
+4. User Experience & Analytics Agent: 
+Foydalanuvchilar faolligini, token bucket limitlarini va tizim yuklamasini o'rganib, optimizatsiya choralarini ko'radi.
+
+XAVFSIZLIK VA TEXNIK TALABLAR (DIQQAT BILAN BAJARILSIN):
+- Tizim node.js (backend) qismida mutlaqo alohida xizmat (AI Core Service - masalan, ai-core/ papkasida) sifatida ajratilsin, juda kichik vaznda (minimal dependencies) bo'lsin.
+- LOYIHADAGI MAVJUD BOSHQAR FUNKSIYALAR BUZILMASIN: Amaldagi ishlayotgan sahifalar, ma'lumotlar bazasi ulanishlari va UI elementlariga shikast yetkazma. Mavjud tizimlar bilan faqat xavfsiz API interfeyslari (Isolated IPC yoki local REST routes) orqali aloqa qilsin.
+- Ulanishlar uzilib qolmasligi uchun har bir bosqichda xatolarni ushlab qolish (Graceful degradation / Error handling) mexanizmi bo'lsin.
+- Har bir agent bajarayotgan avtonom harakatlar va qaytarilgan kiber-hujumlar Replit Logs oynasida aniq va tushunarli formatda aks etsin.
+
+Ushbu engil, ammo Pentagon darajasidan kuchli avtonom tizim poydevorini pishiq qilib qurishni boshla.

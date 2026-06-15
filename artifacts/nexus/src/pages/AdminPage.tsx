@@ -1168,7 +1168,9 @@ function SettingsTab() {
 
   useEffect(() => {
     fetch(`${API}/api/admin/settings`, { credentials: "include" })
-      .then(r => r.json()).then(setSettings);
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setSettings(d); })
+      .catch(() => {});
   }, []);
 
   const save = async () => {

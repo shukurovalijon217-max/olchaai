@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -733,9 +733,8 @@ function LocationContent() {
    MAIN PAGE
 ═══════════════════════════════════════════════════════════════ */
 export default function SettingsPage() {
-  const { t } = useTranslation();
-  const { user, i18n: i18nInst } = useAuth() as ReturnType<typeof useAuth> & { i18n?: typeof import("i18next").default };
-  const i18nRef = useTranslation().i18n;
+  const { t, i18n: i18nRef } = useTranslation();
+  const { user } = useAuth();
   const currentCode = i18nRef.language.split("-")[0] as LangCode;
   const currentLang = LANGUAGES.find(l => l.code === currentCode);
 

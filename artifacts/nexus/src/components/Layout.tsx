@@ -137,87 +137,67 @@ function NavOrb3D({ href, icon: Icon, label, active }: { href: string; icon: Rea
   );
 }
 
-/* ─── Levitating Orb Mobile Nav Button ──────────────────────── */
-function MobileNavBtn({ href, icon: Icon, label, active }: { href: string; icon: React.ElementType; label: string; active: boolean }) {
+/* ─── Glass Orb Nav Icon (icon-only, compact) ───────────────── */
+function MobileNavBtn({ href, icon: Icon, active, onNav }: {
+  href: string; icon: React.ElementType; active: boolean; onNav?: () => void;
+}) {
   const glow = getGlow(href);
   return (
     <Link href={href}>
       <motion.div
-        className="relative flex flex-col items-center select-none"
-        style={{ width: 54, height: 60, justifyContent: "flex-end" }}
-        whileTap={{ scale: 0.82 }}
+        onClick={onNav}
+        whileTap={{ scale: 0.78 }}
+        className="relative flex items-center justify-center select-none"
+        style={{ width: 40, height: 40, borderRadius: "50%", overflow: "visible" }}
       >
-        {/* ── Levitating orb (active) ─ */}
+        {/* Active bg glow */}
+        <motion.div
+          animate={{ opacity: active ? 1 : 0, scale: active ? 1 : 0.5 }}
+          transition={{ type: "spring", stiffness: 500, damping: 28 }}
+          style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            background: `radial-gradient(circle, ${glow.a}40, ${glow.b}20)`,
+            boxShadow: active ? `0 0 16px ${glow.shadow}55` : "none",
+          }}
+        />
+        {/* Pulse ring when active */}
+        {active && (
+          <motion.div
+            animate={{ scale: [0.85, 1.25, 0.85], opacity: [0.6, 0, 0.6] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              position: "absolute", inset: -2, borderRadius: "50%",
+              border: `1.5px solid ${glow.a}66`, pointerEvents: "none",
+            }}
+          />
+        )}
+        {/* Icon */}
+        <Icon
+          className="w-[17px] h-[17px] relative z-10"
+          style={{
+            color: active ? glow.a : "rgba(200,210,230,0.65)",
+            filter: active ? `drop-shadow(0 0 5px ${glow.shadow})` : "none",
+            transition: "color 0.25s, filter 0.25s",
+          }}
+        />
+        {/* Active indicator dot */}
         <AnimatePresence>
           {active && (
             <motion.div
-              key="orb"
-              initial={{ y: 22, scale: 0.1, opacity: 0 }}
-              animate={{ y: 0, scale: 1, opacity: 1 }}
-              exit={{ y: 22, scale: 0.1, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 580, damping: 26 }}
+              key="dot"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 600, damping: 22 }}
               style={{
-                position: "absolute", top: 1,
-                width: 44, height: 44, borderRadius: "50%",
-                background: `linear-gradient(148deg, ${glow.a}, ${glow.b}cc)`,
-                boxShadow: `0 0 0 2px ${glow.a}44, 0 0 24px ${glow.shadow}, 0 12px 30px ${glow.shadow}55, inset 0 1px 0 rgba(255,255,255,0.32)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                zIndex: 10,
-              }}
-            >
-              <Icon className="w-[18px] h-[18px] text-white" style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.9))" }} />
-              {/* shimmer ring */}
-              <motion.div
-                animate={{ opacity: [0.35, 0.85, 0.35], scale: [0.88, 1.06, 0.88] }}
-                transition={{ duration: 2.3, repeat: Infinity, ease: "easeInOut" }}
-                style={{ position: "absolute", inset: -2, borderRadius: "50%", border: `1.5px solid ${glow.a}88`, pointerEvents: "none" }}
-              />
-              {/* pulse burst */}
-              <motion.div
-                animate={{ scale: [1, 1.65, 1], opacity: [0.45, 0, 0.45] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                style={{ position: "absolute", inset: -5, borderRadius: "50%", border: `1px solid ${glow.a}44`, pointerEvents: "none" }}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Stem (orb → bar connector) ─ */}
-        <AnimatePresence>
-          {active && (
-            <motion.div
-              key="stem"
-              initial={{ scaleY: 0, opacity: 0 }}
-              animate={{ scaleY: 1, opacity: 1 }}
-              exit={{ scaleY: 0, opacity: 0 }}
-              transition={{ delay: 0.06, duration: 0.2 }}
-              style={{
-                position: "absolute", top: 45, left: "50%", x: "-50%",
-                width: 2, height: 8,
-                background: `linear-gradient(${glow.a}cc, transparent)`,
-                borderRadius: 1, transformOrigin: "top",
+                position: "absolute", bottom: -5, left: "50%", x: "-50%",
+                width: 4, height: 4, borderRadius: "50%",
+                background: glow.a,
+                boxShadow: `0 0 6px ${glow.shadow}, 0 0 12px ${glow.shadow}66`,
               }}
             />
           )}
         </AnimatePresence>
-
-        {/* ── Base icon (inactive) ─ */}
-        <motion.div
-          animate={{ opacity: active ? 0 : 1, scale: active ? 0.35 : 1, y: active ? 10 : 0 }}
-          transition={{ type: "spring", stiffness: 420, damping: 26 }}
-          style={{ position: "absolute", top: 11 }}
-        >
-          <Icon className="w-5 h-5" style={{ color: "rgba(148,163,184,0.7)" }} />
-        </motion.div>
-
-        {/* ── Label ─ */}
-        <motion.span
-          animate={{ color: active ? glow.b : "rgba(148,163,184,0.6)" }}
-          className="text-[9px] font-bold absolute bottom-1"
-          style={{ letterSpacing: "0.03em" }}
-        >
-          {label}
-        </motion.span>
       </motion.div>
     </Link>
   );
@@ -380,7 +360,7 @@ function MuniPanel() {
         onClick={() => setOpen(v => !v)}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-20 right-4 z-[80] md:bottom-6 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center"
+        className="fixed bottom-28 right-4 z-[80] md:bottom-6 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center"
         style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)", boxShadow: "0 0 24px rgba(124,58,237,0.6), 0 0 48px rgba(59,130,246,0.3)" }}
       >
         <AnimatePresence mode="wait">
@@ -500,6 +480,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(loadOpen);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [navExpanded, setNavExpanded] = useState(false);
 
   /* ── Live clock ──────────────────────────────────────────────── */
   const [clockNow, setClockNow] = useState(() => new Date());
@@ -541,7 +522,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  useEffect(() => { setMoreOpen(false); }, [location]);
+  useEffect(() => { setMoreOpen(false); setNavExpanded(false); }, [location]);
 
   const saveY = () => {
     try { localStorage.setItem(Y_KEY, String(Math.round(y.get()))); } catch {}
@@ -703,129 +684,127 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </motion.div>
       </div>
 
-      {/* ══ FLOATING ISLAND MOBILE NAV ══════════════════════════ */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-3"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)", paddingTop: 6 }}>
-
-        {/* Active item color ambient leak */}
-        {(() => {
-          const activeItem = mobileNavMainItems.find(({ href }) =>
-            location === href || (href !== "/" && location.startsWith(href))
-          );
-          const g = activeItem ? getGlow(activeItem.href) : null;
-          return g ? (
-            <motion.div
-              animate={{ opacity: [0.12, 0.22, 0.12] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              style={{
-                position: "absolute", bottom: 0, left: "20%", right: "20%", height: 60,
-                background: `radial-gradient(ellipse, ${g.shadow} 0%, transparent 75%)`,
-                filter: "blur(18px)", pointerEvents: "none",
-              }}
-            />
-          ) : null;
-        })()}
-
+      {/* ══ GLASS PILL MOBILE NAV ════════════════════════════════ */}
+      <div
+        className="md:hidden fixed bottom-0 right-0 z-50 flex items-end justify-end"
+        style={{ padding: "0 16px calc(env(safe-area-inset-bottom, 0px) + 14px) 0" }}
+      >
+        {/* Glass pill — grows leftward as items expand */}
         <motion.div
-          className="relative flex items-end justify-around overflow-visible"
+          layout
+          transition={{ type: "spring", stiffness: 440, damping: 34 }}
+          className="flex items-center gap-1.5 relative overflow-visible"
           style={{
-            background: "linear-gradient(180deg, hsl(var(--sidebar)/0.88) 0%, hsl(var(--sidebar)/0.97) 100%)",
-            backdropFilter: "blur(40px)",
-            borderRadius: 32,
-            padding: "10px 8px 12px",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 -2px 28px rgba(0,0,0,0.22), 0 8px 32px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07)",
+            background: "rgba(12, 12, 24, 0.45)",
+            backdropFilter: "blur(28px) saturate(180%)",
+            WebkitBackdropFilter: "blur(28px) saturate(180%)",
+            borderRadius: 28,
+            padding: "7px 7px 7px 10px",
+            border: "1px solid rgba(255,255,255,0.10)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}
         >
-          {/* Scan-line shimmer on bar */}
-          <motion.div
-            animate={{ x: ["-120%", "120%"] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", repeatDelay: 3 }}
-            style={{
-              position: "absolute", inset: 0, borderRadius: 32, pointerEvents: "none",
-              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)",
-              zIndex: 0,
-            }}
-          />
+          {/* ── Quick nav icons (expand left from Ko'proq) ─ */}
+          <AnimatePresence mode="popLayout">
+            {navExpanded && mobileNavMainItems.map(({ href, icon, key }, i) => {
+              const active = location === href || (href !== "/" && location.startsWith(href));
+              const delay = (mobileNavMainItems.length - 1 - i) * 0.055;
+              return (
+                <motion.div
+                  key={href}
+                  layout
+                  initial={{ opacity: 0, scale: 0.35, x: 28 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.35, x: 28 }}
+                  transition={{ type: "spring", stiffness: 520, damping: 30, delay }}
+                >
+                  <MobileNavBtn
+                    href={href}
+                    icon={icon}
+                    active={active}
+                    onNav={() => setNavExpanded(false)}
+                  />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
 
-          {mobileNavMainItems.map(({ href, icon, key }) => {
-            const active = location === href || (href !== "/" && location.startsWith(href));
-            return <MobileNavBtn key={href} href={href} icon={icon} label={t(key)} active={active} />;
-          })}
+          {/* Divider line (only when expanded) */}
+          <AnimatePresence>
+            {navExpanded && (
+              <motion.div
+                key="divider"
+                initial={{ opacity: 0, scaleY: 0 }}
+                animate={{ opacity: 1, scaleY: 1 }}
+                exit={{ opacity: 0, scaleY: 0 }}
+                transition={{ duration: 0.22 }}
+                style={{ width: 1, height: 24, background: "rgba(255,255,255,0.12)", borderRadius: 1, flexShrink: 0 }}
+              />
+            )}
+          </AnimatePresence>
 
           {/* ── Plasma Core "Ko'proq" Button ─ */}
           <motion.button
-            onClick={() => setMoreOpen(v => !v)}
-            className="relative flex flex-col items-center select-none"
-            style={{ width: 54, height: 60, justifyContent: "flex-end" }}
-            whileTap={{ scale: 0.82 }}
+            onClick={() => { if (!navExpanded) setNavExpanded(true); else setMoreOpen(true); }}
+            whileTap={{ scale: 0.78 }}
+            className="relative flex items-center justify-center select-none flex-shrink-0"
+            style={{ width: 44, height: 44 }}
           >
-            {/* Plasma orb */}
-            <div style={{ position: "absolute", top: 1, width: 44, height: 44 }}>
-              {/* Ring 1 — CW slow */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                style={{
-                  position: "absolute", inset: 0, borderRadius: "50%",
-                  border: "1.5px solid rgba(139,92,246,0.55)",
-                  pointerEvents: "none",
-                }}
-              />
-              {/* Ring 2 — CCW medium */}
-              <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-                style={{
-                  position: "absolute", inset: 4, borderRadius: "50%",
-                  border: "1px dashed rgba(59,130,246,0.45)",
-                  pointerEvents: "none",
-                }}
-              />
-              {/* Ring 3 — CW fast, glow on open */}
-              <motion.div
-                animate={{ rotate: moreOpen ? [0, 360] : [0, 360], opacity: moreOpen ? [0.5, 1, 0.5] : [0.2, 0.4, 0.2] }}
-                transition={{ rotate: { duration: 3, repeat: Infinity, ease: "linear" }, opacity: { duration: 1.5, repeat: Infinity } }}
-                style={{
-                  position: "absolute", inset: 8, borderRadius: "50%",
-                  border: `1px solid rgba(124,58,237,${moreOpen ? "0.9" : "0.3"})`,
-                  boxShadow: moreOpen ? "0 0 12px rgba(124,58,237,0.7)" : "none",
-                  pointerEvents: "none",
-                  transition: "box-shadow 0.4s",
-                }}
-              />
-              {/* Core orb */}
-              <motion.div
-                animate={{ scale: moreOpen ? [1, 1.15, 1] : [1, 1.05, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                style={{
-                  position: "absolute", inset: 10, borderRadius: "50%",
-                  background: moreOpen
-                    ? "radial-gradient(circle, rgba(139,92,246,0.55), rgba(59,130,246,0.35))"
-                    : "radial-gradient(circle, rgba(139,92,246,0.25), rgba(59,130,246,0.12))",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "background 0.4s",
-                }}
-              >
-                <AnimatePresence mode="wait">
-                  {moreOpen ? (
-                    <motion.div key="x" initial={{ rotate: -90, scale: 0, opacity: 0 }} animate={{ rotate: 0, scale: 1, opacity: 1 }} exit={{ rotate: 90, scale: 0, opacity: 0 }} transition={{ duration: 0.22 }}>
-                      <X className="w-[15px] h-[15px] text-violet-300" />
-                    </motion.div>
-                  ) : (
-                    <motion.div key="more" initial={{ rotate: 90, scale: 0, opacity: 0 }} animate={{ rotate: 0, scale: 1, opacity: 1 }} exit={{ rotate: -90, scale: 0, opacity: 0 }} transition={{ duration: 0.22 }}>
-                      <MoreHorizontal className="w-[15px] h-[15px] text-violet-400" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            </div>
-            <span className="text-[9px] font-bold absolute bottom-1" style={{ color: moreOpen ? "rgb(167,139,250)" : "rgba(148,163,184,0.6)" }}>
-              {t("nav.more")}
-            </span>
+            {/* Ring 1 — CW */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+              style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1.5px solid rgba(139,92,246,0.5)", pointerEvents: "none" }}
+            />
+            {/* Ring 2 — CCW dashed */}
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              style={{ position: "absolute", inset: 5, borderRadius: "50%", border: "1px dashed rgba(59,130,246,0.4)", pointerEvents: "none" }}
+            />
+            {/* Core glow */}
+            <motion.div
+              animate={{
+                scale: navExpanded ? [1, 1.18, 1] : [1, 1.06, 1],
+                opacity: navExpanded ? [0.7, 1, 0.7] : [0.3, 0.5, 0.3],
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                position: "absolute", inset: 9, borderRadius: "50%",
+                background: navExpanded
+                  ? "radial-gradient(circle, rgba(139,92,246,0.65), rgba(59,130,246,0.4))"
+                  : "radial-gradient(circle, rgba(139,92,246,0.28), rgba(59,130,246,0.14))",
+                boxShadow: navExpanded ? "0 0 14px rgba(139,92,246,0.7)" : "none",
+                transition: "background 0.35s, box-shadow 0.35s",
+              }}
+            />
+            {/* Icon */}
+            <AnimatePresence mode="wait">
+              {navExpanded ? (
+                <motion.div key="grid" initial={{ rotate: -90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: 90, scale: 0 }} transition={{ duration: 0.2 }} className="relative z-10">
+                  <MoreHorizontal className="w-[14px] h-[14px] text-violet-300" />
+                </motion.div>
+              ) : (
+                <motion.div key="more" initial={{ rotate: 90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: -90, scale: 0 }} transition={{ duration: 0.2 }} className="relative z-10">
+                  <MoreHorizontal className="w-[14px] h-[14px] text-violet-400" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.button>
         </motion.div>
       </div>
+
+      {/* Tap-outside to collapse nav */}
+      <AnimatePresence>
+        {navExpanded && !moreOpen && (
+          <motion.div
+            key="nav-dismiss"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="md:hidden fixed inset-0 z-[49]"
+            onClick={() => setNavExpanded(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ══ 9D HOLOGRAM PORTAL — KO'PROQ SHEET ════════════════════ */}
       <AnimatePresence>
@@ -869,7 +848,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               className="md:hidden fixed bottom-0 left-0 right-0 z-[61] overflow-hidden"
               style={{
                 maxHeight: "88vh",
-                paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)",
+                paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)",
                 background: "linear-gradient(180deg, #0a0818 0%, #060610 40%, #04040e 100%)",
                 boxShadow: "0 -32px 80px rgba(124,58,237,0.18), 0 -2px 0 rgba(139,92,246,0.35)",
               }}
@@ -1098,7 +1077,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="min-h-screen pl-8 pb-20 md:pl-8 md:pb-0">
+      <main className="min-h-screen pl-8 pb-28 md:pl-8 md:pb-0">
         <motion.div
           key={location}
           initial={{ opacity: 0, y: 14, scale: 0.993, filter: "blur(3px)" }}

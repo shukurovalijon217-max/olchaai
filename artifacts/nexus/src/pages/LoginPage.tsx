@@ -6,6 +6,7 @@ import NexusLogo from "@/components/NexusLogo";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
+import SafetyConsentModal from "@/components/SafetyConsentModal";
 
 /* ─── Popular languages shown first ──────────────────────────── */
 const POPULAR = ["uz", "en", "ru", "zh", "ar", "es", "fr", "hi", "tr", "de", "ja", "ko"];
@@ -218,10 +219,12 @@ function LangOption({ lang, current, onSelect }: {
 /* ─── Main Login Page ────────────────────────────────────────── */
 export default function LoginPage() {
   const { t } = useTranslation();
+  const { i18n: i18nInst } = useTranslation();
   const [show, setShow] = useState(false);
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showConsent, setShowConsent] = useState(false);
   const [, setLocation] = useLocation();
   const { login, register } = useAuth();
 
@@ -234,23 +237,34 @@ export default function LoginPage() {
     setError("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const doRegister = async () => {
     setLoading(true);
     setError("");
     try {
-      if (tab === "login") {
-        const res = await login(form.email, form.password);
-        if (res.error) { setError(res.error); return; }
-      } else {
-        if (!form.username.trim()) { setError(t("auth.username_req")); return; }
-        if (!form.displayName.trim()) { setError(t("auth.name_req")); return; }
-        const res = await register(form.username, form.displayName, form.email, form.password);
-        if (res.error) { setError(res.error); return; }
-      }
+      const res = await register(form.username, form.displayName, form.email, form.password);
+      if (res.error) { setError(res.error); return; }
       setLocation("/");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (tab === "login") {
+      setLoading(true);
+      try {
+        const res = await login(form.email, form.password);
+        if (res.error) { setError(res.error); return; }
+        setLocation("/");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      if (!form.username.trim()) { setError(t("auth.username_req")); return; }
+      if (!form.displayName.trim()) { setError(t("auth.name_req")); return; }
+      setShowConsent(true);
     }
   };
 
@@ -556,6 +570,13 @@ export default function LoginPage() {
           </p>
         </motion.div>
       </div>
+
+      <SafetyConsentModal
+        open={showConsent}
+        lang={i18nInst.language}
+        onAgree={() => { setShowConsent(false); doRegister(); }}
+        onCancel={() => setShowConsent(false)}
+      />
     </div>
   );
 }

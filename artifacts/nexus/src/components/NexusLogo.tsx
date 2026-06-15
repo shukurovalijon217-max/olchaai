@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { motion, useAnimation } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
 
 interface NexusLogoProps {
   ringSize?: number;
@@ -15,13 +16,13 @@ function ellipsePoint(cx: number, cy: number, rx: number, ry: number, t: number)
 const SPARKS = [0, 1, 2, 3, 4, 5, 6].map(i => ({
   id: i,
   t: (i / 7 + 0.05) % 1,
-  delay: i * 0.45,
-  dur: 3.2 + (i % 3) * 0.4,
+  delay: i * 0.42,
+  dur: 3.0 + (i % 3) * 0.45,
   color: i % 3 === 0
-    ? "rgba(255,255,210,0.95)"
+    ? "rgba(255,215,0,0.95)"
     : i % 3 === 1
-    ? "rgba(220,195,90,0.9)"
-    : "rgba(255,230,140,0.85)",
+    ? "rgba(255,240,140,0.88)"
+    : "rgba(200,160,30,0.85)",
   size: i % 2 === 0 ? 1 : 0.7,
 }));
 
@@ -32,202 +33,333 @@ export default function NexusLogo({
   letterSpacing = "0.22em",
 }: NexusLogoProps) {
   const S = ringSize;
-  const uid = `olchalogo_${S}`;
+  const uid = `olcha_${S}`;
 
   const SCX = 50, SCY = 43, SR = 26;
   const RCX = 50, RCY = 50, RRX = 44, RRY = 13, RSW = 9;
   const backClipY = RCY;
   const frontClipMaxY = RCY + 5;
 
+  /* ── Click animation controllers ─────────────────────── */
+  const slowRingCtrl  = useAnimation(); // continuous slow spin
+  const fastRingCtrl  = useAnimation(); // click burst fast spin
+  const burstCtrl     = useAnimation(); // radial glow burst
+  const [spinning, setSpinning] = useState(false);
+
+  /* Start continuous slow rotation on mount */
+  useEffect(() => {
+    slowRingCtrl.start({
+      rotate: [0, 360],
+      transition: { duration: 9, repeat: Infinity, ease: "linear" },
+    });
+  }, [slowRingCtrl]);
+
+  const handleClick = useCallback(async () => {
+    if (spinning) return;
+    setSpinning(true);
+
+    await Promise.all([
+      /* Fast ring: appear + spin 360° + fade */
+      fastRingCtrl.start({
+        rotate: [0, 360],
+        opacity: [0, 1, 0.9, 0],
+        scale: [0.85, 1.12, 1.05, 1.15],
+        transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+      }),
+      /* Radial glow burst */
+      burstCtrl.start({
+        opacity: [0, 1, 0.5, 0],
+        scale:   [0.4, 1.6, 2.2, 3.0],
+        transition: { duration: 0.85, ease: "easeOut" },
+      }),
+    ]);
+
+    fastRingCtrl.set({ rotate: 0, opacity: 0, scale: 1 });
+    setSpinning(false);
+  }, [spinning, fastRingCtrl, burstCtrl]);
+
+  /* CSS ring thickness */
+  const ringThick = Math.max(2, S * 0.09);
+  const ringInset = -S * 0.07;
+  const ringMask  = `radial-gradient(farthest-side, transparent calc(100% - ${ringThick}px), black 0)`;
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: S * 0.18, userSelect: "none" }}>
+    <div
+      onClick={handleClick}
+      style={{
+        display: "flex", alignItems: "center",
+        gap: S * 0.18, userSelect: "none", cursor: "pointer",
+      }}
+    >
       <div style={{ position: "relative", width: S, height: S, flexShrink: 0 }}>
 
-        {/* Red ambient glow */}
+        {/* ── Red ambient glow (sphere) ──────────────────────── */}
         <motion.div
-          animate={{ opacity: [0.2, 0.65, 0.2], scale: [0.78, 1.18, 0.78] }}
-          transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ opacity: [0.2, 0.75, 0.2], scale: [0.75, 1.22, 0.75] }}
+          transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
           style={{
-            position: "absolute",
-            inset: -S * 0.28,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(210,15,0,0.3) 0%, rgba(160,8,0,0.1) 45%, transparent 70%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: -S * 0.3, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(220,10,0,0.45) 0%, rgba(160,5,0,0.18) 45%, transparent 70%)",
+            pointerEvents: "none", zIndex: 0,
           }}
         />
 
-        {/* Gold ring glow */}
+        {/* ── Gold ring ambient glow ──────────────────────────── */}
         <motion.div
-          animate={{ opacity: [0.05, 0.3, 0.05] }}
-          transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+          animate={{ opacity: [0.08, 0.38, 0.08] }}
+          transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
           style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "50%",
-            background: "radial-gradient(ellipse 95% 28% at 50% 54%, rgba(210,185,75,0.22) 0%, transparent 70%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0, borderRadius: "50%",
+            background: "radial-gradient(ellipse 95% 28% at 50% 54%, rgba(255,210,50,0.32) 0%, transparent 70%)",
+            pointerEvents: "none", zIndex: 0,
           }}
         />
 
-        {/* Main SVG */}
+        {/* ══ CLICK BURST GLOW ══════════════════════════════════ */}
+        <motion.div
+          animate={burstCtrl}
+          initial={{ opacity: 0, scale: 0.4 }}
+          style={{
+            position: "absolute",
+            inset: -S * 0.25,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(255,215,80,0.85) 0%, rgba(220,60,255,0.35) 38%, rgba(0,200,255,0.15) 65%, transparent 80%)",
+            pointerEvents: "none",
+            zIndex: 10,
+          }}
+        />
+
+        {/* ══ SLOW-ROTATING CSS RING (silver-gold, continuous) ══ */}
+        <motion.div
+          animate={slowRingCtrl}
+          style={{
+            position: "absolute",
+            inset: ringInset,
+            borderRadius: "50%",
+            background: "conic-gradient(from 0deg, #7a6a20, #ffd700, #ffffff, #e8c060, #c0c0c0, #ffd700, #ffffff, #c8a040, #7a6a20)",
+            WebkitMask: ringMask,
+            mask: ringMask,
+            pointerEvents: "none",
+            zIndex: 4,
+            filter: "brightness(1.3) blur(0.2px)",
+            opacity: 0.85,
+          }}
+        />
+
+        {/* ══ FAST SPIN RING (click-activated) ═════════════════ */}
+        <motion.div
+          animate={fastRingCtrl}
+          initial={{ opacity: 0, rotate: 0, scale: 1 }}
+          style={{
+            position: "absolute",
+            inset: ringInset - S * 0.04,
+            borderRadius: "50%",
+            background: "conic-gradient(from 0deg, transparent 0deg, rgba(255,215,0,0) 30deg, rgba(255,255,255,0.9) 90deg, rgba(255,215,0,1) 150deg, rgba(200,150,255,0.8) 210deg, rgba(255,255,255,0.9) 270deg, rgba(255,215,0,1) 330deg, transparent 360deg)",
+            WebkitMask: `radial-gradient(farthest-side, transparent calc(100% - ${ringThick * 1.5}px), black 0)`,
+            mask: `radial-gradient(farthest-side, transparent calc(100% - ${ringThick * 1.5}px), black 0)`,
+            pointerEvents: "none",
+            zIndex: 5,
+            filter: `brightness(2.2) blur(0.5px) drop-shadow(0 0 ${S * 0.06}px rgba(255,215,0,0.9))`,
+          }}
+        />
+
+        {/* ══ MAIN SVG ══════════════════════════════════════════ */}
         <svg
-          width={S}
-          height={S}
-          viewBox="0 0 100 100"
+          width={S} height={S} viewBox="0 0 100 100"
           style={{ position: "absolute", top: 0, left: 0, overflow: "visible", zIndex: 1 }}
         >
           <defs>
-            {/* Red sphere */}
-            <radialGradient id={`${uid}_sg`} cx="32%" cy="26%" r="68%">
-              <stop offset="0%" stopColor="#ff7575" />
-              <stop offset="18%" stopColor="#ee1e1e" />
-              <stop offset="52%" stopColor="#9a0505" />
-              <stop offset="100%" stopColor="#1e0000" />
+            {/* ── Red sphere gradient (enhanced deep red + bright top) ── */}
+            <radialGradient id={`${uid}_sg`} cx="28%" cy="20%" r="74%">
+              <stop offset="0%"   stopColor="#ff9090" />
+              <stop offset="10%"  stopColor="#ff2828" />
+              <stop offset="32%"  stopColor="#cc0808" />
+              <stop offset="62%"  stopColor="#8a0303" />
+              <stop offset="100%" stopColor="#1a0000" />
             </radialGradient>
 
-            {/* Sphere glass highlight */}
-            <radialGradient id={`${uid}_sh`} cx="27%" cy="21%" r="52%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.82)" />
-              <stop offset="48%" stopColor="rgba(255,255,255,0.14)" />
+            {/* ── Sphere glass highlight ── */}
+            <radialGradient id={`${uid}_sh`} cx="24%" cy="17%" r="56%">
+              <stop offset="0%"   stopColor="rgba(255,255,255,0.92)" />
+              <stop offset="30%"  stopColor="rgba(255,255,255,0.28)" />
               <stop offset="100%" stopColor="rgba(255,255,255,0)" />
             </radialGradient>
 
-            {/* Chrome ring - back arc (shadowed) */}
+            {/* ── Sphere shimmer sweep (moves across surface) ── */}
+            <radialGradient id={`${uid}_ssw`} cx="65%" cy="30%" r="42%">
+              <stop offset="0%"   stopColor="rgba(255,200,180,0.65)" />
+              <stop offset="60%"  stopColor="rgba(255,120,100,0.15)" />
+              <stop offset="100%" stopColor="rgba(255,80,60,0)" />
+            </radialGradient>
+
+            {/* ── Silver-gold ring back arc ── */}
             <linearGradient id={`${uid}_rb`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"   stopColor="#0d0d0d" stopOpacity="0.95" />
-              <stop offset="18%"  stopColor="#333" />
-              <stop offset="38%"  stopColor="#707070" />
-              <stop offset="50%"  stopColor="#8e8e8e" />
-              <stop offset="62%"  stopColor="#707070" />
-              <stop offset="82%"  stopColor="#333" />
-              <stop offset="100%" stopColor="#0d0d0d" stopOpacity="0.95" />
+              <stop offset="0%"   stopColor="#080808" />
+              <stop offset="20%"  stopColor="#2a2008" />
+              <stop offset="42%"  stopColor="#6a5015" />
+              <stop offset="50%"  stopColor="#7a6218" />
+              <stop offset="58%"  stopColor="#6a5015" />
+              <stop offset="80%"  stopColor="#2a2008" />
+              <stop offset="100%" stopColor="#080808" />
             </linearGradient>
 
-            {/* Chrome ring - front arc (bright) */}
+            {/* ── Silver-gold ring front arc (mixed shimmer) ── */}
             <linearGradient id={`${uid}_rf`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"   stopColor="#252525" />
-              <stop offset="8%"   stopColor="#5a5a5a" />
-              <stop offset="20%"  stopColor="#b5b5b5" />
-              <stop offset="33%"  stopColor="#e4e4e4" />
+              <stop offset="0%"   stopColor="#1a1a1a" />
+              <stop offset="7%"   stopColor="#7a7a50" />
+              <stop offset="17%"  stopColor="#c8a000" />
+              <stop offset="27%"  stopColor="#eacc60" />
+              <stop offset="37%"  stopColor="#f8f0c0" />
               <stop offset="50%"  stopColor="#ffffff" />
-              <stop offset="63%"  stopColor="#e0e0e0" />
-              <stop offset="78%"  stopColor="#ababab" />
-              <stop offset="92%"  stopColor="#5a5a5a" />
-              <stop offset="100%" stopColor="#252525" />
+              <stop offset="63%"  stopColor="#f0e080" />
+              <stop offset="73%"  stopColor="#d0aa20" />
+              <stop offset="83%"  stopColor="#b0b080" />
+              <stop offset="93%"  stopColor="#808080" />
+              <stop offset="100%" stopColor="#1a1a1a" />
             </linearGradient>
 
-            {/* Shimmer sweep gradient */}
+            {/* ── White shimmer sweep on ring ── */}
             <linearGradient id={`${uid}_rs`} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%"   stopColor="rgba(255,255,255,0)" />
-              <stop offset="43%"  stopColor="rgba(255,255,255,0)" />
-              <stop offset="50%"  stopColor="rgba(255,255,255,0.72)" />
-              <stop offset="57%"  stopColor="rgba(255,255,255,0)" />
+              <stop offset="45%"  stopColor="rgba(255,255,255,0)" />
+              <stop offset="50%"  stopColor="rgba(255,255,255,0.88)" />
+              <stop offset="55%"  stopColor="rgba(255,255,255,0)" />
               <stop offset="100%" stopColor="rgba(255,255,255,0)" />
             </linearGradient>
 
-            {/* Thin outer decorative ring */}
-            <linearGradient id={`${uid}_or`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"   stopColor="rgba(110,95,30,0)" />
-              <stop offset="28%"  stopColor="rgba(210,185,75,0.45)" />
-              <stop offset="50%"  stopColor="rgba(245,225,120,0.65)" />
-              <stop offset="72%"  stopColor="rgba(210,185,75,0.45)" />
-              <stop offset="100%" stopColor="rgba(110,95,30,0)" />
-            </linearGradient>
-
-            {/* Second shimmer (warmish tint) */}
+            {/* ── Gold shimmer sweep ── */}
             <linearGradient id={`${uid}_rs2`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"   stopColor="rgba(255,240,180,0)" />
-              <stop offset="35%"  stopColor="rgba(255,240,180,0)" />
-              <stop offset="50%"  stopColor="rgba(255,240,180,0.45)" />
-              <stop offset="65%"  stopColor="rgba(255,240,180,0)" />
-              <stop offset="100%" stopColor="rgba(255,240,180,0)" />
+              <stop offset="0%"   stopColor="rgba(255,215,0,0)" />
+              <stop offset="36%"  stopColor="rgba(255,215,0,0)" />
+              <stop offset="50%"  stopColor="rgba(255,215,0,0.72)" />
+              <stop offset="64%"  stopColor="rgba(255,215,0,0)" />
+              <stop offset="100%" stopColor="rgba(255,215,0,0)" />
             </linearGradient>
 
-            {/* Clip: bottom half of ring ellipse (behind sphere) */}
+            {/* ── Outer decorative gold ring ── */}
+            <linearGradient id={`${uid}_or`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stopColor="rgba(120,100,20,0)" />
+              <stop offset="25%"  stopColor="rgba(255,210,50,0.6)" />
+              <stop offset="50%"  stopColor="rgba(255,240,110,0.82)" />
+              <stop offset="75%"  stopColor="rgba(255,210,50,0.6)" />
+              <stop offset="100%" stopColor="rgba(120,100,20,0)" />
+            </linearGradient>
+
+            {/* ── Clip: bottom half (behind sphere) ── */}
             <clipPath id={`${uid}_bc`}>
               <rect x="-20" y={backClipY} width="140" height="70" />
             </clipPath>
 
-            {/* Clip: top half + small margin (in front of sphere) */}
+            {/* ── Clip: top half (in front of sphere) ── */}
             <clipPath id={`${uid}_fc`}>
               <rect x="-20" y="-20" width="140" height={frontClipMaxY + 20} />
             </clipPath>
           </defs>
 
-          {/* ── BACK ARC (behind sphere) ── */}
+          {/* ── BACK ARC (behind sphere) ────────────────────── */}
           <ellipse cx={RCX} cy={RCY} rx={RRX + 3.5} ry={RRY + 3.5}
-            fill="none" stroke="rgba(70,60,15,0.22)" strokeWidth={RSW + 7}
+            fill="none" stroke="rgba(60,50,8,0.28)" strokeWidth={RSW + 7}
             clipPath={`url(#${uid}_bc)`} />
           <ellipse cx={RCX} cy={RCY} rx={RRX} ry={RRY}
             fill="none" stroke={`url(#${uid}_rb)`} strokeWidth={RSW}
             clipPath={`url(#${uid}_bc)`} />
           <ellipse cx={RCX} cy={RCY} rx={RRX - RSW / 2 - 1.2} ry={Math.max(1, RRY - 3.5)}
-            fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth={0.8}
+            fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth={0.8}
             clipPath={`url(#${uid}_bc)`} />
 
-          {/* ── SPHERE ── */}
-          <ellipse cx={SCX + 1.5} cy={SCY + SR * 0.85} rx={SR * 0.68} ry={SR * 0.16}
-            fill="rgba(0,0,0,0.28)" />
-          <circle cx={SCX} cy={SCY} r={SR} fill={`url(#${uid}_sg)`} />
-          <ellipse cx={SCX - SR * 0.19} cy={SCY - SR * 0.19} rx={SR * 0.34} ry={SR * 0.23}
-            fill={`url(#${uid}_sh)`} />
-          <circle cx={SCX} cy={SCY} r={SR}
-            fill="none" stroke="rgba(255,100,60,0.18)" strokeWidth={2.5} />
-          <ellipse cx={SCX + SR * 0.44} cy={SCY - SR * 0.36} rx={SR * 0.09} ry={SR * 0.065}
-            fill="rgba(255,255,255,0.32)" />
+          {/* ── SPHERE ──────────────────────────────────────── */}
+          {/* Shadow under sphere */}
+          <ellipse cx={SCX + 1.5} cy={SCY + SR * 0.85} rx={SR * 0.7} ry={SR * 0.16}
+            fill="rgba(0,0,0,0.32)" />
 
-          {/* ── FRONT ARC (in front of sphere) ── */}
+          {/* Main sphere */}
+          <circle cx={SCX} cy={SCY} r={SR} fill={`url(#${uid}_sg)`} />
+
+          {/* Animated shimmer sweep across sphere surface */}
+          <motion.circle
+            cx={SCX} cy={SCY} r={SR}
+            fill={`url(#${uid}_ssw)`}
+            animate={{ opacity: [0, 0.9, 0] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+          />
+
+          {/* Sphere glass highlight */}
+          <ellipse
+            cx={SCX - SR * 0.18} cy={SCY - SR * 0.18}
+            rx={SR * 0.35} ry={SR * 0.24}
+            fill={`url(#${uid}_sh)`}
+          />
+
+          {/* Sphere rim edge glow */}
+          <circle cx={SCX} cy={SCY} r={SR}
+            fill="none" stroke="rgba(255,100,60,0.16)" strokeWidth={2.5} />
+
+          {/* Sphere secondary specular dot */}
+          <ellipse
+            cx={SCX + SR * 0.44} cy={SCY - SR * 0.35}
+            rx={SR * 0.09} ry={SR * 0.06}
+            fill="rgba(255,255,255,0.38)"
+          />
+
+          {/* Sphere pulsing inner red glow */}
+          <motion.circle
+            cx={SCX} cy={SCY} r={SR}
+            fill="none" stroke="rgba(255,60,30,0.22)" strokeWidth={5}
+            animate={{ opacity: [0.08, 0.45, 0.08], scale: [0.88, 1.0, 0.88] }}
+            transition={{ duration: 2.0, repeat: Infinity, ease: "easeInOut" }}
+            style={{ transformOrigin: `${SCX}px ${SCY}px` }}
+          />
+
+          {/* ── FRONT ARC (in front of sphere) ──────────────── */}
           <ellipse cx={RCX} cy={RCY} rx={RRX + 3.5} ry={RRY + 3.5}
-            fill="none" stroke="rgba(170,150,60,0.18)" strokeWidth={RSW + 7}
+            fill="none" stroke="rgba(180,155,60,0.22)" strokeWidth={RSW + 7}
             clipPath={`url(#${uid}_fc)`} />
           <ellipse cx={RCX} cy={RCY} rx={RRX + RSW * 0.55} ry={RRY + RSW * 0.42}
-            fill="none" stroke={`url(#${uid}_or)`} strokeWidth={1.4}
+            fill="none" stroke={`url(#${uid}_or)`} strokeWidth={1.6}
             clipPath={`url(#${uid}_fc)`} />
           <ellipse cx={RCX} cy={RCY} rx={RRX} ry={RRY}
             fill="none" stroke={`url(#${uid}_rf)`} strokeWidth={RSW}
             clipPath={`url(#${uid}_fc)`} />
           <ellipse cx={RCX} cy={RCY} rx={RRX - RSW / 2 - 1.2} ry={Math.max(1, RRY - 3.5)}
-            fill="none" stroke="rgba(0,0,0,0.28)" strokeWidth={0.8}
+            fill="none" stroke="rgba(0,0,0,0.25)" strokeWidth={0.8}
             clipPath={`url(#${uid}_fc)`} />
 
-          {/* Animated shimmer #1 */}
+          {/* White shimmer on ring */}
           <motion.ellipse cx={RCX} cy={RCY} rx={RRX} ry={RRY}
             fill="none" stroke={`url(#${uid}_rs)`} strokeWidth={RSW}
             clipPath={`url(#${uid}_fc)`}
             animate={{ opacity: [0, 1, 0] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 0.8 }} />
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 0.9 }} />
 
-          {/* Animated shimmer #2 (warm, offset) */}
+          {/* Gold shimmer on ring */}
           <motion.ellipse cx={RCX} cy={RCY} rx={RRX} ry={RRY}
             fill="none" stroke={`url(#${uid}_rs2)`} strokeWidth={RSW}
             clipPath={`url(#${uid}_fc)`}
-            animate={{ opacity: [0, 0.7, 0] }}
-            transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 2.6 }} />
+            animate={{ opacity: [0, 0.85, 0] }}
+            transition={{ duration: 2.7, repeat: Infinity, ease: "easeInOut", delay: 2.5 }} />
 
-          {/* Bright top-arc highlight */}
-          <motion.ellipse cx={RCX} cy={RCY - RRY + 1.5} rx={13} ry={3.8}
-            fill="rgba(255,255,255,0.5)"
+          {/* Bright top-arc highlight on ring */}
+          <motion.ellipse cx={RCX} cy={RCY - RRY + 1.5} rx={14} ry={4}
+            fill="rgba(255,255,255,0.55)"
             clipPath={`url(#${uid}_fc)`}
-            animate={{ opacity: [0.25, 0.75, 0.25] }}
-            transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }} />
+            animate={{ opacity: [0.22, 0.8, 0.22] }}
+            transition={{ duration: 2.9, repeat: Infinity, ease: "easeInOut" }} />
 
-          {/* Wide soft glow pulse on front ring */}
+          {/* Wide gold glow pulse on ring */}
           <motion.ellipse cx={RCX} cy={RCY} rx={RRX} ry={RRY}
-            fill="none" stroke="rgba(255,245,180,0.12)" strokeWidth={RSW + 5}
+            fill="none" stroke="rgba(255,215,60,0.18)" strokeWidth={RSW + 6}
             clipPath={`url(#${uid}_fc)`}
-            animate={{ opacity: [0, 0.55, 0] }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 3 }} />
+            animate={{ opacity: [0, 0.65, 0] }}
+            transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 3.2 }} />
         </svg>
 
-        {/* Orbiting sparkle particles */}
+        {/* ══ ORBITING GOLD SPARKLES ════════════════════════════ */}
         {SPARKS.map(sp => {
           const scale = S / 100;
           const p1 = ellipsePoint(RCX, RCY, RRX, RRY, sp.t);
           const p2 = ellipsePoint(RCX, RCY, RRX, RRY, (sp.t + 0.33) % 1);
           const p3 = ellipsePoint(RCX, RCY, RRX, RRY, (sp.t + 0.67) % 1);
-          const sz = S * 0.055 * sp.size;
+          const sz = S * 0.058 * sp.size;
           const o = sz / 2;
 
           return (
@@ -235,19 +367,18 @@ export default function NexusLogo({
               key={sp.id}
               style={{
                 position: "absolute",
-                width: sz,
-                height: sz,
+                width: sz, height: sz,
                 borderRadius: "50%",
                 background: sp.color,
-                boxShadow: `0 0 ${sz * 1.3}px ${sz * 0.9}px ${sp.color}`,
+                boxShadow: `0 0 ${sz * 1.6}px ${sz * 1.1}px ${sp.color}`,
                 pointerEvents: "none",
                 zIndex: 2,
               }}
               animate={{
                 left: [p1.x * scale - o, p2.x * scale - o, p3.x * scale - o, p1.x * scale - o],
                 top:  [p1.y * scale - o, p2.y * scale - o, p3.y * scale - o, p1.y * scale - o],
-                opacity: [0, 1, 0.6, 0.2, 1, 0],
-                scale: [0, 1.5, 0.6, 1.3, 0],
+                opacity: [0, 1, 0.65, 0.2, 1, 0],
+                scale:   [0, 1.6, 0.65, 1.4, 0],
               }}
               transition={{
                 duration: sp.dur,
@@ -260,6 +391,7 @@ export default function NexusLogo({
         })}
       </div>
 
+      {/* ── OlCha text ─────────────────────────────────────── */}
       {showText && (
         <motion.span
           animate={{ opacity: [0.88, 1, 0.88] }}

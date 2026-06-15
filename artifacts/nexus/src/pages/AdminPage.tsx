@@ -8,7 +8,9 @@ import {
   RotateCcw, BadgeCheck, Crown, DollarSign, Bell, Settings,
   Wallet, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send,
   ToggleLeft, ToggleRight, Lock, Unlock, Globe, Megaphone, Sparkles, Percent,
-  Bot, BrainCircuit, Gauge, MemoryStick, Radio, UserCheck, ShieldX
+  Bot, BrainCircuit, Gauge, MemoryStick, Radio, UserCheck, ShieldX,
+  PlayCircle, Film, Music, TrendingDown as TDown, Check, ChevronDown,
+  CircleDollarSign, Banknote, ArrowRightLeft, BarChart2
 } from "lucide-react";
 import {
   useGetAdminDashboard, useAdminListUsers, useAdminListContent,
@@ -22,7 +24,7 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar
 } from "recharts";
 
-type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "finance" | "notify" | "settings" | "nexus-core" | "ai-autopilot";
+type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "finance" | "monetization" | "notify" | "settings" | "nexus-core" | "ai-autopilot";
 
 const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "dashboard", key: "admin.dashboard", icon: BarChart3 },
@@ -30,6 +32,7 @@ const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "content", key: "admin.content", icon: FileText },
   { id: "analytics", key: "admin.analytics", icon: TrendingUp },
   { id: "finance", key: "admin.finance", icon: DollarSign },
+  { id: "monetization", key: "admin.monetization", icon: CircleDollarSign },
   { id: "notify", key: "nav.notifications", icon: Bell },
   { id: "ai", key: "admin.ai", icon: Cpu },
   { id: "ai-integrations", key: "admin.ai_integrations", icon: Zap },
@@ -587,6 +590,380 @@ function PlatformCostsSection() {
           <div className="w-6 h-6 rounded-full border-2 border-blue-400/40 border-t-blue-400 animate-spin" />
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Monetization Tab ─────────────────────────────────────────── */
+function MonetizationTab() {
+  const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const [stats, setStats] = useState<any>(null);
+  const [cfg, setCfg] = useState<any>(null);
+  const [topContent, setTopContent] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [payoutFilter, setPayoutFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [loading, setLoading] = useState(true);
+  const [savingCfg, setSavingCfg] = useState(false);
+  const [cfgSaved, setCfgSaved] = useState(false);
+  const [actingId, setActingId] = useState<number | null>(null);
+
+  /* Local edit state for config */
+  const [editRpm, setEditRpm] = useState("500");
+  const [editCreatorPct, setEditCreatorPct] = useState("70");
+  const [editMinViews, setEditMinViews] = useState("1000");
+  const [editVideoMult, setEditVideoMult] = useState("1.0");
+  const [editReelMult, setEditReelMult] = useState("1.2");
+  const [editMusicMult, setEditMusicMult] = useState("0.8");
+  const [editMovieMult, setEditMovieMult] = useState("2.0");
+  const [editMinPayout, setEditMinPayout] = useState("50000");
+  const [editEnabled, setEditEnabled] = useState(true);
+
+  const uzs = (tiyin: number) =>
+    Math.round(tiyin / 100).toLocaleString("uz-UZ") + " so'm";
+
+  const loadAll = async () => {
+    setLoading(true);
+    try {
+      const safe = async (url: string) => {
+        const r = await fetch(url, { credentials: "include" });
+        return r.ok ? r.json().catch(() => null) : null;
+      };
+      const [s, c, tc, po] = await Promise.all([
+        safe(`${API_BASE}/api/admin/monetization/stats`),
+        safe(`${API_BASE}/api/admin/monetization/config`),
+        safe(`${API_BASE}/api/admin/monetization/top-content?limit=30`),
+        safe(`${API_BASE}/api/admin/monetization/payouts?status=${payoutFilter}&limit=50`),
+      ]);
+      setStats(s);
+      if (c) {
+        setCfg(c);
+        setEditEnabled(c.enabled ?? true);
+        setEditRpm(String(Math.round((c.revenuePerMille ?? 50000) / 100)));
+        setEditCreatorPct(String(c.creatorSharePercent ?? 70));
+        setEditMinViews(String(c.minViewsThreshold ?? 1000));
+        setEditVideoMult((((c.videoRateMultiplier ?? 10)) / 10).toFixed(1));
+        setEditReelMult((((c.reelRateMultiplier ?? 12)) / 10).toFixed(1));
+        setEditMusicMult((((c.musicRateMultiplier ?? 8)) / 10).toFixed(1));
+        setEditMovieMult((((c.movieRateMultiplier ?? 20)) / 10).toFixed(1));
+        setEditMinPayout(String(Math.round((c.minPayoutAmount ?? 5000000) / 100)));
+      }
+      setTopContent(tc ?? []);
+      setPayouts(po ?? []);
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { loadAll(); }, []);
+  useEffect(() => {
+    if (loading) return;
+    const loadPayouts = async () => {
+      const r = await fetch(`${API_BASE}/api/admin/monetization/payouts?status=${payoutFilter}&limit=50`, { credentials: "include" });
+      if (r.ok) setPayouts(await r.json());
+    };
+    loadPayouts();
+  }, [payoutFilter]);
+
+  const saveConfig = async () => {
+    setSavingCfg(true);
+    try {
+      const r = await fetch(`${API_BASE}/api/admin/monetization/config`, {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({
+          enabled: editEnabled,
+          revenuePerMille: Math.round(parseFloat(editRpm) * 100),
+          creatorSharePercent: Math.round(parseFloat(editCreatorPct)),
+          minViewsThreshold: Math.round(parseFloat(editMinViews)),
+          videoRateMultiplier: Math.round(parseFloat(editVideoMult) * 10),
+          reelRateMultiplier:  Math.round(parseFloat(editReelMult) * 10),
+          musicRateMultiplier: Math.round(parseFloat(editMusicMult) * 10),
+          movieRateMultiplier: Math.round(parseFloat(editMovieMult) * 10),
+          minPayoutAmount: Math.round(parseFloat(editMinPayout) * 100),
+        }),
+      });
+      if (r.ok) { setCfgSaved(true); setTimeout(() => setCfgSaved(false), 2500); }
+    } finally { setSavingCfg(false); }
+  };
+
+  const handlePayout = async (id: number, action: "approve" | "reject") => {
+    setActingId(id);
+    try {
+      await fetch(`${API_BASE}/api/admin/monetization/payouts/${id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ action }),
+      });
+      setPayouts(prev => prev.filter(p => p.id !== id));
+    } finally { setActingId(null); }
+  };
+
+  const platformPct = Math.max(0, 100 - parseFloat(editCreatorPct || "70"));
+
+  const TYPE_LABEL: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+    reel:  { label: "Reel",  icon: PlayCircle, color: "text-pink-400" },
+    video: { label: "Video", icon: Film,       color: "text-blue-400" },
+    music: { label: "Musiqa",icon: Music,      color: "text-emerald-400" },
+    movie: { label: "Film",  icon: Film,       color: "text-amber-400" },
+    post:  { label: "Post",  icon: FileText,   color: "text-violet-400" },
+  };
+
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* ── Stats overview ─────────────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Umumiy daromad", value: uzs(stats?.grossEarnings ?? 0), icon: BarChart2, color: "text-violet-400", bg: "bg-violet-500/10" },
+          { label: "Kreatorlarga to'langan", value: uzs(stats?.creatorEarnings ?? 0), icon: Users, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+          { label: "Platforma ulushi", value: uzs(stats?.platformEarnings ?? 0), icon: CircleDollarSign, color: "text-blue-400", bg: "bg-blue-500/10" },
+          { label: "Kutayotgan to'lovlar", value: `${stats?.pendingCount ?? 0} ta · ${uzs(stats?.pendingAmount ?? 0)}`, icon: Banknote, color: "text-amber-400", bg: "bg-amber-500/10" },
+        ].map((c) => (
+          <div key={c.label} className={`rounded-2xl p-4 ${c.bg} border border-white/5`}>
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-2 ${c.bg}`}>
+              <c.icon className={`w-4 h-4 ${c.color}`} />
+            </div>
+            <p className="text-white/50 text-[11px] mb-0.5">{c.label}</p>
+            <p className={`font-bold text-sm ${c.color}`}>{c.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        {/* ── Config panel ─────────────────────────────────────── */}
+        <div className="lg:col-span-1 rounded-2xl p-5 space-y-4"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex items-center justify-between">
+            <h3 className="text-white font-bold text-sm">⚙️ Monetizatsiya sozlamalari</h3>
+            <button
+              onClick={() => setEditEnabled(v => !v)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${editEnabled ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
+              {editEnabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+              {editEnabled ? "Yoqilgan" : "O'chirilgan"}
+            </button>
+          </div>
+
+          {/* RPM */}
+          <div>
+            <label className="text-white/50 text-[11px] font-medium block mb-1.5">
+              Har 1000 ta ko'rish uchun daromad (UZS so'm)
+            </label>
+            <div className="flex items-center gap-2">
+              <input type="number" value={editRpm} onChange={e => setEditRpm(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-xl text-white text-sm font-medium focus:outline-none"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+              />
+              <span className="text-white/40 text-xs">so'm / 1K</span>
+            </div>
+          </div>
+
+          {/* Creator share */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-white/50 text-[11px] font-medium">Kreator ulushi</label>
+              <span className="text-emerald-400 text-xs font-bold">{editCreatorPct}%</span>
+            </div>
+            <input type="range" min="0" max="100" value={editCreatorPct}
+              onChange={e => setEditCreatorPct(e.target.value)}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{ background: `linear-gradient(to right, #10b981 ${editCreatorPct}%, rgba(255,255,255,0.1) ${editCreatorPct}%)` }}
+            />
+            <div className="flex justify-between text-[10px] mt-1">
+              <span className="text-emerald-400">Kreator: {editCreatorPct}%</span>
+              <span className="text-blue-400">Admin: {platformPct.toFixed(0)}%</span>
+            </div>
+          </div>
+
+          {/* Min views */}
+          <div>
+            <label className="text-white/50 text-[11px] font-medium block mb-1.5">
+              Minimal ko'rishlar soni (daromad boshlash uchun)
+            </label>
+            <input type="number" value={editMinViews} onChange={e => setEditMinViews(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl text-white text-sm font-medium focus:outline-none"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+            />
+          </div>
+
+          {/* Content type multipliers */}
+          <div>
+            <label className="text-white/50 text-[11px] font-medium block mb-2">Kontent turi koeffitsientlari</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { key: "editVideoMult", set: setEditVideoMult, val: editVideoMult, label: "🎬 Video", col: "text-blue-400" },
+                { key: "editReelMult",  set: setEditReelMult,  val: editReelMult,  label: "▶️ Reel",  col: "text-pink-400" },
+                { key: "editMusicMult", set: setEditMusicMult, val: editMusicMult, label: "🎵 Musiqa", col: "text-emerald-400" },
+                { key: "editMovieMult", set: setEditMovieMult, val: editMovieMult, label: "🎥 Film",  col: "text-amber-400" },
+              ].map(f => (
+                <div key={f.key} className="rounded-xl p-2.5"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <span className={`text-[10px] font-semibold ${f.col} block mb-1`}>{f.label}</span>
+                  <div className="flex items-center gap-1">
+                    <input type="number" step="0.1" min="0.1" max="10" value={f.val}
+                      onChange={e => f.set(e.target.value)}
+                      className="w-full px-2 py-1 rounded-lg text-white text-xs font-bold focus:outline-none"
+                      style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    />
+                    <span className="text-white/30 text-[10px]">×</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Min payout */}
+          <div>
+            <label className="text-white/50 text-[11px] font-medium block mb-1.5">
+              Minimal pul so'rovchi miqdori (UZS so'm)
+            </label>
+            <input type="number" value={editMinPayout} onChange={e => setEditMinPayout(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl text-white text-sm font-medium focus:outline-none"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+            />
+          </div>
+
+          <motion.button whileTap={{ scale: 0.96 }} onClick={saveConfig} disabled={savingCfg}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all"
+            style={{ background: cfgSaved ? "rgba(16,185,129,0.3)" : "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff" }}>
+            {savingCfg ? <RefreshCw className="w-4 h-4 animate-spin" /> : cfgSaved ? <Check className="w-4 h-4" /> : <Settings className="w-4 h-4" />}
+            {cfgSaved ? "Saqlandi ✓" : savingCfg ? "Saqlanmoqda…" : "Saqlash"}
+          </motion.button>
+
+          {/* Live preview */}
+          <div className="rounded-xl p-3 text-xs space-y-1"
+            style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
+            <p className="text-white/60 font-semibold text-[11px] mb-1.5">📊 Hisob namunasi (1M ko'rish)</p>
+            <div className="flex justify-between"><span className="text-white/40">Umumiy daromad</span><span className="text-white">{(parseFloat(editRpm || "0") * 1000).toLocaleString()} so'm</span></div>
+            <div className="flex justify-between"><span className="text-emerald-400/70">Kreator ({editCreatorPct}%)</span><span className="text-emerald-400">{(parseFloat(editRpm || "0") * 1000 * parseFloat(editCreatorPct || "0") / 100).toLocaleString()} so'm</span></div>
+            <div className="flex justify-between"><span className="text-blue-400/70">Admin ({platformPct.toFixed(0)}%)</span><span className="text-blue-400">{(parseFloat(editRpm || "0") * 1000 * platformPct / 100).toLocaleString()} so'm</span></div>
+          </div>
+        </div>
+
+        {/* ── Right column: top content + payouts ──────────────── */}
+        <div className="lg:col-span-2 space-y-4">
+
+          {/* Top earning content */}
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="px-5 py-3.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+              <h3 className="text-white font-bold text-sm">🏆 Top daromad olgan kontentlar</h3>
+            </div>
+            <div className="overflow-x-auto">
+              {topContent.length === 0 ? (
+                <div className="py-10 text-center text-white/30 text-sm">Hali daromad yo'q</div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      {["Tur", "Muallif", "Ko'rishlar", "Pul. ko'rish", "Kreator", "Admin", "Holat"].map(h => (
+                        <th key={h} className="text-left px-4 py-2.5 text-[11px] font-semibold text-white/30">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topContent.map((row, i) => {
+                      const t = TYPE_LABEL[row.contentType] ?? { label: row.contentType, icon: FileText, color: "text-white/50" };
+                      return (
+                        <tr key={row.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)" }}>
+                          <td className="px-4 py-2.5">
+                            <div className={`flex items-center gap-1.5 text-xs font-bold ${t.color}`}>
+                              <t.icon className="w-3.5 h-3.5" />
+                              {t.label}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className="text-white text-xs">{row.author?.displayName ?? `#${row.authorId}`}</span>
+                          </td>
+                          <td className="px-4 py-2.5 text-white/70 text-xs">{(row.totalViews ?? 0).toLocaleString()}</td>
+                          <td className="px-4 py-2.5 text-white/70 text-xs">{(row.monetizedViews ?? 0).toLocaleString()}</td>
+                          <td className="px-4 py-2.5 text-emerald-400 text-xs font-semibold">{uzs(row.creatorEarnings ?? 0)}</td>
+                          <td className="px-4 py-2.5 text-blue-400 text-xs font-semibold">{uzs(row.platformEarnings ?? 0)}</td>
+                          <td className="px-4 py-2.5">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.monetizedViews > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-white/8 text-white/30"}`}
+                              style={{ background: row.monetizedViews > 0 ? undefined : "rgba(255,255,255,0.04)" }}>
+                              {row.monetizedViews > 0 ? "Aktiv" : "Kutmoqda"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* Payout requests */}
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+              <h3 className="text-white font-bold text-sm">💸 To'lov so'rovlari</h3>
+              <div className="flex gap-1">
+                {(["pending", "approved", "rejected", "all"] as const).map(f => (
+                  <button key={f} onClick={() => setPayoutFilter(f)}
+                    className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-all ${payoutFilter === f ? "bg-primary/30 text-primary" : "text-white/40 hover:text-white/60"}`}>
+                    {f === "pending" ? "Kutmoqda" : f === "approved" ? "Tasdiqlangan" : f === "rejected" ? "Rad etilgan" : "Barchasi"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {payouts.length === 0 ? (
+              <div className="py-10 text-center text-white/30 text-sm">
+                {payoutFilter === "pending" ? "Kutayotgan so'rov yo'q ✓" : "Hech narsa yo'q"}
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {payouts.map(p => (
+                  <div key={p.id} className="px-5 py-4 flex items-center gap-4">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600/50 to-pink-600/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                      {p.user?.avatarUrl ? <img src={p.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (p.user?.displayName?.[0] ?? "?")}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-white text-sm font-semibold">{p.user?.displayName ?? `User #${p.userId}`}</span>
+                        <span className="text-white/40 text-[10px]">@{p.user?.username}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px]">
+                        <span className="text-emerald-400 font-bold">{uzs(p.amount)}</span>
+                        {p.paymentMethod && <span className="text-white/40">{p.paymentMethod}</span>}
+                        <span className="text-white/30">{new Date(p.createdAt).toLocaleDateString("uz-UZ")}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {p.status === "pending" ? (
+                        <>
+                          <motion.button whileTap={{ scale: 0.9 }} disabled={actingId === p.id}
+                            onClick={() => handlePayout(p.id, "approve")}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-50">
+                            <Check className="w-3.5 h-3.5" />
+                            Tasdiqlash
+                          </motion.button>
+                          <motion.button whileTap={{ scale: 0.9 }} disabled={actingId === p.id}
+                            onClick={() => handlePayout(p.id, "reject")}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50">
+                            <XCircle className="w-3.5 h-3.5" />
+                            Rad etish
+                          </motion.button>
+                        </>
+                      ) : (
+                        <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
+                          p.status === "approved" ? "bg-emerald-500/15 text-emerald-400" :
+                          p.status === "rejected" ? "bg-red-500/15 text-red-400" : "bg-white/8 text-white/40"
+                        }`} style={{ background: p.status === "approved" ? undefined : p.status === "rejected" ? undefined : "rgba(255,255,255,0.04)" }}>
+                          {p.status === "approved" ? "✓ Tasdiqlangan" : p.status === "rejected" ? "✗ Rad etilgan" : p.status}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2304,6 +2681,9 @@ export default function AdminPage() {
 
         {/* AI AUTOPILOT */}
         {tab === "ai-autopilot" && <AiAutopilotTab />}
+
+        {/* MONETIZATION */}
+        {tab === "monetization" && <MonetizationTab />}
 
       </div>
     </div>

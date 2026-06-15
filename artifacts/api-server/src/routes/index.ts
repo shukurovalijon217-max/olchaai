@@ -38,6 +38,7 @@ import voiceTranslateRouter from "./voiceTranslate";
 import nexusCoreRouter from "./nexusCore";
 import platformCostsRouter from "./platformCosts";
 import aiAutopilotRouter from "./aiAutopilot";
+import monetizationRouter from "./monetization";
 
 const router: IRouter = Router();
 
@@ -80,5 +81,6 @@ router.use(voiceTranslateRouter);
 router.use(nexusCoreRouter);
 router.use(platformCostsRouter);
 router.use(aiAutopilotRouter);
+router.use(monetizationRouter);
 
 export default router;

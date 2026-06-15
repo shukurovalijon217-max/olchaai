@@ -19,8 +19,26 @@ export const monetizationConfigTable = pgTable("monetization_config", {
   movieRateMultiplier: integer("movie_rate_multiplier").notNull().default(20),
   /* Min earnings before payout can be requested (tiyin)        */
   minPayoutAmount: integer("min_payout_amount").notNull().default(5000000),
+  /* ── Eligibility criteria for creator monetization program ── */
+  minFollowers: integer("min_followers").notNull().default(1000),
+  minTotalViews: integer("min_total_views").notNull().default(10000),
+  minContentCount: integer("min_content_count").notNull().default(10),
+  autoApprove: boolean("auto_approve").notNull().default(false),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   updatedBy: integer("updated_by").references(() => usersTable.id),
+});
+
+/* ── Per-creator monetization status (YouTube Partner Program) ── */
+export const creatorMonetizationTable = pgTable("creator_monetization", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique().references(() => usersTable.id),
+  /* none | applied | active | rejected | suspended               */
+  status: text("status").notNull().default("none"),
+  appliedAt: timestamp("applied_at"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: integer("reviewed_by").references(() => usersTable.id),
+  rejectionReason: text("rejection_reason"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 /* ── Per-content earnings ledger ──────────────────────────────── */
@@ -31,9 +49,9 @@ export const contentEarningsTable = pgTable("content_earnings", {
   authorId: integer("author_id").notNull().references(() => usersTable.id),
   totalViews: integer("total_views").notNull().default(0),
   monetizedViews: integer("monetized_views").notNull().default(0),
-  grossEarnings: integer("gross_earnings").notNull().default(0),   // platform total (tiyin)
-  creatorEarnings: integer("creator_earnings").notNull().default(0), // creator cut (tiyin)
-  platformEarnings: integer("platform_earnings").notNull().default(0), // admin cut (tiyin)
+  grossEarnings: integer("gross_earnings").notNull().default(0),
+  creatorEarnings: integer("creator_earnings").notNull().default(0),
+  platformEarnings: integer("platform_earnings").notNull().default(0),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -42,9 +60,9 @@ export const contentEarningsTable = pgTable("content_earnings", {
 export const payoutRequestsTable = pgTable("payout_requests", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => usersTable.id),
-  amount: integer("amount").notNull(), // UZS tiyin
-  status: text("status").notNull().default("pending"), // pending | approved | rejected | paid
-  paymentMethod: text("payment_method"), // click | payme | bank
+  amount: integer("amount").notNull(),
+  status: text("status").notNull().default("pending"),
+  paymentMethod: text("payment_method"),
   paymentDetails: text("payment_details"),
   adminNote: text("admin_note"),
   processedBy: integer("processed_by").references(() => usersTable.id),
@@ -53,5 +71,6 @@ export const payoutRequestsTable = pgTable("payout_requests", {
 });
 
 export type MonetizationConfig = typeof monetizationConfigTable.$inferSelect;
+export type CreatorMonetization = typeof creatorMonetizationTable.$inferSelect;
 export type ContentEarning = typeof contentEarningsTable.$inferSelect;
 export type PayoutRequest = typeof payoutRequestsTable.$inferSelect;

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray, not } from "drizzle-orm";
+import { accumulateViewEarning } from "./monetization";
 import { scanContentAsync } from "../moderation/aiFilter";
 
 const router = Router();
@@ -179,7 +180,19 @@ router.post("/reels/:id/like", async (req, res) => {
 router.post("/reels/:id/view", async (req, res) => {
   try {
     const reelId = Number(req.params.id);
-    await db.update(reelsTable).set({ viewsCount: sql`${reelsTable.viewsCount} + 1` }).where(eq(reelsTable.id, reelId));
+
+    /* Increment view count */
+    await db.update(reelsTable)
+      .set({ viewsCount: sql`${reelsTable.viewsCount} + 1` })
+      .where(eq(reelsTable.id, reelId));
+
+    /* Fetch author for monetization — fire-and-forget, never blocks */
+    const [reel] = await db.select({ authorId: reelsTable.authorId })
+      .from(reelsTable).where(eq(reelsTable.id, reelId)).limit(1);
+    if (reel?.authorId) {
+      void accumulateViewEarning("reel", reelId, reel.authorId);
+    }
+
     res.json({ ok: true });
   } catch (err) {
     req.log.error(err);

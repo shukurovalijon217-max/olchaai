@@ -1,0 +1,31 @@
+kind = "api"
+previewPath = "/ai-core"
+title = "AI Core Service"
+version = "1.0.0"
+id = "ai-core-autonomous-01"
+
+[[services]]
+localPort = 9000
+name = "AI Core"
+paths = ["/ai-core"]
+
+[services.development]
+run = "PORT=9000 pnpm --filter @workspace/ai-core run dev"
+
+[services.production]
+
+[services.production.build]
+args = ["pnpm", "--filter", "@workspace/ai-core", "run", "build"]
+
+[services.production.build.env]
+NODE_ENV = "production"
+
+[services.production.run]
+args = ["node", "--enable-source-maps", "artifacts/ai-core/dist/index.mjs"]
+
+[services.production.run.env]
+PORT = "9000"
+NODE_ENV = "production"
+
+[services.production.health.startup]
+path = "/ai-core/health"

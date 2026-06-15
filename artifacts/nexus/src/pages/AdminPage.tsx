@@ -606,6 +606,8 @@ function MonetizationTab() {
   const [savingCfg, setSavingCfg] = useState(false);
   const [cfgSaved, setCfgSaved] = useState(false);
   const [actingId, setActingId] = useState<number | null>(null);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [appFilter, setAppFilter] = useState<"applied" | "active" | "rejected" | "all">("applied");
 
   /* Local edit state for config */
   const [editRpm, setEditRpm] = useState("500");
@@ -617,6 +619,10 @@ function MonetizationTab() {
   const [editMovieMult, setEditMovieMult] = useState("2.0");
   const [editMinPayout, setEditMinPayout] = useState("50000");
   const [editEnabled, setEditEnabled] = useState(true);
+  const [editMinFollowers, setEditMinFollowers] = useState("1000");
+  const [editMinTotalViews, setEditMinTotalViews] = useState("10000");
+  const [editMinContentCount, setEditMinContentCount] = useState("10");
+  const [editAutoApprove, setEditAutoApprove] = useState(false);
 
   const uzs = (tiyin: number) =>
     Math.round(tiyin / 100).toLocaleString("uz-UZ") + " so'm";
@@ -628,11 +634,12 @@ function MonetizationTab() {
         const r = await fetch(url, { credentials: "include" });
         return r.ok ? r.json().catch(() => null) : null;
       };
-      const [s, c, tc, po] = await Promise.all([
+      const [s, c, tc, po, apps] = await Promise.all([
         safe(`${API_BASE}/api/admin/monetization/stats`),
         safe(`${API_BASE}/api/admin/monetization/config`),
         safe(`${API_BASE}/api/admin/monetization/top-content?limit=30`),
         safe(`${API_BASE}/api/admin/monetization/payouts?status=${payoutFilter}&limit=50`),
+        safe(`${API_BASE}/api/admin/monetization/applications?status=applied&limit=50`),
       ]);
       setStats(s);
       if (c) {
@@ -646,9 +653,14 @@ function MonetizationTab() {
         setEditMusicMult((((c.musicRateMultiplier ?? 8)) / 10).toFixed(1));
         setEditMovieMult((((c.movieRateMultiplier ?? 20)) / 10).toFixed(1));
         setEditMinPayout(String(Math.round((c.minPayoutAmount ?? 5000000) / 100)));
+        setEditMinFollowers(String(c.minFollowers ?? 1000));
+        setEditMinTotalViews(String(c.minTotalViews ?? 10000));
+        setEditMinContentCount(String(c.minContentCount ?? 10));
+        setEditAutoApprove(c.autoApprove ?? false);
       }
       setTopContent(tc ?? []);
       setPayouts(po ?? []);
+      setApplications(apps ?? []);
     } finally { setLoading(false); }
   };
 
@@ -677,10 +689,25 @@ function MonetizationTab() {
           musicRateMultiplier: Math.round(parseFloat(editMusicMult) * 10),
           movieRateMultiplier: Math.round(parseFloat(editMovieMult) * 10),
           minPayoutAmount: Math.round(parseFloat(editMinPayout) * 100),
+          minFollowers: Math.round(parseFloat(editMinFollowers)),
+          minTotalViews: Math.round(parseFloat(editMinTotalViews)),
+          minContentCount: Math.round(parseFloat(editMinContentCount)),
+          autoApprove: editAutoApprove,
         }),
       });
       if (r.ok) { setCfgSaved(true); setTimeout(() => setCfgSaved(false), 2500); }
     } finally { setSavingCfg(false); }
+  };
+
+  const handleApplication = async (id: number, action: "approve" | "reject") => {
+    setActingId(id);
+    try {
+      await fetch(`${API_BASE}/api/admin/monetization/applications/${id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ action }),
+      });
+      setApplications(prev => prev.filter(a => a.id !== id));
+    } finally { setActingId(null); }
   };
 
   const handlePayout = async (id: number, action: "approve" | "reject") => {
@@ -824,6 +851,34 @@ function MonetizationTab() {
             />
           </div>
 
+          {/* ── Eligibility criteria (Partner Program) ─────────── */}
+          <div className="pt-2 border-t border-white/8">
+            <p className="text-white/40 text-[11px] font-semibold uppercase tracking-wider mb-3">🏆 Kreator dasturiga kirish shartlari</p>
+            <div className="space-y-2.5">
+              {[
+                { label: "Minimal obunachilар", val: editMinFollowers, set: setEditMinFollowers, icon: "👥" },
+                { label: "Minimal umumiy ko'rishlar", val: editMinTotalViews, set: setEditMinTotalViews, icon: "👁" },
+                { label: "Minimal kontent soni", val: editMinContentCount, set: setEditMinContentCount, icon: "🎬" },
+              ].map(f => (
+                <div key={f.label}>
+                  <label className="text-white/40 text-[11px] font-medium block mb-1">{f.icon} {f.label}</label>
+                  <input type="number" value={f.val} onChange={e => f.set(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-white text-sm font-medium focus:outline-none"
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  />
+                </div>
+              ))}
+              <div className="flex items-center justify-between py-2">
+                <span className="text-white/40 text-[11px] font-medium">⚡ Avtomatik tasdiqlash</span>
+                <button onClick={() => setEditAutoApprove(v => !v)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${editAutoApprove ? "bg-emerald-500/20 text-emerald-400" : "bg-white/8 text-white/40"}`}>
+                  {editAutoApprove ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                  {editAutoApprove ? "Yoqilgan" : "O'chirilgan"}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <motion.button whileTap={{ scale: 0.96 }} onClick={saveConfig} disabled={savingCfg}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all"
             style={{ background: cfgSaved ? "rgba(16,185,129,0.3)" : "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff" }}>
@@ -962,6 +1017,79 @@ function MonetizationTab() {
               </div>
             )}
           </div>
+          {/* ── Creator monetization applications ────────────── */}
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+              <h3 className="text-white font-bold text-sm">🏆 Kreator arizalari</h3>
+              <div className="flex gap-1">
+                {(["applied", "active", "rejected", "all"] as const).map(f => (
+                  <button key={f} onClick={() => {
+                    setAppFilter(f);
+                    const loadApps = async () => {
+                      const r = await fetch(`${API_BASE}/api/admin/monetization/applications?status=${f}&limit=50`, { credentials: "include" });
+                      if (r.ok) setApplications(await r.json());
+                    };
+                    loadApps();
+                  }}
+                    className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-all ${appFilter === f ? "bg-amber-500/25 text-amber-400" : "text-white/40 hover:text-white/60"}`}>
+                    {f === "applied" ? "Kutmoqda" : f === "active" ? "Faol" : f === "rejected" ? "Rad etilgan" : "Barchasi"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {applications.length === 0 ? (
+              <div className="py-10 text-center text-white/30 text-sm">
+                {appFilter === "applied" ? "Kutayotgan ariza yo'q ✓" : "Hech narsa yo'q"}
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {applications.map(a => (
+                  <div key={a.id} className="px-5 py-4 flex items-center gap-4">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-600/50 to-orange-600/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                      {a.user?.avatarUrl ? <img src={a.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (a.user?.displayName?.[0] ?? "?")}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-white text-sm font-semibold">{a.user?.displayName ?? `User #${a.userId}`}</span>
+                        <span className="text-white/40 text-[10px]">@{a.user?.username}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          a.status === "active" ? "bg-emerald-500/15 text-emerald-400" :
+                          a.status === "rejected" ? "bg-red-500/15 text-red-400" :
+                          "bg-amber-500/15 text-amber-400"
+                        }`}>
+                          {a.status === "active" ? "✓ Faol" : a.status === "rejected" ? "✗ Rad" : "⏳ Kutmoqda"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px] text-white/40">
+                        <span>👁 {(a.totalViews ?? 0).toLocaleString()} ko'rish</span>
+                        <span>🎬 {(a.contentCount ?? 0)} kontent</span>
+                        {a.appliedAt && <span>📅 {new Date(a.appliedAt).toLocaleDateString("uz-UZ")}</span>}
+                      </div>
+                    </div>
+                    {a.status === "applied" && (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <motion.button whileTap={{ scale: 0.9 }} disabled={actingId === a.id}
+                          onClick={() => handleApplication(a.id, "approve")}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-50">
+                          <Check className="w-3.5 h-3.5" />
+                          Tasdiqlash
+                        </motion.button>
+                        <motion.button whileTap={{ scale: 0.9 }} disabled={actingId === a.id}
+                          onClick={() => handleApplication(a.id, "reject")}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50">
+                          <XCircle className="w-3.5 h-3.5" />
+                          Rad etish
+                        </motion.button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

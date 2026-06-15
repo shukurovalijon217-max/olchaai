@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   User, Lock, Bell, Palette, Shield, Globe, MapPin,
   Check, Loader2, Eye, EyeOff, Camera, ChevronRight, Search, X, Crown, Zap,
+  CircleDollarSign,
 } from "lucide-react";
 import { Link } from "wouter";
 import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
@@ -12,7 +13,7 @@ import { COUNTRIES, countryFlag, getCountryByCode } from "@/lib/countries";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | "language" | "location";
+type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | "language" | "location" | "monetization";
 
 /* ─── Panel color tokens ──────────────────────────────────── */
 const COLOR: Record<string, { icon: string; border: string; glow: string; badge: string; ring: string; scanFrom: string; scanTo: string }> = {
@@ -729,6 +730,162 @@ function LocationContent() {
   );
 }
 
+/* ─── Monetization panel content ──────────────────────────── */
+function MonetizationContent() {
+  const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [applying, setApplying] = useState(false);
+  const [applyError, setApplyError] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API_BASE}/api/creator/monetization/eligibility`, { credentials: "include" });
+      if (r.ok) setData(await r.json());
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleApply = async () => {
+    setApplying(true); setApplyError("");
+    try {
+      const r = await fetch(`${API_BASE}/api/creator/monetization/apply`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        credentials: "include", body: JSON.stringify({}),
+      });
+      const json = await r.json();
+      if (!r.ok) { setApplyError(json.error ?? "Xato yuz berdi"); return; }
+      await load();
+    } finally { setApplying(false); }
+  };
+
+  const pct = (cur: number, req: number) => Math.min(100, req > 0 ? Math.round(cur / req * 100) : 0);
+  const fmt = (n: number) => n >= 1_000_000 ? `${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n/1_000).toFixed(0)}K` : String(n);
+  const uzs = (t: number) => Math.round(t / 100).toLocaleString("uz-UZ") + " so'm";
+
+  if (loading) return (
+    <div className="flex justify-center py-6">
+      <div className="w-6 h-6 rounded-full border-2 border-amber-500/30 border-t-amber-400 animate-spin" />
+    </div>
+  );
+
+  const s = data?.status ?? "none";
+  const cr = data?.criteria;
+
+  return (
+    <div className="space-y-4">
+      {/* Status badge */}
+      <SF>
+        <div className={`flex items-center gap-3 p-3.5 rounded-2xl border ${
+          s === "active"   ? "bg-emerald-500/10 border-emerald-500/30" :
+          s === "applied"  ? "bg-amber-500/10 border-amber-500/30" :
+          s === "rejected" ? "bg-red-500/10 border-red-500/30" :
+          "bg-white/5 border-white/10"
+        }`}>
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+            s === "active"   ? "bg-emerald-500/20 text-emerald-400" :
+            s === "applied"  ? "bg-amber-500/20 text-amber-400" :
+            s === "rejected" ? "bg-red-500/20 text-red-400" :
+            "bg-white/10 text-white/40"
+          }`}>
+            <CircleDollarSign className="w-4 h-4" />
+          </div>
+          <div className="flex-1">
+            <p className={`font-semibold text-sm ${
+              s === "active" ? "text-emerald-400" :
+              s === "applied" ? "text-amber-400" :
+              s === "rejected" ? "text-red-400" : "text-white/50"}`}>
+              {s === "active"   ? "✓ Monetizatsiya faol" :
+               s === "applied"  ? "⏳ Ariza ko'rib chiqilmoqda" :
+               s === "rejected" ? "✗ Ariza rad etildi" :
+               "Monetizatsiya faol emas"}
+            </p>
+            <p className="text-xs text-white/35 mt-0.5">
+              {s === "active"   ? "Har bir ko'rishdan daromad olasiz" :
+               s === "applied"  ? "Admin ko'rib chiqmoqda, 1–3 ish kunida javob beriladi" :
+               s === "rejected" ? (data?.rejectionReason ?? "Sabab ko'rsatilmagan") :
+               "Quyidagi shartlarni bajaring va ariza topshiring"}
+            </p>
+          </div>
+        </div>
+      </SF>
+
+      {/* Eligibility criteria progress bars */}
+      {s !== "active" && cr && (
+        <SF>
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">Kirish shartlari</p>
+            {([
+              { key: "followers",    label: "Obunachilар", emoji: "👥" },
+              { key: "totalViews",   label: "Umumiy ko'rishlar", emoji: "👁" },
+              { key: "contentCount", label: "Kontent soni",      emoji: "🎬" },
+            ] as const).map(({ key, label, emoji }) => {
+              const c = cr[key as keyof typeof cr];
+              if (!c) return null;
+              const p = pct(c.current, c.required);
+              return (
+                <div key={key} className={`rounded-xl p-3 border transition-colors ${c.met ? "border-emerald-500/25 bg-emerald-500/6" : "border-white/8 bg-white/3"}`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-medium text-white/60">{emoji} {label}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-bold ${c.met ? "text-emerald-400" : "text-white/70"}`}>
+                        {fmt(c.current)} / {fmt(c.required)}
+                      </span>
+                      {c.met && <Check className="w-3 h-3 text-emerald-400" />}
+                    </div>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-white/8 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${c.met ? "bg-emerald-400" : "bg-gradient-to-r from-amber-600 to-amber-400"}`}
+                      style={{ width: `${p}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </SF>
+      )}
+
+      {/* Apply button */}
+      {data?.canApply && (
+        <SF>
+          {applyError && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm mb-2">{applyError}</div>
+          )}
+          <motion.button
+            whileTap={{ scale: 0.97 }} onClick={handleApply} disabled={applying}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg,#d97706,#f59e0b)", color: "#000" }}>
+            {applying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CircleDollarSign className="w-4 h-4" />}
+            {applying ? "Yuborilmoqda…" : data?.autoApprove ? "Monetizatsiyani yoqish" : "Ariza topshirish"}
+          </motion.button>
+        </SF>
+      )}
+
+      {/* Earnings summary if active */}
+      {s === "active" && data?.earnings && (
+        <SF>
+          <div className="rounded-xl p-3.5 bg-emerald-500/8 border border-emerald-500/20 space-y-1">
+            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">💰 Hisobdagi daromad</p>
+            <p className="text-2xl font-bold text-emerald-400">{uzs(data.earnings.balance ?? 0)}</p>
+            <p className="text-xs text-white/30">Minimal pul so'rovi: {uzs(data.earnings.minPayout ?? 5000000)}</p>
+          </div>
+        </SF>
+      )}
+
+      {/* No content yet */}
+      {!data && !loading && (
+        <SF>
+          <p className="text-sm text-white/30 text-center py-4">Ma'lumot yuklanmadi</p>
+        </SF>
+      )}
+    </div>
+  );
+}
+
 /* ════════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════════ */
@@ -780,6 +937,11 @@ export default function SettingsPage() {
       label: "Joylashuv va vaqt",
       preview: user?.country ? `${countryFlag(user.country)} ${getCountryByCode(user.country)?.name ?? ""}` : "Belgilanmagan",
     },
+    {
+      id: "monetization", icon: CircleDollarSign, color: "amber",
+      label: "Monetizatsiya",
+      preview: "YouTube kabi kreator daromad dasturi",
+    },
   ];
 
   const CONTENT: Record<Tab, React.ReactNode> = {
@@ -790,6 +952,7 @@ export default function SettingsPage() {
     privacy: <PrivacyContent />,
     language: <LanguageContent />,
     location: <LocationContent />,
+    monetization: <MonetizationContent />,
   };
 
   return (

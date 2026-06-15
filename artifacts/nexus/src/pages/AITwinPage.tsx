@@ -26,8 +26,9 @@ function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => 
 
   useEffect(() => {
     fetch(`${API}/api/twin/${twinUser.id}/chats`, { credentials: "include" })
-      .then(r => r.json())
-      .then(d => { setChatId(d.chatId); setMessages(d.messages ?? []); })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) { setChatId(d.chatId); setMessages(d.messages ?? []); } })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [twinUser.id]);
 
@@ -304,7 +305,7 @@ export default function AITwinPage() {
         ) : (
           user ? (
             <MyTwinSetup config={config} onSaved={() => {
-              fetch(`${API}/api/twin/config`, { credentials: "include" }).then(r => r.json()).then(d => setConfig(d));
+              fetch(`${API}/api/twin/config`, { credentials: "include" }).then(r => r.ok ? r.json() : null).then(d => { if (d) setConfig(d); }).catch(() => {});
             }} />
           ) : (
             <div className="flex flex-col items-center justify-center h-48 text-center p-8">

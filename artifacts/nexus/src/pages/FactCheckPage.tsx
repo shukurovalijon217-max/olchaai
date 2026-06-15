@@ -43,8 +43,9 @@ function FactCheckResult({ postId, onClose }: { postId: string; onClose: () => v
     if (isNaN(id)) return;
     setLoading(true);
     fetch(`${API}/api/factcheck/${id}`, { credentials: "include" })
-      .then(r => r.json())
-      .then(d => setResult(d))
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setResult(d); })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [postId]);
 
@@ -111,12 +112,12 @@ export default function FactCheckPage() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetch(`${API}/api/credibility/leaderboard`, { credentials: "include" }).then(r => r.json()),
-      user ? fetch(`${API}/api/credibility/${user.id}`, { credentials: "include" }).then(r => r.json()) : Promise.resolve(null),
+      fetch(`${API}/api/credibility/leaderboard`, { credentials: "include" }).then(r => r.ok ? r.json() : []).catch(() => []),
+      user ? fetch(`${API}/api/credibility/${user.id}`, { credentials: "include" }).then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null),
     ]).then(([lb, me]) => {
       setLeaderboard(Array.isArray(lb) ? lb : []);
       setMyScore(me);
-    }).finally(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [user]);
 
   return (

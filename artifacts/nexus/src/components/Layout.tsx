@@ -137,113 +137,159 @@ function NavOrb3D({ href, icon: Icon, label, active }: { href: string; icon: Rea
   );
 }
 
-/* ─── 9D Mobile Bottom Button ────────────────────────────────── */
+/* ─── Levitating Orb Mobile Nav Button ──────────────────────── */
 function MobileNavBtn({ href, icon: Icon, label, active }: { href: string; icon: React.ElementType; label: string; active: boolean }) {
   const glow = getGlow(href);
   return (
     <Link href={href}>
       <motion.div
-        whileTap={{ scale: 0.82, rotateX: 12 }}
-        whileHover={{ scale: 1.1 }}
-        style={{ perspective: 300, transformStyle: "preserve-3d" }}
-        className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl relative"
+        className="relative flex flex-col items-center select-none"
+        style={{ width: 54, height: 60, justifyContent: "flex-end" }}
+        whileTap={{ scale: 0.82 }}
       >
-        {/* Active bg orb */}
+        {/* ── Levitating orb (active) ─ */}
         <AnimatePresence>
           {active && (
             <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              className="absolute inset-0 rounded-2xl"
+              key="orb"
+              initial={{ y: 22, scale: 0.1, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: 22, scale: 0.1, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 580, damping: 26 }}
               style={{
-                background: `radial-gradient(circle at center, ${glow.a}55, ${glow.b}22)`,
-                boxShadow: `0 0 18px ${glow.shadow}50, 0 0 36px ${glow.shadow}25`,
+                position: "absolute", top: 1,
+                width: 44, height: 44, borderRadius: "50%",
+                background: `linear-gradient(148deg, ${glow.a}, ${glow.b}cc)`,
+                boxShadow: `0 0 0 2px ${glow.a}44, 0 0 24px ${glow.shadow}, 0 12px 30px ${glow.shadow}55, inset 0 1px 0 rgba(255,255,255,0.32)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                zIndex: 10,
+              }}
+            >
+              <Icon className="w-[18px] h-[18px] text-white" style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.9))" }} />
+              {/* shimmer ring */}
+              <motion.div
+                animate={{ opacity: [0.35, 0.85, 0.35], scale: [0.88, 1.06, 0.88] }}
+                transition={{ duration: 2.3, repeat: Infinity, ease: "easeInOut" }}
+                style={{ position: "absolute", inset: -2, borderRadius: "50%", border: `1.5px solid ${glow.a}88`, pointerEvents: "none" }}
+              />
+              {/* pulse burst */}
+              <motion.div
+                animate={{ scale: [1, 1.65, 1], opacity: [0.45, 0, 0.45] }}
+                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                style={{ position: "absolute", inset: -5, borderRadius: "50%", border: `1px solid ${glow.a}44`, pointerEvents: "none" }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Stem (orb → bar connector) ─ */}
+        <AnimatePresence>
+          {active && (
+            <motion.div
+              key="stem"
+              initial={{ scaleY: 0, opacity: 0 }}
+              animate={{ scaleY: 1, opacity: 1 }}
+              exit={{ scaleY: 0, opacity: 0 }}
+              transition={{ delay: 0.06, duration: 0.2 }}
+              style={{
+                position: "absolute", top: 45, left: "50%", x: "-50%",
+                width: 2, height: 8,
+                background: `linear-gradient(${glow.a}cc, transparent)`,
+                borderRadius: 1, transformOrigin: "top",
               }}
             />
           )}
         </AnimatePresence>
 
-        {/* Icon */}
+        {/* ── Base icon (inactive) ─ */}
         <motion.div
-          animate={active ? { y: [-1.5, 1.5, -1.5], scale: [1, 1.12, 1] } : {}}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          className="relative z-10"
+          animate={{ opacity: active ? 0 : 1, scale: active ? 0.35 : 1, y: active ? 10 : 0 }}
+          transition={{ type: "spring", stiffness: 420, damping: 26 }}
+          style={{ position: "absolute", top: 11 }}
         >
-          <Icon
-            className="w-5 h-5 transition-colors"
-            style={{ color: active ? glow.a : undefined, filter: active ? `drop-shadow(0 0 6px ${glow.shadow})` : undefined }}
-          />
+          <Icon className="w-5 h-5" style={{ color: "rgba(148,163,184,0.7)" }} />
         </motion.div>
 
-        <span className="text-[9px] font-bold z-10 transition-colors" style={{ color: active ? glow.a : undefined }}>
+        {/* ── Label ─ */}
+        <motion.span
+          animate={{ color: active ? glow.b : "rgba(148,163,184,0.6)" }}
+          className="text-[9px] font-bold absolute bottom-1"
+          style={{ letterSpacing: "0.03em" }}
+        >
           {label}
-        </span>
-
-        {/* Bottom glow line */}
-        {active && (
-          <motion.div
-            layoutId="mob-line"
-            className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full"
-            style={{ width: 24, height: 3, background: `linear-gradient(90deg, ${glow.a}, ${glow.b})`, boxShadow: `0 0 8px ${glow.shadow}` }}
-          />
-        )}
+        </motion.span>
       </motion.div>
     </Link>
   );
 }
 
-/* ─── 9D Mobile Sheet Grid Button ────────────────────────────── */
-function SheetGridBtn({ href, icon: Icon, label, active, onClick }: {
+/* ─── Holographic Sheet Card ─────────────────────────────────── */
+function SheetGridBtn({ href, icon: Icon, label, active, onClick, entryDelay = 0, entryDir = "up" }: {
   href: string; icon: React.ElementType; label: string; active: boolean; onClick?: () => void;
+  entryDelay?: number; entryDir?: "up" | "left" | "right" | "down";
 }) {
   const glow = getGlow(href);
+  const initOffset = entryDir === "left" ? { x: -28, y: 0 } : entryDir === "right" ? { x: 28, y: 0 } : entryDir === "down" ? { x: 0, y: 20 } : { x: 0, y: -20 };
   return (
     <Link href={href}>
       <motion.div
         onClick={onClick}
-        whileTap={{ scale: 0.88, rotateX: 8 }}
-        whileHover={{ scale: 1.06, translateY: -3 }}
-        style={{ perspective: 300, transformStyle: "preserve-3d" }}
+        initial={{ ...initOffset, opacity: 0, scale: 0.78 }}
+        animate={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 480, damping: 28, delay: entryDelay }}
+        whileTap={{ scale: 0.84, rotateX: 10 }}
+        whileHover={{ scale: 1.07, y: -4 }}
+        style={{ perspective: 400, transformStyle: "preserve-3d" }}
         className={`flex flex-col items-center gap-1.5 px-2 py-3 rounded-2xl cursor-pointer relative overflow-hidden ${
           active ? "text-white" : "text-foreground"
         }`}
       >
-        {/* Card background */}
+        {/* Card BG */}
         <div
-          className="absolute inset-0 rounded-2xl transition-all"
+          className="absolute inset-0 rounded-2xl"
           style={active ? {
-            background: `linear-gradient(145deg, ${glow.a}cc, ${glow.b}88)`,
-            boxShadow: `0 4px 20px ${glow.shadow}55, 0 0 0 1px ${glow.a}40, inset 0 1px 0 rgba(255,255,255,0.25)`,
+            background: `linear-gradient(145deg, ${glow.a}ee, ${glow.b}99)`,
+            boxShadow: `0 4px 24px ${glow.shadow}60, 0 0 0 1px ${glow.a}55, inset 0 1px 0 rgba(255,255,255,0.28)`,
           } : {
-            background: "hsl(var(--muted) / 0.45)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06)",
+            background: "linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
+            border: `1px solid rgba(255,255,255,0.1)`,
+            boxShadow: `0 2px 10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)`,
           }}
         />
 
-        {/* Holographic shimmer on active */}
-        {active && (
-          <motion.div
-            className="absolute inset-0 rounded-2xl pointer-events-none"
-            animate={{ x: ["-100%", "200%"] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.5 }}
-            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent)", skewX: -15 }}
-          />
-        )}
+        {/* Holographic sweep — always on, subtle */}
+        <motion.div
+          className="absolute inset-0 rounded-2xl pointer-events-none"
+          animate={{ x: ["-120%", "220%"] }}
+          transition={{ duration: active ? 2.2 : 4, repeat: Infinity, ease: "easeInOut", repeatDelay: active ? 1.2 : 3 + entryDelay }}
+          style={{ background: `linear-gradient(90deg, transparent, ${active ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.1)"}, transparent)`, skewX: -18 }}
+        />
 
-        {/* Icon glow orb */}
-        <div className="relative z-10" style={{ transform: "translateZ(6px)" }}>
-          <div className="relative">
-            <Icon className={`w-5 h-5 ${active ? "drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]" : ""}`} />
-            {!active && (
-              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100"
-                style={{ background: `radial-gradient(circle, ${glow.a}40, transparent)`, filter: "blur(4px)" }} />
-            )}
-          </div>
+        {/* Icon + glow */}
+        <div className="relative z-10" style={{ transform: "translateZ(8px)" }}>
+          <Icon
+            className="w-5 h-5"
+            style={{
+              color: active ? "white" : glow.a,
+              filter: active ? "drop-shadow(0 0 8px rgba(255,255,255,0.9))" : `drop-shadow(0 0 5px ${glow.shadow}88)`,
+            }}
+          />
+          {/* Glow bloom under icon */}
+          <motion.div
+            animate={{ opacity: [0.4, 0.8, 0.4], scale: [0.8, 1.2, 0.8] }}
+            transition={{ duration: 2.5 + entryDelay * 0.3, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              position: "absolute", inset: -4, borderRadius: "50%",
+              background: `radial-gradient(circle, ${glow.a}55, transparent)`,
+              filter: "blur(5px)", pointerEvents: "none",
+            }}
+          />
         </div>
 
-        <span className="text-[10px] font-bold text-center leading-tight z-10">{label}</span>
+        <span className="text-[10px] font-semibold text-center leading-tight z-10"
+          style={{ color: active ? "white" : "rgba(255,255,255,0.75)" }}>
+          {label}
+        </span>
       </motion.div>
     </Link>
   );
@@ -359,12 +405,12 @@ function MuniPanel() {
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 24, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 24, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            initial={{ opacity: 0, y: 32, scale: 0.88, rotateX: 10, filter: "blur(6px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: 32, scale: 0.88, rotateX: 10, filter: "blur(6px)" }}
+            transition={{ type: "spring", stiffness: 420, damping: 32 }}
             className="fixed bottom-36 right-4 z-[79] md:bottom-24 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col"
-            style={{ background: "hsl(var(--card))", border: "1px solid rgba(124,58,237,0.25)", boxShadow: "0 0 60px rgba(124,58,237,0.2), 0 24px 48px rgba(0,0,0,0.4)", maxHeight: "60vh" }}
+            style={{ perspective: 800, background: "hsl(var(--card))", border: "1px solid rgba(124,58,237,0.25)", boxShadow: "0 0 60px rgba(124,58,237,0.2), 0 24px 48px rgba(0,0,0,0.4)", maxHeight: "60vh" }}
           >
             {/* Header */}
             <div className="px-4 py-3 border-b border-border/30 flex items-center gap-2.5"
@@ -534,10 +580,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {isOpen && (
               <motion.aside
                 key="sidebar"
-                initial={{ x: "-100%", opacity: 0.6 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: "-100%", opacity: 0 }}
-                transition={{ type: "spring", stiffness: 400, damping: 38 }}
+                initial={{ x: "-100%", opacity: 0, filter: "blur(10px)", skewX: -4 }}
+                animate={{ x: 0, opacity: 1, filter: "blur(0px)", skewX: 0 }}
+                exit={{ x: "-100%", opacity: 0, filter: "blur(8px)", skewX: 4 }}
+                transition={{ type: "spring", stiffness: 460, damping: 34 }}
                 className="w-52 flex flex-col rounded-r-2xl shadow-2xl overflow-hidden border-y border-r border-border/50"
                 style={{
                   maxHeight: "calc(100vh - 24px)",
@@ -657,147 +703,395 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </motion.div>
       </div>
 
-      {/* ── MOBILE BOTTOM NAV ── */}
-      <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/30 flex items-center justify-around py-1 px-1"
-        style={{
-          background: "hsl(var(--sidebar) / 0.92)",
-          backdropFilter: "blur(32px)",
-          boxShadow: "0 -8px 32px rgba(0,0,0,0.25), 0 -1px 0 rgba(255,255,255,0.05)",
-        }}
-      >
-        {mobileNavMainItems.map(({ href, icon, key }) => {
-          const active = location === href || (href !== "/" && location.startsWith(href));
-          return <MobileNavBtn key={href} href={href} icon={icon} label={t(key)} active={active} />;
-        })}
+      {/* ══ FLOATING ISLAND MOBILE NAV ══════════════════════════ */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-3"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)", paddingTop: 6 }}>
 
-        {/* Ko'proq button */}
-        <motion.button
-          whileTap={{ scale: 0.82 }}
-          whileHover={{ scale: 1.08 }}
-          onClick={() => setMoreOpen(true)}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl relative"
+        {/* Active item color ambient leak */}
+        {(() => {
+          const activeItem = mobileNavMainItems.find(({ href }) =>
+            location === href || (href !== "/" && location.startsWith(href))
+          );
+          const g = activeItem ? getGlow(activeItem.href) : null;
+          return g ? (
+            <motion.div
+              animate={{ opacity: [0.12, 0.22, 0.12] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                position: "absolute", bottom: 0, left: "20%", right: "20%", height: 60,
+                background: `radial-gradient(ellipse, ${g.shadow} 0%, transparent 75%)`,
+                filter: "blur(18px)", pointerEvents: "none",
+              }}
+            />
+          ) : null;
+        })()}
+
+        <motion.div
+          className="relative flex items-end justify-around overflow-visible"
+          style={{
+            background: "linear-gradient(180deg, hsl(var(--sidebar)/0.88) 0%, hsl(var(--sidebar)/0.97) 100%)",
+            backdropFilter: "blur(40px)",
+            borderRadius: 32,
+            padding: "10px 8px 12px",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 -2px 28px rgba(0,0,0,0.22), 0 8px 32px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07)",
+          }}
         >
+          {/* Scan-line shimmer on bar */}
           <motion.div
-            animate={moreOpen ? { rotate: 90 } : { rotate: 0 }}
-            transition={{ type: "spring", stiffness: 400, damping: 22 }}
-          >
-            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-          </motion.div>
-          <span className="text-[9px] font-bold text-muted-foreground">{t("nav.more")}</span>
-        </motion.button>
-      </nav>
+            animate={{ x: ["-120%", "120%"] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", repeatDelay: 3 }}
+            style={{
+              position: "absolute", inset: 0, borderRadius: 32, pointerEvents: "none",
+              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)",
+              zIndex: 0,
+            }}
+          />
 
-      {/* ── MOBILE "KO'PROQ" BOTTOM SHEET ── */}
+          {mobileNavMainItems.map(({ href, icon, key }) => {
+            const active = location === href || (href !== "/" && location.startsWith(href));
+            return <MobileNavBtn key={href} href={href} icon={icon} label={t(key)} active={active} />;
+          })}
+
+          {/* ── Plasma Core "Ko'proq" Button ─ */}
+          <motion.button
+            onClick={() => setMoreOpen(v => !v)}
+            className="relative flex flex-col items-center select-none"
+            style={{ width: 54, height: 60, justifyContent: "flex-end" }}
+            whileTap={{ scale: 0.82 }}
+          >
+            {/* Plasma orb */}
+            <div style={{ position: "absolute", top: 1, width: 44, height: 44 }}>
+              {/* Ring 1 — CW slow */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                style={{
+                  position: "absolute", inset: 0, borderRadius: "50%",
+                  border: "1.5px solid rgba(139,92,246,0.55)",
+                  pointerEvents: "none",
+                }}
+              />
+              {/* Ring 2 — CCW medium */}
+              <motion.div
+                animate={{ rotate: -360 }}
+                transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+                style={{
+                  position: "absolute", inset: 4, borderRadius: "50%",
+                  border: "1px dashed rgba(59,130,246,0.45)",
+                  pointerEvents: "none",
+                }}
+              />
+              {/* Ring 3 — CW fast, glow on open */}
+              <motion.div
+                animate={{ rotate: moreOpen ? [0, 360] : [0, 360], opacity: moreOpen ? [0.5, 1, 0.5] : [0.2, 0.4, 0.2] }}
+                transition={{ rotate: { duration: 3, repeat: Infinity, ease: "linear" }, opacity: { duration: 1.5, repeat: Infinity } }}
+                style={{
+                  position: "absolute", inset: 8, borderRadius: "50%",
+                  border: `1px solid rgba(124,58,237,${moreOpen ? "0.9" : "0.3"})`,
+                  boxShadow: moreOpen ? "0 0 12px rgba(124,58,237,0.7)" : "none",
+                  pointerEvents: "none",
+                  transition: "box-shadow 0.4s",
+                }}
+              />
+              {/* Core orb */}
+              <motion.div
+                animate={{ scale: moreOpen ? [1, 1.15, 1] : [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                style={{
+                  position: "absolute", inset: 10, borderRadius: "50%",
+                  background: moreOpen
+                    ? "radial-gradient(circle, rgba(139,92,246,0.55), rgba(59,130,246,0.35))"
+                    : "radial-gradient(circle, rgba(139,92,246,0.25), rgba(59,130,246,0.12))",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "background 0.4s",
+                }}
+              >
+                <AnimatePresence mode="wait">
+                  {moreOpen ? (
+                    <motion.div key="x" initial={{ rotate: -90, scale: 0, opacity: 0 }} animate={{ rotate: 0, scale: 1, opacity: 1 }} exit={{ rotate: 90, scale: 0, opacity: 0 }} transition={{ duration: 0.22 }}>
+                      <X className="w-[15px] h-[15px] text-violet-300" />
+                    </motion.div>
+                  ) : (
+                    <motion.div key="more" initial={{ rotate: 90, scale: 0, opacity: 0 }} animate={{ rotate: 0, scale: 1, opacity: 1 }} exit={{ rotate: -90, scale: 0, opacity: 0 }} transition={{ duration: 0.22 }}>
+                      <MoreHorizontal className="w-[15px] h-[15px] text-violet-400" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </div>
+            <span className="text-[9px] font-bold absolute bottom-1" style={{ color: moreOpen ? "rgb(167,139,250)" : "rgba(148,163,184,0.6)" }}>
+              {t("nav.more")}
+            </span>
+          </motion.button>
+        </motion.div>
+      </div>
+
+      {/* ══ 9D HOLOGRAM PORTAL — KO'PROQ SHEET ════════════════════ */}
       <AnimatePresence>
         {moreOpen && (
           <>
+            {/* ── Quantum backdrop ── */}
             <motion.div
-              key="backdrop"
+              key="qbackdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
               onClick={() => setMoreOpen(false)}
-              className="md:hidden fixed inset-0 z-[60] bg-black/70 backdrop-blur-[2px]"
-            />
+              className="md:hidden fixed inset-0 z-[60]"
+              style={{ background: "rgba(0,0,5,0.82)", backdropFilter: "blur(4px)" }}
+            >
+              {/* Animated nebula particles in backdrop */}
+              {[0, 1, 2, 3, 4].map(i => (
+                <motion.div
+                  key={i}
+                  animate={{ opacity: [0, 0.18, 0], x: [0, (i % 2 === 0 ? 1 : -1) * 30, 0], y: [0, -20, 0] }}
+                  transition={{ duration: 4 + i, repeat: Infinity, delay: i * 0.8, ease: "easeInOut" }}
+                  style={{
+                    position: "absolute",
+                    left: `${10 + i * 18}%`, top: `${15 + (i % 3) * 22}%`,
+                    width: 120, height: 120, borderRadius: "50%",
+                    background: ["rgba(124,58,237,0.4)", "rgba(59,130,246,0.3)", "rgba(16,185,129,0.25)", "rgba(234,179,8,0.25)", "rgba(239,68,68,0.2)"][i],
+                    filter: "blur(40px)", pointerEvents: "none",
+                  }}
+                />
+              ))}
+            </motion.div>
 
+            {/* ── 9D Portal Sheet ── */}
             <motion.div
-              key="sheet"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 380, damping: 36 }}
-              className="md:hidden fixed bottom-0 left-0 right-0 z-[61] rounded-t-[28px] overflow-hidden"
+              key="qsheet"
+              initial={{ y: "100%", scale: 0.88, borderRadius: "48px 48px 0 0", opacity: 0.4 }}
+              animate={{ y: 0, scale: 1, borderRadius: "28px 28px 0 0", opacity: 1 }}
+              exit={{ y: "105%", scale: 0.92, opacity: 0, borderRadius: "48px 48px 0 0" }}
+              transition={{ type: "spring", stiffness: 360, damping: 34, mass: 0.9 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 z-[61] overflow-hidden"
               style={{
-                background: "hsl(var(--sidebar))",
-                paddingBottom: "calc(env(safe-area-inset-bottom) + 4.5rem)",
-                boxShadow: "0 -20px 60px rgba(0,0,0,0.4), 0 -1px 0 rgba(255,255,255,0.08)",
+                maxHeight: "88vh",
+                paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)",
+                background: "linear-gradient(180deg, #0a0818 0%, #060610 40%, #04040e 100%)",
+                boxShadow: "0 -32px 80px rgba(124,58,237,0.18), 0 -2px 0 rgba(139,92,246,0.35)",
               }}
             >
+              {/* Holographic top border */}
+              <motion.div
+                animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                style={{
+                  position: "absolute", top: 0, left: 0, right: 0, height: 2,
+                  background: "linear-gradient(90deg, #7c3aed, #3b82f6, #10b981, #eab308, #ef4444, #7c3aed)",
+                  backgroundSize: "200% 100%",
+                }}
+              />
+
               {/* Handle */}
-              <div className="flex justify-center pt-3 pb-1">
+              <div className="flex justify-center pt-4 pb-0">
                 <motion.div
-                  animate={{ width: [32, 48, 32] }}
+                  animate={{ width: [28, 44, 28], opacity: [0.4, 0.7, 0.4] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                  className="h-1 rounded-full bg-muted-foreground/30"
+                  style={{ height: 4, borderRadius: 2, background: "rgba(139,92,246,0.6)" }}
                 />
               </div>
 
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border/25">
-                <div className="flex items-center gap-2">
-                  <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Zap className="w-4 h-4 text-violet-400" />
-                  </motion.div>
-                  <p className="font-bold text-foreground text-base">{t("common.all_sections")}</p>
+              {/* HUD Header */}
+              <div className="flex items-center justify-between px-5 pt-3 pb-4">
+                <div className="flex items-center gap-3">
+                  {/* Rotating 9D icon */}
+                  <div className="relative w-9 h-9 flex items-center justify-center">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                      style={{
+                        position: "absolute", inset: 0, borderRadius: "50%",
+                        border: "1.5px solid rgba(139,92,246,0.6)",
+                      }}
+                    />
+                    <motion.div
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                      style={{
+                        position: "absolute", inset: 3, borderRadius: "50%",
+                        border: "1px dashed rgba(59,130,246,0.5)",
+                      }}
+                    />
+                    <motion.div
+                      animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.6, 1, 0.6] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      style={{
+                        width: 20, height: 20, borderRadius: "50%",
+                        background: "radial-gradient(circle, rgba(139,92,246,0.9), rgba(59,130,246,0.6))",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 0 12px rgba(139,92,246,0.7)",
+                      }}
+                    >
+                      <Zap className="w-2.5 h-2.5 text-white" />
+                    </motion.div>
+                  </div>
+                  <div>
+                    <motion.p
+                      animate={{ opacity: [0.7, 1, 0.7] }}
+                      transition={{ duration: 2.5, repeat: Infinity }}
+                      className="font-black text-base tracking-wide"
+                      style={{ background: "linear-gradient(90deg, #a78bfa, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundSize: "200%" }}
+                    >
+                      {t("common.all_sections")}
+                    </motion.p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span className="text-[10px] text-emerald-400 font-mono">NEXUS ONLINE</span>
+                    </div>
+                  </div>
                 </div>
                 <motion.button
-                  whileTap={{ scale: 0.88, rotate: 90 }}
+                  whileTap={{ scale: 0.85, rotate: 90 }}
                   onClick={() => setMoreOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-muted/60 hover:bg-muted transition-colors"
+                  className="w-9 h-9 flex items-center justify-center rounded-2xl"
+                  style={{ background: "rgba(139,92,246,0.18)", border: "1px solid rgba(139,92,246,0.35)" }}
                 >
-                  <X className="w-4 h-4 text-foreground" />
+                  <X className="w-4 h-4 text-violet-400" />
                 </motion.button>
               </div>
 
-              {/* All nav items grid */}
-              <div className="px-4 pt-3 pb-2 grid grid-cols-3 gap-2">
-                {allMobileNav.map(({ href, icon, key }) => {
-                  const active = location === href || (href !== "/" && location.startsWith(href));
+              {/* Scrollable content */}
+              <div className="overflow-y-auto" style={{ maxHeight: "calc(88vh - 120px)" }}>
+
+                {/* ── Category sections ── */}
+                {(
+                  [
+                    {
+                      label: "⚡ Asosiy",
+                      color: "#7c3aed",
+                      shadow: "rgba(124,58,237,0.5)",
+                      hrefs: ["/", "/explore", "/search", "/messages"],
+                      dir: "left" as const,
+                    },
+                    {
+                      label: "🌐 Ijtimoiy",
+                      color: "#0ea5e9",
+                      shadow: "rgba(14,165,233,0.5)",
+                      hrefs: ["/groups", "/notifications", "/reels", "/live-explore"],
+                      dir: "right" as const,
+                    },
+                    {
+                      label: "🤖 AI & Ijod",
+                      color: "#3b82f6",
+                      shadow: "rgba(59,130,246,0.5)",
+                      hrefs: ["/ai-chat", "/twin", "/muni", "/voice-translate", "/factcheck", "/multiscene"],
+                      dir: "left" as const,
+                    },
+                    {
+                      label: "🎯 Kashfiyot",
+                      color: "#10b981",
+                      shadow: "rgba(16,185,129,0.5)",
+                      hrefs: ["/bozor", "/kutubxona", "/mood", "/spaces"],
+                      dir: "right" as const,
+                    },
+                    {
+                      label: "👑 Premium & Hamyon",
+                      color: "#eab308",
+                      shadow: "rgba(234,179,8,0.5)",
+                      hrefs: ["/profile", "/premium", "/wallet", "/quests", "/anon"],
+                      dir: "left" as const,
+                    },
+                    {
+                      label: "⚙️ Sozlamalar",
+                      color: "#94a3b8",
+                      shadow: "rgba(148,163,184,0.5)",
+                      hrefs: ["/settings", ...(user?.isAdmin ? ["/admin"] : [])],
+                      dir: "right" as const,
+                    },
+                  ] as { label: string; color: string; shadow: string; hrefs: string[]; dir: "left" | "right" | "up" | "down" }[]
+                ).map((cat, catIdx) => {
+                  const catItems = allMobileNav.filter(item => cat.hrefs.includes(item.href));
+                  if (!catItems.length) return null;
                   return (
-                    <SheetGridBtn
-                      key={href}
-                      href={href}
-                      icon={icon}
-                      label={t(key)}
-                      active={active}
-                      onClick={() => setMoreOpen(false)}
-                    />
+                    <div key={cat.label} className="px-4 mb-4">
+                      {/* Category label */}
+                      <motion.div
+                        initial={{ opacity: 0, x: cat.dir === "left" ? -20 : 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.06 + catIdx * 0.07, type: "spring", stiffness: 400, damping: 28 }}
+                        className="flex items-center gap-2 mb-2"
+                      >
+                        <motion.div
+                          animate={{ width: [16, 28, 16], opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 2.5 + catIdx * 0.3, repeat: Infinity, ease: "easeInOut" }}
+                          style={{ height: 2, borderRadius: 1, background: cat.color }}
+                        />
+                        <span className="text-[10px] font-black tracking-widest uppercase" style={{ color: cat.color, textShadow: `0 0 8px ${cat.shadow}` }}>
+                          {cat.label}
+                        </span>
+                        <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${cat.color}44, transparent)` }} />
+                      </motion.div>
+
+                      {/* Items grid */}
+                      <div className="grid grid-cols-4 gap-2">
+                        {catItems.map((item, itemIdx) => {
+                          const active = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+                          return (
+                            <SheetGridBtn
+                              key={item.href}
+                              href={item.href}
+                              icon={item.icon}
+                              label={t(item.key)}
+                              active={active}
+                              onClick={() => setMoreOpen(false)}
+                              entryDelay={0.1 + catIdx * 0.06 + itemIdx * 0.04}
+                              entryDir={cat.dir}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
-              </div>
 
-              {/* User + logout */}
-              {user && (
-                <div className="px-4 py-3 border-t border-border/25 mt-1 flex items-center justify-between">
-                  <Link href="/profile" onClick={() => setMoreOpen(false)}>
-                    <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-2.5">
-                      {user.avatarUrl ? (
-                        <div className="relative">
-                          <img src={user.avatarUrl} className="w-9 h-9 rounded-full object-cover ring-2 ring-violet-500/30" />
-                          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-sidebar" />
-                        </div>
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center text-sm font-black text-white ring-2 ring-violet-500/30 shadow-[0_0_12px_rgba(124,58,237,0.4)]">
-                          {user.displayName[0].toUpperCase()}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-foreground truncate">{user.displayName}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                          <span className="text-[10px] text-muted-foreground">@{user.username}</span>
-                          <span className="text-[10px] text-violet-400 font-mono tracking-tight">{clockTime}</span>
-                          <span className="text-[10px] text-muted-foreground font-mono">{clockDate}</span>
-                        </div>
-                        {countryDisplay && (
-                          <p className="text-[10px] text-muted-foreground/80 mt-0.5 truncate">{countryDisplay}</p>
-                        )}
-                      </div>
-                    </motion.div>
-                  </Link>
-                  <motion.button
-                    whileTap={{ scale: 0.93 }}
-                    onClick={logout}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-xs font-bold border border-red-500/20 flex-shrink-0"
+                {/* ── User card ── */}
+                {user && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.55, type: "spring", stiffness: 380, damping: 28 }}
+                    className="mx-4 mt-2 mb-2 rounded-2xl overflow-hidden"
+                    style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(59,130,246,0.08))", border: "1px solid rgba(139,92,246,0.22)" }}
                   >
-                    <LogOut className="w-3.5 h-3.5" />
-                    {t("auth.logout")}
-                  </motion.button>
-                </div>
-              )}
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <Link href="/profile" onClick={() => setMoreOpen(false)}>
+                        <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-2.5">
+                          {user.avatarUrl ? (
+                            <div className="relative">
+                              <img src={user.avatarUrl} className="w-9 h-9 rounded-full object-cover ring-2 ring-violet-500/40" />
+                              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0a0818]" />
+                            </div>
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center text-sm font-black text-white ring-2 ring-violet-500/40 shadow-[0_0_12px_rgba(124,58,237,0.5)]">
+                              {user.displayName[0].toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-white truncate">{user.displayName}</p>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-violet-400/80">@{user.username}</span>
+                              <span className="text-[10px] text-violet-300 font-mono">{clockTime}</span>
+                            </div>
+                            {countryDisplay && <p className="text-[10px] text-slate-400 mt-0.5 truncate">{countryDisplay}</p>}
+                          </div>
+                        </motion.div>
+                      </Link>
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={logout}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-shrink-0"
+                        style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "rgb(248,113,113)" }}
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        {t("auth.logout")}
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
             </motion.div>
           </>
         )}
@@ -807,9 +1101,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="min-h-screen pl-8 pb-20 md:pl-8 md:pb-0">
         <motion.div
           key={location}
-          initial={{ opacity: 0, y: 10, scale: 0.995 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, y: 14, scale: 0.993, filter: "blur(3px)" }}
+          animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
           className="min-h-screen"
         >
           {children}

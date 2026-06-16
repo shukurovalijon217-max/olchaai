@@ -621,6 +621,7 @@ const ALL_TIMEZONES: { label: string; value: string }[] = [
 
 function LocationContent() {
   const { user, refetch } = useAuth();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [selectedCode, setSelectedCode] = useState(user?.country ?? "");
   const [saving, setSaving] = useState(false); const [success, setSuccess] = useState(false); const [error, setError] = useState<string | null>(null);
@@ -662,10 +663,10 @@ function LocationContent() {
     try {
       const res = await fetch(`${API}/api/auth/profile`, { method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ ...(selectedCode ? { country: selectedCode } : {}), timezone: selectedTz }) });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Xato"); return; }
+      if (!res.ok) { setError(data.error ?? t("common.error")); return; }
       await refetch(); setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch { setError("Tarmoq xatosi"); }
+    } catch { setError(t("common.network_error")); }
     finally { setSaving(false); }
   };
 
@@ -673,7 +674,7 @@ function LocationContent() {
     <div className="space-y-4">
       <SF>
         <div className="p-4 rounded-xl border border-orange-500/25 bg-orange-500/8">
-          <p className="text-xs text-white/40 mb-2">Ko'rinishi (jonli)</p>
+          <p className="text-xs text-white/40 mb-2">{t("settings.lt_preview")}</p>
           <div className="flex items-center gap-2 flex-wrap">
             {selectedCountry && <span className="text-xl">{countryFlag(selectedCountry.code)}</span>}
             {selectedCountry && <span className="text-sm font-semibold text-white">{selectedCountry.name}</span>}
@@ -681,14 +682,14 @@ function LocationContent() {
           </div>
         </div>
       </SF>
-      <Field label="Vaqt zonasi">
-        <p className="text-xs text-white/35 mb-2">Avtomatik: <span className="text-white/60">{autoTz}</span></p>
+      <Field label={t("settings.lt_timezone")}>
+        <p className="text-xs text-white/35 mb-2">{t("settings.lt_auto")} <span className="text-white/60">{autoTz}</span></p>
         <select value={selectedTz} onChange={e => setSelectedTz(e.target.value)} className={INPUT}>
           {ALL_TIMEZONES.map(tz => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
-          {!ALL_TIMEZONES.find(t => t.value === selectedTz) && <option value={selectedTz}>{selectedTz}</option>}
+          {!ALL_TIMEZONES.find(tz => tz.value === selectedTz) && <option value={selectedTz}>{selectedTz}</option>}
         </select>
       </Field>
-      <Field label="Davlat (ixtiyoriy)">
+      <Field label={t("settings.lt_country")}>
         {selectedCountry && (
           <div className="mb-2 p-3 rounded-xl border border-white/10 bg-white/5 flex items-center gap-2">
             <span className="text-xl">{countryFlag(selectedCountry.code)}</span>
@@ -698,7 +699,7 @@ function LocationContent() {
         )}
         <div className="relative mb-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Davlat nomi bilan qidiring..." className={`${INPUT} pl-9 pr-9`} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t("settings.lt_search_ph")} className={`${INPUT} pl-9 pr-9`} />
           {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"><X className="w-4 h-4" /></button>}
         </div>
         <div className="max-h-52 overflow-y-auto rounded-xl border border-white/8 bg-white/3 divide-y divide-white/5">
@@ -713,17 +714,17 @@ function LocationContent() {
               {c.code === selectedCode && <Check className="w-4 h-4 text-orange-400 flex-shrink-0" />}
             </button>
           ))}
-          {!search && filtered.length > 10 && <div className="px-3 py-2 text-xs text-white/30 text-center">Qidirish orqali barchani ko'ring ({filtered.length} ta)</div>}
-          {filtered.length === 0 && <div className="py-5 text-center text-sm text-white/30"><Globe className="w-5 h-5 mx-auto mb-1 opacity-40" />Davlat topilmadi</div>}
+          {!search && filtered.length > 10 && <div className="px-3 py-2 text-xs text-white/30 text-center">{t("settings.lt_show_all", { count: filtered.length })}</div>}
+          {filtered.length === 0 && <div className="py-5 text-center text-sm text-white/30"><Globe className="w-5 h-5 mx-auto mb-1 opacity-40" />{t("settings.lt_not_found")}</div>}
         </div>
       </Field>
       {error && <SF><div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div></SF>}
-      {success && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> Saqlandi!</div></SF>}
+      {success && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> {t("common.success")}</div></SF>}
       <SF>
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-300 text-sm font-semibold transition-all disabled:opacity-40">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-          Saqlash
+          {t("common.save")}
         </button>
       </SF>
     </div>
@@ -934,13 +935,13 @@ export default function SettingsPage() {
     },
     {
       id: "location", icon: MapPin, color: "orange",
-      label: "Joylashuv va vaqt",
-      preview: user?.country ? `${countryFlag(user.country)} ${getCountryByCode(user.country)?.name ?? ""}` : "Belgilanmagan",
+      label: t("settings.loc_time"),
+      preview: user?.country ? `${countryFlag(user.country)} ${getCountryByCode(user.country)?.name ?? ""}` : t("settings.lt_not_set"),
     },
     {
       id: "monetization", icon: CircleDollarSign, color: "amber",
-      label: "Monetizatsiya",
-      preview: "YouTube kabi kreator daromad dasturi",
+      label: t("settings.monetization_label"),
+      preview: t("settings.monetization_preview"),
     },
   ];
 

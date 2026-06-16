@@ -91,7 +91,7 @@ export default function AIChatPage() {
     }
   }
 
-  async function newConversation() {
+  async function newConversation(): Promise<number | null> {
     const title = `${t("ai.tab_chat")} ${new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`;
     const r = await fetch(`${API}/api/openai/conversations`, {
       method: "POST",
@@ -104,7 +104,9 @@ export default function AIChatPage() {
       setConversations(prev => [...prev, conv]);
       setActiveConv(conv.id);
       setMsgs([]);
+      return conv.id as number;
     }
+    return null;
   }
 
   async function deleteConversation(id: number, e: React.MouseEvent) {
@@ -116,9 +118,11 @@ export default function AIChatPage() {
 
   async function sendMessage() {
     if (!input.trim() || streaming) return;
-    if (!activeConv) await newConversation();
-    const convId = activeConv;
-    if (!convId) return;
+    let convId = activeConv;
+    if (!convId) {
+      convId = await newConversation();
+      if (!convId) return;
+    }
 
     const userMsg: Message = { id: Date.now(), role: "user", content: input.trim(), createdAt: new Date().toISOString() };
     setMsgs(prev => [...prev, userMsg]);

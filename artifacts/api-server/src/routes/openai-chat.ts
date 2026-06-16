@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { aiConversations as conversations, aiMessages as messages } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
@@ -9,7 +9,11 @@ const router = Router();
 router.get("/openai/conversations", async (req, res) => {
   if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
-    const list = await db.select().from(conversations).orderBy(conversations.createdAt);
+    const list = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.userId, req.session.userId))
+      .orderBy(conversations.createdAt);
     res.json(list);
   } catch (err) {
     req.log.error(err);
@@ -22,7 +26,10 @@ router.post("/openai/conversations", async (req, res) => {
   const { title } = req.body;
   if (!title) { res.status(400).json({ error: "title required" }); return; }
   try {
-    const [conv] = await db.insert(conversations).values({ title }).returning();
+    const [conv] = await db
+      .insert(conversations)
+      .values({ title, userId: req.session.userId })
+      .returning();
     res.status(201).json(conv);
   } catch (err) {
     req.log.error(err);
@@ -34,9 +41,16 @@ router.get("/openai/conversations/:id", async (req, res) => {
   if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const id = Number(req.params.id);
   try {
-    const [conv] = await db.select().from(conversations).where(eq(conversations.id, id));
+    const [conv] = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.userId, req.session.userId)));
     if (!conv) { res.status(404).json({ error: "Not found" }); return; }
-    const msgs = await db.select().from(messages).where(eq(messages.conversationId, id)).orderBy(messages.createdAt);
+    const msgs = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, id))
+      .orderBy(messages.createdAt);
     res.json({ ...conv, messages: msgs });
   } catch (err) {
     req.log.error(err);
@@ -48,7 +62,9 @@ router.delete("/openai/conversations/:id", async (req, res) => {
   if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const id = Number(req.params.id);
   try {
-    await db.delete(conversations).where(eq(conversations.id, id));
+    await db
+      .delete(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.userId, req.session.userId)));
     res.status(204).end();
   } catch (err) {
     req.log.error(err);
@@ -60,7 +76,16 @@ router.get("/openai/conversations/:id/messages", async (req, res) => {
   if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const id = Number(req.params.id);
   try {
-    const msgs = await db.select().from(messages).where(eq(messages.conversationId, id)).orderBy(messages.createdAt);
+    const [conv] = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.userId, req.session.userId)));
+    if (!conv) { res.status(404).json({ error: "Not found" }); return; }
+    const msgs = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, id))
+      .orderBy(messages.createdAt);
     res.json(msgs);
   } catch (err) {
     req.log.error(err);
@@ -75,11 +100,18 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
   if (!content) { res.status(400).json({ error: "content required" }); return; }
 
   try {
-    const [conv] = await db.select().from(conversations).where(eq(conversations.id, convId));
+    const [conv] = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.id, convId), eq(conversations.userId, req.session.userId)));
     if (!conv) { res.status(404).json({ error: "Not found" }); return; }
 
     await db.insert(messages).values({ conversationId: convId, role: "user", content });
-    const history = await db.select().from(messages).where(eq(messages.conversationId, convId)).orderBy(messages.createdAt);
+    const history = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, convId))
+      .orderBy(messages.createdAt);
 
     const chatMessages = history.map(m => ({ role: m.role as "user" | "assistant" | "system", content: m.content }));
 
@@ -91,7 +123,7 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
       model: "gpt-4o-mini",
       max_completion_tokens: 8192,
       messages: [
-        { role: "system", content: "Siz OlCha platformasining AI yordamchisisiz. O'zbek tilida yordam bering. Qisqa, aniq va foydali javoblar bering." },
+        { role: "system", content: "Siz OlCha platformasining AI yordamchisisiz. Foydalanuvchi qaysi tilda yozsa, o'sha tilda javob bering. Qisqa, aniq va foydali javoblar bering." },
         ...chatMessages,
       ],
       stream: true,
@@ -212,14 +244,12 @@ router.post("/openai/voice-chat", async (req, res) => {
       messages: [
         {
           role: "system",
-          content:
-            "Siz OlCha platformasining ovozli AI yordamchisisiz. Qisqa, aniq va foydali javoblar bering. Foydalanuvchi qaysi tilda gapirsa, o'sha tilda javob bering.",
+          content: "Siz OlCha platformasining ovozli AI yordamchisisiz. Qisqa, aniq va foydali javoblar bering. Foydalanuvchi qaysi tilda gapirsa, o'sha tilda javob bering.",
         },
         { role: "user", content: transcript },
       ],
     });
-    const aiText =
-      chatResponse.choices[0]?.message?.content ?? "Kechirasiz, javob bera olmadim.";
+    const aiText = chatResponse.choices[0]?.message?.content ?? "Kechirasiz, javob bera olmadim.";
 
     const ttsResponse = await openai.audio.speech.create({
       model: "tts-1",

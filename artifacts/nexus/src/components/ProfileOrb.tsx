@@ -316,7 +316,7 @@ const PREMIUM_LANGS = [
 
 function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
   { convId:number; meId:number; convName:string; onBack:()=>void; onClose:()=>void }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const { user: me } = useAuth();
   const isPremium = me?.isPremium ?? false;
@@ -471,7 +471,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
                         <EmojiText text={m.content} />
                         <div className={`flex items-center gap-1 mt-0.5 ${isMe?"justify-end":""}`}>
                           <span className="text-[10px] opacity-45">
-                            {new Date(m.createdAt).toLocaleTimeString("uz-UZ",{ hour:"2-digit", minute:"2-digit" })}
+                            {new Date(m.createdAt).toLocaleTimeString(i18n.language,{ hour:"2-digit", minute:"2-digit" })}
                           </span>
                           {isMe && <CheckCheck className="w-3 h-3 text-blue-300 opacity-55"/>}
                         </div>

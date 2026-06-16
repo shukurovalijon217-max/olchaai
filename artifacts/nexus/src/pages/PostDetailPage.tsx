@@ -34,7 +34,7 @@ interface VoiceCommentData {
 }
 
 export default function PostDetailPage({ postId }: PostDetailPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: post } = useGetPost(postId, { query: { queryKey: getGetPostQueryKey(postId) } });
   const { data: comments = [] } = useListPostComments(postId, { query: { queryKey: getListPostCommentsQueryKey(postId) } });
   const [text, setText] = useState("");
@@ -247,7 +247,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
                   <span className="text-sm font-semibold text-foreground">{comment.author.displayName}</span>
                   {comment.author.isVerified && <BadgeCheck className="w-3 h-3 text-primary" />}
                   <span className="text-xs text-muted-foreground ml-auto">
-                    {new Date(comment.createdAt).toLocaleDateString()}
+                    {new Date(comment.createdAt).toLocaleDateString(i18n.language)}
                   </span>
                 </div>
                 <p className="text-sm text-foreground leading-relaxed">{comment.content}</p>

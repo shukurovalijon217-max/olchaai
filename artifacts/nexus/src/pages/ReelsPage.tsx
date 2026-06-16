@@ -4,7 +4,7 @@ import {
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
   Heart, MessageCircle, Share2, Music, BadgeCheck, Plus, Sparkles,
-  Brain, X, Loader2, Volume2, VolumeX, Send, Check, Zap, Tag,
+  Brain, X, Loader2, Volume2, VolumeX, Send, Check, Zap, Tag, Gauge, Scissors,
 } from "lucide-react";
 import { useListReels, useLikeReel, getListReelsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -386,7 +386,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
   onClose: () => void;
   user: { id: number; displayName?: string; avatarUrl?: string | null } | null;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [comments, setComments] = useState<ReelComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
@@ -464,7 +464,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
                   <span className="text-white text-xs font-semibold">{c.author.displayName}</span>
                   {c.author.isVerified && <BadgeCheck className="w-3 h-3 text-violet-400" />}
                   <span className="text-white/30 text-[10px] ml-auto">
-                    {new Date(c.createdAt).toLocaleDateString("uz-UZ", { month: "short", day: "numeric" })}
+                    {new Date(c.createdAt).toLocaleDateString(i18n.language, { month: "short", day: "numeric" })}
                   </span>
                 </div>
                 <p className="text-white/80 text-sm leading-relaxed">{c.content}</p>
@@ -529,6 +529,35 @@ function ReelSlide({
   const [lastTap, setLastTap] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { progress, dur, seek } = useVideoProgress(videoRef);
+  const [speed, setSpeed] = useState(1);
+  const [showSpeedPanel, setShowSpeedPanel] = useState(false);
+  const [showTrimPanel, setShowTrimPanel] = useState(false);
+  const [trimStart, setTrimStart] = useState<number | null>(null);
+  const [trimEnd, setTrimEnd] = useState<number | null>(null);
+  const [clipSaved, setClipSaved] = useState(false);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (v) v.playbackRate = speed;
+  }, [speed, videoRef]);
+
+  const handleSetTrimStart = useCallback(() => {
+    const v = videoRef.current;
+    if (v) setTrimStart(parseFloat(v.currentTime.toFixed(1)));
+  }, [videoRef]);
+
+  const handleSetTrimEnd = useCallback(() => {
+    const v = videoRef.current;
+    if (v) setTrimEnd(parseFloat(v.currentTime.toFixed(1)));
+  }, [videoRef]);
+
+  const handleSaveClip = useCallback(async () => {
+    if (trimStart == null || trimEnd == null) return;
+    const info = `Reel #${reel.id} klip: ${trimStart.toFixed(1)}s – ${trimEnd.toFixed(1)}s`;
+    try { await navigator.clipboard.writeText(info); } catch { /* silent */ }
+    setClipSaved(true);
+    setTimeout(() => setClipSaved(false), 2200);
+  }, [trimStart, trimEnd, reel.id]);
 
   /* Tap handler: single = play/pause, double = like + heart burst */
   const handleTap = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -802,6 +831,37 @@ function ReelSlide({
           }}>
           <Plus className="w-6 h-6 text-white" />
         </motion.button>
+
+        {/* Speed */}
+        <motion.button
+          whileTap={{ scale: 0.82 }}
+          onClick={(e) => { e.stopPropagation(); setShowSpeedPanel(v => !v); setShowTrimPanel(false); }}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center"
+          style={{
+            background: speed !== 1 ? "rgba(124,58,237,0.55)" : "rgba(12,12,24,0.55)",
+            backdropFilter: "blur(16px)",
+            border: speed !== 1 ? "1px solid rgba(167,139,250,0.45)" : "1px solid rgba(255,255,255,0.1)",
+            boxShadow: speed !== 1 ? "0 0 18px rgba(124,58,237,0.45)" : "0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
+          }}>
+          {speed !== 1
+            ? <span className="text-[11px] font-black" style={{ color: "#e9d5ff" }}>{speed}×</span>
+            : <Gauge className="w-[18px] h-[18px] text-white" />
+          }
+        </motion.button>
+
+        {/* Clip / Trim */}
+        <motion.button
+          whileTap={{ scale: 0.82 }}
+          onClick={(e) => { e.stopPropagation(); setShowTrimPanel(v => !v); setShowSpeedPanel(false); }}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center"
+          style={{
+            background: showTrimPanel ? "rgba(59,130,246,0.55)" : "rgba(12,12,24,0.55)",
+            backdropFilter: "blur(16px)",
+            border: showTrimPanel ? "1px solid rgba(96,165,250,0.45)" : "1px solid rgba(255,255,255,0.1)",
+            boxShadow: showTrimPanel ? "0 0 18px rgba(59,130,246,0.45)" : "0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
+          }}>
+          <Scissors className="w-[18px] h-[18px] text-white" />
+        </motion.button>
       </div>
 
       {/* Share toast */}
@@ -814,6 +874,152 @@ function ReelSlide({
             style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
             <Check className="w-4 h-4 text-emerald-400" />
             <span className="text-white text-sm font-medium">Havola nusxalandi</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Speed Control Panel ─────────────────────────────────── */}
+      <AnimatePresence>
+        {showSpeedPanel && (
+          <motion.div
+            initial={{ opacity: 0, x: 60, scale: 0.88 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 60, scale: 0.88 }}
+            transition={{ type: "spring", damping: 22, stiffness: 320 }}
+            className="absolute right-[72px] bottom-48 flex flex-col-reverse gap-2 z-30 pointer-events-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2].map((s, i) => (
+              <motion.button
+                key={s}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                whileTap={{ scale: 0.8 }}
+                onClick={() => { setSpeed(s); setShowSpeedPanel(false); }}
+                className="px-4 py-2 rounded-xl text-xs font-black"
+                style={{
+                  background: speed === s
+                    ? "rgba(124,58,237,0.75)"
+                    : "rgba(8,6,20,0.82)",
+                  backdropFilter: "blur(16px)",
+                  border: speed === s
+                    ? "1px solid rgba(167,139,250,0.65)"
+                    : "1px solid rgba(255,255,255,0.1)",
+                  color: speed === s ? "#e9d5ff" : "rgba(255,255,255,0.65)",
+                  boxShadow: speed === s
+                    ? "0 0 16px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.1)"
+                    : "0 2px 12px rgba(0,0,0,0.5)",
+                  minWidth: "3.8rem",
+                  textAlign: "center",
+                }}>
+                {s === 1 ? "1× Normal" : s < 1 ? `${s}× Sekin` : `${s}× Tez`}
+              </motion.button>
+            ))}
+            <div className="text-[10px] font-semibold text-center mb-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+              Tezlik
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Trim / Clip Panel ───────────────────────────────────── */}
+      <AnimatePresence>
+        {showTrimPanel && (
+          <motion.div
+            initial={{ opacity: 0, y: 64 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 64 }}
+            transition={{ type: "spring", damping: 24, stiffness: 300 }}
+            className="absolute bottom-20 left-4 right-20 z-30 pointer-events-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="rounded-2xl p-4 space-y-3"
+              style={{ background: "rgba(8,6,20,0.94)", backdropFilter: "blur(24px)", border: "1px solid rgba(96,165,250,0.2)" }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Scissors className="w-3.5 h-3.5" style={{ color: "#60a5fa" }} />
+                  <span className="text-white text-xs font-bold">Klip belgilash</span>
+                </div>
+                {trimStart != null && trimEnd != null && (
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    className="text-[10px] font-mono"
+                    style={{ color: "#a78bfa" }}>
+                    {trimStart.toFixed(1)}s → {trimEnd.toFixed(1)}s &nbsp;·&nbsp; {Math.abs(trimEnd - trimStart).toFixed(1)}s
+                  </motion.span>
+                )}
+              </div>
+
+              {/* Timeline bar */}
+              <div className="relative h-8 rounded-xl overflow-hidden"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                {dur > 0 && (
+                  <div className="absolute inset-y-0 left-0 rounded-xl transition-all duration-100"
+                    style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg,rgba(124,58,237,0.45),rgba(59,130,246,0.45),rgba(6,182,212,0.45))" }} />
+                )}
+                {trimStart != null && dur > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    className="absolute inset-y-0 z-10"
+                    style={{
+                      left: `${(trimStart / dur) * 100}%`,
+                      right: trimEnd != null ? `${100 - (trimEnd / dur) * 100}%` : "0%",
+                      background: "rgba(96,165,250,0.22)",
+                      borderLeft: "2px solid #60a5fa",
+                      borderRight: trimEnd != null ? "2px solid #a78bfa" : undefined,
+                    }} />
+                )}
+                {dur > 0 && (
+                  <div className="absolute top-0 bottom-0 w-px z-20 pointer-events-none"
+                    style={{ left: `${progress * 100}%`, background: "rgba(255,255,255,0.7)", transition: "left 120ms linear" }}>
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-white" />
+                  </div>
+                )}
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono pointer-events-none select-none"
+                  style={{ color: "rgba(255,255,255,0.3)" }}>
+                  {dur > 0 ? `${Math.floor(progress * dur)}s / ${Math.floor(dur)}s` : "Video mavjud emas"}
+                </span>
+              </div>
+
+              {/* Controls */}
+              <div className="flex gap-2">
+                <motion.button whileTap={{ scale: 0.88 }}
+                  onClick={handleSetTrimStart}
+                  className="flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                  style={{ background: trimStart != null ? "rgba(124,58,237,0.4)" : "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.4)", color: "#c4b5fd" }}>
+                  ⏮ Boshi
+                  {trimStart != null && (
+                    <span className="opacity-60 text-[9px]">{trimStart.toFixed(1)}s</span>
+                  )}
+                </motion.button>
+                <motion.button whileTap={{ scale: 0.88 }}
+                  onClick={handleSetTrimEnd}
+                  className="flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                  style={{ background: trimEnd != null ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.2)", border: "1px solid rgba(59,130,246,0.4)", color: "#93c5fd" }}>
+                  Oxiri ⏭
+                  {trimEnd != null && (
+                    <span className="opacity-60 text-[9px]">{trimEnd.toFixed(1)}s</span>
+                  )}
+                </motion.button>
+                {trimStart != null && trimEnd != null && Math.abs(trimEnd - trimStart) > 0.1 && (
+                  <motion.button
+                    whileTap={{ scale: 0.88 }}
+                    onClick={handleSaveClip}
+                    initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                    className="py-2 px-4 rounded-xl text-xs font-bold"
+                    style={{
+                      background: clipSaved ? "rgba(16,185,129,0.6)" : "linear-gradient(135deg, #7c3aed, #3b82f6)",
+                      color: "white",
+                      boxShadow: clipSaved ? "0 0 18px rgba(16,185,129,0.5)" : "0 0 16px rgba(124,58,237,0.4)",
+                      border: clipSaved ? "1px solid rgba(52,211,153,0.4)" : "none",
+                      transition: "all 0.2s",
+                    }}>
+                    {clipSaved ? "✓ Saqlandi" : "💾 Saqlash"}
+                  </motion.button>
+                )}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -23,7 +23,7 @@ const TYPE_COLOR: Record<string, string> = {
 };
 
 export default function NotificationsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: notifs = [], isLoading } = useListNotifications();
   const mark = useMarkNotificationRead();
   const qc = useQueryClient();
@@ -100,7 +100,7 @@ export default function NotificationsPage() {
                   )}
                   <p className="text-sm text-muted-foreground">{notif.message}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(notif.createdAt).toLocaleDateString()}
+                    {new Date(notif.createdAt).toLocaleDateString(i18n.language, { year: "numeric", month: "short", day: "numeric" })}
                   </p>
                 </div>
                 {!notif.isRead && (

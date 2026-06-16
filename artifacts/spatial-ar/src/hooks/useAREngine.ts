@@ -3,6 +3,8 @@ import { CameraStreamer, type PermissionState, type OrientationData } from "../e
 import { SpatialMatrix, isWebGLAvailable } from "../engine/SpatialMatrix";
 import { FrameOptimizer, type FrameStats } from "../engine/FrameOptimizer";
 import { HologramRenderer } from "../engine/HologramRenderer";
+import { UIScene, type HitInfo } from "../engine/UIScene";
+import { Interactions } from "../engine/Interactions";
 
 export type ARMode = "ar" | "demo";
 
@@ -13,17 +15,22 @@ export interface AREngineState {
   ready: boolean;
   isMobile: boolean;
   webglAvailable: boolean;
+  lastHit: HitInfo | null;
 }
 
 export function useAREngine(
   videoRef: React.RefObject<HTMLVideoElement | null>,
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
+  overlayRef: React.RefObject<HTMLDivElement | null>,
 ) {
-  const streamer  = useRef<CameraStreamer | null>(null);
-  const matrix    = useRef<SpatialMatrix | null>(null);
-  const optimizer = useRef<FrameOptimizer | null>(null);
-  const hologram  = useRef<HologramRenderer | null>(null);
-  const startTime = useRef(performance.now());
+  const streamer      = useRef<CameraStreamer    | null>(null);
+  const matrix        = useRef<SpatialMatrix     | null>(null);
+  const optimizer     = useRef<FrameOptimizer    | null>(null);
+  const hologram      = useRef<HologramRenderer  | null>(null);
+  const uiScene       = useRef<UIScene           | null>(null);
+  const interactions  = useRef<Interactions      | null>(null);
+  const startTime     = useRef(performance.now());
+  const hitClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const webglAvailable = isWebGLAvailable();
 
@@ -34,6 +41,7 @@ export function useAREngine(
     ready: false,
     isMobile: /Mobi|Android|iPhone|iPad/.test(navigator.userAgent),
     webglAvailable,
+    lastHit: null,
   });
 
   const orientationBuffer = useRef<OrientationData | null>(null);
@@ -44,12 +52,13 @@ export function useAREngine(
       return;
     }
 
-    const canvas = canvasRef.current;
+    const canvas  = canvasRef.current;
+    const overlay = overlayRef.current;
     if (!canvas || matrix.current) return;
 
     let mat: SpatialMatrix;
     try {
-      mat = new SpatialMatrix({ canvas, antialias: true });
+      mat = new SpatialMatrix({ canvas, antialias: false });
     } catch {
       setState((prev) => ({ ...prev, ready: true, webglAvailable: false }));
       return;
@@ -64,9 +73,34 @@ export function useAREngine(
       return;
     }
 
+    // Build UI scene
+    const ui = new UIScene({
+      scene: mat.scene,
+      onHit: (info) => {
+        setState((prev) => ({ ...prev, lastHit: info }));
+        if (hitClearTimer.current) clearTimeout(hitClearTimer.current);
+        hitClearTimer.current = setTimeout(() => {
+          setState((prev) => ({ ...prev, lastHit: null }));
+        }, 3000);
+      },
+    });
+
+    // Attach interaction layer
+    if (overlay) {
+      const ix = new Interactions(
+        overlay,
+        mat.camera,
+        ui.getInteractables(),
+        (id) => ui.onHover(id),
+        (id) => ui.onSelect(id),
+      );
+      interactions.current = ix;
+    }
+
     const opt = new FrameOptimizer();
-    matrix.current    = mat;
-    hologram.current  = holo;
+    matrix.current   = mat;
+    hologram.current = holo;
+    uiScene.current  = ui;
     optimizer.current = opt;
 
     const onResize = () => mat.resize();
@@ -79,6 +113,7 @@ export function useAREngine(
       }
       const elapsed = performance.now() - startTime.current;
       holo.update(elapsed);
+      ui.update(elapsed);
       mat.render();
       setState((prev) => ({ ...prev, stats }));
     });
@@ -88,7 +123,7 @@ export function useAREngine(
     return () => {
       window.removeEventListener("resize", onResize);
     };
-  }, [canvasRef, webglAvailable]);
+  }, [canvasRef, overlayRef, webglAvailable]);
 
   const requestAR = useCallback(async () => {
     const video = videoRef.current;
@@ -96,9 +131,7 @@ export function useAREngine(
 
     if (!streamer.current) {
       streamer.current = new CameraStreamer({
-        onOrientation: (data) => {
-          orientationBuffer.current = data;
-        },
+        onOrientation: (data) => { orientationBuffer.current = data; },
         onPermissionChange: (perm) => {
           setState((prev) => ({
             ...prev,
@@ -119,15 +152,20 @@ export function useAREngine(
   useEffect(() => {
     const cleanup = initEngine();
     return () => {
+      if (hitClearTimer.current) clearTimeout(hitClearTimer.current);
       cleanup?.();
       streamer.current?.stop();
       optimizer.current?.stop();
       hologram.current?.dispose();
+      uiScene.current?.dispose();
+      interactions.current?.dispose();
       matrix.current?.dispose();
-      streamer.current  = null;
-      matrix.current    = null;
-      optimizer.current = null;
-      hologram.current  = null;
+      streamer.current   = null;
+      matrix.current     = null;
+      optimizer.current  = null;
+      hologram.current   = null;
+      uiScene.current    = null;
+      interactions.current = null;
     };
   }, [initEngine]);
 

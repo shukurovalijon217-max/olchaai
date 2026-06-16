@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/spatial-ar/"
+title = "Spatial AR & Hologram Engine"
+version = "1.0.0"
+id = "artifacts/spatial-ar"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/spatial-ar/" ]
+localPort = 23681
+
+[services.development]
+run = "pnpm --filter @workspace/spatial-ar run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/spatial-ar", "run", "build" ]
+publicDir = "artifacts/spatial-ar/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23681"
+BASE_PATH = "/spatial-ar/"

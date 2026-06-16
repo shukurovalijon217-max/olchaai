@@ -2367,6 +2367,39 @@ function AdminSF({ children }: { children: React.ReactNode }) {
   return <motion.div variants={aSI}>{children}</motion.div>;
 }
 
+/* ─── AI Core live status hook ─────────────────────────── */
+interface AiCoreStatus {
+  orchestrator: { openaiAvailable: boolean; queueLength: number; completedCount: number; actionLogLength: number };
+  security: { trackedIps: number; blockedIps: number; totalEvents: number; recentThreats: number };
+  moderation: { queueLength: number; openaiAvailable: boolean };
+  analytics: { uptimeS: number; memMb: { rss: number; heap: number }; eventLoopLagMs: number; requestsLastMin: number; errorsLastMin: number; avgResponseMs: number } | null;
+}
+interface AiCoreEvent { ts: number; type: string; ip: string; detail: string }
+
+function useAiCore() {
+  const [status, setStatus]   = useState<AiCoreStatus | null>(null);
+  const [events, setEvents]   = useState<AiCoreEvent[]>([]);
+  const [online, setOnline]   = useState(false);
+  const [lastRefresh, setLast] = useState<Date | null>(null);
+
+  useEffect(() => {
+    async function poll() {
+      try {
+        const [s, e] = await Promise.all([
+          fetch("/ai-core/status").then(r => { if (!r.ok) throw new Error(); return r.json() as Promise<AiCoreStatus>; }),
+          fetch("/ai-core/security/events?limit=5").then(r => r.json() as Promise<{ events: AiCoreEvent[] }>),
+        ]);
+        setStatus(s); setEvents(e.events ?? []); setOnline(true); setLast(new Date());
+      } catch { setOnline(false); }
+    }
+    void poll();
+    const id = setInterval(() => void poll(), 10_000);
+    return () => clearInterval(id);
+  }, []);
+
+  return { status, events, online, lastRefresh };
+}
+
 /* ═══════════════════════════════════════════════════════════
    MAIN ADMIN PAGE
 ════════════════════════════════════════════════════════════ */
@@ -2379,6 +2412,7 @@ export default function AdminPage() {
   const { data: content = [], refetch: refetchContent } = useAdminListContent();
   const { data: analytics } = useGetAdminAnalytics({ period: "7d" });
   const { data: aiStatus } = useGetAiSystemStatus();
+  const { status: aiCore, events: aiCoreEvents, online: aiCoreOnline, lastRefresh: aiCoreRefresh } = useAiCore();
   const suspend = useSuspendUser();
   const togglePremium = useTogglePremium();
   const qc = useQueryClient();
@@ -2736,6 +2770,101 @@ export default function AdminPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
+
+                  {/* ── AI Core Live Status Widget ── */}
+                  <AdminSF>
+                    <div className="rounded-2xl p-4 border transition-colors"
+                      style={{ borderColor: aiCoreOnline ? "rgba(139,92,246,0.35)" : "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.025)" }}>
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${aiCoreOnline ? "bg-violet-400 animate-pulse" : "bg-red-500/60"}`} />
+                          <span className="text-xs font-bold text-white/60 tracking-wide uppercase">AI Core — Avtonom Tizim</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {aiCoreRefresh && (
+                            <span className="text-[10px] text-white/25">{aiCoreRefresh.toLocaleTimeString("uz-UZ")}</span>
+                          )}
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${aiCoreOnline ? "bg-violet-500/20 text-violet-400" : "bg-red-500/20 text-red-400"}`}>
+                            {aiCoreOnline ? "ONLINE" : "OFFLINE"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 4 Agent pills */}
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        {([
+                          { name: "Kiber-Qalqon",  Icon: ShieldAlert,   color: "text-rose-400"   },
+                          { name: "Moderation",     Icon: Bot,           color: "text-amber-400"  },
+                          { name: "Analytics",      Icon: Activity,      color: "text-emerald-400"},
+                          { name: "Orchestrator",   Icon: BrainCircuit,  color: "text-violet-400" },
+                        ] as const).map(a => (
+                          <div key={a.name} className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }}>
+                            <a.Icon className={`w-3.5 h-3.5 flex-shrink-0 ${a.color}`} />
+                            <span className="text-xs text-white/65 flex-1 truncate">{a.name}</span>
+                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${aiCoreOnline ? "bg-emerald-400" : "bg-red-500/60"}`} />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Stats row */}
+                      {aiCore && (
+                        <div className="grid grid-cols-3 gap-2 mb-3">
+                          {[
+                            { label: "Bloklangan IP", value: aiCore.security.blockedIps,           color: "text-rose-400"   },
+                            { label: "Tahdid (5 daq)", value: aiCore.security.recentThreats,         color: "text-amber-400"  },
+                            { label: "Bajarilgan",     value: aiCore.orchestrator.completedCount,    color: "text-violet-400" },
+                          ].map(s => (
+                            <div key={s.label} className="text-center rounded-xl py-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
+                              <p className={`text-base font-bold ${s.color}`}>{s.value}</p>
+                              <p className="text-[10px] text-white/35 mt-0.5">{s.label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* System metrics */}
+                      {aiCore?.analytics && (
+                        <div className="flex gap-3 text-[11px] text-white/35 border-t border-white/6 pt-3">
+                          <span>Heap: <span className="text-white/65 font-semibold">{aiCore.analytics.memMb.heap}MB</span></span>
+                          <span>·</span>
+                          <span>Loop: <span className={`font-semibold ${aiCore.analytics.eventLoopLagMs > 50 ? "text-amber-400" : "text-white/65"}`}>{aiCore.analytics.eventLoopLagMs}ms</span></span>
+                          <span>·</span>
+                          <span>Uptime: <span className="text-white/65 font-semibold">{Math.floor(aiCore.analytics.uptimeS / 60)}m</span></span>
+                          <span>·</span>
+                          <span>Req/min: <span className="text-white/65 font-semibold">{aiCore.analytics.requestsLastMin}</span></span>
+                        </div>
+                      )}
+                    </div>
+                  </AdminSF>
+
+                  {/* Recent security events */}
+                  {aiCoreEvents.length > 0 && (
+                    <AdminSF>
+                      <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
+                        <p className="text-xs font-semibold text-white/40 mb-2.5 flex items-center gap-2">
+                          <ShieldAlert className="w-3.5 h-3.5 text-rose-400" /> Oxirgi xavfsizlik hodisalari
+                        </p>
+                        <div className="space-y-1.5">
+                          {aiCoreEvents.map((ev, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs py-1">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex-shrink-0 ${
+                                ev.type === "BRUTE_FORCE" ? "bg-red-500/20 text-red-400"     :
+                                ev.type === "RATE_LIMIT"  ? "bg-amber-500/20 text-amber-400" :
+                                ev.type === "INJECTION"   ? "bg-orange-500/20 text-orange-400":
+                                ev.type === "BLOCKED"     ? "bg-rose-500/20 text-rose-400"   :
+                                                            "bg-white/8 text-white/40"
+                              }`}>{ev.type}</span>
+                              <span className="text-white/50 font-mono text-[10px] flex-shrink-0">{ev.ip}</span>
+                              <span className="text-white/30 flex-1 truncate text-[10px]">{ev.detail}</span>
+                              <span className="text-white/20 text-[10px] flex-shrink-0">{new Date(ev.ts).toLocaleTimeString("uz-UZ")}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </AdminSF>
+                  )}
+
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
                       { label: "Versiya",    value: aiStatus.version,                                         icon: Zap,       color: "text-violet-400" },

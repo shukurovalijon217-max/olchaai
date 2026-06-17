@@ -26,6 +26,7 @@ import MarketplacePage from "@/pages/MarketplacePage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import SellPage from "@/pages/SellPage";
 import MyShopPage from "@/pages/MyShopPage";
+import SellerProfilePage from "@/pages/SellerProfilePage";
 import AIChatPage from "@/pages/AIChatPage";
 import LibraryPage from "@/pages/LibraryPage";
 import QuestsPage from "@/pages/QuestsPage";
@@ -145,6 +146,9 @@ function Router() {
       )} />
       <Route path="/bozor/do-kon" component={() => (
         <ProtectedRoute><Layout><MyShopPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/bozor/sotuvchi/:id" component={({ params }) => (
+        <ProtectedRoute><Layout><SellerProfilePage sellerId={Number(params.id)} /></Layout></ProtectedRoute>
       )} />
       <Route path="/bozor/:id" component={({ params }) => (
         <ProtectedRoute><Layout><ProductDetailPage productId={Number(params.id)} /></Layout></ProtectedRoute>

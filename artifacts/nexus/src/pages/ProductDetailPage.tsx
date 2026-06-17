@@ -176,22 +176,31 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
 
         {/* Seller */}
         {(product as any).seller && (
-          <button
-            onClick={() => navigate(`/profile/${product.sellerId}`)}
-            className="w-full flex items-center gap-3 p-3 rounded-xl bg-amber-950/20 hover:bg-amber-950/35 border border-amber-900/30"
-          >
-            <div className="w-10 h-10 rounded-full bg-amber-700/40 overflow-hidden flex-shrink-0">
-              {(product as any).seller.avatarUrl && <img src={(product as any).seller.avatarUrl} className="w-full h-full object-cover" />}
-            </div>
-            <div className="flex-1 text-left">
-              <div className="flex items-center gap-1 font-semibold text-sm">
-                {(product as any).seller.displayName}
-                {(product as any).seller.isVerified && <span className="text-amber-500 text-xs">✓</span>}
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate(`/bozor/sotuvchi/${product.sellerId}`)}
+              className="flex-1 flex items-center gap-3 p-3 rounded-xl bg-amber-950/20 hover:bg-amber-950/35 border border-amber-900/30 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-full bg-amber-700/40 overflow-hidden flex-shrink-0">
+                {(product as any).seller.avatarUrl && <img src={(product as any).seller.avatarUrl} className="w-full h-full object-cover" />}
               </div>
-              <div className="text-xs text-muted-foreground flex items-center gap-1"><Store className="w-3 h-3" /> {t("product_detail.seller_profile")}</div>
-            </div>
-            <span className="text-amber-500 text-sm">→</span>
-          </button>
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-1 font-semibold text-sm">
+                  {(product as any).seller.displayName}
+                  {(product as any).seller.isVerified && <span className="text-amber-500 text-xs">✓</span>}
+                </div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1"><Store className="w-3 h-3" /> {t("product_detail.seller_profile")}</div>
+              </div>
+              <span className="text-amber-500 text-sm">→</span>
+            </button>
+            <button
+              onClick={() => navigate(`/messages?dm=${product.sellerId}`)}
+              className="flex items-center justify-center w-12 h-12 my-auto rounded-xl bg-amber-950/30 border border-amber-900/30 hover:border-amber-700 text-amber-400 transition-colors"
+              title="Sotuvchiga xabar"
+            >
+              <MessageCircle className="w-5 h-5" />
+            </button>
+          </div>
         )}
 
         {/* Description */}

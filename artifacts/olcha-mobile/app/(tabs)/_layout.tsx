@@ -21,9 +21,9 @@ function NativeTabLayout() {
         <Icon sf={{ default: "play.rectangle", selected: "play.rectangle.fill" }} />
         <Label>Reels</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="explore">
-        <Icon sf={{ default: "magnifyingglass", selected: "magnifyingglass" }} />
-        <Label>Qidirish</Label>
+      <NativeTabs.Trigger name="marketplace">
+        <Icon sf={{ default: "bag", selected: "bag.fill" }} />
+        <Label>Bozor</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="messages">
         <Icon sf={{ default: "message", selected: "message.fill" }} />
@@ -109,6 +109,16 @@ function ClassicTabLayout() {
             isIOS ? (
               <SymbolView name="magnifyingglass" tintColor={focused ? colors.primary : colors.mutedForeground} size={22} />
             ) : tabIcon("search", focused),
+        }}
+      />
+      <Tabs.Screen
+        name="marketplace"
+        options={{
+          title: "Bozor",
+          tabBarIcon: ({ focused }) =>
+            isIOS ? (
+              <SymbolView name={focused ? "bag.fill" : "bag"} tintColor={focused ? colors.primary : colors.mutedForeground} size={22} />
+            ) : tabIcon("shopping-bag", focused),
         }}
       />
       <Tabs.Screen

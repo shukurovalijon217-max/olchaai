@@ -332,19 +332,45 @@ function MuniPanel() {
   const send = async (text: string) => {
     if (!text.trim() || loading) return;
     const userMsg = { role: "user" as const, content: text.trim() };
-    setMsgs(prev => [...prev, userMsg]);
+    setMsgs(prev => [...prev, userMsg, { role: "assistant", content: "" }]);
     setInput("");
     setLoading(true);
     setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     try {
-      const res = await fetch(`${API_BASE}/api/ai/chat`, {
+      const history = msgs.slice(-10).map(m => ({ role: m.role, content: m.content }));
+      const res = await fetch(`${API_BASE}/api/muni/chat`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text.trim(), conversationId: null }),
+        body: JSON.stringify({ message: text.trim(), mode: "wisdom", history }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setMsgs(prev => [...prev, { role: "assistant", content: data.response ?? data.message ?? "..." }]);
+      if (!res.ok || !res.body) { setLoading(false); return; }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const parts = buf.split("\n\n");
+        buf = parts.pop() ?? "";
+        for (const part of parts) {
+          if (!part.startsWith("data: ")) continue;
+          try {
+            const json = JSON.parse(part.slice(6)) as { content?: string; done?: boolean };
+            if (json.content) {
+              setMsgs(prev => {
+                const copy = [...prev];
+                const last = copy[copy.length - 1];
+                if (last && last.role === "assistant") {
+                  copy[copy.length - 1] = { ...last, content: last.content + json.content };
+                }
+                return copy;
+              });
+              setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 20);
+            }
+          } catch { /* skip malformed */ }
+        }
       }
     } catch { /* silent */ }
     finally {

@@ -37,12 +37,20 @@ router.post("/twin/config", requireAuth, async (req: any, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server xatosi" }); }
 });
 
-router.get("/twin/:userId", async (req: any, res) => {
+router.get("/twin/:userRef", async (req: any, res) => {
   try {
-    const userId = parseInt(req.params.userId);
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    const userRef = req.params.userRef;
+    const asId = parseInt(userRef);
+    const { eq: eqOp } = await import("drizzle-orm");
+    let user: typeof usersTable.$inferSelect | undefined;
+    if (!isNaN(asId)) {
+      [user] = await db.select().from(usersTable).where(eq(usersTable.id, asId));
+    }
+    if (!user) {
+      [user] = await db.select().from(usersTable).where(eq(usersTable.username, userRef));
+    }
     if (!user) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
-    const [cfg] = await db.select().from(aiTwinConfigTable).where(eq(aiTwinConfigTable.userId, userId));
+    const [cfg] = await db.select().from(aiTwinConfigTable).where(eq(aiTwinConfigTable.userId, user.id));
     if (!cfg?.isEnabled) { res.status(404).json({ error: "Bu foydalanuvchining AI egizagi faol emas" }); return; }
     res.json({ user: { id: user.id, username: user.username, displayName: user.displayName, avatar: user.avatarUrl }, twin: cfg });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server xatosi" }); }

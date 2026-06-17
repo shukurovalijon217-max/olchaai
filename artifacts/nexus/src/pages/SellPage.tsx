@@ -55,7 +55,7 @@ export default function SellPage() {
       for (const file of Array.from(files)) {
         const uploadData = await requestUpload({ data: { name: file.name, size: file.size, contentType: file.type } });
         await fetch(uploadData.uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-        const publicUrl = `${API}/storage/files/${uploadData.objectPath}`;
+        const publicUrl = `${API}/api/storage${uploadData.objectPath}`;
         setMediaUrls(prev => [...prev, publicUrl]);
       }
     } catch {
@@ -75,7 +75,7 @@ export default function SellPage() {
       const origPriceTiyin = originalPrice ? Math.round(Number(originalPrice) * 100) : undefined;
       const tagArr = tags.split(",").map(t => t.trim()).filter(Boolean);
 
-      const product = await createProduct({
+      const product = await createProduct({ data: {
         title: title.trim(),
         description: description.trim() || undefined,
         price: priceTiyin,
@@ -87,12 +87,12 @@ export default function SellPage() {
         stock: Number(stock) || 1,
         location: location.trim() || undefined,
         tags: tagArr.length ? tagArr : undefined,
-      } as any);
+      } as any });
 
       setSuccess(true);
       setTimeout(() => navigate(`/bozor/${(product as any).id}`), 1200);
     } catch (e: any) {
-      setError(e?.response?.data?.error ?? t("common.error"));
+      setError(e?.data?.error ?? e?.message ?? t("common.error"));
     }
   };
 

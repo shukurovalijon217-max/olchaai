@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, bigint, text, boolean, timestamp } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 export const productsTable = pgTable("products", {
@@ -6,8 +6,8 @@ export const productsTable = pgTable("products", {
   sellerId: integer("seller_id").notNull().references(() => usersTable.id),
   title: text("title").notNull(),
   description: text("description"),
-  price: integer("price").notNull(),
-  originalPrice: integer("original_price"),
+  price: bigint("price", { mode: "number" }).notNull(),
+  originalPrice: bigint("original_price", { mode: "number" }),
   category: text("category").notNull().default("other"),
   condition: text("condition").notNull().default("new"),
   mediaUrls: text("media_urls"),
@@ -30,8 +30,8 @@ export const productOrdersTable = pgTable("product_orders", {
   sellerId: integer("seller_id").notNull().references(() => usersTable.id),
   productId: integer("product_id").notNull().references(() => productsTable.id),
   quantity: integer("quantity").notNull().default(1),
-  unitPrice: integer("unit_price").notNull(),
-  totalPrice: integer("total_price").notNull(),
+  unitPrice: bigint("unit_price", { mode: "number" }).notNull(),
+  totalPrice: bigint("total_price", { mode: "number" }).notNull(),
   status: text("status").notNull().default("pending"),
   deliveryMethod: text("delivery_method").notNull().default("pickup"),
   deliveryAddress: text("delivery_address"),

@@ -264,7 +264,7 @@ export default function AIChatPage() {
       });
       if (r.ok) {
         const data = await r.json();
-        setImageResult(data.b64_json || "");
+        setImageResult(data.url || data.b64_json || "");
       }
     } finally {
       setImageLoading(false);
@@ -580,8 +580,8 @@ export default function AIChatPage() {
             {imageResult && (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                 className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                <img src={`data:image/png;base64,${imageResult}`} alt="AI generated" className="w-full rounded-xl" />
-                <a href={`data:image/png;base64,${imageResult}`} download="olcha-ai-image.png"
+                <img src={imageResult.startsWith("http") ? imageResult : `data:image/png;base64,${imageResult}`} alt="AI generated" className="w-full rounded-xl" />
+                <a href={imageResult.startsWith("http") ? imageResult : `data:image/png;base64,${imageResult}`} download="olcha-ai-image.png" target="_blank" rel="noreferrer"
                   className="block w-full text-center py-2.5 rounded-xl bg-primary/15 text-primary text-sm font-semibold hover:bg-primary/25 transition-colors">
                   {t("ai.download")}
                 </a>

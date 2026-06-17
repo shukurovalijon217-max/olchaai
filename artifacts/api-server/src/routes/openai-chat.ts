@@ -182,9 +182,9 @@ router.post("/openai/generate-image", async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) { res.status(400).json({ error: "prompt required" }); return; }
   try {
-    const { generateImageBuffer } = await import("@workspace/integrations-openai-ai-server/image");
-    const buffer = await generateImageBuffer(prompt, "1024x1024");
-    res.json({ b64_json: buffer.toString("base64") });
+    const { generateImageUrl } = await import("@workspace/integrations-openai-ai-server/image");
+    const url = await generateImageUrl(prompt, "1024x1024");
+    res.json({ url });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Rasm yaratishda xato" });

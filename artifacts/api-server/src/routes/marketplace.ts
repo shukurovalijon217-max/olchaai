@@ -219,6 +219,72 @@ router.get("/marketplace/products/:id/reviews", async (req: any, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Sharhlarni olishda xato" }); }
 });
 
+// GET /marketplace/stats
+router.get("/marketplace/stats", async (req: any, res) => {
+  try {
+    const allActive = await db.select({ id: productsTable.id, sellerId: productsTable.sellerId })
+      .from(productsTable).where(eq(productsTable.status, "active"));
+    const totalProducts = allActive.length;
+    const totalSellers = new Set(allActive.map(p => p.sellerId)).size;
+    const orders = await db.select({ id: productOrdersTable.id }).from(productOrdersTable).where(ne(productOrdersTable.status, "cancelled"));
+    res.json({ totalProducts, totalSellers, totalOrders: orders.length });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Statistika olishda xato" }); }
+});
+
+// GET /marketplace/featured — hot deals + new arrivals
+router.get("/marketplace/featured", async (req: any, res) => {
+  try {
+    const all = await db.select().from(productsTable).where(eq(productsTable.status, "active"));
+
+    const hotDeals = all
+      .filter(p => p.originalPrice && p.originalPrice > p.price)
+      .sort((a, b) => {
+        const da = 1 - a.price / (a.originalPrice ?? a.price);
+        const db2 = 1 - b.price / (b.originalPrice ?? b.price);
+        return db2 - da;
+      })
+      .slice(0, 10);
+
+    const newArrivals = [...all]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 10);
+
+    const popular = [...all]
+      .sort((a, b) => b.viewsCount - a.viewsCount)
+      .slice(0, 8);
+
+    const enrich = async (p: typeof all[0]) => {
+      const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, p.sellerId));
+      return { ...p, mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [], tags: p.tags ? JSON.parse(p.tags) : [], seller };
+    };
+
+    const [enrichedHot, enrichedNew, enrichedPopular] = await Promise.all([
+      Promise.all(hotDeals.map(enrich)),
+      Promise.all(newArrivals.map(enrich)),
+      Promise.all(popular.map(enrich)),
+    ]);
+
+    res.json({ hotDeals: enrichedHot, newArrivals: enrichedNew, popular: enrichedPopular });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Featured olishda xato" }); }
+});
+
+// GET /marketplace/seller/:id — seller profile + their products
+router.get("/marketplace/seller/:id", async (req: any, res) => {
+  try {
+    const sellerId = Number(req.params.id);
+    const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified, createdAt: usersTable.createdAt }).from(usersTable).where(eq(usersTable.id, sellerId));
+    if (!seller) { res.status(404).json({ error: "Sotuvchi topilmadi" }); return; }
+
+    const products = await db.select().from(productsTable).where(and(eq(productsTable.sellerId, sellerId), eq(productsTable.status, "active"))).orderBy(desc(productsTable.createdAt));
+    const enriched = products.map(p => ({ ...p, mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [], tags: p.tags ? JSON.parse(p.tags) : [] }));
+
+    const totalOrders = await db.select({ id: productOrdersTable.id }).from(productOrdersTable).where(and(eq(productOrdersTable.sellerId, sellerId), ne(productOrdersTable.status, "cancelled")));
+    const avgRating = products.length > 0 ? Math.round(products.reduce((s, p) => s + p.rating, 0) / products.length) : 0;
+
+    res.json({ seller, products: enriched, stats: { totalProducts: products.length, totalOrders: totalOrders.length, avgRating } });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Sotuvchi ma'lumotini olishda xato" }); }
+});
+
 // POST /marketplace/products/:id/reviews
 router.post("/marketplace/products/:id/reviews", requireAuth, async (req: any, res) => {
   try {

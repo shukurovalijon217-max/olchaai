@@ -13,7 +13,7 @@ export default function MyShopPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("products");
 
-  const { data: myProducts = [], isLoading: loadingProducts } = useListMyProducts();
+  const { data: myProducts = [], isLoading: loadingProducts, refetch: refetchProducts } = useListMyProducts();
   const { data: sellingOrders = [], isLoading: loadingSelling } = useListOrders({ role: "seller" });
   const { data: buyingOrders = [], isLoading: loadingBuying } = useListOrders({ role: "buyer" });
   const { mutateAsync: updateStatus } = useUpdateOrderStatus();
@@ -50,7 +50,12 @@ export default function MyShopPage() {
 
   const handleDelete = async (productId: number) => {
     if (!confirm(t("myshop.delete_confirm"))) return;
-    try { await deleteProduct({ id: productId }); } catch { }
+    try {
+      await deleteProduct({ id: productId });
+      await refetchProducts();
+    } catch (e: any) {
+      alert(e?.data?.error ?? t("common.error"));
+    }
   };
 
   return (

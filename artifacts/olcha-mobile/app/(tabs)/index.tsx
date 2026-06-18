@@ -1,9 +1,9 @@
 /**
- * OlCha Nebula Feed
- * ─────────────────
- * Full-screen horizontal page feed — each post/reel/clip/photo/ad
- * fills 100% of the screen. Swipe LEFT → next, RIGHT → prev.
- * Nothing like Instagram, TikTok, Facebook or YouTube.
+ * ╔══════════════════════════════════════════════════════╗
+ * ║  OlCha Nebula — Lenta paneli                        ║
+ * ║  Dunyoda birinchi gorizontal full-screen feed        ║
+ * ║  Posts + Reels + Photos + Videos + Reklamalar       ║
+ * ╚══════════════════════════════════════════════════════╝
  */
 import React, { useCallback, useRef, useState } from "react";
 import {
@@ -15,54 +15,115 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { Video, ResizeMode } from "expo-av";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "@/context/AuthContext";
-import { apiGet, type Post } from "@/lib/api";
 
-/* ── Constants ────────────────────────────────────────── */
+/* ── Screen dimensions ────────────────────────────────── */
 const { width: W, height: H } = Dimensions.get("window");
 const DOMAIN = process.env.EXPO_PUBLIC_DOMAIN ?? "";
 const API_BASE = `https://${DOMAIN}/api`;
 
-/* ── Per-type config ──────────────────────────────────── */
-const TYPE_CFG: Record<string, { label: string; icon: string; accent: string; bg: [string, string, string] }> = {
-  video:  { label: "Klip",     icon: "play-circle", accent: "#ef4444", bg: ["#1a0808","#4a0d0d","#ef4444"] },
-  reel:   { label: "Reel",     icon: "film",        accent: "#a855f7", bg: ["#160820","#3d1060","#a855f7"] },
-  image:  { label: "Rasm",     icon: "image",       accent: "#3b82f6", bg: ["#080f20","#102060","#3b82f6"] },
-  ad:     { label: "Reklama",  icon: "zap",         accent: "#f59e0b", bg: ["#1a1000","#4a2e00","#f59e0b"] },
-  text:   { label: "Post",     icon: "align-left",  accent: "#10b981", bg: ["#041410","#0a3828","#10b981"] },
-};
-
-const FALLBACK_GRADS: [string,string,string][] = [
-  ["#1a0533","#3b1275","#7c3aed"],
-  ["#0a1530","#1a3a7c","#3b82f6"],
-  ["#1a0820","#5b1a5e","#a855f7"],
-  ["#061a15","#0d5240","#10b981"],
-  ["#1a0f00","#5c3000","#f59e0b"],
-  ["#1a0012","#5c001e","#ec4899"],
-  ["#050e1a","#0d3060","#0ea5e9"],
-];
-
-function gradFor(post: Post): [string,string,string] {
-  return TYPE_CFG[post.type]?.bg ?? FALLBACK_GRADS[(post.id ?? 0) % FALLBACK_GRADS.length];
-}
-
-function mediaUrl(raw: string | null | undefined): string | null {
+/* ── Full media URL helper ────────────────────────────── */
+function mUrl(raw?: string | null): string | null {
   if (!raw) return null;
   return raw.startsWith("http") ? raw : `https://${DOMAIN}${raw}`;
 }
 
+/* ── Per-type visual config ───────────────────────────── */
+type ContentKind = "video" | "photo" | "reel" | "ad" | "text";
+
+const KIND: Record<ContentKind, {
+  label: string; icon: string; accent: string;
+  grad: [string, string, string];
+}> = {
+  video:  { label: "Klip",     icon: "play-circle", accent: "#ef4444", grad: ["#1a0808","#520d0d","#ef4444"] },
+  reel:   { label: "Reel",     icon: "film",        accent: "#a855f7", grad: ["#150820","#3d1060","#a855f7"] },
+  photo:  { label: "Rasm",     icon: "image",       accent: "#3b82f6", grad: ["#080f20","#102060","#3b82f6"] },
+  ad:     { label: "Reklama",  icon: "zap",         accent: "#f59e0b", grad: ["#1a1000","#4a2e00","#f59e0b"] },
+  text:   { label: "Post",     icon: "align-left",  accent: "#10b981", grad: ["#041410","#0a3828","#10b981"] },
+};
+
+/* ── Unified feed item ────────────────────────────────── */
+interface Author {
+  id: number; username: string; displayName: string;
+  avatarUrl?: string | null; isVerified?: boolean;
+}
+
+interface FeedItem {
+  id: string;
+  kind: "post" | "reel";
+  contentKind: ContentKind;
+  caption: string;
+  mediaUrl: string | null;   // photo/video URL
+  videoUrl: string | null;   // reel video URL
+  thumbUrl: string | null;
+  duration?: number | null;
+  author: Author;
+  likesCount: number;
+  commentsCount: number;
+  viewsCount?: number;
+  isLiked: boolean;
+  createdAt: string;
+  rawId: number;
+}
+
+/* ── API raw types ────────────────────────────────────── */
+interface RawPost {
+  id: number; content: string; type: string;
+  mediaUrl?: string | null; likesCount: number;
+  commentsCount: number; isLiked?: boolean;
+  createdAt: string;
+  author?: Author;
+}
+
+interface RawReel {
+  id: number; caption?: string | null;
+  videoUrl?: string | null; thumbnailUrl?: string | null;
+  duration?: number | null; likesCount: number;
+  commentsCount: number; viewsCount?: number;
+  isLiked?: boolean; createdAt: string;
+  author?: Author;
+}
+
+function normPost(p: RawPost): FeedItem {
+  const t = p.type === "video" ? "video" : p.type === "photo" ? "photo" : "text";
+  return {
+    id: `post-${p.id}`, kind: "post", contentKind: t as ContentKind,
+    caption: p.content ?? "",
+    mediaUrl: mUrl(p.mediaUrl), videoUrl: null, thumbUrl: null,
+    author: p.author ?? { id: 0, username: "user", displayName: "OlCha User" },
+    likesCount: p.likesCount ?? 0, commentsCount: p.commentsCount ?? 0,
+    isLiked: p.isLiked ?? false, createdAt: p.createdAt,
+    rawId: p.id,
+  };
+}
+
+function normReel(r: RawReel): FeedItem {
+  return {
+    id: `reel-${r.id}`, kind: "reel", contentKind: "reel",
+    caption: r.caption ?? "",
+    mediaUrl: null,
+    videoUrl: mUrl(r.videoUrl), thumbUrl: mUrl(r.thumbnailUrl),
+    duration: r.duration,
+    author: r.author ?? { id: 0, username: "user", displayName: "OlCha User" },
+    likesCount: r.likesCount ?? 0, commentsCount: r.commentsCount ?? 0,
+    viewsCount: r.viewsCount, isLiked: r.isLiked ?? false,
+    createdAt: r.createdAt,
+    rawId: r.id,
+  };
+}
+
 /* ── Helpers ──────────────────────────────────────────── */
-function timeAgo(s: string) {
+function ago(s: string): string {
   const m = Math.floor((Date.now() - new Date(s).getTime()) / 60000);
   if (m < 1) return "Hozir";
   if (m < 60) return `${m} d.`;
@@ -70,422 +131,572 @@ function timeAgo(s: string) {
   if (h < 24) return `${h} s.`;
   return `${Math.floor(h / 24)} kun`;
 }
-function fmt(n: number) {
-  if (n >= 1e6) return `${(n/1e6).toFixed(1)}M`;
-  if (n >= 1e3) return `${(n/1e3).toFixed(1)}K`;
+function num(n: number): string {
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
   return `${n}`;
 }
-
-/* ── AI Panel (slides up inside overlay) ─────────────── */
-interface AIResult { tags?: string[]; category?: string; summary?: string; sentiment?: string }
-function sentEmoji(s?: string) { return s==="positive"?"😊":s==="negative"?"😞":"😐"; }
-
-/* ── DEMO data (when API has no posts) ───────────────── */
-const DEMO: Post[] = [
-  { id:1,  userId:1,  type:"image",  content:"O'zbekistonning eng go'zal tog' manzarasi — Chimyon cho'qqisi. 🏔️", mediaUrl:null, likesCount:14200, commentsCount:234, createdAt:new Date(Date.now()-600000).toISOString(),   user:{id:1, username:"dilnoza_uz",    displayName:"Dilnoza Yusupova",  avatarUrl:null, isVerified:true}},
-  { id:2,  userId:2,  type:"video",  content:"AI bilan ishlash qanchalik qiziq! OlCha platformasida har kuni yangilik. 🚀", mediaUrl:null, likesCount:8900, commentsCount:156, createdAt:new Date(Date.now()-1800000).toISOString(), user:{id:2, username:"sardor_b",      displayName:"Sardor Baxtiyorov", avatarUrl:null, isVerified:false}},
-  { id:3,  userId:3,  type:"reel",   content:"Toshkent metro liniyasi kengaymoqda — yangi stansiyalar! 🚇", mediaUrl:null, likesCount:23100, commentsCount:412, createdAt:new Date(Date.now()-3600000).toISOString(), user:{id:3, username:"malika_m",      displayName:"Malika Mirzayeva",  avatarUrl:null, isVerified:true}},
-  { id:4,  userId:4,  type:"reel",   content:"Yangi albomim chiqdi! Barcha platformalarda tinglab ko'ring 🎵", mediaUrl:null, likesCount:45600, commentsCount:789, createdAt:new Date(Date.now()-7200000).toISOString(), user:{id:4, username:"jasur_art",      displayName:"Jasur Artistov",    avatarUrl:null, isVerified:true}},
-  { id:5,  userId:5,  type:"ad",     content:"OlCha Premium — cheksiz AI kuchi, reklama yo'q, maxsus imkoniyatlar! ⚡", mediaUrl:null, likesCount:3100, commentsCount:45, createdAt:new Date(Date.now()-9000000).toISOString(), user:{id:5, username:"olcha_official", displayName:"OlCha Official",    avatarUrl:null, isVerified:true}},
-  { id:6,  userId:6,  type:"image",  content:"Samarqand — Registon maydoni, dunyoning eng go'zal arxitekturasi 🏛️", mediaUrl:null, likesCount:31200, commentsCount:567, createdAt:new Date(Date.now()-14400000).toISOString(), user:{id:6, username:"aziz_photo",     displayName:"Aziz Raximov",     avatarUrl:null, isVerified:false}},
-  { id:7,  userId:7,  type:"video",  content:"React Native bilan ilova yaratamiz — live coding sessiyasi 💻", mediaUrl:null, likesCount:7800, commentsCount:234, createdAt:new Date(Date.now()-18000000).toISOString(), user:{id:7, username:"dev_kamol",      displayName:"Kamol Eshmatov",   avatarUrl:null, isVerified:true}},
-  { id:8,  userId:8,  type:"reel",   content:"Xorazm oshi maxsus retsepti — oshpaz sirlarini oshkor qilaman 🍲", mediaUrl:null, likesCount:19400, commentsCount:345, createdAt:new Date(Date.now()-21600000).toISOString(), user:{id:8, username:"oshpaz_pro",     displayName:"Muazzam Xoliqova", avatarUrl:null, isVerified:false}},
-  { id:9,  userId:9,  type:"video",  content:"Kuniga 20 daqiqa mashq — 3 oyda natija kafolatlangan 💪", mediaUrl:null, likesCount:28900, commentsCount:678, createdAt:new Date(Date.now()-28800000).toISOString(), user:{id:9, username:"fit_bobur",      displayName:"Bobur Toshmatov",  avatarUrl:null, isVerified:true}},
-];
-
-const CATS = [
-  {key:"all",   label:"✦ Hammasi"},
-  {key:"image", label:"📸 Rasm"},
-  {key:"video", label:"🎬 Klip"},
-  {key:"reel",  label:"✨ Reel"},
-  {key:"ad",    label:"⚡ Reklama"},
-];
-
-/* ═══════════════════════════════════════════════════════
-   SINGLE FULL-SCREEN CARD
-═══════════════════════════════════════════════════════ */
-function NebulaCard({
-  post, total, index: idx,
-  onAI, onLike, liked, likes,
-}: {
-  post: Post; total: number; index: number;
-  onAI: () => void; onLike: () => void; liked: boolean; likes: number;
-}) {
-  const insets = useSafeAreaInsets();
-  const cfg = TYPE_CFG[post.type] ?? TYPE_CFG.text;
-  const grad = gradFor(post);
-  const uri = mediaUrl(post.mediaUrl);
-  const webBot = Platform.OS === "web" ? 34 : 0;
-
-  return (
-    <View style={[styles.card, { width: W, height: Platform.OS === "web" ? H - 134 : H }]}>
-      {/* ── FULL-SCREEN BACKGROUND ── */}
-      {uri ? (
-        <Image source={{ uri }} style={styles.cardBg} />
-      ) : (
-        <LinearGradient colors={grad} style={styles.cardBg} start={{x:0,y:0}} end={{x:1,y:1}} />
-      )}
-
-      {/* Depth gradient layers */}
-      <LinearGradient
-        colors={["rgba(0,0,0,0.55)","transparent","transparent","rgba(0,0,0,0.70)"]}
-        locations={[0,0.3,0.55,1]}
-        style={StyleSheet.absoluteFillObject}
-      />
-
-      {/* ── TOP BAR ── */}
-      <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10) }]}>
-        {/* Type badge */}
-        <View style={[styles.typePill, { backgroundColor: cfg.accent+"33", borderColor: cfg.accent+"66" }]}>
-          <Feather name={cfg.icon as any} size={11} color={cfg.accent} />
-          <Text style={[styles.typePillText, { color: cfg.accent }]}>{cfg.label}</Text>
-        </View>
-
-        {/* Progress dots */}
-        <View style={styles.dots}>
-          {Array.from({length: Math.min(total, 9)}).map((_, i) => (
-            <View key={i} style={[
-              styles.dot,
-              i === idx % 9
-                ? [styles.dotActive, { backgroundColor: cfg.accent }]
-                : styles.dotInactive,
-            ]} />
-          ))}
-        </View>
-
-        {/* AI badge */}
-        <Pressable style={styles.aiBadge} onPress={onAI}>
-          <LinearGradient colors={["#7c3aed","#a855f7"]} style={styles.aiGrad}>
-            <Feather name="zap" size={11} color="#fff" />
-            <Text style={styles.aiText}>AI</Text>
-          </LinearGradient>
-        </Pressable>
-      </View>
-
-      {/* ── DECORATIVE CENTER ── (only shown when no media) */}
-      {!uri && (
-        <View style={styles.centerOrb}>
-          <View style={[styles.orbRing1, { borderColor: cfg.accent+"25" }]} />
-          <View style={[styles.orbRing2, { borderColor: cfg.accent+"40" }]} />
-          <View style={[styles.orbRing3, { borderColor: cfg.accent+"60" }]} />
-          <View style={[styles.orbCore, { backgroundColor: cfg.accent+"22" }]}>
-            <Text style={[styles.orbIcon, { color: cfg.accent }]}>
-              {post.type === "video" ? "▶" : post.type === "reel" ? "✦" : post.type === "image" ? "◈" : post.type === "ad" ? "⚡" : "✎"}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* ── RIGHT ACTION BAR ── */}
-      <View style={[styles.actionBar, { bottom: insets.bottom + webBot + 120 }]}>
-        {/* Like */}
-        <Pressable style={styles.actionBtn} onPress={onLike}>
-          <LinearGradient
-            colors={liked ? ["#ec4899","#f43f5e"] : ["rgba(255,255,255,0.10)","rgba(255,255,255,0.05)"]}
-            style={styles.actionCircle}
-          >
-            <Feather name="heart" size={22} color={liked ? "#fff" : "rgba(255,255,255,0.9)"} />
-          </LinearGradient>
-          <Text style={styles.actionCount}>{fmt(likes)}</Text>
-        </Pressable>
-
-        {/* Comment */}
-        <Pressable style={styles.actionBtn}>
-          <View style={styles.actionCircle}>
-            <Feather name="message-circle" size={22} color="rgba(255,255,255,0.9)" />
-          </View>
-          <Text style={styles.actionCount}>{fmt(post.commentsCount ?? 0)}</Text>
-        </Pressable>
-
-        {/* Share */}
-        <Pressable style={styles.actionBtn}>
-          <View style={styles.actionCircle}>
-            <Feather name="share-2" size={22} color="rgba(255,255,255,0.9)" />
-          </View>
-          <Text style={styles.actionCount}>Ulash</Text>
-        </Pressable>
-
-        {/* Bookmark */}
-        <Pressable style={styles.actionBtn}>
-          <View style={styles.actionCircle}>
-            <Feather name="bookmark" size={22} color="rgba(255,255,255,0.9)" />
-          </View>
-        </Pressable>
-
-        {/* AI */}
-        <Pressable style={styles.actionBtn} onPress={onAI}>
-          <LinearGradient colors={["#7c3aed","#a855f7"]} style={styles.actionCircle}>
-            <Feather name="zap" size={22} color="#fff" />
-          </LinearGradient>
-          <Text style={[styles.actionCount, { color: "#c4b5fd" }]}>AI</Text>
-        </Pressable>
-      </View>
-
-      {/* ── BOTTOM INFO ── */}
-      <LinearGradient
-        colors={["transparent","rgba(0,0,0,0.60)","rgba(0,0,0,0.92)"]}
-        style={[styles.bottomInfo, { paddingBottom: insets.bottom + webBot + 16 }]}
-      >
-        {/* Author */}
-        <View style={styles.authorRow}>
-          <LinearGradient colors={[grad[1], grad[2]]} style={styles.avatar}>
-            <Text style={styles.avatarText}>{(post.user?.displayName ?? "U")[0].toUpperCase()}</Text>
-          </LinearGradient>
-          <View style={{ flex: 1 }}>
-            <View style={styles.nameRow}>
-              <Text style={styles.displayName} numberOfLines={1}>{post.user?.displayName ?? "OlCha User"}</Text>
-              {post.user?.isVerified && (
-                <View style={[styles.verifiedBadge, { backgroundColor: cfg.accent }]}>
-                  <Text style={styles.verifiedCheck}>✓</Text>
-                </View>
-              )}
-              <Text style={styles.handle}>@{post.user?.username}</Text>
-            </View>
-            <Text style={styles.timeText}>{timeAgo(post.createdAt)}</Text>
-          </View>
-          <Pressable style={[styles.followBtn, { borderColor: cfg.accent+"88" }]}>
-            <Text style={[styles.followText, { color: cfg.accent }]}>+ Kuzat</Text>
-          </Pressable>
-        </View>
-
-        {/* Content text */}
-        <Text style={styles.contentText} numberOfLines={3}>{post.content}</Text>
-
-        {/* Swipe hint */}
-        <View style={styles.swipeHint}>
-          <Feather name="chevron-left" size={12} color="rgba(255,255,255,0.3)" />
-          <Text style={styles.swipeText}>Suring</Text>
-          <Feather name="chevron-right" size={12} color="rgba(255,255,255,0.3)" />
-        </View>
-      </LinearGradient>
-    </View>
-  );
+function secs(s?: number | null): string {
+  if (!s) return "";
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ── Demo fallback posts ──────────────────────────────── */
+const DEMO_AUTHOR: Author = { id: 0, username: "olcha_demo", displayName: "OlCha Demo", avatarUrl: null, isVerified: true };
+const DEMO: FeedItem[] = [
+  { id:"d1", kind:"post", contentKind:"photo",  caption:"O'zbekistondagi eng go'zal tog' manzarasi — Chimyon cho'qqisi 🏔️", mediaUrl:null, videoUrl:null, thumbUrl:null, author:{...DEMO_AUTHOR, displayName:"Dilnoza Yusupova", username:"dilnoza_uz"}, likesCount:14200, commentsCount:234, isLiked:false, createdAt:new Date(Date.now()-600000).toISOString(), rawId:1 },
+  { id:"d2", kind:"reel",  contentKind:"reel",   caption:"Toshkent kechalari — bir daqiqada", mediaUrl:null, videoUrl:null, thumbUrl:null, duration:60, author:{...DEMO_AUTHOR, displayName:"Sardor Baxtiyorov", username:"sardor_b"}, likesCount:8900, commentsCount:156, isLiked:false, createdAt:new Date(Date.now()-1800000).toISOString(), rawId:2 },
+  { id:"d3", kind:"post",  contentKind:"video",  caption:"React Native bilan professional ilova yaratish — live session 💻", mediaUrl:null, videoUrl:null, thumbUrl:null, author:{...DEMO_AUTHOR, displayName:"Kamol Eshmatov", username:"dev_kamol", isVerified:true}, likesCount:7800, commentsCount:234, isLiked:false, createdAt:new Date(Date.now()-3600000).toISOString(), rawId:3 },
+  { id:"d4", kind:"post",  contentKind:"ad",     caption:"OlCha Premium — cheksiz AI kuchi, reklama yo'q, maxsus imkoniyatlar! ⚡ Bugun qo'shiling.", mediaUrl:null, videoUrl:null, thumbUrl:null, author:{...DEMO_AUTHOR, displayName:"OlCha Official", username:"olcha_official", isVerified:true}, likesCount:3100, commentsCount:45, isLiked:false, createdAt:new Date(Date.now()-9000000).toISOString(), rawId:5 },
+  { id:"d5", kind:"post",  contentKind:"photo",  caption:"Samarqand — Registon maydoni, dunyoning eng go'zal arxitekturasi 🏛️", mediaUrl:null, videoUrl:null, thumbUrl:null, author:{...DEMO_AUTHOR, displayName:"Aziz Raximov", username:"aziz_photo"}, likesCount:31200, commentsCount:567, isLiked:false, createdAt:new Date(Date.now()-14400000).toISOString(), rawId:6 },
+  { id:"d6", kind:"reel",  contentKind:"reel",   caption:"Xorazm oshi maxsus retsepti — oshpaz sirlarini oshkor qilaman 🍲", mediaUrl:null, videoUrl:null, thumbUrl:null, duration:45, author:{...DEMO_AUTHOR, displayName:"Muazzam Xoliqova", username:"oshpaz_pro"}, likesCount:19400, commentsCount:345, isLiked:false, createdAt:new Date(Date.now()-21600000).toISOString(), rawId:8 },
+];
+
+/* ── Category filters ─────────────────────────────────── */
+const CATS = [
+  { key: "all",   label: "✦ Hammasi" },
+  { key: "photo", label: "📸 Rasm"   },
+  { key: "video", label: "🎬 Klip"   },
+  { key: "reel",  label: "✨ Reel"   },
+  { key: "ad",    label: "⚡ Reklama" },
+];
+
+/* ══════════════════════════════════════════════════════
    AI ANALYSIS MODAL
-═══════════════════════════════════════════════════════ */
-function AIModal({ post, visible, onClose }: { post: Post | null; visible: boolean; onClose: () => void }) {
+══════════════════════════════════════════════════════ */
+interface AIResult {
+  tags?: string[];
+  category?: string;
+  summary?: string;
+  sentiment?: string;
+  analyzedAt?: string;
+  aiMetadata?: string;
+}
+
+function AIModal({
+  item, visible, onClose,
+}: { item: FeedItem | null; visible: boolean; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AIResult | null>(null);
+  const [error, setError] = useState(false);
 
   React.useEffect(() => {
-    if (!visible || !post) return;
-    setResult(null);
-    setLoading(true);
+    if (!visible || !item) return;
+    setResult(null); setError(false); setLoading(true);
+    const body = {
+      contentId: item.rawId,
+      contentType: item.kind,
+      caption: item.caption ?? "",
+    };
     fetch(`${API_BASE}/ai/analyze-content`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ contentId: post.id, contentType: "post", caption: post.content ?? "" }),
+      body: JSON.stringify(body),
     })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setResult(d); })
-      .catch(() => {})
+      .then(r => r.ok ? r.json() as Promise<AIResult> : Promise.reject())
+      .then(d => setResult(d))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [visible, post?.id]);
+  }, [visible, item?.id]);
 
-  if (!post) return null;
-  const cfg = TYPE_CFG[post.type] ?? TYPE_CFG.text;
-  const grad = gradFor(post);
+  if (!item) return null;
+  const k = KIND[item.contentKind] ?? KIND.text;
+
+  const sentLabel = result?.sentiment === "positive" ? "Ijobiy 😊"
+    : result?.sentiment === "negative" ? "Salbiy 😞" : "Neytral 😐";
+  const sentColor = result?.sentiment === "positive" ? "#10b981"
+    : result?.sentiment === "negative" ? "#ef4444" : "#f59e0b";
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose} />
-      <View style={[styles.aiModal, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 20) }]}>
-        <LinearGradient colors={["#0d0d22","#12102a"]} style={StyleSheet.absoluteFillObject} />
-        <View style={[StyleSheet.absoluteFillObject, { borderTopWidth: 1, borderColor: cfg.accent+"33", borderRadius: 24 }]} />
+      {/* Dim overlay */}
+      <Pressable style={styles.dimOverlay} onPress={onClose} />
 
-        {/* Handle */}
-        <View style={[styles.modalHandle, { backgroundColor: cfg.accent+"66" }]} />
+      <View style={[styles.aiSheet, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 20) }]}>
+        <LinearGradient colors={["#0c0c22", "#10102e"]} style={StyleSheet.absoluteFillObject} />
+        <View style={[StyleSheet.absoluteFillObject, { borderTopWidth: 1, borderTopColor: k.accent + "44", borderTopLeftRadius: 24, borderTopRightRadius: 24 }]} />
+
+        {/* Handle bar */}
+        <View style={[styles.sheetHandle, { backgroundColor: k.accent + "88" }]} />
 
         {/* Header */}
-        <View style={styles.modalHeader}>
-          <LinearGradient colors={["#7c3aed","#a855f7"]} style={styles.modalHeaderIcon}>
-            <Feather name="zap" size={16} color="#fff" />
+        <View style={styles.aiHeader}>
+          <LinearGradient colors={["#7c3aed", "#a855f7"]} style={styles.aiHeaderIcon}>
+            <Feather name="zap" size={18} color="#fff" />
           </LinearGradient>
           <View style={{ flex: 1 }}>
-            <Text style={styles.modalTitle}>OlCha AI Tahlil</Text>
-            <Text style={styles.modalSub} numberOfLines={1}>{post.user?.displayName} · {cfg.label}</Text>
+            <Text style={styles.aiTitle}>OlCha AI Tahlil</Text>
+            <Text style={styles.aiSubtitle} numberOfLines={1}>
+              {item.author.displayName} · {k.label}
+            </Text>
           </View>
-          {result?.sentiment && <Text style={styles.sentimentEmoji}>{sentEmoji(result.sentiment)}</Text>}
-          <Pressable onPress={onClose} style={styles.modalClose}>
-            <Feather name="x" size={18} color="rgba(255,255,255,0.5)" />
+          <Pressable style={styles.aiCloseBtn} onPress={onClose}>
+            <Feather name="x" size={18} color="rgba(255,255,255,0.45)" />
           </Pressable>
         </View>
 
+        {/* Content */}
         {loading ? (
-          <View style={styles.aiLoading}>
+          <View style={styles.aiCenter}>
             <ActivityIndicator color="#a78bfa" size="large" />
-            <Text style={styles.aiLoadingText}>OlCha AI tahlil qilmoqda...</Text>
+            <Text style={styles.aiHint}>OlCha AI tahlil qilmoqda...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.aiCenter}>
+            <Feather name="wifi-off" size={36} color="rgba(255,255,255,0.2)" />
+            <Text style={styles.aiHint}>Tahlil ololmadi. Internet tekshiring.</Text>
           </View>
         ) : result ? (
-          <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 4 }}>
-            {/* Sentiment + category row */}
-            <View style={styles.aiMetaRow}>
-              {result.sentiment && (
-                <View style={styles.aiMetaChip}>
-                  <Text style={styles.aiMetaLabel}>Kayfiyat</Text>
-                  <Text style={styles.aiMetaVal}>
-                    {sentEmoji(result.sentiment)} {result.sentiment === "positive" ? "Ijobiy" : result.sentiment === "negative" ? "Salbiy" : "Neytral"}
-                  </Text>
-                </View>
-              )}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
+            {/* Stats row */}
+            <View style={styles.aiStatRow}>
+              {/* Sentiment */}
+              <View style={[styles.aiStatCard, { borderColor: sentColor + "55", backgroundColor: sentColor + "12" }]}>
+                <Text style={styles.aiStatLabel}>Kayfiyat</Text>
+                <Text style={[styles.aiStatValue, { color: sentColor }]}>{sentLabel}</Text>
+              </View>
+              {/* Category */}
               {result.category && (
-                <View style={[styles.aiMetaChip, { borderColor: cfg.accent+"55", backgroundColor: cfg.accent+"18" }]}>
-                  <Text style={styles.aiMetaLabel}>Kategoriya</Text>
-                  <Text style={[styles.aiMetaVal, { color: cfg.accent }]}>{result.category}</Text>
+                <View style={[styles.aiStatCard, { borderColor: k.accent + "55", backgroundColor: k.accent + "12" }]}>
+                  <Text style={styles.aiStatLabel}>Toifa</Text>
+                  <Text style={[styles.aiStatValue, { color: k.accent }]}>{result.category}</Text>
                 </View>
               )}
             </View>
 
             {/* Summary */}
             {result.summary && (
-              <View style={styles.aiSection}>
-                <Text style={styles.aiSectionLabel}>📝 Xulosa</Text>
-                <Text style={styles.aiSummaryText}>{result.summary}</Text>
+              <View style={styles.aiBlock}>
+                <View style={styles.aiBlockHeader}>
+                  <Feather name="file-text" size={13} color="#a78bfa" />
+                  <Text style={styles.aiBlockTitle}>AI Xulosa</Text>
+                </View>
+                <Text style={styles.aiBodyText}>{result.summary}</Text>
               </View>
             )}
 
             {/* Tags */}
             {result.tags && result.tags.length > 0 && (
-              <View style={styles.aiSection}>
-                <Text style={styles.aiSectionLabel}>🏷 Teglar</Text>
-                <View style={styles.tagsWrap}>
+              <View style={styles.aiBlock}>
+                <View style={styles.aiBlockHeader}>
+                  <Feather name="tag" size={13} color="#a78bfa" />
+                  <Text style={styles.aiBlockTitle}>Teglar</Text>
+                </View>
+                <View style={styles.tagWrap}>
                   {result.tags.map(t => (
-                    <View key={t} style={[styles.tagChip, { borderColor: cfg.accent+"44", backgroundColor: cfg.accent+"11" }]}>
-                      <Text style={[styles.tagText, { color: cfg.accent }]}>#{t}</Text>
+                    <View key={t} style={[styles.tagPill, { borderColor: k.accent + "55", backgroundColor: k.accent + "11" }]}>
+                      <Text style={[styles.tagPillText, { color: k.accent }]}>#{t}</Text>
                     </View>
                   ))}
                 </View>
               </View>
             )}
 
-            {/* Audience note */}
-            <View style={[styles.aiSection, styles.audienceBox]}>
-              <Feather name="users" size={13} color="#a78bfa" />
-              <Text style={styles.audienceText}>
-                Bu kontent {result.category ?? "umumiy"} toifasiga oid bo'lib, OlCha algoritmida
-                faol ko'rsatilmoqda.
+            {/* OlCha recommendation */}
+            <View style={[styles.aiBlock, styles.aiRecoBox]}>
+              <View style={styles.aiBlockHeader}>
+                <Feather name="trending-up" size={13} color="#7c3aed" />
+                <Text style={styles.aiBlockTitle}>OlCha tavsiyasi</Text>
+              </View>
+              <Text style={styles.aiBodyText}>
+                Bu kontent{result.category ? ` "${result.category}"` : ""} toifasida{" "}
+                {result.sentiment === "positive"
+                  ? "ijobiy kayfiyatga ega va auditoriya bilan yaxshi rezonans hosil qiladi."
+                  : result.sentiment === "negative"
+                  ? "salbiy ton aniqlandi — kontent moderatsiyadan o'tkazilishi tavsiya etiladi."
+                  : "neytral tonli bo'lib, keng auditoriyaga mos keladi."}
               </Text>
             </View>
+
+            {/* Analyzed time */}
+            {result.analyzedAt && (
+              <Text style={styles.aiTimestamp}>
+                Tahlil vaqti: {new Date(result.analyzedAt).toLocaleString("uz-UZ")}
+              </Text>
+            )}
           </ScrollView>
-        ) : (
-          <View style={styles.aiLoading}>
-            <Feather name="wifi-off" size={32} color="rgba(255,255,255,0.2)" />
-            <Text style={styles.aiLoadingText}>AI ma'lumot ololmadi</Text>
-          </View>
-        )}
+        ) : null}
       </View>
     </Modal>
   );
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
+   SINGLE FULL-SCREEN NEBULA CARD
+══════════════════════════════════════════════════════ */
+interface CardProps {
+  item: FeedItem;
+  isActive: boolean;
+  total: number;
+  index: number;
+  liked: boolean;
+  likes: number;
+  onLike: () => void;
+  onAI: () => void;
+}
+
+function NebulaCard({ item, isActive, total, index, liked, likes, onLike, onAI }: CardProps) {
+  const insets = useSafeAreaInsets();
+  const k = KIND[item.contentKind] ?? KIND.text;
+  const hasVideo = (item.contentKind === "video" || item.contentKind === "reel")
+    && (item.mediaUrl || item.videoUrl);
+  const videoSrc = item.videoUrl ?? item.mediaUrl;
+  const photoSrc = (item.contentKind === "photo" || item.contentKind === "text") ? item.mediaUrl : null;
+  const avatarUri = mUrl(item.author.avatarUrl);
+
+  const webAdj = Platform.OS === "web";
+  const cardH = webAdj ? H - 134 : H;
+  const topPad = insets.top + (webAdj ? 67 : 10);
+  const botPad = insets.bottom + (webAdj ? 34 : 16);
+
+  return (
+    <View style={[styles.card, { width: W, height: cardH }]}>
+
+      {/* ── FULL-SCREEN BACKGROUND ── */}
+      {hasVideo && videoSrc ? (
+        <Video
+          source={{ uri: videoSrc }}
+          style={styles.mediaBg}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay={isActive}
+          isLooping
+          isMuted={false}
+        />
+      ) : photoSrc ? (
+        <Image source={{ uri: photoSrc }} style={styles.mediaBg} />
+      ) : (
+        <LinearGradient
+          colors={k.grad}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+      )}
+
+      {/* Depth overlay: dark top + dark bottom */}
+      <LinearGradient
+        colors={["rgba(0,0,0,0.60)", "transparent", "transparent", "rgba(0,0,0,0.80)"]}
+        locations={[0, 0.28, 0.55, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* No-media decorative orb */}
+      {!hasVideo && !photoSrc && (
+        <View style={styles.orbWrap}>
+          <View style={[styles.orbRing3, { borderColor: k.accent + "18" }]} />
+          <View style={[styles.orbRing2, { borderColor: k.accent + "35" }]} />
+          <View style={[styles.orbRing1, { borderColor: k.accent + "55" }]} />
+          <View style={[styles.orbCore, { backgroundColor: k.accent + "20" }]}>
+            <Text style={[styles.orbSymbol, { color: k.accent }]}>
+              {item.contentKind === "video" ? "▶" :
+               item.contentKind === "reel" ? "✦" :
+               item.contentKind === "photo" ? "◈" :
+               item.contentKind === "ad" ? "⚡" : "✎"}
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* ── TOP BAR ── */}
+      <View style={[styles.topBar, { paddingTop: topPad }]}>
+        {/* Type badge */}
+        <View style={[styles.kindBadge, { backgroundColor: k.accent + "30", borderColor: k.accent + "60" }]}>
+          <Feather name={k.icon as any} size={11} color={k.accent} />
+          <Text style={[styles.kindText, { color: k.accent }]}>{k.label}</Text>
+        </View>
+
+        {/* Dot progress */}
+        <View style={styles.dotBar}>
+          {Array.from({ length: Math.min(total, 9) }).map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                i === index % 9
+                  ? [styles.dotOn, { backgroundColor: k.accent }]
+                  : styles.dotOff,
+              ]}
+            />
+          ))}
+        </View>
+
+        {/* AI button */}
+        <Pressable style={styles.aiTopBtn} onPress={onAI}>
+          <LinearGradient colors={["#7c3aed", "#a855f7"]} style={styles.aiTopGrad}>
+            <Feather name="zap" size={11} color="#fff" />
+            <Text style={styles.aiTopText}>AI</Text>
+          </LinearGradient>
+        </Pressable>
+      </View>
+
+      {/* Duration badge (video/reel) */}
+      {item.duration && (
+        <View style={[styles.durationBadge, { top: topPad + 40 }]}>
+          <Feather name="clock" size={10} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.durationText}>{secs(item.duration)}</Text>
+        </View>
+      )}
+
+      {/* Views badge (reels) */}
+      {item.viewsCount != null && item.viewsCount > 0 && (
+        <View style={[styles.viewsBadge, { top: topPad + 40 }]}>
+          <Feather name="eye" size={10} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.viewsText}>{num(item.viewsCount)}</Text>
+        </View>
+      )}
+
+      {/* ── RIGHT ACTION BAR ── */}
+      <View style={[styles.actionBar, { bottom: botPad + 100 }]}>
+        {/* Like */}
+        <Pressable style={styles.actionItem} onPress={onLike}>
+          <LinearGradient
+            colors={liked ? ["#ec4899", "#f43f5e"] : ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.06)"]}
+            style={styles.actionCircle}
+          >
+            <Feather name="heart" size={23} color={liked ? "#fff" : "rgba(255,255,255,0.9)"} />
+          </LinearGradient>
+          <Text style={[styles.actionLabel, liked && { color: "#f9a8d4" }]}>{num(likes)}</Text>
+        </Pressable>
+
+        {/* Comment */}
+        <Pressable style={styles.actionItem}>
+          <View style={styles.actionCircle}>
+            <Feather name="message-circle" size={23} color="rgba(255,255,255,0.9)" />
+          </View>
+          <Text style={styles.actionLabel}>{num(item.commentsCount ?? 0)}</Text>
+        </Pressable>
+
+        {/* Share */}
+        <Pressable style={styles.actionItem}>
+          <View style={styles.actionCircle}>
+            <Feather name="share-2" size={23} color="rgba(255,255,255,0.9)" />
+          </View>
+          <Text style={styles.actionLabel}>Ulash</Text>
+        </Pressable>
+
+        {/* Save */}
+        <Pressable style={styles.actionItem}>
+          <View style={styles.actionCircle}>
+            <Feather name="bookmark" size={23} color="rgba(255,255,255,0.9)" />
+          </View>
+          <Text style={styles.actionLabel}>Saqlash</Text>
+        </Pressable>
+
+        {/* AI */}
+        <Pressable style={styles.actionItem} onPress={onAI}>
+          <LinearGradient colors={["#5b21b6", "#7c3aed"]} style={styles.actionCircle}>
+            <Feather name="zap" size={23} color="#fff" />
+          </LinearGradient>
+          <Text style={[styles.actionLabel, { color: "#c4b5fd" }]}>AI Tahlil</Text>
+        </Pressable>
+      </View>
+
+      {/* ── BOTTOM INFO PANEL ── */}
+      <LinearGradient
+        colors={["transparent", "rgba(0,0,0,0.55)", "rgba(0,0,0,0.90)"]}
+        style={[styles.bottomPanel, { paddingBottom: botPad }]}
+      >
+        {/* Author row */}
+        <View style={styles.authorRow}>
+          {/* Avatar */}
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
+          ) : (
+            <LinearGradient colors={[k.grad[1], k.grad[2]]} style={styles.avatarGrad}>
+              <Text style={styles.avatarLetter}>
+                {(item.author.displayName ?? "O")[0].toUpperCase()}
+              </Text>
+            </LinearGradient>
+          )}
+
+          {/* Name + handle */}
+          <View style={{ flex: 1 }}>
+            <View style={styles.nameRow}>
+              <Text style={styles.displayName} numberOfLines={1}>
+                {item.author.displayName}
+              </Text>
+              {item.author.isVerified && (
+                <View style={[styles.verifiedBadge, { backgroundColor: k.accent }]}>
+                  <Text style={styles.verifiedCheck}>✓</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.handleRow}>
+              @{item.author.username}
+              <Text style={styles.dot2}> · </Text>
+              {ago(item.createdAt)}
+            </Text>
+          </View>
+
+          {/* Follow */}
+          <Pressable style={[styles.followBtn, { borderColor: k.accent + "88" }]}>
+            <Text style={[styles.followText, { color: k.accent }]}>+ Kuzatish</Text>
+          </Pressable>
+        </View>
+
+        {/* Caption */}
+        {!!item.caption && (
+          <Text style={styles.caption} numberOfLines={3}>{item.caption}</Text>
+        )}
+
+        {/* Swipe hint */}
+        <View style={styles.swipeHint}>
+          <Feather name="chevron-left"  size={13} color="rgba(255,255,255,0.25)" />
+          <Text style={styles.swipeText}>chapga suring — keyingi</Text>
+          <Feather name="chevron-right" size={13} color="rgba(255,255,255,0.25)" />
+        </View>
+      </LinearGradient>
+    </View>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
    MAIN SCREEN
-═══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 export default function FeedScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const listRef = useRef<FlatList>(null);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [activeCat, setActiveCat] = useState("all");
-  const [likes, setLikes] = useState<Record<number, number>>({});
-  const [liked, setLiked] = useState<Record<number, boolean>>({});
-  const [aiPost, setAiPost] = useState<Post | null>(null);
-  const [aiVisible, setAiVisible] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const flatRef = useRef<FlatList>(null);
 
-  const { data: apiPosts, isLoading, refetch } = useQuery<Post[]>({
+  const [activeIdx, setActiveIdx]   = useState(0);
+  const [activeCat, setActiveCat]   = useState("all");
+  const [likedMap, setLikedMap]     = useState<Record<string, boolean>>({});
+  const [likesMap, setLikesMap]     = useState<Record<string, number>>({});
+  const [refreshing, setRefreshing] = useState(false);
+  const [aiItem, setAiItem]         = useState<FeedItem | null>(null);
+  const [aiOpen, setAiOpen]         = useState(false);
+
+  /* Fetch posts */
+  const { data: rawPosts, isLoading: loadPosts, refetch: refetchPosts } = useQuery<RawPost[]>({
     queryKey: ["posts"],
-    queryFn: () => apiGet<Post[]>("/posts"),
+    queryFn: () => fetch(`${API_BASE}/posts`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : []),
   });
 
+  /* Fetch reels */
+  const { data: rawReels, isLoading: loadReels, refetch: refetchReels } = useQuery<RawReel[]>({
+    queryKey: ["reels"],
+    queryFn: () => fetch(`${API_BASE}/reels`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : []),
+  });
+
+  const loading = loadPosts || loadReels;
+
+  /* Merge + sort by date */
+  const allItems: FeedItem[] = React.useMemo(() => {
+    const posts  = (rawPosts  ?? []).map(normPost);
+    const reels  = (rawReels  ?? []).map(normReel);
+    const merged = [...posts, ...reels].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    return merged.length > 0 ? merged : DEMO;
+  }, [rawPosts, rawReels]);
+
+  /* Filter by category */
+  const feed = activeCat === "all"
+    ? allItems
+    : allItems.filter(i => i.contentKind === activeCat);
+
+  /* Pull-to-refresh */
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([refetchPosts(), refetchReels()]);
     setRefreshing(false);
-  }, [refetch]);
+  }, [refetchPosts, refetchReels]);
 
-  const rawPosts = (apiPosts && apiPosts.length > 0) ? apiPosts : DEMO;
-  const posts = activeCat === "all" ? rawPosts : rawPosts.filter(p => p.type === activeCat);
-
-  const getLikes = (p: Post) => likes[p.id] ?? p.likesCount ?? 0;
-  const isLiked  = (p: Post) => liked[p.id] ?? false;
-
-  const toggleLike = (p: Post) => {
+  /* Like toggle */
+  const toggleLike = (item: FeedItem) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const cur = isLiked(p);
-    setLiked(prev => ({ ...prev, [p.id]: !cur }));
-    setLikes(prev => ({ ...prev, [p.id]: getLikes(p) + (cur ? -1 : 1) }));
+    const was = likedMap[item.id] ?? item.isLiked;
+    const cur = likesMap[item.id] ?? item.likesCount;
+    setLikedMap(p => ({ ...p, [item.id]: !was }));
+    setLikesMap(p => ({ ...p, [item.id]: cur + (was ? -1 : 1) }));
   };
 
-  const openAI = (p: Post) => {
-    setAiPost(p);
-    setAiVisible(true);
+  /* AI open */
+  const openAI = (item: FeedItem) => {
+    setAiItem(item);
+    setAiOpen(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
+  /* Viewable change */
   const onViewable = useCallback(({ viewableItems }: any) => {
-    if (viewableItems.length > 0) setActiveIdx(viewableItems[0].index ?? 0);
+    if (viewableItems[0]) setActiveIdx(viewableItems[0].index ?? 0);
   }, []);
+
+  const viewConfig = useRef({ itemVisiblePercentThreshold: 60 });
 
   const webTop = Platform.OS === "web" ? 67 : 0;
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-
-      {/* ── Category strip (floats above feed) ── */}
-      <View style={[styles.catBar, { top: insets.top + webTop }]}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catContent}>
+      {/* ── Floating category strip ── */}
+      <View style={[styles.catBar, { top: insets.top + webTop + 4 }]}>
+        <ScrollView
+          horizontal showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.catScroll}
+        >
           {CATS.map(c => (
-            <Pressable key={c.key} onPress={() => { setActiveCat(c.key); setActiveIdx(0); }}
-              style={[styles.catChip, activeCat === c.key && styles.catChipOn]}>
+            <Pressable
+              key={c.key}
+              onPress={() => { setActiveCat(c.key); setActiveIdx(0); }}
+              style={[styles.catChip, activeCat === c.key && styles.catChipActive]}
+            >
               {activeCat === c.key && (
-                <LinearGradient colors={["#7c3aed","#a855f7"]} style={StyleSheet.absoluteFillObject}
-                  start={{x:0,y:0}} end={{x:1,y:0}} />
+                <LinearGradient
+                  colors={["#7c3aed", "#a855f7"]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={StyleSheet.absoluteFillObject}
+                />
               )}
-              <Text style={[styles.catText, activeCat === c.key && { color: "#fff" }]}>{c.label}</Text>
+              <Text style={[styles.catLabel, activeCat === c.key && { color: "#fff" }]}>
+                {c.label}
+              </Text>
             </Pressable>
           ))}
         </ScrollView>
       </View>
 
-      {/* ── OlCha logo pill (top-left, transparent) ── */}
-      <View style={[styles.logoPill, { top: insets.top + webTop + 48 }]}>
-        <LinearGradient colors={["#7c3aed","#a855f7"]} style={styles.logoGrad}>
-          <Text style={styles.logoText}>O</Text>
+      {/* ── OlCha logo (top-left) ── */}
+      <View style={[styles.logoBar, { top: insets.top + webTop + 48 }]}>
+        <LinearGradient colors={["#7c3aed", "#a855f7"]} style={styles.logoMark}>
+          <Text style={styles.logoLetter}>O</Text>
         </LinearGradient>
-        <Text style={styles.logoLabel}>OlCha</Text>
+        <Text style={styles.logoName}>OlCha</Text>
       </View>
 
-      {/* ── FULL-SCREEN HORIZONTAL FEED ── */}
-      {isLoading ? (
-        <View style={styles.loadWrap}>
+      {/* ── Main feed ── */}
+      {loading ? (
+        <View style={styles.loadState}>
           <ActivityIndicator color="#7c3aed" size="large" />
           <Text style={styles.loadText}>OlCha Nebula yuklanmoqda...</Text>
         </View>
+      ) : feed.length === 0 ? (
+        <View style={styles.loadState}>
+          <Feather name="inbox" size={40} color="rgba(255,255,255,0.15)" />
+          <Text style={styles.loadText}>Bu toifada kontent yo'q</Text>
+        </View>
       ) : (
         <FlatList
-          ref={listRef}
-          data={posts}
-          keyExtractor={p => `nebula-${p.id}`}
+          ref={flatRef}
+          data={feed}
+          keyExtractor={i => i.id}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"
           onViewableItemsChanged={onViewable}
-          viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-          refreshing={refreshing}
-          onRefresh={undefined}
+          viewabilityConfig={viewConfig.current}
           renderItem={({ item, index }) => (
             <NebulaCard
-              post={item}
-              total={posts.length}
+              item={item}
+              isActive={index === activeIdx}
+              total={feed.length}
               index={index}
-              liked={isLiked(item)}
-              likes={getLikes(item)}
+              liked={likedMap[item.id] ?? item.isLiked}
+              likes={likesMap[item.id] ?? item.likesCount}
               onLike={() => toggleLike(item)}
               onAI={() => openAI(item)}
             />
@@ -493,156 +704,200 @@ export default function FeedScreen() {
         />
       )}
 
-      {/* AI Modal */}
-      <AIModal post={aiPost} visible={aiVisible} onClose={() => setAiVisible(false)} />
+      {/* AI Analysis modal */}
+      <AIModal item={aiItem} visible={aiOpen} onClose={() => setAiOpen(false)} />
     </View>
   );
 }
 
-/* ── Styles ───────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════
+   STYLES
+══════════════════════════════════════════════════════ */
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#070b15" },
 
   /* Category bar */
   catBar: {
-    position: "absolute", left: 0, right: 0, zIndex: 20,
+    position: "absolute", left: 0, right: 0, zIndex: 30,
     height: 40,
   },
-  catContent: { paddingHorizontal: 12, gap: 8, alignItems: "center" },
+  catScroll: { paddingHorizontal: 12, gap: 8, alignItems: "center" },
   catChip: {
     paddingHorizontal: 14, height: 32, borderRadius: 16,
-    alignItems: "center", justifyContent: "center", overflow: "hidden",
-    backgroundColor: "rgba(0,0,0,0.45)",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.12)",
+    overflow: "hidden", alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.50)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.13)",
   },
-  catChipOn: { borderColor: "#7c3aed55" },
-  catText: { fontSize: 12, fontFamily: "Inter_500Medium", color: "rgba(255,255,255,0.65)" },
+  catChipActive: { borderColor: "#7c3aed66" },
+  catLabel: { fontSize: 12, fontFamily: "Inter_500Medium", color: "rgba(255,255,255,0.60)" },
 
-  /* Logo pill */
-  logoPill: {
-    position: "absolute", left: 14, zIndex: 20,
+  /* Logo */
+  logoBar: {
+    position: "absolute", left: 12, zIndex: 30,
     flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(0,0,0,0.40)",
     paddingHorizontal: 8, paddingVertical: 4,
     borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
   },
-  logoGrad: { width: 22, height: 22, borderRadius: 7, alignItems: "center", justifyContent: "center" },
-  logoText: { color: "#fff", fontSize: 11, fontFamily: "Inter_700Bold" },
-  logoLabel: { color: "#c4b5fd", fontSize: 13, fontFamily: "Inter_700Bold", letterSpacing: 1 },
+  logoMark: { width: 22, height: 22, borderRadius: 7, alignItems: "center", justifyContent: "center" },
+  logoLetter: { color: "#fff", fontSize: 12, fontFamily: "Inter_700Bold" },
+  logoName: { color: "#c4b5fd", fontSize: 14, fontFamily: "Inter_700Bold", letterSpacing: 1 },
 
   /* Card */
   card: { overflow: "hidden", backgroundColor: "#070b15" },
-  cardBg: { ...StyleSheet.absoluteFillObject, resizeMode: "cover" } as any,
+  mediaBg: { ...StyleSheet.absoluteFillObject, resizeMode: "cover" } as any,
 
   /* Top bar */
   topBar: {
     position: "absolute", top: 0, left: 0, right: 0, zIndex: 10,
     flexDirection: "row", alignItems: "center",
-    paddingHorizontal: 14, paddingBottom: 8, gap: 10,
+    paddingHorizontal: 14, paddingBottom: 10, gap: 10,
   },
-  typePill: {
+  kindBadge: {
     flexDirection: "row", alignItems: "center", gap: 4,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1,
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: 8, borderWidth: 1,
   },
-  typePillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  dots: { flex: 1, flexDirection: "row", justifyContent: "center", gap: 4, alignItems: "center" },
+  kindText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  dotBar: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 5 },
   dot: { borderRadius: 4 },
-  dotActive:  { width: 16, height: 4, borderRadius: 2 },
-  dotInactive: { width: 4, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.25)" },
-  aiBadge: { borderRadius: 8, overflow: "hidden" },
-  aiGrad: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 8, paddingVertical: 4 },
-  aiText: { color: "#fff", fontSize: 11, fontFamily: "Inter_700Bold" },
-
-  /* Center orb (no-media state) */
-  centerOrb: {
-    position: "absolute", alignSelf: "center",
-    top: "30%", alignItems: "center", justifyContent: "center",
+  dotOn:  { width: 18, height: 4, borderRadius: 2 },
+  dotOff: { width: 4,  height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.22)" },
+  aiTopBtn: { borderRadius: 8, overflow: "hidden" },
+  aiTopGrad: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 8, paddingVertical: 4,
   },
-  orbRing1: { position: "absolute", width: 240, height: 240, borderRadius: 120, borderWidth: 1 },
-  orbRing2: { position: "absolute", width: 170, height: 170, borderRadius: 85,  borderWidth: 1 },
-  orbRing3: { position: "absolute", width: 110, height: 110, borderRadius: 55,  borderWidth: 1 },
-  orbCore:  { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center" },
-  orbIcon:  { fontSize: 28 },
+  aiTopText: { color: "#fff", fontSize: 11, fontFamily: "Inter_700Bold" },
 
-  /* Right action bar */
-  actionBar: { position: "absolute", right: 14, gap: 18 },
-  actionBtn: { alignItems: "center", gap: 4 },
+  /* Duration / views */
+  durationBadge: {
+    position: "absolute", left: 14, zIndex: 10,
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "rgba(0,0,0,0.50)",
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
+  },
+  durationText: { color: "rgba(255,255,255,0.80)", fontSize: 11, fontFamily: "Inter_500Medium" },
+  viewsBadge: {
+    position: "absolute", right: 14, zIndex: 10,
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "rgba(0,0,0,0.50)",
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
+  },
+  viewsText: { color: "rgba(255,255,255,0.80)", fontSize: 11, fontFamily: "Inter_500Medium" },
+
+  /* Orb (no-media) */
+  orbWrap: { position: "absolute", alignSelf: "center", top: "28%", alignItems: "center", justifyContent: "center" },
+  orbRing3: { position: "absolute", width: 260, height: 260, borderRadius: 130, borderWidth: 1 },
+  orbRing2: { position: "absolute", width: 180, height: 180, borderRadius: 90, borderWidth: 1 },
+  orbRing1: { position: "absolute", width: 110, height: 110, borderRadius: 55, borderWidth: 1 },
+  orbCore:  { width: 76, height: 76, borderRadius: 38, alignItems: "center", justifyContent: "center" },
+  orbSymbol: { fontSize: 30 },
+
+  /* Action bar */
+  actionBar: { position: "absolute", right: 14, gap: 20, alignItems: "center" },
+  actionItem: { alignItems: "center", gap: 4 },
   actionCircle: {
-    width: 50, height: 50, borderRadius: 25,
+    width: 52, height: 52, borderRadius: 26,
     alignItems: "center", justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.10)",
     borderWidth: 1, borderColor: "rgba(255,255,255,0.12)",
   },
-  actionCount: { color: "rgba(255,255,255,0.75)", fontSize: 11, fontFamily: "Inter_500Medium" },
+  actionLabel: {
+    color: "rgba(255,255,255,0.70)", fontSize: 11,
+    fontFamily: "Inter_500Medium", textAlign: "center",
+  },
 
-  /* Bottom info */
-  bottomInfo: {
-    position: "absolute", bottom: 0, left: 0, right: 72,
-    paddingHorizontal: 16, paddingTop: 50,
+  /* Bottom panel */
+  bottomPanel: {
+    position: "absolute", bottom: 0, left: 0, right: 68,
+    paddingHorizontal: 16, paddingTop: 56,
   },
   authorRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
-  avatar: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  avatarText: { color: "#fff", fontSize: 18, fontFamily: "Inter_700Bold" },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 5, flexWrap: "wrap" },
-  displayName: { color: "#fff", fontSize: 15, fontFamily: "Inter_700Bold" },
+  avatarImg: { width: 46, height: 46, borderRadius: 14 },
+  avatarGrad: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  avatarLetter: { color: "#fff", fontSize: 20, fontFamily: "Inter_700Bold" },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 2 },
+  displayName: { color: "#fff", fontSize: 15, fontFamily: "Inter_700Bold", flexShrink: 1 },
   verifiedBadge: { width: 16, height: 16, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  verifiedCheck: { color: "#fff", fontSize: 9, fontFamily: "Inter_700Bold" },
-  handle: { color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "Inter_400Regular" },
-  timeText: { color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
+  verifiedCheck: { color: "#fff", fontSize: 9 },
+  handleRow: { color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "Inter_400Regular" },
+  dot2: { color: "rgba(255,255,255,0.25)" },
   followBtn: {
-    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 16,
-    borderWidth: 1, backgroundColor: "rgba(0,0,0,0.3)",
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+    borderWidth: 1, backgroundColor: "rgba(0,0,0,0.30)",
   },
   followText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  contentText: {
-    color: "rgba(255,255,255,0.88)", fontSize: 14,
-    fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 10,
+  caption: {
+    color: "rgba(255,255,255,0.85)", fontSize: 14,
+    fontFamily: "Inter_400Regular", lineHeight: 21, marginBottom: 10,
   },
   swipeHint: {
-    flexDirection: "row", alignItems: "center", gap: 4, alignSelf: "center", marginTop: 4,
+    flexDirection: "row", alignItems: "center", gap: 5,
+    alignSelf: "center", marginTop: 2,
   },
-  swipeText: { color: "rgba(255,255,255,0.25)", fontSize: 10, fontFamily: "Inter_400Regular" },
+  swipeText: { color: "rgba(255,255,255,0.22)", fontSize: 11, fontFamily: "Inter_400Regular" },
 
   /* Loading */
-  loadWrap: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  loadText: { color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: "Inter_400Regular" },
+  loadState: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14 },
+  loadText: { color: "rgba(255,255,255,0.35)", fontSize: 13, fontFamily: "Inter_400Regular" },
 
-  /* AI Modal */
-  modalOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.55)" },
-  aiModal: {
+  /* AI Sheet */
+  dimOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.55)" },
+  aiSheet: {
     position: "absolute", bottom: 0, left: 0, right: 0,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     paddingHorizontal: 20, paddingTop: 12,
-    minHeight: H * 0.5,
-    overflow: "hidden",
+    minHeight: H * 0.52, overflow: "hidden",
   },
-  modalHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
-  modalHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  modalHeaderIcon: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  modalTitle: { color: "#fff", fontSize: 16, fontFamily: "Inter_700Bold" },
-  modalSub: { color: "rgba(255,255,255,0.45)", fontSize: 11 },
-  sentimentEmoji: { fontSize: 24, marginRight: 4 },
-  modalClose: { width: 32, height: 32, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.08)", alignItems: "center", justifyContent: "center" },
-  aiLoading: { alignItems: "center", justifyContent: "center", gap: 12, paddingVertical: 40 },
-  aiLoadingText: { color: "rgba(255,255,255,0.45)", fontSize: 13, fontFamily: "Inter_400Regular" },
-  aiMetaRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
-  aiMetaChip: {
-    flex: 1, borderRadius: 12, borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(255,255,255,0.05)",
-    padding: 12,
+  sheetHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    alignSelf: "center", marginBottom: 18,
   },
-  aiMetaLabel: { color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "Inter_400Regular", marginBottom: 4 },
-  aiMetaVal: { color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  aiSection: { marginBottom: 16 },
-  aiSectionLabel: { color: "rgba(255,255,255,0.5)", fontSize: 12, fontFamily: "Inter_500Medium", marginBottom: 6 },
-  aiSummaryText: { color: "rgba(255,255,255,0.82)", fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
-  tagsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  tagChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
-  tagText: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  audienceBox: {
-    flexDirection: "row", gap: 8, alignItems: "flex-start",
-    backgroundColor: "rgba(124,58,237,0.10)", borderRadius: 12,
-    padding: 12, borderWidth: 1, borderColor: "rgba(124,58,237,0.25)",
+  aiHeader: {
+    flexDirection: "row", alignItems: "center",
+    gap: 12, marginBottom: 18,
   },
-  audienceText: { color: "rgba(255,255,255,0.55)", fontSize: 12, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 17 },
+  aiHeaderIcon: {
+    width: 40, height: 40, borderRadius: 13,
+    alignItems: "center", justifyContent: "center",
+  },
+  aiTitle: { color: "#fff", fontSize: 16, fontFamily: "Inter_700Bold" },
+  aiSubtitle: { color: "rgba(255,255,255,0.42)", fontSize: 11, marginTop: 1 },
+  aiCloseBtn: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    alignItems: "center", justifyContent: "center",
+  },
+  aiCenter: { alignItems: "center", justifyContent: "center", gap: 14, paddingVertical: 40 },
+  aiHint: { color: "rgba(255,255,255,0.38)", fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
+
+  aiStatRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
+  aiStatCard: {
+    flex: 1, borderRadius: 14, borderWidth: 1, padding: 14,
+  },
+  aiStatLabel: { color: "rgba(255,255,255,0.38)", fontSize: 11, fontFamily: "Inter_400Regular", marginBottom: 5 },
+  aiStatValue: { fontSize: 15, fontFamily: "Inter_700Bold" },
+
+  aiBlock: { marginBottom: 14 },
+  aiBlockHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 7 },
+  aiBlockTitle: { color: "rgba(255,255,255,0.55)", fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  aiBodyText: {
+    color: "rgba(255,255,255,0.78)", fontSize: 13,
+    fontFamily: "Inter_400Regular", lineHeight: 20,
+  },
+  tagWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  tagPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
+  tagPillText: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  aiRecoBox: {
+    flexDirection: "column",
+    backgroundColor: "rgba(124,58,237,0.10)",
+    borderRadius: 14, borderWidth: 1,
+    borderColor: "rgba(124,58,237,0.28)",
+    padding: 14,
+  },
+  aiTimestamp: {
+    color: "rgba(255,255,255,0.22)", fontSize: 10,
+    fontFamily: "Inter_400Regular", textAlign: "right", marginTop: 4,
+  },
 });

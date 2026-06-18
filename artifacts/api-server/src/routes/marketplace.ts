@@ -88,7 +88,9 @@ router.post("/marketplace/products", requireAuth, async (req: any, res) => {
 // GET /marketplace/products/my
 router.get("/marketplace/products/my", requireAuth, async (req: any, res) => {
   try {
-    const rows = await db.select().from(productsTable).where(eq(productsTable.sellerId, req.session.userId)).orderBy(desc(productsTable.createdAt));
+    const rows = await db.select().from(productsTable)
+      .where(and(eq(productsTable.sellerId, req.session.userId), ne(productsTable.status, "deleted")))
+      .orderBy(desc(productsTable.createdAt));
     res.json(rows.map(p => ({ ...p, mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [], tags: p.tags ? JSON.parse(p.tags) : [] })));
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Mahsulotlarni olishda xato" }); }
 });
@@ -127,7 +129,15 @@ router.patch("/marketplace/products/:id", requireAuth, async (req: any, res) => 
 // DELETE /marketplace/products/:id
 router.delete("/marketplace/products/:id", requireAuth, async (req: any, res) => {
   try {
-    await db.update(productsTable).set({ status: "draft" }).where(and(eq(productsTable.id, Number(req.params.id)), eq(productsTable.sellerId, req.session.userId)));
+    const productId = Number(req.params.id);
+    const [product] = await db.select().from(productsTable)
+      .where(and(eq(productsTable.id, productId), eq(productsTable.sellerId, req.session.userId)));
+    if (!product) { res.status(404).json({ error: "Mahsulot topilmadi yoki ruxsat yo'q" }); return; }
+    if (product.ordersCount > 0) {
+      await db.update(productsTable).set({ status: "deleted", updatedAt: new Date() }).where(eq(productsTable.id, productId));
+    } else {
+      await db.delete(productsTable).where(eq(productsTable.id, productId));
+    }
     res.json({ ok: true });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "O'chirishda xato" }); }
 });

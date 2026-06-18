@@ -134,7 +134,7 @@ export default function MessagesPage() {
                 onClick={() => { setEphemeral(v => !v); setShowEphemeralHint(true); setTimeout(() => setShowEphemeralHint(false), 2500); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   ephemeral
-                    ? "bg-primary/20 text-primary border border-primary/30 shadow-[0_0_12px_rgba(192,57,43,0.3)]"
+                    ? "bg-violet-500/20 text-violet-400 border border-violet-500/30 shadow-[0_0_12px_rgba(124,58,237,0.3)]"
                     : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
                 }`}
               >
@@ -147,7 +147,7 @@ export default function MessagesPage() {
                     initial={{ opacity: 0, y: 4, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 4, scale: 0.9 }}
-                    className="absolute top-10 right-0 z-50 w-56 px-3 py-2 rounded-xl bg-card border border-primary/30 shadow-xl text-xs text-muted-foreground"
+                    className="absolute top-10 right-0 z-50 w-56 px-3 py-2 rounded-xl bg-card border border-violet-500/30 shadow-xl text-xs text-muted-foreground"
                   >
                     {ephemeral ? t("msg.ghost_on_hint") : t("msg.ghost_off_hint")}
                   </motion.div>
@@ -163,11 +163,11 @@ export default function MessagesPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex items-center gap-2.5 px-5 py-2.5 bg-primary/8 border-b border-primary/20"
+                className="flex items-center gap-2.5 px-5 py-2.5 bg-violet-500/8 border-b border-violet-500/20"
               >
-                <Ghost className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 animate-pulse" />
-                <p className="text-xs text-amber-400 font-medium">{t("msg.ghost_banner")}</p>
-                <button onClick={() => setEphemeral(false)} className="ml-auto text-amber-400/60 hover:text-amber-400">
+                <Ghost className="w-3.5 h-3.5 text-violet-400 flex-shrink-0 animate-pulse" />
+                <p className="text-xs text-violet-400 font-medium">{t("msg.ghost_banner")}</p>
+                <button onClick={() => setEphemeral(false)} className="ml-auto text-violet-400/60 hover:text-violet-400">
                   <X className="w-3 h-3" />
                 </button>
               </motion.div>
@@ -206,11 +206,11 @@ export default function MessagesPage() {
           </div>
 
           {/* Input */}
-          <div className={`px-5 py-4 border-t transition-colors ${ephemeral ? "border-primary/30 bg-primary/5" : "border-border"}`}>
+          <div className={`px-5 py-4 border-t transition-colors ${ephemeral ? "border-violet-500/30 bg-violet-500/5" : "border-border"}`}>
             <div className="flex items-center gap-3">
               {ephemeral && (
-                <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
-                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                <div className="w-7 h-7 rounded-lg bg-violet-500/15 flex items-center justify-center flex-shrink-0">
+                  <Flame className="w-3.5 h-3.5 text-violet-400" />
                 </div>
               )}
               <input
@@ -219,7 +219,7 @@ export default function MessagesPage() {
                 onKeyDown={e => e.key === "Enter" && handleSend()}
                 placeholder={ephemeral ? t("msg.ghost_ph") : t("msg.msg_ph")}
                 className={`flex-1 px-4 py-2.5 rounded-xl bg-card border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none transition-colors ${
-                  ephemeral ? "border-primary/40 focus:border-primary/60" : "border-border focus:border-primary/40"
+                  ephemeral ? "border-violet-500/40 focus:border-violet-500/60" : "border-border focus:border-primary/40"
                 }`}
               />
               <motion.button
@@ -227,7 +227,7 @@ export default function MessagesPage() {
                 onClick={handleSend}
                 disabled={!text.trim()}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-opacity disabled:opacity-40 ${
-                  ephemeral ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-primary text-primary-foreground hover:opacity-90"
+                  ephemeral ? "bg-violet-600 text-white hover:bg-violet-500" : "bg-primary text-primary-foreground hover:opacity-90"
                 }`}
               >
                 {ephemeral ? <Ghost className="w-4 h-4" /> : <Send className="w-4 h-4" />}
@@ -235,8 +235,8 @@ export default function MessagesPage() {
             </div>
             {ephemeral && (
               <div className="flex items-center gap-1.5 mt-2">
-                <Clock className="w-3 h-3 text-amber-400/60" />
-                <p className="text-[10px] text-amber-400/60">{t("msg.ghost_timer_hint")}</p>
+                <Clock className="w-3 h-3 text-violet-400/60" />
+                <p className="text-[10px] text-violet-400/60">{t("msg.ghost_timer_hint")}</p>
               </div>
             )}
           </div>

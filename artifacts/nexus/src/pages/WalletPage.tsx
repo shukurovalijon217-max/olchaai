@@ -26,7 +26,7 @@ const PAYMENT_PROVIDERS = [
   { id: "mastercard", label: "Mastercard",             logo: "🔴", color: "#eb001b", textColor: "#fff", desc: "Mastercard karta" },
   { id: "click",      label: "Click",                  logo: "🟢", color: "#00b050", textColor: "#fff", desc: "O'zbek to'lov tizimi" },
   { id: "payme",      label: "Payme",                  logo: "🔵", color: "#00afef", textColor: "#fff", desc: "Payme mobil to'lov" },
-  { id: "global",     label: "Global Payment Gateway", logo: "🌐", color: "#C0392B", textColor: "#fff", desc: "Xalqaro to'lov tizimi" },
+  { id: "global",     label: "Global Payment Gateway", logo: "🌐", color: "#7c3aed", textColor: "#fff", desc: "Xalqaro to'lov tizimi" },
 ];
 
 const TX_TYPE_META: Record<string, { label: string; icon: typeof ArrowDownCircle; color: string }> = {
@@ -36,7 +36,7 @@ const TX_TYPE_META: Record<string, { label: string; icon: typeof ArrowDownCircle
   transfer_out:    { label: "wallet.transfer",       icon: ArrowLeftRight,  color: "text-orange-400" },
   ad_revenue:      { label: "wallet.ad_revenue",     icon: Megaphone,       color: "text-yellow-400" },
   content_revenue: { label: "wallet.content_revenue",icon: TrendingUp,      color: "text-emerald-400" },
-  referral:        { label: "wallet.referral",       icon: CheckCircle2,    color: "text-amber-400" },
+  referral:        { label: "wallet.referral",       icon: CheckCircle2,    color: "text-purple-400" },
 };
 
 const PM_ICONS: Record<string, string> = {
@@ -514,7 +514,7 @@ export default function WalletPage() {
         </div>
 
         {/* Total balance hero */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/80 to-red-800 p-6 mb-6 shadow-xl">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/80 to-violet-700 p-6 mb-6 shadow-xl">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-4 right-8 w-32 h-32 rounded-full bg-white" />
             <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white" />

@@ -89,7 +89,7 @@ function ProfileBadge({ profile }: { profile: VoiceProfile }) {
   const { t } = useTranslation("voice_translate");
   const energyColors: Record<string, string> = {
     calm: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-    moderate: "bg-primary/15 text-amber-400 border-primary/30",
+    moderate: "bg-violet-500/15 text-violet-400 border-violet-500/30",
     energetic: "bg-orange-500/15 text-orange-400 border-orange-500/30",
   };
   const formalColors: Record<string, string> = {

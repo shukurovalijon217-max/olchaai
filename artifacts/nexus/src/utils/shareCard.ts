@@ -21,7 +21,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Blob> {
   ctx.fillRect(0, 0, W, H);
 
   const bg = ctx.createRadialGradient(80, 80, 0, W * 0.45, H * 0.45, W * 0.75);
-  bg.addColorStop(0, "rgba(192,57,43,0.28)");
+  bg.addColorStop(0, "rgba(124,58,237,0.28)");
   bg.addColorStop(0.55, "rgba(59,130,246,0.12)");
   bg.addColorStop(1, "transparent");
   ctx.fillStyle = bg;
@@ -41,7 +41,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Blob> {
   }
 
   const lineGrad = ctx.createLinearGradient(0, 0, W, 0);
-  lineGrad.addColorStop(0, "#C0392B");
+  lineGrad.addColorStop(0, "#7c3aed");
   lineGrad.addColorStop(0.38, "#d97706");
   lineGrad.addColorStop(1, "#3b82f6");
   ctx.fillStyle = lineGrad;
@@ -74,7 +74,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Blob> {
 
   if (data.tags && data.tags.length > 0) {
     ctx.font = "12px -apple-system,system-ui,sans-serif";
-    ctx.fillStyle = "rgba(212,160,32,0.75)";
+    ctx.fillStyle = "rgba(167,139,250,0.75)";
     ctx.fillText(data.tags.slice(0, 4).map(t => `#${t}`).join("  "), 28, H - 72);
   }
 

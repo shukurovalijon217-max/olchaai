@@ -156,7 +156,7 @@ export default function SellerProfilePage({ sellerId }: { sellerId: number }) {
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-950/40 hover:bg-amber-950/60 border border-amber-900/40 text-sm font-medium transition-colors"
               >
                 <MessageCircle className="w-4 h-4 text-amber-400" />
-                Xabar yuborish
+                {t("seller.contact")}
               </button>
             )}
             {isOwnShop && (
@@ -165,7 +165,7 @@ export default function SellerProfilePage({ sellerId }: { sellerId: number }) {
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-sm font-medium text-white transition-colors"
               >
                 <Package className="w-4 h-4" />
-                E'lon qo'shish
+                {t("market.add_listing")}
               </button>
             )}
           </div>
@@ -177,7 +177,7 @@ export default function SellerProfilePage({ sellerId }: { sellerId: number }) {
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-base flex items-center gap-2">
             <Store className="w-4 h-4 text-amber-500" />
-            Mahsulotlar ({stats.totalProducts})
+            {t("seller.all_by")} ({stats.totalProducts})
           </h3>
         </div>
 
@@ -186,10 +186,10 @@ export default function SellerProfilePage({ sellerId }: { sellerId: number }) {
             <div className="w-16 h-16 rounded-full bg-amber-900/20 flex items-center justify-center">
               <ShoppingBag className="w-7 h-7 text-amber-600/40" />
             </div>
-            <p className="text-muted-foreground">Hali mahsulotlar yo'q</p>
+            <p className="text-muted-foreground">{t("seller.no_products")}</p>
             {isOwnShop && (
               <button onClick={() => navigate("/bozor/sotish")} className="bg-amber-700 text-white px-5 py-2 rounded-full text-sm">
-                Birinchi e'loningizni bering
+                {t("market.add_first")}
               </button>
             )}
           </div>

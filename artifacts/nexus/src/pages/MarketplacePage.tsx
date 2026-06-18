@@ -57,7 +57,7 @@ function ProductCard({
             <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow">-{discount}%</span>
           )}
           {!discount && product.condition === "new" && (
-            <span className="absolute top-2 left-2 bg-emerald-600/90 text-white text-xs px-2 py-0.5 rounded-full">Yangi</span>
+            <span className="absolute top-2 left-2 bg-emerald-600/90 text-white text-xs px-2 py-0.5 rounded-full">{t("market.new_badge")}</span>
           )}
           {product.condition === "digital" && (
             <span className="absolute top-2 right-8 bg-blue-700/90 text-white text-xs px-2 py-0.5 rounded-full">💻</span>
@@ -143,6 +143,7 @@ function HCard({ product, onClick, t, favs, onFav }: { product: any; onClick: ()
 
 // ─── Section header ───────────────────────────────────────────────────────────
 function SectionHeader({ icon: Icon, title, onViewAll, color = "text-amber-500" }: { icon: any; title: string; onViewAll?: () => void; color?: string }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between mb-3">
       <h2 className="font-bold text-base flex items-center gap-2">
@@ -151,7 +152,7 @@ function SectionHeader({ icon: Icon, title, onViewAll, color = "text-amber-500" 
       </h2>
       {onViewAll && (
         <button onClick={onViewAll} className="text-xs text-amber-500 hover:text-amber-400 font-medium">
-          Barchasini ko'ring →
+          {t("market.view_all")}
         </button>
       )}
     </div>
@@ -231,13 +232,13 @@ export default function MarketplacePage() {
             onClick={() => navigate("/bozor/do-kon")}
             className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 font-medium px-2.5 py-1.5 rounded-full border border-amber-900/40 hover:border-amber-700"
           >
-            <Store className="w-3.5 h-3.5" /> Do'konim
+            <Store className="w-3.5 h-3.5" /> {t("market.my_shop")}
           </button>
           <button
             onClick={() => navigate("/bozor/sotish")}
             className="flex items-center gap-1.5 bg-amber-700 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors shadow shadow-amber-900/40"
           >
-            <Plus className="w-3.5 h-3.5" /> E'lon
+            <Plus className="w-3.5 h-3.5" /> {t("market.add_listing")}
           </button>
         </div>
 
@@ -342,12 +343,12 @@ export default function MarketplacePage() {
             {/* Stats banner */}
             {statsData && (
               <div className="rounded-2xl bg-gradient-to-r from-amber-950/60 via-amber-900/40 to-amber-950/60 border border-amber-800/30 p-4">
-                <p className="text-xs text-amber-400/80 font-medium mb-3 uppercase tracking-wider">📊 Bozor statistikasi</p>
+                <p className="text-xs text-amber-400/80 font-medium mb-3 uppercase tracking-wider">📊 {t("market.stats_title")}</p>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { value: statsData.totalProducts, label: "E'lon", icon: "🛍️" },
-                    { value: statsData.totalSellers, label: "Sotuvchi", icon: "🏪" },
-                    { value: statsData.totalOrders, label: "Bitim", icon: "✅" },
+                    { value: statsData.totalProducts, label: t("market.stats_products"), icon: "🛍️" },
+                    { value: statsData.totalSellers, label: t("market.stats_sellers"), icon: "🏪" },
+                    { value: statsData.totalOrders, label: t("market.stats_orders"), icon: "✅" },
                   ].map(({ value, label, icon }) => (
                     <div key={label} className="text-center">
                       <div className="text-xl mb-0.5">{icon}</div>
@@ -361,7 +362,7 @@ export default function MarketplacePage() {
 
             {/* Category grid */}
             <div>
-              <SectionHeader icon={Package} title="Kategoriyalar" color="text-amber-400" />
+              <SectionHeader icon={Package} title={t("market.categories_title")} color="text-amber-400" />
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                 {(categoriesData as any[]).map((cat: any) => (
                   <button key={cat.id} onClick={() => setCategory(cat.id)}
@@ -472,12 +473,12 @@ export default function MarketplacePage() {
         {!isSearching && !showFavs && !category && (
           <div className="rounded-2xl bg-gradient-to-r from-amber-800/40 to-amber-900/40 border border-amber-700/30 p-5 flex items-center gap-4">
             <div className="flex-1">
-              <p className="font-bold text-base">Mahsulot sotmoqchimisiz?</p>
-              <p className="text-muted-foreground text-sm mt-0.5">Minglab xaridorlar sizni kutmoqda!</p>
+              <p className="font-bold text-base">{t("market.sell_cta")}</p>
+              <p className="text-muted-foreground text-sm mt-0.5">{t("market.sell_cta_sub")}</p>
             </div>
             <button onClick={() => navigate("/bozor/sotish")}
               className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 flex-shrink-0 shadow shadow-amber-900/40">
-              <Plus className="w-4 h-4" /> E'lon
+              <Plus className="w-4 h-4" /> {t("market.add_listing")}
             </button>
           </div>
         )}

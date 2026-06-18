@@ -191,7 +191,7 @@ export default function SellPage() {
           <textarea
             value={description}
             onChange={e => setDescription(e.target.value)}
-            placeholder="Mahsulot haqida batafsil ma'lumot..."
+            placeholder={t("sell.desc_ph")}
             rows={4}
             maxLength={1000}
             className="w-full bg-amber-950/20 border border-amber-900/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-600 resize-none"

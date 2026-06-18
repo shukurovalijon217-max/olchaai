@@ -965,42 +965,42 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 {(
                   [
                     {
-                      label: "⚡ Asosiy",
+                      label: t("nav.sect_main"),
                       color: "#7c3aed",
                       shadow: "rgba(124,58,237,0.5)",
                       hrefs: ["/", "/explore", "/search", "/messages"],
                       dir: "left" as const,
                     },
                     {
-                      label: "🌐 Ijtimoiy",
+                      label: t("nav.sect_social"),
                       color: "#0ea5e9",
                       shadow: "rgba(14,165,233,0.5)",
                       hrefs: ["/groups", "/notifications", "/reels", "/live-explore"],
                       dir: "right" as const,
                     },
                     {
-                      label: "🤖 AI & Ijod",
+                      label: t("nav.sect_ai"),
                       color: "#3b82f6",
                       shadow: "rgba(59,130,246,0.5)",
                       hrefs: ["/ai-chat", "/twin", "/muni", "/voice-translate", "/factcheck", "/multiscene"],
                       dir: "left" as const,
                     },
                     {
-                      label: "🎯 Kashfiyot",
+                      label: t("nav.sect_discover"),
                       color: "#10b981",
                       shadow: "rgba(16,185,129,0.5)",
                       hrefs: ["/bozor", "/kutubxona", "/mood", "/spaces"],
                       dir: "right" as const,
                     },
                     {
-                      label: "👑 Premium & Hamyon",
+                      label: t("nav.sect_premium"),
                       color: "#eab308",
                       shadow: "rgba(234,179,8,0.5)",
                       hrefs: ["/profile", "/premium", "/wallet", "/quests", "/anon"],
                       dir: "left" as const,
                     },
                     {
-                      label: "⚙️ Sozlamalar",
+                      label: t("nav.sect_settings"),
                       color: "#94a3b8",
                       shadow: "rgba(148,163,184,0.5)",
                       hrefs: ["/settings", ...(user?.isAdmin ? ["/admin"] : [])],

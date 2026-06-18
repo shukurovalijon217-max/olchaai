@@ -598,12 +598,11 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 200,
+        zIndex: 9999,
         background:
           "radial-gradient(ellipse 80% 70% at 50% 50%, #0d0520 0%, #030210 55%, #000205 100%)",
         perspective: "1100px",
         perspectiveOrigin: "50% 50%",
-        overflow: "hidden",
         touchAction: "none",
       }}
     >

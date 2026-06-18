@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { TrendingUp, Flame, Plus, Layers } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -21,11 +22,12 @@ export default function HomePage() {
 
   return (
     <>
-      {tunnelMode && displayPosts.length > 0 && (
+      {tunnelMode && displayPosts.length > 0 && createPortal(
         <TunnelFeed
           initialPosts={displayPosts as Post[]}
           onExit={() => setTunnelMode(false)}
-        />
+        />,
+        document.body
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-6 flex gap-6">

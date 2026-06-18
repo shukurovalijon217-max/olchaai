@@ -68,7 +68,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
       setOrderDone(res);
       setBuying(false);
     } catch (e: any) {
-      setBuyError(e?.response?.data?.error ?? t("common.error"));
+      setBuyError(e?.data?.error ?? e?.message ?? t("common.error"));
     }
   };
 

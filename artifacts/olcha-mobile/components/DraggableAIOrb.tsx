@@ -49,7 +49,6 @@ export function DraggableAIOrb() {
         const nx = clamp(posX.current + gs.dx, EDGE, w - ORB - EDGE);
         const ny = clamp(posY.current + gs.dy, TOP_SAFE, h - ORB - TAB_BAR_H);
 
-        /* snap to nearest horizontal edge */
         const snapX = nx + ORB / 2 < w / 2 ? EDGE : w - ORB - EDGE;
 
         posX.current = snapX;
@@ -73,6 +72,7 @@ export function DraggableAIOrb() {
       <View style={styles.inner}>
         <Feather name="zap" size={22} color="#fff" />
         <View style={styles.pulse} />
+        <View style={styles.pulse2} />
       </View>
     </Animated.View>
   );
@@ -90,22 +90,32 @@ const styles = StyleSheet.create({
     width: ORB,
     height: ORB,
     borderRadius: ORB / 2,
-    backgroundColor: "#7c3aed",
+    backgroundColor: "#C0392B",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#7c3aed",
+    shadowColor: "#C0392B",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
   },
   pulse: {
     position: "absolute",
-    top: -6,
-    left: -6,
-    right: -6,
-    bottom: -6,
-    borderRadius: (ORB + 12) / 2,
+    top: -5,
+    left: -5,
+    right: -5,
+    bottom: -5,
+    borderRadius: (ORB + 10) / 2,
     borderWidth: 1.5,
-    borderColor: "rgba(124,58,237,0.3)",
+    borderColor: "rgba(192,57,43,0.4)",
+  },
+  pulse2: {
+    position: "absolute",
+    top: -11,
+    left: -11,
+    right: -11,
+    bottom: -11,
+    borderRadius: (ORB + 22) / 2,
+    borderWidth: 1,
+    borderColor: "rgba(184,134,11,0.2)",
   },
 });

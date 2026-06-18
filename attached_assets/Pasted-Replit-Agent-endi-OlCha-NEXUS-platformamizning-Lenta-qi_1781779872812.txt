@@ -1,0 +1,22 @@
+Replit Agent, endi OlCha (NEXUS) platformamizning Lenta qismi uchun mutloqo unikal va futuristik bo'lgan "Chuqurlikka Sho'ng'ish" (Z-Axis Infinite Tunnel) rejimini yaratishimiz kerak. Bu rejimda postlar oddiy tepaga varaqlanmaydi, balki ekranning ichkarisiga (3D chuqurlikka) qarab harakatlanadi.
+
+Iltimos, ushbu innovatsion interfeysni frontend (HTML/CSS/JS) va backend bilan to'liq integratsiya qilib quyidagicha qurgin:
+
+1. 3D CSS / JS Tunnel Arxitekturasi:
+   - Lenta konteyneriga CSS 3D muhitini ber (perspective: 1000px va transform-style: preserve-3d).
+   - Post kartochkalari ekranda ketma-ket emas, Z o'qi bo'yicha bir-birining orqasida, chuqurlikda joylashsin (masalan: 1-post transform: translateZ(0), 2-post translateZ(-300px), 3-post translateZ(-600px) va hokazo). Orqadagi postlar biroz xiraroq (opacity) va kichikroq ko'rinsin.
+
+2. "Zoom-In Sho'ng'ish" Animatsiyasi (Swipe / Scroll effekti):
+   - Foydalanuvchi sichqoncha g'ildiragini aylantirganda (scroll) yoki telefonda yuqoriga "swipe" qilganda, barcha postlar silliq animatsiya bilan oldinga (Z o'qi bo'ylab sizga qarab) otilib chiqsin (translateZ qiymati artsin).
+   - Eng oldinda turgan post foydalanuvchining ko'ziga yaqinlashib, ekran chetlariga qarab "Zoom-in" bo'lib, silliq yo'qolsin (fade out).
+   - Shu paytning o'zida orqada, tunnel chuqurligida turgan keyingi post 3D effekt bilan uning o'rniga — eng oldingi planga chiqsin. Bu huddi kosmik kemada tunnel ichidan uchib o'tayotgandek cheksiz harakat effektini bersin.
+
+3. Post Kartochkalari Dizayni (Neon & Glassmorphism):
+   - Har bir post o'ta zamonaviy, shaffof oyna uslubida (glassmorphism: background: rgba, backdrop-filter: blur) bo'lsin.
+   - Chekkalari neon ko'k yoki binafsha rangda tovlanib tursin. Kartochka ichida muallif nomi, post matni va media (rasm/video) joylashsin.
+   - Post ustida Layk va Izoh tugmalari qulay joylashsin va sho'ng'ish paytida vizual xalaqit bermasin.
+
+4. Cheksiz Yuklanish (Infinite Lazy Loading):
+   - Foydalanuvchi tunnel ichiga chuqurroq kirgani sayin, ma'lumotlar bazasidan (Database) keyingi postlar avtomatik ravishda yuklanib, tunnelning eng oxiriga (masalan, translateZ(-1500px) chuqurlikka) silliq borib qo'shilsin.
+
+Ushbu 3D "Chuqurlikka Sho'ng'ish" Lenta tizimini yaratib, loyihani saqlang va qayta ishga tushiring.

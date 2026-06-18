@@ -293,7 +293,7 @@ function ProfileContent() {
         body: JSON.stringify({ displayName, bio, avatarUrl, coverUrl }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Saqlashda xato"); return; }
+      if (!res.ok) { setError(data.error ?? t("settings.save_error")); return; }
       await refetch(); setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch { setError(t("common.network_error")); }
@@ -322,28 +322,28 @@ function ProfileContent() {
             <p className="text-xs text-white/40">@{user?.username}</p>
             {user?.isVerified && (
               <span className="inline-flex items-center gap-1 mt-1 text-xs text-blue-400">
-                <Check className="w-3 h-3" /> Tasdiqlangan
+                <Check className="w-3 h-3" /> {t("settings.verified")}
               </span>
             )}
           </div>
         </div>
       </SF>
-      <Field label="Ism *">
-        <input value={displayName} onChange={e => setDisplayName(e.target.value)} className={INPUT} placeholder="To'liq ismingiz" />
+      <Field label={t("settings.name_label")}>
+        <input value={displayName} onChange={e => setDisplayName(e.target.value)} className={INPUT} placeholder={t("settings.name_ph")} />
       </Field>
       <Field label="Bio">
         <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} maxLength={160}
-          className={`${INPUT} resize-none`} placeholder="O'zingiz haqingizda qisqacha..." />
+          className={`${INPUT} resize-none`} placeholder={t("settings.bio_ph")} />
         <p className="text-xs text-white/30 mt-1 text-right">{bio.length}/160</p>
       </Field>
       <Field label="Avatar URL">
         <input value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} className={INPUT} placeholder="https://..." />
       </Field>
-      <Field label="Cover rasmi URL">
+      <Field label={t("settings.cover_label")}>
         <input value={coverUrl} onChange={e => setCoverUrl(e.target.value)} className={INPUT} placeholder="https://..." />
       </Field>
       {error && <SF><div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div></SF>}
-      {success && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> Profil saqlandi!</div></SF>}
+      {success && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> {t("settings.profile_saved")}</div></SF>}
       <SF>
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/30 text-violet-300 text-sm font-semibold transition-all disabled:opacity-40">
@@ -363,8 +363,8 @@ function AccountContent() {
   const { user } = useAuth();
 
   const handleChange = async () => {
-    if (newPass !== confirm) { setError("Yangi parollar mos emas"); return; }
-    if (newPass.length < 6) { setError("Parol kamida 6 ta belgi bo'lishi kerak"); return; }
+    if (newPass !== confirm) { setError(t("settings.pass_mismatch")); return; }
+    if (newPass.length < 6) { setError(t("settings.pass_too_short")); return; }
     setSaving(true); setError(null); setSuccess(false);
     try {
       const res = await fetch(`${API}/api/auth/password`, { method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ currentPassword: current, newPassword: newPass }) });
@@ -382,11 +382,11 @@ function AccountContent() {
         <div className="p-4 rounded-xl bg-white/5 border border-white/8">
           <p className="text-xs text-white/40 mb-0.5 uppercase tracking-wider font-semibold">Email</p>
           <p className="text-sm font-semibold text-white">{user?.email}</p>
-          <p className="text-xs text-white/30 mt-1">Email o'zgartirilmaydi</p>
+          <p className="text-xs text-white/30 mt-1">{t("settings.email_immutable")}</p>
         </div>
       </SF>
-      <SF><p className="text-xs font-semibold text-white/50 uppercase tracking-wider">Parolni o'zgartirish</p></SF>
-      <Field label="Joriy parol">
+      <SF><p className="text-xs font-semibold text-white/50 uppercase tracking-wider">{t("settings.change_password")}</p></SF>
+      <Field label={t("settings.current_pass")}>
         <div className="relative">
           <input type={showCurrent ? "text" : "password"} value={current} onChange={e => setCurrent(e.target.value)} className={`${INPUT} pr-11`} placeholder="••••••••" />
           <button type="button" onClick={() => setShowCurrent(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
@@ -394,7 +394,7 @@ function AccountContent() {
           </button>
         </div>
       </Field>
-      <Field label="Yangi parol">
+      <Field label={t("settings.new_pass")}>
         <div className="relative">
           <input type={showNew ? "text" : "password"} value={newPass} onChange={e => setNewPass(e.target.value)} className={`${INPUT} pr-11`} placeholder="••••••••" />
           <button type="button" onClick={() => setShowNew(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
@@ -402,16 +402,16 @@ function AccountContent() {
           </button>
         </div>
       </Field>
-      <Field label="Yangi parolni tasdiqlang">
+      <Field label={t("settings.confirm_pass")}>
         <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} className={INPUT} placeholder="••••••••" />
       </Field>
       {error && <SF><div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div></SF>}
-      {success && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> Parol o'zgartirildi!</div></SF>}
+      {success && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> {t("settings.pass_changed")}</div></SF>}
       <SF>
         <button onClick={handleChange} disabled={saving || !current || !newPass || !confirm}
           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 text-sm font-semibold transition-all disabled:opacity-40">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-          Parolni o'zgartirish
+          {t("settings.change_password")}
         </button>
       </SF>
     </div>
@@ -425,12 +425,12 @@ function NotificationsContent() {
       <SF><p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">{t("settings.notifications")}</p></SF>
       <SF>
         <div className="rounded-xl border border-white/8 bg-white/3 divide-y divide-white/6 overflow-hidden">
-          <ToggleSetting color="amber" label="Yoqtirishlar" description="Post va reellaringiz yoqtirilganda" defaultChecked />
-          <ToggleSetting color="amber" label="Izohlar" description="Postlaringizga izoh yozilganda" defaultChecked />
-          <ToggleSetting color="amber" label="Yangi obunachilar" description="Kimdir sizga obuna bo'lganda" defaultChecked />
-          <ToggleSetting color="amber" label="Xabarlar" description="Yangi xabar kelganda" defaultChecked />
-          <ToggleSetting color="amber" label="Guruh faolligi" description="Guruhlaringizdagi yangiliklar" />
-          <ToggleSetting color="amber" label="Premium yangiliklar" description="OlCha Premium haqidagi yangiliklar" />
+          <ToggleSetting color="amber" label={t("settings.notif_likes")} description={t("settings.notif_likes_desc")} defaultChecked />
+          <ToggleSetting color="amber" label={t("settings.notif_comments")} description={t("settings.notif_comments_desc")} defaultChecked />
+          <ToggleSetting color="amber" label={t("settings.notif_followers")} description={t("settings.notif_followers_desc")} defaultChecked />
+          <ToggleSetting color="amber" label={t("settings.notif_messages")} description={t("settings.notif_messages_desc")} defaultChecked />
+          <ToggleSetting color="amber" label={t("settings.notif_groups")} description={t("settings.notif_groups_desc")} />
+          <ToggleSetting color="amber" label={t("settings.notif_premium")} description={t("settings.notif_premium_desc")} />
         </div>
       </SF>
     </div>
@@ -443,9 +443,9 @@ function AppearanceContent() {
     <div className="space-y-4">
       <SF>
         <div className="rounded-xl border border-white/8 bg-white/3 divide-y divide-white/6 overflow-hidden">
-          <ToggleSetting color="rose" label="Qorong'i rejim" description="Platforma qorong'i mavzuda ko'rsatiladi" defaultChecked />
-          <ToggleSetting color="rose" label="Animatsiyalar" description="Silliq o'tish animatsiyalari" defaultChecked />
-          <ToggleSetting color="rose" label="Kompakt rejim" description="Kichikroq oraliqlar va elementlar" />
+          <ToggleSetting color="rose" label={t("settings.dark_mode")} description={t("settings.dark_mode_desc")} defaultChecked />
+          <ToggleSetting color="rose" label={t("settings.animations")} description={t("settings.animations_desc")} defaultChecked />
+          <ToggleSetting color="rose" label={t("settings.compact_mode")} description={t("settings.compact_mode_desc")} />
         </div>
       </SF>
       <SF>
@@ -453,8 +453,8 @@ function AppearanceContent() {
           <div className="flex items-center gap-3">
             <Crown className="w-5 h-5 text-yellow-400 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-white">Maxsus mavzular</p>
-              <p className="text-xs text-white/40 mt-0.5">Premium foydalanuvchilar uchun eksklyuziv ranglar</p>
+              <p className="text-sm font-semibold text-white">{t("settings.custom_themes")}</p>
+              <p className="text-xs text-white/40 mt-0.5">{t("settings.custom_themes_desc")}</p>
             </div>
             <Link href="/premium">
               <button className="text-xs text-yellow-400 font-semibold flex items-center gap-1 hover:opacity-80 transition">
@@ -474,19 +474,19 @@ function PrivacyContent() {
     <div className="space-y-4">
       <SF>
         <div className="rounded-xl border border-white/8 bg-white/3 divide-y divide-white/6 overflow-hidden">
-          <ToggleSetting color="emerald" label="Shaxsiy profil" description="Faqat obunachilar postlaringizni ko'radi" />
-          <ToggleSetting color="emerald" label="Faollik holati" description="Onlayn ekanligingiz ko'rsatiladi" defaultChecked />
-          <ToggleSetting color="emerald" label="O'qildi belgisi" description="Xabarlarda o'qildi belgisini ko'rsatish" defaultChecked />
-          <ToggleSetting color="emerald" label="Tavsiya qilinish" description="Boshqa foydalanuvchilarga tavsiya qilinish" defaultChecked />
-          <ToggleSetting color="emerald" label="Qidiruv natijalari" description="Qidiruvda topilish imkoni" defaultChecked />
+          <ToggleSetting color="emerald" label={t("settings.priv_profile")} description={t("settings.priv_profile_desc")} />
+          <ToggleSetting color="emerald" label={t("settings.priv_activity")} description={t("settings.priv_activity_desc")} defaultChecked />
+          <ToggleSetting color="emerald" label={t("settings.priv_read")} description={t("settings.priv_read_desc")} defaultChecked />
+          <ToggleSetting color="emerald" label={t("settings.priv_suggest")} description={t("settings.priv_suggest_desc")} defaultChecked />
+          <ToggleSetting color="emerald" label={t("settings.priv_search")} description={t("settings.priv_search_desc")} defaultChecked />
         </div>
       </SF>
       <SF>
         <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5">
-          <p className="text-sm font-semibold text-red-400 mb-1">Xavfli zona</p>
-          <p className="text-xs text-white/35 mb-3">Bu amalni qaytarib bo'lmaydi</p>
+          <p className="text-sm font-semibold text-red-400 mb-1">{t("settings.danger_zone")}</p>
+          <p className="text-xs text-white/35 mb-3">{t("settings.danger_irreversible")}</p>
           <button className="px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-xs font-semibold hover:bg-red-500/10 transition">
-            Akkauntni o'chirish
+            {t("settings.delete_account")}
           </button>
         </div>
       </SF>
@@ -580,8 +580,8 @@ function LanguageContent() {
           </div>
         </SF>
       )}
-      {filtered.length === 0 && <SF><div className="text-center py-8 text-white/30 text-sm"><Globe className="w-8 h-8 mx-auto mb-2 opacity-40" /><p>Til topilmadi</p></div></SF>}
-      <SF><p className="text-xs text-white/25 text-center">{LANGUAGES.length} ta til qo'llab-quvvatlanadi</p></SF>
+      {filtered.length === 0 && <SF><div className="text-center py-8 text-white/30 text-sm"><Globe className="w-8 h-8 mx-auto mb-2 opacity-40" /><p>{t("lang.not_found")}</p></div></SF>}
+      <SF><p className="text-xs text-white/25 text-center">{t("lang.count", { count: LANGUAGES.length })}</p></SF>
     </div>
   );
 }
@@ -733,6 +733,7 @@ function LocationContent() {
 
 /* ─── Monetization panel content ──────────────────────────── */
 function MonetizationContent() {
+  const { t } = useTranslation();
   const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -757,7 +758,7 @@ function MonetizationContent() {
         credentials: "include", body: JSON.stringify({}),
       });
       const json = await r.json();
-      if (!r.ok) { setApplyError(json.error ?? "Xato yuz berdi"); return; }
+      if (!r.ok) { setApplyError(json.error ?? t("settings.mon_error")); return; }
       await load();
     } finally { setApplying(false); }
   };
@@ -798,16 +799,16 @@ function MonetizationContent() {
               s === "active" ? "text-emerald-400" :
               s === "applied" ? "text-amber-400" :
               s === "rejected" ? "text-red-400" : "text-white/50"}`}>
-              {s === "active"   ? "✓ Monetizatsiya faol" :
-               s === "applied"  ? "⏳ Ariza ko'rib chiqilmoqda" :
-               s === "rejected" ? "✗ Ariza rad etildi" :
-               "Monetizatsiya faol emas"}
+              {s === "active"   ? t("settings.mon_active") :
+               s === "applied"  ? t("settings.mon_pending") :
+               s === "rejected" ? t("settings.mon_rejected") :
+               t("settings.mon_inactive")}
             </p>
             <p className="text-xs text-white/35 mt-0.5">
-              {s === "active"   ? "Har bir ko'rishdan daromad olasiz" :
-               s === "applied"  ? "Admin ko'rib chiqmoqda, 1–3 ish kunida javob beriladi" :
-               s === "rejected" ? (data?.rejectionReason ?? "Sabab ko'rsatilmagan") :
-               "Quyidagi shartlarni bajaring va ariza topshiring"}
+              {s === "active"   ? t("settings.mon_active_desc") :
+               s === "applied"  ? t("settings.mon_pending_desc") :
+               s === "rejected" ? (data?.rejectionReason ?? t("settings.mon_rejected")) :
+               t("settings.mon_inactive_desc")}
             </p>
           </div>
         </div>
@@ -817,11 +818,11 @@ function MonetizationContent() {
       {s !== "active" && cr && (
         <SF>
           <div className="space-y-2.5">
-            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">Kirish shartlari</p>
+            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">{t("settings.mon_requirements")}</p>
             {([
-              { key: "followers",    label: "Obunachilар", emoji: "👥" },
-              { key: "totalViews",   label: "Umumiy ko'rishlar", emoji: "👁" },
-              { key: "contentCount", label: "Kontent soni",      emoji: "🎬" },
+              { key: "followers",    label: t("settings.mon_followers"), emoji: "👥" },
+              { key: "totalViews",   label: t("settings.mon_views"), emoji: "👁" },
+              { key: "contentCount", label: t("settings.mon_content"), emoji: "🎬" },
             ] as const).map(({ key, label, emoji }) => {
               const c = cr[key as keyof typeof cr];
               if (!c) return null;
@@ -861,7 +862,7 @@ function MonetizationContent() {
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-50"
             style={{ background: "linear-gradient(135deg,#d97706,#f59e0b)", color: "#000" }}>
             {applying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CircleDollarSign className="w-4 h-4" />}
-            {applying ? "Yuborilmoqda…" : data?.autoApprove ? "Monetizatsiyani yoqish" : "Ariza topshirish"}
+            {applying ? t("settings.mon_submitting") : data?.autoApprove ? t("settings.mon_enable") : t("settings.mon_apply")}
           </motion.button>
         </SF>
       )}
@@ -870,9 +871,9 @@ function MonetizationContent() {
       {s === "active" && data?.earnings && (
         <SF>
           <div className="rounded-xl p-3.5 bg-emerald-500/8 border border-emerald-500/20 space-y-1">
-            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">💰 Hisobdagi daromad</p>
+            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">{t("settings.mon_earnings")}</p>
             <p className="text-2xl font-bold text-emerald-400">{uzs(data.earnings.balance ?? 0)}</p>
-            <p className="text-xs text-white/30">Minimal pul so'rovi: {uzs(data.earnings.minPayout ?? 5000000)}</p>
+            <p className="text-xs text-white/30">{t("settings.mon_min_payout")} {uzs(data.earnings.minPayout ?? 5000000)}</p>
           </div>
         </SF>
       )}
@@ -880,7 +881,7 @@ function MonetizationContent() {
       {/* No content yet */}
       {!data && !loading && (
         <SF>
-          <p className="text-sm text-white/30 text-center py-4">Ma'lumot yuklanmadi</p>
+          <p className="text-sm text-white/30 text-center py-4">{t("settings.mon_no_data")}</p>
         </SF>
       )}
     </div>
@@ -916,17 +917,17 @@ export default function SettingsPage() {
     {
       id: "notifications", icon: Bell, color: "amber",
       label: t("settings.notifications"),
-      preview: "6 ta qoida sozlandi",
+      preview: t("settings.notif_preview"),
     },
     {
       id: "appearance", icon: Palette, color: "rose",
       label: t("settings.appearance"),
-      preview: "Qorong'i mavzu faol",
+      preview: t("settings.appearance_preview"),
     },
     {
       id: "privacy", icon: Shield, color: "emerald",
       label: t("settings.privacy"),
-      preview: "5 ta maxfiylik qoidasi",
+      preview: t("settings.privacy_preview"),
     },
     {
       id: "language", icon: Globe, color: "cyan",

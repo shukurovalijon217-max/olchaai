@@ -63,7 +63,7 @@ function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => 
         </motion.button>
         <div className="relative flex-shrink-0">
           {twinUser.avatar ? <img src={twinUser.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /> :
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-700 to-amber-700 flex items-center justify-center text-white font-bold">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white font-bold">
               {twinUser.displayName?.[0]?.toUpperCase()}
             </div>}
           <Bot className="absolute -bottom-1 -right-1 w-4 h-4 text-blue-400 bg-[#0a0604] rounded-full p-0.5" />
@@ -87,10 +87,10 @@ function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => 
             <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
               <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: msg.role === "user" ? "linear-gradient(135deg,#C0392B,#B8860B)" : "linear-gradient(135deg,#3b82f6,#6366f1)" }}>
+                style={{ background: msg.role === "user" ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "linear-gradient(135deg,#3b82f6,#6366f1)" }}>
                 {msg.role === "user" ? <User className="w-3.5 h-3.5 text-white" /> : <Bot className="w-3.5 h-3.5 text-white" />}
               </div>
-              <div className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm ${msg.role === "user" ? "bg-primary/20 text-white rounded-tr-sm" : "bg-blue-500/10 border border-blue-500/20 text-white/90 rounded-tl-sm"}`}>
+              <div className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm ${msg.role === "user" ? "bg-violet-500/20 text-white rounded-tr-sm" : "bg-blue-500/10 border border-blue-500/20 text-white/90 rounded-tl-sm"}`}>
                 {msg.content}
               </div>
             </motion.div>
@@ -258,7 +258,7 @@ export default function AITwinPage() {
       <div className="flex-1 overflow-y-auto">
         {tab === "explore" ? (
           <div className="p-4 space-y-4">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-red-950/30 to-amber-950/20 border border-blue-500/20">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-900/30 to-violet-900/20 border border-blue-500/20">
               <Brain className="w-8 h-8 text-blue-400 mb-2" />
               <h3 className="text-white font-semibold text-sm">{t("twin.what_is")}</h3>
               <p className="text-white/50 text-xs mt-1 leading-relaxed">{t("twin.what_is_desc")}</p>
@@ -285,7 +285,7 @@ export default function AITwinPage() {
                   className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30">
                   <div className="flex items-center gap-3 mb-3">
                     {twinUser.avatar ? <img src={twinUser.avatar} alt="" className="w-12 h-12 rounded-full object-cover" /> :
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-700 to-amber-700 flex items-center justify-center text-white text-lg font-bold">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-lg font-bold">
                         {twinUser.displayName?.[0]}
                       </div>}
                     <div>

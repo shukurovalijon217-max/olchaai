@@ -197,7 +197,7 @@ function ProgressBar({ progress, dur, seek }: { progress: number; dur: number; s
       <div className="w-full h-[3px] rounded-full" style={{ background: "rgba(255,255,255,0.12)" }}>
         <motion.div
           className="h-full rounded-full relative overflow-hidden"
-          style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg,#C0392B,#B8860B,#D4A020,#C0392B)" }}
+          style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg,#7c3aed,#3b82f6,#06b6d4,#10b981,#f59e0b,#ef4444)" }}
         >
           <motion.div
             className="absolute inset-0"
@@ -363,7 +363,7 @@ function ReelVideoEl({ videoUrl, thumbnailUrl, isActive, muted, videoRef, onPlay
       {loading && !error && !thumbnailUrl && (
         <div className="absolute inset-0 flex items-center justify-center z-[3] pointer-events-none">
           <div className="relative">
-            <div className="w-14 h-14 rounded-full border-2 border-white/10 border-t-amber-500 animate-spin" />
+            <div className="w-14 h-14 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin" />
             <div className="absolute inset-2 rounded-full border border-white/5 border-t-pink-400 animate-spin" style={{ animationDuration: "0.7s", animationDirection: "reverse" }} />
           </div>
         </div>
@@ -427,7 +427,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 28, stiffness: 300 }}
         className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm rounded-t-3xl overflow-hidden"
-        style={{ maxHeight: "75vh", background: "rgba(10,8,24,0.96)", backdropFilter: "blur(24px)", border: "1px solid rgba(192,57,43,0.2)", borderBottom: "none" }}
+        style={{ maxHeight: "75vh", background: "rgba(10,8,24,0.96)", backdropFilter: "blur(24px)", border: "1px solid rgba(124,58,237,0.2)", borderBottom: "none" }}
         onClick={e => e.stopPropagation()}>
 
         <div className="flex justify-center pt-3 pb-1">
@@ -444,7 +444,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
         <div ref={listRef} className="overflow-y-auto px-4 py-3 space-y-4" style={{ maxHeight: "calc(75vh - 140px)" }}>
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-amber-500 animate-spin" />
+              <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-violet-400 animate-spin" />
             </div>
           ) : comments.length === 0 ? (
             <div className="text-center py-8">
@@ -453,7 +453,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
           ) : comments.map((c, i) => (
             <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }} className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-700/60 to-amber-700/60 flex-shrink-0 flex items-center justify-center overflow-hidden border border-white/10">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600/60 to-pink-600/60 flex-shrink-0 flex items-center justify-center overflow-hidden border border-white/10">
                 {c.author.avatarUrl
                   ? <img src={c.author.avatarUrl} alt="" className="w-full h-full object-cover" />
                   : <span className="text-xs font-bold text-white">{c.author.displayName?.[0]?.toUpperCase()}</span>
@@ -462,7 +462,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="text-white text-xs font-semibold">{c.author.displayName}</span>
-                  {c.author.isVerified && <BadgeCheck className="w-3 h-3 text-amber-400" />}
+                  {c.author.isVerified && <BadgeCheck className="w-3 h-3 text-violet-400" />}
                   <span className="text-white/30 text-[10px] ml-auto">
                     {new Date(c.createdAt).toLocaleDateString(i18n.language, { month: "short", day: "numeric" })}
                   </span>
@@ -474,7 +474,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
         </div>
 
         <div className="px-4 py-3 flex items-center gap-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-700/60 to-amber-700/60 flex-shrink-0 flex items-center justify-center overflow-hidden">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600/60 to-pink-600/60 flex-shrink-0 flex items-center justify-center overflow-hidden">
             {user?.avatarUrl
               ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
               : <span className="text-xs font-bold text-white">{user?.displayName?.[0]?.toUpperCase() ?? "?"}</span>
@@ -490,7 +490,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
             <motion.button whileTap={{ scale: 0.88 }} onClick={handleSend}
               disabled={!text.trim() || sending}
               className="w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-40"
-              style={{ background: "linear-gradient(135deg, #C0392B, #B8860B)" }}>
+              style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)" }}>
               {sending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-4 h-4 text-white" />}
             </motion.button>
           </div>
@@ -635,7 +635,7 @@ function ReelSlide({
             <motion.div initial={{ opacity: 0, scale: 0.85, x: -8 }} animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ delay: 0.15 }}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold"
-              style={{ background: "rgba(192,57,43,0.4)", backdropFilter: "blur(10px)", border: "1px solid rgba(212,160,32,0.3)", color: "#D4A020" }}>
+              style={{ background: "rgba(124,58,237,0.4)", backdropFilter: "blur(10px)", border: "1px solid rgba(167,139,250,0.3)", color: "#c4b5fd" }}>
               <Zap className="w-2.5 h-2.5" />
               <span>Sizga tavsiya · {reel._aiReason}</span>
             </motion.div>
@@ -660,14 +660,14 @@ function ReelSlide({
           disabled={analyzingId === reel.id}
           className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-[11px] font-semibold transition-all pointer-events-auto"
           style={{
-            background: showAnalysisId === reel.id ? "rgba(192,57,43,0.6)" : "rgba(0,0,0,0.45)",
+            background: showAnalysisId === reel.id ? "rgba(124,58,237,0.6)" : "rgba(0,0,0,0.45)",
             backdropFilter: "blur(10px)",
-            border: showAnalysisId === reel.id ? "1px solid rgba(212,160,32,0.5)" : "1px solid rgba(255,255,255,0.1)",
-            color: showAnalysisId === reel.id ? "#D4A020" : "rgba(255,255,255,0.75)",
+            border: showAnalysisId === reel.id ? "1px solid rgba(167,139,250,0.5)" : "1px solid rgba(255,255,255,0.1)",
+            color: showAnalysisId === reel.id ? "#e9d5ff" : "rgba(255,255,255,0.75)",
           }}>
           {analyzingId === reel.id
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            : <Brain className="w-3.5 h-3.5" style={{ color: "#D4A020" }} />
+            : <Brain className="w-3.5 h-3.5" style={{ color: "#a78bfa" }} />
           }
           AI
         </motion.button>
@@ -682,12 +682,12 @@ function ReelSlide({
             className="absolute top-16 inset-x-4 z-20 pointer-events-auto"
           >
             <div className="rounded-2xl p-4 space-y-2.5"
-              style={{ background: "rgba(8,6,20,0.88)", backdropFilter: "blur(20px)", border: "1px solid rgba(192,57,43,0.25)" }}>
+              style={{ background: "rgba(8,6,20,0.88)", backdropFilter: "blur(20px)", border: "1px solid rgba(124,58,237,0.25)" }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-wrap">
                   {analysis.category && (
                     <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold"
-                      style={{ background: "rgba(192,57,43,0.3)", color: "#D4A020" }}>
+                      style={{ background: "rgba(124,58,237,0.3)", color: "#c4b5fd" }}>
                       {analysis.category}
                     </span>
                   )}
@@ -729,7 +729,7 @@ function ReelSlide({
             {/* Spinning gradient ring */}
             <motion.div
               className="absolute inset-[-2px] rounded-full"
-              style={{ background: "conic-gradient(from 0deg, #C0392B, #B8860B, #D4A020, #C0392B)" }}
+              style={{ background: "conic-gradient(from 0deg, #7c3aed, #3b82f6, #06b6d4, #10b981, #f59e0b, #ef4444, #7c3aed)" }}
               animate={{ rotate: 360 }}
               transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             />
@@ -737,7 +737,7 @@ function ReelSlide({
               {reel.author?.avatarUrl
                 ? <img src={reel.author.avatarUrl} alt="" className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white"
-                    style={{ background: "linear-gradient(135deg, #C0392B, #B8860B)" }}>
+                    style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)" }}>
                     {reel.author?.displayName?.[0]?.toUpperCase()}
                   </div>
               }
@@ -747,7 +747,7 @@ function ReelSlide({
             <div className="flex items-center gap-1.5">
               <span className="text-white font-bold text-sm leading-tight">{reel.author?.displayName}</span>
               {reel.author?.isVerified && (
-                <BadgeCheck className="w-4 h-4 flex-shrink-0" style={{ color: "#D4A020" }} />
+                <BadgeCheck className="w-4 h-4 flex-shrink-0" style={{ color: "#a78bfa" }} />
               )}
             </div>
             <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>@{reel.author?.username}</span>
@@ -825,8 +825,8 @@ function ReelSlide({
           onClick={onAdd}
           className="w-12 h-12 rounded-2xl flex items-center justify-center"
           style={{
-            background: "linear-gradient(135deg, #C0392B 0%, #B8860B 100%)",
-            boxShadow: "0 0 24px rgba(192,57,43,0.5), 0 4px 20px rgba(0,0,0,0.5)",
+            background: "linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)",
+            boxShadow: "0 0 24px rgba(124,58,237,0.5), 0 4px 20px rgba(0,0,0,0.5)",
             border: "1px solid rgba(255,255,255,0.15)",
           }}>
           <Plus className="w-6 h-6 text-white" />
@@ -838,13 +838,13 @@ function ReelSlide({
           onClick={(e) => { e.stopPropagation(); setShowSpeedPanel(v => !v); setShowTrimPanel(false); }}
           className="w-12 h-12 rounded-2xl flex items-center justify-center"
           style={{
-            background: speed !== 1 ? "rgba(192,57,43,0.55)" : "rgba(12,12,24,0.55)",
+            background: speed !== 1 ? "rgba(124,58,237,0.55)" : "rgba(12,12,24,0.55)",
             backdropFilter: "blur(16px)",
-            border: speed !== 1 ? "1px solid rgba(212,160,32,0.45)" : "1px solid rgba(255,255,255,0.1)",
-            boxShadow: speed !== 1 ? "0 0 18px rgba(192,57,43,0.45)" : "0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
+            border: speed !== 1 ? "1px solid rgba(167,139,250,0.45)" : "1px solid rgba(255,255,255,0.1)",
+            boxShadow: speed !== 1 ? "0 0 18px rgba(124,58,237,0.45)" : "0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}>
           {speed !== 1
-            ? <span className="text-[11px] font-black" style={{ color: "#D4A020" }}>{speed}×</span>
+            ? <span className="text-[11px] font-black" style={{ color: "#e9d5ff" }}>{speed}×</span>
             : <Gauge className="w-[18px] h-[18px] text-white" />
           }
         </motion.button>
@@ -900,15 +900,15 @@ function ReelSlide({
                 className="px-4 py-2 rounded-xl text-xs font-black"
                 style={{
                   background: speed === s
-                    ? "rgba(192,57,43,0.75)"
+                    ? "rgba(124,58,237,0.75)"
                     : "rgba(8,6,20,0.82)",
                   backdropFilter: "blur(16px)",
                   border: speed === s
-                    ? "1px solid rgba(212,160,32,0.65)"
+                    ? "1px solid rgba(167,139,250,0.65)"
                     : "1px solid rgba(255,255,255,0.1)",
-                  color: speed === s ? "#D4A020" : "rgba(255,255,255,0.65)",
+                  color: speed === s ? "#e9d5ff" : "rgba(255,255,255,0.65)",
                   boxShadow: speed === s
-                    ? "0 0 16px rgba(192,57,43,0.5), inset 0 1px 0 rgba(255,255,255,0.1)"
+                    ? "0 0 16px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.1)"
                     : "0 2px 12px rgba(0,0,0,0.5)",
                   minWidth: "3.8rem",
                   textAlign: "center",
@@ -945,7 +945,7 @@ function ReelSlide({
                   <motion.span
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                     className="text-[10px] font-mono"
-                    style={{ color: "#D4A020" }}>
+                    style={{ color: "#a78bfa" }}>
                     {trimStart.toFixed(1)}s → {trimEnd.toFixed(1)}s &nbsp;·&nbsp; {Math.abs(trimEnd - trimStart).toFixed(1)}s
                   </motion.span>
                 )}
@@ -956,7 +956,7 @@ function ReelSlide({
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.07)" }}>
                 {dur > 0 && (
                   <div className="absolute inset-y-0 left-0 rounded-xl transition-all duration-100"
-                    style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg,rgba(192,57,43,0.45),rgba(59,130,246,0.45),rgba(6,182,212,0.45))" }} />
+                    style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg,rgba(124,58,237,0.45),rgba(59,130,246,0.45),rgba(6,182,212,0.45))" }} />
                 )}
                 {trimStart != null && dur > 0 && (
                   <motion.div
@@ -967,7 +967,7 @@ function ReelSlide({
                       right: trimEnd != null ? `${100 - (trimEnd / dur) * 100}%` : "0%",
                       background: "rgba(96,165,250,0.22)",
                       borderLeft: "2px solid #60a5fa",
-                      borderRight: trimEnd != null ? "2px solid #D4A020" : undefined,
+                      borderRight: trimEnd != null ? "2px solid #a78bfa" : undefined,
                     }} />
                 )}
                 {dur > 0 && (
@@ -987,7 +987,7 @@ function ReelSlide({
                 <motion.button whileTap={{ scale: 0.88 }}
                   onClick={handleSetTrimStart}
                   className="flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
-                  style={{ background: trimStart != null ? "rgba(192,57,43,0.4)" : "rgba(192,57,43,0.2)", border: "1px solid rgba(192,57,43,0.4)", color: "#D4A020" }}>
+                  style={{ background: trimStart != null ? "rgba(124,58,237,0.4)" : "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.4)", color: "#c4b5fd" }}>
                   ⏮ Boshi
                   {trimStart != null && (
                     <span className="opacity-60 text-[9px]">{trimStart.toFixed(1)}s</span>
@@ -1009,9 +1009,9 @@ function ReelSlide({
                     initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                     className="py-2 px-4 rounded-xl text-xs font-bold"
                     style={{
-                      background: clipSaved ? "rgba(16,185,129,0.6)" : "linear-gradient(135deg, #C0392B, #B8860B)",
+                      background: clipSaved ? "rgba(16,185,129,0.6)" : "linear-gradient(135deg, #7c3aed, #3b82f6)",
                       color: "white",
-                      boxShadow: clipSaved ? "0 0 18px rgba(16,185,129,0.5)" : "0 0 16px rgba(192,57,43,0.4)",
+                      boxShadow: clipSaved ? "0 0 18px rgba(16,185,129,0.5)" : "0 0 16px rgba(124,58,237,0.4)",
                       border: clipSaved ? "1px solid rgba(52,211,153,0.4)" : "none",
                       transition: "all 0.2s",
                     }}>
@@ -1255,7 +1255,7 @@ export default function ReelsPage() {
       {isLoading && feed.length === 0 ? (
         <div className="flex flex-col items-center gap-5 z-10">
           <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-white/10 border-t-amber-500 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin" />
             <div className="absolute inset-3 rounded-full border border-white/10 border-t-pink-400 animate-spin" style={{ animationDuration: "0.6s", animationDirection: "reverse" }} />
           </div>
           <p className="text-white/40 text-sm font-medium">OlCha lenta yuklanmoqda…</p>
@@ -1270,7 +1270,7 @@ export default function ReelsPage() {
           </div>
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCreateOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white text-sm font-bold"
-            style={{ background: "linear-gradient(135deg, #C0392B, #B8860B)", boxShadow: "0 4px 24px rgba(192,57,43,0.5)" }}>
+            style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)", boxShadow: "0 4px 24px rgba(124,58,237,0.5)" }}>
             <Plus className="w-4 h-4" /> Reel qo'shish
           </motion.button>
         </div>
@@ -1347,7 +1347,7 @@ export default function ReelsPage() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-semibold z-20"
-                style={{ background: "rgba(192,57,43,0.3)", backdropFilter: "blur(8px)", border: "1px solid rgba(212,160,32,0.2)", color: "#D4A020" }}>
+                style={{ background: "rgba(124,58,237,0.3)", backdropFilter: "blur(8px)", border: "1px solid rgba(167,139,250,0.2)", color: "#c4b5fd" }}>
                 <Sparkles className="w-2.5 h-2.5 animate-pulse" />
                 AI tavsiyalar tayyorlanmoqda…
               </motion.div>

@@ -30,7 +30,7 @@ export default function MyShopPage() {
   const STATUS_LABELS: Record<string, { label: string; color: string }> = {
     pending: { label: t("myshop.status_pending"), color: "text-yellow-400" },
     paid: { label: t("myshop.status_paid"), color: "text-blue-400" },
-    processing: { label: t("myshop.status_processing"), color: "text-amber-400" },
+    processing: { label: t("myshop.status_processing"), color: "text-indigo-400" },
     shipped: { label: t("myshop.status_shipped"), color: "text-cyan-400" },
     delivered: { label: t("myshop.status_delivered"), color: "text-emerald-400" },
     cancelled: { label: t("myshop.status_cancelled"), color: "text-red-400" },

@@ -16,11 +16,11 @@ const SPRING_STIFFNESS = 0.11;
 const SNAP_THRESHOLD = 0.4;
 
 const NEON_COLORS = [
-  { border: "rgba(192,57,43,0.85)", glow: "rgba(192,57,43,0.45)", label: "#C0392B" },
-  { border: "rgba(184,134,11,0.85)", glow: "rgba(184,134,11,0.45)", label: "#B8860B" },
-  { border: "rgba(212,160,32,0.85)", glow: "rgba(212,160,32,0.45)", label: "#D4A020" },
+  { border: "rgba(139,92,246,0.85)", glow: "rgba(139,92,246,0.45)", label: "#a78bfa" },
+  { border: "rgba(59,130,246,0.85)", glow: "rgba(59,130,246,0.45)", label: "#60a5fa" },
+  { border: "rgba(236,72,153,0.85)", glow: "rgba(236,72,153,0.45)", label: "#f472b6" },
   { border: "rgba(16,185,129,0.85)", glow: "rgba(16,185,129,0.45)", label: "#34d399" },
-  { border: "rgba(192,57,43,0.75)", glow: "rgba(212,160,32,0.4)", label: "#e05b4e" },
+  { border: "rgba(245,158,11,0.85)", glow: "rgba(245,158,11,0.45)", label: "#fbbf24" },
 ];
 
 function formatTime(iso: string) {
@@ -135,7 +135,7 @@ function TunnelPostCard({ post, isActive, colorIdx }: TunnelPostCardProps) {
               boxShadow: `0 0 10px ${neon.glow}`,
               overflow: "hidden",
               flexShrink: 0,
-              background: "rgba(192,57,43,0.2)",
+              background: "rgba(139,92,246,0.2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -432,9 +432,9 @@ function TunnelRings({ cameraZ }: { cameraZ: number }) {
               maxWidth: 920,
               height: "85vh",
               borderRadius: 32,
-              border: `1px solid rgba(192,57,43,${alpha})`,
+              border: `1px solid rgba(139,92,246,${alpha})`,
               pointerEvents: "none",
-              boxShadow: `0 0 40px rgba(192,57,43,${alpha * 0.5})`,
+              boxShadow: `0 0 40px rgba(139,92,246,${alpha * 0.5})`,
             }}
           />
         );
@@ -614,7 +614,7 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
           position: "absolute",
           inset: 0,
           background:
-            "radial-gradient(ellipse 60% 40% at 50% 100%, rgba(192,57,43,0.07) 0%, transparent 70%)",
+            "radial-gradient(ellipse 60% 40% at 50% 100%, rgba(139,92,246,0.07) 0%, transparent 70%)",
           pointerEvents: "none",
         }}
       />
@@ -623,7 +623,7 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
           position: "absolute",
           inset: 0,
           background:
-            "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(184,134,11,0.06) 0%, transparent 70%)",
+            "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(59,130,246,0.06) 0%, transparent 70%)",
           pointerEvents: "none",
         }}
       />
@@ -707,11 +707,11 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
               height: 32,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, rgba(192,57,43,0.9), rgba(184,134,11,0.6))",
+                "radial-gradient(circle, rgba(139,92,246,0.9), rgba(59,130,246,0.6))",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 0 16px rgba(192,57,43,0.7)",
+              boxShadow: "0 0 16px rgba(139,92,246,0.7)",
             }}
           >
             <Zap style={{ width: 16, height: 16, color: "#fff" }} />
@@ -723,7 +723,7 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
                 fontWeight: 900,
                 letterSpacing: "0.08em",
                 background:
-                  "linear-gradient(90deg, #C0392B, #D4A020)",
+                  "linear-gradient(90deg, #a78bfa, #60a5fa)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}
@@ -794,7 +794,7 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
                   height: 6,
                   borderRadius: 3,
                   background: isAct
-                    ? "linear-gradient(90deg, #C0392B, #D4A020)"
+                    ? "linear-gradient(90deg, #a78bfa, #60a5fa)"
                     : "rgba(255,255,255,0.35)",
                   transition: "width 0.3s",
                 }}
@@ -803,7 +803,7 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
           })}
           {loadingMore && (
             <Loader2
-              style={{ width: 14, height: 14, color: "#C0392B", animation: "spin 1s linear infinite" }}
+              style={{ width: 14, height: 14, color: "#a78bfa", animation: "spin 1s linear infinite" }}
             />
           )}
         </div>
@@ -818,8 +818,8 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
               width: 42,
               height: 42,
               borderRadius: "50%",
-              background: activeIndex === 0 ? "rgba(255,255,255,0.04)" : "rgba(192,57,43,0.18)",
-              border: `1px solid ${activeIndex === 0 ? "rgba(255,255,255,0.1)" : "rgba(192,57,43,0.5)"}`,
+              background: activeIndex === 0 ? "rgba(255,255,255,0.04)" : "rgba(139,92,246,0.18)",
+              border: `1px solid ${activeIndex === 0 ? "rgba(255,255,255,0.1)" : "rgba(139,92,246,0.5)"}`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -831,7 +831,7 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
               style={{
                 width: 18,
                 height: 18,
-                color: "#C0392B",
+                color: "#a78bfa",
                 transform: "rotate(180deg)",
               }}
             />
@@ -845,16 +845,16 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
               width: 42,
               height: 42,
               borderRadius: "50%",
-              background: "rgba(192,57,43,0.18)",
-              border: "1px solid rgba(192,57,43,0.5)",
+              background: "rgba(139,92,246,0.18)",
+              border: "1px solid rgba(139,92,246,0.5)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
-              boxShadow: "0 0 14px rgba(192,57,43,0.35)",
+              boxShadow: "0 0 14px rgba(139,92,246,0.35)",
             }}
           >
-            <ChevronDown style={{ width: 18, height: 18, color: "#C0392B" }} />
+            <ChevronDown style={{ width: 18, height: 18, color: "#a78bfa" }} />
           </motion.button>
         </div>
       </div>
@@ -884,18 +884,18 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
               animate={{ y: [0, 8, 0] }}
               transition={{ duration: 1.4, repeat: Infinity }}
             >
-              <ArrowDown style={{ width: 22, height: 22, color: "rgba(192,57,43,0.85)" }} />
+              <ArrowDown style={{ width: 22, height: 22, color: "rgba(167,139,250,0.8)" }} />
             </motion.div>
             <span
               style={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: "rgba(212,160,32,0.9)",
+                color: "rgba(167,139,250,0.8)",
                 letterSpacing: "0.04em",
                 background: "rgba(0,0,0,0.6)",
                 padding: "4px 12px",
                 borderRadius: 20,
-                border: "1px solid rgba(192,57,43,0.3)",
+                border: "1px solid rgba(139,92,246,0.3)",
               }}
             >
               {t("tunnel.hint_scroll")}

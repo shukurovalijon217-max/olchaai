@@ -66,7 +66,7 @@ const PAGES = [
   { id: "call"    as const, label: "Qo'ng'iroq",  icon: Phone,         color: "#22c55e", bg: "linear-gradient(135deg,#22c55e,#16a34a)" },
   { id: "video"   as const, label: "Video",        icon: Video,         color: "#3b82f6", bg: "linear-gradient(135deg,#3b82f6,#2563eb)" },
   { id: "sms"     as const, label: "SMS",          icon: MessageSquare, color: "#f59e0b", bg: "linear-gradient(135deg,#f59e0b,#d97706)" },
-  { id: "comment" as const, label: "Kommentariy",  icon: MessageCircle, color: "#B8860B", bg: "linear-gradient(135deg,#B8860B,#C0392B)" },
+  { id: "comment" as const, label: "Kommentariy",  icon: MessageCircle, color: "#a855f7", bg: "linear-gradient(135deg,#a855f7,#7c3aed)" },
   { id: "post"    as const, label: "Post",         icon: FileText,      color: "#ec4899", bg: "linear-gradient(135deg,#ec4899,#be185d)" },
 ] as const;
 
@@ -82,7 +82,7 @@ function SwipeableRow({ id, children, onDelete, onArchive, archiveLabel }:
   const [gone, setGone] = useState<null|"del"|"arc">(null);
 
   const delBg  = useTransform(x, [-SWP*2.2, -SWP, 0], ["rgba(239,68,68,.97)","rgba(239,68,68,.72)","rgba(239,68,68,0)"]);
-  const arcBg  = useTransform(x, [0, SWP, SWP*2.2],    ["rgba(192,57,43,0)","rgba(192,57,43,.72)","rgba(192,57,43,.97)"]);
+  const arcBg  = useTransform(x, [0, SWP, SWP*2.2],    ["rgba(124,58,237,0)","rgba(124,58,237,.72)","rgba(124,58,237,.97)"]);
   const delSc  = useTransform(x, [-SWP*1.5, -SWP, 0],  [1.18, 1, 0.55]);
   const arcSc  = useTransform(x, [0, SWP, SWP*1.5],    [0.55, 1, 1.18]);
 
@@ -467,7 +467,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
                       {/* Original bubble */}
                       <div className={`max-w-[82%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
                         isMe ? "rounded-br-sm text-white" : "rounded-bl-sm text-foreground bg-white/8 border border-white/10"
-                      }`} style={isMe?{ background:"linear-gradient(135deg,#C0392B,#B8860B)", boxShadow:"0 2px 12px rgba(192,57,43,0.35)" }:{}}>
+                      }`} style={isMe?{ background:"linear-gradient(135deg,#7c3aed,#a855f7)", boxShadow:"0 2px 12px rgba(124,58,237,0.35)" }:{}}>
                         <EmojiText text={m.content} />
                         <div className={`flex items-center gap-1 mt-0.5 ${isMe?"justify-end":""}`}>
                           <span className="text-[10px] opacity-45">
@@ -546,7 +546,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
           <motion.button whileTap={{ scale:0.85 }} onClick={handleSend}
             disabled={!text.trim()||send.isPending}
             className="w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-30"
-            style={{ background:text.trim()?"linear-gradient(135deg,#C0392B,#B8860B)":"rgba(255,255,255,0.06)" }}>
+            style={{ background:text.trim()?"linear-gradient(135deg,#7c3aed,#a855f7)":"rgba(255,255,255,0.06)" }}>
             {send.isPending ? <Loader2 className="w-3 h-3 text-white animate-spin"/> : <Send className="w-3 h-3 text-white"/>}
           </motion.button>
         </div>
@@ -592,7 +592,7 @@ function CallPanelContent({ onClose }:{ onClose:()=>void }) {
                   :c.type==="missed"?"border-red-500/20 bg-red-500/5"
                   :"border-blue-500/20 bg-blue-500/5"}`}>
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                    style={{ background:"linear-gradient(135deg,#C0392B,#B8860B)", boxShadow:"0 0 12px rgba(192,57,43,0.35)" }}>
+                    style={{ background:"linear-gradient(135deg,#7c3aed,#db2777)", boxShadow:"0 0 12px rgba(124,58,237,0.35)" }}>
                     {c.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -665,7 +665,7 @@ function VideoPanelContent({ targetUser, onClose }:{ targetUser:OrbUser; onClose
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <motion.div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold text-white"
               animate={{ scale:connected?[1,1.05,1]:1 }} transition={{ duration:2.2, repeat:Infinity }}
-              style={{ background:"linear-gradient(135deg,#C0392B,#B8860B)", boxShadow:"0 0 28px rgba(192,57,43,0.5)" }}>
+              style={{ background:"linear-gradient(135deg,#7c3aed,#db2777)", boxShadow:"0 0 28px rgba(124,58,237,0.5)" }}>
               {targetUser.displayName.charAt(0)}
             </motion.div>
             <p className="text-white font-semibold text-sm">{targetUser.displayName}</p>
@@ -760,7 +760,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
     <>
       <PanelHeader
         title={selectedPost?`Post #${selectedPost.id} · ${t("orb.comment_title")}`:t("orb.comment_title")}
-        color="#B8860B" bg="linear-gradient(135deg,#B8860B,#C0392B)"
+        color="#a855f7" bg="linear-gradient(135deg,#a855f7,#7c3aed)"
         Icon={MessageCircle}
         onClose={onClose}/>
 
@@ -788,7 +788,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                         </div>
                         <div className="flex-1">
                           <div className="inline-block px-3 py-2 rounded-2xl rounded-tl-sm bg-white/8 border border-white/10">
-                            <p className="text-[10px] font-semibold text-amber-400 mb-0.5">
+                            <p className="text-[10px] font-semibold text-violet-400 mb-0.5">
                               {c.author?.id===me?.id?t("orb.mine"):`@${c.author?.username??"?"}`}
                             </p>
                             <EmojiText text={c.content} className="text-sm text-foreground leading-relaxed" />
@@ -820,7 +820,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                 <motion.button whileTap={{ scale:0.85 }} onClick={handleSend}
                   disabled={!text.trim()||addComment.isPending}
                   className="w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-30"
-                  style={{ background:text.trim()?"linear-gradient(135deg,#B8860B,#C0392B)":"rgba(255,255,255,0.06)" }}>
+                  style={{ background:text.trim()?"linear-gradient(135deg,#a855f7,#7c3aed)":"rgba(255,255,255,0.06)" }}>
                   {addComment.isPending?<Loader2 className="w-3 h-3 text-white animate-spin"/>:<Send className="w-3 h-3 text-white"/>}
                 </motion.button>
               </div>
@@ -844,7 +844,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                   <p className="text-sm text-foreground leading-relaxed line-clamp-2 mb-1.5">{p.content}</p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{p.likesCount??0}</span>
-                    <span className="flex items-center gap-1 text-amber-400"><MessageCircle className="w-3 h-3"/>{p.commentsCount??0}</span>
+                    <span className="flex items-center gap-1 text-violet-400"><MessageCircle className="w-3 h-3"/>{p.commentsCount??0}</span>
                   </div>
                 </motion.button>
               ))
@@ -918,7 +918,7 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
             className="flex-1 flex flex-col overflow-hidden" style={{ minHeight:0 }}>
             <div className="flex-1 p-3 flex gap-2.5">
               <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold text-white"
-                style={{ background:"linear-gradient(135deg,#C0392B,#B8860B)" }}>{targetUser.displayName.charAt(0)}</div>
+                style={{ background:"linear-gradient(135deg,#7c3aed,#db2777)" }}>{targetUser.displayName.charAt(0)}</div>
               <textarea ref={textareaRef} value={draft} onChange={e=>setDraft(e.target.value)} autoFocus
                 placeholder={t("orb.whats_on_mind")} rows={4}
                 className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none"/>
@@ -955,7 +955,7 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
               <motion.button whileTap={{ scale:0.95 }} onClick={()=>setComposing(true)}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-pink-500/25 bg-pink-500/6 hover:bg-pink-500/10 transition-colors text-left mb-1">
                 <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
-                  style={{ background:"linear-gradient(135deg,#C0392B,#B8860B)" }}>{targetUser.displayName.charAt(0)}</div>
+                  style={{ background:"linear-gradient(135deg,#7c3aed,#db2777)" }}>{targetUser.displayName.charAt(0)}</div>
                 <span className="text-sm text-muted-foreground flex-1">{t("orb.whats_on_mind")}</span>
                 <Plus className="w-4 h-4 text-pink-400"/>
               </motion.button>
@@ -1075,7 +1075,7 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
     ? mode.panel==="sms-thread"?"#f59e0b"
       :mode.panel==="call"?"#22c55e"
       :mode.panel==="video"?"#3b82f6"
-      :mode.panel==="comment"?"#B8860B"
+      :mode.panel==="comment"?"#a855f7"
       :"#ec4899"
     : "#ec4899";
 
@@ -1210,13 +1210,13 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
 
         {/* Conic shimmer */}
         <motion.div animate={{ rotate:360 }} transition={{ duration:2.8, repeat:Infinity, ease:"linear" }}
-          style={{ position:"absolute", inset:-3, borderRadius:"50%", background:"conic-gradient(from 0deg, transparent, rgba(192,57,43,0.68) 20%, rgba(255,255,255,0.2) 32%, transparent 48%, rgba(212,160,32,0.52) 68%, rgba(255,255,255,0.17) 82%, transparent)", pointerEvents:"none" }}/>
+          style={{ position:"absolute", inset:-3, borderRadius:"50%", background:"conic-gradient(from 0deg, transparent, rgba(236,72,153,0.68) 20%, rgba(255,255,255,0.2) 32%, transparent 48%, rgba(167,139,250,0.52) 68%, rgba(255,255,255,0.17) 82%, transparent)", pointerEvents:"none" }}/>
 
         {/* Avatar */}
         <div style={{ position:"absolute", inset:3, borderRadius:"50%", overflow:"hidden", border:"2px solid rgba(236,72,153,0.4)", boxShadow:"inset 0 2px 14px rgba(0,0,0,0.55), 0 0 22px rgba(236,72,153,0.42)" }}>
           {targetUser.avatarUrl
             ? <img src={targetUser.avatarUrl} alt={targetUser.displayName} draggable={false} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
-            : <div style={{ width:"100%", height:"100%", background:"linear-gradient(135deg,#C0392B 0%,#B8860B 55%,#D4A020 100%)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:ORB*0.26, fontWeight:800, color:"#fff", textShadow:"0 1px 8px rgba(0,0,0,0.5)" }}>{initials}</div>
+            : <div style={{ width:"100%", height:"100%", background:"linear-gradient(135deg,#7c3aed 0%,#ec4899 55%,#be185d 100%)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:ORB*0.26, fontWeight:800, color:"#fff", textShadow:"0 1px 8px rgba(0,0,0,0.5)" }}>{initials}</div>
           }
         </div>
 
@@ -1255,7 +1255,7 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
         {/* Book hint badge */}
         {!menuOpen && !isPanel && (
           <motion.div animate={{ scale:[1,1.3,1], opacity:[0.5,0.9,0.5] }} transition={{ duration:3, repeat:Infinity, delay:2 }}
-            style={{ position:"absolute", top:-4, right:-4, width:18, height:18, borderRadius:"50%", background:"linear-gradient(135deg,#C0392B,#B8860B)", border:"2px solid rgba(0,0,0,0.55)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:14, pointerEvents:"none" }}>
+            style={{ position:"absolute", top:-4, right:-4, width:18, height:18, borderRadius:"50%", background:"linear-gradient(135deg,#7c3aed,#a855f7)", border:"2px solid rgba(0,0,0,0.55)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:14, pointerEvents:"none" }}>
             <BookOpen style={{ width:9, height:9, color:"#fff" }}/>
           </motion.div>
         )}

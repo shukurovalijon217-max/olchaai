@@ -27,7 +27,7 @@ function Avatar({ m }: { m: Member }) {
   return m.avatarUrl ? (
     <img src={m.avatarUrl} className="w-7 h-7 rounded-full object-cover border border-border/40" />
   ) : (
-    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-700/40 to-amber-700/40 flex items-center justify-center">
+    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500/40 to-blue-500/40 flex items-center justify-center">
       <span className="text-[10px] font-bold text-white">{(m.displayName || m.username)[0].toUpperCase()}</span>
     </div>
   );
@@ -152,7 +152,7 @@ export default function CoViewPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
     </div>
   );
 
@@ -161,8 +161,8 @@ export default function CoViewPage() {
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-sm rounded-3xl p-6 border border-border/40 bg-card">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center">
-            <Tv2 className="w-5 h-5 text-amber-400" />
+          <div className="w-10 h-10 rounded-2xl bg-violet-500/20 flex items-center justify-center">
+            <Tv2 className="w-5 h-5 text-violet-400" />
           </div>
           <h2 className="text-lg font-bold">{t("coview.join_title")}</h2>
         </div>
@@ -170,9 +170,9 @@ export default function CoViewPage() {
         <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
           onKeyDown={e => e.key === "Enter" && handleJoin()}
           placeholder={t("coview.code_ph")} maxLength={8}
-          className="w-full px-4 py-2.5 rounded-xl bg-muted border border-border/50 text-sm font-mono uppercase outline-none focus:ring-2 ring-primary/50 mb-3" />
+          className="w-full px-4 py-2.5 rounded-xl bg-muted border border-border/50 text-sm font-mono uppercase outline-none focus:ring-2 ring-violet-500/50 mb-3" />
         <button onClick={handleJoin} disabled={!joinCode.trim() || joining}
-          className="w-full py-2.5 rounded-xl bg-primary hover:bg-red-700 text-white text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2">
+          className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2">
           {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tv2 className="w-4 h-4" />}
           {t("coview.join")}
         </button>
@@ -183,7 +183,7 @@ export default function CoViewPage() {
   if (error || !room) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4">
       <p className="text-muted-foreground">{error ?? t("coview.not_found")}</p>
-      <button onClick={() => setLocation("/")} className="text-sm text-amber-400 hover:underline flex items-center gap-1">
+      <button onClick={() => setLocation("/")} className="text-sm text-violet-400 hover:underline flex items-center gap-1">
         <ArrowLeft className="w-4 h-4" /> {t("common.back")}
       </button>
     </div>
@@ -198,7 +198,7 @@ export default function CoViewPage() {
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex items-center gap-2 flex-1">
-          <Tv2 className="w-5 h-5 text-amber-400" />
+          <Tv2 className="w-5 h-5 text-violet-400" />
           <h1 className="text-base font-bold">{t("coview.title")}</h1>
           <div className={`w-2 h-2 rounded-full ml-1 ${wsConnected ? "bg-emerald-400" : "bg-red-400"}`} />
         </div>
@@ -210,11 +210,11 @@ export default function CoViewPage() {
       </motion.div>
 
       {/* Invite code badge */}
-      <div className="flex items-center justify-between mb-4 px-4 py-2.5 rounded-2xl bg-primary/10 border border-primary/25">
+      <div className="flex items-center justify-between mb-4 px-4 py-2.5 rounded-2xl bg-violet-500/10 border border-violet-500/25">
         <div className="flex items-center gap-2">
-          <Link2 className="w-4 h-4 text-amber-400" />
+          <Link2 className="w-4 h-4 text-violet-400" />
           <span className="text-xs text-muted-foreground">{t("coview.invite_code")}</span>
-          <span className="font-mono font-black text-amber-400 text-sm tracking-widest">{room.inviteCode}</span>
+          <span className="font-mono font-black text-violet-400 text-sm tracking-widest">{room.inviteCode}</span>
         </div>
         <div className="flex -space-x-2">
           {room.members.slice(0, 5).map(m => <Avatar key={m.id} m={m} />)}
@@ -228,10 +228,10 @@ export default function CoViewPage() {
 
       {/* Content area */}
       <div className="rounded-2xl border border-border/40 bg-card overflow-hidden mb-4">
-        <div className="aspect-video bg-gradient-to-br from-red-950 to-slate-900 flex flex-col items-center justify-center relative">
+        <div className="aspect-video bg-gradient-to-br from-violet-950 to-slate-900 flex flex-col items-center justify-center relative">
           <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 3, repeat: Infinity }}
-            className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-3">
-            <Tv2 className="w-8 h-8 text-amber-400" />
+            className="w-16 h-16 rounded-2xl bg-violet-500/20 flex items-center justify-center mb-3">
+            <Tv2 className="w-8 h-8 text-violet-400" />
           </motion.div>
           <p className="text-white/60 text-sm font-medium mb-1">{t("coview.content_label")}</p>
           <p className="text-white/40 text-xs font-mono">{room.contentType} #{room.contentId}</p>
@@ -251,7 +251,7 @@ export default function CoViewPage() {
         {/* Playback controls (host only) */}
         {isHost && (
           <div className="flex items-center gap-2 px-4 py-2.5 border-t border-border/30 bg-muted/20">
-            <span className="text-xs text-amber-400 font-semibold mr-1">{t("coview.host_controls")}</span>
+            <span className="text-xs text-violet-400 font-semibold mr-1">{t("coview.host_controls")}</span>
             <motion.button whileTap={{ scale: 0.88 }} onClick={() => sendSync(!isPlaying)}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
                 isPlaying ? "bg-red-500/20 text-red-400 hover:bg-red-500/30" : "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
@@ -284,11 +284,11 @@ export default function CoViewPage() {
             return (
               <motion.div key={i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                 className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
-                <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white ${isMe ? "bg-primary" : "bg-muted"}`}>
+                <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white ${isMe ? "bg-violet-500" : "bg-muted"}`}>
                   {(m.displayName ?? "?")[0].toUpperCase()}
                 </div>
                 <div className={`max-w-[75%] px-3 py-1.5 rounded-2xl text-xs ${
-                  isMe ? "bg-primary text-white" : "bg-muted text-foreground"
+                  isMe ? "bg-violet-600 text-white" : "bg-muted text-foreground"
                 }`}>
                   {!isMe && <p className="text-[10px] font-semibold mb-0.5 opacity-70">{m.displayName}</p>}
                   {m.text}
@@ -302,9 +302,9 @@ export default function CoViewPage() {
           <input value={msgInput} onChange={e => setMsgInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && sendMsg()}
             placeholder={t("coview.msg_ph")}
-            className="flex-1 px-3 py-2 rounded-xl bg-muted text-sm outline-none focus:ring-2 ring-primary/50" />
+            className="flex-1 px-3 py-2 rounded-xl bg-muted text-sm outline-none focus:ring-2 ring-violet-500/50" />
           <motion.button whileTap={{ scale: 0.88 }} onClick={sendMsg}
-            className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white hover:bg-red-700 transition">
+            className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white hover:bg-violet-700 transition">
             <Send className="w-4 h-4" />
           </motion.button>
         </div>

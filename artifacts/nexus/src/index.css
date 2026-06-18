@@ -53,57 +53,56 @@
 }
 
 :root {
-  /* ── OlCha Brand: Rich Black + Deep Red + Dark Gold ── */
-  --background: 0 0% 4%;
-  --foreground: 0 0% 94%;
-  --border: 0 0% 16%;
-  --input: 0 0% 16%;
-  --ring: 4 63% 46%;
+  --background: 222 47% 5%;
+  --foreground: 210 40% 95%;
+  --border: 220 30% 15%;
+  --input: 220 30% 15%;
+  --ring: 252 100% 70%;
 
-  --card: 0 0% 11%;
-  --card-foreground: 0 0% 94%;
-  --card-border: 0 0% 16%;
+  --card: 222 40% 8%;
+  --card-foreground: 210 40% 95%;
+  --card-border: 220 30% 14%;
 
-  --popover: 0 0% 9%;
-  --popover-foreground: 0 0% 94%;
-  --popover-border: 0 0% 16%;
+  --popover: 222 40% 8%;
+  --popover-foreground: 210 40% 95%;
+  --popover-border: 220 30% 14%;
 
-  --primary: 4 63% 46%;
-  --primary-foreground: 0 0% 100%;
-  --primary-border: hsl(4 63% 38%);
+  --primary: 252 100% 68%;
+  --primary-foreground: 222 47% 5%;
+  --primary-border: hsl(252 100% 60%);
 
-  --secondary: 0 0% 11%;
-  --secondary-foreground: 0 0% 94%;
-  --secondary-border: hsl(0 0% 16%);
+  --secondary: 220 30% 14%;
+  --secondary-foreground: 210 40% 80%;
+  --secondary-border: hsl(220 30% 18%);
 
-  --muted: 0 0% 13%;
-  --muted-foreground: 0 0% 53%;
-  --muted-border: hsl(0 0% 16%);
+  --muted: 220 30% 11%;
+  --muted-foreground: 215 20% 55%;
+  --muted-border: hsl(220 30% 15%);
 
-  --accent: 43 89% 38%;
-  --accent-foreground: 0 0% 100%;
-  --accent-border: hsl(43 89% 30%);
+  --accent: 280 90% 60%;
+  --accent-foreground: 222 47% 5%;
+  --accent-border: hsl(280 90% 52%);
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
   --destructive-border: hsl(0 84% 52%);
 
-  --sidebar: 0 0% 6%;
-  --sidebar-foreground: 0 0% 80%;
-  --sidebar-border: 0 0% 10%;
-  --sidebar-primary: 4 63% 46%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-primary-border: hsl(4 63% 38%);
-  --sidebar-accent: 0 0% 11%;
-  --sidebar-accent-foreground: 0 0% 94%;
-  --sidebar-accent-border: hsl(0 0% 16%);
-  --sidebar-ring: 4 63% 46%;
+  --sidebar: 222 47% 6%;
+  --sidebar-foreground: 210 40% 80%;
+  --sidebar-border: 220 30% 12%;
+  --sidebar-primary: 252 100% 68%;
+  --sidebar-primary-foreground: 222 47% 5%;
+  --sidebar-primary-border: hsl(252 100% 60%);
+  --sidebar-accent: 220 30% 13%;
+  --sidebar-accent-foreground: 210 40% 90%;
+  --sidebar-accent-border: hsl(220 30% 17%);
+  --sidebar-ring: 252 100% 70%;
 
-  --chart-1: 4 63% 46%;
-  --chart-2: 43 89% 38%;
-  --chart-3: 0 84% 60%;
-  --chart-4: 43 75% 48%;
-  --chart-5: 0 0% 53%;
+  --chart-1: 252 100% 68%;
+  --chart-2: 168 80% 50%;
+  --chart-3: 325 80% 60%;
+  --chart-4: 45 90% 60%;
+  --chart-5: 200 80% 55%;
 
   --app-font-sans: 'Inter', sans-serif;
   --app-font-mono: 'JetBrains Mono', monospace;
@@ -125,21 +124,21 @@
 }
 
 @layer utilities {
-  .glow-primary { box-shadow: 0 0 20px hsl(4 63% 46% / 0.45); }
-  .glow-accent { box-shadow: 0 0 20px hsl(43 89% 38% / 0.4); }
+  .glow-primary { box-shadow: 0 0 20px hsl(252 100% 68% / 0.3); }
+  .glow-accent { box-shadow: 0 0 20px hsl(280 90% 60% / 0.3); }
   .aurora-border {
     background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
-      linear-gradient(135deg, hsl(4 63% 46%), hsl(43 89% 38%), hsl(43 75% 55%)) border-box;
+      linear-gradient(135deg, hsl(252 100% 68%), hsl(280 90% 60%), hsl(168 80% 50%)) border-box;
     border: 1px solid transparent;
   }
   .aurora-text {
-    background: linear-gradient(135deg, hsl(4 75% 60%), hsl(43 89% 50%), hsl(43 75% 65%));
+    background: linear-gradient(135deg, hsl(252 100% 75%), hsl(280 90% 70%), hsl(168 80% 60%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .story-ring {
-    background: linear-gradient(135deg, hsl(4 63% 46%), hsl(43 89% 38%), hsl(43 75% 60%));
+    background: linear-gradient(135deg, hsl(252 100% 68%), hsl(325 80% 60%), hsl(45 90% 60%));
     padding: 2px;
     border-radius: 9999px;
   }
@@ -158,31 +157,31 @@
 @keyframes olcha-emoji-9d {
   0%, 100% {
     transform: perspective(280px) rotateY(0deg) rotateX(0deg) translateZ(0px) scale(1);
-    filter: drop-shadow(0 0 4px rgba(192,57,43,0.45));
+    filter: drop-shadow(0 0 4px rgba(124,58,237,0.45));
   }
   14% {
     transform: perspective(280px) rotateY(20deg) rotateX(11deg) translateZ(7px) scale(1.2);
-    filter: drop-shadow(0 0 14px rgba(192,57,43,0.95)) drop-shadow(0 0 30px rgba(212,160,32,0.5));
+    filter: drop-shadow(0 0 14px rgba(168,85,247,0.98)) drop-shadow(0 0 30px rgba(59,130,246,0.5));
   }
   28% {
     transform: perspective(280px) rotateY(10deg) rotateX(-6deg) translateZ(11px) scale(1.15);
-    filter: drop-shadow(0 0 10px rgba(184,134,11,0.8)) drop-shadow(0 0 24px rgba(192,57,43,0.45));
+    filter: drop-shadow(0 0 10px rgba(236,72,153,0.8)) drop-shadow(0 0 24px rgba(124,58,237,0.45));
   }
   42% {
     transform: perspective(280px) rotateY(0deg) rotateX(0deg) translateZ(9px) scale(1.12);
-    filter: drop-shadow(0 0 16px rgba(212,160,32,0.95)) drop-shadow(0 0 32px rgba(192,57,43,0.5));
+    filter: drop-shadow(0 0 16px rgba(59,130,246,0.95)) drop-shadow(0 0 32px rgba(168,85,247,0.5));
   }
   57% {
     transform: perspective(280px) rotateY(-10deg) rotateX(-6deg) translateZ(11px) scale(1.15);
-    filter: drop-shadow(0 0 10px rgba(192,57,43,0.8)) drop-shadow(0 0 24px rgba(184,134,11,0.45));
+    filter: drop-shadow(0 0 10px rgba(124,58,237,0.8)) drop-shadow(0 0 24px rgba(236,72,153,0.45));
   }
   71% {
     transform: perspective(280px) rotateY(-20deg) rotateX(11deg) translateZ(7px) scale(1.2);
-    filter: drop-shadow(0 0 14px rgba(184,134,11,0.98)) drop-shadow(0 0 30px rgba(212,160,32,0.5));
+    filter: drop-shadow(0 0 14px rgba(236,72,153,0.98)) drop-shadow(0 0 30px rgba(59,130,246,0.5));
   }
   85% {
     transform: perspective(280px) rotateY(-8deg) rotateX(4deg) translateZ(4px) scale(1.07);
-    filter: drop-shadow(0 0 8px rgba(192,57,43,0.65)) drop-shadow(0 0 18px rgba(184,134,11,0.3));
+    filter: drop-shadow(0 0 8px rgba(168,85,247,0.65)) drop-shadow(0 0 18px rgba(236,72,153,0.3));
   }
 }
 
@@ -206,12 +205,12 @@
 /* ── Emoji picker CSS custom properties (shadow DOM vars) ── */
 em-emoji-picker {
   --border-radius: 0px;
-  --color-border: rgba(192,57,43,0.15);
-  --color-border-over: rgba(184,134,11,0.35);
-  --background-rgb: 10,10,10;
-  --rgb-input: 28,28,28;
-  --rgb-color: 240,240,240;
-  --rgb-accent: 192,57,43;
+  --color-border: rgba(124,58,237,0.12);
+  --color-border-over: rgba(168,85,247,0.32);
+  --background-rgb: 10,6,24;
+  --rgb-input: 22,14,50;
+  --rgb-color: 220,210,255;
+  --rgb-accent: 139,92,246;
   --font-family: Inter, sans-serif;
   --font-size: 13px;
   --shadow: none;
@@ -228,14 +227,14 @@ em-emoji-picker {
   overflow: hidden;
   background: linear-gradient(
     160deg,
-    rgba(10,10,10,0.99) 0%,
-    rgba(28,10,8,0.99) 55%,
-    rgba(10,10,10,0.99) 100%
+    rgba(10,6,26,0.99) 0%,
+    rgba(28,12,60,0.99) 55%,
+    rgba(10,6,26,0.99) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(192,57,43,0.28),
-    0 0 56px rgba(192,57,43,0.18),
-    0 0 110px rgba(184,134,11,0.08),
+    0 0 0 1px rgba(124,58,237,0.26),
+    0 0 56px rgba(124,58,237,0.22),
+    0 0 110px rgba(59,130,246,0.09),
     0 28px 72px rgba(0,0,0,0.75);
   isolation: isolate;
 }
@@ -248,11 +247,11 @@ em-emoji-picker {
   background: conic-gradient(
     from 0deg at 50% 50%,
     transparent 0deg,
-    rgba(192,57,43,0.045) 60deg,
+    rgba(124,58,237,0.045) 60deg,
     transparent 120deg,
-    rgba(184,134,11,0.03) 180deg,
+    rgba(59,130,246,0.03) 180deg,
     transparent 240deg,
-    rgba(212,160,32,0.04) 300deg,
+    rgba(236,72,153,0.045) 300deg,
     transparent 360deg
   );
   animation: olcha-picker-spin 18s linear infinite;
@@ -274,10 +273,10 @@ em-emoji-picker {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    #C0392B 20%,
-    #B8860B 40%,
-    #D4A020 60%,
-    #C0392B 80%,
+    #7c3aed 20%,
+    #3b82f6 40%,
+    #ec4899 60%,
+    #a855f7 80%,
     transparent 100%
   );
   animation: olcha-holo-scan 3.8s ease-in-out infinite;
@@ -301,14 +300,14 @@ em-emoji-picker {
 .olcha-picker-orb-1 {
   width: 130px; height: 130px;
   top: -45px; right: -35px;
-  background: radial-gradient(circle, rgba(192,57,43,0.22) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%);
   animation: olcha-orb-pulse 7s ease-in-out infinite;
 }
 
 .olcha-picker-orb-2 {
   width: 110px; height: 110px;
   bottom: -25px; left: -25px;
-  background: radial-gradient(circle, rgba(184,134,11,0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
   animation: olcha-orb-pulse 7s ease-in-out infinite;
   animation-delay: -3.5s;
 }
@@ -316,7 +315,7 @@ em-emoji-picker {
 .olcha-picker-orb-3 {
   width: 80px; height: 80px;
   top: 40%; right: -15px;
-  background: radial-gradient(circle, rgba(212,160,32,0.14) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(236,72,153,0.12) 0%, transparent 70%);
   animation: olcha-orb-pulse 5.5s ease-in-out infinite;
   animation-delay: -1.8s;
 }

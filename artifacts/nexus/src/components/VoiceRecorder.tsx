@@ -166,7 +166,7 @@ export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRec
           <motion.button key="mic" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }} whileTap={{ scale: 0.88 }}
             onClick={startRecording}
-            className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors shrink-0" style={{ background: "rgba(192,57,43,0.12)", color: "#C0392B" }}
+            className="w-9 h-9 rounded-xl bg-violet-500/12 text-violet-400 flex items-center justify-center hover:bg-violet-500/22 transition-colors shrink-0"
             title="Ovozli izoh (10 sek)">
             <Mic className="w-4 h-4" />
           </motion.button>
@@ -175,10 +175,10 @@ export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRec
         {phase === "recording" && (
           <motion.div key="rec" initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: "100%" }}
             exit={{ opacity: 0 }}
-            className="flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5 rounded-xl relative overflow-hidden" style={{ background: "rgba(192,57,43,0.1)", border: "1px solid rgba(192,57,43,0.25)" }}>
+            className="flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/25 relative overflow-hidden">
             {/* Progress track */}
-            <motion.div className="absolute bottom-0 left-0 h-0.5 rounded-full"
-              style={{ background: "rgba(192,57,43,0.4)", width: `${progress * 100}%` }} />
+            <motion.div className="absolute bottom-0 left-0 h-0.5 bg-violet-500/40 rounded-full"
+              style={{ width: `${progress * 100}%` }} />
             {/* Animated dot */}
             <motion.div animate={{ scale: [1, 1.3, 1], opacity: [1, 0.6, 1] }}
               transition={{ duration: 0.8, repeat: Infinity }}
@@ -186,11 +186,11 @@ export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRec
             {/* Waveform bars */}
             <div className="flex items-center gap-[2px] flex-1 overflow-hidden h-8">
               {bars.map((h, i) => (
-                <motion.div key={i} className="w-[2px] rounded-full shrink-0" style={{ background: "#C0392B" }}
+                <motion.div key={i} className="w-[2px] rounded-full bg-violet-400 shrink-0"
                   animate={{ height: h }} transition={{ duration: 0.06, ease: "linear" }} />
               ))}
             </div>
-            <span className="text-[11px] font-mono tabular-nums shrink-0" style={{ color: "#C0392B" }}>{elapsedSec}s</span>
+            <span className="text-[11px] text-violet-400 font-mono tabular-nums shrink-0">{elapsedSec}s</span>
             <motion.button whileTap={{ scale: 0.85 }} onClick={stopRecording}
               className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center shrink-0 shadow-md shadow-red-500/30">
               <Square className="w-3 h-3 text-white fill-white" />
@@ -203,14 +203,14 @@ export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRec
             className="flex items-center gap-2 flex-1 min-w-0">
             {/* Play/pause */}
             <motion.button whileTap={{ scale: 0.88 }} onClick={togglePlay}
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors shrink-0" style={{ background: "rgba(192,57,43,0.15)", color: "#C0392B" }}>
+              className="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-400 flex items-center justify-center hover:bg-violet-500/25 transition-colors shrink-0">
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
             </motion.button>
             {/* Static waveform from recording */}
             <div className="flex items-center gap-[2px] flex-1 overflow-hidden h-8">
               {frozenBars.map((h, i) => (
-                <div key={i} className="w-[2px] rounded-full shrink-0 transition-colors"
-                  style={{ background: isPlaying ? "#C0392B" : "rgba(192,57,43,0.5)", height: Math.max(3, h) }} />
+                <div key={i} className={`w-[2px] rounded-full shrink-0 transition-colors ${isPlaying ? "bg-violet-400" : "bg-violet-400/50"}`}
+                  style={{ height: Math.max(3, h) }} />
               ))}
             </div>
             <span className="text-[11px] text-muted-foreground font-mono tabular-nums shrink-0">{elapsedSec}s</span>
@@ -222,7 +222,7 @@ export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRec
             {/* Send */}
             <motion.button whileTap={{ scale: 0.88 }} onClick={handleSend}
               disabled={isUploading || isSubmitting}
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-white disabled:opacity-45 transition-colors shrink-0" style={{ background: "#C0392B", boxShadow: "0 4px 8px rgba(192,57,43,0.3)" }}>
+              className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white disabled:opacity-45 hover:bg-violet-500 transition-colors shrink-0 shadow-md shadow-violet-600/30">
               {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </motion.button>
           </motion.div>

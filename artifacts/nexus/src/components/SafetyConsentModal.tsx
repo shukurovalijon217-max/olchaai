@@ -418,14 +418,14 @@ export default function SafetyConsentModal({ open, lang, onAgree, onCancel }: Pr
               className="relative w-full max-w-md rounded-3xl overflow-hidden"
               onClick={e => e.stopPropagation()}
               style={{
-                background: "linear-gradient(160deg, rgba(10,10,10,0.98) 0%, rgba(6,6,6,0.99) 100%)",
-                border: "1px solid rgba(192,57,43,0.35)",
-                boxShadow: "0 0 60px rgba(192,57,43,0.18), 0 0 120px rgba(184,134,11,0.08), inset 0 1px 0 rgba(212,160,32,0.12)",
+                background: "linear-gradient(160deg, rgba(10,8,24,0.98) 0%, rgba(6,4,16,0.99) 100%)",
+                border: "1px solid rgba(124,58,237,0.35)",
+                boxShadow: "0 0 60px rgba(124,58,237,0.18), 0 0 120px rgba(59,130,246,0.08), inset 0 1px 0 rgba(167,139,250,0.12)",
               }}
             >
               {/* Animated rainbow top border */}
               <div className="absolute top-0 left-0 right-0 h-[2px]" style={{
-                background: "linear-gradient(90deg, #C0392B, #B8860B, #10b981, #D4A020, #ef4444, #C0392B, #B8860B, #C0392B)",
+                background: "linear-gradient(90deg, #7c3aed, #3b82f6, #06b6d4, #10b981, #f59e0b, #ef4444, #ec4899, #7c3aed)",
                 backgroundSize: "200% 100%",
                 animation: "gradientShift 3s linear infinite",
               }} />
@@ -443,20 +443,20 @@ export default function SafetyConsentModal({ open, lang, onAgree, onCancel }: Pr
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-1">
                   <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{
-                    background: "linear-gradient(135deg, rgba(192,57,43,0.3), rgba(184,134,11,0.2))",
-                    border: "1px solid rgba(192,57,43,0.4)",
-                    boxShadow: "0 0 16px rgba(192,57,43,0.25)",
+                    background: "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.2))",
+                    border: "1px solid rgba(124,58,237,0.4)",
+                    boxShadow: "0 0 16px rgba(124,58,237,0.25)",
                   }}>
-                    <Lock className="w-5 h-5" style={{ color: "#D4A020" }} />
+                    <Lock className="w-5 h-5" style={{ color: "#a78bfa" }} />
                   </div>
                   <div>
                     <h2 className="text-base font-bold" style={{ color: "#e2d9f3" }}>{T.title}</h2>
-                    <p className="text-[11px]" style={{ color: "rgba(184,134,11,0.7)" }}>{T.subtitle}</p>
+                    <p className="text-[11px]" style={{ color: "rgba(167,139,250,0.6)" }}>{T.subtitle}</p>
                   </div>
                 </div>
 
                 {/* Divider */}
-                <div className="my-4 h-px" style={{ background: "rgba(192,57,43,0.18)" }} />
+                <div className="my-4 h-px" style={{ background: "rgba(124,58,237,0.18)" }} />
 
                 {/* Security card */}
                 <motion.div
@@ -540,9 +540,9 @@ export default function SafetyConsentModal({ open, lang, onAgree, onCancel }: Pr
                     onClick={() => setAgreed(v => !v)}
                     className="relative flex-shrink-0 w-5 h-5 mt-0.5 rounded-md transition-all duration-200"
                     style={{
-                      background: agreed ? "linear-gradient(135deg, #C0392B, #B8860B)" : "rgba(255,255,255,0.04)",
-                      border: agreed ? "1px solid transparent" : "1px solid rgba(192,57,43,0.35)",
-                      boxShadow: agreed ? "0 0 12px rgba(192,57,43,0.4)" : "none",
+                      background: agreed ? "linear-gradient(135deg, #7c3aed, #3b82f6)" : "rgba(255,255,255,0.04)",
+                      border: agreed ? "1px solid transparent" : "1px solid rgba(124,58,237,0.35)",
+                      boxShadow: agreed ? "0 0 12px rgba(124,58,237,0.4)" : "none",
                     }}
                   >
                     <AnimatePresence>
@@ -560,7 +560,7 @@ export default function SafetyConsentModal({ open, lang, onAgree, onCancel }: Pr
                   </div>
                   <span
                     className="text-[11px] leading-relaxed"
-                    style={{ color: agreed ? "rgba(212,160,32,0.95)" : "rgba(255,255,255,0.45)" }}
+                    style={{ color: agreed ? "rgba(216,180,254,0.9)" : "rgba(255,255,255,0.45)" }}
                     onClick={() => setAgreed(v => !v)}
                   >
                     {T.check}
@@ -588,13 +588,13 @@ export default function SafetyConsentModal({ open, lang, onAgree, onCancel }: Pr
                     className="flex-[2] py-3 rounded-xl text-xs font-bold relative overflow-hidden transition-all duration-200"
                     style={{
                       background: agreed
-                        ? "linear-gradient(135deg, #C0392B 0%, #B8860B 100%)"
-                        : "rgba(192,57,43,0.12)",
+                        ? "linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)"
+                        : "rgba(124,58,237,0.12)",
                       border: agreed
-                        ? "1px solid rgba(212,160,32,0.4)"
-                        : "1px solid rgba(192,57,43,0.2)",
-                      color: agreed ? "#fff" : "rgba(192,57,43,0.35)",
-                      boxShadow: agreed ? "0 0 24px rgba(192,57,43,0.35)" : "none",
+                        ? "1px solid rgba(167,139,250,0.4)"
+                        : "1px solid rgba(124,58,237,0.2)",
+                      color: agreed ? "#fff" : "rgba(167,139,250,0.35)",
+                      boxShadow: agreed ? "0 0 24px rgba(124,58,237,0.35)" : "none",
                       cursor: agreed ? "pointer" : "not-allowed",
                     }}
                   >

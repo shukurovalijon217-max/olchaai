@@ -171,11 +171,11 @@ function SpeakButton3D({ text, lang, isActive, onClick, label = "O'qish" }: {
         className="relative w-[68px] h-[68px] rounded-[22px] overflow-hidden select-none disabled:opacity-35">
         {/* Surface */}
         <div className={`absolute inset-0 transition-all duration-300 ${isActive
-          ? "bg-gradient-to-br from-red-900 via-red-700 to-amber-800"
+          ? "bg-gradient-to-br from-blue-400 via-violet-500 to-purple-700"
           : "bg-gradient-to-br from-slate-500 via-slate-600 to-slate-800"}`} />
         <div className="absolute inset-x-0 top-0 h-px bg-white/40" />
         <div className="absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-white/22 to-transparent rounded-t-[22px]" />
-        <div className={`absolute inset-x-0 bottom-0 h-1.5 ${isActive ? "bg-red-900/60" : "bg-black/40"}`} />
+        <div className={`absolute inset-x-0 bottom-0 h-1.5 ${isActive ? "bg-purple-900/60" : "bg-black/40"}`} />
         <motion.div style={{ left: glareX, top: glareY, x: "-50%", y: "-50%" }}
           className="absolute w-14 h-14 rounded-full bg-white/28 blur-lg pointer-events-none" />
         {/* Content */}
@@ -230,13 +230,13 @@ function TranslateButton3D({ loading, disabled, onClick }: {
     <div ref={wrapRef} onMouseMove={onMove} onMouseLeave={() => { mx.set(0); my.set(0); }}
       style={{ perspective: 900 }} className="relative">
       {/* Depth shadow blob */}
-      <div className="absolute inset-x-8 bottom-0 translate-y-3 h-full rounded-2xl bg-red-900/50 blur-2xl pointer-events-none" />
+      <div className="absolute inset-x-8 bottom-0 translate-y-3 h-full rounded-2xl bg-indigo-700/50 blur-2xl pointer-events-none" />
       <motion.button onClick={onClick} disabled={disabled || loading} onHoverStart={onHoverStart}
         whileTap={{ scale: 0.975, rotateX: 5 }}
         style={{ rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }}
         className="relative w-full py-[18px] rounded-2xl overflow-hidden select-none disabled:opacity-50 disabled:cursor-not-allowed">
         {/* Main gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-red-700 via-red-600 to-amber-700" />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-600" />
         {/* Top edge line */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" />
         {/* Bottom depth */}
@@ -889,7 +889,7 @@ export default function LibraryPage() {
               {([
                 { id: "all",     label: "Hammasi",    icon: Zap,        color: "text-primary",    bg: "bg-primary/10",    border: "border-primary/30" },
                 { id: "library", label: "Kutubxona",  icon: BookCopy,   color: "text-amber-400",  bg: "bg-amber-400/10",  border: "border-amber-400/30" },
-                { id: "ai",      label: "AI Tahlil",  icon: Sparkles,   color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/30" },
+                { id: "ai",      label: "AI Tahlil",  icon: Sparkles,   color: "text-violet-400", bg: "bg-violet-400/10", border: "border-violet-400/30" },
                 { id: "google",  label: "Google",     icon: Globe,      color: "text-blue-400",   bg: "bg-blue-400/10",   border: "border-blue-400/30" },
                 { id: "yandex",  label: "Yandex",     icon: ExternalLink,color: "text-red-400",   bg: "bg-red-400/10",    border: "border-red-400/30" },
               ] as { id: SearchSource; label: string; icon: ElementType; color: string; bg: string; border: string }[]).map(s => (
@@ -963,16 +963,16 @@ export default function LibraryPage() {
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                   className={`rounded-2xl border p-5 space-y-4 ${
                     aiResult.aiAvailable
-                      ? "border-primary/20 bg-gradient-to-br from-primary/5 to-amber-500/5"
+                      ? "border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-primary/5"
                       : "border-border bg-card"
                   }`}>
 
                   {/* Header */}
                   <div className="flex items-center gap-2.5">
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      aiResult.aiAvailable ? "bg-primary/15" : "bg-muted"
+                      aiResult.aiAvailable ? "bg-violet-500/15" : "bg-muted"
                     }`}>
-                      <Sparkles className={`w-4 h-4 ${aiResult.aiAvailable ? "text-amber-400" : "text-muted-foreground"}`} />
+                      <Sparkles className={`w-4 h-4 ${aiResult.aiAvailable ? "text-violet-400" : "text-muted-foreground"}`} />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-foreground">
@@ -1006,7 +1006,7 @@ export default function LibraryPage() {
                       {aiResult.ai.topics!.map((t, i) => (
                         <motion.button key={t} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.15 + i * 0.05 }}
                           onClick={() => { setSearchQ(t); doSearch(undefined, t); }}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 text-xs font-medium hover:bg-amber-400/20 transition-colors">
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-400/10 border border-violet-400/20 text-violet-400 text-xs font-medium hover:bg-violet-400/20 transition-colors">
                           <Hash className="w-2.5 h-2.5" /> {t}
                         </motion.button>
                       ))}
@@ -1112,7 +1112,7 @@ export default function LibraryPage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="text-center py-16 space-y-4">
                 <div className="relative mx-auto w-20 h-20">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-amber-500/20 animate-pulse" />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-violet-500/20 animate-pulse" />
                   <div className="absolute inset-2 rounded-full bg-card flex items-center justify-center">
                     <Search className="w-8 h-8 text-primary/60" />
                   </div>
@@ -1200,7 +1200,7 @@ export default function LibraryPage() {
 
             {/* Header */}
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-700 to-amber-700 flex items-center justify-center shadow-lg">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg">
                 <Languages className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -1288,7 +1288,7 @@ export default function LibraryPage() {
             <AnimatePresence>
               {(tgtText || translateLoading) && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="relative bg-gradient-to-br from-primary/5 to-amber-500/5 border border-primary/20 rounded-2xl overflow-hidden">
+                  className="relative bg-gradient-to-br from-blue-500/5 to-violet-600/5 border border-blue-500/20 rounded-2xl overflow-hidden">
                   <div className="flex items-center justify-between px-3 pt-3 pb-1">
                     <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide">
                       {LANGUAGES.find(l => l.code === tgtLang)?.flag} {LANGUAGES.find(l => l.code === tgtLang)?.name ?? tgtLang}

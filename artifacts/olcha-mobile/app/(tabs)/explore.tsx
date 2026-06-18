@@ -19,19 +19,19 @@ import { apiGet, apiPost, type UserItem, type TrendingTopic, type Group } from "
 
 /* ── colour palette for category labels ─────────────────── */
 const CAT_COLORS: Record<string, string> = {
-  Technology: "#7c3aed",
+  Technology: "#C0392B",
   Finance:    "#2563eb",
   Health:     "#059669",
-  Lifestyle:  "#d97706",
-  Entertainment: "#db2777",
+  Lifestyle:  "#B8860B",
+  Entertainment: "#C0392B",
   Art:        "#0891b2",
   Business:   "#65a30d",
-  Music:      "#9333ea",
+  Music:      "#B8860B",
   Travel:     "#0284c7",
-  Fashion:    "#e11d48",
-  Community:  "#f59e0b",
+  Fashion:    "#C0392B",
+  Community:  "#D4A020",
 };
-const catColor = (c?: string | null) => CAT_COLORS[c ?? ""] ?? "#7c3aed";
+const catColor = (c?: string | null) => CAT_COLORS[c ?? ""] ?? "#C0392B";
 
 /* ── pretty number formatter ─────────────────────────────── */
 function fmtN(n: number) {
@@ -81,8 +81,8 @@ function PersonCard({
         style={[
           styles.followBtn,
           {
-            backgroundColor: followed ? colors.card : "#7c3aed",
-            borderColor: followed ? colors.border : "#7c3aed",
+            backgroundColor: followed ? colors.card : "#C0392B",
+            borderColor: followed ? colors.border : "#C0392B",
           },
         ]}
       >

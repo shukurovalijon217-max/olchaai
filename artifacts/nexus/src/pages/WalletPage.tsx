@@ -26,7 +26,7 @@ const PAYMENT_PROVIDERS = [
   { id: "mastercard", label: "Mastercard",             logo: "🔴", color: "#eb001b", textColor: "#fff", desc: "Mastercard karta" },
   { id: "click",      label: "Click",                  logo: "🟢", color: "#00b050", textColor: "#fff", desc: "O'zbek to'lov tizimi" },
   { id: "payme",      label: "Payme",                  logo: "🔵", color: "#00afef", textColor: "#fff", desc: "Payme mobil to'lov" },
-  { id: "global",     label: "Global Payment Gateway", logo: "🌐", color: "#7c3aed", textColor: "#fff", desc: "Xalqaro to'lov tizimi" },
+  { id: "global",     label: "Global Payment Gateway", logo: "🌐", color: "#C0392B", textColor: "#fff", desc: "Xalqaro to'lov tizimi" },
 ];
 
 const TX_TYPE_META: Record<string, { label: string; icon: typeof ArrowDownCircle; color: string }> = {
@@ -36,7 +36,7 @@ const TX_TYPE_META: Record<string, { label: string; icon: typeof ArrowDownCircle
   transfer_out:    { label: "wallet.transfer",       icon: ArrowLeftRight,  color: "text-orange-400" },
   ad_revenue:      { label: "wallet.ad_revenue",     icon: Megaphone,       color: "text-yellow-400" },
   content_revenue: { label: "wallet.content_revenue",icon: TrendingUp,      color: "text-emerald-400" },
-  referral:        { label: "wallet.referral",       icon: CheckCircle2,    color: "text-purple-400" },
+  referral:        { label: "wallet.referral",       icon: CheckCircle2,    color: "text-amber-400" },
 };
 
 const PM_ICONS: Record<string, string> = {

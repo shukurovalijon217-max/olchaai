@@ -87,7 +87,7 @@ function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => 
             <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
               <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: msg.role === "user" ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "linear-gradient(135deg,#3b82f6,#6366f1)" }}>
+                style={{ background: msg.role === "user" ? "linear-gradient(135deg,#C0392B,#B8860B)" : "linear-gradient(135deg,#3b82f6,#6366f1)" }}>
                 {msg.role === "user" ? <User className="w-3.5 h-3.5 text-white" /> : <Bot className="w-3.5 h-3.5 text-white" />}
               </div>
               <div className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm ${msg.role === "user" ? "bg-primary/20 text-white rounded-tr-sm" : "bg-blue-500/10 border border-blue-500/20 text-white/90 rounded-tl-sm"}`}>

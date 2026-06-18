@@ -19,7 +19,7 @@ interface Task { id: number; spaceId: number; title: string; description: string
 const CATEGORIES = [
   { key: "general", label: "Umumiy", icon: Globe, color: "#6366f1" },
   { key: "tech", label: "Texnologiya", icon: Code, color: "#3b82f6" },
-  { key: "design", label: "Dizayn", icon: Palette, color: "#a855f7" },
+  { key: "design", label: "Dizayn", icon: Palette, color: "#B8860B" },
   { key: "business", label: "Biznes", icon: TrendingUp, color: "#10b981" },
   { key: "music", label: "Musiqa", icon: Music, color: "#ec4899" },
   { key: "education", label: "Ta'lim", icon: BookOpen, color: "#f59e0b" },
@@ -319,13 +319,15 @@ export default function CoSpacesPage() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-white font-bold text-xl flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-400" /> {t("spaces.title")}
+              <Users className="w-5 h-5 text-amber-500" /> {t("spaces.title")}
             </h1>
             <p className="text-white/40 text-xs mt-0.5">{t("spaces.subtitle")}</p>
           </div>
           {user && (
             <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-500 text-white text-sm hover:bg-indigo-600 transition-colors">
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-white text-sm transition-colors" style={{ background: "#C0392B" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#a93226")}
+              onMouseLeave={e => (e.currentTarget.style.background = "#C0392B")}>
               <Plus className="w-4 h-4" /> {t("spaces.room_btn")}
             </motion.button>
           )}
@@ -333,7 +335,8 @@ export default function CoSpacesPage() {
 
         <div className="flex gap-2 overflow-x-auto pb-1">
           <button onClick={() => setSelectedCat("all")}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCat === "all" ? "bg-indigo-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCat === "all" ? "text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}
+            style={selectedCat === "all" ? { background: "#C0392B" } : {}}>
             {t("spaces.all")}
           </button>
           {CATEGORIES.map(c => (
@@ -348,13 +351,13 @@ export default function CoSpacesPage() {
 
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 text-indigo-400 animate-spin" /></div>
+          <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 text-amber-500 animate-spin" /></div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <Users className="w-16 h-16 text-indigo-400/20 mb-4" />
+            <Users className="w-16 h-16 text-amber-500/20 mb-4" />
             <p className="text-white/30 text-sm">{t("spaces.no_rooms")}</p>
             {user && <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowCreate(true)}
-              className="mt-4 px-4 py-2 rounded-xl bg-indigo-500 text-white text-sm">
+              className="mt-4 px-4 py-2 rounded-xl text-white text-sm" style={{ background: "#C0392B" }}>
               {t("spaces.be_first")}
             </motion.button>}
           </div>

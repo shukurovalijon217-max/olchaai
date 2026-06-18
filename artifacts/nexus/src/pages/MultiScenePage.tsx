@@ -20,7 +20,7 @@ interface Scenario {
 const CATEGORY_COLORS: Record<string, string> = {
   adventure: "from-emerald-500 to-teal-500",
   romance: "from-pink-500 to-rose-500",
-  mystery: "from-purple-500 to-indigo-500",
+  mystery: "from-red-700 to-amber-700",
   comedy: "from-amber-500 to-yellow-500",
   drama: "from-blue-500 to-cyan-500",
   horror: "from-red-700 to-red-500",

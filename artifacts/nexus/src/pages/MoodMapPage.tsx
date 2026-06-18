@@ -15,7 +15,7 @@ const MOODS = [
   { key: "energetic", label: "Energetik", emoji: "⚡", icon: Zap, color: "#f59e0b", bg: "from-amber-500/20 to-yellow-500/10", desc: "Kuchli, faol, harakat qilgim kelyapti" },
   { key: "calm", label: "Xotirjam", emoji: "🧘", icon: Moon, color: "#06b6d4", bg: "from-cyan-500/20 to-teal-500/10", desc: "Tinch, muvozanatlangan, huzurli" },
   { key: "creative", label: "Ijodiy", emoji: "🎨", icon: Star, color: "#C0392B", bg: "from-red-900/20 to-amber-900/10", desc: "G'oyalar bor, yaratgim kelyapti" },
-  { key: "philosophical", label: "Falsafiy", emoji: "🤔", icon: Brain, color: "#6366f1", bg: "from-indigo-500/20 to-blue-500/10", desc: "Chuqur fikrlar, savollar" },
+  { key: "philosophical", label: "Falsafiy", emoji: "🤔", icon: Brain, color: "#B8860B", bg: "from-amber-900/20 to-yellow-900/10", desc: "Chuqur fikrlar, savollar" },
   { key: "social", label: "Ijtimoiy", emoji: "🤝", icon: Heart, color: "#ec4899", bg: "from-pink-500/20 to-rose-500/10", desc: "Odamlar bilan muloqot qilgim kelyapti" },
   { key: "focused", label: "Diqqatli", emoji: "🎯", icon: Flame, color: "#ef4444", bg: "from-red-500/20 to-rose-500/10", desc: "Ish ustida, konsentratsiyalangan" },
   { key: "melancholic", label: "Melanxolik", emoji: "🌧️", icon: Coffee, color: "#94a3b8", bg: "from-slate-500/20 to-gray-500/10", desc: "Nostalgi, fikrli kayfiyat" },

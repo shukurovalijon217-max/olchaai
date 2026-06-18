@@ -175,7 +175,7 @@ function SpeakButton3D({ text, lang, isActive, onClick, label = "O'qish" }: {
           : "bg-gradient-to-br from-slate-500 via-slate-600 to-slate-800"}`} />
         <div className="absolute inset-x-0 top-0 h-px bg-white/40" />
         <div className="absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-white/22 to-transparent rounded-t-[22px]" />
-        <div className={`absolute inset-x-0 bottom-0 h-1.5 ${isActive ? "bg-purple-900/60" : "bg-black/40"}`} />
+        <div className={`absolute inset-x-0 bottom-0 h-1.5 ${isActive ? "bg-red-900/60" : "bg-black/40"}`} />
         <motion.div style={{ left: glareX, top: glareY, x: "-50%", y: "-50%" }}
           className="absolute w-14 h-14 rounded-full bg-white/28 blur-lg pointer-events-none" />
         {/* Content */}
@@ -230,7 +230,7 @@ function TranslateButton3D({ loading, disabled, onClick }: {
     <div ref={wrapRef} onMouseMove={onMove} onMouseLeave={() => { mx.set(0); my.set(0); }}
       style={{ perspective: 900 }} className="relative">
       {/* Depth shadow blob */}
-      <div className="absolute inset-x-8 bottom-0 translate-y-3 h-full rounded-2xl bg-indigo-700/50 blur-2xl pointer-events-none" />
+      <div className="absolute inset-x-8 bottom-0 translate-y-3 h-full rounded-2xl bg-red-900/50 blur-2xl pointer-events-none" />
       <motion.button onClick={onClick} disabled={disabled || loading} onHoverStart={onHoverStart}
         whileTap={{ scale: 0.975, rotateX: 5 }}
         style={{ rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }}

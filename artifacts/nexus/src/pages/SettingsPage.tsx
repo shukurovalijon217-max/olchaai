@@ -510,7 +510,7 @@ function LangRow({ lang, current, onSelect }: { lang: typeof LANGUAGES[0]; curre
         <p className="text-sm font-semibold text-white truncate">{lang.native}</p>
         <p className="text-xs text-white/40 truncate">{lang.name}</p>
       </div>
-      {lang.rtl && <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 flex-shrink-0">RTL</span>}
+      {lang.rtl && <span className="text-xs px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(184,134,11,0.2)", color: "#D4A020" }}>RTL</span>}
       {isSelected && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500 }}><Check className="w-4 h-4 text-cyan-400 flex-shrink-0" /></motion.div>}
     </motion.button>
   );
@@ -551,7 +551,7 @@ function LanguageContent() {
             <p className="text-sm font-semibold text-white">{currentLang!.native}</p>
             <p className="text-xs text-white/40">{currentLang!.name}</p>
           </div>
-          {currentLang!.rtl && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">RTL</span>}
+          {currentLang!.rtl && <span className="text-xs px-2 py-0.5 rounded-full border" style={{ background: "rgba(184,134,11,0.2)", color: "#D4A020", borderColor: "rgba(184,134,11,0.3)" }}>RTL</span>}
           <Check className="w-5 h-5 text-cyan-400" />
         </div>
       </SF>

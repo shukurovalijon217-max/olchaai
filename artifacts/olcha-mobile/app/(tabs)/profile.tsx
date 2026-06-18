@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { useColors } from "@/hooks/useColors";
@@ -19,8 +20,11 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
 import { LANGUAGES, changeLanguage, type LangCode } from "@/lib/i18n";
 
-const DEMO_STATS_KEYS = ["Postlar", "Kuzatuvchilar", "Kuzatilayotgan"];
-const DEMO_STATS_VALS = ["48", "1.2K", "340"];
+const DEMO_STATS = [
+  { label: "Postlar", value: "48" },
+  { label: "Kuzatuvchilar", value: "1.2K" },
+  { label: "Kuzatilmoqda", value: "340" },
+];
 
 const POPULAR: LangCode[] = ["uz", "en", "ru", "zh", "ar", "es", "fr", "hi", "tr", "de", "ja", "ko"];
 
@@ -80,37 +84,59 @@ export default function ProfileScreen() {
     <>
       <ScrollView
         style={[styles.root, { backgroundColor: colors.background }]}
-        contentContainerStyle={{ paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0) + 80 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0) + 90 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + webTopPadding, borderBottomColor: colors.border }]}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>@{displayUser.username}</Text>
           <View style={styles.headerActions}>
-            <Pressable onPress={() => setLangOpen(true)} style={[styles.langBtn, { borderColor: colors.border }]}>
-              <Text style={styles.langFlag}>{currentLang.flag}</Text>
-              <Feather name="globe" size={14} color={colors.mutedForeground} />
+            <Pressable
+              onPress={() => setLangOpen(true)}
+              style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <Text style={{ fontSize: 14 }}>{currentLang.flag}</Text>
             </Pressable>
-            <Pressable onPress={handleLogout} style={{ marginLeft: 12 }}>
-              <Feather name="log-out" size={20} color={colors.mutedForeground} />
+            <Pressable
+              onPress={handleLogout}
+              style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <Feather name="log-out" size={16} color={colors.mutedForeground} />
             </Pressable>
           </View>
         </View>
 
+        {/* Cover gradient */}
+        <LinearGradient
+          colors={["rgba(192,57,43,0.2)", "rgba(184,134,11,0.1)", "transparent"]}
+          style={styles.coverGrad}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+
+        {/* Profile section */}
         <View style={styles.profileSection}>
           <View style={styles.avatarRow}>
-            <UserAvatar uri={displayUser.avatarUrl} name={displayUser.displayName} size={80} isVerified={displayUser.isVerified} />
+            <View style={[styles.avatarRing, { borderColor: colors.primary }]}>
+              <UserAvatar uri={displayUser.avatarUrl} name={displayUser.displayName} size={76} isVerified={displayUser.isVerified} />
+            </View>
             <View style={styles.statsRow}>
-              {DEMO_STATS_KEYS.map((label, i) => (
-                <View key={label} style={styles.stat}>
-                  <Text style={[styles.statValue, { color: colors.foreground }]}>{DEMO_STATS_VALS[i]}</Text>
-                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{label}</Text>
+              {DEMO_STATS.map((stat) => (
+                <View key={stat.label} style={styles.stat}>
+                  <Text style={[styles.statValue, { color: colors.foreground }]}>{stat.value}</Text>
+                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
                 </View>
               ))}
             </View>
           </View>
 
           <View style={styles.bioSection}>
-            <Text style={[styles.displayName, { color: colors.foreground }]}>{displayUser.displayName}</Text>
+            <View style={styles.nameRow}>
+              <Text style={[styles.displayName, { color: colors.foreground }]}>{displayUser.displayName}</Text>
+              {displayUser.isVerified && (
+                <Feather name="check-circle" size={15} color={colors.gold} style={{ marginLeft: 6 }} />
+              )}
+            </View>
             <Text style={[styles.bio, { color: colors.mutedForeground }]}>
               {displayUser.bio || "OlCha foydalanuvchisi 🌟"}
             </Text>
@@ -118,26 +144,47 @@ export default function ProfileScreen() {
 
           <View style={styles.actionRow}>
             <Pressable style={[styles.editBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="edit-2" size={14} color={colors.foreground} style={{ marginRight: 6 }} />
               <Text style={[styles.editText, { color: colors.foreground }]}>Profilni tahrirlash</Text>
             </Pressable>
-            <Pressable style={[styles.shareBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Pressable style={[styles.iconBtnSq, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="share-2" size={16} color={colors.foreground} />
             </Pressable>
           </View>
         </View>
 
-        <View style={[styles.gridHeader, { borderTopColor: colors.border, borderBottomColor: colors.border }]}>
-          <Pressable style={styles.gridTab}><Feather name="grid" size={22} color={colors.primary} /></Pressable>
-          <Pressable style={styles.gridTab}><Feather name="bookmark" size={22} color={colors.mutedForeground} /></Pressable>
-          <Pressable style={styles.gridTab}><Feather name="tag" size={22} color={colors.mutedForeground} /></Pressable>
+        {/* Premium badge */}
+        <View style={[styles.premiumBanner, { borderColor: "rgba(184,134,11,0.3)" }]}>
+          <LinearGradient
+            colors={["rgba(184,134,11,0.12)", "rgba(192,57,43,0.08)"]}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          />
+          <Feather name="star" size={14} color={colors.gold} />
+          <Text style={[styles.premiumText, { color: colors.gold }]}>OlCha Premium'ga o'tish</Text>
+          <Feather name="chevron-right" size={14} color={colors.gold} style={{ marginLeft: "auto" }} />
         </View>
 
+        {/* Grid tabs */}
+        <View style={[styles.gridHeader, { borderTopColor: colors.border, borderBottomColor: colors.border }]}>
+          <Pressable style={styles.gridTab}>
+            <Feather name="grid" size={20} color={colors.primary} />
+            <View style={[styles.activeTabLine, { backgroundColor: colors.primary }]} />
+          </Pressable>
+          <Pressable style={styles.gridTab}>
+            <Feather name="bookmark" size={20} color={colors.mutedForeground} />
+          </Pressable>
+          <Pressable style={styles.gridTab}>
+            <Feather name="tag" size={20} color={colors.mutedForeground} />
+          </Pressable>
+        </View>
+
+        {/* Post grid */}
         <View style={styles.grid}>
           {DEMO_POSTS.map((post) => (
             <View key={post.id} style={[styles.gridItem, { backgroundColor: colors.card }]}>
-              <View style={styles.gridPlaceholder}>
-                <Feather name="image" size={24} color={colors.mutedForeground} />
-              </View>
+              <Feather name="image" size={22} color={colors.border} />
             </View>
           ))}
         </View>
@@ -146,19 +193,23 @@ export default function ProfileScreen() {
       {/* Language Modal */}
       <Modal visible={langOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setLangOpen(false)}>
         <View style={[styles.modal, { backgroundColor: colors.background }]}>
-          {/* Modal header */}
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <View>
               <Text style={[styles.modalTitle, { color: colors.foreground }]}>{t("lang.title")}</Text>
               <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>{t("lang.subtitle")}</Text>
             </View>
-            <Pressable onPress={() => { setLangOpen(false); setSearch(""); }} style={[styles.closeBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="x" size={18} color={colors.foreground} />
+            <Pressable onPress={() => { setLangOpen(false); setSearch(""); }} style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="x" size={16} color={colors.foreground} />
             </Pressable>
           </View>
 
-          {/* Current language */}
           <View style={[styles.currentLang, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <LinearGradient
+              colors={["rgba(192,57,43,0.1)", "rgba(184,134,11,0.08)"]}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            />
             <Text style={styles.currentFlag}>{currentLang.flag}</Text>
             <View style={{ flex: 1 }}>
               <Text style={[styles.currentLabel, { color: colors.mutedForeground }]}>{t("lang.current")}</Text>
@@ -166,15 +217,14 @@ export default function ProfileScreen() {
             </View>
             {applied && (
               <View style={[styles.appliedBadge, { backgroundColor: "#22c55e20" }]}>
-                <Feather name="check" size={14} color="#22c55e" />
+                <Feather name="check" size={13} color="#22c55e" />
                 <Text style={[styles.appliedText, { color: "#22c55e" }]}>{t("lang.applied")}</Text>
               </View>
             )}
           </View>
 
-          {/* Search */}
           <View style={[styles.searchRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="search" size={16} color={colors.mutedForeground} />
+            <Feather name="search" size={15} color={colors.mutedForeground} />
             <TextInput
               value={search}
               onChangeText={setSearch}
@@ -184,12 +234,11 @@ export default function ProfileScreen() {
             />
             {search.length > 0 && (
               <Pressable onPress={() => setSearch("")}>
-                <Feather name="x-circle" size={16} color={colors.mutedForeground} />
+                <Feather name="x-circle" size={15} color={colors.mutedForeground} />
               </Pressable>
             )}
           </View>
 
-          {/* Language list */}
           <FlatList
             data={[
               ...(!search ? [{ type: "header" as const, label: t("lang.popular") }] : []),
@@ -201,9 +250,7 @@ export default function ProfileScreen() {
             contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
             renderItem={({ item }) => {
               if (item.type === "header") {
-                return (
-                  <Text style={[styles.sectionHeader, { color: colors.mutedForeground }]}>{item.label}</Text>
-                );
+                return <Text style={[styles.sectionHeader, { color: colors.mutedForeground }]}>{item.label}</Text>;
               }
               const isSelected = item.code === currentCode;
               return (
@@ -212,7 +259,7 @@ export default function ProfileScreen() {
                   style={[
                     styles.langRow,
                     { borderBottomColor: colors.border },
-                    isSelected && { backgroundColor: colors.primary + "18" },
+                    isSelected && { backgroundColor: "rgba(192,57,43,0.08)" },
                   ]}
                 >
                   <Text style={styles.rowFlag}>{item.flag}</Text>
@@ -221,11 +268,11 @@ export default function ProfileScreen() {
                     <Text style={[styles.rowName, { color: colors.mutedForeground }]}>{item.name}</Text>
                   </View>
                   {item.rtl && (
-                    <View style={[styles.rtlBadge, { backgroundColor: "#a855f720" }]}>
-                      <Text style={{ color: "#a855f7", fontSize: 10, fontFamily: "Inter_500Medium" }}>RTL</Text>
+                    <View style={[styles.rtlBadge, { backgroundColor: "rgba(184,134,11,0.15)" }]}>
+                      <Text style={{ color: colors.gold, fontSize: 10, fontFamily: "Inter_500Medium" }}>RTL</Text>
                     </View>
                   )}
-                  {isSelected && <Feather name="check" size={18} color={colors.primary} />}
+                  {isSelected && <Feather name="check" size={16} color={colors.primary} />}
                 </Pressable>
               );
             }}
@@ -243,47 +290,75 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingBottom: 12,
     borderBottomWidth: 0.5,
     paddingTop: 8,
   },
   headerTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  headerActions: { flexDirection: "row", alignItems: "center" },
-  langBtn: {
+  headerActions: { flexDirection: "row", gap: 8 },
+  iconBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 0.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  coverGrad: { height: 80, marginTop: -1 },
+  profileSection: { paddingHorizontal: 16, paddingTop: 0, paddingBottom: 16, gap: 12, marginTop: -20 },
+  avatarRow: { flexDirection: "row", alignItems: "center", gap: 20 },
+  avatarRing: { borderRadius: 44, borderWidth: 2, padding: 2 },
+  statsRow: { flex: 1, flexDirection: "row", justifyContent: "space-around" },
+  stat: { alignItems: "center", gap: 3 },
+  statValue: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  bioSection: { gap: 5 },
+  nameRow: { flexDirection: "row", alignItems: "center" },
+  displayName: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  bio: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  actionRow: { flexDirection: "row", gap: 10 },
+  editBtn: {
+    flex: 1,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 0.5,
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 20,
-    borderWidth: 1,
+    justifyContent: "center",
   },
-  langFlag: { fontSize: 16 },
-  profileSection: { padding: 16, gap: 12 },
-  avatarRow: { flexDirection: "row", alignItems: "center", gap: 20 },
-  statsRow: { flex: 1, flexDirection: "row", justifyContent: "space-around" },
-  stat: { alignItems: "center", gap: 2 },
-  statValue: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  bioSection: { gap: 4 },
-  displayName: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  bio: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 },
-  actionRow: { flexDirection: "row", gap: 10, marginTop: 4 },
-  editBtn: { flex: 1, height: 36, borderRadius: 8, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  editText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  shareBtn: { width: 36, height: 36, borderRadius: 8, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  editText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  iconBtnSq: { width: 36, height: 36, borderRadius: 10, borderWidth: 0.5, alignItems: "center", justifyContent: "center" },
+  premiumBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  premiumText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   gridHeader: { flexDirection: "row", borderTopWidth: 0.5, borderBottomWidth: 0.5 },
-  gridTab: { flex: 1, paddingVertical: 12, alignItems: "center" },
+  gridTab: { flex: 1, paddingVertical: 12, alignItems: "center", position: "relative" },
+  activeTabLine: { position: "absolute", bottom: 0, left: "20%", right: "20%", height: 2, borderRadius: 1 },
   grid: { flexDirection: "row", flexWrap: "wrap" },
-  gridItem: { width: "33.33%", aspectRatio: 1, borderWidth: 0.5, borderColor: "#000", alignItems: "center", justifyContent: "center" },
-  gridPlaceholder: { alignItems: "center", justifyContent: "center" },
+  gridItem: {
+    width: "33.33%",
+    aspectRatio: 1,
+    borderWidth: 0.5,
+    borderColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   // Modal
   modal: { flex: 1 },
   modalHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", padding: 20, paddingTop: 24, borderBottomWidth: 0.5 },
   modalTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 2 },
   modalSubtitle: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  closeBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  currentLang: { flexDirection: "row", alignItems: "center", gap: 12, margin: 16, padding: 14, borderRadius: 14, borderWidth: 1 },
+  currentLang: { flexDirection: "row", alignItems: "center", gap: 12, margin: 16, padding: 14, borderRadius: 14, borderWidth: 1, overflow: "hidden" },
   currentFlag: { fontSize: 28 },
   currentLabel: { fontSize: 11, fontFamily: "Inter_400Regular", marginBottom: 1 },
   currentName: { fontSize: 15, fontFamily: "Inter_600SemiBold" },

@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -72,8 +73,29 @@ function sentimentEmoji(s?: string) {
 }
 
 /* ─── Media / Gradient Background ───────────────────── */
+const MEDIA_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+
+function mediaUri(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  return `${MEDIA_BASE}${url}`;
+}
+
 function CardBg({ post, style }: { post: Post; style?: object }) {
   const grad = CARD_GRADS[(post.id ?? 0) % CARD_GRADS.length];
+  const uri = mediaUri(post.mediaUrl);
+  if (uri) {
+    return (
+      <>
+        <Image
+          source={{ uri }}
+          style={[StyleSheet.absoluteFillObject, { resizeMode: "cover" }]}
+        />
+        {/* Subtle dark overlay so text stays readable */}
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.22)" }]} />
+      </>
+    );
+  }
   return (
     <LinearGradient
       colors={[grad[0], grad[1], grad[2]]}
@@ -291,8 +313,18 @@ function ImmersiveOverlay({ post, visible, onClose }: { post: Post | null; visib
   return (
     <Modal visible={visible} animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <View style={styles.immRoot}>
-        {/* Background */}
-        <LinearGradient colors={[grad[0], grad[1], grad[2]]} style={StyleSheet.absoluteFillObject} />
+        {/* Background — real media or gradient */}
+        {mediaUri(post.mediaUrl) ? (
+          <>
+            <Image
+              source={{ uri: mediaUri(post.mediaUrl)! }}
+              style={[StyleSheet.absoluteFillObject, { resizeMode: "cover" }]}
+            />
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.35)" }]} />
+          </>
+        ) : (
+          <LinearGradient colors={[grad[0], grad[1], grad[2]]} style={StyleSheet.absoluteFillObject} />
+        )}
         <LinearGradient colors={["rgba(0,0,0,0.3)", "transparent", "rgba(0,0,0,0.6)"]} style={StyleSheet.absoluteFillObject} />
 
         {/* Close */}

@@ -9,12 +9,12 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { PostCard } from "@/components/PostCard";
 import { StoryBar } from "@/components/StoryBar";
-import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
 import { apiGet, type Post } from "@/lib/api";
 
@@ -50,7 +50,7 @@ export default function FeedScreen() {
     },
     {
       id: 4, userId: 4, content: "Musiqa — ruhning ozuqasi. Yangi albomim chiqdi! Barcha platformalarda tinglab ko'ring 🎵", mediaUrl: null, type: "text", likesCount: 512, commentsCount: 89, createdAt: new Date(Date.now() - 7200000).toISOString(),
-      user: { id: 4, username: "jasur_art", displayName: "Jasur Artistov", avatarUrl: null, isVerified: true }
+      user: { id: 4, username: "jasur_art", displayName: "Jasur Artistov", avatarUrl: null, isVerified: false }
     },
   ];
 
@@ -60,26 +60,41 @@ export default function FeedScreen() {
   const webBottomPadding = Platform.OS === "web" ? 34 : 0;
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <View style={styles.root}>
+      {/* Aurora background */}
+      <LinearGradient
+        colors={["#070b15", "#0a0d1e", "#070b15"]}
+        style={StyleSheet.absoluteFillObject}
+      />
+      {/* Top aurora glow */}
+      <View style={[styles.auroraGlow, { pointerEvents: "none" } as any]} />
+
+      {/* Header */}
       <View
         style={[
           styles.header,
           {
             paddingTop: insets.top + (Platform.OS === "web" ? webTopPadding : 0),
-            backgroundColor: colors.background,
             borderBottomColor: colors.border,
           },
         ]}
       >
-        <Text style={[styles.logo, { color: colors.gold }]}>OlCha</Text>
+        <Text style={styles.logo}>OlCha</Text>
         <View style={styles.headerActions}>
-          <Pressable style={styles.headerBtn}>
-            <Feather name="bell" size={22} color={colors.foreground} />
+          <Pressable style={[styles.headerBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="bell" size={19} color={colors.foreground} />
           </Pressable>
-          <Pressable style={styles.headerBtn}>
-            <Feather name="send" size={22} color={colors.foreground} />
+          <Pressable style={[styles.headerBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="send" size={19} color={colors.foreground} />
           </Pressable>
-          <UserAvatar uri={user?.avatarUrl} name={user?.displayName} size={28} />
+          <LinearGradient
+            colors={["#7c3aed", "#a855f7"]}
+            style={styles.avatarGrad}
+          >
+            <Text style={styles.avatarInitial}>
+              {(user?.displayName ?? "O")[0].toUpperCase()}
+            </Text>
+          </LinearGradient>
         </View>
       </View>
 
@@ -91,11 +106,10 @@ export default function FeedScreen() {
           keyExtractor={(item) => `post-${item.id}`}
           renderItem={({ item }) => <PostCard post={item} />}
           ListHeaderComponent={<StoryBar stories={[]} />}
-          ItemSeparatorComponent={() => <View style={[styles.sep, { backgroundColor: colors.border }]} />}
           refreshing={refreshing}
           onRefresh={onRefresh}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + webBottomPadding + 80 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + webBottomPadding + 80, paddingTop: 4 }}
         />
       )}
     </View>
@@ -103,18 +117,52 @@ export default function FeedScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, backgroundColor: "#070b15" },
+  auroraGlow: {
+    position: "absolute",
+    top: -80,
+    left: "20%",
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: "rgba(124,58,237,0.15)",
+    ...Platform.select({ web: { filter: "blur(50px)" } }),
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 10,
-    borderBottomWidth: 0.5,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(30,42,61,0.8)",
   },
-  logo: { fontSize: 26, fontFamily: "Inter_700Bold", letterSpacing: 2 },
-  headerActions: { flexDirection: "row", alignItems: "center", gap: 12 },
-  headerBtn: { padding: 2 },
+  logo: {
+    fontSize: 26,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 2,
+    color: "#a78bfa",
+  },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  headerBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarGrad: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarInitial: {
+    color: "#fff",
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+  },
   loader: { flex: 1, alignSelf: "center" },
-  sep: { height: 0.5 },
 });

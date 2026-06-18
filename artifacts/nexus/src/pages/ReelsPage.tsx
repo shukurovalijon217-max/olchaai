@@ -363,7 +363,7 @@ function ReelVideoEl({ videoUrl, thumbnailUrl, isActive, muted, videoRef, onPlay
       {loading && !error && !thumbnailUrl && (
         <div className="absolute inset-0 flex items-center justify-center z-[3] pointer-events-none">
           <div className="relative">
-            <div className="w-14 h-14 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin" />
+            <div className="w-14 h-14 rounded-full border-2 border-white/10 border-t-amber-500 animate-spin" />
             <div className="absolute inset-2 rounded-full border border-white/5 border-t-pink-400 animate-spin" style={{ animationDuration: "0.7s", animationDirection: "reverse" }} />
           </div>
         </div>
@@ -444,7 +444,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
         <div ref={listRef} className="overflow-y-auto px-4 py-3 space-y-4" style={{ maxHeight: "calc(75vh - 140px)" }}>
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-violet-400 animate-spin" />
+              <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-amber-500 animate-spin" />
             </div>
           ) : comments.length === 0 ? (
             <div className="text-center py-8">
@@ -453,7 +453,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
           ) : comments.map((c, i) => (
             <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }} className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600/60 to-pink-600/60 flex-shrink-0 flex items-center justify-center overflow-hidden border border-white/10">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-700/60 to-amber-700/60 flex-shrink-0 flex items-center justify-center overflow-hidden border border-white/10">
                 {c.author.avatarUrl
                   ? <img src={c.author.avatarUrl} alt="" className="w-full h-full object-cover" />
                   : <span className="text-xs font-bold text-white">{c.author.displayName?.[0]?.toUpperCase()}</span>
@@ -462,7 +462,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="text-white text-xs font-semibold">{c.author.displayName}</span>
-                  {c.author.isVerified && <BadgeCheck className="w-3 h-3 text-violet-400" />}
+                  {c.author.isVerified && <BadgeCheck className="w-3 h-3 text-amber-400" />}
                   <span className="text-white/30 text-[10px] ml-auto">
                     {new Date(c.createdAt).toLocaleDateString(i18n.language, { month: "short", day: "numeric" })}
                   </span>
@@ -474,7 +474,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
         </div>
 
         <div className="px-4 py-3 flex items-center gap-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600/60 to-pink-600/60 flex-shrink-0 flex items-center justify-center overflow-hidden">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-700/60 to-amber-700/60 flex-shrink-0 flex items-center justify-center overflow-hidden">
             {user?.avatarUrl
               ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
               : <span className="text-xs font-bold text-white">{user?.displayName?.[0]?.toUpperCase() ?? "?"}</span>
@@ -1255,7 +1255,7 @@ export default function ReelsPage() {
       {isLoading && feed.length === 0 ? (
         <div className="flex flex-col items-center gap-5 z-10">
           <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-2 border-white/10 border-t-amber-500 animate-spin" />
             <div className="absolute inset-3 rounded-full border border-white/10 border-t-pink-400 animate-spin" style={{ animationDuration: "0.6s", animationDirection: "reverse" }} />
           </div>
           <p className="text-white/40 text-sm font-medium">OlCha lenta yuklanmoqda…</p>

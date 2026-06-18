@@ -38,7 +38,7 @@ function BranchTree({ branches, onSelect, currentId }: { branches: Branch[]; onS
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => onSelect(branch)}
-          className={`text-xs px-3 py-1.5 rounded-full border transition-all ${isCurrent ? "border-violet-500 bg-violet-500/20 text-violet-300" : "border-white/20 bg-white/5 text-white/70 hover:border-white/40"}`}
+          className={`text-xs px-3 py-1.5 rounded-full border transition-all ${isCurrent ? "border-primary bg-primary/20 text-amber-300" : "border-white/20 bg-white/5 text-white/70 hover:border-white/40"}`}
         >
           {branch.choiceEmoji} {branch.choiceText.slice(0, 20)}
         </motion.button>
@@ -69,13 +69,13 @@ function ScenarioCard({ sc, onClick }: { sc: Scenario; onClick: () => void }) {
       whileHover={{ scale: 1.02, y: -4 }}
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className="cursor-pointer rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-violet-500/50 transition-all"
+      className="cursor-pointer rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-primary/50 transition-all"
     >
-      <div className="aspect-video bg-gradient-to-br from-violet-900/50 to-purple-900/30 flex items-center justify-center relative">
+      <div className="aspect-video bg-gradient-to-br from-red-950/50 to-amber-950/30 flex items-center justify-center relative">
         {sc.thumbnail ? (
           <img src={sc.thumbnail} alt="" className="w-full h-full object-cover absolute inset-0" />
         ) : (
-          <GitBranch className="w-12 h-12 text-violet-400/50" />
+          <GitBranch className="w-12 h-12 text-amber-400/50" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         <div className="absolute bottom-2 left-3 right-3">
@@ -83,7 +83,7 @@ function ScenarioCard({ sc, onClick }: { sc: Scenario; onClick: () => void }) {
             <Eye className="w-3 h-3" /> {sc.viewCount}
           </div>
         </div>
-        <div className="absolute top-2 right-2 bg-violet-500 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+        <div className="absolute top-2 right-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
           <GitBranch className="w-2.5 h-2.5" /> Interactive
         </div>
       </div>
@@ -126,7 +126,7 @@ function PlayerView({ scenario, onBack }: { scenario: Scenario; onBack: () => vo
           <div className="text-white/40 text-xs">{t("multiscene.step")} {path.length}/{Math.max(path.length, branches.length)}</div>
         </div>
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowTree(!showTree)}
-          className={`p-2 rounded-xl transition-colors ${showTree ? "bg-violet-500/30 text-violet-300" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>
+          className={`p-2 rounded-xl transition-colors ${showTree ? "bg-primary/30 text-amber-300" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>
           <GitBranch className="w-4 h-4" />
         </motion.button>
         <motion.button whileTap={{ scale: 0.9 }} onClick={restart} className="p-2 rounded-xl bg-white/5 hover:bg-white/10">
@@ -149,7 +149,7 @@ function PlayerView({ scenario, onBack }: { scenario: Scenario; onBack: () => vo
             <video ref={videoRef} src={current.videoUrl} controls autoPlay className="w-full h-full object-contain max-h-[50vh]" />
           ) : (
             <div className="flex flex-col items-center gap-3 text-center p-8">
-              <Film className="w-16 h-16 text-violet-400/40" />
+              <Film className="w-16 h-16 text-amber-400/40" />
               <p className="text-white/40 text-sm">{current?.choiceText ?? t("multiscene.start_point")}</p>
               {path.length > 1 && (
                 <div className="flex flex-wrap gap-2 justify-center mt-2">
@@ -175,7 +175,7 @@ function PlayerView({ scenario, onBack }: { scenario: Scenario; onBack: () => vo
                     whileHover={{ scale: 1.02, x: 6 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => pickChoice(choice)}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-violet-500/60 hover:bg-violet-500/10 text-left transition-all"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-primary/60 hover:bg-primary/10 text-left transition-all"
                   >
                     <span className="text-2xl">{choice.choiceEmoji}</span>
                     <span className="text-white text-sm font-medium">{choice.choiceText}</span>
@@ -185,10 +185,10 @@ function PlayerView({ scenario, onBack }: { scenario: Scenario; onBack: () => vo
             </>
           ) : (
             <div className="text-center py-4">
-              <Sparkles className="w-8 h-8 text-violet-400 mx-auto mb-2" />
+              <Sparkles className="w-8 h-8 text-amber-400 mx-auto mb-2" />
               <p className="text-white/60 text-sm">{t("multiscene.end_reached")}</p>
               <motion.button whileTap={{ scale: 0.95 }} onClick={restart}
-                className="mt-3 px-4 py-2 rounded-xl bg-violet-500 text-white text-sm hover:bg-violet-600 transition-colors">
+                className="mt-3 px-4 py-2 rounded-xl bg-primary text-white text-sm hover:bg-red-700 transition-colors">
                 {t("multiscene.restart")}
               </motion.button>
               {path.length > 1 && (
@@ -234,17 +234,17 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
         <h3 className="text-white font-bold text-lg mb-4">{t("multiscene.new_scenario")}</h3>
         <input value={title} onChange={e => setTitle(e.target.value)}
           placeholder={t("multiscene.title_ph")}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-3 focus:outline-none focus:border-violet-500/60" />
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-3 focus:outline-none focus:border-primary/60" />
         <textarea value={description} onChange={e => setDescription(e.target.value)}
           placeholder={t("multiscene.desc_ph")}
           rows={3}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-4 focus:outline-none focus:border-violet-500/60 resize-none" />
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-4 focus:outline-none focus:border-primary/60 resize-none" />
         <div className="flex gap-2">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-white/5 text-white/60 text-sm hover:bg-white/10 transition-colors">
             {t("multiscene.cancel")}
           </button>
           <motion.button whileTap={{ scale: 0.95 }} onClick={handleCreate} disabled={loading || !title.trim()}
-            className="flex-1 py-2.5 rounded-xl bg-violet-500 text-white text-sm hover:bg-violet-600 transition-colors disabled:opacity-50">
+            className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm hover:bg-red-700 transition-colors disabled:opacity-50">
             {loading ? t("multiscene.creating") : t("multiscene.create")}
           </motion.button>
         </div>
@@ -292,13 +292,13 @@ export default function MultiScenePage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h1 className="text-white font-bold text-xl flex items-center gap-2">
-                  <GitBranch className="w-5 h-5 text-violet-400" /> {t("multiscene.title")}
+                  <GitBranch className="w-5 h-5 text-amber-400" /> {t("multiscene.title")}
                 </h1>
                 <p className="text-white/50 text-xs mt-0.5">{t("multiscene.subtitle")}</p>
               </div>
               {user && (
                 <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowCreate(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-500 text-white text-sm hover:bg-violet-600 transition-colors">
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary text-white text-sm hover:bg-red-700 transition-colors">
                   <Plus className="w-4 h-4" /> {t("multiscene.create_btn")}
                 </motion.button>
               )}
@@ -307,7 +307,7 @@ export default function MultiScenePage() {
             <div className="flex gap-2">
               {(["explore", "mine"] as const).map(tabKey => (
                 <button key={tabKey} onClick={() => setTab(tabKey)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${tab === tabKey ? "bg-violet-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${tab === tabKey ? "bg-primary text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>
                   {tabKey === "explore" ? <><Globe className="w-3 h-3 inline mr-1" />{t("multiscene.explore_tab")}</> : <><Lock className="w-3 h-3 inline mr-1" />{t("multiscene.mine_tab")}</>}
                 </button>
               ))}
@@ -323,10 +323,10 @@ export default function MultiScenePage() {
               </div>
             ) : scenarios.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center">
-                <GitBranch className="w-16 h-16 text-violet-400/30 mb-4" />
+                <GitBranch className="w-16 h-16 text-amber-400/30 mb-4" />
                 <p className="text-white/40 text-sm">{t("multiscene.no_scenarios")}</p>
                 {user && <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowCreate(true)}
-                  className="mt-4 px-4 py-2 rounded-xl bg-violet-500 text-white text-sm">
+                  className="mt-4 px-4 py-2 rounded-xl bg-primary text-white text-sm">
                   {t("multiscene.be_first")}
                 </motion.button>}
               </div>

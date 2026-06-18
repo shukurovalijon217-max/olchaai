@@ -257,9 +257,9 @@ function CreateSpaceModal({ onClose, onCreated }: { onClose: () => void; onCreat
         onClick={e => e.stopPropagation()}>
         <h3 className="text-white font-bold text-lg mb-4">{t("spaces.new_space")}</h3>
         <input value={name} onChange={e => setName(e.target.value)} placeholder={t("spaces.space_name_ph")}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-3 focus:outline-none focus:border-violet-500/60" />
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-3 focus:outline-none focus:border-primary/60" />
         <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("spaces.space_desc_ph")} rows={2}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-3 focus:outline-none focus:border-violet-500/60 resize-none" />
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-white/40 text-sm mb-3 focus:outline-none focus:border-primary/60 resize-none" />
         <div className="grid grid-cols-3 gap-2 mb-4">
           {CATEGORIES.map(c => (
             <button key={c.key} onClick={() => setCategory(c.key)}

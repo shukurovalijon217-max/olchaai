@@ -788,7 +788,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                         </div>
                         <div className="flex-1">
                           <div className="inline-block px-3 py-2 rounded-2xl rounded-tl-sm bg-white/8 border border-white/10">
-                            <p className="text-[10px] font-semibold text-violet-400 mb-0.5">
+                            <p className="text-[10px] font-semibold text-amber-400 mb-0.5">
                               {c.author?.id===me?.id?t("orb.mine"):`@${c.author?.username??"?"}`}
                             </p>
                             <EmojiText text={c.content} className="text-sm text-foreground leading-relaxed" />
@@ -844,7 +844,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                   <p className="text-sm text-foreground leading-relaxed line-clamp-2 mb-1.5">{p.content}</p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{p.likesCount??0}</span>
-                    <span className="flex items-center gap-1 text-violet-400"><MessageCircle className="w-3 h-3"/>{p.commentsCount??0}</span>
+                    <span className="flex items-center gap-1 text-amber-400"><MessageCircle className="w-3 h-3"/>{p.commentsCount??0}</span>
                   </div>
                 </motion.button>
               ))

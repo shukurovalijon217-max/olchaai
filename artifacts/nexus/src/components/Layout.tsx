@@ -15,35 +15,35 @@ import { countryFlag, getCountryByCode, getCountryByTimezone } from "@/lib/count
 
 /* ─── Icon color palette ─────────────────────────────────────── */
 const NAV_GLOW: Record<string, { a: string; b: string; shadow: string }> = {
-  "/":             { a: "#7c3aed", b: "#a78bfa", shadow: "rgba(124,58,237,0.65)" },
+  "/":             { a: "#C0392B", b: "#e05b4e", shadow: "rgba(192,57,43,0.65)" },
   "/reels":        { a: "#ef4444", b: "#f87171", shadow: "rgba(239,68,68,0.65)" },
-  "/explore":      { a: "#f59e0b", b: "#fbbf24", shadow: "rgba(245,158,11,0.65)" },
-  "/search":       { a: "#06b6d4", b: "#67e8f9", shadow: "rgba(6,182,212,0.65)" },
+  "/explore":      { a: "#D4A020", b: "#fbbf24", shadow: "rgba(212,160,32,0.65)" },
+  "/search":       { a: "#B8860B", b: "#D4A020", shadow: "rgba(184,134,11,0.65)" },
   "/bozor":        { a: "#10b981", b: "#34d399", shadow: "rgba(16,185,129,0.65)" },
-  "/ai-chat":      { a: "#3b82f6", b: "#93c5fd", shadow: "rgba(59,130,246,0.65)" },
-  "/kutubxona":    { a: "#6366f1", b: "#a5b4fc", shadow: "rgba(99,102,241,0.65)" },
+  "/ai-chat":      { a: "#C0392B", b: "#e05b4e", shadow: "rgba(192,57,43,0.65)" },
+  "/kutubxona":    { a: "#B8860B", b: "#D4A020", shadow: "rgba(184,134,11,0.65)" },
   "/live-explore": { a: "#dc2626", b: "#f87171", shadow: "rgba(220,38,38,0.65)" },
-  "/messages":     { a: "#0ea5e9", b: "#7dd3fc", shadow: "rgba(14,165,233,0.65)" },
+  "/messages":     { a: "#D4A020", b: "#fde68a", shadow: "rgba(212,160,32,0.65)" },
   "/groups":       { a: "#14b8a6", b: "#5eead4", shadow: "rgba(20,184,166,0.65)" },
   "/notifications":{ a: "#f97316", b: "#fdba74", shadow: "rgba(249,115,22,0.65)" },
-  "/profile":      { a: "#8b5cf6", b: "#c4b5fd", shadow: "rgba(139,92,246,0.65)" },
-  "/premium":      { a: "#eab308", b: "#fde047", shadow: "rgba(234,179,8,0.65)" },
+  "/profile":      { a: "#C0392B", b: "#e05b4e", shadow: "rgba(192,57,43,0.65)" },
+  "/premium":      { a: "#B8860B", b: "#D4A020", shadow: "rgba(184,134,11,0.65)" },
   "/wallet":       { a: "#22c55e", b: "#86efac", shadow: "rgba(34,197,94,0.65)" },
   "/settings":     { a: "#94a3b8", b: "#cbd5e1", shadow: "rgba(148,163,184,0.65)" },
   "/admin":        { a: "#dc2626", b: "#fca5a5", shadow: "rgba(220,38,38,0.65)" },
-  "/quests":       { a: "#f59e0b", b: "#fbbf24", shadow: "rgba(245,158,11,0.65)" },
+  "/quests":       { a: "#D4A020", b: "#fbbf24", shadow: "rgba(212,160,32,0.65)" },
   "/anon":         { a: "#64748b", b: "#94a3b8", shadow: "rgba(100,116,139,0.65)" },
-  "/multiscene":   { a: "#7c3aed", b: "#a78bfa", shadow: "rgba(124,58,237,0.65)" },
-  "/mood":         { a: "#06b6d4", b: "#67e8f9", shadow: "rgba(6,182,212,0.65)" },
-  "/twin":         { a: "#3b82f6", b: "#93c5fd", shadow: "rgba(59,130,246,0.65)" },
+  "/multiscene":   { a: "#C0392B", b: "#e05b4e", shadow: "rgba(192,57,43,0.65)" },
+  "/mood":         { a: "#B8860B", b: "#D4A020", shadow: "rgba(184,134,11,0.65)" },
+  "/twin":         { a: "#C0392B", b: "#e05b4e", shadow: "rgba(192,57,43,0.65)" },
   "/factcheck":    { a: "#10b981", b: "#34d399", shadow: "rgba(16,185,129,0.65)" },
-  "/spaces":          { a: "#6366f1", b: "#a5b4fc", shadow: "rgba(99,102,241,0.65)" },
-  "/muni":            { a: "#f59e0b", b: "#fbbf24", shadow: "rgba(245,158,11,0.65)" },
-  "/voice-translate": { a: "#ec4899", b: "#f9a8d4", shadow: "rgba(236,72,153,0.65)" },
+  "/spaces":          { a: "#B8860B", b: "#D4A020", shadow: "rgba(184,134,11,0.65)" },
+  "/muni":            { a: "#D4A020", b: "#fbbf24", shadow: "rgba(212,160,32,0.65)" },
+  "/voice-translate": { a: "#C0392B", b: "#e05b4e", shadow: "rgba(192,57,43,0.65)" },
 };
 
 function getGlow(href: string) {
-  return NAV_GLOW[href] ?? { a: "#7c3aed", b: "#a78bfa", shadow: "rgba(124,58,237,0.65)" };
+  return NAV_GLOW[href] ?? { a: "#C0392B", b: "#e05b4e", shadow: "rgba(192,57,43,0.65)" };
 }
 
 /* ─── 9D Icon Orb (desktop sidebar) ─────────────────────────── */
@@ -387,7 +387,7 @@ function MuniPanel() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.9 }}
         className="fixed bottom-28 right-4 z-[80] md:bottom-6 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center"
-        style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)", boxShadow: "0 0 24px rgba(124,58,237,0.6), 0 0 48px rgba(59,130,246,0.3)" }}
+        style={{ background: "linear-gradient(135deg, #C0392B, #B8860B)", boxShadow: "0 0 24px rgba(192,57,43,0.6), 0 0 48px rgba(184,134,11,0.3)" }}
       >
         <AnimatePresence mode="wait">
           {open ? (
@@ -403,7 +403,7 @@ function MuniPanel() {
         {!open && (
           <motion.div className="absolute inset-0 rounded-full" animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
             transition={{ duration: 2.5, repeat: Infinity }}
-            style={{ background: "radial-gradient(circle, rgba(124,58,237,0.5), transparent)", pointerEvents: "none" }} />
+            style={{ background: "radial-gradient(circle, rgba(192,57,43,0.5), transparent)", pointerEvents: "none" }} />
         )}
       </motion.button>
 
@@ -416,12 +416,12 @@ function MuniPanel() {
             exit={{ opacity: 0, y: 32, scale: 0.88, rotateX: 10, filter: "blur(6px)" }}
             transition={{ type: "spring", stiffness: 420, damping: 32 }}
             className="fixed bottom-36 right-4 z-[79] md:bottom-24 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col"
-            style={{ perspective: 800, background: "hsl(var(--card))", border: "1px solid rgba(124,58,237,0.25)", boxShadow: "0 0 60px rgba(124,58,237,0.2), 0 24px 48px rgba(0,0,0,0.4)", maxHeight: "60vh" }}
+            style={{ perspective: 800, background: "hsl(var(--card))", border: "1px solid rgba(192,57,43,0.25)", boxShadow: "0 0 60px rgba(192,57,43,0.18), 0 24px 48px rgba(0,0,0,0.4)", maxHeight: "60vh" }}
           >
             {/* Header */}
             <div className="px-4 py-3 border-b border-border/30 flex items-center gap-2.5"
-              style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(59,130,246,0.08))" }}>
-              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center shadow-[0_0_12px_rgba(124,58,237,0.5)]">
+              style={{ background: "linear-gradient(135deg, rgba(192,57,43,0.15), rgba(184,134,11,0.08))" }}>
+              <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #C0392B, #B8860B)", boxShadow: "0 0 12px rgba(192,57,43,0.5)" }}>
                 <Zap className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
@@ -441,7 +441,7 @@ function MuniPanel() {
                   <div className="grid grid-cols-2 gap-1.5">
                     {SUGGESTS.map(k => (
                       <button key={k} onClick={() => send(t(`jarvis.${k}`))}
-                        className="px-3 py-2 rounded-xl text-xs font-medium bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition text-left border border-violet-500/20">
+                        className="px-3 py-2 rounded-xl text-xs font-medium transition text-left" style={{ background: "rgba(192,57,43,0.1)", color: "#e05b4e", border: "1px solid rgba(192,57,43,0.2)" }}>
                         {t(`jarvis.${k}`)}
                       </button>
                     ))}
@@ -452,7 +452,7 @@ function MuniPanel() {
                 <motion.div key={i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                   className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
-                    m.role === "user" ? "bg-violet-600 text-white" : "bg-muted text-foreground"
+                    m.role === "user" ? "text-white" : "bg-muted text-foreground"
                   }`}>
                     {m.content}
                   </div>
@@ -461,9 +461,9 @@ function MuniPanel() {
               {loading && (
                 <div className="flex justify-start">
                   <div className="px-3 py-2 rounded-2xl bg-muted text-xs flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#C0392B", animationDelay: "0ms" }} />
+                    <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#B8860B", animationDelay: "150ms" }} />
+                    <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#D4A020", animationDelay: "300ms" }} />
                   </div>
                 </div>
               )}
@@ -475,9 +475,9 @@ function MuniPanel() {
               <input value={input} onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && !e.shiftKey && send(input)}
                 placeholder={t("jarvis.placeholder")}
-                className="flex-1 px-3 py-2 rounded-xl bg-muted text-xs outline-none focus:ring-2 ring-violet-500/50" />
+                className="flex-1 px-3 py-2 rounded-xl bg-muted text-xs outline-none focus:ring-2" style={{ "--tw-ring-color": "rgba(192,57,43,0.5)" } as React.CSSProperties} />
               <motion.button whileTap={{ scale: 0.88 }} onClick={() => send(input)}
-                className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center text-white hover:bg-violet-700 transition flex-shrink-0">
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-white flex-shrink-0" style={{ background: "#C0392B" }}>
                 <Send className="w-3.5 h-3.5" />
               </motion.button>
             </div>
@@ -624,15 +624,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <motion.div
                       whileHover={{ scale: 1.02, x: 2 }}
                       whileTap={{ scale: 0.97 }}
-                      className="flex items-center gap-2 mx-2 my-1.5 px-2.5 py-1.5 rounded-xl bg-muted/40 hover:bg-gradient-to-r hover:from-violet-500/15 hover:to-blue-500/10 cursor-pointer transition-all border border-transparent hover:border-violet-500/20"
+                      className="flex items-center gap-2 mx-2 my-1.5 px-2.5 py-1.5 rounded-xl bg-muted/40 cursor-pointer transition-all border border-transparent" style={{ } as React.CSSProperties}
                     >
                       {user.avatarUrl ? (
                         <div className="relative">
-                          <img src={user.avatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-violet-500/40" />
+                          <img src={user.avatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0" style={{ outline: "1px solid rgba(192,57,43,0.4)" }} />
                           <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-sidebar" />
                         </div>
                       ) : (
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center text-[11px] font-black text-white flex-shrink-0 ring-1 ring-violet-500/40 shadow-[0_0_8px_rgba(124,58,237,0.4)]">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black text-white flex-shrink-0" style={{ background: "linear-gradient(135deg, #C0392B, #B8860B)", boxShadow: "0 0 8px rgba(192,57,43,0.4)" }}>
                           {user.displayName[0].toUpperCase()}
                         </div>
                       )}
@@ -780,13 +780,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-              style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1.5px solid rgba(139,92,246,0.5)", pointerEvents: "none" }}
+              style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1.5px solid rgba(192,57,43,0.5)", pointerEvents: "none" }}
             />
             {/* Ring 2 — CCW dashed */}
             <motion.div
               animate={{ rotate: -360 }}
               transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              style={{ position: "absolute", inset: 5, borderRadius: "50%", border: "1px dashed rgba(59,130,246,0.4)", pointerEvents: "none" }}
+              style={{ position: "absolute", inset: 5, borderRadius: "50%", border: "1px dashed rgba(184,134,11,0.4)", pointerEvents: "none" }}
             />
             {/* Core glow */}
             <motion.div
@@ -798,9 +798,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               style={{
                 position: "absolute", inset: 9, borderRadius: "50%",
                 background: navExpanded
-                  ? "radial-gradient(circle, rgba(139,92,246,0.65), rgba(59,130,246,0.4))"
-                  : "radial-gradient(circle, rgba(139,92,246,0.28), rgba(59,130,246,0.14))",
-                boxShadow: navExpanded ? "0 0 14px rgba(139,92,246,0.7)" : "none",
+                  ? "radial-gradient(circle, rgba(192,57,43,0.65), rgba(184,134,11,0.4))"
+                  : "radial-gradient(circle, rgba(192,57,43,0.28), rgba(184,134,11,0.14))",
+                boxShadow: navExpanded ? "0 0 14px rgba(192,57,43,0.7)" : "none",
                 transition: "background 0.35s, box-shadow 0.35s",
               }}
             />
@@ -808,11 +808,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <AnimatePresence mode="wait">
               {navExpanded ? (
                 <motion.div key="grid" initial={{ rotate: -90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: 90, scale: 0 }} transition={{ duration: 0.2 }} className="relative z-10">
-                  <MoreHorizontal className="w-[14px] h-[14px] text-violet-300" />
+                  <MoreHorizontal className="w-[14px] h-[14px]" style={{ color: "#e05b4e" }} />
                 </motion.div>
               ) : (
                 <motion.div key="more" initial={{ rotate: 90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: -90, scale: 0 }} transition={{ duration: 0.2 }} className="relative z-10">
-                  <MoreHorizontal className="w-[14px] h-[14px] text-violet-400" />
+                  <MoreHorizontal className="w-[14px] h-[14px]" style={{ color: "#C0392B" }} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -857,7 +857,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     position: "absolute",
                     left: `${10 + i * 18}%`, top: `${15 + (i % 3) * 22}%`,
                     width: 120, height: 120, borderRadius: "50%",
-                    background: ["rgba(124,58,237,0.4)", "rgba(59,130,246,0.3)", "rgba(16,185,129,0.25)", "rgba(234,179,8,0.25)", "rgba(239,68,68,0.2)"][i],
+                    background: ["rgba(192,57,43,0.4)", "rgba(184,134,11,0.3)", "rgba(16,185,129,0.25)", "rgba(212,160,32,0.25)", "rgba(192,57,43,0.2)"][i],
                     filter: "blur(40px)", pointerEvents: "none",
                   }}
                 />
@@ -875,8 +875,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               style={{
                 maxHeight: "88vh",
                 paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)",
-                background: "linear-gradient(180deg, #0a0818 0%, #060610 40%, #04040e 100%)",
-                boxShadow: "0 -32px 80px rgba(124,58,237,0.18), 0 -2px 0 rgba(139,92,246,0.35)",
+                background: "linear-gradient(180deg, #120806 0%, #0A0A0A 40%, #060606 100%)",
+                boxShadow: "0 -32px 80px rgba(192,57,43,0.18), 0 -2px 0 rgba(184,134,11,0.35)",
               }}
             >
               {/* Holographic top border */}
@@ -885,7 +885,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                 style={{
                   position: "absolute", top: 0, left: 0, right: 0, height: 2,
-                  background: "linear-gradient(90deg, #7c3aed, #3b82f6, #10b981, #eab308, #ef4444, #7c3aed)",
+                  background: "linear-gradient(90deg, #C0392B, #B8860B, #10b981, #D4A020, #C0392B, #B8860B)",
                   backgroundSize: "200% 100%",
                 }}
               />
@@ -895,7 +895,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <motion.div
                   animate={{ width: [28, 44, 28], opacity: [0.4, 0.7, 0.4] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                  style={{ height: 4, borderRadius: 2, background: "rgba(139,92,246,0.6)" }}
+                  style={{ height: 4, borderRadius: 2, background: "rgba(192,57,43,0.6)" }}
                 />
               </div>
 
@@ -909,7 +909,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                       style={{
                         position: "absolute", inset: 0, borderRadius: "50%",
-                        border: "1.5px solid rgba(139,92,246,0.6)",
+                        border: "1.5px solid rgba(192,57,43,0.6)",
                       }}
                     />
                     <motion.div
@@ -917,7 +917,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
                       style={{
                         position: "absolute", inset: 3, borderRadius: "50%",
-                        border: "1px dashed rgba(59,130,246,0.5)",
+                        border: "1px dashed rgba(184,134,11,0.5)",
                       }}
                     />
                     <motion.div
@@ -925,9 +925,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       transition={{ duration: 2, repeat: Infinity }}
                       style={{
                         width: 20, height: 20, borderRadius: "50%",
-                        background: "radial-gradient(circle, rgba(139,92,246,0.9), rgba(59,130,246,0.6))",
+                        background: "radial-gradient(circle, rgba(192,57,43,0.9), rgba(184,134,11,0.6))",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: "0 0 12px rgba(139,92,246,0.7)",
+                        boxShadow: "0 0 12px rgba(192,57,43,0.7)",
                       }}
                     >
                       <Zap className="w-2.5 h-2.5 text-white" />
@@ -938,7 +938,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       animate={{ opacity: [0.7, 1, 0.7] }}
                       transition={{ duration: 2.5, repeat: Infinity }}
                       className="font-black text-base tracking-wide"
-                      style={{ background: "linear-gradient(90deg, #a78bfa, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundSize: "200%" }}
+                      style={{ background: "linear-gradient(90deg, #C0392B, #D4A020, #C0392B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundSize: "200%" }}
                     >
                       {t("common.all_sections")}
                     </motion.p>
@@ -952,9 +952,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   whileTap={{ scale: 0.85, rotate: 90 }}
                   onClick={() => setMoreOpen(false)}
                   className="w-9 h-9 flex items-center justify-center rounded-2xl"
-                  style={{ background: "rgba(139,92,246,0.18)", border: "1px solid rgba(139,92,246,0.35)" }}
+                  style={{ background: "rgba(192,57,43,0.18)", border: "1px solid rgba(192,57,43,0.35)" }}
                 >
-                  <X className="w-4 h-4 text-violet-400" />
+                  <X className="w-4 h-4" style={{ color: "#C0392B" }} />
                 </motion.button>
               </div>
 
@@ -966,8 +966,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   [
                     {
                       label: t("nav.sect_main"),
-                      color: "#7c3aed",
-                      shadow: "rgba(124,58,237,0.5)",
+                      color: "#C0392B",
+                      shadow: "rgba(192,57,43,0.5)",
                       hrefs: ["/", "/explore", "/search", "/messages"],
                       dir: "left" as const,
                     },
@@ -980,8 +980,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     },
                     {
                       label: t("nav.sect_ai"),
-                      color: "#3b82f6",
-                      shadow: "rgba(59,130,246,0.5)",
+                      color: "#B8860B",
+                      shadow: "rgba(184,134,11,0.5)",
                       hrefs: ["/ai-chat", "/twin", "/muni", "/voice-translate", "/factcheck", "/multiscene"],
                       dir: "left" as const,
                     },
@@ -1059,26 +1059,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.55, type: "spring", stiffness: 380, damping: 28 }}
                     className="mx-4 mt-2 mb-2 rounded-2xl overflow-hidden"
-                    style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(59,130,246,0.08))", border: "1px solid rgba(139,92,246,0.22)" }}
+                    style={{ background: "linear-gradient(135deg, rgba(192,57,43,0.12), rgba(184,134,11,0.06))", border: "1px solid rgba(192,57,43,0.22)" }}
                   >
                     <div className="flex items-center justify-between px-4 py-3">
                       <Link href="/profile" onClick={() => setMoreOpen(false)}>
                         <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-2.5">
                           {user.avatarUrl ? (
                             <div className="relative">
-                              <img src={user.avatarUrl} className="w-9 h-9 rounded-full object-cover ring-2 ring-violet-500/40" />
-                              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0a0818]" />
+                              <img src={user.avatarUrl} className="w-9 h-9 rounded-full object-cover" style={{ outline: "2px solid rgba(192,57,43,0.4)" }} />
+                              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0A0A0A]" />
                             </div>
                           ) : (
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center text-sm font-black text-white ring-2 ring-violet-500/40 shadow-[0_0_12px_rgba(124,58,237,0.5)]">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black text-white" style={{ background: "linear-gradient(135deg, #C0392B, #B8860B)", boxShadow: "0 0 12px rgba(192,57,43,0.5)" }}>
                               {user.displayName[0].toUpperCase()}
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-bold text-white truncate">{user.displayName}</p>
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                              <span className="text-[10px] font-semibold" style={{ color: "rgba(167,139,250,0.9)" }}>@{user.username}</span>
-                              <span className="text-[10px] font-mono" style={{ color: "rgba(125,211,252,0.85)" }}>{clockTime}</span>
+                              <span className="text-[10px] font-semibold" style={{ color: "rgba(212,160,32,0.9)" }}>@{user.username}</span>
+                              <span className="text-[10px] font-mono" style={{ color: "rgba(184,134,11,0.85)" }}>{clockTime}</span>
                               <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>{clockDate}</span>
                             </div>
                             {countryDisplay ? (

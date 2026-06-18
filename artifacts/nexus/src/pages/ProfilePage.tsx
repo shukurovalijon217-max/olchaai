@@ -200,7 +200,7 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
             <motion.div animate={{ boxShadow: ["0 0 8px rgba(124,58,237,0.4)", "0 0 20px rgba(124,58,237,0.7)", "0 0 8px rgba(124,58,237,0.4)"] }}
               transition={{ duration: 2, repeat: Infinity }}
               className="w-8 h-8 rounded-full bg-background flex items-center justify-center shadow-lg">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-red-700 to-amber-700 flex items-center justify-center">
                 <BadgeCheck className="w-4 h-4 text-white" />
               </div>
             </motion.div>
@@ -285,7 +285,7 @@ function TabBtn({ active, icon: Icon, label, onClick }: { active: boolean; icon:
           style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)", skewX: -20 }}
         />
       )}
-      <Icon className={`w-4 h-4 relative z-10 ${active ? "text-violet-400 drop-shadow-[0_0_6px_rgba(124,58,237,0.8)]" : "text-muted-foreground"}`} />
+      <Icon className={`w-4 h-4 relative z-10 ${active ? "text-amber-400 drop-shadow-[0_0_6px_rgba(184,134,11,0.8)]" : "text-muted-foreground"}`} />
       <span className={`relative z-10 ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
     </motion.button>
   );
@@ -575,7 +575,7 @@ function SettingsSheet({ open, onClose, user, isOwner, onAvatarClick, onCoverCli
           {user.avatarUrl ? (
             <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500/25 to-blue-500/20">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/25 to-amber-500/20">
               <span className="text-lg font-black text-primary">{user.displayName[0]}</span>
             </div>
           )}
@@ -792,7 +792,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               <motion.div
                 animate={{ y: ["-100%", "300%"] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "linear", repeatDelay: 2 }}
-                className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-400/30 to-transparent pointer-events-none"
+                className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent pointer-events-none"
               />
             </motion.div>
           )}
@@ -866,7 +866,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                 <motion.button whileTap={{ scale: 0.88, rotate: 90 }} whileHover={{ scale: 1.1, rotate: 30 }}
                   transition={{ type: "spring", stiffness: 300, damping: 18 }}
                   onClick={() => setShowSettings(true)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground border border-border/50 bg-muted/60 hover:bg-muted hover:border-violet-500/30 hover:text-foreground transition-all"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground border border-border/50 bg-muted/60 hover:bg-muted hover:border-primary/30 hover:text-foreground transition-all"
                   style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>
                   <Settings className="w-3.5 h-3.5" />
                 </motion.button>
@@ -1138,17 +1138,17 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
               {topReel && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.52 }}
-                  className="rounded-2xl border border-violet-500/20 p-4"
+                  className="rounded-2xl border border-primary/20 p-4"
                   style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(59,130,246,0.04))", boxShadow: "0 4px 16px rgba(124,58,237,0.08)" }}>
                   <div className="flex items-center gap-2 mb-2.5">
                     <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
-                      <Play className="w-3.5 h-3.5 text-violet-400 fill-violet-400" />
+                      <Play className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                     </motion.div>
                     <span className="text-xs font-bold text-foreground">{t("profile.top_reel")}</span>
                   </div>
                   <p className="text-sm text-foreground/80 line-clamp-2 mb-2">{topReel.caption ?? "Reel"}</p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-violet-400" />{(topReel.viewsCount ?? 0).toLocaleString()}</span>
+                    <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-amber-400" />{(topReel.viewsCount ?? 0).toLocaleString()}</span>
                     <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-pink-400" />{topReel.likesCount ?? 0}</span>
                   </div>
                 </motion.div>

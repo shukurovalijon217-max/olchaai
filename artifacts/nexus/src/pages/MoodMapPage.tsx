@@ -14,7 +14,7 @@ interface MoodEntry {
 const MOODS = [
   { key: "energetic", label: "Energetik", emoji: "⚡", icon: Zap, color: "#f59e0b", bg: "from-amber-500/20 to-yellow-500/10", desc: "Kuchli, faol, harakat qilgim kelyapti" },
   { key: "calm", label: "Xotirjam", emoji: "🧘", icon: Moon, color: "#06b6d4", bg: "from-cyan-500/20 to-teal-500/10", desc: "Tinch, muvozanatlangan, huzurli" },
-  { key: "creative", label: "Ijodiy", emoji: "🎨", icon: Star, color: "#a855f7", bg: "from-purple-500/20 to-violet-500/10", desc: "G'oyalar bor, yaratgim kelyapti" },
+  { key: "creative", label: "Ijodiy", emoji: "🎨", icon: Star, color: "#C0392B", bg: "from-red-900/20 to-amber-900/10", desc: "G'oyalar bor, yaratgim kelyapti" },
   { key: "philosophical", label: "Falsafiy", emoji: "🤔", icon: Brain, color: "#6366f1", bg: "from-indigo-500/20 to-blue-500/10", desc: "Chuqur fikrlar, savollar" },
   { key: "social", label: "Ijtimoiy", emoji: "🤝", icon: Heart, color: "#ec4899", bg: "from-pink-500/20 to-rose-500/10", desc: "Odamlar bilan muloqot qilgim kelyapti" },
   { key: "focused", label: "Diqqatli", emoji: "🎯", icon: Flame, color: "#ef4444", bg: "from-red-500/20 to-rose-500/10", desc: "Ish ustida, konsentratsiyalangan" },
@@ -45,7 +45,7 @@ function MoodBubble({ entry, index }: { entry: MoodEntry; index: number }) {
         {entry.avatar ? (
           <img src={entry.avatar} alt="" className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-black object-cover" />
         ) : (
-          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-black bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-[8px] text-white font-bold">
+          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-black bg-gradient-to-br from-red-700 to-amber-700 flex items-center justify-center text-[8px] text-white font-bold">
             {entry.displayName?.[0]?.toUpperCase()}
           </div>
         )}
@@ -189,7 +189,7 @@ export default function MoodMapPage() {
                       <span>{t("mood.energy")}</span><span className="font-bold" style={{ color: MOOD_MAP[selectedMood]?.color }}>{energy}/10</span>
                     </div>
                     <input type="range" min={1} max={10} value={energy} onChange={e => setEnergy(+e.target.value)}
-                      className="w-full accent-violet-500" />
+                      className="w-full accent-red-500" />
                   </div>
                   <input value={note} onChange={e => setNote(e.target.value)} placeholder={t("mood.note_ph")}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-cyan-500/60" />
@@ -239,7 +239,7 @@ export default function MoodMapPage() {
                     className={`flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r ${mood.bg} border border-white/10`}>
                     <div className="relative flex-shrink-0">
                       {e.avatar ? <img src={e.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /> :
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-700 to-amber-700 flex items-center justify-center text-white font-bold">
                           {e.displayName?.[0]?.toUpperCase()}
                         </div>}
                       <span className="absolute -bottom-1 -right-1 text-base">{mood.emoji}</span>

@@ -21,7 +21,7 @@ export default function GroupsPage() {
   };
 
   const COLORS = [
-    "from-violet-500/30 to-purple-600/20",
+    "from-red-900/30 to-amber-900/20",
     "from-cyan-500/30 to-blue-600/20",
     "from-rose-500/30 to-pink-600/20",
     "from-emerald-500/30 to-teal-600/20",

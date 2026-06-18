@@ -52,10 +52,10 @@ export default function HomePage() {
                   className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold overflow-hidden"
                   style={{
                     background:
-                      "linear-gradient(135deg, rgba(124,58,237,0.18) 0%, rgba(59,130,246,0.18) 100%)",
-                    border: "1px solid rgba(139,92,246,0.5)",
-                    color: "#a78bfa",
-                    boxShadow: "0 0 14px rgba(139,92,246,0.2)",
+                      "linear-gradient(135deg, rgba(192,57,43,0.18) 0%, rgba(184,134,11,0.18) 100%)",
+                    border: "1px solid rgba(192,57,43,0.5)",
+                    color: "#e05b4e",
+                    boxShadow: "0 0 14px rgba(192,57,43,0.2)",
                   }}
                 >
                   <motion.div
@@ -65,7 +65,7 @@ export default function HomePage() {
                       position: "absolute",
                       inset: 0,
                       background:
-                        "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.1))",
+                        "linear-gradient(135deg, rgba(192,57,43,0.1), rgba(184,134,11,0.1))",
                       borderRadius: "inherit",
                     }}
                   />

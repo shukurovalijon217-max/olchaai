@@ -53,7 +53,7 @@ const STATUS_COLOR: Record<string, string> = {
   pending: "bg-amber-400/15 text-amber-400",
   approved: "bg-emerald-400/15 text-emerald-400",
   rejected: "bg-destructive/15 text-destructive",
-  escalated: "bg-violet-400/15 text-violet-400",
+  escalated: "bg-primary/15 text-primary",
 };
 
 function SafeGuardTab() {
@@ -139,7 +139,7 @@ function SafeGuardTab() {
             { label: "Tasdiqlangan", value: stats.approved, color: "text-emerald-400" },
             { label: "Rad etilgan", value: stats.rejected, color: "text-destructive" },
             { label: "Auto bloklangan", value: stats.autoBlocked, color: "text-red-400" },
-            { label: "Shikoyatlar", value: stats.totalReports, color: "text-violet-400" },
+            { label: "Shikoyatlar", value: stats.totalReports, color: "text-amber-400" },
           ].map(s => (
             <div key={s.label} className="bg-card border border-border rounded-xl p-3 text-center">
               <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
@@ -248,7 +248,7 @@ function SafeGuardTab() {
 /* ─── Platform Operating Costs Section ───────────────────────── */
 const EXPENSE_CATS: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   hosting:           { label: "Hosting",            icon: Activity,     color: "text-blue-400 bg-blue-500/10" },
-  ai_api:            { label: "AI API",              icon: Cpu,          color: "text-violet-400 bg-violet-500/10" },
+  ai_api:            { label: "AI API",              icon: Cpu,          color: "text-amber-400 bg-primary/10" },
   payment_processor: { label: "To'lov tizimi",       icon: DollarSign,   color: "text-emerald-400 bg-emerald-500/10" },
   storage:           { label: "Saqlash",             icon: BadgeCheck,   color: "text-cyan-400 bg-cyan-500/10" },
   other:             { label: "Boshqa",              icon: Wallet,       color: "text-amber-400 bg-amber-500/10" },
@@ -364,7 +364,7 @@ function PlatformCostsSection() {
   const historyRequests = requests.filter(r => r.status !== "pending");
 
   return (
-    <div className="bg-gradient-to-br from-blue-500/5 to-violet-500/5 border border-blue-500/20 rounded-2xl p-5 space-y-5">
+    <div className="bg-gradient-to-br from-primary/5 to-amber-500/5 border border-primary/20 rounded-2xl p-5 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -728,7 +728,7 @@ function MonetizationTab() {
     video: { label: "Video", icon: Film,       color: "text-blue-400" },
     music: { label: "Musiqa",icon: Music,      color: "text-emerald-400" },
     movie: { label: "Film",  icon: Film,       color: "text-amber-400" },
-    post:  { label: "Post",  icon: FileText,   color: "text-violet-400" },
+    post:  { label: "Post",  icon: FileText,   color: "text-amber-400" },
   };
 
   if (loading) return (
@@ -742,7 +742,7 @@ function MonetizationTab() {
       {/* ── Stats overview ─────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Umumiy daromad", value: uzs(stats?.grossEarnings ?? 0), icon: BarChart2, color: "text-violet-400", bg: "bg-violet-500/10" },
+          { label: "Umumiy daromad", value: uzs(stats?.grossEarnings ?? 0), icon: BarChart2, color: "text-amber-400", bg: "bg-primary/10" },
           { label: "Kreatorlarga to'langan", value: uzs(stats?.creatorEarnings ?? 0), icon: Users, color: "text-emerald-400", bg: "bg-emerald-500/10" },
           { label: "Platforma ulushi", value: uzs(stats?.platformEarnings ?? 0), icon: CircleDollarSign, color: "text-blue-400", bg: "bg-blue-500/10" },
           { label: "Kutayotgan to'lovlar", value: `${stats?.pendingCount ?? 0} ta · ${uzs(stats?.pendingAmount ?? 0)}`, icon: Banknote, color: "text-amber-400", bg: "bg-amber-500/10" },
@@ -973,7 +973,7 @@ function MonetizationTab() {
               <div className="divide-y divide-white/5">
                 {payouts.map(p => (
                   <div key={p.id} className="px-5 py-4 flex items-center gap-4">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600/50 to-pink-600/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-700/50 to-amber-700/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
                       {p.user?.avatarUrl ? <img src={p.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (p.user?.displayName?.[0] ?? "?")}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1811,7 +1811,7 @@ const ACTION_LABEL: Record<string, string> = {
   banned:  "Bloklandi",
 };
 const ENGINE_COLOR: Record<string, string> = {
-  "openai+rules": "text-violet-400",
+  "openai+rules": "text-amber-400",
   hybrid:         "text-cyan-400",
   rules:          "text-amber-400",
   tensorflow:     "text-blue-400",
@@ -1880,7 +1880,7 @@ function AiAutopilotTab() {
 
   if (loading) return (
     <div className="flex justify-center items-center py-20">
-      <div className="w-8 h-8 rounded-full border-2 border-violet-400/40 border-t-violet-400 animate-spin" />
+      <div className="w-8 h-8 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
     </div>
   );
 
@@ -1891,8 +1891,8 @@ function AiAutopilotTab() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-violet-500/15 flex items-center justify-center">
-            <Bot className="w-6 h-6 text-violet-400" />
+          <div className="w-10 h-10 rounded-2xl bg-primary/15 flex items-center justify-center">
+            <Bot className="w-6 h-6 text-amber-400" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-foreground">AI Avtopilot Boshqaruvi</h2>
@@ -1929,15 +1929,15 @@ function AiAutopilotTab() {
       </div>
 
       {/* AI Engine status */}
-      <div className="bg-gradient-to-br from-violet-500/8 to-blue-500/8 border border-violet-500/20 rounded-2xl p-4">
+      <div className="bg-gradient-to-br from-primary/8 to-amber-500/8 border border-primary/20 rounded-2xl p-4">
         <div className="flex items-center gap-3 mb-4">
-          <BrainCircuit className="w-5 h-5 text-violet-400" />
+          <BrainCircuit className="w-5 h-5 text-amber-400" />
           <span className="text-sm font-bold text-foreground">AI Dvigatel Holati</span>
-          <span className="ml-auto px-3 py-1 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 text-xs font-semibold">OpenAI + Rules Hybrid</span>
+          <span className="ml-auto px-3 py-1 rounded-xl bg-primary/15 border border-primary/30 text-amber-400 text-xs font-semibold">OpenAI + Rules Hybrid</span>
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
-            <p className="text-lg font-bold text-violet-400">{stats?.total ?? 0}</p>
+            <p className="text-lg font-bold text-amber-400">{stats?.total ?? 0}</p>
             <p className="text-xs text-muted-foreground">Jami tekshiruv</p>
           </div>
           <div className="text-center">
@@ -1993,7 +1993,7 @@ function AiAutopilotTab() {
       <div className="flex gap-2">
         {([["feed", "📡 Jonli Lenta"], ["banned", `🚫 Bloklanganlar (${bannedUsers.length})`], ["warned", `⚠️ Ogohlantirilganlar (${warnedUsers.length})`]] as const).map(([s, label]) => (
           <button key={s} onClick={() => setActiveSection(s as any)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${activeSection === s ? "bg-violet-500/15 border border-violet-500/30 text-violet-400" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${activeSection === s ? "bg-primary/15 border border-primary/30 text-amber-400" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
             {label}
           </button>
         ))}
@@ -2270,7 +2270,7 @@ const ADMIN_COLOR: Record<string, {
   icon: string; border: string; glow: string;
   badge: string; ring: string; scanFrom: string;
 }> = {
-  violet:  { icon: "bg-violet-500/20 text-violet-400",   border: "border-violet-500/50",  glow: "shadow-[0_0_30px_-5px_rgba(139,92,246,0.35)]",  badge: "bg-violet-500/20 text-violet-300",   ring: "ring-violet-500/30",  scanFrom: "from-violet-500/30"  },
+  primary: { icon: "bg-primary/20 text-primary",   border: "border-primary/50",  glow: "shadow-[0_0_30px_-5px_rgba(192,57,43,0.35)]",  badge: "bg-primary/20 text-amber-300",   ring: "ring-primary/30",  scanFrom: "from-primary/30"  },
   blue:    { icon: "bg-blue-500/20 text-blue-400",       border: "border-blue-500/50",    glow: "shadow-[0_0_30px_-5px_rgba(59,130,246,0.35)]",   badge: "bg-blue-500/20 text-blue-300",     ring: "ring-blue-500/30",    scanFrom: "from-blue-500/30"    },
   amber:   { icon: "bg-amber-500/20 text-amber-400",     border: "border-amber-500/50",   glow: "shadow-[0_0_30px_-5px_rgba(245,158,11,0.35)]",   badge: "bg-amber-500/20 text-amber-300",   ring: "ring-amber-500/30",   scanFrom: "from-amber-500/30"   },
   rose:    { icon: "bg-rose-500/20 text-rose-400",       border: "border-rose-500/50",    glow: "shadow-[0_0_30px_-5px_rgba(244,63,94,0.35)]",    badge: "bg-rose-500/20 text-rose-300",     ring: "ring-rose-500/30",    scanFrom: "from-rose-500/30"    },
@@ -2448,7 +2448,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#080810]">
       {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/3 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/3 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/4 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-0 w-64 h-64 bg-cyan-500/3 rounded-full blur-3xl" />
       </div>
@@ -2471,21 +2471,21 @@ export default function AdminPage() {
 
           {/* ── DASHBOARD ─────────────────────────────── */}
           <motion.div variants={aPE}>
-            <AdminPanel color="violet" icon={BarChart3} label="Dashboard"
+            <AdminPanel color="primary" icon={BarChart3} label="Dashboard"
               preview={dash ? `${dash.totalUsers.toLocaleString()} foydalanuvchi · ${dash.totalPosts.toLocaleString()} post` : "Platform ko'rsatkichlari"}
               isOpen={openPanel === "dashboard"} onToggle={() => toggle("dashboard")}>
               {!dash ? (
                 <div className="flex justify-center py-6">
-                  <div className="w-5 h-5 rounded-full border-2 border-violet-400/30 border-t-violet-400 animate-spin" />
+                  <div className="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { label: "Total Users",  value: dash.totalUsers.toLocaleString(),  icon: Users,    color: "text-violet-400", bg: "bg-violet-500/10" },
+                      { label: "Total Users",  value: dash.totalUsers.toLocaleString(),  icon: Users,    color: "text-amber-400", bg: "bg-primary/10" },
                       { label: "Total Posts",  value: dash.totalPosts.toLocaleString(),  icon: FileText, color: "text-cyan-400",   bg: "bg-cyan-500/10"   },
                       { label: "Active Now",   value: dash.activeNow.toLocaleString(),   icon: Activity, color: "text-emerald-400",bg: "bg-emerald-500/10"},
-                      { label: "AI Accuracy",  value: `${dash.aiAccuracy}%`,            icon: Cpu,      color: "text-violet-400", bg: "bg-violet-500/10" },
+                      { label: "AI Accuracy",  value: `${dash.aiAccuracy}%`,            icon: Cpu,      color: "text-amber-400", bg: "bg-primary/10" },
                     ].map(s => (
                       <AdminSF key={s.label}>
                         <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -2533,7 +2533,7 @@ export default function AdminPage() {
                                 </div>
                                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
                                   <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.7, delay: 0.2 }}
-                                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500" />
+                                    className="h-full rounded-full bg-gradient-to-r from-primary to-amber-600" />
                                 </div>
                               </div>
                             );
@@ -2761,12 +2761,12 @@ export default function AdminPage() {
 
           {/* ── AI SYSTEM ─────────────────────────────── */}
           <motion.div variants={aPE}>
-            <AdminPanel color="violet" icon={Cpu} label={t("admin.ai")}
+            <AdminPanel color="primary" icon={Cpu} label={t("admin.ai")}
               preview={aiStatus ? `v${aiStatus.version} · ${aiStatus.accuracy}% aniqlik` : "AI tizim holati"}
               isOpen={openPanel === "ai"} onToggle={() => toggle("ai")}>
               {!aiStatus ? (
                 <div className="flex justify-center py-6">
-                  <div className="w-5 h-5 rounded-full border-2 border-violet-400/30 border-t-violet-400 animate-spin" />
+                  <div className="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -2778,14 +2778,14 @@ export default function AdminPage() {
                       {/* Header */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${aiCoreOnline ? "bg-violet-400 animate-pulse" : "bg-red-500/60"}`} />
+                          <div className={`w-2 h-2 rounded-full ${aiCoreOnline ? "bg-amber-400 animate-pulse" : "bg-red-500/60"}`} />
                           <span className="text-xs font-bold text-white/60 tracking-wide uppercase">AI Core — Avtonom Tizim</span>
                         </div>
                         <div className="flex items-center gap-2">
                           {aiCoreRefresh && (
                             <span className="text-[10px] text-white/25">{aiCoreRefresh.toLocaleTimeString("uz-UZ")}</span>
                           )}
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${aiCoreOnline ? "bg-violet-500/20 text-violet-400" : "bg-red-500/20 text-red-400"}`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${aiCoreOnline ? "bg-primary/20 text-primary" : "bg-red-500/20 text-red-400"}`}>
                             {aiCoreOnline ? "ONLINE" : "OFFLINE"}
                           </span>
                         </div>
@@ -2797,7 +2797,7 @@ export default function AdminPage() {
                           { name: "Kiber-Qalqon",  Icon: ShieldAlert,   color: "text-rose-400"   },
                           { name: "Moderation",     Icon: Bot,           color: "text-amber-400"  },
                           { name: "Analytics",      Icon: Activity,      color: "text-emerald-400"},
-                          { name: "Orchestrator",   Icon: BrainCircuit,  color: "text-violet-400" },
+                          { name: "Orchestrator",   Icon: BrainCircuit,  color: "text-amber-400" },
                         ] as const).map(a => (
                           <div key={a.name} className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }}>
                             <a.Icon className={`w-3.5 h-3.5 flex-shrink-0 ${a.color}`} />
@@ -2813,7 +2813,7 @@ export default function AdminPage() {
                           {[
                             { label: "Bloklangan IP", value: aiCore.security.blockedIps,           color: "text-rose-400"   },
                             { label: "Tahdid (5 daq)", value: aiCore.security.recentThreats,         color: "text-amber-400"  },
-                            { label: "Bajarilgan",     value: aiCore.orchestrator.completedCount,    color: "text-violet-400" },
+                            { label: "Bajarilgan",     value: aiCore.orchestrator.completedCount,    color: "text-amber-400" },
                           ].map(s => (
                             <div key={s.label} className="text-center rounded-xl py-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
                               <p className={`text-base font-bold ${s.color}`}>{s.value}</p>
@@ -2867,10 +2867,10 @@ export default function AdminPage() {
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { label: "Versiya",    value: aiStatus.version,                                         icon: Zap,       color: "text-violet-400" },
+                      { label: "Versiya",    value: aiStatus.version,                                         icon: Zap,       color: "text-amber-400" },
                       { label: "Aniqlik",    value: `${aiStatus.accuracy}%`,                                  icon: Activity,  color: "text-emerald-400" },
                       { label: "Modellar",   value: aiStatus.modelsRunning.toString(),                        icon: Cpu,       color: "text-cyan-400" },
-                      { label: "Yangilanish",value: new Date(aiStatus.lastImproved).toLocaleTimeString("uz-UZ"), icon: RefreshCw, color: "text-violet-400" },
+                      { label: "Yangilanish",value: new Date(aiStatus.lastImproved).toLocaleTimeString("uz-UZ"), icon: RefreshCw, color: "text-amber-400" },
                     ].map(m => (
                       <AdminSF key={m.label}>
                         <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -2902,7 +2902,7 @@ export default function AdminPage() {
                   <AdminSF>
                     <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
                       <p className="text-xs font-semibold text-white/40 mb-3 flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5 text-violet-400" /> AI Tavsiyalar
+                        <Zap className="w-3.5 h-3.5 text-amber-400" /> AI Tavsiyalar
                       </p>
                       <div className="space-y-2">
                         {aiStatus.recommendations?.map((rec: any, i: number) => (
@@ -2915,7 +2915,7 @@ export default function AdminPage() {
                               <p className="text-sm font-semibold text-white">{rec.module}</p>
                               <p className="text-xs text-white/40">{rec.suggestion}</p>
                             </div>
-                            <button className="ml-auto flex-shrink-0 px-2.5 py-1 rounded-lg bg-violet-500/15 text-violet-400 text-xs font-semibold hover:bg-violet-500/25 transition-colors">
+                            <button className="ml-auto flex-shrink-0 px-2.5 py-1 rounded-lg bg-primary/15 text-amber-400 text-xs font-semibold hover:bg-primary/25 transition-colors">
                               Qo'llash
                             </button>
                           </div>
@@ -2937,7 +2937,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     { name: "OpenAI GPT-4o",    status: "active",  icon: "🤖", desc: "AI Chat, Caption Generator, Kontent Moderatsiya", model: "gpt-4o-mini",       color: "border-emerald-500/25 bg-emerald-500/5", badge: "bg-emerald-400/15 text-emerald-400" },
-                    { name: "DALL-E 3",          status: "active",  icon: "🎨", desc: "AI Rasm Yaratish — Matndan rasm generatsiya",      model: "dall-e-3",          color: "border-violet-500/25 bg-violet-500/5",  badge: "bg-violet-400/15 text-violet-400"  },
+                    { name: "DALL-E 3",          status: "active",  icon: "🎨", desc: "AI Rasm Yaratish — Matndan rasm generatsiya",      model: "dall-e-3",          color: "border-primary/25 bg-primary/5",  badge: "bg-primary/15 text-primary"  },
                     { name: "Google Books",      status: "active",  icon: "📚", desc: "Shaxsiy kutubxona — Kitob qidirish va saqlash",    model: "Google Books v1",   color: "border-blue-500/25 bg-blue-500/5",      badge: "bg-blue-400/15 text-blue-400"      },
                     { name: "TensorFlow.js",     status: "active",  icon: "🧠", desc: "ML modellar — Kontentni tahlil qilish",            model: "tfjs v4",           color: "border-orange-500/25 bg-orange-500/5",  badge: "bg-orange-400/15 text-orange-400"  },
                     { name: "Stripe",            status: "active",  icon: "💳", desc: "To'lovlar va obunalar tizimi",                      model: "Stripe API v3",     color: "border-indigo-500/25 bg-indigo-500/5",  badge: "bg-indigo-400/15 text-indigo-400"  },
@@ -2975,7 +2975,7 @@ export default function AdminPage() {
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <a href="/ai-chat" target="_blank" rel="noreferrer"
-                        className="flex items-center gap-2 px-4 py-3 rounded-xl bg-violet-500/15 text-violet-400 hover:bg-violet-500/25 transition-colors text-sm font-semibold">
+                        className="flex items-center gap-2 px-4 py-3 rounded-xl bg-primary/15 text-amber-400 hover:bg-primary/25 transition-colors text-sm font-semibold">
                         🤖 AI Chat ochish
                       </a>
                       <a href="/kutubxona" target="_blank" rel="noreferrer"

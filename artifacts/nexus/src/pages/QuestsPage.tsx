@@ -30,7 +30,7 @@ const QUEST_ICONS: Record<string, React.ReactNode> = {
 };
 
 const QUEST_GRADIENTS: Record<string, string> = {
-  post: "from-violet-500/20 to-purple-500/10",
+  post: "from-red-900/20 to-amber-900/10",
   like: "from-pink-500/20 to-rose-500/10",
   comment: "from-blue-500/20 to-cyan-500/10",
   watch: "from-emerald-500/20 to-teal-500/10",
@@ -123,7 +123,7 @@ export default function QuestsPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+      <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
     </div>
   );
 
@@ -213,7 +213,7 @@ export default function QuestsPage() {
           const isDone = !!quest.completedAt;
           const isClaimed = !!quest.claimedAt;
           const pct = Math.min((quest.progress / quest.target) * 100, 100);
-          const gradient = QUEST_GRADIENTS[quest.type] ?? "from-violet-500/20 to-purple-500/10";
+          const gradient = QUEST_GRADIENTS[quest.type] ?? "from-red-900/20 to-amber-900/10";
           const glow = QUEST_GLOW[quest.type] ?? "rgba(139,92,246,0.4)";
 
           return (
@@ -261,7 +261,7 @@ export default function QuestsPage() {
 
                   {/* Progress bar */}
                   <div className="h-1.5 bg-muted/60 rounded-full overflow-hidden mb-1">
-                    <motion.div className={`h-full rounded-full ${isClaimed ? "bg-yellow-400" : isDone ? "bg-emerald-400" : "bg-violet-500"}`}
+                    <motion.div className={`h-full rounded-full ${isClaimed ? "bg-yellow-400" : isDone ? "bg-emerald-400" : "bg-primary"}`}
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
                       transition={{ duration: 0.6, ease: "easeOut" }} />
@@ -299,8 +299,8 @@ export default function QuestsPage() {
       {/* Leaderboard hint */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
         className="mt-6 rounded-2xl p-4 border border-border/30 bg-muted/30 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-violet-500/20 flex items-center justify-center">
-          <Sparkles className="w-4 h-4 text-violet-400" />
+        <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+          <Sparkles className="w-4 h-4 text-amber-400" />
         </div>
         <div className="flex-1">
           <p className="text-sm font-semibold">{t("quest.streak_tip_title")}</p>

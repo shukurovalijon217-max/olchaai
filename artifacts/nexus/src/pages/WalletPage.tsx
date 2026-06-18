@@ -514,7 +514,7 @@ export default function WalletPage() {
         </div>
 
         {/* Total balance hero */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/80 to-violet-700 p-6 mb-6 shadow-xl">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/80 to-red-800 p-6 mb-6 shadow-xl">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-4 right-8 w-32 h-32 rounded-full bg-white" />
             <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white" />

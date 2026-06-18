@@ -18,12 +18,12 @@ type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | 
 /* ─── Panel color tokens ──────────────────────────────────── */
 const COLOR: Record<string, { icon: string; border: string; glow: string; badge: string; ring: string; scanFrom: string; scanTo: string }> = {
   violet: {
-    icon: "bg-violet-500/20 text-violet-400",
-    border: "border-violet-500/50",
-    glow: "shadow-[0_0_30px_-5px_rgba(139,92,246,0.35)]",
-    badge: "bg-violet-500/20 text-violet-300",
-    ring: "ring-violet-500/30",
-    scanFrom: "from-violet-500/30",
+    icon: "bg-primary/20 text-primary",
+    border: "border-primary/50",
+    glow: "shadow-[0_0_30px_-5px_rgba(192,57,43,0.35)]",
+    badge: "bg-primary/20 text-amber-400",
+    ring: "ring-primary/30",
+    scanFrom: "from-primary/30",
     scanTo: "to-transparent",
   },
   blue: {
@@ -309,11 +309,11 @@ function ProfileContent() {
             {avatarUrl ? (
               <img src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-white/20" />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-violet-500/30 flex items-center justify-center text-xl font-bold text-violet-300 ring-2 ring-violet-500/30">
+              <div className="w-16 h-16 rounded-full bg-primary/30 flex items-center justify-center text-xl font-bold text-amber-300 ring-2 ring-primary/30">
                 {(displayName || user?.displayName || "?")[0].toUpperCase()}
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center">
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
               <Camera className="w-3 h-3 text-white" />
             </div>
           </div>
@@ -346,7 +346,7 @@ function ProfileContent() {
       {success && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> {t("settings.profile_saved")}</div></SF>}
       <SF>
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/30 text-violet-300 text-sm font-semibold transition-all disabled:opacity-40">
+          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-primary/20 hover:bg-primary/30 border border-primary/30 text-amber-300 text-sm font-semibold transition-all disabled:opacity-40">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {t("common.save")}
         </button>
@@ -961,7 +961,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-[#080810]">
       {/* Background ambient */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/3 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/3 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/4 rounded-full blur-3xl" />
       </div>
 

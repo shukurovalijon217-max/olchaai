@@ -18,9 +18,9 @@ import { useTranslation } from "react-i18next";
 interface PostCardProps { post: Post; index?: number; }
 
 const GRADIENT_COLORS = [
-  "from-violet-600/20 to-purple-900/10",
-  "from-pink-600/20 to-rose-900/10",
-  "from-cyan-600/20 to-blue-900/10",
+  "from-red-900/15 to-red-950/5",
+  "from-yellow-900/15 to-amber-950/5",
+  "from-red-800/10 to-amber-900/8",
   "from-emerald-600/20 to-teal-900/10",
 ];
 
@@ -398,10 +398,10 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
               <div className="p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Brain className="w-3.5 h-3.5 text-violet-400" />
+                    <Brain className="w-3.5 h-3.5" style={{ color: "#B8860B" }} />
                     <span className="text-xs font-semibold text-foreground">{t("post.ai_analysis")}</span>
                     {analysis.category && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-violet-500/20 text-violet-400 text-[10px] font-semibold">
+                      <span className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold" style={{ background: "rgba(184,134,11,0.2)", color: "#D4A020" }}>
                         {analysis.category}
                       </span>
                     )}
@@ -464,7 +464,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
           <motion.button whileTap={{ scale: 0.85 }} onClick={handleAnalyze} disabled={analyzing}
             title={t("post.ai_analysis")}
             className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              showAnalysis ? "text-violet-400 bg-violet-400/10" : "text-muted-foreground hover:text-violet-400 hover:bg-violet-400/10"
+              showAnalysis ? "bg-primary/10" : "text-muted-foreground hover:bg-primary/10"
             }`}>
             {analyzing
               ? <Loader2 className="w-4 h-4 animate-spin" />

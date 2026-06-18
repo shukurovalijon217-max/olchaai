@@ -277,7 +277,7 @@ export default function AIChatPage() {
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-700 to-amber-700 flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -328,8 +328,8 @@ export default function AIChatPage() {
             <div className="flex-1 flex flex-col min-w-0">
               {!activeConv ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-6 py-16">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 border border-violet-500/30 flex items-center justify-center">
-                    <Sparkles className="w-8 h-8 text-violet-400" />
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-amber-500/20 border border-primary/30 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-amber-400" />
                   </div>
                   <div className="text-center">
                     <h2 className="text-xl font-bold text-foreground mb-1">{t("ai.welcome_title")}</h2>
@@ -357,7 +357,7 @@ export default function AIChatPage() {
                       {msgs.map(m => (
                         <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                           className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-                          <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-gradient-to-br from-violet-500 to-blue-600"}`}>
+                          <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-gradient-to-br from-red-700 to-amber-700"}`}>
                             {m.role === "user" ? (user?.displayName?.[0] || "U") : <Bot className="w-4 h-4 text-white" />}
                           </div>
                           <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
@@ -421,7 +421,7 @@ export default function AIChatPage() {
                     ? "bg-red-500 hover:bg-red-600 shadow-red-500/30"
                     : voiceLoading
                     ? "bg-muted cursor-not-allowed"
-                    : "bg-gradient-to-br from-violet-500 to-blue-600 hover:from-violet-400 hover:to-blue-500 shadow-violet-500/30"
+                    : "bg-gradient-to-br from-red-700 to-amber-700 hover:from-red-600 hover:to-amber-600 shadow-primary/30"
                 }`}
               >
                 {voiceLoading ? (
@@ -464,16 +464,16 @@ export default function AIChatPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="w-full bg-gradient-to-br from-violet-500/10 to-blue-500/10 border border-violet-500/20 rounded-2xl p-4 space-y-3"
+                  className="w-full bg-gradient-to-br from-primary/10 to-amber-500/10 border border-primary/20 rounded-2xl p-4 space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-violet-400 font-semibold flex items-center gap-1">
+                    <p className="text-xs text-amber-400 font-semibold flex items-center gap-1">
                       <Bot className="w-3.5 h-3.5" /> OlCha AI:
                     </p>
                     {voiceAudio && (
                       <button
                         onClick={playVoiceResponse}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-violet-500/20 text-violet-400 text-xs font-semibold hover:bg-violet-500/30 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary/20 text-amber-400 text-xs font-semibold hover:bg-primary/30 transition-colors"
                       >
                         <Volume2 className="w-3.5 h-3.5" /> {t("ai.listen")}
                       </button>

@@ -50,10 +50,10 @@ function ReelItem({ item, isActive }: { item: typeof DEMO_REELS[0]; isActive: bo
             <Text style={styles.reelTitle} numberOfLines={2}>{item.title}</Text>
           </View>
           <View style={styles.reelTags}>
-            <View style={[styles.tag, { backgroundColor: "rgba(192,57,43,0.3)" }]}>
+            <View style={[styles.tag, { backgroundColor: "rgba(124,58,237,0.3)" }]}>
               <Text style={styles.tagText}>#OlCha</Text>
             </View>
-            <View style={[styles.tag, { backgroundColor: "rgba(184,134,11,0.3)" }]}>
+            <View style={[styles.tag, { backgroundColor: "rgba(168,85,247,0.3)" }]}>
               <Text style={styles.tagText}>#Trending</Text>
             </View>
           </View>

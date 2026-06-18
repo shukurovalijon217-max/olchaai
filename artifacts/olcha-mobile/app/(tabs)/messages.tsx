@@ -59,34 +59,25 @@ export default function MessagesScreen() {
       style={[styles.deleteAction, { backgroundColor: "#ef4444" }]}
       onPress={() => deleteConv.mutate(convId)}
     >
-      <Feather name="trash-2" size={18} color="#fff" />
+      <Feather name="trash-2" size={20} color="#fff" />
       <Text style={styles.deleteLabel}>O'chirish</Text>
     </Pressable>
   );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + webTopPadding, borderBottomColor: colors.border }]}>
-        <View>
-          <Text style={[styles.title, { color: colors.foreground }]}>Xabarlar</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>{displayConvs.length} suhbat</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <Pressable style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="search" size={17} color={colors.foreground} />
-          </Pressable>
-          <Pressable style={[styles.iconBtn, { backgroundColor: colors.primary }]}>
-            <Feather name="edit" size={17} color="#fff" />
-          </Pressable>
-        </View>
+        <Text style={[styles.title, { color: colors.foreground }]}>Xabarlar</Text>
+        <Pressable>
+          <Feather name="edit" size={22} color={colors.foreground} />
+        </Pressable>
       </View>
 
       <FlatList
         data={displayConvs}
         keyExtractor={(item) => `conv-${item.id}`}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0) + 90, paddingTop: 6 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0) + 80 }}
         renderItem={({ item }) => {
           const name = item.participant?.displayName ?? "Foydalanuvchi";
           const username = item.participant?.username ?? "";
@@ -110,26 +101,21 @@ export default function MessagesScreen() {
                 }
               >
                 <View>
-                  <View style={[styles.avatarRing, { borderColor: "rgba(192,57,43,0.4)" }]}>
-                    <UserAvatar uri={item.participant?.avatarUrl} name={name} size={46} isVerified={isVerified} />
-                  </View>
+                  <UserAvatar uri={item.participant?.avatarUrl} name={name} size={50} isVerified={isVerified} />
                   <View style={[styles.onlineDot, { backgroundColor: "#22C55E", borderColor: colors.background }]} />
                 </View>
                 <View style={styles.convInfo}>
                   <View style={styles.convTop}>
-                    <View style={styles.nameRow}>
-                      <Text style={[styles.convName, { color: colors.foreground }]}>{name}</Text>
-                      {isVerified && (
-                        <Feather name="check-circle" size={12} color={colors.gold} style={{ marginLeft: 4 }} />
-                      )}
-                    </View>
+                    <Text style={[styles.convName, { color: colors.foreground }]}>{name}</Text>
                     <Text style={[styles.convTime, { color: colors.mutedForeground }]}>
                       {timeAgo(item.updatedAt)}
                     </Text>
                   </View>
-                  <Text style={[styles.convMsg, { color: colors.mutedForeground }]} numberOfLines={1}>
-                    {item.lastMessage ?? "Xabar yo'q"}
-                  </Text>
+                  <View style={styles.convBottom}>
+                    <Text style={[styles.convMsg, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      {item.lastMessage ?? "Xabar yo'q"}
+                    </Text>
+                  </View>
                 </View>
               </Pressable>
             </Swipeable>
@@ -152,52 +138,37 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   title: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  subtitle: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
-  headerRight: { flexDirection: "row", gap: 8 },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 0.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   convRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    gap: 12,
+    gap: 14,
     borderBottomWidth: 0.5,
-  },
-  avatarRing: {
-    borderRadius: 27,
-    borderWidth: 1.5,
-    padding: 1.5,
   },
   onlineDot: {
     position: "absolute",
-    bottom: 3,
-    right: 3,
-    width: 11,
-    height: 11,
-    borderRadius: 5.5,
+    bottom: 2,
+    right: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     borderWidth: 2,
   },
-  nameRow: { flexDirection: "row", alignItems: "center" },
-  convInfo: { flex: 1, gap: 3 },
+  convInfo: { flex: 1, gap: 4 },
   convTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   convName: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  convTime: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  convMsg: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  convTime: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  convBottom: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  convMsg: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
   deleteAction: {
-    width: 76,
+    width: 80,
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
     marginVertical: 4,
-    marginRight: 10,
-    borderRadius: 14,
+    marginRight: 8,
+    borderRadius: 12,
   },
   deleteLabel: { color: "#fff", fontSize: 10, fontFamily: "Inter_600SemiBold" },
 });

@@ -128,13 +128,13 @@ export function FloatingMiniPlayer() {
         <View style={[styles.expandedOverlay, { backgroundColor: "rgba(0,0,0,0.6)" }]}>
           <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
           <LinearGradient
-            colors={["rgba(192,57,43,0.18)", "rgba(8,6,20,0.98)", "rgba(8,6,20,1)"]}
+            colors={["rgba(124,58,237,0.18)", "rgba(8,6,20,0.98)", "rgba(8,6,20,1)"]}
             style={StyleSheet.absoluteFill}
           />
         <View style={styles.expandedContent}>
           {/* Artwork / Orb */}
           <Animated.View style={[styles.expandedOrb, { transform: [{ scale: orbPulse }] }]}>
-            <LinearGradient colors={["#C0392B", "#B8860B", "#D4A020"]} style={styles.orbGradient}>
+            <LinearGradient colors={["#7c3aed", "#3b82f6", "#06b6d4"]} style={styles.orbGradient}>
               {track.artworkUrl ? null : (
                 <Feather name="music" size={48} color="rgba(255,255,255,0.9)" />
               )}
@@ -150,7 +150,7 @@ export function FloatingMiniPlayer() {
 
           {/* Waveform */}
           <View style={{ marginVertical: 8 }}>
-            <WaveformBars playing={isPlaying} color="#D4A020" />
+            <WaveformBars playing={isPlaying} color="#a78bfa" />
           </View>
 
           {/* Progress bar */}
@@ -173,7 +173,7 @@ export function FloatingMiniPlayer() {
             <Pressable
               onPress={() => isPlaying ? pause() : resume()}
               style={styles.playBtn}>
-              <LinearGradient colors={["#C0392B", "#B8860B"]} style={styles.playBtnGrad}>
+              <LinearGradient colors={["#7c3aed", "#3b82f6"]} style={styles.playBtnGrad}>
                 <Feather name={isPlaying ? "pause" : "play"} size={28} color="#fff" />
               </LinearGradient>
             </Pressable>
@@ -187,8 +187,8 @@ export function FloatingMiniPlayer() {
             <Pressable
               onPress={() => setShowSpeedPicker(v => !v)}
               style={[styles.speedChip, speed !== 1 && styles.speedChipActive]}>
-              <Feather name="zap" size={12} color={speed !== 1 ? "#D4A020" : "rgba(255,255,255,0.5)"} />
-              <Text style={[styles.speedText, speed !== 1 && { color: "#D4A020" }]}>{speed}×</Text>
+              <Feather name="zap" size={12} color={speed !== 1 ? "#e9d5ff" : "rgba(255,255,255,0.5)"} />
+              <Text style={[styles.speedText, speed !== 1 && { color: "#e9d5ff" }]}>{speed}×</Text>
             </Pressable>
             <Pressable onPress={() => { setExpanded(false); setMini(true); }} style={styles.minimizeBtn}>
               <Feather name="minimize-2" size={16} color="rgba(255,255,255,0.5)" />
@@ -206,7 +206,7 @@ export function FloatingMiniPlayer() {
                   key={s}
                   onPress={() => { setSpeed(s); setShowSpeedPicker(false); }}
                   style={[styles.speedOption, speed === s && styles.speedOptionActive]}>
-                  <Text style={[styles.speedOptionText, speed === s && { color: "#D4A020" }]}>{s}×</Text>
+                  <Text style={[styles.speedOptionText, speed === s && { color: "#e9d5ff" }]}>{s}×</Text>
                 </Pressable>
               ))}
             </View>
@@ -223,7 +223,7 @@ export function FloatingMiniPlayer() {
       {...panResponder.panHandlers}
     >
       <LinearGradient
-        colors={["rgba(192,57,43,0.85)", "rgba(184,134,11,0.85)"]}
+        colors={["rgba(124,58,237,0.85)", "rgba(59,130,246,0.85)"]}
         style={styles.miniGradient}>
         <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
 
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     zIndex: 9999,
     borderRadius: MINI_SIZE / 2,
     overflow: "hidden",
-    shadowColor: "#C0392B",
+    shadowColor: "#7c3aed",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 14,
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     height: MINI_SIZE + 12,
     borderRadius: (MINI_SIZE + 12) / 2,
     borderWidth: 1.5,
-    borderColor: "rgba(192,57,43,0.5)",
+    borderColor: "rgba(167,139,250,0.5)",
   },
   miniInner: {
     alignItems: "center",
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#C0392B",
+    shadowColor: "#7c3aed",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
     shadowRadius: 40,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     height: 184,
     borderRadius: 92,
     borderWidth: 2,
-    borderColor: "rgba(192,57,43,0.35)",
+    borderColor: "rgba(167,139,250,0.35)",
     top: -12,
     left: -12,
   },
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     borderRadius: 2,
-    backgroundColor: "#C0392B",
+    backgroundColor: "#7c3aed",
   },
   progressThumb: {
     position: "absolute",
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: "#fff",
     marginLeft: -7,
-    shadowColor: "#C0392B",
+    shadowColor: "#7c3aed",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 8,
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     overflow: "hidden",
-    shadowColor: "#C0392B",
+    shadowColor: "#7c3aed",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 20,
@@ -451,8 +451,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.1)",
   },
   speedChipActive: {
-    backgroundColor: "rgba(192,57,43,0.35)",
-    borderColor: "rgba(192,57,43,0.4)",
+    backgroundColor: "rgba(124,58,237,0.35)",
+    borderColor: "rgba(167,139,250,0.4)",
   },
   speedText: {
     fontSize: 12,
@@ -495,8 +495,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.1)",
   },
   speedOptionActive: {
-    backgroundColor: "rgba(192,57,43,0.45)",
-    borderColor: "rgba(192,57,43,0.5)",
+    backgroundColor: "rgba(124,58,237,0.45)",
+    borderColor: "rgba(167,139,250,0.5)",
   },
   speedOptionText: {
     fontSize: 13,

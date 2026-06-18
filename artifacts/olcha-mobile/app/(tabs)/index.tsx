@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -46,22 +45,22 @@ export default function FeedScreen() {
       user: { id: 2, username: "sardor_b", displayName: "Sardor Baxtiyorov", avatarUrl: null, isVerified: false }
     },
     {
-      id: 3, userId: 3, content: "Toshkent kunlari... Shahrimiz har kuni yangilanib bormoqda! Yangi metro liniyasi ochildi. 🚇", mediaUrl: null, type: "text", likesCount: 234, commentsCount: 45, createdAt: new Date(Date.now() - 3600000).toISOString(),
+      id: 3, userId: 3, content: "Toshkent kunlari... Shahrimiz har kuni yangilanib bormoqda! Yangi metro liniyasi ochildi.", mediaUrl: null, type: "text", likesCount: 234, commentsCount: 45, createdAt: new Date(Date.now() - 3600000).toISOString(),
       user: { id: 3, username: "malika_m", displayName: "Malika Mirzayeva", avatarUrl: null, isVerified: true }
     },
     {
-      id: 4, userId: 4, content: "Musiqa — ruhning ozuqasi. Yangi albomim chiqdi! Barcha platformalarda tinglab ko'ring 🎵✨", mediaUrl: null, type: "text", likesCount: 512, commentsCount: 89, createdAt: new Date(Date.now() - 7200000).toISOString(),
+      id: 4, userId: 4, content: "Musiqa — ruhning ozuqasi. Yangi albomim chiqdi! Barcha platformalarda tinglab ko'ring 🎵", mediaUrl: null, type: "text", likesCount: 512, commentsCount: 89, createdAt: new Date(Date.now() - 7200000).toISOString(),
       user: { id: 4, username: "jasur_art", displayName: "Jasur Artistov", avatarUrl: null, isVerified: true }
     },
   ];
 
   const displayPosts = (posts && posts.length > 0) ? posts : DEMO_POSTS;
+
   const webTopPadding = Platform.OS === "web" ? 67 : 0;
   const webBottomPadding = Platform.OS === "web" ? 34 : 0;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View
         style={[
           styles.header,
@@ -72,57 +71,33 @@ export default function FeedScreen() {
           },
         ]}
       >
-        <View style={styles.logoWrap}>
-          <Text style={styles.logoText}>OlCha</Text>
-          <View style={[styles.liveBadge, { backgroundColor: "rgba(192,57,43,0.15)", borderColor: "rgba(192,57,43,0.3)" }]}>
-            <View style={styles.liveDot} />
-            <Text style={[styles.liveText, { color: colors.primary }]}>LIVE</Text>
-          </View>
-        </View>
+        <Text style={[styles.logo, { color: colors.gold }]}>OlCha</Text>
         <View style={styles.headerActions}>
-          <Pressable style={[styles.headerBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="bell" size={18} color={colors.foreground} />
+          <Pressable style={styles.headerBtn}>
+            <Feather name="bell" size={22} color={colors.foreground} />
           </Pressable>
-          <Pressable style={[styles.headerBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="send" size={18} color={colors.foreground} />
+          <Pressable style={styles.headerBtn}>
+            <Feather name="send" size={22} color={colors.foreground} />
           </Pressable>
-          <View style={[styles.avatarRing, { borderColor: colors.primary }]}>
-            <UserAvatar uri={user?.avatarUrl} name={user?.displayName} size={26} />
-          </View>
+          <UserAvatar uri={user?.avatarUrl} name={user?.displayName} size={28} />
         </View>
       </View>
 
       {isLoading ? (
-        <View style={styles.loaderWrap}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={[styles.loaderText, { color: colors.mutedForeground }]}>Yuklanmoqda...</Text>
-        </View>
+        <ActivityIndicator style={styles.loader} color={colors.primary} />
       ) : (
         <FlatList
           data={displayPosts}
           keyExtractor={(item) => `post-${item.id}`}
           renderItem={({ item }) => <PostCard post={item} />}
           ListHeaderComponent={<StoryBar stories={[]} />}
-          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={[styles.sep, { backgroundColor: colors.border }]} />}
           refreshing={refreshing}
           onRefresh={onRefresh}
-          contentContainerStyle={{ paddingBottom: insets.bottom + webBottomPadding + 90, paddingTop: 4 }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: insets.bottom + webBottomPadding + 80 }}
         />
       )}
-
-      {/* Compose button */}
-      <Pressable
-        style={[styles.composeFab, { backgroundColor: colors.primary }]}
-        onPress={() => {}}
-      >
-        <LinearGradient
-          colors={["#C0392B", "#B8860B"]}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
-        <Feather name="edit-3" size={20} color="#fff" />
-      </Pressable>
     </View>
   );
 }
@@ -134,62 +109,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 10,
     borderBottomWidth: 0.5,
   },
-  logoWrap: { flexDirection: "row", alignItems: "center", gap: 8 },
-  logoText: {
-    fontSize: 26,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 1,
-    color: "#B8860B",
-  },
-  liveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  liveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: "#C0392B",
-  },
-  liveText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.8 },
-  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 0.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarRing: {
-    borderRadius: 16,
-    borderWidth: 1.5,
-    padding: 1.5,
-  },
-  loaderWrap: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  loaderText: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  composeFab: {
-    position: "absolute",
-    bottom: 100,
-    right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    shadowColor: "#C0392B",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 8,
-  },
+  logo: { fontSize: 26, fontFamily: "Inter_700Bold", letterSpacing: 2 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 12 },
+  headerBtn: { padding: 2 },
+  loader: { flex: 1, alignSelf: "center" },
+  sep: { height: 0.5 },
 });

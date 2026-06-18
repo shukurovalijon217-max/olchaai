@@ -6,3 +6,4 @@
 - [Voice comments feature](voice-comments.md) — voice_comments table (id, post_id, author_id, audio_url, duration_ms, waveform_data); routes at GET/POST /api/posts/:id/voice-comments; waveform stored as JSON string; max 10s recording.
 - [Dwell time algorithm](dwell-time-algorithm.md) — useDwellTracker hook uses IntersectionObserver (threshold 0.5); sends view interaction with durationMs on leave/unmount; AI feed weights view by 1+(durationMs/10000) up to 4; also adds freshness decay boost.
 - [Premium pricing admin](premium-pricing-admin.md) — premium_config singleton table (id=1); PUT /api/admin/premium-config creates new Stripe prices + archives old; FinanceTab safeJson wrapper prevents Promise.all crash on 401.
+- [Marketplace i18n coverage](marketplace-i18n.md) — all marketplace pages fully use t() keys; uz is source-of-truth, all other langs fall back to en; sell.desc_ph added to uz/en/ru, es/fr/zh/de/tr fall back to en.

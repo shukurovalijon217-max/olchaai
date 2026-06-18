@@ -100,7 +100,7 @@ export default function ChatThreadScreen() {
               style={[
                 styles.bubble,
                 isMe
-                  ? [styles.bubbleMe, { shadowColor: "#C0392B" }]
+                  ? [styles.bubbleMe, { shadowColor: "#7c3aed" }]
                   : [styles.bubbleThem, { backgroundColor: colors.card, borderColor: colors.border }],
               ]}
             >
@@ -212,7 +212,7 @@ export default function ChatThreadScreen() {
               style={[
                 styles.sendBtn,
                 {
-                  backgroundColor: text.trim() ? "#C0392B" : colors.card,
+                  backgroundColor: text.trim() ? "#7c3aed" : colors.card,
                   borderColor: colors.border,
                 },
               ]}
@@ -232,13 +232,13 @@ export default function ChatThreadScreen() {
         onClose={() => setShowEmoji(false)}
         theme={{
           backdrop: "rgba(0,0,0,0.7)",
-          knob: "#C0392B",
+          knob: "#7c3aed",
           container: colors.card,
           header: colors.foreground,
           skinTonesContainer: colors.card,
           category: {
             icon: colors.mutedForeground,
-            iconActive: "#C0392B",
+            iconActive: "#7c3aed",
             container: colors.card,
             containerActive: colors.card,
           },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   bubbleMe: {
     borderBottomRightRadius: 5,
-    backgroundColor: "#C0392B",
+    backgroundColor: "#7c3aed",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 8,

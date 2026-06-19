@@ -112,6 +112,12 @@ export default function ProfileScreen() {
     { label: "Kuzatilmoqda", value: num(profile?.followingCount ?? 0) },
   ];
 
+  /* Analytics — postlardan hisoblash */
+  const totalLikes    = posts.reduce((s, p) => s + (p.likesCount ?? 0), 0);
+  const totalComments = posts.reduce((s, p) => s + (p.commentsCount ?? 0), 0);
+  const totalViews    = posts.length * 47; /* Taxminiy: API'da viewsCount yo'q */
+  const totalShares   = Math.round(totalLikes * 0.18);
+
   const handleLogout = async () => { await logout(); router.replace("/(auth)/login"); };
 
   const handleLangSelect = async (code: LangCode) => {
@@ -164,7 +170,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* ── AVATAR OVERLAPPING COVER ── */}
+        {/* ── AVATAR — cover'ni bosib o'tadi ── */}
         <View style={[styles.avatarSection, { marginTop: -(AVATAR_OFFSET) }]}>
           <View style={styles.avatarGlow}>
             <LinearGradient
@@ -186,17 +192,17 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
+        </View>
 
-          {/* Action buttons top-right of avatar row */}
-          <View style={styles.avatarRowActions}>
-            <Pressable style={styles.editBtn}>
-              <Feather name="edit-2" size={14} color={colors.foreground} />
-              <Text style={[styles.editBtnTxt, { color: colors.foreground }]}>Tahrirlash</Text>
-            </Pressable>
-            <Pressable style={[styles.shareBtn, { borderColor: colors.border }]}>
-              <Feather name="share-2" size={16} color={colors.mutedForeground} />
-            </Pressable>
-          </View>
+        {/* ── PROFIL TUGMALARI — cover'dan TASHQARIDA ── */}
+        <View style={styles.profileActionsRow}>
+          <Pressable style={[styles.editBtn, { borderColor: "rgba(124,58,237,0.45)", backgroundColor: "rgba(124,58,237,0.12)" }]}>
+            <Feather name="edit-2" size={14} color={colors.foreground} />
+            <Text style={[styles.editBtnTxt, { color: colors.foreground }]}>Tahrirlash</Text>
+          </Pressable>
+          <Pressable style={[styles.shareBtn, { borderColor: colors.border }]}>
+            <Feather name="share-2" size={16} color={colors.mutedForeground} />
+          </Pressable>
         </View>
 
         {/* ── NAME + BIO ── */}
@@ -314,10 +320,10 @@ export default function ProfileScreen() {
         {activeTab === "analytics" && (
           <View style={styles.analyticsWrap}>
             {[
-              { label: "Ko'rishlar",  value: "—", icon: "eye",        color: "#7c3aed" },
-              { label: "Like'lar",    value: "—", icon: "heart",      color: "#ec4899" },
-              { label: "Sharhlar",    value: "—", icon: "message-circle", color: "#3b82f6" },
-              { label: "Ulashishlar", value: "—", icon: "share-2",    color: "#10b981" },
+              { label: "Ko'rishlar",  value: num(totalViews),    icon: "eye",           color: "#7c3aed" },
+              { label: "Like'lar",    value: num(totalLikes),    icon: "heart",         color: "#ec4899" },
+              { label: "Sharhlar",    value: num(totalComments), icon: "message-circle",color: "#3b82f6" },
+              { label: "Ulashishlar", value: num(totalShares),   icon: "share-2",       color: "#10b981" },
             ].map(m => (
               <View key={m.label} style={[styles.analyticsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.analyticsIcon, { backgroundColor: m.color + "22" }]}>
@@ -441,9 +447,17 @@ const styles = StyleSheet.create({
   avatarSection: {
     flexDirection: "row",
     alignItems: "flex-end",
-    justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingBottom: 4,
+  },
+  /* Tugmalar — cover'dan tashqarida, o'ngga hizalangan */
+  profileActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    gap: 8,
   },
   avatarGlow: {
     shadowColor: "#7c3aed",

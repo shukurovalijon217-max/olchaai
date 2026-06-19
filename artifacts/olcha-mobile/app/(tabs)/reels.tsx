@@ -171,44 +171,30 @@ function ReelItem({ item, index, isActive, scrollY }: ReelItemProps) {
           style={StyleSheet.absoluteFillObject}
         />
 
-        {/* ════ NEON MUALLIF OYNASI — CHAP YUQORI ════ */}
-        <View style={[styles.authorNeonWrap, {
-          top: topPad + 14,
-          borderColor: ACCENT + "66",
-          shadowColor: ACCENT,
-        }]}>
-          <BlurView intensity={22} tint="dark" style={StyleSheet.absoluteFillObject} />
-          <LinearGradient
-            colors={[ACCENT + "18", "transparent"]}
-            style={StyleSheet.absoluteFillObject}
+        {/* ════ MUALLIF — TikTok USLUBI, PASTDA (bottom-left) ════ */}
+        <View style={[styles.authorFlat, { bottom: botPad + 140 }]}>
+          <UserAvatar
+            uri={item.author?.avatarUrl ?? null}
+            name={authorName}
+            size={40}
+            isVerified={item.author?.isVerified}
           />
-          {/* Neon corner accents */}
-          <View style={[styles.neonCornerTL, { borderColor: ACCENT }]} />
-          <View style={[styles.neonCornerBR, { borderColor: ACCENT }]} />
-
-          <View style={styles.authorInnerRow}>
-            <UserAvatar
-              uri={item.author?.avatarUrl ?? null}
-              name={authorName}
-              size={36}
-              isVerified={item.author?.isVerified}
-            />
-            <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <Text style={styles.authorName} numberOfLines={1}>{authorName}</Text>
-              <Text style={styles.authorSub}>@{authorUser} · {ago(item.createdAt)}</Text>
+              <View style={[styles.kindPill, { backgroundColor: ACCENT + "33", borderColor: ACCENT + "66" }]}>
+                <Text style={[styles.kindPillTxt, { color: ACCENT }]}>REEL</Text>
+              </View>
             </View>
-          </View>
-
-          {/* Follow + music row */}
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 7, gap: 8, marginLeft: 44 }}>
-            <Pressable style={[styles.followChip, { borderColor: ACCENT + "99", backgroundColor: ACCENT + "20" }]}>
-              <Text style={[styles.followTxt, { color: ACCENT }]}>+ Kuzat</Text>
-            </Pressable>
-            <View style={styles.audioRow}>
+            <Text style={styles.authorSub}>@{authorUser} · {ago(item.createdAt)}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
               <Feather name="music" size={10} color="rgba(255,255,255,0.55)" />
               <Text style={styles.audioTxt} numberOfLines={1}>OlCha · Asl audio</Text>
             </View>
           </View>
+          <Pressable style={[styles.followChip, { borderColor: ACCENT + "99", backgroundColor: ACCENT + "20" }]}>
+            <Text style={[styles.followTxt, { color: ACCENT }]}>+ Kuzat</Text>
+          </Pressable>
         </View>
 
         {/* Reel badge — top right */}
@@ -409,31 +395,16 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
 
-  /* Neon author frame */
-  authorNeonWrap: {
-    position: "absolute", left: 12, zIndex: 20,
-    borderRadius: 16, borderWidth: 1,
-    overflow: "hidden",
-    paddingHorizontal: 10, paddingVertical: 10,
-    maxWidth: W * 0.62,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.65,
-    shadowRadius: 10,
-    elevation: 6,
+  /* TikTok flat author row — PASTDA */
+  authorFlat: {
+    position: "absolute", left: 12, right: 72, zIndex: 20,
+    flexDirection: "row", alignItems: "center", gap: 10,
   },
-  authorInnerRow: { flexDirection: "row", alignItems: "center", gap: 9 },
-  neonCornerTL: {
-    position: "absolute", top: 0, left: 0,
-    width: 14, height: 14,
-    borderTopWidth: 2, borderLeftWidth: 2,
-    borderTopLeftRadius: 6,
+  kindPill: {
+    borderRadius: 6, borderWidth: 1,
+    paddingHorizontal: 5, paddingVertical: 2,
   },
-  neonCornerBR: {
-    position: "absolute", bottom: 0, right: 0,
-    width: 14, height: 14,
-    borderBottomWidth: 2, borderRightWidth: 2,
-    borderBottomRightRadius: 6,
-  },
+  kindPillTxt: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
   authorName: { color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" },
   authorSub: { color: "rgba(255,255,255,0.55)", fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
   followChip: {

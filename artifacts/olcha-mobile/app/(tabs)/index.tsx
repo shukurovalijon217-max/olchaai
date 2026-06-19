@@ -168,24 +168,15 @@ function HoloComment({ visible, accent, onClose }: {
         </View>
         <View style={[styles.holoInputWrap, { borderColor: accent + "55" }]}>
           <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFillObject} />
-          <Text style={styles.holoInputPlaceholder}>{text || "Fikringizni yozing..."}</Text>
-        </View>
-        <View style={styles.holoKeyboard}>
-          {["a","s","d","f","g","h","j","k","l"].map(c => (
-            <Pressable key={c} onPress={() => setText(t => t + c)}
-              style={[styles.holoKey, { borderColor: accent+"33", backgroundColor: accent+"11" }]}>
-              <Text style={[styles.holoKeyText, { color: accent }]}>{c}</Text>
-            </Pressable>
-          ))}
-          <View style={{ width:"100%", flexDirection:"row", justifyContent:"center", gap:8, marginTop:4 }}>
-            {["o","l","c","h","a"," ","⌫"].map(c => (
-              <Pressable key={c}
-                onPress={() => c === "⌫" ? setText(t => t.slice(0,-1)) : setText(t => t + c)}
-                style={[styles.holoKey, { borderColor:accent+"33", backgroundColor:accent+"11", minWidth:c===" "?72:36 }]}>
-                <Text style={[styles.holoKeyText,{color:accent}]}>{c === "⌫" ? "⌫" : c}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder="Fikringizni yozing..."
+            placeholderTextColor="rgba(255,255,255,0.35)"
+            multiline
+            autoFocus
+            style={[styles.holoTextInput, { color: "#fff" }]}
+          />
         </View>
         <Pressable style={[styles.holoSend, { backgroundColor: accent }]} onPress={onClose}>
           <Feather name="send" size={16} color="#fff" />
@@ -730,8 +721,8 @@ function VerticalCard({ item, index, scrollY, isActive, liked, likes, onLike, on
           style={StyleSheet.absoluteFillObject}
         />
 
-        {/* ════ MUALLIF — TikTok USLUBI (ramkasiz) ════ */}
-        <View style={[styles.authorFlat, { top: topPad + 52 }]}>
+        {/* ════ MUALLIF — TikTok USLUBI, PASTDA (bottom-left) ════ */}
+        <View style={[styles.authorFlat, { bottom: botPad + 140 }]}>
           {/* Avatar */}
           <View style={styles.authorAvatarWrap}>
             {avatarUri ? (
@@ -997,7 +988,8 @@ export default function FeedScreen() {
           ref={flatRef}
           data={feed}
           keyExtractor={i => i.id}
-          pagingEnabled
+          snapToInterval={webAdj ? H - 134 : H}
+          snapToAlignment="start"
           showsVerticalScrollIndicator={false}
           decelerationRate="fast"
           scrollEventThrottle={16}
@@ -1253,6 +1245,11 @@ const styles = StyleSheet.create({
   holoTitle: { flex:1, color:"#fff", fontSize:16, fontFamily:"Inter_700Bold" },
   holoInputWrap: { borderRadius:16, borderWidth:1, padding:14, minHeight:70, marginBottom:14, overflow:"hidden" },
   holoInputPlaceholder: { color:"rgba(255,255,255,0.45)", fontSize:14, fontFamily:"Inter_400Regular" },
+  holoTextInput: {
+    fontSize: 14, fontFamily: "Inter_400Regular",
+    minHeight: 56, paddingVertical: 8, paddingHorizontal: 4,
+    textAlignVertical: "top",
+  },
   holoKeyboard: { flexDirection:"row", flexWrap:"wrap", gap:6, justifyContent:"center", marginBottom:14 },
   holoKey: { minWidth:34, height:38, borderRadius:10, borderWidth:1, alignItems:"center", justifyContent:"center", paddingHorizontal:8 },
   holoKeyText: { fontSize:15, fontFamily:"Inter_500Medium" },

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { usersTable, followsTable } from "@workspace/db";
-import { eq, ilike, sql, and } from "drizzle-orm";
+import { usersTable, followsTable, postsTable } from "@workspace/db";
+import { eq, ilike, sql, and, desc } from "drizzle-orm";
 
 const router = Router();
 
@@ -57,9 +57,28 @@ router.get("/users/:id", async (req, res) => {
     const id = Number(req.params.id);
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
     if (!user) { res.status(404).json({ error: "Not found" }); return; }
-    const [followers] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id));
-    const [following] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id));
-    res.json({ ...user, followersCount: followers.count, followingCount: following.count, postsCount: 0, isFollowing: false });
+    const [[followers], [following], [postsCount]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
+      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
+      db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
+    ]);
+    res.json({ ...user, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: false });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/users/:id/posts", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const limit = Math.min(Number(req.query.limit) || 30, 100);
+    const offset = Number(req.query.offset) || 0;
+    const posts = await db.select().from(postsTable)
+      .where(eq(postsTable.authorId, id))
+      .orderBy(desc(postsTable.createdAt))
+      .limit(limit).offset(offset);
+    res.json(posts);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

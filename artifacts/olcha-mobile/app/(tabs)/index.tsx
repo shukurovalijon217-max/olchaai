@@ -883,8 +883,24 @@ export default function FeedScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const was = likedMap[item.id] ?? item.isLiked;
     const cur = likesMap[item.id] ?? item.likesCount;
+    // Optimistik yangilash
     setLikedMap(p => ({ ...p, [item.id]: !was }));
     setLikesMap(p => ({ ...p, [item.id]: cur + (was ? -1 : 1) }));
+    // API chaqiruv
+    const endpoint = item.kind === "reel"
+      ? `${API}/reels/${item.rawId}/like`
+      : `${API}/posts/${item.rawId}/like`;
+    fetch(endpoint, { method: "POST", credentials: "include" })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((data: { liked: boolean; likesCount: number }) => {
+        setLikedMap(p => ({ ...p, [item.id]: data.liked }));
+        setLikesMap(p => ({ ...p, [item.id]: data.likesCount }));
+      })
+      .catch(() => {
+        // Xato bo'lsa qaytarish
+        setLikedMap(p => ({ ...p, [item.id]: was }));
+        setLikesMap(p => ({ ...p, [item.id]: cur }));
+      });
   };
 
   const webAdj  = Platform.OS === "web";

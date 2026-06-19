@@ -91,6 +91,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const { user } = useAuth();
   const isOwner = user?.id === post.author.id;
   const dwellRef = useDwellTracker("post", post.id, !!user);
+  const pendingLikeRef = useRef(false);
 
   const grad = GRADIENT_COLORS[index % GRADIENT_COLORS.length];
 
@@ -103,8 +104,9 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
-  /* Sync liked/count when post prop changes */
+  /* Sync liked/count when post prop changes — skip while mutation in flight */
   useEffect(() => {
+    if (pendingLikeRef.current) return;
     setLiked(post.isLiked);
     setCount(post.likesCount);
   }, [post.isLiked, post.likesCount]);
@@ -112,18 +114,21 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   /* ── Like ── */
   const handleLike = () => {
     if (!user) return;
-    setLiked(v => !v);
-    setCount(v => liked ? v - 1 : v + 1);
+    const wasLiked = liked;
+    pendingLikeRef.current = true;
+    setLiked(!wasLiked);
+    setCount(v => wasLiked ? v - 1 : v + 1);
     likePost.mutate({ id: post.id }, {
       onSuccess: (data) => {
         setLiked(data.liked);
         setCount(data.likesCount);
-        qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
-        qc.invalidateQueries({ queryKey: getGetTrendingPostsQueryKey() });
       },
       onError: () => {
-        setLiked(v => !v);
-        setCount(v => liked ? v + 1 : v - 1);
+        setLiked(wasLiked);
+        setCount(v => wasLiked ? v + 1 : v - 1);
+      },
+      onSettled: () => {
+        pendingLikeRef.current = false;
       },
     });
   };

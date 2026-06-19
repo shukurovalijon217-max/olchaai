@@ -634,9 +634,9 @@ interface CardProps {
 function VerticalCard({ item, index, scrollY, isActive, liked, likes, onLike, onComment, onShare, onAI }: CardProps) {
   const insets  = useSafeAreaInsets();
   const webAdj  = Platform.OS === "web";
-  const cardH   = webAdj ? H - 134 : H;
-  const topPad  = insets.top  + (webAdj ? 67 : 0);
-  const botPad  = insets.bottom + (webAdj ? 34 : 0);
+  const cardH   = H;
+  const topPad  = insets.top;
+  const botPad  = insets.bottom + (webAdj ? 134 : 0);
 
   /* ── 3D TUNNEL ANIMATSIYASI (FULL-SCREEN) ── */
   const inputRange = [(index - 1) * cardH, index * cardH, (index + 1) * cardH];
@@ -936,15 +936,18 @@ export default function FeedScreen() {
   };
 
   const webAdj  = Platform.OS === "web";
-  const topSafe = insets.top + (webAdj ? 67 : 0);
+  const topSafe = insets.top;
   const currentK = feed[activeIdx]?.contentKind ?? "text";
   const catAccent = K[currentK]?.accent ?? "#7c3aed";
 
   return (
     <View style={styles.root}>
 
-      {/* ── TOP BAR: Logo + Category chips ── */}
-      <View style={[styles.topBar, { top: topSafe + 4 }]}>
+      {/* ── FILTER BAR: Logo + Category chips — PASTDA (TikTok uslubi) ── */}
+      <View style={[styles.topBar, webAdj
+        ? { bottom: insets.bottom + 90 }
+        : { top: topSafe + 4 }
+      ]}>
         <View style={styles.topBarLogo}>
           <LinearGradient colors={["#7c3aed","#a855f7"]} style={styles.logoOrb}>
             <Text style={styles.logoO}>O</Text>
@@ -989,7 +992,7 @@ export default function FeedScreen() {
           ref={flatRef}
           data={feed}
           keyExtractor={i => i.id}
-          snapToInterval={webAdj ? H - 134 : H}
+          snapToInterval={H}
           snapToAlignment="start"
           showsVerticalScrollIndicator={false}
           decelerationRate="fast"
@@ -1060,8 +1063,10 @@ const styles = StyleSheet.create({
   /* ── Top bar ── */
   topBar: {
     position: "absolute", left: 0, right: 0, zIndex: 50,
-    height: 44, flexDirection: "row", alignItems: "center",
+    height: 52, flexDirection: "row", alignItems: "center",
     paddingLeft: 12, paddingRight: 8,
+    backgroundColor: "rgba(4,6,15,0.80)",
+    borderTopWidth: 1, borderTopColor: "rgba(124,58,237,0.20)",
   },
   topBarLogo: {
     flexDirection: "row", alignItems: "center", gap: 6,

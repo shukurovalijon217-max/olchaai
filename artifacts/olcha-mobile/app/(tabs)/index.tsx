@@ -479,7 +479,7 @@ function TunnelCard({ item, index, scrollX, isActive, totalCount, liked, likes, 
       <LinearGradient colors={["rgba(0,0,0,0.65)","transparent","transparent","rgba(0,0,0,0.88)"]} locations={[0,0.22,0.52,1]} style={StyleSheet.absoluteFillObject}/>
 
       {/* ════ MUALLIF — CHAP YUQORIDA ════ */}
-      <View style={[styles.authorTop, { top: topPad + 44 }]}>
+      <View style={[styles.authorTop, { top: topPad + 56 }]}>
         {avatarUri ? (
           <Image source={{ uri: avatarUri }} style={[styles.avatarTop, {borderColor:k.accent+"77"}]}/>
         ) : (
@@ -487,7 +487,7 @@ function TunnelCard({ item, index, scrollX, isActive, totalCount, liked, likes, 
             <Text style={styles.avatarLetter}>{(item.author.displayName ?? "O")[0].toUpperCase()}</Text>
           </LinearGradient>
         )}
-        <View>
+        <View style={{flex:1, minWidth:0}}>
           <View style={{flexDirection:"row",alignItems:"center",gap:5}}>
             <Text style={styles.authorName} numberOfLines={1}>{item.author.displayName}</Text>
             {item.author.isVerified && (
@@ -496,7 +496,7 @@ function TunnelCard({ item, index, scrollX, isActive, totalCount, liked, likes, 
               </View>
             )}
           </View>
-          <Text style={styles.authorHandle}>@{item.author.username} · {ago(item.createdAt)}</Text>
+          <Text style={styles.authorHandle} numberOfLines={1}>@{item.author.username} · {ago(item.createdAt)}</Text>
         </View>
         <Pressable style={[styles.followChip,{borderColor:k.accent+"77"}]}>
           <Text style={[styles.followText,{color:k.accent}]}>+ Kuzat</Text>
@@ -504,7 +504,7 @@ function TunnelCard({ item, index, scrollX, isActive, totalCount, liked, likes, 
       </View>
 
       {/* Kind badge — top right */}
-      <View style={[styles.kindBadge, { top: topPad + 44, backgroundColor: k.accent+"22", borderColor: k.accent+"55" }]}>
+      <View style={[styles.kindBadge, { top: topPad + 56, backgroundColor: k.accent+"22", borderColor: k.accent+"55" }]}>
         <Feather name={k.icon as any} size={11} color={k.accent}/>
         <Text style={[styles.kindText,{color:k.accent}]}>{k.label}</Text>
       </View>
@@ -517,7 +517,7 @@ function TunnelCard({ item, index, scrollX, isActive, totalCount, liked, likes, 
       </View>
 
       {/* ════ RIGHT ACTION BAR ════ */}
-      <View style={[styles.actionBar, { bottom: botPad + 120 }]}>
+      <View style={[styles.actionBar, { top: topPad + 118, bottom: botPad + 90 }]}>
         {/* Like */}
         <Pressable style={styles.actionBtn} onPress={onLike}>
           <LinearGradient
@@ -659,9 +659,16 @@ export default function FeedScreen() {
 
   return (
     <View style={styles.root}>
-      {/* ── Category strip — floating ── */}
-      <View style={[styles.catBar, { top: topSafe + 4 }]}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catScroll}>
+      {/* ── Top bar: Logo + Category strip (bir qatorda) ── */}
+      <View style={[styles.topBar, { top: topSafe + 4 }]}>
+        <View style={styles.topBarLogo}>
+          <LinearGradient colors={["#7c3aed","#a855f7"]} style={styles.logoOrb}>
+            <Text style={styles.logoO}>O</Text>
+          </LinearGradient>
+          <Text style={styles.logoTxt}>OlCha</Text>
+          <View style={[styles.logoPulse, {backgroundColor:catAccent}]}/>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{flex:1}} contentContainerStyle={styles.catScroll}>
           {CATS.map(c=>(
             <Pressable key={c.key} onPress={()=>{setActiveCat(c.key);setActiveIdx(0);}} style={[styles.catChip, activeCat===c.key&&{borderColor:catAccent+"88"}]}>
               {activeCat===c.key&&(
@@ -671,15 +678,6 @@ export default function FeedScreen() {
             </Pressable>
           ))}
         </ScrollView>
-      </View>
-
-      {/* ── OlCha logo ── */}
-      <View style={[styles.logo, { top: topSafe + 46 }]}>
-        <LinearGradient colors={["#7c3aed","#a855f7"]} style={styles.logoOrb}>
-          <Text style={styles.logoO}>O</Text>
-        </LinearGradient>
-        <Text style={styles.logoTxt}>OlCha</Text>
-        <View style={[styles.logoPulse, {backgroundColor:catAccent}]}/>
       </View>
 
       {/* ── 3D TUNNEL FEED ── */}
@@ -746,11 +744,20 @@ export default function FeedScreen() {
 const styles = StyleSheet.create({
   root: { flex:1, backgroundColor:"#04060f" },
 
-  /* Category */
-  catBar: { position:"absolute", left:0, right:0, zIndex:40, height:40 },
-  catScroll: { paddingHorizontal:12, gap:8, alignItems:"center" },
+  /* Top bar (logo + category chips — bir qatorda) */
+  topBar: {
+    position:"absolute", left:0, right:0, zIndex:40,
+    height:44, flexDirection:"row", alignItems:"center",
+    paddingLeft:12,
+  },
+  topBarLogo: {
+    flexDirection:"row", alignItems:"center", gap:6,
+    paddingRight:10, borderRightWidth:1,
+    borderRightColor:"rgba(255,255,255,0.10)",
+  },
+  catScroll: { paddingHorizontal:8, gap:8, alignItems:"center" },
   catChip: {
-    paddingHorizontal:14, height:32, borderRadius:16, overflow:"hidden",
+    paddingHorizontal:12, height:30, borderRadius:15, overflow:"hidden",
     alignItems:"center", justifyContent:"center",
     backgroundColor:"rgba(0,0,0,0.55)",
     borderWidth:1, borderColor:"rgba(255,255,255,0.12)",
@@ -758,11 +765,10 @@ const styles = StyleSheet.create({
   catLabel: { fontSize:12, fontFamily:"Inter_500Medium", color:"rgba(255,255,255,0.55)" },
 
   /* Logo */
-  logo: { position:"absolute", left:14, zIndex:40, flexDirection:"row", alignItems:"center", gap:7 },
-  logoOrb: { width:26, height:26, borderRadius:8, alignItems:"center", justifyContent:"center" },
-  logoO: { color:"#fff", fontSize:13, fontFamily:"Inter_700Bold" },
-  logoTxt: { color:"#c4b5fd", fontSize:15, fontFamily:"Inter_700Bold", letterSpacing:1 },
-  logoPulse: { width:6, height:6, borderRadius:3, marginLeft:2 },
+  logoOrb: { width:24, height:24, borderRadius:7, alignItems:"center", justifyContent:"center" },
+  logoO: { color:"#fff", fontSize:12, fontFamily:"Inter_700Bold" },
+  logoTxt: { color:"#c4b5fd", fontSize:14, fontFamily:"Inter_700Bold", letterSpacing:1 },
+  logoPulse: { width:5, height:5, borderRadius:3 },
 
   /* Loading */
   loadState: { flex:1, alignItems:"center", justifyContent:"center", gap:14 },
@@ -779,14 +785,17 @@ const styles = StyleSheet.create({
   dotInactive: { width:4, height:4, borderRadius:2, backgroundColor:"rgba(255,255,255,0.22)" },
 
   /* Author — chap yuqorida */
-  authorTop: { position:"absolute", left:14, zIndex:20, flexDirection:"row", alignItems:"center", gap:10, maxWidth:W-90 },
-  avatarTop: { width:44, height:44, borderRadius:13, borderWidth:2 },
+  authorTop: {
+    position:"absolute", left:14, right:76, zIndex:20,
+    flexDirection:"row", alignItems:"center", gap:10,
+  },
+  avatarTop: { width:42, height:42, borderRadius:12, borderWidth:2, flexShrink:0 },
   avatarLetter: { color:"#fff", fontSize:18, fontFamily:"Inter_700Bold" },
   authorName: { color:"#fff", fontSize:14, fontFamily:"Inter_700Bold", flexShrink:1 },
   authorHandle: { color:"rgba(255,255,255,0.45)", fontSize:11, fontFamily:"Inter_400Regular" },
   verifiedDot: { width:15, height:15, borderRadius:8, alignItems:"center", justifyContent:"center" },
   verifiedMark: { color:"#fff", fontSize:9 },
-  followChip: { paddingHorizontal:10, paddingVertical:5, borderRadius:18, borderWidth:1, backgroundColor:"rgba(0,0,0,0.30)" },
+  followChip: { paddingHorizontal:10, paddingVertical:5, borderRadius:18, borderWidth:1, backgroundColor:"rgba(0,0,0,0.30)", flexShrink:0 },
   followText: { fontSize:11, fontFamily:"Inter_600SemiBold" },
 
   /* Kind badge — yuqori o'ngda */
@@ -798,9 +807,12 @@ const styles = StyleSheet.create({
   kindText: { fontSize:11, fontFamily:"Inter_700Bold" },
 
   /* Action bar */
-  actionBar: { position:"absolute", right:14, gap:18, alignItems:"center" },
+  actionBar: {
+    position:"absolute", right:14, zIndex:20,
+    alignItems:"center", justifyContent:"center", gap:14,
+  },
   actionBtn:  { alignItems:"center", gap:4 },
-  actionCircle: { width:52, height:52, borderRadius:26, alignItems:"center", justifyContent:"center" },
+  actionCircle: { width:48, height:48, borderRadius:24, alignItems:"center", justifyContent:"center" },
   actionLabel: { color:"rgba(255,255,255,0.65)", fontSize:11, fontFamily:"Inter_500Medium", textAlign:"center" },
 
   /* Glass bottom */

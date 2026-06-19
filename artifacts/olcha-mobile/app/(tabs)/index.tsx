@@ -646,21 +646,24 @@ function VerticalCard({ item, index, scrollY, isActive, liked, likes, onLike, on
   const topPad  = insets.top  + (webAdj ? 67 : 0);
   const botPad  = insets.bottom + (webAdj ? 34 : 0);
 
-  /* ── 3D TUNNEL ANIMATSIYASI ── */
+  /* ── 3D TUNNEL ANIMATSIYASI (FULL-SCREEN) ── */
   const inputRange = [(index - 1) * cardH, index * cardH, (index + 1) * cardH];
+  /* Scale: kiruvchi 0.92 → 1, ketuvchi 1 → 1.12  (karta chegara YO'Q) */
   const tunnelScale = scrollY.interpolate({
     inputRange,
-    outputRange: [0.85, 1, 1.18],
+    outputRange: [0.92, 1, 1.12],
     extrapolate: "clamp",
   });
+  /* Opacity: aktiv bo'lmaganlar TO'LIQ ko'rinmas → chegara yo'q */
   const tunnelOpacity = scrollY.interpolate({
     inputRange,
-    outputRange: [0.55, 1, 0],
+    outputRange: [0, 1, 0],
     extrapolate: "clamp",
   });
+  /* TranslateY: Z-o'qi illuziyasi uchun juda kichik harakat */
   const tunnelTranslateY = scrollY.interpolate({
     inputRange,
-    outputRange: [cardH * 0.04, 0, -cardH * 0.06],
+    outputRange: [cardH * 0.015, 0, -cardH * 0.025],
     extrapolate: "clamp",
   });
   const k       = K[item.contentKind] ?? K.text;

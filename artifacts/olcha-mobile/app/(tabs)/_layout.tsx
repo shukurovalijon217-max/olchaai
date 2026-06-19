@@ -8,7 +8,6 @@ import React from "react";
 import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
-import { DraggableAIOrb } from "@/components/DraggableAIOrb";
 
 function NativeTabLayout() {
   return (
@@ -149,7 +148,6 @@ export default function TabLayout() {
   return (
     <View style={{ flex: 1 }}>
       {isLiquidGlassAvailable() ? <NativeTabLayout /> : <ClassicTabLayout />}
-      <DraggableAIOrb />
     </View>
   );
 }

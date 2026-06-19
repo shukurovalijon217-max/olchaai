@@ -730,74 +730,54 @@ function VerticalCard({ item, index, scrollY, isActive, liked, likes, onLike, on
           style={StyleSheet.absoluteFillObject}
         />
 
-        {/* ════ NEON MUALLIF OYNASI — CHAP YUQORI ════ */}
-        <View style={[styles.authorNeonWrap, {
-          top: topPad + 52,
-          borderColor: k.accent + "66",
-          shadowColor: k.accent,
-        }]}>
-          <BlurView intensity={22} tint="dark" style={StyleSheet.absoluteFillObject}/>
-          <LinearGradient
-            colors={[k.accent + "18", "transparent"]}
-            style={StyleSheet.absoluteFillObject}
-          />
-          {/* Neon glow corner lines */}
-          <View style={[styles.neonCornerTL, { borderColor: k.accent }]} />
-          <View style={[styles.neonCornerBR, { borderColor: k.accent }]} />
-
-          <View style={styles.authorInnerRow}>
-            {/* Avatar */}
+        {/* ════ MUALLIF — TikTok USLUBI (ramkasiz) ════ */}
+        <View style={[styles.authorFlat, { top: topPad + 52 }]}>
+          {/* Avatar */}
+          <View style={styles.authorAvatarWrap}>
             {avatarUri ? (
-              <Image source={{ uri: avatarUri }}
-                style={[styles.avatar, { borderColor: k.accent }]}/>
+              <Image source={{ uri: avatarUri }} style={styles.avatar}/>
             ) : (
               <LinearGradient colors={[k.grad[1], k.grad[2]] as any}
-                style={[styles.avatar, { borderColor: k.accent, alignItems:"center", justifyContent:"center" }]}>
+                style={[styles.avatar, { alignItems:"center", justifyContent:"center" }]}>
                 <Text style={styles.avatarLetter}>
                   {(item.author.displayName ?? "O")[0].toUpperCase()}
                 </Text>
               </LinearGradient>
             )}
-            {/* Name + handle + audio */}
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <View style={{ flexDirection:"row", alignItems:"center", gap:4 }}>
-                <Text style={styles.authorName} numberOfLines={1}>{item.author.displayName}</Text>
-                {item.author.isVerified && (
-                  <View style={[styles.verifiedBadge, { backgroundColor: k.accent }]}>
-                    <Text style={styles.verifiedMark}>✓</Text>
-                  </View>
-                )}
+            {/* Thin accent ring */}
+            <View style={[styles.avatarRing, { borderColor: k.accent + "bb" }]}/>
+          </View>
+
+          {/* Name + handle + audio */}
+          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+            <View style={{ flexDirection:"row", alignItems:"center", gap:5 }}>
+              <Text style={styles.authorName} numberOfLines={1}>{item.author.displayName}</Text>
+              {item.author.isVerified && (
+                <View style={[styles.verifiedBadge, { backgroundColor: k.accent }]}>
+                  <Text style={styles.verifiedMark}>✓</Text>
+                </View>
+              )}
+              {/* Kind pill — inline with name */}
+              <View style={[styles.kindPill, { backgroundColor: k.accent+"33", borderColor: k.accent+"66" }]}>
+                <Text style={[styles.kindPillTxt, { color: k.accent }]}>{k.label}</Text>
               </View>
-              <Text style={styles.authorSub} numberOfLines={1}>
-                @{item.author.username} · {ago(item.createdAt)}
-              </Text>
-              <View style={styles.audioRow}>
-                <Feather name="music" size={10} color="rgba(255,255,255,0.55)"/>
-                <Text style={styles.audioTxt} numberOfLines={1}>OlCha · Asl audio</Text>
-              </View>
+            </View>
+            <Text style={styles.authorSub} numberOfLines={1}>
+              @{item.author.username} · {ago(item.createdAt)}
+            </Text>
+            <View style={styles.audioRow}>
+              <Feather name="music" size={10} color="rgba(255,255,255,0.55)"/>
+              <Text style={styles.audioTxt} numberOfLines={1}>OlCha · Asl audio</Text>
             </View>
           </View>
 
-          {/* Follow button inside neon frame */}
+          {/* Follow button */}
           <Pressable style={[styles.followChip, {
-            borderColor: k.accent + "99",
-            backgroundColor: k.accent + "20",
-            marginTop: 8,
-            alignSelf: "flex-start",
-            marginLeft: 50,
+            borderColor: k.accent + "aa",
+            backgroundColor: "rgba(0,0,0,0.45)",
           }]}>
-            <Text style={[styles.followTxt, { color: k.accent }]}>+ Kuzat</Text>
+            <Text style={[styles.followTxt, { color: "#fff" }]}>+ Kuzat</Text>
           </Pressable>
-        </View>
-
-        {/* Kind badge — top right (same row as author) */}
-        <View style={[styles.kindBadge, {
-          top: topPad + 52,
-          backgroundColor: k.accent+"22",
-          borderColor: k.accent+"55",
-        }]}>
-          <Feather name={k.icon as any} size={10} color={k.accent}/>
-          <Text style={[styles.kindTxt, { color: k.accent }]}>{k.label}</Text>
         </View>
 
         {/* ════ O'NG — EVENLY SPACED ACTION BAR ════ */}
@@ -1119,58 +1099,42 @@ const styles = StyleSheet.create({
   loadState: { flex: 1, alignItems:"center", justifyContent:"center", gap: 14 },
   loadTxt: { color: "rgba(255,255,255,0.30)", fontSize: 13, fontFamily: "Inter_400Regular" },
 
-  /* ── Author row ── */
-  authorRow: {
-    position: "absolute", left: 14, right: 76, zIndex: 20,
+  /* ── Author flat (TikTok uslubi — ramkasiz) ── */
+  authorFlat: {
+    position: "absolute", left: 12, right: 72, zIndex: 20,
     flexDirection: "row", alignItems: "center", gap: 10,
   },
-  avatar: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, flexShrink: 0 },
-  avatarLetter: { color: "#fff", fontSize: 16, fontFamily: "Inter_700Bold" },
-  authorName: { color: "#fff", fontSize: 14, fontFamily: "Inter_700Bold", flexShrink: 1 },
-  authorSub: { color: "rgba(255,255,255,0.45)", fontSize: 11, fontFamily: "Inter_400Regular" },
+  authorAvatarWrap: { position: "relative", flexShrink: 0 },
+  avatar: { width: 44, height: 44, borderRadius: 22, flexShrink: 0 },
+  avatarRing: {
+    position: "absolute", top: -2, left: -2,
+    width: 48, height: 48, borderRadius: 24, borderWidth: 2,
+  },
+  avatarLetter: { color: "#fff", fontSize: 17, fontFamily: "Inter_700Bold" },
+  authorName: {
+    color: "#fff", fontSize: 14, fontFamily: "Inter_700Bold", flexShrink: 1,
+    textShadowColor: "rgba(0,0,0,0.8)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+  },
+  authorSub: {
+    color: "rgba(255,255,255,0.55)", fontSize: 11, fontFamily: "Inter_400Regular",
+    textShadowColor: "rgba(0,0,0,0.7)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+  },
   verifiedBadge: { width: 14, height: 14, borderRadius: 7, alignItems:"center", justifyContent:"center", flexShrink: 0 },
   verifiedMark: { color: "#fff", fontSize: 8 },
-  audioRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  audioRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   audioTxt: { color: "rgba(255,255,255,0.45)", fontSize: 10, fontFamily: "Inter_400Regular", flexShrink: 1 },
   followChip: {
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 18,
-    borderWidth: 1, backgroundColor: "rgba(0,0,0,0.35)", flexShrink: 0,
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+    borderWidth: 1, flexShrink: 0,
   },
-  followTxt: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  followTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 
-  /* Kind badge */
-  kindBadge: {
-    position: "absolute", right: 14, zIndex: 20,
-    flexDirection: "row", alignItems: "center", gap: 4,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 9, borderWidth: 1,
+  /* Kind pill — inline (kichik, kamroq e'tiborli) */
+  kindPill: {
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1,
+    flexShrink: 0,
   },
-  kindTxt: { fontSize: 11, fontFamily: "Inter_700Bold" },
-
-  /* ── Neon author frame ── */
-  authorNeonWrap: {
-    position: "absolute", left: 12, zIndex: 20,
-    borderRadius: 16, borderWidth: 1,
-    overflow: "hidden",
-    paddingHorizontal: 10, paddingVertical: 10,
-    maxWidth: W * 0.60,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.65,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  authorInnerRow: { flexDirection: "row", alignItems: "center", gap: 9 },
-  neonCornerTL: {
-    position: "absolute", top: 0, left: 0,
-    width: 14, height: 14,
-    borderTopWidth: 2, borderLeftWidth: 2,
-    borderTopLeftRadius: 6,
-  },
-  neonCornerBR: {
-    position: "absolute", bottom: 0, right: 0,
-    width: 14, height: 14,
-    borderBottomWidth: 2, borderRightWidth: 2,
-    borderBottomRightRadius: 6,
-  },
+  kindPillTxt: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
 
   /* ── Right action bar ── */
   rightBar: {

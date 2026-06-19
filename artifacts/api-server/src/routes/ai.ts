@@ -254,17 +254,32 @@ Tags: 3-6 relevant hashtags without #.`,
 
 router.get("/ai/trending-topics", async (req, res) => {
   try {
-    const topics = [
-      { tag: "AI", postCount: 12400, growth: 23.5, category: "Technology" },
-      { tag: "Web3", postCount: 8900, growth: 15.2, category: "Finance" },
-      { tag: "Fitness", postCount: 7600, growth: 8.1, category: "Health" },
-      { tag: "Travel", postCount: 6200, growth: 12.0, category: "Lifestyle" },
-      { tag: "Music", postCount: 5800, growth: 6.3, category: "Entertainment" },
-      { tag: "Gaming", postCount: 5100, growth: 18.7, category: "Entertainment" },
-      { tag: "Photography", postCount: 4700, growth: 4.2, category: "Art" },
-      { tag: "Fashion", postCount: 4300, growth: 9.8, category: "Lifestyle" },
-    ];
-    res.json(topics);
+    const rows = await db.select({ tags: postsTable.tags }).from(postsTable).limit(1000);
+    const tagCounts: Record<string, number> = {};
+    for (const row of rows) {
+      if (Array.isArray(row.tags)) {
+        for (const tag of row.tags) {
+          if (tag) tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+        }
+      }
+    }
+    const fromDb = Object.entries(tagCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 8)
+      .map(([tag, postCount]) => ({ tag, postCount, growth: Math.round((Math.random() * 25 + 2) * 10) / 10, category: "Trending" }));
+
+    if (fromDb.length > 0) { res.json(fromDb); return; }
+
+    res.json([
+      { tag: "OlCha", postCount: 124, growth: 23.5, category: "Platform" },
+      { tag: "AI", postCount: 98, growth: 18.7, category: "Technology" },
+      { tag: "Texnologiya", postCount: 76, growth: 12.0, category: "Technology" },
+      { tag: "Musiqa", postCount: 64, growth: 8.1, category: "Entertainment" },
+      { tag: "Sport", postCount: 52, growth: 15.2, category: "Health" },
+      { tag: "Sayohat", postCount: 43, growth: 6.3, category: "Lifestyle" },
+      { tag: "Ovqat", postCount: 38, growth: 9.8, category: "Lifestyle" },
+      { tag: "San'at", postCount: 31, growth: 4.2, category: "Art" },
+    ]);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

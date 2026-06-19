@@ -55,14 +55,18 @@ router.get("/users/stats/summary", async (req, res) => {
 router.get("/users/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const viewerId = (req.session as any)?.userId as number | undefined;
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
     if (!user) { res.status(404).json({ error: "Not found" }); return; }
-    const [[followers], [following], [postsCount]] = await Promise.all([
+    const [[followers], [following], [postsCount], followCheck] = await Promise.all([
       db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
       db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
       db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
+      viewerId && viewerId !== id
+        ? db.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, id))).limit(1)
+        : Promise.resolve([]),
     ]);
-    res.json({ ...user, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: false });
+    res.json({ ...user, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: (followCheck as { id: number }[]).length > 0 });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -91,7 +95,12 @@ router.patch("/users/:id", async (req, res) => {
     const { displayName, bio, avatarUrl, coverUrl } = req.body;
     const [user] = await db.update(usersTable).set({ displayName, bio, avatarUrl, coverUrl }).where(eq(usersTable.id, id)).returning();
     if (!user) { res.status(404).json({ error: "Not found" }); return; }
-    res.json({ ...user, followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false });
+    const [[followers], [following], [postsCount]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
+      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
+      db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
+    ]);
+    res.json({ ...user, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: false });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -101,7 +110,8 @@ router.patch("/users/:id", async (req, res) => {
 router.post("/users/:id/follow", async (req, res) => {
   try {
     const followingId = Number(req.params.id);
-    const followerId = 1;
+    const followerId = (req.session as any)?.userId as number | undefined;
+    if (!followerId) { res.status(401).json({ error: "Unauthorized" }); return; }
     const existing = await db.select().from(followsTable).where(and(eq(followsTable.followerId, followerId), eq(followsTable.followingId, followingId)));
     if (existing.length > 0) {
       await db.delete(followsTable).where(and(eq(followsTable.followerId, followerId), eq(followsTable.followingId, followingId)));

@@ -162,6 +162,18 @@ router.get("/posts/:id", async (req, res) => {
 router.delete("/posts/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const commentRows = await db
+      .select({ id: commentsTable.id })
+      .from(commentsTable)
+      .where(eq(commentsTable.postId, id));
+    if (commentRows.length > 0) {
+      await db.delete(commentLikesTable).where(inArray(commentLikesTable.commentId, commentRows.map(c => c.id)));
+    }
+    await Promise.all([
+      db.delete(commentsTable).where(eq(commentsTable.postId, id)),
+      db.delete(postLikesTable).where(eq(postLikesTable.postId, id)),
+      db.delete(moderationQueueTable).where(and(eq(moderationQueueTable.contentType, "post"), eq(moderationQueueTable.contentId, id))),
+    ]);
     await db.delete(postsTable).where(eq(postsTable.id, id));
     res.status(204).send();
   } catch (err) {

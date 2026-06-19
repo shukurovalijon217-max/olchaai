@@ -1,14 +1,11 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { TrendingUp, Flame, Plus, Layers } from "lucide-react";
+import { TrendingUp, Flame, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useListPosts, useGetTrendingTopics, useGetAiFeed } from "@workspace/api-client-react";
-import type { Post } from "@workspace/api-client-react";
 import PostCard from "@/components/PostCard";
 import StoriesBar from "@/components/StoriesBar";
 import CreateContentModal from "@/components/CreateContentModal";
-import TunnelFeed from "@/components/TunnelFeed";
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -16,20 +13,11 @@ export default function HomePage() {
   const { data: posts = [], isLoading } = useListPosts();
   const { data: topics = [] } = useGetTrendingTopics();
   const [createOpen, setCreateOpen] = useState(false);
-  const [tunnelMode, setTunnelMode] = useState(false);
 
   const displayPosts = feed?.posts?.length ? feed.posts : posts;
 
   return (
     <>
-      {tunnelMode && displayPosts.length > 0 && createPortal(
-        <TunnelFeed
-          initialPosts={displayPosts as Post[]}
-          onExit={() => setTunnelMode(false)}
-        />,
-        document.body
-      )}
-
       <div className="max-w-6xl mx-auto px-4 py-6 flex gap-6">
         {/* Main Feed */}
         <div className="flex-1 max-w-2xl space-y-5">
@@ -42,45 +30,13 @@ export default function HomePage() {
               <Flame className="w-4 h-4 text-orange-400" />
               {t("home.for_you")}
             </h2>
-            <div className="flex items-center gap-2">
-              {/* Tunnel Mode Toggle */}
-              {displayPosts.length > 0 && (
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.94 }}
-                  onClick={() => setTunnelMode(true)}
-                  className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold overflow-hidden"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgba(124,58,237,0.18) 0%, rgba(59,130,246,0.18) 100%)",
-                    border: "1px solid rgba(139,92,246,0.5)",
-                    color: "#a78bfa",
-                    boxShadow: "0 0 14px rgba(139,92,246,0.2)",
-                  }}
-                >
-                  <motion.div
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background:
-                        "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.1))",
-                      borderRadius: "inherit",
-                    }}
-                  />
-                  <Layers className="w-3.5 h-3.5 relative" />
-                  <span className="relative">{t("tunnel.enter")}</span>
-                </motion.button>
-              )}
-              <button
-                onClick={() => setCreateOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                {t("home.create_post")}
-              </button>
-            </div>
+            <button
+              onClick={() => setCreateOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {t("home.create_post")}
+            </button>
           </div>
 
           {/* Posts */}

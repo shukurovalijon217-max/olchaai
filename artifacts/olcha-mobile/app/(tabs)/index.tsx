@@ -629,21 +629,40 @@ function UploadSheet({ visible, onClose, onDone }: {
 }
 
 /* ╔════════════════════════════════════════════════════════
-   ║  VERTIKAL FULL-SCREEN KARTA
+   ║  VERTIKAL FULL-SCREEN KARTA — 3D TUNNEL
    ╚════════════════════════════════════════════════════════ */
 interface CardProps {
   item: FeedItem; isActive: boolean;
+  index: number; scrollY: Animated.Value;
   liked: boolean; likes: number;
   onLike: () => void; onComment: () => void;
   onShare: () => void; onAI: () => void;
 }
 
-function VerticalCard({ item, isActive, liked, likes, onLike, onComment, onShare, onAI }: CardProps) {
+function VerticalCard({ item, index, scrollY, isActive, liked, likes, onLike, onComment, onShare, onAI }: CardProps) {
   const insets  = useSafeAreaInsets();
   const webAdj  = Platform.OS === "web";
   const cardH   = webAdj ? H - 134 : H;
   const topPad  = insets.top  + (webAdj ? 67 : 0);
   const botPad  = insets.bottom + (webAdj ? 34 : 0);
+
+  /* ── 3D TUNNEL ANIMATSIYASI ── */
+  const inputRange = [(index - 1) * cardH, index * cardH, (index + 1) * cardH];
+  const tunnelScale = scrollY.interpolate({
+    inputRange,
+    outputRange: [0.85, 1, 1.18],
+    extrapolate: "clamp",
+  });
+  const tunnelOpacity = scrollY.interpolate({
+    inputRange,
+    outputRange: [0.55, 1, 0],
+    extrapolate: "clamp",
+  });
+  const tunnelTranslateY = scrollY.interpolate({
+    inputRange,
+    outputRange: [cardH * 0.04, 0, -cardH * 0.06],
+    extrapolate: "clamp",
+  });
   const k       = K[item.contentKind] ?? K.text;
   const avatarUri = mu(item.author.avatarUrl);
   const hasVideo  = (item.contentKind === "video" || item.contentKind === "reel") && (item.mediaUrl || item.videoUrl);
@@ -651,177 +670,214 @@ function VerticalCard({ item, isActive, liked, likes, onLike, onComment, onShare
   const photoSrc  = item.contentKind === "photo" ? item.mediaUrl : null;
 
   return (
-    <View style={{ width: W, height: cardH, overflow: "hidden", backgroundColor: "#04060f" }}>
+    /* ── 3D TUNNEL OUTER WRAPPER ── */
+    <Animated.View style={{
+      width: W,
+      height: cardH,
+      opacity: tunnelOpacity,
+      transform: [
+        { perspective: 1200 },
+        { scale: tunnelScale },
+        { translateY: tunnelTranslateY },
+      ],
+    }}>
+      <View style={{ width: W, height: cardH, overflow: "hidden", backgroundColor: "#04060f" }}>
 
-      {/* ── BACKGROUND MEDIA ── */}
-      {hasVideo && videoSrc ? (
-        <Video
-          source={{ uri: videoSrc }}
-          style={StyleSheet.absoluteFillObject as any}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay={isActive}
-          isLooping
-          isMuted={false}
-        />
-      ) : photoSrc ? (
-        <Image source={{ uri: photoSrc }} style={StyleSheet.absoluteFillObject as any} resizeMode="cover"/>
-      ) : (
-        <LinearGradient
-          colors={k.grad as any}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}>
-          {/* Nebula center */}
-          <View style={styles.nebula}>
-            <View style={[styles.nebulaRing3, { borderColor: k.accent+"10" }]}/>
-            <View style={[styles.nebulaRing2, { borderColor: k.accent+"22" }]}/>
-            <View style={[styles.nebulaRing1, { borderColor: k.accent+"44" }]}/>
-            <LinearGradient colors={[k.accent+"30","transparent"]}
-              style={[styles.nebulaCore, { borderColor: k.accent+"55" }]}>
-              <Text style={[styles.nebulaSymbol, { color: k.accent }]}>
-                {item.contentKind==="video"?"▶":item.contentKind==="reel"?"✦":item.contentKind==="photo"?"◈":item.contentKind==="ad"?"⚡":"✎"}
-              </Text>
-            </LinearGradient>
-          </View>
-        </LinearGradient>
-      )}
-
-      {/* Gradient overlays */}
-      <LinearGradient
-        colors={["rgba(0,0,0,0.72)","rgba(0,0,0,0.0)","rgba(0,0,0,0.0)","rgba(0,0,0,0.85)"]}
-        locations={[0, 0.25, 0.55, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
-
-      {/* ════ MUALLIF — CHAP YUQORI ════ */}
-      <View style={[styles.authorRow, { top: topPad + 56 }]}>
-        {/* Avatar */}
-        {avatarUri ? (
-          <Image source={{ uri: avatarUri }}
-            style={[styles.avatar, { borderColor: k.accent }]}/>
+        {/* ── BACKGROUND MEDIA ── */}
+        {hasVideo && videoSrc ? (
+          <Video
+            source={{ uri: videoSrc }}
+            style={StyleSheet.absoluteFillObject as any}
+            resizeMode={ResizeMode.COVER}
+            shouldPlay={isActive}
+            isLooping
+            isMuted={false}
+          />
+        ) : photoSrc ? (
+          <Image source={{ uri: photoSrc }} style={StyleSheet.absoluteFillObject as any} resizeMode="cover"/>
         ) : (
-          <LinearGradient colors={[k.grad[1], k.grad[2]] as any}
-            style={[styles.avatar, { borderColor: k.accent, alignItems:"center", justifyContent:"center" }]}>
-            <Text style={styles.avatarLetter}>
-              {(item.author.displayName ?? "O")[0].toUpperCase()}
-            </Text>
+          <LinearGradient
+            colors={k.grad as any}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}>
+            <View style={styles.nebula}>
+              <View style={[styles.nebulaRing3, { borderColor: k.accent+"10" }]}/>
+              <View style={[styles.nebulaRing2, { borderColor: k.accent+"22" }]}/>
+              <View style={[styles.nebulaRing1, { borderColor: k.accent+"44" }]}/>
+              <LinearGradient colors={[k.accent+"30","transparent"]}
+                style={[styles.nebulaCore, { borderColor: k.accent+"55" }]}>
+                <Text style={[styles.nebulaSymbol, { color: k.accent }]}>
+                  {item.contentKind==="video"?"▶":item.contentKind==="reel"?"✦":item.contentKind==="photo"?"◈":item.contentKind==="ad"?"⚡":"✎"}
+                </Text>
+              </LinearGradient>
+            </View>
           </LinearGradient>
         )}
 
-        {/* Name + handle */}
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <View style={{ flexDirection:"row", alignItems:"center", gap:4 }}>
-            <Text style={styles.authorName} numberOfLines={1}>
-              {item.author.displayName}
-            </Text>
-            {item.author.isVerified && (
-              <View style={[styles.verifiedBadge, { backgroundColor: k.accent }]}>
-                <Text style={styles.verifiedMark}>✓</Text>
+        {/* Gradient overlays — top dark + bottom dark for readability */}
+        <LinearGradient
+          colors={["rgba(0,0,0,0.78)","rgba(0,0,0,0.0)","rgba(0,0,0,0.0)","rgba(0,0,0,0.90)"]}
+          locations={[0, 0.28, 0.52, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        {/* Subtle left vignette to make author text pop */}
+        <LinearGradient
+          colors={["rgba(0,0,0,0.45)", "transparent"]}
+          start={{ x: 0, y: 0.5 }} end={{ x: 0.5, y: 0.5 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+
+        {/* ════ NEON MUALLIF OYNASI — CHAP YUQORI ════ */}
+        <View style={[styles.authorNeonWrap, {
+          top: topPad + 52,
+          borderColor: k.accent + "66",
+          shadowColor: k.accent,
+        }]}>
+          <BlurView intensity={22} tint="dark" style={StyleSheet.absoluteFillObject}/>
+          <LinearGradient
+            colors={[k.accent + "18", "transparent"]}
+            style={StyleSheet.absoluteFillObject}
+          />
+          {/* Neon glow corner lines */}
+          <View style={[styles.neonCornerTL, { borderColor: k.accent }]} />
+          <View style={[styles.neonCornerBR, { borderColor: k.accent }]} />
+
+          <View style={styles.authorInnerRow}>
+            {/* Avatar */}
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }}
+                style={[styles.avatar, { borderColor: k.accent }]}/>
+            ) : (
+              <LinearGradient colors={[k.grad[1], k.grad[2]] as any}
+                style={[styles.avatar, { borderColor: k.accent, alignItems:"center", justifyContent:"center" }]}>
+                <Text style={styles.avatarLetter}>
+                  {(item.author.displayName ?? "O")[0].toUpperCase()}
+                </Text>
+              </LinearGradient>
+            )}
+            {/* Name + handle + audio */}
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <View style={{ flexDirection:"row", alignItems:"center", gap:4 }}>
+                <Text style={styles.authorName} numberOfLines={1}>{item.author.displayName}</Text>
+                {item.author.isVerified && (
+                  <View style={[styles.verifiedBadge, { backgroundColor: k.accent }]}>
+                    <Text style={styles.verifiedMark}>✓</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.authorSub} numberOfLines={1}>
+                @{item.author.username} · {ago(item.createdAt)}
+              </Text>
+              <View style={styles.audioRow}>
+                <Feather name="music" size={10} color="rgba(255,255,255,0.55)"/>
+                <Text style={styles.audioTxt} numberOfLines={1}>OlCha · Asl audio</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Follow button inside neon frame */}
+          <Pressable style={[styles.followChip, {
+            borderColor: k.accent + "99",
+            backgroundColor: k.accent + "20",
+            marginTop: 8,
+            alignSelf: "flex-start",
+            marginLeft: 50,
+          }]}>
+            <Text style={[styles.followTxt, { color: k.accent }]}>+ Kuzat</Text>
+          </Pressable>
+        </View>
+
+        {/* Kind badge — top right (same row as author) */}
+        <View style={[styles.kindBadge, {
+          top: topPad + 52,
+          backgroundColor: k.accent+"22",
+          borderColor: k.accent+"55",
+        }]}>
+          <Feather name={k.icon as any} size={10} color={k.accent}/>
+          <Text style={[styles.kindTxt, { color: k.accent }]}>{k.label}</Text>
+        </View>
+
+        {/* ════ O'NG — EVENLY SPACED ACTION BAR ════ */}
+        <View style={[styles.rightBar, {
+          top: topPad + 140,
+          bottom: botPad + 100,
+          right: 12,
+        }]}>
+
+          {/* Like */}
+          <Pressable style={styles.rBtn} onPress={onLike}>
+            <View style={[styles.rCircle, liked && { backgroundColor: k.accent, borderColor: k.accent }]}>
+              <Feather name="heart" size={22} color={liked ? "#fff" : "rgba(255,255,255,0.88)"}/>
+            </View>
+            <Text style={[styles.rLabel, liked && { color: k.accent }]}>{num(likes)}</Text>
+          </Pressable>
+
+          {/* Comment */}
+          <Pressable style={styles.rBtn} onPress={onComment}>
+            <View style={styles.rCircle}>
+              <Feather name="message-circle" size={22} color="rgba(255,255,255,0.88)"/>
+            </View>
+            <Text style={styles.rLabel}>{num(item.commentsCount ?? 0)}</Text>
+          </Pressable>
+
+          {/* Share */}
+          <Pressable style={styles.rBtn} onPress={onShare}>
+            <View style={[styles.rCircle, { borderColor: "rgba(59,130,246,0.55)", backgroundColor:"rgba(59,130,246,0.15)" }]}>
+              <Feather name="share-2" size={20} color="#93c5fd"/>
+            </View>
+            <Text style={[styles.rLabel, { color: "#93c5fd" }]}>Ulash</Text>
+          </Pressable>
+
+          {/* Save */}
+          <Pressable style={styles.rBtn}>
+            <View style={styles.rCircle}>
+              <Feather name="bookmark" size={20} color="rgba(255,255,255,0.88)"/>
+            </View>
+            <Text style={styles.rLabel}>Saqlash</Text>
+          </Pressable>
+
+          {/* AI */}
+          <Pressable style={styles.rBtn} onPress={onAI}>
+            <LinearGradient colors={["#5b21b6","#7c3aed"]}
+              style={[styles.rCircle, { borderColor: "#a78bfa66" }]}>
+              <Feather name="zap" size={20} color="#fff"/>
+            </LinearGradient>
+            <Text style={[styles.rLabel, { color:"#c4b5fd" }]}>AI</Text>
+          </Pressable>
+        </View>
+
+        {/* ════ GLASSMORPHISM PASTKI PANEL ════ */}
+        <View style={[styles.bottomPanel, { paddingBottom: botPad + 8 }]}>
+          {/* Multi-layer glass */}
+          <BlurView intensity={72} tint="dark" style={StyleSheet.absoluteFillObject}/>
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(4,6,15,0.52)" }]} />
+          {/* Neon accent line at top */}
+          <View style={[styles.bottomEdge, { backgroundColor: k.accent, opacity: 0.9 }]}/>
+          <View style={{ position:"absolute", top:0, left:0, right:0, height:8, backgroundColor: k.accent+"28" }} />
+
+          {/* Caption */}
+          {!!item.caption && (
+            <Text style={styles.captionTxt} numberOfLines={2}>{item.caption}</Text>
+          )}
+
+          {/* Bottom row */}
+          <View style={styles.bottomMetaRow}>
+            {!!item.viewsCount && (
+              <View style={styles.viewsChip}>
+                <Feather name="eye" size={12} color="rgba(255,255,255,0.45)"/>
+                <Text style={styles.viewsTxt}>{num(item.viewsCount)} ko'rish</Text>
               </View>
             )}
-          </View>
-          <Text style={styles.authorSub} numberOfLines={1}>
-            @{item.author.username} · {ago(item.createdAt)}
-          </Text>
-          {/* Audio row */}
-          <View style={styles.audioRow}>
-            <Feather name="music" size={10} color="rgba(255,255,255,0.55)"/>
-            <Text style={styles.audioTxt} numberOfLines={1}>OlCha · Asl audio</Text>
-          </View>
-        </View>
-
-        {/* Follow */}
-        <Pressable style={[styles.followChip, { borderColor: k.accent+"99" }]}>
-          <Text style={[styles.followTxt, { color: k.accent }]}>+ Kuzat</Text>
-        </Pressable>
-      </View>
-
-      {/* Kind badge — top right */}
-      <View style={[styles.kindBadge, {
-        top: topPad + 56,
-        backgroundColor: k.accent+"22",
-        borderColor: k.accent+"55",
-      }]}>
-        <Feather name={k.icon as any} size={10} color={k.accent}/>
-        <Text style={[styles.kindTxt, { color: k.accent }]}>{k.label}</Text>
-      </View>
-
-      {/* ════ O'NG TOMONDAGI TUGMALAR ════ */}
-      <View style={[styles.rightBar, {
-        top: topPad + 130,
-        bottom: botPad + 110,
-      }]}>
-
-        {/* Like */}
-        <Pressable style={styles.rBtn} onPress={onLike}>
-          <View style={[styles.rCircle, liked && { backgroundColor: k.accent }]}>
-            <Feather name="heart" size={22}
-              color={liked ? "#fff" : "rgba(255,255,255,0.88)"}/>
-          </View>
-          <Text style={[styles.rLabel, liked && { color: k.accent }]}>{num(likes)}</Text>
-        </Pressable>
-
-        {/* Comment */}
-        <Pressable style={styles.rBtn} onPress={onComment}>
-          <View style={styles.rCircle}>
-            <Feather name="message-circle" size={22} color="rgba(255,255,255,0.88)"/>
-          </View>
-          <Text style={styles.rLabel}>{num(item.commentsCount ?? 0)}</Text>
-        </Pressable>
-
-        {/* Share */}
-        <Pressable style={styles.rBtn} onPress={onShare}>
-          <View style={[styles.rCircle, { borderColor: "rgba(59,130,246,0.55)", backgroundColor:"rgba(59,130,246,0.15)" }]}>
-            <Feather name="share-2" size={20} color="#93c5fd"/>
-          </View>
-          <Text style={[styles.rLabel, { color: "#93c5fd" }]}>Ulash</Text>
-        </Pressable>
-
-        {/* Save */}
-        <Pressable style={styles.rBtn}>
-          <View style={styles.rCircle}>
-            <Feather name="bookmark" size={20} color="rgba(255,255,255,0.88)"/>
-          </View>
-          <Text style={styles.rLabel}>Saqlash</Text>
-        </Pressable>
-
-        {/* AI */}
-        <Pressable style={styles.rBtn} onPress={onAI}>
-          <LinearGradient colors={["#5b21b6","#7c3aed"]}
-            style={[styles.rCircle, { borderColor: "#a78bfa66" }]}>
-            <Feather name="zap" size={20} color="#fff"/>
-          </LinearGradient>
-          <Text style={[styles.rLabel, { color:"#c4b5fd" }]}>AI</Text>
-        </Pressable>
-      </View>
-
-      {/* ════ PASTKI SHAFFOF PANEL ════ */}
-      <View style={[styles.bottomPanel, { paddingBottom: botPad + 8 }]}>
-        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFillObject}/>
-        <View style={[styles.bottomEdge, { backgroundColor: k.accent+"33" }]}/>
-
-        {/* Caption */}
-        {!!item.caption && (
-          <Text style={styles.captionTxt} numberOfLines={2}>
-            {item.caption}
-          </Text>
-        )}
-
-        {/* Bottom row: views + swipe hint */}
-        <View style={styles.bottomMetaRow}>
-          {!!item.viewsCount && (
-            <View style={styles.viewsChip}>
-              <Feather name="eye" size={12} color="rgba(255,255,255,0.45)"/>
-              <Text style={styles.viewsTxt}>{num(item.viewsCount)} ko'rish</Text>
+            <View style={{ flex: 1 }}/>
+            <View style={styles.swipeHint}>
+              <Feather name="chevrons-up" size={14} color={k.accent + "88"}/>
+              <Text style={[styles.swipeTxt, { color: k.accent + "66" }]}>suring</Text>
             </View>
-          )}
-          <View style={{ flex: 1 }}/>
-          <View style={styles.swipeHint}>
-            <Feather name="chevrons-up" size={14} color="rgba(255,255,255,0.25)"/>
-            <Text style={styles.swipeTxt}>suring</Text>
           </View>
         </View>
+
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -833,7 +889,8 @@ export default function FeedScreen() {
   const qc     = useQueryClient();
   const { user } = useAuth();
 
-  const flatRef = useRef<FlatList>(null);
+  const flatRef  = useRef<FlatList>(null);
+  const scrollY  = useRef(new Animated.Value(0)).current;
   const [activeIdx,   setActiveIdx]   = useState(0);
   const [activeCat,   setActiveCat]   = useState("all");
   const [likedMap,    setLikedMap]    = useState<Record<string,boolean>>({});
@@ -960,11 +1017,18 @@ export default function FeedScreen() {
           pagingEnabled
           showsVerticalScrollIndicator={false}
           decelerationRate="fast"
+          scrollEventThrottle={16}
           onViewableItemsChanged={onViewable}
           viewabilityConfig={viewConfig.current}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
           renderItem={({ item, index }) => (
             <VerticalCard
               item={item}
+              index={index}
+              scrollY={scrollY}
               isActive={index === activeIdx}
               liked={likedMap[item.id] ?? item.isLiked}
               likes={likesMap[item.id] ?? item.likesCount}
@@ -1079,10 +1143,36 @@ const styles = StyleSheet.create({
   },
   kindTxt: { fontSize: 11, fontFamily: "Inter_700Bold" },
 
+  /* ── Neon author frame ── */
+  authorNeonWrap: {
+    position: "absolute", left: 12, zIndex: 20,
+    borderRadius: 16, borderWidth: 1,
+    overflow: "hidden",
+    paddingHorizontal: 10, paddingVertical: 10,
+    maxWidth: W * 0.60,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.65,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  authorInnerRow: { flexDirection: "row", alignItems: "center", gap: 9 },
+  neonCornerTL: {
+    position: "absolute", top: 0, left: 0,
+    width: 14, height: 14,
+    borderTopWidth: 2, borderLeftWidth: 2,
+    borderTopLeftRadius: 6,
+  },
+  neonCornerBR: {
+    position: "absolute", bottom: 0, right: 0,
+    width: 14, height: 14,
+    borderBottomWidth: 2, borderRightWidth: 2,
+    borderBottomRightRadius: 6,
+  },
+
   /* ── Right action bar ── */
   rightBar: {
-    position: "absolute", right: 14, zIndex: 20,
-    alignItems: "center", justifyContent: "center", gap: 16,
+    position: "absolute", right: 12, zIndex: 20,
+    alignItems: "center", justifyContent: "space-evenly",
   },
   rBtn: { alignItems: "center", gap: 4 },
   rCircle: {

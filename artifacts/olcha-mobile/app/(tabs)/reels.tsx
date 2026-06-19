@@ -78,16 +78,19 @@ function ReelItem({ item, index, isActive, scrollY }: ReelItemProps) {
   const topPad = insets.top + (webAdj ? 67 : 0);
   const botPad = insets.bottom + (webAdj ? 34 : 0);
 
-  /* ── 3D TUNNEL ANIMATSIYA ── */
+  /* ── 3D TUNNEL ANIMATSIYA (FULL-SCREEN) ── */
   const inputRange = [(index - 1) * itemH, index * itemH, (index + 1) * itemH];
+  /* Scale: kiruvchi 0.92 → 1, ketuvchi 1 → 1.12 (karta chegara YO'Q) */
   const tunnelScale = scrollY.interpolate({
-    inputRange, outputRange: [0.84, 1, 1.20], extrapolate: "clamp",
+    inputRange, outputRange: [0.92, 1, 1.12], extrapolate: "clamp",
   });
+  /* Opacity: aktiv bo'lmaganlar TO'LIQ ko'rinmas → chegara yo'q */
   const tunnelOpacity = scrollY.interpolate({
-    inputRange, outputRange: [0.55, 1, 0], extrapolate: "clamp",
+    inputRange, outputRange: [0, 1, 0], extrapolate: "clamp",
   });
+  /* TranslateY: Z-o'qi illuziyasi */
   const tunnelTranslateY = scrollY.interpolate({
-    inputRange, outputRange: [itemH * 0.04, 0, -itemH * 0.06], extrapolate: "clamp",
+    inputRange, outputRange: [itemH * 0.015, 0, -itemH * 0.025], extrapolate: "clamp",
   });
 
   const videoSrc  = mu(item.videoUrl);

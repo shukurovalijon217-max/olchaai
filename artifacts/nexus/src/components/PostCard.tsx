@@ -75,6 +75,8 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const [sendingVoice, setSendingVoice] = useState(false);
+  /* Delete confirm */
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   /* Tip */
   const [tipOpen, setTipOpen] = useState(false);
   const [tipAmount, setTipAmount] = useState(5000);
@@ -98,7 +100,10 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   /* Close menu on outside click */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+        setDeleteConfirm(false);
+      }
     };
     if (menuOpen) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -199,7 +204,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
 
   /* ── Delete ── */
   const handleDelete = () => {
-    if (!confirm(t("common.delete_confirm"))) return;
+    setDeleteConfirm(false);
     setMenuOpen(false);
     deletePost.mutate({ id: post.id }, {
       onSuccess: () => {
@@ -342,10 +347,26 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                   exit={{ opacity: 0, scale: 0.9, y: -4 }} transition={{ duration: 0.12 }}
                   className="absolute right-0 top-8 z-50 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden">
                   {isOwner && (
-                    <button onClick={handleDelete}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors">
-                      <Trash2 className="w-4 h-4" /> {t("post.delete")}
-                    </button>
+                    deleteConfirm ? (
+                      <div className="px-3 py-2.5 border-b border-border">
+                        <p className="text-xs text-muted-foreground mb-2">{t("common.delete_confirm")}</p>
+                        <div className="flex gap-2">
+                          <button onClick={handleDelete}
+                            className="flex-1 text-xs bg-destructive text-white rounded-lg py-1.5 hover:bg-destructive/80 transition-colors font-medium">
+                            Ha
+                          </button>
+                          <button onClick={() => { setDeleteConfirm(false); setMenuOpen(false); }}
+                            className="flex-1 text-xs bg-muted text-muted-foreground rounded-lg py-1.5 hover:bg-muted/80 transition-colors">
+                            Yo'q
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => setDeleteConfirm(true)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors">
+                        <Trash2 className="w-4 h-4" /> {t("post.delete")}
+                      </button>
+                    )
                   )}
                   <button onClick={() => { setMenuOpen(false); setReportOpen(true); }}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">

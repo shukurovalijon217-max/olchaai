@@ -33,6 +33,13 @@ export const commentsTable = pgTable("comments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const commentLikesTable = pgTable("comment_likes", {
+  id: serial("id").primaryKey(),
+  commentId: integer("comment_id").notNull().references(() => commentsTable.id),
+  userId: integer("user_id").notNull().references(() => usersTable.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertPostSchema = createInsertSchema(postsTable).omit({ id: true, createdAt: true, likesCount: true, commentsCount: true, sharesCount: true, isFlagged: true });
 export type InsertPost = z.infer<typeof insertPostSchema>;
 export type Post = typeof postsTable.$inferSelect;

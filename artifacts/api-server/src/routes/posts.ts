@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { postsTable, postLikesTable, commentsTable, usersTable, moderationQueueTable } from "@workspace/db";
+import { postsTable, postLikesTable, commentsTable, commentLikesTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
@@ -194,6 +194,36 @@ router.post("/posts/:id/like", async (req, res) => {
 
     const [post] = await db.select({ likesCount: postsTable.likesCount }).from(postsTable).where(eq(postsTable.id, postId));
     res.json({ liked: !isLiked, likesCount: post?.likesCount ?? 0 });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── POST /posts/:id/comments/:commentId/like ───────────────── */
+router.post("/posts/:id/comments/:commentId/like", async (req, res) => {
+  try {
+    const commentId = Number(req.params.commentId);
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+    const existing = await db
+      .select({ id: commentLikesTable.id })
+      .from(commentLikesTable)
+      .where(and(eq(commentLikesTable.commentId, commentId), eq(commentLikesTable.userId, userId)))
+      .limit(1);
+
+    const isLiked = existing.length > 0;
+    if (isLiked) {
+      await db.delete(commentLikesTable).where(and(eq(commentLikesTable.commentId, commentId), eq(commentLikesTable.userId, userId)));
+      await db.update(commentsTable).set({ likesCount: sql`GREATEST(0, ${commentsTable.likesCount} - 1)` }).where(eq(commentsTable.id, commentId));
+    } else {
+      await db.insert(commentLikesTable).values({ commentId, userId }).onConflictDoNothing();
+      await db.update(commentsTable).set({ likesCount: sql`${commentsTable.likesCount} + 1` }).where(eq(commentsTable.id, commentId));
+    }
+
+    const [comment] = await db.select({ likesCount: commentsTable.likesCount }).from(commentsTable).where(eq(commentsTable.id, commentId));
+    res.json({ liked: !isLiked, likesCount: comment?.likesCount ?? 0 });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

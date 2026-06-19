@@ -42,6 +42,28 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
   const qc = useQueryClient();
   const { user } = useAuth();
 
+  const [commentLikes, setCommentLikes] = useState<Record<number, { liked: boolean; count: number }>>({});
+
+  const handleCommentLike = async (commentId: number, currentCount: number) => {
+    if (!user) return;
+    const prev = commentLikes[commentId] ?? { liked: false, count: currentCount };
+    const optimistic = { liked: !prev.liked, count: prev.liked ? prev.count - 1 : prev.count + 1 };
+    setCommentLikes(s => ({ ...s, [commentId]: optimistic }));
+    try {
+      const r = await fetch(`${API}/api/posts/${postId}/comments/${commentId}/like`, {
+        method: "POST", credentials: "include",
+      });
+      if (r.ok) {
+        const data = await r.json() as { liked: boolean; likesCount: number };
+        setCommentLikes(s => ({ ...s, [commentId]: { liked: data.liked, count: data.likesCount } }));
+      } else {
+        setCommentLikes(s => ({ ...s, [commentId]: prev }));
+      }
+    } catch {
+      setCommentLikes(s => ({ ...s, [commentId]: prev }));
+    }
+  };
+
   const [voiceComments, setVoiceComments] = useState<VoiceCommentData[]>([]);
   const [playingId, setPlayingId] = useState<number | null>(null);
   const audioCache = useState(() => new Map<number, HTMLAudioElement>())[0];
@@ -252,9 +274,20 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
                 </div>
                 <p className="text-sm text-foreground leading-relaxed">{comment.content}</p>
                 <div className="flex items-center gap-3 mt-1.5">
-                  <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-pink-400 transition-colors">
-                    <Heart className="w-3 h-3" /> {comment.likesCount ?? 0}
-                  </button>
+                  {(() => {
+                    const cl = commentLikes[comment.id];
+                    const liked = cl?.liked ?? false;
+                    const count = cl?.count ?? comment.likesCount ?? 0;
+                    return (
+                      <button
+                        onClick={() => handleCommentLike(comment.id, comment.likesCount ?? 0)}
+                        className={`flex items-center gap-1 text-xs transition-colors ${liked ? "text-pink-500" : "text-muted-foreground hover:text-pink-400"}`}
+                      >
+                        <Heart className={`w-3 h-3 ${liked ? "fill-pink-500" : ""}`} />
+                        {count}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             </motion.div>

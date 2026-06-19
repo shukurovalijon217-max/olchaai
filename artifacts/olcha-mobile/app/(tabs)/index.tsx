@@ -167,7 +167,8 @@ function HoloComment({ visible, accent, onClose }: {
           </Pressable>
         </View>
         <View style={[styles.holoInputWrap, { borderColor: accent + "55" }]}>
-          <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFillObject} />
+          <BlurView intensity={30} tint="dark"
+            style={[StyleSheet.absoluteFillObject, { pointerEvents: "none" } as any]} />
           <TextInput
             value={text}
             onChangeText={setText}
@@ -175,7 +176,7 @@ function HoloComment({ visible, accent, onClose }: {
             placeholderTextColor="rgba(255,255,255,0.35)"
             multiline
             autoFocus
-            style={[styles.holoTextInput, { color: "#fff" }]}
+            style={[styles.holoTextInput, { color: "#fff", zIndex: 1 }]}
           />
         </View>
         <Pressable style={[styles.holoSend, { backgroundColor: accent }]} onPress={onClose}>

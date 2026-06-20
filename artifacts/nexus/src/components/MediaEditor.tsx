@@ -825,7 +825,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const videoRef = useRef<HTMLVideoElement>(null);
 
   /* ── Internet music search state ── */
-  type ApiSong = { name: string; artist: string; title: string; album: string; artwork: string };
+  type ApiSong = { name: string; artist: string; title: string; album: string; artwork: string; preview: string };
   const [musicApiResults, setMusicApiResults] = useState<ApiSong[]>([]);
   const [musicApiLoading, setMusicApiLoading] = useState(false);
   const musicDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -870,26 +870,34 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     return () => { audio.removeEventListener("timeupdate", onTime); audio.removeEventListener("ended", onEnd); };
   }, [audioTrimEnd, audioTrimStart]);
 
+  /* load audio url into preview element and read duration */
+  const loadAudioUrl = (url: string, name: string, isBlobUrl = false) => {
+    const audio = audioPreviewRef.current;
+    if (!audio) return;
+    audio.src = url;
+    audio.load();
+    const onMeta = () => {
+      const dur = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 60;
+      setAudioDuration(dur);
+      setAudioTrimStart(0);
+      setAudioTrimEnd(Math.min(60, dur));
+      audio.removeEventListener("loadedmetadata", onMeta);
+    };
+    audio.addEventListener("loadedmetadata", onMeta);
+    setAudioUploadUrl(url);
+    setAudioName(name);
+    setMusicTab("trim");
+    if (isBlobUrl && audioUploadUrl && audioUploadUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(audioUploadUrl);
+    }
+  };
+
   /* handle uploaded audio file */
   const handleAudioFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (audioUploadUrl) URL.revokeObjectURL(audioUploadUrl);
     const url = URL.createObjectURL(file);
-    setAudioUploadUrl(url);
-    setAudioName(file.name.replace(/\.[^.]+$/, ""));
-    setMusicTab("trim");
-    const tmpAudio = new Audio(url);
-    tmpAudio.addEventListener("loadedmetadata", () => {
-      const dur = tmpAudio.duration || 60;
-      setAudioDuration(dur);
-      setAudioTrimStart(0);
-      setAudioTrimEnd(Math.min(60, dur));
-      if (audioPreviewRef.current) {
-        audioPreviewRef.current.src = url;
-        audioPreviewRef.current.load();
-      }
-    });
+    loadAudioUrl(url, file.name.replace(/\.[^.]+$/, ""), true);
     if (e.target) e.target.value = "";
   };
 
@@ -934,14 +942,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         stream.getTracks().forEach(t => t.stop());
         const blob = new Blob(recChunksRef.current, { type:"audio/webm" });
         const url  = URL.createObjectURL(blob);
-        if (audioUploadUrl) URL.revokeObjectURL(audioUploadUrl);
-        setAudioUploadUrl(url);
-        setAudioName("Yozib olish " + new Date().toLocaleTimeString("uz-UZ"));
-        setAudioDuration(0);
-        setAudioTrimStart(0);
-        setAudioTrimEnd(60);
-        setMusicTab("trim");
-        if (audioPreviewRef.current) { audioPreviewRef.current.src = url; audioPreviewRef.current.load(); }
+        loadAudioUrl(url, "Yozib olish " + new Date().toLocaleTimeString("uz-UZ"), true);
         setIsRecording(false);
       };
       mr.start(); mediaRecorderRef.current = mr; setIsRecording(true);
@@ -1956,21 +1957,35 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                       const isSelected = audioName === name;
                       return (
                         <button key={i}
-                          onClick={() => { setAudioName(name); setMusicQuery(name); setMusicApiResults([]); setAudioUploadUrl(""); }}
+                          onClick={() => {
+                            setMusicQuery(name);
+                            setMusicApiResults([]);
+                            if (song.preview) {
+                              loadAudioUrl(song.preview, name, false);
+                            } else {
+                              setAudioName(name);
+                              setAudioUploadUrl("");
+                            }
+                          }}
                           className="w-full flex items-center gap-3 px-4 py-2 transition-all"
-                          style={{ background: isSelected ? "rgba(124,58,237,0.18)" : "transparent",
-                            borderLeft: isSelected ? "2.5px solid #7c3aed" : "2.5px solid transparent" }}>
+                          style={{
+                            background: isSelected ? "rgba(6,182,212,0.12)" : "transparent",
+                            borderLeft: isSelected ? "2.5px solid #06b6d4" : "2.5px solid transparent",
+                          }}>
                           {song.artwork
                             ? <img src={song.artwork} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" style={{ border:"1px solid rgba(255,255,255,0.1)" }} />
-                            : <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background:"rgba(124,58,237,0.3)" }}><Music className="w-4 h-4 text-purple-300" /></div>}
+                            : <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background:"rgba(6,182,212,0.2)" }}><Music className="w-4 h-4 text-cyan-300" /></div>}
                           <div className="flex flex-col items-start flex-1 min-w-0">
                             <span className="text-[13px] font-semibold text-white truncate w-full text-left leading-tight">{song.title}</span>
                             <span className="text-[10px] text-white/40 truncate w-full text-left">{song.artist}</span>
                             {song.album && <span className="text-[9px] text-white/25 truncate w-full text-left">{song.album}</span>}
                           </div>
-                          {isSelected
-                            ? <div className="flex items-end gap-0.5 flex-shrink-0"><span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" /></div>
-                            : <span className="text-white/20 flex-shrink-0 text-xs">▶</span>}
+                          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                            {song.preview && <span className="text-[8px] font-bold px-1 py-0.5 rounded" style={{ background:"rgba(6,182,212,0.2)", color:"#67e8f9" }}>30s</span>}
+                            {isSelected
+                              ? <div className="flex items-end gap-0.5"><span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" /></div>
+                              : <span className="text-white/20 text-xs">▶</span>}
+                          </div>
                         </button>
                       );
                     })}

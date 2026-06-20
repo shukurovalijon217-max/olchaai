@@ -759,6 +759,22 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
 
   const selected = items.find(i => i.id === selectedId);
   const activeFilter = FILTERS.find(f => f.id === filterName) ?? FILTERS[0];
+  const activeAr     = AR_FILTERS.find(f => f.id === arFilter) ?? AR_FILTERS[0];
+
+  /* Combine regular filter + AR filter + beauty sliders into one CSS filter string */
+  const combinedCss = (() => {
+    const parts: string[] = [];
+    if (activeFilter.css !== "none") parts.push(activeFilter.css);
+    if (activeAr.css     !== "none") parts.push(activeAr.css);
+    /* Beauty: smoothing → blur, brightness → brightness, blush → saturate */
+    const sm = beautyVals.smoothing ?? 0;
+    const br = beautyVals.brightness ?? 0;
+    const bl = beautyVals.blush ?? 0;
+    if (sm > 0) parts.push(`blur(${(sm / 100) * 1.8}px)`);
+    if (br > 0) parts.push(`brightness(${1 + (br / 100) * 0.45})`);
+    if (bl > 0) parts.push(`saturate(${1 + (bl / 100) * 0.6}) hue-rotate(${-(bl / 100) * 8}deg)`);
+    return parts.length ? parts.join(" ") : "none";
+  })();
 
   const allSongs = useMemo(() => SONGS_BY_COUNTRY.flatMap(c => c.songs), []);
   const musicSuggestions = useMemo(() => {
@@ -805,10 +821,10 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         {/* Media with filter */}
         {isVideo(previews[slide]) ? (
           <video ref={videoRef} src={previews[slide]} className="w-full h-full object-cover" muted loop playsInline autoPlay
-            style={{ filter: activeFilter.css === "none" ? undefined : activeFilter.css }} />
+            style={{ filter: combinedCss !== "none" ? combinedCss : undefined, transition:"filter 0.25s ease" }} />
         ) : (
           <img src={previews[slide]} alt="" className="w-full h-full object-cover"
-            style={{ filter: activeFilter.css === "none" ? undefined : activeFilter.css }} />
+            style={{ filter: combinedCss !== "none" ? combinedCss : undefined, transition:"filter 0.25s ease" }} />
         )}
 
         {/* Text/Sticker overlays */}
@@ -914,13 +930,33 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
           )}
         </div>
 
-        {/* Filter badge (shown when active) */}
-        {filterName !== "none" && (
-          <div className="absolute bottom-8 left-4 px-2.5 py-1 rounded-full text-xs font-bold"
-            style={{ background:"rgba(124,58,237,0.8)", color:"#fff", backdropFilter:"blur(8px)" }}>
-            ✦ {activeFilter.label}
-          </div>
-        )}
+        {/* Active effects badges */}
+        <div className="absolute bottom-8 left-3 flex flex-col gap-1 pointer-events-none">
+          {filterName !== "none" && (
+            <div className="px-2.5 py-1 rounded-full text-xs font-bold self-start"
+              style={{ background:"rgba(124,58,237,0.8)", color:"#fff", backdropFilter:"blur(8px)" }}>
+              ✦ {activeFilter.label}
+            </div>
+          )}
+          {arFilter !== "none" && (
+            <div className="px-2.5 py-1 rounded-full text-xs font-bold self-start"
+              style={{ background:"rgba(16,185,129,0.8)", color:"#fff", backdropFilter:"blur(8px)" }}>
+              🎭 {activeAr.label}
+            </div>
+          )}
+          {Object.values(beautyVals).some(v => v > 0) && (
+            <div className="px-2.5 py-1 rounded-full text-xs font-bold self-start"
+              style={{ background:"rgba(236,72,153,0.8)", color:"#fff", backdropFilter:"blur(8px)" }}>
+              ✨ Beauty faol
+            </div>
+          )}
+          {voiceFx !== "normal" && (
+            <div className="px-2.5 py-1 rounded-full text-xs font-bold self-start"
+              style={{ background:"rgba(99,102,241,0.8)", color:"#fff", backdropFilter:"blur(8px)" }}>
+              🎤 {VOICE_FX.find(v=>v.id===voiceFx)?.label}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Text panel ── */}

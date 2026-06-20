@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2 } from "lucide-react";
+import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2, Wand2, Mic, Scissors } from "lucide-react";
 
 export type TextOverlay = {
   id: string; text: string; x: number; y: number;
@@ -563,6 +563,59 @@ const SOUND_FX: { cat: string; sounds: { name: string; emoji: string }[] }[] = [
   ]},
 ];
 
+const AR_FILTERS: { id: string; emoji: string; label: string; desc: string; css: string }[] = [
+  { id:"none",       emoji:"✨", label:"Asl",         desc:"Filtr yo'q",          css:"none" },
+  { id:"galaxy",     emoji:"🌌", label:"Galaktika",   desc:"Kosmik neon effekt",  css:"hue-rotate(200deg) saturate(3) brightness(1.2)" },
+  { id:"anime",      emoji:"🌸", label:"Anime",       desc:"Anime estetika",      css:"saturate(1.6) contrast(1.15) hue-rotate(330deg)" },
+  { id:"neon_glow",  emoji:"💜", label:"Neon Glow",   desc:"Ultra neon glow",     css:"saturate(4) contrast(1.4) hue-rotate(10deg) brightness(1.1)" },
+  { id:"sunset",     emoji:"🌅", label:"Sunset",      desc:"Iliq qizg'ish",       css:"sepia(0.4) saturate(2) hue-rotate(10deg) brightness(1.1)" },
+  { id:"cyberpunk",  emoji:"🤖", label:"Cyberpunk",   desc:"Neon shahri",         css:"hue-rotate(270deg) saturate(2.5) contrast(1.3)" },
+  { id:"vintage_ar", emoji:"📽", label:"Vintage",     desc:"Retro 70s",           css:"sepia(0.7) contrast(0.85) brightness(1.15) saturate(0.6)" },
+  { id:"forest",     emoji:"🌿", label:"O'rmon",      desc:"Yashil tabiat",       css:"hue-rotate(90deg) saturate(1.8) brightness(1.05)" },
+  { id:"ocean",      emoji:"🌊", label:"Okean",       desc:"Ko'k dengiz",         css:"hue-rotate(190deg) saturate(2) brightness(1.05) contrast(1.1)" },
+  { id:"fire",       emoji:"🔥", label:"Olov",        desc:"Issiq alanga",        css:"hue-rotate(350deg) saturate(3) contrast(1.2) brightness(1.1)" },
+  { id:"ice",        emoji:"❄️", label:"Muz",         desc:"Sovuq ko'k",          css:"hue-rotate(210deg) saturate(1.5) brightness(1.2) contrast(0.9)" },
+  { id:"gold",       emoji:"👑", label:"Oltin",       desc:"Lyuks oltin",         css:"sepia(0.9) saturate(2.5) brightness(1.15)" },
+  { id:"horror",     emoji:"💀", label:"Dahshat",     desc:"Qo'rqinchli",        css:"grayscale(0.8) contrast(1.5) brightness(0.85)" },
+  { id:"dream",      emoji:"🦄", label:"Orzuli",      desc:"Pastel xayol",        css:"brightness(1.2) saturate(1.8) hue-rotate(320deg) blur(0.4px)" },
+  { id:"matrix",     emoji:"💚", label:"Matrix",      desc:"Yashil kod",          css:"hue-rotate(100deg) saturate(5) contrast(1.6) brightness(0.9)" },
+  { id:"noir_ar",    emoji:"🎬", label:"Noir",        desc:"Kinematografik",      css:"grayscale(1) contrast(1.4) brightness(0.95)" },
+  { id:"rainbow",    emoji:"🌈", label:"Kamalak",     desc:"Rang bayram",        css:"hue-rotate(45deg) saturate(2.5) contrast(1.1)" },
+  { id:"candy",      emoji:"🍭", label:"Konfet",      desc:"Rang-barang",         css:"saturate(2.2) brightness(1.15) hue-rotate(330deg) contrast(1.05)" },
+  { id:"midnight",   emoji:"🌙", label:"Yarim tun",   desc:"Tungi estetika",      css:"brightness(0.75) saturate(0.7) contrast(1.3) hue-rotate(220deg)" },
+  { id:"spring",     emoji:"🌷", label:"Bahor",       desc:"Freshe yangi",        css:"saturate(1.5) brightness(1.12) hue-rotate(310deg) contrast(0.95)" },
+];
+
+const VOICE_FX: { id: string; emoji: string; label: string; desc: string }[] = [
+  { id:"normal",    emoji:"🎤", label:"Normal",      desc:"O'z ovozingiz" },
+  { id:"high",      emoji:"🐭", label:"Sichqon",     desc:"Baland tovush" },
+  { id:"low",       emoji:"🐻", label:"Ayiq",        desc:"Past chuqur ovoz" },
+  { id:"robot",     emoji:"🤖", label:"Robot",       desc:"Mexanik ovoz" },
+  { id:"anime",     emoji:"🌸", label:"Anime",       desc:"Anime qahramon" },
+  { id:"echo",      emoji:"🏔", label:"Aks-sado",    desc:"Tog'dagi ovoz" },
+  { id:"underwater",emoji:"🌊", label:"Suv ostida",  desc:"Chuqur dengiz" },
+  { id:"radio",     emoji:"📻", label:"Radio",       desc:"Vintage efir" },
+  { id:"celebrity", emoji:"⭐", label:"Yulduz",      desc:"Kuchaytirilgan" },
+  { id:"whisper",   emoji:"🤫", label:"Shivirla",    desc:"Sirli shivirash" },
+];
+
+const BEAUTY_OPTIONS: { id: string; emoji: string; label: string; min: number; max: number; step: number }[] = [
+  { id:"smoothing",  emoji:"✨", label:"Teri sirlash",     min:0, max:100, step:5 },
+  { id:"brightness", emoji:"💡", label:"Yorqinlik",         min:0, max:100, step:5 },
+  { id:"slim",       emoji:"🤳", label:"Yuz ingichkalash",  min:0, max:100, step:5 },
+  { id:"eyes",       emoji:"👁", label:"Ko'z kattalashtir", min:0, max:100, step:5 },
+  { id:"teeth",      emoji:"😁", label:"Tishlarni oqlashtir",min:0,max:100, step:5 },
+  { id:"blush",      emoji:"🌸", label:"Yonoq qizarish",   min:0, max:100, step:5 },
+];
+
+export const TRENDING_CHALLENGES = [
+  "#OlChaChallenge 🔥", "#DanceOff 💃", "#GlowUp ✨", "#SilhouetteChallenge 🌟",
+  "#TrendingNow 📈", "#ViralDance 🎵", "#FoodChallenge 🍔", "#FitnessChallenge 💪",
+  "#BeautyHacks 💄", "#LifeHacks 🛠", "#PetChallenge 🐾", "#ArtChallenge 🎨",
+  "#Transition 🔄", "#LipSync 🎤", "#CommentChallenge 💬", "#OutfitOfTheDay 👗",
+  "#MorningRoutine ☀️", "#NightRoutine 🌙", "#CookingChallenge 👨‍🍳", "#StudyWith 📚",
+];
+
 const SPEED_OPTIONS = [
   { label:"0.3×", val:0.3, color:"#38bdf8" },
   { label:"0.5×", val:0.5, color:"#818cf8" },
@@ -637,7 +690,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [slide, setSlide]               = useState(0);
   const [items, setItems]               = useState<TextOverlay[]>(initialOverlays);
   const [selectedId, setSelectedId]     = useState<string|null>(null);
-  const [panel, setPanel]               = useState<"none"|"text"|"music"|"sticker"|"filter"|"speed"|"soundfx">("none");
+  const [panel, setPanel]               = useState<"none"|"text"|"music"|"sticker"|"filter"|"speed"|"soundfx"|"ar"|"voice"|"beauty">("none");
   const [audioName, setAudioName]       = useState(initialAudioName);
   const [filterName, setFilterName]     = useState("none");
   const [stickerGroup, setStickerGroup] = useState(0);
@@ -645,6 +698,11 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [musicCat, setMusicCat]         = useState(0);
   const [videoSpeed, setVideoSpeed]     = useState(1);
   const [soundFxCat, setSoundFxCat]     = useState(0);
+  const [arFilter, setArFilter]         = useState("none");
+  const [voiceFx, setVoiceFx]           = useState("normal");
+  const [beautyVals, setBeautyVals]     = useState<Record<string,number>>({
+    smoothing:0, brightness:0, slim:0, eyes:0, teeth:0, blush:0
+  });
   const videoRef = useRef<HTMLVideoElement>(null);
 
   /* ── Internet music search state ── */
@@ -825,9 +883,12 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             { id:"text",    Icon:Type,     label:"Matn"    },
             { id:"sticker", Icon:Smile,    label:"Stiker"  },
             { id:"filter",  Icon:Sparkles, label:"Filtr"   },
+            { id:"ar",      Icon:Wand2,    label:"AR"      },
             { id:"music",   Icon:Music,    label:"Musiqa"  },
             { id:"speed",   Icon:Zap,      label:"Tezlik"  },
             { id:"soundfx", Icon:Volume2,  label:"FX Ovoz" },
+            { id:"voice",   Icon:Mic,      label:"Ovoz FX" },
+            { id:"beauty",  Icon:Scissors, label:"Beautify"},
           ].map(({ id, Icon, label }) => (
             <button key={id} onClick={e => { e.stopPropagation(); setPanel(p => p===id ? "none" : id as any); setSelectedId(null); }}
               className="w-11 h-11 rounded-2xl flex flex-col items-center justify-center gap-0.5"
@@ -1299,6 +1360,163 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                 </button>
               </div>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── AR Filters panel ── */}
+      <AnimatePresence>
+        {panel === "ar" && (
+          <motion.div
+            initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
+            transition={{ type:"spring", stiffness:380, damping:32 }}
+            className="flex-shrink-0 px-4 pt-3 pb-8"
+            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="text-xs font-bold text-white/40 mb-3">🎭 AR Filtrlar — 20 ta unikal effekt</p>
+            <div className="grid grid-cols-4 gap-2 max-h-56 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
+              {AR_FILTERS.map(f => {
+                const isActive = arFilter === f.id;
+                return (
+                  <button key={f.id} onClick={() => setArFilter(f.id)}
+                    className="flex flex-col items-center gap-1.5 py-2.5 rounded-2xl transition-all"
+                    style={{
+                      background: isActive ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.05)",
+                      border: isActive ? "2px solid rgba(124,58,237,0.9)" : "1.5px solid rgba(255,255,255,0.08)",
+                      transform: isActive ? "scale(0.95)" : "scale(1)",
+                    }}>
+                    <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0"
+                      style={{ border: isActive ? "1.5px solid rgba(124,58,237,0.7)" : "1px solid rgba(255,255,255,0.1)" }}>
+                      {previews[0] ? (
+                        isVideo(previews[0]) ? (
+                          <video src={previews[0]} className="w-full h-full object-cover" muted playsInline
+                            style={{ filter: f.css === "none" ? undefined : f.css }} />
+                        ) : (
+                          <img src={previews[0]} alt="" className="w-full h-full object-cover"
+                            style={{ filter: f.css === "none" ? undefined : f.css }} />
+                        )
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xl">{f.emoji}</div>
+                      )}
+                    </div>
+                    <span className="text-[9px] font-bold text-center leading-tight px-0.5"
+                      style={{ color: isActive ? "#c4b5fd" : "rgba(255,255,255,0.5)" }}>
+                      {f.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {arFilter !== "none" && (
+              <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl"
+                style={{ background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.4)" }}>
+                <span className="text-sm">{AR_FILTERS.find(f=>f.id===arFilter)?.emoji}</span>
+                <span className="text-xs font-bold text-purple-300 flex-1">{AR_FILTERS.find(f=>f.id===arFilter)?.label} filtri faol</span>
+                <button onClick={() => setArFilter("none")} className="text-white/30 hover:text-white/60">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Voice FX panel ── */}
+      <AnimatePresence>
+        {panel === "voice" && (
+          <motion.div
+            initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
+            transition={{ type:"spring", stiffness:380, damping:32 }}
+            className="flex-shrink-0 px-4 pt-3 pb-8"
+            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="text-xs font-bold text-white/40 mb-3">🎤 Ovoz effektlari — TikTokdan 2x ko'p!</p>
+            <div className="grid grid-cols-2 gap-2">
+              {VOICE_FX.map(v => {
+                const isActive = voiceFx === v.id;
+                return (
+                  <button key={v.id} onClick={() => setVoiceFx(v.id)}
+                    className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all"
+                    style={{
+                      background: isActive ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.05)",
+                      border: isActive ? "2px solid rgba(99,102,241,0.8)" : "1.5px solid rgba(255,255,255,0.08)",
+                    }}>
+                    <span className="text-2xl leading-none">{v.emoji}</span>
+                    <div className="text-left">
+                      <p className="text-[12px] font-bold leading-tight"
+                        style={{ color: isActive ? "#a5b4fc" : "rgba(255,255,255,0.7)" }}>
+                        {v.label}
+                      </p>
+                      <p className="text-[9px]" style={{ color:"rgba(255,255,255,0.3)" }}>{v.desc}</p>
+                    </div>
+                    {isActive && (
+                      <div className="ml-auto flex items-end gap-0.5">
+                        <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {voiceFx !== "normal" && (
+              <p className="text-center text-[11px] text-indigo-400 font-semibold mt-3">
+                {VOICE_FX.find(v=>v.id===voiceFx)?.emoji} {VOICE_FX.find(v=>v.id===voiceFx)?.label} ovozi faol ✓
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Beauty / Beautify panel ── */}
+      <AnimatePresence>
+        {panel === "beauty" && (
+          <motion.div
+            initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
+            transition={{ type:"spring", stiffness:380, damping:32 }}
+            className="flex-shrink-0 px-4 pt-3 pb-8"
+            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold text-white/40">✨ Beautify — Instagramdan 3x yaxshi!</p>
+              <button onClick={() => setBeautyVals({smoothing:0,brightness:0,slim:0,eyes:0,teeth:0,blush:0})}
+                className="text-[10px] text-purple-400 font-bold">Tozalash</button>
+            </div>
+            <div className="space-y-3">
+              {BEAUTY_OPTIONS.map(opt => {
+                const val = beautyVals[opt.id] ?? 0;
+                return (
+                  <div key={opt.id}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">{opt.emoji}</span>
+                        <span className="text-[11px] font-bold text-white/70">{opt.label}</span>
+                      </div>
+                      <span className="text-[11px] font-bold"
+                        style={{ color: val > 0 ? "#a78bfa" : "rgba(255,255,255,0.3)" }}>
+                        {val}%
+                      </span>
+                    </div>
+                    <div className="relative h-2 rounded-full" style={{ background:"rgba(255,255,255,0.1)" }}>
+                      <div className="absolute left-0 top-0 h-full rounded-full transition-all"
+                        style={{ width:`${val}%`, background:"linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+                      <input type="range" min={0} max={100} step={5} value={val}
+                        onChange={e => setBeautyVals(p => ({...p, [opt.id]: Number(e.target.value)}))}
+                        className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-3 px-3 py-2 rounded-xl" style={{ background:"rgba(168,85,247,0.1)", border:"1px solid rgba(168,85,247,0.25)" }}>
+              <p className="text-[10px] text-purple-300 font-semibold">
+                {Object.values(beautyVals).some(v=>v>0)
+                  ? `✨ ${Object.values(beautyVals).filter(v=>v>0).length} ta beauty effekt faol`
+                  : "Slayderlarni o'ngga torting ✨"}
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

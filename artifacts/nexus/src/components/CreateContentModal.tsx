@@ -19,7 +19,8 @@ import { useMediaUpload } from "@/hooks/useMediaUpload";
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 type TabType = "post" | "reel" | "story";
-type Permission = "everyone" | "followers" | "none";
+type Permission = "everyone" | "followers" | "friends" | "none";
+type Visibility = "everyone" | "followers" | "friends" | "only_me";
 type DisplayFormat = "cover" | "contain" | "square";
 
 interface Props {
@@ -38,7 +39,30 @@ const ACCEPT = {
 const PERM_OPTIONS: { value: Permission; icon: React.ElementType; label: string; desc: string; color: string }[] = [
   { value: "everyone",  icon: Globe,          label: "Hamma",         desc: "Barcha foydalanuvchilar",  color: "#34d399" },
   { value: "followers", icon: Users,          label: "Obunachilarga", desc: "Faqat obunachilaring",     color: "#60a5fa" },
+  { value: "friends",   icon: Users,          label: "Do'stlar",      desc: "Faqat o'zaro obunalar",    color: "#f59e0b" },
   { value: "none",      icon: Ban,            label: "O'chirilgan",   desc: "Hech kim",                 color: "#f87171" },
+];
+
+const VIS_OPTIONS: { value: Visibility; emoji: string; label: string; desc: string }[] = [
+  { value: "everyone",  emoji: "🌍", label: "Hamma",          desc: "Butun dunyo ko'radi" },
+  { value: "followers", emoji: "👥", label: "Kuzatuvchilar",  desc: "Faqat obunachilaring" },
+  { value: "friends",   emoji: "🤝", label: "Do'stlar",       desc: "O'zaro obunalar" },
+  { value: "only_me",   emoji: "🔒", label: "Faqat men",      desc: "Xususiy arxiv" },
+];
+
+const CONTENT_LABELS = [
+  { id:"entertainment", emoji:"🎭", label:"Ko'ngil ochar" },
+  { id:"education",     emoji:"📚", label:"Ta'limiy" },
+  { id:"comedy",        emoji:"😂", label:"Kulgili" },
+  { id:"dance",         emoji:"💃", label:"Raqs" },
+  { id:"music",         emoji:"🎵", label:"Musiqa" },
+  { id:"sports",        emoji:"⚽", label:"Sport" },
+  { id:"food",          emoji:"🍔", label:"Ovqat" },
+  { id:"travel",        emoji:"✈️", label:"Sayohat" },
+  { id:"fashion",       emoji:"👗", label:"Moda" },
+  { id:"tech",          emoji:"💻", label:"Texnologiya" },
+  { id:"art",           emoji:"🎨", label:"San'at" },
+  { id:"gaming",        emoji:"🎮", label:"O'yin" },
 ];
 
 function PermPicker({
@@ -289,6 +313,19 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const [prediction, setPrediction] = useState<{likes:number;comments:number;shares:number;reach:number;score:number}|null>(null);
   const [predictOpen, setPredictOpen] = useState(false);
 
+  /* ── Rich privacy state ── */
+  const [visibility, setVisibility] = useState<Visibility>("everyone");
+  const [duetAllowed, setDuetAllowed] = useState(true);
+  const [downloadAllowed, setDownloadAllowed] = useState(true);
+  const [hideLikes, setHideLikes] = useState(false);
+  const [hideViews, setHideViews] = useState(false);
+  const [sensitiveContent, setSensitiveContent] = useState(false);
+  const [ageRestricted, setAgeRestricted] = useState(false);
+  const [brandPartnership, setBrandPartnership] = useState(false);
+  const [contentLabel, setContentLabel] = useState("");
+  const [locationTag, setLocationTag] = useState("");
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+
   const addFiles = (files: FileList) => {
     const arr = Array.from(files).slice(0, 10 - mediaQueue.length);
     if (arr.length === 0) return;
@@ -463,6 +500,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     setMood(""); setPollEnabled(false); setPollQuestion(""); setPollOptions(["", ""]);
     setAiCaptions([]); setAiCaptionOpen(false); setPostFilterName("none");
     setHotTake(false); setTimeCapsule(false); setScheduledAt(""); setPrediction(null); setPredictOpen(false);
+    setVisibility("everyone"); setDuetAllowed(true); setDownloadAllowed(true); setHideLikes(false); setHideViews(false);
+    setSensitiveContent(false); setAgeRestricted(false); setBrandPartnership(false); setContentLabel(""); setLocationTag(""); setPrivacyOpen(false);
     setReelFile(null); setReelPreview(""); setReelCaption(""); setReelAudio("");
     setReelAudioFile(null); setReelAudioPreview(""); setReelUploadResult(null); setReelAudioUploadResult(null);
     setReelCommentPerm("everyone"); setReelSharePerm("everyone");
@@ -989,12 +1028,115 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                         )}
                       </AnimatePresence>
 
-                      {/* Permission settings */}
-                      <div className="rounded-2xl p-3.5 space-y-3.5"
+                      {/* ── Rich Privacy Panel ── */}
+                      <div className="rounded-2xl overflow-hidden"
                         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <p className="text-xs font-bold text-white/60 mb-1">Maxfiylik sozlamalari</p>
-                        <PermPicker label="Kim izoh yoza oladi" icon={MessageCircle} value={commentPerm} onChange={setCommentPerm} />
-                        <PermPicker label="Kim ulasha oladi"    icon={Share2}        value={sharePerm}   onChange={setSharePerm} />
+                        <button className="w-full flex items-center justify-between px-3.5 py-3"
+                          onClick={() => setPrivacyOpen(p => !p)}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">🔐</span>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-white/80">Maxfiylik & Ruxsatlar</p>
+                              <p className="text-[10px] text-white/40">{VIS_OPTIONS.find(v=>v.value===visibility)?.emoji} {VIS_OPTIONS.find(v=>v.value===visibility)?.label} · TikTok/Instagramdan ustun</p>
+                            </div>
+                          </div>
+                          {privacyOpen ? <ChevronUp className="w-4 h-4 text-white/40"/> : <ChevronDown className="w-4 h-4 text-white/40"/>}
+                        </button>
+                        <AnimatePresence>
+                          {privacyOpen && (
+                            <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                              <div className="px-3.5 pb-4 space-y-4 border-t border-white/5">
+                                {/* Visibility */}
+                                <div className="mt-3">
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">👁 Kim ko'ra oladi</p>
+                                  <div className="grid grid-cols-2 gap-1.5">
+                                    {VIS_OPTIONS.map(v => (
+                                      <button key={v.value} onClick={() => setVisibility(v.value)}
+                                        className="flex items-center gap-2 px-2.5 py-2 rounded-xl text-left transition-all"
+                                        style={{
+                                          background: visibility===v.value ? "rgba(124,58,237,0.2)" : "rgba(255,255,255,0.05)",
+                                          border: visibility===v.value ? "1.5px solid rgba(124,58,237,0.7)" : "1.5px solid rgba(255,255,255,0.07)",
+                                        }}>
+                                        <span className="text-base leading-none">{v.emoji}</span>
+                                        <div>
+                                          <p className="text-[11px] font-bold text-white/85">{v.label}</p>
+                                          <p className="text-[9px] text-white/35">{v.desc}</p>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Content label */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🏷 Kontent turi</p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {CONTENT_LABELS.map(cl => (
+                                      <button key={cl.id} onClick={() => setContentLabel(contentLabel===cl.id ? "" : cl.id)}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all"
+                                        style={{
+                                          background: contentLabel===cl.id ? "rgba(168,85,247,0.25)" : "rgba(255,255,255,0.06)",
+                                          border: contentLabel===cl.id ? "1px solid rgba(168,85,247,0.6)" : "1px solid rgba(255,255,255,0.08)",
+                                          color: contentLabel===cl.id ? "#d8b4fe" : "rgba(255,255,255,0.5)",
+                                        }}>
+                                        {cl.emoji} {cl.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Location */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📍 Joylashuv (ixtiyoriy)</p>
+                                  <input placeholder="Masalan: Toshkent, O'zbekiston"
+                                    value={locationTag} onChange={e => setLocationTag(e.target.value)}
+                                    className="w-full rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                                    style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }} />
+                                </div>
+
+                                {/* Comment & Share pickers */}
+                                <div className="space-y-2">
+                                  <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">💬 Interaktivlik</p>
+                                  <PermPicker label="Kim izoh yoza oladi" icon={MessageCircle} value={commentPerm} onChange={setCommentPerm} />
+                                  <PermPicker label="Kim ulasha oladi" icon={Share2} value={sharePerm} onChange={setSharePerm} />
+                                </div>
+
+                                {/* Toggle switches */}
+                                <div className="space-y-2">
+                                  <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">⚙️ Qo'shimcha sozlamalar</p>
+                                  {[
+                                    { label:"Duet / Kollaboratsiya",  desc:"Boshqalar duet qila oladi",    val:duetAllowed,       set:setDuetAllowed,       icon:"🎭", color:"#818cf8" },
+                                    { label:"Ko'chirib olish",        desc:"Video yuklab olish ruxsati",   val:downloadAllowed,   set:setDownloadAllowed,   icon:"⬇️", color:"#34d399" },
+                                    { label:"Like sonini yashirish",  desc:"Faqat siz ko'rasiz",          val:hideLikes,         set:setHideLikes,         icon:"❤️", color:"#f472b6" },
+                                    { label:"Ko'rishlar sonini yashirish", desc:"Maxfiy statistika",      val:hideViews,         set:setHideViews,         icon:"👁", color:"#a78bfa" },
+                                    { label:"Sezgir kontent",         desc:"Content warning ko'rsatish",  val:sensitiveContent,  set:setSensitiveContent,  icon:"⚠️", color:"#f97316" },
+                                    { label:"18+ Yosh cheklovi",      desc:"Faqat kattalar uchun",        val:ageRestricted,     set:setAgeRestricted,     icon:"🔞", color:"#ef4444" },
+                                    { label:"Brand hamkorlik",        desc:"Reklama matni qo'shiladi",    val:brandPartnership,  set:setBrandPartnership,  icon:"🤝", color:"#fbbf24" },
+                                  ].map(t => (
+                                    <div key={t.label} className="flex items-center justify-between py-1.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm">{t.icon}</span>
+                                        <div>
+                                          <p className="text-[11px] font-bold text-white/75">{t.label}</p>
+                                          <p className="text-[9px] text-white/35">{t.desc}</p>
+                                        </div>
+                                      </div>
+                                      <button onClick={() => t.set((p: boolean) => !p)}
+                                        className="w-10 h-5.5 rounded-full flex items-center px-0.5 transition-all flex-shrink-0"
+                                        style={{
+                                          background: t.val ? t.color : "rgba(255,255,255,0.12)",
+                                          justifyContent: t.val ? "flex-end" : "flex-start",
+                                          height: 22, width: 40,
+                                        }}>
+                                        <div className="w-4 h-4 rounded-full bg-white shadow-md" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </div>
                   )}

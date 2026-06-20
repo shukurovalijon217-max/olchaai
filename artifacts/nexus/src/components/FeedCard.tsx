@@ -124,7 +124,9 @@ export default function FeedCard({ post }: FeedCardProps) {
   const [shares, setShares]   = useState(post.sharesCount ?? 0);
   const [muted, setMuted]         = useState(true);
   const [copied, setCopied]       = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
+  const [subscribed, setSubscribed]       = useState(false);
+  const [showSubscribe, setShowSubscribe] = useState(false);
+  const subscribeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ── Video speed hold ── */
   const [holdMode, setHoldMode] = useState<"fast" | "slow" | null>(null);
@@ -168,16 +170,25 @@ export default function FeedCard({ post }: FeedCardProps) {
     else v.playbackRate = 1;
   }, [holdMode]);
 
+  /* show subscribe pill briefly then auto-hide */
+  const showSubscribeBriefly = useCallback(() => {
+    setShowSubscribe(true);
+    if (subscribeTimer.current) clearTimeout(subscribeTimer.current);
+    subscribeTimer.current = setTimeout(() => setShowSubscribe(false), 2800);
+  }, []);
+
   /* hold zone handlers — only activate after 130 ms press */
   const startHold = useCallback((side: "fast" | "slow") => {
     holdTimer.current = setTimeout(() => setHoldMode(side), 130);
   }, []);
 
   const endHold = useCallback(() => {
+    const wasQuickTap = holdTimer.current !== null; // timer still pending = user released before 130 ms
     if (holdTimer.current) clearTimeout(holdTimer.current);
     holdTimer.current = null;
     setHoldMode(null);
-  }, []);
+    if (wasQuickTap) showSubscribeBriefly();
+  }, [showSubscribeBriefly]);
 
   const handleLike = () => {
     if (!user) return;
@@ -286,7 +297,8 @@ export default function FeedCard({ post }: FeedCardProps) {
           /* Photo — fills screen completely per displayFormat */
           <img
             src={post.mediaUrl} alt={post.content}
-            className={`w-full h-full ${photoFit}`}
+            className={`w-full h-full ${photoFit} cursor-pointer`}
+            onClick={showSubscribeBriefly}
           />
         ) : (
           /* Text post */
@@ -448,14 +460,14 @@ export default function FeedCard({ post }: FeedCardProps) {
         {theme.badge}
       </motion.div>
 
-      {/* ══ SUBSCRIBE PILL — video, top-center ══ */}
-      {isVideo && (
+      {/* ══ SUBSCRIBE PILL — video & photo, top-center, only on tap ══ */}
+      {(isVideo || isPhoto) && (
         <motion.div
           className="absolute left-1/2 -translate-x-1/2"
           style={{ top: 22, zIndex: 20 }}
-          initial={{ opacity: 0, y: -10 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
-          transition={{ delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, scale: 0.85, y: -6 }}
+          animate={showSubscribe ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.85, y: -6 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.button
             onClick={() => setSubscribed(s => !s)}

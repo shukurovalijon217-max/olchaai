@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   Heart, MessageCircle, Share2, Bookmark,
   VolumeX, Volume2, BadgeCheck, Check, Send, X,
-  ChevronsRight, ChevronsLeft,
+  ChevronsRight, ChevronsLeft, Eye, DollarSign,
 } from "lucide-react";
 import type { Post } from "@workspace/api-client-react";
 import { PostType, useLikePost } from "@workspace/api-client-react";
@@ -75,6 +75,22 @@ const PERM_LABEL: Record<string, string> = {
   none: "O'chirilgan",
 };
 
+/* ── Number formatter ── */
+function fmtNum(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
+
+/* ── Monetization: $2 CPM (YouTube starter estimate) ── */
+const CPM = 2;
+const MONO_THRESHOLD = 1_000_000;
+function estimatedEarnings(views: number): string {
+  const usd = (views / 1000) * CPM;
+  if (usd >= 1000) return "$" + (usd / 1000).toFixed(1) + "K";
+  return "$" + usd.toFixed(0);
+}
+
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 /* ─────────────────────────────────────────────────
@@ -100,11 +116,13 @@ export default function FeedCard({ post }: FeedCardProps) {
   const [sendingComment, setSendingComment] = useState(false);
   const [commentSent, setCommentSent] = useState(false);
 
-  const [liked, setLiked]   = useState(post.isLiked ?? false);
-  const [likes, setLikes]   = useState(post.likesCount ?? 0);
-  const [saved, setSaved]   = useState(false);
-  const [muted, setMuted]   = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [liked, setLiked]     = useState(post.isLiked ?? false);
+  const [likes, setLikes]     = useState(post.likesCount ?? 0);
+  const [saved, setSaved]     = useState(false);
+  const [saves, setSaves]     = useState(0);
+  const [shares, setShares]   = useState(post.sharesCount ?? 0);
+  const [muted, setMuted]     = useState(true);
+  const [copied, setCopied]   = useState(false);
 
   /* ── Video speed hold ── */
   const [holdMode, setHoldMode] = useState<"fast" | "slow" | null>(null);
@@ -171,6 +189,7 @@ export default function FeedCard({ post }: FeedCardProps) {
     const url = `${window.location.origin}/post/${post.id}`;
     try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
     setCopied(true);
+    setShares(s => s + 1);
     setTimeout(() => setCopied(false), 2200);
   };
 
@@ -193,10 +212,10 @@ export default function FeedCard({ post }: FeedCardProps) {
   };
 
   const ACTIONS = [
-    { id: "like",    Icon: Heart,                  label: likes > 0 ? likes.toLocaleString() : "Like",      active: liked,  activeColor: "#f87171", fill: liked,  fn: handleLike },
-    { id: "comment", Icon: MessageCircle,           label: (post.commentsCount ?? 0) > 0 ? String(post.commentsCount) : "Izoh", active: false, activeColor: "#22d3ee", fill: false, fn: () => { setActionsOpen(false); setCommentOpen(o => !o); } },
-    { id: "share",   Icon: copied ? Check : Share2, label: copied ? "Nusxalandi!" : "Ulash",                active: copied, activeColor: "#34d399", fill: false, fn: handleShare },
-    { id: "save",    Icon: Bookmark,               label: saved ? "Saqlandi" : "Saqlash",                  active: saved,  activeColor: "#fbbf24", fill: saved,  fn: () => setSaved(s => !s) },
+    { id: "like",    Icon: Heart,                  label: "Layk",    count: likes,                    active: liked,  activeColor: "#f87171", fill: liked,  fn: handleLike },
+    { id: "comment", Icon: MessageCircle,           label: "Izoh",    count: post.commentsCount ?? 0,  active: false,  activeColor: "#22d3ee", fill: false, fn: () => { setActionsOpen(false); setCommentOpen(o => !o); } },
+    { id: "share",   Icon: copied ? Check : Share2, label: copied ? "Nusxa!" : "Ulash", count: shares, active: copied, activeColor: "#34d399", fill: false, fn: handleShare },
+    { id: "save",    Icon: Bookmark,               label: "Saqlash", count: saves,                    active: saved,  activeColor: "#fbbf24", fill: saved,  fn: () => { setSaved(s => { setSaves(n => s ? Math.max(0,n-1) : n+1); return !s; }); } },
   ];
 
   /* For photo — display format determines object-fit behaviour */
@@ -462,7 +481,7 @@ export default function FeedCard({ post }: FeedCardProps) {
           </div>
         </motion.button>
 
-        {/* SLIDE-DOWN PANEL */}
+        {/* SLIDE-DOWN PANEL — glassmorphism */}
         <AnimatePresence>
           {actionsOpen && (
             <motion.div
@@ -470,46 +489,49 @@ export default function FeedCard({ post }: FeedCardProps) {
               animate={{ opacity: 1, scaleY: 1, y: 0 }}
               exit={{ opacity: 0, scaleY: 0.45, y: -10 }}
               transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute right-0 mt-2.5 w-[148px] rounded-2xl overflow-hidden flex flex-col gap-0.5 p-1.5"
+              className="absolute right-0 mt-2.5 w-[158px] rounded-2xl overflow-hidden flex flex-col gap-0.5 p-1.5"
               style={{
-                background: "rgba(5,5,18,0.94)",
-                backdropFilter: "blur(22px) saturate(1.6)",
-                border: `1px solid ${theme.accent}28`,
-                boxShadow: `0 12px 48px rgba(0,0,0,0.7),0 0 24px ${theme.glow}`,
+                background: "rgba(255,255,255,0.08)",
+                backdropFilter: "blur(32px) saturate(2) brightness(1.1)",
+                WebkitBackdropFilter: "blur(32px) saturate(2) brightness(1.1)",
+                border: `1px solid rgba(255,255,255,0.18)`,
+                boxShadow: `0 8px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 20px ${theme.glow}`,
                 transformOrigin: "top right",
               }}
             >
               <div className="h-[1px] rounded-full mx-2 mb-0.5"
-                style={{ background: `linear-gradient(90deg,transparent,${theme.accent}88,transparent)` }} />
-
-              {/* Permission hints */}
-              {(post as any).commentPermission && (post as any).commentPermission !== "everyone" && (
-                <div className="px-3 py-1 text-[9px] text-white/40 font-medium">
-                  Izoh: {PERM_LABEL[(post as any).commentPermission] ?? ""}
-                </div>
-              )}
+                style={{ background: `linear-gradient(90deg,transparent,${theme.accent}99,transparent)` }} />
 
               {ACTIONS.map((action, i) => (
                 <motion.button
                   key={action.id}
                   initial={{ opacity: 0, x: 16 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.065, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
                   onClick={() => { action.fn(); if (action.id !== "share" && action.id !== "comment") setActionsOpen(false); }}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left w-full"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl w-full"
                   style={{
-                    background: action.active ? `${action.activeColor}16` : "transparent",
-                    border: action.active ? `1px solid ${action.activeColor}30` : "1px solid transparent",
+                    background: action.active ? `${action.activeColor}20` : "rgba(255,255,255,0.04)",
+                    border: action.active ? `1px solid ${action.activeColor}44` : "1px solid transparent",
                   }}
-                  whileHover={{ x: 2 } as any}
                   whileTap={{ scale: 0.93 }}
                 >
-                  <action.Icon className="w-4 h-4 flex-shrink-0"
-                    style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.72)" }}
-                    fill={action.fill ? action.activeColor : "none"} />
-                  <span className="text-xs font-semibold leading-none"
-                    style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.82)" }}>
-                    {action.label}
+                  {/* Icon + label */}
+                  <div className="flex items-center gap-2">
+                    <action.Icon className="w-4 h-4 flex-shrink-0"
+                      style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.85)" }}
+                      fill={action.fill ? action.activeColor : "none"} />
+                    <span className="text-[11px] font-semibold"
+                      style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.85)" }}>
+                      {action.label}
+                    </span>
+                  </div>
+                  {/* Count */}
+                  <span
+                    className="text-xs font-black tabular-nums"
+                    style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.55)" }}
+                  >
+                    {fmtNum(action.count)}
                   </span>
                 </motion.button>
               ))}
@@ -518,23 +540,26 @@ export default function FeedCard({ post }: FeedCardProps) {
         </AnimatePresence>
       </div>
 
-      {/* ══ LAYER 6 — BOTTOM-LEFT CONTROLS ══ */}
-      <div className="absolute left-4 flex items-center gap-2.5" style={{ bottom: 36, zIndex: 10 }}>
-
+      {/* ══ LAYER 6 — BOTTOM-LEFT CONTROLS (volume + views + monetization) ══ */}
+      <motion.div
+        className="absolute left-4 flex items-center gap-2"
+        style={{ bottom: 28, zIndex: 10 }}
+        initial={{ opacity: 0 }}
+        animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ delay: 0.38 }}
+      >
         {/* Volume toggle (video only) */}
         {isVideo && (
           <motion.button
             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
             style={{
-              background: "rgba(0,0,0,0.55)",
+              background: "rgba(0,0,0,0.42)",
+              backdropFilter: "blur(10px)",
               border: `1px solid ${theme.accent}44`,
               boxShadow: `0 0 10px ${theme.glow}`,
             }}
             onClick={() => setMuted(m => !m)}
             whileTap={{ scale: 0.88 }}
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ delay: 0.4 }}
           >
             {muted
               ? <VolumeX className="w-4 h-4 text-white" />
@@ -542,32 +567,50 @@ export default function FeedCard({ post }: FeedCardProps) {
             }
           </motion.button>
         )}
-      </div>
 
-      {/* ══ LAYER 7 — CAPTION (bottom, above controls) ══ */}
-      {!isText && (
-        <motion.div
-          className="absolute left-4 right-16"
-          style={{ bottom: commentOpen ? 140 : 80, zIndex: 10, transition: "bottom 0.3s ease" }}
-          initial={{ opacity: 0, y: 18 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
-          transition={{ delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <p className="text-white text-[13px] font-medium leading-relaxed line-clamp-3 drop-shadow-lg">
-            {post.content}
-          </p>
-          {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {post.tags.slice(0, 3).map(tag => (
-                <span key={tag} className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                  style={{ background: `${theme.accent}1e`, border: `1px solid ${theme.accent}38`, color: theme.labelColor }}>
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </motion.div>
-      )}
+        {/* Views counter (photo + video) */}
+        {!isText && (
+          <div
+            className="flex items-center gap-1 px-2 py-1 rounded-full"
+            style={{
+              background: "rgba(0,0,0,0.38)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
+          >
+            <Eye className="w-3 h-3 text-white/60" />
+            <span className="text-[11px] font-bold text-white/80 tabular-nums">
+              {fmtNum((post as any).viewsCount ?? 0)}
+            </span>
+          </div>
+        )}
+
+        {/* Monetization badge — shown when views ≥ 1M */}
+        {!isText && ((post as any).viewsCount ?? 0) >= MONO_THRESHOLD && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 380, damping: 22, delay: 0.6 }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full"
+            style={{
+              background: "linear-gradient(135deg,rgba(251,191,36,0.22),rgba(245,158,11,0.14))",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(251,191,36,0.45)",
+              boxShadow: "0 0 12px rgba(251,191,36,0.25)",
+            }}
+          >
+            <motion.div
+              animate={{ rotate: [0, -8, 8, 0] }}
+              transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+            >
+              <DollarSign className="w-3 h-3 text-amber-300" />
+            </motion.div>
+            <span className="text-[10px] font-black text-amber-300 tabular-nums">
+              {estimatedEarnings((post as any).viewsCount ?? 0)}
+            </span>
+          </motion.div>
+        )}
+      </motion.div>
 
       {/* ══ LAYER 8 — INLINE COMMENT PANEL (slide up from bottom) ══ */}
       <AnimatePresence>
@@ -580,10 +623,12 @@ export default function FeedCard({ post }: FeedCardProps) {
             className="absolute inset-x-0 bottom-0 rounded-t-3xl overflow-hidden"
             style={{
               zIndex: 40,
-              background: "rgba(5,5,20,0.97)",
-              backdropFilter: "blur(24px)",
-              border: `1px solid ${theme.accent}28`,
+              background: "rgba(255,255,255,0.10)",
+              backdropFilter: "blur(40px) saturate(2) brightness(0.9)",
+              WebkitBackdropFilter: "blur(40px) saturate(2) brightness(0.9)",
+              border: `1px solid rgba(255,255,255,0.20)`,
               borderBottom: "none",
+              boxShadow: `0 -8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)`,
             }}
           >
             {/* Handle */}

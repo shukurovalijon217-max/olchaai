@@ -5,9 +5,16 @@ import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkl
 export type TextOverlay = {
   id: string; text: string; x: number; y: number;
   fontSize: number; color: string;
-  animation: "none"|"pulse"|"bounce"|"wave"|"neon"|"slide";
+  animation: "none"|"pulse"|"bounce"|"wave"|"neon"|"slide"|"shake"|"flip"|"rainbow"|"typewriter";
   fontStyle: "regular"|"bold"|"italic"|"shadow"|"outline";
-  bgStyle: "none"|"dark"|"blur";
+  fontFamily: string;
+  bgStyle: "none"|"dark"|"blur"|"gradient"|"highlight"|"pill";
+  align: "left"|"center"|"right";
+  shadowPreset: "none"|"soft"|"glow"|"neon-pink"|"neon-blue"|"fire"|"3d"|"retro";
+  gradient: string;
+  letterSpacing: number;
+  strokeWidth: number;
+  strokeColor: string;
   isSticker?: boolean;
 };
 
@@ -20,19 +27,58 @@ interface Props {
   onClose: () => void;
 }
 
-const COLORS = ["#ffffff","#ffee38","#ff6b6b","#a78bfa","#34d399","#06b6d4","#f472b6","#111111"];
+const COLORS = [
+  "#ffffff","#000000","#ffee38","#ff6b6b","#ff4500","#ff0080",
+  "#a78bfa","#7c3aed","#34d399","#06b6d4","#f472b6","#fda085",
+  "#ffd700","#00ff88","#00cfff","#8b00ff",
+];
 const ANIMS: { id: TextOverlay["animation"]; label: string; icon: string }[] = [
-  { id:"none",   label:"Statik",    icon:"Aa" },
-  { id:"pulse",  label:"Puls",      icon:"◎"  },
-  { id:"bounce", label:"Sakrash",   icon:"↕"  },
-  { id:"wave",   label:"To'lqin",   icon:"〰" },
-  { id:"neon",   label:"Neon",      icon:"✦"  },
-  { id:"slide",  label:"Sirpanish", icon:"→"  },
+  { id:"none",       label:"Statik",    icon:"Aa" },
+  { id:"pulse",      label:"Puls",      icon:"◎"  },
+  { id:"bounce",     label:"Sakrash",   icon:"↕"  },
+  { id:"wave",       label:"To'lqin",   icon:"〰" },
+  { id:"neon",       label:"Neon",      icon:"✦"  },
+  { id:"slide",      label:"Sirpanish", icon:"→"  },
+  { id:"shake",      label:"Silkish",   icon:"⇌"  },
+  { id:"flip",       label:"Flip",      icon:"↔"  },
+  { id:"rainbow",    label:"Kamalak",   icon:"🌈" },
+  { id:"typewriter", label:"Mashinaka", icon:"⌨"  },
 ];
 const FSTYLES: { id: TextOverlay["fontStyle"]; label: string }[] = [
-  { id:"regular",  label:"Aa" }, { id:"bold", label:"𝗔𝗮" },
-  { id:"italic",   label:"𝘈𝘢" }, { id:"shadow", label:"A̲a" },
-  { id:"outline",  label:"Ao" },
+  { id:"regular",  label:"Aa" }, { id:"bold",    label:"𝗔𝗮" },
+  { id:"italic",   label:"𝘈𝘢" }, { id:"shadow",  label:"A̤a" },
+  { id:"outline",  label:"A⃝o" },
+];
+const FONT_FAMILIES = [
+  { id:"sans",    label:"Modern",  css:"system-ui,sans-serif" },
+  { id:"mono",    label:"Kode",    css:"'Courier New',monospace" },
+  { id:"serif",   label:"Klasik",  css:"Georgia,serif" },
+  { id:"impact",  label:"Impact",  css:"Impact,'Arial Black',sans-serif" },
+  { id:"round",   label:"Yumshoq", css:"'Trebuchet MS',sans-serif" },
+  { id:"narrow",  label:"Tor",     css:"'Arial Narrow',Arial,sans-serif" },
+  { id:"cursive", label:"Kursiv",  css:"'Comic Sans MS',cursive" },
+  { id:"display", label:"Display", css:"'Arial Black',Gadget,sans-serif" },
+];
+const TEXT_SHADOWS = [
+  { id:"none",     label:"Yo'q",    css:"none" },
+  { id:"soft",     label:"Soya",    css:"0 2px 8px rgba(0,0,0,0.9)" },
+  { id:"glow",     label:"Glow",    css:"0 0 12px #c084fc,0 0 30px #9333ea,0 0 60px rgba(147,51,234,0.4)" },
+  { id:"neon-pink",label:"Neon🌸",  css:"0 0 7px #ff0080,0 0 20px #ff0080,0 0 50px #ff0080" },
+  { id:"neon-blue",label:"Neon💧",  css:"0 0 7px #00cfff,0 0 20px #00cfff,0 0 50px #0080ff" },
+  { id:"fire",     label:"Olov🔥",  css:"0 0 5px #ffd700,0 0 15px #ff8c00,0 0 35px #ff4500" },
+  { id:"3d",       label:"3D🧊",    css:"3px 3px 0 #000,5px 5px 0 rgba(0,0,0,0.4),8px 8px 12px rgba(0,0,0,0.3)" },
+  { id:"retro",    label:"Retro🕹", css:"3px 3px 0 #ff6b35,-1px -1px 0 #222,1px 1px 0 #222" },
+];
+const GRADIENT_PRESETS = [
+  { id:"none",    label:"Oddiy",   css:"" },
+  { id:"sunset",  label:"🌅Shafaq", css:"linear-gradient(90deg,#ff6b6b,#feca57)" },
+  { id:"ocean",   label:"🌊Okean",  css:"linear-gradient(90deg,#667eea,#764ba2)" },
+  { id:"fire",    label:"🔥Olov",   css:"linear-gradient(90deg,#f093fb,#f5576c)" },
+  { id:"neon",    label:"⚡Neon",   css:"linear-gradient(90deg,#4facfe,#00f2fe)" },
+  { id:"gold",    label:"✨Oltin",  css:"linear-gradient(90deg,#f6d365,#fda085)" },
+  { id:"matrix",  label:"🟢Matrix", css:"linear-gradient(90deg,#0f9b58,#00ff88)" },
+  { id:"cosmic",  label:"🌌Kosmik", css:"linear-gradient(90deg,#667eea,#ff6b6b,#feca57)" },
+  { id:"rainbow", label:"🌈Kamalak",css:"linear-gradient(90deg,#ff0000,#ff8c00,#ffd700,#00ff00,#00bfff,#8b00ff)" },
 ];
 
 const STICKER_GROUPS: { label: string; emojis: string[] }[] = [
@@ -655,33 +701,71 @@ function WaveText({ text, color, fontSize }: { text: string; color: string; font
 }
 
 function OverlayText({ item }: { item: TextOverlay }) {
-  const cls = item.animation === "pulse" ? "txt-anim-pulse"
-    : item.animation === "bounce" ? "txt-anim-bounce"
-    : item.animation === "neon"   ? "txt-anim-neon"
-    : item.animation === "slide"  ? "txt-anim-slide"
+  const animCls = item.animation === "pulse"      ? "txt-anim-pulse"
+    : item.animation === "bounce"     ? "txt-anim-bounce"
+    : item.animation === "neon"       ? "txt-anim-neon"
+    : item.animation === "slide"      ? "txt-anim-slide"
+    : item.animation === "flip"       ? "txt-anim-flip"
+    : item.animation === "rainbow"    ? "txt-anim-rainbow"
+    : item.animation === "typewriter" ? "txt-anim-typewriter"
     : "";
 
-  const fs: React.CSSProperties = item.fontStyle === "bold"    ? { fontWeight: 900 }
-    : item.fontStyle === "italic"   ? { fontStyle: "italic" }
-    : item.fontStyle === "shadow"   ? { textShadow: `2px 3px 8px rgba(0,0,0,0.9)` }
-    : item.fontStyle === "outline"  ? { WebkitTextStroke: "1.5px rgba(0,0,0,0.85)" }
+  const shakeStyle: React.CSSProperties = item.animation === "shake"
+    ? { animation:"txt-shake 0.5s ease-in-out infinite" } : {};
+
+  const fontCss = FONT_FAMILIES.find(f => f.id === item.fontFamily)?.css ?? "system-ui,sans-serif";
+  const shadowCss = TEXT_SHADOWS.find(s => s.id === item.shadowPreset)?.css ?? "none";
+
+  const fStyleProps: React.CSSProperties = {
+    fontWeight: item.fontStyle === "bold" ? 900 : item.fontStyle === "outline" ? 700 : 400,
+    fontStyle:  item.fontStyle === "italic" ? "italic" : "normal",
+    WebkitTextStroke: item.strokeWidth > 0
+      ? `${item.strokeWidth}px ${item.strokeColor || "#000"}`
+      : item.fontStyle === "outline" ? "1.5px rgba(0,0,0,0.85)" : undefined,
+  };
+
+  const bgProps: React.CSSProperties =
+      item.bgStyle === "dark"      ? { background:"rgba(0,0,0,0.55)",     padding:"4px 12px", borderRadius:8 }
+    : item.bgStyle === "blur"      ? { backdropFilter:"blur(12px)", background:"rgba(0,0,0,0.3)", padding:"4px 12px", borderRadius:8 }
+    : item.bgStyle === "gradient"  ? { background:"linear-gradient(135deg,rgba(124,58,237,0.75),rgba(168,85,247,0.55))", padding:"4px 12px", borderRadius:8 }
+    : item.bgStyle === "highlight" ? { background:"rgba(255,238,0,0.9)", padding:"2px 8px", borderRadius:4 }
+    : item.bgStyle === "pill"      ? { background:"rgba(0,0,0,0.65)", padding:"4px 18px", borderRadius:999, border:"1.5px solid rgba(255,255,255,0.3)" }
     : {};
 
-  const bg: React.CSSProperties = item.bgStyle === "dark" ? { background:"rgba(0,0,0,0.5)", padding:"4px 10px", borderRadius: 8 }
-    : item.bgStyle === "blur" ? { backdropFilter:"blur(12px)", background:"rgba(0,0,0,0.25)", padding:"4px 10px", borderRadius: 8 }
-    : {};
+  if (item.isSticker) return <span style={{ fontSize: item.fontSize, lineHeight: 1 }}>{item.text}</span>;
 
-  if (item.isSticker) {
-    return <span style={{ fontSize: item.fontSize, lineHeight: 1 }}>{item.text}</span>;
+  const hasGradient = item.gradient && item.gradient !== "";
+
+  const textStyle: React.CSSProperties = {
+    fontFamily: fontCss,
+    fontSize: item.fontSize,
+    letterSpacing: item.letterSpacing ?? 0,
+    textAlign: item.align ?? "center",
+    lineHeight: 1.25,
+    whiteSpace: "pre-wrap",
+    textShadow: shadowCss !== "none" ? shadowCss
+      : item.fontStyle === "shadow" ? "0 2px 8px rgba(0,0,0,0.9)" : undefined,
+    ...(hasGradient ? {
+      background: item.gradient,
+      WebkitBackgroundClip: "text" as React.CSSProperties["WebkitBackgroundClip"],
+      WebkitTextFillColor: "transparent",
+      backgroundClip: "text",
+    } : { color: item.color }),
+    ...fStyleProps,
+    ...shakeStyle,
+  };
+
+  if (item.animation === "wave") {
+    return (
+      <div className={animCls} style={bgProps}>
+        <WaveText text={item.text} color={hasGradient ? "#fff" : item.color} fontSize={item.fontSize} />
+      </div>
+    );
   }
 
-  const inner = item.animation === "wave"
-    ? <WaveText text={item.text} color={item.color} fontSize={item.fontSize} />
-    : <span style={{ color: item.color, fontSize: item.fontSize }}>{item.text}</span>;
-
   return (
-    <div className={cls} style={{ fontFamily:"system-ui,sans-serif", lineHeight:1.2, ...fs, ...bg }}>
-      {inner}
+    <div className={animCls} style={{ display:"inline-block", ...bgProps }}>
+      <span style={textStyle}>{item.text}</span>
     </div>
   );
 }
@@ -712,12 +796,20 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const musicDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-  const [draftText, setDraftText]       = useState("");
-  const [draftColor, setDraftColor]     = useState("#ffffff");
-  const [draftAnim, setDraftAnim]       = useState<TextOverlay["animation"]>("none");
-  const [draftFStyle, setDraftFStyle]   = useState<TextOverlay["fontStyle"]>("bold");
-  const [draftBg, setDraftBg]           = useState<TextOverlay["bgStyle"]>("none");
-  const [draftSize, setDraftSize]       = useState(28);
+  const [draftText, setDraftText]             = useState("");
+  const [draftColor, setDraftColor]           = useState("#ffffff");
+  const [draftAnim, setDraftAnim]             = useState<TextOverlay["animation"]>("none");
+  const [draftFStyle, setDraftFStyle]         = useState<TextOverlay["fontStyle"]>("bold");
+  const [draftBg, setDraftBg]                 = useState<TextOverlay["bgStyle"]>("none");
+  const [draftSize, setDraftSize]             = useState(36);
+  const [draftFont, setDraftFont]             = useState("sans");
+  const [draftShadow, setDraftShadow]         = useState<TextOverlay["shadowPreset"]>("soft");
+  const [draftGradient, setDraftGradient]     = useState("");
+  const [draftAlign, setDraftAlign]           = useState<TextOverlay["align"]>("center");
+  const [draftLetterSpacing, setDraftLetterSpacing] = useState(0);
+  const [draftStrokeW, setDraftStrokeW]       = useState(0);
+  const [draftStrokeColor, setDraftStrokeColor] = useState("#000000");
+  const [textTab, setTextTab]                 = useState<"write"|"font"|"color"|"effect"|"anim">("write");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{id:string;sx:number;sy:number;ox:number;oy:number}|null>(null);
@@ -727,13 +819,28 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const addText = () => {
     if (!draftText.trim()) return;
     const id = `${Date.now()}`;
-    setItems(p => [...p, { id, text: draftText.trim(), x:50, y:45, fontSize:draftSize, color:draftColor, animation:draftAnim, fontStyle:draftFStyle, bgStyle:draftBg }]);
+    setItems(p => [...p, {
+      id, text: draftText.trim(), x: 50, y: 45,
+      fontSize: draftSize, color: draftColor,
+      animation: draftAnim, fontStyle: draftFStyle, bgStyle: draftBg,
+      fontFamily: draftFont, shadowPreset: draftShadow, gradient: draftGradient,
+      align: draftAlign, letterSpacing: draftLetterSpacing,
+      strokeWidth: draftStrokeW, strokeColor: draftStrokeColor,
+    }]);
     setDraftText(""); setPanel("none"); setSelectedId(id);
+  };
+
+  /* ── Resize selected text by dragging corner handle ── */
+  const resizeRef = useRef<{id:string;startSize:number;startY:number}|null>(null);
+  const onResizeDown = (e: React.PointerEvent, id: string, fontSize: number) => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    resizeRef.current = { id, startSize: fontSize, startY: e.clientY };
   };
 
   const addSticker = (emoji: string) => {
     const id = `sticker_${Date.now()}`;
-    setItems(p => [...p, { id, text: emoji, x: 30 + Math.random() * 40, y: 30 + Math.random() * 40, fontSize: 52, color:"#fff", animation:"none", fontStyle:"regular", bgStyle:"none", isSticker: true }]);
+    setItems(p => [...p, { id, text: emoji, x: 30 + Math.random() * 40, y: 30 + Math.random() * 40, fontSize: 52, color:"#fff", animation:"none", fontStyle:"regular", bgStyle:"none", isSticker: true, fontFamily:"sans", shadowPreset:"none", gradient:"", align:"center", letterSpacing:0, strokeWidth:0, strokeColor:"#000" }]);
     setSelectedId(id);
   };
 
@@ -747,6 +854,13 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     setSelectedId(id);
   };
   const onPointerMove = useCallback((e: React.PointerEvent) => {
+    /* resize takes priority */
+    if (resizeRef.current) {
+      const dy = resizeRef.current.startY - e.clientY;
+      const newSize = Math.max(12, Math.min(110, resizeRef.current.startSize + dy * 0.55));
+      setItems(p => p.map(i => i.id === resizeRef.current!.id ? { ...i, fontSize: newSize } : i));
+      return;
+    }
     if (!dragRef.current || !containerRef.current) return;
     const r = containerRef.current.getBoundingClientRect();
     const dx = ((e.clientX - dragRef.current.sx) / r.width) * 100;
@@ -755,7 +869,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
       ? { ...i, x: Math.max(4,Math.min(96,dragRef.current!.ox+dx)), y: Math.max(4,Math.min(96,dragRef.current!.oy+dy)) }
       : i));
   }, []);
-  const onPointerUp = () => { dragRef.current = null; };
+  const onPointerUp = () => { dragRef.current = null; resizeRef.current = null; };
 
   const selected = items.find(i => i.id === selectedId);
   const activeFilter = FILTERS.find(f => f.id === filterName) ?? FILTERS[0];
@@ -828,27 +942,67 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         )}
 
         {/* Text/Sticker overlays */}
-        {items.map(item => (
-          <div
-            key={item.id}
-            onPointerDown={e => onPointerDown(e, item.id)}
-            style={{
-              position:"absolute",
-              left:`${item.x}%`, top:`${item.y}%`,
-              transform:"translate(-50%,-50%)",
-              cursor:"grab", userSelect:"none", touchAction:"none",
-            }}
-            onClick={e => { e.stopPropagation(); setSelectedId(item.id); }}
-          >
-            <OverlayText item={item} />
-            {selectedId === item.id && (
-              <div
-                className="absolute inset-0 rounded-lg"
-                style={{ border:"1.5px dashed rgba(255,255,255,0.7)", pointerEvents:"none", margin:-4 }}
-              />
-            )}
-          </div>
-        ))}
+        {items.map(item => {
+          const isSel = selectedId === item.id;
+          return (
+            <div
+              key={item.id}
+              onPointerDown={e => onPointerDown(e, item.id)}
+              style={{
+                position:"absolute",
+                left:`${item.x}%`, top:`${item.y}%`,
+                transform:"translate(-50%,-50%)",
+                cursor: isSel ? "move" : "grab",
+                userSelect:"none", touchAction:"none",
+              }}
+              onClick={e => { e.stopPropagation(); setSelectedId(item.id); }}
+            >
+              <OverlayText item={item} />
+
+              {/* Selection handles (only when selected) */}
+              {isSel && (
+                <>
+                  {/* Dashed selection border */}
+                  <div className="absolute inset-0 pointer-events-none"
+                    style={{ border:"1.5px dashed rgba(255,255,255,0.85)", borderRadius:6, margin:-6 }} />
+
+                  {/* − / + size buttons above */}
+                  <div className="absolute flex gap-1.5"
+                    style={{ left:"50%", transform:"translateX(-50%)", top:-34, pointerEvents:"auto" }}>
+                    <button
+                      onClick={e => { e.stopPropagation(); setItems(p => p.map(i => i.id === item.id ? {...i, fontSize: Math.max(12, Math.round(i.fontSize) - 4)} : i)); }}
+                      className="w-7 h-7 rounded-full text-white text-sm font-black flex items-center justify-center"
+                      style={{ background:"rgba(0,0,0,0.75)", border:"1.5px solid rgba(255,255,255,0.5)" }}>−</button>
+                    <div className="px-2 h-7 rounded-full flex items-center text-[10px] font-bold text-white/70"
+                      style={{ background:"rgba(0,0,0,0.6)", border:"1px solid rgba(255,255,255,0.25)" }}>
+                      {Math.round(item.fontSize)}px
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); setItems(p => p.map(i => i.id === item.id ? {...i, fontSize: Math.min(110, Math.round(i.fontSize) + 4)} : i)); }}
+                      className="w-7 h-7 rounded-full text-white text-sm font-black flex items-center justify-center"
+                      style={{ background:"rgba(0,0,0,0.75)", border:"1.5px solid rgba(255,255,255,0.5)" }}>+</button>
+                  </div>
+
+                  {/* Drag-resize handle at bottom-right corner */}
+                  {!item.isSticker && (
+                    <div
+                      onPointerDown={e => onResizeDown(e, item.id, item.fontSize)}
+                      className="absolute flex items-center justify-center"
+                      style={{
+                        right:-14, bottom:-14, width:22, height:22,
+                        background:"rgba(124,58,237,0.95)", borderRadius:"50%",
+                        border:"2px solid white", cursor:"se-resize", touchAction:"none",
+                        fontSize:11, color:"white", fontWeight:"bold", userSelect:"none",
+                        boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
+                      }}>
+                      ⤡
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
 
         {/* Slide nav dots */}
         {previews.length > 1 && (
@@ -959,95 +1113,279 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         </div>
       </div>
 
-      {/* ── Text panel ── */}
+      {/* ── Text panel (RICH — 5 tabs) ── */}
       <AnimatePresence>
-        {panel === "text" && (
+        {panel === "text" && (() => {
+          /* live preview item */
+          const previewItem: TextOverlay = {
+            id:"__preview__", text: draftText || "Namuna matn", x:50, y:50,
+            fontSize: draftSize, color: draftColor, animation:"none",
+            fontStyle: draftFStyle, bgStyle: draftBg, fontFamily: draftFont,
+            shadowPreset: draftShadow, gradient: draftGradient, align: draftAlign,
+            letterSpacing: draftLetterSpacing, strokeWidth: draftStrokeW, strokeColor: draftStrokeColor,
+          };
+          return (
           <motion.div
-            initial={{ y: "100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
+            initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
             transition={{ type:"spring", stiffness:380, damping:32 }}
-            className="flex-shrink-0 px-4 pt-3 pb-8 space-y-3"
-            style={{ background:"rgba(8,8,22,0.97)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            className="flex-shrink-0 pb-6"
+            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex gap-2">
-              <input
-                autoFocus
-                value={draftText}
-                onChange={e => setDraftText(e.target.value)}
-                placeholder="Matn kiriting…"
-                className="flex-1 rounded-2xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none"
-                style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)" }}
-                onKeyDown={e => e.key==="Enter" && addText()}
-              />
-              <button onClick={addText}
-                className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                style={{ background: draftText.trim() ? "rgba(124,58,237,0.9)" : "rgba(255,255,255,0.07)" }}>
-                <Check className="w-5 h-5 text-white" />
-              </button>
-            </div>
-
-            <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-              {COLORS.map(c => (
-                <button key={c} onClick={() => setDraftColor(c)}
-                  className="w-8 h-8 rounded-full flex-shrink-0 transition-transform"
-                  style={{ background:c, border: c===draftColor ? "2.5px solid white" : "2px solid transparent",
-                    transform: c===draftColor ? "scale(1.2)" : "scale(1)",
-                    boxShadow: c===draftColor ? "0 0 0 2px rgba(124,58,237,0.7)" : "none" }} />
-              ))}
-              <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                <button onClick={() => setDraftSize(s=>Math.max(14,s-4))}
-                  className="w-7 h-7 rounded-full text-white/60 text-sm font-bold flex items-center justify-center"
-                  style={{ background:"rgba(255,255,255,0.08)" }}>−</button>
-                <span className="text-xs text-white/50 w-6 text-center">{draftSize}</span>
-                <button onClick={() => setDraftSize(s=>Math.min(72,s+4))}
-                  className="w-7 h-7 rounded-full text-white/60 text-sm font-bold flex items-center justify-center"
-                  style={{ background:"rgba(255,255,255,0.08)" }}>+</button>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              {FSTYLES.map(st => (
-                <button key={st.id} onClick={() => setDraftFStyle(st.id)}
-                  className="flex-1 py-2 rounded-xl text-sm font-bold transition-all"
-                  style={{
-                    background: draftFStyle===st.id ? "rgba(124,58,237,0.7)" : "rgba(255,255,255,0.06)",
-                    color: draftFStyle===st.id ? "white" : "rgba(255,255,255,0.5)",
-                    border: draftFStyle===st.id ? "1px solid rgba(124,58,237,0.8)" : "1px solid transparent",
-                  }}>
-                  {st.label}
-                </button>
-              ))}
-              {(["none","dark","blur"] as TextOverlay["bgStyle"][]).map(b => (
-                <button key={b} onClick={() => setDraftBg(b)}
-                  className="flex-1 py-2 rounded-xl text-[10px] font-bold transition-all"
-                  style={{
-                    background: draftBg===b ? "rgba(6,182,212,0.4)" : "rgba(255,255,255,0.06)",
-                    color: draftBg===b ? "white" : "rgba(255,255,255,0.4)",
-                  }}>
-                  {b==="none" ? "Yo'q" : b==="dark" ? "Qora" : "Blur"}
+            {/* ── Tab bar ── */}
+            <div className="flex border-b border-white/8">
+              {(["write","font","color","effect","anim"] as const).map(t => (
+                <button key={t} onClick={() => setTextTab(t)}
+                  className="flex-1 py-2.5 text-[10px] font-bold transition-all"
+                  style={{ color: textTab===t ? "#c4b5fd" : "rgba(255,255,255,0.35)",
+                    borderBottom: textTab===t ? "2px solid #7c3aed" : "2px solid transparent" }}>
+                  {t==="write"?"✏️Yoz":t==="font"?"🔤Font":t==="color"?"🎨Rang":t==="effect"?"✨Effekt":"🎬Anim"}
                 </button>
               ))}
             </div>
 
-            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
-              {ANIMS.map(an => (
-                <button key={an.id} onClick={() => setDraftAnim(an.id)}
-                  className="flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all"
-                  style={{
-                    background: draftAnim===an.id ? "rgba(124,58,237,0.7)" : "rgba(255,255,255,0.06)",
-                    border: draftAnim===an.id ? "1px solid rgba(124,58,237,0.8)" : "1px solid transparent",
-                  }}>
-                  <span className="text-base leading-none" style={{ color: draftAnim===an.id ? "white" : "rgba(255,255,255,0.5)" }}>
-                    {an.icon}
-                  </span>
-                  <span className="text-[9px] font-bold" style={{ color: draftAnim===an.id ? "white" : "rgba(255,255,255,0.4)" }}>
-                    {an.label}
-                  </span>
-                </button>
-              ))}
+            {/* ── Live preview strip ── */}
+            <div className="mx-4 mt-3 mb-2 flex items-center justify-center rounded-2xl overflow-hidden"
+              style={{ background:"rgba(255,255,255,0.05)", minHeight:52, border:"1px solid rgba(255,255,255,0.08)" }}>
+              <OverlayText item={previewItem} />
+            </div>
+
+            {/* ── Tab content ── */}
+            <div className="px-4">
+
+              {/* WRITE tab */}
+              {textTab === "write" && (
+                <div className="space-y-3 pt-1">
+                  <div className="flex gap-2">
+                    <input autoFocus value={draftText} onChange={e => setDraftText(e.target.value)}
+                      placeholder="Matn kiriting…"
+                      className="flex-1 rounded-2xl px-4 py-3 text-base text-white placeholder:text-white/25 focus:outline-none"
+                      style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)", fontFamily: FONT_FAMILIES.find(f=>f.id===draftFont)?.css }}
+                      onKeyDown={e => e.key==="Enter" && addText()} />
+                    <button onClick={addText}
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: draftText.trim() ? "rgba(124,58,237,0.9)" : "rgba(255,255,255,0.07)",
+                        border: draftText.trim() ? "2px solid rgba(168,85,247,0.6)" : "1px solid rgba(255,255,255,0.1)" }}>
+                      <Check className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                  {/* Size slider */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] text-white/40 font-bold w-8">A</span>
+                    <div className="relative flex-1 h-2 rounded-full" style={{ background:"rgba(255,255,255,0.1)" }}>
+                      <div className="absolute left-0 top-0 h-full rounded-full"
+                        style={{ width:`${((draftSize-12)/(110-12))*100}%`, background:"linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+                      <input type="range" min={12} max={110} step={2} value={draftSize}
+                        onChange={e => setDraftSize(Number(e.target.value))}
+                        className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                    </div>
+                    <span className="text-[10px] text-white/40 font-bold w-8 text-right">A</span>
+                    <span className="text-[11px] font-black text-purple-400 w-9 text-right">{draftSize}px</span>
+                  </div>
+                  {/* Quick colors */}
+                  <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth:"none" }}>
+                    {COLORS.map(c => (
+                      <button key={c} onClick={() => { setDraftColor(c); setDraftGradient(""); }}
+                        className="w-8 h-8 rounded-full flex-shrink-0 transition-all"
+                        style={{ background:c, outline: c===draftColor && !draftGradient ? "2.5px solid white" : "none",
+                          outlineOffset:2, transform: c===draftColor && !draftGradient ? "scale(1.2)" : "scale(1)" }} />
+                    ))}
+                  </div>
+                  {/* Align */}
+                  <div className="flex gap-2">
+                    {(["left","center","right"] as const).map(a => (
+                      <button key={a} onClick={() => setDraftAlign(a)}
+                        className="flex-1 py-2 rounded-xl text-sm font-bold transition-all"
+                        style={{ background: draftAlign===a ? "rgba(124,58,237,0.6)" : "rgba(255,255,255,0.06)",
+                          color: draftAlign===a ? "white" : "rgba(255,255,255,0.4)" }}>
+                        {a==="left"?"⬅ Sol":a==="center"?"⬛ O'rta":"➡ O'ng"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* FONT tab */}
+              {textTab === "font" && (
+                <div className="space-y-3 pt-1">
+                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Font oilasi</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {FONT_FAMILIES.map(f => (
+                      <button key={f.id} onClick={() => setDraftFont(f.id)}
+                        className="px-3 py-2.5 rounded-xl text-sm transition-all text-left"
+                        style={{
+                          fontFamily: f.css,
+                          background: draftFont===f.id ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.05)",
+                          border: draftFont===f.id ? "1.5px solid rgba(124,58,237,0.8)" : "1.5px solid rgba(255,255,255,0.08)",
+                          color: draftFont===f.id ? "#c4b5fd" : "rgba(255,255,255,0.65)",
+                          fontWeight: draftFont===f.id ? 700 : 400,
+                        }}>
+                        {f.label} — <span style={{ opacity:0.6 }}>Aa 1 2 3</span>
+                      </button>
+                    ))}
+                  </div>
+                  {/* Style */}
+                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest mt-2">Matn stili</p>
+                  <div className="flex gap-1.5">
+                    {FSTYLES.map(st => (
+                      <button key={st.id} onClick={() => setDraftFStyle(st.id)}
+                        className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+                        style={{ background: draftFStyle===st.id ? "rgba(124,58,237,0.6)" : "rgba(255,255,255,0.06)",
+                          color: draftFStyle===st.id ? "white" : "rgba(255,255,255,0.45)",
+                          border: draftFStyle===st.id ? "1px solid rgba(168,85,247,0.6)" : "none" }}>
+                        {st.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Letter spacing */}
+                  <div>
+                    <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest mb-1.5">Harf oralig'i</p>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1 h-2 rounded-full" style={{ background:"rgba(255,255,255,0.1)" }}>
+                        <div className="absolute left-0 top-0 h-full rounded-full"
+                          style={{ width:`${(draftLetterSpacing/10)*100}%`, background:"linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+                        <input type="range" min={0} max={10} step={0.5} value={draftLetterSpacing}
+                          onChange={e => setDraftLetterSpacing(Number(e.target.value))}
+                          className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                      </div>
+                      <span className="text-[11px] font-bold text-purple-400 w-8 text-right">{draftLetterSpacing}px</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* COLOR tab */}
+              {textTab === "color" && (
+                <div className="space-y-3 pt-1">
+                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Rang</p>
+                  <div className="flex flex-wrap gap-2">
+                    {COLORS.map(c => (
+                      <button key={c} onClick={() => { setDraftColor(c); setDraftGradient(""); }}
+                        className="w-9 h-9 rounded-full flex-shrink-0 transition-all"
+                        style={{ background:c, outline: c===draftColor && !draftGradient ? "2.5px solid white" : "none",
+                          outlineOffset:2, transform: c===draftColor && !draftGradient ? "scale(1.15)" : "scale(1)",
+                          boxShadow: c==="000000" ? "inset 0 0 0 1px rgba(255,255,255,0.3)" : "none" }} />
+                    ))}
+                  </div>
+                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Gradient matn</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {GRADIENT_PRESETS.map(g => (
+                      <button key={g.id} onClick={() => setDraftGradient(g.id==="none" ? "" : g.css)}
+                        className="py-2 px-2.5 rounded-xl text-[10px] font-bold transition-all text-center"
+                        style={{
+                          background: g.css || "rgba(255,255,255,0.08)",
+                          border: draftGradient===g.css ? "2px solid white" : "1.5px solid rgba(255,255,255,0.1)",
+                          color: g.id==="none" ? "rgba(255,255,255,0.5)" : "white",
+                          textShadow: g.id!=="none" ? "0 1px 3px rgba(0,0,0,0.8)" : "none",
+                        }}>
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Background style */}
+                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Fon</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {(["none","dark","blur","gradient","highlight","pill"] as TextOverlay["bgStyle"][]).map(b => (
+                      <button key={b} onClick={() => setDraftBg(b)}
+                        className="py-2 rounded-xl text-[10px] font-bold transition-all"
+                        style={{
+                          background: draftBg===b ? "rgba(6,182,212,0.35)" : "rgba(255,255,255,0.06)",
+                          color: draftBg===b ? "white" : "rgba(255,255,255,0.4)",
+                          border: draftBg===b ? "1px solid rgba(6,182,212,0.6)" : "1px solid rgba(255,255,255,0.06)",
+                        }}>
+                        {b==="none"?"Yo'q":b==="dark"?"Qora":b==="blur"?"Blur":b==="gradient"?"Gradient":b==="highlight"?"Sariq":"Pill"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* EFFECT tab */}
+              {textTab === "effect" && (
+                <div className="space-y-3 pt-1">
+                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Soya / Glow effektlari</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {TEXT_SHADOWS.map(sh => (
+                      <button key={sh.id} onClick={() => setDraftShadow(sh.id as TextOverlay["shadowPreset"])}
+                        className="py-2.5 px-2 rounded-xl text-[10px] font-bold transition-all"
+                        style={{
+                          background: draftShadow===sh.id ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.06)",
+                          border: draftShadow===sh.id ? "1.5px solid rgba(124,58,237,0.8)" : "1.5px solid rgba(255,255,255,0.08)",
+                          color: "white",
+                          textShadow: sh.css !== "none" ? sh.css : "none",
+                        }}>
+                        {sh.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Stroke */}
+                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Chegara (Stroke)</p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] text-white/40 font-bold">Qalinlik</span>
+                    <div className="relative flex-1 h-2 rounded-full" style={{ background:"rgba(255,255,255,0.1)" }}>
+                      <div className="absolute left-0 top-0 h-full rounded-full"
+                        style={{ width:`${(draftStrokeW/5)*100}%`, background:"linear-gradient(90deg,#f59e0b,#ef4444)" }} />
+                      <input type="range" min={0} max={5} step={0.5} value={draftStrokeW}
+                        onChange={e => setDraftStrokeW(Number(e.target.value))}
+                        className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                    </div>
+                    <span className="text-[11px] font-bold text-amber-400 w-8 text-right">{draftStrokeW}px</span>
+                  </div>
+                  {draftStrokeW > 0 && (
+                    <div>
+                      <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest mb-1.5">Chegara rangi</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {["#000000","#ffffff","#ff0000","#0000ff","#ffff00","#ff00ff","#00ffff","#ff8c00"].map(c => (
+                          <button key={c} onClick={() => setDraftStrokeColor(c)}
+                            className="w-8 h-8 rounded-full transition-all"
+                            style={{ background:c, outline: draftStrokeColor===c ? "2.5px solid rgba(255,255,255,0.9)" : "none",
+                              outlineOffset:2, boxShadow: c==="#000000" ? "inset 0 0 0 1px rgba(255,255,255,0.3)" : "none" }} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ANIM tab */}
+              {textTab === "anim" && (
+                <div className="pt-1">
+                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest mb-2">Animatsiya</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {ANIMS.map(an => (
+                      <button key={an.id} onClick={() => setDraftAnim(an.id)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all"
+                        style={{
+                          background: draftAnim===an.id ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.06)",
+                          border: draftAnim===an.id ? "1.5px solid rgba(124,58,237,0.8)" : "1.5px solid rgba(255,255,255,0.07)",
+                        }}>
+                        <span className="text-xl leading-none">{an.icon}</span>
+                        <div className="text-left">
+                          <p className="text-[11px] font-bold" style={{ color: draftAnim===an.id ? "#c4b5fd" : "rgba(255,255,255,0.7)" }}>
+                            {an.label}
+                          </p>
+                        </div>
+                        {draftAnim===an.id && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background:"#7c3aed" }} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Quick add button */}
+                  <button onClick={addText} disabled={!draftText.trim()}
+                    className="mt-3 w-full py-3 rounded-2xl text-sm font-bold transition-all"
+                    style={{
+                      background: draftText.trim() ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "rgba(255,255,255,0.06)",
+                      color: draftText.trim() ? "white" : "rgba(255,255,255,0.3)",
+                    }}>
+                    ✓ Qo'shish
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
 
       {/* ── Sticker panel ── */}

@@ -353,15 +353,6 @@ export default function FeedCard({ post }: FeedCardProps) {
         </>
       )}
 
-      {/* VIDEO scanline */}
-      {isVideo && (
-        <motion.div
-          className="absolute inset-x-0 h-[2px] pointer-events-none"
-          style={{ background: `linear-gradient(90deg,transparent,${theme.accent}88,transparent)`, zIndex: 4, opacity: 0.55 }}
-          animate={{ top: ["-2px", "100%"] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-        />
-      )}
 
       {/* ══ LAYER 2 — MAIN CONTENT ══ */}
       <motion.div

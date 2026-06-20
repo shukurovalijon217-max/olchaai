@@ -259,15 +259,284 @@ const SONGS_BY_COUNTRY: { flag: string; label: string; songs: string[] }[] = [
     "Rammstein — Du Hast","Rammstein — Sonne","Rammstein — Mutter","Rammstein — Amerika",
     "Tokio Hotel — Durch den Monsun","Tokio Hotel — Schrei",
     "Herbert Grönemeyer — Mensch","Herbert Grönemeyer — Männer",
-    "Die Toten Hosen — Hier kommt Alex","Die Toten Hosen — Alles aus Liebe",
-    "Xavier Naidoo — Dieser Weg","Xavier Naidoo — Ich kenne nichts",
-    "Clueso — Gewinner","Clueso — Stadtrandlichter",
-    "Mark Forster — Chöre","Mark Forster — Au Revoir",
-    "Udo Lindenberg — Cello","Udo Lindenberg — Sonderzug nach Pankow",
     "Milky Chance — Stolen Dance","Milky Chance — Ego",
     "CRO — Easy","CRO — Einmal Um Die Welt",
-    "Seeed — Aufstehn","Seeed — Augenbling",
     "Peter Fox — Alles Neu","Peter Fox — Stadtaffe",
+  ]},
+  { flag:"🇬🇧", label:"UK", songs:[
+    "Adele — Rolling in the Deep","Adele — Hello","Adele — Someone Like You","Adele — Easy On Me",
+    "Sam Smith — Stay With Me","Sam Smith — Too Good at Goodbyes",
+    "George Michael — Careless Whisper","George Michael — Faith",
+    "Elton John — Rocket Man","Elton John — Tiny Dancer","Elton John — Crocodile Rock",
+    "Amy Winehouse — Rehab","Amy Winehouse — Valerie","Amy Winehouse — Back to Black",
+    "The Rolling Stones — Paint It Black","The Rolling Stones — Sympathy for the Devil",
+    "David Bowie — Space Oddity","David Bowie — Heroes","David Bowie — Life on Mars?",
+    "Radiohead — Creep","Radiohead — Karma Police",
+    "Blur — Song 2","Blur — Girls & Boys",
+    "Pulp — Common People","Pulp — Babies",
+    "Dua Lipa — Levitating","Dua Lipa — Future Nostalgia",
+    "Charli XCX — Boom Clap","Charli XCX — Break The Rules",
+    "Little Mix — Shout Out to My Ex","Little Mix — Wings",
+  ]},
+  { flag:"🇮🇹", label:"Italiya", songs:[
+    "Laura Pausini — La Solitudine","Laura Pausini — Strani Amori",
+    "Eros Ramazzotti — Più Bella Cosa","Eros Ramazzotti — Fuego",
+    "Andrea Bocelli — Time to Say Goodbye","Andrea Bocelli — Con Te Partirò",
+    "Zucchero — Baila (Sexy Thing)","Zucchero — Senza una Donna",
+    "Vasco Rossi — Sally","Vasco Rossi — Albachiara",
+    "Jovanotti — Serenata Rap","Jovanotti — L'Ombelico del Mondo",
+    "Elodie — Andromeda","Elodie — Bagno a Mezzanotte",
+    "Måneskin — ZITTI E BUONI","Måneskin — Beggin","Måneskin — I WANNA BE YOUR SLAVE","Måneskin — The Loneliest",
+    "Lucio Dalla — Caruso","Lucio Dalla — Anna e Marco",
+    "Elisa — Luce (Tramonti a Nord Est)","Elisa — Anche Fragile",
+  ]},
+  { flag:"🇪🇸", label:"Ispaniya", songs:[
+    "Enrique Iglesias — Bailando","Enrique Iglesias — Hero","Enrique Iglesias — I Like It",
+    "Alejandro Sanz — La Tortura","Alejandro Sanz — Corazón Partío",
+    "Julio Iglesias — To All the Girls","Julio Iglesias — La Paloma",
+    "Pablo Alborán — Solamente Tú","Pablo Alborán — Dónde Está el Amor",
+    "Juanes — La Camisa Negra","Juanes — Me Enamora",
+    "Isabel Pantoja — Marinero de Luces","Isabel Pantoja — Así Fue",
+    "El Fary — Qué Bueno Está","El Fary — Vamos a la Playa",
+    "Sebastián Yatra — Robarte un Beso","Sebastián Yatra — Traicionera",
+    "C. Tangana — Tú Me Dejaste de Querer","C. Tangana — Antes de Morirme",
+    "Bad Gyal — Zorra","Bad Gyal — Lullaby",
+  ]},
+  { flag:"🇸🇪", label:"Shvetsiya", songs:[
+    "ABBA — Dancing Queen","ABBA — Mamma Mia","ABBA — Waterloo","ABBA — Fernando","ABBA — Gimme! Gimme!",
+    "Avicii — Wake Me Up","Avicii — Levels","Avicii — The Nights","Avicii — Without You",
+    "Swedish House Mafia — Don't You Worry Child","Swedish House Mafia — Save the World",
+    "Roxette — The Look","Roxette — It Must Have Been Love","Roxette — Listen to Your Heart",
+    "Zara Larsson — Lush Life","Zara Larsson — Never Forget You","Zara Larsson — Ruin My Life",
+    "Tove Lo — Habits (Stay High)","Tove Lo — Talking Body",
+    "Ace of Base — All That She Wants","Ace of Base — The Sign",
+    "Loreen — Euphoria","Loreen — Tattoo",
+    "Robyn — Dancing On My Own","Robyn — Call Your Girlfriend",
+  ]},
+  { flag:"🇳🇱", label:"Niderlandiya", songs:[
+    "Tiësto — Adagio for Strings","Tiësto — The Business","Tiësto — Red Lights",
+    "Martin Garrix — Animals","Martin Garrix — Scared to Be Lonely","Martin Garrix — In the Name of Love",
+    "Hardwell — Spaceman","Hardwell — Never Say Goodbye",
+    "Armin van Buuren — This Is What It Feels Like","Armin van Buuren — Blah Blah Blah",
+    "Afrojack — Take Over Control","Afrojack — Ten Feet Tall",
+    "Anouk — Nobody's Wife","Anouk — Girl",
+    "Candy Dulfer — Lily Was Here","Candy Dulfer — Pick Up the Pieces",
+    "Marco Borsato — Binnen","Marco Borsato — Dromen Zijn Bedrog",
+  ]},
+  { flag:"🇦🇺", label:"Avstraliya", songs:[
+    "Tame Impala — Let It Happen","Tame Impala — The Less I Know the Better","Tame Impala — Feels Like We Only Go Backwards",
+    "Sia — Chandelier","Sia — Cheap Thrills","Sia — Elastic Heart","Sia — Unstoppable",
+    "Nick Cave — Into My Arms","Nick Cave — The Ship Song",
+    "INXS — Never Tear Us Apart","INXS — Need You Tonight",
+    "Kylie Minogue — Can't Get You Out of My Head","Kylie Minogue — Spinning Around",
+    "Keith Urban — Blue Ain't Your Color","Keith Urban — You'll Think of Me",
+    "Vance Joy — Riptide","Vance Joy — Lay It on Me",
+    "Gotye — Somebody That I Used to Know",
+    "Flume — Never Be Like You","Flume — Say It",
+    "The Vines — Get Free","The Vines — Ride",
+  ]},
+  { flag:"🇰🇿", label:"Qozog'iston", songs:[
+    "Dimash Kudaibergen — S.O.S","Dimash Kudaibergen — Daybreak","Dimash Kudaibergen — Give Me Your Love",
+    "Bandymas — Kele ber","Bandymas — Jur ketsek",
+    "Ninety One — Itte","Ninety One — Ultra",
+    "Skriptonit — Pussy Power","Skriptonit — Kroshka",
+    "Zarina Altynbayeva — Seni Suyem","Zarina Altynbayeva — Bir Omir",
+    "Xcho — Поверь","Xcho — Нет не так",
+    "Begzat — Sevinch","Begzat — Birge",
+    "Raushan — Sağyndım","Raushan — Bir Didar",
+    "Doston Ergashev — Qo'shiq","Doston Ergashev — Umid",
+    "Moldanazar — Qayta kel","Moldanazar — Kün",
+  ]},
+  { flag:"🇦🇿", label:"Ozarbayjon", songs:[
+    "Elman Həsənov — Ata","Elman Həsənov — Anam",
+    "Safura — Drip Drop","Safura — Always",
+    "Elnur Hüseynov — Hold Me","Elnur Hüseynov — Love Me Now",
+    "Samira Efendi — Cleopatra","Samira Efendi — Fly to Win",
+    "Farid Mammadov — Hold Me","Farid Mammadov — Unbeatable",
+    "Chingiz — Truth","Chingiz — Ordinary World",
+    "Aysel Teymurzadeh — Always","Aysel Teymurzadeh — One More Day",
+    "Hadise — Düm Tek Tek","Hadise — Aşk Kaç Beden Giyer",
+    "Türkçe Pop — Seni Seviyorum","Türkçe Pop — Aşkım",
+  ]},
+  { flag:"🇨🇳", label:"Xitoy / C-Pop", songs:[
+    "Jay Chou — 青花瓷 (Blue and White Porcelain)","Jay Chou — 稻香 (Sunny Rice Fields)","Jay Chou — 七里香 (Common Jasmine)",
+    "Wang Fang — 传奇 (Legend)","Wang Fang — 明月几时有",
+    "Teresa Teng — 月亮代表我的心 (The Moon Represents My Heart)","Teresa Teng — 甜蜜蜜",
+    "G.E.M. — 泡沫 (Bubble)","G.E.M. — 喜欢你","G.E.M. — 倒数",
+    "BLACKPINK — 뚜두뚜두 (Chinese ver)","EXO — 中毒 (Overdose)",
+    "Jackson Wang — 100 Ways","Jackson Wang — Blow",
+    "Hua Chenyu — 烟火里的尘埃","Hua Chenyu — 十年",
+    "Lay Zhang — LIT","Lay Zhang — Sheep",
+    "TFBoys — 宠爱 (Pet Love)","TFBoys — 青春修炼手册",
+  ]},
+  { flag:"🇮🇩", label:"Indoneziya", songs:[
+    "Raisa — Kali Kedua","Raisa — Serba Salah","Raisa — Usai Di Sini",
+    "Isyana Sarasvati — Keep Being You","Isyana Sarasvati — Kau Adalah",
+    "Tulus — Monokrom","Tulus — Sepatu","Tulus — Gajah",
+    "Rizky Febian — Curang","Rizky Febian — Hasta Manana",
+    "Judika — Aku Yang Tersakiti","Judika — Bersama Bintang",
+    "Glenn Fredly — Januari","Glenn Fredly — Kisah yang Salah",
+    "Armada — Asal Kau Bahagia","Armada — Pergi Pagi Pulang Pagi",
+    "Peterpan — Mungkin Nanti","Peterpan — Ada Apa Denganmu",
+    "Sheila on 7 — Dan","Sheila on 7 — Saat Aku Lanjut Tua",
+    "Dewa 19 — Kangen","Dewa 19 — Larut",
+  ]},
+  { flag:"🇵🇭", label:"Filippin", songs:[
+    "Ben&Ben — Leaves","Ben&Ben — Maybe The Night","Ben&Ben — Kathang Isip",
+    "December Avenue — Kung 'Di Rin Lang Ikaw","December Avenue — Buwan",
+    "Sarah Geronimo — Tala","Sarah Geronimo — Diamond",
+    "Gary Valenciano — Hatid ng Puso Ko","Gary Valenciano — Natutulog Ba ang Diyos",
+    "Regine Velasquez — Kailangan Kita","Regine Velasquez — Gusto Kita",
+    "SB19 — GENTO","SB19 — Bazinga","SB19 — What?",
+    "BINI — Born to Win","BINI — Karera",
+    "IV of Spades — Where Have You Been","IV of Spades — Come Inside of My Heart",
+    "Eraserheads — Ang Huling El Bimbo","Eraserheads — With a Smile",
+  ]},
+  { flag:"🇹🇭", label:"Tailand", songs:[
+    "MILLI — ทุ่มแล้ว","MILLI — Mango Sticky Rice",
+    "Bodyslam — อยู่ได้โดยไม่มีเธอ","Bodyslam — แค่เพียง",
+    "Potato — ดาวกระจาย","Potato — สักวัน",
+    "Moderndog — ชั่วดี","Moderndog — หัวใจจะขาด",
+    "Lula — ไม่ลืมเธอ","Lula — เกินพอ",
+    "Peck Palitchoke — เข้าใจ","Peck Palitchoke — ห่างกัน",
+    "Clash — ซ่า","Clash — ฝากใจด้วย",
+    "STAMP — ลม","STAMP — เวลา",
+    "Phum Viphurit — Lover Boy","Phum Viphurit — Open Invitation",
+    "Jeff Satur — Bed","Jeff Satur — ท้องฟ้าสีทอง",
+  ]},
+  { flag:"🇸🇦", label:"Arab olami", songs:[
+    "Amr Diab — Habibi Ya Nour El Ain","Amr Diab — Tamally Maak","Amr Diab — Nour El Ain",
+    "Nancy Ajram — Ah W Noss","Nancy Ajram — Lawn Einak","Nancy Ajram — Ya Tabtab",
+    "Fairuz — La Bkitra","Fairuz — Nassam Alayna El Hawa","Fairuz — Bhebak Ya Libnan",
+    "Elissa — Aadet Hiba","Elissa — Betfakar Fi Meen",
+    "Haifa Wehbe — Badi Asha","Haifa Wehbe — Khalik Leya",
+    "Wael Kfoury — Khedni Maak","Wael Kfoury — Inta Eyoun",
+    "Kadim Al Saher — Ahebbak","Kadim Al Saher — Ilahi Al Hakim",
+    "Mohammed Abdo — Ya Zaman","Mohammed Abdo — Qalb Al Asheq",
+    "Balqees — Sabry Alaik","Balqees — Tamally",
+  ]},
+  { flag:"🇵🇰", label:"Pokiston", songs:[
+    "Coke Studio — Pasoori (Ali Sethi & Shae Gill)","Coke Studio — Tu Jhoom",
+    "Atif Aslam — Woh Lamhe","Atif Aslam — Jeena Jeena","Atif Aslam — Tu Jaane Na",
+    "Rahat Fateh Ali Khan — Tere Mast Mast Do Nain","Rahat Fateh Ali Khan — Zaroori Tha",
+    "Nusrat Fateh Ali Khan — Dam Mast Qalandar","Nusrat Fateh Ali Khan — Afreen Afreen",
+    "Ali Zafar — Channo","Ali Zafar — Rockstar",
+    "Momina Mustehsan — Awari","Momina Mustehsan — Baazi",
+    "Falak Shabir — Bol Do Na Zara","Falak Shabir — Tere Bina",
+    "Asrar Shah — Yaar Bina","Asrar Shah — Ishq Wala Love",
+    "Zoe Viccaji — Ik Baar","Zoe Viccaji — O Re Piya",
+  ]},
+  { flag:"🇲🇽", label:"Meksika", songs:[
+    "Luis Miguel — La Incondicional","Luis Miguel — Suave","Luis Miguel — Por Debajo de la Mesa",
+    "Banda MS — Tú y Yo","Banda MS — Loco",
+    "Grupo Firme — El Tóxico","Grupo Firme — Yo Ya No Vuelvo Contigo",
+    "Christian Nodal — Adiós Amor","Christian Nodal — Ya No Somos Ni Seremos",
+    "Pepe Aguilar — Por Mujeres Como Tú","Pepe Aguilar — El Vino y el Amor",
+    "Maná — Oye Mi Amor","Maná — No Ha Parado de Llover",
+    "Los Tigres del Norte — La Puerta Negra","Los Tigres del Norte — Contrabando y Traición",
+    "Jenni Rivera — La Gran Señora","Jenni Rivera — De Contrabando",
+    "Alejandro Fernández — Como Quien Pierde una Estrella","Alejandro Fernández — Lástima Que Seas Ajena",
+    "Juan Gabriel — Amor Eterno","Juan Gabriel — El Noa Noa",
+  ]},
+  { flag:"🇿🇦", label:"Afrika Janubiy", songs:[
+    "Master KG — Jerusalema","Master KG — Shine Your Light",
+    "Sho Madjozi — John Cena","Sho Madjozi — Huku",
+    "Black Motion — We Are One","Black Motion — Afro Warrior",
+    "Sun El Musician — Akanamali","Sun El Musician — Boy from the Slums",
+    "Samthing Soweto — Akulaleki","Samthing Soweto — Isphithiphithi",
+    "Kabza De Small — Sponono","Kabza De Small — Umsebenzi Wethu",
+    "DJ Maphorisa — Izolo","DJ Maphorisa — Banyana",
+    "Focalistic — Ke Star","Focalistic — Gugulethu",
+    "Nasty C — Strings and Bling","Nasty C — SMA",
+    "Cassper Nyovest — Tito Mboweni","Cassper Nyovest — Mama I Made It",
+  ]},
+  { flag:"🇨🇦", label:"Kanada", songs:[
+    "Drake — God's Plan","Drake — Hotline Bling","Drake — God's Plan","Drake — Started From the Bottom",
+    "The Weeknd — Blinding Lights","The Weeknd — Can't Feel My Face","The Weeknd — Earned It",
+    "Justin Bieber — Baby","Justin Bieber — Love Yourself","Justin Bieber — Peaches","Justin Bieber — Ghost",
+    "Shawn Mendes — Stitches","Shawn Mendes — Treat You Better","Shawn Mendes — There's Nothing Holdin' Me Back",
+    "Celine Dion — My Heart Will Go On","Celine Dion — The Power of Love",
+    "Alanis Morissette — Ironic","Alanis Morissette — You Oughta Know",
+    "Arcade Fire — Wake Up","Arcade Fire — Rebellion (Lies)",
+    "Tory Lanez — Luv","Tory Lanez — Broke in a Minute",
+    "Loud Luxury — Body","Loud Luxury — Cold",
+    "Kaytranada — 10%","Kaytranada — You're the One",
+  ]},
+  { flag:"🇬🇭", label:"Ghana", songs:[
+    "Stonebwoy — Activate","Stonebwoy — Nominate","Stonebwoy — Everlasting",
+    "Sarkodie — Non Living Thing","Sarkodie — Lucky","Sarkodie — Rollies and Cigars",
+    "Shatta Wale — My Level","Shatta Wale — Freedom Wave",
+    "R2Bees — Stay With Me","R2Bees — Slow Down",
+    "Efya — Nobody","Efya — Getaway",
+    "Bisa Kdei — Mansa","Bisa Kdei — Kae (Remember)",
+    "Medikal — Omo Ada","Medikal — La Hustle",
+    "King Promise — Slow Down","King Promise — CCTV",
+    "KiDi — Enjoyment","KiDi — Touch It","KiDi — Spiritual",
+  ]},
+  { flag:"🎻", label:"Klassik", songs:[
+    "Beethoven — Moonlight Sonata","Beethoven — Symphony No. 5","Beethoven — Für Elise","Beethoven — Ode to Joy",
+    "Mozart — Eine Kleine Nachtmusik","Mozart — Symphony No. 40","Mozart — Requiem","Mozart — Magic Flute",
+    "Bach — Air on the G String","Bach — Toccata and Fugue in D minor","Bach — Cello Suite No. 1",
+    "Tchaikovsky — Swan Lake","Tchaikovsky — Nutcracker Suite","Tchaikovsky — 1812 Overture",
+    "Vivaldi — The Four Seasons (Spring)","Vivaldi — The Four Seasons (Summer)",
+    "Chopin — Nocturne in E-flat major","Chopin — Ballade No. 1","Chopin — Fantasie Impromptu",
+    "Debussy — Clair de Lune","Debussy — Arabesque No. 1",
+    "Yiruma — River Flows in You","Yiruma — Kiss the Rain","Yiruma — May Be",
+    "Ludovico Einaudi — Una Mattina","Ludovico Einaudi — Nuvole Bianche","Ludovico Einaudi — Divenire",
+    "Hans Zimmer — Time (Inception)","Hans Zimmer — Interstellar Theme",
+    "John Williams — Imperial March","John Williams — Hedwig's Theme",
+  ]},
+  { flag:"🎧", label:"EDM / House", songs:[
+    "Calvin Harris — Feel So Close","Calvin Harris — Summer","Calvin Harris — This Is What You Came For",
+    "David Guetta — Titanium","David Guetta — Without You","David Guetta — When Love Takes Over",
+    "Marshmello — Alone","Marshmello — Happier","Marshmello — Friends",
+    "Skrillex — Bangarang","Skrillex — First of the Year",
+    "Zedd — Clarity","Zedd — Stay the Night","Zedd — The Middle",
+    "Kygo — Stole the Show","Kygo — Firestone","Kygo — Happy Now",
+    "Diplo — Lean On (ft. MØ)","Diplo — Express Yourself",
+    "Daft Punk — Harder Better Faster Stronger","Daft Punk — Get Lucky","Daft Punk — One More Time",
+    "The Chainsmokers — Closer","The Chainsmokers — Don't Let Me Down",
+    "Fisher — Losing It","Fisher — Freaks",
+    "Alan Walker — Faded","Alan Walker — Alone","Alan Walker — On My Way",
+  ]},
+  { flag:"🎤", label:"Hip-Hop", songs:[
+    "Kendrick Lamar — HUMBLE.","Kendrick Lamar — Not Like Us","Kendrick Lamar — DNA","Kendrick Lamar — Alright",
+    "Kanye West — POWER","Kanye West — All Falls Down","Kanye West — Stronger","Kanye West — Gold Digger",
+    "J. Cole — No Role Modelz","J. Cole — Love Yourz","J. Cole — Middle Child",
+    "Lil Uzi Vert — XO TOUR Llif3","Lil Uzi Vert — Just Wanna Rock",
+    "Travis Scott — SICKO MODE","Travis Scott — Goosebumps","Travis Scott — Antidote",
+    "21 Savage — Bank Account","21 Savage — A Lot",
+    "Cardi B — Bodak Yellow","Cardi B — WAP","Cardi B — Up",
+    "Nicki Minaj — Super Bass","Nicki Minaj — Anaconda","Nicki Minaj — Monster",
+    "Future — Mask Off","Future — Life Is Good","Future — Jumpin on a Jet",
+    "Megan Thee Stallion — Savage","Megan Thee Stallion — Hot Girl Summer",
+    "A$AP Rocky — Peso","A$AP Rocky — Fashion Killa","A$AP Rocky — LSD",
+  ]},
+  { flag:"🌙", label:"R&B / Soul", songs:[
+    "Frank Ocean — Thinking Bout You","Frank Ocean — Nights","Frank Ocean — Pink + White",
+    "H.E.R. — Focus","H.E.R. — Best Part","H.E.R. — I Can't",
+    "Daniel Caesar — Get You","Daniel Caesar — Best Part","Daniel Caesar — ENTROPY",
+    "Summer Walker — Playing Games","Summer Walker — Over It","Summer Walker — Come Thru",
+    "Jhené Aiko — None of Your Concern","Jhené Aiko — Sativa","Jhené Aiko — Trigger Protection Mantra",
+    "Bryson Tiller — Exchange","Bryson Tiller — Don't","Bryson Tiller — Sorry Not Sorry",
+    "Ella Mai — Boo'd Up","Ella Mai — Trip","Ella Mai — Shot Clock",
+    "Giveon — Heartbreak Anniversary","Giveon — Like I Want You","Giveon — Still Your Best",
+    "Khalid — Location","Khalid — Better","Khalid — Talk",
+    "Steve Lacy — Bad Habit","Steve Lacy — Dark Red","Steve Lacy — LMFTFY",
+    "Usher — Yeah!","Usher — Confessions Part II","Usher — Burn",
+    "Beyoncé — Drunk in Love","Beyoncé — Love On Top","Beyoncé — Crazy in Love",
+  ]},
+  { flag:"🇮🇷", label:"Eron / Fors", songs:[
+    "Dariush — Kavir","Dariush — Jomeh",
+    "Googoosh — Talagh","Googoosh — Man Amadeh Am",
+    "Hayedeh — Negah Kon","Hayedeh — Ghafas",
+    "Ebi — Mikhaam Beraghsam","Ebi — Dokhtar",
+    "Shahram Nazeri — Shams","Shahram Nazeri — Divan-e Shams",
+    "Sasy Mankan — Dokhtar Irani","Sasy Mankan — Jader",
+    "Yas — Yadete Nist","Yas — Az Ma Behtar",
+    "Alireza JJ — Tabestoon","Alireza JJ — Janan",
+    "Ho3ein — Gole Yakh","Ho3ein — Tanhayi",
+    "Mehrad Hidden — Khatereh","Mehrad Hidden — Cheshmat",
   ]},
 ];
 
@@ -378,6 +647,13 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [soundFxCat, setSoundFxCat]     = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  /* ── Internet music search state ── */
+  type ApiSong = { name: string; artist: string; title: string; album: string; artwork: string };
+  const [musicApiResults, setMusicApiResults] = useState<ApiSong[]>([]);
+  const [musicApiLoading, setMusicApiLoading] = useState(false);
+  const musicDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
   const [draftText, setDraftText]       = useState("");
   const [draftColor, setDraftColor]     = useState("#ffffff");
   const [draftAnim, setDraftAnim]       = useState<TextOverlay["animation"]>("none");
@@ -438,6 +714,24 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   useEffect(() => {
     if (videoRef.current) videoRef.current.playbackRate = videoSpeed;
   }, [videoSpeed]);
+
+  /* ── iTunes internet search (debounced 450ms) ── */
+  useEffect(() => {
+    const q = musicQuery.trim();
+    if (musicDebounceRef.current) clearTimeout(musicDebounceRef.current);
+    if (q.length < 2) { setMusicApiResults([]); setMusicApiLoading(false); return; }
+    setMusicApiLoading(true);
+    musicDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(q)}`);
+        const data = await res.json() as { results?: ApiSong[] };
+        setMusicApiResults(data.results ?? []);
+      } catch { setMusicApiResults([]); }
+      finally { setMusicApiLoading(false); }
+    }, 450);
+    return () => { if (musicDebounceRef.current) clearTimeout(musicDebounceRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [musicQuery]);
 
   return (
     <motion.div
@@ -771,12 +1065,13 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                 <input
                   autoFocus
                   value={musicQuery}
-                  onChange={e => { setMusicQuery(e.target.value); }}
-                  placeholder="Artist yoki qo'shiq nomini qidiring…"
+                  onChange={e => { setMusicQuery(e.target.value); setMusicApiResults([]); }}
+                  placeholder="🌐 Internetdan qidiring — har qanday qo'shiq…"
                   className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
                 />
-                {musicQuery && (
-                  <button onClick={() => setMusicQuery("")}>
+                {musicApiLoading && <div className="w-3.5 h-3.5 rounded-full border-2 border-purple-400 border-t-transparent animate-spin flex-shrink-0" />}
+                {musicQuery && !musicApiLoading && (
+                  <button onClick={() => { setMusicQuery(""); setMusicApiResults([]); }}>
                     <X className="w-3.5 h-3.5 text-white/30" />
                   </button>
                 )}
@@ -787,6 +1082,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                 <Check className="w-5 h-5 text-white" />
               </button>
             </div>
+
+            {/* Search mode hint */}
+            {musicQuery.length >= 1 && musicQuery.length < 2 && (
+              <p className="text-[10px] text-white/30 px-4 mt-1">Kamida 2 harf kiriting…</p>
+            )}
+            {musicQuery.length >= 2 && !musicApiLoading && musicApiResults.length === 0 && (
+              <p className="text-[10px] text-amber-400/60 px-4 mt-1">⚠️ iTunes API natija bermadi — pastdagi lokal qo'shiqlardan tanlang</p>
+            )}
 
             {/* Country category tabs with waving flags */}
             {!musicQuery && (
@@ -806,15 +1109,60 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
               </div>
             )}
 
-            {/* Songs list */}
+            {/* ── INTERNET search results (iTunes API) ── */}
+            {musicQuery.length >= 2 && musicApiResults.length > 0 && (
+              <div className="mt-1 max-h-52 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
+                <div className="flex items-center gap-1.5 px-4 py-1">
+                  <span className="text-[10px] font-bold text-purple-400">🌐 iTunes</span>
+                  <span className="text-[10px] text-white/30">{musicApiResults.length} natija</span>
+                </div>
+                {musicApiResults.map((song, i) => {
+                  const name = `${song.artist} — ${song.title}`;
+                  const isSelected = audioName === name;
+                  return (
+                    <button key={i}
+                      onClick={() => { setAudioName(name); setMusicQuery(name); setMusicApiResults([]); }}
+                      className="w-full flex items-center gap-3 px-4 py-2 transition-all"
+                      style={{
+                        background: isSelected ? "rgba(124,58,237,0.18)" : "transparent",
+                        borderLeft: isSelected ? "2.5px solid #7c3aed" : "2.5px solid transparent",
+                      }}>
+                      {song.artwork ? (
+                        <img src={song.artwork} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+                          style={{ border:"1px solid rgba(255,255,255,0.1)" }} />
+                      ) : (
+                        <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center"
+                          style={{ background:"rgba(124,58,237,0.3)" }}>
+                          <Music className="w-4 h-4 text-purple-300" />
+                        </div>
+                      )}
+                      <div className="flex flex-col items-start flex-1 min-w-0">
+                        <span className="text-[13px] font-semibold text-white truncate w-full text-left leading-tight">{song.title}</span>
+                        <span className="text-[10px] text-white/40 truncate w-full text-left">{song.artist}</span>
+                        {song.album && <span className="text-[9px] text-white/25 truncate w-full text-left">{song.album}</span>}
+                      </div>
+                      {isSelected ? (
+                        <div className="flex items-end gap-0.5 flex-shrink-0">
+                          <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
+                        </div>
+                      ) : (
+                        <span className="text-white/20 flex-shrink-0 text-xs">▶</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── Local songs list (always shown below internet results) ── */}
             <div className="mt-1 max-h-48 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
-              {musicQuery && (
+              {musicQuery && musicApiResults.length === 0 && (
                 <p className="text-[10px] text-white/30 px-4 py-1">
-                  {musicSuggestions.length} natija — barcha mamlakatlar
+                  📁 Lokal: {musicSuggestions.length} natija
                 </p>
               )}
-              {musicSuggestions.length === 0 ? (
-                <p className="text-center text-white/30 text-xs py-6">Qo'shiq topilmadi</p>
+              {musicSuggestions.length === 0 && !musicQuery ? null : musicSuggestions.length === 0 ? (
+                <p className="text-center text-white/30 text-xs py-3">Lokal bazada topilmadi</p>
               ) : (
                 musicSuggestions.map((song, i) => {
                   const parts = song.split(" — ");
@@ -823,7 +1171,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                   const countryFlag = SONGS_BY_COUNTRY.find(c => c.songs.includes(song))?.flag ?? "🎵";
                   return (
                     <button key={i}
-                      onClick={() => { setAudioName(song); setMusicQuery(song); }}
+                      onClick={() => { setAudioName(song); setMusicQuery(song); setMusicApiResults([]); }}
                       className="w-full flex items-center gap-3 px-4 py-2 transition-all"
                       style={{
                         background: isSelected ? "rgba(124,58,237,0.18)" : "transparent",
@@ -847,7 +1195,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
               )}
             </div>
             <p className="text-center text-white/20 text-[10px] pt-1">
-              {allSongs.length}+ qo'shiq · Topilmasa o'zingiz yozing ✓
+              🌐 Internet + 📁 {allSongs.length}+ lokal qo'shiq · {SONGS_BY_COUNTRY.length} mamlakat
             </p>
           </motion.div>
         )}

@@ -82,6 +82,30 @@ router.get("/posts", async (req, res) => {
   }
 });
 
+/* ── GET /music/search — iTunes proxy (CORS-safe) ──────────── */
+router.get("/music/search", async (req: any, res) => {
+  try {
+    const q = String(req.query.q ?? "").trim();
+    if (!q || q.length < 2) { res.json({ results: [] }); return; }
+    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=25&lang=en_us`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!r.ok) { res.json({ results: [] }); return; }
+    const data = await r.json() as { results?: any[] };
+    const results = (data.results ?? []).map((t: any) => ({
+      name: `${t.artistName} — ${t.trackName}`,
+      artist: t.artistName ?? "",
+      title:  t.trackName  ?? "",
+      album:  t.collectionName ?? "",
+      artwork: (t.artworkUrl100 ?? "").replace("100x100", "60x60"),
+      preview: t.previewUrl ?? "",
+    }));
+    res.json({ results });
+  } catch (err) {
+    req.log.warn(err, "music search failed");
+    res.json({ results: [] });
+  }
+});
+
 /* ── POST /posts/ai-predict — predict engagement ───────────── */
 router.post("/posts/ai-predict", async (req: any, res) => {
   try {

@@ -843,39 +843,33 @@ export default function FeedCard({ post }: FeedCardProps) {
         )}
       </motion.div>
 
-      {/* ══ ALBUM DOTS — counter + dot strip ══ */}
+      {/* ══ ALBUM DOTS — glass dots, no counter, equal size ══ */}
       {isAlbum && (
         <motion.div
-          className="absolute left-0 right-0 flex flex-col items-center gap-1.5"
-          style={{ bottom: commentOpen ? 230 : 116, zIndex: 12 }}
+          className="absolute left-0 right-0 flex items-center justify-center gap-[7px]"
+          style={{ bottom: commentOpen ? 220 : 60, zIndex: 12 }}
           initial={{ opacity: 0 }} animate={isInView ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: 0.25 }}
         >
-          {/* counter badge */}
-          <div
-            className="px-2.5 py-0.5 rounded-full text-[11px] font-black tabular-nums"
-            style={{
-              background: "rgba(0,0,0,0.38)",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.18)",
-              color: "rgba(255,255,255,0.85)",
-            }}
-          >
-            {slideIdx + 1} / {allMedia.length}
-          </div>
-          {/* dot strip */}
-          <div className="flex items-center gap-1.5">
-            {allMedia.map((_, i) => (
-              <motion.button
-                key={i}
-                onClick={() => { setSlideDir(i > slideIdx ? 1 : -1); setSlideIdx(i); }}
-                animate={{ width: i === slideIdx ? 20 : 6, opacity: i === slideIdx ? 1 : 0.38 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                className="h-1.5 rounded-full"
-                style={{ background: i === slideIdx ? theme.accent : "rgba(255,255,255,0.7)", minWidth: 6 }}
-              />
-            ))}
-          </div>
+          {allMedia.map((_, i) => (
+            <motion.button
+              key={i}
+              onClick={() => { setSlideDir(i > slideIdx ? 1 : -1); setSlideIdx(i); }}
+              animate={{ opacity: i === slideIdx ? 1 : 0.32 }}
+              transition={{ duration: 0.22 }}
+              className="w-[7px] h-[7px] rounded-full flex-shrink-0"
+              style={{
+                background: i === slideIdx
+                  ? "rgba(255,255,255,0.88)"
+                  : "rgba(255,255,255,0.28)",
+                backdropFilter: "blur(6px)",
+                boxShadow: i === slideIdx
+                  ? "0 0 6px rgba(255,255,255,0.4), inset 0 0 3px rgba(255,255,255,0.15)"
+                  : "inset 0 0 2px rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.18)",
+              }}
+            />
+          ))}
         </motion.div>
       )}
 

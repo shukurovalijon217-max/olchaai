@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles } from "lucide-react";
+import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search } from "lucide-react";
 
 export type TextOverlay = {
   id: string; text: string; x: number; y: number;
@@ -40,6 +40,47 @@ const STICKER_GROUPS: { label: string; emojis: string[] }[] = [
   { label: "🌈 Tabiat",   emojis: ["🌙","⭐","✨","🌟","💫","☀️","🌊","🌸","🍀","🦋","🐉","🦅","🌺","🍁","❄️"] },
   { label: "💎 Predmet",  emojis: ["💎","🎵","🎮","🏆","💰","🎯","🚀","⚡","🔮","💣","🎁","📸","🎬","🎸","🎤"] },
   { label: "❤️ Sevgi",    emojis: ["❤️","💜","💙","💚","💛","🧡","🖤","🤍","💕","💞","💝","💖","💗","💓","♾️"] },
+];
+
+const POPULAR_SONGS = [
+  "Ulmas Musayev — Sevgim","Ulmas Musayev — Dunyom","Ulmas Musayev — Sarvinoz",
+  "Shaxriyor — Ishq","Shaxriyor — Yig'lama","Shaxriyor — Orzular",
+  "Mirzo — Alvido","Mirzo — Sog'inch","Mirzo — Qalbim",
+  "Jasur Umirov — Sevilaman","Jasur Umirov — Muhabbat",
+  "Dilnoza Yusupova — Yurak","Dilnoza Yusupova — Sev meni",
+  "Ziyoda — Mahkum","Ziyoda — Baxtiyor",
+  "Mansur Toshmatov — Ko'zlaring","Mansur Toshmatov — Sevgi",
+  "Shohruhxon — Temir yurak","Shohruhxon — Azizim",
+  "Shahlo Toshmatova — Baxt","Shahlo Toshmatova — Yor-yor",
+  "Bojalar — Kel yonim","Bojalar — Seni deya",
+  "Munisa Rizayeva — Yurak","Munisa Rizayeva — Ko'rmasam",
+  "Dua Lipa — Levitating","Dua Lipa — New Rules","Dua Lipa — Don't Start Now",
+  "Taylor Swift — Anti-Hero","Taylor Swift — Shake It Off","Taylor Swift — Blank Space",
+  "The Weeknd — Blinding Lights","The Weeknd — Starboy","The Weeknd — Save Your Tears",
+  "Drake — One Dance","Drake — God's Plan","Drake — Hotline Bling",
+  "Billie Eilish — bad guy","Billie Eilish — Happier Than Ever",
+  "Ed Sheeran — Shape of You","Ed Sheeran — Perfect","Ed Sheeran — Thinking Out Loud",
+  "Post Malone — Circles","Post Malone — Sunflower","Post Malone — rockstar",
+  "Ariana Grande — 7 rings","Ariana Grande — thank u, next",
+  "Justin Bieber — Sorry","Justin Bieber — Love Yourself","Justin Bieber — Peaches",
+  "Harry Styles — As It Was","Harry Styles — Watermelon Sugar",
+  "Olivia Rodrigo — drivers license","Olivia Rodrigo — good 4 u",
+  "Bad Bunny — Me Porto Bonito","Bad Bunny — Tití Me Preguntó",
+  "BTS — Dynamite","BTS — Butter","BTS — DNA",
+  "Stromae — Papaoutai","Stromae — Alors on danse",
+  "Kendrick Lamar — HUMBLE.","Kendrick Lamar — Not Like Us",
+  "SZA — Kill Bill","SZA — Good Days",
+  "Glass Animals — Heat Waves","Imagine Dragons — Enemy","Imagine Dragons — Believer",
+  "Coldplay — Yellow","Coldplay — The Scientist","Coldplay — Fix You",
+  "Eminem — Lose Yourself","Eminem — Without Me","Eminem — Stan",
+  "Rihanna — Umbrella","Rihanna — We Found Love","Rihanna — Diamonds",
+  "Bruno Mars — Uptown Funk","Bruno Mars — Just The Way You Are","Bruno Mars — Grenade",
+  "Adele — Rolling in the Deep","Adele — Someone Like You","Adele — Hello",
+  "Pharrell Williams — Happy","Mark Ronson ft Bruno Mars — Uptown Funk",
+  "Queen — Bohemian Rhapsody","Nirvana — Smells Like Teen Spirit",
+  "Linkin Park — Numb","Linkin Park — In The End",
+  "Loreen — Euphoria","Loreen — Tattoo",
+  "Calvin Harris — Summer","Calvin Harris — We Found Love",
 ];
 
 const FILTERS: { id: string; label: string; css: string }[] = [
@@ -111,6 +152,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [audioName, setAudioName]       = useState(initialAudioName);
   const [filterName, setFilterName]     = useState("none");
   const [stickerGroup, setStickerGroup] = useState(0);
+  const [musicQuery, setMusicQuery]     = useState(initialAudioName);
 
   const [draftText, setDraftText]       = useState("");
   const [draftColor, setDraftColor]     = useState("#ffffff");
@@ -159,6 +201,12 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
 
   const selected = items.find(i => i.id === selectedId);
   const activeFilter = FILTERS.find(f => f.id === filterName) ?? FILTERS[0];
+
+  const musicSuggestions = useMemo(() => {
+    const q = musicQuery.trim().toLowerCase();
+    if (!q) return POPULAR_SONGS.slice(0, 8);
+    return POPULAR_SONGS.filter(s => s.toLowerCase().includes(q)).slice(0, 10);
+  }, [musicQuery]);
 
   return (
     <motion.div
@@ -462,36 +510,87 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
           <motion.div
             initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
             transition={{ type:"spring", stiffness:380, damping:32 }}
-            className="flex-shrink-0 px-4 pt-4 pb-8 space-y-3"
+            className="flex-shrink-0 pb-8"
             style={{ background:"rgba(8,8,22,0.97)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
             onClick={e => e.stopPropagation()}
           >
-            <p className="text-xs font-bold text-white/50 mb-1">🎵 Qo'shiq nomi</p>
-            <div className="flex gap-2">
-              <input
-                autoFocus
-                value={audioName}
-                onChange={e => setAudioName(e.target.value)}
-                placeholder="Masalan: Dua Lipa — Levitating"
-                className="flex-1 rounded-2xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none"
-                style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)" }}
-              />
+            {/* Selected song bar */}
+            {audioName && (
+              <div className="flex items-center gap-2 mx-4 mt-3 px-3 py-2 rounded-2xl"
+                style={{ background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.4)" }}>
+                <div className="w-6 h-6 rounded-full vinyl-spin flex items-center justify-center flex-shrink-0"
+                  style={{ background:"linear-gradient(135deg,#7c3aed,#f472b6)" }}>
+                  <Music className="w-3 h-3 text-white" />
+                </div>
+                <span className="flex-1 text-sm text-white font-semibold truncate">{audioName}</span>
+                <button onClick={() => { setAudioName(""); setMusicQuery(""); }}
+                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background:"rgba(255,255,255,0.15)" }}>
+                  <X className="w-3 h-3 text-white/70" />
+                </button>
+              </div>
+            )}
+
+            {/* Search bar */}
+            <div className="flex gap-2 mx-4 mt-3">
+              <div className="flex-1 flex items-center gap-2 rounded-2xl px-3"
+                style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)" }}>
+                <Search className="w-4 h-4 text-white/40 flex-shrink-0" />
+                <input
+                  autoFocus
+                  value={musicQuery}
+                  onChange={e => setMusicQuery(e.target.value)}
+                  placeholder="Qo'shiq yoki artist qidiring…"
+                  className="flex-1 bg-transparent py-3 text-sm text-white placeholder:text-white/30 focus:outline-none"
+                />
+                {musicQuery && (
+                  <button onClick={() => setMusicQuery("")}>
+                    <X className="w-3.5 h-3.5 text-white/30" />
+                  </button>
+                )}
+              </div>
               <button onClick={() => setPanel("none")}
-                className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                style={{ background:"rgba(124,58,237,0.85)" }}>
+                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: audioName ? "rgba(124,58,237,0.9)" : "rgba(255,255,255,0.08)" }}>
                 <Check className="w-5 h-5 text-white" />
               </button>
             </div>
-            {audioName && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-2xl"
-                style={{ background:"rgba(124,58,237,0.12)", border:"1px solid rgba(124,58,237,0.3)" }}>
-                <div className="w-7 h-7 rounded-full vinyl-spin flex items-center justify-center flex-shrink-0"
-                  style={{ background:"linear-gradient(135deg,#7c3aed,#f472b6)" }}>
-                  <Music className="w-3.5 h-3.5 text-white" />
-                </div>
-                <span className="text-sm text-white/80 truncate">{audioName}</span>
-              </div>
-            )}
+
+            {/* Suggestions */}
+            <div className="mt-2 max-h-52 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
+              {musicSuggestions.length === 0 ? (
+                <p className="text-center text-white/30 text-xs py-6">Qo'shiq topilmadi</p>
+              ) : (
+                musicSuggestions.map((song, i) => {
+                  const [artist, title] = song.split(" — ");
+                  const isSelected = audioName === song;
+                  return (
+                    <button key={i}
+                      onClick={() => { setAudioName(song); setMusicQuery(song); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 transition-all"
+                      style={{
+                        background: isSelected ? "rgba(124,58,237,0.2)" : "transparent",
+                        borderLeft: isSelected ? "2px solid #7c3aed" : "2px solid transparent",
+                      }}>
+                      <div className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center"
+                        style={{ background: isSelected ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.08)" }}>
+                        <Music className="w-3.5 h-3.5 text-white" style={{ opacity: isSelected ? 1 : 0.5 }} />
+                      </div>
+                      <div className="flex flex-col items-start flex-1 min-w-0">
+                        <span className="text-[13px] font-semibold text-white truncate w-full text-left">{title}</span>
+                        <span className="text-[11px] text-white/45 truncate w-full text-left">{artist}</span>
+                      </div>
+                      {isSelected && <Check className="w-4 h-4 text-violet-400 flex-shrink-0" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Manual entry hint */}
+            <p className="text-center text-white/25 text-[10px] pb-2 mt-1">
+              Topilmasa — to'g'ridan-to'g'ri yozing va ✓ bosing
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

@@ -95,6 +95,88 @@ function estimatedEarnings(views: number): string {
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 /* ─────────────────────────────────────────────────
+   HOT TAKE WIDGET
+───────────────────────────────────────────────── */
+function HotTakeWidget({ post }: { post: any }) {
+  const [fire, setFire] = useState(0);
+  const [cold, setCold] = useState(0);
+  const [userVote, setUserVote] = useState<"fire"|"cold"|null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fetched, setFetched] = useState(false);
+
+  const { user } = useAuth();
+  const total = fire + cold;
+
+  useEffect(() => {
+    if (fetched) return;
+    setFetched(true);
+    fetch(`${API_BASE}/api/posts/${post.id}/hot-take`, { credentials: "include" })
+      .then(r => r.json())
+      .then((d: { fire: number; cold: number; userVote: "fire"|"cold"|null }) => {
+        setFire(d.fire ?? 0); setCold(d.cold ?? 0); setUserVote(d.userVote ?? null);
+      })
+      .catch(() => {});
+  }, [post.id, fetched]);
+
+  const vote = async (v: "fire"|"cold") => {
+    if (userVote || loading || !user?.id) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/posts/${post.id}/hot-take`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, vote: v }),
+      });
+      const d = await res.json() as { fire: number; cold: number };
+      setFire(d.fire ?? 0); setCold(d.cold ?? 0); setUserVote(v);
+    } catch { /* silent */ } finally { setLoading(false); }
+  };
+
+  const fireW = total > 0 ? Math.round((fire / total) * 100) : 50;
+
+  return (
+    <div className="rounded-2xl overflow-hidden"
+      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)" }}>
+      <div className="px-3.5 pt-2.5 pb-1">
+        <p className="text-white font-black text-[12px]">🔥 Hot Take — Ovoz bering!</p>
+        <p className="text-white/35 text-[10px]">{total} ovoz · Instagramda yo'q</p>
+      </div>
+      {/* Bar */}
+      <div className="mx-3 mb-2.5 rounded-xl overflow-hidden h-2 flex">
+        <motion.div animate={{ width: `${fireW}%` }} transition={{ duration: 0.6, ease: [0.16,1,0.3,1] }}
+          className="h-full" style={{ background: "linear-gradient(90deg,#f97316,#ef4444)" }} />
+        <div className="flex-1 h-full" style={{ background: "linear-gradient(90deg,#38bdf8,#818cf8)" }} />
+      </div>
+      {/* Buttons */}
+      <div className="flex gap-2 px-3 pb-3">
+        {[
+          { v: "fire" as const, emoji: "🔥", label: "Issiq", count: fire, grad: "linear-gradient(135deg,#f97316,#ef4444)", active: "#f97316" },
+          { v: "cold" as const, emoji: "❄️", label: "Sovuq", count: cold, grad: "linear-gradient(135deg,#38bdf8,#818cf8)", active: "#38bdf8" },
+        ].map(btn => (
+          <motion.button key={btn.v}
+            disabled={!!userVote || loading}
+            onClick={() => vote(btn.v)}
+            whileTap={{ scale: 0.92 }}
+            className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl"
+            style={{
+              background: userVote === btn.v ? btn.grad : "rgba(255,255,255,0.08)",
+              border: userVote === btn.v ? `1px solid ${btn.active}` : "1px solid rgba(255,255,255,0.12)",
+              opacity: userVote && userVote !== btn.v ? 0.6 : 1,
+            }}>
+            <span className="text-base leading-none">{btn.emoji}</span>
+            <div className="flex flex-col items-center flex-1">
+              <span className="text-[12px] font-black text-white">{btn.count}</span>
+              <span className="text-[9px] text-white/50">{btn.label}</span>
+            </div>
+            {userVote === btn.v && <span className="text-[10px] text-white font-bold">✓</span>}
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────
    POLL WIDGET
 ───────────────────────────────────────────────── */
 function PollWidget({ post, theme }: { post: any; theme: any }) {
@@ -1094,6 +1176,25 @@ export default function FeedCard({ post }: FeedCardProps) {
           {/* Poll Widget */}
           {!!(post as any).pollQuestion && (
             <PollWidget post={post} theme={theme} />
+          )}
+
+          {/* Hot Take Widget */}
+          {!!(post as any).hotTake && (
+            <HotTakeWidget post={post} />
+          )}
+
+          {/* Time Capsule badge */}
+          {!!(post as any).scheduledAt && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-2xl"
+              style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)" }}>
+              <span className="text-sm">⏳</span>
+              <div>
+                <p className="text-[11px] font-bold text-cyan-300">Vaqt Kapsulasi</p>
+                <p className="text-[10px] text-white/40">
+                  {new Date((post as any).scheduledAt).toLocaleString("uz-UZ", { dateStyle:"medium", timeStyle:"short" })} da ochiladi
+                </p>
+              </div>
+            </div>
           )}
         </motion.div>
       )}

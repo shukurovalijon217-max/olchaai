@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { postsTable, postLikesTable, commentsTable, commentLikesTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray } from "drizzle-orm";
+import { openai } from "@workspace/integrations-openai-ai-server";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 
@@ -81,15 +82,97 @@ router.get("/posts", async (req, res) => {
   }
 });
 
+/* ── POST /posts/ai-caption — generate AI captions ─────────── */
+router.post("/posts/ai-caption", async (req: any, res) => {
+  try {
+    const { mood, mediaType, description } = req.body as { mood?: string; mediaType?: string; description?: string };
+    const moodLabel = mood ? `Mood/kayfiyat: ${mood}.` : "";
+    const mediaLabel = mediaType === "video" ? "video post" : mediaType === "photo" ? "rasm/foto post" : "matn post";
+    const descPart = description ? `Post haqida: "${description}".` : "";
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Sen OlCha ijtimoiy tarmoq uchun ijodiy caption/izoh yozuvchi AI yordamchisan. Foydalanuvchi so'ragan tilda (o'zbek, rus yoki ingliz) qisqa, jozibali, emoji ishlatgan 3 ta har xil caption yoz. Har birini JSON arrayda qaytargin.`,
+        },
+        {
+          role: "user",
+          content: `${mediaLabel} uchun 3 ta caption yoz. ${moodLabel} ${descPart} Faqat JSON array qaytargin: ["caption1","caption2","caption3"]`,
+        },
+      ],
+      temperature: 0.85,
+      max_tokens: 300,
+    });
+    const raw = completion.choices[0]?.message?.content ?? "[]";
+    let captions: string[] = [];
+    try {
+      const match = raw.match(/\[[\s\S]*\]/);
+      captions = match ? JSON.parse(match[0]) : [];
+    } catch { captions = [raw]; }
+    res.json({ captions: captions.slice(0, 3) });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ captions: [] });
+  }
+});
+
+/* ── POST /posts/:id/vote ───────────────────────────────────── */
+router.post("/posts/:id/vote", async (req: any, res) => {
+  try {
+    const postId = Number(req.params.id);
+    const { userId, optionIndex } = req.body as { userId: number; optionIndex: number };
+    if (!userId || optionIndex === undefined) { res.status(400).json({ error: "userId, optionIndex required" }); return; }
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    await pool.query(
+      `INSERT INTO post_votes(post_id,user_id,option_index) VALUES($1,$2,$3)
+       ON CONFLICT(post_id,user_id) DO UPDATE SET option_index=$3`,
+      [postId, userId, optionIndex]
+    );
+    const { rows } = await pool.query(
+      `SELECT option_index, COUNT(*) as count FROM post_votes WHERE post_id=$1 GROUP BY option_index`,
+      [postId]
+    );
+    await pool.end();
+    res.json({ votes: rows.map((r: any) => ({ optionIndex: Number(r.option_index), count: Number(r.count) })), userVote: optionIndex });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── GET /posts/:id/votes ───────────────────────────────────── */
+router.get("/posts/:id/votes", async (req: any, res) => {
+  try {
+    const postId = Number(req.params.id);
+    const userId = Number((req.session as any)?.userId ?? 0);
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const [{ rows: voteRows }, { rows: userRows }] = await Promise.all([
+      pool.query(`SELECT option_index, COUNT(*) as count FROM post_votes WHERE post_id=$1 GROUP BY option_index`, [postId]),
+      userId ? pool.query(`SELECT option_index FROM post_votes WHERE post_id=$1 AND user_id=$2`, [postId, userId]) : { rows: [] },
+    ]);
+    await pool.end();
+    res.json({
+      votes: voteRows.map((r: any) => ({ optionIndex: Number(r.option_index), count: Number(r.count) })),
+      userVote: userRows[0] ? Number(userRows[0].option_index) : null,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 /* ── POST /posts — instant response, AI scan in background ─── */
 router.post("/posts", async (req: any, res) => {
   try {
-    const { authorId, content, type, mediaUrl, mediaUrls, overlays, audioName, tags } = req.body;
+    const { authorId, content, type, mediaUrl, mediaUrls, overlays, audioName, pollQuestion, pollOptions, mood, filterName, tags } = req.body;
     const sessionUserId: number | undefined = req.session?.userId;
 
     const [post] = await db
       .insert(postsTable)
-      .values({ authorId, content, type: type || "text", mediaUrl, mediaUrls, overlays: overlays ?? null, audioName: audioName ?? null, tags, isFlagged: false })
+      .values({ authorId, content, type: type || "text", mediaUrl, mediaUrls, overlays: overlays ?? null, audioName: audioName ?? null, pollQuestion: pollQuestion ?? null, pollOptions: pollOptions ?? null, mood: mood ?? null, filterName: filterName ?? null, tags, isFlagged: false })
       .returning();
 
     const [enriched] = await batchEnrichPosts([post], sessionUserId);

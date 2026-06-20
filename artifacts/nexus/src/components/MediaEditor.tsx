@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles } from "lucide-react";
 
 export type TextOverlay = {
   id: string; text: string; x: number; y: number;
@@ -8,6 +8,7 @@ export type TextOverlay = {
   animation: "none"|"pulse"|"bounce"|"wave"|"neon"|"slide";
   fontStyle: "regular"|"bold"|"italic"|"shadow"|"outline";
   bgStyle: "none"|"dark"|"blur";
+  isSticker?: boolean;
 };
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
   files: File[];
   initialOverlays?: TextOverlay[];
   initialAudioName?: string;
-  onDone: (overlays: TextOverlay[], audioName: string) => void;
+  onDone: (overlays: TextOverlay[], audioName: string, filterName: string) => void;
   onClose: () => void;
 }
 
@@ -32,6 +33,26 @@ const FSTYLES: { id: TextOverlay["fontStyle"]; label: string }[] = [
   { id:"regular",  label:"Aa" }, { id:"bold", label:"𝗔𝗮" },
   { id:"italic",   label:"𝘈𝘢" }, { id:"shadow", label:"A̲a" },
   { id:"outline",  label:"Ao" },
+];
+
+const STICKER_GROUPS: { label: string; emojis: string[] }[] = [
+  { label: "😂 Kayfiyat", emojis: ["😂","🔥","😍","💀","🤩","😎","🥹","😤","🤔","💪","🫶","✌️","🤙","👏","🫡"] },
+  { label: "🌈 Tabiat",   emojis: ["🌙","⭐","✨","🌟","💫","☀️","🌊","🌸","🍀","🦋","🐉","🦅","🌺","🍁","❄️"] },
+  { label: "💎 Predmet",  emojis: ["💎","🎵","🎮","🏆","💰","🎯","🚀","⚡","🔮","💣","🎁","📸","🎬","🎸","🎤"] },
+  { label: "❤️ Sevgi",    emojis: ["❤️","💜","💙","💚","💛","🧡","🖤","🤍","💕","💞","💝","💖","💗","💓","♾️"] },
+];
+
+const FILTERS: { id: string; label: string; css: string }[] = [
+  { id: "none",     label: "Asl",     css: "none" },
+  { id: "vivid",    label: "Yorqin",  css: "saturate(1.8) contrast(1.1)" },
+  { id: "warm",     label: "Iliq",    css: "sepia(0.35) saturate(1.4) brightness(1.05)" },
+  { id: "cool",     label: "Sovuq",   css: "hue-rotate(200deg) saturate(1.3) brightness(1.05)" },
+  { id: "noir",     label: "Qora-oq", css: "grayscale(1) contrast(1.2)" },
+  { id: "fade",     label: "Soliq",   css: "brightness(1.1) saturate(0.7) contrast(0.85)" },
+  { id: "neon",     label: "Neon",    css: "saturate(3) contrast(1.3) hue-rotate(10deg)" },
+  { id: "golden",   label: "Oltin",   css: "sepia(0.8) saturate(2) brightness(1.1)" },
+  { id: "dreamy",   label: "Orzuli",  css: "brightness(1.15) saturate(1.5) hue-rotate(330deg) blur(0.3px)" },
+  { id: "vintage",  label: "Retro",   css: "sepia(0.5) contrast(0.9) brightness(1.1) saturate(0.8)" },
 ];
 
 function WaveText({ text, color, fontSize }: { text: string; color: string; fontSize: number }) {
@@ -67,6 +88,10 @@ function OverlayText({ item }: { item: TextOverlay }) {
     : item.bgStyle === "blur" ? { backdropFilter:"blur(12px)", background:"rgba(0,0,0,0.25)", padding:"4px 10px", borderRadius: 8 }
     : {};
 
+  if (item.isSticker) {
+    return <span style={{ fontSize: item.fontSize, lineHeight: 1 }}>{item.text}</span>;
+  }
+
   const inner = item.animation === "wave"
     ? <WaveText text={item.text} color={item.color} fontSize={item.fontSize} />
     : <span style={{ color: item.color, fontSize: item.fontSize }}>{item.text}</span>;
@@ -82,8 +107,10 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [slide, setSlide]               = useState(0);
   const [items, setItems]               = useState<TextOverlay[]>(initialOverlays);
   const [selectedId, setSelectedId]     = useState<string|null>(null);
-  const [panel, setPanel]               = useState<"none"|"text"|"music">("none");
+  const [panel, setPanel]               = useState<"none"|"text"|"music"|"sticker"|"filter">("none");
   const [audioName, setAudioName]       = useState(initialAudioName);
+  const [filterName, setFilterName]     = useState("none");
+  const [stickerGroup, setStickerGroup] = useState(0);
 
   const [draftText, setDraftText]       = useState("");
   const [draftColor, setDraftColor]     = useState("#ffffff");
@@ -102,6 +129,12 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     const id = `${Date.now()}`;
     setItems(p => [...p, { id, text: draftText.trim(), x:50, y:45, fontSize:draftSize, color:draftColor, animation:draftAnim, fontStyle:draftFStyle, bgStyle:draftBg }]);
     setDraftText(""); setPanel("none"); setSelectedId(id);
+  };
+
+  const addSticker = (emoji: string) => {
+    const id = `sticker_${Date.now()}`;
+    setItems(p => [...p, { id, text: emoji, x: 30 + Math.random() * 40, y: 30 + Math.random() * 40, fontSize: 52, color:"#fff", animation:"none", fontStyle:"regular", bgStyle:"none", isSticker: true }]);
+    setSelectedId(id);
   };
 
   const removeSelected = () => { setItems(p => p.filter(i => i.id !== selectedId)); setSelectedId(null); };
@@ -125,6 +158,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const onPointerUp = () => { dragRef.current = null; };
 
   const selected = items.find(i => i.id === selectedId);
+  const activeFilter = FILTERS.find(f => f.id === filterName) ?? FILTERS[0];
 
   return (
     <motion.div
@@ -133,18 +167,20 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
       style={{ zIndex:200, background:"#000", touchAction:"none" }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onClick={() => { setSelectedId(null); if (panel !== "text" && panel !== "music") setPanel("none"); }}
+      onClick={() => { setSelectedId(null); if (panel !== "text" && panel !== "music" && panel !== "sticker" && panel !== "filter") setPanel("none"); }}
     >
       {/* ── Preview area ── */}
       <div ref={containerRef} className="relative flex-1 overflow-hidden">
-        {/* Media */}
+        {/* Media with filter */}
         {isVideo(previews[slide]) ? (
-          <video src={previews[slide]} className="w-full h-full object-cover" muted loop playsInline autoPlay />
+          <video src={previews[slide]} className="w-full h-full object-cover" muted loop playsInline autoPlay
+            style={{ filter: activeFilter.css === "none" ? undefined : activeFilter.css }} />
         ) : (
-          <img src={previews[slide]} alt="" className="w-full h-full object-cover" />
+          <img src={previews[slide]} alt="" className="w-full h-full object-cover"
+            style={{ filter: activeFilter.css === "none" ? undefined : activeFilter.css }} />
         )}
 
-        {/* Text overlays */}
+        {/* Text/Sticker overlays */}
         {items.map(item => (
           <div
             key={item.id}
@@ -203,7 +239,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             <X className="w-5 h-5 text-white" />
           </button>
           <span className="text-white font-bold text-sm opacity-75">Redaktor</span>
-          <button onClick={() => onDone(items, audioName)}
+          <button onClick={() => onDone(items, audioName, filterName)}
             className="px-4 py-1.5 rounded-full text-sm font-bold text-white"
             style={{ background:"linear-gradient(135deg,#7c3aed,#4f46e5)" }}>
             Tayyor
@@ -213,8 +249,10 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         {/* Right tool strip */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3">
           {[
-            { id:"text", Icon:Type, label:"Matn" },
-            { id:"music", Icon:Music, label:"Musiqa" },
+            { id:"text",    Icon:Type,     label:"Matn"    },
+            { id:"sticker", Icon:Smile,    label:"Stiker"  },
+            { id:"filter",  Icon:Sparkles, label:"Filtr"   },
+            { id:"music",   Icon:Music,    label:"Musiqa"  },
           ].map(({ id, Icon, label }) => (
             <button key={id} onClick={e => { e.stopPropagation(); setPanel(p => p===id ? "none" : id as any); setSelectedId(null); }}
               className="w-11 h-11 rounded-2xl flex flex-col items-center justify-center gap-0.5"
@@ -228,7 +266,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             </button>
           ))}
 
-          {/* Selected text delete */}
+          {/* Selected item delete */}
           {selected && (
             <motion.button initial={{scale:0}} animate={{scale:1}}
               onClick={e => { e.stopPropagation(); removeSelected(); }}
@@ -238,6 +276,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             </motion.button>
           )}
         </div>
+
+        {/* Filter badge (shown when active) */}
+        {filterName !== "none" && (
+          <div className="absolute bottom-8 left-4 px-2.5 py-1 rounded-full text-xs font-bold"
+            style={{ background:"rgba(124,58,237,0.8)", color:"#fff", backdropFilter:"blur(8px)" }}>
+            ✦ {activeFilter.label}
+          </div>
+        )}
       </div>
 
       {/* ── Text panel ── */}
@@ -250,7 +296,6 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             style={{ background:"rgba(8,8,22,0.97)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Text input */}
             <div className="flex gap-2">
               <input
                 autoFocus
@@ -268,7 +313,6 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
               </button>
             </div>
 
-            {/* Color row */}
             <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
               {COLORS.map(c => (
                 <button key={c} onClick={() => setDraftColor(c)}
@@ -277,7 +321,6 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                     transform: c===draftColor ? "scale(1.2)" : "scale(1)",
                     boxShadow: c===draftColor ? "0 0 0 2px rgba(124,58,237,0.7)" : "none" }} />
               ))}
-              {/* Size */}
               <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                 <button onClick={() => setDraftSize(s=>Math.max(14,s-4))}
                   className="w-7 h-7 rounded-full text-white/60 text-sm font-bold flex items-center justify-center"
@@ -289,7 +332,6 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
               </div>
             </div>
 
-            {/* Style row */}
             <div className="flex gap-2">
               {FSTYLES.map(st => (
                 <button key={st.id} onClick={() => setDraftFStyle(st.id)}
@@ -302,7 +344,6 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                   {st.label}
                 </button>
               ))}
-              {/* BG style */}
               {(["none","dark","blur"] as TextOverlay["bgStyle"][]).map(b => (
                 <button key={b} onClick={() => setDraftBg(b)}
                   className="flex-1 py-2 rounded-xl text-[10px] font-bold transition-all"
@@ -315,7 +356,6 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
               ))}
             </div>
 
-            {/* Animation row */}
             <div className="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
               {ANIMS.map(an => (
                 <button key={an.id} onClick={() => setDraftAnim(an.id)}
@@ -329,6 +369,85 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                   </span>
                   <span className="text-[9px] font-bold" style={{ color: draftAnim===an.id ? "white" : "rgba(255,255,255,0.4)" }}>
                     {an.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Sticker panel ── */}
+      <AnimatePresence>
+        {panel === "sticker" && (
+          <motion.div
+            initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
+            transition={{ type:"spring", stiffness:380, damping:32 }}
+            className="flex-shrink-0 px-4 pt-3 pb-8"
+            style={{ background:"rgba(8,8,22,0.97)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Group tabs */}
+            <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-none">
+              {STICKER_GROUPS.map((g, i) => (
+                <button key={i} onClick={() => setStickerGroup(i)}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                  style={{
+                    background: stickerGroup===i ? "rgba(124,58,237,0.8)" : "rgba(255,255,255,0.08)",
+                    color: stickerGroup===i ? "white" : "rgba(255,255,255,0.5)",
+                  }}>
+                  {g.label}
+                </button>
+              ))}
+            </div>
+            {/* Emoji grid */}
+            <div className="grid grid-cols-8 gap-2">
+              {STICKER_GROUPS[stickerGroup].emojis.map(em => (
+                <button key={em} onClick={() => { addSticker(em); setPanel("none"); }}
+                  className="text-2xl aspect-square flex items-center justify-center rounded-xl transition-transform active:scale-90"
+                  style={{ background:"rgba(255,255,255,0.06)" }}>
+                  {em}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Filter panel ── */}
+      <AnimatePresence>
+        {panel === "filter" && (
+          <motion.div
+            initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
+            transition={{ type:"spring", stiffness:380, damping:32 }}
+            className="flex-shrink-0 px-4 pt-3 pb-8"
+            style={{ background:"rgba(8,8,22,0.97)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="text-xs font-bold text-white/40 mb-3">✦ Rasm filtri tanlang</p>
+            <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1">
+              {FILTERS.map(f => (
+                <button key={f.id} onClick={() => setFilterName(f.id)}
+                  className="flex-shrink-0 flex flex-col items-center gap-1.5">
+                  <div
+                    className="w-16 h-16 rounded-xl overflow-hidden"
+                    style={{
+                      border: filterName===f.id ? "2.5px solid #7c3aed" : "2px solid rgba(255,255,255,0.12)",
+                      boxShadow: filterName===f.id ? "0 0 0 2px rgba(124,58,237,0.5)" : "none",
+                    }}>
+                    {previews[0] && (
+                      isVideo(previews[0]) ? (
+                        <video src={previews[0]} className="w-full h-full object-cover"
+                          style={{ filter: f.css === "none" ? undefined : f.css }} muted playsInline />
+                      ) : (
+                        <img src={previews[0]} alt={f.label} className="w-full h-full object-cover"
+                          style={{ filter: f.css === "none" ? undefined : f.css }} />
+                      )
+                    )}
+                  </div>
+                  <span className="text-[10px] font-bold"
+                    style={{ color: filterName===f.id ? "#a78bfa" : "rgba(255,255,255,0.45)" }}>
+                    {f.label}
                   </span>
                 </button>
               ))}

@@ -5,6 +5,7 @@ import {
   CheckCircle2, Play, Film, Camera,
   Maximize2, Square, RectangleVertical,
   MessageCircle, Share2, Users, Globe, Ban, Plus, Trash2,
+  Sparkles, BarChart2, ChevronDown, ChevronUp,
 } from "lucide-react";
 import MediaEditor, { type TextOverlay } from "@/components/MediaEditor";
 import {
@@ -261,6 +262,20 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const [editorPreviews, setEditorPreviews] = useState<string[]>([]);
   const [postOverlays, setPostOverlays] = useState<TextOverlay[]>([]);
   const [postAudioName, setPostAudioName] = useState("");
+  const [postFilterName, setPostFilterName] = useState("none");
+
+  /* ── mood state ── */
+  const [mood, setMood] = useState("");
+
+  /* ── poll state ── */
+  const [pollEnabled, setPollEnabled] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
+
+  /* ── AI caption state ── */
+  const [aiCaptionLoading, setAiCaptionLoading] = useState(false);
+  const [aiCaptions, setAiCaptions] = useState<string[]>([]);
+  const [aiCaptionOpen, setAiCaptionOpen] = useState(false);
 
   const addFiles = (files: FileList) => {
     const arr = Array.from(files).slice(0, 10 - mediaQueue.length);
@@ -277,10 +292,34 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     setEditorOpen(true);
   };
 
-  const handleEditorDone = (overlays: TextOverlay[], audioName: string) => {
+  const handleEditorDone = (overlays: TextOverlay[], audioName: string, filterName: string) => {
     setPostOverlays(overlays);
     setPostAudioName(audioName);
+    setPostFilterName(filterName);
     setEditorOpen(false);
+  };
+
+  const generateAiCaption = async () => {
+    setAiCaptionLoading(true);
+    setAiCaptionOpen(true);
+    try {
+      const firstFile = mediaQueue[0]?.file;
+      const mediaType = firstFile
+        ? firstFile.type.startsWith("video") ? "video" : "photo"
+        : "text";
+      const res = await fetch(`${API}/api/posts/ai-caption`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mood, mediaType, description: postContent }),
+      });
+      const data = await res.json() as { captions: string[] };
+      setAiCaptions(data.captions ?? []);
+    } catch {
+      setAiCaptions([]);
+    } finally {
+      setAiCaptionLoading(false);
+    }
   };
 
   const removeMedia = (id: string) => {
@@ -346,6 +385,12 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
             mediaUrls: urls.length > 1 ? urls : undefined,
             overlays: postOverlays.length > 0 ? JSON.stringify(postOverlays) : undefined,
             audioName: postAudioName || undefined,
+            filterName: postFilterName !== "none" ? postFilterName : undefined,
+            mood: mood || undefined,
+            pollQuestion: pollEnabled && pollQuestion.trim() ? pollQuestion.trim() : undefined,
+            pollOptions: pollEnabled && pollOptions.filter(o => o.trim()).length >= 2
+              ? JSON.stringify(pollOptions.filter(o => o.trim()))
+              : undefined,
             tags: metaTags,
           }),
         });
@@ -384,6 +429,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const handleClose = () => {
     setMediaQueue([]); uploadingRef.current = false;
     setPostContent(""); setDisplayFormat("cover"); setCommentPerm("everyone"); setSharePerm("everyone");
+    setMood(""); setPollEnabled(false); setPollQuestion(""); setPollOptions(["", ""]);
+    setAiCaptions([]); setAiCaptionOpen(false); setPostFilterName("none");
     setReelFile(null); setReelPreview(""); setReelCaption(""); setReelAudio("");
     setReelAudioFile(null); setReelAudioPreview(""); setReelUploadResult(null); setReelAudioUploadResult(null);
     setReelCommentPerm("everyone"); setReelSharePerm("everyone");
@@ -638,15 +685,162 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                         <FormatPicker value={displayFormat} onChange={setDisplayFormat} />
                       )}
 
-                      {/* Caption */}
-                      <textarea
-                        placeholder={mediaQueue.length > 0 ? "Izoh qo'shing…" : "Nima haqida yozyapsiz?"}
-                        rows={3}
-                        value={postContent}
-                        onChange={e => setPostContent(e.target.value)}
-                        className="w-full resize-none rounded-2xl px-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none"
-                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
-                      />
+                      {/* Caption + AI */}
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <textarea
+                            placeholder={mediaQueue.length > 0 ? "Izoh qo'shing…" : "Nima haqida yozyapsiz?"}
+                            rows={3}
+                            value={postContent}
+                            onChange={e => setPostContent(e.target.value)}
+                            className="w-full resize-none rounded-2xl px-4 py-3 pr-12 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
+                          />
+                          <button
+                            onClick={generateAiCaption}
+                            disabled={aiCaptionLoading}
+                            title="AI caption yaratish"
+                            className="absolute top-2.5 right-2.5 w-7 h-7 rounded-xl flex items-center justify-center transition-all"
+                            style={{ background: "rgba(124,58,237,0.8)" }}
+                          >
+                            {aiCaptionLoading
+                              ? <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                              : <Sparkles className="w-3.5 h-3.5 text-white" />}
+                          </button>
+                        </div>
+
+                        {/* AI Caption suggestions */}
+                        <AnimatePresence>
+                          {aiCaptionOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="rounded-2xl overflow-hidden"
+                              style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.3)" }}
+                            >
+                              <div className="flex items-center justify-between px-3 py-2">
+                                <span className="text-xs font-bold text-violet-300">✦ AI Caption takliflari</span>
+                                <button onClick={() => setAiCaptionOpen(false)}>
+                                  <X className="w-3.5 h-3.5 text-white/40" />
+                                </button>
+                              </div>
+                              {aiCaptionLoading ? (
+                                <div className="flex justify-center py-4">
+                                  <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
+                                </div>
+                              ) : aiCaptions.map((cap, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => { setPostContent(cap); setAiCaptionOpen(false); }}
+                                  className="w-full text-left px-3 py-2.5 text-sm text-white/85 hover:bg-white/5 transition-colors border-t border-white/5"
+                                >
+                                  {cap}
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* ── Mood / Vibe Picker ── */}
+                      <div className="rounded-2xl p-3.5 space-y-2.5"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <p className="text-xs font-bold text-white/50">Kayfiyat (ixtiyoriy)</p>
+                        <div className="flex gap-2 flex-wrap">
+                          {[
+                            { emoji: "🔥", label: "Zo'r",     color: "#f97316" },
+                            { emoji: "😂", label: "Kulgili",  color: "#facc15" },
+                            { emoji: "😍", label: "Ajoyib",   color: "#f472b6" },
+                            { emoji: "💭", label: "Fikr",     color: "#818cf8" },
+                            { emoji: "💪", label: "Kuch",     color: "#22d3ee" },
+                            { emoji: "😢", label: "Sad",      color: "#60a5fa" },
+                            { emoji: "🤩", label: "Wow",      color: "#fbbf24" },
+                            { emoji: "🌙", label: "Tungi",    color: "#a78bfa" },
+                            { emoji: "😤", label: "Jahl",     color: "#f87171" },
+                            { emoji: "🫶", label: "Sevgi",    color: "#fb7185" },
+                          ].map(m => (
+                            <button
+                              key={m.emoji}
+                              onClick={() => setMood(mood === m.emoji ? "" : m.emoji)}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold transition-all"
+                              style={{
+                                background: mood === m.emoji ? `${m.color}28` : "rgba(255,255,255,0.06)",
+                                border: mood === m.emoji ? `1px solid ${m.color}88` : "1px solid rgba(255,255,255,0.08)",
+                                color: mood === m.emoji ? m.color : "rgba(255,255,255,0.55)",
+                                transform: mood === m.emoji ? "scale(1.05)" : "scale(1)",
+                              }}
+                            >
+                              <span>{m.emoji}</span>
+                              <span>{m.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* ── Poll Widget ── */}
+                      <div className="rounded-2xl overflow-hidden"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <button
+                          onClick={() => setPollEnabled(p => !p)}
+                          className="w-full flex items-center justify-between px-3.5 py-3 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <BarChart2 className="w-4 h-4 text-cyan-400" />
+                            <span className="text-xs font-bold text-white/70">So'rovnoma qo'shish</span>
+                          </div>
+                          {pollEnabled
+                            ? <ChevronUp className="w-4 h-4 text-white/40" />
+                            : <ChevronDown className="w-4 h-4 text-white/40" />}
+                        </button>
+
+                        <AnimatePresence>
+                          {pollEnabled && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="px-3.5 pb-3.5 space-y-2 border-t border-white/5">
+                                <input
+                                  placeholder="Savol matni…"
+                                  value={pollQuestion}
+                                  onChange={e => setPollQuestion(e.target.value)}
+                                  className="w-full mt-3 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none"
+                                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+                                />
+                                {pollOptions.map((opt, i) => (
+                                  <div key={i} className="flex gap-2 items-center">
+                                    <input
+                                      placeholder={`Variant ${i + 1}`}
+                                      value={opt}
+                                      onChange={e => setPollOptions(prev => prev.map((o, j) => j === i ? e.target.value : o))}
+                                      className="flex-1 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none"
+                                      style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+                                    />
+                                    {pollOptions.length > 2 && (
+                                      <button onClick={() => setPollOptions(p => p.filter((_, j) => j !== i))}
+                                        className="w-8 h-8 rounded-xl flex items-center justify-center"
+                                        style={{ background: "rgba(239,68,68,0.15)" }}>
+                                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                                {pollOptions.length < 4 && (
+                                  <button
+                                    onClick={() => setPollOptions(p => [...p, ""])}
+                                    className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 px-1 py-1"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" /> Variant qo'shish
+                                  </button>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
 
                       {/* Permission settings */}
                       <div className="rounded-2xl p-3.5 space-y-3.5"

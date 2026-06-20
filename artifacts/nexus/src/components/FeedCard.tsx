@@ -95,6 +95,107 @@ function estimatedEarnings(views: number): string {
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 /* ─────────────────────────────────────────────────
+   POLL WIDGET
+───────────────────────────────────────────────── */
+function PollWidget({ post, theme }: { post: any; theme: any }) {
+  const [userVote, setUserVote] = useState<number | null>(null);
+  const [votes, setVotes] = useState<{ optionIndex: number; count: number }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [fetched, setFetched] = useState(false);
+
+  const options: string[] = (() => {
+    try { return JSON.parse(post.pollOptions ?? "[]"); } catch { return []; }
+  })();
+  const totalVotes = votes.reduce((s, v) => s + v.count, 0);
+
+  useEffect(() => {
+    if (fetched) return;
+    setFetched(true);
+    fetch(`${API_BASE}/api/posts/${post.id}/votes`, { credentials: "include" })
+      .then(r => r.json())
+      .then((d: { votes: typeof votes; userVote: number | null }) => {
+        setVotes(d.votes ?? []);
+        setUserVote(d.userVote ?? null);
+      })
+      .catch(() => {});
+  }, [post.id, fetched]);
+
+  const vote = async (optionIndex: number) => {
+    if (userVote !== null || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/posts/${post.id}/vote`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: post.authorId, optionIndex }),
+      });
+      const d = await res.json() as { votes: typeof votes; userVote: number };
+      setVotes(d.votes ?? []);
+      setUserVote(d.userVote);
+    } catch { /* silent */ } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCount = (i: number) => votes.find(v => v.optionIndex === i)?.count ?? 0;
+  const getPct   = (i: number) => totalVotes > 0 ? Math.round((getCount(i) / totalVotes) * 100) : 0;
+
+  return (
+    <div className="rounded-2xl overflow-hidden"
+      style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.14)" }}>
+      <div className="px-3.5 pt-3 pb-1">
+        <p className="text-white font-bold text-[13px] leading-snug" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
+          📊 {post.pollQuestion}
+        </p>
+        <p className="text-white/45 text-[10px] mt-0.5">{totalVotes} ovoz</p>
+      </div>
+      <div className="px-3 pb-3 space-y-2">
+        {options.map((opt, i) => {
+          const voted = userVote !== null;
+          const isChosen = userVote === i;
+          const pct = voted ? getPct(i) : 0;
+          return (
+            <button
+              key={i}
+              disabled={voted || loading}
+              onClick={() => vote(i)}
+              className="w-full relative rounded-xl overflow-hidden text-left transition-all"
+              style={{
+                height: 38,
+                background: voted
+                  ? isChosen ? `${theme.accent}28` : "rgba(255,255,255,0.06)"
+                  : "rgba(255,255,255,0.10)",
+                border: voted && isChosen ? `1px solid ${theme.accent}66` : "1px solid rgba(255,255,255,0.14)",
+              }}
+            >
+              {/* Progress bar fill */}
+              {voted && (
+                <motion.div
+                  className="absolute inset-y-0 left-0 rounded-xl"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ background: isChosen ? `${theme.accent}44` : "rgba(255,255,255,0.08)" }}
+                />
+              )}
+              <div className="relative flex items-center justify-between px-3 h-full">
+                <span className="text-white text-[12px] font-semibold truncate" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>
+                  {isChosen && "✓ "}{opt}
+                </span>
+                {voted && (
+                  <span className="text-white/70 text-[11px] font-bold flex-shrink-0 ml-2">{pct}%</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────
    MAIN COMPONENT
 ───────────────────────────────────────────────── */
 interface FeedCardProps {
@@ -941,10 +1042,10 @@ export default function FeedCard({ post }: FeedCardProps) {
         </div>
       )}
 
-      {/* ══ LAYER 7 — CAPTION (video & photo, bottom-left) ══ */}
-      {!isText && post.content && (
+      {/* ══ LAYER 7 — CAPTION + POLL + MOOD (video & photo, bottom-left) ══ */}
+      {!isText && (
         <motion.div
-          className="absolute left-4 right-14"
+          className="absolute left-4 right-14 space-y-2.5"
           style={{
             bottom: commentOpen ? 220 : 72,
             zIndex: 10,
@@ -954,28 +1055,45 @@ export default function FeedCard({ post }: FeedCardProps) {
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
           transition={{ delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
         >
-          <p
-            className="text-white text-[13px] font-medium leading-relaxed line-clamp-3"
-            style={{ textShadow: "0 1px 6px rgba(0,0,0,0.85)" }}
-          >
-            {post.content}
-          </p>
+          {/* Mood badge */}
+          {!!(post as any).mood && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+              style={{
+                background: "rgba(255,255,255,0.12)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.2)",
+              }}>
+              <span style={{ fontSize: 16 }}>{(post as any).mood}</span>
+            </div>
+          )}
+
+          {/* Caption */}
+          {post.content && (
+            <p className="text-white text-[13px] font-medium leading-relaxed line-clamp-3"
+              style={{ textShadow: "0 1px 6px rgba(0,0,0,0.85)" }}>
+              {post.content}
+            </p>
+          )}
+
+          {/* Tags */}
           {post.tags && post.tags.filter(t => !t.startsWith("_")).length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
+            <div className="flex flex-wrap gap-1.5">
               {post.tags.filter(t => !t.startsWith("_")).slice(0, 4).map(tag => (
-                <span
-                  key={tag}
-                  className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                <span key={tag} className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                   style={{
                     background: `${theme.accent}1e`,
                     border: `1px solid ${theme.accent}44`,
                     color: theme.labelColor,
-                  }}
-                >
+                  }}>
                   #{tag}
                 </span>
               ))}
             </div>
+          )}
+
+          {/* Poll Widget */}
+          {!!(post as any).pollQuestion && (
+            <PollWidget post={post} theme={theme} />
           )}
         </motion.div>
       )}

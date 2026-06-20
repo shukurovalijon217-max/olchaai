@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2, Wand2, Mic, Scissors } from "lucide-react";
+import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2, Wand2, Mic, Scissors, Palette, Camera } from "lucide-react";
 
 export type TextOverlay = {
   id: string; text: string; x: number; y: number;
@@ -706,6 +706,33 @@ const SPEED_OPTIONS = [
   { label:"3×",   val:3.0, color:"#e11d48" },
 ];
 
+const BG_GRADIENTS = [
+  { id:"none",      label:"Asl",       css:"none",                                                                                     thumb:"rgba(255,255,255,0.12)" },
+  { id:"midnight",  label:"Tungi",     css:"linear-gradient(160deg,#0a0a1a 0%,#1a1040 100%)",                                           thumb:"#1a1040" },
+  { id:"sunset",    label:"Quyosh",    css:"linear-gradient(160deg,#ff6b35 0%,#f7c948 50%,#ff3d00 100%)",                               thumb:"#f97316" },
+  { id:"ocean",     label:"Okean",     css:"linear-gradient(160deg,#0ea5e9 0%,#0284c7 50%,#0c4a6e 100%)",                               thumb:"#0ea5e9" },
+  { id:"galaxy",    label:"Galaktika", css:"linear-gradient(160deg,#0f0c29 0%,#302b63 50%,#7c3aed 100%)",                               thumb:"#302b63" },
+  { id:"forest",    label:"O'rmon",    css:"linear-gradient(160deg,#052e16 0%,#065f46 50%,#14532d 100%)",                               thumb:"#065f46" },
+  { id:"fire",      label:"Olov",      css:"linear-gradient(160deg,#7f1d1e 0%,#dc2626 40%,#f97316 70%,#fbbf24 100%)",                  thumb:"#dc2626" },
+  { id:"rose",      label:"Atirgul",   css:"linear-gradient(160deg,#4c0519 0%,#9f1239 40%,#e11d48 70%,#fb7185 100%)",                  thumb:"#e11d48" },
+  { id:"lavender",  label:"Lavanda",   css:"linear-gradient(160deg,#2e1065 0%,#5b21b6 50%,#a78bfa 100%)",                               thumb:"#7c3aed" },
+  { id:"cyber",     label:"Cyber",     css:"linear-gradient(160deg,#041330 0%,#0d2b55 50%,#0369a1 80%,#00d4ff 100%)",                  thumb:"#00d4ff" },
+  { id:"neon",      label:"Neon",      css:"linear-gradient(160deg,#0a001a 0%,#3b0764 50%,#9333ea 80%,#f0abfc 100%)",                  thumb:"#a21caf" },
+  { id:"aurora",    label:"Aurora",    css:"linear-gradient(160deg,#022c22 0%,#065f46 25%,#0c4a6e 60%,#1e1b4b 100%)",                  thumb:"#065f46" },
+  { id:"dusk",      label:"Shomgoh",   css:"linear-gradient(160deg,#1c0533 0%,#6a0572 35%,#c2410c 65%,#fbbf24 100%)",                  thumb:"#6a0572" },
+  { id:"deep",      label:"Teranlik",  css:"linear-gradient(160deg,#000428 0%,#00204a 50%,#004e92 100%)",                               thumb:"#004e92" },
+  { id:"blush",     label:"Pushti",    css:"linear-gradient(160deg,#4a044e 0%,#86198f 40%,#db2777 70%,#fb7185 100%)",                  thumb:"#db2777" },
+  { id:"emerald",   label:"Zumrad",    css:"linear-gradient(160deg,#022c22 0%,#0f9b58 50%,#34d399 100%)",                               thumb:"#10b981" },
+  { id:"gold",      label:"Oltin",     css:"linear-gradient(160deg,#78350f 0%,#b45309 40%,#fbbf24 80%,#fef08a 100%)",                  thumb:"#f59e0b" },
+  { id:"noir",      label:"Qora",      css:"linear-gradient(160deg,#000000 0%,#0f0f23 50%,#1e1b4b 100%)",                               thumb:"#111" },
+  { id:"candy",     label:"Konfet",    css:"linear-gradient(160deg,#7e22ce 0%,#db2777 40%,#f97316 70%,#fbbf24 100%)",                  thumb:"#db2777" },
+  { id:"arctic",    label:"Arktika",   css:"linear-gradient(160deg,#0c4a6e 0%,#155e75 40%,#164e63 70%,#1e3a5f 100%)",                  thumb:"#0c4a6e" },
+  { id:"matrix",    label:"Matrix",    css:"linear-gradient(160deg,#000000 0%,#052e16 50%,#14532d 100%)",                               thumb:"#052e16" },
+  { id:"copper",    label:"Mis",       css:"linear-gradient(160deg,#431407 0%,#9a3412 40%,#c2683c 70%,#f5c29b 100%)",                  thumb:"#c2410c" },
+  { id:"milk",      label:"Sut",       css:"linear-gradient(160deg,#f0fdf4 0%,#ede9fe 50%,#fce7f3 100%)",                               thumb:"#e9d5ff" },
+  { id:"thunder",   label:"Momaqald.", css:"linear-gradient(160deg,#0c0c1e 0%,#1e293b 40%,#334155 70%,#6366f1 100%)",                  thumb:"#334155" },
+];
+
 const FILTERS: { id: string; label: string; css: string }[] = [
   { id: "none",     label: "Asl",     css: "none" },
   { id: "vivid",    label: "Yorqin",  css: "saturate(1.8) contrast(1.1)" },
@@ -809,7 +836,8 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [slide, setSlide]               = useState(0);
   const [items, setItems]               = useState<TextOverlay[]>(initialOverlays);
   const [selectedId, setSelectedId]     = useState<string|null>(null);
-  const [panel, setPanel]               = useState<"none"|"text"|"music"|"sticker"|"filter"|"speed"|"soundfx"|"ar"|"voice"|"beauty">("none");
+  const [panel, setPanel]               = useState<"none"|"text"|"music"|"sticker"|"filter"|"speed"|"soundfx"|"ar"|"voice"|"beauty"|"bg">("none");
+  const [bgOverlay, setBgOverlay]       = useState("none");
   const [audioName, setAudioName]       = useState(initialAudioName);
   const [filterName, setFilterName]     = useState("none");
   const [stickerGroup, setStickerGroup] = useState(0);
@@ -842,6 +870,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [isRecording, setIsRecording]       = useState(false);
   const audioPreviewRef   = useRef<HTMLAudioElement|null>(null);
   const audioFileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef    = useRef<HTMLInputElement>(null);
   const trimTrackRef      = useRef<HTMLDivElement>(null);
   const trimDragRef       = useRef<{type:"start"|"end";startX:number;startVal:number}|null>(null);
   const mediaRecorderRef  = useRef<MediaRecorder|null>(null);
@@ -1097,6 +1126,12 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             style={{ filter: combinedCss !== "none" ? combinedCss : undefined, transition:"filter 0.25s ease" }} />
         )}
 
+        {/* Background gradient overlay */}
+        {bgOverlay !== "none" && (
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: bgOverlay, opacity: 0.72, zIndex: 1 }} />
+        )}
+
         {/* Text/Sticker overlays */}
         {items.map(item => {
           const isSel = selectedId === item.id;
@@ -1209,6 +1244,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
           {[
             { id:"text",    Icon:Type,     label:"Matn"   },
             { id:"sticker", Icon:Smile,    label:"Stiker" },
+            { id:"bg",      Icon:Palette,  label:"Fon"    },
             { id:"filter",  Icon:Sparkles, label:"Filtr"  },
             { id:"ar",      Icon:Wand2,    label:"AR"     },
             { id:"music",   Icon:Music,    label:"Musiqa" },
@@ -1220,14 +1256,49 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             <button key={id} onClick={e => { e.stopPropagation(); setPanel(p => p===id ? "none" : id as any); setSelectedId(null); }}
               className="w-10 h-10 rounded-2xl flex flex-col items-center justify-center gap-0.5 flex-shrink-0"
               style={{
-                background: panel===id ? "rgba(124,58,237,0.9)" : "rgba(0,0,0,0.55)",
+                background: panel===id
+                  ? id==="bg" ? "rgba(16,185,129,0.9)" : "rgba(124,58,237,0.9)"
+                  : id==="bg" && bgOverlay!=="none" ? "rgba(16,185,129,0.4)" : "rgba(0,0,0,0.55)",
                 backdropFilter:"blur(10px)",
-                border: panel===id ? "1.5px solid rgba(168,85,247,0.7)" : "1px solid rgba(255,255,255,0.18)",
+                border: panel===id
+                  ? id==="bg" ? "1.5px solid rgba(52,211,153,0.7)" : "1.5px solid rgba(168,85,247,0.7)"
+                  : id==="bg" && bgOverlay!=="none" ? "1.5px solid rgba(52,211,153,0.5)" : "1px solid rgba(255,255,255,0.18)",
               }}>
               <Icon style={{ width:15, height:15, color:"#fff" }} />
               <span className="text-[8px] text-white/85 font-bold leading-none">{label}</span>
             </button>
           ))}
+
+          {/* Camera capture button (action, not panel) */}
+          <button
+            onClick={e => { e.stopPropagation(); cameraInputRef.current?.click(); }}
+            className="w-10 h-10 rounded-2xl flex flex-col items-center justify-center gap-0.5 flex-shrink-0"
+            style={{ background:"rgba(0,0,0,0.55)", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.18)" }}>
+            <Camera style={{ width:15, height:15, color:"#fff" }} />
+            <span className="text-[8px] text-white/85 font-bold leading-none">Kamera</span>
+          </button>
+          <input ref={cameraInputRef} type="file" accept="image/*,video/*" capture="environment"
+            className="hidden"
+            onChange={e => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const url = URL.createObjectURL(f);
+              const newItem: TextOverlay = {
+                id: Date.now().toString(),
+                text: `📷`, x: 50, y: 50,
+                fontSize: 48, color: "#ffffff",
+                animation: "none", fontStyle: "regular",
+                fontFamily: "system", bgStyle: "none",
+                align: "center", shadowPreset: "none",
+                gradient: "", letterSpacing: 0,
+                strokeWidth: 0, strokeColor: "#000",
+                isSticker: true,
+              };
+              void url;
+              setItems(prev => [...prev, newItem]);
+              e.target.value = "";
+            }}
+          />
 
           {/* Selected item delete */}
           {selected && (
@@ -1358,31 +1429,108 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
               {/* ════ WRITE TAB ════ */}
               {textTab === "write" && (
                 <div className="px-3 space-y-2.5 pt-1">
-                  {/* Glowing textarea */}
-                  <div className="relative">
-                    <textarea
-                      autoFocus rows={2}
-                      value={draftText} onChange={e => setDraftText(e.target.value)}
-                      placeholder="Matn kiriting…"
-                      className="w-full rounded-2xl px-4 py-3 text-base text-white placeholder:text-white/20 focus:outline-none resize-none"
-                      style={{
-                        background:"rgba(255,255,255,0.06)",
-                        border:"1.5px solid rgba(124,58,237,0.4)",
-                        fontFamily: FONT_FAMILIES.find(f=>f.id===draftFont)?.css,
-                        boxShadow:"0 0 0 0 rgba(124,58,237,0)",
-                        transition:"box-shadow 0.2s",
-                      }}
-                      onFocus={e => (e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.25)")}
-                      onBlur={e => (e.currentTarget.style.boxShadow = "0 0 0 0 rgba(124,58,237,0)")}
-                    />
-                    {/* Current font badge */}
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-lg"
-                      style={{ background:"rgba(124,58,237,0.3)", border:"1px solid rgba(168,85,247,0.4)" }}>
-                      <span className="text-[9px] font-bold text-purple-300">
-                        {FONT_FAMILIES.find(f=>f.id===draftFont)?.label}
-                      </span>
-                    </div>
-                  </div>
+
+                  {/* ── Character Studio — animated letter tiles ── */}
+                  {(() => {
+                    const fontCss = FONT_FAMILIES.find(f=>f.id===draftFont)?.css ?? "system-ui,sans-serif";
+                    const tileSize = Math.min(Math.max(draftSize * 0.52, 18), 38);
+                    const chars = draftText.split("");
+                    return (
+                      <div>
+                        {/* Tile display zone */}
+                        <div
+                          className="relative min-h-[72px] flex flex-wrap gap-1 items-center justify-center p-3 rounded-2xl cursor-text overflow-hidden"
+                          style={{
+                            background:"radial-gradient(ellipse at 50% 50%,rgba(124,58,237,0.1) 0%,rgba(0,0,0,0.35) 100%)",
+                            border:"1.5px solid rgba(124,58,237,0.3)",
+                            animation:"bg-panel-glow 3s ease-in-out infinite",
+                          }}
+                          onClick={() => document.getElementById("char-studio-textarea")?.focus()}
+                        >
+                          {chars.length === 0 && (
+                            <div className="flex flex-col items-center gap-1 pointer-events-none select-none">
+                              <span className="text-xl">✏️</span>
+                              <span className="text-[11px] text-white/25">Pastdagi maydondan yozishni boshlang</span>
+                            </div>
+                          )}
+                          {chars.map((ch, i) => (
+                            ch === " "
+                              ? <span key={`${i}-space`} className="char-tile-space" style={{ animationDelay:`${Math.min(i*0.035, 0.5)}s` }} />
+                              : <span
+                                  key={`${i}-${ch}`}
+                                  className="char-tile"
+                                  style={{
+                                    fontFamily: fontCss,
+                                    fontSize: tileSize,
+                                    fontWeight: draftFStyle==="bold" ? 900 : 600,
+                                    fontStyle: draftFStyle==="italic" ? "italic" : "normal",
+                                    ...(draftGradient
+                                      ? { background:draftGradient, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }
+                                      : { color: draftColor }),
+                                    WebkitTextStroke: draftFStyle==="outline" ? `1.5px rgba(0,0,0,0.7)` : undefined,
+                                    textShadow: draftFStyle==="shadow" ? "0 2px 6px rgba(0,0,0,0.8)" : undefined,
+                                    animationDelay: `${Math.min(i*0.035, 0.5)}s`,
+                                  }}>
+                                  {ch}
+                                </span>
+                          ))}
+                          {chars.length > 0 && <span className="char-cursor-blink" />}
+
+                          {/* Char count badge */}
+                          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-lg"
+                            style={{ background:"rgba(124,58,237,0.35)", border:"1px solid rgba(168,85,247,0.4)" }}>
+                            <span className="text-[8px] font-bold text-purple-300">{chars.length}</span>
+                          </div>
+                        </div>
+
+                        {/* Quick action row */}
+                        <div className="flex gap-1.5 mt-1.5">
+                          {["😊","🔥","💜","✨","👑","🎵","💫","🎉"].map(em => (
+                            <button key={em}
+                              onClick={() => setDraftText(t => t + em)}
+                              className="flex-1 text-center text-lg rounded-xl py-1 flex-shrink-0 transition-all active:scale-90"
+                              style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.08)" }}>
+                              {em}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Actual textarea input */}
+                        <textarea
+                          id="char-studio-textarea"
+                          autoFocus
+                          rows={2}
+                          value={draftText}
+                          onChange={e => setDraftText(e.target.value)}
+                          placeholder="⌨️ Bu yerga yozing — har harf alohida chiqib keladi..."
+                          className="w-full rounded-2xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none resize-none mt-1"
+                          style={{
+                            background:"rgba(255,255,255,0.05)",
+                            border:"1.5px solid rgba(124,58,237,0.3)",
+                            fontFamily: fontCss,
+                            transition:"border-color 0.2s, box-shadow 0.2s",
+                          }}
+                          onFocus={e => {
+                            e.currentTarget.style.borderColor = "rgba(168,85,247,0.7)";
+                            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.18)";
+                          }}
+                          onBlur={e => {
+                            e.currentTarget.style.borderColor = "rgba(124,58,237,0.3)";
+                            e.currentTarget.style.boxShadow = "none";
+                          }}
+                        />
+
+                        {/* Clear button */}
+                        {draftText.length > 0 && (
+                          <button onClick={() => setDraftText("")}
+                            className="w-full text-center text-[10px] font-bold py-1 rounded-xl transition-all"
+                            style={{ color:"rgba(248,113,113,0.7)", background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.15)" }}>
+                            🗑 Tozalash
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Size control: big A ────slider──── big A */}
                   <div className="flex items-center gap-2">
@@ -2324,6 +2472,87 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                 : <p className="text-[11px] text-red-400 font-semibold">🚀 Super tez — hype effekti!</p>
               }
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Background / Fon panel ── */}
+      <AnimatePresence>
+        {panel === "bg" && (
+          <motion.div
+            initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
+            transition={{ type:"spring", stiffness:380, damping:32 }}
+            className="flex-shrink-0 pb-8"
+            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(16,185,129,0.2)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+              <div>
+                <p className="text-[13px] font-black text-white">🎨 Fon Studiyasi</p>
+                <p className="text-[10px] text-white/40">24 ta premium gradient — TikTokdan yaxshi!</p>
+              </div>
+              {bgOverlay !== "none" && (
+                <button onClick={() => setBgOverlay("none")}
+                  className="px-2.5 py-1 rounded-xl text-[10px] font-bold"
+                  style={{ background:"rgba(239,68,68,0.15)", color:"#f87171", border:"1px solid rgba(239,68,68,0.3)" }}>
+                  ✕ O'chirish
+                </button>
+              )}
+            </div>
+
+            {/* Gradient grid */}
+            <div className="grid grid-cols-4 gap-2 px-4 max-h-52 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
+              {BG_GRADIENTS.map(bg => {
+                const isActive = bgOverlay === bg.css;
+                return (
+                  <button key={bg.id} onClick={() => setBgOverlay(bg.css === "none" ? "none" : bg.css)}
+                    className="flex flex-col items-center gap-1.5 rounded-2xl overflow-hidden transition-all active:scale-95"
+                    style={{
+                      border: isActive ? "2.5px solid rgba(52,211,153,0.9)" : "2px solid rgba(255,255,255,0.08)",
+                      transform: isActive ? "scale(0.94)" : "scale(1)",
+                      boxShadow: isActive ? "0 0 12px rgba(52,211,153,0.4)" : "none",
+                    }}>
+                    {/* Color swatch */}
+                    <div className="w-full h-12 rounded-xl"
+                      style={{
+                        background: bg.css === "none" ? "rgba(255,255,255,0.08)" : bg.css,
+                        border: bg.css === "none" ? "1.5px dashed rgba(255,255,255,0.2)" : "none",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                      }}>
+                      {bg.css === "none" && <span className="text-sm text-white/30">✕</span>}
+                      {isActive && bg.css !== "none" && (
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{ background:"rgba(255,255,255,0.9)" }}>
+                          <span className="text-[9px] text-black font-black">✓</span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[9px] font-bold pb-1.5"
+                      style={{ color: isActive ? "#34d399" : "rgba(255,255,255,0.5)" }}>
+                      {bg.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Opacity control when active */}
+            {bgOverlay !== "none" && (
+              <div className="mx-4 mt-3 px-3 py-2 rounded-2xl"
+                style={{ background:"rgba(16,185,129,0.08)", border:"1px solid rgba(16,185,129,0.25)" }}>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-emerald-400">Shaffoflik:</span>
+                  <span className="text-[10px] text-white/50">Fon qo'shildi ✓</span>
+                  <div className="ml-auto flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full" style={{ background: BG_GRADIENTS.find(b=>b.css===bgOverlay)?.thumb }} />
+                    <span className="text-[10px] font-bold text-emerald-300">
+                      {BG_GRADIENTS.find(b=>b.css===bgOverlay)?.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -357,14 +357,16 @@ em-emoji-picker {
 .txt-anim-neon   { animation: txt-neon   1.8s ease-in-out infinite; }
 .txt-anim-slide  { animation: txt-slide  3.5s ease-in-out infinite; }
 
-/* ── Music pill ── */
-@keyframes vinyl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes bar-dance  {
-  0%, 100% { scaleY: 0.3; }
-  50%       { scaleY: 1; }
+/* ── Music (transparent overlay) ── */
+@keyframes music-note-bounce {
+  0%, 100% { transform: translateY(0px);  opacity: 1; }
+  40%       { transform: translateY(-4px); opacity: 0.7; }
+  70%       { transform: translateY(-2px); opacity: 0.9; }
 }
-.vinyl-spin { animation: vinyl-spin 3s linear infinite; }
-.bar1 { animation: bar-dance 0.8s ease-in-out infinite; animation-delay: 0s; }
-.bar2 { animation: bar-dance 0.8s ease-in-out infinite; animation-delay: 0.15s; }
-.bar3 { animation: bar-dance 0.8s ease-in-out infinite; animation-delay: 0.3s; }
-.bar4 { animation: bar-dance 0.8s ease-in-out infinite; animation-delay: 0.45s; }
+@keyframes music-text-scroll {
+  0%,  18% { transform: translateX(0); }
+  68%, 82%  { transform: translateX(calc(-100% - 24px)); }
+  83%, 100% { transform: translateX(0); }
+}
+.music-note-bounce { animation: music-note-bounce 1.4s ease-in-out infinite; }
+.music-text-scroll { animation: music-text-scroll 7s ease-in-out infinite; }

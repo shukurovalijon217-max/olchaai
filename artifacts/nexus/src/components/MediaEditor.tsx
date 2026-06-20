@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search } from "lucide-react";
+import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2 } from "lucide-react";
 
 export type TextOverlay = {
   id: string; text: string; x: number; y: number;
@@ -42,45 +42,265 @@ const STICKER_GROUPS: { label: string; emojis: string[] }[] = [
   { label: "❤️ Sevgi",    emojis: ["❤️","💜","💙","💚","💛","🧡","🖤","🤍","💕","💞","💝","💖","💗","💓","♾️"] },
 ];
 
-const POPULAR_SONGS = [
-  "Ulmas Musayev — Sevgim","Ulmas Musayev — Dunyom","Ulmas Musayev — Sarvinoz",
-  "Shaxriyor — Ishq","Shaxriyor — Yig'lama","Shaxriyor — Orzular",
-  "Mirzo — Alvido","Mirzo — Sog'inch","Mirzo — Qalbim",
-  "Jasur Umirov — Sevilaman","Jasur Umirov — Muhabbat",
-  "Dilnoza Yusupova — Yurak","Dilnoza Yusupova — Sev meni",
-  "Ziyoda — Mahkum","Ziyoda — Baxtiyor",
-  "Mansur Toshmatov — Ko'zlaring","Mansur Toshmatov — Sevgi",
-  "Shohruhxon — Temir yurak","Shohruhxon — Azizim",
-  "Shahlo Toshmatova — Baxt","Shahlo Toshmatova — Yor-yor",
-  "Bojalar — Kel yonim","Bojalar — Seni deya",
-  "Munisa Rizayeva — Yurak","Munisa Rizayeva — Ko'rmasam",
-  "Dua Lipa — Levitating","Dua Lipa — New Rules","Dua Lipa — Don't Start Now",
-  "Taylor Swift — Anti-Hero","Taylor Swift — Shake It Off","Taylor Swift — Blank Space",
-  "The Weeknd — Blinding Lights","The Weeknd — Starboy","The Weeknd — Save Your Tears",
-  "Drake — One Dance","Drake — God's Plan","Drake — Hotline Bling",
-  "Billie Eilish — bad guy","Billie Eilish — Happier Than Ever",
-  "Ed Sheeran — Shape of You","Ed Sheeran — Perfect","Ed Sheeran — Thinking Out Loud",
-  "Post Malone — Circles","Post Malone — Sunflower","Post Malone — rockstar",
-  "Ariana Grande — 7 rings","Ariana Grande — thank u, next",
-  "Justin Bieber — Sorry","Justin Bieber — Love Yourself","Justin Bieber — Peaches",
-  "Harry Styles — As It Was","Harry Styles — Watermelon Sugar",
-  "Olivia Rodrigo — drivers license","Olivia Rodrigo — good 4 u",
-  "Bad Bunny — Me Porto Bonito","Bad Bunny — Tití Me Preguntó",
-  "BTS — Dynamite","BTS — Butter","BTS — DNA",
-  "Stromae — Papaoutai","Stromae — Alors on danse",
-  "Kendrick Lamar — HUMBLE.","Kendrick Lamar — Not Like Us",
-  "SZA — Kill Bill","SZA — Good Days",
-  "Glass Animals — Heat Waves","Imagine Dragons — Enemy","Imagine Dragons — Believer",
-  "Coldplay — Yellow","Coldplay — The Scientist","Coldplay — Fix You",
-  "Eminem — Lose Yourself","Eminem — Without Me","Eminem — Stan",
-  "Rihanna — Umbrella","Rihanna — We Found Love","Rihanna — Diamonds",
-  "Bruno Mars — Uptown Funk","Bruno Mars — Just The Way You Are","Bruno Mars — Grenade",
-  "Adele — Rolling in the Deep","Adele — Someone Like You","Adele — Hello",
-  "Pharrell Williams — Happy","Mark Ronson ft Bruno Mars — Uptown Funk",
-  "Queen — Bohemian Rhapsody","Nirvana — Smells Like Teen Spirit",
-  "Linkin Park — Numb","Linkin Park — In The End",
-  "Loreen — Euphoria","Loreen — Tattoo",
-  "Calvin Harris — Summer","Calvin Harris — We Found Love",
+const SONGS_BY_COUNTRY: { flag: string; label: string; songs: string[] }[] = [
+  { flag:"🇺🇿", label:"O'zbek", songs:[
+    "Ulmas Musayev — Sevgim","Ulmas Musayev — Dunyom","Ulmas Musayev — Sarvinoz","Ulmas Musayev — Muhabbatim",
+    "Shaxriyor — Ishq","Shaxriyor — Yig'lama","Shaxriyor — Orzular","Shaxriyor — Sevaman",
+    "Mirzo — Alvido","Mirzo — Sog'inch","Mirzo — Qalbim","Mirzo — Izla",
+    "Jasur Umirov — Sevilaman","Jasur Umirov — Muhabbat","Jasur Umirov — Yurak",
+    "Dilnoza Yusupova — Yurak","Dilnoza Yusupova — Sev meni","Dilnoza Yusupova — Xayol",
+    "Ziyoda — Mahkum","Ziyoda — Baxtiyor","Ziyoda — Seni eslayman",
+    "Mansur Toshmatov — Ko'zlaring","Mansur Toshmatov — Sevgi","Mansur Toshmatov — Qayda sen",
+    "Shohruhxon — Temir yurak","Shohruhxon — Azizim","Shohruhxon — Sevaman",
+    "Shahlo Toshmatova — Baxt","Shahlo Toshmatova — Yor-yor","Shahlo Toshmatova — Mehribon",
+    "Bojalar — Kel yonim","Bojalar — Seni deya","Bojalar — Baxting bo'lsin",
+    "Munisa Rizayeva — Yurak","Munisa Rizayeva — Ko'rmasam","Munisa Rizayeva — Sevgi izi",
+    "Nargiza Umarova — Qo'shiq","Nargiza Umarova — Seni sevaman",
+    "Otabek Mutalxo'jayev — Yulduz","Otabek Mutalxo'jayev — Ko'zlar",
+    "Xurshid Rasulov — Muhabbat","Xurshid Rasulov — Sen uchun",
+    "Ozodbek Nazarbekov — Bedana","Ozodbek Nazarbekov — Qo'shiqlarim",
+    "G'ayrat Usmonov — Qo'shiq","G'ayrat Usmonov — Sevgi haqida",
+    "Dildora Niyozova — Yurak","Dildora Niyozova — Mehr",
+    "Jahongir Otajonov — Sog'indim","Jahongir Otajonov — Sarvinoz",
+  ]},
+  { flag:"🌍", label:"Trending", songs:[
+    "Dua Lipa — Levitating","Dua Lipa — New Rules","Dua Lipa — Don't Start Now","Dua Lipa — Houdini",
+    "Taylor Swift — Anti-Hero","Taylor Swift — Shake It Off","Taylor Swift — Blank Space","Taylor Swift — Cruel Summer","Taylor Swift — Love Story",
+    "The Weeknd — Blinding Lights","The Weeknd — Starboy","The Weeknd — Save Your Tears","The Weeknd — Die For You",
+    "Harry Styles — As It Was","Harry Styles — Watermelon Sugar","Harry Styles — Golden",
+    "Olivia Rodrigo — drivers license","Olivia Rodrigo — good 4 u","Olivia Rodrigo — vampire",
+    "SZA — Kill Bill","SZA — Good Days","SZA — Snooze",
+    "Glass Animals — Heat Waves",
+    "Arctic Monkeys — Do I Wanna Know?","Arctic Monkeys — R U Mine?",
+    "Hozier — Take Me To Church","Hozier — From Eden",
+    "Rema — Calm Down","Tems — Free Mind",
+    "Doja Cat — Say So","Doja Cat — Kiss Me More","Doja Cat — Woman",
+    "Lizzo — About Damn Time","Lizzo — Good as Hell",
+    "Lana Del Rey — Summertime Sadness","Lana Del Rey — Young and Beautiful",
+    "Billie Eilish — bad guy","Billie Eilish — Happier Than Ever","Billie Eilish — What Was I Made For?",
+    "Sabrina Carpenter — Espresso","Sabrina Carpenter — Please Please Please",
+    "Chappell Roan — HOT TO GO!","Chappell Roan — Good Luck Babe!",
+    "Gracie Abrams — That's So True",
+  ]},
+  { flag:"🇺🇸", label:"USA", songs:[
+    "Drake — One Dance","Drake — God's Plan","Drake — Hotline Bling","Drake — Rich Flex",
+    "Post Malone — Circles","Post Malone — Sunflower","Post Malone — rockstar","Post Malone — Chemical",
+    "Ariana Grande — 7 rings","Ariana Grande — thank u, next","Ariana Grande — positions",
+    "Justin Bieber — Sorry","Justin Bieber — Love Yourself","Justin Bieber — Peaches",
+    "Kendrick Lamar — HUMBLE.","Kendrick Lamar — Not Like Us","Kendrick Lamar — DNA",
+    "Bruno Mars — Uptown Funk","Bruno Mars — Just The Way You Are","Bruno Mars — Grenade","Bruno Mars — Locked Out of Heaven",
+    "Eminem — Lose Yourself","Eminem — Without Me","Eminem — Stan","Eminem — Rap God",
+    "Rihanna — Umbrella","Rihanna — We Found Love","Rihanna — Diamonds","Rihanna — Stay",
+    "Beyoncé — Crazy in Love","Beyoncé — Single Ladies","Beyoncé — Halo","Beyoncé — Texas Hold 'Em",
+    "Jay-Z ft Alicia Keys — Empire State of Mind",
+    "Mariah Carey — All I Want for Christmas Is You",
+    "Michael Jackson — Thriller","Michael Jackson — Billie Jean","Michael Jackson — Beat It",
+    "Ed Sheeran — Shape of You","Ed Sheeran — Perfect","Ed Sheeran — Thinking Out Loud","Ed Sheeran — Photograph",
+    "Adele — Rolling in the Deep","Adele — Someone Like You","Adele — Hello","Adele — Easy On Me",
+    "Lady Gaga — Bad Romance","Lady Gaga — Poker Face","Lady Gaga — Shallow",
+    "Katy Perry — Roar","Katy Perry — Firework","Katy Perry — Dark Horse",
+    "Pharrell Williams — Happy",
+    "Justin Timberlake — Can't Stop the Feeling","Justin Timberlake — Mirrors",
+  ]},
+  { flag:"🇰🇷", label:"K-Pop", songs:[
+    "BTS — Dynamite","BTS — Butter","BTS — DNA","BTS — Boy With Luv","BTS — Spring Day","BTS — Fake Love",
+    "BLACKPINK — Kill This Love","BLACKPINK — DDU-DU DDU-DU","BLACKPINK — How You Like That","BLACKPINK — Pink Venom",
+    "aespa — Savage","aespa — Next Level","aespa — Drama",
+    "NewJeans — Hype Boy","NewJeans — Ditto","NewJeans — OMG","NewJeans — Super Shy",
+    "IVE — Love Dive","IVE — After Like","IVE — I AM",
+    "TWICE — I CAN'T STOP ME","TWICE — Fancy","TWICE — Alcohol-Free","TWICE — Talk That Talk",
+    "EXID — Up & Down","EXID — Ah Yeah",
+    "EXO — Growl","EXO — Monster","EXO — Ko Ko Bop",
+    "GOT7 — Hard Carry","GOT7 — Just Right",
+    "Stray Kids — Miroh","Stray Kids — God's Menu","Stray Kids — CASE 143",
+    "MONSTA X — Dramarama","MONSTA X — Love Killa",
+    "TXT — Chasing That Feeling","TXT — Sugar Rush Ride",
+    "Taeyeon — I","Taeyeon — Fine","Taeyeon — INVU",
+    "IU — Celebrity","IU — Lilac","IU — Strawberry Moon",
+    "G-Dragon — Crooked","G-Dragon — Fantastic Baby (BIGBANG)",
+    "PSY — Gangnam Style","PSY — DADDY",
+    "LE SSERAFIM — ANTIFRAGILE","LE SSERAFIM — FEARLESS",
+  ]},
+  { flag:"🇮🇳", label:"Bollywood", songs:[
+    "Arijit Singh — Tum Hi Ho","Arijit Singh — Channa Mereya","Arijit Singh — Tera Ban Jaunga",
+    "AR Rahman — Jai Ho","AR Rahman — Rang De Basanti","AR Rahman — Dil Se Re",
+    "Shreya Ghoshal — Teri Meri","Shreya Ghoshal — Barso Re","Shreya Ghoshal — Sun Raha Hai",
+    "Kumar Sanu — Ek Ladki Ko Dekha","Kumar Sanu — Dil Deewana",
+    "Udit Narayan — Pehla Nasha","Udit Narayan — Raja Ko Rani Se",
+    "Atif Aslam — Tera Hone Laga Hoon","Atif Aslam — Doorie","Atif Aslam — Woh Lamhe",
+    "Yo Yo Honey Singh — Brown Rang","Yo Yo Honey Singh — Desi Kalakaar",
+    "Badshah — Paani Paani","Badshah — Genda Phool","Badshah — DJ Wale Babu",
+    "Neha Kakkar — O Humsafar","Neha Kakkar — Dilbar","Neha Kakkar — Coca Cola",
+    "Guru Randhawa — Lahore","Guru Randhawa — High Rated Gabru",
+    "Diljit Dosanjh — GOAT","Diljit Dosanjh — Born to Shine",
+    "Pritam — Gerua","Pritam — Phir Le Aaya Dil",
+    "Vishal-Shekhar — Zara Sa","Vishal-Shekhar — Desi Girl",
+    "Shankar-Ehsaan-Loy — Kajra Re",
+  ]},
+  { flag:"🇧🇷", label:"Latin", songs:[
+    "Bad Bunny — Me Porto Bonito","Bad Bunny — Tití Me Preguntó","Bad Bunny — TQMQ","Bad Bunny — Un Verano Sin Ti",
+    "J Balvin — Mi Gente","J Balvin — Con Calma","J Balvin — Que Calor",
+    "Shakira — Hips Don't Lie","Shakira — Waka Waka","Shakira — Whenever Wherever","Shakira — Bzrp Session 53",
+    "Maluma — Hawái","Maluma — Felices los 4","Maluma — ADMV",
+    "Ozuna — Taki Taki","Ozuna — Baila Baila Baila",
+    "Karol G — BICHOTA","Karol G — Provenza","Karol G — Watati",
+    "Daddy Yankee — Gasolina","Daddy Yankee — Despacito","Daddy Yankee — Con Calma",
+    "Luis Fonsi — Despacito","Luis Fonsi — Échame La Culpa",
+    "Rosalía — MALAMENTE","Rosalía — BIZCOCHITO","Rosalía — Despechá",
+    "Rauw Alejandro — Todo de Ti","Rauw Alejandro — Estilazo",
+    "Anuel AA — China","Anuel AA — Ella Quiere Beber",
+    "Nicky Jam — El Perdón","Nicky Jam — X",
+    "Anitta — Envolver","Anitta — Girl From Rio",
+    "Sech — Otro Trago","Sech — Relación",
+  ]},
+  { flag:"🇷🇺", label:"Rus", songs:[
+    "Miyagi ft Andy Panda — I Got Love","Miyagi ft Andy Panda — Там где нас нет",
+    "Morgenshtern — Cadillac","Morgenshtern ft Элджей — Cadillac",
+    "Элджей — Розовое вино","Элджей — Feduk",
+    "Макс Корж — Малый повзрослел","Макс Корж — Пьяный туман",
+    "Скриптонит — Буду там","Скриптонит — Пинкман",
+    "Грибы — Тает лёд","Грибы — Между нами тает лёд",
+    "T-Fest — Зачем","T-Fest — Ехала машина",
+    "Jah Khalib — Медина","Jah Khalib — Без тебя я не я",
+    "Navai ft Бьянка — Не твоя","Navai — Чем же ты дышишь",
+    "Hammali ft Navai — Птица","Hammali ft Navai — Без тебя я не я",
+    "NILETTO — Любимка","NILETTO — КРАШ",
+    "Ёлка — Города","Ёлка — Прятки",
+    "Полина Гагарина — Кукушка","Полина Гагарина — Я не буду любить",
+    "Би-2 — Полковнику никто не пишет","Би-2 — Аутсайдер",
+    "FACE — Грустная песня","FACE — Малиновый закат",
+    "IC3PEAK — Смерти Больше Нет","IC3PEAK — Плак Плак",
+    "Слава КПСС — Молодость","Скруджи — Добрый вечер",
+  ]},
+  { flag:"🎸", label:"Rock/Pop", songs:[
+    "Queen — Bohemian Rhapsody","Queen — We Will Rock You","Queen — Don't Stop Me Now","Queen — Under Pressure",
+    "Nirvana — Smells Like Teen Spirit","Nirvana — Come as You Are","Nirvana — Heart-Shaped Box",
+    "Linkin Park — Numb","Linkin Park — In The End","Linkin Park — Crawling","Linkin Park — Faint",
+    "Coldplay — Yellow","Coldplay — The Scientist","Coldplay — Fix You","Coldplay — Clocks","Coldplay — Viva La Vida",
+    "Imagine Dragons — Enemy","Imagine Dragons — Believer","Imagine Dragons — Radioactive","Imagine Dragons — Thunder",
+    "The Beatles — Let It Be","The Beatles — Hey Jude","The Beatles — Come Together",
+    "Led Zeppelin — Stairway to Heaven","Led Zeppelin — Whole Lotta Love",
+    "Pink Floyd — Comfortably Numb","Pink Floyd — Wish You Were Here",
+    "AC/DC — Back in Black","AC/DC — Highway to Hell","AC/DC — Thunderstruck",
+    "Metallica — Enter Sandman","Metallica — Nothing Else Matters",
+    "Green Day — Boulevard of Broken Dreams","Green Day — American Idiot",
+    "Radiohead — Creep","Radiohead — Karma Police",
+    "U2 — With or Without You","U2 — One",
+    "Foo Fighters — Everlong","Foo Fighters — Best of You",
+    "Red Hot Chili Peppers — Under the Bridge","Red Hot Chili Peppers — Californication",
+    "The Killers — Mr. Brightside","The Killers — Somebody Told Me",
+    "Arctic Monkeys — Do I Wanna Know?","Arctic Monkeys — 505",
+    "Oasis — Wonderwall","Oasis — Don't Look Back in Anger",
+  ]},
+  { flag:"🇹🇷", label:"Türk", songs:[
+    "Tarkan — Şımarık","Tarkan — Kuzu Kuzu","Tarkan — Hüp",
+    "Sezen Aksu — Geri Dön","Sezen Aksu — Firuze",
+    "Hadise — Düm Tek Tek","Hadise — Aşk Kaç Beden Giyer",
+    "Mabel Matiz — Tadı Yok","Mabel Matiz — Dokunsa Elim",
+    "Simge — Yeniden Sevmek","Simge — Sen Olsan Bari",
+    "Serdar Ortaç — Kırmızı","Serdar Ortaç — Affet",
+    "Mustafa Sandal — Araba","Mustafa Sandal — Sen Olursan Olmaz",
+    "Teoman — Paramparça","Teoman — Eski Bir Rüya Uğruna",
+    "Gripin — Tüm Zamanların En İyisi","Gripin — Seninle Olmak",
+    "Manga — Beni Benimle Bırak","Manga — Dün Yoktum",
+    "Mor ve Ötesi — Duman","Mor ve Ötesi — Hesap Sorarım",
+    "Semicenk — Kıyamam","Semicenk — İki Aşık",
+    "Sagopa Kajmer — Hep Mi Ben","Sagopa Kajmer — Sitemkar",
+    "Ceza — Holocaust","Ceza — Suspus",
+    "Edis — Sarı Saçların","Edis — Gel Yeter",
+    "Burak Doğansoy — Sağ Ol","Burak Doğansoy — Kısa Film",
+  ]},
+  { flag:"🇳🇬", label:"Afrobeats", songs:[
+    "Burna Boy — Last Last","Burna Boy — Ye","Burna Boy — On the Low","Burna Boy — Kilometre",
+    "Wizkid — Essence","Wizkid — Come Closer","Wizkid — Soco",
+    "Davido — Fall","Davido — FEM","Davido — Assurance",
+    "Tems — Free Mind","Tems — Higher","Tems — Crazy Tings",
+    "Rema — Calm Down","Rema — Dumebi","Rema — Iron Man",
+    "CKay — Love Nwantiti","CKay — Emiliana",
+    "Fireboy DML — Peru","Fireboy DML — Jealous","Fireboy DML — Bandana",
+    "Ckay — Love Nwantiti","Omah Lay — Bad Influence","Omah Lay — Godly",
+    "Afro B — Joanna (Drogba)","Mr Eazi — Leg Over",
+    "Yemi Alade — Johnny","Yemi Alade — Temptation",
+    "Tiwa Savage — All Over","Tiwa Savage — Wanted",
+    "Olamide — Science Student","Olamide — Wo!!",
+    "Asake — Joha","Asake — Organise","Asake — Lonely at the Top",
+  ]},
+  { flag:"🇯🇵", label:"J-Pop", songs:[
+    "YOASOBI — Idol","YOASOBI — Biri-Biri","YOASOBI — Probably",
+    "Official HIGE DANdism — Pretender","Official HIGE DANdism — Subtitle",
+    "Ado — Usseewa","Ado — Gira Gira","Ado — New Genesis",
+    "Kenshi Yonezu — Lemon","Kenshi Yonezu — Flamingo","Kenshi Yonezu — KICK BACK",
+    "LiSA — Gurenge","LiSA — Homura","LiSA — Rising Hope",
+    "Zutomayo — Can't Be Right","Zutomayo — Mirror Monster",
+    "King Gnu — Hakujitsu","King Gnu — Warawanaide Kure",
+    "ONE OK ROCK — Wherever You Are","ONE OK ROCK — Cry Out",
+    "Hikaru Utada — First Love","Hikaru Utada — Passion",
+    "Perfume — Polyrhythm","Perfume — Edge",
+    "Eve — Dramaturgy","Eve — Heart Glass",
+    "Vaundy — Odoriko","Vaundy — Strangers",
+    "Mrs. GREEN APPLE — Magic","Mrs. GREEN APPLE — In the Morning",
+  ]},
+  { flag:"🇫🇷", label:"Frantsuz", songs:[
+    "Stromae — Papaoutai","Stromae — Alors on danse","Stromae — Formidable","Stromae — L'enfer",
+    "Angèle — Balance ton quoi","Angèle — Bruxelles je t'aime",
+    "Christine and the Queens — La Nuit est Belle","Christine and the Queens — Saint Claude",
+    "Clara Luciani — La grenade","Clara Luciani — Sainte-Victoire",
+    "Daft Punk — Get Lucky","Daft Punk — One More Time","Daft Punk — Around the World",
+    "Air — La Femme d'Argent","Air — Sexy Boy",
+    "Alizée — J'en ai marre","Alizée — Lili",
+    "Carla Bruni — Quelqu'un m'a dit","Carla Bruni — La Toi du Toit",
+    "Édith Piaf — Non je ne regrette rien","Édith Piaf — La Vie en Rose",
+    "Jacques Brel — Ne me quitte pas","Jacques Brel — Amsterdam",
+    "Indochine — Tes yeux noirs","Indochine — College Boy",
+    "Soprano — Classico","Soprano — Mohamed Ali",
+    "Jul — Tchoin","Jul — La famille",
+  ]},
+  { flag:"🇩🇪", label:"Deutsch", songs:[
+    "Rammstein — Du Hast","Rammstein — Sonne","Rammstein — Mutter","Rammstein — Amerika",
+    "Tokio Hotel — Durch den Monsun","Tokio Hotel — Schrei",
+    "Herbert Grönemeyer — Mensch","Herbert Grönemeyer — Männer",
+    "Die Toten Hosen — Hier kommt Alex","Die Toten Hosen — Alles aus Liebe",
+    "Xavier Naidoo — Dieser Weg","Xavier Naidoo — Ich kenne nichts",
+    "Clueso — Gewinner","Clueso — Stadtrandlichter",
+    "Mark Forster — Chöre","Mark Forster — Au Revoir",
+    "Udo Lindenberg — Cello","Udo Lindenberg — Sonderzug nach Pankow",
+    "Milky Chance — Stolen Dance","Milky Chance — Ego",
+    "CRO — Easy","CRO — Einmal Um Die Welt",
+    "Seeed — Aufstehn","Seeed — Augenbling",
+    "Peter Fox — Alles Neu","Peter Fox — Stadtaffe",
+  ]},
+];
+
+const SOUND_FX: { cat: string; sounds: { name: string; emoji: string }[] }[] = [
+  { cat:"😂 Qiziq", sounds:[
+    { name:"Boink", emoji:"🟡" },{ name:"Whoosh", emoji:"💨" },{ name:"Pop", emoji:"🎈" },
+    { name:"Fart Sound", emoji:"💨" },{ name:"Sad Trombone", emoji:"🎺" },{ name:"Fail Horn", emoji:"📯" },
+    { name:"Vine Boom", emoji:"💥" },{ name:"Bruh Sound", emoji:"😶" },{ name:"Meme Laugh", emoji:"😂" },
+  ]},
+  { cat:"🌊 Tabiat", sounds:[
+    { name:"Ocean Waves", emoji:"🌊" },{ name:"Rain Drops", emoji:"🌧" },{ name:"Birds Singing", emoji:"🐦" },
+    { name:"Thunderstorm", emoji:"⛈" },{ name:"Wind Howling", emoji:"🌬" },{ name:"Forest Ambience", emoji:"🌲" },
+    { name:"Fire Crackling", emoji:"🔥" },{ name:"River Stream", emoji:"💧" },
+  ]},
+  { cat:"🔔 Bildirishnoma", sounds:[
+    { name:"iPhone Ding", emoji:"📱" },{ name:"Message Pop", emoji:"💬" },{ name:"Email Swoop", emoji:"📧" },
+    { name:"Level Up!", emoji:"⬆️" },{ name:"Achievement", emoji:"🏆" },{ name:"Coins", emoji:"💰" },
+    { name:"Magic Spell", emoji:"✨" },{ name:"Power Up", emoji:"⚡" },
+  ]},
+  { cat:"🎬 Transition", sounds:[
+    { name:"Swoosh Left", emoji:"⬅️" },{ name:"Swoosh Right", emoji:"➡️" },{ name:"Zoom In", emoji:"🔍" },
+    { name:"Camera Shutter", emoji:"📸" },{ name:"Film Reel", emoji:"🎞" },{ name:"Dramatic Hit", emoji:"💢" },
+    { name:"Cinematic Rise", emoji:"🎬" },{ name:"Record Scratch", emoji:"💿" },
+  ]},
+];
+
+const SPEED_OPTIONS = [
+  { label:"0.3×", val:0.3, color:"#38bdf8" },
+  { label:"0.5×", val:0.5, color:"#818cf8" },
+  { label:"1×",   val:1.0, color:"#a855f7" },
+  { label:"1.5×", val:1.5, color:"#f97316" },
+  { label:"2×",   val:2.0, color:"#ef4444" },
+  { label:"3×",   val:3.0, color:"#e11d48" },
 ];
 
 const FILTERS: { id: string; label: string; css: string }[] = [
@@ -148,11 +368,15 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [slide, setSlide]               = useState(0);
   const [items, setItems]               = useState<TextOverlay[]>(initialOverlays);
   const [selectedId, setSelectedId]     = useState<string|null>(null);
-  const [panel, setPanel]               = useState<"none"|"text"|"music"|"sticker"|"filter">("none");
+  const [panel, setPanel]               = useState<"none"|"text"|"music"|"sticker"|"filter"|"speed"|"soundfx">("none");
   const [audioName, setAudioName]       = useState(initialAudioName);
   const [filterName, setFilterName]     = useState("none");
   const [stickerGroup, setStickerGroup] = useState(0);
   const [musicQuery, setMusicQuery]     = useState(initialAudioName);
+  const [musicCat, setMusicCat]         = useState(0);
+  const [videoSpeed, setVideoSpeed]     = useState(1);
+  const [soundFxCat, setSoundFxCat]     = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const [draftText, setDraftText]       = useState("");
   const [draftColor, setDraftColor]     = useState("#ffffff");
@@ -202,11 +426,18 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const selected = items.find(i => i.id === selectedId);
   const activeFilter = FILTERS.find(f => f.id === filterName) ?? FILTERS[0];
 
+  const allSongs = useMemo(() => SONGS_BY_COUNTRY.flatMap(c => c.songs), []);
   const musicSuggestions = useMemo(() => {
     const q = musicQuery.trim().toLowerCase();
-    if (!q) return POPULAR_SONGS.slice(0, 8);
-    return POPULAR_SONGS.filter(s => s.toLowerCase().includes(q)).slice(0, 10);
-  }, [musicQuery]);
+    const pool = q ? allSongs : SONGS_BY_COUNTRY[musicCat].songs;
+    return q
+      ? allSongs.filter(s => s.toLowerCase().includes(q)).slice(0, 12)
+      : pool.slice(0, 14);
+  }, [musicQuery, musicCat, allSongs]);
+
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.playbackRate = videoSpeed;
+  }, [videoSpeed]);
 
   return (
     <motion.div
@@ -215,13 +446,13 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
       style={{ zIndex:200, background:"#000", touchAction:"none" }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onClick={() => { setSelectedId(null); if (panel !== "text" && panel !== "music" && panel !== "sticker" && panel !== "filter") setPanel("none"); }}
+      onClick={() => { setSelectedId(null); setPanel("none"); }}
     >
       {/* ── Preview area ── */}
       <div ref={containerRef} className="relative flex-1 overflow-hidden">
         {/* Media with filter */}
         {isVideo(previews[slide]) ? (
-          <video src={previews[slide]} className="w-full h-full object-cover" muted loop playsInline autoPlay
+          <video ref={videoRef} src={previews[slide]} className="w-full h-full object-cover" muted loop playsInline autoPlay
             style={{ filter: activeFilter.css === "none" ? undefined : activeFilter.css }} />
         ) : (
           <img src={previews[slide]} alt="" className="w-full h-full object-cover"
@@ -295,12 +526,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         </div>
 
         {/* Right tool strip */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-2">
           {[
             { id:"text",    Icon:Type,     label:"Matn"    },
             { id:"sticker", Icon:Smile,    label:"Stiker"  },
             { id:"filter",  Icon:Sparkles, label:"Filtr"   },
             { id:"music",   Icon:Music,    label:"Musiqa"  },
+            { id:"speed",   Icon:Zap,      label:"Tezlik"  },
+            { id:"soundfx", Icon:Volume2,  label:"FX Ovoz" },
           ].map(({ id, Icon, label }) => (
             <button key={id} onClick={e => { e.stopPropagation(); setPanel(p => p===id ? "none" : id as any); setSelectedId(null); }}
               className="w-11 h-11 rounded-2xl flex flex-col items-center justify-center gap-0.5"
@@ -510,38 +743,37 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
           <motion.div
             initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
             transition={{ type:"spring", stiffness:380, damping:32 }}
-            className="flex-shrink-0 pb-8"
-            style={{ background:"rgba(8,8,22,0.97)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            className="flex-shrink-0 pb-6"
+            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
             onClick={e => e.stopPropagation()}
           >
             {/* Selected song bar */}
             {audioName && (
               <div className="flex items-center gap-2 mx-4 mt-3 px-3 py-2 rounded-2xl"
-                style={{ background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.4)" }}>
-                <div className="w-6 h-6 rounded-full vinyl-spin flex items-center justify-center flex-shrink-0"
-                  style={{ background:"linear-gradient(135deg,#7c3aed,#f472b6)" }}>
-                  <Music className="w-3 h-3 text-white" />
+                style={{ background:"rgba(124,58,237,0.18)", border:"1px solid rgba(124,58,237,0.5)" }}>
+                <div className="flex items-end gap-0.5 w-6 h-5 flex-shrink-0">
+                  <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
                 </div>
-                <span className="flex-1 text-sm text-white font-semibold truncate">{audioName}</span>
+                <span className="flex-1 text-[13px] text-white font-bold truncate">{audioName}</span>
                 <button onClick={() => { setAudioName(""); setMusicQuery(""); }}
                   className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ background:"rgba(255,255,255,0.15)" }}>
+                  style={{ background:"rgba(255,255,255,0.18)" }}>
                   <X className="w-3 h-3 text-white/70" />
                 </button>
               </div>
             )}
 
             {/* Search bar */}
-            <div className="flex gap-2 mx-4 mt-3">
+            <div className="flex gap-2 mx-4 mt-2.5">
               <div className="flex-1 flex items-center gap-2 rounded-2xl px-3"
                 style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)" }}>
-                <Search className="w-4 h-4 text-white/40 flex-shrink-0" />
+                <Search className="w-4 h-4 text-white/35 flex-shrink-0" />
                 <input
                   autoFocus
                   value={musicQuery}
-                  onChange={e => setMusicQuery(e.target.value)}
-                  placeholder="Qo'shiq yoki artist qidiring…"
-                  className="flex-1 bg-transparent py-3 text-sm text-white placeholder:text-white/30 focus:outline-none"
+                  onChange={e => { setMusicQuery(e.target.value); }}
+                  placeholder="Artist yoki qo'shiq nomini qidiring…"
+                  className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
                 />
                 {musicQuery && (
                   <button onClick={() => setMusicQuery("")}>
@@ -556,41 +788,169 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
               </button>
             </div>
 
-            {/* Suggestions */}
-            <div className="mt-2 max-h-52 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
+            {/* Country category tabs with waving flags */}
+            {!musicQuery && (
+              <div className="flex gap-2 px-4 mt-3 overflow-x-auto scrollbar-none pb-0.5">
+                {SONGS_BY_COUNTRY.map((cat, i) => (
+                  <button key={i} onClick={() => setMusicCat(i)}
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
+                    style={{
+                      background: musicCat===i ? "rgba(124,58,237,0.85)" : "rgba(255,255,255,0.08)",
+                      border: musicCat===i ? "1px solid rgba(124,58,237,0.9)" : "1px solid rgba(255,255,255,0.1)",
+                      color: musicCat===i ? "white" : "rgba(255,255,255,0.55)",
+                    }}>
+                    <span className={musicCat===i ? "flag-wave" : ""} style={{ fontSize:14, lineHeight:1 }}>{cat.flag}</span>
+                    <span>{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Songs list */}
+            <div className="mt-1 max-h-48 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
+              {musicQuery && (
+                <p className="text-[10px] text-white/30 px-4 py-1">
+                  {musicSuggestions.length} natija — barcha mamlakatlar
+                </p>
+              )}
               {musicSuggestions.length === 0 ? (
                 <p className="text-center text-white/30 text-xs py-6">Qo'shiq topilmadi</p>
               ) : (
                 musicSuggestions.map((song, i) => {
-                  const [artist, title] = song.split(" — ");
+                  const parts = song.split(" — ");
+                  const artist = parts[0]; const title = parts.slice(1).join(" — ");
                   const isSelected = audioName === song;
+                  const countryFlag = SONGS_BY_COUNTRY.find(c => c.songs.includes(song))?.flag ?? "🎵";
                   return (
                     <button key={i}
                       onClick={() => { setAudioName(song); setMusicQuery(song); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 transition-all"
+                      className="w-full flex items-center gap-3 px-4 py-2 transition-all"
                       style={{
-                        background: isSelected ? "rgba(124,58,237,0.2)" : "transparent",
-                        borderLeft: isSelected ? "2px solid #7c3aed" : "2px solid transparent",
+                        background: isSelected ? "rgba(124,58,237,0.18)" : "transparent",
+                        borderLeft: isSelected ? "2.5px solid #7c3aed" : "2.5px solid transparent",
                       }}>
-                      <div className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center"
-                        style={{ background: isSelected ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.08)" }}>
-                        <Music className="w-3.5 h-3.5 text-white" style={{ opacity: isSelected ? 1 : 0.5 }} />
-                      </div>
+                      <span className="flex-shrink-0 text-base leading-none">{countryFlag}</span>
                       <div className="flex flex-col items-start flex-1 min-w-0">
-                        <span className="text-[13px] font-semibold text-white truncate w-full text-left">{title}</span>
-                        <span className="text-[11px] text-white/45 truncate w-full text-left">{artist}</span>
+                        <span className="text-[13px] font-semibold text-white truncate w-full text-left leading-tight">{title}</span>
+                        <span className="text-[10px] text-white/40 truncate w-full text-left">{artist}</span>
                       </div>
-                      {isSelected && <Check className="w-4 h-4 text-violet-400 flex-shrink-0" />}
+                      {isSelected ? (
+                        <div className="flex items-end gap-0.5 flex-shrink-0">
+                          <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
+                        </div>
+                      ) : (
+                        <span className="text-white/20 flex-shrink-0 text-xs">▶</span>
+                      )}
                     </button>
                   );
                 })
               )}
             </div>
-
-            {/* Manual entry hint */}
-            <p className="text-center text-white/25 text-[10px] pb-2 mt-1">
-              Topilmasa — to'g'ridan-to'g'ri yozing va ✓ bosing
+            <p className="text-center text-white/20 text-[10px] pt-1">
+              {allSongs.length}+ qo'shiq · Topilmasa o'zingiz yozing ✓
             </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Speed panel ── */}
+      <AnimatePresence>
+        {panel === "speed" && (
+          <motion.div
+            initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
+            transition={{ type:"spring", stiffness:380, damping:32 }}
+            className="flex-shrink-0 px-4 pt-4 pb-8"
+            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="text-xs font-bold text-white/40 mb-3">⚡ Video tezligi — CapCutdan ustun!</p>
+            {/* Speed track */}
+            <div className="relative mb-4">
+              <div className="flex gap-2 justify-between">
+                {SPEED_OPTIONS.map(sp => (
+                  <button key={sp.val} onClick={() => setVideoSpeed(sp.val)}
+                    className="flex-1 py-3 rounded-2xl flex flex-col items-center gap-1 transition-all"
+                    style={{
+                      background: videoSpeed===sp.val ? `${sp.color}30` : "rgba(255,255,255,0.06)",
+                      border: videoSpeed===sp.val ? `1.5px solid ${sp.color}` : "1.5px solid rgba(255,255,255,0.1)",
+                      transform: videoSpeed===sp.val ? "scale(1.08)" : "scale(1)",
+                    }}>
+                    <span className="text-[13px] font-black" style={{ color: videoSpeed===sp.val ? sp.color : "rgba(255,255,255,0.6)" }}>
+                      {sp.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Speed description */}
+            <div className="px-3 py-2 rounded-xl" style={{ background:"rgba(255,255,255,0.05)" }}>
+              {videoSpeed < 1
+                ? <p className="text-[11px] text-cyan-300 font-semibold">🐌 Sekin harakat — dramatik effekt</p>
+                : videoSpeed === 1
+                ? <p className="text-[11px] text-white/40 font-semibold">▶ Oddiy tezlik</p>
+                : videoSpeed === 1.5
+                ? <p className="text-[11px] text-orange-300 font-semibold">⚡ Biroz tezroq — ko'proq kontent</p>
+                : <p className="text-[11px] text-red-400 font-semibold">🚀 Super tez — hype effekti!</p>
+              }
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Sound FX panel ── */}
+      <AnimatePresence>
+        {panel === "soundfx" && (
+          <motion.div
+            initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
+            transition={{ type:"spring", stiffness:380, damping:32 }}
+            className="flex-shrink-0 pb-8"
+            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex gap-2 px-4 pt-3 mb-3 overflow-x-auto scrollbar-none">
+              {SOUND_FX.map((cat, i) => (
+                <button key={i} onClick={() => setSoundFxCat(i)}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
+                  style={{
+                    background: soundFxCat===i ? "rgba(168,85,247,0.8)" : "rgba(255,255,255,0.08)",
+                    color: soundFxCat===i ? "white" : "rgba(255,255,255,0.5)",
+                  }}>
+                  {cat.cat}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-4 gap-2 px-4 max-h-44 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
+              {SOUND_FX[soundFxCat].sounds.map((fx, i) => {
+                const isSelected = audioName === fx.name;
+                return (
+                  <button key={i} onClick={() => setAudioName(isSelected ? "" : fx.name)}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all"
+                    style={{
+                      background: isSelected ? "rgba(168,85,247,0.25)" : "rgba(255,255,255,0.06)",
+                      border: isSelected ? "1.5px solid rgba(168,85,247,0.8)" : "1.5px solid rgba(255,255,255,0.08)",
+                      transform: isSelected ? "scale(0.95)" : "scale(1)",
+                    }}>
+                    <span className="text-2xl leading-none">{fx.emoji}</span>
+                    <span className="text-[9px] font-bold text-center leading-tight px-1"
+                      style={{ color: isSelected ? "#d8b4fe" : "rgba(255,255,255,0.45)" }}>
+                      {fx.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {audioName && SOUND_FX.flatMap(c=>c.sounds).some(s=>s.name===audioName) && (
+              <div className="flex items-center gap-2 mx-4 mt-2 px-3 py-2 rounded-2xl"
+                style={{ background:"rgba(168,85,247,0.12)", border:"1px solid rgba(168,85,247,0.35)" }}>
+                <div className="flex items-end gap-0.5">
+                  <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
+                </div>
+                <span className="text-sm text-purple-300 font-bold">{audioName} qo'shildi</span>
+                <button onClick={() => setAudioName("")} className="ml-auto">
+                  <X className="w-3.5 h-3.5 text-white/40" />
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

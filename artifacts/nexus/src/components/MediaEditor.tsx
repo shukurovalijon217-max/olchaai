@@ -877,28 +877,29 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
           </button>
         </div>
 
-        {/* Right tool strip */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-2">
+        {/* Right tool strip — scrollable so all 9+ buttons fit on any screen */}
+        <div className="absolute right-2 top-2 bottom-2 flex flex-col gap-1.5 overflow-y-auto py-1"
+          style={{ scrollbarWidth:"none", maxHeight:"calc(100% - 16px)" }}>
           {[
-            { id:"text",    Icon:Type,     label:"Matn"    },
-            { id:"sticker", Icon:Smile,    label:"Stiker"  },
-            { id:"filter",  Icon:Sparkles, label:"Filtr"   },
-            { id:"ar",      Icon:Wand2,    label:"AR"      },
-            { id:"music",   Icon:Music,    label:"Musiqa"  },
-            { id:"speed",   Icon:Zap,      label:"Tezlik"  },
-            { id:"soundfx", Icon:Volume2,  label:"FX Ovoz" },
-            { id:"voice",   Icon:Mic,      label:"Ovoz FX" },
-            { id:"beauty",  Icon:Scissors, label:"Beautify"},
+            { id:"text",    Icon:Type,     label:"Matn"   },
+            { id:"sticker", Icon:Smile,    label:"Stiker" },
+            { id:"filter",  Icon:Sparkles, label:"Filtr"  },
+            { id:"ar",      Icon:Wand2,    label:"AR"     },
+            { id:"music",   Icon:Music,    label:"Musiqa" },
+            { id:"speed",   Icon:Zap,      label:"Tezlik" },
+            { id:"soundfx", Icon:Volume2,  label:"FX"     },
+            { id:"voice",   Icon:Mic,      label:"Ovoz"   },
+            { id:"beauty",  Icon:Scissors, label:"Beauty" },
           ].map(({ id, Icon, label }) => (
             <button key={id} onClick={e => { e.stopPropagation(); setPanel(p => p===id ? "none" : id as any); setSelectedId(null); }}
-              className="w-11 h-11 rounded-2xl flex flex-col items-center justify-center gap-0.5"
+              className="w-10 h-10 rounded-2xl flex flex-col items-center justify-center gap-0.5 flex-shrink-0"
               style={{
-                background: panel===id ? "rgba(124,58,237,0.85)" : "rgba(0,0,0,0.5)",
+                background: panel===id ? "rgba(124,58,237,0.9)" : "rgba(0,0,0,0.55)",
                 backdropFilter:"blur(10px)",
-                border:"1px solid rgba(255,255,255,0.18)",
+                border: panel===id ? "1.5px solid rgba(168,85,247,0.7)" : "1px solid rgba(255,255,255,0.18)",
               }}>
-              <Icon className="w-4.5 h-4.5 text-white" style={{ width:18, height:18 }} />
-              <span className="text-[9px] text-white/80 font-bold leading-none">{label}</span>
+              <Icon style={{ width:15, height:15, color:"#fff" }} />
+              <span className="text-[8px] text-white/85 font-bold leading-none">{label}</span>
             </button>
           ))}
 
@@ -906,9 +907,9 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
           {selected && (
             <motion.button initial={{scale:0}} animate={{scale:1}}
               onClick={e => { e.stopPropagation(); removeSelected(); }}
-              className="w-11 h-11 rounded-2xl flex items-center justify-center"
-              style={{ background:"rgba(239,68,68,0.7)", backdropFilter:"blur(10px)" }}>
-              <Trash2 className="text-white" style={{ width:18, height:18 }} />
+              className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background:"rgba(239,68,68,0.75)", backdropFilter:"blur(10px)" }}>
+              <Trash2 style={{ width:15, height:15, color:"#fff" }} />
             </motion.button>
           )}
         </div>

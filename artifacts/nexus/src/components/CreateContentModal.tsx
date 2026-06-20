@@ -204,33 +204,54 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const [sharePerm,     setSharePerm]    = useState<Permission>("everyone");
   const uploadingRef = useRef(false);
 
-  /* Sequential upload runner */
+  /* Sequential upload runner — mirrors useMediaUpload two-step flow */
   useEffect(() => {
     const pending = mediaQueue.find(m => m.status === "idle");
     if (!pending || uploadingRef.current) return;
     uploadingRef.current = true;
-    setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "uploading" } : m));
-    const form = new FormData();
-    form.append("file", pending.file);
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${API}/api/media/upload`);
-    xhr.withCredentials = true;
-    xhr.upload.onprogress = e => {
-      if (e.lengthComputable)
-        setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, progress: Math.round((e.loaded / e.total) * 100) } : m));
-    };
-    xhr.onload = () => {
-      uploadingRef.current = false;
+    setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "uploading", progress: 5 } : m));
+
+    (async () => {
       try {
-        const res = JSON.parse(xhr.responseText);
-        const serveUrl: string = res.serveUrl ?? res.url ?? "";
+        /* Step 1 — request presigned PUT URL */
+        const urlRes = await fetch(`${API}/api/storage/uploads/request-url`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: pending.file.name,
+            size: pending.file.size,
+            contentType: pending.file.type || "application/octet-stream",
+          }),
+        });
+        if (!urlRes.ok) throw new Error("URL xatosi");
+        const { uploadURL, objectPath } = await urlRes.json() as { uploadURL: string; objectPath: string };
+        setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, progress: 30 } : m));
+
+        /* Step 2 — PUT file with XHR for progress */
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("PUT", uploadURL);
+          xhr.setRequestHeader("Content-Type", pending.file.type || "application/octet-stream");
+          xhr.upload.onprogress = e => {
+            if (e.lengthComputable)
+              setMediaQueue(q => q.map(m => m.id === pending.id
+                ? { ...m, progress: 30 + Math.round((e.loaded / e.total) * 65) }
+                : m));
+          };
+          xhr.onload = () => xhr.status < 300 ? resolve() : reject(new Error(`PUT xatosi ${xhr.status}`));
+          xhr.onerror = () => reject(new Error("Tarmoq xatosi"));
+          xhr.send(pending.file);
+        });
+
+        const serveUrl = `${API}/api/storage${objectPath}`;
         setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "done", progress: 100, serveUrl } : m));
       } catch {
         setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "error" } : m));
+      } finally {
+        uploadingRef.current = false;
       }
-    };
-    xhr.onerror = () => { uploadingRef.current = false; setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "error" } : m)); };
-    xhr.send(form);
+    })();
   }, [mediaQueue]);
 
   const addFiles = (files: FileList) => {

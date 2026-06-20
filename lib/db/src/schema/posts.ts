@@ -9,6 +9,7 @@ export const postsTable = pgTable("posts", {
   content: text("content").notNull(),
   type: text("type").notNull().default("text"),
   mediaUrl: text("media_url"),
+  mediaUrls: text("media_urls").array(),
   tags: text("tags").array(),
   likesCount: integer("likes_count").notNull().default(0),
   commentsCount: integer("comments_count").notNull().default(0),

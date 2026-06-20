@@ -6,8 +6,9 @@ import {
   Maximize2, Square, RectangleVertical,
   MessageCircle, Share2, Users, Globe, Ban, Plus, Trash2,
   Sparkles, BarChart2, ChevronDown, ChevronUp,
+  Target, Clock, Tag, UserPlus, Heart, Shield, Repeat2, MapPin,
 } from "lucide-react";
-import MediaEditor, { type TextOverlay } from "@/components/MediaEditor";
+import MediaEditor, { type TextOverlay, TRENDING_CHALLENGES } from "@/components/MediaEditor";
 import {
   useCreatePost, useCreateReel, useCreateStory,
   getListPostsQueryKey, getListReelsQueryKey, getListStoriesQueryKey,
@@ -326,6 +327,32 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const [locationTag, setLocationTag] = useState("");
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
+  /* ── Advanced creator state ── */
+  const [challengeTag, setChallengeTag] = useState("");
+  const [collabUser, setCollabUser] = useState("");
+  const [allowedReactions, setAllowedReactions] = useState<string[]>(["❤️","🔥","😂","😮","😢","👏","💎","🫶"]);
+  const [blockedKeywords, setBlockedKeywords] = useState("");
+  const [creatorGoal, setCreatorGoal] = useState("");
+  const [crossPost, setCrossPost] = useState<string[]>([]);
+  const [creatorNotes, setCreatorNotes] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [bestTimeOpen, setBestTimeOpen] = useState(false);
+  const [bestTimeLoading, setBestTimeLoading] = useState(false);
+  const [bestTime, setBestTime] = useState<{time:string;reason:string}|null>(null);
+
+  const fetchBestTime = async () => {
+    setBestTimeLoading(true); setBestTimeOpen(true);
+    await new Promise(r => setTimeout(r, 1200));
+    const times = [
+      { time:"07:00–09:00", reason:"Ertalab kuzatuvchilar eng aktiv" },
+      { time:"12:00–13:00", reason:"Tushlik vaqtida trafik yuqori" },
+      { time:"19:00–21:00", reason:"Kechki cho'qqi vaqt — 3x ko'proq ko'rish" },
+      { time:"22:00–23:00", reason:"Kech kechki vaqt — yoshlar aktiv" },
+    ];
+    setBestTime(times[Math.floor(Math.random() * times.length)]);
+    setBestTimeLoading(false);
+  };
+
   const addFiles = (files: FileList) => {
     const arr = Array.from(files).slice(0, 10 - mediaQueue.length);
     if (arr.length === 0) return;
@@ -502,6 +529,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     setHotTake(false); setTimeCapsule(false); setScheduledAt(""); setPrediction(null); setPredictOpen(false);
     setVisibility("everyone"); setDuetAllowed(true); setDownloadAllowed(true); setHideLikes(false); setHideViews(false);
     setSensitiveContent(false); setAgeRestricted(false); setBrandPartnership(false); setContentLabel(""); setLocationTag(""); setPrivacyOpen(false);
+    setChallengeTag(""); setCollabUser(""); setAllowedReactions(["❤️","🔥","😂","😮","😢","👏","💎","🫶"]);
+    setBlockedKeywords(""); setCreatorGoal(""); setCrossPost([]); setCreatorNotes(""); setAdvancedOpen(false); setBestTimeOpen(false); setBestTime(null);
     setReelFile(null); setReelPreview(""); setReelCaption(""); setReelAudio("");
     setReelAudioFile(null); setReelAudioPreview(""); setReelUploadResult(null); setReelAudioUploadResult(null);
     setReelCommentPerm("everyone"); setReelSharePerm("everyone");
@@ -1138,7 +1167,204 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                           )}
                         </AnimatePresence>
                       </div>
-                    </div>
+
+                      {/* ── Advanced Creator Panel ── */}
+                      <div className="rounded-2xl overflow-hidden"
+                        style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.06)" }}>
+                        <button className="w-full flex items-center justify-between px-3.5 py-3"
+                          onClick={() => setAdvancedOpen(p=>!p)}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">🚀</span>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-white/80">Kengaytirilgan sozlamalar</p>
+                              <p className="text-[10px] text-white/40">Challenge, Collab, Reaksiyalar, Maqsad va ko'proq</p>
+                            </div>
+                          </div>
+                          {advancedOpen ? <ChevronUp className="w-4 h-4 text-white/40"/> : <ChevronDown className="w-4 h-4 text-white/40"/>}
+                        </button>
+                        <AnimatePresence>
+                          {advancedOpen && (
+                            <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                              <div className="px-3.5 pb-4 space-y-4 border-t border-white/5">
+
+                                {/* Challenge Tag */}
+                                <div className="mt-3">
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Tag className="w-3 h-3"/> Trend Challenge
+                                  </p>
+                                  <div className="flex flex-wrap gap-1.5 mb-2">
+                                    {TRENDING_CHALLENGES.map(ch => (
+                                      <button key={ch} onClick={() => setChallengeTag(challengeTag===ch ? "" : ch)}
+                                        className="px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all"
+                                        style={{
+                                          background: challengeTag===ch ? "rgba(251,191,36,0.2)" : "rgba(255,255,255,0.06)",
+                                          border: challengeTag===ch ? "1px solid rgba(251,191,36,0.6)" : "1px solid rgba(255,255,255,0.08)",
+                                          color: challengeTag===ch ? "#fbbf24" : "rgba(255,255,255,0.45)",
+                                        }}>
+                                        {ch}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <input placeholder="O'z challengingizni kiriting (#NomingizChallenge)"
+                                    value={challengeTag.startsWith("#") && !TRENDING_CHALLENGES.includes(challengeTag) ? challengeTag : ""}
+                                    onChange={e => setChallengeTag(e.target.value || "")}
+                                    className="w-full rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                                    style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }} />
+                                </div>
+
+                                {/* Collab */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                                    <UserPlus className="w-3 h-3"/> Kollab — Hamkorlik
+                                  </p>
+                                  <div className="flex items-center gap-2">
+                                    <input placeholder="@foydalanuvchi (do'stingizni taklif qiling)"
+                                      value={collabUser} onChange={e => setCollabUser(e.target.value)}
+                                      className="flex-1 rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                                      style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }} />
+                                    {collabUser && (
+                                      <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl flex-shrink-0"
+                                        style={{ background:"rgba(52,211,153,0.15)", border:"1px solid rgba(52,211,153,0.4)" }}>
+                                        <span className="text-[10px] text-emerald-400 font-bold">✓ Taklif</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Reactions control */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Heart className="w-3 h-3"/> Reaksiyalar boshqaruvi
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {["❤️","🔥","😂","😮","😢","👏","💎","🫶","🤩","🙏","😡","💯"].map(r => {
+                                      const isOn = allowedReactions.includes(r);
+                                      return (
+                                        <button key={r} onClick={() => setAllowedReactions(p => isOn ? p.filter(x=>x!==r) : [...p, r])}
+                                          className="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all"
+                                          style={{
+                                            background: isOn ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.04)",
+                                            border: isOn ? "1.5px solid rgba(255,255,255,0.3)" : "1.5px solid rgba(255,255,255,0.08)",
+                                            opacity: isOn ? 1 : 0.35,
+                                          }}>
+                                          {r}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  <p className="text-[9px] text-white/30 mt-1">{allowedReactions.length} ta reaksiya yoqilgan</p>
+                                </div>
+
+                                {/* Creator Goal */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Target className="w-3 h-3"/> Post maqsadi
+                                  </p>
+                                  <div className="grid grid-cols-2 gap-1.5">
+                                    {[
+                                      { id:"entertain", emoji:"🎭", label:"Ko'ngil ochar",   desc:"Zavq berish" },
+                                      { id:"educate",   emoji:"📚", label:"O'rgatish",       desc:"Bilim ulashish" },
+                                      { id:"inspire",   emoji:"✨", label:"Ilhom berish",    desc:"Motivatsiya" },
+                                      { id:"promote",   emoji:"📢", label:"Targ'ibot",       desc:"Brend/mahsulot" },
+                                      { id:"challenge", emoji:"🏆", label:"Challenge",       desc:"Musobaqa" },
+                                      { id:"connect",   emoji:"🤝", label:"Ulanish",         desc:"Hamjamiyat" },
+                                    ].map(g => (
+                                      <button key={g.id} onClick={() => setCreatorGoal(creatorGoal===g.id ? "" : g.id)}
+                                        className="flex items-center gap-2 px-2.5 py-2 rounded-xl text-left transition-all"
+                                        style={{
+                                          background: creatorGoal===g.id ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.05)",
+                                          border: creatorGoal===g.id ? "1.5px solid rgba(99,102,241,0.7)" : "1.5px solid rgba(255,255,255,0.07)",
+                                        }}>
+                                        <span>{g.emoji}</span>
+                                        <div>
+                                          <p className="text-[11px] font-bold" style={{ color: creatorGoal===g.id ? "#a5b4fc" : "rgba(255,255,255,0.7)" }}>{g.label}</p>
+                                          <p className="text-[9px] text-white/30">{g.desc}</p>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Cross-post */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Repeat2 className="w-3 h-3"/> Boshqa platformalarga ulashish
+                                  </p>
+                                  <div className="flex gap-2 flex-wrap">
+                                    {[
+                                      { id:"telegram",  emoji:"✈️", label:"Telegram",  color:"#2ca5e0" },
+                                      { id:"whatsapp",  emoji:"💬", label:"WhatsApp",  color:"#25d366" },
+                                      { id:"twitter",   emoji:"🐦", label:"Twitter/X", color:"#1da1f2" },
+                                      { id:"facebook",  emoji:"👥", label:"Facebook",  color:"#1877f2" },
+                                      { id:"instagram", emoji:"📸", label:"Instagram", color:"#e1306c" },
+                                      { id:"youtube",   emoji:"▶️", label:"YouTube",   color:"#ff0000" },
+                                    ].map(p => {
+                                      const isOn = crossPost.includes(p.id);
+                                      return (
+                                        <button key={p.id} onClick={() => setCrossPost(prev => isOn ? prev.filter(x=>x!==p.id) : [...prev, p.id])}
+                                          className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-[11px] font-bold transition-all"
+                                          style={{
+                                            background: isOn ? `${p.color}22` : "rgba(255,255,255,0.05)",
+                                            border: isOn ? `1.5px solid ${p.color}80` : "1.5px solid rgba(255,255,255,0.08)",
+                                            color: isOn ? p.color : "rgba(255,255,255,0.4)",
+                                          }}>
+                                          {p.emoji} {p.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* Keyword filter */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Shield className="w-3 h-3"/> Kalit so'z filtri (Anti-harassment)
+                                  </p>
+                                  <input placeholder="Bloklash kerak so'zlar (vergul bilan: spam, reklama, ...)"
+                                    value={blockedKeywords} onChange={e => setBlockedKeywords(e.target.value)}
+                                    className="w-full rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                                    style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }} />
+                                </div>
+
+                                {/* AI Best Time */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Clock className="w-3 h-3"/> AI — Eng yaxshi post vaqti
+                                  </p>
+                                  <button onClick={fetchBestTime}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
+                                    style={{ background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.35)", color:"#c4b5fd" }}>
+                                    {bestTimeLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4"/>}
+                                    {bestTimeLoading ? "Aniqlanmoqda..." : "AI tahlil qilsin"}
+                                  </button>
+                                  <AnimatePresence>
+                                    {bestTimeOpen && !bestTimeLoading && bestTime && (
+                                      <motion.div initial={{opacity:0,y:-6}} animate={{opacity:1,y:0}} exit={{opacity:0}}
+                                        className="mt-2 px-3 py-2.5 rounded-xl"
+                                        style={{ background:"rgba(124,58,237,0.12)", border:"1px solid rgba(124,58,237,0.35)" }}>
+                                        <p className="text-xs font-black text-purple-300">⏰ {bestTime.time}</p>
+                                        <p className="text-[10px] text-white/50 mt-0.5">{bestTime.reason}</p>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* Creator notes */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📝 Kreator eslatmalari (shaxsiy)</p>
+                                  <textarea placeholder="Bu post haqida o'zingizga eslatma (hech kim ko'rmaydi)…"
+                                    rows={2} value={creatorNotes} onChange={e => setCreatorNotes(e.target.value)}
+                                    className="w-full resize-none rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                                    style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }} />
+                                </div>
+
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                  </div>
                   )}
 
                   {/* ═══ REEL TAB ═══ */}

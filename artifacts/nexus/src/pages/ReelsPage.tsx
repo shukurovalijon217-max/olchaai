@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-/* ─── Types ─────────────────────────────────────────────── */
+/* ─── Types ──────────────────────────────────────────────────── */
 interface FeedItem {
   id: number; videoUrl?: string | null; thumbnailUrl?: string | null;
   caption?: string | null; audioTrack?: string | null; duration?: number | null;
@@ -29,61 +29,67 @@ interface ReelComment {
 }
 interface Analysis { tags?: string[]; category?: string; summary?: string; sentiment?: string }
 
-/* ─── Helpers ────────────────────────────────────────────── */
-const fmt = (n: number) => n >= 1_000_000 ? `${(n/1_000_000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(1)}K` : `${n}`;
+/* ─── Utils ───────────────────────────────────────────────────── */
+const fmt = (n: number) =>
+  n >= 1_000_000 ? `${(n/1_000_000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(1)}K` : `${n}`;
 
 const initials = (name?: string) =>
-  (name ?? "?").split(" ").slice(0, 2).map(w => w[0]?.toUpperCase()).join("");
+  (name ?? "?").split(" ").slice(0,2).map(w => w[0]?.toUpperCase()).join("");
 
-/* ─── Design tokens ──────────────────────────────────────── */
-/** Perfect glass circle — same diameter for all action buttons */
-const CIRC = 44;
-const circleBase: React.CSSProperties = {
-  width: CIRC, height: CIRC, borderRadius: "50%", flexShrink: 0,
-  background: "rgba(8,6,22,0.44)",
-  backdropFilter: "blur(22px) saturate(1.6)",
-  WebkitBackdropFilter: "blur(22px) saturate(1.6)",
-  border: "1px solid rgba(255,255,255,0.13)",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.1)",
+/* ─── Design tokens ───────────────────────────────────────────── */
+const HUB  = 46;   // hub button diameter
+const SUB  = 40;   // sub-circle diameter
+const STEP = 54;   // vertical distance between sub-circles
+
+const hubBase: React.CSSProperties = {
+  width: HUB, height: HUB, borderRadius: "50%",
   display: "flex", alignItems: "center", justifyContent: "center",
-  cursor: "pointer",
+  cursor: "pointer", flexShrink: 0,
+  backdropFilter: "blur(24px) saturate(1.7)",
+  WebkitBackdropFilter: "blur(24px) saturate(1.7)",
 };
 
-/** Small volume circle */
-const VOL_SIZE = 32;
+const subBase: React.CSSProperties = {
+  width: SUB, height: SUB, borderRadius: "50%",
+  display: "flex", alignItems: "center", justifyContent: "center",
+  cursor: "pointer",
+  backdropFilter: "blur(20px) saturate(1.5)",
+  WebkitBackdropFilter: "blur(20px) saturate(1.5)",
+};
+
 const volCircle: React.CSSProperties = {
-  width: VOL_SIZE, height: VOL_SIZE, borderRadius: "50%", flexShrink: 0,
-  background: "rgba(6,4,18,0.42)",
-  backdropFilter: "blur(18px) saturate(1.4)",
-  WebkitBackdropFilter: "blur(18px) saturate(1.4)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  boxShadow: "0 2px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
+  width: 30, height: 30, borderRadius: "50%",
+  background: "rgba(6,4,18,0.38)",
+  backdropFilter: "blur(18px) saturate(1.3)",
+  WebkitBackdropFilter: "blur(18px) saturate(1.3)",
+  border: "1px solid rgba(255,255,255,0.09)",
+  boxShadow: "0 2px 10px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.06)",
   display: "flex", alignItems: "center", justifyContent: "center",
   cursor: "pointer",
 };
 
-/* ─── Particle burst on double-tap ──────────────────────── */
+/* ─── Particles ────────────────────────────────────────────────── */
 const PCOLS = ["#ff6b6b","#ffd93d","#6bcb77","#4d96ff","#ff6ef7","#ff8c42","#c084fc","#38bdf8"];
+
 function ParticleBurst({ x, y, onDone }: { x: number; y: number; onDone: () => void }) {
   const pts = Array.from({ length: 14 }, (_, i) => {
-    const angle = (i / 14) * 360, dist = 40 + Math.random() * 28;
-    const rad = (angle * Math.PI) / 180;
-    return { tx: Math.cos(rad) * dist, ty: Math.sin(rad) * dist, color: PCOLS[i % PCOLS.length] };
+    const a = (i/14)*360, d = 40 + Math.random()*28, r = (a*Math.PI)/180;
+    return { tx: Math.cos(r)*d, ty: Math.sin(r)*d, color: PCOLS[i%PCOLS.length] };
   });
   return (
     <>
-      {pts.map((p, i) => (
+      {pts.map((p,i) => (
         <motion.div key={i}
-          initial={{ x, y, scale: 1.2, opacity: 1 }}
-          animate={{ x: x + p.tx, y: y + p.ty, scale: 0, opacity: 0 }}
-          transition={{ duration: 0.56, ease: "easeOut", delay: i * 0.01 }}
-          onAnimationComplete={i === 0 ? onDone : undefined}
+          initial={{ x, y, scale:1.2, opacity:1 }}
+          animate={{ x:x+p.tx, y:y+p.ty, scale:0, opacity:0 }}
+          transition={{ duration:0.56, ease:"easeOut", delay:i*0.01 }}
+          onAnimationComplete={i===0 ? onDone : undefined}
           style={{ position:"absolute", width:7, height:7, borderRadius:"50%",
-            background: p.color, pointerEvents:"none", zIndex:60, left:0, top:0, marginLeft:-3.5, marginTop:-3.5 }} />
+            background:p.color, pointerEvents:"none", zIndex:60, left:0, top:0, marginLeft:-3.5, marginTop:-3.5 }} />
       ))}
       <motion.div
         initial={{ scale:0, opacity:1, x:x-24, y:y-24 }}
-        animate={{ scale:[0,1.8,1.1], opacity:[1,1,0], y:y-82 }}
+        animate={{ scale:[0,1.9,1.1], opacity:[1,1,0], y:y-84 }}
         transition={{ duration:0.7, ease:"easeOut" }}
         style={{ position:"absolute", left:0, top:0, pointerEvents:"none", zIndex:60 }}>
         <Heart className="w-12 h-12 fill-red-500 text-red-500" />
@@ -92,54 +98,57 @@ function ParticleBurst({ x, y, onDone }: { x: number; y: number; onDone: () => v
   );
 }
 
-/* ─── Neon corners ───────────────────────────────────────── */
+/* ─── Neon corners ─────────────────────────────────────────────── */
 function NeonCorners({ color }: { color: string }) {
   const S = 18, W = "2px";
-  const c: React.CSSProperties = { position:"absolute", width:S, height:S, opacity:0.85,
+  const b: React.CSSProperties = { position:"absolute", width:S, height:S, opacity:0.82,
     filter:`drop-shadow(0 0 4px ${color})`, zIndex:25, pointerEvents:"none" };
   return (
     <>
-      <div style={{ ...c, top:9, left:9,    borderTop:`${W} solid ${color}`, borderLeft:`${W} solid ${color}`, borderRadius:"3px 0 0 0" }} />
-      <div style={{ ...c, top:9, right:9,   borderTop:`${W} solid ${color}`, borderRight:`${W} solid ${color}`, borderRadius:"0 3px 0 0" }} />
-      <div style={{ ...c, bottom:9, left:9,  borderBottom:`${W} solid ${color}`, borderLeft:`${W} solid ${color}`, borderRadius:"0 0 0 3px" }} />
-      <div style={{ ...c, bottom:9, right:9, borderBottom:`${W} solid ${color}`, borderRight:`${W} solid ${color}`, borderRadius:"0 0 3px 0" }} />
+      <div style={{...b, top:9, left:9,    borderTop:`${W} solid ${color}`, borderLeft:`${W} solid ${color}`,  borderRadius:"3px 0 0 0"}} />
+      <div style={{...b, top:9, right:9,   borderTop:`${W} solid ${color}`, borderRight:`${W} solid ${color}`, borderRadius:"0 3px 0 0"}} />
+      <div style={{...b, bottom:9, left:9,  borderBottom:`${W} solid ${color}`, borderLeft:`${W} solid ${color}`,  borderRadius:"0 0 0 3px"}} />
+      <div style={{...b, bottom:9, right:9, borderBottom:`${W} solid ${color}`, borderRight:`${W} solid ${color}`, borderRadius:"0 0 3px 0"}} />
     </>
   );
 }
 
-/* ─── Video element ──────────────────────────────────────── */
+/* ─── Video element ────────────────────────────────────────────── */
 function ReelVideoEl({ videoUrl, thumbnailUrl, isActive, muted, videoRef, onPlayState }: {
   videoUrl?: string|null; thumbnailUrl?: string|null; isActive: boolean; muted: boolean;
   videoRef: React.RefObject<HTMLVideoElement|null>; onPlayState: (p: boolean) => void;
 }) {
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(false);
+  const [error,   setError]   = useState(false);
+
   useEffect(() => {
     const v = videoRef.current; if (!v) return;
     if (isActive) { v.currentTime=0; setError(false); setLoading(v.readyState<3); v.play().catch(()=>onPlayState(true)); }
     else { v.pause(); v.currentTime=0; }
   }, [isActive, videoRef, onPlayState]);
+
   useEffect(() => { if (videoRef.current) videoRef.current.muted = muted; }, [muted, videoRef]);
 
   if (!videoUrl) return (
     <div className="absolute inset-0">
-      {thumbnailUrl ? <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
-        : <div className="w-full h-full" style={{ background:"linear-gradient(135deg,#1e0533,#030314)" }} />}
+      {thumbnailUrl ? <img src={thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+        : <div className="w-full h-full" style={{background:"linear-gradient(135deg,#1e0533,#030314)"}}/>}
     </div>
   );
+
   return (
     <div className="absolute inset-0">
       {thumbnailUrl && (
         <img src={thumbnailUrl} alt="" aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover scale-110"
-          style={{ filter:"blur(22px) brightness(0.28)", pointerEvents:"none" }} />
+          style={{filter:"blur(22px) brightness(0.28)", pointerEvents:"none"}} />
       )}
       {thumbnailUrl && (loading||!isActive) && !error && (
         <img src={thumbnailUrl} alt="" loading="eager"
           className="absolute inset-0 w-full h-full object-contain pointer-events-none z-[1]" />
       )}
       <video ref={videoRef as React.RefObject<HTMLVideoElement>}
-        src={videoUrl} poster={thumbnailUrl ?? undefined}
+        src={videoUrl} poster={thumbnailUrl??undefined}
         className="absolute inset-0 w-full h-full object-contain z-[2]"
         loop playsInline muted={muted} preload="auto"
         onLoadedData={()=>setLoading(false)} onCanPlay={()=>setLoading(false)}
@@ -147,20 +156,20 @@ function ReelVideoEl({ videoUrl, thumbnailUrl, isActive, muted, videoRef, onPlay
         onPlaying={()=>{ setLoading(false); onPlayState(false); }}
         onPause={()=>onPlayState(true)}
         onError={()=>{ setError(true); setLoading(false); }}
-        style={{ opacity:loading&&!thumbnailUrl?0:1, transition:"opacity 100ms ease" }}
+        style={{opacity:loading&&!thumbnailUrl?0:1, transition:"opacity 100ms ease"}}
       />
       {loading && !error && !thumbnailUrl && (
         <div className="absolute inset-0 flex items-center justify-center z-[3] pointer-events-none">
           <div className="relative">
-            <div className="w-11 h-11 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin" />
+            <div className="w-11 h-11 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin"/>
             <div className="absolute inset-2 rounded-full border border-white/5 border-t-pink-400 animate-spin"
-              style={{ animationDuration:"0.65s", animationDirection:"reverse" }} />
+              style={{animationDuration:"0.65s",animationDirection:"reverse"}}/>
           </div>
         </div>
       )}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/55 z-[3] pointer-events-none">
-          {thumbnailUrl && <img src={thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25" />}
+          {thumbnailUrl && <img src={thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25"/>}
           <span className="text-white/65 text-xs bg-black/50 px-4 py-2 rounded-full z-10">Video mavjud emas</span>
         </div>
       )}
@@ -173,16 +182,59 @@ function useVideoProgress(ref: React.RefObject<HTMLVideoElement|null>) {
   useEffect(() => {
     const v = ref.current; if (!v) return;
     const h = () => setProgress(v.duration>0 ? v.currentTime/v.duration : 0);
-    v.addEventListener("timeupdate", h, { passive:true });
+    v.addEventListener("timeupdate", h, {passive:true});
     return () => v.removeEventListener("timeupdate", h);
   });
   return progress;
 }
 
-/* ─── Comments sheet ─────────────────────────────────────── */
+/* ─── Speed indicator ─────────────────────────────────────────── */
+function SpeedGlass({ speed, side }: { speed: number; side: "left"|"right" }) {
+  const color = side==="left" ? "#38bdf8" : "#f59e0b";
+  const dots  = speed<=0.25?1:speed<=0.5?2:speed<=0.75?3:speed===1?4:speed<=1.25?5:speed<=1.5?6:7;
+  return (
+    <motion.div initial={{opacity:0,scale:0.82}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.82}}
+      transition={{type:"spring",damping:22,stiffness:380}}
+      className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
+      <div className="flex flex-col items-center gap-2 px-8 py-4 rounded-3xl"
+        style={{background:"rgba(5,4,15,0.58)", backdropFilter:"blur(30px) saturate(1.5)",
+          WebkitBackdropFilter:"blur(30px) saturate(1.5)",
+          border:`1px solid ${color}28`, boxShadow:`0 0 44px ${color}14, inset 0 1px 0 rgba(255,255,255,0.07)`}}>
+        <div className="flex items-center gap-1">
+          {side==="left"
+            ? [1,0.6,0.25].map((o,i)=>(
+                <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill="none" style={{opacity:o}}>
+                  <path d="M15 18l-6-6 6-6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>))
+            : [0.25,0.6,1].map((o,i)=>(
+                <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill="none" style={{opacity:o}}>
+                  <path d="M9 18l6-6-6-6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>))}
+        </div>
+        <span className="font-black tabular-nums"
+          style={{fontSize:38, color, textShadow:`0 0 22px ${color}88`, letterSpacing:"-0.02em"}}>
+          {speed}×
+        </span>
+        <div className="flex gap-[5px]">
+          {Array.from({length:7},(_,i)=>(
+            <div key={i} className="rounded-full transition-all duration-200"
+              style={{width:i<dots?8:5, height:i<dots?8:5,
+                background:i<dots?color:"rgba(255,255,255,0.13)",
+                boxShadow:i<dots?`0 0 6px ${color}`:undefined}} />
+          ))}
+        </div>
+        <span className="text-[9px] font-bold" style={{color:`${color}88`,letterSpacing:"0.1em"}}>
+          {side==="left" ? "◀ SEKIN" : "TEZ ▶"}
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── Comments sheet ──────────────────────────────────────────── */
 function CommentsSheet({ reelId, commentsCount, onClose, user }: {
   reelId: number; commentsCount: number; onClose: () => void;
-  user: { id:number; displayName?:string; avatarUrl?:string|null }|null;
+  user: {id:number;displayName?:string;avatarUrl?:string|null}|null;
 }) {
   const { t, i18n } = useTranslation();
   const [comments, setComments] = useState<ReelComment[]>([]);
@@ -194,16 +246,16 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API}/api/reels/${reelId}/comments`, { credentials:"include" })
-      .then(r=>r.ok?r.json():[]).then(d=>{ setComments(d); setLoading(false); }).catch(()=>setLoading(false));
+    fetch(`${API}/api/reels/${reelId}/comments`, {credentials:"include"})
+      .then(r=>r.ok?r.json():[]).then(d=>{setComments(d);setLoading(false);}).catch(()=>setLoading(false));
   }, [reelId]);
 
   const handleSend = async () => {
     if (!text.trim()||!user||sending) return; setSending(true);
     try {
       const res = await fetch(`${API}/api/reels/${reelId}/comments`, {
-        method:"POST", headers:{ "Content-Type":"application/json" }, credentials:"include",
-        body: JSON.stringify({ content:text }),
+        method:"POST", headers:{"Content-Type":"application/json"}, credentials:"include",
+        body:JSON.stringify({content:text}),
       });
       if (res.ok) {
         const nc = await res.json(); setComments(p=>[nc,...p]); setCount(v=>v+1); setText("");
@@ -213,31 +265,31 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
   };
 
   return (
-    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
       className="fixed inset-0 z-50" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
-      <motion.div initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
-        transition={{ type:"spring", damping:28, stiffness:300 }}
+      <div className="absolute inset-0 bg-black/55 backdrop-blur-sm"/>
+      <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
+        transition={{type:"spring",damping:28,stiffness:300}}
         className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm rounded-t-3xl overflow-hidden"
-        style={{ maxHeight:"75vh", background:"rgba(10,8,24,0.96)", backdropFilter:"blur(24px)",
-          border:"1px solid rgba(124,58,237,0.2)", borderBottom:"none" }}
+        style={{maxHeight:"75vh", background:"rgba(10,8,24,0.96)", backdropFilter:"blur(24px)",
+          border:"1px solid rgba(124,58,237,0.2)", borderBottom:"none"}}
         onClick={e=>e.stopPropagation()}>
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-white/20" />
+          <div className="w-10 h-1 rounded-full bg-white/20"/>
         </div>
         <div className="flex items-center justify-between px-5 py-3"
-          style={{ borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
+          style={{borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
           <span className="text-white font-bold text-sm">{count} {t("reels.comments")}</span>
           <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background:"rgba(255,255,255,0.08)" }}>
-            <X className="w-3.5 h-3.5 text-white/60" />
+            style={{background:"rgba(255,255,255,0.08)"}}>
+            <X className="w-3.5 h-3.5 text-white/60"/>
           </button>
         </div>
         <div ref={listRef} className="overflow-y-auto px-4 py-3 space-y-4"
-          style={{ maxHeight:"calc(75vh - 140px)" }}>
+          style={{maxHeight:"calc(75vh - 140px)"}}>
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-violet-400 animate-spin" />
+              <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-violet-400 animate-spin"/>
             </div>
           ) : comments.length===0 ? (
             <p className="text-white/30 text-sm text-center py-8">{t("reels.no_comments")}</p>
@@ -245,9 +297,9 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
             <motion.div key={c.id} initial={{opacity:0,y:6}} animate={{opacity:1,y:0}}
               transition={{delay:i*0.03}} className="flex gap-3">
               <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden border border-white/10"
-                style={{ background:"linear-gradient(135deg,#7c3aed55,#ec489955)" }}>
+                style={{background:"linear-gradient(135deg,#7c3aed55,#ec489955)"}}>
                 {c.author.avatarUrl
-                  ? <img src={c.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ? <img src={c.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
                   : <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-white">
                       {initials(c.author.displayName)}
                     </div>}
@@ -266,27 +318,27 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
           ))}
         </div>
         <div className="px-4 py-3 flex items-center gap-3"
-          style={{ borderTop:"1px solid rgba(255,255,255,0.07)" }}>
+          style={{borderTop:"1px solid rgba(255,255,255,0.07)"}}>
           <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden"
-            style={{ background:"linear-gradient(135deg,#7c3aed55,#ec489955)" }}>
+            style={{background:"linear-gradient(135deg,#7c3aed55,#ec489955)"}}>
             {user?.avatarUrl
-              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
               : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
                   {initials(user?.displayName)}
                 </div>}
           </div>
           <div className="flex-1 flex gap-2">
             <input value={text} onChange={e=>setText(e.target.value)}
-              onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend();} }}
+              onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend();}}}
               placeholder={t("reels.comment_ph")}
               className="flex-1 px-3.5 py-2 rounded-2xl text-white text-sm placeholder:text-white/30 focus:outline-none"
-              style={{ background:"rgba(255,255,255,0.07)", border:"1px solid rgba(255,255,255,0.1)" }}
+              style={{background:"rgba(255,255,255,0.07)", border:"1px solid rgba(255,255,255,0.1)"}}
             />
             <motion.button whileTap={{scale:0.88}} onClick={handleSend}
               disabled={!text.trim()||sending}
               className="w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-40"
-              style={{ background:"linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
-              {sending?<Loader2 className="w-4 h-4 text-white animate-spin"/>:<Send className="w-4 h-4 text-white"/>}
+              style={{background:"linear-gradient(135deg,#7c3aed,#3b82f6)"}}>
+              {sending ? <Loader2 className="w-4 h-4 text-white animate-spin"/> : <Send className="w-4 h-4 text-white"/>}
             </motion.button>
           </div>
         </div>
@@ -295,87 +347,207 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
   );
 }
 
-/* ─── Speed indicator (center glass) ────────────────────── */
-function SpeedGlass({ speed, side }: { speed: number; side: "left"|"right" }) {
-  const color = side==="left" ? "#38bdf8" : "#f59e0b";
-  const dots  = speed<=0.25?1:speed<=0.5?2:speed<=0.75?3:speed===1?4:speed<=1.25?5:speed<=1.5?6:7;
-  return (
-    <motion.div initial={{opacity:0,scale:0.82}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.82}}
-      transition={{type:"spring",damping:22,stiffness:380}}
-      className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-      <div className="flex flex-col items-center gap-2 px-8 py-4 rounded-3xl"
-        style={{ background:"rgba(5,4,15,0.58)", backdropFilter:"blur(30px) saturate(1.5)",
-          WebkitBackdropFilter:"blur(30px) saturate(1.5)",
-          border:`1px solid ${color}28`, boxShadow:`0 0 44px ${color}14, inset 0 1px 0 rgba(255,255,255,0.07)` }}>
-        <div className="flex items-center gap-1">
-          {side==="left"
-            ? [1,0.6,0.25].map((o,i)=>(
-                <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill="none" style={{opacity:o}}>
-                  <path d="M15 18l-6-6 6-6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ))
-            : [0.25,0.6,1].map((o,i)=>(
-                <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill="none" style={{opacity:o}}>
-                  <path d="M9 18l6-6-6-6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ))
-          }
-        </div>
-        <span className="font-black tabular-nums"
-          style={{ fontSize:38, color, textShadow:`0 0 22px ${color}88`, letterSpacing:"-0.02em" }}>
-          {speed}×
-        </span>
-        <div className="flex gap-[5px]">
-          {Array.from({length:7},(_,i)=>(
-            <div key={i} className="rounded-full transition-all duration-200"
-              style={{ width:i<dots?8:5, height:i<dots?8:5, background:i<dots?color:"rgba(255,255,255,0.13)",
-                boxShadow:i<dots?`0 0 6px ${color}`:undefined }} />
-          ))}
-        </div>
-        <span className="text-[9px] font-bold" style={{color:`${color}88`,letterSpacing:"0.1em"}}>
-          {side==="left"?"◀ SEKIN":"TEZ ▶"}
-        </span>
-      </div>
-    </motion.div>
-  );
+/* ═══════════════════════════════════════════════════════════════
+   ACTION HUB — single circle at top-right
+   Opens: sub-circles cascade DOWN out of the hub (spring)
+   Closes: sub-circles absorbed back UP into the hub (reverse spring)
+═══════════════════════════════════════════════════════════════ */
+interface HubProps {
+  open: boolean;
+  onToggle: () => void;
+  isLiked: boolean;
+  likesCount: number;
+  commentsCount: number;
+  onLike: () => void;
+  onComment: () => void;
+  onShare: () => void;
+  onAI: () => void;
+  onAdd: () => void;
+  analyzingId: number | null;
+  reelId: number;
+  sharedId: number | null;
+  neonColor: string;
 }
 
-/* ─── Circle action button with vertical dropdown ────────── */
-type PanelType = "like"|"comment"|"share"|"ai"|"create"|null;
+function ActionHub({
+  open, onToggle, isLiked, likesCount, commentsCount,
+  onLike, onComment, onShare, onAI, onAdd,
+  analyzingId, reelId, sharedId, neonColor,
+}: HubProps) {
+  const [shareOk, setShareOk] = useState(false);
 
-/** One circle option that slides in from above */
-function DropCircle({
-  icon, label, color, bg, onClick, delay = 0,
-}: {
-  icon: React.ReactNode; label?: string; color?: string;
-  bg?: string; onClick?: () => void; delay?: number;
-}) {
+  const handleShare = async () => {
+    try {
+      if (navigator.share) await navigator.share({ title:"OlCha Reel", url:`${window.location.origin}/reels` });
+      else await navigator.clipboard.writeText(`${window.location.origin}/reels`);
+    } catch { /* silent */ }
+    setShareOk(true); onShare();
+    setTimeout(() => { setShareOk(false); onToggle(); }, 1600);
+  };
+
+  const handleCopy = async () => {
+    try { await navigator.clipboard.writeText(`${window.location.origin}/reels`); } catch { /* silent */ }
+    setShareOk(true); onShare();
+    setTimeout(() => { setShareOk(false); onToggle(); }, 1600);
+  };
+
+  /* Sub-circle definitions */
+  const subs = [
+    {
+      id: "like",
+      icon: <Heart className={`w-[17px] h-[17px] transition-all ${isLiked ? "fill-red-400 text-red-400" : "text-white/80"}`}/>,
+      color:  isLiked ? "#ef4444" : "rgba(255,255,255,0.55)",
+      bg:     isLiked ? "rgba(239,68,68,0.42)" : "rgba(10,7,24,0.55)",
+      border: isLiked ? "rgba(239,68,68,0.45)" : "rgba(255,255,255,0.12)",
+      glow:   isLiked ? "rgba(239,68,68,0.4)"  : undefined,
+      label:  fmt(likesCount),
+      onClick: () => { onLike(); },
+    },
+    {
+      id: "comment",
+      icon: <MessageCircle className="w-[17px] h-[17px] text-white/80"/>,
+      color: "#3b82f6", bg: "rgba(59,130,246,0.32)", border: "rgba(59,130,246,0.35)", glow: "rgba(59,130,246,0.3)",
+      label: fmt(commentsCount),
+      onClick: () => { onComment(); onToggle(); },
+    },
+    {
+      id: "share",
+      icon: shareOk ? <Check className="w-[17px] h-[17px] text-emerald-400"/> : <Share2 className="w-[17px] h-[17px] text-white/80"/>,
+      color: shareOk ? "#10b981" : "rgba(255,255,255,0.55)",
+      bg: shareOk ? "rgba(16,185,129,0.35)" : "rgba(10,7,24,0.55)",
+      border: shareOk ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.12)",
+      glow: shareOk ? "rgba(16,185,129,0.35)" : undefined,
+      label: "",
+      onClick: handleCopy,
+    },
+    {
+      id: "ai",
+      icon: analyzingId === reelId
+        ? <Loader2 className="w-[17px] h-[17px] text-violet-300 animate-spin"/>
+        : <Brain className="w-[17px] h-[17px] text-violet-200"/>,
+      color: "#a78bfa", bg: "rgba(124,58,237,0.38)", border: "rgba(167,139,250,0.38)", glow: "rgba(124,58,237,0.35)",
+      label: "",
+      onClick: () => { onAI(); },
+    },
+    {
+      id: "create",
+      icon: <Plus className="w-[17px] h-[17px] text-white"/>,
+      color: "#ec4899",
+      bg: "linear-gradient(135deg,rgba(124,58,237,0.65),rgba(236,72,153,0.65))",
+      border: "rgba(236,72,153,0.35)", glow: "rgba(236,72,153,0.35)",
+      label: "",
+      onClick: () => { onAdd(); onToggle(); },
+    },
+  ];
+
   return (
-    <motion.div
-      initial={{ opacity:0, y:-14, scale:0.7 }}
-      animate={{ opacity:1, y:0, scale:1 }}
-      exit={{ opacity:0, y:-10, scale:0.7 }}
-      transition={{ type:"spring", damping:20, stiffness:380, delay }}
-      className="flex flex-col items-center gap-0.5">
-      <motion.button whileTap={{scale:0.72}} onClick={onClick}
-        style={{
-          ...circleBase,
-          background: bg ?? "rgba(8,6,22,0.56)",
-          border: `1px solid ${color ? color+"28" : "rgba(255,255,255,0.13)"}`,
-          boxShadow: color ? `0 0 16px ${color}24, inset 0 1px 0 rgba(255,255,255,0.09)` : circleBase.boxShadow,
-        }}>
-        {icon}
+    /* Hub container — all sub-circles are absolutely positioned relative to this */
+    <div style={{ position:"absolute", top:14, right:12, zIndex:30, width:HUB }}
+      /* prevent clicks from bubbling to the video tap zone */
+      onPointerDown={e=>e.stopPropagation()} onPointerUp={e=>e.stopPropagation()}>
+
+      {/* ── Hub circle ── */}
+      <motion.button
+        whileTap={{ scale:0.68 }}
+        onClick={onToggle}
+        animate={{
+          background: open
+            ? `rgba(124,58,237,0.62)`
+            : "rgba(8,6,22,0.50)",
+          border: open
+            ? `1px solid rgba(167,139,250,0.55)`
+            : "1px solid rgba(255,255,255,0.15)",
+          boxShadow: open
+            ? `0 0 28px rgba(124,58,237,0.55), 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.14)`
+            : `0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)`,
+        }}
+        transition={{ duration:0.22 }}
+        style={{ ...hubBase, position:"relative", zIndex:10 }}>
+
+        {/* Hub icon: + rotates 45° → × */}
+        <motion.div
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={{ type:"spring", damping:14, stiffness:300 }}>
+          <Plus className="w-5 h-5 text-white"/>
+        </motion.div>
+
+        {/* Subtle pulsing ring when closed */}
+        {!open && (
+          <motion.div
+            className="absolute inset-[-3px] rounded-full pointer-events-none"
+            animate={{ opacity:[0.4,0,0.4], scale:[1,1.22,1] }}
+            transition={{ duration:3, repeat:Infinity, ease:"easeInOut" }}
+            style={{ border:`1px solid ${neonColor}55` }}
+          />
+        )}
       </motion.button>
-      {label && (
-        <span className="text-[8px] font-bold" style={{color:color??"rgba(255,255,255,0.45)",letterSpacing:"0.05em"}}>
-          {label}
-        </span>
-      )}
-    </motion.div>
+
+      {/* ── Sub-circles — always mounted, animate in/out from hub ── */}
+      {subs.map((s, i) => {
+        const targetY = (i+1) * STEP;
+        /* Stagger: open → top first; close → bottom first */
+        const delayOpen  = i * 0.07;
+        const delayClose = (subs.length - 1 - i) * 0.055;
+
+        return (
+          <motion.div
+            key={s.id}
+            animate={{
+              y:       open ? targetY : 0,
+              scale:   open ? 1 : 0.18,
+              opacity: open ? 1 : 0,
+            }}
+            transition={{
+              type:"spring", damping:20, stiffness:310,
+              delay: open ? delayOpen : delayClose,
+            }}
+            style={{
+              position:"absolute", top:0, left:0,
+              pointerEvents: open ? "auto" : "none",
+              zIndex: 9 - i,   /* higher circles render on top when collapsing */
+            }}>
+
+            {/* Circle button */}
+            <motion.button
+              whileTap={{ scale:0.68 }}
+              onClick={s.onClick}
+              style={{
+                ...subBase,
+                background: s.bg,
+                border: `1px solid ${s.border}`,
+                boxShadow: s.glow
+                  ? `0 0 16px ${s.glow}, 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)`
+                  : `0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)`,
+              }}>
+              {s.icon}
+            </motion.button>
+
+            {/* Count label — slides in beside the circle */}
+            {s.label && (
+              <motion.div
+                animate={{ opacity: open ? 1 : 0, x: open ? 0 : 8 }}
+                transition={{ delay: open ? delayOpen+0.12 : 0, duration:0.2 }}
+                style={{
+                  position:"absolute", left:"calc(100% + 6px)", top:"50%", transform:"translateY(-50%)",
+                  pointerEvents:"none", whiteSpace:"nowrap",
+                }}>
+                <span className="text-[11px] font-black tabular-nums"
+                  style={{
+                    color: s.color === "rgba(255,255,255,0.55)" ? "rgba(255,255,255,0.7)" : s.color,
+                    textShadow:"0 1px 8px rgba(0,0,0,0.9)",
+                  }}>
+                  {s.label}
+                </span>
+              </motion.div>
+            )}
+          </motion.div>
+        );
+      })}
+    </div>
   );
 }
 
-/* ─── ReelSlide ──────────────────────────────────────────── */
+/* ─── ReelSlide ────────────────────────────────────────────────── */
 function ReelSlide({
   reel, isActive, muted,
   onLike, isLiked, onAnalyze, analyzingId, analysis,
@@ -387,17 +559,16 @@ function ReelSlide({
   onComment:()=>void; onShare:()=>void; sharedId:number|null;
   onAdd:()=>void; onMute:()=>void;
 }) {
-  const videoRef   = useRef<HTMLVideoElement>(null);
-  const progress   = useVideoProgress(videoRef);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const progress = useVideoProgress(videoRef);
   const [paused, setPaused]       = useState(false);
   const [particles, setParticles] = useState<{x:number;y:number;id:number}[]>([]);
   const [lastTap, setLastTap]     = useState(0);
-  const [openPanel, setOpenPanel] = useState<PanelType>(null);
-  const [shareOk, setShareOk]     = useState(false);
+  const [hubOpen, setHubOpen]     = useState(false);
 
-  /* speed-hold */
+  /* hold-to-speed */
   const [holdSpeed, setHoldSpeed] = useState<number|null>(null);
-  const [holdSide, setHoldSide]   = useState<"left"|"right"|null>(null);
+  const [holdSide,  setHoldSide]  = useState<"left"|"right"|null>(null);
   const holdTimer = useRef<ReturnType<typeof setInterval>|null>(null);
   const holdStart = useRef(0);
   const isHold    = useRef(false);
@@ -406,7 +577,7 @@ function ReelSlide({
   const SPEED_L   = [1, 0.75, 0.5, 0.25];
 
   const startHold = useCallback((side:"left"|"right") => {
-    isHold.current = true; speedIdx.current = 0;
+    isHold.current=true; speedIdx.current=0;
     setHoldSide(side); setHoldSpeed(1);
     holdTimer.current = setInterval(() => {
       speedIdx.current = Math.min(speedIdx.current+1, 3);
@@ -425,11 +596,9 @@ function ReelSlide({
 
   useEffect(()=>()=>{ if(holdTimer.current) clearInterval(holdTimer.current); },[]);
 
-  const neonColor = analysis?.sentiment==="positive"?"#10b981"
-    : analysis?.sentiment==="negative"?"#ef4444"
-    : reel._aiSuggested?"#a78bfa":"#7c3aed";
-
-  const likes = (reel.likesCount??0) + (isLiked?1:0);
+  const neonColor = analysis?.sentiment==="positive" ? "#10b981"
+    : analysis?.sentiment==="negative" ? "#ef4444"
+    : reel._aiSuggested ? "#a78bfa" : "#7c3aed";
 
   type TapDiv = HTMLDivElement & { _holdTimer?: ReturnType<typeof setTimeout> };
 
@@ -438,7 +607,7 @@ function ReelSlide({
     const rect = e.currentTarget.getBoundingClientRect();
     const side = e.clientX-rect.left < rect.width/2 ? "left" : "right";
     const el   = e.currentTarget as TapDiv;
-    el._holdTimer = setTimeout(()=>{ if(!isHold.current) startHold(side); }, 200);
+    el._holdTimer = setTimeout(() => { if (!isHold.current) startHold(side); }, 200);
   }, [startHold]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -447,7 +616,7 @@ function ReelSlide({
     const held = Date.now()-holdStart.current;
     stopHold();
     if (held < 200) {
-      const now = Date.now();
+      const now  = Date.now();
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX-rect.left, y = e.clientY-rect.top;
       if (now-lastTap < 280) {
@@ -457,23 +626,11 @@ function ReelSlide({
         const v = videoRef.current;
         if (v) { if(v.paused){v.play().catch(()=>{});setPaused(false);}else{v.pause();setPaused(true);} }
       }
+      /* close hub if open */
+      if (hubOpen) setHubOpen(false);
       setLastTap(now);
     }
-  }, [stopHold, lastTap, isLiked, onLike]);
-
-  const toggle = (p: PanelType) => setOpenPanel(prev => prev===p ? null : p);
-
-  const handleCopy = async () => {
-    try { await navigator.clipboard.writeText(`${window.location.origin}/reels`); } catch {}
-    setShareOk(true); onShare(); setTimeout(()=>{setShareOk(false);setOpenPanel(null);},1600);
-  };
-  const handleNative = async () => {
-    try {
-      if (navigator.share) await navigator.share({title:reel.caption||"OlCha Reel",url:`${window.location.origin}/reels`});
-      else await navigator.clipboard.writeText(`${window.location.origin}/reels`);
-    } catch {}
-    onShare(); setOpenPanel(null);
-  };
+  }, [stopHold, lastTap, isLiked, onLike, hubOpen]);
 
   return (
     <div className="relative w-full h-full">
@@ -483,29 +640,31 @@ function ReelSlide({
         {reel.thumbnailUrl && (
           <img src={reel.thumbnailUrl} alt="" aria-hidden="true"
             className="absolute inset-[-10%] w-[120%] h-[120%] object-cover"
-            style={{ filter:"blur(60px) saturate(2.6) brightness(0.18)" }} />
+            style={{filter:"blur(62px) saturate(2.6) brightness(0.17)"}}/>
         )}
         <div className="absolute inset-0"
-          style={{ background:`radial-gradient(ellipse at 50% 40%, ${neonColor}14 0%, rgba(0,0,0,0.62) 100%)` }} />
+          style={{background:`radial-gradient(ellipse at 50% 38%, ${neonColor}13 0%, rgba(0,0,0,0.6) 100%)`}}/>
       </div>
 
       {/* floating video card */}
       <div className="absolute inset-x-1 top-0 bottom-0 rounded-[28px] overflow-hidden"
-        style={{ boxShadow:`0 0 52px ${neonColor}22, 0 24px 64px rgba(0,0,0,0.82)`,
-          border:`1.5px solid ${neonColor}18` }}>
+        style={{
+          boxShadow:`0 0 52px ${neonColor}22, 0 24px 64px rgba(0,0,0,0.82)`,
+          border:`1.5px solid ${neonColor}18`,
+        }}>
 
         <ReelVideoEl videoUrl={reel.videoUrl} thumbnailUrl={reel.thumbnailUrl}
-          isActive={isActive} muted={muted} videoRef={videoRef} onPlayState={setPaused} />
+          isActive={isActive} muted={muted} videoRef={videoRef} onPlayState={setPaused}/>
 
-        {/* cinematic gradient — thin, video visible through */}
+        {/* cinematic gradients */}
         <div className="absolute inset-0 pointer-events-none z-10"
-          style={{ background:"linear-gradient(to top, rgba(0,0,0,0.74) 0%, rgba(0,0,0,0.08) 22%, transparent 42%)" }} />
+          style={{background:"linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.06) 22%, transparent 40%)"}}/>
         <div className="absolute inset-0 pointer-events-none z-10"
-          style={{ background:"linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 15%)" }} />
+          style={{background:"linear-gradient(to bottom, rgba(0,0,0,0.32) 0%, transparent 14%)"}}/>
 
-        <NeonCorners color={neonColor} />
+        <NeonCorners color={neonColor}/>
 
-        {/* tap / hold zone (fills center, avoids button columns) */}
+        {/* tap / hold zone */}
         <div className="absolute inset-0 z-20 cursor-pointer"
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
@@ -520,20 +679,20 @@ function ReelSlide({
         <div className="absolute inset-0 z-40 pointer-events-none overflow-hidden">
           {particles.map(p=>(
             <ParticleBurst key={p.id} x={p.x} y={p.y}
-              onDone={()=>setParticles(prev=>prev.filter(h=>h.id!==p.id))} />
+              onDone={()=>setParticles(prev=>prev.filter(h=>h.id!==p.id))}/>
           ))}
         </div>
 
         {/* progress strip */}
         <div className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none" style={{height:3}}>
-          <div style={{ width:`${progress*100}%`, height:"100%",
+          <div style={{width:`${progress*100}%`, height:"100%",
             background:`linear-gradient(90deg,${neonColor},#06b6d4)`,
-            boxShadow:`0 0 7px ${neonColor}bb`, transition:"width 0.1s linear" }} />
+            boxShadow:`0 0 7px ${neonColor}bb`, transition:"width 0.1s linear"}}/>
         </div>
 
-        {/* speed indicator */}
+        {/* speed glass */}
         <AnimatePresence>
-          {holdSpeed!==null && holdSide && <SpeedGlass speed={holdSpeed} side={holdSide} />}
+          {holdSpeed!==null && holdSide && <SpeedGlass speed={holdSpeed} side={holdSide}/>}
         </AnimatePresence>
 
         {/* pause icon */}
@@ -542,275 +701,153 @@ function ReelSlide({
             <motion.div initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}}
               exit={{opacity:0,scale:1.4}} transition={{duration:0.15}}
               className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-              <div style={{ width:66, height:66, borderRadius:"50%",
+              <div style={{width:64, height:64, borderRadius:"50%",
                 background:"rgba(0,0,0,0.5)", backdropFilter:"blur(12px)",
                 border:"1.5px solid rgba(255,255,255,0.18)",
                 boxShadow:`0 0 28px ${neonColor}44`,
-                display:"flex", alignItems:"center", justifyContent:"center" }}>
+                display:"flex", alignItems:"center", justifyContent:"center"}}>
                 <svg className="fill-white" width="24" height="24" viewBox="0 0 24 24">
-                  <rect x="6" y="4" width="4" height="16" rx="1.5" />
-                  <rect x="14" y="4" width="4" height="16" rx="1.5" />
+                  <rect x="6" y="4" width="4" height="16" rx="1.5"/>
+                  <rect x="14" y="4" width="4" height="16" rx="1.5"/>
                 </svg>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ═══════════════════════════════════════════
+        {/* ══════════════════════════════════════════
             TOP LEFT — Author chip (lentadagi kabi)
-            Circle with initials + name in text
-        ═══════════════════════════════════════════ */}
-        <div className="absolute top-4 left-4 z-30 pointer-events-auto">
+        ══════════════════════════════════════════ */}
+        <div className="absolute top-4 left-4 z-30 pointer-events-auto"
+          onPointerDown={e=>e.stopPropagation()} onPointerUp={e=>e.stopPropagation()}>
           <motion.div initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}}
-            transition={{delay:0.06}}
-            className="flex items-center gap-2">
+            transition={{delay:0.07}} className="flex items-center gap-2">
 
-            {/* Spinning ring avatar circle — shows initials */}
+            {/* Spinning ring + initials */}
             <div className="relative flex-shrink-0" style={{width:36,height:36}}>
               <motion.div className="absolute inset-[-2px] rounded-full"
-                style={{ background:`conic-gradient(from 0deg, ${neonColor}, #3b82f6, #06b6d4, ${neonColor})` }}
-                animate={{rotate:360}} transition={{duration:4,repeat:Infinity,ease:"linear"}} />
+                style={{background:`conic-gradient(from 0deg, ${neonColor}, #3b82f6, #06b6d4, ${neonColor})`}}
+                animate={{rotate:360}} transition={{duration:4,repeat:Infinity,ease:"linear"}}/>
               <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
-                style={{ background:"linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
+                style={{background:"linear-gradient(135deg,#1a0838,#0d1a3a)"}}>
                 {reel.author?.avatarUrl
-                  ? <img src={reel.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ? <img src={reel.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
                   : <span className="text-[11px] font-black text-white select-none">
                       {initials(reel.author?.displayName)}
                     </span>}
               </div>
             </div>
 
-            {/* Name + handle — compact */}
+            {/* Name */}
             <div className="min-w-0">
               <div className="flex items-center gap-1">
-                <span className="text-white font-black text-[12px] leading-tight drop-shadow-lg truncate max-w-[96px]">
+                <span className="text-white font-black text-[12px] leading-tight drop-shadow-lg truncate max-w-[90px]">
                   {reel.author?.displayName}
                 </span>
-                {reel.author?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0 text-violet-300" />}
+                {reel.author?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0 text-violet-300"/>}
               </div>
-              <span className="text-white/40 text-[9px] leading-none">@{reel.author?.username}</span>
+              <span className="text-white/38 text-[9px] leading-none">@{reel.author?.username}</span>
               {reel._aiSuggested && (
                 <div className="flex items-center gap-0.5 mt-0.5">
-                  <Zap className="w-2 h-2 text-violet-300" />
-                  <span className="text-[8px] font-bold text-violet-300">AI</span>
+                  <Zap className="w-2 h-2 text-violet-300"/> <span className="text-[8px] font-bold text-violet-300">AI</span>
                 </div>
               )}
             </div>
           </motion.div>
         </div>
 
-        {/* ═══════════════════════════════════════════
-            RIGHT — Vertical column of CIRCLE buttons
-            Each: round, glass, same CIRC px diameter
-            Tap → circles drop below (chain dropdown)
-        ═══════════════════════════════════════════ */}
-        <div className="absolute top-4 right-3 z-30 flex flex-col items-center gap-2.5 pointer-events-auto">
+        {/* ══════════════════════════════════════════
+            TOP RIGHT — ActionHub
+            Single circle → cascading sub-circles
+        ══════════════════════════════════════════ */}
+        <ActionHub
+          open={hubOpen} onToggle={()=>setHubOpen(v=>!v)}
+          isLiked={isLiked} likesCount={(reel.likesCount??0)+(isLiked?1:0)}
+          commentsCount={reel.commentsCount??0}
+          onLike={onLike} onComment={onComment}
+          onShare={onShare} onAI={onAnalyze}
+          onAdd={onAdd} analyzingId={analyzingId}
+          reelId={reel.id} sharedId={sharedId}
+          neonColor={neonColor}
+        />
 
-          {/* ── LIKE ── */}
-          <div className="flex flex-col items-center gap-2.5">
-            <div className="relative">
-              <motion.button whileTap={{scale:0.72}} onClick={()=>{onLike();toggle("like");}}
-                style={{
-                  ...circleBase,
-                  background: isLiked?"rgba(239,68,68,0.38)":circleBase.background,
-                  border: isLiked?"1px solid rgba(239,68,68,0.5)":circleBase.border,
-                  boxShadow: isLiked?"0 0 20px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.09)":circleBase.boxShadow,
-                }}>
-                <motion.div animate={isLiked?{scale:[1,1.45,1]}:{scale:1}} transition={{duration:0.28}}>
-                  <Heart className={`w-5 h-5 transition-all ${isLiked?"fill-red-400 text-red-400":"text-white/80"}`} />
-                </motion.div>
-              </motion.button>
-            </div>
-            <AnimatePresence>
-              {openPanel==="like" && (
-                <DropCircle key="like-count" delay={0}
-                  icon={<span className="text-[10px] font-black text-red-300 tabular-nums">{fmt(likes)}</span>}
-                  color="#ef4444" bg="rgba(239,68,68,0.28)"
-                />
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* ── COMMENT ── */}
-          <div className="flex flex-col items-center gap-2.5">
-            <motion.button whileTap={{scale:0.72}} onClick={()=>{onComment();setOpenPanel(null);}}
-              style={{...circleBase}}>
-              <MessageCircle className="w-5 h-5 text-white/80" />
-            </motion.button>
-            <AnimatePresence>
-              {openPanel==="comment" && (
-                <DropCircle key="cmt-count" delay={0}
-                  icon={<span className="text-[10px] font-black text-blue-300">{fmt(reel.commentsCount??0)}</span>}
-                  color="#3b82f6" bg="rgba(59,130,246,0.28)"
-                />
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* ── SHARE ── */}
-          <div className="flex flex-col items-center gap-2.5">
-            <motion.button whileTap={{scale:0.72}} onClick={()=>toggle("share")}
-              style={{
-                ...circleBase,
-                background: shareOk?"rgba(16,185,129,0.35)":circleBase.background,
-                border: shareOk?"1px solid rgba(16,185,129,0.45)":circleBase.border,
-              }}>
-              {shareOk
-                ? <Check className="w-5 h-5 text-emerald-400" />
-                : <Share2 className="w-5 h-5 text-white/80" />}
-            </motion.button>
-            <AnimatePresence>
-              {openPanel==="share" && (
-                <>
-                  <DropCircle key="sh-copy" delay={0}
-                    icon={<Copy className="w-4 h-4 text-emerald-300" />}
-                    label="Nusxa" color="#10b981" bg="rgba(16,185,129,0.28)"
-                    onClick={handleCopy}
-                  />
-                  <DropCircle key="sh-native" delay={0.06}
-                    icon={<ExternalLink className="w-4 h-4 text-blue-300" />}
-                    label="Ulash" color="#3b82f6" bg="rgba(59,130,246,0.28)"
-                    onClick={handleNative}
-                  />
-                </>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* ── AI ── */}
-          <div className="flex flex-col items-center gap-2.5">
-            <motion.button whileTap={{scale:0.72}} onClick={()=>{ toggle("ai"); if(openPanel!=="ai"&&!analysis) onAnalyze(); }}
-              style={{
-                ...circleBase,
-                background: openPanel==="ai"?"rgba(124,58,237,0.42)":circleBase.background,
-                border: openPanel==="ai"?"1px solid rgba(167,139,250,0.45)":circleBase.border,
-                boxShadow: openPanel==="ai"?"0 0 18px rgba(124,58,237,0.45), inset 0 1px 0 rgba(255,255,255,0.09)":circleBase.boxShadow,
-              }}>
-              {analyzingId!==null
-                ? <Loader2 className="w-5 h-5 text-purple-300 animate-spin" />
-                : <Brain className={`w-5 h-5 ${openPanel==="ai"?"text-purple-300":"text-white/80"}`} />}
-            </motion.button>
-            <AnimatePresence>
-              {openPanel==="ai" && analysis && (
-                <>
-                  {analysis.category && (
-                    <DropCircle key="ai-cat" delay={0}
-                      icon={<span className="text-[8px] font-black text-purple-200 text-center px-0.5 leading-tight">
-                        {analysis.category.slice(0,6)}
-                      </span>}
-                      label={analysis.sentiment==="positive"?"✅":analysis.sentiment==="negative"?"⚠️":"😐"}
-                      color="#a78bfa" bg="rgba(124,58,237,0.35)"
-                    />
-                  )}
-                </>
-              )}
-              {openPanel==="ai" && !analysis && analyzingId===null && (
-                <DropCircle key="ai-tap" delay={0}
-                  icon={<Brain className="w-4 h-4 text-purple-300" />}
-                  label="Tahlil" color="#a78bfa" bg="rgba(124,58,237,0.28)"
-                  onClick={onAnalyze}
-                />
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* ── CREATE ── */}
-          <div className="flex flex-col items-center gap-2.5">
-            <motion.button whileTap={{scale:0.72}} onClick={()=>{onAdd();setOpenPanel(null);}}
-              style={{
-                ...circleBase,
-                background:"linear-gradient(135deg,rgba(124,58,237,0.6),rgba(236,72,153,0.6))",
-                border:"1px solid rgba(167,139,250,0.35)",
-                boxShadow:"0 0 18px rgba(124,58,237,0.38), inset 0 1px 0 rgba(255,255,255,0.14)",
-              }}>
-              <Plus className="w-5 h-5 text-white" />
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Dismiss dropdown when tapping video area */}
-        {openPanel && (
-          <div className="absolute inset-0 z-[19]" onClick={()=>setOpenPanel(null)} />
-        )}
-
-        {/* ═══════════════════════════════════════════
-            BOTTOM — Caption (above the bottom bar)
-            Tags below caption — no overlap
-        ═══════════════════════════════════════════ */}
-        <div className="absolute bottom-10 left-4 right-[58px] z-30 pointer-events-none">
+        {/* ══════════════════════════════════════════
+            BOTTOM — Caption + tags
+        ══════════════════════════════════════════ */}
+        <div className="absolute bottom-9 left-4 right-[62px] z-30 pointer-events-none">
           {reel.caption && (
             <p className="text-white text-[12px] leading-snug mb-2 font-semibold"
-              style={{ textShadow:"0 1px 12px rgba(0,0,0,0.98)" }}>
-              {reel.caption.length>72 ? reel.caption.slice(0,72)+"…" : reel.caption}
+              style={{textShadow:"0 1px 12px rgba(0,0,0,0.98)"}}>
+              {reel.caption.length>70 ? reel.caption.slice(0,70)+"…" : reel.caption}
             </p>
           )}
           <div className="flex items-center gap-1.5 flex-wrap">
             {reel.audioTrack && (
               <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full"
-                style={{ background:"rgba(0,0,0,0.4)", backdropFilter:"blur(8px)" }}>
+                style={{background:"rgba(0,0,0,0.38)", backdropFilter:"blur(8px)"}}>
                 <motion.div animate={{rotate:360}} transition={{duration:3,repeat:Infinity,ease:"linear"}}
                   className="w-3 h-3 rounded-full flex items-center justify-center"
-                  style={{ background:"rgba(255,255,255,0.1)" }}>
-                  <Music className="w-1.5 h-1.5 text-white" />
+                  style={{background:"rgba(255,255,255,0.1)"}}>
+                  <Music className="w-1.5 h-1.5 text-white"/>
                 </motion.div>
-                <span className="text-[9px] text-white/50 truncate max-w-[72px]">{reel.audioTrack}</span>
+                <span className="text-[9px] text-white/48 truncate max-w-[72px]">{reel.audioTrack}</span>
               </div>
             )}
             {reel.tags?.slice(0,3).map(tag=>(
               <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                style={{ color:neonColor, background:`${neonColor}16`, border:`1px solid ${neonColor}28` }}>
+                style={{color:neonColor, background:`${neonColor}14`, border:`1px solid ${neonColor}26`}}>
                 #{tag}
               </span>
             ))}
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════
-            BOTTOM LEFT
-            🔊 Volume (small glass circle) + 👁 Views
-            Side by side, compact, don't block caption
-        ═══════════════════════════════════════════ */}
-        <div className="absolute bottom-4 left-4 z-30 flex items-center gap-2 pointer-events-auto">
-          {/* Volume — smaller circle */}
+        {/* ══════════════════════════════════════════
+            BOTTOM LEFT — Volume (small) + Views (eye)
+        ══════════════════════════════════════════ */}
+        <div className="absolute bottom-4 left-4 z-30 flex items-center gap-2"
+          onPointerDown={e=>e.stopPropagation()} onPointerUp={e=>e.stopPropagation()}>
+
+          {/* Volume — small glass circle */}
           <motion.button whileTap={{scale:0.75}} onClick={onMute} style={{...volCircle}}>
             {muted
-              ? <VolumeX className="w-3.5 h-3.5 text-white/50" />
-              : <Volume2 className="w-3.5 h-3.5 text-white/75" />}
+              ? <VolumeX className="w-3 h-3 text-white/45"/>
+              : <Volume2 className="w-3 h-3 text-white/70"/>}
           </motion.button>
 
-          {/* Views — eye icon like lenta */}
+          {/* Views — eye + count */}
           <div className="flex items-center gap-1 px-2 py-1 rounded-full pointer-events-none"
-            style={{ background:"rgba(8,6,22,0.42)", backdropFilter:"blur(18px)",
-              border:"1px solid rgba(255,255,255,0.1)",
-              boxShadow:"0 2px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
-            <Eye className="w-3 h-3 text-white/55" />
+            style={{background:"rgba(8,6,22,0.40)", backdropFilter:"blur(18px)",
+              border:"1px solid rgba(255,255,255,0.09)",
+              boxShadow:"0 2px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)"}}>
+            <Eye className="w-3 h-3 text-white/45"/>
             <motion.span
-              animate={{opacity:[0.6,1,0.6]}} transition={{duration:2.4,repeat:Infinity,ease:"easeInOut"}}
+              animate={{opacity:[0.55,1,0.55]}} transition={{duration:2.6,repeat:Infinity,ease:"easeInOut"}}
               className="text-[10px] font-bold tabular-nums"
-              style={{ color:"rgba(255,255,255,0.65)" }}>
+              style={{color:"rgba(255,255,255,0.62)"}}>
               {fmt(reel.viewsCount??0)}
             </motion.span>
           </div>
         </div>
 
-      </div>{/* /floating card */}
+      </div>{/* /card */}
     </div>
   );
 }
 
-/* ─── Main ReelsPage ─────────────────────────────────────── */
+/* ─── Main ReelsPage ──────────────────────────────────────────── */
 export default function ReelsPage() {
   const { data: initialReels = [], isLoading } = useListReels({ limit:20 } as any);
-  const [feed, setFeed]           = useState<FeedItem[]>([]);
-  const [current, setCurrent]     = useState(0);
-  const [likedIds, setLikedIds]   = useState<Set<number>>(new Set());
-  const [muted, setMuted]         = useState(false);
+  const [feed, setFeed]             = useState<FeedItem[]>([]);
+  const [current, setCurrent]       = useState(0);
+  const [likedIds, setLikedIds]     = useState<Set<number>>(new Set());
+  const [muted, setMuted]           = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [commentReel, setCommentReel] = useState<FeedItem|null>(null);
   const [analysisMap, setAnalysisMap] = useState<Record<number,Analysis>>({});
   const [analyzingId, setAnalyzingId] = useState<number|null>(null);
-  const [sharedId, setSharedId]   = useState<number|null>(null);
-  const [injecting, setInjecting] = useState(false);
+  const [sharedId, setSharedId]     = useState<number|null>(null);
+  const [injecting, setInjecting]   = useState(false);
 
   const likeReel = useLikeReel();
   const qc       = useQueryClient();
@@ -822,7 +859,7 @@ export default function ReelsPage() {
   useEffect(()=>{ if(initialReels.length>0&&feed.length===0) setFeed(initialReels as FeedItem[]); },[initialReels,feed.length]);
 
   useEffect(()=>{
-    const reel = feed[current]; if(!reel) return;
+    const reel=feed[current]; if(!reel) return;
     fetch(`${API}/api/interactions`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",
       body:JSON.stringify({contentType:"reel",contentId:reel.id,interactionType:"view"})}).catch(()=>{});
     fetch(`${API}/api/reels/${reel.id}/view`,{method:"POST",credentials:"include"}).catch(()=>{});
@@ -851,8 +888,8 @@ export default function ReelsPage() {
     window.addEventListener("keydown",h); return()=>window.removeEventListener("keydown",h);
   },[feed.length]);
 
-  const wheelAccum = useRef(0), wheelLock = useRef(false);
-  const handleWheel = useCallback((e:React.WheelEvent)=>{
+  const wheelAccum=useRef(0), wheelLock=useRef(false);
+  const handleWheel=useCallback((e:React.WheelEvent)=>{
     e.preventDefault(); if(wheelLock.current) return;
     wheelAccum.current+=e.deltaY;
     if(Math.abs(wheelAccum.current)>60){
@@ -861,23 +898,23 @@ export default function ReelsPage() {
     }
   },[feed.length]);
 
-  const touchY = useRef(0);
-  const handleTouchStart = useCallback((e:React.TouchEvent)=>{ touchY.current=e.touches[0].clientY; },[]);
-  const handleTouchEnd   = useCallback((e:React.TouchEvent)=>{
+  const touchY=useRef(0);
+  const handleTouchStart=useCallback((e:React.TouchEvent)=>{ touchY.current=e.touches[0].clientY; },[]);
+  const handleTouchEnd  =useCallback((e:React.TouchEvent)=>{
     const dy=touchY.current-e.changedTouches[0].clientY;
-    if(dy>50) setCurrent(c=>Math.min(feed.length-1,c+1));
+    if(dy>50)  setCurrent(c=>Math.min(feed.length-1,c+1));
     if(dy<-50) setCurrent(c=>Math.max(0,c-1));
   },[feed.length]);
 
-  const y = useMotionValue(0);
-  const dragOpacity = useTransform(y,[-80,0,80],[0.45,1,0.45]);
-  const handleDragEnd = useCallback((_:unknown,info:{offset:{y:number}})=>{
+  const y=useMotionValue(0);
+  const dragOpacity=useTransform(y,[-80,0,80],[0.45,1,0.45]);
+  const handleDragEnd=useCallback((_:unknown,info:{offset:{y:number}})=>{
     if(info.offset.y<-50) setCurrent(c=>Math.min(feed.length-1,c+1));
     else if(info.offset.y>50) setCurrent(c=>Math.max(0,c-1));
     y.set(0);
   },[feed.length,y]);
 
-  const handleLike = useCallback((reelId:number)=>{
+  const handleLike=useCallback((reelId:number)=>{
     const next=new Set(likedIds);
     if(next.has(reelId)) next.delete(reelId); else next.add(reelId);
     setLikedIds(next);
@@ -887,7 +924,7 @@ export default function ReelsPage() {
     });
   },[likedIds,likeReel,qc]);
 
-  const handleAnalyze = useCallback(async(reelId:number,caption?:string,thumbUrl?:string)=>{
+  const handleAnalyze=useCallback(async(reelId:number,caption?:string,thumbUrl?:string)=>{
     if(analysisMap[reelId]) return; setAnalyzingId(reelId);
     try{
       const res=await fetch(`${API}/api/ai/analyze-content`,{
@@ -898,34 +935,34 @@ export default function ReelsPage() {
     }catch{}finally{setAnalyzingId(null);}
   },[analysisMap]);
 
-  const handleShare = useCallback(async(reelId:number)=>{
+  const handleShare=useCallback(async(reelId:number)=>{
     setSharedId(reelId); setTimeout(()=>setSharedId(null),2200);
     fetch(`${API}/api/interactions`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",
       body:JSON.stringify({contentType:"reel",contentId:reelId,interactionType:"share"})}).catch(()=>{});
   },[]);
 
-  const reel = feed[current];
+  const reel=feed[current];
 
   return (
     <div className="relative flex items-center justify-center overflow-hidden"
-      style={{ height:"calc(100vh - 60px)", minHeight:480, background:"#000" }}
+      style={{height:"calc(100vh - 60px)", minHeight:480, background:"#000"}}
       onWheel={handleWheel} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
 
-      {/* full-screen ambient */}
+      {/* global ambient bg */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <AnimatePresence mode="wait">
           {reel?.thumbnailUrl && (
             <motion.img key={reel.id} src={reel.thumbnailUrl} alt="" aria-hidden="true"
               initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.5}}
               className="absolute inset-[-12%] w-[124%] h-[124%] object-cover"
-              style={{ filter:"blur(80px) saturate(3) brightness(0.14)" }} />
+              style={{filter:"blur(80px) saturate(3) brightness(0.13)"}}/>
           )}
         </AnimatePresence>
-        <div className="absolute inset-0" style={{ background:"rgba(0,0,0,0.55)" }} />
-        {/* scanline */}
+        <div className="absolute inset-0" style={{background:"rgba(0,0,0,0.55)"}}/>
+        {/* scanline texture */}
         <div className="absolute inset-0 pointer-events-none"
-          style={{ opacity:0.016,
-            backgroundImage:"repeating-linear-gradient(0deg,rgba(255,255,255,0.6) 0px,rgba(255,255,255,0.6) 1px,transparent 1px,transparent 3px)" }} />
+          style={{opacity:0.015,
+            backgroundImage:"repeating-linear-gradient(0deg,rgba(255,255,255,0.6) 0px,rgba(255,255,255,0.6) 1px,transparent 1px,transparent 3px)"}}/>
       </div>
 
       {/* preload */}
@@ -935,12 +972,12 @@ export default function ReelsPage() {
       </div>
 
       {/* states */}
-      {isLoading && feed.length===0 ? (
+      {isLoading&&feed.length===0 ? (
         <div className="flex flex-col items-center gap-4 z-10">
           <div className="relative w-14 h-14">
-            <div className="absolute inset-0 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin"/>
             <div className="absolute inset-2.5 rounded-full border border-white/10 border-t-pink-400 animate-spin"
-              style={{animationDuration:"0.65s",animationDirection:"reverse"}} />
+              style={{animationDuration:"0.65s",animationDirection:"reverse"}}/>
           </div>
           <div className="text-center">
             <p className="text-white font-black text-sm tracking-[0.2em]">◈ SIGNAL</p>
@@ -958,7 +995,7 @@ export default function ReelsPage() {
           <motion.button whileTap={{scale:0.95}} onClick={()=>setCreateOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white text-sm font-bold"
             style={{background:"linear-gradient(135deg,#7c3aed,#ec4899)",boxShadow:"0 4px 24px rgba(124,58,237,0.5)"}}>
-            <Plus className="w-4 h-4" /> Reel qo'shish
+            <Plus className="w-4 h-4"/> Reel qo'shish
           </motion.button>
         </div>
       ) : reel && (
@@ -966,15 +1003,16 @@ export default function ReelsPage() {
           <motion.div drag="y" dragConstraints={{top:0,bottom:0}} dragElastic={0.1}
             onDragEnd={handleDragEnd} className="relative z-10 select-none touch-none"
             style={{
-              opacity: dragOpacity,
+              opacity:dragOpacity,
               width:"min(100%, calc((100vh - 60px) * 0.52))",
               height:"calc(100vh - 60px)",
             }}>
+
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={reel.id}
-                initial={{opacity:0,y:30,scale:0.97}}
+                initial={{opacity:0,y:28,scale:0.97}}
                 animate={{opacity:1,y:0,scale:1}}
-                exit={{opacity:0,y:-30,scale:0.97}}
+                exit={{opacity:0,y:-28,scale:0.97}}
                 transition={{type:"spring",stiffness:440,damping:36}}
                 className="absolute inset-0">
                 <ReelSlide
@@ -993,7 +1031,7 @@ export default function ReelsPage() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Desktop nav arrows */}
+            {/* Desktop nav */}
             <div className="absolute -left-14 top-1/2 -translate-y-1/2 flex-col gap-3 hidden md:flex z-20">
               {([[-1,"M5 15l7-7 7 7"],[1,"M19 9l-7 7-7-7"]] as [number,string][]).map(([dir,icon])=>(
                 <motion.button key={dir} whileTap={{scale:0.85}}
@@ -1002,17 +1040,18 @@ export default function ReelsPage() {
                   className="w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-20"
                   style={{background:"rgba(255,255,255,0.07)",backdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.11)"}}>
                   <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={icon} />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={icon}/>
                   </svg>
                 </motion.button>
               ))}
             </div>
           </motion.div>
 
-          {/* Right filmstrip (vertical thumbnail nav) */}
+          {/* Filmstrip — right side */}
           <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2 items-center">
             {feed.slice(Math.max(0,current-3),Math.min(feed.length,current+6)).map((r,relIdx)=>{
-              const absIdx=Math.max(0,current-3)+relIdx, isAct=absIdx===current, dist=Math.abs(absIdx-current);
+              const absIdx=Math.max(0,current-3)+relIdx;
+              const isAct=absIdx===current, dist=Math.abs(absIdx-current);
               return (
                 <motion.button key={r.id} onClick={()=>setCurrent(absIdx)} whileTap={{scale:0.82}}
                   animate={{scale:isAct?1:1-dist*0.06}} className="overflow-hidden flex-shrink-0"
@@ -1025,8 +1064,8 @@ export default function ReelsPage() {
                     transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
                   }}>
                   {r.thumbnailUrl
-                    ? <img src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-                    : <div className="w-full h-full" style={{background:"linear-gradient(135deg,#7c3aed44,#ec489944)"}} />}
+                    ? <img src={r.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                    : <div className="w-full h-full" style={{background:"linear-gradient(135deg,#7c3aed44,#ec489944)"}}/>}
                 </motion.button>
               );
             })}
@@ -1047,7 +1086,7 @@ export default function ReelsPage() {
             className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-semibold z-30"
             style={{background:"rgba(124,58,237,0.3)",backdropFilter:"blur(8px)",
               border:"1px solid rgba(167,139,250,0.2)",color:"#c4b5fd"}}>
-            <Sparkles className="w-2.5 h-2.5 animate-pulse" />
+            <Sparkles className="w-2.5 h-2.5 animate-pulse"/>
             AI tavsiyalar…
           </motion.div>
         )}
@@ -1056,11 +1095,11 @@ export default function ReelsPage() {
       <AnimatePresence>
         {commentReel && (
           <CommentsSheet reelId={commentReel.id} commentsCount={commentReel.commentsCount??0}
-            user={user} onClose={()=>setCommentReel(null)} />
+            user={user} onClose={()=>setCommentReel(null)}/>
         )}
       </AnimatePresence>
 
-      <CreateContentModal open={createOpen} onClose={()=>setCreateOpen(false)} />
+      <CreateContentModal open={createOpen} onClose={()=>setCreateOpen(false)}/>
     </div>
   );
 }

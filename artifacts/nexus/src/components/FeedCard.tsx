@@ -4,7 +4,7 @@ import {
   Heart, MessageCircle, Share2, Bookmark,
   VolumeX, Volume2, BadgeCheck, Check, Send, X,
   ChevronsRight, ChevronsLeft, Eye, DollarSign,
-  UserPlus, UserCheck,
+  UserPlus, UserCheck, Search, Link, User,
 } from "lucide-react";
 import type { Post } from "@workspace/api-client-react";
 import { PostType, useLikePost } from "@workspace/api-client-react";
@@ -128,6 +128,14 @@ export default function FeedCard({ post }: FeedCardProps) {
   const [showSubscribe, setShowSubscribe] = useState(false);
   const subscribeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* ── Share panel ── */
+  const [shareOpen, setShareOpen]       = useState(false);
+  const [shareQuery, setShareQuery]     = useState("");
+  const [shareResults, setShareResults] = useState<any[]>([]);
+  const [shareSending, setShareSending] = useState<number | null>(null);
+  const [shareSent, setShareSent]       = useState<number | null>(null);
+  const [linkCopied, setLinkCopied]     = useState(false);
+
   /* ── Video speed hold ── */
   const [holdMode, setHoldMode] = useState<"fast" | "slow" | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -169,6 +177,63 @@ export default function FeedCard({ post }: FeedCardProps) {
     else if (holdMode === "slow") v.playbackRate = 0.35;
     else v.playbackRate = 1;
   }, [holdMode]);
+
+  /* share panel — debounced user search */
+  useEffect(() => {
+    if (!shareOpen) return;
+    if (!shareQuery.trim()) { setShareResults([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/users?search=${encodeURIComponent(shareQuery)}&limit=12`, { credentials: "include" });
+        if (res.ok) setShareResults(await res.json());
+      } catch { /* ignore */ }
+    }, 320);
+    return () => clearTimeout(t);
+  }, [shareQuery, shareOpen]);
+
+  /* send post link to a specific user via chat */
+  const handleSendToUser = async (toUser: any) => {
+    if (!user || shareSending) return;
+    setShareSending(toUser.id);
+    const postUrl = `${window.location.origin}/post/${post.id}`;
+    const content = `📤 *${post.author?.displayName ?? "OlCha"}* tomonidan post:\n${postUrl}`;
+    try {
+      const convRes = await fetch(`${API_BASE}/api/conversations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ participantIds: [user.id, toUser.id] }),
+      });
+      if (!convRes.ok) throw new Error();
+      const conv = await convRes.json();
+      await fetch(`${API_BASE}/api/conversations/${conv.id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ senderId: user.id, content }),
+      });
+      setShareSent(toUser.id);
+      setShares(s => s + 1);
+      setTimeout(() => {
+        setShareSent(null);
+        setShareSending(null);
+        setShareOpen(false);
+        setShareQuery("");
+        setShareResults([]);
+      }, 1600);
+    } catch {
+      setShareSending(null);
+    }
+  };
+
+  /* copy link fallback */
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}/post/${post.id}`;
+    try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+    setLinkCopied(true);
+    setShares(s => s + 1);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
 
   /* show subscribe pill briefly then auto-hide */
   const showSubscribeBriefly = useCallback(() => {
@@ -225,10 +290,10 @@ export default function FeedCard({ post }: FeedCardProps) {
   };
 
   const ACTIONS = [
-    { id: "like",    Icon: Heart,                  label: "Layk",    count: likes,                    active: liked,  activeColor: "#f87171", fill: liked,  fn: handleLike },
-    { id: "comment", Icon: MessageCircle,           label: "Izoh",    count: post.commentsCount ?? 0,  active: false,  activeColor: "#22d3ee", fill: false, fn: () => { setActionsOpen(false); setCommentOpen(o => !o); } },
-    { id: "share",   Icon: copied ? Check : Share2, label: copied ? "Nusxa!" : "Ulash", count: shares, active: copied, activeColor: "#34d399", fill: false, fn: handleShare },
-    { id: "save",    Icon: Bookmark,               label: "Saqlash", count: saves,                    active: saved,  activeColor: "#fbbf24", fill: saved,  fn: () => { setSaved(s => { setSaves(n => s ? Math.max(0,n-1) : n+1); return !s; }); } },
+    { id: "like",    Icon: Heart,          label: "Layk",    count: likes,                   active: liked,      activeColor: "#f87171", fill: liked,  fn: handleLike },
+    { id: "comment", Icon: MessageCircle,  label: "Izoh",    count: post.commentsCount ?? 0, active: false,      activeColor: "#22d3ee", fill: false, fn: () => { setActionsOpen(false); setCommentOpen(o => !o); setShareOpen(false); } },
+    { id: "share",   Icon: Share2,         label: "Ulash",   count: shares,                  active: shareOpen,  activeColor: "#34d399", fill: false, fn: () => { setShareOpen(o => !o); setCommentOpen(false); setActionsOpen(false); } },
+    { id: "save",    Icon: Bookmark,       label: "Saqlash", count: saves,                   active: saved,      activeColor: "#fbbf24", fill: saved,  fn: () => { setSaved(s => { setSaves(n => s ? Math.max(0,n-1) : n+1); return !s; }); } },
   ];
 
   /* For photo — display format determines object-fit behaviour */
@@ -722,6 +787,165 @@ export default function FeedCard({ post }: FeedCardProps) {
           )}
         </motion.div>
       )}
+
+      {/* ══ LAYER 8a — SHARE PANEL (slide up from bottom) ══ */}
+      <AnimatePresence>
+        {shareOpen && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-x-0 bottom-0 rounded-t-3xl overflow-hidden"
+            style={{
+              zIndex: 40,
+              background: "rgba(255,255,255,0.10)",
+              backdropFilter: "blur(40px) saturate(2) brightness(0.9)",
+              WebkitBackdropFilter: "blur(40px) saturate(2) brightness(0.9)",
+              border: "1px solid rgba(255,255,255,0.20)",
+              borderBottom: "none",
+              boxShadow: "0 -8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
+            }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-2.5 pb-1">
+              <div className="w-8 h-1 rounded-full bg-white/25" />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pb-3">
+              <span className="text-white font-black text-[15px]">Kimga yuborish?</span>
+              <motion.button
+                onClick={() => { setShareOpen(false); setShareQuery(""); setShareResults([]); }}
+                whileTap={{ scale: 0.88 }}
+                className="w-7 h-7 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)" }}
+              >
+                <X className="w-3.5 h-3.5 text-white/80" />
+              </motion.button>
+            </div>
+
+            {/* Search field */}
+            <div className="px-4 pb-3">
+              <div
+                className="flex items-center gap-2 px-3 py-2.5 rounded-2xl"
+                style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)" }}
+              >
+                <Search className="w-4 h-4 text-white/50 flex-shrink-0" />
+                <input
+                  autoFocus
+                  value={shareQuery}
+                  onChange={e => setShareQuery(e.target.value)}
+                  placeholder="Foydalanuvchi nomini kiriting…"
+                  className="flex-1 bg-transparent outline-none text-white text-[13px] placeholder:text-white/35"
+                />
+                {shareQuery && (
+                  <button onClick={() => { setShareQuery(""); setShareResults([]); }}>
+                    <X className="w-3.5 h-3.5 text-white/40" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Copy link row */}
+            <div className="px-4 pb-2">
+              <motion.button
+                onClick={handleCopyLink}
+                whileTap={{ scale: 0.97 }}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl"
+                style={{
+                  background: linkCopied ? "rgba(52,211,153,0.14)" : "rgba(255,255,255,0.06)",
+                  border: linkCopied ? "1px solid rgba(52,211,153,0.40)" : "1px solid rgba(255,255,255,0.12)",
+                }}
+              >
+                {linkCopied
+                  ? <Check className="w-4 h-4 text-emerald-400" />
+                  : <Link className="w-4 h-4 text-white/60" />
+                }
+                <span className="text-[13px] font-semibold" style={{ color: linkCopied ? "#34d399" : "rgba(255,255,255,0.75)" }}>
+                  {linkCopied ? "Havola nusxalandi!" : "Havolani nusxalash"}
+                </span>
+              </motion.button>
+            </div>
+
+            {/* Divider */}
+            {(shareResults.length > 0 || shareQuery.trim()) && (
+              <div className="mx-4 mb-2 h-px" style={{ background: "rgba(255,255,255,0.10)" }} />
+            )}
+
+            {/* User results */}
+            <div className="overflow-y-auto" style={{ maxHeight: "220px" }}>
+              {shareQuery.trim() && shareResults.length === 0 && (
+                <div className="flex items-center justify-center py-6 gap-2 text-white/35">
+                  <User className="w-4 h-4" />
+                  <span className="text-[12px]">Foydalanuvchi topilmadi</span>
+                </div>
+              )}
+              {shareResults
+                .filter(u => u.id !== user?.id)
+                .map((u, i) => {
+                  const sent    = shareSent === u.id;
+                  const sending = shareSending === u.id;
+                  return (
+                    <motion.button
+                      key={u.id}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.045 }}
+                      onClick={() => handleSendToUser(u)}
+                      disabled={sending || sent}
+                      className="flex items-center gap-3 w-full px-4 py-2.5"
+                      style={{ background: sent ? "rgba(52,211,153,0.08)" : "transparent" }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {/* Avatar */}
+                      {u.avatarUrl ? (
+                        <img src={u.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                          style={{ boxShadow: "0 0 0 2px rgba(255,255,255,0.18)" }} />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black text-white"
+                          style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", boxShadow: "0 0 0 2px rgba(168,85,247,0.35)" }}>
+                          {u.displayName?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                      )}
+                      {/* Name + username */}
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="text-white text-[13px] font-bold truncate">{u.displayName}</p>
+                        <p className="text-white/45 text-[11px] truncate">@{u.username}</p>
+                      </div>
+                      {/* Status */}
+                      <div className="flex-shrink-0">
+                        {sent ? (
+                          <motion.div
+                            initial={{ scale: 0 }} animate={{ scale: 1 }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-full"
+                            style={{ background: "rgba(52,211,153,0.18)", border: "1px solid rgba(52,211,153,0.40)" }}
+                          >
+                            <Check className="w-3 h-3 text-emerald-400" />
+                            <span className="text-[11px] font-bold text-emerald-400">Yuborildi</span>
+                          </motion.div>
+                        ) : sending ? (
+                          <motion.div
+                            animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                            className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/70"
+                          />
+                        ) : (
+                          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full"
+                            style={{ background: "rgba(168,85,247,0.18)", border: "1px solid rgba(168,85,247,0.40)" }}>
+                            <Send className="w-3 h-3" style={{ color: "#a855f7" }} />
+                            <span className="text-[11px] font-bold" style={{ color: "#a855f7" }}>Yuborish</span>
+                          </div>
+                        )}
+                      </div>
+                    </motion.button>
+                  );
+                })}
+            </div>
+
+            <div className="h-safe pb-4" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ══ LAYER 8 — INLINE COMMENT PANEL (slide up from bottom) ══ */}
       <AnimatePresence>

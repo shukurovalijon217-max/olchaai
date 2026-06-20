@@ -662,6 +662,41 @@ export const TRENDING_CHALLENGES = [
   "#MorningRoutine ☀️", "#NightRoutine 🌙", "#CookingChallenge 👨‍🍳", "#StudyWith 📚",
 ];
 
+type StylePreset = {
+  id:string; label:string; cardGrad:string;
+  color:string; gradient:string; fontFamily:string;
+  bgStyle:TextOverlay["bgStyle"]; shadowPreset:TextOverlay["shadowPreset"];
+  strokeWidth:number; strokeColor:string;
+  animation:TextOverlay["animation"]; letterSpacing:number;
+  fontSize:number; fontStyle:TextOverlay["fontStyle"];
+};
+const STYLE_PRESETS: StylePreset[] = [
+  { id:"neon-club",  label:"Neon Club",   cardGrad:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",
+    color:"#00ffff",  gradient:"", fontFamily:"mono",   bgStyle:"dark",      shadowPreset:"neon-blue", strokeWidth:0, strokeColor:"#000",    animation:"neon",       letterSpacing:4, fontSize:38, fontStyle:"bold" },
+  { id:"fire",       label:"Olov 🔥",     cardGrad:"linear-gradient(135deg,#f12711,#f5af19)",
+    color:"#fff",     gradient:"linear-gradient(90deg,#ff4e00,#ec9f05)", fontFamily:"impact", bgStyle:"none", shadowPreset:"fire", strokeWidth:1, strokeColor:"#7a1a00", animation:"pulse",      letterSpacing:2, fontSize:42, fontStyle:"bold" },
+  { id:"cinema",     label:"Sinema 🎬",   cardGrad:"linear-gradient(135deg,#1a1a2e,#0f3460)",
+    color:"#f5e642",  gradient:"", fontFamily:"serif",  bgStyle:"dark",      shadowPreset:"3d",        strokeWidth:2, strokeColor:"#000",    animation:"none",       letterSpacing:6, fontSize:40, fontStyle:"bold" },
+  { id:"galaxy",     label:"Galaktika 🌌",cardGrad:"linear-gradient(135deg,#667eea,#764ba2)",
+    color:"#fff",     gradient:"linear-gradient(90deg,#a78bfa,#38bdf8,#a78bfa)", fontFamily:"display", bgStyle:"none", shadowPreset:"glow", strokeWidth:0, strokeColor:"#000", animation:"rainbow", letterSpacing:3, fontSize:36, fontStyle:"bold" },
+  { id:"retro",      label:"Retro 🕹️",    cardGrad:"linear-gradient(135deg,#fc4a1a,#f7b733)",
+    color:"#fff",     gradient:"", fontFamily:"impact", bgStyle:"pill",      shadowPreset:"retro",     strokeWidth:0, strokeColor:"#000",    animation:"bounce",     letterSpacing:4, fontSize:34, fontStyle:"bold" },
+  { id:"luxury",     label:"Luxury ✨",   cardGrad:"linear-gradient(135deg,#b8860b,#ffd700,#b8860b)",
+    color:"#ffd700",  gradient:"linear-gradient(90deg,#c6a000,#ffd700,#fff8dc)", fontFamily:"serif", bgStyle:"dark", shadowPreset:"3d", strokeWidth:1, strokeColor:"#8B6914", animation:"none", letterSpacing:5, fontSize:40, fontStyle:"bold" },
+  { id:"bubble",     label:"Bubble 🫧",   cardGrad:"linear-gradient(135deg,#ff9a9e,#fecfef)",
+    color:"#ff6b9d",  gradient:"", fontFamily:"soft",   bgStyle:"highlight", shadowPreset:"soft",      strokeWidth:3, strokeColor:"#fff",    animation:"bounce",     letterSpacing:2, fontSize:36, fontStyle:"bold" },
+  { id:"hacker",     label:"Hacker 💻",   cardGrad:"linear-gradient(135deg,#000,#003300)",
+    color:"#00ff41",  gradient:"", fontFamily:"mono",   bgStyle:"none",      shadowPreset:"neon-blue", strokeWidth:0, strokeColor:"#000",    animation:"typewriter", letterSpacing:2, fontSize:32, fontStyle:"regular" },
+  { id:"sunset",     label:"Sunset 🌅",   cardGrad:"linear-gradient(135deg,#f093fb,#f5576c)",
+    color:"#fff",     gradient:"linear-gradient(90deg,#f093fb,#f5576c,#f093fb)", fontFamily:"soft", bgStyle:"none", shadowPreset:"glow", strokeWidth:0, strokeColor:"#000", animation:"wave", letterSpacing:1, fontSize:38, fontStyle:"bold" },
+  { id:"storm",      label:"Bo'ron ⚡",   cardGrad:"linear-gradient(135deg,#373b44,#4286f4)",
+    color:"#fff",     gradient:"", fontFamily:"narrow", bgStyle:"blur",      shadowPreset:"3d",        strokeWidth:2, strokeColor:"#1a3a6e", animation:"shake",      letterSpacing:3, fontSize:36, fontStyle:"bold" },
+  { id:"kawaii",     label:"Kawaii 🌸",   cardGrad:"linear-gradient(135deg,#f8c8d4,#e880a0)",
+    color:"#fff",     gradient:"linear-gradient(90deg,#ff9ecd,#c8a0e0)", fontFamily:"soft", bgStyle:"pill", shadowPreset:"glow", strokeWidth:2, strokeColor:"#ff80b5", animation:"pulse", letterSpacing:2, fontSize:36, fontStyle:"bold" },
+  { id:"matrix",     label:"Matrix 🔢",   cardGrad:"linear-gradient(135deg,#000,#00290b)",
+    color:"#39ff14",  gradient:"linear-gradient(180deg,#00ff41,#008f11)", fontFamily:"mono", bgStyle:"none", shadowPreset:"neon-blue", strokeWidth:0, strokeColor:"#000", animation:"flip", letterSpacing:1, fontSize:34, fontStyle:"regular" },
+];
+
 const SPEED_OPTIONS = [
   { label:"0.3×", val:0.3, color:"#38bdf8" },
   { label:"0.5×", val:0.5, color:"#818cf8" },
@@ -927,7 +962,9 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [draftLetterSpacing, setDraftLetterSpacing] = useState(0);
   const [draftStrokeW, setDraftStrokeW]       = useState(0);
   const [draftStrokeColor, setDraftStrokeColor] = useState("#000000");
-  const [textTab, setTextTab]                 = useState<"write"|"font"|"color"|"effect"|"anim">("write");
+  const [textTab, setTextTab]                 = useState<"write"|"style"|"font"|"color"|"fx">("write");
+  const [draftHue, setDraftHue]               = useState(0);
+  const [draftLightness, setDraftLightness]   = useState(60);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{id:string;sx:number;sy:number;ox:number;oy:number}|null>(null);
@@ -1231,275 +1268,458 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         </div>
       </div>
 
-      {/* ── Text panel (RICH — 5 tabs) ── */}
+      {/* ── Text panel (STUDIO — revolutionary) ── */}
       <AnimatePresence>
         {panel === "text" && (() => {
-          /* live preview item */
           const previewItem: TextOverlay = {
-            id:"__preview__", text: draftText || "Namuna matn", x:50, y:50,
-            fontSize: draftSize, color: draftColor, animation:"none",
+            id:"__preview__", text: draftText || "OlCha Studio", x:50, y:50,
+            fontSize: Math.min(draftSize, 36), color: draftColor, animation:"none",
             fontStyle: draftFStyle, bgStyle: draftBg, fontFamily: draftFont,
             shadowPreset: draftShadow, gradient: draftGradient, align: draftAlign,
             letterSpacing: draftLetterSpacing, strokeWidth: draftStrokeW, strokeColor: draftStrokeColor,
           };
+          const applyPreset = (p: StylePreset) => {
+            setDraftColor(p.color); setDraftGradient(p.gradient);
+            setDraftFont(p.fontFamily); setDraftBg(p.bgStyle);
+            setDraftShadow(p.shadowPreset); setDraftStrokeW(p.strokeWidth);
+            setDraftStrokeColor(p.strokeColor); setDraftAnim(p.animation);
+            setDraftLetterSpacing(p.letterSpacing); setDraftSize(p.fontSize);
+            setDraftFStyle(p.fontStyle);
+          };
+          const TABS = [
+            { id:"write" as const,  icon:"✏️", tip:"Yoz"  },
+            { id:"style" as const,  icon:"🎨", tip:"Stil" },
+            { id:"font"  as const,  icon:"🔤", tip:"Font" },
+            { id:"color" as const,  icon:"🌈", tip:"Rang" },
+            { id:"fx"    as const,  icon:"✨", tip:"FX"   },
+          ];
           return (
           <motion.div
             initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
-            transition={{ type:"spring", stiffness:380, damping:32 }}
-            className="flex-shrink-0 pb-6"
-            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            transition={{ type:"spring", stiffness:400, damping:34 }}
+            className="flex-shrink-0"
+            style={{
+              background:"linear-gradient(180deg,rgba(14,4,32,0.99) 0%,rgba(6,4,18,0.99) 100%)",
+              borderTop:"2px solid transparent",
+              backgroundClip:"padding-box",
+              boxShadow:"0 -1px 0 rgba(124,58,237,0.5), inset 0 1px 0 rgba(168,85,247,0.12)",
+            }}
             onClick={e => e.stopPropagation()}
           >
-            {/* ── Tab bar ── */}
-            <div className="flex border-b border-white/8">
-              {(["write","font","color","effect","anim"] as const).map(t => (
-                <button key={t} onClick={() => setTextTab(t)}
-                  className="flex-1 py-2.5 text-[10px] font-bold transition-all"
-                  style={{ color: textTab===t ? "#c4b5fd" : "rgba(255,255,255,0.35)",
-                    borderBottom: textTab===t ? "2px solid #7c3aed" : "2px solid transparent" }}>
-                  {t==="write"?"✏️Yoz":t==="font"?"🔤Font":t==="color"?"🎨Rang":t==="effect"?"✨Effekt":"🎬Anim"}
+            {/* ── Glowing icon tab bar ── */}
+            <div className="flex items-center gap-1 px-3 pt-2.5 pb-0">
+              {TABS.map(t => (
+                <button key={t.id} onClick={() => setTextTab(t.id)}
+                  className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-xl transition-all"
+                  style={{
+                    background: textTab===t.id
+                      ? "radial-gradient(ellipse at 50% 0%,rgba(124,58,237,0.4) 0%,rgba(124,58,237,0.08) 100%)"
+                      : "transparent",
+                    boxShadow: textTab===t.id ? "0 0 12px rgba(124,58,237,0.3)" : "none",
+                  }}>
+                  <span className="text-lg leading-none"
+                    style={{ filter: textTab===t.id ? "drop-shadow(0 0 6px #a855f7)" : "none" }}>
+                    {t.icon}
+                  </span>
+                  <span className="text-[8px] font-black tracking-wider"
+                    style={{ color: textTab===t.id ? "#c4b5fd" : "rgba(255,255,255,0.3)" }}>
+                    {t.tip}
+                  </span>
                 </button>
               ))}
+              {/* Done button */}
+              <button onClick={addText}
+                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ml-1 transition-all"
+                style={{
+                  background: draftText.trim()
+                    ? "linear-gradient(135deg,#7c3aed,#a855f7)"
+                    : "rgba(255,255,255,0.07)",
+                  boxShadow: draftText.trim() ? "0 0 16px rgba(124,58,237,0.5)" : "none",
+                  border: draftText.trim() ? "1.5px solid rgba(168,85,247,0.6)" : "1px solid rgba(255,255,255,0.1)",
+                }}>
+                <Check className="w-5 h-5 text-white" />
+              </button>
             </div>
 
-            {/* ── Live preview strip ── */}
-            <div className="mx-4 mt-3 mb-2 flex items-center justify-center rounded-2xl overflow-hidden"
-              style={{ background:"rgba(255,255,255,0.05)", minHeight:52, border:"1px solid rgba(255,255,255,0.08)" }}>
+            {/* ── Live preview banner ── */}
+            <div className="mx-3 mt-2 mb-1.5 flex items-center justify-center rounded-2xl overflow-hidden"
+              style={{
+                minHeight:48,
+                background:"radial-gradient(ellipse at 50% 50%,rgba(124,58,237,0.12) 0%,rgba(0,0,0,0.4) 100%)",
+                border:"1px solid rgba(124,58,237,0.2)",
+              }}>
               <OverlayText item={previewItem} />
             </div>
 
-            {/* ── Tab content ── */}
-            <div className="px-4">
+            {/* ── Tab content (scrollable) ── */}
+            <div className="overflow-y-auto pb-6" style={{ maxHeight:"46vh", scrollbarWidth:"none" }}>
 
-              {/* WRITE tab */}
+              {/* ════ WRITE TAB ════ */}
               {textTab === "write" && (
-                <div className="space-y-3 pt-1">
-                  <div className="flex gap-2">
-                    <input autoFocus value={draftText} onChange={e => setDraftText(e.target.value)}
+                <div className="px-3 space-y-2.5 pt-1">
+                  {/* Glowing textarea */}
+                  <div className="relative">
+                    <textarea
+                      autoFocus rows={2}
+                      value={draftText} onChange={e => setDraftText(e.target.value)}
                       placeholder="Matn kiriting…"
-                      className="flex-1 rounded-2xl px-4 py-3 text-base text-white placeholder:text-white/25 focus:outline-none"
-                      style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)", fontFamily: FONT_FAMILIES.find(f=>f.id===draftFont)?.css }}
-                      onKeyDown={e => e.key==="Enter" && addText()} />
-                    <button onClick={addText}
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: draftText.trim() ? "rgba(124,58,237,0.9)" : "rgba(255,255,255,0.07)",
-                        border: draftText.trim() ? "2px solid rgba(168,85,247,0.6)" : "1px solid rgba(255,255,255,0.1)" }}>
-                      <Check className="w-5 h-5 text-white" />
-                    </button>
+                      className="w-full rounded-2xl px-4 py-3 text-base text-white placeholder:text-white/20 focus:outline-none resize-none"
+                      style={{
+                        background:"rgba(255,255,255,0.06)",
+                        border:"1.5px solid rgba(124,58,237,0.4)",
+                        fontFamily: FONT_FAMILIES.find(f=>f.id===draftFont)?.css,
+                        boxShadow:"0 0 0 0 rgba(124,58,237,0)",
+                        transition:"box-shadow 0.2s",
+                      }}
+                      onFocus={e => (e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.25)")}
+                      onBlur={e => (e.currentTarget.style.boxShadow = "0 0 0 0 rgba(124,58,237,0)")}
+                    />
+                    {/* Current font badge */}
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-lg"
+                      style={{ background:"rgba(124,58,237,0.3)", border:"1px solid rgba(168,85,247,0.4)" }}>
+                      <span className="text-[9px] font-bold text-purple-300">
+                        {FONT_FAMILIES.find(f=>f.id===draftFont)?.label}
+                      </span>
+                    </div>
                   </div>
-                  {/* Size slider */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] text-white/40 font-bold w-8">A</span>
-                    <div className="relative flex-1 h-2 rounded-full" style={{ background:"rgba(255,255,255,0.1)" }}>
+
+                  {/* Size control: big A ────slider──── big A */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white/30 flex-shrink-0" style={{ fontSize:11 }}>A</span>
+                    <div className="relative flex-1 h-3 rounded-full cursor-pointer"
+                      style={{ background:"rgba(255,255,255,0.08)" }}>
                       <div className="absolute left-0 top-0 h-full rounded-full"
-                        style={{ width:`${((draftSize-12)/(110-12))*100}%`, background:"linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+                        style={{ width:`${((draftSize-12)/(110-12))*100}%`, background:"linear-gradient(90deg,#4c1d95,#7c3aed,#c4b5fd)" }} />
                       <input type="range" min={12} max={110} step={2} value={draftSize}
                         onChange={e => setDraftSize(Number(e.target.value))}
                         className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                      {/* thumb indicator */}
+                      <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full pointer-events-none"
+                        style={{ left:`calc(${((draftSize-12)/(110-12))*100}% - 8px)`,
+                          background:"white", boxShadow:"0 0 8px rgba(124,58,237,0.8)" }} />
                     </div>
-                    <span className="text-[10px] text-white/40 font-bold w-8 text-right">A</span>
-                    <span className="text-[11px] font-black text-purple-400 w-9 text-right">{draftSize}px</span>
+                    <span className="text-lg font-black text-white/30 flex-shrink-0">A</span>
+                    <span className="text-xs font-black text-purple-400 w-9 text-right flex-shrink-0">{draftSize}px</span>
                   </div>
-                  {/* Quick colors */}
-                  <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth:"none" }}>
-                    {COLORS.map(c => (
-                      <button key={c} onClick={() => { setDraftColor(c); setDraftGradient(""); }}
-                        className="w-8 h-8 rounded-full flex-shrink-0 transition-all"
-                        style={{ background:c, outline: c===draftColor && !draftGradient ? "2.5px solid white" : "none",
-                          outlineOffset:2, transform: c===draftColor && !draftGradient ? "scale(1.2)" : "scale(1)" }} />
-                    ))}
-                  </div>
-                  {/* Align */}
-                  <div className="flex gap-2">
-                    {(["left","center","right"] as const).map(a => (
-                      <button key={a} onClick={() => setDraftAlign(a)}
-                        className="flex-1 py-2 rounded-xl text-sm font-bold transition-all"
-                        style={{ background: draftAlign===a ? "rgba(124,58,237,0.6)" : "rgba(255,255,255,0.06)",
-                          color: draftAlign===a ? "white" : "rgba(255,255,255,0.4)" }}>
-                        {a==="left"?"⬅ Sol":a==="center"?"⬛ O'rta":"➡ O'ng"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* FONT tab */}
-              {textTab === "font" && (
-                <div className="space-y-3 pt-1">
-                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Font oilasi</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {FONT_FAMILIES.map(f => (
-                      <button key={f.id} onClick={() => setDraftFont(f.id)}
-                        className="px-3 py-2.5 rounded-xl text-sm transition-all text-left"
-                        style={{
-                          fontFamily: f.css,
-                          background: draftFont===f.id ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.05)",
-                          border: draftFont===f.id ? "1.5px solid rgba(124,58,237,0.8)" : "1.5px solid rgba(255,255,255,0.08)",
-                          color: draftFont===f.id ? "#c4b5fd" : "rgba(255,255,255,0.65)",
-                          fontWeight: draftFont===f.id ? 700 : 400,
-                        }}>
-                        {f.label} — <span style={{ opacity:0.6 }}>Aa 1 2 3</span>
-                      </button>
-                    ))}
+                  {/* Quick 8 colors + align */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1.5 flex-1 overflow-x-auto" style={{ scrollbarWidth:"none" }}>
+                      {["#ffffff","#000000","#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#a855f7","#ec4899","#06b6d4"].map(c => (
+                        <button key={c} onClick={() => { setDraftColor(c); setDraftGradient(""); setDraftHue(0); }}
+                          className="w-7 h-7 rounded-full flex-shrink-0 transition-all"
+                          style={{
+                            background: c,
+                            outline: c===draftColor && !draftGradient ? "2.5px solid rgba(255,255,255,0.9)" : "none",
+                            outlineOffset: 2,
+                            transform: c===draftColor && !draftGradient ? "scale(1.25)" : "scale(1)",
+                            boxShadow: c==="#000000" ? "inset 0 0 0 1.5px rgba(255,255,255,0.3)" : "none",
+                          }} />
+                      ))}
+                    </div>
+                    {/* Align icons */}
+                    <div className="flex gap-1 flex-shrink-0 pl-1" style={{ borderLeft:"1px solid rgba(255,255,255,0.1)" }}>
+                      {([["left","⬅"],["center","☰"],["right","➡"]] as const).map(([a,ico]) => (
+                        <button key={a} onClick={() => setDraftAlign(a)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all"
+                          style={{ background: draftAlign===a ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.07)",
+                            color: draftAlign===a ? "#c4b5fd" : "rgba(255,255,255,0.4)" }}>
+                          {ico}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  {/* Style */}
-                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest mt-2">Matn stili</p>
+
+                  {/* Font style pills */}
                   <div className="flex gap-1.5">
                     {FSTYLES.map(st => (
                       <button key={st.id} onClick={() => setDraftFStyle(st.id)}
-                        className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
-                        style={{ background: draftFStyle===st.id ? "rgba(124,58,237,0.6)" : "rgba(255,255,255,0.06)",
-                          color: draftFStyle===st.id ? "white" : "rgba(255,255,255,0.45)",
-                          border: draftFStyle===st.id ? "1px solid rgba(168,85,247,0.6)" : "none" }}>
+                        className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all"
+                        style={{
+                          background: draftFStyle===st.id ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.05)",
+                          color: draftFStyle===st.id ? "white" : "rgba(255,255,255,0.4)",
+                          border: draftFStyle===st.id ? "1px solid rgba(168,85,247,0.6)" : "1px solid rgba(255,255,255,0.06)",
+                        }}>
                         {st.label}
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* ════ STYLE PRESETS TAB ════ */}
+              {textTab === "style" && (
+                <div className="px-3 pt-1 space-y-2">
+                  {/* Random button */}
+                  <button onClick={() => applyPreset(STYLE_PRESETS[Math.floor(Math.random()*STYLE_PRESETS.length)])}
+                    className="w-full py-2.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2"
+                    style={{ background:"linear-gradient(90deg,#7c3aed,#a855f7,#7c3aed)", backgroundSize:"200%", animation:"gradientShift 3s ease infinite" }}>
+                    🎲 Tasodifiy Stil
+                  </button>
+
+                  {/* 2-column preset grid */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {STYLE_PRESETS.map(p => {
+                      const sampleItem: TextOverlay = {
+                        id:"__sample__", text: draftText || "Salom", x:50, y:50,
+                        fontSize:22, color:p.color, animation:"none",
+                        fontStyle:p.fontStyle, bgStyle:"none", fontFamily:p.fontFamily,
+                        shadowPreset:p.shadowPreset, gradient:p.gradient, align:"center",
+                        letterSpacing:p.letterSpacing, strokeWidth:p.strokeWidth, strokeColor:p.strokeColor,
+                      };
+                      return (
+                        <button key={p.id} onClick={() => applyPreset(p)}
+                          className="relative overflow-hidden rounded-2xl px-3 py-3 text-left transition-all"
+                          style={{
+                            background: p.cardGrad,
+                            border: "1.5px solid rgba(255,255,255,0.1)",
+                            transform: "scale(1)",
+                            transition: "transform 0.15s, box-shadow 0.15s",
+                          }}
+                          onPointerDown={e => (e.currentTarget.style.transform="scale(0.95)")}
+                          onPointerUp={e => (e.currentTarget.style.transform="scale(1)")}
+                          onPointerLeave={e => (e.currentTarget.style.transform="scale(1)")}
+                        >
+                          {/* Sample text preview */}
+                          <div className="flex items-center justify-center mb-2" style={{ minHeight:32 }}>
+                            <OverlayText item={sampleItem} />
+                          </div>
+                          {/* Label */}
+                          <p className="text-[10px] font-black text-white/80 text-center"
+                            style={{ textShadow:"0 1px 4px rgba(0,0,0,0.8)" }}>
+                            {p.label}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ════ FONT TAB ════ */}
+              {textTab === "font" && (
+                <div className="px-3 pt-1 space-y-3">
+                  {/* Horizontal film strip */}
+                  <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth:"none" }}>
+                    {FONT_FAMILIES.map(f => (
+                      <button key={f.id} onClick={() => setDraftFont(f.id)}
+                        className="flex-shrink-0 flex flex-col items-center justify-center rounded-2xl transition-all"
+                        style={{
+                          width:100, height:72, padding:"8px 10px",
+                          background: draftFont===f.id
+                            ? "radial-gradient(ellipse at 50% 0%,rgba(124,58,237,0.5),rgba(30,10,50,0.9))"
+                            : "rgba(255,255,255,0.05)",
+                          border: draftFont===f.id ? "2px solid rgba(124,58,237,0.9)" : "1.5px solid rgba(255,255,255,0.08)",
+                          transform: draftFont===f.id ? "scale(1.04)" : "scale(1)",
+                          boxShadow: draftFont===f.id ? "0 0 14px rgba(124,58,237,0.4)" : "none",
+                        }}>
+                        <span className="text-xl text-white mb-1" style={{ fontFamily:f.css, lineHeight:1 }}>Aa</span>
+                        <span className="text-[9px] font-bold"
+                          style={{ color: draftFont===f.id ? "#c4b5fd" : "rgba(255,255,255,0.4)" }}>
+                          {f.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Font style */}
+                  <div>
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[3px] mb-1.5">Qalinlik / Uslub</p>
+                    <div className="flex gap-1.5">
+                      {FSTYLES.map(st => (
+                        <button key={st.id} onClick={() => setDraftFStyle(st.id)}
+                          className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all"
+                          style={{ background: draftFStyle===st.id ? "rgba(124,58,237,0.55)" : "rgba(255,255,255,0.05)",
+                            color: draftFStyle===st.id ? "white" : "rgba(255,255,255,0.4)",
+                            border: draftFStyle===st.id ? "1px solid rgba(168,85,247,0.6)" : "1px solid rgba(255,255,255,0.06)" }}>
+                          {st.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Letter spacing */}
                   <div>
-                    <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest mb-1.5">Harf oralig'i</p>
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1 h-2 rounded-full" style={{ background:"rgba(255,255,255,0.1)" }}>
-                        <div className="absolute left-0 top-0 h-full rounded-full"
-                          style={{ width:`${(draftLetterSpacing/10)*100}%`, background:"linear-gradient(90deg,#7c3aed,#a855f7)" }} />
-                        <input type="range" min={0} max={10} step={0.5} value={draftLetterSpacing}
-                          onChange={e => setDraftLetterSpacing(Number(e.target.value))}
-                          className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
-                      </div>
-                      <span className="text-[11px] font-bold text-purple-400 w-8 text-right">{draftLetterSpacing}px</span>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <p className="text-[9px] font-black text-white/30 uppercase tracking-[3px]">Harf oralig'i</p>
+                      <span className="text-[11px] font-black text-purple-400">{draftLetterSpacing}px</span>
+                    </div>
+                    <div className="relative h-3 rounded-full" style={{ background:"rgba(255,255,255,0.08)" }}>
+                      <div className="absolute left-0 top-0 h-full rounded-full"
+                        style={{ width:`${(draftLetterSpacing/10)*100}%`, background:"linear-gradient(90deg,#7c3aed,#c4b5fd)" }} />
+                      <input type="range" min={0} max={10} step={0.5} value={draftLetterSpacing}
+                        onChange={e => setDraftLetterSpacing(Number(e.target.value))}
+                        className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                      <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full pointer-events-none"
+                        style={{ left:`calc(${(draftLetterSpacing/10)*100}% - 8px)`, background:"white", boxShadow:"0 0 8px rgba(124,58,237,0.7)" }} />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* COLOR tab */}
+              {/* ════ COLOR TAB ════ */}
               {textTab === "color" && (
-                <div className="space-y-3 pt-1">
-                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Rang</p>
-                  <div className="flex flex-wrap gap-2">
-                    {COLORS.map(c => (
-                      <button key={c} onClick={() => { setDraftColor(c); setDraftGradient(""); }}
-                        className="w-9 h-9 rounded-full flex-shrink-0 transition-all"
-                        style={{ background:c, outline: c===draftColor && !draftGradient ? "2.5px solid white" : "none",
-                          outlineOffset:2, transform: c===draftColor && !draftGradient ? "scale(1.15)" : "scale(1)",
-                          boxShadow: c==="000000" ? "inset 0 0 0 1px rgba(255,255,255,0.3)" : "none" }} />
+                <div className="px-3 pt-1 space-y-3">
+                  {/* ── Spectrum hue bar ── */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <p className="text-[9px] font-black text-white/30 uppercase tracking-[3px]">Rang spektri</p>
+                      <div className="w-6 h-6 rounded-full border-2 border-white/40"
+                        style={{ background:`hsl(${draftHue},100%,${draftLightness}%)`, boxShadow:`0 0 8px hsl(${draftHue},100%,${draftLightness}%)` }} />
+                    </div>
+                    {/* Hue track */}
+                    <div className="relative h-5 rounded-full overflow-hidden mb-2"
+                      style={{ background:"linear-gradient(90deg,#ff0000,#ff7700,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)" }}>
+                      <input type="range" min={0} max={360} value={draftHue}
+                        onChange={e => { const h=Number(e.target.value); setDraftHue(h); setDraftColor(`hsl(${h},100%,${draftLightness}%)`); setDraftGradient(""); }}
+                        className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                      <div className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 border-white pointer-events-none"
+                        style={{ left:`calc(${(draftHue/360)*100}% - 10px)`, background:`hsl(${draftHue},100%,${draftLightness}%)`, boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} />
+                    </div>
+                    {/* Lightness track */}
+                    <div className="relative h-4 rounded-full"
+                      style={{ background:`linear-gradient(90deg,hsl(${draftHue},100%,20%),hsl(${draftHue},100%,55%),hsl(${draftHue},100%,90%))` }}>
+                      <input type="range" min={30} max={85} value={draftLightness}
+                        onChange={e => { const l=Number(e.target.value); setDraftLightness(l); setDraftColor(`hsl(${draftHue},100%,${l}%)`); setDraftGradient(""); }}
+                        className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                      <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white pointer-events-none"
+                        style={{ left:`calc(${((draftLightness-30)/55)*100}% - 8px)`, background:`hsl(${draftHue},100%,${draftLightness}%)`, boxShadow:"0 2px 6px rgba(0,0,0,0.5)" }} />
+                    </div>
+                  </div>
+
+                  {/* Quick solid colors */}
+                  <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth:"none" }}>
+                    {["#ffffff","#000000","#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#a855f7","#ec4899","#06b6d4","#f59e0b","#6366f1"].map(c => (
+                      <button key={c} onClick={() => { setDraftColor(c); setDraftGradient(""); setDraftHue(0); }}
+                        className="w-8 h-8 rounded-full flex-shrink-0 transition-all"
+                        style={{ background:c,
+                          outline: c===draftColor && !draftGradient ? "2.5px solid white" : "none",
+                          outlineOffset:2, transform: c===draftColor && !draftGradient ? "scale(1.2)" : "scale(1)",
+                          boxShadow: c==="#000000" ? "inset 0 0 0 1.5px rgba(255,255,255,0.35)" : "none" }} />
                     ))}
                   </div>
-                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Gradient matn</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {GRADIENT_PRESETS.map(g => (
-                      <button key={g.id} onClick={() => setDraftGradient(g.id==="none" ? "" : g.css)}
-                        className="py-2 px-2.5 rounded-xl text-[10px] font-bold transition-all text-center"
-                        style={{
-                          background: g.css || "rgba(255,255,255,0.08)",
-                          border: draftGradient===g.css ? "2px solid white" : "1.5px solid rgba(255,255,255,0.1)",
-                          color: g.id==="none" ? "rgba(255,255,255,0.5)" : "white",
-                          textShadow: g.id!=="none" ? "0 1px 3px rgba(0,0,0,0.8)" : "none",
-                        }}>
-                        {g.label}
-                      </button>
-                    ))}
+
+                  {/* Gradient text presets */}
+                  <div>
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[3px] mb-1.5">Gradient matn</p>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {GRADIENT_PRESETS.map(g => (
+                        <button key={g.id} onClick={() => setDraftGradient(g.id==="none" ? "" : g.css)}
+                          className="py-2.5 rounded-xl text-[10px] font-black transition-all"
+                          style={{
+                            background: g.css || "rgba(255,255,255,0.07)",
+                            border: draftGradient===g.css ? "2px solid white" : "1.5px solid rgba(255,255,255,0.1)",
+                            color: g.id==="none" ? "rgba(255,255,255,0.4)" : "white",
+                            textShadow: g.id!=="none" ? "0 1px 4px rgba(0,0,0,0.8)" : "none",
+                          }}>
+                          {g.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
                   {/* Background style */}
-                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Fon</p>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {(["none","dark","blur","gradient","highlight","pill"] as TextOverlay["bgStyle"][]).map(b => (
-                      <button key={b} onClick={() => setDraftBg(b)}
-                        className="py-2 rounded-xl text-[10px] font-bold transition-all"
-                        style={{
-                          background: draftBg===b ? "rgba(6,182,212,0.35)" : "rgba(255,255,255,0.06)",
-                          color: draftBg===b ? "white" : "rgba(255,255,255,0.4)",
-                          border: draftBg===b ? "1px solid rgba(6,182,212,0.6)" : "1px solid rgba(255,255,255,0.06)",
-                        }}>
-                        {b==="none"?"Yo'q":b==="dark"?"Qora":b==="blur"?"Blur":b==="gradient"?"Gradient":b==="highlight"?"Sariq":"Pill"}
-                      </button>
-                    ))}
+                  <div>
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[3px] mb-1.5">Matn foni</p>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(["none","dark","blur","gradient","highlight","pill"] as TextOverlay["bgStyle"][]).map(b => (
+                        <button key={b} onClick={() => setDraftBg(b)}
+                          className="py-2 rounded-xl text-[10px] font-bold transition-all"
+                          style={{
+                            background: draftBg===b ? "rgba(6,182,212,0.3)" : "rgba(255,255,255,0.05)",
+                            color: draftBg===b ? "#67e8f9" : "rgba(255,255,255,0.4)",
+                            border: draftBg===b ? "1px solid rgba(6,182,212,0.55)" : "1px solid rgba(255,255,255,0.06)",
+                          }}>
+                          {b==="none"?"Yo'q":b==="dark"?"Qora":b==="blur"?"Blur":b==="gradient"?"Grad":b==="highlight"?"Sariq":"Pill"}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* EFFECT tab */}
-              {textTab === "effect" && (
-                <div className="space-y-3 pt-1">
-                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Soya / Glow effektlari</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {TEXT_SHADOWS.map(sh => (
-                      <button key={sh.id} onClick={() => setDraftShadow(sh.id as TextOverlay["shadowPreset"])}
-                        className="py-2.5 px-2 rounded-xl text-[10px] font-bold transition-all"
-                        style={{
-                          background: draftShadow===sh.id ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.06)",
-                          border: draftShadow===sh.id ? "1.5px solid rgba(124,58,237,0.8)" : "1.5px solid rgba(255,255,255,0.08)",
-                          color: "white",
-                          textShadow: sh.css !== "none" ? sh.css : "none",
-                        }}>
-                        {sh.label}
-                      </button>
-                    ))}
+              {/* ════ FX TAB (shadow + stroke + animation) ════ */}
+              {textTab === "fx" && (
+                <div className="px-3 pt-1 space-y-3">
+                  {/* Shadow grid */}
+                  <div>
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[3px] mb-1.5">Soya / Glow</p>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {TEXT_SHADOWS.map(sh => (
+                        <button key={sh.id} onClick={() => setDraftShadow(sh.id as TextOverlay["shadowPreset"])}
+                          className="py-3 rounded-xl transition-all flex flex-col items-center gap-1"
+                          style={{
+                            background: draftShadow===sh.id ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.05)",
+                            border: draftShadow===sh.id ? "1.5px solid rgba(124,58,237,0.8)" : "1.5px solid rgba(255,255,255,0.07)",
+                          }}>
+                          <span className="text-sm font-black text-white"
+                            style={{ textShadow: sh.css !== "none" ? sh.css : "none" }}>
+                            A
+                          </span>
+                          <span className="text-[9px] font-bold"
+                            style={{ color: draftShadow===sh.id ? "#c4b5fd" : "rgba(255,255,255,0.35)" }}>
+                            {sh.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
                   {/* Stroke */}
-                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Chegara (Stroke)</p>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] text-white/40 font-bold">Qalinlik</span>
-                    <div className="relative flex-1 h-2 rounded-full" style={{ background:"rgba(255,255,255,0.1)" }}>
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <p className="text-[9px] font-black text-white/30 uppercase tracking-[3px]">Chegara (Stroke)</p>
+                      <span className="text-[11px] font-black text-amber-400">{draftStrokeW}px</span>
+                    </div>
+                    <div className="relative h-3 rounded-full" style={{ background:"rgba(255,255,255,0.08)" }}>
                       <div className="absolute left-0 top-0 h-full rounded-full"
                         style={{ width:`${(draftStrokeW/5)*100}%`, background:"linear-gradient(90deg,#f59e0b,#ef4444)" }} />
                       <input type="range" min={0} max={5} step={0.5} value={draftStrokeW}
                         onChange={e => setDraftStrokeW(Number(e.target.value))}
                         className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                      <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full pointer-events-none"
+                        style={{ left:`calc(${(draftStrokeW/5)*100}% - 8px)`, background:"white", boxShadow:"0 0 8px rgba(245,158,11,0.7)" }} />
                     </div>
-                    <span className="text-[11px] font-bold text-amber-400 w-8 text-right">{draftStrokeW}px</span>
-                  </div>
-                  {draftStrokeW > 0 && (
-                    <div>
-                      <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest mb-1.5">Chegara rangi</p>
-                      <div className="flex gap-2 flex-wrap">
-                        {["#000000","#ffffff","#ff0000","#0000ff","#ffff00","#ff00ff","#00ffff","#ff8c00"].map(c => (
+                    {draftStrokeW > 0 && (
+                      <div className="flex gap-1.5 mt-2">
+                        {["#000000","#ffffff","#ef4444","#3b82f6","#eab308","#22c55e","#a855f7","#f97316"].map(c => (
                           <button key={c} onClick={() => setDraftStrokeColor(c)}
-                            className="w-8 h-8 rounded-full transition-all"
-                            style={{ background:c, outline: draftStrokeColor===c ? "2.5px solid rgba(255,255,255,0.9)" : "none",
-                              outlineOffset:2, boxShadow: c==="#000000" ? "inset 0 0 0 1px rgba(255,255,255,0.3)" : "none" }} />
+                            className="w-7 h-7 rounded-full flex-shrink-0 transition-all"
+                            style={{ background:c,
+                              outline: draftStrokeColor===c ? "2.5px solid rgba(255,255,255,0.9)" : "none", outlineOffset:2,
+                              boxShadow: c==="#000000" ? "inset 0 0 0 1.5px rgba(255,255,255,0.3)" : "none" }} />
                         ))}
                       </div>
+                    )}
+                  </div>
+
+                  {/* Animations */}
+                  <div>
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[3px] mb-1.5">Animatsiya</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {ANIMS.map(an => (
+                        <button key={an.id} onClick={() => setDraftAnim(an.id)}
+                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all"
+                          style={{
+                            background: draftAnim===an.id
+                              ? "radial-gradient(ellipse at 0% 50%,rgba(124,58,237,0.4),rgba(30,10,50,0.5))"
+                              : "rgba(255,255,255,0.04)",
+                            border: draftAnim===an.id ? "1.5px solid rgba(124,58,237,0.75)" : "1.5px solid rgba(255,255,255,0.06)",
+                            boxShadow: draftAnim===an.id ? "0 0 10px rgba(124,58,237,0.25)" : "none",
+                          }}>
+                          <span className="text-lg leading-none flex-shrink-0">{an.icon}</span>
+                          <span className="text-[11px] font-bold flex-1 text-left"
+                            style={{ color: draftAnim===an.id ? "#c4b5fd" : "rgba(255,255,255,0.6)" }}>
+                            {an.label}
+                          </span>
+                          {draftAnim===an.id && <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background:"#7c3aed" }} />}
+                        </button>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 
-              {/* ANIM tab */}
-              {textTab === "anim" && (
-                <div className="pt-1">
-                  <p className="text-[9px] font-bold text-white/35 uppercase tracking-widest mb-2">Animatsiya</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {ANIMS.map(an => (
-                      <button key={an.id} onClick={() => setDraftAnim(an.id)}
-                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all"
-                        style={{
-                          background: draftAnim===an.id ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.06)",
-                          border: draftAnim===an.id ? "1.5px solid rgba(124,58,237,0.8)" : "1.5px solid rgba(255,255,255,0.07)",
-                        }}>
-                        <span className="text-xl leading-none">{an.icon}</span>
-                        <div className="text-left">
-                          <p className="text-[11px] font-bold" style={{ color: draftAnim===an.id ? "#c4b5fd" : "rgba(255,255,255,0.7)" }}>
-                            {an.label}
-                          </p>
-                        </div>
-                        {draftAnim===an.id && (
-                          <div className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background:"#7c3aed" }} />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  {/* Quick add button */}
-                  <button onClick={addText} disabled={!draftText.trim()}
-                    className="mt-3 w-full py-3 rounded-2xl text-sm font-bold transition-all"
-                    style={{
-                      background: draftText.trim() ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "rgba(255,255,255,0.06)",
-                      color: draftText.trim() ? "white" : "rgba(255,255,255,0.3)",
-                    }}>
-                    ✓ Qo'shish
-                  </button>
-                </div>
-              )}
             </div>
           </motion.div>
           );

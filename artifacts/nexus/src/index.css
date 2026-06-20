@@ -431,3 +431,14 @@ em-emoji-picker {
 }
 .music-note-bounce { animation: music-note-bounce 1.4s ease-in-out infinite; }
 .music-text-scroll { animation: music-text-scroll 7s ease-in-out infinite; }
+
+/* ── Studio text panel ── */
+@keyframes gradientShift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+@keyframes studio-border-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(124,58,237,0.4); }
+  50%       { box-shadow: 0 0 18px rgba(168,85,247,0.7); }
+}

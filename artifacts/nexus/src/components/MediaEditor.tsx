@@ -1805,81 +1805,107 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         )}
       </AnimatePresence>
 
-      {/* hidden audio element + file input */}
+      {/* hidden audio element */}
       <audio ref={audioPreviewRef} style={{ display:"none" }} />
-      <input ref={audioFileInputRef} type="file" accept="audio/*" style={{ display:"none" }}
-        onChange={handleAudioFileUpload} />
 
-      {/* ── Music panel ── */}
+      {/* ── Music panel (STUDIO WAVE — revolutionary) ── */}
       <AnimatePresence>
         {panel === "music" && (
           <motion.div
             initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
-            transition={{ type:"spring", stiffness:380, damping:32 }}
-            className="flex-shrink-0 pb-6"
-            style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
+            transition={{ type:"spring", stiffness:400, damping:34 }}
+            className="flex-shrink-0"
+            style={{
+              background:"linear-gradient(180deg,rgba(2,14,26,0.99) 0%,rgba(2,8,18,0.99) 100%)",
+              boxShadow:"0 -1px 0 rgba(6,182,212,0.4), inset 0 1px 0 rgba(34,211,238,0.1)",
+            }}
             onClick={e => e.stopPropagation()}
           >
-            {/* ── Tab bar ── */}
-            <div className="flex border-b border-white/8">
+            {/* ── Glowing tab bar ── */}
+            <div className="flex items-center gap-1 px-3 pt-2.5 pb-0">
               {([
-                { id:"search" as const, label:"🔍 Qidirish",  disabled: false },
-                { id:"upload" as const, label:"📁 Yuklash",   disabled: false },
-                { id:"trim"   as const, label:"✂️ Kesish",    disabled: !audioName },
-              ]).map(t => (
+                { id:"search" as const, icon:"🔍", tip:"Qidirish", color:"#06b6d4", bg:"rgba(6,182,212,0.35)" },
+                { id:"upload" as const, icon:"📁", tip:"Yuklash",  color:"#10b981", bg:"rgba(16,185,129,0.35)" },
+                { id:"trim"   as const, icon:"✂️", tip:"Kesish",   color:"#f43f5e", bg:"rgba(244,63,94,0.35)",   disabled:!audioName },
+              ] as const).map(t => (
                 <button key={t.id}
-                  onClick={() => !t.disabled && setMusicTab(t.id)}
-                  disabled={t.disabled}
-                  className="flex-1 py-2.5 text-[10px] font-bold transition-all"
+                  onClick={() => !("disabled" in t && t.disabled) && setMusicTab(t.id)}
+                  disabled={"disabled" in t && t.disabled}
+                  className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-xl transition-all"
                   style={{
-                    color: musicTab===t.id ? "#c4b5fd" : t.disabled ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.38)",
-                    borderBottom: musicTab===t.id ? "2px solid #7c3aed" : "2px solid transparent",
-                    cursor: t.disabled ? "not-allowed" : "pointer",
+                    background: musicTab===t.id
+                      ? `radial-gradient(ellipse at 50% 0%,${t.bg} 0%,rgba(0,0,0,0.1) 100%)`
+                      : "transparent",
+                    boxShadow: musicTab===t.id ? `0 0 12px ${t.color}44` : "none",
+                    opacity: "disabled" in t && t.disabled ? 0.3 : 1,
+                    cursor: "disabled" in t && t.disabled ? "not-allowed" : "pointer",
                   }}>
-                  {t.label}
+                  <span className="text-lg leading-none"
+                    style={{ filter: musicTab===t.id ? `drop-shadow(0 0 6px ${t.color})` : "none" }}>
+                    {t.icon}
+                  </span>
+                  <span className="text-[8px] font-black tracking-wider"
+                    style={{ color: musicTab===t.id ? t.color : "rgba(255,255,255,0.3)" }}>
+                    {t.tip}
+                  </span>
                 </button>
               ))}
+              {/* Done / close */}
               <button onClick={() => setPanel("none")}
-                className="w-10 flex items-center justify-center flex-shrink-0"
-                style={{ color: audioName ? "#a78bfa" : "rgba(255,255,255,0.3)" }}>
-                <Check className="w-5 h-5" />
+                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ml-1 transition-all"
+                style={{
+                  background: audioName
+                    ? "linear-gradient(135deg,#0e7490,#06b6d4)"
+                    : "rgba(255,255,255,0.07)",
+                  boxShadow: audioName ? "0 0 16px rgba(6,182,212,0.45)" : "none",
+                  border: audioName ? "1.5px solid rgba(6,182,212,0.6)" : "1px solid rgba(255,255,255,0.1)",
+                }}>
+                <Check className="w-5 h-5 text-white" />
               </button>
             </div>
 
-            {/* Selected song bar (shown in all tabs) */}
+            {/* Selected song banner */}
             {audioName && (
-              <div className="flex items-center gap-2 mx-4 mt-2.5 px-3 py-2 rounded-2xl"
-                style={{ background:"rgba(124,58,237,0.18)", border:"1px solid rgba(124,58,237,0.45)" }}>
+              <div className="flex items-center gap-2.5 mx-3 mt-2 px-3 py-2.5 rounded-2xl"
+                style={{
+                  background:"linear-gradient(90deg,rgba(6,182,212,0.15),rgba(6,182,212,0.08))",
+                  border:"1px solid rgba(6,182,212,0.4)",
+                  boxShadow:"0 0 16px rgba(6,182,212,0.1)",
+                }}>
                 <div className="flex items-end gap-0.5 w-5 h-4 flex-shrink-0">
                   <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
                 </div>
                 <span className="flex-1 text-[12px] text-white font-bold truncate">{audioName}</span>
                 {audioUploadUrl && (
-                  <span className="text-[9px] text-purple-300 font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                    style={{ background:"rgba(124,58,237,0.3)" }}>
+                  <span className="text-[9px] font-bold px-2 py-1 rounded-full flex-shrink-0"
+                    style={{ background:"rgba(6,182,212,0.25)", color:"#67e8f9", border:"1px solid rgba(6,182,212,0.4)" }}>
                     {fmtTime(audioTrimStart)} – {fmtTime(audioTrimEnd)}
                   </span>
                 )}
                 <button onClick={() => { setAudioName(""); setAudioUploadUrl(""); setMusicQuery(""); setMusicTab("search"); }}
-                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ background:"rgba(255,255,255,0.18)" }}>
-                  <X className="w-3 h-3 text-white/70" />
+                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background:"rgba(255,255,255,0.12)" }}>
+                  <X className="w-3.5 h-3.5 text-white/70" />
                 </button>
               </div>
             )}
 
+            {/* scrollable content */}
+            <div className="overflow-y-auto pb-6" style={{ maxHeight:"50vh", scrollbarWidth:"none" }}>
+
             {/* ════════════ SEARCH TAB ════════════ */}
             {musicTab === "search" && (
               <div>
-                <div className="flex gap-2 mx-4 mt-2.5">
-                  <div className="flex-1 flex items-center gap-2 rounded-2xl px-3"
-                    style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)" }}>
-                    <Search className="w-4 h-4 text-white/35 flex-shrink-0" />
+                {/* Search bar */}
+                <div className="flex gap-2 mx-3 mt-2.5">
+                  <div className="flex-1 flex items-center gap-2 rounded-2xl px-3 transition-all"
+                    style={{ background:"rgba(255,255,255,0.06)", border:"1.5px solid rgba(6,182,212,0.3)" }}>
+                    <Search className="w-4 h-4 flex-shrink-0" style={{ color:"#06b6d4" }} />
                     <input autoFocus value={musicQuery}
                       onChange={e => { setMusicQuery(e.target.value); setMusicApiResults([]); }}
-                      placeholder="🌐 Internetdan qidiring — har qanday qo'shiq…"
-                      className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none" />
-                    {musicApiLoading && <div className="w-3.5 h-3.5 rounded-full border-2 border-purple-400 border-t-transparent animate-spin flex-shrink-0" />}
+                      placeholder="Har qanday qo'shiq — qidiring…"
+                      className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none" />
+                    {musicApiLoading && <div className="w-3.5 h-3.5 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin flex-shrink-0" />}
                     {musicQuery && !musicApiLoading && (
                       <button onClick={() => { setMusicQuery(""); setMusicApiResults([]); }}>
                         <X className="w-3.5 h-3.5 text-white/30" />
@@ -1888,26 +1914,30 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                   </div>
                 </div>
 
-                {/* Search mode hints */}
                 {musicQuery.length >= 1 && musicQuery.length < 2 && (
-                  <p className="text-[10px] text-white/30 px-4 mt-1">Kamida 2 harf kiriting…</p>
+                  <p className="text-[10px] text-white/30 px-4 mt-1.5">Kamida 2 harf kiriting…</p>
                 )}
                 {musicQuery.length >= 2 && !musicApiLoading && musicApiResults.length === 0 && (
-                  <p className="text-[10px] text-amber-400/60 px-4 mt-1">⚠️ iTunes natija bermadi — lokal qo'shiqlardan tanlang</p>
+                  <div className="mx-3 mt-2 px-3 py-2 rounded-xl flex items-center gap-2"
+                    style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.25)" }}>
+                    <span className="text-amber-400 text-sm">⚠️</span>
+                    <p className="text-[11px] text-amber-400/80">iTunes natija bermadi — quyidagi lokal qo'shiqlardan tanlang</p>
+                  </div>
                 )}
 
-                {/* Country tabs */}
+                {/* Country pills */}
                 {!musicQuery && (
-                  <div className="flex gap-2 px-4 mt-3 overflow-x-auto scrollbar-none pb-0.5">
+                  <div className="flex gap-1.5 px-3 mt-3 overflow-x-auto scrollbar-none pb-0.5">
                     {SONGS_BY_COUNTRY.map((cat, i) => (
                       <button key={i} onClick={() => setMusicCat(i)}
-                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
+                        className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all"
                         style={{
-                          background: musicCat===i ? "rgba(124,58,237,0.85)" : "rgba(255,255,255,0.08)",
-                          border: musicCat===i ? "1px solid rgba(124,58,237,0.9)" : "1px solid rgba(255,255,255,0.1)",
-                          color: musicCat===i ? "white" : "rgba(255,255,255,0.55)",
+                          background: musicCat===i ? "rgba(6,182,212,0.8)" : "rgba(255,255,255,0.07)",
+                          border: musicCat===i ? "1px solid rgba(6,182,212,0.9)" : "1px solid rgba(255,255,255,0.08)",
+                          color: musicCat===i ? "white" : "rgba(255,255,255,0.5)",
+                          boxShadow: musicCat===i ? "0 0 10px rgba(6,182,212,0.35)" : "none",
                         }}>
-                        <span className={musicCat===i ? "flag-wave" : ""} style={{ fontSize:14, lineHeight:1 }}>{cat.flag}</span>
+                        <span className={musicCat===i ? "flag-wave" : ""} style={{ fontSize:13, lineHeight:1 }}>{cat.flag}</span>
                         <span>{cat.label}</span>
                       </button>
                     ))}
@@ -1987,41 +2017,69 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
 
             {/* ════════════ UPLOAD TAB ════════════ */}
             {musicTab === "upload" && (
-              <div className="px-4 pt-3 space-y-3">
-                {/* Upload from device */}
-                <button onClick={() => audioFileInputRef.current?.click()}
-                  className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all"
-                  style={{ background:"rgba(124,58,237,0.12)", border:"1.5px dashed rgba(124,58,237,0.55)" }}>
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                    style={{ background:"rgba(124,58,237,0.25)" }}>
-                    <Volume2 className="w-6 h-6 text-purple-300" />
+              <div className="px-3 pt-3 space-y-3">
+                {/* ── BIG drop zone with label (bug fix: reliable file picker) ── */}
+                <label htmlFor="music-file-input" className="block cursor-pointer">
+                  <input
+                    id="music-file-input"
+                    ref={audioFileInputRef}
+                    type="file"
+                    accept="audio/*"
+                    style={{ position:"absolute", width:1, height:1, opacity:0, pointerEvents:"none" }}
+                    onChange={handleAudioFileUpload}
+                  />
+                  <div className="flex flex-col items-center justify-center gap-3 py-8 rounded-3xl transition-all"
+                    style={{
+                      background:"linear-gradient(135deg,rgba(16,185,129,0.08),rgba(6,182,212,0.06))",
+                      border:"2px dashed rgba(16,185,129,0.5)",
+                      boxShadow:"0 0 24px rgba(16,185,129,0.06)",
+                    }}>
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center"
+                      style={{ background:"rgba(16,185,129,0.15)", border:"1.5px solid rgba(16,185,129,0.4)" }}>
+                      <span className="text-3xl">🎵</span>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-black text-white">Qurilmadan audio yuklash</p>
+                      <p className="text-[11px] mt-1" style={{ color:"rgba(16,185,129,0.9)" }}>
+                        MP3 · WAV · AAC · OGG · FLAC · M4A
+                      </p>
+                      <div className="mt-2.5 px-5 py-2 rounded-full inline-block"
+                        style={{ background:"linear-gradient(135deg,#059669,#10b981)", boxShadow:"0 0 16px rgba(16,185,129,0.4)" }}>
+                        <span className="text-white text-xs font-black">📁 Fayl tanlash</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <p className="text-sm font-bold text-white">📱 Qurilmadan yuklash</p>
-                    <p className="text-[11px] text-white/40 mt-0.5">MP3, AAC, WAV, OGG, FLAC qo'llab-quvvatlanadi</p>
-                    <p className="text-[10px] text-purple-400 font-bold mt-1">Shu yerga bosing →</p>
-                  </div>
-                </button>
+                </label>
 
-                {/* Record from microphone */}
-                <button
-                  onClick={isRecording ? stopRecording : startRecording}
-                  className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all"
+                {/* ── Mic recording ── */}
+                <button onClick={isRecording ? stopRecording : startRecording}
+                  className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all relative overflow-hidden"
                   style={{
-                    background: isRecording ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.05)",
+                    background: isRecording
+                      ? "linear-gradient(135deg,rgba(239,68,68,0.2),rgba(239,68,68,0.08))"
+                      : "rgba(255,255,255,0.05)",
                     border: isRecording ? "1.5px solid rgba(239,68,68,0.7)" : "1.5px solid rgba(255,255,255,0.1)",
                   }}>
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: isRecording ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.08)" }}>
+                  {/* Pulsing ring when recording */}
+                  {isRecording && (
+                    <div className="absolute inset-0 pointer-events-none"
+                      style={{ background:"radial-gradient(ellipse at 20% 50%,rgba(239,68,68,0.15) 0%,transparent 70%)", animation:"pulse 1.5s ease-in-out infinite" }} />
+                  )}
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 relative"
+                    style={{
+                      background: isRecording ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.08)",
+                      border: isRecording ? "2px solid #ef4444" : "2px solid rgba(255,255,255,0.12)",
+                      boxShadow: isRecording ? "0 0 20px rgba(239,68,68,0.5)" : "none",
+                    }}>
                     {isRecording
-                      ? <div className="w-4 h-4 rounded-sm" style={{ background:"#ef4444", animation:"pulse 0.8s ease-in-out infinite" }} />
-                      : <Mic className="w-6 h-6 text-white/60" />}
+                      ? <div className="w-5 h-5 rounded-sm" style={{ background:"#ef4444" }} />
+                      : <Mic className="w-7 h-7 text-white/60" />}
                   </div>
-                  <div className="text-left">
-                    <p className="text-sm font-bold" style={{ color: isRecording ? "#fca5a5" : "white" }}>
-                      {isRecording ? "🔴 Yozmoqda… (to'xtatish uchun bosing)" : "🎙️ Mikrofon orqali yozish"}
+                  <div className="text-left flex-1">
+                    <p className="text-[13px] font-black" style={{ color: isRecording ? "#fca5a5" : "white" }}>
+                      {isRecording ? "🔴 Yozmoqda… — To'xtatish uchun bosing" : "🎙️ Mikrofon orqali yozish"}
                     </p>
-                    <p className="text-[11px] text-white/40 mt-0.5">
+                    <p className="text-[11px] mt-0.5" style={{ color:"rgba(255,255,255,0.35)" }}>
                       {isRecording ? "Gapiring yoki kuylay boshlang" : "O'zingizning ovozingizni yozing"}
                     </p>
                   </div>
@@ -2032,24 +2090,16 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                   )}
                 </button>
 
-                {/* Supported formats info */}
-                <div className="px-3 py-2.5 rounded-xl" style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.06)" }}>
-                  <p className="text-[10px] text-white/35 font-bold mb-1.5">💡 Maslahat</p>
-                  <ul className="space-y-1">
-                    {["Qo'shiqni yuklang va ✂️ Kesish tabida kerakli joyini tanlang","Mikrofon orqali original ovoz yozing","Yuklangan audio kontentingizga biriktirilib saqlanadi"].map((tip,i) => (
-                      <li key={i} className="text-[10px] text-white/40 flex items-start gap-1.5">
-                        <span className="text-purple-400 mt-0.5 flex-shrink-0">→</span>{tip}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
+                {/* Go to trim if audio loaded */}
                 {audioUploadUrl && (
                   <button onClick={() => setMusicTab("trim")}
-                    className="w-full py-3 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2"
-                    style={{ background:"linear-gradient(135deg,rgba(124,58,237,0.8),rgba(168,85,247,0.7))" }}>
+                    className="w-full py-3.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2"
+                    style={{
+                      background:"linear-gradient(135deg,#0e7490,#06b6d4)",
+                      boxShadow:"0 0 20px rgba(6,182,212,0.4)",
+                    }}>
                     <Scissors className="w-4 h-4" />
-                    Kesish/Sozlash →
+                    ✂️ Kesish/Sozlashga o'tish →
                   </button>
                 )}
               </div>
@@ -2057,196 +2107,164 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
 
             {/* ════════════ TRIM TAB ════════════ */}
             {musicTab === "trim" && (
-              <div className="px-4 pt-3 space-y-4">
+              <div className="px-3 pt-3 space-y-3">
                 {!audioUploadUrl ? (
-                  <div className="text-center py-6">
-                    <p className="text-sm text-white/40">Avval 📁 Yuklash tabidan audio yuklang</p>
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+                      style={{ background:"rgba(244,63,94,0.1)", border:"1.5px solid rgba(244,63,94,0.3)" }}>
+                      <span className="text-3xl">✂️</span>
+                    </div>
+                    <p className="text-sm text-white/40 mb-3">Avval audio yuklang yoki yozing</p>
                     <button onClick={() => setMusicTab("upload")}
-                      className="mt-3 px-4 py-2 rounded-xl text-sm font-bold text-purple-300"
-                      style={{ background:"rgba(124,58,237,0.2)" }}>
-                      Yuklashga o'tish →
+                      className="px-5 py-2.5 rounded-xl text-sm font-bold"
+                      style={{ background:"linear-gradient(135deg,#059669,#10b981)", color:"white" }}>
+                      📁 Yuklashga o'tish →
                     </button>
                   </div>
                 ) : (
                   <>
-                    {/* Song name + duration */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-bold text-white truncate max-w-[200px]">{audioName}</p>
-                        <p className="text-[10px] text-white/35 mt-0.5">
-                          Jami: {fmtTime(audioDuration || 0)} · Tanlangan: {fmtTime(audioTrimEnd - audioTrimStart)}
-                        </p>
+                    {/* Track info + transport */}
+                    <div className="flex items-center gap-3 px-1">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-black text-white truncate">{audioName}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] font-bold" style={{ color:"rgba(244,63,94,0.9)" }}>
+                            ✂️ {fmtTime(audioTrimEnd - audioTrimStart)}
+                          </span>
+                          <span className="text-[10px] text-white/25">/ {fmtTime(audioDuration || 0)}</span>
+                        </div>
                       </div>
+                      {/* Play/Pause */}
                       <button onClick={toggleAudioPreview}
-                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                        className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{
-                          background: audioPlaying ? "rgba(239,68,68,0.2)" : "rgba(124,58,237,0.3)",
-                          border: audioPlaying ? "1.5px solid rgba(239,68,68,0.6)" : "1.5px solid rgba(124,58,237,0.6)",
+                          background: audioPlaying
+                            ? "linear-gradient(135deg,#b91c1c,#ef4444)"
+                            : "linear-gradient(135deg,#0e7490,#06b6d4)",
+                          boxShadow: audioPlaying ? "0 0 16px rgba(239,68,68,0.5)" : "0 0 16px rgba(6,182,212,0.4)",
                         }}>
                         {audioPlaying
-                          ? <div className="w-3 h-3 rounded-sm" style={{ background:"#ef4444" }} />
-                          : <span className="text-white text-base">▶</span>}
+                          ? <div className="flex gap-1"><div className="w-1.5 h-5 rounded-sm bg-white" /><div className="w-1.5 h-5 rounded-sm bg-white" /></div>
+                          : <span className="text-white text-lg pl-0.5">▶</span>}
                       </button>
                     </div>
 
-                    {/* Waveform + trim track */}
+                    {/* Waveform track */}
                     <div className="relative"
                       onPointerMove={onTrimMove} onPointerUp={onTrimUp} onPointerCancel={onTrimUp}>
-
-                      {/* Waveform bars */}
-                      <div ref={trimTrackRef} className="relative flex items-end gap-px overflow-hidden rounded-xl"
-                        style={{ height:60, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.08)", cursor:"crosshair" }}>
+                      <div ref={trimTrackRef}
+                        className="relative flex items-end gap-px overflow-hidden rounded-2xl"
+                        style={{ height:72, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(244,63,94,0.2)", cursor:"crosshair" }}>
                         {waveformBars.map((h, i) => {
                           const pct = i / waveformBars.length;
-                          const inRange = pct >= (audioTrimStart / (audioDuration||60)) && pct <= (audioTrimEnd / (audioDuration||60));
-                          const isCurrent = audioPlaying && Math.abs(pct - audioCurrentTime/(audioDuration||60)) < 0.015;
+                          const dur = audioDuration || 60;
+                          const inRange = pct >= audioTrimStart/dur && pct <= audioTrimEnd/dur;
+                          const isCurrent = audioPlaying && Math.abs(pct - audioCurrentTime/dur) < 0.015;
                           return (
                             <div key={i} className="flex-1 rounded-t-sm transition-colors duration-75"
                               style={{
-                                height: `${h * 100}%`,
-                                background: isCurrent
-                                  ? "#ffffff"
-                                  : inRange
-                                    ? "rgba(168,85,247,0.85)"
-                                    : "rgba(255,255,255,0.18)",
+                                height:`${h*100}%`,
+                                background: isCurrent ? "#ffffff"
+                                  : inRange ? "rgba(244,63,94,0.8)"
+                                  : "rgba(255,255,255,0.14)",
                               }} />
                           );
                         })}
-
-                        {/* Dim overlay for excluded start region */}
-                        <div className="absolute left-0 top-0 bottom-0 rounded-xl pointer-events-none"
-                          style={{
-                            width: `${(audioTrimStart/(audioDuration||60))*100}%`,
-                            background:"rgba(0,0,0,0.55)",
-                          }} />
-                        {/* Dim overlay for excluded end region */}
-                        <div className="absolute right-0 top-0 bottom-0 rounded-xl pointer-events-none"
-                          style={{
-                            width: `${((1 - audioTrimEnd/(audioDuration||60))*100)}%`,
-                            background:"rgba(0,0,0,0.55)",
-                          }} />
-
-                        {/* Trim bracket top line */}
+                        {/* Dim overlays */}
+                        <div className="absolute left-0 top-0 bottom-0 rounded-l-2xl pointer-events-none"
+                          style={{ width:`${(audioTrimStart/(audioDuration||60))*100}%`, background:"rgba(0,0,0,0.6)" }} />
+                        <div className="absolute right-0 top-0 bottom-0 rounded-r-2xl pointer-events-none"
+                          style={{ width:`${(1-audioTrimEnd/(audioDuration||60))*100*100/100}%`, background:"rgba(0,0,0,0.6)" }} />
+                        {/* Selection border */}
                         <div className="absolute top-0 h-0.5 pointer-events-none"
-                          style={{
-                            left:`${(audioTrimStart/(audioDuration||60))*100}%`,
-                            right:`${((1 - audioTrimEnd/(audioDuration||60))*100)}%`,
-                            background:"#7c3aed",
-                          }} />
+                          style={{ left:`${(audioTrimStart/(audioDuration||60))*100}%`, right:`${(1-audioTrimEnd/(audioDuration||60))*100}%`, background:"#f43f5e" }} />
                         <div className="absolute bottom-0 h-0.5 pointer-events-none"
-                          style={{
-                            left:`${(audioTrimStart/(audioDuration||60))*100}%`,
-                            right:`${((1 - audioTrimEnd/(audioDuration||60))*100)}%`,
-                            background:"#7c3aed",
-                          }} />
-
+                          style={{ left:`${(audioTrimStart/(audioDuration||60))*100}%`, right:`${(1-audioTrimEnd/(audioDuration||60))*100}%`, background:"#f43f5e" }} />
                         {/* Playhead */}
                         {audioPlaying && (
-                          <div className="absolute top-0 bottom-0 w-0.5 pointer-events-none"
-                            style={{ left:`${(audioCurrentTime/(audioDuration||60))*100}%`, background:"white", opacity:0.8 }} />
+                          <div className="absolute top-0 bottom-0 w-px pointer-events-none"
+                            style={{ left:`${(audioCurrentTime/(audioDuration||60))*100}%`, background:"white" }} />
                         )}
                       </div>
-
                       {/* START handle */}
-                      <div
-                        onPointerDown={e => onTrimDown(e, "start")}
-                        className="absolute top-0 bottom-0 flex items-center justify-center"
-                        style={{
-                          left:`calc(${(audioTrimStart/(audioDuration||60))*100}% - 12px)`,
-                          width:24, cursor:"ew-resize", zIndex:10, touchAction:"none",
-                        }}>
-                        <div className="w-4 h-full rounded-l-lg flex flex-col items-center justify-center gap-0.5"
-                          style={{ background:"rgba(124,58,237,0.95)", border:"1.5px solid #a78bfa", boxShadow:"0 0 8px rgba(124,58,237,0.6)" }}>
-                          <div className="w-0.5 h-3 rounded-full bg-white/80" />
-                          <div className="w-0.5 h-3 rounded-full bg-white/80" />
+                      <div onPointerDown={e => onTrimDown(e, "start")}
+                        className="absolute top-0 bottom-0 flex items-center"
+                        style={{ left:`calc(${(audioTrimStart/(audioDuration||60))*100}% - 12px)`, width:24, cursor:"ew-resize", zIndex:10, touchAction:"none" }}>
+                        <div className="w-4 h-full rounded-l-xl flex flex-col items-center justify-center gap-1"
+                          style={{ background:"rgba(244,63,94,0.9)", border:"1.5px solid #fb7185", boxShadow:"0 0 10px rgba(244,63,94,0.6)" }}>
+                          <div className="w-0.5 h-4 rounded-full bg-white/80" />
+                          <div className="w-0.5 h-4 rounded-full bg-white/80" />
                         </div>
                       </div>
-
                       {/* END handle */}
-                      <div
-                        onPointerDown={e => onTrimDown(e, "end")}
-                        className="absolute top-0 bottom-0 flex items-center justify-center"
-                        style={{
-                          left:`calc(${(audioTrimEnd/(audioDuration||60))*100}% - 12px)`,
-                          width:24, cursor:"ew-resize", zIndex:10, touchAction:"none",
-                        }}>
-                        <div className="w-4 h-full rounded-r-lg flex flex-col items-center justify-center gap-0.5"
-                          style={{ background:"rgba(124,58,237,0.95)", border:"1.5px solid #a78bfa", boxShadow:"0 0 8px rgba(124,58,237,0.6)" }}>
-                          <div className="w-0.5 h-3 rounded-full bg-white/80" />
-                          <div className="w-0.5 h-3 rounded-full bg-white/80" />
+                      <div onPointerDown={e => onTrimDown(e, "end")}
+                        className="absolute top-0 bottom-0 flex items-center justify-end"
+                        style={{ left:`calc(${(audioTrimEnd/(audioDuration||60))*100}% - 12px)`, width:24, cursor:"ew-resize", zIndex:10, touchAction:"none" }}>
+                        <div className="w-4 h-full rounded-r-xl flex flex-col items-center justify-center gap-1"
+                          style={{ background:"rgba(244,63,94,0.9)", border:"1.5px solid #fb7185", boxShadow:"0 0 10px rgba(244,63,94,0.6)" }}>
+                          <div className="w-0.5 h-4 rounded-full bg-white/80" />
+                          <div className="w-0.5 h-4 rounded-full bg-white/80" />
                         </div>
                       </div>
                     </div>
 
-                    {/* Start / End time pickers */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Boshlanish</p>
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                          style={{ background:"rgba(255,255,255,0.07)", border:"1px solid rgba(124,58,237,0.4)" }}>
-                          <span className="text-purple-400 text-lg font-black flex-shrink-0">◀</span>
-                          <span className="text-white font-mono font-bold text-base">{fmtTime(audioTrimStart)}</span>
-                          <div className="ml-auto flex flex-col gap-0.5">
-                            <button onClick={() => setAudioTrimStart(s => Math.max(0, s-1))}
-                              className="text-[10px] text-white/50 leading-none px-1">▲</button>
-                            <button onClick={() => setAudioTrimStart(s => Math.min(audioTrimEnd-1, s+1))}
-                              className="text-[10px] text-white/50 leading-none px-1">▼</button>
+                    {/* Time pickers */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { label:"Boshlanish", val:audioTrimStart, set:(v:number)=>setAudioTrimStart(v), clamp:(v:number)=>Math.max(0,Math.min(audioTrimEnd-1,v)), dir:"◀" },
+                        { label:"Tugash",     val:audioTrimEnd,   set:(v:number)=>setAudioTrimEnd(v),   clamp:(v:number)=>Math.max(audioTrimStart+1,Math.min(audioDuration||60,v)), dir:"▶" },
+                      ]).map(item => (
+                        <div key={item.label}>
+                          <p className="text-[9px] font-black text-white/25 uppercase tracking-widest mb-1">{item.label}</p>
+                          <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl"
+                            style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(244,63,94,0.35)" }}>
+                            <span className="text-[11px] font-black flex-shrink-0" style={{ color:"#fb7185" }}>{item.dir}</span>
+                            <span className="text-white font-mono font-bold text-[13px] flex-1 text-center">{fmtTime(item.val)}</span>
+                            <div className="flex flex-col gap-0.5">
+                              <button onClick={() => item.set(item.clamp(item.val - 1))} className="text-[9px] text-white/50 px-1 leading-none">▲</button>
+                              <button onClick={() => item.set(item.clamp(item.val + 1))} className="text-[9px] text-white/50 px-1 leading-none">▼</button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Tugash</p>
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                          style={{ background:"rgba(255,255,255,0.07)", border:"1px solid rgba(124,58,237,0.4)" }}>
-                          <span className="text-purple-400 text-lg font-black flex-shrink-0">▶</span>
-                          <span className="text-white font-mono font-bold text-base">{fmtTime(audioTrimEnd)}</span>
-                          <div className="ml-auto flex flex-col gap-0.5">
-                            <button onClick={() => setAudioTrimEnd(s => Math.min(audioDuration||60, s+1))}
-                              className="text-[10px] text-white/50 leading-none px-1">▲</button>
-                            <button onClick={() => setAudioTrimEnd(s => Math.max(audioTrimStart+1, s-1))}
-                              className="text-[10px] text-white/50 leading-none px-1">▼</button>
-                          </div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
 
-                    {/* Quick duration presets */}
-                    <div>
-                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1.5">Tezkor davomiylik</p>
-                      <div className="flex gap-2">
-                        {[15,30,45,60].map(sec => (
-                          <button key={sec} onClick={() => {
-                            setAudioTrimStart(0);
-                            setAudioTrimEnd(Math.min(sec, audioDuration||60));
-                          }}
-                            className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+                    {/* Quick presets */}
+                    <div className="flex gap-1.5">
+                      {[15,30,45,60].map(sec => {
+                        const active = Math.round(audioTrimEnd - audioTrimStart) === sec;
+                        return (
+                          <button key={sec} onClick={() => { setAudioTrimStart(0); setAudioTrimEnd(Math.min(sec, audioDuration||60)); }}
+                            className="flex-1 py-2 rounded-xl text-[11px] font-black transition-all"
                             style={{
-                              background: Math.round(audioTrimEnd - audioTrimStart) === sec ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.06)",
-                              color: Math.round(audioTrimEnd - audioTrimStart) === sec ? "#c4b5fd" : "rgba(255,255,255,0.4)",
-                              border: Math.round(audioTrimEnd - audioTrimStart) === sec ? "1px solid rgba(124,58,237,0.7)" : "none",
+                              background: active ? "rgba(244,63,94,0.35)" : "rgba(255,255,255,0.05)",
+                              color: active ? "#fb7185" : "rgba(255,255,255,0.35)",
+                              border: active ? "1px solid rgba(244,63,94,0.6)" : "1px solid rgba(255,255,255,0.06)",
                             }}>
                             {sec}s
                           </button>
-                        ))}
-                        <button onClick={() => { setAudioTrimStart(0); setAudioTrimEnd(audioDuration||60); }}
-                          className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
-                          style={{ background:"rgba(255,255,255,0.06)", color:"rgba(255,255,255,0.4)" }}>
-                          Hammasi
-                        </button>
-                      </div>
+                        );
+                      })}
+                      <button onClick={() => { setAudioTrimStart(0); setAudioTrimEnd(audioDuration||60); }}
+                        className="flex-1 py-2 rounded-xl text-[11px] font-black transition-all"
+                        style={{ background:"rgba(255,255,255,0.05)", color:"rgba(255,255,255,0.35)", border:"1px solid rgba(255,255,255,0.06)" }}>
+                        Hammasi
+                      </button>
                     </div>
 
-                    {/* Confirm trim button */}
+                    {/* Confirm */}
                     <button onClick={() => setPanel("none")}
-                      className="w-full py-3 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2"
-                      style={{ background:"linear-gradient(135deg,rgba(124,58,237,0.9),rgba(168,85,247,0.8))" }}>
+                      className="w-full py-3.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2"
+                      style={{ background:"linear-gradient(135deg,#be123c,#f43f5e)", boxShadow:"0 0 20px rgba(244,63,94,0.4)" }}>
                       <Check className="w-4 h-4" />
-                      Kesishni tasdiqlash — {fmtTime(audioTrimEnd - audioTrimStart)} tanlandi
+                      Tasdiqlash — {fmtTime(audioTrimEnd - audioTrimStart)} tanlandi
                     </button>
                   </>
                 )}
               </div>
             )}
+
+            </div>{/* end scrollable */}
           </motion.div>
         )}
       </AnimatePresence>

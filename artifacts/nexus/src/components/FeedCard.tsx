@@ -898,45 +898,43 @@ export default function FeedCard({ post }: FeedCardProps) {
         </motion.div>
       )}
 
-      {/* ══ LAYER 6.5 — MUSIC PILL ══ */}
+      {/* ══ LAYER 6.5 — MUSIC (transparent, letters only) ══ */}
       {!isText && !!(post as any).audioName && (
         <div
-          className="absolute"
+          className="absolute flex items-center gap-1.5"
           style={{
             left: 16,
             bottom: commentOpen ? 270 : 120,
             zIndex: 11,
+            maxWidth: 200,
             transition: "bottom 0.32s cubic-bezier(0.16,1,0.3,1)",
           }}
         >
-          <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+          {/* Bouncing note */}
+          <span
+            className="music-note-bounce flex-shrink-0 select-none"
             style={{
-              background: "rgba(0,0,0,0.45)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255,255,255,0.14)",
-              maxWidth: 180,
+              fontSize: 14,
+              color: "#fff",
+              textShadow: "0 1px 8px rgba(0,0,0,1), 0 0 16px rgba(168,85,247,0.9)",
             }}
-          >
-            {/* Spinning vinyl */}
-            <div
-              className="vinyl-spin flex-shrink-0 flex items-center justify-center rounded-full"
-              style={{ width:22, height:22, background:"linear-gradient(135deg,#7c3aed,#f472b6)" }}
+          >♪</span>
+
+          {/* Scrolling song name — clips cleanly */}
+          <div style={{ overflow: "hidden", maxWidth: 172 }}>
+            <span
+              className="music-text-scroll"
+              style={{
+                display: "inline-block",
+                whiteSpace: "nowrap",
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.01em",
+                color: "#fff",
+                textShadow:
+                  "0 1px 6px rgba(0,0,0,0.95), 0 2px 14px rgba(0,0,0,0.85), 0 0 22px rgba(168,85,247,0.5)",
+              }}
             >
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
-                <circle cx="5" cy="5" r="2" fill="white" opacity="0.8" />
-                <circle cx="5" cy="5" r="4.5" stroke="white" strokeWidth="0.8" fill="none" opacity="0.4" />
-              </svg>
-            </div>
-            {/* Bars */}
-            <div className="flex items-end gap-px h-3.5 flex-shrink-0">
-              {[1,2,3,4].map(n => (
-                <div key={n} className={`bar${n} rounded-full`}
-                  style={{ width:2, height:n%2===0?12:7, background:"rgba(255,255,255,0.7)", transformOrigin:"bottom" }} />
-              ))}
-            </div>
-            {/* Song name */}
-            <span className="text-[11px] font-semibold text-white/85 truncate leading-none" style={{ maxWidth:100 }}>
               {(post as any).audioName}
             </span>
           </div>

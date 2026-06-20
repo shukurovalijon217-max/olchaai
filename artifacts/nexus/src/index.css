@@ -61,6 +61,52 @@
 .txt-anim-rainbow  span { animation: txt-rainbow 2s linear infinite; }
 .txt-anim-typewriter span { animation: txt-typewriter 1.8s steps(20,end) infinite alternate; display:inline-block; }
 
+/* ── Character Studio — individual letter tiles ── */
+@keyframes char-pop {
+  0%   { transform: scale(0.2) translateY(10px) rotate(-12deg); opacity: 0; }
+  60%  { transform: scale(1.18) translateY(-4px) rotate(3deg); opacity: 1; }
+  80%  { transform: scale(0.93) translateY(1px) rotate(-1deg); }
+  100% { transform: scale(1) translateY(0) rotate(0); opacity: 1; }
+}
+@keyframes char-cursor-blink {
+  0%, 45% { opacity: 1; }
+  55%, 100% { opacity: 0; }
+}
+@keyframes bg-panel-glow {
+  0%, 100% { box-shadow: 0 0 16px rgba(124,58,237,0.25); }
+  50%       { box-shadow: 0 0 28px rgba(124,58,237,0.45); }
+}
+.char-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4em;
+  padding: 4px 6px;
+  border-radius: 10px;
+  background: rgba(124,58,237,0.18);
+  border: 1px solid rgba(124,58,237,0.38);
+  line-height: 1.1;
+  animation: char-pop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  box-shadow: 0 2px 8px rgba(124,58,237,0.18);
+}
+.char-tile-space {
+  display: inline-block;
+  width: 14px;
+  min-width: 14px;
+  animation: char-pop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.char-cursor-blink {
+  display: inline-block;
+  width: 2.5px;
+  height: 1.2em;
+  background: rgba(168,85,247,0.95);
+  border-radius: 2px;
+  animation: char-cursor-blink 1.1s ease-in-out infinite;
+  vertical-align: middle;
+  margin-left: 3px;
+  box-shadow: 0 0 8px rgba(168,85,247,0.7);
+}
+
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));

@@ -1,10 +1,10 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, ImagePlus, Video, Music, FileText, Upload, Loader2,
   CheckCircle2, Play, Film, Camera,
-  Maximize2, Square, RectangleVertical, RectangleHorizontal,
-  MessageCircle, Share2, Users, Globe, Ban,
+  Maximize2, Square, RectangleVertical,
+  MessageCircle, Share2, Users, Globe, Ban, Plus, Trash2,
 } from "lucide-react";
 import {
   useCreatePost, useCreateReel, useCreateStory,
@@ -195,14 +195,56 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const [tab,  setTab]  = useState<TabType>(defaultTab);
   const [done, setDone] = useState(false);
 
-  /* post state */
-  const [postContent,      setPostContent]      = useState("");
-  const [postFile,         setPostFile]         = useState<File | null>(null);
-  const [postPreview,      setPostPreview]       = useState("");
-  const [postUploadResult, setPostUploadResult] = useState<{ serveUrl: string } | null>(null);
-  const [displayFormat,    setDisplayFormat]    = useState<DisplayFormat>("cover");
-  const [commentPerm,      setCommentPerm]      = useState<Permission>("everyone");
-  const [sharePerm,        setSharePerm]        = useState<Permission>("everyone");
+  /* post state — multi-file queue */
+  type MediaItem = { id: string; file: File; preview: string; status: "idle"|"uploading"|"done"|"error"; progress: number; serveUrl?: string };
+  const [mediaQueue,    setMediaQueue]    = useState<MediaItem[]>([]);
+  const [postContent,   setPostContent]  = useState("");
+  const [displayFormat, setDisplayFormat] = useState<DisplayFormat>("cover");
+  const [commentPerm,   setCommentPerm]  = useState<Permission>("everyone");
+  const [sharePerm,     setSharePerm]    = useState<Permission>("everyone");
+  const uploadingRef = useRef(false);
+
+  /* Sequential upload runner */
+  useEffect(() => {
+    const pending = mediaQueue.find(m => m.status === "idle");
+    if (!pending || uploadingRef.current) return;
+    uploadingRef.current = true;
+    setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "uploading" } : m));
+    const form = new FormData();
+    form.append("file", pending.file);
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API}/api/media/upload`);
+    xhr.withCredentials = true;
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable)
+        setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, progress: Math.round((e.loaded / e.total) * 100) } : m));
+    };
+    xhr.onload = () => {
+      uploadingRef.current = false;
+      try {
+        const res = JSON.parse(xhr.responseText);
+        const serveUrl: string = res.serveUrl ?? res.url ?? "";
+        setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "done", progress: 100, serveUrl } : m));
+      } catch {
+        setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "error" } : m));
+      }
+    };
+    xhr.onerror = () => { uploadingRef.current = false; setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "error" } : m)); };
+    xhr.send(form);
+  }, [mediaQueue]);
+
+  const addFiles = (files: FileList) => {
+    const newItems: MediaItem[] = Array.from(files).slice(0, 10 - mediaQueue.length).map(f => ({
+      id: `${Date.now()}-${Math.random()}`, file: f,
+      preview: URL.createObjectURL(f),
+      status: "idle", progress: 0,
+    }));
+    setMediaQueue(q => [...q, ...newItems]);
+  };
+
+  const removeMedia = (id: string) => {
+    setMediaQueue(q => q.filter(m => m.id !== id));
+  };
 
   /* reel state */
   const [reelFile,              setReelFile]              = useState<File | null>(null);
@@ -224,7 +266,6 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
 
   const [submitting, setSubmitting] = useState(false);
 
-  const { uploadFile: upPost,      isUploading: upPostBusy,      progress: upPostProg }      = useMediaUpload({ onSuccess: r => setPostUploadResult(r) });
   const { uploadFile: upReel,      isUploading: upReelBusy,      progress: upReelProg }      = useMediaUpload({ onSuccess: r => setReelUploadResult(r) });
   const { uploadFile: upReelAudio, isUploading: upReelAudioBusy, progress: upReelAudioProg } = useMediaUpload({ onSuccess: r => setReelAudioUploadResult(r) });
   const { uploadFile: upStory,     isUploading: upStoryBusy,     progress: upStoryProg }     = useMediaUpload({ onSuccess: r => setStoryUploadResult(r) });
@@ -245,23 +286,25 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     setSubmitting(true);
     try {
       if (tab === "post") {
-        const type = postFile
-          ? postFile.type.startsWith("video") ? "video" : "photo"
+        const doneItems = mediaQueue.filter(m => m.status === "done" && m.serveUrl);
+        const firstFile = mediaQueue[0]?.file;
+        const type = firstFile
+          ? firstFile.type.startsWith("video") ? "video" : "photo"
           : "text";
-        /* embed permissions & format in tags until API supports them */
-        const metaTags = [
-          `_fmt:${displayFormat}`,
-          `_cmt:${commentPerm}`,
-          `_shr:${sharePerm}`,
-        ];
-        await createPost.mutateAsync({
-          data: {
+        const metaTags = [`_fmt:${displayFormat}`, `_cmt:${commentPerm}`, `_shr:${sharePerm}`];
+        const urls = doneItems.map(m => m.serveUrl!);
+        await fetch(`${API}/api/posts`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             authorId: user.id,
             content: postContent || " ",
             type,
-            mediaUrl: postUploadResult?.serveUrl,
+            mediaUrl: urls[0],
+            mediaUrls: urls.length > 1 ? urls : undefined,
             tags: metaTags,
-          },
+          }),
         });
         qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
       } else if (tab === "reel") {
@@ -296,8 +339,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   };
 
   const handleClose = () => {
-    setPostContent(""); setPostFile(null); setPostPreview(""); setPostUploadResult(null);
-    setDisplayFormat("cover"); setCommentPerm("everyone"); setSharePerm("everyone");
+    setMediaQueue([]); uploadingRef.current = false;
+    setPostContent(""); setDisplayFormat("cover"); setCommentPerm("everyone"); setSharePerm("everyone");
     setReelFile(null); setReelPreview(""); setReelCaption(""); setReelAudio("");
     setReelAudioFile(null); setReelAudioPreview(""); setReelUploadResult(null); setReelAudioUploadResult(null);
     setReelCommentPerm("everyone"); setReelSharePerm("everyone");
@@ -306,8 +349,11 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     onClose();
   };
 
-  const canSubmit = !submitting && !upPostBusy && !upReelBusy && !upStoryBusy && !upReelAudioBusy && (
-    (tab === "post" && (postContent.trim() || !!postUploadResult)) ||
+  const queueUploading = mediaQueue.some(m => m.status === "uploading" || m.status === "idle");
+  const queueAllDone   = mediaQueue.length === 0 || mediaQueue.every(m => m.status === "done");
+
+  const canSubmit = !submitting && !upReelBusy && !upStoryBusy && !upReelAudioBusy && (
+    (tab === "post" && queueAllDone && (postContent.trim() || mediaQueue.some(m => m.status === "done"))) ||
     (tab === "reel" && !!reelUploadResult && reelCaption.trim()) ||
     (tab === "story" && !!storyUploadResult)
   );
@@ -389,122 +435,159 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                   {tab === "post" && (
                     <div className="space-y-4">
 
-                      {/* Media type buttons */}
-                      <div className="flex gap-2">
-                        {[
-                          { id: "img", label: "Rasm",  Icon: ImagePlus, accept: ACCEPT.image, color: "#7c3aed" },
-                          { id: "vid", label: "Video", Icon: Video,     accept: ACCEPT.video, color: "#06b6d4" },
-                        ].map(btn => {
-                          const active = btn.id === "img"
-                            ? postFile?.type.startsWith("image")
-                            : postFile?.type.startsWith("video");
-                          return (
-                            <button key={btn.id}
-                              onClick={() => document.getElementById(`post-${btn.id}-input`)?.click()}
-                              className="flex-1 flex flex-col items-center gap-1.5 py-4 rounded-2xl border-2 border-dashed transition-all"
-                              style={{
-                                borderColor: active ? `${btn.color}88` : "rgba(255,255,255,0.1)",
-                                background: active ? `${btn.color}12` : "rgba(255,255,255,0.02)",
-                              }}>
-                              <btn.Icon className="w-5 h-5" style={{ color: active ? btn.color : "rgba(255,255,255,0.4)" }} />
-                              <span className="text-xs font-bold" style={{ color: active ? btn.color : "rgba(255,255,255,0.4)" }}>
-                                {btn.label}
-                              </span>
-                              <input id={`post-${btn.id}-input`} type="file" accept={btn.accept} className="hidden"
-                                onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f, setPostFile, setPostPreview, upPost); e.target.value = ""; }} />
-                            </button>
-                          );
-                        })}
-                        <button
-                          onClick={() => { setPostFile(null); setPostPreview(""); setPostUploadResult(null); }}
-                          className="flex-1 flex flex-col items-center gap-1.5 py-4 rounded-2xl border-2 border-dashed transition-all"
+                      {/* ─── Multi-file drop zone ─── */}
+                      {mediaQueue.length < 10 && (
+                        <motion.label
+                          htmlFor="post-multi-input"
+                          whileTap={{ scale: 0.98 }}
+                          className="flex flex-col items-center justify-center gap-3 py-7 rounded-2xl border-2 border-dashed cursor-pointer transition-all"
                           style={{
-                            borderColor: !postFile ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.08)",
-                            background: !postFile ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.02)",
-                          }}>
-                          <FileText className="w-5 h-5" style={{ color: !postFile ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)" }} />
-                          <span className="text-xs font-bold" style={{ color: !postFile ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)" }}>
-                            Matn
-                          </span>
-                        </button>
-                      </div>
+                            borderColor: mediaQueue.length > 0 ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.12)",
+                            background: mediaQueue.length > 0 ? "rgba(124,58,237,0.06)" : "rgba(255,255,255,0.02)",
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                              style={{ background: "rgba(124,58,237,0.15)" }}>
+                              <Plus className="w-5 h-5 text-violet-400" />
+                            </div>
+                            {mediaQueue.length > 0 && (
+                              <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                                style={{ background: "rgba(6,182,212,0.12)" }}>
+                                <Video className="w-5 h-5 text-cyan-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-white/70">
+                              {mediaQueue.length === 0 ? "Rasm yoki video qo'shing" : `Yana qo'shish (${mediaQueue.length}/10)`}
+                            </p>
+                            <p className="text-xs text-white/35 mt-0.5">Bir nechta fayl tanlash mumkin</p>
+                          </div>
+                          <input
+                            id="post-multi-input"
+                            type="file"
+                            multiple
+                            accept={`${ACCEPT.image},${ACCEPT.video}`}
+                            className="hidden"
+                            onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }}
+                          />
+                        </motion.label>
+                      )}
 
-                      {/* Preview */}
-                      {postFile && (
+                      {/* ─── Thumbnail strip ─── */}
+                      {mediaQueue.length > 0 && (
                         <AnimatePresence>
                           <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
-                            className="relative rounded-2xl overflow-hidden"
-                            style={{ background: "rgba(255,255,255,0.04)" }}
+                            className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none"
+                            style={{ scrollbarWidth: "none" }}
                           >
-                            {upPostBusy ? (
-                              <div className="flex flex-col items-center justify-center py-10 gap-3">
-                                <motion.div
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
-                                  <Loader2 className="w-7 h-7 text-primary" />
-                                </motion.div>
-                                <div className="w-36 rounded-full h-1.5" style={{ background: "rgba(255,255,255,0.1)" }}>
-                                  <motion.div
-                                    className="h-1.5 rounded-full"
-                                    style={{ background: "linear-gradient(90deg,#7c3aed,#06b6d4)", width: `${upPostProg}%` }}
-                                    animate={{ width: `${upPostProg}%` }} />
-                                </div>
-                                <p className="text-xs text-white/50">Yuklanmoqda {upPostProg}%</p>
-                              </div>
-                            ) : postFile.type.startsWith("image") ? (
-                              /* Image preview in chosen format */
-                              <div className="relative" style={{
-                                aspectRatio: displayFormat === "square" ? "1/1" : displayFormat === "cover" ? "9/16" : "auto",
-                                maxHeight: 320,
-                                overflow: "hidden",
-                              }}>
-                                <img src={postPreview} alt="" className="w-full h-full object-cover" />
-                              </div>
-                            ) : postFile.type.startsWith("video") ? (
-                              <video src={postPreview} className="w-full max-h-64 object-cover" controls muted />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center py-8 gap-3">
-                                <Music className="w-8 h-8 text-amber-400" />
-                                <audio controls src={postPreview} className="w-48" />
-                              </div>
-                            )}
+                            {mediaQueue.map((item, idx) => (
+                              <motion.div
+                                key={item.id}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.7 }}
+                                transition={{ delay: idx * 0.04 }}
+                                className="relative flex-shrink-0 rounded-xl overflow-hidden"
+                                style={{ width: 96, height: 96, background: "rgba(255,255,255,0.06)" }}
+                              >
+                                {/* Thumbnail */}
+                                {item.file.type.startsWith("video") ? (
+                                  <video src={item.preview} className="w-full h-full object-cover" muted />
+                                ) : (
+                                  <img src={item.preview} alt="" className="w-full h-full object-cover" />
+                                )}
 
-                            {/* Remove + uploaded badge */}
-                            {!upPostBusy && (
-                              <button onClick={() => { setPostFile(null); setPostPreview(""); setPostUploadResult(null); }}
-                                className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
-                                style={{ background: "rgba(0,0,0,0.65)" }}>
-                                <X className="w-3.5 h-3.5 text-white" />
-                              </button>
-                            )}
-                            {postUploadResult && !upPostBusy && (
-                              <div className="absolute bottom-2 left-2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                style={{ background: "rgba(52,211,153,0.9)", color: "#000" }}>
-                                <CheckCircle2 className="w-3 h-3" /> Yuklandi
+                                {/* Video badge */}
+                                {item.file.type.startsWith("video") && (
+                                  <div className="absolute bottom-1 left-1">
+                                    <Play className="w-3 h-3 text-white drop-shadow" fill="white" />
+                                  </div>
+                                )}
+
+                                {/* Progress overlay */}
+                                {(item.status === "uploading" || item.status === "idle") && (
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1"
+                                    style={{ background: "rgba(0,0,0,0.62)" }}>
+                                    <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
+                                    <span className="text-[10px] font-bold text-white/80">
+                                      {item.status === "uploading" ? `${item.progress}%` : "…"}
+                                    </span>
+                                    {item.status === "uploading" && (
+                                      <div className="w-14 h-0.5 rounded-full overflow-hidden"
+                                        style={{ background: "rgba(255,255,255,0.15)" }}>
+                                        <div className="h-full rounded-full transition-all"
+                                          style={{ width: `${item.progress}%`, background: "linear-gradient(90deg,#7c3aed,#06b6d4)" }} />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Done badge */}
+                                {item.status === "done" && (
+                                  <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full flex items-center justify-center"
+                                    style={{ background: "rgba(52,211,153,0.9)" }}>
+                                    <CheckCircle2 className="w-2.5 h-2.5 text-black" />
+                                  </div>
+                                )}
+
+                                {/* Error badge */}
+                                {item.status === "error" && (
+                                  <div className="absolute inset-0 flex items-center justify-center"
+                                    style={{ background: "rgba(239,68,68,0.5)" }}>
+                                    <span className="text-[10px] font-bold text-white">Xato</span>
+                                  </div>
+                                )}
+
+                                {/* Remove button (shown when not uploading) */}
+                                {item.status !== "uploading" && (
+                                  <button
+                                    onClick={() => removeMedia(item.id)}
+                                    className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                                    style={{ background: "rgba(0,0,0,0.7)" }}
+                                  >
+                                    <X className="w-3 h-3 text-white" />
+                                  </button>
+                                )}
+
+                                {/* Order badge */}
+                                <div className="absolute top-1 left-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black"
+                                  style={{ background: "rgba(0,0,0,0.6)", color: "rgba(255,255,255,0.8)" }}>
+                                  {idx + 1}
+                                </div>
+                              </motion.div>
+                            ))}
+
+                            {/* Upload status summary */}
+                            {queueUploading && (
+                              <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1 w-24 h-24 rounded-xl"
+                                style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)" }}>
+                                <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
+                                <span className="text-[10px] text-violet-300 font-bold text-center leading-tight px-1">
+                                  {mediaQueue.filter(m => m.status === "done").length}/{mediaQueue.length} yuklandi
+                                </span>
                               </div>
                             )}
                           </motion.div>
                         </AnimatePresence>
                       )}
 
-                      {/* Display format (shown when media selected) */}
-                      {postFile?.type.startsWith("image") && !upPostBusy && (
+                      {/* Display format (shown when has images) */}
+                      {mediaQueue.some(m => m.file.type.startsWith("image")) && queueAllDone && (
                         <FormatPicker value={displayFormat} onChange={setDisplayFormat} />
                       )}
 
                       {/* Caption */}
                       <textarea
-                        placeholder={postFile ? "Izoh qo'shing…" : "Nima haqida yozyapsiz?"}
+                        placeholder={mediaQueue.length > 0 ? "Izoh qo'shing…" : "Nima haqida yozyapsiz?"}
                         rows={3}
                         value={postContent}
                         onChange={e => setPostContent(e.target.value)}
                         className="w-full resize-none rounded-2xl px-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none"
-                        style={{
-                          background: "rgba(255,255,255,0.05)",
-                          border: "1px solid rgba(255,255,255,0.07)",
-                        }}
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
                       />
 
                       {/* Permission settings */}

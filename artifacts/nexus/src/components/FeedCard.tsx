@@ -300,6 +300,25 @@ export default function FeedCard({ post }: FeedCardProps) {
   const displayFormat = (post as any).displayFormat ?? "cover";
   const photoFit = displayFormat === "contain" ? "object-contain" : "object-cover";
 
+  /* ── Album / multi-media carousel ── */
+  const allMedia: string[] = (() => {
+    const urls: string[] = (post as any).mediaUrls ?? [];
+    if (urls.length > 1) return urls;
+    return post.mediaUrl ? [post.mediaUrl] : [];
+  })();
+  const isAlbum = allMedia.length > 1;
+  const [slideIdx, setSlideIdx]   = useState(0);
+  const [slideDir, setSlideDir]   = useState(1); // 1 = forward, -1 = back
+
+  const goSlide = (dir: 1 | -1) => {
+    const next = slideIdx + dir;
+    if (next < 0 || next >= allMedia.length) return;
+    setSlideDir(dir);
+    setSlideIdx(next);
+  };
+
+  const isVideoUrl = (url: string) => /\.(mp4|webm|mov|avi|m4v)(\?|$)/i.test(url);
+
   return (
     <div
       ref={cardRef}
@@ -351,7 +370,82 @@ export default function FeedCard({ post }: FeedCardProps) {
         initial={enterV.initial}
         animate={isInView ? enterV.animate : enterV.initial}
       >
-        {isVideo && post.mediaUrl ? (
+        {isAlbum ? (
+          /* ── ALBUM CAROUSEL ── */
+          <div className="absolute inset-0 overflow-hidden" style={{ perspective: "1200px" }}>
+            <AnimatePresence initial={false} custom={slideDir}>
+              <motion.div
+                key={slideIdx}
+                custom={slideDir}
+                variants={{
+                  enter: (d: number) => ({ x: d > 0 ? "100%" : "-100%", scale: 0.88, rotateY: d > 0 ? 18 : -18, opacity: 0 }),
+                  center: { x: 0, scale: 1, rotateY: 0, opacity: 1 },
+                  exit: (d: number) => ({ x: d > 0 ? "-38%" : "38%", scale: 0.82, rotateY: d > 0 ? -12 : 12, opacity: 0 }),
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0"
+                style={{ transformStyle: "preserve-3d" }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.12}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -55) goSlide(1);
+                  else if (info.offset.x > 55) goSlide(-1);
+                }}
+                onClick={showSubscribeBriefly}
+              >
+                {isVideoUrl(allMedia[slideIdx]) ? (
+                  <video
+                    src={allMedia[slideIdx]}
+                    muted={muted} loop playsInline autoPlay
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={allMedia[slideIdx]}
+                    alt={post.content}
+                    className={`w-full h-full ${photoFit}`}
+                  />
+                )}
+                {/* Blur BG for photo */}
+                <div className="absolute inset-0 -z-10">
+                  <img src={allMedia[slideIdx]} alt="" aria-hidden
+                    className="w-full h-full object-cover"
+                    style={{ filter: "blur(26px) saturate(1.5) brightness(0.3)", transform: "scale(1.15)" }}
+                  />
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Swipe zone left */}
+            {slideIdx > 0 && (
+              <div className="absolute left-0 top-0 bottom-0 w-12 z-10 flex items-center justify-start pl-1"
+                onClick={() => goSlide(-1)}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </div>
+              </div>
+            )}
+            {/* Swipe zone right */}
+            {slideIdx < allMedia.length - 1 && (
+              <div className="absolute right-0 top-0 bottom-0 w-12 z-10 flex items-center justify-end pr-1"
+                onClick={() => goSlide(1)}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : isVideo && post.mediaUrl ? (
           /* Video — full cover */
           <video
             ref={videoRef} src={post.mediaUrl}
@@ -748,6 +842,42 @@ export default function FeedCard({ post }: FeedCardProps) {
           </motion.div>
         )}
       </motion.div>
+
+      {/* ══ ALBUM DOTS — counter + dot strip ══ */}
+      {isAlbum && (
+        <motion.div
+          className="absolute left-0 right-0 flex flex-col items-center gap-1.5"
+          style={{ bottom: commentOpen ? 230 : 116, zIndex: 12 }}
+          initial={{ opacity: 0 }} animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          {/* counter badge */}
+          <div
+            className="px-2.5 py-0.5 rounded-full text-[11px] font-black tabular-nums"
+            style={{
+              background: "rgba(0,0,0,0.38)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              color: "rgba(255,255,255,0.85)",
+            }}
+          >
+            {slideIdx + 1} / {allMedia.length}
+          </div>
+          {/* dot strip */}
+          <div className="flex items-center gap-1.5">
+            {allMedia.map((_, i) => (
+              <motion.button
+                key={i}
+                onClick={() => { setSlideDir(i > slideIdx ? 1 : -1); setSlideIdx(i); }}
+                animate={{ width: i === slideIdx ? 20 : 6, opacity: i === slideIdx ? 1 : 0.38 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="h-1.5 rounded-full"
+                style={{ background: i === slideIdx ? theme.accent : "rgba(255,255,255,0.7)", minWidth: 6 }}
+              />
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* ══ LAYER 7 — CAPTION (video & photo, bottom-left) ══ */}
       {!isText && post.content && (

@@ -796,6 +796,124 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const musicDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+  /* ── Audio upload + trim state ── */
+  const [musicTab, setMusicTab]           = useState<"search"|"upload"|"trim">("search");
+  const [audioUploadUrl, setAudioUploadUrl] = useState("");     // blob URL of uploaded file
+  const [audioDuration, setAudioDuration]   = useState(0);      // seconds
+  const [audioTrimStart, setAudioTrimStart] = useState(0);
+  const [audioTrimEnd, setAudioTrimEnd]     = useState(30);
+  const [audioPlaying, setAudioPlaying]     = useState(false);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [isRecording, setIsRecording]       = useState(false);
+  const audioPreviewRef   = useRef<HTMLAudioElement|null>(null);
+  const audioFileInputRef = useRef<HTMLInputElement>(null);
+  const trimTrackRef      = useRef<HTMLDivElement>(null);
+  const trimDragRef       = useRef<{type:"start"|"end";startX:number;startVal:number}|null>(null);
+  const mediaRecorderRef  = useRef<MediaRecorder|null>(null);
+  const recChunksRef      = useRef<Blob[]>([]);
+
+  /* fake waveform bars — regenerate per song */
+  const waveformBars = useMemo(() => Array.from({length:52}, () => Math.random()*0.72+0.15), [audioName]);
+
+  const fmtTime = (s: number) =>
+    `${Math.floor(s/60).toString().padStart(2,"0")}:${Math.floor(s%60).toString().padStart(2,"0")}`;
+
+  /* audio element timeupdate → stop at trimEnd */
+  useEffect(() => {
+    const audio = audioPreviewRef.current;
+    if (!audio) return;
+    const onTime = () => {
+      setAudioCurrentTime(audio.currentTime);
+      if (audio.currentTime >= audioTrimEnd) {
+        audio.pause(); setAudioPlaying(false);
+        audio.currentTime = audioTrimStart;
+      }
+    };
+    const onEnd = () => setAudioPlaying(false);
+    audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("ended", onEnd);
+    return () => { audio.removeEventListener("timeupdate", onTime); audio.removeEventListener("ended", onEnd); };
+  }, [audioTrimEnd, audioTrimStart]);
+
+  /* handle uploaded audio file */
+  const handleAudioFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (audioUploadUrl) URL.revokeObjectURL(audioUploadUrl);
+    const url = URL.createObjectURL(file);
+    setAudioUploadUrl(url);
+    setAudioName(file.name.replace(/\.[^.]+$/, ""));
+    setMusicTab("trim");
+    const tmpAudio = new Audio(url);
+    tmpAudio.addEventListener("loadedmetadata", () => {
+      const dur = tmpAudio.duration || 60;
+      setAudioDuration(dur);
+      setAudioTrimStart(0);
+      setAudioTrimEnd(Math.min(60, dur));
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.src = url;
+        audioPreviewRef.current.load();
+      }
+    });
+    if (e.target) e.target.value = "";
+  };
+
+  /* play / pause preview inside trim window */
+  const toggleAudioPreview = () => {
+    const audio = audioPreviewRef.current;
+    if (!audio || !audioUploadUrl) return;
+    if (audioPlaying) { audio.pause(); setAudioPlaying(false); }
+    else {
+      audio.currentTime = audioTrimStart;
+      audio.play().then(() => setAudioPlaying(true)).catch(() => {});
+    }
+  };
+
+  /* trim handle drag */
+  const onTrimDown = (e: React.PointerEvent, type: "start"|"end") => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    trimDragRef.current = { type, startX: e.clientX, startVal: type==="start" ? audioTrimStart : audioTrimEnd };
+  };
+  const onTrimMove = (e: React.PointerEvent) => {
+    if (!trimDragRef.current || !trimTrackRef.current) return;
+    const rect = trimTrackRef.current.getBoundingClientRect();
+    const frac = (e.clientX - trimDragRef.current.startX) / rect.width;
+    const delta = frac * (audioDuration || 60);
+    if (trimDragRef.current.type === "start") {
+      setAudioTrimStart(prev => Math.max(0, Math.min(audioTrimEnd - 1, trimDragRef.current!.startVal + delta)));
+    } else {
+      setAudioTrimEnd(prev => Math.max(audioTrimStart + 1, Math.min(audioDuration || 60, trimDragRef.current!.startVal + delta)));
+    }
+  };
+  const onTrimUp = () => { trimDragRef.current = null; };
+
+  /* microphone recording */
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recChunksRef.current = [];
+      const mr = new MediaRecorder(stream);
+      mr.ondataavailable = e => { if (e.data.size > 0) recChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(recChunksRef.current, { type:"audio/webm" });
+        const url  = URL.createObjectURL(blob);
+        if (audioUploadUrl) URL.revokeObjectURL(audioUploadUrl);
+        setAudioUploadUrl(url);
+        setAudioName("Yozib olish " + new Date().toLocaleTimeString("uz-UZ"));
+        setAudioDuration(0);
+        setAudioTrimStart(0);
+        setAudioTrimEnd(60);
+        setMusicTab("trim");
+        if (audioPreviewRef.current) { audioPreviewRef.current.src = url; audioPreviewRef.current.load(); }
+        setIsRecording(false);
+      };
+      mr.start(); mediaRecorderRef.current = mr; setIsRecording(true);
+    } catch { alert("Mikrofon ruxsati berilmadi"); }
+  };
+  const stopRecording = () => { mediaRecorderRef.current?.stop(); };
+
   const [draftText, setDraftText]             = useState("");
   const [draftColor, setDraftColor]           = useState("#ffffff");
   const [draftAnim, setDraftAnim]             = useState<TextOverlay["animation"]>("none");
@@ -1467,6 +1585,11 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         )}
       </AnimatePresence>
 
+      {/* hidden audio element + file input */}
+      <audio ref={audioPreviewRef} style={{ display:"none" }} />
+      <input ref={audioFileInputRef} type="file" accept="audio/*" style={{ display:"none" }}
+        onChange={handleAudioFileUpload} />
+
       {/* ── Music panel ── */}
       <AnimatePresence>
         {panel === "music" && (
@@ -1477,15 +1600,47 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             style={{ background:"rgba(6,6,20,0.98)", borderTop:"1px solid rgba(255,255,255,0.08)" }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Selected song bar */}
+            {/* ── Tab bar ── */}
+            <div className="flex border-b border-white/8">
+              {([
+                { id:"search" as const, label:"🔍 Qidirish",  disabled: false },
+                { id:"upload" as const, label:"📁 Yuklash",   disabled: false },
+                { id:"trim"   as const, label:"✂️ Kesish",    disabled: !audioName },
+              ]).map(t => (
+                <button key={t.id}
+                  onClick={() => !t.disabled && setMusicTab(t.id)}
+                  disabled={t.disabled}
+                  className="flex-1 py-2.5 text-[10px] font-bold transition-all"
+                  style={{
+                    color: musicTab===t.id ? "#c4b5fd" : t.disabled ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.38)",
+                    borderBottom: musicTab===t.id ? "2px solid #7c3aed" : "2px solid transparent",
+                    cursor: t.disabled ? "not-allowed" : "pointer",
+                  }}>
+                  {t.label}
+                </button>
+              ))}
+              <button onClick={() => setPanel("none")}
+                className="w-10 flex items-center justify-center flex-shrink-0"
+                style={{ color: audioName ? "#a78bfa" : "rgba(255,255,255,0.3)" }}>
+                <Check className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Selected song bar (shown in all tabs) */}
             {audioName && (
-              <div className="flex items-center gap-2 mx-4 mt-3 px-3 py-2 rounded-2xl"
-                style={{ background:"rgba(124,58,237,0.18)", border:"1px solid rgba(124,58,237,0.5)" }}>
-                <div className="flex items-end gap-0.5 w-6 h-5 flex-shrink-0">
+              <div className="flex items-center gap-2 mx-4 mt-2.5 px-3 py-2 rounded-2xl"
+                style={{ background:"rgba(124,58,237,0.18)", border:"1px solid rgba(124,58,237,0.45)" }}>
+                <div className="flex items-end gap-0.5 w-5 h-4 flex-shrink-0">
                   <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
                 </div>
-                <span className="flex-1 text-[13px] text-white font-bold truncate">{audioName}</span>
-                <button onClick={() => { setAudioName(""); setMusicQuery(""); }}
+                <span className="flex-1 text-[12px] text-white font-bold truncate">{audioName}</span>
+                {audioUploadUrl && (
+                  <span className="text-[9px] text-purple-300 font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background:"rgba(124,58,237,0.3)" }}>
+                    {fmtTime(audioTrimStart)} – {fmtTime(audioTrimEnd)}
+                  </span>
+                )}
+                <button onClick={() => { setAudioName(""); setAudioUploadUrl(""); setMusicQuery(""); setMusicTab("search"); }}
                   className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ background:"rgba(255,255,255,0.18)" }}>
                   <X className="w-3 h-3 text-white/70" />
@@ -1493,146 +1648,385 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
               </div>
             )}
 
-            {/* Search bar */}
-            <div className="flex gap-2 mx-4 mt-2.5">
-              <div className="flex-1 flex items-center gap-2 rounded-2xl px-3"
-                style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)" }}>
-                <Search className="w-4 h-4 text-white/35 flex-shrink-0" />
-                <input
-                  autoFocus
-                  value={musicQuery}
-                  onChange={e => { setMusicQuery(e.target.value); setMusicApiResults([]); }}
-                  placeholder="🌐 Internetdan qidiring — har qanday qo'shiq…"
-                  className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
-                />
-                {musicApiLoading && <div className="w-3.5 h-3.5 rounded-full border-2 border-purple-400 border-t-transparent animate-spin flex-shrink-0" />}
-                {musicQuery && !musicApiLoading && (
-                  <button onClick={() => { setMusicQuery(""); setMusicApiResults([]); }}>
-                    <X className="w-3.5 h-3.5 text-white/30" />
+            {/* ════════════ SEARCH TAB ════════════ */}
+            {musicTab === "search" && (
+              <div>
+                <div className="flex gap-2 mx-4 mt-2.5">
+                  <div className="flex-1 flex items-center gap-2 rounded-2xl px-3"
+                    style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)" }}>
+                    <Search className="w-4 h-4 text-white/35 flex-shrink-0" />
+                    <input autoFocus value={musicQuery}
+                      onChange={e => { setMusicQuery(e.target.value); setMusicApiResults([]); }}
+                      placeholder="🌐 Internetdan qidiring — har qanday qo'shiq…"
+                      className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none" />
+                    {musicApiLoading && <div className="w-3.5 h-3.5 rounded-full border-2 border-purple-400 border-t-transparent animate-spin flex-shrink-0" />}
+                    {musicQuery && !musicApiLoading && (
+                      <button onClick={() => { setMusicQuery(""); setMusicApiResults([]); }}>
+                        <X className="w-3.5 h-3.5 text-white/30" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search mode hints */}
+                {musicQuery.length >= 1 && musicQuery.length < 2 && (
+                  <p className="text-[10px] text-white/30 px-4 mt-1">Kamida 2 harf kiriting…</p>
+                )}
+                {musicQuery.length >= 2 && !musicApiLoading && musicApiResults.length === 0 && (
+                  <p className="text-[10px] text-amber-400/60 px-4 mt-1">⚠️ iTunes natija bermadi — lokal qo'shiqlardan tanlang</p>
+                )}
+
+                {/* Country tabs */}
+                {!musicQuery && (
+                  <div className="flex gap-2 px-4 mt-3 overflow-x-auto scrollbar-none pb-0.5">
+                    {SONGS_BY_COUNTRY.map((cat, i) => (
+                      <button key={i} onClick={() => setMusicCat(i)}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
+                        style={{
+                          background: musicCat===i ? "rgba(124,58,237,0.85)" : "rgba(255,255,255,0.08)",
+                          border: musicCat===i ? "1px solid rgba(124,58,237,0.9)" : "1px solid rgba(255,255,255,0.1)",
+                          color: musicCat===i ? "white" : "rgba(255,255,255,0.55)",
+                        }}>
+                        <span className={musicCat===i ? "flag-wave" : ""} style={{ fontSize:14, lineHeight:1 }}>{cat.flag}</span>
+                        <span>{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* iTunes results */}
+                {musicQuery.length >= 2 && musicApiResults.length > 0 && (
+                  <div className="mt-1 max-h-40 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
+                    <div className="flex items-center gap-1.5 px-4 py-1">
+                      <span className="text-[10px] font-bold text-purple-400">🌐 iTunes</span>
+                      <span className="text-[10px] text-white/30">{musicApiResults.length} natija</span>
+                    </div>
+                    {musicApiResults.map((song, i) => {
+                      const name = `${song.artist} — ${song.title}`;
+                      const isSelected = audioName === name;
+                      return (
+                        <button key={i}
+                          onClick={() => { setAudioName(name); setMusicQuery(name); setMusicApiResults([]); setAudioUploadUrl(""); }}
+                          className="w-full flex items-center gap-3 px-4 py-2 transition-all"
+                          style={{ background: isSelected ? "rgba(124,58,237,0.18)" : "transparent",
+                            borderLeft: isSelected ? "2.5px solid #7c3aed" : "2.5px solid transparent" }}>
+                          {song.artwork
+                            ? <img src={song.artwork} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" style={{ border:"1px solid rgba(255,255,255,0.1)" }} />
+                            : <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background:"rgba(124,58,237,0.3)" }}><Music className="w-4 h-4 text-purple-300" /></div>}
+                          <div className="flex flex-col items-start flex-1 min-w-0">
+                            <span className="text-[13px] font-semibold text-white truncate w-full text-left leading-tight">{song.title}</span>
+                            <span className="text-[10px] text-white/40 truncate w-full text-left">{song.artist}</span>
+                            {song.album && <span className="text-[9px] text-white/25 truncate w-full text-left">{song.album}</span>}
+                          </div>
+                          {isSelected
+                            ? <div className="flex items-end gap-0.5 flex-shrink-0"><span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" /></div>
+                            : <span className="text-white/20 flex-shrink-0 text-xs">▶</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Local songs */}
+                <div className="mt-1 max-h-44 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
+                  {musicQuery && musicApiResults.length === 0 && (
+                    <p className="text-[10px] text-white/30 px-4 py-1">📁 Lokal: {musicSuggestions.length} natija</p>
+                  )}
+                  {musicSuggestions.length === 0 && !musicQuery ? null : musicSuggestions.length === 0 ? (
+                    <p className="text-center text-white/30 text-xs py-3">Lokal bazada topilmadi</p>
+                  ) : (
+                    musicSuggestions.map((song, i) => {
+                      const parts = song.split(" — ");
+                      const artist = parts[0]; const title = parts.slice(1).join(" — ");
+                      const isSelected = audioName === song;
+                      const countryFlag = SONGS_BY_COUNTRY.find(c => c.songs.includes(song))?.flag ?? "🎵";
+                      return (
+                        <button key={i}
+                          onClick={() => { setAudioName(song); setMusicQuery(song); setMusicApiResults([]); setAudioUploadUrl(""); }}
+                          className="w-full flex items-center gap-3 px-4 py-2 transition-all"
+                          style={{ background: isSelected ? "rgba(124,58,237,0.18)" : "transparent",
+                            borderLeft: isSelected ? "2.5px solid #7c3aed" : "2.5px solid transparent" }}>
+                          <span className="flex-shrink-0 text-base leading-none">{countryFlag}</span>
+                          <div className="flex flex-col items-start flex-1 min-w-0">
+                            <span className="text-[13px] font-semibold text-white truncate w-full text-left leading-tight">{title}</span>
+                            <span className="text-[10px] text-white/40 truncate w-full text-left">{artist}</span>
+                          </div>
+                          {isSelected
+                            ? <div className="flex items-end gap-0.5 flex-shrink-0"><span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" /></div>
+                            : <span className="text-white/20 flex-shrink-0 text-xs">▶</span>}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+                <p className="text-center text-white/20 text-[10px] pt-1 pb-0.5">
+                  🌐 iTunes + 📁 {allSongs.length}+ lokal · {SONGS_BY_COUNTRY.length} mamlakat
+                </p>
+              </div>
+            )}
+
+            {/* ════════════ UPLOAD TAB ════════════ */}
+            {musicTab === "upload" && (
+              <div className="px-4 pt-3 space-y-3">
+                {/* Upload from device */}
+                <button onClick={() => audioFileInputRef.current?.click()}
+                  className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all"
+                  style={{ background:"rgba(124,58,237,0.12)", border:"1.5px dashed rgba(124,58,237,0.55)" }}>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background:"rgba(124,58,237,0.25)" }}>
+                    <Volume2 className="w-6 h-6 text-purple-300" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-white">📱 Qurilmadan yuklash</p>
+                    <p className="text-[11px] text-white/40 mt-0.5">MP3, AAC, WAV, OGG, FLAC qo'llab-quvvatlanadi</p>
+                    <p className="text-[10px] text-purple-400 font-bold mt-1">Shu yerga bosing →</p>
+                  </div>
+                </button>
+
+                {/* Record from microphone */}
+                <button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all"
+                  style={{
+                    background: isRecording ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.05)",
+                    border: isRecording ? "1.5px solid rgba(239,68,68,0.7)" : "1.5px solid rgba(255,255,255,0.1)",
+                  }}>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: isRecording ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.08)" }}>
+                    {isRecording
+                      ? <div className="w-4 h-4 rounded-sm" style={{ background:"#ef4444", animation:"pulse 0.8s ease-in-out infinite" }} />
+                      : <Mic className="w-6 h-6 text-white/60" />}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold" style={{ color: isRecording ? "#fca5a5" : "white" }}>
+                      {isRecording ? "🔴 Yozmoqda… (to'xtatish uchun bosing)" : "🎙️ Mikrofon orqali yozish"}
+                    </p>
+                    <p className="text-[11px] text-white/40 mt-0.5">
+                      {isRecording ? "Gapiring yoki kuylay boshlang" : "O'zingizning ovozingizni yozing"}
+                    </p>
+                  </div>
+                  {isRecording && (
+                    <div className="ml-auto flex items-end gap-0.5 flex-shrink-0">
+                      <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Supported formats info */}
+                <div className="px-3 py-2.5 rounded-xl" style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.06)" }}>
+                  <p className="text-[10px] text-white/35 font-bold mb-1.5">💡 Maslahat</p>
+                  <ul className="space-y-1">
+                    {["Qo'shiqni yuklang va ✂️ Kesish tabida kerakli joyini tanlang","Mikrofon orqali original ovoz yozing","Yuklangan audio kontentingizga biriktirilib saqlanadi"].map((tip,i) => (
+                      <li key={i} className="text-[10px] text-white/40 flex items-start gap-1.5">
+                        <span className="text-purple-400 mt-0.5 flex-shrink-0">→</span>{tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {audioUploadUrl && (
+                  <button onClick={() => setMusicTab("trim")}
+                    className="w-full py-3 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2"
+                    style={{ background:"linear-gradient(135deg,rgba(124,58,237,0.8),rgba(168,85,247,0.7))" }}>
+                    <Scissors className="w-4 h-4" />
+                    Kesish/Sozlash →
                   </button>
                 )}
               </div>
-              <button onClick={() => setPanel("none")}
-                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ background: audioName ? "rgba(124,58,237,0.9)" : "rgba(255,255,255,0.08)" }}>
-                <Check className="w-5 h-5 text-white" />
-              </button>
-            </div>
-
-            {/* Search mode hint */}
-            {musicQuery.length >= 1 && musicQuery.length < 2 && (
-              <p className="text-[10px] text-white/30 px-4 mt-1">Kamida 2 harf kiriting…</p>
-            )}
-            {musicQuery.length >= 2 && !musicApiLoading && musicApiResults.length === 0 && (
-              <p className="text-[10px] text-amber-400/60 px-4 mt-1">⚠️ iTunes API natija bermadi — pastdagi lokal qo'shiqlardan tanlang</p>
             )}
 
-            {/* Country category tabs with waving flags */}
-            {!musicQuery && (
-              <div className="flex gap-2 px-4 mt-3 overflow-x-auto scrollbar-none pb-0.5">
-                {SONGS_BY_COUNTRY.map((cat, i) => (
-                  <button key={i} onClick={() => setMusicCat(i)}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
-                    style={{
-                      background: musicCat===i ? "rgba(124,58,237,0.85)" : "rgba(255,255,255,0.08)",
-                      border: musicCat===i ? "1px solid rgba(124,58,237,0.9)" : "1px solid rgba(255,255,255,0.1)",
-                      color: musicCat===i ? "white" : "rgba(255,255,255,0.55)",
-                    }}>
-                    <span className={musicCat===i ? "flag-wave" : ""} style={{ fontSize:14, lineHeight:1 }}>{cat.flag}</span>
-                    <span>{cat.label}</span>
-                  </button>
-                ))}
+            {/* ════════════ TRIM TAB ════════════ */}
+            {musicTab === "trim" && (
+              <div className="px-4 pt-3 space-y-4">
+                {!audioUploadUrl ? (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-white/40">Avval 📁 Yuklash tabidan audio yuklang</p>
+                    <button onClick={() => setMusicTab("upload")}
+                      className="mt-3 px-4 py-2 rounded-xl text-sm font-bold text-purple-300"
+                      style={{ background:"rgba(124,58,237,0.2)" }}>
+                      Yuklashga o'tish →
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Song name + duration */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-white truncate max-w-[200px]">{audioName}</p>
+                        <p className="text-[10px] text-white/35 mt-0.5">
+                          Jami: {fmtTime(audioDuration || 0)} · Tanlangan: {fmtTime(audioTrimEnd - audioTrimStart)}
+                        </p>
+                      </div>
+                      <button onClick={toggleAudioPreview}
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{
+                          background: audioPlaying ? "rgba(239,68,68,0.2)" : "rgba(124,58,237,0.3)",
+                          border: audioPlaying ? "1.5px solid rgba(239,68,68,0.6)" : "1.5px solid rgba(124,58,237,0.6)",
+                        }}>
+                        {audioPlaying
+                          ? <div className="w-3 h-3 rounded-sm" style={{ background:"#ef4444" }} />
+                          : <span className="text-white text-base">▶</span>}
+                      </button>
+                    </div>
+
+                    {/* Waveform + trim track */}
+                    <div className="relative"
+                      onPointerMove={onTrimMove} onPointerUp={onTrimUp} onPointerCancel={onTrimUp}>
+
+                      {/* Waveform bars */}
+                      <div ref={trimTrackRef} className="relative flex items-end gap-px overflow-hidden rounded-xl"
+                        style={{ height:60, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.08)", cursor:"crosshair" }}>
+                        {waveformBars.map((h, i) => {
+                          const pct = i / waveformBars.length;
+                          const inRange = pct >= (audioTrimStart / (audioDuration||60)) && pct <= (audioTrimEnd / (audioDuration||60));
+                          const isCurrent = audioPlaying && Math.abs(pct - audioCurrentTime/(audioDuration||60)) < 0.015;
+                          return (
+                            <div key={i} className="flex-1 rounded-t-sm transition-colors duration-75"
+                              style={{
+                                height: `${h * 100}%`,
+                                background: isCurrent
+                                  ? "#ffffff"
+                                  : inRange
+                                    ? "rgba(168,85,247,0.85)"
+                                    : "rgba(255,255,255,0.18)",
+                              }} />
+                          );
+                        })}
+
+                        {/* Dim overlay for excluded start region */}
+                        <div className="absolute left-0 top-0 bottom-0 rounded-xl pointer-events-none"
+                          style={{
+                            width: `${(audioTrimStart/(audioDuration||60))*100}%`,
+                            background:"rgba(0,0,0,0.55)",
+                          }} />
+                        {/* Dim overlay for excluded end region */}
+                        <div className="absolute right-0 top-0 bottom-0 rounded-xl pointer-events-none"
+                          style={{
+                            width: `${((1 - audioTrimEnd/(audioDuration||60))*100)}%`,
+                            background:"rgba(0,0,0,0.55)",
+                          }} />
+
+                        {/* Trim bracket top line */}
+                        <div className="absolute top-0 h-0.5 pointer-events-none"
+                          style={{
+                            left:`${(audioTrimStart/(audioDuration||60))*100}%`,
+                            right:`${((1 - audioTrimEnd/(audioDuration||60))*100)}%`,
+                            background:"#7c3aed",
+                          }} />
+                        <div className="absolute bottom-0 h-0.5 pointer-events-none"
+                          style={{
+                            left:`${(audioTrimStart/(audioDuration||60))*100}%`,
+                            right:`${((1 - audioTrimEnd/(audioDuration||60))*100)}%`,
+                            background:"#7c3aed",
+                          }} />
+
+                        {/* Playhead */}
+                        {audioPlaying && (
+                          <div className="absolute top-0 bottom-0 w-0.5 pointer-events-none"
+                            style={{ left:`${(audioCurrentTime/(audioDuration||60))*100}%`, background:"white", opacity:0.8 }} />
+                        )}
+                      </div>
+
+                      {/* START handle */}
+                      <div
+                        onPointerDown={e => onTrimDown(e, "start")}
+                        className="absolute top-0 bottom-0 flex items-center justify-center"
+                        style={{
+                          left:`calc(${(audioTrimStart/(audioDuration||60))*100}% - 12px)`,
+                          width:24, cursor:"ew-resize", zIndex:10, touchAction:"none",
+                        }}>
+                        <div className="w-4 h-full rounded-l-lg flex flex-col items-center justify-center gap-0.5"
+                          style={{ background:"rgba(124,58,237,0.95)", border:"1.5px solid #a78bfa", boxShadow:"0 0 8px rgba(124,58,237,0.6)" }}>
+                          <div className="w-0.5 h-3 rounded-full bg-white/80" />
+                          <div className="w-0.5 h-3 rounded-full bg-white/80" />
+                        </div>
+                      </div>
+
+                      {/* END handle */}
+                      <div
+                        onPointerDown={e => onTrimDown(e, "end")}
+                        className="absolute top-0 bottom-0 flex items-center justify-center"
+                        style={{
+                          left:`calc(${(audioTrimEnd/(audioDuration||60))*100}% - 12px)`,
+                          width:24, cursor:"ew-resize", zIndex:10, touchAction:"none",
+                        }}>
+                        <div className="w-4 h-full rounded-r-lg flex flex-col items-center justify-center gap-0.5"
+                          style={{ background:"rgba(124,58,237,0.95)", border:"1.5px solid #a78bfa", boxShadow:"0 0 8px rgba(124,58,237,0.6)" }}>
+                          <div className="w-0.5 h-3 rounded-full bg-white/80" />
+                          <div className="w-0.5 h-3 rounded-full bg-white/80" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Start / End time pickers */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Boshlanish</p>
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                          style={{ background:"rgba(255,255,255,0.07)", border:"1px solid rgba(124,58,237,0.4)" }}>
+                          <span className="text-purple-400 text-lg font-black flex-shrink-0">◀</span>
+                          <span className="text-white font-mono font-bold text-base">{fmtTime(audioTrimStart)}</span>
+                          <div className="ml-auto flex flex-col gap-0.5">
+                            <button onClick={() => setAudioTrimStart(s => Math.max(0, s-1))}
+                              className="text-[10px] text-white/50 leading-none px-1">▲</button>
+                            <button onClick={() => setAudioTrimStart(s => Math.min(audioTrimEnd-1, s+1))}
+                              className="text-[10px] text-white/50 leading-none px-1">▼</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Tugash</p>
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                          style={{ background:"rgba(255,255,255,0.07)", border:"1px solid rgba(124,58,237,0.4)" }}>
+                          <span className="text-purple-400 text-lg font-black flex-shrink-0">▶</span>
+                          <span className="text-white font-mono font-bold text-base">{fmtTime(audioTrimEnd)}</span>
+                          <div className="ml-auto flex flex-col gap-0.5">
+                            <button onClick={() => setAudioTrimEnd(s => Math.min(audioDuration||60, s+1))}
+                              className="text-[10px] text-white/50 leading-none px-1">▲</button>
+                            <button onClick={() => setAudioTrimEnd(s => Math.max(audioTrimStart+1, s-1))}
+                              className="text-[10px] text-white/50 leading-none px-1">▼</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick duration presets */}
+                    <div>
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1.5">Tezkor davomiylik</p>
+                      <div className="flex gap-2">
+                        {[15,30,45,60].map(sec => (
+                          <button key={sec} onClick={() => {
+                            setAudioTrimStart(0);
+                            setAudioTrimEnd(Math.min(sec, audioDuration||60));
+                          }}
+                            className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+                            style={{
+                              background: Math.round(audioTrimEnd - audioTrimStart) === sec ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.06)",
+                              color: Math.round(audioTrimEnd - audioTrimStart) === sec ? "#c4b5fd" : "rgba(255,255,255,0.4)",
+                              border: Math.round(audioTrimEnd - audioTrimStart) === sec ? "1px solid rgba(124,58,237,0.7)" : "none",
+                            }}>
+                            {sec}s
+                          </button>
+                        ))}
+                        <button onClick={() => { setAudioTrimStart(0); setAudioTrimEnd(audioDuration||60); }}
+                          className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+                          style={{ background:"rgba(255,255,255,0.06)", color:"rgba(255,255,255,0.4)" }}>
+                          Hammasi
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Confirm trim button */}
+                    <button onClick={() => setPanel("none")}
+                      className="w-full py-3 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2"
+                      style={{ background:"linear-gradient(135deg,rgba(124,58,237,0.9),rgba(168,85,247,0.8))" }}>
+                      <Check className="w-4 h-4" />
+                      Kesishni tasdiqlash — {fmtTime(audioTrimEnd - audioTrimStart)} tanlandi
+                    </button>
+                  </>
+                )}
               </div>
             )}
-
-            {/* ── INTERNET search results (iTunes API) ── */}
-            {musicQuery.length >= 2 && musicApiResults.length > 0 && (
-              <div className="mt-1 max-h-52 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
-                <div className="flex items-center gap-1.5 px-4 py-1">
-                  <span className="text-[10px] font-bold text-purple-400">🌐 iTunes</span>
-                  <span className="text-[10px] text-white/30">{musicApiResults.length} natija</span>
-                </div>
-                {musicApiResults.map((song, i) => {
-                  const name = `${song.artist} — ${song.title}`;
-                  const isSelected = audioName === name;
-                  return (
-                    <button key={i}
-                      onClick={() => { setAudioName(name); setMusicQuery(name); setMusicApiResults([]); }}
-                      className="w-full flex items-center gap-3 px-4 py-2 transition-all"
-                      style={{
-                        background: isSelected ? "rgba(124,58,237,0.18)" : "transparent",
-                        borderLeft: isSelected ? "2.5px solid #7c3aed" : "2.5px solid transparent",
-                      }}>
-                      {song.artwork ? (
-                        <img src={song.artwork} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
-                          style={{ border:"1px solid rgba(255,255,255,0.1)" }} />
-                      ) : (
-                        <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center"
-                          style={{ background:"rgba(124,58,237,0.3)" }}>
-                          <Music className="w-4 h-4 text-purple-300" />
-                        </div>
-                      )}
-                      <div className="flex flex-col items-start flex-1 min-w-0">
-                        <span className="text-[13px] font-semibold text-white truncate w-full text-left leading-tight">{song.title}</span>
-                        <span className="text-[10px] text-white/40 truncate w-full text-left">{song.artist}</span>
-                        {song.album && <span className="text-[9px] text-white/25 truncate w-full text-left">{song.album}</span>}
-                      </div>
-                      {isSelected ? (
-                        <div className="flex items-end gap-0.5 flex-shrink-0">
-                          <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
-                        </div>
-                      ) : (
-                        <span className="text-white/20 flex-shrink-0 text-xs">▶</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ── Local songs list (always shown below internet results) ── */}
-            <div className="mt-1 max-h-48 overflow-y-auto" style={{ scrollbarWidth:"none" }}>
-              {musicQuery && musicApiResults.length === 0 && (
-                <p className="text-[10px] text-white/30 px-4 py-1">
-                  📁 Lokal: {musicSuggestions.length} natija
-                </p>
-              )}
-              {musicSuggestions.length === 0 && !musicQuery ? null : musicSuggestions.length === 0 ? (
-                <p className="text-center text-white/30 text-xs py-3">Lokal bazada topilmadi</p>
-              ) : (
-                musicSuggestions.map((song, i) => {
-                  const parts = song.split(" — ");
-                  const artist = parts[0]; const title = parts.slice(1).join(" — ");
-                  const isSelected = audioName === song;
-                  const countryFlag = SONGS_BY_COUNTRY.find(c => c.songs.includes(song))?.flag ?? "🎵";
-                  return (
-                    <button key={i}
-                      onClick={() => { setAudioName(song); setMusicQuery(song); setMusicApiResults([]); }}
-                      className="w-full flex items-center gap-3 px-4 py-2 transition-all"
-                      style={{
-                        background: isSelected ? "rgba(124,58,237,0.18)" : "transparent",
-                        borderLeft: isSelected ? "2.5px solid #7c3aed" : "2.5px solid transparent",
-                      }}>
-                      <span className="flex-shrink-0 text-base leading-none">{countryFlag}</span>
-                      <div className="flex flex-col items-start flex-1 min-w-0">
-                        <span className="text-[13px] font-semibold text-white truncate w-full text-left leading-tight">{title}</span>
-                        <span className="text-[10px] text-white/40 truncate w-full text-left">{artist}</span>
-                      </div>
-                      {isSelected ? (
-                        <div className="flex items-end gap-0.5 flex-shrink-0">
-                          <span className="eq-bar" /><span className="eq-bar" /><span className="eq-bar" />
-                        </div>
-                      ) : (
-                        <span className="text-white/20 flex-shrink-0 text-xs">▶</span>
-                      )}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-            <p className="text-center text-white/20 text-[10px] pt-1">
-              🌐 Internet + 📁 {allSongs.length}+ lokal qo'shiq · {SONGS_BY_COUNTRY.length} mamlakat
-            </p>
           </motion.div>
         )}
       </AnimatePresence>

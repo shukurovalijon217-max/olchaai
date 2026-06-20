@@ -329,3 +329,42 @@ em-emoji-picker {
   0%   { background-position: 200% center; }
   100% { background-position: -200% center; }
 }
+
+/* ── Text overlay animations ── */
+@keyframes txt-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 1; }
+}
+@keyframes txt-bounce {
+  0%, 100% { transform: translate(-50%,-50%) translateY(0px); }
+  50%       { transform: translate(-50%,-50%) translateY(-14px); }
+}
+@keyframes txt-neon {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 8px currentColor) drop-shadow(0 0 18px currentColor); }
+  50%       { filter: brightness(1.4) drop-shadow(0 0 3px currentColor); }
+}
+@keyframes txt-slide {
+  0%        { opacity: 0; transform: translate(-50%,-50%) translateX(-36px); }
+  12%, 88%  { opacity: 1; transform: translate(-50%,-50%) translateX(0); }
+  100%      { opacity: 0; transform: translate(-50%,-50%) translateX(36px); }
+}
+@keyframes txt-wave-letter {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-9px); }
+}
+.txt-anim-pulse  { animation: txt-pulse  2s ease-in-out infinite; }
+.txt-anim-bounce { animation: txt-bounce 1.2s ease-in-out infinite; }
+.txt-anim-neon   { animation: txt-neon   1.8s ease-in-out infinite; }
+.txt-anim-slide  { animation: txt-slide  3.5s ease-in-out infinite; }
+
+/* ── Music pill ── */
+@keyframes vinyl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes bar-dance  {
+  0%, 100% { scaleY: 0.3; }
+  50%       { scaleY: 1; }
+}
+.vinyl-spin { animation: vinyl-spin 3s linear infinite; }
+.bar1 { animation: bar-dance 0.8s ease-in-out infinite; animation-delay: 0s; }
+.bar2 { animation: bar-dance 0.8s ease-in-out infinite; animation-delay: 0.15s; }
+.bar3 { animation: bar-dance 0.8s ease-in-out infinite; animation-delay: 0.3s; }
+.bar4 { animation: bar-dance 0.8s ease-in-out infinite; animation-delay: 0.45s; }

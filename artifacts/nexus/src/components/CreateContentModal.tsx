@@ -6,6 +6,7 @@ import {
   Maximize2, Square, RectangleVertical,
   MessageCircle, Share2, Users, Globe, Ban, Plus, Trash2,
 } from "lucide-react";
+import MediaEditor, { type TextOverlay } from "@/components/MediaEditor";
 import {
   useCreatePost, useCreateReel, useCreateStory,
   getListPostsQueryKey, getListReelsQueryKey, getListStoriesQueryKey,
@@ -254,13 +255,32 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     })();
   }, [mediaQueue]);
 
+  /* ── media editor state ── */
+  const [editorOpen,  setEditorOpen]  = useState(false);
+  const [editorFiles, setEditorFiles] = useState<File[]>([]);
+  const [editorPreviews, setEditorPreviews] = useState<string[]>([]);
+  const [postOverlays, setPostOverlays] = useState<TextOverlay[]>([]);
+  const [postAudioName, setPostAudioName] = useState("");
+
   const addFiles = (files: FileList) => {
-    const newItems: MediaItem[] = Array.from(files).slice(0, 10 - mediaQueue.length).map(f => ({
+    const arr = Array.from(files).slice(0, 10 - mediaQueue.length);
+    if (arr.length === 0) return;
+    const newItems: MediaItem[] = arr.map(f => ({
       id: `${Date.now()}-${Math.random()}`, file: f,
       preview: URL.createObjectURL(f),
       status: "idle", progress: 0,
     }));
     setMediaQueue(q => [...q, ...newItems]);
+    /* Open editor immediately after file selection */
+    setEditorFiles(arr);
+    setEditorPreviews(arr.map(f => URL.createObjectURL(f)));
+    setEditorOpen(true);
+  };
+
+  const handleEditorDone = (overlays: TextOverlay[], audioName: string) => {
+    setPostOverlays(overlays);
+    setPostAudioName(audioName);
+    setEditorOpen(false);
   };
 
   const removeMedia = (id: string) => {
@@ -324,6 +344,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
             type,
             mediaUrl: urls[0],
             mediaUrls: urls.length > 1 ? urls : undefined,
+            overlays: postOverlays.length > 0 ? JSON.stringify(postOverlays) : undefined,
+            audioName: postAudioName || undefined,
             tags: metaTags,
           }),
         });
@@ -386,6 +408,21 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   ];
 
   return (
+    <>
+    {/* ── Media Editor (full-screen, shown on top when editing) ── */}
+    <AnimatePresence>
+      {editorOpen && (
+        <MediaEditor
+          files={editorFiles}
+          previews={editorPreviews}
+          initialOverlays={postOverlays}
+          initialAudioName={postAudioName}
+          onDone={handleEditorDone}
+          onClose={() => setEditorOpen(false)}
+        />
+      )}
+    </AnimatePresence>
+
     <AnimatePresence>
       {open && (
         <motion.div
@@ -782,5 +819,6 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 }

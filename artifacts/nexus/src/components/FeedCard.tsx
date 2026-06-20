@@ -495,6 +495,40 @@ export default function FeedCard({ post }: FeedCardProps) {
         }}
       />
 
+      {/* ══ LAYER 3.2 — TEXT OVERLAYS (from MediaEditor) ══ */}
+      {(() => {
+        let overlays: any[] = [];
+        try { overlays = JSON.parse((post as any).overlays || "[]"); } catch { overlays = []; }
+        if (!overlays.length) return null;
+        return overlays.map((item: any) => {
+          const animCls = item.animation === "pulse"  ? "txt-anim-pulse"
+            : item.animation === "bounce" ? "txt-anim-bounce"
+            : item.animation === "neon"   ? "txt-anim-neon"
+            : item.animation === "slide"  ? "txt-anim-slide"
+            : "";
+          const fs: React.CSSProperties = item.fontStyle === "bold"   ? { fontWeight: 900 }
+            : item.fontStyle === "italic"  ? { fontStyle: "italic" }
+            : item.fontStyle === "shadow"  ? { textShadow: "2px 3px 8px rgba(0,0,0,0.9)" }
+            : item.fontStyle === "outline" ? { WebkitTextStroke: "1.5px rgba(0,0,0,0.85)" }
+            : {};
+          const bg: React.CSSProperties = item.bgStyle === "dark" ? { background:"rgba(0,0,0,0.5)", padding:"4px 10px", borderRadius:8 }
+            : item.bgStyle === "blur" ? { backdropFilter:"blur(12px)", background:"rgba(0,0,0,0.25)", padding:"4px 10px", borderRadius:8 }
+            : {};
+          const inner = item.animation === "wave"
+            ? <span style={{ display:"inline-flex", gap:0 }}>
+                {String(item.text).split("").map((ch: string, ci: number) => (
+                  <span key={ci} style={{ display:"inline-block", animation:`txt-wave-letter 1s ease-in-out infinite`, animationDelay:`${ci*0.08}s`, color:item.color, fontSize:item.fontSize, whiteSpace:ch===" "?"pre":undefined }}>{ch}</span>
+                ))}
+              </span>
+            : <span style={{ color:item.color, fontSize:item.fontSize }}>{item.text}</span>;
+          return (
+            <div key={item.id} className={animCls} style={{ position:"absolute", left:`${item.x}%`, top:`${item.y}%`, transform:"translate(-50%,-50%)", zIndex:9, pointerEvents:"none", fontFamily:"system-ui,sans-serif", lineHeight:1.2, ...fs, ...bg }}>
+              {inner}
+            </div>
+          );
+        });
+      })()}
+
       {/* ══ LAYER 3.5 — VIDEO SPEED HOLD ZONES (video only) ══ */}
       {isVideo && (
         <>
@@ -871,6 +905,51 @@ export default function FeedCard({ post }: FeedCardProps) {
             />
           ))}
         </motion.div>
+      )}
+
+      {/* ══ LAYER 6.5 — MUSIC PILL ══ */}
+      {!isText && !!(post as any).audioName && (
+        <div
+          className="absolute"
+          style={{
+            left: 16,
+            bottom: commentOpen ? 270 : 120,
+            zIndex: 11,
+            transition: "bottom 0.32s cubic-bezier(0.16,1,0.3,1)",
+          }}
+        >
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+            style={{
+              background: "rgba(0,0,0,0.45)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255,255,255,0.14)",
+              maxWidth: 180,
+            }}
+          >
+            {/* Spinning vinyl */}
+            <div
+              className="vinyl-spin flex-shrink-0 flex items-center justify-center rounded-full"
+              style={{ width:22, height:22, background:"linear-gradient(135deg,#7c3aed,#f472b6)" }}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+                <circle cx="5" cy="5" r="2" fill="white" opacity="0.8" />
+                <circle cx="5" cy="5" r="4.5" stroke="white" strokeWidth="0.8" fill="none" opacity="0.4" />
+              </svg>
+            </div>
+            {/* Bars */}
+            <div className="flex items-end gap-px h-3.5 flex-shrink-0">
+              {[1,2,3,4].map(n => (
+                <div key={n} className={`bar${n} rounded-full`}
+                  style={{ width:2, height:n%2===0?12:7, background:"rgba(255,255,255,0.7)", transformOrigin:"bottom" }} />
+              ))}
+            </div>
+            {/* Song name */}
+            <span className="text-[11px] font-semibold text-white/85 truncate leading-none" style={{ maxWidth:100 }}>
+              {(post as any).audioName}
+            </span>
+          </div>
+        </div>
       )}
 
       {/* ══ LAYER 7 — CAPTION (video & photo, bottom-left) ══ */}

@@ -84,12 +84,12 @@ router.get("/posts", async (req, res) => {
 /* ── POST /posts — instant response, AI scan in background ─── */
 router.post("/posts", async (req: any, res) => {
   try {
-    const { authorId, content, type, mediaUrl, mediaUrls, tags } = req.body;
+    const { authorId, content, type, mediaUrl, mediaUrls, overlays, audioName, tags } = req.body;
     const sessionUserId: number | undefined = req.session?.userId;
 
     const [post] = await db
       .insert(postsTable)
-      .values({ authorId, content, type: type || "text", mediaUrl, mediaUrls, tags, isFlagged: false })
+      .values({ authorId, content, type: type || "text", mediaUrl, mediaUrls, overlays: overlays ?? null, audioName: audioName ?? null, tags, isFlagged: false })
       .returning();
 
     const [enriched] = await batchEnrichPosts([post], sessionUserId);

@@ -4,6 +4,7 @@ import {
   Heart, MessageCircle, Share2, Bookmark,
   VolumeX, Volume2, BadgeCheck, Check, Send, X,
   ChevronsRight, ChevronsLeft, Eye, DollarSign,
+  UserPlus, UserCheck,
 } from "lucide-react";
 import type { Post } from "@workspace/api-client-react";
 import { PostType, useLikePost } from "@workspace/api-client-react";
@@ -121,8 +122,9 @@ export default function FeedCard({ post }: FeedCardProps) {
   const [saved, setSaved]     = useState(false);
   const [saves, setSaves]     = useState(0);
   const [shares, setShares]   = useState(post.sharesCount ?? 0);
-  const [muted, setMuted]     = useState(true);
-  const [copied, setCopied]   = useState(false);
+  const [muted, setMuted]         = useState(true);
+  const [copied, setCopied]       = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
 
   /* ── Video speed hold ── */
   const [holdMode, setHoldMode] = useState<"fast" | "slow" | null>(null);
@@ -446,37 +448,92 @@ export default function FeedCard({ post }: FeedCardProps) {
         {theme.badge}
       </motion.div>
 
+      {/* ══ SUBSCRIBE PILL — video, top-center ══ */}
+      {isVideo && (
+        <motion.div
+          className="absolute left-1/2 -translate-x-1/2"
+          style={{ top: 22, zIndex: 20 }}
+          initial={{ opacity: 0, y: -10 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
+          transition={{ delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <motion.button
+            onClick={() => setSubscribed(s => !s)}
+            whileTap={{ scale: 0.91 }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+            style={{
+              background: subscribed
+                ? "rgba(248,113,113,0.18)"
+                : "rgba(255,255,255,0.11)",
+              backdropFilter: "blur(24px) saturate(1.8)",
+              WebkitBackdropFilter: "blur(24px) saturate(1.8)",
+              border: subscribed
+                ? "1px solid rgba(248,113,113,0.50)"
+                : "1px solid rgba(255,255,255,0.22)",
+              boxShadow: subscribed
+                ? "0 0 14px rgba(248,113,113,0.25), inset 0 1px 0 rgba(255,255,255,0.12)"
+                : "0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.14)",
+            }}
+          >
+            <AnimatePresence mode="wait">
+              {subscribed ? (
+                <motion.div key="check" className="flex items-center gap-1.5"
+                  initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.7, opacity: 0 }} transition={{ duration: 0.18 }}>
+                  <UserCheck className="w-3.5 h-3.5" style={{ color: "#fca5a5" }} />
+                  <span className="text-[11px] font-black tracking-wide" style={{ color: "#fca5a5" }}>
+                    Obunada
+                  </span>
+                </motion.div>
+              ) : (
+                <motion.div key="plus" className="flex items-center gap-1.5"
+                  initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.7, opacity: 0 }} transition={{ duration: 0.18 }}>
+                  <UserPlus className="w-3.5 h-3.5 text-white/80" />
+                  <span className="text-[11px] font-black tracking-wide text-white/90">
+                    Obuna
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
+        </motion.div>
+      )}
+
       {/* ══ LAYER 5 — ACTION ORB + PANEL (top-right) ══ */}
       <div className="absolute right-4" style={{ top: 20, zIndex: 30 }}>
 
-        {/* THE ORB */}
+        {/* THE ORB — true glassmorphism, slightly smaller */}
         <motion.button
           onClick={() => { setActionsOpen(o => !o); setCommentOpen(false); }}
           aria-label="Amallar"
-          className="relative w-10 h-10 rounded-full flex items-center justify-center focus:outline-none"
+          className="relative w-8 h-8 rounded-full flex items-center justify-center focus:outline-none"
           style={{
-            background: `radial-gradient(circle at 35% 35%,${theme.accent}44,${theme.bg}dd)`,
-            border: `1.5px solid ${theme.accent}88`,
-            boxShadow: `0 0 18px ${theme.glow}`,
+            background: "rgba(255,255,255,0.12)",
+            backdropFilter: "blur(20px) saturate(1.8)",
+            WebkitBackdropFilter: "blur(20px) saturate(1.8)",
+            border: `1px solid rgba(255,255,255,0.28)`,
+            boxShadow: `0 4px 20px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.20), 0 0 14px ${theme.glow}`,
           }}
           whileTap={{ scale: 0.86 }}
         >
-          {!actionsOpen && [1, 2].map(i => (
-            <motion.span key={i} className="absolute inset-0 rounded-full"
-              style={{ border: `1px solid ${theme.accent}` }}
-              animate={{ scale: [1, 1.55 + i * 0.32], opacity: [0.55, 0] }}
-              transition={{ duration: 1.9, repeat: Infinity, delay: i * 0.45, ease: "easeOut" }} />
-          ))}
+          {/* subtle pulse ring */}
+          {!actionsOpen && (
+            <motion.span className="absolute inset-0 rounded-full"
+              style={{ border: `1px solid ${theme.accent}88` }}
+              animate={{ scale: [1, 1.65], opacity: [0.5, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} />
+          )}
 
-          <div className="flex flex-col items-center gap-[3.5px]">
-            <motion.span className="w-[14px] h-[2px] rounded-full bg-white block"
-              animate={{ rotate: actionsOpen ? 45 : 0, y: actionsOpen ? 5.5 : 0 }}
+          <div className="flex flex-col items-center gap-[3px]">
+            <motion.span className="w-[11px] h-[1.5px] rounded-full bg-white/90 block"
+              animate={{ rotate: actionsOpen ? 45 : 0, y: actionsOpen ? 4.5 : 0 }}
               transition={{ duration: 0.22 }} />
-            <motion.span className="w-[14px] h-[2px] rounded-full bg-white block"
+            <motion.span className="w-[11px] h-[1.5px] rounded-full bg-white/90 block"
               animate={{ opacity: actionsOpen ? 0 : 1, scaleX: actionsOpen ? 0 : 1 }}
               transition={{ duration: 0.18 }} />
-            <motion.span className="w-[14px] h-[2px] rounded-full bg-white block"
-              animate={{ rotate: actionsOpen ? -45 : 0, y: actionsOpen ? -5.5 : 0 }}
+            <motion.span className="w-[11px] h-[1.5px] rounded-full bg-white/90 block"
+              animate={{ rotate: actionsOpen ? -45 : 0, y: actionsOpen ? -4.5 : 0 }}
               transition={{ duration: 0.22 }} />
           </div>
         </motion.button>
@@ -526,10 +583,13 @@ export default function FeedCard({ post }: FeedCardProps) {
                       {action.label}
                     </span>
                   </div>
-                  {/* Count */}
+                  {/* Count — fixed width so layout never shifts */}
                   <span
-                    className="text-xs font-black tabular-nums"
-                    style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.55)" }}
+                    className="text-xs font-black tabular-nums text-right"
+                    style={{
+                      color: action.active ? action.activeColor : "rgba(255,255,255,0.55)",
+                      minWidth: "2.6rem",
+                    }}
                   >
                     {fmtNum(action.count)}
                   </span>

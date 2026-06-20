@@ -1,5 +1,35 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
+/* ── Waving flag animation ── */
+@keyframes flag-wave {
+  0%   { transform: rotate(0deg) skewX(0deg); }
+  10%  { transform: rotate(-4deg) skewX(-2deg); }
+  20%  { transform: rotate(3deg) skewX(1.5deg); }
+  30%  { transform: rotate(-3deg) skewX(-1.5deg); }
+  40%  { transform: rotate(4deg) skewX(2deg); }
+  50%  { transform: rotate(-2deg) skewX(-1deg); }
+  60%  { transform: rotate(3deg) skewX(1.5deg); }
+  70%  { transform: rotate(-3deg) skewX(-1.5deg); }
+  80%  { transform: rotate(2deg) skewX(1deg); }
+  90%  { transform: rotate(-1deg) skewX(-0.5deg); }
+  100% { transform: rotate(0deg) skewX(0deg); }
+}
+.flag-wave {
+  display: inline-block;
+  animation: flag-wave 2s ease-in-out infinite;
+  transform-origin: left center;
+}
+
+/* ── Equalizer bars (music playing indicator) ── */
+@keyframes eq-bar {
+  0%, 100% { height: 4px; }
+  50%       { height: 14px; }
+}
+.eq-bar { display:inline-block; width:3px; border-radius:2px; background:#a855f7; animation: eq-bar 0.7s ease-in-out infinite; }
+.eq-bar:nth-child(2) { animation-delay: 0.15s; }
+.eq-bar:nth-child(3) { animation-delay: 0.3s; }
+.eq-bar:nth-child(4) { animation-delay: 0.45s; }
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));

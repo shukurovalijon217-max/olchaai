@@ -277,6 +277,18 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const [aiCaptions, setAiCaptions] = useState<string[]>([]);
   const [aiCaptionOpen, setAiCaptionOpen] = useState(false);
 
+  /* ── Hot Take state ── */
+  const [hotTake, setHotTake] = useState(false);
+
+  /* ── Time Capsule state ── */
+  const [timeCapsule, setTimeCapsule] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState("");
+
+  /* ── AI Predict state ── */
+  const [predictLoading, setPredictLoading] = useState(false);
+  const [prediction, setPrediction] = useState<{likes:number;comments:number;shares:number;reach:number;score:number}|null>(null);
+  const [predictOpen, setPredictOpen] = useState(false);
+
   const addFiles = (files: FileList) => {
     const arr = Array.from(files).slice(0, 10 - mediaQueue.length);
     if (arr.length === 0) return;
@@ -320,6 +332,23 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     } finally {
       setAiCaptionLoading(false);
     }
+  };
+
+  const generatePredict = async () => {
+    setPredictLoading(true);
+    setPredictOpen(true);
+    try {
+      const firstFile = mediaQueue[0]?.file;
+      const mediaType = firstFile ? (firstFile.type.startsWith("video") ? "video" : "photo") : "text";
+      const res = await fetch(`${API}/api/posts/ai-predict`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mood, mediaType, hasPoll: pollEnabled, hotTake, followerCount: 800 }),
+      });
+      const data = await res.json();
+      setPrediction(data);
+    } catch { setPrediction(null); } finally { setPredictLoading(false); }
   };
 
   const removeMedia = (id: string) => {
@@ -391,6 +420,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
             pollOptions: pollEnabled && pollOptions.filter(o => o.trim()).length >= 2
               ? JSON.stringify(pollOptions.filter(o => o.trim()))
               : undefined,
+            hotTake: hotTake || undefined,
+            scheduledAt: timeCapsule && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
             tags: metaTags,
           }),
         });
@@ -431,6 +462,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     setPostContent(""); setDisplayFormat("cover"); setCommentPerm("everyone"); setSharePerm("everyone");
     setMood(""); setPollEnabled(false); setPollQuestion(""); setPollOptions(["", ""]);
     setAiCaptions([]); setAiCaptionOpen(false); setPostFilterName("none");
+    setHotTake(false); setTimeCapsule(false); setScheduledAt(""); setPrediction(null); setPredictOpen(false);
     setReelFile(null); setReelPreview(""); setReelCaption(""); setReelAudio("");
     setReelAudioFile(null); setReelAudioPreview(""); setReelUploadResult(null); setReelAudioUploadResult(null);
     setReelCommentPerm("everyone"); setReelSharePerm("everyone");
@@ -842,6 +874,121 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                         </AnimatePresence>
                       </div>
 
+                      {/* ── Hot Take ── */}
+                      <div
+                        className="flex items-center gap-3 px-3.5 py-3 rounded-2xl cursor-pointer transition-all"
+                        style={{
+                          background: hotTake ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                          border: hotTake ? "1px solid rgba(249,115,22,0.5)" : "1px solid rgba(255,255,255,0.06)",
+                        }}
+                        onClick={() => setHotTake(p => !p)}
+                      >
+                        <span style={{ fontSize: 22 }}>🔥</span>
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-white/80">Hot Take — "Issiq fikr"</p>
+                          <p className="text-[10px] text-white/40 mt-0.5">Jamoat 🔥/❄️ ovoz beradi. Instagramda yoki TikTokda yo'q!</p>
+                        </div>
+                        <div className="w-9 h-5 rounded-full flex items-center transition-all"
+                          style={{
+                            background: hotTake ? "rgba(249,115,22,0.8)" : "rgba(255,255,255,0.12)",
+                            justifyContent: hotTake ? "flex-end" : "flex-start",
+                            padding: "2px",
+                          }}>
+                          <div className="w-4 h-4 rounded-full bg-white" />
+                        </div>
+                      </div>
+
+                      {/* ── Time Capsule ── */}
+                      <div className="rounded-2xl overflow-hidden"
+                        style={{
+                          background: timeCapsule ? "rgba(6,182,212,0.08)" : "rgba(255,255,255,0.04)",
+                          border: timeCapsule ? "1px solid rgba(6,182,212,0.4)" : "1px solid rgba(255,255,255,0.06)",
+                        }}>
+                        <div className="flex items-center gap-3 px-3.5 py-3 cursor-pointer"
+                          onClick={() => setTimeCapsule(p => !p)}>
+                          <span style={{ fontSize: 22 }}>⏳</span>
+                          <div className="flex-1">
+                            <p className="text-xs font-bold text-white/80">Vaqt Kapsulasi</p>
+                            <p className="text-[10px] text-white/40 mt-0.5">Post kelajakda ko'rinadi. Yangi kashfiyot!</p>
+                          </div>
+                          <div className="w-9 h-5 rounded-full flex items-center transition-all"
+                            style={{
+                              background: timeCapsule ? "rgba(6,182,212,0.8)" : "rgba(255,255,255,0.12)",
+                              justifyContent: timeCapsule ? "flex-end" : "flex-start",
+                              padding: "2px",
+                            }}>
+                            <div className="w-4 h-4 rounded-full bg-white" />
+                          </div>
+                        </div>
+                        <AnimatePresence>
+                          {timeCapsule && (
+                            <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
+                              <div className="px-3.5 pb-3 border-t border-white/5">
+                                <input
+                                  type="datetime-local"
+                                  value={scheduledAt}
+                                  onChange={e => setScheduledAt(e.target.value)}
+                                  min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                                  className="w-full mt-3 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none"
+                                  style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", colorScheme: "dark" }}
+                                />
+                                {scheduledAt && (
+                                  <p className="text-[11px] text-cyan-400 mt-1.5 font-semibold">
+                                    ⏳ {new Date(scheduledAt).toLocaleString("uz-UZ", { dateStyle:"medium", timeStyle:"short" })} da ko'rinadi
+                                  </p>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* ── AI Predict ── */}
+                      <AnimatePresence>
+                        {predictOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden rounded-2xl"
+                            style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.35)" }}
+                          >
+                            <div className="flex items-center justify-between px-3.5 py-2.5">
+                              <span className="text-xs font-bold text-indigo-300">✦ AI Bashorat</span>
+                              <button onClick={() => setPredictOpen(false)}><X className="w-3.5 h-3.5 text-white/40" /></button>
+                            </div>
+                            {predictLoading ? (
+                              <div className="flex justify-center pb-4"><Loader2 className="w-5 h-5 text-indigo-400 animate-spin" /></div>
+                            ) : prediction && (
+                              <div className="px-3.5 pb-3.5 grid grid-cols-4 gap-2">
+                                {[
+                                  { icon:"❤️", label:"Layk", val: prediction.likes >= 1000 ? `${(prediction.likes/1000).toFixed(1)}K` : prediction.likes },
+                                  { icon:"💬", label:"Izoh", val: prediction.comments },
+                                  { icon:"🔁", label:"Ulash", val: prediction.shares },
+                                  { icon:"👁", label:"Ko'rish", val: prediction.reach >= 1000 ? `${(prediction.reach/1000).toFixed(1)}K` : prediction.reach },
+                                ].map(s => (
+                                  <div key={s.label} className="flex flex-col items-center gap-0.5 py-2 rounded-xl"
+                                    style={{ background: "rgba(255,255,255,0.06)" }}>
+                                    <span className="text-base">{s.icon}</span>
+                                    <span className="text-sm font-black text-white">{s.val}</span>
+                                    <span className="text-[9px] text-white/40">{s.label}</span>
+                                  </div>
+                                ))}
+                                <div className="col-span-4 flex items-center gap-2 mt-1">
+                                  <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+                                    <div className="h-full rounded-full transition-all"
+                                      style={{ width: `${prediction.score}%`, background: prediction.score >= 80 ? "#22c55e" : prediction.score >= 60 ? "#f59e0b" : "#f87171" }} />
+                                  </div>
+                                  <span className="text-xs font-black" style={{ color: prediction.score >= 80 ? "#22c55e" : prediction.score >= 60 ? "#f59e0b" : "#f87171" }}>
+                                    {prediction.score}/100
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       {/* Permission settings */}
                       <div className="rounded-2xl p-3.5 space-y-3.5"
                         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -987,26 +1134,40 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
 
             {/* Footer */}
             {!done && (
-              <div className="px-5 pb-6 flex gap-3 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                <button onClick={handleClose}
-                  className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-colors"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
-                  Bekor
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={!canSubmit}
-                  className="flex-1 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
-                  style={{
-                    background: canSubmit ? "linear-gradient(135deg,#7c3aed,#4f46e5)" : "rgba(255,255,255,0.06)",
-                    color: canSubmit ? "white" : "rgba(255,255,255,0.25)",
-                    boxShadow: canSubmit ? "0 4px 20px rgba(124,58,237,0.35)" : "none",
-                  }}>
-                  {submitting
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Yuklanmoqda…</>
-                    : <><Upload className="w-4 h-4" /> E'lon qilish</>
-                  }
-                </button>
+              <div className="px-5 pb-6 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                {/* AI Predict quick button */}
+                {tab === "post" && (
+                  <button onClick={generatePredict} disabled={predictLoading}
+                    className="w-full flex items-center justify-center gap-2 py-2 mb-2.5 rounded-2xl text-xs font-bold transition-all"
+                    style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)", color: "#a5b4fc" }}>
+                    {predictLoading
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Tahlil qilinmoqda…</>
+                      : <><Sparkles className="w-3.5 h-3.5" /> AI Bashorat — qancha like oladi?</>}
+                  </button>
+                )}
+                <div className="flex gap-3">
+                  <button onClick={handleClose}
+                    className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-colors"
+                    style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
+                    Bekor
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!canSubmit}
+                    className="flex-1 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
+                    style={{
+                      background: canSubmit ? "linear-gradient(135deg,#7c3aed,#4f46e5)" : "rgba(255,255,255,0.06)",
+                      color: canSubmit ? "white" : "rgba(255,255,255,0.25)",
+                      boxShadow: canSubmit ? "0 4px 20px rgba(124,58,237,0.35)" : "none",
+                    }}>
+                    {submitting
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Yuklanmoqda…</>
+                      : timeCapsule && scheduledAt
+                        ? <><span>⏳</span> Kapsulani saqlash</>
+                        : <><Upload className="w-4 h-4" /> E'lon qilish</>
+                    }
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>

@@ -82,6 +82,76 @@ router.get("/posts", async (req, res) => {
   }
 });
 
+/* ── POST /posts/ai-predict — predict engagement ───────────── */
+router.post("/posts/ai-predict", async (req: any, res) => {
+  try {
+    const { mood, mediaType, hasPoll, hotTake, followerCount = 500 } = req.body as { mood?: string; mediaType?: string; hasPoll?: boolean; hotTake?: boolean; followerCount?: number };
+    const base = followerCount;
+    const videoMult = mediaType === "video" ? 3.2 : mediaType === "photo" ? 1.8 : 1.0;
+    const moodMult = mood ? 1.4 : 1.0;
+    const pollMult = hasPoll ? 1.6 : 1.0;
+    const hotMult = hotTake ? 2.1 : 1.0;
+    const rand = (lo: number, hi: number) => Math.round(lo + Math.random() * (hi - lo));
+    const likes = Math.round(base * videoMult * moodMult * pollMult * hotMult * (0.15 + Math.random() * 0.25));
+    const comments = Math.round(likes * (0.08 + Math.random() * 0.12));
+    const shares = Math.round(likes * (0.05 + Math.random() * 0.08));
+    const reach = Math.round(likes * rand(4, 12));
+    const score = Math.min(99, Math.round(50 + (videoMult - 1) * 15 + (moodMult - 1) * 12 + (pollMult - 1) * 18 + (hotMult - 1) * 22 + Math.random() * 10));
+    res.json({ likes, comments, shares, reach, score });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ likes: 0, comments: 0, shares: 0, reach: 0, score: 50 });
+  }
+});
+
+/* ── POST /posts/:id/hot-take ───────────────────────────────── */
+router.post("/posts/:id/hot-take", async (req: any, res) => {
+  try {
+    const postId = Number(req.params.id);
+    const { userId, vote } = req.body as { userId: number; vote: "fire" | "cold" };
+    if (!userId || !vote) { res.status(400).json({ error: "userId, vote required" }); return; }
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    await pool.query(
+      `INSERT INTO hot_take_votes(post_id,user_id,vote) VALUES($1,$2,$3)
+       ON CONFLICT(post_id,user_id) DO UPDATE SET vote=$3`,
+      [postId, userId, vote]
+    );
+    const { rows } = await pool.query(
+      `SELECT vote, COUNT(*) as count FROM hot_take_votes WHERE post_id=$1 GROUP BY vote`,
+      [postId]
+    );
+    const fire = Number(rows.find((r: any) => r.vote === "fire")?.count ?? 0);
+    const cold = Number(rows.find((r: any) => r.vote === "cold")?.count ?? 0);
+    await pool.end();
+    res.json({ fire, cold, userVote: vote });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── GET /posts/:id/hot-take ────────────────────────────────── */
+router.get("/posts/:id/hot-take", async (req: any, res) => {
+  try {
+    const postId = Number(req.params.id);
+    const userId = Number((req.session as any)?.userId ?? 0);
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const [{ rows }, { rows: userRow }] = await Promise.all([
+      pool.query(`SELECT vote, COUNT(*) as count FROM hot_take_votes WHERE post_id=$1 GROUP BY vote`, [postId]),
+      userId ? pool.query(`SELECT vote FROM hot_take_votes WHERE post_id=$1 AND user_id=$2`, [postId, userId]) : { rows: [] },
+    ]);
+    await pool.end();
+    const fire = Number(rows.find((r: any) => r.vote === "fire")?.count ?? 0);
+    const cold = Number(rows.find((r: any) => r.vote === "cold")?.count ?? 0);
+    res.json({ fire, cold, userVote: userRow[0]?.vote ?? null });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ fire: 0, cold: 0, userVote: null });
+  }
+});
+
 /* ── POST /posts/ai-caption — generate AI captions ─────────── */
 router.post("/posts/ai-caption", async (req: any, res) => {
   try {

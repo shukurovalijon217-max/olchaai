@@ -684,6 +684,45 @@ export default function FeedCard({ post }: FeedCardProps) {
         )}
       </motion.div>
 
+      {/* ══ LAYER 7 — CAPTION (video & photo, bottom-left) ══ */}
+      {!isText && post.content && (
+        <motion.div
+          className="absolute left-4 right-14"
+          style={{
+            bottom: commentOpen ? 220 : 72,
+            zIndex: 10,
+            transition: "bottom 0.32s cubic-bezier(0.16,1,0.3,1)",
+          }}
+          initial={{ opacity: 0, y: 14 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+          transition={{ delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <p
+            className="text-white text-[13px] font-medium leading-relaxed line-clamp-3"
+            style={{ textShadow: "0 1px 6px rgba(0,0,0,0.85)" }}
+          >
+            {post.content}
+          </p>
+          {post.tags && post.tags.filter(t => !t.startsWith("_")).length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {post.tags.filter(t => !t.startsWith("_")).slice(0, 4).map(tag => (
+                <span
+                  key={tag}
+                  className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{
+                    background: `${theme.accent}1e`,
+                    border: `1px solid ${theme.accent}44`,
+                    color: theme.labelColor,
+                  }}
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
+
       {/* ══ LAYER 8 — INLINE COMMENT PANEL (slide up from bottom) ══ */}
       <AnimatePresence>
         {commentOpen && (

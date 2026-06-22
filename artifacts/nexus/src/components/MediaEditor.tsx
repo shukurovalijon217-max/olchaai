@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2, Wand2, Mic, Scissors, Palette, Camera } from "lucide-react";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
 
 export type TextOverlay = {
   id: string; text: string; x: number; y: number;
@@ -859,6 +860,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const musicDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+  /* ── Audio server upload ── */
+  const [audioServerUrl, setAudioServerUrl] = useState("");   // real server URL after upload
+  const [audioUploading, setAudioUploading] = useState(false);
+  const { uploadFile: uploadAudioFile } = useMediaUpload({
+    onSuccess: r => { setAudioServerUrl(r.serveUrl); setAudioUploading(false); },
+    onError: () => setAudioUploading(false),
+  });
+
   /* ── Audio upload + trim state ── */
   const [musicTab, setMusicTab]           = useState<"search"|"upload"|"trim">("search");
   const [audioUploadUrl, setAudioUploadUrl] = useState("");     // blob URL of uploaded file
@@ -916,6 +925,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     setAudioUploadUrl(url);
     setAudioName(name);
     setMusicTab("trim");
+    if (!isBlobUrl) setAudioServerUrl("");  // iTunes URL: clear server url, use audioUploadUrl directly
     if (isBlobUrl && audioUploadUrl && audioUploadUrl.startsWith("blob:")) {
       URL.revokeObjectURL(audioUploadUrl);
     }
@@ -925,8 +935,11 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const handleAudioFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    loadAudioUrl(url, file.name.replace(/\.[^.]+$/, ""), true);
+    const blobUrl = URL.createObjectURL(file);
+    setAudioServerUrl("");
+    loadAudioUrl(blobUrl, file.name.replace(/\.[^.]+$/, ""), true);
+    setAudioUploading(true);
+    uploadAudioFile(new File([file], file.name, { type: file.type }));
     if (e.target) e.target.value = "";
   };
 
@@ -1231,10 +1244,16 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             <X className="w-5 h-5 text-white" />
           </button>
           <span className="text-white font-bold text-sm opacity-75">Redaktor</span>
-          <button onClick={() => onDone(items, audioName, filterName, audioUploadUrl || undefined)}
+          <button
+            onClick={() => {
+              const resolvedAudioUrl = audioServerUrl
+                || (audioUploadUrl && !audioUploadUrl.startsWith("blob:") ? audioUploadUrl : undefined);
+              onDone(items, audioName, filterName, resolvedAudioUrl);
+            }}
+            disabled={audioUploading}
             className="px-4 py-1.5 rounded-full text-sm font-bold text-white"
-            style={{ background:"linear-gradient(135deg,#7c3aed,#4f46e5)" }}>
-            Tayyor
+            style={{ background: audioUploading ? "rgba(124,58,237,0.4)" : "linear-gradient(135deg,#7c3aed,#4f46e5)", opacity: audioUploading ? 0.7 : 1 }}>
+            {audioUploading ? "Yuklanmoqda…" : "Tayyor"}
           </button>
         </div>
 
@@ -2286,6 +2305,19 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                   </div>
                 ) : (
                   <>
+                    {/* Upload progress indicator */}
+                    {audioUploading && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background:"rgba(6,182,212,0.12)", border:"1px solid rgba(6,182,212,0.3)" }}>
+                        <div className="w-3 h-3 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin flex-shrink-0" />
+                        <span className="text-[11px] font-bold text-cyan-300">Audio yuklanmoqda… iltimos kuting</span>
+                      </div>
+                    )}
+                    {!audioUploading && audioServerUrl && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background:"rgba(16,185,129,0.12)", border:"1px solid rgba(16,185,129,0.3)" }}>
+                        <span className="text-green-400 text-sm">✓</span>
+                        <span className="text-[11px] font-bold text-green-300">Audio yuklandi — endi o'ynaydi!</span>
+                      </div>
+                    )}
                     {/* Track info + transport */}
                     <div className="flex items-center gap-3 px-1">
                       <div className="flex-1 min-w-0">

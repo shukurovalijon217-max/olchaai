@@ -42,6 +42,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import CreateContentModal from "@/components/CreateContentModal";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -1100,13 +1101,23 @@ export default function ReelsPage() {
     }
   },[feed.length]);
 
+  const [, navigate] = useLocation();
   const touchY=useRef(0);
-  const handleTouchStart=useCallback((e:React.TouchEvent)=>{ touchY.current=e.touches[0].clientY; },[]);
+  const touchX=useRef(0);
+  const handleTouchStart=useCallback((e:React.TouchEvent)=>{
+    touchY.current=e.touches[0].clientY;
+    touchX.current=e.touches[0].clientX;
+  },[]);
   const handleTouchEnd  =useCallback((e:React.TouchEvent)=>{
     const dy=touchY.current-e.changedTouches[0].clientY;
-    if(dy>50)  setCurrent(c=>Math.min(feed.length-1,c+1));
-    if(dy<-50) setCurrent(c=>Math.max(0,c-1));
-  },[feed.length]);
+    const dx=touchX.current-e.changedTouches[0].clientX;
+    if(Math.abs(dx)>Math.abs(dy)){
+      if(dx<-70) navigate("/");
+    } else {
+      if(dy>50)  setCurrent(c=>Math.min(feed.length-1,c+1));
+      if(dy<-50) setCurrent(c=>Math.max(0,c-1));
+    }
+  },[feed.length, navigate]);
 
   const y=useMotionValue(0);
   const dragOpacity=useTransform(y,[-80,0,80],[0.45,1,0.45]);

@@ -318,6 +318,152 @@ function SpeedGlass({ speed, side }: { speed: number; side: "left"|"right" }) {
   );
 }
 
+/* ─── Bottom Command Bar ─────────────────────────────────────── *
+ *  One pill at the bottom: [Avatar+Name] | [❤️][💬][↑][🧠] | [👁][🔊]
+ *  No other social platform has this unified horizontal layout.
+ * ────────────────────────────────────────────────────────────── */
+function BottomBar({
+  reel, isLiked, likesCount, commentsCount, onLike, onComment,
+  onShare, onAI, onMute, muted, analyzingId, neonColor, cinemaMode,
+}: {
+  reel: FeedItem; isLiked: boolean; likesCount: number; commentsCount: number;
+  onLike:()=>void; onComment:()=>void; onShare:()=>void; onAI:()=>void;
+  onMute:()=>void; muted:boolean; analyzingId:number|null;
+  neonColor:string; cinemaMode:boolean;
+}) {
+  const [shareOk, setShareOk] = useState(false);
+  const handleShare = async () => {
+    try {
+      if (navigator.share) await navigator.share({ title:"OlCha Reel", url:`${window.location.origin}/reels` });
+      else await navigator.clipboard.writeText(`${window.location.origin}/reels`);
+    } catch { /* silent */ }
+    setShareOk(true); onShare();
+    setTimeout(() => setShareOk(false), 1600);
+  };
+
+  const sep = <div style={{ width:1, height:22, background:"rgba(255,255,255,0.09)", flexShrink:0, margin:"0 2px" }}/>;
+
+  return (
+    <motion.div
+      animate={{ opacity: cinemaMode ? 0 : 1, y: cinemaMode ? 14 : 0 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      className="absolute bottom-3 left-2 right-2 z-30"
+      onPointerDown={e => e.stopPropagation()}
+      onPointerUp={e => e.stopPropagation()}
+    >
+      <div className="flex items-center gap-1 pl-1.5 pr-1 py-[5px] rounded-[22px]" style={{
+        background: "rgba(5,3,16,0.80)",
+        backdropFilter: "blur(32px) saturate(2)",
+        WebkitBackdropFilter: "blur(32px) saturate(2)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: `0 -2px 28px rgba(0,0,0,0.55), 0 8px 36px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.07), 0 0 0 1px ${neonColor}0d`,
+      }}>
+
+        {/* ── Author ── */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <div className="relative flex-shrink-0" style={{ width:34, height:34 }}>
+            <motion.div className="absolute inset-[-2px] rounded-full"
+              style={{ background:`conic-gradient(from 0deg,${neonColor}dd,#3b82f677,#06b6d455,${neonColor}dd)` }}
+              animate={{ rotate:360 }} transition={{ duration:5, repeat:Infinity, ease:"linear" }}/>
+            <div className="absolute inset-[2.5px] rounded-full overflow-hidden z-10 flex items-center justify-center"
+              style={{ background:"linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
+              {reel.author?.avatarUrl
+                ? <img src={reel.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
+                : <span className="text-[10px] font-black text-white select-none">{initials(reel.author?.displayName)}</span>
+              }
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-0.5">
+              <span className="text-white font-black text-[11px] truncate max-w-[66px] leading-tight">
+                {reel.author?.displayName}
+              </span>
+              {reel.author?.isVerified && <BadgeCheck className="w-2.5 h-2.5 flex-shrink-0 text-violet-300"/>}
+            </div>
+            {reel._aiSuggested
+              ? <div className="flex items-center gap-0.5">
+                  <Zap className="w-[9px] h-[9px] text-violet-400"/>
+                  <span className="text-[8px] font-bold text-violet-400 leading-none">AI</span>
+                </div>
+              : <span className="text-[8.5px] text-white/30 leading-none">@{reel.author?.username}</span>
+            }
+          </div>
+        </div>
+
+        {sep}
+
+        {/* ── Like ── */}
+        <motion.button whileTap={{ scale:0.72 }} onClick={onLike}
+          className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0"
+          style={{ width:37, height:38, borderRadius:"50%", cursor:"pointer",
+            background: isLiked ? "rgba(239,68,68,0.22)" : "transparent",
+            border: isLiked ? "1px solid rgba(239,68,68,0.42)" : "1px solid transparent" }}>
+          <Heart style={{ width:14, height:14,
+            color: isLiked ? "#f87171" : "rgba(255,255,255,0.65)",
+            fill: isLiked ? "#f87171" : "none", transition:"all 0.15s" }}/>
+          <span style={{ fontSize:8.5, color: isLiked ? "#fca5a5" : "rgba(255,255,255,0.42)",
+            fontWeight:800, lineHeight:1 }}>{fmt(likesCount)}</span>
+        </motion.button>
+
+        {/* ── Comment ── */}
+        <motion.button whileTap={{ scale:0.72 }} onClick={onComment}
+          className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0"
+          style={{ width:37, height:38, borderRadius:"50%", cursor:"pointer" }}>
+          <MessageCircle style={{ width:14, height:14, color:"rgba(255,255,255,0.65)" }}/>
+          <span style={{ fontSize:8.5, color:"rgba(255,255,255,0.42)", fontWeight:800, lineHeight:1 }}>
+            {fmt(commentsCount)}
+          </span>
+        </motion.button>
+
+        {/* ── Share ── */}
+        <motion.button whileTap={{ scale:0.72 }} onClick={handleShare}
+          className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0"
+          style={{ width:37, height:38, borderRadius:"50%", cursor:"pointer",
+            background: shareOk ? "rgba(16,185,129,0.22)" : "transparent",
+            border: shareOk ? "1px solid rgba(16,185,129,0.38)" : "1px solid transparent" }}>
+          {shareOk
+            ? <Check style={{ width:14, height:14, color:"#6ee7b7" }}/>
+            : <Share2 style={{ width:14, height:14, color:"rgba(255,255,255,0.65)" }}/>
+          }
+        </motion.button>
+
+        {/* ── AI ── */}
+        <motion.button whileTap={{ scale:0.72 }} onClick={onAI}
+          className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0"
+          style={{ width:37, height:38, borderRadius:"50%", cursor:"pointer" }}>
+          {analyzingId === reel.id
+            ? <Loader2 style={{ width:14, height:14, color:"#c4b5fd" }} className="animate-spin"/>
+            : <Brain style={{ width:14, height:14, color:"rgba(167,139,250,0.8)" }}/>
+          }
+        </motion.button>
+
+        {sep}
+
+        {/* ── Views ── */}
+        <div className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0 pointer-events-none"
+          style={{ width:33 }}>
+          <Eye style={{ width:12, height:12, color:"rgba(255,255,255,0.35)" }}/>
+          <span style={{ fontSize:8, color:"rgba(255,255,255,0.35)", fontWeight:700, lineHeight:1 }}>
+            {fmt(reel.viewsCount??0)}
+          </span>
+        </div>
+
+        {/* ── Volume ── */}
+        <motion.button whileTap={{ scale:0.72 }} onClick={onMute}
+          className="flex items-center justify-center flex-shrink-0"
+          style={{ width:32, height:32, borderRadius:"50%", cursor:"pointer",
+            background: muted ? "rgba(255,255,255,0.05)" : `${neonColor}1a`,
+            border: muted ? "1px solid rgba(255,255,255,0.07)" : `1px solid ${neonColor}33` }}>
+          {muted
+            ? <VolumeX style={{ width:13, height:13, color:"rgba(255,255,255,0.32)" }}/>
+            : <Volume2 style={{ width:13, height:13, color:"rgba(255,255,255,0.75)" }}/>
+          }
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
 /* ─── Comments sheet ─────────────────────────────────────────── */
 function CommentsSheet({ reelId, commentsCount, onClose, user }: {
   reelId: number; commentsCount: number; onClose: () => void;
@@ -730,40 +876,19 @@ function ReelSlide({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const progress = useVideoProgress(videoRef);
-  const [paused,   setPaused]   = useState(false);
-  const [hubOpen,  setHubOpen]  = useState(false);
-  const [particles, setParticles] = useState<{x:number;y:number;id:number}[]>([]);
-  const [ripples,   setRipples]   = useState<{x:number;y:number;id:number}[]>([]);
-  const [lastTap,   setLastTap]   = useState(0);
-
-  /* Hold-to-speed */
-  const [holdSpeed, setHoldSpeed] = useState<number|null>(null);
-  const [holdSide,  setHoldSide]  = useState<"left"|"right"|null>(null);
-  const holdTimer = useRef<ReturnType<typeof setInterval>|null>(null);
+  const [paused,      setPaused]      = useState(false);
+  const [cinemaMode,  setCinemaMode]  = useState(false);
+  const [particles,   setParticles]   = useState<{x:number;y:number;id:number}[]>([]);
+  const [ripples,     setRipples]     = useState<{x:number;y:number;id:number}[]>([]);
+  const [lastTap,     setLastTap]     = useState(0);
   const holdStart = useRef(0);
-  const isHold    = useRef(false);
-  const speedIdx  = useRef(0);
-  const SPEED_R   = [1, 1.25, 1.5, 2];
-  const SPEED_L   = [1, 0.75, 0.5, 0.25];
+  const holdTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
 
-  const startHold = useCallback((side:"left"|"right") => {
-    isHold.current=true; speedIdx.current=0; setHoldSide(side); setHoldSpeed(1);
-    holdTimer.current = setInterval(() => {
-      speedIdx.current = Math.min(speedIdx.current+1, 3);
-      const sp = side==="right" ? SPEED_R[speedIdx.current] : SPEED_L[speedIdx.current];
-      setHoldSpeed(sp);
-      if (videoRef.current) videoRef.current.playbackRate = sp;
-    }, 600);
-  }, []); // eslint-disable-line
+  /* Hold → Cinema mode: all UI fades, pure video + letterbox */
+  const startHold = useCallback(() => { setCinemaMode(true); }, []);
+  const stopHold  = useCallback(() => { setCinemaMode(false); }, []);
 
-  const stopHold = useCallback(() => {
-    if (holdTimer.current) { clearInterval(holdTimer.current); holdTimer.current=null; }
-    isHold.current=false; speedIdx.current=0;
-    setHoldSpeed(null); setHoldSide(null);
-    if (videoRef.current) videoRef.current.playbackRate=1;
-  }, []);
-
-  useEffect(()=>()=>{ if(holdTimer.current) clearInterval(holdTimer.current); },[]);
+  useEffect(() => () => { if (holdTimer.current) clearTimeout(holdTimer.current); }, []);
 
   const neonColor = analysis?.sentiment==="positive" ? "#10b981"
     : analysis?.sentiment==="negative" ? "#ef4444"
@@ -778,10 +903,8 @@ function ReelSlide({
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     holdStart.current = Date.now();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const side = e.clientX-rect.left < rect.width/2 ? "left" : "right";
-    const el   = e.currentTarget as TapDiv;
-    el._holdTimer = setTimeout(() => { if (!isHold.current) startHold(side); }, 200);
+    const el = e.currentTarget as TapDiv;
+    el._holdTimer = setTimeout(() => startHold(), 220);
   }, [startHold]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -789,12 +912,11 @@ function ReelSlide({
     if (el._holdTimer) { clearTimeout(el._holdTimer); el._holdTimer=undefined; }
     const held = Date.now()-holdStart.current;
     stopHold();
-    if (held < 200) {
+    if (held < 220) {
       const now  = Date.now();
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX-rect.left, y = e.clientY-rect.top;
       if (now-lastTap < 280) {
-        /* Double tap: ripple wave + particles + like */
         if (!isLiked) onLike();
         setRipples(r=>[...r,{x,y,id:now}]);
         setParticles(p=>[...p,{x,y,id:now+1}]);
@@ -802,10 +924,9 @@ function ReelSlide({
         const v = videoRef.current;
         if (v) { if(v.paused){v.play().catch(()=>{});setPaused(false);}else{v.pause();setPaused(true);} }
       }
-      if (hubOpen) setHubOpen(false);
       setLastTap(now);
     }
-  }, [stopHold, lastTap, isLiked, onLike, hubOpen]);
+  }, [stopHold, lastTap, isLiked, onLike]);
 
   return (
     <div className="relative w-full h-full">
@@ -873,22 +994,49 @@ function ReelSlide({
             boxShadow:`0 0 7px ${neonColor}bb`, transition:"width 0.1s linear"}}/>
         </div>
 
-        {/* Speed indicator */}
+        {/* ══ CINEMA MODE: letterbox + SIGNAL pulse ══ */}
         <AnimatePresence>
-          {holdSpeed!==null && holdSide && <SpeedGlass speed={holdSpeed} side={holdSide}/>}
+          {cinemaMode && (
+            <>
+              {/* top bar */}
+              <motion.div key="lb-top"
+                initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+                transition={{duration:0.14}}
+                className="absolute top-0 left-0 right-0 z-[35] pointer-events-none"
+                style={{height:52, background:"linear-gradient(to bottom,rgba(0,0,0,0.9) 30%,transparent)"}}/>
+              {/* bottom bar */}
+              <motion.div key="lb-bot"
+                initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+                transition={{duration:0.14}}
+                className="absolute bottom-0 left-0 right-0 z-[35] pointer-events-none"
+                style={{height:52, background:"linear-gradient(to top,rgba(0,0,0,0.9) 30%,transparent)"}}/>
+              {/* SIGNAL dot */}
+              <motion.div key="signal"
+                initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+                className="absolute top-3 left-1/2 -translate-x-1/2 z-[36] flex items-center gap-1.5 pointer-events-none">
+                <motion.div
+                  animate={{scale:[1,1.6,1], opacity:[1,0.35,1]}}
+                  transition={{duration:1.3, repeat:Infinity, ease:"easeInOut"}}
+                  style={{width:7,height:7,borderRadius:"50%",background:"#a855f7",
+                    boxShadow:"0 0 12px #a855f7,0 0 24px #a855f755"}}/>
+                <span style={{fontSize:8.5,fontWeight:900,letterSpacing:"0.24em",
+                  color:"rgba(255,255,255,0.32)",textTransform:"uppercase"}}>SIGNAL</span>
+              </motion.div>
+            </>
+          )}
         </AnimatePresence>
 
         {/* Pause icon */}
         <AnimatePresence>
-          {paused && (
+          {paused && !cinemaMode && (
             <motion.div initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}}
               exit={{opacity:0,scale:1.4}} transition={{duration:0.15}}
               className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-              <div style={{width:64, height:64, borderRadius:"50%",
-                background:"rgba(0,0,0,0.52)", backdropFilter:"blur(12px)",
+              <div style={{width:64,height:64,borderRadius:"50%",
+                background:"rgba(0,0,0,0.52)",backdropFilter:"blur(12px)",
                 border:"1.5px solid rgba(255,255,255,0.18)",
                 boxShadow:`0 0 28px ${neonColor}44`,
-                display:"flex", alignItems:"center", justifyContent:"center"}}>
+                display:"flex",alignItems:"center",justifyContent:"center"}}>
                 <svg className="fill-white" width="24" height="24" viewBox="0 0 24 24">
                   <rect x="6" y="4" width="4" height="16" rx="1.5"/>
                   <rect x="14" y="4" width="4" height="16" rx="1.5"/>
@@ -898,70 +1046,26 @@ function ReelSlide({
           )}
         </AnimatePresence>
 
-        {/* ══ TOP-LEFT: Holographic author chip ══ */}
-        <div className="absolute top-4 left-4 z-30 pointer-events-auto"
-          onPointerDown={e=>e.stopPropagation()} onPointerUp={e=>e.stopPropagation()}>
-          <motion.div initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}}
-            transition={{delay:0.06, type:"spring", damping:18}}
-            className="flex items-center gap-2">
-
-            {/* Spinning conic ring + initials */}
-            <div className="relative flex-shrink-0" style={{width:36,height:36}}>
-              {/* Spinning ring */}
-              <motion.div className="absolute inset-[-2px] rounded-full"
-                style={{background:`conic-gradient(from 0deg, ${neonColor}, #3b82f6, #06b6d4, ${neonColor})`}}
-                animate={{rotate:360}} transition={{duration:4,repeat:Infinity,ease:"linear"}}/>
-              {/* Avatar / initials */}
-              <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
-                style={{background:"linear-gradient(135deg,#1a0838,#0d1a3a)"}}>
-                {reel.author?.avatarUrl
-                  ? <img src={reel.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
-                  : <span className="text-[11px] font-black text-white select-none">
-                      {initials(reel.author?.displayName)}
-                    </span>}
-              </div>
-            </div>
-
-            {/* Name + handle */}
-            <div className="min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="text-white font-black text-[12px] leading-tight drop-shadow-lg truncate max-w-[88px]">
-                  {reel.author?.displayName}
-                </span>
-                {reel.author?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0 text-violet-300"/>}
-              </div>
-              <span className="text-white/38 text-[9px] leading-none">@{reel.author?.username}</span>
-              {reel._aiSuggested && (
-                <div className="flex items-center gap-0.5 mt-0.5">
-                  <Zap className="w-2 h-2 text-violet-300"/>
-                  <span className="text-[8px] font-bold text-violet-300">AI</span>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* ══ TOP-RIGHT: SINGULARITY ActionHub ══ */}
-        <ActionHub
-          open={hubOpen} onToggle={()=>setHubOpen(v=>!v)}
-          isLiked={isLiked} likesCount={(reel.likesCount??0)+(isLiked?1:0)}
-          commentsCount={reel.commentsCount??0}
-          onLike={onLike} onComment={onComment} onShare={onShare}
-          onAI={onAnalyze}
-          analyzingId={analyzingId} reelId={reel.id} neonColor={neonColor}
-        />
-
-        {/* ══ BOTTOM: Caption (typewriter) + tags ══ */}
-        <div className="absolute bottom-[46px] left-4 right-[60px] z-30 pointer-events-none">
+        {/* ══ CAPTION + TAGS (above bottom bar, fades in cinema mode) ══ */}
+        <motion.div
+          animate={{ opacity: cinemaMode ? 0 : 1, y: cinemaMode ? 6 : 0 }}
+          transition={{ duration: 0.18 }}
+          className="absolute bottom-[72px] left-4 right-4 z-30 pointer-events-none">
           {caption && (
             <p className="text-white text-[12px] leading-snug mb-2 font-semibold"
               style={{textShadow:"0 1px 14px rgba(0,0,0,1)"}}>
               {typed}
-              {/* blinking cursor while typing */}
               {typed.length < captionShort.length && (
                 <motion.span animate={{opacity:[1,0,1]}} transition={{duration:0.6,repeat:Infinity}}>|</motion.span>
               )}
             </p>
+          )}
+          {/* Audio chip */}
+          {reel.audioTrack && (
+            <div className="pointer-events-auto mb-1.5"
+              onPointerDown={e=>e.stopPropagation()} onPointerUp={e=>e.stopPropagation()}>
+              <AudioChip track={reel.audioTrack} color={neonColor}/>
+            </div>
           )}
           <div className="flex items-center gap-1.5 flex-wrap">
             {reel.tags?.slice(0,3).map(tag=>(
@@ -974,39 +1078,18 @@ function ReelSlide({
               </motion.span>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        {/* ══ BOTTOM-LEFT: Volume + Views + Audio chip ══ */}
-        <div className="absolute bottom-4 left-4 z-30 flex flex-col items-start gap-2"
-          onPointerDown={e=>e.stopPropagation()} onPointerUp={e=>e.stopPropagation()}>
-
-          {/* Audio chip — lentadagi kabi (only when track exists) */}
-          {reel.audioTrack && <AudioChip track={reel.audioTrack} color={neonColor}/>}
-
-          {/* Row: volume + views */}
-          <div className="flex items-center gap-2">
-            {/* Volume */}
-            <motion.button whileTap={{scale:0.72}} onClick={onMute} style={{...volCircle}}>
-              {muted
-                ? <VolumeX className="w-3 h-3 text-white/42"/>
-                : <Volume2 className="w-3 h-3 text-white/68"/>}
-            </motion.button>
-
-            {/* Views */}
-            <div className="flex items-center gap-1 px-2 py-[5px] rounded-full pointer-events-none"
-              style={{background:"rgba(8,6,22,0.42)", backdropFilter:"blur(18px)",
-                border:"1px solid rgba(255,255,255,0.09)",
-                boxShadow:"0 2px 12px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.05)"}}>
-              <Eye className="w-3 h-3 text-white/45"/>
-              <motion.span
-                animate={{opacity:[0.5,1,0.5]}} transition={{duration:2.8,repeat:Infinity,ease:"easeInOut"}}
-                className="text-[10px] font-bold tabular-nums"
-                style={{color:"rgba(255,255,255,0.6)"}}>
-                {fmt(reel.viewsCount??0)}
-              </motion.span>
-            </div>
-          </div>
-        </div>
+        {/* ══ NEW: Bottom Command Bar ══ */}
+        <BottomBar
+          reel={reel}
+          isLiked={isLiked} likesCount={(reel.likesCount??0)+(isLiked?1:0)}
+          commentsCount={reel.commentsCount??0}
+          onLike={onLike} onComment={onComment} onShare={()=>{}}
+          onAI={onAnalyze}
+          onMute={onMute} muted={muted}
+          analyzingId={analyzingId} neonColor={neonColor} cinemaMode={cinemaMode}
+        />
 
         {/* AI analysis badge */}
         <AnimatePresence>

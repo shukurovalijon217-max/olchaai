@@ -23,7 +23,7 @@ interface Props {
   files: File[];
   initialOverlays?: TextOverlay[];
   initialAudioName?: string;
-  onDone: (overlays: TextOverlay[], audioName: string, filterName: string) => void;
+  onDone: (overlays: TextOverlay[], audioName: string, filterName: string, audioUrl?: string) => void;
   onClose: () => void;
 }
 
@@ -1231,7 +1231,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             <X className="w-5 h-5 text-white" />
           </button>
           <span className="text-white font-bold text-sm opacity-75">Redaktor</span>
-          <button onClick={() => onDone(items, audioName, filterName)}
+          <button onClick={() => onDone(items, audioName, filterName, audioUploadUrl || undefined)}
             className="px-4 py-1.5 rounded-full text-sm font-bold text-white"
             style={{ background:"linear-gradient(135deg,#7c3aed,#4f46e5)" }}>
             Tayyor

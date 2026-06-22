@@ -326,6 +326,7 @@ export default function FeedCard({ post }: FeedCardProps) {
   const cardRef    = useRef<HTMLDivElement>(null);
   const videoRef   = useRef<HTMLVideoElement>(null);
   const commentRef = useRef<HTMLTextAreaElement>(null);
+  const audioRef   = useRef<HTMLAudioElement | null>(null);
   const isInView   = useInView(cardRef, { amount: 0.55 });
 
   const likePost = useLikePost();
@@ -341,6 +342,26 @@ export default function FeedCard({ post }: FeedCardProps) {
     if (isInView) v.play().catch(() => {});
     else { v.pause(); v.currentTime = 0; }
   }, [isInView]);
+
+  /* auto-play background music for image posts */
+  useEffect(() => {
+    const audioUrl = (post as any).audioUrl as string | undefined;
+    if (!audioUrl || !isPhoto) return;
+    if (!audioRef.current) {
+      const a = new Audio(audioUrl);
+      a.loop = true;
+      a.volume = 0.55;
+      audioRef.current = a;
+    }
+    if (isInView) {
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+    return () => {
+      audioRef.current?.pause();
+    };
+  }, [isInView, isPhoto, (post as any).audioUrl]);
 
   /* close panel on scroll */
   useEffect(() => {

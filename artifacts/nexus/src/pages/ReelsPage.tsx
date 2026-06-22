@@ -541,15 +541,16 @@ function ActionHub({
       <motion.button
         whileTap={{ scale:0.65 }}
         onClick={handleOpen}
-        animate={{
-          background: open ? "rgba(124,58,237,0.65)" : "rgba(8,6,22,0.52)",
-          border:     open ? "1px solid rgba(167,139,250,0.58)" : "1px solid rgba(255,255,255,0.16)",
-          boxShadow:  open
-            ? "0 0 30px rgba(124,58,237,0.6), 0 4px 22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.16)"
-            : "0 4px 22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.1)",
-        }}
-        transition={{ duration:0.2 }}
-        style={{ ...hubBase, position:"relative", zIndex:10 }}>
+        style={{
+          ...hubBase, position:"relative", zIndex:10,
+          background: "rgba(255,255,255,0.10)",
+          border: "1.5px solid rgba(255,255,255,0.22)",
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+          boxShadow: open
+            ? "0 0 22px rgba(167,139,250,0.35), 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.14)"
+            : "0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.10)",
+        }}>
 
         {/* Rotating + → × */}
         <motion.div

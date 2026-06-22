@@ -1,13 +1,15 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, Plus, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
 import { useListPosts, useGetAiFeed } from "@workspace/api-client-react";
 import FeedCard from "@/components/FeedCard";
 import CreateContentModal from "@/components/CreateContentModal";
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const [, navigate] = useLocation();
   const { data: feed } = useGetAiFeed();
   const { data: posts = [], isLoading } = useListPosts();
   const [createOpen, setCreateOpen] = useState(false);
@@ -21,13 +23,31 @@ export default function HomePage() {
     feedRef.current.scrollBy({ top: h, behavior: "smooth" });
   };
 
+  /* ── Horizontal swipe → Reels ── */
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(dx) > Math.abs(dy) && dx < -70) {
+      navigate("/reels");
+    }
+  }, [navigate]);
+
   return (
-    /* Negative margins to break out of Layout padding and fill the content column */
     <div className="-mx-8 -mt-0 relative">
 
       {/* ── SNAP SCROLL FEED ── */}
       <div
         ref={feedRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         style={{
           height: "100dvh",
           overflowY: "scroll",
@@ -37,7 +57,6 @@ export default function HomePage() {
         className="relative"
       >
         {isLoading ? (
-          /* Skeleton */
           <div
             className="flex items-center justify-center"
             style={{ height: "100dvh", background: "#06060f" }}
@@ -52,7 +71,6 @@ export default function HomePage() {
             </div>
           </div>
         ) : displayPosts.length === 0 ? (
-          /* Empty state */
           <div
             className="flex flex-col items-center justify-center gap-6"
             style={{ height: "100dvh", background: "#06060f" }}
@@ -81,29 +99,28 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* ── FLOATING CREATE BUTTON (bottom-center) ── */}
+      {/* ── FLOATING CREATE BUTTON — plain glass circle ── */}
       <AnimatePresence>
         {!createOpen && displayPosts.length > 0 && (
           <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            whileHover={{ scale: 1.07 }}
-            whileTap={{ scale: 0.93 }}
+            initial={{ opacity: 0, y: 16, scale: 0.85 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.85 }}
+            whileTap={{ scale: 0.88 }}
             onClick={() => setCreateOpen(true)}
-            className="fixed z-50 flex items-center gap-2 px-4 py-2.5 rounded-2xl text-white text-xs font-bold shadow-2xl"
+            className="fixed z-50 w-[52px] h-[52px] rounded-full flex items-center justify-center"
             style={{
               bottom: 28,
               left: "50%",
               transform: "translateX(-50%)",
-              background: "linear-gradient(135deg, rgba(124,58,237,0.95), rgba(79,70,229,0.95))",
-              border: "1px solid rgba(167,139,250,0.4)",
-              boxShadow: "0 8px 32px rgba(124,58,237,0.45)",
-              backdropFilter: "blur(12px)",
+              background: "rgba(255,255,255,0.10)",
+              border: "1.5px solid rgba(255,255,255,0.22)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12)",
             }}
           >
-            <Plus className="w-3.5 h-3.5" />
-            {t("home.create_post")}
+            <Plus className="w-5 h-5 text-white/80" />
           </motion.button>
         )}
       </AnimatePresence>

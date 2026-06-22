@@ -350,9 +350,10 @@ export default function FeedCard({ post }: FeedCardProps) {
     if (!audioRef.current) {
       const a = new Audio(audioUrl);
       a.loop = true;
-      a.volume = 0.55;
+      a.volume = 0.65;
       audioRef.current = a;
     }
+    audioRef.current.muted = muted;
     if (isInView) {
       audioRef.current.play().catch(() => {});
     } else {
@@ -361,7 +362,7 @@ export default function FeedCard({ post }: FeedCardProps) {
     return () => {
       audioRef.current?.pause();
     };
-  }, [isInView, isPhoto, (post as any).audioUrl]);
+  }, [isInView, isPhoto, muted, (post as any).audioUrl]);
 
   /* close panel on scroll */
   useEffect(() => {
@@ -1008,22 +1009,25 @@ export default function FeedCard({ post }: FeedCardProps) {
         animate={isInView ? { opacity: 1 } : { opacity: 0 }}
         transition={{ delay: 0.38 }}
       >
-        {/* Volume toggle (video only) */}
-        {isVideo && (
+        {/* Volume toggle — video always, photo only when audioUrl present */}
+        {(isVideo || (isPhoto && !!(post as any).audioUrl)) && (
           <motion.button
-            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+            className="flex items-center justify-center flex-shrink-0"
             style={{
+              width: isPhoto ? 30 : 36,
+              height: isPhoto ? 30 : 36,
+              borderRadius: "50%",
               background: "rgba(0,0,0,0.42)",
               backdropFilter: "blur(10px)",
               border: `1px solid ${theme.accent}44`,
-              boxShadow: `0 0 10px ${theme.glow}`,
+              boxShadow: `0 0 8px ${theme.glow}`,
             }}
             onClick={() => setMuted(m => !m)}
             whileTap={{ scale: 0.88 }}
           >
             {muted
-              ? <VolumeX className="w-4 h-4 text-white" />
-              : <Volume2 className="w-4 h-4" style={{ color: theme.accent }} />
+              ? <VolumeX style={{ width: isPhoto ? 13 : 16, height: isPhoto ? 13 : 16, color: "rgba(255,255,255,0.7)" }} />
+              : <Volume2 style={{ width: isPhoto ? 13 : 16, height: isPhoto ? 13 : 16, color: theme.accent }} />
             }
           </motion.button>
         )}

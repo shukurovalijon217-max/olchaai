@@ -1009,26 +1009,89 @@ export default function FeedCard({ post }: FeedCardProps) {
         animate={isInView ? { opacity: 1 } : { opacity: 0 }}
         transition={{ delay: 0.38 }}
       >
-        {/* Volume toggle — video always, photo only when audioUrl present */}
-        {(isVideo || (isPhoto && !!(post as any).audioUrl)) && (
+        {/* Volume toggle — video: plain glass circle */}
+        {isVideo && (
           <motion.button
-            className="flex items-center justify-center flex-shrink-0"
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
             style={{
-              width: isPhoto ? 30 : 36,
-              height: isPhoto ? 30 : 36,
-              borderRadius: "50%",
               background: "rgba(0,0,0,0.42)",
               backdropFilter: "blur(10px)",
               border: `1px solid ${theme.accent}44`,
-              boxShadow: `0 0 8px ${theme.glow}`,
+              boxShadow: `0 0 10px ${theme.glow}`,
             }}
             onClick={() => setMuted(m => !m)}
             whileTap={{ scale: 0.88 }}
           >
             {muted
-              ? <VolumeX style={{ width: isPhoto ? 13 : 16, height: isPhoto ? 13 : 16, color: "rgba(255,255,255,0.7)" }} />
-              : <Volume2 style={{ width: isPhoto ? 13 : 16, height: isPhoto ? 13 : 16, color: theme.accent }} />
+              ? <VolumeX className="w-4 h-4 text-white" />
+              : <Volume2 className="w-4 h-4" style={{ color: theme.accent }} />
             }
+          </motion.button>
+        )}
+
+        {/* Audio chip — photo only, completely different from video button */}
+        {isPhoto && !!(post as any).audioUrl && (
+          <motion.button
+            onClick={() => setMuted(m => !m)}
+            whileTap={{ scale: 0.93 }}
+            animate={!muted ? { boxShadow: ["0 0 6px #a855f799", "0 0 14px #a855f7cc", "0 0 6px #a855f799"] } : {}}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            className="flex items-center gap-1.5 flex-shrink-0"
+            style={{
+              padding: "4px 8px 4px 5px",
+              borderRadius: 20,
+              background: muted
+                ? "rgba(0,0,0,0.45)"
+                : "linear-gradient(135deg,rgba(168,85,247,0.55),rgba(236,72,153,0.45))",
+              backdropFilter: "blur(12px)",
+              border: muted
+                ? "1px solid rgba(255,255,255,0.15)"
+                : "1px solid rgba(168,85,247,0.55)",
+            }}
+          >
+            {/* Vinyl disc or mute icon */}
+            {muted ? (
+              <VolumeX style={{ width: 11, height: 11, color: "rgba(255,255,255,0.55)", flexShrink: 0 }} />
+            ) : (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                style={{
+                  width: 14, height: 14, borderRadius: "50%", flexShrink: 0,
+                  background: "conic-gradient(#1a1a1a 0deg 90deg,#333 90deg 180deg,#1a1a1a 180deg 270deg,#222 270deg 360deg)",
+                  border: "1.5px solid rgba(168,85,247,0.7)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#a855f7" }} />
+              </motion.div>
+            )}
+
+            {/* EQ bars — only when playing */}
+            {!muted && (
+              <div className="flex items-end gap-[2px]" style={{ height: 12 }}>
+                {[0, 0.2, 0.4].map((delay, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ scaleY: [0.3, 1, 0.3] }}
+                    transition={{ duration: 0.7, repeat: Infinity, delay, ease: "easeInOut" }}
+                    style={{
+                      width: 2, borderRadius: 2,
+                      background: "linear-gradient(180deg,#f0abfc,#a855f7)",
+                      height: 10, transformOrigin: "bottom",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Label */}
+            <span style={{
+              fontSize: 9, fontWeight: 800, letterSpacing: "0.03em",
+              color: muted ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.9)",
+            }}>
+              {muted ? "OFF" : "ON"}
+            </span>
           </motion.button>
         )}
 

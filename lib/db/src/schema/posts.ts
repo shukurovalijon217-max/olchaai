@@ -12,6 +12,7 @@ export const postsTable = pgTable("posts", {
   mediaUrls: text("media_urls").array(),
   overlays: text("overlays"),
   audioName: text("audio_name"),
+  audioUrl: text("audio_url"),
   pollQuestion: text("poll_question"),
   pollOptions: text("poll_options"),
   mood: text("mood"),

@@ -34,7 +34,7 @@ import {
   animate as fmAnimate,
 } from "framer-motion";
 import {
-  Heart, MessageCircle, Share2, Music, BadgeCheck, Plus, Sparkles,
+  Heart, MessageCircle, Share2, BadgeCheck, Plus, Sparkles,
   Brain, X, Loader2, Volume2, VolumeX, Send, Check, Eye, Zap,
 } from "lucide-react";
 import { useListReels, useLikeReel, getListReelsQueryKey } from "@workspace/api-client-react";
@@ -86,14 +86,10 @@ function seededWave(seed: number, bars: number): number[] {
 /* ─── Design constants ───────────────────────────────────────── */
 const HUB  = 46;
 const SUB  = 40;
-const RADIUS = 72;
+const STEP = 52;
 
-// Quarter-circle fan: left (180°) → down (270°), 5 equal steps
-const FAN_ANGLES = [180, 202.5, 225, 247.5, 270]; // degrees in screen coords
-const FAN_OFFSETS = FAN_ANGLES.map(a => ({
-  dx: Math.round(Math.cos((a * Math.PI) / 180) * RADIUS),
-  dy: Math.round(Math.sin((a * Math.PI) / 180) * RADIUS),
-}));
+// Vertical cascade: sub-circles drop straight DOWN from hub
+const FAN_OFFSETS = [0, 1, 2, 3, 4].map(i => ({ dx: 0, dy: (i + 1) * STEP }));
 
 const hubBase: React.CSSProperties = {
   width: HUB, height: HUB, borderRadius: "50%",
@@ -951,17 +947,6 @@ function ReelSlide({
             </p>
           )}
           <div className="flex items-center gap-1.5 flex-wrap">
-            {reel.audioTrack && (
-              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full"
-                style={{background:"rgba(0,0,0,0.4)", backdropFilter:"blur(8px)"}}>
-                <motion.div animate={{rotate:360}} transition={{duration:3,repeat:Infinity,ease:"linear"}}
-                  className="w-3 h-3 rounded-full flex items-center justify-center"
-                  style={{background:"rgba(255,255,255,0.1)"}}>
-                  <Music className="w-1.5 h-1.5 text-white"/>
-                </motion.div>
-                <span className="text-[9px] text-white/48 truncate max-w-[72px]">{reel.audioTrack}</span>
-              </div>
-            )}
             {reel.tags?.slice(0,3).map(tag=>(
               <motion.span key={tag}
                 initial={{opacity:0,scale:0.7}} animate={{opacity:1,scale:1}}

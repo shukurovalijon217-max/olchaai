@@ -27,14 +27,14 @@
  */
 
 import {
-  useState, useEffect, useRef, useCallback, useMemo,
+  useState, useEffect, useRef, useCallback,
 } from "react";
 import {
   motion, AnimatePresence, useMotionValue, useTransform,
   animate as fmAnimate,
 } from "framer-motion";
 import {
-  Heart, MessageCircle, Share2, BadgeCheck, Plus, Sparkles,
+  Heart, MessageCircle, Share2, Music, BadgeCheck, Plus, Sparkles,
   Brain, X, Loader2, Volume2, VolumeX, Send, Check, Eye, Zap,
 } from "lucide-react";
 import { useListReels, useLikeReel, getListReelsQueryKey } from "@workspace/api-client-react";
@@ -71,25 +71,13 @@ const fmt = (n: number) =>
 const initials = (name?: string) =>
   (name ?? "?").split(" ").slice(0,2).map(w => w[0]?.toUpperCase()).join("");
 
-/* ─── Waveform seed (deterministic per reel id) ──────────────── */
-function seededWave(seed: number, bars: number): number[] {
-  let s = seed;
-  return Array.from({ length: bars }, (_, i) => {
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
-    const base = 18 + 14 * Math.sin(i * 0.7 + s * 0.0000001)
-      + 8 * Math.sin(i * 2.1 - s * 0.00000003)
-      + 4 * Math.sin(i * 5.3);
-    return Math.max(8, Math.min(42, base));
-  });
-}
-
 /* ─── Design constants ───────────────────────────────────────── */
 const HUB  = 46;
 const SUB  = 40;
 const STEP = 52;
 
-// Vertical cascade: sub-circles drop straight DOWN from hub
-const FAN_OFFSETS = [0, 1, 2, 3, 4].map(i => ({ dx: 0, dy: (i + 1) * STEP }));
+// Vertical cascade: 4 sub-circles drop straight DOWN from hub
+const FAN_OFFSETS = [0, 1, 2, 3].map(i => ({ dx: 0, dy: (i + 1) * STEP }));
 
 const hubBase: React.CSSProperties = {
   width: HUB, height: HUB, borderRadius: "50%",
@@ -198,32 +186,90 @@ function useTypewriter(text: string, active: boolean, speed = 28) {
   return displayed;
 }
 
-/* ─── Waveform progress bar ──────────────────────────────────── */
-function WaveformProgress({ progress, color, reelId }: { progress: number; color: string; reelId: number }) {
-  const BARS = 44;
-  const heights = useMemo(() => seededWave(reelId, BARS), [reelId]);
+/* ─── Audio chip (spinning vinyl + track name, click → popup) ── */
+function AudioChip({ track, color }: { track: string; color: string }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(track).catch(()=>{});
+    setCopied(true);
+    setTimeout(()=>setCopied(false), 1800);
+  };
+
+  const short = track.length > 22 ? track.slice(0, 22) + "…" : track;
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-28 pointer-events-none flex items-end gap-[2px] px-3 pb-[3px]"
-      style={{ height: 36 }}>
-      {heights.map((h, i) => {
-        const filled = (i / BARS) < progress;
-        return (
-          <motion.div key={i}
-            animate={{ scaleY: filled ? 1 : 0.5 + Math.sin(Date.now()*0.003 + i*0.4)*0.18 }}
-            transition={{ duration:0.1 }}
+    <div className="relative" style={{zIndex:40}}>
+      {/* Chip */}
+      <motion.button
+        whileTap={{scale:0.92}}
+        onClick={()=>setOpen(v=>!v)}
+        className="flex items-center gap-[6px] px-[10px] py-[5px] rounded-full"
+        style={{
+          background:"rgba(8,6,22,0.54)",
+          backdropFilter:"blur(20px)",
+          WebkitBackdropFilter:"blur(20px)",
+          border:`1px solid ${color}44`,
+          boxShadow:`0 2px 14px rgba(0,0,0,0.4), 0 0 8px ${color}22`,
+        }}>
+        {/* Spinning vinyl disc */}
+        <motion.div
+          animate={{rotate:360}}
+          transition={{duration:3, repeat:Infinity, ease:"linear"}}
+          className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center"
+          style={{
+            background:`conic-gradient(from 0deg, #1a1030, ${color}88, #1a1030, ${color}44, #1a1030)`,
+            border:`1px solid ${color}66`,
+          }}>
+          <div className="w-[5px] h-[5px] rounded-full bg-white/70"/>
+        </motion.div>
+        {/* Track name */}
+        <span className="text-[10px] font-medium" style={{color:"rgba(255,255,255,0.72)", maxWidth:120, overflow:"hidden", whiteSpace:"nowrap"}}>
+          {short}
+        </span>
+        <Music className="w-[9px] h-[9px] flex-shrink-0" style={{color:`${color}cc`}}/>
+      </motion.button>
+
+      {/* Popup */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{opacity:0, y:6, scale:0.94}}
+            animate={{opacity:1, y:0, scale:1}}
+            exit={{opacity:0, y:6, scale:0.94}}
+            transition={{type:"spring", damping:24, stiffness:360}}
+            className="absolute bottom-[calc(100%+8px)] left-0 rounded-2xl p-3 flex flex-col gap-2"
             style={{
-              flex: 1, borderRadius: 1.5,
-              height: `${h}px`,
-              background: filled
-                ? `linear-gradient(to top, ${color}, ${color}88)`
-                : "rgba(255,255,255,0.12)",
-              boxShadow: filled ? `0 0 5px ${color}88` : "none",
-              transition: "background 0.12s linear, box-shadow 0.12s linear",
-            }}
-          />
-        );
-      })}
+              minWidth:180,
+              background:"rgba(8,6,22,0.82)",
+              backdropFilter:"blur(28px)",
+              WebkitBackdropFilter:"blur(28px)",
+              border:`1px solid ${color}30`,
+              boxShadow:`0 8px 32px rgba(0,0,0,0.55), 0 0 20px ${color}14`,
+            }}>
+            <div className="flex items-start gap-2">
+              <Music className="w-3 h-3 mt-[2px] flex-shrink-0" style={{color:`${color}cc`}}/>
+              <span className="text-[11px] leading-snug" style={{color:"rgba(255,255,255,0.82)", wordBreak:"break-word"}}>
+                {track}
+              </span>
+            </div>
+            <motion.button
+              whileTap={{scale:0.88}}
+              onClick={handleCopy}
+              className="flex items-center justify-center gap-1 py-[6px] rounded-xl text-[10px] font-semibold"
+              style={{
+                background: copied ? `${color}33` : "rgba(255,255,255,0.08)",
+                border:`1px solid ${copied ? color+"66" : "rgba(255,255,255,0.10)"}`,
+                color: copied ? color : "rgba(255,255,255,0.65)",
+                transition:"all 0.2s",
+              }}>
+              {copied ? <Check className="w-3 h-3"/> : null}
+              {copied ? "Nusxalandi!" : "Nusxalash"}
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -401,13 +447,13 @@ interface HubProps {
   open: boolean; onToggle: () => void;
   isLiked: boolean; likesCount: number; commentsCount: number;
   onLike: ()=>void; onComment: ()=>void; onShare: ()=>void;
-  onAI: ()=>void; onAdd: ()=>void;
+  onAI: ()=>void;
   analyzingId: number|null; reelId: number; neonColor: string;
 }
 
 function ActionHub({
   open, onToggle, isLiked, likesCount, commentsCount,
-  onLike, onComment, onShare, onAI, onAdd,
+  onLike, onComment, onShare, onAI,
   analyzingId, reelId, neonColor,
 }: HubProps) {
   const [shareOk, setShareOk]       = useState(false);
@@ -470,19 +516,7 @@ function ActionHub({
       label:"", labelColor:"#c4b5fd",
       onClick: () => { onAI(); pulse(); },
     },
-    {
-      id:"create",
-      icon:<Plus className="w-[18px] h-[18px] text-white"/>,
-      color:"#f472b6",
-      bg:"linear-gradient(135deg,rgba(124,58,237,0.7),rgba(236,72,153,0.7))",
-      border:"rgba(244,114,182,0.38)", glow:"rgba(236,72,153,0.38)",
-      label:"", labelColor:"#f9a8d4",
-      onClick: () => { onAdd(); onToggle(); },
-    },
   ];
-
-  // Hub center within the 46×46 container
-  const HC = HUB / 2;
 
   return (
     <div
@@ -502,29 +536,6 @@ function ActionHub({
           />
         )}
       </AnimatePresence>
-
-      {/* SVG constellation lines */}
-      <svg
-        style={{ position:"absolute", left:0, top:0, overflow:"visible", zIndex:2, pointerEvents:"none" }}
-        width={HUB} height={HUB} viewBox={`0 0 ${HUB} ${HUB}`}>
-        {subs.map((s, i) => {
-          const { dx, dy } = FAN_OFFSETS[i];
-          return (
-            <motion.line key={s.id}
-              x1={HC} y1={HC}
-              x2={HC + dx} y2={HC + dy}
-              stroke={s.color}
-              strokeWidth={1.2}
-              strokeLinecap="round"
-              animate={{
-                opacity: open ? 0.45 : 0,
-                pathLength: open ? 1 : 0,
-              }}
-              transition={{ duration:0.3, delay: open ? i*0.07 : (subs.length-1-i)*0.04 }}
-            />
-          );
-        })}
-      </svg>
 
       {/* Hub button */}
       <motion.button
@@ -707,13 +718,13 @@ function useVideoProgress(ref: React.RefObject<HTMLVideoElement|null>) {
 function ReelSlide({
   reel, isActive, muted,
   onLike, isLiked, onAnalyze, analyzingId, analysis,
-  onComment, onShare, onAdd, onMute,
+  onComment, onShare, onMute,
 }: {
   reel: FeedItem; isActive: boolean; muted: boolean;
   onLike:()=>void; isLiked:boolean;
   onAnalyze:()=>void; analyzingId:number|null; analysis?:Analysis;
   onComment:()=>void; onShare:()=>void;
-  onAdd:()=>void; onMute:()=>void;
+  onMute:()=>void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const progress = useVideoProgress(videoRef);
@@ -853,8 +864,12 @@ function ReelSlide({
           ))}
         </div>
 
-        {/* Waveform progress (replaces flat bar) */}
-        <WaveformProgress progress={progress} color={neonColor} reelId={reel.id}/>
+        {/* Thin progress bar */}
+        <div className="absolute bottom-0 left-0 right-0 z-[28] pointer-events-none" style={{height:3}}>
+          <div style={{width:`${progress*100}%`, height:"100%",
+            background:`linear-gradient(90deg,${neonColor},#06b6d4)`,
+            boxShadow:`0 0 7px ${neonColor}bb`, transition:"width 0.1s linear"}}/>
+        </div>
 
         {/* Speed indicator */}
         <AnimatePresence>
@@ -930,7 +945,7 @@ function ReelSlide({
           isLiked={isLiked} likesCount={(reel.likesCount??0)+(isLiked?1:0)}
           commentsCount={reel.commentsCount??0}
           onLike={onLike} onComment={onComment} onShare={onShare}
-          onAI={onAnalyze} onAdd={onAdd}
+          onAI={onAnalyze}
           analyzingId={analyzingId} reelId={reel.id} neonColor={neonColor}
         />
 
@@ -959,29 +974,35 @@ function ReelSlide({
           </div>
         </div>
 
-        {/* ══ BOTTOM-LEFT: Volume + Views ══ */}
-        <div className="absolute bottom-4 left-4 z-30 flex items-center gap-2"
+        {/* ══ BOTTOM-LEFT: Volume + Views + Audio chip ══ */}
+        <div className="absolute bottom-4 left-4 z-30 flex flex-col items-start gap-2"
           onPointerDown={e=>e.stopPropagation()} onPointerUp={e=>e.stopPropagation()}>
 
-          {/* Volume — small glass circle */}
-          <motion.button whileTap={{scale:0.72}} onClick={onMute} style={{...volCircle}}>
-            {muted
-              ? <VolumeX className="w-3 h-3 text-white/42"/>
-              : <Volume2 className="w-3 h-3 text-white/68"/>}
-          </motion.button>
+          {/* Audio chip — lentadagi kabi (only when track exists) */}
+          {reel.audioTrack && <AudioChip track={reel.audioTrack} color={neonColor}/>}
 
-          {/* Views — eye */}
-          <div className="flex items-center gap-1 px-2 py-[5px] rounded-full pointer-events-none"
-            style={{background:"rgba(8,6,22,0.42)", backdropFilter:"blur(18px)",
-              border:"1px solid rgba(255,255,255,0.09)",
-              boxShadow:"0 2px 12px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.05)"}}>
-            <Eye className="w-3 h-3 text-white/45"/>
-            <motion.span
-              animate={{opacity:[0.5,1,0.5]}} transition={{duration:2.8,repeat:Infinity,ease:"easeInOut"}}
-              className="text-[10px] font-bold tabular-nums"
-              style={{color:"rgba(255,255,255,0.6)"}}>
-              {fmt(reel.viewsCount??0)}
-            </motion.span>
+          {/* Row: volume + views */}
+          <div className="flex items-center gap-2">
+            {/* Volume */}
+            <motion.button whileTap={{scale:0.72}} onClick={onMute} style={{...volCircle}}>
+              {muted
+                ? <VolumeX className="w-3 h-3 text-white/42"/>
+                : <Volume2 className="w-3 h-3 text-white/68"/>}
+            </motion.button>
+
+            {/* Views */}
+            <div className="flex items-center gap-1 px-2 py-[5px] rounded-full pointer-events-none"
+              style={{background:"rgba(8,6,22,0.42)", backdropFilter:"blur(18px)",
+                border:"1px solid rgba(255,255,255,0.09)",
+                boxShadow:"0 2px 12px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.05)"}}>
+              <Eye className="w-3 h-3 text-white/45"/>
+              <motion.span
+                animate={{opacity:[0.5,1,0.5]}} transition={{duration:2.8,repeat:Infinity,ease:"easeInOut"}}
+                className="text-[10px] font-bold tabular-nums"
+                style={{color:"rgba(255,255,255,0.6)"}}>
+                {fmt(reel.viewsCount??0)}
+              </motion.span>
+            </div>
           </div>
         </div>
 
@@ -1210,7 +1231,6 @@ export default function ReelsPage() {
                   analysis={analysisMap[reel.id]}
                   onComment={()=>setCommentReel(reel)}
                   onShare={()=>handleShare(reel.id)}
-                  onAdd={()=>setCreateOpen(true)}
                   onMute={()=>setMuted(v=>!v)}
                 />
               </motion.div>

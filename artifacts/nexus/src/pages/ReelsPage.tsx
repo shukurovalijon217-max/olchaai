@@ -1196,6 +1196,7 @@ export default function ReelsPage() {
     const dx=touchX.current-e.changedTouches[0].clientX;
     if(Math.abs(dx)>Math.abs(dy)){
       if(dx<-70) navigate("/");
+      if(dx>70)  navigate("/otube");
     } else {
       if(dy>50)  setCurrent(c=>Math.min(feed.length-1,c+1));
       if(dy<-50) setCurrent(c=>Math.max(0,c-1));

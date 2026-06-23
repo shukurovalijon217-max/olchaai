@@ -1,11 +1,12 @@
 /**
- * OTube — NEXUS SIGNAL ENGINE v3
- * Kelajak avlod video platformasi — YouTube raqibi
+ * OTube — SIGNAL ENGINE v4
+ * "BROADCAST STATION" — Kiberpu / Arcade / Neon estetikasi
+ * YouTube'dan tubdan boshqa ko'rinish
  */
 import {
   useState, useRef, useEffect, useCallback, useMemo,
 } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { useListReels } from "@workspace/api-client-react";
 import type { Reel } from "@workspace/api-client-react";
@@ -13,11 +14,38 @@ import {
   Play, Pause, Volume2, VolumeX, ArrowLeft, Search, X,
   Eye, Heart, Share2, Check, Film, Music2, Gamepad2,
   Zap, Sparkles, TrendingUp, Globe, Settings, Bell,
-  RotateCcw, ChevronRight, ChevronDown, ChevronUp,
-  Maximize2, Minimize2, RefreshCw, MessageCircle, Bookmark,
-  Plus, DollarSign, Star, Users, Clock, ThumbsUp, ThumbsDown,
-  Flag, Gauge, Upload, BadgeDollarSign,
+  RotateCcw, ChevronRight, ChevronDown, RefreshCw,
+  MessageCircle, Bookmark, Plus, DollarSign, Star,
+  Users, Clock, ThumbsUp, ThumbsDown, Gauge, Upload,
+  Maximize2, Minimize2, BadgeDollarSign, Radio, Tv,
 } from "lucide-react";
+
+/* ─────────────────────────────────────────────────────── */
+/* Design tokens — BROADCAST / NEON                        */
+/* ─────────────────────────────────────────────────────── */
+const T = {
+  bg:       "#000005",
+  bg2:      "#08020f",
+  card:     "#0c0315",
+  cyan:     "#00e5ff",
+  orange:   "#ff6b00",
+  violet:   "#9d00ff",
+  border:   "rgba(0,229,255,0.1)",
+  borderHot:"rgba(0,229,255,0.35)",
+  txt:      "rgba(255,255,255,0.92)",
+  txtSub:   "rgba(255,255,255,0.38)",
+  gCyan:    "linear-gradient(90deg,#00e5ff,#0088cc)",
+  gOrange:  "linear-gradient(90deg,#ff6b00,#ff2d00)",
+  gViolet:  "linear-gradient(90deg,#9d00ff,#5500cc)",
+} as const;
+
+/* Dot-grid background CSS */
+const DOT_BG = {
+  background: T.bg,
+  backgroundImage:
+    "radial-gradient(rgba(0,229,255,0.06) 1px, transparent 1px)",
+  backgroundSize: "22px 22px",
+} as const;
 
 /* ─────────────────────────────────────────────────────── */
 /* helpers                                                 */
@@ -29,143 +57,93 @@ function fmt(n: number) {
 }
 function fmtTime(s: number) {
   if (!isFinite(s) || isNaN(s)) return "0:00";
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = Math.floor(s % 60);
-  if (h > 0) return `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
-  return `${m}:${String(sec).padStart(2,"0")}`;
+  const m = Math.floor(s / 60);
+  return `${m}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Settings / Monetization types                           */
+/* Settings types                                          */
 /* ─────────────────────────────────────────────────────── */
 interface PlayerSettings {
-  autoplay:     boolean;
-  loop:         boolean;
-  muteDefault:  boolean;
-  quality:      "Auto"|"1080p"|"720p"|"480p"|"360p";
-  cinemaMode:   boolean;
-  showTitle:    boolean;
-  dataWarning:  boolean;
-  hdStream:     boolean;
+  autoplay: boolean; loop: boolean; muteDefault: boolean;
+  quality: "Auto"|"1080p"|"720p"|"480p"|"360p";
+  cinemaMode: boolean; showTitle: boolean;
+  hdStream: boolean; dataWarning: boolean;
 }
 interface MonetizationSettings {
-  creatorMode:       boolean;
-  adsEnabled:        boolean;
-  membershipEnabled: boolean;
-  superThanks:       boolean;
-  donation:          "500"|"2000"|"10000"|"50000";
+  creatorMode: boolean; adsEnabled: boolean;
+  membershipEnabled: boolean; superThanks: boolean;
+  donation: "500"|"2000"|"10000"|"50000";
 }
-const DEFAULT_SETTINGS: PlayerSettings = {
-  autoplay: true, loop: true, muteDefault: false,
-  quality: "Auto", cinemaMode: false, showTitle: true,
-  dataWarning: false, hdStream: true,
+const DEF_S: PlayerSettings = {
+  autoplay:true, loop:true, muteDefault:false, quality:"Auto",
+  cinemaMode:false, showTitle:true, hdStream:true, dataWarning:false,
 };
-const DEFAULT_MONETIZE: MonetizationSettings = {
-  creatorMode: false, adsEnabled: true,
-  membershipEnabled: false, superThanks: true, donation: "2000",
+const DEF_M: MonetizationSettings = {
+  creatorMode:false, adsEnabled:true,
+  membershipEnabled:false, superThanks:true, donation:"2000",
 };
 
 /* ─────────────────────────────────────────────────────── */
-/* OTube Logo — yumaloq doira ichida qizil sfera           */
+/* OTube Logo — QIZIL SFERA (o'zgarmaydi)                 */
 /* ─────────────────────────────────────────────────────── */
 function OTubeMark({ size = 32 }: { size?: number }) {
   const id = `ot${size}`;
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
       <defs>
-        {/* Qizil sfera gradient */}
-        <radialGradient id={`${id}s`} cx="38%" cy="30%" r="65%" gradientUnits="objectBoundingBox">
+        <radialGradient id={`${id}s`} cx="38%" cy="30%" r="65%">
           <stop offset="0%"   stopColor="#ff6b6b"/>
           <stop offset="35%"  stopColor="#ef2020"/>
           <stop offset="75%"  stopColor="#b91c1c"/>
           <stop offset="100%" stopColor="#7f1d1d"/>
         </radialGradient>
-        {/* Tashqi doira gradient */}
         <linearGradient id={`${id}r`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%"   stopColor="#ff4444"/>
           <stop offset="100%" stopColor="#991b1b"/>
         </linearGradient>
-        {/* Glow filter */}
         <filter id={`${id}g`} x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
           <feComposite in="SourceGraphic" in2="b" operator="over"/>
         </filter>
-        {/* Drop shadow */}
-        <filter id={`${id}d`} x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#ef2020" floodOpacity="0.55"/>
+        <filter id={`${id}d`}>
+          <feDropShadow dx="0" dy="2" stdDeviation="3"
+            floodColor="#ef2020" floodOpacity="0.55"/>
         </filter>
       </defs>
-
-      {/* Tashqi halqa — glowing ring */}
       <circle cx="24" cy="24" r="22.5"
         stroke={`url(#${id}r)`} strokeWidth="1.2"
-        fill="rgba(0,0,0,0.35)"
-        filter={`url(#${id}g)`}/>
-
-      {/* Asosiy qizil sfera */}
+        fill="rgba(0,0,0,0.35)" filter={`url(#${id}g)`}/>
       <circle cx="24" cy="24" r="18"
-        fill={`url(#${id}s)`}
-        filter={`url(#${id}d)`}/>
-
-      {/* Yorug'lik bliki — tepada chap */}
+        fill={`url(#${id}s)`} filter={`url(#${id}d)`}/>
       <ellipse cx="18.5" cy="15.5" rx="6.5" ry="4"
         fill="rgba(255,255,255,0.28)" transform="rotate(-18 18.5 15.5)"/>
-
-      {/* Kichik blik */}
       <ellipse cx="30" cy="14" rx="2.5" ry="1.5"
         fill="rgba(255,255,255,0.15)" transform="rotate(10 30 14)"/>
-
-      {/* Play o'qi — oq, markazda */}
       <path d="M20 16.5 L32 24 L20 31.5 Z"
-        fill="white" opacity="0.96"
-        style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}/>
+        fill="white" opacity="0.96"/>
     </svg>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* categories                                             */
-/* ─────────────────────────────────────────────────────── */
-const CATS = [
-  { id:"all",      label:"Hammasi",  Icon:Globe,      color:"#a855f7" },
-  { id:"trending", label:"Trend",    Icon:TrendingUp, color:"#f59e0b" },
-  { id:"cinema",   label:"Kino",     Icon:Film,       color:"#ef4444" },
-  { id:"music",    label:"Musiqa",   Icon:Music2,     color:"#06b6d4" },
-  { id:"gaming",   label:"Gaming",   Icon:Gamepad2,   color:"#10b981" },
-  { id:"ai",       label:"AI",       Icon:Sparkles,   color:"#f59e0b" },
-  { id:"live",     label:"🔴 Live",  Icon:Zap,        color:"#ef4444" },
-  { id:"new",      label:"Yangi",    Icon:Clock,      color:"#a855f7" },
-];
-
-/* Tablar */
-const TABS = [
-  { id:"home", label:"Bosh sahifa" },
-  { id:"shorts", label:"Shorts" },
-  { id:"subs", label:"Obunalar" },
-];
-
-/* ─────────────────────────────────────────────────────── */
-/* SeekFlash                                               */
+/* Seek flash                                              */
 /* ─────────────────────────────────────────────────────── */
 function SeekFlash({ side, visible }: { side:"left"|"right"; visible:boolean }) {
   return (
     <AnimatePresence>
       {visible && (
         <motion.div key={side}
-          initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-          transition={{ duration:0.12 }}
+          initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+          transition={{duration:0.12}}
           className={`absolute top-0 ${side==="left"?"left-0":"right-0"} bottom-0 flex items-center justify-center pointer-events-none`}
-          style={{ width:"38%",
+          style={{ width:"36%",
             background: side==="left"
-              ? "radial-gradient(ellipse at left,rgba(239,68,68,0.22),transparent 70%)"
-              : "radial-gradient(ellipse at right,rgba(239,68,68,0.22),transparent 70%)" }}
-        >
-          <div className="flex flex-col items-center gap-1.5" style={{ marginTop:-20 }}>
-            <span style={{ fontSize:32 }}>{side==="left"?"⏪":"⏩"}</span>
-            <span style={{ fontSize:12,fontWeight:900,color:"rgba(255,255,255,0.7)" }}>
-              {side==="left"?"-10s":"+10s"}
-            </span>
+              ? "radial-gradient(ellipse at left,rgba(0,229,255,0.22),transparent 70%)"
+              : "radial-gradient(ellipse at right,rgba(0,229,255,0.22),transparent 70%)" }}>
+          <div className="flex flex-col items-center gap-1" style={{marginTop:-18}}>
+            <span style={{fontSize:28}}>{side==="left"?"⏪":"⏩"}</span>
+            <span style={{fontSize:11,fontWeight:900,color:T.cyan}}>{side==="left"?"-10s":"+10s"}</span>
           </div>
         </motion.div>
       )}
@@ -174,148 +152,134 @@ function SeekFlash({ side, visible }: { side:"left"|"right"; visible:boolean }) 
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* SpeedMenu                                               */
+/* Speed picker                                            */
 /* ─────────────────────────────────────────────────────── */
-const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
-function SpeedMenu({
-  speed, onSpeed, onClose,
-}: { speed:number; onSpeed:(s:number)=>void; onClose:()=>void }) {
+const SPEEDS = [0.5,0.75,1,1.25,1.5,2] as const;
+function SpeedPicker({ speed, onSpeed, onClose }:
+  { speed:number; onSpeed:(s:number)=>void; onClose:()=>void }) {
   return (
     <motion.div
-      initial={{ opacity:0, scale:0.88, y:8 }} animate={{ opacity:1, scale:1, y:0 }}
-      exit={{ opacity:0, scale:0.88, y:8 }}
-      transition={{ type:"spring", damping:22, stiffness:350 }}
-      className="absolute bottom-20 right-3 z-50 rounded-[18px] overflow-hidden"
-      style={{ background:"rgba(10,4,26,0.96)", backdropFilter:"blur(24px)",
-        border:"1px solid rgba(239,68,68,0.25)", minWidth:130,
-        boxShadow:"0 16px 60px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(239,68,68,0.12)" }}
-    >
-      <div className="px-4 py-2.5 flex items-center justify-between"
-        style={{ borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
-        <span style={{ fontSize:10,fontWeight:900,letterSpacing:"0.12em",
-          color:"rgba(239,68,68,0.8)",textTransform:"uppercase" }}>TEZLIK</span>
-        <motion.button whileTap={{ scale:0.8 }} onClick={onClose}>
-          <X className="w-3.5 h-3.5 text-white/35"/>
-        </motion.button>
+      initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:10}}
+      className="absolute bottom-20 right-3 z-50 rounded-none overflow-hidden"
+      style={{ background:"#06020a",
+        border:`1px solid ${T.cyan}44`,
+        boxShadow:`0 0 30px rgba(0,229,255,0.15)`,
+        minWidth:130,
+        clipPath:"polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))" }}>
+      <div className="px-4 py-2 flex items-center justify-between"
+        style={{ borderBottom:`1px solid ${T.cyan}22`,
+          background:"rgba(0,229,255,0.06)" }}>
+        <span style={{fontSize:9,fontWeight:900,letterSpacing:"0.16em",color:T.cyan}}>TEZLIK</span>
+        <button onClick={onClose}><X style={{width:12,height:12,color:"rgba(255,255,255,0.4)"}}/></button>
       </div>
       {SPEEDS.map(s => (
-        <motion.button key={s} whileTap={{ scale:0.92 }}
-          onClick={() => { onSpeed(s); onClose(); }}
+        <button key={s} onClick={()=>{onSpeed(s);onClose();}}
           className="w-full flex items-center justify-between px-4 py-2.5"
-          style={{ background: speed===s ? "rgba(239,68,68,0.12)" : "transparent",
-            transition:"background 0.15s" }}>
-          <span style={{ fontSize:13, fontWeight: speed===s ? 900 : 600,
-            color: speed===s ? "#fca5a5" : "rgba(255,255,255,0.55)" }}>
-            {s === 1 ? "Oddiy" : `${s}×`}
+          style={{ background:speed===s?"rgba(0,229,255,0.1)":"transparent" }}>
+          <span style={{fontSize:13,fontWeight:speed===s?900:500,
+            color:speed===s?T.cyan:"rgba(255,255,255,0.5)"}}>
+            {s===1?"Oddiy":`${s}×`}
           </span>
-          {speed===s && <Check className="w-3.5 h-3.5 text-red-400"/>}
-        </motion.button>
+          {speed===s && <Check style={{width:12,height:12,color:T.cyan}}/>}
+        </button>
       ))}
     </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* CommentsPanel                                           */
+/* Comments panel                                          */
 /* ─────────────────────────────────────────────────────── */
-const MOCK_COMMENTS = [
-  { id:1, user:"Jasur T",       avatar:"",  text:"Ajoyib video! Davom ettir 🔥",    likes:42, time:"2s oldin" },
-  { id:2, user:"Malika S",      avatar:"",  text:"Bu qanaqa texnologiya bor?",      likes:18, time:"5s oldin" },
-  { id:3, user:"OlCha fani",    avatar:"",  text:"OTube eng yaxshi platforma 💯",   likes:105,time:"8s oldin" },
-  { id:4, user:"Dilshod B",     avatar:"",  text:"Qachon keyingi qism?",            likes:7,  time:"12s oldin" },
-  { id:5, user:"Nodira A",      avatar:"",  text:"Sifat juda yaxshi ekan 👏",       likes:33, time:"18s oldin" },
-  { id:6, user:"Tech Uzbek",    avatar:"",  text:"Signal Engine — future platform!",likes:89, time:"24s oldin" },
+const MOCK = [
+  {id:1,u:"Jasur T",   t:"Signal Engine zo'r! 🔥",          l:42,  ago:"2s"},
+  {id:2,u:"Malika S",  t:"Bu texnologiya qayerdan?",         l:18,  ago:"5s"},
+  {id:3,u:"OlCha fan", t:"OTube — kelajak platformasi 💯",   l:105, ago:"8s"},
+  {id:4,u:"Dilshod B", t:"Keyingi qism qachon?",             l:7,   ago:"12s"},
+  {id:5,u:"Tech UZ",   t:"Broadcast Station — unique look!", l:89,  ago:"20s"},
 ];
 
 function CommentsPanel({ onClose }: { onClose:()=>void }) {
-  const [text, setText] = useState("");
-  const [comments, setComments] = useState(MOCK_COMMENTS);
+  const [txt, setTxt] = useState("");
+  const [list, setList] = useState(MOCK);
   const [liked, setLiked] = useState<Set<number>>(new Set());
-
   const send = () => {
-    if (!text.trim()) return;
-    setComments(c => [{ id: Date.now(), user:"Siz", avatar:"", text, likes:0, time:"hozir" }, ...c]);
-    setText("");
+    if (!txt.trim()) return;
+    setList(c=>[{id:Date.now(),u:"Siz",t:txt,l:0,ago:"hozir"},...c]);
+    setTxt("");
   };
-
   return (
     <motion.div
-      key="comments"
-      initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }}
-      transition={{ type:"spring", damping:30, stiffness:320 }}
-      className="absolute inset-x-0 bottom-0 z-[60] flex flex-col rounded-t-[24px] overflow-hidden"
-      style={{ background:"rgba(8,3,22,0.97)", backdropFilter:"blur(30px)",
-        border:"1px solid rgba(239,68,68,0.15)", maxHeight:"70%" }}
-      onClick={e => e.stopPropagation()}
-    >
-      {/* Handle */}
-      <div className="flex justify-center pt-3 pb-1">
-        <div style={{ width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.12)" }}/>
-      </div>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5"
-        style={{ borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+      initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
+      transition={{type:"spring",damping:30,stiffness:320}}
+      className="absolute inset-x-0 bottom-0 z-[60] flex flex-col overflow-hidden"
+      style={{ background:"#04010e",maxHeight:"68%",
+        borderTop:`2px solid ${T.cyan}55`,
+        boxShadow:`0 -16px 60px rgba(0,229,255,0.12)` }}
+      onClick={e=>e.stopPropagation()}>
+      {/* header */}
+      <div className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom:`1px solid ${T.cyan}18` }}>
         <div className="flex items-center gap-2">
-          <MessageCircle className="w-4 h-4 text-red-400"/>
-          <span className="text-white font-black text-[14px]">Izohlar</span>
-          <span className="text-white/30 text-[11px]">({comments.length})</span>
+          <div style={{width:3,height:20,background:T.gCyan,borderRadius:2}}/>
+          <span style={{fontSize:12,fontWeight:900,letterSpacing:"0.1em",color:T.cyan}}>
+            IZOHLAR <span style={{color:"rgba(255,255,255,0.3)"}}>({list.length})</span>
+          </span>
         </div>
-        <motion.button whileTap={{ scale:0.82 }} onClick={onClose}
-          style={{ width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.07)",
-            border:"1px solid rgba(255,255,255,0.09)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-          <X className="w-3.5 h-3.5 text-white/55"/>
-        </motion.button>
+        <button onClick={onClose}
+          style={{width:30,height:30,borderRadius:0,background:"rgba(0,229,255,0.08)",
+            border:`1px solid ${T.cyan}33`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
+          <X style={{width:12,height:12,color:T.cyan}}/>
+        </button>
       </div>
-      {/* Input */}
+      {/* input */}
       <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ width:30,height:30,borderRadius:"50%",flexShrink:0,
-          background:"linear-gradient(135deg,#ef4444,#7c3aed)",
-          display:"flex",alignItems:"center",justifyContent:"center" }}>
-          <span style={{ fontSize:12,fontWeight:900,color:"white" }}>S</span>
+        style={{borderBottom:`1px solid rgba(255,255,255,0.05)`}}>
+        <div style={{width:28,height:28,flexShrink:0,
+          background:"linear-gradient(135deg,#00e5ff33,#9d00ff33)",
+          border:`1px solid ${T.cyan}44`,
+          display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{fontSize:12,fontWeight:900,color:T.cyan}}>S</span>
         </div>
-        <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-full"
-          style={{ background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.09)" }}>
-          <input value={text} onChange={e => setText(e.target.value)}
-            onKeyDown={e => e.key==="Enter" && send()}
-            placeholder="Izoh qoldiring..."
-            className="flex-1 bg-transparent outline-none text-white text-[12px] placeholder:text-white/25"/>
-          {text && (
-            <motion.button whileTap={{ scale:0.82 }} onClick={send}>
-              <span style={{ fontSize:18 }}>➤</span>
-            </motion.button>
-          )}
+        <div className="flex-1 flex items-center gap-2 px-3 py-1.5"
+          style={{background:"rgba(0,229,255,0.04)",border:`1px solid ${T.cyan}22`}}>
+          <input value={txt} onChange={e=>setTxt(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&send()}
+            placeholder="Izoh yozing..."
+            className="flex-1 bg-transparent outline-none text-white text-[12px] placeholder:text-white/20"
+            style={{fontFamily:"inherit"}}/>
+          {txt && <button onClick={send} style={{color:T.cyan,fontSize:16}}>➤</button>}
         </div>
       </div>
-      {/* List */}
-      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3" style={{ scrollbarWidth:"none" }}>
-        {comments.map(c => (
+      {/* list */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2.5"
+        style={{scrollbarWidth:"none"}}>
+        {list.map(c=>(
           <div key={c.id} className="flex gap-2.5">
-            <div style={{ width:28,height:28,borderRadius:"50%",flexShrink:0,
-              background:`hsl(${(c.id * 47)%360},60%,35%)`,
-              display:"flex",alignItems:"center",justifyContent:"center" }}>
-              <span style={{ fontSize:11,fontWeight:900,color:"white" }}>
-                {c.user[0]}
-              </span>
+            <div style={{width:26,height:26,flexShrink:0,
+              background:`hsl(${(c.id*47)%360},50%,22%)`,
+              border:`1px solid hsl(${(c.id*47)%360},60%,35%)`,
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <span style={{fontSize:10,fontWeight:900,color:"white"}}>{c.u[0]}</span>
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1">
               <div className="flex items-center gap-2 mb-0.5">
-                <span style={{ fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.7)" }}>{c.user}</span>
-                <span style={{ fontSize:9,color:"rgba(255,255,255,0.25)" }}>{c.time}</span>
+                <span style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.7)"}}>{c.u}</span>
+                <span style={{fontSize:9,color:"rgba(255,255,255,0.22)"}}>{c.ago} oldin</span>
               </div>
-              <p style={{ fontSize:12,color:"rgba(255,255,255,0.82)",lineHeight:1.45 }}>{c.text}</p>
+              <p style={{fontSize:11.5,color:"rgba(255,255,255,0.8)",lineHeight:1.45}}>{c.t}</p>
               <div className="flex items-center gap-3 mt-1">
-                <motion.button whileTap={{ scale:0.8 }}
-                  onClick={() => setLiked(s => { const n=new Set(s); n.has(c.id)?n.delete(c.id):n.add(c.id); return n; })}
+                <button onClick={()=>setLiked(s=>{const n=new Set(s);n.has(c.id)?n.delete(c.id):n.add(c.id);return n;})}
                   className="flex items-center gap-1">
-                  <ThumbsUp style={{ width:10,height:10,
-                    fill:liked.has(c.id)?"#fca5a5":"none",
-                    color:liked.has(c.id)?"#fca5a5":"rgba(255,255,255,0.3)" }}/>
-                  <span style={{ fontSize:9,color:"rgba(255,255,255,0.3)" }}>
-                    {c.likes + (liked.has(c.id)?1:0)}
+                  <ThumbsUp style={{width:10,height:10,
+                    fill:liked.has(c.id)?T.cyan:"none",
+                    color:liked.has(c.id)?T.cyan:"rgba(255,255,255,0.28)"}}/>
+                  <span style={{fontSize:9,color:"rgba(255,255,255,0.28)"}}>
+                    {c.l+(liked.has(c.id)?1:0)}
                   </span>
-                </motion.button>
-                <button style={{ fontSize:9,color:"rgba(255,255,255,0.22)" }}>Javob</button>
+                </button>
+                <button style={{fontSize:9,color:"rgba(255,255,255,0.2)"}}>Javob</button>
               </div>
             </div>
           </div>
@@ -326,77 +290,63 @@ function CommentsPanel({ onClose }: { onClose:()=>void }) {
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* NexusPlayer v3 — YouTube-dan boyroq                    */
+/* NexusPlayer — BROADCAST STYLE                           */
 /* ─────────────────────────────────────────────────────── */
-function NexusPlayer({
-  video, onClose, settings,
-}: { video:Reel; onClose:()=>void; settings:PlayerSettings }) {
+function NexusPlayer({ video, onClose, settings }:
+  { video:Reel; onClose:()=>void; settings:PlayerSettings }) {
   const videoRef   = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const contRef    = useRef<HTMLDivElement>(null);
   const ctrlTimer  = useRef<ReturnType<typeof setTimeout>|null>(null);
   const lastTap    = useRef(0);
   const tapTimer   = useRef<ReturnType<typeof setTimeout>|null>(null);
   const longHold   = useRef<ReturnType<typeof setTimeout>|null>(null);
 
-  const [playing,    setPlaying]    = useState(false);
-  const [muted,      setMuted]      = useState(settings.muteDefault);
-  const [progress,   setProgress]   = useState(0);
-  const [duration,   setDuration]   = useState(0);
-  const [curTime,    setCurTime]    = useState(0);
-  const [showCtrl,   setShowCtrl]   = useState(true);
-  const [liked,      setLiked]      = useState(false);
-  const [disliked,   setDisliked]   = useState(false);
-  const [shared,     setShared]     = useState(false);
-  const [saved,      setSaved]      = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
-  const [seekLeft,   setSeekLeft]   = useState(false);
-  const [seekRight,  setSeekRight]  = useState(false);
-  const [fastFwd,    setFastFwd]    = useState(false);
-  const [speed,      setSpeed]      = useState(1);
-  const [showSpeed,  setShowSpeed]  = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [theaterMode, setTheaterMode]   = useState(false);
-  const [showDesc,   setShowDesc]   = useState(false);
-  const [donating,   setDonating]   = useState(false);
-  const [donateAmt,  setDonateAmt]  = useState("2000");
+  const [playing,   setPlaying]   = useState(false);
+  const [muted,     setMuted]     = useState(settings.muteDefault);
+  const [progress,  setProgress]  = useState(0);
+  const [duration,  setDuration]  = useState(0);
+  const [curTime,   setCurTime]   = useState(0);
+  const [showCtrl,  setShowCtrl]  = useState(true);
+  const [liked,     setLiked]     = useState(false);
+  const [disliked,  setDisliked]  = useState(false);
+  const [shared,    setShared]    = useState(false);
+  const [saved,     setSaved]     = useState(false);
+  const [subbed,    setSubbed]    = useState(false);
+  const [seekLeft,  setSeekLeft]  = useState(false);
+  const [seekRight, setSeekRight] = useState(false);
+  const [fastFwd,   setFastFwd]   = useState(false);
+  const [speed,     setSpeed]     = useState(1);
+  const [showSpeed, setShowSpeed] = useState(false);
+  const [showCom,   setShowCom]   = useState(false);
+  const [isFull,    setIsFull]    = useState(false);
+  const [showDesc,  setShowDesc]  = useState(false);
+  const [donating,  setDonating]  = useState(false);
+  const [donateAmt, setDonateAmt] = useState("2000");
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
     const v = videoRef.current;
-    if (v && settings.autoplay) v.play().then(() => setPlaying(true)).catch(() => {});
+    if (v && settings.autoplay) v.play().then(()=>setPlaying(true)).catch(()=>{});
     return () => { document.body.style.overflow = ""; };
   }, [settings.autoplay]);
 
-  /* Fullscreen API */
   useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
+    const h = () => setIsFull(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", h);
+    return () => document.removeEventListener("fullscreenchange", h);
   }, []);
 
-  const toggleFullscreen = useCallback(async () => {
-    const el = containerRef.current;
-    if (!el) return;
+  const toggleFull = useCallback(async () => {
+    const el = contRef.current; if (!el) return;
     if (!document.fullscreenElement) { try { await el.requestFullscreen(); } catch{} }
     else { try { await document.exitFullscreen(); } catch{} }
-  }, []);
-
-  /* PiP */
-  const togglePiP = useCallback(async () => {
-    const v = videoRef.current; if (!v) return;
-    try {
-      if (document.pictureInPictureElement) await document.exitPictureInPicture();
-      else await v.requestPictureInPicture();
-    } catch { /* silent */ }
   }, []);
 
   const resetCtrl = useCallback(() => {
     setShowCtrl(true);
     if (ctrlTimer.current) clearTimeout(ctrlTimer.current);
-    ctrlTimer.current = setTimeout(() => setShowCtrl(false), 3000);
+    ctrlTimer.current = setTimeout(()=>setShowCtrl(false), 3200);
   }, []);
-
   useEffect(() => {
     resetCtrl();
     return () => { if (ctrlTimer.current) clearTimeout(ctrlTimer.current); };
@@ -404,156 +354,156 @@ function NexusPlayer({
 
   const togglePlay = useCallback(() => {
     const v = videoRef.current; if (!v) return;
-    if (v.paused) { v.play().then(() => setPlaying(true)).catch(() => {}); }
-    else          { v.pause(); setPlaying(false); }
+    if (v.paused) v.play().then(()=>setPlaying(true)).catch(()=>{});
+    else { v.pause(); setPlaying(false); }
     resetCtrl();
   }, [resetCtrl]);
 
-  const seek = useCallback((delta:number) => {
+  const seek = useCallback((d:number) => {
     const v = videoRef.current; if (!v) return;
-    v.currentTime = Math.max(0, Math.min(v.duration||0, v.currentTime+delta));
-    if (delta < 0) { setSeekLeft(true);  setTimeout(()=>setSeekLeft(false),650); }
-    else           { setSeekRight(true); setTimeout(()=>setSeekRight(false),650); }
+    v.currentTime = Math.max(0,Math.min(v.duration||0, v.currentTime+d));
+    if (d<0){setSeekLeft(true);setTimeout(()=>setSeekLeft(false),650);}
+    else   {setSeekRight(true);setTimeout(()=>setSeekRight(false),650);}
     resetCtrl();
   }, [resetCtrl]);
 
-  const handleVideoTap = useCallback((e:React.MouseEvent<HTMLDivElement>) => {
-    if (showSpeed || showComments) return;
+  const handleTap = useCallback((e:React.MouseEvent<HTMLDivElement>) => {
+    if (showSpeed||showCom) return;
     const now = Date.now();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const side: "left"|"right" = e.clientX - rect.left < rect.width/2 ? "left" : "right";
-    if (now - lastTap.current < 320) {
-      if (tapTimer.current) { clearTimeout(tapTimer.current); tapTimer.current=null; }
-      seek(side==="right" ? 10 : -10);
-      lastTap.current = 0; return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const side = e.clientX-r.left < r.width/2 ? "left" : "right";
+    if (now-lastTap.current < 320) {
+      if (tapTimer.current){clearTimeout(tapTimer.current);tapTimer.current=null;}
+      seek(side==="right"?10:-10); lastTap.current=0; return;
     }
-    lastTap.current = now;
-    tapTimer.current = setTimeout(() => { togglePlay(); lastTap.current=0; }, 330);
-  }, [seek, togglePlay, showSpeed, showComments]);
+    lastTap.current=now;
+    tapTimer.current=setTimeout(()=>{togglePlay();lastTap.current=0;},330);
+  }, [seek,togglePlay,showSpeed,showCom]);
 
-  /* long-press = 2× speed */
-  const startHold = useCallback(() => {
-    longHold.current = setTimeout(() => {
-      const v = videoRef.current; if (v) v.playbackRate = 2;
-      setFastFwd(true);
-    }, 500);
-  }, []);
-  const endHold = useCallback(() => {
-    if (longHold.current) clearTimeout(longHold.current);
-    const v = videoRef.current; if (v) v.playbackRate = speed;
-    setFastFwd(false);
-  }, [speed]);
+  const startHold = useCallback(()=>{
+    longHold.current=setTimeout(()=>{
+      const v=videoRef.current;if(v)v.playbackRate=2;setFastFwd(true);
+    },500);
+  },[]);
+  const endHold = useCallback(()=>{
+    if(longHold.current)clearTimeout(longHold.current);
+    const v=videoRef.current;if(v)v.playbackRate=speed;setFastFwd(false);
+  },[speed]);
 
-  const handleScrub = useCallback((val:number) => {
-    const v = videoRef.current;
-    if (v && isFinite(v.duration)) {
-      v.currentTime = val * v.duration;
-      setProgress(val); setCurTime(v.currentTime);
-    }
+  const scrub = useCallback((val:number)=>{
+    const v=videoRef.current;
+    if(v&&isFinite(v.duration)){v.currentTime=val*v.duration;setProgress(val);setCurTime(v.currentTime);}
     resetCtrl();
-  }, [resetCtrl]);
+  },[resetCtrl]);
 
-  const applySpeed = useCallback((s:number) => {
-    const v = videoRef.current; if (v) v.playbackRate = s;
-    setSpeed(s);
-  }, []);
+  const applySpeed = useCallback((s:number)=>{
+    const v=videoRef.current;if(v)v.playbackRate=s;setSpeed(s);
+  },[]);
 
-  const handleShare = useCallback(async () => {
-    try {
-      if (navigator.share) await navigator.share({ title:video.caption||"OTube", url:window.location.href });
-      else await navigator.clipboard.writeText(window.location.href);
-    } catch { /* silent */ }
-    setShared(true); setTimeout(()=>setShared(false),2000);
-  }, [video.caption]);
+  const handleShare = useCallback(async()=>{
+    try{if(navigator.share)await navigator.share({title:video.caption||"OTube",url:window.location.href});
+    else await navigator.clipboard.writeText(window.location.href);}catch{}
+    setShared(true);setTimeout(()=>setShared(false),2000);
+  },[video.caption]);
 
-  const videoArea = theaterMode
-    ? { width:"100%", height:"auto", aspectRatio:"16/9" }
-    : { width:"100%", height:"100%" };
+  /* Icon button helper */
+  const IBtn = ({ onClick, active=false, activeColor=T.cyan, children, label }:
+    { onClick:()=>void; active?:boolean; activeColor?:string; children:React.ReactNode; label:string }) => (
+    <motion.button whileTap={{scale:0.72}}
+      onClick={e=>{e.stopPropagation();onClick();}}
+      className="flex flex-col items-center gap-0.5">
+      <div style={{
+        width:40,height:40,flexShrink:0,
+        background: active?`${activeColor}22`:"rgba(0,0,0,0.5)",
+        backdropFilter:"blur(10px)",
+        border: active?`1px solid ${activeColor}55`:"1px solid rgba(255,255,255,0.1)",
+        boxShadow: active?`0 0 14px ${activeColor}44`:"none",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))",
+      }}>
+        {children}
+      </div>
+      <span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontWeight:700,letterSpacing:"0.05em"}}>
+        {label}
+      </span>
+    </motion.button>
+  );
 
   return (
-    <motion.div ref={containerRef}
-      initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-      transition={{ duration:0.18 }}
+    <motion.div ref={contRef}
+      initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+      transition={{duration:0.18}}
       className="fixed inset-0 z-[9999] flex flex-col"
-      style={{ background: settings.cinemaMode ? "#000" : "#020107" }}
+      style={{ background: settings.cinemaMode?"#000":"#03000a" }}
       onMouseMove={resetCtrl} onTouchMove={resetCtrl}
     >
-      {/* ── Video area ── */}
-      <div
-        className="relative flex-1 flex items-center justify-center select-none overflow-hidden"
-        style={theaterMode ? { flex:"none" } : { flex:1 }}
-        onClick={handleVideoTap}
+      {/* Video */}
+      <div className="relative flex-1 flex items-center justify-center select-none"
+        onClick={handleTap}
         onTouchStart={startHold} onTouchEnd={endHold}
-        onMouseDown={startHold} onMouseUp={endHold}
-      >
+        onMouseDown={startHold} onMouseUp={endHold}>
         <video
           ref={videoRef}
-          src={video.videoUrl ?? undefined}
-          poster={video.thumbnailUrl ?? undefined}
-          muted={muted}
-          playsInline
-          loop={settings.loop}
-          style={{ objectFit:"contain", ...videoArea }}
-          onTimeUpdate={() => {
-            const v = videoRef.current;
-            if (v && isFinite(v.duration) && v.duration > 0) {
-              setCurTime(v.currentTime); setProgress(v.currentTime / v.duration);
-            }
+          src={video.videoUrl??undefined}
+          poster={video.thumbnailUrl??undefined}
+          muted={muted} playsInline loop={settings.loop}
+          style={{objectFit:"contain",width:"100%",height:"100%"}}
+          onTimeUpdate={()=>{
+            const v=videoRef.current;
+            if(v&&isFinite(v.duration)&&v.duration>0){setCurTime(v.currentTime);setProgress(v.currentTime/v.duration);}
           }}
-          onLoadedMetadata={() => setDuration(videoRef.current?.duration??0)}
-          onEnded={() => setPlaying(false)}
+          onLoadedMetadata={()=>setDuration(videoRef.current?.duration??0)}
+          onEnded={()=>setPlaying(false)}
         />
-        <SeekFlash side="left"  visible={seekLeft}  />
-        <SeekFlash side="right" visible={seekRight} />
+        <SeekFlash side="left"  visible={seekLeft}/>
+        <SeekFlash side="right" visible={seekRight}/>
 
         {/* 2× badge */}
         <AnimatePresence>
           {fastFwd && (
             <motion.div initial={{opacity:0,scale:0.7}} animate={{opacity:1,scale:1}} exit={{opacity:0}}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ padding:"8px 20px",borderRadius:12,
-                background:"rgba(0,0,0,0.65)",backdropFilter:"blur(12px)",
-                border:"1px solid rgba(255,255,255,0.15)" }}>
-              <span style={{ fontSize:18,fontWeight:900,color:"#fbbf24" }}>2× TEZLIK</span>
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none px-5 py-2"
+              style={{ background:"rgba(0,0,0,0.7)",backdropFilter:"blur(12px)",
+                border:`1px solid ${T.orange}55` }}>
+              <span style={{fontSize:18,fontWeight:900,color:T.orange,letterSpacing:"0.12em"}}>2× TEZLIK</span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Speed menu */}
         <AnimatePresence>
-          {showSpeed && <SpeedMenu speed={speed} onSpeed={applySpeed} onClose={()=>setShowSpeed(false)}/>}
+          {showSpeed && <SpeedPicker speed={speed} onSpeed={applySpeed} onClose={()=>setShowSpeed(false)}/>}
+        </AnimatePresence>
+        <AnimatePresence>
+          {showCom && <CommentsPanel onClose={()=>setShowCom(false)}/>}
         </AnimatePresence>
 
-        {/* Comments panel */}
-        <AnimatePresence>
-          {showComments && <CommentsPanel onClose={()=>setShowComments(false)}/>}
-        </AnimatePresence>
-
-        {/* Controls overlay */}
+        {/* Controls */}
         <AnimatePresence>
           {showCtrl && (
             <motion.div key="ctrls"
               initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
               transition={{duration:0.18}}
-              className="absolute inset-0 pointer-events-none"
-            >
-              {/* ── TOP ── */}
+              className="absolute inset-0 pointer-events-none">
+
+              {/* TOP bar */}
               <div className="absolute top-0 inset-x-0 pointer-events-auto"
-                style={{ background:"linear-gradient(to bottom,rgba(0,0,0,0.82),transparent)",
-                  padding:"14px 12px 36px" }}>
+                style={{ background:"linear-gradient(to bottom,rgba(0,0,0,0.85),transparent)",
+                  padding:"14px 12px 40px" }}>
                 <div className="flex items-center gap-2">
-                  <motion.button whileTap={{scale:0.84}} onClick={onClose}
-                    style={{ width:40,height:40,borderRadius:"50%",
-                      background:"rgba(0,0,0,0.5)",backdropFilter:"blur(12px)",
-                      border:"1px solid rgba(255,255,255,0.12)",
-                      display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                    <ArrowLeft className="w-5 h-5 text-white"/>
+                  <motion.button whileTap={{scale:0.85}} onClick={onClose}
+                    style={{ width:40,height:40,flexShrink:0,
+                      background:"rgba(0,0,0,0.55)",backdropFilter:"blur(12px)",
+                      border:`1px solid ${T.cyan}33`,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      clipPath:"polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))" }}>
+                    <ArrowLeft style={{width:18,height:18,color:T.cyan}}/>
                   </motion.button>
 
                   <div className="flex-1 min-w-0">
                     {settings.showTitle && <>
                       <p className="text-white font-black text-[13px] truncate">{video.caption||"OTube Video"}</p>
-                      <p className="text-white/38 text-[10px] truncate mt-0.5">
+                      <p className="text-[10px] truncate mt-0.5"
+                        style={{color:"rgba(255,255,255,0.38)"}}>
                         {video.author.displayName} · {fmt(video.viewsCount)} ko'rish
                       </p>
                     </>}
@@ -561,313 +511,222 @@ function NexusPlayer({
 
                   {/* Subscribe */}
                   <motion.button whileTap={{scale:0.88}}
-                    onClick={()=>setSubscribed(s=>!s)}
-                    style={{ padding:"5px 10px",borderRadius:10,flexShrink:0,
-                      background: subscribed ? "rgba(255,255,255,0.12)" : "rgba(239,68,68,0.85)",
-                      border: subscribed ? "1px solid rgba(255,255,255,0.18)" : "1px solid rgba(239,68,68,0.5)",
-                      boxShadow: subscribed ? "none" : "0 0 18px rgba(239,68,68,0.4)" }}>
-                    <span style={{ fontSize:10,fontWeight:900,
-                      color: subscribed ? "rgba(255,255,255,0.6)" : "white" }}>
-                      {subscribed ? "✓ Obuna" : "+ Obuna"}
+                    onClick={()=>setSubbed(s=>!s)}
+                    style={{ padding:"5px 10px",flexShrink:0,
+                      background: subbed?"rgba(255,255,255,0.08)":`${T.orange}cc`,
+                      border: subbed?"1px solid rgba(255,255,255,0.18)":`1px solid ${T.orange}`,
+                      boxShadow: subbed?"none":`0 0 16px ${T.orange}55`,
+                      clipPath:"polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)" }}>
+                    <span style={{fontSize:10,fontWeight:900,color:subbed?"rgba(255,255,255,0.55)":"white",letterSpacing:"0.05em"}}>
+                      {subbed?"✓ OBUNA":"+ OBUNA"}
                     </span>
                   </motion.button>
 
-                  {/* Theater mode */}
-                  <motion.button whileTap={{scale:0.82}}
-                    onClick={()=>setTheaterMode(t=>!t)}
-                    style={{ width:38,height:38,borderRadius:"50%",flexShrink:0,
-                      background: theaterMode ? "rgba(239,68,68,0.18)" : "rgba(0,0,0,0.5)",
-                      backdropFilter:"blur(12px)",
-                      border: theaterMode ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                      display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    {theaterMode
-                      ? <Minimize2 className="w-4 h-4 text-red-400"/>
-                      : <Maximize2 className="w-4 h-4 text-white/70"/>}
+                  {/* Fullscreen */}
+                  <motion.button whileTap={{scale:0.85}} onClick={toggleFull}
+                    style={{ width:38,height:38,flexShrink:0,
+                      background:"rgba(0,0,0,0.5)",backdropFilter:"blur(10px)",
+                      border:`1px solid ${T.cyan}28`,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      clipPath:"polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px))" }}>
+                    {isFull
+                      ? <Minimize2 style={{width:15,height:15,color:T.cyan}}/>
+                      : <Maximize2 style={{width:15,height:15,color:"rgba(255,255,255,0.6)"}}/>}
                   </motion.button>
                 </div>
               </div>
 
-              {/* ── CENTER: paused ── */}
+              {/* CENTER paused */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <AnimatePresence>
                   {!playing && (
                     <motion.div key="ppause"
-                      initial={{opacity:0,scale:0.55}} animate={{opacity:1,scale:1}}
-                      exit={{opacity:0,scale:1.4}} transition={{duration:0.14}}
-                      style={{ width:76,height:76,borderRadius:"50%",
-                        background:"rgba(0,0,0,0.5)",backdropFilter:"blur(18px)",
-                        border:"1.5px solid rgba(255,255,255,0.18)",
+                      initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}}
+                      exit={{opacity:0,scale:1.4}} transition={{duration:0.15}}
+                      style={{ width:74,height:74,
+                        background:"rgba(0,0,0,0.55)",backdropFilter:"blur(18px)",
+                        border:`2px solid ${T.cyan}44`,
+                        boxShadow:`0 0 40px ${T.cyan}33`,
                         display:"flex",alignItems:"center",justifyContent:"center",
-                        boxShadow:"0 0 40px rgba(239,68,68,0.35)" }}>
-                      <Play style={{ width:28,height:28,fill:"white",color:"white",marginLeft:4 }}/>
+                        clipPath:"polygon(0 8px,8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px))" }}>
+                      <Play style={{width:28,height:28,fill:T.cyan,color:T.cyan,marginLeft:4}}/>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {/* ── RIGHT SIDEBAR: action buttons ── */}
+              {/* RIGHT sidebar */}
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-auto flex flex-col gap-2.5">
-                {/* Like */}
-                <motion.button whileTap={{scale:0.75}}
-                  onClick={e=>{e.stopPropagation();setLiked(l=>!l);if(disliked)setDisliked(false);}}
-                  className="flex flex-col items-center gap-0.5">
-                  <div style={{ width:40,height:40,borderRadius:"50%",
-                    background: liked ? "rgba(239,68,68,0.25)" : "rgba(0,0,0,0.45)",
-                    backdropFilter:"blur(10px)",
-                    border: liked ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(255,255,255,0.1)",
-                    display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <ThumbsUp style={{ width:16,height:16,
-                      fill:liked?"#f87171":"none", color:liked?"#f87171":"rgba(255,255,255,0.75)" }}/>
-                  </div>
-                  <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.4)",fontWeight:700 }}>
-                    {fmt(video.likesCount+(liked?1:0))}
-                  </span>
-                </motion.button>
-
-                {/* Dislike */}
-                <motion.button whileTap={{scale:0.75}}
-                  onClick={e=>{e.stopPropagation();setDisliked(d=>!d);if(liked)setLiked(false);}}
-                  className="flex flex-col items-center gap-0.5">
-                  <div style={{ width:40,height:40,borderRadius:"50%",
-                    background: disliked ? "rgba(239,68,68,0.12)" : "rgba(0,0,0,0.45)",
-                    backdropFilter:"blur(10px)",
-                    border: disliked ? "1px solid rgba(239,68,68,0.25)" : "1px solid rgba(255,255,255,0.1)",
-                    display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <ThumbsDown style={{ width:16,height:16,
-                      fill:disliked?"#f87171":"none", color:disliked?"#f87171":"rgba(255,255,255,0.5)" }}/>
-                  </div>
-                  <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.25)",fontWeight:700 }}>Ko'rmadim</span>
-                </motion.button>
-
-                {/* Share */}
-                <motion.button whileTap={{scale:0.75}}
-                  onClick={e=>{e.stopPropagation();void handleShare();}}
-                  className="flex flex-col items-center gap-0.5">
-                  <div style={{ width:40,height:40,borderRadius:"50%",
-                    background: shared ? "rgba(16,185,129,0.25)" : "rgba(0,0,0,0.45)",
-                    backdropFilter:"blur(10px)",
-                    border: shared ? "1px solid rgba(16,185,129,0.5)" : "1px solid rgba(255,255,255,0.1)",
-                    display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    {shared ? <Check className="w-4 h-4 text-emerald-400"/>
-                             : <Share2 className="w-4 h-4 text-white/75"/>}
-                  </div>
-                  <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.35)",fontWeight:700 }}>Ulashish</span>
-                </motion.button>
-
-                {/* Save */}
-                <motion.button whileTap={{scale:0.75}}
-                  onClick={e=>{e.stopPropagation();setSaved(s=>!s);}}
-                  className="flex flex-col items-center gap-0.5">
-                  <div style={{ width:40,height:40,borderRadius:"50%",
-                    background: saved ? "rgba(168,85,247,0.22)" : "rgba(0,0,0,0.45)",
-                    backdropFilter:"blur(10px)",
-                    border: saved ? "1px solid rgba(168,85,247,0.45)" : "1px solid rgba(255,255,255,0.1)",
-                    display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <Bookmark style={{ width:16,height:16,
-                      fill:saved?"#c084fc":"none", color:saved?"#c084fc":"rgba(255,255,255,0.65)" }}/>
-                  </div>
-                  <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.35)",fontWeight:700 }}>Saqlash</span>
-                </motion.button>
-
-                {/* Comments */}
-                <motion.button whileTap={{scale:0.75}}
-                  onClick={e=>{e.stopPropagation();setShowComments(c=>!c);}}
-                  className="flex flex-col items-center gap-0.5">
-                  <div style={{ width:40,height:40,borderRadius:"50%",
-                    background:"rgba(0,0,0,0.45)",backdropFilter:"blur(10px)",
-                    border:"1px solid rgba(255,255,255,0.1)",
-                    display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <MessageCircle className="w-4 h-4 text-white/65"/>
-                  </div>
-                  <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.35)",fontWeight:700 }}>Izohlar</span>
-                </motion.button>
-
-                {/* Donate */}
-                <motion.button whileTap={{scale:0.75}}
-                  onClick={e=>{e.stopPropagation();setDonating(d=>!d);}}
-                  className="flex flex-col items-center gap-0.5">
-                  <div style={{ width:40,height:40,borderRadius:"50%",
-                    background: donating ? "rgba(245,158,11,0.22)" : "rgba(0,0,0,0.45)",
-                    backdropFilter:"blur(10px)",
-                    border: donating ? "1px solid rgba(245,158,11,0.45)" : "1px solid rgba(255,255,255,0.1)",
-                    display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <Star style={{ width:16,height:16,
-                      fill:donating?"#fbbf24":"none", color:donating?"#fbbf24":"rgba(255,255,255,0.55)" }}/>
-                  </div>
-                  <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.35)",fontWeight:700 }}>Yordam</span>
-                </motion.button>
+                <IBtn onClick={()=>{setLiked(l=>!l);if(disliked)setDisliked(false);}}
+                  active={liked} activeColor={T.cyan} label={fmt(video.likesCount+(liked?1:0))}>
+                  <ThumbsUp style={{width:15,height:15,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.7)"}}/>
+                </IBtn>
+                <IBtn onClick={()=>{setDisliked(d=>!d);if(liked)setLiked(false);}}
+                  active={disliked} activeColor={T.orange} label="Ko'rmadim">
+                  <ThumbsDown style={{width:15,height:15,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.55)"}}/>
+                </IBtn>
+                <IBtn onClick={()=>void handleShare()} active={shared} activeColor="#10b981" label="Ulashish">
+                  {shared?<Check style={{width:15,height:15,color:"#10b981"}}/>
+                         :<Share2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>}
+                </IBtn>
+                <IBtn onClick={()=>setSaved(s=>!s)} active={saved} activeColor={T.violet} label="Saqlash">
+                  <Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.65)"}}/>
+                </IBtn>
+                <IBtn onClick={()=>setShowCom(c=>!c)} label="Izoh">
+                  <MessageCircle style={{width:15,height:15,color:"rgba(255,255,255,0.65)"}}/>
+                </IBtn>
+                <IBtn onClick={()=>setDonating(d=>!d)} active={donating} activeColor={T.orange} label="Yordam">
+                  <Star style={{width:15,height:15,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.55)"}}/>
+                </IBtn>
               </div>
 
-              {/* ── BOTTOM ── */}
+              {/* BOTTOM controls */}
               <div className="absolute bottom-0 inset-x-0 pointer-events-auto"
                 style={{ background:"linear-gradient(to top,rgba(0,0,0,0.92),transparent)",
-                  padding:"38px 12px 18px" }}>
+                  padding:"40px 12px 16px" }}>
 
-                {/* Donation panel */}
+                {/* Donate panel */}
                 <AnimatePresence>
                   {donating && (
                     <motion.div
-                      initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} exit={{opacity:0,y:12}}
-                      className="mb-3 p-3 rounded-[14px]"
+                      initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}
+                      className="mb-3 p-3"
                       onClick={e=>e.stopPropagation()}
-                      style={{ background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.25)" }}>
-                      <p style={{ fontSize:11,fontWeight:800,color:"#fbbf24",marginBottom:8 }}>
-                        🌟 Super Thanks — {video.author.displayName}ga yordam bering
+                      style={{ background:"rgba(0,0,0,0.7)",border:`1px solid ${T.orange}44`,
+                        backdropFilter:"blur(16px)" }}>
+                      <p style={{fontSize:11,fontWeight:800,color:T.orange,marginBottom:8,letterSpacing:"0.08em"}}>
+                        ⭐ {video.author.displayName}GA YORDAM
                       </p>
                       <div className="flex gap-2 mb-2">
-                        {["500","2000","10000","50000"].map(a => (
-                          <motion.button key={a} whileTap={{scale:0.88}}
-                            onClick={()=>setDonateAmt(a)}
-                            style={{ flex:1,padding:"5px 0",borderRadius:8,textAlign:"center",
-                              background: donateAmt===a ? "rgba(245,158,11,0.35)" : "rgba(255,255,255,0.06)",
-                              border: donateAmt===a ? "1px solid rgba(245,158,11,0.6)" : "1px solid rgba(255,255,255,0.08)" }}>
-                            <span style={{ fontSize:10,fontWeight:900,color:donateAmt===a?"#fbbf24":"rgba(255,255,255,0.45)" }}>
+                        {["500","2000","10000","50000"].map(a=>(
+                          <button key={a} onClick={()=>setDonateAmt(a)}
+                            style={{flex:1,padding:"5px 0",textAlign:"center",
+                              background:donateAmt===a?`${T.orange}33`:"rgba(255,255,255,0.04)",
+                              border:donateAmt===a?`1px solid ${T.orange}88`:"1px solid rgba(255,255,255,0.07)"}}>
+                            <span style={{fontSize:10,fontWeight:900,color:donateAmt===a?T.orange:"rgba(255,255,255,0.4)"}}>
                               {Number(a)>=1000?`${Number(a)/1000}K`:a}
                             </span>
-                          </motion.button>
+                          </button>
                         ))}
                       </div>
-                      <motion.button whileTap={{scale:0.95}}
-                        onClick={()=>setDonating(false)}
-                        className="w-full py-2 rounded-[10px] flex items-center justify-center gap-2"
-                        style={{ background:"linear-gradient(90deg,#f59e0b,#d97706)",
-                          boxShadow:"0 0 18px rgba(245,158,11,0.35)" }}>
-                        <Star className="w-3.5 h-3.5 text-white" style={{ fill:"white" }}/>
-                        <span style={{ fontSize:12,fontWeight:900,color:"white" }}>
+                      <button onClick={()=>setDonating(false)}
+                        className="w-full py-2 flex items-center justify-center gap-2"
+                        style={{background:T.gOrange}}>
+                        <span style={{fontSize:12,fontWeight:900,color:"white"}}>
                           {donateAmt} so'm jo'natish
                         </span>
-                      </motion.button>
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
                 {/* Description toggle */}
-                <button
-                  onClick={e=>{e.stopPropagation();setShowDesc(d=>!d);}}
-                  className="w-full flex items-center justify-between mb-2.5"
-                  style={{ background:"rgba(255,255,255,0.04)",borderRadius:10,
-                    padding:"6px 10px",border:"1px solid rgba(255,255,255,0.06)" }}>
-                  <span style={{ fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700 }}>
-                    Tavsif ko'rsatish
-                  </span>
-                  {showDesc
-                    ? <ChevronDown className="w-3.5 h-3.5 text-white/35"/>
-                    : <ChevronUp   className="w-3.5 h-3.5 text-white/35"/>}
+                <button onClick={e=>{e.stopPropagation();setShowDesc(d=>!d);}}
+                  className="w-full flex items-center justify-between mb-2"
+                  style={{padding:"5px 10px",
+                    background:"rgba(0,229,255,0.04)",
+                    border:`1px solid ${T.cyan}18`}}>
+                  <span style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>TAVSIF</span>
+                  {showDesc?<ChevronDown style={{width:12,height:12,color:T.cyan}}/>
+                            :<ChevronRight style={{width:12,height:12,color:T.cyan}}/>}
                 </button>
                 <AnimatePresence>
                   {showDesc && (
-                    <motion.div
-                      initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}}
+                    <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}}
                       exit={{height:0,opacity:0}}
                       className="overflow-hidden mb-2"
                       onClick={e=>e.stopPropagation()}>
-                      <p style={{ fontSize:11,color:"rgba(255,255,255,0.5)",lineHeight:1.6,
-                        padding:"6px 10px",background:"rgba(255,255,255,0.03)",
-                        borderRadius:10,marginBottom:6 }}>
-                        {video.caption || "OTube video platformasida joylashtirilgan kontent."}
-                        {" "}Ko'rsatkichlar: {fmt(video.viewsCount)} ko'rish, {fmt(video.likesCount)} like.
-                        {" "}Muallif: @{video.author.username}
+                      <p style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.6,
+                        padding:"6px 10px",background:"rgba(0,229,255,0.04)",
+                        borderLeft:`2px solid ${T.cyan}55`,marginBottom:6}}>
+                        {video.caption} · @{video.author.username} ·{" "}
+                        {fmt(video.viewsCount)} ko'rish · {fmt(video.likesCount)} like
                       </p>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                {/* Quality badge + speed */}
+                {/* Quality + Speed badges */}
                 <div className="flex justify-between items-center mb-2">
-                  <span style={{ fontSize:9,fontWeight:800,letterSpacing:"0.08em",
-                    color:"rgba(255,255,255,0.4)",background:"rgba(255,255,255,0.06)",
-                    padding:"2px 8px",borderRadius:4,border:"1px solid rgba(255,255,255,0.08)" }}>
+                  <span style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",
+                    background:"rgba(255,255,255,0.05)",padding:"2px 8px",letterSpacing:"0.08em"}}>
                     {settings.quality}
                   </span>
-                  <span style={{ fontSize:9,fontWeight:800,
-                    color: speed!==1 ? "#fbbf24" : "rgba(255,255,255,0.3)",
-                    background: speed!==1 ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.04)",
-                    padding:"2px 8px",borderRadius:4,border: speed!==1 ? "1px solid rgba(245,158,11,0.3)" : "1px solid rgba(255,255,255,0.07)" }}>
-                    {speed}× tezlik
+                  <span style={{fontSize:9,fontWeight:800,letterSpacing:"0.08em",
+                    color:speed!==1?T.orange:"rgba(255,255,255,0.28)",
+                    background:speed!==1?`${T.orange}18`:"rgba(255,255,255,0.04)",
+                    padding:"2px 8px"}}>
+                    {speed}× TEZLIK
                   </span>
                 </div>
 
                 {/* Scrubber */}
-                <div className="relative flex items-center h-5 mb-2.5" onClick={e=>e.stopPropagation()}>
-                  <div className="absolute inset-x-0 h-[3px] rounded-full"
-                    style={{ background:"rgba(255,255,255,0.1)" }}>
-                    <div className="h-full rounded-full"
-                      style={{ width:`${progress*100}%`,
-                        background:"linear-gradient(90deg,#ef4444,#a855f7)" }}/>
+                <div className="relative flex items-center h-5 mb-2.5"
+                  onClick={e=>e.stopPropagation()}>
+                  <div className="absolute inset-x-0 h-[2px]"
+                    style={{background:"rgba(255,255,255,0.1)"}}>
+                    <div className="h-full"
+                      style={{width:`${progress*100}%`,
+                        background:`linear-gradient(90deg,${T.cyan},${T.violet})`}}/>
                   </div>
                   <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
-                    style={{ left:`calc(${progress*100}% - 7px)`,
-                      width:14,height:14,borderRadius:"50%",background:"white",
-                      boxShadow:"0 0 10px #ef4444aa, 0 2px 6px rgba(0,0,0,0.6)" }}/>
+                    style={{left:`calc(${progress*100}% - 6px)`,
+                      width:12,height:12,background:T.cyan,
+                      boxShadow:`0 0 10px ${T.cyan}aa`,
+                      clipPath:"polygon(50% 0%,100% 50%,50% 100%,0% 50%)"}}/>
                   <input type="range" min={0} max={1} step={0.001} value={progress}
-                    onChange={e=>handleScrub(Number(e.target.value))}
+                    onChange={e=>scrub(Number(e.target.value))}
                     className="absolute inset-0 w-full opacity-0 cursor-pointer"
                     onClick={e=>e.stopPropagation()}/>
                 </div>
 
-                {/* Controls row */}
+                {/* Bottom row */}
                 <div className="flex items-center gap-2" onClick={e=>e.stopPropagation()}>
-                  {/* Play/Pause */}
-                  <motion.button whileTap={{scale:0.8}}
-                    onClick={togglePlay}
-                    style={{ width:46,height:46,borderRadius:"50%",flexShrink:0,
-                      background:"linear-gradient(135deg,#ef4444cc,#dc2626cc)",
-                      boxShadow:"0 0 22px #ef444455",
-                      display:"flex",alignItems:"center",justifyContent:"center" }}>
+                  <motion.button whileTap={{scale:0.82}} onClick={togglePlay}
+                    style={{ width:44,height:44,flexShrink:0,
+                      background:"rgba(0,0,0,0.55)",backdropFilter:"blur(12px)",
+                      border:`2px solid ${T.cyan}66`,
+                      boxShadow:`0 0 18px ${T.cyan}33`,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      clipPath:"polygon(0 8px,8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px))" }}>
                     {playing
-                      ? <Pause style={{ width:18,height:18,fill:"white",color:"white" }}/>
-                      : <Play  style={{ width:18,height:18,fill:"white",color:"white",marginLeft:2 }}/>}
+                      ? <Pause style={{width:17,height:17,fill:T.cyan,color:T.cyan}}/>
+                      : <Play  style={{width:17,height:17,fill:T.cyan,color:T.cyan,marginLeft:2}}/>}
                   </motion.button>
 
                   {/* Restart */}
-                  <motion.button whileTap={{scale:0.8}}
-                    onClick={()=>{const v=videoRef.current;if(v){v.currentTime=0;setProgress(0);setCurTime(0);}}}
-                    style={{ width:36,height:36,borderRadius:"50%",
-                      background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.09)",
-                      display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <RotateCcw className="w-3.5 h-3.5 text-white/55"/>
-                  </motion.button>
+                  <button onClick={()=>{const v=videoRef.current;if(v){v.currentTime=0;setProgress(0);setCurTime(0);}}}
+                    style={{width:34,height:34,flexShrink:0,
+                      background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <RotateCcw style={{width:13,height:13,color:"rgba(255,255,255,0.45)"}}/>
+                  </button>
 
-                  {/* Time */}
-                  <span className="text-white/45 text-[10px] font-mono tabular-nums flex-shrink-0">
-                    {fmtTime(curTime)} / {fmtTime(duration)}
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontFamily:"monospace",flexShrink:0}}>
+                    {fmtTime(curTime)}/{fmtTime(duration)}
                   </span>
 
                   <div className="flex-1"/>
 
-                  {/* Speed selector */}
-                  <motion.button whileTap={{scale:0.8}}
-                    onClick={()=>setShowSpeed(s=>!s)}
-                    style={{ width:36,height:36,borderRadius:"50%",
-                      background: showSpeed ? "rgba(245,158,11,0.18)" : "rgba(255,255,255,0.06)",
-                      border: showSpeed ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(255,255,255,0.09)",
-                      display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <Gauge className="w-3.5 h-3.5"
-                      style={{ color: showSpeed ? "#fbbf24" : "rgba(255,255,255,0.5)" }}/>
-                  </motion.button>
+                  {/* Speed */}
+                  <button onClick={()=>setShowSpeed(s=>!s)}
+                    style={{width:34,height:34,flexShrink:0,
+                      background:showSpeed?`${T.orange}22`:"rgba(255,255,255,0.05)",
+                      border:showSpeed?`1px solid ${T.orange}55`:"1px solid rgba(255,255,255,0.07)",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <Gauge style={{width:14,height:14,color:showSpeed?T.orange:"rgba(255,255,255,0.45)"}}/>
+                  </button>
 
                   {/* Volume */}
-                  <motion.button whileTap={{scale:0.8}}
-                    onClick={()=>setMuted(m=>!m)}
-                    style={{ width:36,height:36,borderRadius:"50%",
-                      background: muted ? "rgba(255,255,255,0.06)" : "rgba(239,68,68,0.15)",
-                      border: muted ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(239,68,68,0.35)",
-                      display:"flex",alignItems:"center",justifyContent:"center" }}>
+                  <button onClick={()=>setMuted(m=>!m)}
+                    style={{width:34,height:34,flexShrink:0,
+                      background:muted?"rgba(255,255,255,0.05)":`${T.cyan}18`,
+                      border:muted?"1px solid rgba(255,255,255,0.07)":`1px solid ${T.cyan}44`,
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
                     {muted
-                      ? <VolumeX className="w-4 h-4 text-white/35"/>
-                      : <Volume2 className="w-4 h-4 text-red-400"/>}
-                  </motion.button>
-
-                  {/* Fullscreen */}
-                  <motion.button whileTap={{scale:0.8}}
-                    onClick={toggleFullscreen}
-                    style={{ width:36,height:36,borderRadius:"50%",
-                      background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.09)",
-                      display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    {isFullscreen
-                      ? <Minimize2 className="w-3.5 h-3.5 text-white/55"/>
-                      : <Maximize2 className="w-3.5 h-3.5 text-white/55"/>}
-                  </motion.button>
+                      ? <VolumeX style={{width:14,height:14,color:"rgba(255,255,255,0.3)"}}/>
+                      : <Volume2 style={{width:14,height:14,color:T.cyan}}/>}
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -879,262 +738,236 @@ function NexusPlayer({
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Settings + Monetization drawer                          */
+/* Settings Drawer — BROADCAST STYLE                       */
 /* ─────────────────────────────────────────────────────── */
-function SectionLabel({ children }: { children:React.ReactNode }) {
+function Toggle({ on, onToggle, accent=T.cyan }:
+  { on:boolean; onToggle:()=>void; accent?:string }) {
   return (
-    <p style={{ fontSize:10,fontWeight:900,letterSpacing:"0.1em",
-      color:"rgba(239,68,68,0.65)",textTransform:"uppercase",marginBottom:6 }}>
-      {children}
-    </p>
+    <motion.button whileTap={{scale:0.88}} onClick={onToggle}
+      style={{position:"relative",width:44,height:24,flexShrink:0,
+        background:on?`${accent}cc`:"rgba(255,255,255,0.08)",
+        border:on?`1px solid ${accent}`:"1px solid rgba(255,255,255,0.1)",
+        boxShadow:on?`0 0 12px ${accent}55`:"none",transition:"all 0.2s",borderRadius:0}}>
+      <motion.div animate={{x:on?22:2}}
+        transition={{type:"spring",damping:18,stiffness:280}}
+        style={{position:"absolute",top:2,width:18,height:18,
+          background:"white",boxShadow:"0 2px 4px rgba(0,0,0,0.3)"}}/>
+    </motion.button>
   );
 }
-function ToggleRow({
-  icon, label, sub, value, onChange,
-}: { icon:string; label:string; sub:string; value:boolean; onChange:(v:boolean)=>void }) {
+
+function TRow({ icon,label,sub,on,onToggle }:
+  { icon:string;label:string;sub:string;on:boolean;onToggle:()=>void }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3 rounded-[14px]"
-      style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)" }}>
-      <span style={{ fontSize:18,flexShrink:0 }}>{icon}</span>
+    <div className="flex items-center gap-3 py-2.5 px-3"
+      style={{background:"rgba(0,229,255,0.03)",border:`1px solid ${T.cyan}10`,marginBottom:2}}>
+      <span style={{fontSize:17,flexShrink:0}}>{icon}</span>
       <div className="flex-1 min-w-0">
-        <p style={{ fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.88)",lineHeight:1 }}>{label}</p>
-        <p style={{ fontSize:10,color:"rgba(255,255,255,0.32)",marginTop:2 }}>{sub}</p>
+        <p style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.85)",lineHeight:1}}>{label}</p>
+        <p style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:2}}>{sub}</p>
       </div>
-      <motion.button whileTap={{scale:0.88}} onClick={()=>onChange(!value)}
-        style={{ position:"relative",width:44,height:24,borderRadius:12,flexShrink:0,
-          background: value ? "linear-gradient(90deg,#ef4444,#dc2626)" : "rgba(255,255,255,0.1)",
-          border: value ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.1)",
-          boxShadow: value ? "0 0 12px rgba(239,68,68,0.3)" : "none", transition:"all 0.2s" }}>
-        <motion.div animate={{ x: value ? 21 : 2 }}
-          transition={{ type:"spring",damping:18,stiffness:280 }}
-          style={{ position:"absolute",top:2,width:19,height:19,borderRadius:"50%",
-            background:"white",boxShadow:"0 2px 4px rgba(0,0,0,0.3)" }}/>
-      </motion.button>
+      <Toggle on={on} onToggle={onToggle}/>
     </div>
   );
 }
 
-function SettingsDrawer({
-  open, onClose, settings, onSettings, monetize, onMonetize,
-}: {
-  open:boolean; onClose:()=>void;
-  settings:PlayerSettings; onSettings:(s:PlayerSettings)=>void;
-  monetize:MonetizationSettings; onMonetize:(m:MonetizationSettings)=>void;
-}) {
-  const [tab, setTab] = useState<"player"|"monetize">("player");
-  const setP = <K extends keyof PlayerSettings>(k:K, v:PlayerSettings[K]) =>
-    onSettings({ ...settings, [k]:v });
-  const setM = <K extends keyof MonetizationSettings>(k:K, v:MonetizationSettings[K]) =>
-    onMonetize({ ...monetize, [k]:v });
+function SecHead({ children }: { children:React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 mt-3 mb-1.5">
+      <div style={{width:3,height:16,background:T.gCyan}}/>
+      <span style={{fontSize:9,fontWeight:900,letterSpacing:"0.18em",color:T.cyan,textTransform:"uppercase"}}>
+        {children}
+      </span>
+    </div>
+  );
+}
 
-  /* mock revenue numbers */
-  const views = 12480;
-  const revenue = monetize.creatorMode
-    ? (views * (monetize.adsEnabled ? 0.0018 : 0) + (monetize.membershipEnabled ? 18500 : 0)).toFixed(0)
-    : "0";
+function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }:
+  { open:boolean;onClose:()=>void;settings:PlayerSettings;onSettings:(s:PlayerSettings)=>void;
+    monetize:MonetizationSettings;onMonetize:(m:MonetizationSettings)=>void; }) {
+  const [tab, setTab] = useState<"player"|"monetize">("player");
+  const sP = <K extends keyof PlayerSettings>(k:K,v:PlayerSettings[K])=>onSettings({...settings,[k]:v});
+  const sM = <K extends keyof MonetizationSettings>(k:K,v:MonetizationSettings[K])=>onMonetize({...monetize,[k]:v});
+  const views=12480;
+  const rev = monetize.creatorMode
+    ?(views*(monetize.adsEnabled?0.0018:0)+(monetize.membershipEnabled?18500:0)).toFixed(0):"0";
 
   return (
     <AnimatePresence>
       {open && (
         <>
-          <motion.div key="sd-b"
+          <motion.div key="sb"
             initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
             className="fixed inset-0 z-[8998]"
-            style={{ background:"rgba(0,0,0,0.65)",backdropFilter:"blur(6px)" }}
+            style={{background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)"}}
             onClick={onClose}/>
-          <motion.div key="sd-d"
+          <motion.div key="sd"
             initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
-            transition={{ type:"spring",damping:28,stiffness:320 }}
-            className="fixed bottom-0 left-0 right-0 z-[8999] rounded-t-[26px] overflow-hidden"
-            style={{ background:"linear-gradient(180deg,#0e0318 0%,#080211 100%)",
-              border:"1px solid rgba(239,68,68,0.15)",
-              boxShadow:"0 -24px 80px rgba(239,68,68,0.08), 0 -3px 0 rgba(239,68,68,0.18)",
-              maxHeight:"86vh" }}>
-
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div style={{ width:38,height:4,borderRadius:2,background:"rgba(255,255,255,0.12)" }}/>
-            </div>
+            transition={{type:"spring",damping:28,stiffness:320}}
+            className="fixed bottom-0 left-0 right-0 z-[8999] overflow-hidden"
+            style={{background:"#05010f",
+              borderTop:`2px solid ${T.cyan}55`,
+              boxShadow:`0 -20px 80px rgba(0,229,255,0.1)`,
+              maxHeight:"88vh"}}>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3"
-              style={{ borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
-              <div className="flex items-center gap-2">
-                <OTubeMark size={28}/>
-                <span className="text-white font-black text-[15px]">OTube Sozlamalar</span>
+            <div className="flex items-center justify-between px-5 py-3.5"
+              style={{borderBottom:`1px solid ${T.cyan}18`}}>
+              <div className="flex items-center gap-3">
+                <OTubeMark size={26}/>
+                <div>
+                  <p style={{fontSize:14,fontWeight:900,color:"white",letterSpacing:"0.05em"}}>OTUBE SOZLAMALAR</p>
+                  <p style={{fontSize:9,color:T.cyan,letterSpacing:"0.14em"}}>SIGNAL ENGINE v4</p>
+                </div>
               </div>
-              <motion.button whileTap={{scale:0.85}} onClick={onClose}
-                style={{ width:32,height:32,borderRadius:"50%",
-                  background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.09)",
-                  display:"flex",alignItems:"center",justifyContent:"center" }}>
-                <X className="w-4 h-4 text-white/60"/>
-              </motion.button>
+              <button onClick={onClose}
+                style={{width:32,height:32,background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
+                <X style={{width:14,height:14,color:T.cyan}}/>
+              </button>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-0 px-5 pt-3 pb-0"
-              style={{ borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
-              {([
-                { id:"player",   label:"🎬 O'ynatuvchi", Icon:Settings },
-                { id:"monetize", label:"💰 Monetizatsiya", Icon:DollarSign },
-              ] as const).map(({ id, label }) => (
+            <div className="flex"
+              style={{borderBottom:`1px solid ${T.cyan}18`}}>
+              {([{id:"player",label:"🎬 O'YNATUVCHI"},{id:"monetize",label:"💰 MONETIZATSIYA"}] as const)
+                .map(({id,label})=>(
                 <button key={id} onClick={()=>setTab(id)}
-                  className="flex-1 pb-3 text-center relative"
-                  style={{ fontSize:12,fontWeight:tab===id?900:600,
-                    color:tab===id?"white":"rgba(255,255,255,0.38)" }}>
+                  className="flex-1 py-3 relative text-center"
+                  style={{fontSize:10,fontWeight:900,letterSpacing:"0.1em",
+                    color:tab===id?T.cyan:"rgba(255,255,255,0.35)"}}>
                   {label}
                   {tab===id && (
-                    <motion.div layoutId="tab-indicator"
-                      className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full"
-                      style={{ background:"linear-gradient(90deg,#ef4444,#a855f7)" }}/>
+                    <motion.div layoutId="st-ind"
+                      className="absolute bottom-0 left-0 right-0 h-[2px]"
+                      style={{background:T.gCyan}}/>
                   )}
                 </button>
               ))}
             </div>
 
-            {/* Body */}
-            <div className="px-5 py-4 overflow-y-auto space-y-1.5" style={{ maxHeight:"62vh" }}>
-              {tab === "player" ? (
+            <div className="px-5 py-3 overflow-y-auto" style={{maxHeight:"64vh",scrollbarWidth:"none"}}>
+              {tab==="player" ? (
                 <>
-                  <SectionLabel>Ijro sozlamalari</SectionLabel>
-                  <ToggleRow icon="▶" label="Avtoijro" sub="Keyingi videoni avtomatik boshlash"
-                    value={settings.autoplay} onChange={v=>setP("autoplay",v)}/>
-                  <ToggleRow icon="🔁" label="Takrorlash" sub="Videoni loop qilish"
-                    value={settings.loop} onChange={v=>setP("loop",v)}/>
-                  <ToggleRow icon="🔇" label="Sukut ovoz" sub="Videolar shovqinsiz ochilsin"
-                    value={settings.muteDefault} onChange={v=>setP("muteDefault",v)}/>
-                  <ToggleRow icon="📶" label="HD oqim" sub="Yuqori sifat (ko'proq internet)"
-                    value={settings.hdStream} onChange={v=>setP("hdStream",v)}/>
-                  <ToggleRow icon="⚠️" label="Ma'lumot ogohlanishi" sub="Ko'p internet sarflanganda ogohlantir"
-                    value={settings.dataWarning} onChange={v=>setP("dataWarning",v)}/>
+                  <SecHead>Ijro sozlamalari</SecHead>
+                  <TRow icon="▶" label="Avtoijro" sub="Keyingi videoni avtomatik boshlash"
+                    on={settings.autoplay} onToggle={()=>sP("autoplay",!settings.autoplay)}/>
+                  <TRow icon="🔁" label="Takrorlash" sub="Videoni loop qilish"
+                    on={settings.loop} onToggle={()=>sP("loop",!settings.loop)}/>
+                  <TRow icon="🔇" label="Sukut ovoz" sub="Videolar shovqinsiz ochilsin"
+                    on={settings.muteDefault} onToggle={()=>sP("muteDefault",!settings.muteDefault)}/>
+                  <TRow icon="📶" label="HD oqim" sub="Yuqori sifat (ko'proq internet)"
+                    on={settings.hdStream} onToggle={()=>sP("hdStream",!settings.hdStream)}/>
 
-                  <div className="h-2"/>
-                  <SectionLabel>Ko'rish sozlamalari</SectionLabel>
-                  <ToggleRow icon="🎬" label="Kino rejimi" sub="O'ynatuvchi foni qora bo'ladi"
-                    value={settings.cinemaMode} onChange={v=>setP("cinemaMode",v)}/>
-                  <ToggleRow icon="📝" label="Sarlavha ko'rsatish" sub="O'ynatuvchida nom ko'rinsin"
-                    value={settings.showTitle} onChange={v=>setP("showTitle",v)}/>
+                  <SecHead>Ko'rish sozlamalari</SecHead>
+                  <TRow icon="🎬" label="Kino rejimi" sub="Fon qorayadi"
+                    on={settings.cinemaMode} onToggle={()=>sP("cinemaMode",!settings.cinemaMode)}/>
+                  <TRow icon="📝" label="Sarlavha ko'rsatish" sub="Player ichida nom ko'rinsin"
+                    on={settings.showTitle} onToggle={()=>sP("showTitle",!settings.showTitle)}/>
 
-                  <div className="h-2"/>
-                  <SectionLabel>Video sifati</SectionLabel>
+                  <SecHead>Video sifati</SecHead>
                   <div className="grid grid-cols-5 gap-1.5 mt-1">
-                    {(["Auto","1080p","720p","480p","360p"] as const).map(q => (
-                      <motion.button key={q} whileTap={{scale:0.88}}
-                        onClick={()=>setP("quality",q)}
-                        style={{ padding:"8px 4px",borderRadius:10,textAlign:"center",
-                          background: settings.quality===q
-                            ? "linear-gradient(135deg,rgba(239,68,68,0.3),rgba(168,85,247,0.2))"
-                            : "rgba(255,255,255,0.04)",
-                          border: settings.quality===q
-                            ? "1px solid rgba(239,68,68,0.55)"
-                            : "1px solid rgba(255,255,255,0.07)" }}>
-                        <span style={{ fontSize:11,fontWeight:settings.quality===q?900:600,
-                          color:settings.quality===q?"#fca5a5":"rgba(255,255,255,0.38)" }}>
+                    {(["Auto","1080p","720p","480p","360p"] as const).map(q=>(
+                      <button key={q} onClick={()=>sP("quality",q)}
+                        style={{padding:"8px 0",textAlign:"center",
+                          background:settings.quality===q?`${T.cyan}22`:"rgba(255,255,255,0.04)",
+                          border:settings.quality===q?`1px solid ${T.cyan}66`:"1px solid rgba(255,255,255,0.07)"}}>
+                        <span style={{fontSize:10,fontWeight:settings.quality===q?900:500,
+                          color:settings.quality===q?T.cyan:"rgba(255,255,255,0.38)"}}>
                           {q}
                         </span>
-                      </motion.button>
+                      </button>
                     ))}
                   </div>
                 </>
               ) : (
                 <>
-                  {/* Creator stats */}
-                  <div className="rounded-[18px] p-4 mb-3"
-                    style={{ background:"linear-gradient(135deg,rgba(239,68,68,0.12),rgba(168,85,247,0.08))",
-                      border:"1px solid rgba(239,68,68,0.2)" }}>
+                  {/* Revenue card */}
+                  <div className="p-4 mt-1 mb-2"
+                    style={{background:"rgba(0,229,255,0.05)",
+                      border:`1px solid ${T.cyan}30`,
+                      boxShadow:`inset 0 0 30px rgba(0,229,255,0.04)`}}>
                     <div className="flex items-center gap-2 mb-3">
-                      <BadgeDollarSign className="w-4 h-4 text-red-400"/>
-                      <span style={{ fontSize:13,fontWeight:900,color:"white" }}>Kreator daromadi</span>
+                      <Radio style={{width:14,height:14,color:T.cyan}}/>
+                      <span style={{fontSize:11,fontWeight:900,color:T.cyan,letterSpacing:"0.12em"}}>
+                        KREATOR DAROMADI
+                      </span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { label:"Ko'rishlar", value:fmt(views), icon:"👁" },
-                        { label:"Daromad", value:`${Number(revenue).toLocaleString()} so'm`, icon:"💰" },
-                        { label:"Obunachi", value:"1.2K", icon:"👥" },
-                      ].map(s => (
-                        <div key={s.label} className="rounded-[12px] p-2.5 text-center"
-                          style={{ background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)" }}>
-                          <div style={{ fontSize:16,marginBottom:2 }}>{s.icon}</div>
-                          <div style={{ fontSize:12,fontWeight:900,color:"white" }}>{s.value}</div>
-                          <div style={{ fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:1 }}>{s.label}</div>
+                        {l:"Ko'rishlar",v:fmt(views),i:"👁"},
+                        {l:"Daromad",v:`${Number(rev).toLocaleString()} so'm`,i:"💰"},
+                        {l:"Obunachi",v:"1.2K",i:"👥"},
+                      ].map(s=>(
+                        <div key={s.l} className="p-2.5 text-center"
+                          style={{background:"rgba(0,0,0,0.35)",border:`1px solid ${T.cyan}18`}}>
+                          <div style={{fontSize:16,marginBottom:2}}>{s.i}</div>
+                          <div style={{fontSize:12,fontWeight:900,color:T.cyan}}>{s.v}</div>
+                          <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:1}}>{s.l}</div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <SectionLabel>Kreator rejimi</SectionLabel>
-                  <ToggleRow icon="🎥" label="Kreator rejimi" sub="Daromad va tahlillarni ko'rish imkonini beradi"
-                    value={monetize.creatorMode} onChange={v=>setM("creatorMode",v)}/>
+                  <SecHead>Kreator rejimi</SecHead>
+                  <TRow icon="🎥" label="Kreator rejimi" sub="Daromad va tahlillarni ko'rish"
+                    on={monetize.creatorMode} onToggle={()=>sM("creatorMode",!monetize.creatorMode)}/>
 
-                  <div className="h-2"/>
-                  <SectionLabel>Daromad manbalari</SectionLabel>
-                  <ToggleRow icon="📢" label="Reklama daromadi" sub="Videolarda reklama ko'rsatish (CPM: 1.8 so'm/ko'rish)"
-                    value={monetize.adsEnabled} onChange={v=>setM("adsEnabled",v)}/>
-                  <ToggleRow icon="⭐" label="Super Thanks" sub="Tomoshabinlar yordam pul jo'natishi"
-                    value={monetize.superThanks} onChange={v=>setM("superThanks",v)}/>
-                  <ToggleRow icon="👑" label="A'zolik (Membership)" sub="Oylik to'lov bilan eksklyuziv kontent"
-                    value={monetize.membershipEnabled} onChange={v=>setM("membershipEnabled",v)}/>
+                  <SecHead>Daromad manbalari</SecHead>
+                  <TRow icon="📢" label="Reklama daromadi" sub="CPM: 1.8 so'm/ko'rish"
+                    on={monetize.adsEnabled} onToggle={()=>sM("adsEnabled",!monetize.adsEnabled)}/>
+                  <TRow icon="⭐" label="Super Thanks" sub="Tomoshabin yordam puli"
+                    on={monetize.superThanks} onToggle={()=>sM("superThanks",!monetize.superThanks)}/>
+                  <TRow icon="👑" label="A'zolik (Membership)" sub="Oylik to'lov bilan eksklyuziv kontent"
+                    on={monetize.membershipEnabled} onToggle={()=>sM("membershipEnabled",!monetize.membershipEnabled)}/>
 
-                  {/* Donation tiers */}
-                  <div className="h-2"/>
-                  <SectionLabel>Minimal yordam miqdori</SectionLabel>
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    {(["500","2000","10000","50000"] as const).map(d => (
-                      <motion.button key={d} whileTap={{scale:0.92}}
-                        onClick={()=>setM("donation",d)}
-                        className="py-2 px-3 rounded-[12px] flex items-center justify-between"
-                        style={{ background: monetize.donation===d
-                            ? "rgba(245,158,11,0.18)" : "rgba(255,255,255,0.04)",
-                          border: monetize.donation===d
-                            ? "1px solid rgba(245,158,11,0.45)" : "1px solid rgba(255,255,255,0.07)" }}>
-                        <span style={{ fontSize:13,fontWeight:900,
-                          color: monetize.donation===d ? "#fbbf24" : "rgba(255,255,255,0.5)" }}>
+                  <SecHead>Minimal yordam miqdori</SecHead>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["500","2000","10000","50000"] as const).map(d=>(
+                      <button key={d} onClick={()=>sM("donation",d)}
+                        className="py-2 px-3 flex items-center justify-between"
+                        style={{background:monetize.donation===d?`${T.orange}22`:"rgba(255,255,255,0.03)",
+                          border:monetize.donation===d?`1px solid ${T.orange}66`:"1px solid rgba(255,255,255,0.07)"}}>
+                        <span style={{fontSize:13,fontWeight:900,
+                          color:monetize.donation===d?T.orange:"rgba(255,255,255,0.45)"}}>
                           {Number(d)>=1000?`${Number(d)/1000}K`:d} so'm
                         </span>
-                        {monetize.donation===d && <Check className="w-3.5 h-3.5 text-amber-400"/>}
-                      </motion.button>
+                        {monetize.donation===d&&<Check style={{width:13,height:13,color:T.orange}}/>}
+                      </button>
                     ))}
                   </div>
 
-                  {/* Membership tiers */}
                   {monetize.membershipEnabled && (
                     <>
-                      <div className="h-2"/>
-                      <SectionLabel>A'zolik darajalari</SectionLabel>
+                      <SecHead>A'zolik darajalari</SecHead>
                       {[
-                        { name:"Bronza", price:"9 900", color:"#cd7f32", perks:"Maxsus badge" },
-                        { name:"Kumush", price:"29 900", color:"#c0c0c0", perks:"Badge + imtiyozlar" },
-                        { name:"Oltin",  price:"99 900", color:"#ffd700", perks:"To'liq eksklyuziv" },
-                      ].map(tier => (
-                        <div key={tier.name} className="flex items-center gap-3 py-2.5 px-3 rounded-[14px]"
-                          style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)" }}>
-                          <div style={{ width:32,height:32,borderRadius:"50%",flexShrink:0,
-                            background:`${tier.color}22`,border:`1.5px solid ${tier.color}55`,
-                            display:"flex",alignItems:"center",justifyContent:"center" }}>
-                            <Star style={{ width:14,height:14,fill:tier.color,color:tier.color }}/>
+                        {n:"BRONZA",p:"9 900",c:"#cd7f32",pk:"Maxsus badge"},
+                        {n:"KUMUSH",p:"29 900",c:"#c0c0c0",pk:"Badge + imtiyozlar"},
+                        {n:"OLTIN", p:"99 900",c:"#ffd700",pk:"To'liq eksklyuziv"},
+                      ].map(tier=>(
+                        <div key={tier.n} className="flex items-center gap-3 py-2.5 px-3 mb-1.5"
+                          style={{background:"rgba(0,0,0,0.3)",border:`1px solid ${tier.c}33`}}>
+                          <div style={{width:30,height:30,flexShrink:0,
+                            background:`${tier.c}22`,border:`1.5px solid ${tier.c}66`,
+                            display:"flex",alignItems:"center",justifyContent:"center"}}>
+                            <Star style={{width:13,height:13,fill:tier.c,color:tier.c}}/>
                           </div>
                           <div className="flex-1">
-                            <p style={{ fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.85)" }}>{tier.name}</p>
-                            <p style={{ fontSize:10,color:"rgba(255,255,255,0.35)" }}>{tier.perks}</p>
+                            <p style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.85)",letterSpacing:"0.08em"}}>{tier.n}</p>
+                            <p style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{tier.pk}</p>
                           </div>
-                          <span style={{ fontSize:11,fontWeight:900,color:tier.color }}>{tier.price} so'm/oy</span>
+                          <span style={{fontSize:11,fontWeight:900,color:tier.c}}>{tier.p} so'm/oy</span>
                         </div>
                       ))}
                     </>
                   )}
 
-                  {/* Payout */}
-                  <div className="mt-3 rounded-[14px] p-3.5"
-                    style={{ background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.12)" }}>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <DollarSign className="w-3.5 h-3.5 text-red-400"/>
-                      <span style={{ fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.7)" }}>
-                        To'lovlarni olish
-                      </span>
-                    </div>
-                    <p style={{ fontSize:10,color:"rgba(255,255,255,0.35)",lineHeight:1.6 }}>
-                      Minimal to'lov: 100 000 so'm. OlCha Pay orqali avtomatik hisobingizga o'tkaziladi.
-                      To'lovlar har oyning 15-sanasida amalga oshiriladi.
+                  {/* Payout info */}
+                  <div className="mt-3 p-3"
+                    style={{background:"rgba(0,229,255,0.04)",borderLeft:`2px solid ${T.cyan}55`}}>
+                    <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",lineHeight:1.7}}>
+                      Min: 100 000 so'm. OlCha Pay orqali har oyning 15-sanasida chiqariladi.
                     </p>
                   </div>
                 </>
@@ -1148,312 +981,335 @@ function SettingsDrawer({
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* HeroCard — expand button tepada                         */
+/* Channel number badge                                    */
+/* ─────────────────────────────────────────────────────── */
+function ChBadge({ n, color=T.cyan }: { n:string; color?:string }) {
+  return (
+    <span style={{fontSize:9,fontWeight:900,letterSpacing:"0.1em",color,
+      background:`${color}18`,padding:"2px 8px",
+      border:`1px solid ${color}44`,marginRight:6}}>
+      CH.{n}
+    </span>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
+/* Hero broadcast card — expand button                     */
 /* ─────────────────────────────────────────────────────── */
 function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
   const [expanded, setExpanded] = useState(false);
-  const y = useMotionValue(0);
-  const scale = useTransform(y, [-40,0,40], [0.97,1,0.97]);
-
   return (
-    <motion.div style={{ scale }}
-      className="relative rounded-[22px] overflow-hidden cursor-pointer"
-      whileTap={{ scale:0.98 }} onClick={onPlay}
-      initial={{ opacity:0,y:18 }} animate={{ opacity:1,y:0 }}
-      transition={{ type:"spring",damping:22 }}
+    <motion.div
+      className="relative cursor-pointer overflow-hidden"
+      initial={{opacity:0,y:16}} animate={{opacity:1,y:0}}
+      transition={{type:"spring",damping:22}}
+      style={{border:`1px solid ${T.cyan}33`,boxShadow:`0 0 40px rgba(0,229,255,0.08)`}}
+      whileTap={{scale:0.99}} onClick={onPlay}
     >
-      {/* Expand/shrink button — TOP RIGHT */}
-      <motion.button
-        whileTap={{ scale:0.82 }}
-        onClick={e => { e.stopPropagation(); setExpanded(x=>!x); }}
-        className="absolute top-2.5 right-2.5 z-10 flex items-center justify-center"
-        style={{ width:34,height:34,borderRadius:"50%",
-          background:"rgba(0,0,0,0.55)",backdropFilter:"blur(10px)",
-          border:"1px solid rgba(255,255,255,0.15)" }}>
+      {/* Expand/shrink button — top right */}
+      <motion.button whileTap={{scale:0.8}}
+        onClick={e=>{e.stopPropagation();setExpanded(x=>!x);}}
+        className="absolute top-2 right-2 z-10 flex items-center justify-center"
+        style={{width:32,height:32,
+          background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",
+          border:`1px solid ${T.cyan}44`,
+          clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
         {expanded
-          ? <Minimize2 className="w-3.5 h-3.5 text-white"/>
-          : <Maximize2 className="w-3.5 h-3.5 text-white"/>}
+          ? <Minimize2 style={{width:13,height:13,color:T.cyan}}/>
+          : <Maximize2 style={{width:13,height:13,color:T.cyan}}/>}
       </motion.button>
 
-      <div style={{ aspectRatio: expanded ? "4/3" : "21/9", position:"relative", transition:"all 0.3s" }}>
+      {/* Thumbnail */}
+      <div style={{aspectRatio:expanded?"4/3":"21/9",position:"relative",transition:"all 0.35s",overflow:"hidden"}}>
         {video.thumbnailUrl
-          ? <img src={video.thumbnailUrl} alt={video.caption}
-              className="w-full h-full object-cover" style={{ transition:"all 0.3s" }}/>
+          ? <img src={video.thumbnailUrl} alt={video.caption} className="w-full h-full object-cover"/>
           : <div className="w-full h-full flex items-center justify-center"
-              style={{ background:"linear-gradient(135deg,#2d0a0a,#0d040d)" }}>
-              <Film className="w-14 h-14 text-white/10"/>
+              style={{background:"linear-gradient(135deg,#0d0028,#000510)"}}>
+              <Film className="w-14 h-14 text-white/8"/>
             </div>}
-        {/* Scan-line */}
+        {/* Scanlines */}
         <div className="absolute inset-0 pointer-events-none"
-          style={{ background:"repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px)" }}/>
-        {/* Gradient */}
+          style={{background:"repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.015) 3px,rgba(0,229,255,0.015) 4px)"}}/>
         <div className="absolute inset-0 pointer-events-none"
-          style={{ background:"linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.1) 55%,transparent 100%)" }}/>
-        {/* Play ring */}
+          style={{background:"linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.15) 55%,transparent 100%)"}}/>
+        {/* Play button — unique shape */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div whileHover={{ scale:1.08 }} whileTap={{ scale:0.92 }}
-            style={{ width:66,height:66,borderRadius:"50%",
-              background:"rgba(239,68,68,0.82)",
-              boxShadow:"0 0 0 12px rgba(239,68,68,0.14), 0 0 0 24px rgba(239,68,68,0.05)",
+          <motion.div whileHover={{scale:1.1}} whileTap={{scale:0.9}}
+            style={{width:66,height:66,
+              background:"rgba(0,0,0,0.55)",backdropFilter:"blur(10px)",
+              border:`2px solid ${T.cyan}66`,
+              boxShadow:`0 0 30px ${T.cyan}44, 0 0 0 14px ${T.cyan}0a`,
               display:"flex",alignItems:"center",justifyContent:"center",
-              backdropFilter:"blur(8px)",border:"1.5px solid rgba(255,255,255,0.25)" }}>
-            <Play style={{ width:26,height:26,fill:"white",color:"white",marginLeft:3 }}/>
+              clipPath:"polygon(0 10px,10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px))"}}>
+            <Play style={{width:24,height:24,fill:T.cyan,color:T.cyan,marginLeft:3}}/>
           </motion.div>
         </div>
-        {/* TANLANGAN badge */}
-        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-          style={{ background:"rgba(0,0,0,0.62)",backdropFilter:"blur(10px)",
-            border:"1px solid rgba(239,68,68,0.4)" }}>
-          <div style={{ width:6,height:6,borderRadius:"50%",background:"#ef4444",
-            boxShadow:"0 0 6px #ef4444" }}/>
-          <span style={{ fontSize:9,fontWeight:900,color:"#fca5a5",letterSpacing:"0.12em" }}>TANLANGAN</span>
+        {/* On-air badge */}
+        <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2.5 py-1"
+          style={{background:"rgba(0,0,0,0.72)",backdropFilter:"blur(10px)",
+            border:`1px solid ${T.cyan}44`}}>
+          <div style={{width:6,height:6,background:T.cyan,
+            animation:"pulse 1.5s infinite",
+            boxShadow:`0 0 8px ${T.cyan}`}}/>
+          <span style={{fontSize:9,fontWeight:900,color:T.cyan,letterSpacing:"0.14em"}}>ON AIR</span>
         </div>
       </div>
-      {/* Info */}
-      <div className="absolute bottom-0 inset-x-0 p-4">
-        <h2 className="text-white font-black text-[15px] leading-tight mb-2 line-clamp-2"
-          style={{ textShadow:"0 2px 8px rgba(0,0,0,0.8)" }}>
+
+      {/* Info panel — broadcast style */}
+      <div className="absolute bottom-0 inset-x-0 p-3.5"
+        style={{borderTop:`1px solid ${T.cyan}18`}}>
+        <h2 style={{color:"white",fontWeight:900,fontSize:14,lineHeight:1.3,
+          marginBottom:6,textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>
           {video.caption||"OTube Tanlangan"}
         </h2>
         <div className="flex items-center gap-2">
           {video.author.avatarUrl && (
-            <img src={video.author.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-              style={{ border:"1px solid rgba(239,68,68,0.4)" }}/>)}
-          <span className="text-white/55 text-[11px] flex-1 truncate">{video.author.displayName}</span>
+            <img src={video.author.avatarUrl} alt="" className="w-5 h-5 object-cover flex-shrink-0"
+              style={{border:`1px solid ${T.cyan}55`}}/>)}
+          <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",flex:1}} className="truncate">
+            {video.author.displayName}
+          </span>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
-              <Eye className="w-3 h-3 text-white/30"/>
-              <span className="text-white/35 text-[10px] tabular-nums">{fmt(video.viewsCount)}</span>
+              <Eye style={{width:10,height:10,color:T.cyan+"88"}}/>
+              <span style={{fontSize:10,color:T.cyan+"88",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Heart className="w-3 h-3 text-white/30"/>
-              <span className="text-white/35 text-[10px] tabular-nums">{fmt(video.likesCount)}</span>
+              <Heart style={{width:10,height:10,color:T.orange+"88"}}/>
+              <span style={{fontSize:10,color:T.orange+"88",fontFamily:"monospace"}}>{fmt(video.likesCount)}</span>
             </div>
           </div>
         </div>
       </div>
+      {/* Bottom accent line */}
       <div className="absolute bottom-0 left-0 right-0 h-[2px]"
-        style={{ background:"linear-gradient(90deg,#ef4444,#a855f7,transparent)" }}/>
+        style={{background:`linear-gradient(90deg,${T.cyan},${T.violet},transparent)`}}/>
     </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* TrendCard                                               */
+/* Trending list — vertical rank                           */
 /* ─────────────────────────────────────────────────────── */
-function TrendCard({ video, onPlay, idx }: { video:Reel; onPlay:()=>void; idx:number }) {
-  const ACCENTS = ["#ef4444","#f59e0b","#06b6d4","#a855f7","#10b981","#f59e0b"];
-  const accent = ACCENTS[idx % ACCENTS.length];
+function TrendRow({ video, onPlay, idx }:
+  { video:Reel; onPlay:()=>void; idx:number }) {
+  const COLS = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55", "#ffd700"];
+  const col = COLS[idx % COLS.length];
   return (
     <motion.div
-      initial={{ opacity:0,x:28 }} animate={{ opacity:1,x:0 }}
-      transition={{ delay:idx*0.06,type:"spring",damping:22 }}
-      className="flex-shrink-0 rounded-[16px] overflow-hidden cursor-pointer relative"
-      style={{ width:150,background:"#0a0214",
-        border:`1px solid ${accent}22`,
-        boxShadow:`0 4px 24px rgba(0,0,0,0.55), 0 0 0 0.5px ${accent}12` }}
-      whileTap={{ scale:0.94 }} onClick={onPlay}
+      initial={{opacity:0,x:-16}} animate={{opacity:1,x:0}}
+      transition={{delay:idx*0.05,type:"spring",damping:22}}
+      className="flex items-center gap-3 cursor-pointer"
+      style={{padding:"10px 12px",
+        background:"rgba(255,255,255,0.025)",
+        border:`1px solid ${col}18`,
+        marginBottom:2}}
+      whileTap={{scale:0.97}} onClick={onPlay}
     >
-      <div style={{ aspectRatio:"16/9",position:"relative" }}>
+      {/* Rank */}
+      <div style={{width:32,height:32,flexShrink:0,
+        display:"flex",alignItems:"center",justifyContent:"center",
+        background:`${col}18`,border:`1px solid ${col}55`}}>
+        <span style={{fontSize:14,fontWeight:900,color:col,fontFamily:"monospace"}}>
+          {idx+1}
+        </span>
+      </div>
+      {/* Thumb */}
+      <div style={{width:56,aspectRatio:"16/9",flexShrink:0,position:"relative",overflow:"hidden"}}>
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
-          : <div className="w-full h-full flex items-center justify-center"
-              style={{ background:`linear-gradient(135deg,${accent}14,#07030f)` }}>
-              <Film className="w-6 h-6 text-white/10"/>
-            </div>}
+          : <div className="w-full h-full" style={{background:`${col}18`}}/>}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div style={{ width:28,height:28,borderRadius:"50%",
-            background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",
-            border:"1px solid rgba(255,255,255,0.14)",
-            display:"flex",alignItems:"center",justifyContent:"center" }}>
-            <Play style={{ width:10,height:10,fill:"white",color:"white",marginLeft:1.5 }}/>
-          </div>
-        </div>
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background:"linear-gradient(to top,rgba(0,0,0,0.72),transparent 48%)" }}/>
-        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md"
-          style={{ background:`${accent}cc`,fontSize:9,fontWeight:900,color:"white" }}>
-          #{idx+1}
+          <Play style={{width:12,height:12,fill:"white",color:"white",opacity:0.8,marginLeft:1}}/>
         </div>
       </div>
-      <div className="p-2">
-        <p className="text-white text-[10px] font-bold line-clamp-2 leading-snug">{video.caption||"Video"}</p>
-        <div className="flex items-center gap-1 mt-1">
-          <Eye style={{ width:9,height:9,color:"rgba(255,255,255,0.28)" }}/>
-          <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.28)",fontWeight:600 }}>{fmt(video.viewsCount)}</span>
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p style={{fontSize:11.5,fontWeight:700,color:"rgba(255,255,255,0.88)"}}
+          className="line-clamp-2 leading-snug">{video.caption||"Video"}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <Eye style={{width:9,height:9,color:col}}/>
+          <span style={{fontSize:9,color:col,fontFamily:"monospace",fontWeight:700}}>{fmt(video.viewsCount)}</span>
+          <span style={{fontSize:9,color:"rgba(255,255,255,0.25)"}}>{video.author.displayName}</span>
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-[1.5px]"
-        style={{ background:`linear-gradient(90deg,${accent}80,transparent)` }}/>
+      {/* Side accent */}
+      <div style={{width:2,height:40,background:col,opacity:0.5,flexShrink:0}}/>
     </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* GridCard — expand button tepada                         */
+/* Bento grid card                                         */
 /* ─────────────────────────────────────────────────────── */
-function GridCard({ video, onPlay, idx }: { video:Reel; onPlay:()=>void; idx:number }) {
+function BentoCard({ video, onPlay, wide=false, idx=0 }:
+  { video:Reel; onPlay:()=>void; wide?:boolean; idx?:number }) {
   const [liked,    setLiked]    = useState(false);
   const [expanded, setExpanded] = useState(false);
-
   return (
     <motion.div
-      initial={{ opacity:0,y:16 }} animate={{ opacity:1,y:0 }}
-      transition={{ delay:idx*0.04,type:"spring",damping:20 }}
-      className="rounded-[14px] overflow-hidden cursor-pointer relative"
-      style={{ background:"#080218",border:"1px solid rgba(255,255,255,0.06)",
-        boxShadow:"0 4px 20px rgba(0,0,0,0.5)" }}
-      whileTap={{ scale:0.96 }} onClick={onPlay}
+      initial={{opacity:0,y:14}} animate={{opacity:1,y:0}}
+      transition={{delay:idx*0.04,type:"spring",damping:20}}
+      className={`cursor-pointer overflow-hidden relative ${wide?"col-span-2":""}`}
+      style={{background:T.card,border:`1px solid ${T.border}`,
+        boxShadow:`0 4px 20px rgba(0,0,0,0.6)`}}
+      whileTap={{scale:0.97}} onClick={onPlay}
     >
-      {/* Expand/shrink button */}
-      <motion.button
-        whileTap={{ scale:0.8 }}
+      {/* Expand/shrink button top-right */}
+      <motion.button whileTap={{scale:0.8}}
         onClick={e=>{e.stopPropagation();setExpanded(x=>!x);}}
         className="absolute top-1.5 right-1.5 z-10 flex items-center justify-center"
-        style={{ width:26,height:26,borderRadius:"50%",
-          background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
-          border:"1px solid rgba(255,255,255,0.12)" }}>
+        style={{width:24,height:24,
+          background:"rgba(0,0,0,0.65)",backdropFilter:"blur(8px)",
+          border:`1px solid ${T.cyan}33`,
+          clipPath:"polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))"}}>
         {expanded
-          ? <Minimize2 style={{ width:10,height:10,color:"white" }}/>
-          : <Maximize2 style={{ width:10,height:10,color:"white" }}/>}
+          ? <Minimize2 style={{width:9,height:9,color:T.cyan}}/>
+          : <Maximize2 style={{width:9,height:9,color:T.cyan}}/>}
       </motion.button>
 
-      <div style={{ aspectRatio: expanded?"4/3":"16/9",position:"relative",transition:"all 0.3s" }}>
+      <div style={{aspectRatio:expanded?"4/3":wide?"21/9":"16/9",position:"relative",transition:"all 0.3s",overflow:"hidden"}}>
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
           : <div className="w-full h-full flex items-center justify-center"
-              style={{ background:"linear-gradient(135deg,#1a0a0a,#0a0d28)" }}>
-              <Film className="w-7 h-7 text-white/10"/>
+              style={{background:`linear-gradient(135deg,#110028,#06030f)`}}>
+              <Film style={{width:wide?32:20,height:wide?32:20,color:"rgba(255,255,255,0.08)"}}/>
             </div>}
-        <div className="absolute bottom-1 right-1 flex items-center justify-center"
-          style={{ width:24,height:24,borderRadius:"50%",background:"rgba(0,0,0,0.6)",backdropFilter:"blur(6px)" }}>
-          <Play style={{ width:9,height:9,fill:"rgba(255,255,255,0.7)",color:"rgba(255,255,255,0.7)",marginLeft:1 }}/>
-        </div>
         <div className="absolute inset-0 pointer-events-none"
-          style={{ background:"linear-gradient(to top,rgba(0,0,0,0.62) 0%,transparent 42%)" }}/>
+          style={{background:"linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 45%)"}}/>
+        <div className="absolute bottom-1.5 right-1.5"
+          style={{width:22,height:22,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(6px)",
+            border:`1px solid ${T.cyan}33`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            clipPath:"polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))"}}>
+          <Play style={{width:8,height:8,fill:T.cyan,color:T.cyan,marginLeft:1}}/>
+        </div>
       </div>
-      <div className="p-2.5">
-        <p className="text-white font-bold text-[11px] line-clamp-2 leading-snug mb-1.5">
-          {video.caption||"Video"}
-        </p>
+      <div style={{padding:"8px 10px 10px"}}>
+        <p style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.88)",lineHeight:1.4}}
+          className="line-clamp-2 mb-1.5">{video.caption||"Video"}</p>
         <div className="flex items-center justify-between">
-          <span className="text-white/35 text-[9.5px] truncate max-w-[72px]">{video.author.displayName}</span>
+          <span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}} className="truncate max-w-[70px]">
+            {video.author.displayName}
+          </span>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-0.5">
-              <Eye style={{ width:8.5,height:8.5,color:"rgba(255,255,255,0.25)" }}/>
-              <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.25)",fontWeight:700 }}>{fmt(video.viewsCount)}</span>
+              <Eye style={{width:8,height:8,color:T.cyan+"77"}}/>
+              <span style={{fontSize:8.5,color:T.cyan+"77",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
             </div>
             <motion.button whileTap={{scale:0.65}}
               onClick={e=>{e.stopPropagation();setLiked(l=>!l);}}
               className="flex items-center gap-0.5">
-              <Heart style={{ width:8.5,height:8.5,
-                fill:liked?"#f87171":"none", color:liked?"#f87171":"rgba(255,255,255,0.25)" }}/>
-              <span style={{ fontSize:8.5,fontWeight:700,
-                color:liked?"#fca5a5":"rgba(255,255,255,0.25)" }}>
+              <Heart style={{width:8,height:8,fill:liked?T.orange:"none",color:liked?T.orange:"rgba(255,255,255,0.25)"}}/>
+              <span style={{fontSize:8.5,fontFamily:"monospace",
+                color:liked?T.orange:"rgba(255,255,255,0.25)"}}>
                 {fmt(video.likesCount+(liked?1:0))}
               </span>
             </motion.button>
           </div>
         </div>
       </div>
+      {/* left accent strip */}
+      <div className="absolute left-0 top-0 bottom-0 w-[2px]"
+        style={{background:T.gCyan,opacity:0.4}}/>
     </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* ShortsCard                                              */
+/* Shorts card — vertical                                  */
 /* ─────────────────────────────────────────────────────── */
 function ShortsCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
   return (
-    <motion.div whileTap={{ scale:0.93 }} onClick={onPlay}
-      className="flex-shrink-0 rounded-[16px] overflow-hidden cursor-pointer relative"
-      style={{ width:110,aspectRatio:"9/16",background:"#080218",
-        border:"1px solid rgba(239,68,68,0.12)" }}>
+    <motion.div whileTap={{scale:0.93}} onClick={onPlay}
+      className="flex-shrink-0 cursor-pointer overflow-hidden relative"
+      style={{width:108,aspectRatio:"9/16",background:T.card,
+        border:`1px solid ${T.orange}22`}}>
       {video.thumbnailUrl
         ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
-        : <div className="w-full h-full flex items-center justify-center"
-            style={{ background:"linear-gradient(180deg,#2d0a0a,#0a0218)" }}>
-            <Zap className="w-8 h-8 text-white/10"/>
-          </div>}
+        : <div className="w-full h-full" style={{background:`linear-gradient(180deg,#1a0028,#000510)`}}/>}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background:"linear-gradient(to top,rgba(0,0,0,0.82) 0%,transparent 55%)" }}/>
-      <div className="absolute top-2 left-2">
-        <div className="px-2 py-0.5 rounded-full flex items-center gap-1"
-          style={{ background:"rgba(239,68,68,0.75)",backdropFilter:"blur(6px)" }}>
-          <Zap style={{ width:8,height:8,fill:"white",color:"white" }}/>
-          <span style={{ fontSize:8,fontWeight:900,color:"white" }}>SHORT</span>
-        </div>
+        style={{background:"linear-gradient(to top,rgba(0,0,0,0.88) 0%,transparent 55%)"}}/>
+      <div className="absolute top-2 left-1.5 px-1.5 py-0.5 flex items-center gap-1"
+        style={{background:T.orange,clipPath:"polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)"}}>
+        <Zap style={{width:8,height:8,fill:"white",color:"white"}}/>
+        <span style={{fontSize:8,fontWeight:900,color:"white",letterSpacing:"0.1em"}}>SHORT</span>
       </div>
       <div className="absolute bottom-2 inset-x-2">
-        <p className="text-white font-bold text-[9.5px] line-clamp-2 leading-snug">{video.caption||"Short"}</p>
-        <div className="flex items-center gap-1 mt-0.5">
-          <Eye style={{ width:7,height:7,color:"rgba(255,255,255,0.4)" }}/>
-          <span style={{ fontSize:7.5,color:"rgba(255,255,255,0.4)",fontWeight:600 }}>{fmt(video.viewsCount)}</span>
-        </div>
+        <p style={{fontSize:9.5,fontWeight:700,color:"rgba(255,255,255,0.9)",lineHeight:1.35}}
+          className="line-clamp-2 mb-0.5">{video.caption||"Short"}</p>
+        <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
       </div>
+      {/* Bottom orange line */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px]"
+        style={{background:T.gOrange}}/>
     </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* OTubePage — main                                        */
+/* OTubePage — MAIN                                        */
 /* ─────────────────────────────────────────────────────── */
+const CATS = [
+  {id:"all",      label:"ALL",       Icon:Globe,      col:T.cyan},
+  {id:"trending", label:"TREND",     Icon:TrendingUp, col:T.orange},
+  {id:"cinema",   label:"KINO",      Icon:Film,       col:"#ff2d55"},
+  {id:"music",    label:"MUSIQA",    Icon:Music2,     col:T.cyan},
+  {id:"gaming",   label:"GAMING",    Icon:Gamepad2,   col:"#00ff88"},
+  {id:"ai",       label:"AI",        Icon:Sparkles,   col:T.orange},
+  {id:"live",     label:"◉ LIVE",    Icon:Zap,        col:"#ff2d55"},
+  {id:"new",      label:"YANGI",     Icon:Clock,      col:T.violet},
+];
+const TABS=[{id:"home",l:"BROADCAST"},{id:"shorts",l:"SHORTS"},{id:"subs",l:"CHANNELS"}] as const;
+
 export default function OTubePage() {
-  const [, navigate]        = useLocation();
-  const [cat, setCat]       = useState("all");
-  const [query, setQuery]   = useState("");
-  const [showSearch, setShowSearch] = useState(false);
-  const [selected, setSelected]     = useState<Reel|null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [settings, setSettings]     = useState<PlayerSettings>(DEFAULT_SETTINGS);
-  const [monetize, setMonetize]     = useState<MonetizationSettings>(DEFAULT_MONETIZE);
-  const [tab, setTab]       = useState<"home"|"shorts"|"subs">("home");
-  const [notifDot, setNotifDot] = useState(true);
+  const [,navigate]  = useLocation();
+  const [cat,setCat] = useState("all");
+  const [query,setQuery] = useState("");
+  const [showSearch,setShowSearch] = useState(false);
+  const [selected,setSelected] = useState<Reel|null>(null);
+  const [showSettings,setShowSettings] = useState(false);
+  const [settings,setSettings] = useState<PlayerSettings>(DEF_S);
+  const [monetize,setMonetize] = useState<MonetizationSettings>(DEF_M);
+  const [tab,setTab] = useState<"home"|"shorts"|"subs">("home");
+  const [notifDot,setNotifDot] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const { data: raw = [], isLoading } = useListReels();
+  const { data:raw=[], isLoading } = useListReels();
 
-  const reels = useMemo(() => {
+  const reels = useMemo(()=>{
     if (!query.trim()) return raw;
     const q = query.toLowerCase();
-    return raw.filter(r =>
-      r.caption.toLowerCase().includes(q) ||
-      r.author.displayName.toLowerCase().includes(q)
-    );
-  }, [raw, query]);
+    return raw.filter(r=>r.caption.toLowerCase().includes(q)||r.author.displayName.toLowerCase().includes(q));
+  },[raw,query]);
 
-  /* swipe right → /reels */
-  const tx = useRef(0); const ty = useRef(0);
-  const onTS = useCallback((e:React.TouchEvent) => {
-    tx.current = e.touches[0].clientX; ty.current = e.touches[0].clientY;
-  }, []);
-  const onTE = useCallback((e:React.TouchEvent) => {
-    const dx = tx.current - e.changedTouches[0].clientX;
-    const dy = ty.current - e.changedTouches[0].clientY;
-    if (Math.abs(dx) > Math.abs(dy) && dx < -70) navigate("/reels");
-  }, [navigate]);
+  const tx=useRef(0);const ty=useRef(0);
+  const onTS=useCallback((e:React.TouchEvent)=>{tx.current=e.touches[0].clientX;ty.current=e.touches[0].clientY;},[]);
+  const onTE=useCallback((e:React.TouchEvent)=>{
+    const dx=tx.current-e.changedTouches[0].clientX;
+    const dy=ty.current-e.changedTouches[0].clientY;
+    if(Math.abs(dx)>Math.abs(dy)&&dx<-70)navigate("/reels");
+  },[navigate]);
 
-  useEffect(() => {
-    if (showSearch) setTimeout(()=>searchRef.current?.focus(), 120);
-  }, [showSearch]);
+  useEffect(()=>{ if(showSearch)setTimeout(()=>searchRef.current?.focus(),120); },[showSearch]);
 
-  const featured  = reels[0] ?? null;
-  const trending  = reels.slice(1, 8);
-  const shorts    = reels.slice(0, 6);
-  const grid      = reels.slice(1);
-  const newVideos = [...reels].reverse().slice(0, 6);
+  const featured = reels[0]??null;
+  const trending = reels.slice(1,9);
+  const shorts   = reels.slice(0,6);
+  const grid     = reels.slice(1);
+  const newest   = [...reels].reverse().slice(0,4);
 
   return (
     <>
       <div className="h-full overflow-y-auto"
-        style={{ background:"#03010b",paddingBottom:100 }}
-        onTouchStart={onTS} onTouchEnd={onTE}
-      >
+        style={{...DOT_BG,paddingBottom:100}}
+        onTouchStart={onTS} onTouchEnd={onTE}>
+
         {/* ── HEADER ── */}
         <div className="sticky top-0 z-40"
-          style={{ background:"rgba(3,1,11,0.92)",backdropFilter:"blur(22px) saturate(1.7)",
-            WebkitBackdropFilter:"blur(22px) saturate(1.7)",
-            borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+          style={{background:"rgba(0,0,5,0.94)",backdropFilter:"blur(24px)",
+            WebkitBackdropFilter:"blur(24px)",
+            borderBottom:`1px solid ${T.cyan}22`}}>
 
           <div className="px-4 pt-4 pb-2">
             <AnimatePresence mode="wait">
@@ -1463,23 +1319,21 @@ export default function OTubePage() {
                   transition={{duration:0.18}}
                   className="flex items-center gap-2 mb-3">
                   <motion.button whileTap={{scale:0.85}}
-                    onClick={()=>{ setShowSearch(false); setQuery(""); }}
-                    style={{ width:38,height:38,borderRadius:"50%",
-                      background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.09)",
-                      display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                    <ArrowLeft className="w-4 h-4 text-white/60"/>
+                    onClick={()=>{setShowSearch(false);setQuery("");}}
+                    style={{width:38,height:38,flexShrink:0,
+                      background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      clipPath:"polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px))"}}>
+                    <ArrowLeft style={{width:15,height:15,color:T.cyan}}/>
                   </motion.button>
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl"
-                    style={{ background:"rgba(255,255,255,0.06)",border:"1px solid rgba(239,68,68,0.3)" }}>
-                    <Search className="w-3.5 h-3.5 text-red-400 flex-shrink-0"/>
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2"
+                    style={{background:"rgba(0,229,255,0.05)",border:`1px solid ${T.cyan}33`}}>
+                    <Search style={{width:13,height:13,color:T.cyan,flexShrink:0}}/>
                     <input ref={searchRef} value={query} onChange={e=>setQuery(e.target.value)}
-                      placeholder="Video, kanal qidirish..."
-                      className="flex-1 bg-transparent outline-none text-white text-[13px] placeholder:text-white/30"/>
-                    {query && (
-                      <motion.button whileTap={{scale:0.8}} onClick={()=>setQuery("")}>
-                        <X className="w-3.5 h-3.5 text-white/35"/>
-                      </motion.button>
-                    )}
+                      placeholder="Video, kanal, qo'shiq..."
+                      className="flex-1 bg-transparent outline-none text-white text-[13px] placeholder:text-white/20"
+                      style={{fontFamily:"inherit",letterSpacing:"0.02em"}}/>
+                    {query && <button onClick={()=>setQuery("")}><X style={{width:13,height:13,color:"rgba(255,255,255,0.3)"}}/></button>}
                   </div>
                 </motion.div>
               ) : (
@@ -1487,54 +1341,51 @@ export default function OTubePage() {
                   initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}
                   transition={{duration:0.18}}
                   className="flex items-center justify-between mb-3">
-                  {/* Logo */}
                   <div className="flex items-center gap-2.5">
                     <OTubeMark size={34}/>
                     <div className="flex flex-col leading-none">
-                      <span className="font-black text-[20px] tracking-tight"
-                        style={{ background:"linear-gradient(90deg,#ef4444,#dc2626,#7c3aed)",
-                          WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>
-                        OTube
+                      <span className="font-black text-[20px] tracking-[-0.02em]"
+                        style={{color:"white",letterSpacing:"-0.01em"}}>
+                        O<span style={{color:T.cyan}}>T</span>ube
                       </span>
-                      <span style={{ fontSize:8,letterSpacing:"0.22em",color:"rgba(239,68,68,0.5)",
-                        fontWeight:700,textTransform:"uppercase" }}>
-                        SIGNAL ENGINE
+                      <span style={{fontSize:8,letterSpacing:"0.24em",color:T.cyan,
+                        fontWeight:700,textTransform:"uppercase",fontFamily:"monospace"}}>
+                        BROADCAST
                       </span>
                     </div>
                   </div>
-                  {/* Right actions */}
                   <div className="flex items-center gap-1.5">
-                    {/* Upload */}
                     <motion.button whileTap={{scale:0.85}}
-                      style={{ width:36,height:36,borderRadius:"50%",
-                        background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",
-                        display:"flex",alignItems:"center",justifyContent:"center" }}>
-                      <Upload className="w-3.5 h-3.5 text-red-400"/>
+                      style={{width:34,height:34,
+                        background:`${T.orange}18`,border:`1px solid ${T.orange}33`,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
+                      <Upload style={{width:13,height:13,color:T.orange}}/>
                     </motion.button>
-                    {/* Bell with dot */}
                     <motion.button whileTap={{scale:0.85}} onClick={()=>setNotifDot(false)}
                       className="relative"
-                      style={{ width:36,height:36,borderRadius:"50%",
-                        background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-                        display:"flex",alignItems:"center",justifyContent:"center" }}>
-                      <Bell className="w-3.5 h-3.5 text-white/55"/>
-                      {notifDot && (
-                        <div className="absolute top-1 right-1"
-                          style={{ width:7,height:7,borderRadius:"50%",background:"#ef4444",
-                            boxShadow:"0 0 6px #ef4444",border:"1.5px solid #03010b" }}/>
-                      )}
+                      style={{width:34,height:34,
+                        background:"rgba(255,255,255,0.04)",border:`1px solid ${T.cyan}22`,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
+                      <Bell style={{width:13,height:13,color:"rgba(255,255,255,0.5)"}}/>
+                      {notifDot && <div className="absolute top-1 right-1"
+                        style={{width:7,height:7,background:T.orange,
+                          boxShadow:`0 0 6px ${T.orange}`,border:`1.5px solid #000005`}}/>}
                     </motion.button>
                     <motion.button whileTap={{scale:0.85}} onClick={()=>setShowSearch(true)}
-                      style={{ width:36,height:36,borderRadius:"50%",
-                        background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-                        display:"flex",alignItems:"center",justifyContent:"center" }}>
-                      <Search className="w-3.5 h-3.5 text-white/55"/>
+                      style={{width:34,height:34,
+                        background:"rgba(255,255,255,0.04)",border:`1px solid ${T.cyan}22`,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
+                      <Search style={{width:13,height:13,color:"rgba(255,255,255,0.5)"}}/>
                     </motion.button>
                     <motion.button whileTap={{scale:0.85}} onClick={()=>setShowSettings(true)}
-                      style={{ width:36,height:36,borderRadius:"50%",
-                        background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-                        display:"flex",alignItems:"center",justifyContent:"center" }}>
-                      <Settings className="w-3.5 h-3.5 text-white/55"/>
+                      style={{width:34,height:34,
+                        background:"rgba(255,255,255,0.04)",border:`1px solid ${T.cyan}22`,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
+                      <Settings style={{width:13,height:13,color:"rgba(255,255,255,0.5)"}}/>
                     </motion.button>
                   </div>
                 </motion.div>
@@ -1542,38 +1393,39 @@ export default function OTubePage() {
             </AnimatePresence>
 
             {/* Nav tabs */}
-            <div className="flex gap-0 mb-2.5 overflow-x-auto" style={{ scrollbarWidth:"none" }}>
-              {TABS.map(t => (
-                <button key={t.id} onClick={()=>setTab(t.id as typeof tab)}
-                  className="flex-shrink-0 px-4 py-1.5 relative"
-                  style={{ fontSize:12,fontWeight:tab===t.id?900:600,
-                    color:tab===t.id?"white":"rgba(255,255,255,0.4)" }}>
-                  {t.label}
+            <div className="flex overflow-x-auto mb-2.5" style={{scrollbarWidth:"none",
+              borderBottom:`1px solid ${T.cyan}15`}}>
+              {TABS.map(t=>(
+                <button key={t.id} onClick={()=>setTab(t.id)}
+                  className="flex-shrink-0 px-4 py-2 relative"
+                  style={{fontSize:10,fontWeight:900,letterSpacing:"0.14em",
+                    color:tab===t.id?T.cyan:"rgba(255,255,255,0.3)"}}>
+                  {t.l}
                   {tab===t.id && (
-                    <motion.div layoutId="nav-tab"
-                      className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full"
-                      style={{ background:"linear-gradient(90deg,#ef4444,#a855f7)" }}/>
+                    <motion.div layoutId="nt"
+                      className="absolute bottom-0 left-1 right-1 h-[2px]"
+                      style={{background:T.gCyan}}/>
                   )}
                 </button>
               ))}
             </div>
 
-            {/* Category pills */}
-            {tab === "home" && (
-              <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth:"none" }}>
-                {CATS.map(({ id, label, Icon, color }) => {
-                  const active = cat===id;
+            {/* Category selector — frequency band style */}
+            {tab==="home" && (
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{scrollbarWidth:"none"}}>
+                {CATS.map(({id,label,Icon,col})=>{
+                  const active=cat===id;
                   return (
-                    <motion.button key={id} whileTap={{scale:0.87}} onClick={()=>setCat(id)}
+                    <motion.button key={id} whileTap={{scale:0.88}} onClick={()=>setCat(id)}
                       className="flex items-center gap-1.5 flex-shrink-0"
-                      style={{ padding:"5px 12px",borderRadius:7,
-                        background: active ? `${color}22` : "rgba(255,255,255,0.04)",
-                        border: active ? `1px solid ${color}55` : "1px solid rgba(255,255,255,0.07)",
-                        boxShadow: active ? `0 0 14px ${color}20` : "none",
-                        clipPath:"polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%)" }}>
-                      <Icon style={{ width:10,height:10,color:active?color:"rgba(255,255,255,0.35)" }}/>
-                      <span style={{ fontSize:10.5,fontWeight:active?800:600,
-                        color:active?"white":"rgba(255,255,255,0.4)",lineHeight:1 }}>
+                      style={{padding:"4px 10px",
+                        background:active?`${col}22`:"rgba(255,255,255,0.03)",
+                        border:active?`1px solid ${col}66`:"1px solid rgba(255,255,255,0.07)",
+                        boxShadow:active?`0 0 12px ${col}33`:"none",
+                        clipPath:"polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%)"}}>
+                      <Icon style={{width:9,height:9,color:active?col:"rgba(255,255,255,0.3)"}}/>
+                      <span style={{fontSize:9.5,fontWeight:active?900:600,letterSpacing:"0.08em",
+                        color:active?col:"rgba(255,255,255,0.38)"}}>
                         {label}
                       </span>
                     </motion.button>
@@ -1585,134 +1437,140 @@ export default function OTubePage() {
         </div>
 
         {/* ── CONTENT ── */}
-        <div className="px-3 pt-4 space-y-7">
+        <div className="px-3 pt-4 space-y-8">
           {isLoading ? (
             <div className="flex items-center justify-center py-24">
-              <div className="flex flex-col items-center gap-3">
-                <OTubeMark size={52}/>
-                <div className="w-6 h-6 rounded-full border-2 animate-spin"
-                  style={{ borderColor:"rgba(239,68,68,0.25)",borderTopColor:"#ef4444" }}/>
-                <span style={{ fontSize:11,color:"rgba(255,255,255,0.3)",fontWeight:700 }}>Yuklanmoqda...</span>
+              <div className="flex flex-col items-center gap-4">
+                <OTubeMark size={56}/>
+                <div className="flex items-center gap-1">
+                  {[0,1,2,3].map(i=>(
+                    <motion.div key={i}
+                      animate={{opacity:[0.3,1,0.3],scaleY:[0.5,1,0.5]}}
+                      transition={{duration:0.8,repeat:Infinity,delay:i*0.15}}
+                      style={{width:3,height:20,background:T.cyan}}/>
+                  ))}
+                </div>
+                <span style={{fontSize:10,color:T.cyan,letterSpacing:"0.18em",fontFamily:"monospace"}}>
+                  SIGNAL SCANNING...
+                </span>
               </div>
             </div>
-          ) : reels.length === 0 ? (
+          ) : reels.length===0 ? (
             <div className="flex flex-col items-center justify-center py-24 gap-3">
               <OTubeMark size={52}/>
-              <p className="text-white/28 text-[13px] mt-1">
-                {query ? `"${query}" bo'yicha natija topilmadi` : "Hali videolar yo'q"}
+              <p style={{color:"rgba(255,255,255,0.25)",fontSize:13,fontFamily:"monospace"}}>
+                {query?`"${query}" — signal topilmadi`:"Kontent yo'q"}
               </p>
               {query && (
                 <motion.button whileTap={{scale:0.9}} onClick={()=>setQuery("")}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full mt-1"
-                  style={{ background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.3)" }}>
-                  <RefreshCw className="w-3.5 h-3.5 text-red-400"/>
-                  <span style={{ fontSize:12,color:"#fca5a5",fontWeight:700 }}>Filterni tozalash</span>
+                  className="flex items-center gap-2 px-4 py-2"
+                  style={{background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`}}>
+                  <RefreshCw style={{width:13,height:13,color:T.cyan}}/>
+                  <span style={{fontSize:11,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>FILTER TOZALASH</span>
                 </motion.button>
               )}
             </div>
-          ) : tab === "home" ? (
+          ) : tab==="home" ? (
             <>
               {/* Featured */}
               {featured && !query && (
-                <HeroCard video={featured} onPlay={()=>setSelected(featured)}/>
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <ChBadge n="00" color={T.cyan}/>
+                    <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.6)"}}>
+                      TANLANGAN EFIR
+                    </span>
+                  </div>
+                  <HeroCard video={featured} onPlay={()=>setSelected(featured)}/>
+                </>
               )}
 
               {/* Search results */}
-              {query && reels.length > 0 && (
+              {query && reels.length>0 && (
                 <section>
                   <div className="flex items-center gap-2 mb-3">
-                    <Search className="w-3.5 h-3.5 text-red-400"/>
-                    <span className="text-white font-black text-[13px]">
-                      "{query}" — {reels.length} ta natija
+                    <Search style={{width:13,height:13,color:T.cyan}}/>
+                    <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.1em",color:T.cyan}}>
+                      "{query}" — {reels.length} NATIJA
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {reels.map((v,i) => (
-                      <GridCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>
-                    ))}
+                  <div className="grid grid-cols-2 gap-2">
+                    {reels.map((v,i)=><BentoCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
                   </div>
                 </section>
               )}
 
               {!query && (
                 <>
-                  {/* Trending */}
-                  {trending.length > 0 && (
+                  {/* Trending — vertical list */}
+                  {trending.length>0 && (
                     <section>
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <TrendingUp className="w-3.5 h-3.5 text-amber-400"/>
-                          <span className="text-white font-black text-[13px]">Trending</span>
+                          <ChBadge n="01" color={T.orange}/>
+                          <TrendingUp style={{width:13,height:13,color:T.orange}}/>
+                          <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.7)"}}>
+                            TRENDING
+                          </span>
                         </div>
-                        <div className="flex items-center gap-1 text-amber-400/50">
-                          <span className="text-[10px] font-bold">Ko'proq</span>
-                          <ChevronRight className="w-3 h-3"/>
+                        <div className="flex items-center gap-1">
+                          <span style={{fontSize:9,color:T.orange+"88",letterSpacing:"0.1em",fontWeight:700}}>KO'PROQ</span>
+                          <ChevronRight style={{width:11,height:11,color:T.orange+"88"}}/>
                         </div>
                       </div>
-                      <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth:"none" }}>
-                        {trending.map((v,i) => (
-                          <TrendCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>
-                        ))}
-                      </div>
+                      {trending.map((v,i)=><TrendRow key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
                     </section>
                   )}
 
-                  {/* New videos */}
-                  {newVideos.length > 0 && (
+                  {/* Newest — compact list */}
+                  {newest.length>0 && (
                     <section>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Clock className="w-3.5 h-3.5 text-violet-400"/>
-                        <span className="text-white font-black text-[13px]">Yangi videolar</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <ChBadge n="02" color={T.violet}/>
+                        <Clock style={{width:13,height:13,color:T.violet}}/>
+                        <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.7)"}}>
+                          YANGI SIGNAL
+                        </span>
                       </div>
-                      <div className="space-y-2">
-                        {newVideos.map((v) => (
-                          <motion.div key={v.id}
-                            whileTap={{scale:0.98}}
-                            onClick={()=>setSelected(v)}
-                            className="flex gap-3 rounded-[14px] overflow-hidden cursor-pointer"
-                            style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)",padding:8 }}>
-                            <div className="flex-shrink-0 rounded-[10px] overflow-hidden"
-                              style={{ width:88,aspectRatio:"16/9",background:"#0a0218",position:"relative" }}>
-                              {v.thumbnailUrl
-                                ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
-                                : <div className="w-full h-full flex items-center justify-center">
-                                    <Film className="w-5 h-5 text-white/10"/>
-                                  </div>}
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div style={{ width:22,height:22,borderRadius:"50%",
-                                  background:"rgba(0,0,0,0.55)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-                                  <Play style={{ width:8,height:8,fill:"white",color:"white",marginLeft:1 }}/>
-                                </div>
-                              </div>
+                      {newest.map(v=>(
+                        <motion.div key={v.id}
+                          whileTap={{scale:0.97}} onClick={()=>setSelected(v)}
+                          className="flex gap-3 cursor-pointer mb-2"
+                          style={{padding:"8px 10px",background:"rgba(255,255,255,0.02)",
+                            border:`1px solid ${T.violet}22`,borderLeft:`2px solid ${T.violet}66`}}>
+                          <div style={{width:80,aspectRatio:"16/9",flexShrink:0,position:"relative",overflow:"hidden"}}>
+                            {v.thumbnailUrl
+                              ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                              : <div className="w-full h-full" style={{background:`${T.violet}18`}}/>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.85)"}}
+                              className="line-clamp-2 leading-snug mb-1">{v.caption||"Video"}</p>
+                            <p style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{v.author.displayName}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Eye style={{width:8,height:8,color:T.violet}}/>
+                              <span style={{fontSize:8.5,color:T.violet,fontFamily:"monospace"}}>{fmt(v.viewsCount)}</span>
                             </div>
-                            <div className="flex-1 min-w-0 py-0.5">
-                              <p className="text-white font-bold text-[11px] line-clamp-2 leading-snug mb-1">
-                                {v.caption||"Video"}
-                              </p>
-                              <p className="text-white/40 text-[10px]">{v.author.displayName}</p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <Eye style={{ width:8,height:8,color:"rgba(255,255,255,0.25)" }}/>
-                                <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.25)",fontWeight:600 }}>{fmt(v.viewsCount)}</span>
-                                <Heart style={{ width:8,height:8,color:"rgba(255,255,255,0.25)" }}/>
-                                <span style={{ fontSize:8.5,color:"rgba(255,255,255,0.25)",fontWeight:600 }}>{fmt(v.likesCount)}</span>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
+                          </div>
+                        </motion.div>
+                      ))}
                     </section>
                   )}
 
-                  {/* Discovery grid */}
-                  {grid.length > 0 && (
+                  {/* Discovery — bento grid */}
+                  {grid.length>0 && (
                     <section>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="w-3.5 h-3.5 text-cyan-400"/>
-                        <span className="text-white font-black text-[13px]">Kashfiyot</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <ChBadge n="03" color={T.cyan}/>
+                        <Sparkles style={{width:13,height:13,color:T.cyan}}/>
+                        <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.7)"}}>
+                          KASHFIYOT GRID
+                        </span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        {grid.map((v,i) => (
-                          <GridCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>
+                      <div className="grid grid-cols-2 gap-2">
+                        {grid.map((v,i)=>(
+                          <BentoCard key={v.id} video={v} onPlay={()=>setSelected(v)}
+                            wide={i===0 || i===5 || i===10} idx={i}/>
                         ))}
                       </div>
                     </section>
@@ -1720,122 +1578,113 @@ export default function OTubePage() {
                 </>
               )}
             </>
-          ) : tab === "shorts" ? (
+          ) : tab==="shorts" ? (
             <section>
               <div className="flex items-center gap-2 mb-4">
-                <div style={{ width:28,height:28,borderRadius:"50%",
-                  background:"rgba(239,68,68,0.85)",
-                  display:"flex",alignItems:"center",justifyContent:"center" }}>
-                  <Zap style={{ width:14,height:14,fill:"white",color:"white" }}/>
+                <div style={{width:26,height:26,
+                  background:T.orange,display:"flex",alignItems:"center",justifyContent:"center",
+                  clipPath:"polygon(0 4px,4px 0,calc(100% - 4px) 0,100% 4px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px))"}}>
+                  <Zap style={{width:13,height:13,fill:"white",color:"white"}}/>
                 </div>
-                <span className="text-white font-black text-[16px]">Shorts</span>
-                <span style={{ fontSize:10,fontWeight:700,
-                  color:"rgba(239,68,68,0.7)",background:"rgba(239,68,68,0.1)",
-                  padding:"2px 8px",borderRadius:6,border:"1px solid rgba(239,68,68,0.2)" }}>
-                  YANGI AVLOD
+                <span style={{fontSize:15,fontWeight:900,color:"white",letterSpacing:"0.05em"}}>SHORTS</span>
+                <span style={{fontSize:9,fontWeight:900,letterSpacing:"0.12em",
+                  color:T.orange,background:`${T.orange}18`,
+                  padding:"2px 8px",border:`1px solid ${T.orange}44`}}>
+                  VERTICAL
                 </span>
               </div>
-              <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth:"none" }}>
-                {shorts.map(v => (
-                  <ShortsCard key={v.id} video={v} onPlay={()=>setSelected(v)}/>
-                ))}
+              <div className="flex gap-2.5 overflow-x-auto pb-1" style={{scrollbarWidth:"none"}}>
+                {shorts.map(v=><ShortsCard key={v.id} video={v} onPlay={()=>setSelected(v)}/>)}
               </div>
               <div className="h-4"/>
-              {/* Grid view for shorts */}
-              <div className="grid grid-cols-2 gap-2.5">
-                {raw.map((v,i) => (
-                  <GridCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>
-                ))}
+              <div className="grid grid-cols-2 gap-2">
+                {raw.map((v,i)=><BentoCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
               </div>
             </section>
           ) : (
-            /* Subscriptions tab */
+            /* CHANNELS tab */
             <section>
               <div className="flex items-center gap-2 mb-4">
-                <Users className="w-4 h-4 text-violet-400"/>
-                <span className="text-white font-black text-[15px]">Obunalar</span>
+                <Tv style={{width:16,height:16,color:T.cyan}}/>
+                <span style={{fontSize:13,fontWeight:900,letterSpacing:"0.1em",color:T.cyan}}>
+                  KANALLAR
+                </span>
               </div>
-              {/* Channel rows */}
-              {raw.map((v, i) => i < 5 && (
-                <div key={v.id} className="flex items-center gap-3 py-2.5 px-3 rounded-[14px] mb-2"
-                  style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)" }}>
-                  <div style={{ width:40,height:40,borderRadius:"50%",flexShrink:0,
-                    background:`hsl(${i*65}deg 60% 35%)`,
-                    display:"flex",alignItems:"center",justifyContent:"center" }}>
+              {raw.slice(0,5).map((v,i)=>(
+                <div key={v.id} className="flex items-center gap-3 mb-2"
+                  style={{padding:"10px 12px",background:"rgba(0,229,255,0.03)",
+                    border:`1px solid ${T.cyan}18`,
+                    borderLeft:`2px solid ${[T.cyan,T.orange,T.violet,"#00ff88","#ff2d55"][i%5]}88`}}>
+                  <div style={{width:38,height:38,flexShrink:0,
+                    background:`hsl(${i*65}deg 55%,20%)`,
+                    border:`1px solid hsl(${i*65}deg 60%,35%)`,
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
                     {v.author.avatarUrl
-                      ? <img src={v.author.avatarUrl} alt="" className="w-full h-full rounded-full object-cover"/>
-                      : <span style={{ fontSize:16,fontWeight:900,color:"white" }}>
-                          {v.author.displayName[0]}
-                        </span>}
+                      ? <img src={v.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
+                      : <span style={{fontSize:15,fontWeight:900,color:"white"}}>{v.author.displayName[0]}</span>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p style={{ fontSize:13,fontWeight:800,color:"rgba(255,255,255,0.85)" }}>
+                    <p style={{fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.85)",letterSpacing:"0.03em"}}>
                       {v.author.displayName}
                     </p>
-                    <p style={{ fontSize:10,color:"rgba(255,255,255,0.35)" }}>
+                    <p style={{fontSize:9,color:"rgba(255,255,255,0.35)",letterSpacing:"0.06em",fontFamily:"monospace"}}>
                       @{v.author.username} · {fmt(Math.floor(Math.random()*50000+1000))} obunachi
                     </p>
                   </div>
                   <motion.button whileTap={{scale:0.9}}
-                    style={{ padding:"6px 12px",borderRadius:10,
-                      background:"rgba(239,68,68,0.12)",border:"1px solid rgba(239,68,68,0.25)" }}>
-                    <span style={{ fontSize:10,fontWeight:900,color:"#fca5a5" }}>+ Obuna</span>
+                    style={{padding:"5px 10px",
+                      background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`,
+                      clipPath:"polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)"}}>
+                    <span style={{fontSize:9,fontWeight:900,color:T.cyan,letterSpacing:"0.1em"}}>+ OBUNA</span>
                   </motion.button>
                 </div>
               ))}
-              {/* Videos from subs */}
-              <div className="h-2"/>
+              <div className="h-3"/>
               <div className="flex items-center gap-2 mb-3">
-                <Play className="w-3.5 h-3.5 text-red-400"/>
-                <span className="text-white font-black text-[13px]">So'nggi videolar</span>
+                <Play style={{width:13,height:13,color:T.orange}}/>
+                <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.6)"}}>
+                  SO'NGGI EFIRLAR
+                </span>
               </div>
-              <div className="space-y-2">
-                {raw.slice(0,4).map(v => (
-                  <motion.div key={v.id}
-                    whileTap={{scale:0.98}} onClick={()=>setSelected(v)}
-                    className="flex gap-3 rounded-[14px] overflow-hidden cursor-pointer"
-                    style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)",padding:8 }}>
-                    <div className="flex-shrink-0 rounded-[10px] overflow-hidden"
-                      style={{ width:88,aspectRatio:"16/9",background:"#0a0218",position:"relative" }}>
-                      {v.thumbnailUrl
-                        ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
-                        : <div className="w-full h-full flex items-center justify-center">
-                            <Film className="w-5 h-5 text-white/10"/>
-                          </div>}
-                    </div>
-                    <div className="flex-1 min-w-0 py-0.5">
-                      <p className="text-white font-bold text-[11px] line-clamp-2 leading-snug mb-1">
-                        {v.caption||"Video"}
-                      </p>
-                      <p className="text-white/40 text-[10px]">{v.author.displayName}</p>
-                      <p style={{ fontSize:9,color:"rgba(255,255,255,0.25)",marginTop:2 }}>
-                        {fmt(v.viewsCount)} ko'rish
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+              {raw.slice(0,4).map(v=>(
+                <motion.div key={v.id}
+                  whileTap={{scale:0.97}} onClick={()=>setSelected(v)}
+                  className="flex gap-3 cursor-pointer mb-2"
+                  style={{padding:"8px 10px",background:"rgba(255,255,255,0.02)",
+                    border:`1px solid rgba(255,255,255,0.06)`}}>
+                  <div style={{width:80,aspectRatio:"16/9",flexShrink:0,position:"relative",overflow:"hidden"}}>
+                    {v.thumbnailUrl
+                      ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                      : <div className="w-full h-full" style={{background:"#0a0218"}}/>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.82)"}}
+                      className="line-clamp-2 leading-snug mb-1">{v.caption||"Video"}</p>
+                    <p style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{v.author.displayName}</p>
+                    <span style={{fontSize:8.5,color:T.cyan+"88",fontFamily:"monospace"}}>{fmt(v.viewsCount)} ko'rish</span>
+                  </div>
+                </motion.div>
+              ))}
             </section>
           )}
         </div>
 
         {/* Swipe indicator */}
-        <div className="flex items-end justify-center gap-2.5 py-10 pointer-events-none">
-          {[{label:"Lenta",a:false},{label:"Reels",a:false},{label:"OTube",a:true}].map(d => (
-            <div key={d.label} className="flex flex-col items-center gap-1.5">
-              <div style={{ width:d.a?26:7,height:7,borderRadius:4,transition:"all 0.35s",
-                background:d.a?"linear-gradient(90deg,#ef4444,#a855f7)":"rgba(255,255,255,0.08)",
-                boxShadow:d.a?"0 0 12px #ef444499":"none" }}/>
-              <span style={{ fontSize:8,fontWeight:700,letterSpacing:"0.06em",
-                color:d.a?"rgba(239,68,68,0.65)":"rgba(255,255,255,0.18)" }}>
-                {d.label}
+        <div className="flex items-end justify-center gap-3 py-10 pointer-events-none">
+          {[{l:"Lenta",a:false},{l:"Reels",a:false},{l:"OTube",a:true}].map(d=>(
+            <div key={d.l} className="flex flex-col items-center gap-1.5">
+              <div style={{width:d.a?28:6,height:6,transition:"all 0.35s",
+                background:d.a?T.gCyan:"rgba(255,255,255,0.07)",
+                boxShadow:d.a?`0 0 12px ${T.cyan}88`:"none"}}/>
+              <span style={{fontSize:8,fontWeight:700,letterSpacing:"0.08em",fontFamily:"monospace",
+                color:d.a?T.cyan+"99":"rgba(255,255,255,0.18)"}}>
+                {d.l.toUpperCase()}
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Player */}
       <AnimatePresence>
         {selected && (
           <NexusPlayer key={selected.id}
@@ -1843,12 +1692,9 @@ export default function OTubePage() {
         )}
       </AnimatePresence>
 
-      {/* Settings + Monetization drawer */}
-      <SettingsDrawer
-        open={showSettings} onClose={()=>setShowSettings(false)}
+      <SettingsDrawer open={showSettings} onClose={()=>setShowSettings(false)}
         settings={settings} onSettings={setSettings}
-        monetize={monetize} onMonetize={setMonetize}
-      />
+        monetize={monetize} onMonetize={setMonetize}/>
     </>
   );
 }

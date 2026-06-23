@@ -8,8 +8,10 @@ import {
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { useListReels } from "@workspace/api-client-react";
+import { useListReels, useLikeReel, useFollowUser } from "@workspace/api-client-react";
 import type { Reel } from "@workspace/api-client-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 import {
   Play, Pause, Volume2, VolumeX, ArrowLeft, Search, X,
   Eye, Heart, Share2, Check, Film, Music2, Gamepad2,
@@ -188,25 +190,60 @@ function SpeedPicker({ speed, onSpeed, onClose }:
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Comments panel                                          */
+/* Comments panel — real API                               */
 /* ─────────────────────────────────────────────────────── */
-const MOCK = [
-  {id:1,u:"Jasur T",   t:"Signal Engine zo'r! 🔥",          l:42,  ago:"2s"},
-  {id:2,u:"Malika S",  t:"Bu texnologiya qayerdan?",         l:18,  ago:"5s"},
-  {id:3,u:"OlCha fan", t:"OTube — kelajak platformasi 💯",   l:105, ago:"8s"},
-  {id:4,u:"Dilshod B", t:"Keyingi qism qachon?",             l:7,   ago:"12s"},
-  {id:5,u:"Tech UZ",   t:"Broadcast Station — unique look!", l:89,  ago:"20s"},
-];
+interface ApiComment {
+  id: number;
+  content: string;
+  createdAt: string;
+  author: { id: number; username: string; displayName: string; avatarUrl: string | null };
+}
 
-function CommentsPanel({ onClose }: { onClose:()=>void }) {
+function timeAgo(iso: string) {
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60)  return `${s}s`;
+  if (s < 3600) return `${Math.floor(s/60)}m`;
+  if (s < 86400) return `${Math.floor(s/3600)}h`;
+  return `${Math.floor(s/86400)}k`;
+}
+
+function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const [txt, setTxt] = useState("");
-  const [list, setList] = useState(MOCK);
-  const [liked, setLiked] = useState<Set<number>>(new Set());
+
+  const { data: comments = [], isLoading } = useQuery<ApiComment[]>({
+    queryKey: ["reel-comments", reelId],
+    queryFn: async () => {
+      const r = await fetch(`/api/reels/${reelId}/comments`);
+      if (!r.ok) throw new Error("Izohlarni olishda xatolik");
+      return r.json() as Promise<ApiComment[]>;
+    },
+    staleTime: 30_000,
+  });
+
+  const postMut = useMutation({
+    mutationFn: async (content: string) => {
+      const r = await fetch(`/api/reels/${reelId}/comments`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ content }),
+      });
+      if (!r.ok) throw new Error("Izoh qo'shishda xatolik");
+      return r.json() as Promise<ApiComment>;
+    },
+    onSuccess: (newComment) => {
+      qc.setQueryData<ApiComment[]>(["reel-comments", reelId], old =>
+        old ? [newComment, ...old] : [newComment]
+      );
+    },
+  });
+
   const send = () => {
-    if (!txt.trim()) return;
-    setList(c=>[{id:Date.now(),u:"Siz",t:txt,l:0,ago:"hozir"},...c]);
+    if (!txt.trim() || postMut.isPending) return;
+    postMut.mutate(txt.trim());
     setTxt("");
   };
+
   return (
     <motion.div
       initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
@@ -222,7 +259,7 @@ function CommentsPanel({ onClose }: { onClose:()=>void }) {
         <div className="flex items-center gap-2">
           <div style={{width:3,height:20,background:T.gCyan,borderRadius:2}}/>
           <span style={{fontSize:12,fontWeight:900,letterSpacing:"0.1em",color:T.cyan}}>
-            IZOHLAR <span style={{color:"rgba(255,255,255,0.3)"}}>({list.length})</span>
+            IZOHLAR <span style={{color:"rgba(255,255,255,0.3)"}}>({comments.length})</span>
           </span>
         </div>
         <button onClick={onClose}
@@ -234,53 +271,73 @@ function CommentsPanel({ onClose }: { onClose:()=>void }) {
         </button>
       </div>
       {/* input */}
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{borderBottom:`1px solid rgba(255,255,255,0.05)`}}>
-        <div style={{width:28,height:28,flexShrink:0,
-          background:"linear-gradient(135deg,#00e5ff33,#9d00ff33)",
-          border:`1px solid ${T.cyan}44`,
-          display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <span style={{fontSize:12,fontWeight:900,color:T.cyan}}>S</span>
+      {user && (
+        <div className="flex items-center gap-2 px-4 py-2.5"
+          style={{borderBottom:`1px solid rgba(255,255,255,0.05)`}}>
+          <div style={{width:28,height:28,flexShrink:0,
+            background:"linear-gradient(135deg,#00e5ff33,#9d00ff33)",
+            border:`1px solid ${T.cyan}44`,overflow:"hidden",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {user.avatarUrl
+              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
+              : <span style={{fontSize:12,fontWeight:900,color:T.cyan}}>
+                  {(user.displayName||user.username||"S")[0].toUpperCase()}
+                </span>}
+          </div>
+          <div className="flex-1 flex items-center gap-2 px-3 py-1.5"
+            style={{background:"rgba(0,229,255,0.04)",border:`1px solid ${T.cyan}22`}}>
+            <input value={txt} onChange={e=>setTxt(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&send()}
+              placeholder="Izoh yozing..."
+              className="flex-1 bg-transparent outline-none text-white text-[12px] placeholder:text-white/20"
+              style={{fontFamily:"inherit"}}/>
+            {txt && (
+              <button onClick={send} disabled={postMut.isPending}
+                style={{color:postMut.isPending?"rgba(0,229,255,0.4)":T.cyan,fontSize:16}}>
+                {postMut.isPending ? "..." : "➤"}
+              </button>
+            )}
+          </div>
         </div>
-        <div className="flex-1 flex items-center gap-2 px-3 py-1.5"
-          style={{background:"rgba(0,229,255,0.04)",border:`1px solid ${T.cyan}22`}}>
-          <input value={txt} onChange={e=>setTxt(e.target.value)}
-            onKeyDown={e=>e.key==="Enter"&&send()}
-            placeholder="Izoh yozing..."
-            className="flex-1 bg-transparent outline-none text-white text-[12px] placeholder:text-white/20"
-            style={{fontFamily:"inherit"}}/>
-          {txt && <button onClick={send} style={{color:T.cyan,fontSize:16}}>➤</button>}
-        </div>
-      </div>
+      )}
       {/* list */}
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2.5"
         style={{scrollbarWidth:"none"}}>
-        {list.map(c=>(
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="flex items-center gap-1">
+              {[0,1,2].map(i=>(
+                <motion.div key={i} animate={{opacity:[0.3,1,0.3]}}
+                  transition={{duration:0.7,repeat:Infinity,delay:i*0.15}}
+                  style={{width:3,height:14,background:T.cyan}}/>
+              ))}
+            </div>
+          </div>
+        ) : comments.length === 0 ? (
+          <p style={{fontSize:11,color:"rgba(255,255,255,0.25)",textAlign:"center",paddingTop:24,fontFamily:"monospace"}}>
+            Birinchi bo'lib izoh qoldiring
+          </p>
+        ) : comments.map(c=>(
           <div key={c.id} className="flex gap-2.5">
             <div style={{width:26,height:26,flexShrink:0,
               background:`hsl(${(c.id*47)%360},50%,22%)`,
               border:`1px solid hsl(${(c.id*47)%360},60%,35%)`,
+              overflow:"hidden",
               display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span style={{fontSize:10,fontWeight:900,color:"white"}}>{c.u[0]}</span>
+              {c.author.avatarUrl
+                ? <img src={c.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
+                : <span style={{fontSize:10,fontWeight:900,color:"white"}}>
+                    {(c.author.displayName||c.author.username||"?")[0].toUpperCase()}
+                  </span>}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-0.5">
-                <span style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.7)"}}>{c.u}</span>
-                <span style={{fontSize:9,color:"rgba(255,255,255,0.22)"}}>{c.ago} oldin</span>
+                <span style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.7)"}}>
+                  {c.author.displayName||c.author.username}
+                </span>
+                <span style={{fontSize:9,color:"rgba(255,255,255,0.22)"}}>{timeAgo(c.createdAt)}</span>
               </div>
-              <p style={{fontSize:11.5,color:"rgba(255,255,255,0.8)",lineHeight:1.45}}>{c.t}</p>
-              <div className="flex items-center gap-3 mt-1">
-                <button onClick={()=>setLiked(s=>{const n=new Set(s);n.has(c.id)?n.delete(c.id):n.add(c.id);return n;})}
-                  className="flex items-center gap-1">
-                  <ThumbsUp style={{width:10,height:10,
-                    fill:liked.has(c.id)?T.cyan:"none",
-                    color:liked.has(c.id)?T.cyan:"rgba(255,255,255,0.28)"}}/>
-                  <span style={{fontSize:9,color:"rgba(255,255,255,0.28)"}}>
-                    {c.l+(liked.has(c.id)?1:0)}
-                  </span>
-                </button>
-                <button style={{fontSize:9,color:"rgba(255,255,255,0.2)"}}>Javob</button>
-              </div>
+              <p style={{fontSize:11.5,color:"rgba(255,255,255,0.8)",lineHeight:1.45}}>{c.content}</p>
             </div>
           </div>
         ))}
@@ -294,12 +351,14 @@ function CommentsPanel({ onClose }: { onClose:()=>void }) {
 /* ─────────────────────────────────────────────────────── */
 function NexusPlayer({ video, onClose, settings }:
   { video:Reel; onClose:()=>void; settings:PlayerSettings }) {
+  const qc         = useQueryClient();
   const videoRef   = useRef<HTMLVideoElement>(null);
   const contRef    = useRef<HTMLDivElement>(null);
   const ctrlTimer  = useRef<ReturnType<typeof setTimeout>|null>(null);
   const lastTap    = useRef(0);
   const tapTimer   = useRef<ReturnType<typeof setTimeout>|null>(null);
   const longHold   = useRef<ReturnType<typeof setTimeout>|null>(null);
+  const viewTracked = useRef(false);
 
   const [playing,   setPlaying]   = useState(false);
   const [muted,     setMuted]     = useState(settings.muteDefault);
@@ -307,11 +366,14 @@ function NexusPlayer({ video, onClose, settings }:
   const [duration,  setDuration]  = useState(0);
   const [curTime,   setCurTime]   = useState(0);
   const [showCtrl,  setShowCtrl]  = useState(true);
-  const [liked,     setLiked]     = useState(false);
+  const [liked,     setLiked]     = useState(video.isLiked ?? false);
+  const [likesCount,setLikesCount]= useState(video.likesCount ?? 0);
   const [disliked,  setDisliked]  = useState(false);
   const [shared,    setShared]    = useState(false);
-  const [saved,     setSaved]     = useState(false);
-  const [subbed,    setSubbed]    = useState(false);
+  const [saved,     setSaved]     = useState(()=>{
+    try { return JSON.parse(localStorage.getItem("otube_saved")||"[]").includes(video.id); } catch { return false; }
+  });
+  const [subbed,    setSubbed]    = useState(video.author.isFollowing ?? false);
   const [seekLeft,  setSeekLeft]  = useState(false);
   const [seekRight, setSeekRight] = useState(false);
   const [fastFwd,   setFastFwd]   = useState(false);
@@ -322,6 +384,48 @@ function NexusPlayer({ video, onClose, settings }:
   const [showDesc,  setShowDesc]  = useState(false);
   const [donating,  setDonating]  = useState(false);
   const [donateAmt, setDonateAmt] = useState("2000");
+
+  /* Real like mutation */
+  const likeMut = useLikeReel({
+    mutation: {
+      onMutate: () => {
+        const wasLiked = liked;
+        setLiked(!wasLiked);
+        setLikesCount(c => wasLiked ? Math.max(0,c-1) : c+1);
+        if (!liked && disliked) setDisliked(false);
+      },
+      onSuccess: (data) => {
+        setLiked(data.liked);
+        setLikesCount(data.likesCount);
+        qc.invalidateQueries({ queryKey: ["listReels"] });
+      },
+      onError: () => {
+        setLiked(liked);
+        setLikesCount(video.likesCount);
+      },
+    },
+  });
+
+  /* Real follow mutation */
+  const followMut = useFollowUser({
+    mutation: {
+      onMutate: () => setSubbed(s => !s),
+      onError: () => setSubbed(video.author.isFollowing ?? false),
+    },
+  });
+
+  /* Save to localStorage */
+  const toggleSave = useCallback(() => {
+    setSaved((s: boolean) => {
+      const next = !s;
+      try {
+        const arr: number[] = JSON.parse(localStorage.getItem("otube_saved")||"[]");
+        const updated = next ? [...arr, video.id] : arr.filter(x=>x!==video.id);
+        localStorage.setItem("otube_saved", JSON.stringify(updated));
+      } catch {}
+      return next;
+    });
+  }, [video.id]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -354,10 +458,17 @@ function NexusPlayer({ video, onClose, settings }:
 
   const togglePlay = useCallback(() => {
     const v = videoRef.current; if (!v) return;
-    if (v.paused) v.play().then(()=>setPlaying(true)).catch(()=>{});
-    else { v.pause(); setPlaying(false); }
+    if (v.paused) {
+      v.play().then(()=>{
+        setPlaying(true);
+        if (!viewTracked.current) {
+          viewTracked.current = true;
+          fetch(`/api/reels/${video.id}/view`, { method:"POST" }).catch(()=>{});
+        }
+      }).catch(()=>{});
+    } else { v.pause(); setPlaying(false); }
     resetCtrl();
-  }, [resetCtrl]);
+  }, [resetCtrl, video.id]);
 
   const seek = useCallback((d:number) => {
     const v = videoRef.current; if (!v) return;
@@ -474,7 +585,7 @@ function NexusPlayer({ video, onClose, settings }:
           {showSpeed && <SpeedPicker speed={speed} onSpeed={applySpeed} onClose={()=>setShowSpeed(false)}/>}
         </AnimatePresence>
         <AnimatePresence>
-          {showCom && <CommentsPanel onClose={()=>setShowCom(false)}/>}
+          {showCom && <CommentsPanel reelId={video.id} onClose={()=>setShowCom(false)}/>}
         </AnimatePresence>
 
         {/* Controls */}
@@ -511,12 +622,14 @@ function NexusPlayer({ video, onClose, settings }:
 
                   {/* Subscribe */}
                   <motion.button whileTap={{scale:0.88}}
-                    onClick={()=>setSubbed(s=>!s)}
+                    onClick={()=>followMut.mutate({ id: video.author.id })}
+                    disabled={followMut.isPending}
                     style={{ padding:"5px 10px",flexShrink:0,
                       background: subbed?"rgba(255,255,255,0.08)":`${T.orange}cc`,
                       border: subbed?"1px solid rgba(255,255,255,0.18)":`1px solid ${T.orange}`,
                       boxShadow: subbed?"none":`0 0 16px ${T.orange}55`,
-                      clipPath:"polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)" }}>
+                      clipPath:"polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)",
+                      opacity: followMut.isPending?0.7:1 }}>
                     <span style={{fontSize:10,fontWeight:900,color:subbed?"rgba(255,255,255,0.55)":"white",letterSpacing:"0.05em"}}>
                       {subbed?"✓ OBUNA":"+ OBUNA"}
                     </span>
@@ -557,11 +670,11 @@ function NexusPlayer({ video, onClose, settings }:
 
               {/* RIGHT sidebar */}
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-auto flex flex-col gap-2.5">
-                <IBtn onClick={()=>{setLiked(l=>!l);if(disliked)setDisliked(false);}}
-                  active={liked} activeColor={T.cyan} label={fmt(video.likesCount+(liked?1:0))}>
+                <IBtn onClick={()=>likeMut.mutate({ id: video.id })}
+                  active={liked} activeColor={T.cyan} label={fmt(likesCount)}>
                   <ThumbsUp style={{width:15,height:15,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.7)"}}/>
                 </IBtn>
-                <IBtn onClick={()=>{setDisliked(d=>!d);if(liked)setLiked(false);}}
+                <IBtn onClick={()=>{setDisliked(d=>!d);if(liked){likeMut.mutate({id:video.id});}}}
                   active={disliked} activeColor={T.orange} label="Ko'rmadim">
                   <ThumbsDown style={{width:15,height:15,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.55)"}}/>
                 </IBtn>
@@ -569,11 +682,11 @@ function NexusPlayer({ video, onClose, settings }:
                   {shared?<Check style={{width:15,height:15,color:"#10b981"}}/>
                          :<Share2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>}
                 </IBtn>
-                <IBtn onClick={()=>setSaved(s=>!s)} active={saved} activeColor={T.violet} label="Saqlash">
+                <IBtn onClick={toggleSave} active={saved} activeColor={T.violet} label="Saqlash">
                   <Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.65)"}}/>
                 </IBtn>
-                <IBtn onClick={()=>setShowCom(c=>!c)} label="Izoh">
-                  <MessageCircle style={{width:15,height:15,color:"rgba(255,255,255,0.65)"}}/>
+                <IBtn onClick={()=>setShowCom(c=>!c)} active={showCom} label={fmt(video.commentsCount??0)}>
+                  <MessageCircle style={{width:15,height:15,color:showCom?T.cyan:"rgba(255,255,255,0.65)"}}/>
                 </IBtn>
                 <IBtn onClick={()=>setDonating(d=>!d)} active={donating} activeColor={T.orange} label="Yordam">
                   <Star style={{width:15,height:15,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.55)"}}/>
@@ -994,6 +1107,56 @@ function ChBadge({ n, color=T.cyan }: { n:string; color?:string }) {
 }
 
 /* ─────────────────────────────────────────────────────── */
+/* Channel row — real follow                               */
+/* ─────────────────────────────────────────────────────── */
+function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
+  const COLORS = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55"];
+  const col = COLORS[idx % COLORS.length];
+  const [subbed, setSubbed] = useState(author.isFollowing ?? false);
+  const followMut = useFollowUser({
+    mutation: {
+      onMutate: () => setSubbed(s => !s),
+      onError: () => setSubbed(author.isFollowing ?? false),
+    },
+  });
+  return (
+    <div className="flex items-center gap-3 mb-2"
+      style={{padding:"10px 12px",background:"rgba(0,229,255,0.03)",
+        border:`1px solid ${T.cyan}18`,
+        borderLeft:`2px solid ${col}88`}}>
+      <div style={{width:38,height:38,flexShrink:0,overflow:"hidden",
+        background:`hsl(${idx*65}deg 55%,20%)`,
+        border:`1px solid hsl(${idx*65}deg 60%,35%)`,
+        display:"flex",alignItems:"center",justifyContent:"center"}}>
+        {author.avatarUrl
+          ? <img src={author.avatarUrl} alt="" className="w-full h-full object-cover"/>
+          : <span style={{fontSize:15,fontWeight:900,color:"white"}}>{(author.displayName||author.username||"?")[0]}</span>}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p style={{fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.85)",letterSpacing:"0.03em"}}>
+          {author.displayName}
+        </p>
+        <p style={{fontSize:9,color:"rgba(255,255,255,0.35)",letterSpacing:"0.06em",fontFamily:"monospace"}}>
+          @{author.username} · {fmt(author.followersCount ?? 0)} obunachi
+        </p>
+      </div>
+      <motion.button whileTap={{scale:0.9}}
+        onClick={()=>followMut.mutate({ id: author.id })}
+        disabled={followMut.isPending}
+        style={{padding:"5px 10px",
+          background: subbed?`${col}22`:`${col}18`,
+          border:`1px solid ${col}${subbed?"88":"44"}`,
+          clipPath:"polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)",
+          opacity: followMut.isPending ? 0.6 : 1}}>
+        <span style={{fontSize:9,fontWeight:900,color:col,letterSpacing:"0.1em"}}>
+          {subbed?"✓ OBUNA":"+ OBUNA"}
+        </span>
+      </motion.button>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
 /* Hero broadcast card — expand button                     */
 /* ─────────────────────────────────────────────────────── */
 function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
@@ -1144,8 +1307,23 @@ function TrendRow({ video, onPlay, idx }:
 /* ─────────────────────────────────────────────────────── */
 function BentoCard({ video, onPlay, wide=false, idx=0 }:
   { video:Reel; onPlay:()=>void; wide?:boolean; idx?:number }) {
-  const [liked,    setLiked]    = useState(false);
+  const qc = useQueryClient();
+  const [liked,    setLiked]    = useState(video.isLiked ?? false);
+  const [likesCount, setLikesCount] = useState(video.likesCount ?? 0);
   const [expanded, setExpanded] = useState(false);
+  const likeMut = useLikeReel({
+    mutation: {
+      onMutate: () => {
+        setLiked(l => !l);
+        setLikesCount(c => liked ? Math.max(0,c-1) : c+1);
+      },
+      onSuccess: (data) => {
+        setLiked(data.liked);
+        setLikesCount(data.likesCount);
+        qc.invalidateQueries({ queryKey: ["listReels"] });
+      },
+    },
+  });
   return (
     <motion.div
       initial={{opacity:0,y:14}} animate={{opacity:1,y:0}}
@@ -1198,12 +1376,12 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
               <span style={{fontSize:8.5,color:T.cyan+"77",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
             </div>
             <motion.button whileTap={{scale:0.65}}
-              onClick={e=>{e.stopPropagation();setLiked(l=>!l);}}
+              onClick={e=>{e.stopPropagation();likeMut.mutate({id:video.id});}}
               className="flex items-center gap-0.5">
               <Heart style={{width:8,height:8,fill:liked?T.orange:"none",color:liked?T.orange:"rgba(255,255,255,0.25)"}}/>
               <span style={{fontSize:8.5,fontFamily:"monospace",
                 color:liked?T.orange:"rgba(255,255,255,0.25)"}}>
-                {fmt(video.likesCount+(liked?1:0))}
+                {fmt(likesCount)}
               </span>
             </motion.button>
           </div>
@@ -1611,33 +1789,7 @@ export default function OTubePage() {
                 </span>
               </div>
               {raw.slice(0,5).map((v,i)=>(
-                <div key={v.id} className="flex items-center gap-3 mb-2"
-                  style={{padding:"10px 12px",background:"rgba(0,229,255,0.03)",
-                    border:`1px solid ${T.cyan}18`,
-                    borderLeft:`2px solid ${[T.cyan,T.orange,T.violet,"#00ff88","#ff2d55"][i%5]}88`}}>
-                  <div style={{width:38,height:38,flexShrink:0,
-                    background:`hsl(${i*65}deg 55%,20%)`,
-                    border:`1px solid hsl(${i*65}deg 60%,35%)`,
-                    display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    {v.author.avatarUrl
-                      ? <img src={v.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
-                      : <span style={{fontSize:15,fontWeight:900,color:"white"}}>{v.author.displayName[0]}</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p style={{fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.85)",letterSpacing:"0.03em"}}>
-                      {v.author.displayName}
-                    </p>
-                    <p style={{fontSize:9,color:"rgba(255,255,255,0.35)",letterSpacing:"0.06em",fontFamily:"monospace"}}>
-                      @{v.author.username} · {fmt(Math.floor(Math.random()*50000+1000))} obunachi
-                    </p>
-                  </div>
-                  <motion.button whileTap={{scale:0.9}}
-                    style={{padding:"5px 10px",
-                      background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`,
-                      clipPath:"polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)"}}>
-                    <span style={{fontSize:9,fontWeight:900,color:T.cyan,letterSpacing:"0.1em"}}>+ OBUNA</span>
-                  </motion.button>
-                </div>
+                <ChannelRow key={v.author.id} author={v.author} idx={i}/>
               ))}
               <div className="h-3"/>
               <div className="flex items-center gap-2 mb-3">

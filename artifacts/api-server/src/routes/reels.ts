@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable } from "@workspace/db";
-import { eq, sql, desc, and, inArray, not } from "drizzle-orm";
+import { reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable, followsTable } from "@workspace/db";
+import { eq, sql, desc, and, inArray, not, count } from "drizzle-orm";
 import { accumulateViewEarning } from "./monetization";
 import { scanContentAsync } from "../moderation/aiFilter";
 
 const router = Router();
 
-/* ── Batch enrich: 2 queries for ALL reels (not 2×N) ────────── */
+/* ── Batch enrich: 3 queries for ALL reels (not 3×N) ────────── */
 async function batchEnrichReels(
   reels: (typeof reelsTable.$inferSelect)[],
   viewerId = 0,
@@ -17,7 +17,7 @@ async function batchEnrichReels(
   const authorIds = [...new Set(reels.map(r => r.authorId).filter(Boolean))] as number[];
   const reelIds = reels.map(r => r.id);
 
-  const [authors, likedRows] = await Promise.all([
+  const [authors, likedRows, followRows, followerCounts] = await Promise.all([
     authorIds.length > 0
       ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : Promise.resolve([]),
@@ -27,28 +27,44 @@ async function batchEnrichReels(
           .from(reelLikesTable)
           .where(and(inArray(reelLikesTable.reelId, reelIds), eq(reelLikesTable.userId, viewerId)))
       : Promise.resolve([]),
+    viewerId && authorIds.length > 0
+      ? db
+          .select({ followingId: followsTable.followingId })
+          .from(followsTable)
+          .where(and(eq(followsTable.followerId, viewerId), inArray(followsTable.followingId, authorIds)))
+      : Promise.resolve([]),
+    authorIds.length > 0
+      ? db
+          .select({ userId: followsTable.followingId, cnt: count(followsTable.followerId) })
+          .from(followsTable)
+          .where(inArray(followsTable.followingId, authorIds))
+          .groupBy(followsTable.followingId)
+      : Promise.resolve([]),
   ]);
 
   const authorMap = new Map(authors.map(a => [a.id, a]));
   const likedSet = new Set((likedRows as { reelId: number }[]).map(l => l.reelId));
+  const followingSet = new Set((followRows as { followingId: number }[]).map(f => f.followingId));
+  const followerMap = new Map((followerCounts as { userId: number; cnt: number }[]).map(r => [r.userId, r.cnt]));
 
   return reels.map(reel => {
     const author = authorMap.get(reel.authorId as number);
+    const authorId = author?.id ?? (reel.authorId as number);
     return {
       ...reel,
       likesCount: reel.likesCount ?? 0,
       commentsCount: reel.commentsCount ?? 0,
       viewsCount: reel.viewsCount ?? 0,
       author: {
-        id: author?.id ?? reel.authorId,
+        id: authorId,
         username: author?.username ?? "deleted",
         displayName: author?.displayName ?? "Deleted User",
         avatarUrl: author?.avatarUrl ?? null,
         isVerified: author?.isVerified ?? false,
-        followersCount: 0,
+        followersCount: followerMap.get(authorId) ?? 0,
         followingCount: 0,
         postsCount: 0,
-        isFollowing: false,
+        isFollowing: followingSet.has(authorId),
       },
       tags: reel.tags || [],
       isLiked: likedSet.has(reel.id),

@@ -1242,7 +1242,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
           : <Maximize2 style={{width:13,height:13,color:"rgba(255,255,255,0.7)"}}/>}
       </motion.button>
 
-      {/* Thumbnail */}
+      {/* Thumbnail — info panel lives INSIDE so it doesn't overlap Watch Party row */}
       <div style={{aspectRatio:expanded?"4/3":"16/9",position:"relative",transition:"all 0.4s cubic-bezier(.4,0,.2,1)",overflow:"hidden"}}>
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt={video.caption} className="w-full h-full object-cover"/>
@@ -1269,37 +1269,37 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
             boxShadow:"0 0 8px #ff3b30"}}/>
           <span style={{fontSize:9.5,fontWeight:700,color:"rgba(255,255,255,0.85)",letterSpacing:"0.06em"}}>LIVE</span>
         </div>
-      </div>
 
-      {/* Info panel — overlaid, no border */}
-      <div className="absolute bottom-0 inset-x-0 p-4">
-        <h2 style={{color:"white",fontWeight:900,fontSize:14,lineHeight:1.3,
-          marginBottom:6,textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>
-          {video.caption||"OTube Tanlangan"}
-        </h2>
-        <div className="flex items-center gap-2">
-          {video.author.avatarUrl && (
-            <img src={video.author.avatarUrl} alt="" 
-              style={{width:24,height:24,borderRadius:"50%",objectFit:"cover",flexShrink:0,
-                boxShadow:`0 0 0 1.5px ${T.cyan}55`}}/>)}
-          <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",flex:1}} className="truncate">
-            {video.author.displayName}
-          </span>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <Eye style={{width:10,height:10,color:T.cyan+"88"}}/>
-              <span style={{fontSize:10,color:T.cyan+"88",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Heart style={{width:10,height:10,color:T.orange+"88"}}/>
-              <span style={{fontSize:10,color:T.orange+"88",fontFamily:"monospace"}}>{fmt(video.likesCount)}</span>
+        {/* Info panel — inside thumbnail so Watch Party row never overlaps */}
+        <div className="absolute bottom-0 inset-x-0 p-4">
+          <h2 style={{color:"white",fontWeight:900,fontSize:14,lineHeight:1.3,
+            marginBottom:6,textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>
+            {video.caption||"OTube Tanlangan"}
+          </h2>
+          <div className="flex items-center gap-2">
+            {video.author.avatarUrl && (
+              <img src={video.author.avatarUrl} alt=""
+                style={{width:24,height:24,borderRadius:"50%",objectFit:"cover",flexShrink:0,
+                  boxShadow:`0 0 0 1.5px ${T.cyan}55`}}/>)}
+            <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",flex:1}} className="truncate">
+              {video.author.displayName}
+            </span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Eye style={{width:10,height:10,color:T.cyan+"88"}}/>
+                <span style={{fontSize:10,color:T.cyan+"88",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Heart style={{width:10,height:10,color:T.orange+"88"}}/>
+                <span style={{fontSize:10,color:T.orange+"88",fontFamily:"monospace"}}>{fmt(video.likesCount)}</span>
+              </div>
             </div>
           </div>
         </div>
+        {/* Bottom accent line — also inside thumbnail */}
+        <div className="absolute bottom-0 left-0 right-0 h-[2px]"
+          style={{background:`linear-gradient(90deg,${T.cyan},${T.violet},transparent)`}}/>
       </div>
-      {/* Bottom accent line */}
-      <div className="absolute bottom-0 left-0 right-0 h-[2px]"
-        style={{background:`linear-gradient(90deg,${T.cyan},${T.violet},transparent)`}}/>
 
       {/* Watch Party + Live Pulse row */}
       <div className="flex gap-2 p-3 pt-2" onClick={e=>e.stopPropagation()}

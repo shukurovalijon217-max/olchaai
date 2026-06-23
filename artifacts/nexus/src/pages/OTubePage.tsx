@@ -41,13 +41,8 @@ const T = {
   gViolet:  "linear-gradient(90deg,#9d00ff,#5500cc)",
 } as const;
 
-/* Dot-grid background CSS */
-const DOT_BG = {
-  background: T.bg,
-  backgroundImage:
-    "radial-gradient(rgba(0,229,255,0.06) 1px, transparent 1px)",
-  backgroundSize: "22px 22px",
-} as const;
+/* Pure black — aurora blobs added in JSX */
+const DOT_BG = { background: "#000000" } as const;
 
 /* ─────────────────────────────────────────────────────── */
 /* helpers                                                 */
@@ -517,24 +512,23 @@ function NexusPlayer({ video, onClose, settings }:
     setShared(true);setTimeout(()=>setShared(false),2000);
   },[video.caption]);
 
-  /* Icon button helper */
+  /* Icon button helper — round */
   const IBtn = ({ onClick, active=false, activeColor=T.cyan, children, label }:
     { onClick:()=>void; active?:boolean; activeColor?:string; children:React.ReactNode; label:string }) => (
     <motion.button whileTap={{scale:0.72}}
       onClick={e=>{e.stopPropagation();onClick();}}
-      className="flex flex-col items-center gap-0.5">
+      className="flex flex-col items-center gap-1">
       <div style={{
-        width:40,height:40,flexShrink:0,
-        background: active?`${activeColor}22`:"rgba(0,0,0,0.5)",
-        backdropFilter:"blur(10px)",
-        border: active?`1px solid ${activeColor}55`:"1px solid rgba(255,255,255,0.1)",
-        boxShadow: active?`0 0 14px ${activeColor}44`:"none",
+        width:42,height:42,flexShrink:0,borderRadius:"50%",
+        background: active?`${activeColor}28`:"rgba(0,0,0,0.45)",
+        backdropFilter:"blur(12px)",
+        boxShadow: active?`0 0 0 1.5px ${activeColor}66, 0 0 16px ${activeColor}33`
+                        :"0 0 0 1px rgba(255,255,255,0.1)",
         display:"flex",alignItems:"center",justifyContent:"center",
-        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))",
       }}>
         {children}
       </div>
-      <span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontWeight:700,letterSpacing:"0.05em"}}>
+      <span style={{fontSize:8,color:"rgba(255,255,255,0.28)",fontWeight:600}}>
         {label}
       </span>
     </motion.button>
@@ -1094,20 +1088,17 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Channel number badge                                    */
+/* Glowing dot label                                       */
 /* ─────────────────────────────────────────────────────── */
-function ChBadge({ n, color=T.cyan }: { n:string; color?:string }) {
+function ChBadge({ n: _n, color=T.cyan }: { n:string; color?:string }) {
   return (
-    <span style={{fontSize:9,fontWeight:900,letterSpacing:"0.1em",color,
-      background:`${color}18`,padding:"2px 8px",
-      border:`1px solid ${color}44`,marginRight:6}}>
-      CH.{n}
-    </span>
+    <div style={{width:6,height:6,borderRadius:"50%",flexShrink:0,
+      background:color,boxShadow:`0 0 12px ${color}, 0 0 5px ${color}`}}/>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Channel row — real follow                               */
+/* Channel row — real follow (redesigned)                  */
 /* ─────────────────────────────────────────────────────── */
 function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
   const COLORS = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55"];
@@ -1120,107 +1111,103 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
     },
   });
   return (
-    <div className="flex items-center gap-3 mb-2"
-      style={{padding:"10px 12px",background:"rgba(0,229,255,0.03)",
-        border:`1px solid ${T.cyan}18`,
-        borderLeft:`2px solid ${col}88`}}>
-      <div style={{width:38,height:38,flexShrink:0,overflow:"hidden",
-        background:`hsl(${idx*65}deg 55%,20%)`,
-        border:`1px solid hsl(${idx*65}deg 60%,35%)`,
+    <motion.div className="flex items-center gap-3 mb-3"
+      initial={{opacity:0,y:10}} animate={{opacity:1,y:0}}
+      transition={{delay:idx*0.06,type:"spring",damping:24}}
+      style={{padding:"12px 14px",
+        background:"rgba(255,255,255,0.028)",
+        backdropFilter:"blur(12px)",
+        borderRadius:16,
+        boxShadow:`0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06)`}}>
+      {/* Circular avatar */}
+      <div style={{width:44,height:44,flexShrink:0,overflow:"hidden",
+        borderRadius:"50%",
+        background:`radial-gradient(circle at 30% 30%, hsl(${idx*65}deg 60%,35%), hsl(${idx*65}deg 40%,12%))`,
+        boxShadow:`0 0 0 2px ${col}44, 0 0 20px ${col}22`,
         display:"flex",alignItems:"center",justifyContent:"center"}}>
         {author.avatarUrl
           ? <img src={author.avatarUrl} alt="" className="w-full h-full object-cover"/>
-          : <span style={{fontSize:15,fontWeight:900,color:"white"}}>{(author.displayName||author.username||"?")[0]}</span>}
+          : <span style={{fontSize:17,fontWeight:900,color:"white"}}>{(author.displayName||author.username||"?")[0]}</span>}
       </div>
       <div className="flex-1 min-w-0">
-        <p style={{fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.85)",letterSpacing:"0.03em"}}>
+        <p style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.9)"}}>
           {author.displayName}
         </p>
-        <p style={{fontSize:9,color:"rgba(255,255,255,0.35)",letterSpacing:"0.06em",fontFamily:"monospace"}}>
-          @{author.username} · {fmt(author.followersCount ?? 0)} obunachi
+        <p style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:1}}>
+          {fmt(author.followersCount ?? 0)} obunachi
         </p>
       </div>
       <motion.button whileTap={{scale:0.9}}
         onClick={()=>followMut.mutate({ id: author.id })}
         disabled={followMut.isPending}
-        style={{padding:"5px 10px",
-          background: subbed?`${col}22`:`${col}18`,
-          border:`1px solid ${col}${subbed?"88":"44"}`,
-          clipPath:"polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)",
+        style={{padding:"7px 16px",borderRadius:99,
+          background: subbed?"rgba(255,255,255,0.08)":`${col}22`,
+          border:`1px solid ${col}${subbed?"44":"66"}`,
+          boxShadow: subbed?"none":`0 0 14px ${col}33`,
           opacity: followMut.isPending ? 0.6 : 1}}>
-        <span style={{fontSize:9,fontWeight:900,color:col,letterSpacing:"0.1em"}}>
-          {subbed?"✓ OBUNA":"+ OBUNA"}
+        <span style={{fontSize:10,fontWeight:700,color:subbed?"rgba(255,255,255,0.4)":col}}>
+          {subbed?"Obuna":"+ Obuna"}
         </span>
       </motion.button>
-    </div>
+    </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Hero broadcast card — expand button                     */
+/* Hero cinematic card                                     */
 /* ─────────────────────────────────────────────────────── */
 function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <motion.div
       className="relative cursor-pointer overflow-hidden"
-      initial={{opacity:0,y:16}} animate={{opacity:1,y:0}}
-      transition={{type:"spring",damping:22}}
-      style={{border:`1px solid ${T.cyan}33`,boxShadow:`0 0 40px rgba(0,229,255,0.08)`}}
-      whileTap={{scale:0.99}} onClick={onPlay}
+      initial={{opacity:0,scale:0.97}} animate={{opacity:1,scale:1}}
+      transition={{type:"spring",damping:24}}
+      style={{borderRadius:20,boxShadow:`0 0 60px rgba(0,229,255,0.1), 0 0 0 1px rgba(255,255,255,0.07)`}}
+      whileTap={{scale:0.985}} onClick={onPlay}
     >
-      {/* Expand/shrink button — top right */}
+      {/* Expand button */}
       <motion.button whileTap={{scale:0.8}}
         onClick={e=>{e.stopPropagation();setExpanded(x=>!x);}}
-        className="absolute top-2 right-2 z-10 flex items-center justify-center"
-        style={{width:32,height:32,
-          background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",
-          border:`1px solid ${T.cyan}44`,
-          clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
+        className="absolute top-3 right-3 z-10 flex items-center justify-center"
+        style={{width:32,height:32,borderRadius:"50%",
+          background:"rgba(0,0,0,0.5)",backdropFilter:"blur(12px)"}}>
         {expanded
-          ? <Minimize2 style={{width:13,height:13,color:T.cyan}}/>
-          : <Maximize2 style={{width:13,height:13,color:T.cyan}}/>}
+          ? <Minimize2 style={{width:13,height:13,color:"rgba(255,255,255,0.7)"}}/>
+          : <Maximize2 style={{width:13,height:13,color:"rgba(255,255,255,0.7)"}}/>}
       </motion.button>
 
       {/* Thumbnail */}
-      <div style={{aspectRatio:expanded?"4/3":"21/9",position:"relative",transition:"all 0.35s",overflow:"hidden"}}>
+      <div style={{aspectRatio:expanded?"4/3":"16/9",position:"relative",transition:"all 0.4s cubic-bezier(.4,0,.2,1)",overflow:"hidden"}}>
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt={video.caption} className="w-full h-full object-cover"/>
           : <div className="w-full h-full flex items-center justify-center"
               style={{background:"linear-gradient(135deg,#0d0028,#000510)"}}>
               <Film className="w-14 h-14 text-white/8"/>
             </div>}
-        {/* Scanlines */}
         <div className="absolute inset-0 pointer-events-none"
-          style={{background:"repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.015) 3px,rgba(0,229,255,0.015) 4px)"}}/>
-        <div className="absolute inset-0 pointer-events-none"
-          style={{background:"linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.15) 55%,transparent 100%)"}}/>
-        {/* Play button — unique shape */}
+          style={{background:"linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.1) 50%,transparent 100%)"}}/>
+        {/* Play button — round */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div whileHover={{scale:1.1}} whileTap={{scale:0.9}}
-            style={{width:66,height:66,
-              background:"rgba(0,0,0,0.55)",backdropFilter:"blur(10px)",
-              border:`2px solid ${T.cyan}66`,
-              boxShadow:`0 0 30px ${T.cyan}44, 0 0 0 14px ${T.cyan}0a`,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              clipPath:"polygon(0 10px,10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px))"}}>
-            <Play style={{width:24,height:24,fill:T.cyan,color:T.cyan,marginLeft:3}}/>
+          <motion.div whileTap={{scale:0.88}}
+            style={{width:64,height:64,borderRadius:"50%",
+              background:"rgba(0,0,0,0.45)",backdropFilter:"blur(12px)",
+              boxShadow:`0 0 0 1.5px rgba(255,255,255,0.25), 0 0 40px rgba(0,229,255,0.25)`,
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Play style={{width:22,height:22,fill:"white",color:"white",marginLeft:3}}/>
           </motion.div>
         </div>
-        {/* On-air badge */}
-        <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2.5 py-1"
-          style={{background:"rgba(0,0,0,0.72)",backdropFilter:"blur(10px)",
-            border:`1px solid ${T.cyan}44`}}>
-          <div style={{width:6,height:6,background:T.cyan,
-            animation:"pulse 1.5s infinite",
-            boxShadow:`0 0 8px ${T.cyan}`}}/>
-          <span style={{fontSize:9,fontWeight:900,color:T.cyan,letterSpacing:"0.14em"}}>ON AIR</span>
+        {/* Live dot */}
+        <div className="absolute top-3 left-3 flex items-center gap-2 px-2.5 py-1.5"
+          style={{borderRadius:99,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(12px)"}}>
+          <div style={{width:6,height:6,borderRadius:"50%",background:"#ff3b30",
+            boxShadow:"0 0 8px #ff3b30"}}/>
+          <span style={{fontSize:9.5,fontWeight:700,color:"rgba(255,255,255,0.85)",letterSpacing:"0.06em"}}>LIVE</span>
         </div>
       </div>
 
-      {/* Info panel — broadcast style */}
-      <div className="absolute bottom-0 inset-x-0 p-3.5"
-        style={{borderTop:`1px solid ${T.cyan}18`}}>
+      {/* Info panel — overlaid, no border */}
+      <div className="absolute bottom-0 inset-x-0 p-4">
         <h2 style={{color:"white",fontWeight:900,fontSize:14,lineHeight:1.3,
           marginBottom:6,textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>
           {video.caption||"OTube Tanlangan"}
@@ -1254,63 +1241,63 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
 /* ─────────────────────────────────────────────────────── */
 /* Trending list — vertical rank                           */
 /* ─────────────────────────────────────────────────────── */
+/* TrendRow renders a horizontal cinema card (used inside overflow-x scroll) */
 function TrendRow({ video, onPlay, idx }:
   { video:Reel; onPlay:()=>void; idx:number }) {
   const COLS = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55", "#ffd700"];
   const col = COLS[idx % COLS.length];
   return (
     <motion.div
-      initial={{opacity:0,x:-16}} animate={{opacity:1,x:0}}
-      transition={{delay:idx*0.05,type:"spring",damping:22}}
-      className="flex items-center gap-3 cursor-pointer"
-      style={{padding:"10px 12px",
-        background:"rgba(255,255,255,0.025)",
-        border:`1px solid ${col}18`,
-        marginBottom:2}}
-      whileTap={{scale:0.97}} onClick={onPlay}
+      initial={{opacity:0,x:20,scale:0.94}} animate={{opacity:1,x:0,scale:1}}
+      transition={{delay:idx*0.06,type:"spring",damping:22}}
+      className="flex-shrink-0 cursor-pointer overflow-hidden relative"
+      style={{width:160,borderRadius:14,
+        boxShadow:`0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)`}}
+      whileTap={{scale:0.94}} onClick={onPlay}
     >
-      {/* Rank */}
-      <div style={{width:32,height:32,flexShrink:0,
-        display:"flex",alignItems:"center",justifyContent:"center",
-        background:`${col}18`,border:`1px solid ${col}55`}}>
-        <span style={{fontSize:14,fontWeight:900,color:col,fontFamily:"monospace"}}>
-          {idx+1}
-        </span>
-      </div>
-      {/* Thumb */}
-      <div style={{width:56,aspectRatio:"16/9",flexShrink:0,position:"relative",overflow:"hidden"}}>
+      {/* Thumbnail */}
+      <div style={{aspectRatio:"9/12",position:"relative",overflow:"hidden"}}>
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
-          : <div className="w-full h-full" style={{background:`${col}18`}}/>}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Play style={{width:12,height:12,fill:"white",color:"white",opacity:0.8,marginLeft:1}}/>
+          : <div className="w-full h-full"
+              style={{background:`linear-gradient(160deg,${col}22,#000)`}}/>}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{background:"linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.05) 55%,transparent 100%)"}}/>
+        {/* Rank badge */}
+        <div className="absolute top-2.5 left-2.5"
+          style={{width:28,height:28,borderRadius:"50%",
+            background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            boxShadow:`0 0 0 1.5px ${col}55`}}>
+          <span style={{fontSize:12,fontWeight:900,color:col,fontFamily:"monospace"}}>{idx+1}</span>
         </div>
-      </div>
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p style={{fontSize:11.5,fontWeight:700,color:"rgba(255,255,255,0.88)"}}
-          className="line-clamp-2 leading-snug">{video.caption||"Video"}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <Eye style={{width:9,height:9,color:col}}/>
-          <span style={{fontSize:9,color:col,fontFamily:"monospace",fontWeight:700}}>{fmt(video.viewsCount)}</span>
-          <span style={{fontSize:9,color:"rgba(255,255,255,0.25)"}}>{video.author.displayName}</span>
+        {/* Bottom info */}
+        <div className="absolute bottom-0 inset-x-0 p-2.5">
+          <p style={{fontSize:10.5,fontWeight:700,color:"white",lineHeight:1.3,marginBottom:3}}
+            className="line-clamp-2">{video.caption||"Video"}</p>
+          <div className="flex items-center gap-1.5">
+            <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.4)"}}/>
+            <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
+          </div>
         </div>
+        {/* Color accent bottom */}
+        <div className="absolute bottom-0 inset-x-0 h-[2px]"
+          style={{background:col,opacity:0.6}}/>
       </div>
-      {/* Side accent */}
-      <div style={{width:2,height:40,background:col,opacity:0.5,flexShrink:0}}/>
     </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Bento grid card                                         */
+/* Discovery card — cinematic, no info box                 */
 /* ─────────────────────────────────────────────────────── */
 function BentoCard({ video, onPlay, wide=false, idx=0 }:
   { video:Reel; onPlay:()=>void; wide?:boolean; idx?:number }) {
   const qc = useQueryClient();
   const [liked,    setLiked]    = useState(video.isLiked ?? false);
   const [likesCount, setLikesCount] = useState(video.likesCount ?? 0);
-  const [expanded, setExpanded] = useState(false);
+  const ACCENT = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55"];
+  const accent = ACCENT[idx % ACCENT.length];
   const likeMut = useLikeReel({
     mutation: {
       onMutate: () => {
@@ -1324,103 +1311,95 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
       },
     },
   });
+  const ar = wide ? "16/9" : idx%3===0 ? "3/4" : "16/9";
   return (
     <motion.div
-      initial={{opacity:0,y:14}} animate={{opacity:1,y:0}}
-      transition={{delay:idx*0.04,type:"spring",damping:20}}
+      initial={{opacity:0,y:18,scale:0.96}} animate={{opacity:1,y:0,scale:1}}
+      transition={{delay:idx*0.05,type:"spring",damping:22,stiffness:200}}
       className={`cursor-pointer overflow-hidden relative ${wide?"col-span-2":""}`}
-      style={{background:T.card,border:`1px solid ${T.border}`,
-        boxShadow:`0 4px 20px rgba(0,0,0,0.6)`}}
-      whileTap={{scale:0.97}} onClick={onPlay}
+      style={{borderRadius:16,
+        boxShadow:`0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06)`}}
+      whileTap={{scale:0.96}} onClick={onPlay}
     >
-      {/* Expand/shrink button top-right */}
-      <motion.button whileTap={{scale:0.8}}
-        onClick={e=>{e.stopPropagation();setExpanded(x=>!x);}}
-        className="absolute top-1.5 right-1.5 z-10 flex items-center justify-center"
-        style={{width:24,height:24,
-          background:"rgba(0,0,0,0.65)",backdropFilter:"blur(8px)",
-          border:`1px solid ${T.cyan}33`,
-          clipPath:"polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))"}}>
-        {expanded
-          ? <Minimize2 style={{width:9,height:9,color:T.cyan}}/>
-          : <Maximize2 style={{width:9,height:9,color:T.cyan}}/>}
-      </motion.button>
-
-      <div style={{aspectRatio:expanded?"4/3":wide?"21/9":"16/9",position:"relative",transition:"all 0.3s",overflow:"hidden"}}>
+      {/* Full-bleed image — NO bottom info box */}
+      <div style={{aspectRatio:ar,position:"relative",overflow:"hidden"}}>
         {video.thumbnailUrl
-          ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+          ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
+              style={{transition:"transform 0.4s"}}/>
           : <div className="w-full h-full flex items-center justify-center"
-              style={{background:`linear-gradient(135deg,#110028,#06030f)`}}>
+              style={{background:`linear-gradient(135deg,${accent}18,#000)`}}>
               <Film style={{width:wide?32:20,height:wide?32:20,color:"rgba(255,255,255,0.08)"}}/>
             </div>}
+
+        {/* Deep gradient overlay */}
         <div className="absolute inset-0 pointer-events-none"
-          style={{background:"linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 45%)"}}/>
-        <div className="absolute bottom-1.5 right-1.5"
-          style={{width:22,height:22,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(6px)",
-            border:`1px solid ${T.cyan}33`,
-            display:"flex",alignItems:"center",justifyContent:"center",
-            clipPath:"polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))"}}>
-          <Play style={{width:8,height:8,fill:T.cyan,color:T.cyan,marginLeft:1}}/>
+          style={{background:"linear-gradient(to top,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.15) 50%,transparent 100%)"}}/>
+
+        {/* Top stats — floating */}
+        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+          <div className="flex items-center gap-1 px-2 py-1"
+            style={{borderRadius:99,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(8px)"}}>
+            <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.5)"}}/>
+            <span style={{fontSize:8,color:"rgba(255,255,255,0.55)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
+          </div>
         </div>
-      </div>
-      <div style={{padding:"8px 10px 10px"}}>
-        <p style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.88)",lineHeight:1.4}}
-          className="line-clamp-2 mb-1.5">{video.caption||"Video"}</p>
-        <div className="flex items-center justify-between">
-          <span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}} className="truncate max-w-[70px]">
-            {video.author.displayName}
-          </span>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5">
-              <Eye style={{width:8,height:8,color:T.cyan+"77"}}/>
-              <span style={{fontSize:8.5,color:T.cyan+"77",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
-            </div>
+
+        {/* Bottom: title + author + like */}
+        <div className="absolute bottom-0 inset-x-0 p-3">
+          <p style={{fontSize:wide?13:11.5,fontWeight:700,color:"white",lineHeight:1.35,
+            marginBottom:5,textShadow:"0 1px 8px rgba(0,0,0,0.8)"}}
+            className={wide?"line-clamp-2":"line-clamp-2"}>{video.caption||"Video"}</p>
+          <div className="flex items-center justify-between">
+            <span style={{fontSize:9,color:"rgba(255,255,255,0.4)"}} className="truncate max-w-[80px]">
+              {video.author.displayName}
+            </span>
             <motion.button whileTap={{scale:0.65}}
               onClick={e=>{e.stopPropagation();likeMut.mutate({id:video.id});}}
-              className="flex items-center gap-0.5">
-              <Heart style={{width:8,height:8,fill:liked?T.orange:"none",color:liked?T.orange:"rgba(255,255,255,0.25)"}}/>
-              <span style={{fontSize:8.5,fontFamily:"monospace",
-                color:liked?T.orange:"rgba(255,255,255,0.25)"}}>
+              className="flex items-center gap-1 px-2 py-1"
+              style={{borderRadius:99,background:liked?`${T.orange}22`:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)"}}>
+              <Heart style={{width:9,height:9,fill:liked?T.orange:"none",
+                color:liked?T.orange:"rgba(255,255,255,0.4)"}}/>
+              <span style={{fontSize:8,fontFamily:"monospace",
+                color:liked?T.orange:"rgba(255,255,255,0.35)"}}>
                 {fmt(likesCount)}
               </span>
             </motion.button>
           </div>
         </div>
-      </div>
-      {/* left accent strip */}
-      <div className="absolute left-0 top-0 bottom-0 w-[2px]"
-        style={{background:T.gCyan,opacity:0.4}}/>
+
+        {/* Accent glow bottom edge */}
+        <div className="absolute bottom-0 inset-x-0 h-[1px]"
+          style={{background:`linear-gradient(90deg,transparent,${accent}66,transparent)`}}/>
+      </div>{/* end aspect ratio container */}
     </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Shorts card — vertical                                  */
+/* Shorts card — vertical, rounded                         */
 /* ─────────────────────────────────────────────────────── */
 function ShortsCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
   return (
-    <motion.div whileTap={{scale:0.93}} onClick={onPlay}
+    <motion.div whileTap={{scale:0.92}} onClick={onPlay}
       className="flex-shrink-0 cursor-pointer overflow-hidden relative"
-      style={{width:108,aspectRatio:"9/16",background:T.card,
-        border:`1px solid ${T.orange}22`}}>
+      style={{width:112,aspectRatio:"9/16",borderRadius:14,
+        boxShadow:`0 4px 20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)`}}>
       {video.thumbnailUrl
         ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
-        : <div className="w-full h-full" style={{background:`linear-gradient(180deg,#1a0028,#000510)`}}/>}
+        : <div className="w-full h-full" style={{background:"linear-gradient(180deg,#1a0028,#000510)"}}/>}
       <div className="absolute inset-0 pointer-events-none"
         style={{background:"linear-gradient(to top,rgba(0,0,0,0.88) 0%,transparent 55%)"}}/>
-      <div className="absolute top-2 left-1.5 px-1.5 py-0.5 flex items-center gap-1"
-        style={{background:T.orange,clipPath:"polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)"}}>
-        <Zap style={{width:8,height:8,fill:"white",color:"white"}}/>
-        <span style={{fontSize:8,fontWeight:900,color:"white",letterSpacing:"0.1em"}}>SHORT</span>
+      {/* Short badge — round pill */}
+      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-1"
+        style={{borderRadius:99,background:"rgba(255,107,0,0.85)",backdropFilter:"blur(8px)"}}>
+        <Zap style={{width:7,height:7,fill:"white",color:"white"}}/>
+        <span style={{fontSize:7.5,fontWeight:800,color:"white",letterSpacing:"0.06em"}}>SHORT</span>
       </div>
-      <div className="absolute bottom-2 inset-x-2">
-        <p style={{fontSize:9.5,fontWeight:700,color:"rgba(255,255,255,0.9)",lineHeight:1.35}}
-          className="line-clamp-2 mb-0.5">{video.caption||"Short"}</p>
-        <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
+      <div className="absolute bottom-3 inset-x-2.5">
+        <p style={{fontSize:10,fontWeight:700,color:"white",lineHeight:1.3}}
+          className="line-clamp-2 mb-1">{video.caption||"Short"}</p>
+        <span style={{fontSize:8,color:"rgba(255,255,255,0.45)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
       </div>
-      {/* Bottom orange line */}
-      <div className="absolute bottom-0 left-0 right-0 h-[2px]"
-        style={{background:T.gOrange}}/>
     </motion.div>
   );
 }
@@ -1479,17 +1458,25 @@ export default function OTubePage() {
 
   return (
     <>
-      <div className="h-full overflow-y-auto"
-        style={{...DOT_BG,paddingBottom:100}}
+      {/* Aurora background blobs — fixed */}
+      <div className="fixed inset-0 pointer-events-none" style={{zIndex:0}}>
+        <div style={{position:"absolute",top:-120,left:-80,width:340,height:340,borderRadius:"50%",
+          background:"radial-gradient(circle,rgba(0,229,255,0.07) 0%,transparent 70%)",filter:"blur(40px)"}}/>
+        <div style={{position:"absolute",top:220,right:-100,width:280,height:280,borderRadius:"50%",
+          background:"radial-gradient(circle,rgba(157,0,255,0.06) 0%,transparent 70%)",filter:"blur(40px)"}}/>
+        <div style={{position:"absolute",bottom:160,left:40,width:220,height:220,borderRadius:"50%",
+          background:"radial-gradient(circle,rgba(255,107,0,0.05) 0%,transparent 70%)",filter:"blur(36px)"}}/>
+      </div>
+      <div className="h-full overflow-y-auto relative"
+        style={{...DOT_BG,paddingBottom:100,zIndex:1}}
         onTouchStart={onTS} onTouchEnd={onTE}>
 
-        {/* ── HEADER ── */}
+        {/* ── HEADER — floating, no borders ── */}
         <div className="sticky top-0 z-40"
-          style={{background:"rgba(0,0,5,0.94)",backdropFilter:"blur(24px)",
-            WebkitBackdropFilter:"blur(24px)",
-            borderBottom:`1px solid ${T.cyan}22`}}>
+          style={{background:"rgba(0,0,0,0.75)",backdropFilter:"blur(28px)",
+            WebkitBackdropFilter:"blur(28px)"}}>
 
-          <div className="px-4 pt-4 pb-2">
+          <div className="px-4 pt-4 pb-3">
             <AnimatePresence mode="wait">
               {showSearch ? (
                 <motion.div key="search"
@@ -1498,19 +1485,19 @@ export default function OTubePage() {
                   className="flex items-center gap-2 mb-3">
                   <motion.button whileTap={{scale:0.85}}
                     onClick={()=>{setShowSearch(false);setQuery("");}}
-                    style={{width:38,height:38,flexShrink:0,
-                      background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`,
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      clipPath:"polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px))"}}>
-                    <ArrowLeft style={{width:15,height:15,color:T.cyan}}/>
+                    style={{width:38,height:38,flexShrink:0,borderRadius:"50%",
+                      background:"rgba(255,255,255,0.08)",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <ArrowLeft style={{width:15,height:15,color:"rgba(255,255,255,0.8)"}}/>
                   </motion.button>
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2"
-                    style={{background:"rgba(0,229,255,0.05)",border:`1px solid ${T.cyan}33`}}>
-                    <Search style={{width:13,height:13,color:T.cyan,flexShrink:0}}/>
+                  <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5"
+                    style={{borderRadius:99,background:"rgba(255,255,255,0.07)",
+                      boxShadow:"0 0 0 1px rgba(255,255,255,0.1)"}}>
+                    <Search style={{width:13,height:13,color:"rgba(255,255,255,0.4)",flexShrink:0}}/>
                     <input ref={searchRef} value={query} onChange={e=>setQuery(e.target.value)}
                       placeholder="Video, kanal, qo'shiq..."
-                      className="flex-1 bg-transparent outline-none text-white text-[13px] placeholder:text-white/20"
-                      style={{fontFamily:"inherit",letterSpacing:"0.02em"}}/>
+                      className="flex-1 bg-transparent outline-none text-white text-[13px] placeholder:text-white/25"
+                      style={{fontFamily:"inherit"}}/>
                     {query && <button onClick={()=>setQuery("")}><X style={{width:13,height:13,color:"rgba(255,255,255,0.3)"}}/></button>}
                   </div>
                 </motion.div>
@@ -1518,77 +1505,58 @@ export default function OTubePage() {
                 <motion.div key="logo"
                   initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}
                   transition={{duration:0.18}}
-                  className="flex items-center justify-between mb-3">
+                  className="flex items-center justify-between mb-3.5">
                   <div className="flex items-center gap-2.5">
                     <OTubeMark size={34}/>
-                    <div className="flex flex-col leading-none">
-                      <span className="font-black text-[20px] tracking-[-0.02em]"
-                        style={{color:"white",letterSpacing:"-0.01em"}}>
-                        O<span style={{color:T.cyan}}>T</span>ube
-                      </span>
-                      <span style={{fontSize:8,letterSpacing:"0.24em",color:T.cyan,
-                        fontWeight:700,textTransform:"uppercase",fontFamily:"monospace"}}>
-                        BROADCAST
-                      </span>
-                    </div>
+                    <span className="font-black text-[21px]" style={{color:"white",letterSpacing:"-0.02em"}}>
+                      O<span style={{color:T.cyan}}>T</span>ube
+                    </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <motion.button whileTap={{scale:0.85}}
-                      style={{width:34,height:34,
-                        background:`${T.orange}18`,border:`1px solid ${T.orange}33`,
-                        display:"flex",alignItems:"center",justifyContent:"center",
-                        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
-                      <Upload style={{width:13,height:13,color:T.orange}}/>
-                    </motion.button>
+                  <div className="flex items-center gap-1">
                     <motion.button whileTap={{scale:0.85}} onClick={()=>setNotifDot(false)}
                       className="relative"
-                      style={{width:34,height:34,
-                        background:"rgba(255,255,255,0.04)",border:`1px solid ${T.cyan}22`,
-                        display:"flex",alignItems:"center",justifyContent:"center",
-                        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
-                      <Bell style={{width:13,height:13,color:"rgba(255,255,255,0.5)"}}/>
-                      {notifDot && <div className="absolute top-1 right-1"
-                        style={{width:7,height:7,background:T.orange,
-                          boxShadow:`0 0 6px ${T.orange}`,border:`1.5px solid #000005`}}/>}
+                      style={{width:36,height:36,borderRadius:"50%",
+                        background:"rgba(255,255,255,0.07)",
+                        display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <Bell style={{width:14,height:14,color:"rgba(255,255,255,0.6)"}}/>
+                      {notifDot && <div className="absolute top-1.5 right-1.5"
+                        style={{width:7,height:7,borderRadius:"50%",background:"#ff3b30",
+                          boxShadow:"0 0 6px #ff3b30"}}/>}
                     </motion.button>
                     <motion.button whileTap={{scale:0.85}} onClick={()=>setShowSearch(true)}
-                      style={{width:34,height:34,
-                        background:"rgba(255,255,255,0.04)",border:`1px solid ${T.cyan}22`,
-                        display:"flex",alignItems:"center",justifyContent:"center",
-                        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
-                      <Search style={{width:13,height:13,color:"rgba(255,255,255,0.5)"}}/>
+                      style={{width:36,height:36,borderRadius:"50%",
+                        background:"rgba(255,255,255,0.07)",
+                        display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <Search style={{width:14,height:14,color:"rgba(255,255,255,0.6)"}}/>
                     </motion.button>
                     <motion.button whileTap={{scale:0.85}} onClick={()=>setShowSettings(true)}
-                      style={{width:34,height:34,
-                        background:"rgba(255,255,255,0.04)",border:`1px solid ${T.cyan}22`,
-                        display:"flex",alignItems:"center",justifyContent:"center",
-                        clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
-                      <Settings style={{width:13,height:13,color:"rgba(255,255,255,0.5)"}}/>
+                      style={{width:36,height:36,borderRadius:"50%",
+                        background:"rgba(255,255,255,0.07)",
+                        display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <Settings style={{width:14,height:14,color:"rgba(255,255,255,0.6)"}}/>
                     </motion.button>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Nav tabs */}
-            <div className="flex overflow-x-auto mb-2.5" style={{scrollbarWidth:"none",
-              borderBottom:`1px solid ${T.cyan}15`}}>
+            {/* Nav tabs — round pills */}
+            <div className="flex gap-2 overflow-x-auto mb-3" style={{scrollbarWidth:"none"}}>
               {TABS.map(t=>(
-                <button key={t.id} onClick={()=>setTab(t.id)}
-                  className="flex-shrink-0 px-4 py-2 relative"
-                  style={{fontSize:10,fontWeight:900,letterSpacing:"0.14em",
-                    color:tab===t.id?T.cyan:"rgba(255,255,255,0.3)"}}>
+                <motion.button key={t.id} onClick={()=>setTab(t.id)}
+                  whileTap={{scale:0.93}}
+                  className="flex-shrink-0 px-4 py-1.5 relative"
+                  style={{borderRadius:99,fontSize:10.5,fontWeight:700,letterSpacing:"0.06em",
+                    background:tab===t.id?"rgba(255,255,255,0.12)":"transparent",
+                    color:tab===t.id?"white":"rgba(255,255,255,0.35)",
+                    boxShadow:tab===t.id?"0 0 0 1px rgba(255,255,255,0.2)":"none",
+                    transition:"all 0.2s"}}>
                   {t.l}
-                  {tab===t.id && (
-                    <motion.div layoutId="nt"
-                      className="absolute bottom-0 left-1 right-1 h-[2px]"
-                      style={{background:T.gCyan}}/>
-                  )}
-                </button>
+                </motion.button>
               ))}
             </div>
 
-            {/* Category selector — frequency band style */}
+            {/* Category chips — round pills */}
             {tab==="home" && (
               <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{scrollbarWidth:"none"}}>
                 {CATS.map(({id,label,Icon,col})=>{
@@ -1596,14 +1564,13 @@ export default function OTubePage() {
                   return (
                     <motion.button key={id} whileTap={{scale:0.88}} onClick={()=>setCat(id)}
                       className="flex items-center gap-1.5 flex-shrink-0"
-                      style={{padding:"4px 10px",
-                        background:active?`${col}22`:"rgba(255,255,255,0.03)",
-                        border:active?`1px solid ${col}66`:"1px solid rgba(255,255,255,0.07)",
-                        boxShadow:active?`0 0 12px ${col}33`:"none",
-                        clipPath:"polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%)"}}>
-                      <Icon style={{width:9,height:9,color:active?col:"rgba(255,255,255,0.3)"}}/>
-                      <span style={{fontSize:9.5,fontWeight:active?900:600,letterSpacing:"0.08em",
-                        color:active?col:"rgba(255,255,255,0.38)"}}>
+                      style={{padding:"5px 12px",borderRadius:99,
+                        background:active?`${col}22`:"rgba(255,255,255,0.05)",
+                        boxShadow:active?`0 0 0 1px ${col}55, 0 0 16px ${col}22`:"0 0 0 1px rgba(255,255,255,0.08)",
+                        transition:"all 0.2s"}}>
+                      <Icon style={{width:9,height:9,color:active?col:"rgba(255,255,255,0.35)"}}/>
+                      <span style={{fontSize:10,fontWeight:active?700:500,
+                        color:active?col:"rgba(255,255,255,0.45)"}}>
                         {label}
                       </span>
                     </motion.button>
@@ -1650,29 +1617,23 @@ export default function OTubePage() {
             </div>
           ) : tab==="home" ? (
             <>
-              {/* Featured */}
+              {/* Featured hero — edge-to-edge */}
               {featured && !query && (
-                <>
-                  <div className="flex items-center gap-2 mb-2">
-                    <ChBadge n="00" color={T.cyan}/>
-                    <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.6)"}}>
-                      TANLANGAN EFIR
-                    </span>
-                  </div>
+                <div className="-mx-3 mb-2">
                   <HeroCard video={featured} onPlay={()=>setSelected(featured)}/>
-                </>
+                </div>
               )}
 
               {/* Search results */}
               {query && reels.length>0 && (
                 <section>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Search style={{width:13,height:13,color:T.cyan}}/>
-                    <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.1em",color:T.cyan}}>
-                      "{query}" — {reels.length} NATIJA
+                  <div className="flex items-center gap-2 mb-4">
+                    <Search style={{width:13,height:13,color:"rgba(255,255,255,0.4)"}}/>
+                    <span style={{fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.5)"}}>
+                      "{query}" — {reels.length} ta natija
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     {reels.map((v,i)=><BentoCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
                   </div>
                 </section>
@@ -1680,76 +1641,39 @@ export default function OTubePage() {
 
               {!query && (
                 <>
-                  {/* Trending — vertical list */}
+                  {/* Trending — horizontal scroll cinema strip */}
                   {trending.length>0 && (
-                    <section>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <ChBadge n="01" color={T.orange}/>
-                          <TrendingUp style={{width:13,height:13,color:T.orange}}/>
-                          <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.7)"}}>
-                            TRENDING
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span style={{fontSize:9,color:T.orange+"88",letterSpacing:"0.1em",fontWeight:700}}>KO'PROQ</span>
-                          <ChevronRight style={{width:11,height:11,color:T.orange+"88"}}/>
-                        </div>
-                      </div>
-                      {trending.map((v,i)=><TrendRow key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
-                    </section>
-                  )}
-
-                  {/* Newest — compact list */}
-                  {newest.length>0 && (
-                    <section>
-                      <div className="flex items-center gap-2 mb-2">
-                        <ChBadge n="02" color={T.violet}/>
-                        <Clock style={{width:13,height:13,color:T.violet}}/>
-                        <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.7)"}}>
-                          YANGI SIGNAL
+                    <section className="mb-8">
+                      <div className="flex items-center gap-2 mb-3">
+                        <ChBadge n="01" color={T.orange}/>
+                        <span style={{fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.55)",letterSpacing:"0.04em"}}>
+                          Trending
                         </span>
                       </div>
-                      {newest.map(v=>(
-                        <motion.div key={v.id}
-                          whileTap={{scale:0.97}} onClick={()=>setSelected(v)}
-                          className="flex gap-3 cursor-pointer mb-2"
-                          style={{padding:"8px 10px",background:"rgba(255,255,255,0.02)",
-                            border:`1px solid ${T.violet}22`,borderLeft:`2px solid ${T.violet}66`}}>
-                          <div style={{width:80,aspectRatio:"16/9",flexShrink:0,position:"relative",overflow:"hidden"}}>
-                            {v.thumbnailUrl
-                              ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
-                              : <div className="w-full h-full" style={{background:`${T.violet}18`}}/>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.85)"}}
-                              className="line-clamp-2 leading-snug mb-1">{v.caption||"Video"}</p>
-                            <p style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{v.author.displayName}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <Eye style={{width:8,height:8,color:T.violet}}/>
-                              <span style={{fontSize:8.5,color:T.violet,fontFamily:"monospace"}}>{fmt(v.viewsCount)}</span>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                      <div className="flex gap-3 overflow-x-auto -mx-3 px-3 pb-2"
+                        style={{scrollbarWidth:"none"}}>
+                        {trending.map((v,i)=><TrendRow key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
+                      </div>
                     </section>
                   )}
 
-                  {/* Discovery — bento grid */}
+                  {/* Discovery — organic alternating grid */}
                   {grid.length>0 && (
                     <section>
-                      <div className="flex items-center gap-2 mb-2">
-                        <ChBadge n="03" color={T.cyan}/>
-                        <Sparkles style={{width:13,height:13,color:T.cyan}}/>
-                        <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.7)"}}>
-                          KASHFIYOT GRID
+                      <div className="flex items-center gap-2 mb-3">
+                        <ChBadge n="02" color={T.violet}/>
+                        <span style={{fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.55)",letterSpacing:"0.04em"}}>
+                          Kashfiyot
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {grid.map((v,i)=>(
-                          <BentoCard key={v.id} video={v} onPlay={()=>setSelected(v)}
-                            wide={i===0 || i===5 || i===10} idx={i}/>
-                        ))}
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {grid.map((v,i)=>{
+                          const isWide = i===0 || i===4 || i===9;
+                          return (
+                            <BentoCard key={v.id} video={v} onPlay={()=>setSelected(v)}
+                              wide={isWide} idx={i}/>
+                          );
+                        })}
                       </div>
                     </section>
                   )}

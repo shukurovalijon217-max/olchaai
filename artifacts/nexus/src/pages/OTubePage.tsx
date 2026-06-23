@@ -156,18 +156,15 @@ function SpeedPicker({ speed, onSpeed, onClose }:
   { speed:number; onSpeed:(s:number)=>void; onClose:()=>void }) {
   return (
     <motion.div
-      initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:10}}
-      className="absolute bottom-20 right-3 z-50 rounded-none overflow-hidden"
-      style={{ background:"#06020a",
-        border:`1px solid ${T.cyan}44`,
-        boxShadow:`0 0 30px rgba(0,229,255,0.15)`,
-        minWidth:130,
-        clipPath:"polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))" }}>
-      <div className="px-4 py-2 flex items-center justify-between"
-        style={{ borderBottom:`1px solid ${T.cyan}22`,
-          background:"rgba(0,229,255,0.06)" }}>
-        <span style={{fontSize:9,fontWeight:900,letterSpacing:"0.16em",color:T.cyan}}>TEZLIK</span>
-        <button onClick={onClose}><X style={{width:12,height:12,color:"rgba(255,255,255,0.4)"}}/></button>
+      initial={{opacity:0,y:10,scale:0.92}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:10,scale:0.92}}
+      className="absolute bottom-20 right-3 z-50 overflow-hidden"
+      style={{ background:"rgba(12,8,22,0.92)",backdropFilter:"blur(20px)",
+        boxShadow:`0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1)`,
+        borderRadius:16,minWidth:130 }}>
+      <div className="px-4 py-2.5 flex items-center justify-between"
+        style={{ borderBottom:`1px solid rgba(255,255,255,0.07)` }}>
+        <span style={{fontSize:9,fontWeight:700,letterSpacing:"0.12em",color:"rgba(255,255,255,0.5)"}}>TEZLIK</span>
+        <button onClick={onClose}><X style={{width:12,height:12,color:"rgba(255,255,255,0.3)"}}/></button>
       </div>
       {SPEEDS.map(s => (
         <button key={s} onClick={()=>{onSpeed(s);onClose();}}
@@ -244,43 +241,43 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
       initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
       transition={{type:"spring",damping:30,stiffness:320}}
       className="absolute inset-x-0 bottom-0 z-[60] flex flex-col overflow-hidden"
-      style={{ background:"#04010e",maxHeight:"68%",
-        borderTop:`2px solid ${T.cyan}55`,
-        boxShadow:`0 -16px 60px rgba(0,229,255,0.12)` }}
+      style={{ background:"rgba(6,3,16,0.97)",backdropFilter:"blur(24px)",maxHeight:"68%",
+        borderRadius:"20px 20px 0 0",
+        boxShadow:`0 -8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.07)` }}
       onClick={e=>e.stopPropagation()}>
+      {/* drag handle */}
+      <div className="flex justify-center pt-2.5 pb-1">
+        <div style={{width:36,height:3,borderRadius:99,background:"rgba(255,255,255,0.15)"}}/>
+      </div>
       {/* header */}
-      <div className="flex items-center justify-between px-4 py-3"
-        style={{ borderBottom:`1px solid ${T.cyan}18` }}>
-        <div className="flex items-center gap-2">
-          <div style={{width:3,height:20,background:T.gCyan,borderRadius:2}}/>
-          <span style={{fontSize:12,fontWeight:900,letterSpacing:"0.1em",color:T.cyan}}>
-            IZOHLAR <span style={{color:"rgba(255,255,255,0.3)"}}>({comments.length})</span>
-          </span>
-        </div>
+      <div className="flex items-center justify-between px-4 py-2.5"
+        style={{ borderBottom:`1px solid rgba(255,255,255,0.07)` }}>
+        <span style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.75)"}}>
+          Izohlar <span style={{color:"rgba(255,255,255,0.25)",fontWeight:500}}>({comments.length})</span>
+        </span>
         <button onClick={onClose}
-          style={{width:30,height:30,borderRadius:0,background:"rgba(0,229,255,0.08)",
-            border:`1px solid ${T.cyan}33`,
-            display:"flex",alignItems:"center",justifyContent:"center",
-            clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
-          <X style={{width:12,height:12,color:T.cyan}}/>
+          style={{width:28,height:28,borderRadius:"50%",background:"rgba(255,255,255,0.08)",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <X style={{width:12,height:12,color:"rgba(255,255,255,0.5)"}}/>
         </button>
       </div>
       {/* input */}
       {user && (
-        <div className="flex items-center gap-2 px-4 py-2.5"
-          style={{borderBottom:`1px solid rgba(255,255,255,0.05)`}}>
-          <div style={{width:28,height:28,flexShrink:0,
-            background:"linear-gradient(135deg,#00e5ff33,#9d00ff33)",
-            border:`1px solid ${T.cyan}44`,overflow:"hidden",
+        <div className="flex items-center gap-2.5 px-4 py-3"
+          style={{borderBottom:`1px solid rgba(255,255,255,0.06)`}}>
+          <div style={{width:30,height:30,flexShrink:0,borderRadius:"50%",
+            background:"linear-gradient(135deg,rgba(0,229,255,0.2),rgba(157,0,255,0.2))",
+            overflow:"hidden",
             display:"flex",alignItems:"center",justifyContent:"center"}}>
             {user.avatarUrl
               ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
-              : <span style={{fontSize:12,fontWeight:900,color:T.cyan}}>
+              : <span style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>
                   {(user.displayName||user.username||"S")[0].toUpperCase()}
                 </span>}
           </div>
-          <div className="flex-1 flex items-center gap-2 px-3 py-1.5"
-            style={{background:"rgba(0,229,255,0.04)",border:`1px solid ${T.cyan}22`}}>
+          <div className="flex-1 flex items-center gap-2 px-3.5 py-2"
+            style={{borderRadius:99,background:"rgba(255,255,255,0.07)",
+              boxShadow:"0 0 0 1px rgba(255,255,255,0.09)"}}>
             <input value={txt} onChange={e=>setTxt(e.target.value)}
               onKeyDown={e=>e.key==="Enter"&&send()}
               placeholder="Izoh yozing..."
@@ -314,9 +311,8 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
           </p>
         ) : comments.map(c=>(
           <div key={c.id} className="flex gap-2.5">
-            <div style={{width:26,height:26,flexShrink:0,
+            <div style={{width:28,height:28,flexShrink:0,borderRadius:"50%",
               background:`hsl(${(c.id*47)%360},50%,22%)`,
-              border:`1px solid hsl(${(c.id*47)%360},60%,35%)`,
               overflow:"hidden",
               display:"flex",alignItems:"center",justifyContent:"center"}}>
               {c.author.avatarUrl
@@ -568,8 +564,8 @@ function NexusPlayer({ video, onClose, settings }:
           {fastFwd && (
             <motion.div initial={{opacity:0,scale:0.7}} animate={{opacity:1,scale:1}} exit={{opacity:0}}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none px-5 py-2"
-              style={{ background:"rgba(0,0,0,0.7)",backdropFilter:"blur(12px)",
-                border:`1px solid ${T.orange}55` }}>
+              style={{ borderRadius:99,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(12px)",
+                boxShadow:`0 0 0 1px ${T.orange}44` }}>
               <span style={{fontSize:18,fontWeight:900,color:T.orange,letterSpacing:"0.12em"}}>2× TEZLIK</span>
             </motion.div>
           )}
@@ -596,12 +592,11 @@ function NexusPlayer({ video, onClose, settings }:
                   padding:"14px 12px 40px" }}>
                 <div className="flex items-center gap-2">
                   <motion.button whileTap={{scale:0.85}} onClick={onClose}
-                    style={{ width:40,height:40,flexShrink:0,
-                      background:"rgba(0,0,0,0.55)",backdropFilter:"blur(12px)",
-                      border:`1px solid ${T.cyan}33`,
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      clipPath:"polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))" }}>
-                    <ArrowLeft style={{width:18,height:18,color:T.cyan}}/>
+                    style={{ width:40,height:40,flexShrink:0,borderRadius:"50%",
+                      background:"rgba(0,0,0,0.5)",backdropFilter:"blur(12px)",
+                      boxShadow:"0 0 0 1px rgba(255,255,255,0.12)",
+                      display:"flex",alignItems:"center",justifyContent:"center" }}>
+                    <ArrowLeft style={{width:18,height:18,color:"rgba(255,255,255,0.85)"}}/>
                   </motion.button>
 
                   <div className="flex-1 min-w-0">
@@ -618,26 +613,23 @@ function NexusPlayer({ video, onClose, settings }:
                   <motion.button whileTap={{scale:0.88}}
                     onClick={()=>followMut.mutate({ id: video.author.id })}
                     disabled={followMut.isPending}
-                    style={{ padding:"5px 10px",flexShrink:0,
-                      background: subbed?"rgba(255,255,255,0.08)":`${T.orange}cc`,
-                      border: subbed?"1px solid rgba(255,255,255,0.18)":`1px solid ${T.orange}`,
-                      boxShadow: subbed?"none":`0 0 16px ${T.orange}55`,
-                      clipPath:"polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)",
+                    style={{ padding:"6px 14px",flexShrink:0,borderRadius:99,
+                      background: subbed?"rgba(255,255,255,0.1)":`${T.orange}dd`,
+                      boxShadow: subbed?"none":`0 0 16px ${T.orange}44`,
                       opacity: followMut.isPending?0.7:1 }}>
-                    <span style={{fontSize:10,fontWeight:900,color:subbed?"rgba(255,255,255,0.55)":"white",letterSpacing:"0.05em"}}>
-                      {subbed?"✓ OBUNA":"+ OBUNA"}
+                    <span style={{fontSize:10,fontWeight:700,color:subbed?"rgba(255,255,255,0.5)":"white"}}>
+                      {subbed?"✓ Obuna":"+ Obuna"}
                     </span>
                   </motion.button>
 
                   {/* Fullscreen */}
                   <motion.button whileTap={{scale:0.85}} onClick={toggleFull}
-                    style={{ width:38,height:38,flexShrink:0,
-                      background:"rgba(0,0,0,0.5)",backdropFilter:"blur(10px)",
-                      border:`1px solid ${T.cyan}28`,
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      clipPath:"polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px))" }}>
+                    style={{ width:38,height:38,flexShrink:0,borderRadius:"50%",
+                      background:"rgba(0,0,0,0.4)",backdropFilter:"blur(10px)",
+                      boxShadow:"0 0 0 1px rgba(255,255,255,0.1)",
+                      display:"flex",alignItems:"center",justifyContent:"center" }}>
                     {isFull
-                      ? <Minimize2 style={{width:15,height:15,color:T.cyan}}/>
+                      ? <Minimize2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>
                       : <Maximize2 style={{width:15,height:15,color:"rgba(255,255,255,0.6)"}}/>}
                   </motion.button>
                 </div>
@@ -650,13 +642,11 @@ function NexusPlayer({ video, onClose, settings }:
                     <motion.div key="ppause"
                       initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}}
                       exit={{opacity:0,scale:1.4}} transition={{duration:0.15}}
-                      style={{ width:74,height:74,
-                        background:"rgba(0,0,0,0.55)",backdropFilter:"blur(18px)",
-                        border:`2px solid ${T.cyan}44`,
-                        boxShadow:`0 0 40px ${T.cyan}33`,
-                        display:"flex",alignItems:"center",justifyContent:"center",
-                        clipPath:"polygon(0 8px,8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px))" }}>
-                      <Play style={{width:28,height:28,fill:T.cyan,color:T.cyan,marginLeft:4}}/>
+                      style={{ width:74,height:74,borderRadius:"50%",
+                        background:"rgba(0,0,0,0.5)",backdropFilter:"blur(18px)",
+                        boxShadow:`0 0 0 2px rgba(255,255,255,0.2), 0 0 40px rgba(0,229,255,0.2)`,
+                        display:"flex",alignItems:"center",justifyContent:"center" }}>
+                      <Play style={{width:28,height:28,fill:"white",color:"white",marginLeft:4}}/>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -696,30 +686,32 @@ function NexusPlayer({ video, onClose, settings }:
                 <AnimatePresence>
                   {donating && (
                     <motion.div
-                      initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}
-                      className="mb-3 p-3"
+                      initial={{opacity:0,y:12,scale:0.95}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:12,scale:0.95}}
+                      className="mb-3 p-3.5"
                       onClick={e=>e.stopPropagation()}
-                      style={{ background:"rgba(0,0,0,0.7)",border:`1px solid ${T.orange}44`,
-                        backdropFilter:"blur(16px)" }}>
-                      <p style={{fontSize:11,fontWeight:800,color:T.orange,marginBottom:8,letterSpacing:"0.08em"}}>
-                        ⭐ {video.author.displayName}GA YORDAM
+                      style={{ borderRadius:18,
+                        background:"rgba(10,6,20,0.88)",backdropFilter:"blur(20px)",
+                        boxShadow:`0 0 0 1px rgba(255,107,0,0.25), 0 8px 32px rgba(0,0,0,0.5)` }}>
+                      <p style={{fontSize:11,fontWeight:700,color:"rgba(255,160,50,0.9)",marginBottom:10}}>
+                        ⭐ {video.author.displayName}ga yordam
                       </p>
-                      <div className="flex gap-2 mb-2">
+                      <div className="flex gap-2 mb-3">
                         {["500","2000","10000","50000"].map(a=>(
                           <button key={a} onClick={()=>setDonateAmt(a)}
-                            style={{flex:1,padding:"5px 0",textAlign:"center",
-                              background:donateAmt===a?`${T.orange}33`:"rgba(255,255,255,0.04)",
-                              border:donateAmt===a?`1px solid ${T.orange}88`:"1px solid rgba(255,255,255,0.07)"}}>
-                            <span style={{fontSize:10,fontWeight:900,color:donateAmt===a?T.orange:"rgba(255,255,255,0.4)"}}>
+                            style={{flex:1,padding:"7px 0",textAlign:"center",borderRadius:10,
+                              background:donateAmt===a?`${T.orange}28`:"rgba(255,255,255,0.06)",
+                              boxShadow:donateAmt===a?`0 0 0 1.5px ${T.orange}66`:"0 0 0 1px rgba(255,255,255,0.08)"}}>
+                            <span style={{fontSize:10.5,fontWeight:700,color:donateAmt===a?T.orange:"rgba(255,255,255,0.45)"}}>
                               {Number(a)>=1000?`${Number(a)/1000}K`:a}
                             </span>
                           </button>
                         ))}
                       </div>
                       <button onClick={()=>setDonating(false)}
-                        className="w-full py-2 flex items-center justify-center gap-2"
-                        style={{background:T.gOrange}}>
-                        <span style={{fontSize:12,fontWeight:900,color:"white"}}>
+                        className="w-full py-2.5 flex items-center justify-center gap-2"
+                        style={{borderRadius:12,background:"linear-gradient(90deg,#ff6b00,#ff3d00)",
+                          boxShadow:"0 4px 16px rgba(255,80,0,0.35)"}}>
+                        <span style={{fontSize:12,fontWeight:700,color:"white"}}>
                           {donateAmt} so'm jo'natish
                         </span>
                       </button>
@@ -730,12 +722,11 @@ function NexusPlayer({ video, onClose, settings }:
                 {/* Description toggle */}
                 <button onClick={e=>{e.stopPropagation();setShowDesc(d=>!d);}}
                   className="w-full flex items-center justify-between mb-2"
-                  style={{padding:"5px 10px",
-                    background:"rgba(0,229,255,0.04)",
-                    border:`1px solid ${T.cyan}18`}}>
-                  <span style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>TAVSIF</span>
-                  {showDesc?<ChevronDown style={{width:12,height:12,color:T.cyan}}/>
-                            :<ChevronRight style={{width:12,height:12,color:T.cyan}}/>}
+                  style={{padding:"7px 12px",borderRadius:10,
+                    background:"rgba(255,255,255,0.06)"}}>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.55)",fontWeight:600}}>Tavsif</span>
+                  {showDesc?<ChevronDown style={{width:12,height:12,color:"rgba(255,255,255,0.4)"}}/>
+                            :<ChevronRight style={{width:12,height:12,color:"rgba(255,255,255,0.4)"}}/>}
                 </button>
                 <AnimatePresence>
                   {showDesc && (
@@ -744,8 +735,7 @@ function NexusPlayer({ video, onClose, settings }:
                       className="overflow-hidden mb-2"
                       onClick={e=>e.stopPropagation()}>
                       <p style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.6,
-                        padding:"6px 10px",background:"rgba(0,229,255,0.04)",
-                        borderLeft:`2px solid ${T.cyan}55`,marginBottom:6}}>
+                        padding:"8px 12px",background:"rgba(255,255,255,0.04)",borderRadius:10,marginBottom:6}}>
                         {video.caption} · @{video.author.username} ·{" "}
                         {fmt(video.viewsCount)} ko'rish · {fmt(video.likesCount)} like
                       </p>
@@ -755,14 +745,14 @@ function NexusPlayer({ video, onClose, settings }:
 
                 {/* Quality + Speed badges */}
                 <div className="flex justify-between items-center mb-2">
-                  <span style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",
-                    background:"rgba(255,255,255,0.05)",padding:"2px 8px",letterSpacing:"0.08em"}}>
+                  <span style={{fontSize:9,fontWeight:600,color:"rgba(255,255,255,0.35)",
+                    background:"rgba(255,255,255,0.06)",padding:"3px 10px",borderRadius:99}}>
                     {settings.quality}
                   </span>
-                  <span style={{fontSize:9,fontWeight:800,letterSpacing:"0.08em",
+                  <span style={{fontSize:9,fontWeight:600,borderRadius:99,
                     color:speed!==1?T.orange:"rgba(255,255,255,0.28)",
-                    background:speed!==1?`${T.orange}18`:"rgba(255,255,255,0.04)",
-                    padding:"2px 8px"}}>
+                    background:speed!==1?`${T.orange}18`:"rgba(255,255,255,0.05)",
+                    padding:"3px 10px"}}>
                     {speed}× TEZLIK
                   </span>
                 </div>
@@ -778,9 +768,8 @@ function NexusPlayer({ video, onClose, settings }:
                   </div>
                   <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
                     style={{left:`calc(${progress*100}% - 6px)`,
-                      width:12,height:12,background:T.cyan,
-                      boxShadow:`0 0 10px ${T.cyan}aa`,
-                      clipPath:"polygon(50% 0%,100% 50%,50% 100%,0% 50%)"}}/>
+                      width:12,height:12,borderRadius:"50%",background:"white",
+                      boxShadow:`0 0 10px rgba(255,255,255,0.7), 0 0 0 2px rgba(255,255,255,0.3)`}}/>
                   <input type="range" min={0} max={1} step={0.001} value={progress}
                     onChange={e=>scrub(Number(e.target.value))}
                     className="absolute inset-0 w-full opacity-0 cursor-pointer"
@@ -790,21 +779,19 @@ function NexusPlayer({ video, onClose, settings }:
                 {/* Bottom row */}
                 <div className="flex items-center gap-2" onClick={e=>e.stopPropagation()}>
                   <motion.button whileTap={{scale:0.82}} onClick={togglePlay}
-                    style={{ width:44,height:44,flexShrink:0,
-                      background:"rgba(0,0,0,0.55)",backdropFilter:"blur(12px)",
-                      border:`2px solid ${T.cyan}66`,
-                      boxShadow:`0 0 18px ${T.cyan}33`,
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      clipPath:"polygon(0 8px,8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px))" }}>
+                    style={{ width:46,height:46,flexShrink:0,borderRadius:"50%",
+                      background:"rgba(255,255,255,0.12)",backdropFilter:"blur(12px)",
+                      boxShadow:`0 0 0 1.5px rgba(255,255,255,0.2)`,
+                      display:"flex",alignItems:"center",justifyContent:"center" }}>
                     {playing
-                      ? <Pause style={{width:17,height:17,fill:T.cyan,color:T.cyan}}/>
-                      : <Play  style={{width:17,height:17,fill:T.cyan,color:T.cyan,marginLeft:2}}/>}
+                      ? <Pause style={{width:17,height:17,fill:"white",color:"white"}}/>
+                      : <Play  style={{width:17,height:17,fill:"white",color:"white",marginLeft:2}}/>}
                   </motion.button>
 
                   {/* Restart */}
                   <button onClick={()=>{const v=videoRef.current;if(v){v.currentTime=0;setProgress(0);setCurTime(0);}}}
-                    style={{width:34,height:34,flexShrink:0,
-                      background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
+                    style={{width:34,height:34,flexShrink:0,borderRadius:"50%",
+                      background:"rgba(255,255,255,0.06)",
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <RotateCcw style={{width:13,height:13,color:"rgba(255,255,255,0.45)"}}/>
                   </button>
@@ -817,22 +804,20 @@ function NexusPlayer({ video, onClose, settings }:
 
                   {/* Speed */}
                   <button onClick={()=>setShowSpeed(s=>!s)}
-                    style={{width:34,height:34,flexShrink:0,
-                      background:showSpeed?`${T.orange}22`:"rgba(255,255,255,0.05)",
-                      border:showSpeed?`1px solid ${T.orange}55`:"1px solid rgba(255,255,255,0.07)",
+                    style={{width:34,height:34,flexShrink:0,borderRadius:"50%",
+                      background:showSpeed?`${T.orange}22`:"rgba(255,255,255,0.06)",
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <Gauge style={{width:14,height:14,color:showSpeed?T.orange:"rgba(255,255,255,0.45)"}}/>
                   </button>
 
                   {/* Volume */}
                   <button onClick={()=>setMuted(m=>!m)}
-                    style={{width:34,height:34,flexShrink:0,
-                      background:muted?"rgba(255,255,255,0.05)":`${T.cyan}18`,
-                      border:muted?"1px solid rgba(255,255,255,0.07)":`1px solid ${T.cyan}44`,
+                    style={{width:34,height:34,flexShrink:0,borderRadius:"50%",
+                      background:muted?"rgba(255,255,255,0.06)":`rgba(0,229,255,0.12)`,
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
                     {muted
                       ? <VolumeX style={{width:14,height:14,color:"rgba(255,255,255,0.3)"}}/>
-                      : <Volume2 style={{width:14,height:14,color:T.cyan}}/>}
+                      : <Volume2 style={{width:14,height:14,color:"rgba(0,229,255,0.8)"}}/>}
                   </button>
                 </div>
               </div>

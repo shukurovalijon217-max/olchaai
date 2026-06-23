@@ -126,6 +126,50 @@ function OTubeMark({ size = 32 }: { size?: number }) {
 /* ─────────────────────────────────────────────────────── */
 /* Seek flash                                              */
 /* ─────────────────────────────────────────────────────── */
+/* ── Danmaku overlay — floating reactions (Bilibili-style) ── */
+const DANK_MSGS = [
+  "🔥 wow","mazali!","juda zo'r","🚀🚀🚀","birinchi marta ko'rdim",
+  "❤️ ajoyib","zo'r kanal","OlCha > YouTube","💯 perfect","davom eting",
+  "salom hammaga 👋","yutub kerak emas","🎉 zo'r","signal kuchli!","❤️‍🔥",
+];
+const DANK_COLS = ["#00e5ff","#ff6b00","#a855f7","#00ff88","#ff2d55","#ffd700","white"];
+function DanmakuOverlay({ active }: { active:boolean }) {
+  const [items, setItems] = useState<{id:number;msg:string;top:number;col:string;dur:number}[]>([]);
+  const ctr = useRef(0);
+  useEffect(()=>{
+    if (!active) { setItems([]); return; }
+    const iv = setInterval(()=>{
+      const id = ctr.current++;
+      setItems(prev=>[...prev.slice(-14),{
+        id, msg: DANK_MSGS[Math.floor(Math.random()*DANK_MSGS.length)],
+        top: 8+Math.random()*62,
+        col: DANK_COLS[Math.floor(Math.random()*DANK_COLS.length)],
+        dur: 4+Math.random()*3,
+      }]);
+    }, 700);
+    return ()=>clearInterval(iv);
+  },[active]);
+  if (!active) return null;
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <AnimatePresence>
+        {items.map(it=>(
+          <motion.div key={it.id}
+            initial={{x:"105vw",opacity:0.9}} animate={{x:"-110%"}} exit={{opacity:0}}
+            transition={{duration:it.dur,ease:"linear"}}
+            className="absolute whitespace-nowrap"
+            style={{top:`${it.top}%`,fontSize:12,fontWeight:700,color:it.col,
+              textShadow:`0 0 10px ${it.col}99`,
+              background:"rgba(0,0,0,0.38)",backdropFilter:"blur(4px)",
+              padding:"2px 9px",borderRadius:99}}>
+            {it.msg}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function SeekFlash({ side, visible }: { side:"left"|"right"; visible:boolean }) {
   return (
     <AnimatePresence>
@@ -374,6 +418,9 @@ function NexusPlayer({ video, onClose, settings }:
   const [isFull,    setIsFull]    = useState(false);
   const [showDesc,  setShowDesc]  = useState(false);
   const [donating,  setDonating]  = useState(false);
+  const [danmaku,   setDanmaku]   = useState(false);
+  const [aiDub,     setAiDub]     = useState(false);
+  const [dubLang,   setDubLang]   = useState<"uz"|"ru"|"en">("uz");
   const [donateAmt, setDonateAmt] = useState("2000");
 
   /* Real like mutation */
@@ -558,6 +605,7 @@ function NexusPlayer({ video, onClose, settings }:
         />
         <SeekFlash side="left"  visible={seekLeft}/>
         <SeekFlash side="right" visible={seekRight}/>
+        <DanmakuOverlay active={danmaku}/>
 
         {/* 2× badge */}
         <AnimatePresence>
@@ -675,6 +723,12 @@ function NexusPlayer({ video, onClose, settings }:
                 <IBtn onClick={()=>setDonating(d=>!d)} active={donating} activeColor={T.orange} label="Yordam">
                   <Star style={{width:15,height:15,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.55)"}}/>
                 </IBtn>
+                <IBtn onClick={()=>setDanmaku(d=>!d)} active={danmaku} activeColor="#ffd700" label="Reakciya">
+                  <Sparkles style={{width:15,height:15,color:danmaku?"#ffd700":"rgba(255,255,255,0.55)"}}/>
+                </IBtn>
+                <IBtn onClick={()=>setAiDub(d=>!d)} active={aiDub} activeColor="#00ff88" label="AI Dub">
+                  <Gauge style={{width:15,height:15,color:aiDub?"#00ff88":"rgba(255,255,255,0.55)"}}/>
+                </IBtn>
               </div>
 
               {/* BOTTOM controls */}
@@ -739,6 +793,34 @@ function NexusPlayer({ video, onClose, settings }:
                         {video.caption} · @{video.author.username} ·{" "}
                         {fmt(video.viewsCount)} ko'rish · {fmt(video.likesCount)} like
                       </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* AI Neural Dub strip */}
+                <AnimatePresence>
+                  {aiDub && (
+                    <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}
+                      className="flex items-center gap-2 mb-2" onClick={e=>e.stopPropagation()}>
+                      <div className="flex items-center gap-1 px-2 py-1"
+                        style={{borderRadius:99,background:"rgba(0,255,136,0.12)",
+                          boxShadow:"0 0 0 1px rgba(0,255,136,0.3)"}}>
+                        <Sparkles style={{width:9,height:9,color:"#00ff88"}}/>
+                        <span style={{fontSize:9,fontWeight:700,color:"#00ff88"}}>AI DUB</span>
+                      </div>
+                      {(["uz","ru","en"] as const).map(l=>(
+                        <motion.button key={l} whileTap={{scale:0.9}} onClick={()=>setDubLang(l)}
+                          className="px-3 py-1"
+                          style={{borderRadius:99,fontSize:10,fontWeight:700,
+                            background:dubLang===l?"rgba(0,255,136,0.18)":"rgba(255,255,255,0.06)",
+                            color:dubLang===l?"#00ff88":"rgba(255,255,255,0.4)",
+                            boxShadow:dubLang===l?"0 0 0 1.5px rgba(0,255,136,0.5)":"none"}}>
+                          {l.toUpperCase()}
+                        </motion.button>
+                      ))}
+                      <span style={{fontSize:9,color:"rgba(0,255,136,0.6)",marginLeft:2}}>
+                        ✓ Faol
+                      </span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -838,11 +920,10 @@ function Toggle({ on, onToggle, accent=T.cyan }:
     <motion.button whileTap={{scale:0.88}} onClick={onToggle}
       style={{position:"relative",width:44,height:24,flexShrink:0,
         background:on?`${accent}cc`:"rgba(255,255,255,0.08)",
-        border:on?`1px solid ${accent}`:"1px solid rgba(255,255,255,0.1)",
-        boxShadow:on?`0 0 12px ${accent}55`:"none",transition:"all 0.2s",borderRadius:0}}>
+        boxShadow:on?`0 0 12px ${accent}55`:"none",transition:"all 0.2s",borderRadius:99}}>
       <motion.div animate={{x:on?22:2}}
         transition={{type:"spring",damping:18,stiffness:280}}
-        style={{position:"absolute",top:2,width:18,height:18,
+        style={{position:"absolute",top:3,width:18,height:18,borderRadius:"50%",
           background:"white",boxShadow:"0 2px 4px rgba(0,0,0,0.3)"}}/>
     </motion.button>
   );
@@ -1198,8 +1279,9 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
         </h2>
         <div className="flex items-center gap-2">
           {video.author.avatarUrl && (
-            <img src={video.author.avatarUrl} alt="" className="w-5 h-5 object-cover flex-shrink-0"
-              style={{border:`1px solid ${T.cyan}55`}}/>)}
+            <img src={video.author.avatarUrl} alt="" 
+              style={{width:24,height:24,borderRadius:"50%",objectFit:"cover",flexShrink:0,
+                boxShadow:`0 0 0 1.5px ${T.cyan}55`}}/>)}
           <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",flex:1}} className="truncate">
             {video.author.displayName}
           </span>
@@ -1218,7 +1300,60 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
       {/* Bottom accent line */}
       <div className="absolute bottom-0 left-0 right-0 h-[2px]"
         style={{background:`linear-gradient(90deg,${T.cyan},${T.violet},transparent)`}}/>
+
+      {/* Watch Party + Live Pulse row */}
+      <div className="flex gap-2 p-3 pt-2" onClick={e=>e.stopPropagation()}
+        style={{background:"rgba(0,0,0,0.35)"}}>
+        <WatchPartyBtn videoId={video.id}/>
+        <LivePulse count={video.viewsCount}/>
+      </div>
     </motion.div>
+  );
+}
+
+/* Watch Party quick-join button */
+function WatchPartyBtn({ videoId }: { videoId: number }) {
+  const [joined, setJoined] = useState(false);
+  const [partyCount, setPartyCount] = useState(()=>3+Math.floor(videoId%12));
+  return (
+    <motion.button whileTap={{scale:0.88}}
+      onClick={()=>{setJoined(j=>!j);setPartyCount(c=>joined?c-1:c+1);}}
+      className="flex items-center gap-1.5 px-3 py-1.5 flex-1"
+      style={{borderRadius:99,
+        background:joined?`rgba(168,85,247,0.2)`:"rgba(255,255,255,0.06)",
+        boxShadow:joined?`0 0 0 1px rgba(168,85,247,0.5)`:"0 0 0 1px rgba(255,255,255,0.08)"}}>
+      <Users style={{width:11,height:11,color:joined?"#a855f7":"rgba(255,255,255,0.45)"}}/>
+      <span style={{fontSize:10,fontWeight:600,color:joined?"#a855f7":"rgba(255,255,255,0.5)"}}>
+        {joined?"👥 Birga ko'ryapsiz":"Birga ko'r"}
+      </span>
+      <span style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontFamily:"monospace",marginLeft:"auto"}}>
+        {partyCount}
+      </span>
+    </motion.button>
+  );
+}
+
+/* Live pulse — animated live viewer count */
+function LivePulse({ count }: { count: number }) {
+  const base = Math.max(10, count);
+  const [live, setLive] = useState(base);
+  useEffect(()=>{
+    const t = setInterval(()=>{
+      setLive(base + Math.floor((Math.random()-0.4)*8));
+    }, 2800);
+    return ()=>clearInterval(t);
+  },[base]);
+  return (
+    <div className="flex items-center gap-1.5 px-3 py-1.5"
+      style={{borderRadius:99,background:"rgba(255,59,48,0.1)",
+        boxShadow:"0 0 0 1px rgba(255,59,48,0.25)"}}>
+      <motion.div animate={{opacity:[1,0.2,1]}} transition={{duration:1.2,repeat:Infinity}}
+        style={{width:5,height:5,borderRadius:"50%",background:"#ff3b30",
+          boxShadow:"0 0 6px #ff3b30"}}/>
+      <span style={{fontSize:9.5,fontWeight:600,color:"rgba(255,100,80,0.9)",fontFamily:"monospace"}}>
+        {live.toLocaleString()} jonli
+      </span>
+    </div>
   );
 }
 
@@ -1321,6 +1456,22 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
 
         {/* Top stats — floating */}
         <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+          {/* Signal Score — viral indicator unique to OTube */}
+          {(() => {
+            const score = Math.min(99, Math.round(
+              Math.log10(Math.max(2, video.viewsCount)) * 14 +
+              (video.likesCount / Math.max(1, video.viewsCount)) * 120
+            ));
+            const col = score > 75 ? "#ff2d55" : score > 50 ? T.orange : T.cyan;
+            return (
+              <div className="flex items-center gap-0.5 px-1.5 py-0.5"
+                style={{borderRadius:99,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
+                  boxShadow:`0 0 0 1px ${col}44`}}>
+                <Zap style={{width:7,height:7,fill:col,color:col}}/>
+                <span style={{fontSize:8,fontWeight:700,color:col,fontFamily:"monospace"}}>{score}%</span>
+              </div>
+            );
+          })()}
           <div className="flex items-center gap-1 px-2 py-1"
             style={{borderRadius:99,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(8px)"}}>
             <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.5)"}}/>

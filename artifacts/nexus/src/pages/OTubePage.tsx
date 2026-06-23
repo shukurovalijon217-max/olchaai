@@ -21,7 +21,8 @@ import {
   Users, Clock, ThumbsUp, ThumbsDown, Gauge, Upload,
   Maximize2, Minimize2, BadgeDollarSign, Radio, Tv,
   Brain, Flame, Trophy, Moon, ArrowUp, BarChart2, Layers,
-  SmilePlus, Swords, Wind,
+  SmilePlus, Swords, Wind, Award, Tag, Cpu, Activity,
+  ListVideo, ShieldCheck, Crosshair,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────── */
@@ -1225,13 +1226,27 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
 /* ─────────────────────────────────────────────────────── */
 function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
   const [expanded, setExpanded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({x:0,y:0});
+  const onMouseMove = useCallback((e:React.MouseEvent<HTMLDivElement>)=>{
+    const el = cardRef.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    setTilt({x: py * -7, y: px * 7});
+  },[]);
+  const onMouseLeave = useCallback(()=>setTilt({x:0,y:0}),[]);
   return (
-    <motion.div
+    <motion.div ref={cardRef}
       className="relative cursor-pointer overflow-hidden"
       initial={{opacity:0,scale:0.97}} animate={{opacity:1,scale:1}}
       transition={{type:"spring",damping:24}}
-      style={{borderRadius:20,boxShadow:`0 0 60px rgba(0,229,255,0.1), 0 0 0 1px rgba(255,255,255,0.07)`}}
+      style={{borderRadius:20,
+        boxShadow:`0 0 60px rgba(0,229,255,0.1), 0 0 0 1px rgba(255,255,255,0.07)`,
+        transform:`perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+        transition:"transform 0.18s ease-out"}}
       whileTap={{scale:0.985}} onClick={onPlay}
+      onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}
     >
       {/* Expand button */}
       <motion.button whileTap={{scale:0.8}}
@@ -1468,13 +1483,57 @@ function TrendRow({ video, onPlay, idx }:
             </div>
           );
         })()}
-        {/* Bottom info */}
+        {/* Duration badge */}
+        {(()=>{
+          const mins = 1 + (video.id % 12);
+          const secs = (video.id * 13) % 60;
+          return (
+            <div className="absolute top-2.5 right-8 px-1.5 py-0.5"
+              style={{borderRadius:6,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)"}}>
+              <span style={{fontSize:8,fontWeight:700,color:"white",fontFamily:"monospace"}}>
+                {mins}:{String(secs).padStart(2,"0")}
+              </span>
+            </div>
+          );
+        })()}
+
+        {/* Heatmap — popular moments bar */}
+        <div className="absolute bottom-12 inset-x-2.5 flex gap-0.5 items-end"
+          style={{height:12}}>
+          {Array.from({length:10},((_,i)=>{
+            const h = 3 + ((video.id * (i+3) * 7) % 10);
+            const heat = h > 7 ? "#ff2d55" : h > 5 ? T.orange : h > 3 ? T.cyan : "rgba(255,255,255,0.18)";
+            return (
+              <motion.div key={i}
+                initial={{scaleY:0}} animate={{scaleY:1}}
+                transition={{delay:0.1+i*0.04,type:"spring",damping:16}}
+                style={{flex:1,height:`${(h/10)*100}%`,borderRadius:2,
+                  background:heat,opacity:0.65,transformOrigin:"bottom center"}}/>
+            );
+          }))}
+        </div>
+
+        {/* Sparkline — 7-day trend */}
         <div className="absolute bottom-0 inset-x-0 p-2.5">
           <p style={{fontSize:10.5,fontWeight:700,color:"white",lineHeight:1.3,marginBottom:3}}
             className="line-clamp-2">{video.caption||"Video"}</p>
-          <div className="flex items-center gap-1.5">
-            <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.4)"}}/>
-            <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.4)"}}/>
+              <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
+            </div>
+            {/* 7-day mini sparkline */}
+            <div className="flex gap-0.5 items-end" style={{height:10}}>
+              {Array.from({length:7},(_,i)=>{
+                const base = 3 + (video.id % 4);
+                const h = Math.max(2, Math.min(10, base + i*0.6 + ((video.id*i)%3)));
+                return (
+                  <div key={i}
+                    style={{width:3,height:`${h}px`,borderRadius:1,
+                      background:`rgba(${i>4?"0,229,255":"255,107,0"},${0.35+i*0.08})`}}/>
+                );
+              })}
+            </div>
           </div>
         </div>
         {/* Color accent bottom */}
@@ -1587,10 +1646,46 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
           )}
         </div>
 
+        {/* Duration badge — bottom right of thumbnail */}
+        {(()=>{
+          const mins = 2 + (video.id % 18);
+          const secs = (video.id * 7) % 60;
+          return (
+            <div className="absolute bottom-8 right-2 px-1.5 py-0.5"
+              style={{borderRadius:6,background:"rgba(0,0,0,0.78)",backdropFilter:"blur(6px)"}}>
+              <span style={{fontSize:8,fontWeight:700,color:"white",fontFamily:"monospace"}}>
+                {mins}:{String(secs).padStart(2,"0")}
+              </span>
+            </div>
+          );
+        })()}
+
         {/* Top stats — floating */}
-        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
-          {/* Signal Score — viral indicator unique to OTube */}
-          {(() => {
+        <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1">
+          {/* Neural Match chip */}
+          {(()=>{
+            const match = 60 + ((video.id * 23 + idx * 11) % 38);
+            const isHot = match >= 88;
+            return (
+              <motion.div
+                animate={isHot?{boxShadow:[
+                  `0 0 0 1px rgba(0,229,255,0.5)`,
+                  `0 0 0 1px rgba(157,0,255,0.5)`,
+                  `0 0 0 1px rgba(255,107,0,0.5)`,
+                  `0 0 0 1px rgba(0,229,255,0.5)`,
+                ]}:{}}
+                transition={{duration:2,repeat:Infinity}}
+                className="flex items-center gap-0.5 px-1.5 py-0.5"
+                style={{borderRadius:99,background:"rgba(0,0,0,0.72)",backdropFilter:"blur(8px)",
+                  boxShadow:`0 0 0 1px ${isHot?T.cyan:"rgba(255,255,255,0.12)"}44`}}>
+                <Cpu style={{width:6,height:6,color:isHot?T.cyan:T.violet}}/>
+                <span style={{fontSize:7.5,fontWeight:700,
+                  color:isHot?T.cyan:T.violet,fontFamily:"monospace"}}>{match}% mos</span>
+              </motion.div>
+            );
+          })()}
+          {/* Signal Score */}
+          {(()=>{
             const score = Math.min(99, Math.round(
               Math.log10(Math.max(2, video.viewsCount)) * 14 +
               (video.likesCount / Math.max(1, video.viewsCount)) * 120
@@ -1605,22 +1700,51 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
               </div>
             );
           })()}
-          <div className="flex items-center gap-1 px-2 py-1"
+          <div className="flex items-center gap-1 px-1.5 py-0.5"
             style={{borderRadius:99,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(8px)"}}>
-            <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.5)"}}/>
-            <span style={{fontSize:8,color:"rgba(255,255,255,0.55)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
+            <Eye style={{width:7,height:7,color:"rgba(255,255,255,0.5)"}}/>
+            <span style={{fontSize:7.5,color:"rgba(255,255,255,0.55)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
           </div>
         </div>
 
         {/* Bottom: title + author + like */}
         <div className="absolute bottom-0 inset-x-0 p-3">
+          {/* AI Smart Tags */}
+          {(()=>{
+            const tagSets = [
+              ["Tech","AI","Qiziqarli"],["Musiqa","Hits","Yangi"],
+              ["Gaming","Esports","Pro"],["Kino","Drama","HD"],
+              ["Sport","Fitness","Hayot"],["Travel","Dunyo","Avventura"],
+            ];
+            const tags = tagSets[video.id % tagSets.length];
+            return (
+              <div className="flex gap-1 mb-1.5 overflow-hidden">
+                {tags.slice(0,2).map(tag=>(
+                  <span key={tag}
+                    style={{fontSize:7,fontWeight:700,color:`${accent}cc`,
+                      background:`${accent}12`,
+                      padding:"1px 6px",borderRadius:99,
+                      border:`1px solid ${accent}22`,
+                      whiteSpace:"nowrap"}}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
           <p style={{fontSize:wide?13:11.5,fontWeight:700,color:"white",lineHeight:1.35,
             marginBottom:5,textShadow:"0 1px 8px rgba(0,0,0,0.8)"}}
             className={wide?"line-clamp-2":"line-clamp-2"}>{video.caption||"Video"}</p>
           <div className="flex items-center justify-between">
-            <span style={{fontSize:9,color:"rgba(255,255,255,0.4)"}} className="truncate max-w-[80px]">
-              {video.author.displayName}
-            </span>
+            <div className="flex items-center gap-1 truncate max-w-[100px]">
+              <span style={{fontSize:9,color:"rgba(255,255,255,0.4)"}} className="truncate">
+                {video.author.displayName}
+              </span>
+              {/* Verified badge */}
+              {(video.viewsCount > 300 || video.author.id % 3 === 0) && (
+                <ShieldCheck style={{width:8,height:8,color:"#ffd700",flexShrink:0}}/>
+              )}
+            </div>
             <motion.button whileTap={{scale:0.65}}
               onClick={e=>{e.stopPropagation();likeMut.mutate({id:video.id});}}
               className="flex items-center gap-1 px-2 py-1"
@@ -1644,14 +1768,195 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
 }
 
 /* ─────────────────────────────────────────────────────── */
+/* Social Gravity Ticker — live online count               */
+/* ─────────────────────────────────────────────────────── */
+function SocialTicker() {
+  const [count, setCount] = useState(247);
+  useEffect(()=>{
+    const t = setInterval(()=>setCount(c=>Math.max(180,c+Math.floor((Math.random()-0.38)*18))),3200);
+    return ()=>clearInterval(t);
+  },[]);
+  return (
+    <motion.div
+      className="flex items-center gap-1.5 px-2.5 py-1.5"
+      style={{borderRadius:99,background:"rgba(255,59,48,0.1)",
+        boxShadow:"0 0 0 1px rgba(255,59,48,0.22)"}}>
+      <motion.div
+        animate={{opacity:[1,0.2,1],scale:[1,1.3,1]}}
+        transition={{duration:1.3,repeat:Infinity}}
+        style={{width:5,height:5,borderRadius:"50%",background:"#ff3b30",
+          boxShadow:"0 0 6px #ff3b30"}}/>
+      <motion.span
+        key={count}
+        initial={{y:-6,opacity:0}} animate={{y:0,opacity:1}}
+        transition={{duration:0.2}}
+        style={{fontSize:9.5,fontWeight:700,color:"rgba(255,100,80,0.9)",fontFamily:"monospace"}}>
+        {count.toLocaleString()}
+      </motion.span>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
+/* Streak Banner — haftalik watch streak + XP              */
+/* ─────────────────────────────────────────────────────── */
+function StreakBanner() {
+  const days = ["Du","Se","Ch","Pa","Ju","Sh","Ya"];
+  const today = new Date().getDay(); // 0=Sun
+  const active = [1,2,3,4,5]; // Mon–Fri active (demo)
+  const [xp, setXp] = useState(1240);
+  useEffect(()=>{
+    const t = setInterval(()=>setXp(x=>x+(Math.random()>0.7?10:0)),4000);
+    return ()=>clearInterval(t);
+  },[]);
+  return (
+    <motion.div
+      initial={{opacity:0,y:-16}} animate={{opacity:1,y:0}}
+      transition={{type:"spring",damping:22,delay:0.3}}
+      className="mx-3 mb-4 p-3"
+      style={{borderRadius:16,
+        background:"linear-gradient(135deg,rgba(255,107,0,0.12),rgba(157,0,255,0.1))",
+        boxShadow:`0 0 0 1px rgba(255,107,0,0.22), 0 8px 32px rgba(0,0,0,0.45), 0 0 40px rgba(255,107,0,0.06)`}}>
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2">
+          <motion.span
+            animate={{scale:[1,1.2,1]}} transition={{duration:1.6,repeat:Infinity}}
+            style={{fontSize:18}}>🔥</motion.span>
+          <div>
+            <div style={{fontSize:12,fontWeight:900,color:"white",lineHeight:1}}>7 kunlik streak</div>
+            <div style={{fontSize:9,color:"rgba(255,255,255,0.38)",marginTop:2}}>Bugun ham ko'rdingiz!</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5"
+          style={{borderRadius:99,background:"rgba(255,107,0,0.18)",
+            boxShadow:"0 0 0 1px rgba(255,107,0,0.35)"}}>
+          <Trophy style={{width:9,height:9,color:T.orange}}/>
+          <motion.span
+            key={xp}
+            initial={{scale:1.4,color:"#fff"}} animate={{scale:1,color:T.orange}}
+            transition={{duration:0.35}}
+            style={{fontSize:10,fontWeight:900,fontFamily:"monospace"}}>
+            {xp.toLocaleString()} XP
+          </motion.span>
+        </div>
+      </div>
+      <div className="flex gap-1">
+        {days.map((d,i)=>{
+          const isActive = active.includes(i);
+          const isToday = i === (today===0?6:today-1);
+          return (
+            <div key={d} className="flex-1 flex flex-col items-center gap-1">
+              <motion.div
+                initial={{scaleY:0}} animate={{scaleY:1}}
+                transition={{delay:i*0.05,type:"spring",damping:18}}
+                style={{width:"100%",height:24,borderRadius:6,
+                  background:isActive
+                    ?`linear-gradient(180deg,${T.orange},${T.violet})`
+                    :"rgba(255,255,255,0.06)",
+                  boxShadow:isToday?`0 0 12px ${T.orange}88`:"none",
+                  transformOrigin:"bottom center",
+                  border:isToday?`1px solid ${T.orange}66`:"1px solid transparent"}}/>
+              <span style={{fontSize:7,fontWeight:700,
+                color:isActive?T.orange:"rgba(255,255,255,0.2)"}}>{d}</span>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
+/* Continue Watching row — videos with progress bars       */
+/* ─────────────────────────────────────────────────────── */
+function ContinueRow({ videos, onPlay }: { videos:Reel[]; onPlay:(v:Reel)=>void }) {
+  if (!videos.length) return null;
+  const items = videos.slice(0,5);
+  return (
+    <section className="mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-1.5 px-3 py-1.5"
+          style={{borderRadius:99,background:"rgba(0,229,255,0.1)",
+            boxShadow:`0 0 0 1px rgba(0,229,255,0.25)`}}>
+          <ListVideo style={{width:10,height:10,color:T.cyan}}/>
+          <span style={{fontSize:11,fontWeight:700,color:T.cyan,letterSpacing:"0.04em"}}>
+            Davom ettirish
+          </span>
+        </div>
+        <div style={{flex:1,height:1,background:`linear-gradient(90deg,${T.cyan}33,transparent)`}}/>
+        <span style={{fontSize:8,color:"rgba(255,255,255,0.2)",fontFamily:"monospace"}}>
+          {items.length} ta
+        </span>
+      </div>
+      <div className="flex gap-3 overflow-x-auto -mx-3 px-3 pb-2" style={{scrollbarWidth:"none"}}>
+        {items.map((v,i)=>{
+          const pct = 15 + ((v.id * 17 + i * 31) % 72); // 15–87% deterministic
+          const mins = 2 + (v.id % 18);
+          const secs = (v.id * 7) % 60;
+          const durStr = `${mins}:${String(secs).padStart(2,"0")}`;
+          const watchedStr = fmtTime((pct/100) * (mins*60+secs));
+          return (
+            <motion.div key={v.id}
+              initial={{opacity:0,x:18}} animate={{opacity:1,x:0}}
+              transition={{delay:i*0.07,type:"spring",damping:22}}
+              className="flex-shrink-0 cursor-pointer"
+              style={{width:164,borderRadius:14,overflow:"hidden",
+                boxShadow:`0 4px 20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)`}}
+              whileTap={{scale:0.93}} onClick={()=>onPlay(v)}>
+              <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
+                {v.thumbnailUrl
+                  ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                  : <div className="w-full h-full"
+                      style={{background:`linear-gradient(135deg,${T.cyan}14,#000)`}}/>}
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{background:"linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 55%)"}}/>
+                {/* Progress bar overlay */}
+                <div className="absolute bottom-0 inset-x-0 h-[3px]"
+                  style={{background:"rgba(255,255,255,0.12)"}}>
+                  <motion.div
+                    initial={{width:0}} animate={{width:`${pct}%`}}
+                    transition={{delay:0.4+i*0.1,duration:0.9,ease:"easeOut"}}
+                    style={{height:"100%",borderRadius:99,
+                      background:`linear-gradient(90deg,${T.cyan},${T.violet})`}}/>
+                </div>
+                {/* Duration */}
+                <div className="absolute bottom-1.5 right-2 flex items-center gap-0.5">
+                  <span style={{fontSize:8,fontFamily:"monospace",color:"rgba(255,255,255,0.55)"}}>
+                    {watchedStr} / {durStr}
+                  </span>
+                </div>
+              </div>
+              <div style={{background:"rgba(8,2,15,0.95)",padding:"8px 10px"}}>
+                <p style={{fontSize:10.5,fontWeight:600,color:"rgba(255,255,255,0.8)",
+                  lineHeight:1.3}} className="line-clamp-1">{v.caption||"Video"}</p>
+                <div className="flex items-center justify-between mt-1">
+                  <span style={{fontSize:8,color:"rgba(255,255,255,0.3)"}}>
+                    {v.author.displayName}
+                  </span>
+                  <span style={{fontSize:8,fontWeight:700,color:T.cyan,fontFamily:"monospace"}}>
+                    {pct}%
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
 /* Floating FAB — speed dial                               */
 /* ─────────────────────────────────────────────────────── */
 function FloatingFAB() {
   const [open, setOpen] = useState(false);
   const items = [
-    { Icon: Upload, label: "Yuklash",    col: T.cyan },
-    { Icon: Radio,  label: "Jonli efir", col: "#ff2d55" },
-    { Icon: Zap,    label: "Short",      col: T.orange },
+    { Icon: Upload,    label: "Yuklash",    col: T.cyan },
+    { Icon: Radio,     label: "Jonli efir", col: "#ff2d55" },
+    { Icon: Zap,       label: "Short",      col: T.orange },
+    { Icon: Swords,    label: "Challenge",  col: "#00ff88" },
+    { Icon: Crosshair, label: "Klip yarating", col: T.violet },
   ];
   return (
     <div className="fixed bottom-24 right-4 z-50 flex flex-col items-end gap-2.5 pointer-events-none">
@@ -1781,7 +2086,11 @@ const CATS = [
   {id:"live",     label:"◉ LIVE",    Icon:Zap,        col:"#ff2d55"},
   {id:"new",      label:"YANGI",     Icon:Clock,      col:T.violet},
 ];
-const TABS=[{id:"home",l:"BROADCAST"},{id:"shorts",l:"SHORTS"},{id:"subs",l:"CHANNELS"}] as const;
+const TABS=[
+  {id:"home",  l:"BROADCAST", badge:null},
+  {id:"shorts",l:"SHORTS",    badge:"NEW"},
+  {id:"subs",  l:"CHANNELS",  badge:null},
+] as const;
 
 export default function OTubePage() {
   const [,navigate]  = useLocation();
@@ -1877,6 +2186,8 @@ export default function OTubePage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
+                    {/* Social gravity ticker */}
+                    <SocialTicker/>
                     <motion.button whileTap={{scale:0.85}} onClick={()=>setNotifDot(false)}
                       className="relative"
                       style={{width:36,height:36,borderRadius:"50%",
@@ -1909,13 +2220,27 @@ export default function OTubePage() {
               {TABS.map(t=>(
                 <motion.button key={t.id} onClick={()=>setTab(t.id)}
                   whileTap={{scale:0.93}}
-                  className="flex-shrink-0 px-4 py-1.5 relative"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 relative"
                   style={{borderRadius:99,fontSize:10.5,fontWeight:700,letterSpacing:"0.06em",
                     background:tab===t.id?"rgba(255,255,255,0.12)":"transparent",
                     color:tab===t.id?"white":"rgba(255,255,255,0.35)",
-                    boxShadow:tab===t.id?"0 0 0 1px rgba(255,255,255,0.2)":"none",
+                    boxShadow:tab===t.id?`0 0 0 1px rgba(255,255,255,0.2), 0 0 18px ${T.cyan}22`:"none",
                     transition:"all 0.2s"}}>
                   {t.l}
+                  {t.badge && (
+                    <motion.span
+                      animate={{scale:[1,1.1,1]}} transition={{duration:2,repeat:Infinity}}
+                      style={{fontSize:7,fontWeight:900,color:"#000",background:"#00ff88",
+                        padding:"1px 5px",borderRadius:99,letterSpacing:"0.06em",
+                        boxShadow:"0 0 8px rgba(0,255,136,0.6)"}}>
+                      {t.badge}
+                    </motion.span>
+                  )}
+                  {t.id==="home" && tab==="home" && (
+                    <span style={{fontSize:8,color:`${T.cyan}88`,fontFamily:"monospace",fontWeight:700}}>
+                      {reels.length}
+                    </span>
+                  )}
                 </motion.button>
               ))}
             </div>
@@ -1981,6 +2306,9 @@ export default function OTubePage() {
             </div>
           ) : tab==="home" ? (
             <>
+              {/* Streak banner — always visible on home */}
+              {!query && <StreakBanner/>}
+
               {/* Featured hero — edge-to-edge */}
               {featured && !query && (
                 <div className="-mx-3 mb-2">
@@ -2005,14 +2333,31 @@ export default function OTubePage() {
 
               {!query && (
                 <>
+                  {/* Continue Watching */}
+                  <ContinueRow videos={reels.slice(2,7)} onPlay={v=>setSelected(v)}/>
+
                   {/* Trending — horizontal scroll cinema strip */}
                   {trending.length>0 && (
                     <section className="mb-8">
                       <div className="flex items-center gap-2 mb-3">
                         <ChBadge n="01" color={T.orange}/>
-                        <span style={{fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.55)",letterSpacing:"0.04em"}}>
-                          Trending
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span style={{fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.55)",letterSpacing:"0.04em"}}>
+                            Trending
+                          </span>
+                          {/* Live trending pulse */}
+                          <motion.div className="flex items-center gap-1 px-2 py-0.5"
+                            style={{borderRadius:99,background:"rgba(255,45,85,0.12)",
+                              boxShadow:"0 0 0 1px rgba(255,45,85,0.3)"}}>
+                            <motion.div
+                              animate={{opacity:[1,0.2,1]}} transition={{duration:0.9,repeat:Infinity}}
+                              style={{width:4,height:4,borderRadius:"50%",background:"#ff2d55",
+                                boxShadow:"0 0 5px #ff2d55"}}/>
+                            <span style={{fontSize:7.5,fontWeight:700,color:"#ff2d55",letterSpacing:"0.08em"}}>
+                              LIVE
+                            </span>
+                          </motion.div>
+                        </div>
                       </div>
                       <div className="flex gap-3 overflow-x-auto -mx-3 px-3 pb-2"
                         style={{scrollbarWidth:"none"}}>

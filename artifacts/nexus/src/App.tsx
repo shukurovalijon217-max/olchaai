@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Layout from "@/components/Layout";
 import HomePage from "@/pages/HomePage";
 import ReelsPage from "@/pages/ReelsPage";
+import OTubePage from "@/pages/OTubePage";
 import ExplorePage from "@/pages/ExplorePage";
 import MessagesPage from "@/pages/MessagesPage";
 import GroupsPage from "@/pages/GroupsPage";
@@ -128,6 +129,9 @@ function Router() {
       )} />
       <Route path="/reels" component={() => (
         <ProtectedRoute><Layout><ReelsPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/otube" component={() => (
+        <ProtectedRoute><Layout><OTubePage /></Layout></ProtectedRoute>
       )} />
       <Route path="/explore" component={() => (
         <ProtectedRoute><Layout><ExplorePage /></Layout></ProtectedRoute>

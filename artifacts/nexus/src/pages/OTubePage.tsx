@@ -1483,57 +1483,20 @@ function TrendRow({ video, onPlay, idx }:
             </div>
           );
         })()}
-        {/* Duration badge */}
-        {(()=>{
-          const mins = 1 + (video.id % 12);
-          const secs = (video.id * 13) % 60;
-          return (
-            <div className="absolute top-2.5 right-8 px-1.5 py-0.5"
-              style={{borderRadius:6,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)"}}>
-              <span style={{fontSize:8,fontWeight:700,color:"white",fontFamily:"monospace"}}>
-                {mins}:{String(secs).padStart(2,"0")}
-              </span>
-            </div>
-          );
-        })()}
-
-        {/* Heatmap — popular moments bar */}
-        <div className="absolute bottom-12 inset-x-2.5 flex gap-0.5 items-end"
-          style={{height:12}}>
-          {Array.from({length:10},((_,i)=>{
-            const h = 3 + ((video.id * (i+3) * 7) % 10);
-            const heat = h > 7 ? "#ff2d55" : h > 5 ? T.orange : h > 3 ? T.cyan : "rgba(255,255,255,0.18)";
-            return (
-              <motion.div key={i}
-                initial={{scaleY:0}} animate={{scaleY:1}}
-                transition={{delay:0.1+i*0.04,type:"spring",damping:16}}
-                style={{flex:1,height:`${(h/10)*100}%`,borderRadius:2,
-                  background:heat,opacity:0.65,transformOrigin:"bottom center"}}/>
-            );
-          }))}
-        </div>
-
-        {/* Sparkline — 7-day trend */}
+        {/* Bottom info */}
         <div className="absolute bottom-0 inset-x-0 p-2.5">
-          <p style={{fontSize:10.5,fontWeight:700,color:"white",lineHeight:1.3,marginBottom:3}}
+          <p style={{fontSize:10.5,fontWeight:700,color:"white",lineHeight:1.3,marginBottom:4}}
             className="line-clamp-2">{video.caption||"Video"}</p>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.4)"}}/>
-              <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
-            </div>
-            {/* 7-day mini sparkline */}
-            <div className="flex gap-0.5 items-end" style={{height:10}}>
-              {Array.from({length:7},(_,i)=>{
-                const base = 3 + (video.id % 4);
-                const h = Math.max(2, Math.min(10, base + i*0.6 + ((video.id*i)%3)));
-                return (
-                  <div key={i}
-                    style={{width:3,height:`${h}px`,borderRadius:1,
-                      background:`rgba(${i>4?"0,229,255":"255,107,0"},${0.35+i*0.08})`}}/>
-                );
-              })}
-            </div>
+          <div className="flex items-center gap-1.5">
+            <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.4)"}}/>
+            <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>
+              {fmt(video.viewsCount)}
+            </span>
+            {/* Duration */}
+            <span style={{marginLeft:"auto",fontSize:8,fontWeight:700,color:"rgba(255,255,255,0.55)",
+              fontFamily:"monospace",background:"rgba(0,0,0,0.55)",padding:"1px 5px",borderRadius:4}}>
+              {1+(video.id%12)}:{String((video.id*13)%60).padStart(2,"0")}
+            </span>
           </div>
         </div>
         {/* Color accent bottom */}
@@ -1646,45 +1609,16 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
           )}
         </div>
 
-        {/* Duration badge — bottom right of thumbnail */}
-        {(()=>{
-          const mins = 2 + (video.id % 18);
-          const secs = (video.id * 7) % 60;
-          return (
-            <div className="absolute bottom-8 right-2 px-1.5 py-0.5"
-              style={{borderRadius:6,background:"rgba(0,0,0,0.78)",backdropFilter:"blur(6px)"}}>
-              <span style={{fontSize:8,fontWeight:700,color:"white",fontFamily:"monospace"}}>
-                {mins}:{String(secs).padStart(2,"0")}
-              </span>
-            </div>
-          );
-        })()}
+        {/* Duration badge */}
+        <div className="absolute bottom-9 right-2 px-1.5 py-0.5"
+          style={{borderRadius:5,background:"rgba(0,0,0,0.78)",backdropFilter:"blur(4px)"}}>
+          <span style={{fontSize:8,fontWeight:700,color:"white",fontFamily:"monospace"}}>
+            {2+(video.id%18)}:{String((video.id*7)%60).padStart(2,"0")}
+          </span>
+        </div>
 
-        {/* Top stats — floating */}
-        <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1">
-          {/* Neural Match chip */}
-          {(()=>{
-            const match = 60 + ((video.id * 23 + idx * 11) % 38);
-            const isHot = match >= 88;
-            return (
-              <motion.div
-                animate={isHot?{boxShadow:[
-                  `0 0 0 1px rgba(0,229,255,0.5)`,
-                  `0 0 0 1px rgba(157,0,255,0.5)`,
-                  `0 0 0 1px rgba(255,107,0,0.5)`,
-                  `0 0 0 1px rgba(0,229,255,0.5)`,
-                ]}:{}}
-                transition={{duration:2,repeat:Infinity}}
-                className="flex items-center gap-0.5 px-1.5 py-0.5"
-                style={{borderRadius:99,background:"rgba(0,0,0,0.72)",backdropFilter:"blur(8px)",
-                  boxShadow:`0 0 0 1px ${isHot?T.cyan:"rgba(255,255,255,0.12)"}44`}}>
-                <Cpu style={{width:6,height:6,color:isHot?T.cyan:T.violet}}/>
-                <span style={{fontSize:7.5,fontWeight:700,
-                  color:isHot?T.cyan:T.violet,fontFamily:"monospace"}}>{match}% mos</span>
-              </motion.div>
-            );
-          })()}
-          {/* Signal Score */}
+        {/* Signal Score — single chip only */}
+        <div className="absolute top-2.5 right-2.5">
           {(()=>{
             const score = Math.min(99, Math.round(
               Math.log10(Math.max(2, video.viewsCount)) * 14 +
@@ -1696,42 +1630,14 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
                 style={{borderRadius:99,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
                   boxShadow:`0 0 0 1px ${col}44`}}>
                 <Zap style={{width:7,height:7,fill:col,color:col}}/>
-                <span style={{fontSize:8,fontWeight:700,color:col,fontFamily:"monospace"}}>{score}%</span>
+                <span style={{fontSize:8,fontWeight:700,color:col,fontFamily:"monospace"}}>{score}</span>
               </div>
             );
           })()}
-          <div className="flex items-center gap-1 px-1.5 py-0.5"
-            style={{borderRadius:99,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(8px)"}}>
-            <Eye style={{width:7,height:7,color:"rgba(255,255,255,0.5)"}}/>
-            <span style={{fontSize:7.5,color:"rgba(255,255,255,0.55)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
-          </div>
         </div>
 
         {/* Bottom: title + author + like */}
         <div className="absolute bottom-0 inset-x-0 p-3">
-          {/* AI Smart Tags */}
-          {(()=>{
-            const tagSets = [
-              ["Tech","AI","Qiziqarli"],["Musiqa","Hits","Yangi"],
-              ["Gaming","Esports","Pro"],["Kino","Drama","HD"],
-              ["Sport","Fitness","Hayot"],["Travel","Dunyo","Avventura"],
-            ];
-            const tags = tagSets[video.id % tagSets.length];
-            return (
-              <div className="flex gap-1 mb-1.5 overflow-hidden">
-                {tags.slice(0,2).map(tag=>(
-                  <span key={tag}
-                    style={{fontSize:7,fontWeight:700,color:`${accent}cc`,
-                      background:`${accent}12`,
-                      padding:"1px 6px",borderRadius:99,
-                      border:`1px solid ${accent}22`,
-                      whiteSpace:"nowrap"}}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            );
-          })()}
           <p style={{fontSize:wide?13:11.5,fontWeight:700,color:"white",lineHeight:1.35,
             marginBottom:5,textShadow:"0 1px 8px rgba(0,0,0,0.8)"}}
             className={wide?"line-clamp-2":"line-clamp-2"}>{video.caption||"Video"}</p>
@@ -1801,66 +1707,58 @@ function SocialTicker() {
 /* Streak Banner — haftalik watch streak + XP              */
 /* ─────────────────────────────────────────────────────── */
 function StreakBanner() {
-  const days = ["Du","Se","Ch","Pa","Ju","Sh","Ya"];
-  const today = new Date().getDay(); // 0=Sun
-  const active = [1,2,3,4,5]; // Mon–Fri active (demo)
   const [xp, setXp] = useState(1240);
   useEffect(()=>{
     const t = setInterval(()=>setXp(x=>x+(Math.random()>0.7?10:0)),4000);
     return ()=>clearInterval(t);
   },[]);
+  const dots = [true,true,true,true,true,true,false]; // 6/7 kunlik streak
   return (
     <motion.div
-      initial={{opacity:0,y:-16}} animate={{opacity:1,y:0}}
-      transition={{type:"spring",damping:22,delay:0.3}}
-      className="mx-3 mb-4 p-3"
-      style={{borderRadius:16,
-        background:"linear-gradient(135deg,rgba(255,107,0,0.12),rgba(157,0,255,0.1))",
-        boxShadow:`0 0 0 1px rgba(255,107,0,0.22), 0 8px 32px rgba(0,0,0,0.45), 0 0 40px rgba(255,107,0,0.06)`}}>
-      <div className="flex items-center justify-between mb-2.5">
-        <div className="flex items-center gap-2">
-          <motion.span
-            animate={{scale:[1,1.2,1]}} transition={{duration:1.6,repeat:Infinity}}
-            style={{fontSize:18}}>🔥</motion.span>
-          <div>
-            <div style={{fontSize:12,fontWeight:900,color:"white",lineHeight:1}}>7 kunlik streak</div>
-            <div style={{fontSize:9,color:"rgba(255,255,255,0.38)",marginTop:2}}>Bugun ham ko'rdingiz!</div>
-          </div>
+      initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}}
+      transition={{type:"spring",damping:22,delay:0.2}}
+      className="mx-3 mb-4 px-4 py-3 flex items-center gap-3"
+      style={{borderRadius:14,
+        background:"rgba(255,107,0,0.09)",
+        boxShadow:"0 0 0 1px rgba(255,107,0,0.2)"}}>
+      {/* Flame */}
+      <motion.span
+        animate={{scale:[1,1.15,1]}} transition={{duration:1.8,repeat:Infinity}}
+        style={{fontSize:22,lineHeight:1,flexShrink:0}}>🔥</motion.span>
+
+      {/* Streak info */}
+      <div className="flex-1 min-w-0">
+        <div style={{fontSize:12,fontWeight:900,color:"white",marginBottom:4}}>
+          7 kunlik streak
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5"
-          style={{borderRadius:99,background:"rgba(255,107,0,0.18)",
-            boxShadow:"0 0 0 1px rgba(255,107,0,0.35)"}}>
-          <Trophy style={{width:9,height:9,color:T.orange}}/>
-          <motion.span
-            key={xp}
-            initial={{scale:1.4,color:"#fff"}} animate={{scale:1,color:T.orange}}
-            transition={{duration:0.35}}
-            style={{fontSize:10,fontWeight:900,fontFamily:"monospace"}}>
-            {xp.toLocaleString()} XP
-          </motion.span>
+        {/* 7 dot indicators */}
+        <div className="flex gap-1.5">
+          {dots.map((active,i)=>(
+            <motion.div key={i}
+              initial={{scale:0}} animate={{scale:1}}
+              transition={{delay:i*0.04,type:"spring",damping:16}}
+              style={{width:active?20:14,height:6,borderRadius:99,
+                background:active
+                  ?`linear-gradient(90deg,${T.orange},${T.violet})`
+                  :"rgba(255,255,255,0.1)",
+                boxShadow:active?`0 0 8px ${T.orange}66`:"none",
+                transition:"all 0.3s"}}/>
+          ))}
         </div>
       </div>
-      <div className="flex gap-1">
-        {days.map((d,i)=>{
-          const isActive = active.includes(i);
-          const isToday = i === (today===0?6:today-1);
-          return (
-            <div key={d} className="flex-1 flex flex-col items-center gap-1">
-              <motion.div
-                initial={{scaleY:0}} animate={{scaleY:1}}
-                transition={{delay:i*0.05,type:"spring",damping:18}}
-                style={{width:"100%",height:24,borderRadius:6,
-                  background:isActive
-                    ?`linear-gradient(180deg,${T.orange},${T.violet})`
-                    :"rgba(255,255,255,0.06)",
-                  boxShadow:isToday?`0 0 12px ${T.orange}88`:"none",
-                  transformOrigin:"bottom center",
-                  border:isToday?`1px solid ${T.orange}66`:"1px solid transparent"}}/>
-              <span style={{fontSize:7,fontWeight:700,
-                color:isActive?T.orange:"rgba(255,255,255,0.2)"}}>{d}</span>
-            </div>
-          );
-        })}
+
+      {/* XP badge */}
+      <div className="flex items-center gap-1 px-2.5 py-1.5 flex-shrink-0"
+        style={{borderRadius:99,background:"rgba(255,107,0,0.18)",
+          boxShadow:"0 0 0 1px rgba(255,107,0,0.3)"}}>
+        <Trophy style={{width:9,height:9,color:T.orange}}/>
+        <motion.span
+          key={xp}
+          initial={{y:-4,opacity:0}} animate={{y:0,opacity:1}}
+          transition={{duration:0.25}}
+          style={{fontSize:10,fontWeight:900,color:T.orange,fontFamily:"monospace"}}>
+          {xp.toLocaleString()}
+        </motion.span>
       </div>
     </motion.div>
   );

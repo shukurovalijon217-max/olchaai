@@ -20,6 +20,8 @@ import {
   MessageCircle, Bookmark, Plus, DollarSign, Star,
   Users, Clock, ThumbsUp, ThumbsDown, Gauge, Upload,
   Maximize2, Minimize2, BadgeDollarSign, Radio, Tv,
+  Brain, Flame, Trophy, Moon, ArrowUp, BarChart2, Layers,
+  SmilePlus, Swords, Wind,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────── */
@@ -1278,9 +1280,26 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
           </h2>
           <div className="flex items-center gap-2">
             {video.author.avatarUrl && (
-              <img src={video.author.avatarUrl} alt=""
-                style={{width:24,height:24,borderRadius:"50%",objectFit:"cover",flexShrink:0,
-                  boxShadow:`0 0 0 1.5px ${T.cyan}55`}}/>)}
+              <div style={{position:"relative",flexShrink:0,width:32,height:32}}>
+                <svg width={32} height={32}
+                  style={{position:"absolute",top:0,left:0,zIndex:1,transform:"rotate(-90deg)"}}>
+                  <circle cx={16} cy={16} r={13.5} stroke="rgba(255,255,255,0.07)" strokeWidth={2} fill="none"/>
+                  <motion.circle cx={16} cy={16} r={13.5} stroke={T.cyan} strokeWidth={2} fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2*Math.PI*13.5}`}
+                    initial={{strokeDashoffset:`${2*Math.PI*13.5}`}}
+                    animate={{strokeDashoffset:`${2*Math.PI*13.5*0.27}`}}
+                    transition={{duration:2,ease:"easeOut",delay:0.5}}/>
+                </svg>
+                <img src={video.author.avatarUrl} alt=""
+                  style={{width:24,height:24,borderRadius:"50%",objectFit:"cover",
+                    position:"absolute",top:4,left:4,zIndex:2}}/>
+                <div style={{position:"absolute",bottom:-2,right:-2,zIndex:3,
+                  width:12,height:12,borderRadius:"50%",background:T.cyan,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:6,fontWeight:900,color:"#000",boxShadow:`0 0 6px ${T.cyan}88`}}>7</div>
+              </div>
+            )}
             <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",flex:1}} className="truncate">
               {video.author.displayName}
             </span>
@@ -1307,6 +1326,44 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
         <WatchPartyBtn videoId={video.id}/>
         <LivePulse count={video.viewsCount}/>
       </div>
+
+      {/* AI Smart Chapters strip */}
+      <div className="px-3 pb-3" onClick={e=>e.stopPropagation()}
+        style={{background:"rgba(0,0,0,0.2)"}}>
+        <div className="flex items-center gap-1.5 mb-2">
+          <Brain style={{width:9,height:9,color:`${T.cyan}99`}}/>
+          <span style={{fontSize:8,fontWeight:700,color:`${T.cyan}70`,letterSpacing:"0.1em"}}>
+            AI CHAPTERS
+          </span>
+        </div>
+        <div className="flex gap-1">
+          {([
+            {label:"Kirish",    col:T.cyan,    flex:2},
+            {label:"Asosiy",   col:T.orange,  flex:5},
+            {label:"Kulminatsiya",col:"#ff2d55",flex:4},
+            {label:"Xulosa",   col:T.violet,  flex:2},
+          ] as const).map((ch,i)=>(
+            <motion.div key={i}
+              initial={{opacity:0,scaleX:0}} animate={{opacity:1,scaleX:1}}
+              transition={{delay:0.3+i*0.08,type:"spring",damping:20}}
+              style={{flex:ch.flex,height:3,borderRadius:99,
+                background:ch.col,opacity:0.55,transformOrigin:"left center"}}/>
+          ))}
+        </div>
+        <div className="flex mt-1">
+          {([
+            {label:"Kirish",    col:T.cyan,    flex:2},
+            {label:"Asosiy",   col:T.orange,  flex:5},
+            {label:"Kulminatsiya",col:"#ff2d55",flex:4},
+            {label:"Xulosa",   col:T.violet,  flex:2},
+          ] as const).map((ch,i)=>(
+            <div key={i} style={{flex:ch.flex,overflow:"hidden"}}>
+              <span style={{fontSize:6.5,color:ch.col,fontWeight:600,opacity:0.75,
+                whiteSpace:"nowrap"}}>{ch.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -1321,14 +1378,22 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
       className="flex items-center gap-1.5 px-3 py-1.5 flex-1"
       style={{borderRadius:99,
         background:joined?`rgba(168,85,247,0.2)`:"rgba(255,255,255,0.06)",
-        boxShadow:joined?`0 0 0 1px rgba(168,85,247,0.5)`:"0 0 0 1px rgba(255,255,255,0.08)"}}>
+        boxShadow:joined?`0 0 0 1px rgba(168,85,247,0.5), 0 0 16px rgba(168,85,247,0.2)`:"0 0 0 1px rgba(255,255,255,0.08)"}}>
       <Users style={{width:11,height:11,color:joined?"#a855f7":"rgba(255,255,255,0.45)"}}/>
       <span style={{fontSize:10,fontWeight:600,color:joined?"#a855f7":"rgba(255,255,255,0.5)"}}>
         {joined?"👥 Birga ko'ryapsiz":"Birga ko'r"}
       </span>
-      <span style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontFamily:"monospace",marginLeft:"auto"}}>
-        {partyCount}
-      </span>
+      {joined ? (
+        <motion.span
+          animate={{opacity:[0.3,1,0.3]}} transition={{duration:1.1,repeat:Infinity}}
+          style={{fontSize:11,color:"rgba(168,85,247,0.7)",marginLeft:"auto",letterSpacing:"0.12em"}}>
+          ···
+        </motion.span>
+      ) : (
+        <span style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontFamily:"monospace",marginLeft:"auto"}}>
+          {partyCount}
+        </span>
+      )}
     </motion.button>
   );
 }
@@ -1390,6 +1455,19 @@ function TrendRow({ video, onPlay, idx }:
             boxShadow:`0 0 0 1.5px ${col}55`}}>
           <span style={{fontSize:12,fontWeight:900,color:col,fontFamily:"monospace"}}>{idx+1}</span>
         </div>
+        {/* Velocity badge */}
+        {(()=>{
+          const vel = 8+((idx*13+7)%41);
+          const vc = vel>30?"#ff2d55":vel>18?T.orange:T.cyan;
+          return (
+            <div className="absolute top-2.5 right-2.5 flex items-center gap-0.5 px-1.5 py-0.5"
+              style={{borderRadius:99,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
+                boxShadow:`0 0 0 1px ${vc}44`}}>
+              <ArrowUp style={{width:7,height:7,color:vc}}/>
+              <span style={{fontSize:7.5,fontWeight:700,color:vc,fontFamily:"monospace"}}>{vel}%</span>
+            </div>
+          );
+        })()}
         {/* Bottom info */}
         <div className="absolute bottom-0 inset-x-0 p-2.5">
           <p style={{fontSize:10.5,fontWeight:700,color:"white",lineHeight:1.3,marginBottom:3}}
@@ -1415,8 +1493,12 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
   const qc = useQueryClient();
   const [liked,    setLiked]    = useState(video.isLiked ?? false);
   const [likesCount, setLikesCount] = useState(video.likesCount ?? 0);
+  const [showReact, setShowReact] = useState(false);
+  const [myReact,   setMyReact]   = useState<string|null>(null);
+  const pressRef = useRef<ReturnType<typeof setTimeout>|null>(null);
   const ACCENT = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55"];
   const accent = ACCENT[idx % ACCENT.length];
+  const isNew = idx < 2;
   const likeMut = useLikeReel({
     mutation: {
       onMutate: () => {
@@ -1435,13 +1517,43 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
     <motion.div
       initial={{opacity:0,y:18,scale:0.96}} animate={{opacity:1,y:0,scale:1}}
       transition={{delay:idx*0.05,type:"spring",damping:22,stiffness:200}}
-      className={`cursor-pointer overflow-hidden relative ${wide?"col-span-2":""}`}
+      className={`cursor-pointer relative ${wide?"col-span-2":""}`}
       style={{borderRadius:16,
-        boxShadow:`0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06)`}}
+        boxShadow:`0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06), 0 0 48px ${accent}14`}}
       whileTap={{scale:0.96}} onClick={onPlay}
+      onPointerDown={()=>{pressRef.current=setTimeout(()=>setShowReact(r=>!r),500);}}
+      onPointerUp={()=>{if(pressRef.current)clearTimeout(pressRef.current);}}
+      onPointerLeave={()=>{if(pressRef.current)clearTimeout(pressRef.current);}}
     >
+    {/* Reaction burst overlay — floats above card */}
+    <AnimatePresence>
+      {showReact && (
+        <motion.div
+          initial={{opacity:0,y:10,scale:0.85}} animate={{opacity:1,y:0,scale:1}}
+          exit={{opacity:0,y:10,scale:0.85}}
+          transition={{type:"spring",damping:20}}
+          className="absolute flex gap-1.5 justify-center"
+          style={{bottom:"calc(100% + 6px)",left:0,right:0,zIndex:30,padding:"0 6px"}}
+          onClick={e=>e.stopPropagation()}>
+          {["🔥","❤️","😮","😂","👏","⚡"].map((r,i)=>(
+            <motion.button key={r}
+              initial={{scale:0,y:10}} animate={{scale:1,y:0}}
+              transition={{delay:i*0.04,type:"spring",damping:14,stiffness:400}}
+              whileTap={{scale:0.7}}
+              onClick={e=>{e.stopPropagation();setMyReact(r);setShowReact(false);}}
+              style={{width:34,height:34,borderRadius:"50%",fontSize:18,
+                background:myReact===r?"rgba(255,255,255,0.18)":"rgba(0,0,0,0.72)",
+                backdropFilter:"blur(16px)",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:myReact===r?"0 0 16px rgba(255,255,255,0.25)":"0 2px 8px rgba(0,0,0,0.5)"}}>
+              {r}
+            </motion.button>
+          ))}
+        </motion.div>
+      )}
+    </AnimatePresence>
       {/* Full-bleed image — NO bottom info box */}
-      <div style={{aspectRatio:ar,position:"relative",overflow:"hidden"}}>
+      <div style={{aspectRatio:ar,position:"relative",overflow:"hidden",borderRadius:16}}>
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
               style={{transition:"transform 0.4s"}}/>
@@ -1453,6 +1565,27 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
         {/* Deep gradient overlay */}
         <div className="absolute inset-0 pointer-events-none"
           style={{background:"linear-gradient(to top,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.15) 50%,transparent 100%)"}}/>
+
+        {/* Top left: NEW badge or my reaction */}
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
+          {isNew && (
+            <motion.div initial={{scale:0}} animate={{scale:1}} transition={{delay:0.2,type:"spring",damping:14}}
+              className="flex items-center gap-1 px-2 py-0.5"
+              style={{borderRadius:99,background:"linear-gradient(90deg,#00ff88,#00bbaa)",
+                boxShadow:"0 0 10px rgba(0,255,136,0.5)"}}>
+              <Sparkles style={{width:7,height:7,color:"#000"}}/>
+              <span style={{fontSize:7.5,fontWeight:900,color:"#000",letterSpacing:"0.06em"}}>YANGI</span>
+            </motion.div>
+          )}
+          {myReact && (
+            <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",damping:14}}
+              style={{width:22,height:22,borderRadius:"50%",background:"rgba(0,0,0,0.6)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,
+                backdropFilter:"blur(8px)"}}>
+              {myReact}
+            </motion.div>
+          )}
+        </div>
 
         {/* Top stats — floating */}
         <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
@@ -1507,6 +1640,102 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
           style={{background:`linear-gradient(90deg,transparent,${accent}66,transparent)`}}/>
       </div>{/* end aspect ratio container */}
     </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
+/* Floating FAB — speed dial                               */
+/* ─────────────────────────────────────────────────────── */
+function FloatingFAB() {
+  const [open, setOpen] = useState(false);
+  const items = [
+    { Icon: Upload, label: "Yuklash",    col: T.cyan },
+    { Icon: Radio,  label: "Jonli efir", col: "#ff2d55" },
+    { Icon: Zap,    label: "Short",      col: T.orange },
+  ];
+  return (
+    <div className="fixed bottom-24 right-4 z-50 flex flex-col items-end gap-2.5 pointer-events-none">
+      <AnimatePresence>
+        {open && items.map((item, i) => (
+          <motion.button key={i}
+            initial={{opacity:0,x:24,scale:0.75}} animate={{opacity:1,x:0,scale:1}}
+            exit={{opacity:0,x:24,scale:0.75}}
+            transition={{delay:i*0.05,type:"spring",damping:22,stiffness:280}}
+            className="flex items-center gap-2 pointer-events-auto"
+            style={{padding:"8px 14px 8px 10px",borderRadius:99,
+              background:"rgba(4,1,16,0.88)",backdropFilter:"blur(24px)",
+              boxShadow:`0 0 0 1px ${item.col}33, 0 6px 24px rgba(0,0,0,0.55)`}}>
+            <div style={{width:28,height:28,borderRadius:"50%",background:`${item.col}22`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              boxShadow:`0 0 0 1px ${item.col}55`}}>
+              <item.Icon style={{width:12,height:12,color:item.col}}/>
+            </div>
+            <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.88)"}}>
+              {item.label}
+            </span>
+          </motion.button>
+        ))}
+      </AnimatePresence>
+      <motion.button className="pointer-events-auto" whileTap={{scale:0.86}}
+        onClick={()=>setOpen(o=>!o)}
+        style={{width:54,height:54,borderRadius:"50%",
+          background:open?"rgba(255,255,255,0.08)":T.cyan,
+          boxShadow:open
+            ?"0 0 0 1px rgba(255,255,255,0.18), 0 4px 20px rgba(0,0,0,0.5)"
+            :`0 0 32px ${T.cyan}66, 0 0 0 1.5px ${T.cyan}, 0 4px 20px rgba(0,0,0,0.5)`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          transition:"background 0.22s, box-shadow 0.22s"}}>
+        <motion.div animate={{rotate:open?45:0}} transition={{type:"spring",damping:18,stiffness:320}}>
+          <Plus style={{width:22,height:22,color:open?"rgba(255,255,255,0.65)":"#000"}}/>
+        </motion.div>
+      </motion.button>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
+/* Mood row — curated themed horizontal scroll             */
+/* ─────────────────────────────────────────────────────── */
+function MoodRow({ title, emoji, col, videos, onPlay }:
+  { title:string; emoji:string; col:string; videos:Reel[]; onPlay:(v:Reel)=>void }) {
+  if (videos.length === 0) return null;
+  return (
+    <section className="mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-1.5 px-3 py-1.5"
+          style={{borderRadius:99,background:`${col}18`,boxShadow:`0 0 0 1px ${col}33`}}>
+          <span style={{fontSize:14}}>{emoji}</span>
+          <span style={{fontSize:11,fontWeight:700,color:col,letterSpacing:"0.04em"}}>{title}</span>
+        </div>
+        <div style={{flex:1,height:1,background:`linear-gradient(90deg,${col}44,transparent)`}}/>
+      </div>
+      <div className="flex gap-3 overflow-x-auto -mx-3 px-3 pb-2" style={{scrollbarWidth:"none"}}>
+        {videos.slice(0,6).map((v,i)=>(
+          <motion.div key={v.id}
+            initial={{opacity:0,x:18,scale:0.94}} animate={{opacity:1,x:0,scale:1}}
+            transition={{delay:i*0.06,type:"spring",damping:22}}
+            className="flex-shrink-0 cursor-pointer overflow-hidden relative"
+            style={{width:148,borderRadius:14,
+              boxShadow:`0 4px 20px rgba(0,0,0,0.65), 0 0 0 1px ${col}22, 0 0 28px ${col}12`}}
+            whileTap={{scale:0.93}} onClick={()=>onPlay(v)}>
+            <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
+              {v.thumbnailUrl
+                ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                : <div className="w-full h-full"
+                    style={{background:`linear-gradient(135deg,${col}22,#000)`}}/>}
+              <div className="absolute inset-0 pointer-events-none"
+                style={{background:"linear-gradient(to top,rgba(0,0,0,0.9) 0%,transparent 60%)"}}/>
+              <div className="absolute bottom-0 inset-x-0 p-2">
+                <p style={{fontSize:10,fontWeight:700,color:"white",lineHeight:1.3}}
+                  className="line-clamp-2">{v.caption||"Video"}</p>
+              </div>
+              <div className="absolute bottom-0 inset-x-0 h-[2px]"
+                style={{background:col,opacity:0.55}}/>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1792,6 +2021,17 @@ export default function OTubePage() {
                     </section>
                   )}
 
+                  {/* Mood rows — curated themed */}
+                  <MoodRow title="Kech uchun" emoji="🌙" col={T.violet}
+                    videos={reels.filter((_,i)=>i%3===0)}
+                    onPlay={v=>setSelected(v)}/>
+                  <MoodRow title="Energiya" emoji="⚡" col={T.orange}
+                    videos={reels.filter((_,i)=>i%2===0)}
+                    onPlay={v=>setSelected(v)}/>
+                  <MoodRow title="Kulgili" emoji="😂" col={T.cyan}
+                    videos={reels.filter((_,i)=>i%2===1)}
+                    onPlay={v=>setSelected(v)}/>
+
                   {/* Discovery — organic alternating grid */}
                   {grid.length>0 && (
                     <section>
@@ -1908,6 +2148,9 @@ export default function OTubePage() {
       <SettingsDrawer open={showSettings} onClose={()=>setShowSettings(false)}
         settings={settings} onSettings={setSettings}
         monetize={monetize} onMonetize={setMonetize}/>
+
+      {/* Floating action button — only when player closed */}
+      {!selected && <FloatingFAB/>}
     </>
   );
 }

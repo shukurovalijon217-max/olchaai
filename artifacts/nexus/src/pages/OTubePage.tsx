@@ -851,12 +851,12 @@ function Toggle({ on, onToggle, accent=T.cyan }:
 function TRow({ icon,label,sub,on,onToggle }:
   { icon:string;label:string;sub:string;on:boolean;onToggle:()=>void }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3"
-      style={{background:"rgba(0,229,255,0.03)",border:`1px solid ${T.cyan}10`,marginBottom:2}}>
-      <span style={{fontSize:17,flexShrink:0}}>{icon}</span>
+    <div className="flex items-center gap-3 py-3 px-1"
+      style={{borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
+      <span style={{fontSize:18,flexShrink:0,width:28,textAlign:"center"}}>{icon}</span>
       <div className="flex-1 min-w-0">
-        <p style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.85)",lineHeight:1}}>{label}</p>
-        <p style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:2}}>{sub}</p>
+        <p style={{fontSize:12.5,fontWeight:600,color:"rgba(255,255,255,0.85)"}}>{label}</p>
+        <p style={{fontSize:9.5,color:"rgba(255,255,255,0.28)",marginTop:1}}>{sub}</p>
       </div>
       <Toggle on={on} onToggle={onToggle}/>
     </div>
@@ -865,10 +865,9 @@ function TRow({ icon,label,sub,on,onToggle }:
 
 function SecHead({ children }: { children:React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 mt-3 mb-1.5">
-      <div style={{width:3,height:16,background:T.gCyan}}/>
-      <span style={{fontSize:9,fontWeight:900,letterSpacing:"0.18em",color:T.cyan,textTransform:"uppercase"}}>
-        {children}
+    <div className="mt-5 mb-2">
+      <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.35)",letterSpacing:"0.06em"}}>
+        {String(children).toUpperCase()}
       </span>
     </div>
   );
@@ -897,45 +896,46 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
             initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
             transition={{type:"spring",damping:28,stiffness:320}}
             className="fixed bottom-0 left-0 right-0 z-[8999] overflow-hidden"
-            style={{background:"#05010f",
-              borderTop:`2px solid ${T.cyan}55`,
-              boxShadow:`0 -20px 80px rgba(0,229,255,0.1)`,
+            style={{background:"rgba(8,4,18,0.97)",backdropFilter:"blur(24px)",
+              borderRadius:"20px 20px 0 0",
+              boxShadow:`0 -8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)`,
               maxHeight:"88vh"}}>
 
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-0.5">
+              <div style={{width:36,height:3,borderRadius:99,background:"rgba(255,255,255,0.15)"}}/>
+            </div>
+
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3.5"
-              style={{borderBottom:`1px solid ${T.cyan}18`}}>
+            <div className="flex items-center justify-between px-5 py-3">
               <div className="flex items-center gap-3">
                 <OTubeMark size={26}/>
                 <div>
-                  <p style={{fontSize:14,fontWeight:900,color:"white",letterSpacing:"0.05em"}}>OTUBE SOZLAMALAR</p>
-                  <p style={{fontSize:9,color:T.cyan,letterSpacing:"0.14em"}}>SIGNAL ENGINE v4</p>
+                  <p style={{fontSize:14,fontWeight:700,color:"white"}}>OTube Sozlamalar</p>
+                  <p style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>Player va monetizatsiya</p>
                 </div>
               </div>
               <button onClick={onClose}
-                style={{width:32,height:32,background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`,
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                  clipPath:"polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))"}}>
-                <X style={{width:14,height:14,color:T.cyan}}/>
+                style={{width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.08)",
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <X style={{width:14,height:14,color:"rgba(255,255,255,0.6)"}}/>
               </button>
             </div>
 
-            {/* Tabs */}
-            <div className="flex"
-              style={{borderBottom:`1px solid ${T.cyan}18`}}>
-              {([{id:"player",label:"🎬 O'YNATUVCHI"},{id:"monetize",label:"💰 MONETIZATSIYA"}] as const)
+            {/* Tabs — round pills */}
+            <div className="flex gap-2 px-5 pb-3">
+              {([{id:"player",label:"🎬 O'ynatuvchi"},{id:"monetize",label:"💰 Monetizatsiya"}] as const)
                 .map(({id,label})=>(
-                <button key={id} onClick={()=>setTab(id)}
-                  className="flex-1 py-3 relative text-center"
-                  style={{fontSize:10,fontWeight:900,letterSpacing:"0.1em",
-                    color:tab===id?T.cyan:"rgba(255,255,255,0.35)"}}>
+                <motion.button key={id} onClick={()=>setTab(id)}
+                  whileTap={{scale:0.94}}
+                  className="flex-1 py-2 text-center"
+                  style={{borderRadius:10,fontSize:11,fontWeight:600,
+                    background:tab===id?"rgba(255,255,255,0.1)":"transparent",
+                    color:tab===id?"white":"rgba(255,255,255,0.35)",
+                    boxShadow:tab===id?"0 0 0 1px rgba(255,255,255,0.15)":"none",
+                    transition:"all 0.2s"}}>
                   {label}
-                  {tab===id && (
-                    <motion.div layoutId="st-ind"
-                      className="absolute bottom-0 left-0 right-0 h-[2px]"
-                      style={{background:T.gCyan}}/>
-                  )}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -959,14 +959,14 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                     on={settings.showTitle} onToggle={()=>sP("showTitle",!settings.showTitle)}/>
 
                   <SecHead>Video sifati</SecHead>
-                  <div className="grid grid-cols-5 gap-1.5 mt-1">
+                  <div className="flex flex-wrap gap-2 mt-1">
                     {(["Auto","1080p","720p","480p","360p"] as const).map(q=>(
                       <button key={q} onClick={()=>sP("quality",q)}
-                        style={{padding:"8px 0",textAlign:"center",
-                          background:settings.quality===q?`${T.cyan}22`:"rgba(255,255,255,0.04)",
-                          border:settings.quality===q?`1px solid ${T.cyan}66`:"1px solid rgba(255,255,255,0.07)"}}>
-                        <span style={{fontSize:10,fontWeight:settings.quality===q?900:500,
-                          color:settings.quality===q?T.cyan:"rgba(255,255,255,0.38)"}}>
+                        style={{padding:"7px 14px",borderRadius:99,
+                          background:settings.quality===q?`rgba(0,229,255,0.14)`:"rgba(255,255,255,0.05)",
+                          boxShadow:settings.quality===q?`0 0 0 1.5px ${T.cyan}55`:"0 0 0 1px rgba(255,255,255,0.08)"}}>
+                        <span style={{fontSize:11,fontWeight:settings.quality===q?700:400,
+                          color:settings.quality===q?T.cyan:"rgba(255,255,255,0.4)"}}>
                           {q}
                         </span>
                       </button>
@@ -977,14 +977,11 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                 <>
                   {/* Revenue card */}
                   <div className="p-4 mt-1 mb-2"
-                    style={{background:"rgba(0,229,255,0.05)",
-                      border:`1px solid ${T.cyan}30`,
-                      boxShadow:`inset 0 0 30px rgba(0,229,255,0.04)`}}>
+                    style={{borderRadius:16,background:"rgba(0,229,255,0.05)",
+                      boxShadow:`0 0 0 1px rgba(0,229,255,0.12), inset 0 0 30px rgba(0,229,255,0.03)`}}>
                     <div className="flex items-center gap-2 mb-3">
-                      <Radio style={{width:14,height:14,color:T.cyan}}/>
-                      <span style={{fontSize:11,fontWeight:900,color:T.cyan,letterSpacing:"0.12em"}}>
-                        KREATOR DAROMADI
-                      </span>
+                      <Radio style={{width:13,height:13,color:T.cyan}}/>
+                      <span style={{fontSize:11,fontWeight:600,color:T.cyan}}>Kreator daromadi</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {[
@@ -993,9 +990,9 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                         {l:"Obunachi",v:"1.2K",i:"👥"},
                       ].map(s=>(
                         <div key={s.l} className="p-2.5 text-center"
-                          style={{background:"rgba(0,0,0,0.35)",border:`1px solid ${T.cyan}18`}}>
+                          style={{borderRadius:12,background:"rgba(0,0,0,0.3)"}}>
                           <div style={{fontSize:16,marginBottom:2}}>{s.i}</div>
-                          <div style={{fontSize:12,fontWeight:900,color:T.cyan}}>{s.v}</div>
+                          <div style={{fontSize:12,fontWeight:700,color:T.cyan}}>{s.v}</div>
                           <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:1}}>{s.l}</div>
                         </div>
                       ))}
@@ -1018,10 +1015,11 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                   <div className="grid grid-cols-2 gap-2">
                     {(["500","2000","10000","50000"] as const).map(d=>(
                       <button key={d} onClick={()=>sM("donation",d)}
-                        className="py-2 px-3 flex items-center justify-between"
-                        style={{background:monetize.donation===d?`${T.orange}22`:"rgba(255,255,255,0.03)",
-                          border:monetize.donation===d?`1px solid ${T.orange}66`:"1px solid rgba(255,255,255,0.07)"}}>
-                        <span style={{fontSize:13,fontWeight:900,
+                        className="py-2.5 px-3 flex items-center justify-between"
+                        style={{borderRadius:10,
+                          background:monetize.donation===d?`${T.orange}22`:"rgba(255,255,255,0.05)",
+                          boxShadow:monetize.donation===d?`0 0 0 1.5px ${T.orange}55`:"0 0 0 1px rgba(255,255,255,0.08)"}}>
+                        <span style={{fontSize:13,fontWeight:600,
                           color:monetize.donation===d?T.orange:"rgba(255,255,255,0.45)"}}>
                           {Number(d)>=1000?`${Number(d)/1000}K`:d} so'm
                         </span>
@@ -1039,9 +1037,10 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                         {n:"OLTIN", p:"99 900",c:"#ffd700",pk:"To'liq eksklyuziv"},
                       ].map(tier=>(
                         <div key={tier.n} className="flex items-center gap-3 py-2.5 px-3 mb-1.5"
-                          style={{background:"rgba(0,0,0,0.3)",border:`1px solid ${tier.c}33`}}>
-                          <div style={{width:30,height:30,flexShrink:0,
-                            background:`${tier.c}22`,border:`1.5px solid ${tier.c}66`,
+                          style={{borderRadius:12,background:"rgba(0,0,0,0.3)",
+                            boxShadow:`0 0 0 1px ${tier.c}22`}}>
+                          <div style={{width:32,height:32,flexShrink:0,borderRadius:"50%",
+                            background:`${tier.c}18`,boxShadow:`0 0 0 1.5px ${tier.c}44`,
                             display:"flex",alignItems:"center",justifyContent:"center"}}>
                             <Star style={{width:13,height:13,fill:tier.c,color:tier.c}}/>
                           </div>
@@ -1056,9 +1055,9 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                   )}
 
                   {/* Payout info */}
-                  <div className="mt-3 p-3"
-                    style={{background:"rgba(0,229,255,0.04)",borderLeft:`2px solid ${T.cyan}55`}}>
-                    <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",lineHeight:1.7}}>
+                  <div className="mt-3 p-3.5"
+                    style={{borderRadius:12,background:"rgba(255,255,255,0.04)"}}>
+                    <p style={{fontSize:10,color:"rgba(255,255,255,0.38)",lineHeight:1.7}}>
                       Min: 100 000 so'm. OlCha Pay orqali har oyning 15-sanasida chiqariladi.
                     </p>
                   </div>
@@ -1710,19 +1709,21 @@ export default function OTubePage() {
               {raw.slice(0,4).map(v=>(
                 <motion.div key={v.id}
                   whileTap={{scale:0.97}} onClick={()=>setSelected(v)}
-                  className="flex gap-3 cursor-pointer mb-2"
-                  style={{padding:"8px 10px",background:"rgba(255,255,255,0.02)",
-                    border:`1px solid rgba(255,255,255,0.06)`}}>
-                  <div style={{width:80,aspectRatio:"16/9",flexShrink:0,position:"relative",overflow:"hidden"}}>
+                  className="flex gap-3 cursor-pointer mb-2.5"
+                  style={{padding:"10px 12px",borderRadius:14,
+                    background:"rgba(255,255,255,0.04)",
+                    boxShadow:"0 0 0 1px rgba(255,255,255,0.06)"}}>
+                  <div style={{width:80,aspectRatio:"16/9",flexShrink:0,borderRadius:8,
+                    position:"relative",overflow:"hidden"}}>
                     {v.thumbnailUrl
                       ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                       : <div className="w-full h-full" style={{background:"#0a0218"}}/>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.82)"}}
+                    <p style={{fontSize:11.5,fontWeight:600,color:"rgba(255,255,255,0.82)"}}
                       className="line-clamp-2 leading-snug mb-1">{v.caption||"Video"}</p>
                     <p style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{v.author.displayName}</p>
-                    <span style={{fontSize:8.5,color:T.cyan+"88",fontFamily:"monospace"}}>{fmt(v.viewsCount)} ko'rish</span>
+                    <span style={{fontSize:8.5,color:"rgba(255,255,255,0.3)",fontFamily:"monospace"}}>{fmt(v.viewsCount)} ko'rish</span>
                   </div>
                 </motion.div>
               ))}
@@ -1734,7 +1735,7 @@ export default function OTubePage() {
         <div className="flex items-end justify-center gap-3 py-10 pointer-events-none">
           {[{l:"Lenta",a:false},{l:"Reels",a:false},{l:"OTube",a:true}].map(d=>(
             <div key={d.l} className="flex flex-col items-center gap-1.5">
-              <div style={{width:d.a?28:6,height:6,transition:"all 0.35s",
+              <div style={{width:d.a?28:6,height:6,borderRadius:99,transition:"all 0.35s",
                 background:d.a?T.gCyan:"rgba(255,255,255,0.07)",
                 boxShadow:d.a?`0 0 12px ${T.cyan}88`:"none"}}/>
               <span style={{fontSize:8,fontWeight:700,letterSpacing:"0.08em",fontFamily:"monospace",

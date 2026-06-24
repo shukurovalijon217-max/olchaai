@@ -3,7 +3,7 @@
  * "BROADCAST STATION" — Kiberpu / Arcade / Neon estetikasi
  * YouTube'dan tubdan boshqa ko'rinish
  */
-import {
+import React, {
   useState, useRef, useEffect, useCallback, useMemo,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,26 +26,33 @@ import {
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────── */
-/* Design tokens — BROADCAST / NEON                        */
+/* Design tokens — NEXUS AURORA BROADCAST                  */
 /* ─────────────────────────────────────────────────────── */
 const T = {
-  bg:       "#000005",
-  bg2:      "#08020f",
-  card:     "#0c0315",
+  bg:       "#000008",
+  bg2:      "#050010",
+  card:     "#0a0018",
   cyan:     "#00e5ff",
+  aurora:   "#00ffee",
   orange:   "#ff6b00",
+  plasma:   "#ff3500",
   violet:   "#9d00ff",
-  border:   "rgba(0,229,255,0.1)",
+  nova:     "#7700ff",
+  pulse:    "#00ff77",
+  gold:     "#ffc400",
+  border:   "rgba(0,229,255,0.08)",
   borderHot:"rgba(0,229,255,0.35)",
   txt:      "rgba(255,255,255,0.92)",
-  txtSub:   "rgba(255,255,255,0.38)",
-  gCyan:    "linear-gradient(90deg,#00e5ff,#0088cc)",
-  gOrange:  "linear-gradient(90deg,#ff6b00,#ff2d00)",
-  gViolet:  "linear-gradient(90deg,#9d00ff,#5500cc)",
+  txtSub:   "rgba(255,255,255,0.35)",
+  gCyan:    "linear-gradient(135deg,#00ffee,#0088cc)",
+  gOrange:  "linear-gradient(135deg,#ff6b00,#ff2d00)",
+  gViolet:  "linear-gradient(135deg,#9d00ff,#4400aa)",
+  gAurora:  "linear-gradient(135deg,#00ffee,#7700ff)",
+  gFire:    "linear-gradient(135deg,#ff6b00,#ff0055)",
 } as const;
 
-/* Pure black — aurora blobs added in JSX */
-const DOT_BG = { background: "#000000" } as const;
+/* Deep void — aurora system in JSX */
+const DOT_BG = { background: "#000008" } as const;
 
 /* ─────────────────────────────────────────────────────── */
 /* Global follow-state cache (module-level Map)            */
@@ -1491,68 +1498,94 @@ function LivePulse({ count }: { count: number }) {
 /* ─────────────────────────────────────────────────────── */
 /* Trending list — vertical rank                           */
 /* ─────────────────────────────────────────────────────── */
-/* TrendRow renders a horizontal cinema card (used inside overflow-x scroll) */
+/* TrendRow — NEXUS PULSE CARD: cinematic vertical broadcast window */
 function TrendRow({ video, onPlay, idx }:
   { video:Reel; onPlay:()=>void; idx:number }) {
-  const COLS = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55", "#ffd700"];
-  const col = COLS[idx % COLS.length];
+  const AURORA = [T.aurora, "#ff4500", "#ff2d55", T.pulse, "#a855f7", T.gold];
+  const col = AURORA[idx % AURORA.length];
+  const vel = 8+((idx*13+7)%41);
+  const isHot = vel > 30;
   return (
     <motion.div
-      initial={{opacity:0,x:20,scale:0.94}} animate={{opacity:1,x:0,scale:1}}
-      transition={{delay:idx*0.06,type:"spring",damping:22}}
-      className="flex-shrink-0 cursor-pointer overflow-hidden relative"
-      style={{width:160,borderRadius:14,
-        boxShadow:`0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)`}}
-      whileTap={{scale:0.94}} onClick={onPlay}
+      initial={{opacity:0,x:24,scale:0.9}} animate={{opacity:1,x:0,scale:1}}
+      transition={{delay:idx*0.07,type:"spring",damping:20,stiffness:220}}
+      className="flex-shrink-0 cursor-pointer relative"
+      style={{width:148,borderRadius:20,overflow:"hidden",
+        boxShadow:`0 0 0 1px ${col}22, 0 8px 32px rgba(0,0,0,0.7), 0 0 40px ${col}10`}}
+      whileTap={{scale:0.91}} onClick={onPlay}
     >
-      {/* Thumbnail */}
-      <div style={{aspectRatio:"9/12",position:"relative",overflow:"hidden"}}>
+      {/* Thumbnail — fills entire card, no border visible */}
+      <div style={{aspectRatio:"3/4",position:"relative",overflow:"hidden"}}>
         {video.thumbnailUrl
-          ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+          ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
+              style={{transform:"scale(1.04)"}}/>
           : <div className="w-full h-full"
-              style={{background:`linear-gradient(160deg,${col}22,#000)`}}/>}
+              style={{background:`linear-gradient(175deg,${col}28,#000010)`}}/>}
+
+        {/* Heavy cinema gradient — bottom 2/3 dark */}
         <div className="absolute inset-0 pointer-events-none"
-          style={{background:"linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.05) 55%,transparent 100%)"}}/>
-        {/* Rank badge */}
-        <div className="absolute top-2.5 left-2.5"
-          style={{width:28,height:28,borderRadius:"50%",
-            background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            boxShadow:`0 0 0 1.5px ${col}55`}}>
-          <span style={{fontSize:12,fontWeight:900,color:col,fontFamily:"monospace"}}>{idx+1}</span>
+          style={{background:`linear-gradient(to top,rgba(0,0,5,0.98) 0%,rgba(0,0,5,0.5) 40%,transparent 75%)`}}/>
+        {/* Top letterbox — cinema feel */}
+        <div className="absolute top-0 inset-x-0 h-[3px]"
+          style={{background:`linear-gradient(90deg,transparent,${col},transparent)`}}/>
+
+        {/* HOT signal badge */}
+        {isHot && (
+          <motion.div className="absolute top-3 right-3"
+            animate={{opacity:[0.7,1,0.7]}} transition={{duration:1.2,repeat:Infinity}}>
+            <div className="flex items-center gap-0.5 px-1.5 py-0.5"
+              style={{borderRadius:99,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(8px)",
+                boxShadow:"0 0 0 1px rgba(255,45,85,0.6), 0 0 12px rgba(255,45,85,0.3)"}}>
+              <Flame style={{width:7,height:7,fill:"#ff2d55",color:"#ff2d55"}}/>
+              <span style={{fontSize:7,fontWeight:900,color:"#ff2d55",letterSpacing:"0.08em"}}>HOT</span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Rank — floating number with color glow */}
+        <div className="absolute top-3 left-3">
+          <span style={{fontSize:28,fontWeight:900,color:col,lineHeight:1,
+            textShadow:`0 0 20px ${col}, 0 0 40px ${col}66`,fontFamily:"monospace",
+            opacity:0.9}}>
+            {idx+1}
+          </span>
         </div>
-        {/* Velocity badge */}
+
+        {/* Bottom: title + momentum */}
+        <div className="absolute bottom-0 inset-x-0 p-3">
+          <p style={{fontSize:11,fontWeight:800,color:"white",lineHeight:1.3,
+            marginBottom:6,textShadow:"0 1px 12px rgba(0,0,0,0.9)"}}
+            className="line-clamp-2">{video.caption||"Video"}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.4)"}}/>
+              <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>
+                {fmt(video.viewsCount)}
+              </span>
+            </div>
+            {/* Velocity signal */}
+            <div className="flex items-center gap-0.5 px-1.5 py-0.5"
+              style={{borderRadius:99,background:`${col}18`,boxShadow:`0 0 0 1px ${col}44`}}>
+              <ArrowUp style={{width:7,height:7,color:col}}/>
+              <span style={{fontSize:7.5,fontWeight:800,color:col,fontFamily:"monospace"}}>{vel}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Color accent bottom edge */}
+        <div className="absolute bottom-0 inset-x-0 h-[1px]"
+          style={{background:`linear-gradient(90deg,transparent,${col}88,transparent)`}}/>
+        {/* Dummy old block closer — see below */}
         {(()=>{
-          const vel = 8+((idx*13+7)%41);
-          const vc = vel>30?"#ff2d55":vel>18?T.orange:T.cyan;
+          const _dur = `${1+(video.id%12)}:${String((video.id*13)%60).padStart(2,"0")}`;
           return (
-            <div className="absolute top-2.5 right-2.5 flex items-center gap-0.5 px-1.5 py-0.5"
-              style={{borderRadius:99,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
-                boxShadow:`0 0 0 1px ${vc}44`}}>
-              <ArrowUp style={{width:7,height:7,color:vc}}/>
-              <span style={{fontSize:7.5,fontWeight:700,color:vc,fontFamily:"monospace"}}>{vel}%</span>
+            <div className="absolute bottom-[44px] right-3 px-1.5 py-0.5"
+              style={{borderRadius:4,background:"rgba(0,0,0,0.72)",backdropFilter:"blur(4px)"}}>
+              <span style={{fontSize:7.5,fontWeight:700,color:"rgba(255,255,255,0.55)",fontFamily:"monospace"}}>
+                {_dur}</span>
             </div>
           );
         })()}
-        {/* Bottom info */}
-        <div className="absolute bottom-0 inset-x-0 p-2.5">
-          <p style={{fontSize:10.5,fontWeight:700,color:"white",lineHeight:1.3,marginBottom:4}}
-            className="line-clamp-2">{video.caption||"Video"}</p>
-          <div className="flex items-center gap-1.5">
-            <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.4)"}}/>
-            <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>
-              {fmt(video.viewsCount)}
-            </span>
-            {/* Duration */}
-            <span style={{marginLeft:"auto",fontSize:8,fontWeight:700,color:"rgba(255,255,255,0.55)",
-              fontFamily:"monospace",background:"rgba(0,0,0,0.55)",padding:"1px 5px",borderRadius:4}}>
-              {1+(video.id%12)}:{String((video.id*13)%60).padStart(2,"0")}
-            </span>
-          </div>
-        </div>
-        {/* Color accent bottom */}
-        <div className="absolute bottom-0 inset-x-0 h-[2px]"
-          style={{background:col,opacity:0.6}}/>
       </div>
     </motion.div>
   );
@@ -2023,36 +2056,83 @@ function ShortsCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
 }
 
 /* ─────────────────────────────────────────────────────── */
+/* BROADCAST MATRIX — asymmetric organic grid               */
+/* Pattern: [full] → [pair] → [trio] → [full] → repeat    */
+/* ─────────────────────────────────────────────────────── */
+function BroadcastMatrix({ reels, onPlay }: { reels: Reel[]; onPlay:(v:Reel)=>void }) {
+  if (!reels.length) return null;
+  const rows: React.ReactNode[] = [];
+  let i = 0;
+  let rowKey = 0;
+  while (i < reels.length) {
+    const pattern = (rowKey % 3); // 0=full, 1=pair, 2=trio
+    if (pattern === 0) {
+      // Full-width featured card
+      const v = reels[i];
+      rows.push(
+        <div key={`r${rowKey}`} className="-mx-3">
+          <BentoCard video={v} onPlay={()=>onPlay(v)} wide idx={i}/>
+        </div>
+      );
+      i++;
+    } else if (pattern === 1) {
+      // 2-column pair
+      const pair = reels.slice(i, i+2);
+      rows.push(
+        <div key={`r${rowKey}`} className="grid grid-cols-2 gap-2">
+          {pair.map((v,j)=>(
+            <BentoCard key={v.id} video={v} onPlay={()=>onPlay(v)} idx={i+j}/>
+          ))}
+        </div>
+      );
+      i += pair.length;
+    } else {
+      // 3-column landscape trio
+      const trio = reels.slice(i, i+3);
+      rows.push(
+        <div key={`r${rowKey}`} className="grid grid-cols-3 gap-1.5">
+          {trio.map((v,j)=>(
+            <BentoCard key={v.id} video={v} onPlay={()=>onPlay(v)} idx={i+j}/>
+          ))}
+        </div>
+      );
+      i += trio.length;
+    }
+    rowKey++;
+  }
+  return <div className="space-y-2">{rows}</div>;
+}
+
+/* ─────────────────────────────────────────────────────── */
 /* OTubePage — MAIN                                        */
 /* ─────────────────────────────────────────────────────── */
-const CATS = [
-  {id:"all",      label:"ALL",       Icon:Globe,      col:T.cyan},
-  {id:"trending", label:"TREND",     Icon:TrendingUp, col:T.orange},
-  {id:"cinema",   label:"KINO",      Icon:Film,       col:"#ff2d55"},
-  {id:"music",    label:"MUSIQA",    Icon:Music2,     col:T.cyan},
-  {id:"gaming",   label:"GAMING",    Icon:Gamepad2,   col:"#00ff88"},
-  {id:"ai",       label:"AI",        Icon:Sparkles,   col:T.orange},
-  {id:"live",     label:"◉ LIVE",    Icon:Zap,        col:"#ff2d55"},
-  {id:"new",      label:"YANGI",     Icon:Clock,      col:T.violet},
-];
-const TABS=[
-  {id:"home",  l:"BROADCAST", badge:null},
-  {id:"shorts",l:"SHORTS",    badge:"NEW"},
-  {id:"subs",  l:"CHANNELS",  badge:null},
+/* Unified signal board — replaces both tabs + category chips */
+const SIGNALS = [
+  {id:"all",      Icon:Globe,    label:"EFIR",    col:T.aurora,  tab:"home"   as const, cat:"all"},
+  {id:"fire",     Icon:Flame,    label:"TREND",   col:"#ff4500", tab:"home"   as const, cat:"trending"},
+  {id:"cinema",   Icon:Film,     label:"KINO",    col:"#ff2d55", tab:"home"   as const, cat:"cinema"},
+  {id:"music",    Icon:Music2,   label:"MUSIQA",  col:"#a855f7", tab:"home"   as const, cat:"music"},
+  {id:"gaming",   Icon:Gamepad2, label:"GAMING",  col:T.pulse,   tab:"home"   as const, cat:"gaming"},
+  {id:"ai",       Icon:Brain,    label:"AI",      col:T.cyan,    tab:"home"   as const, cat:"ai"},
+  {id:"shorts",   Icon:Zap,      label:"SHORTS",  col:T.orange,  tab:"shorts" as const, cat:""},
+  {id:"channels", Icon:Tv,       label:"KANALLAR",col:T.violet,  tab:"subs"   as const, cat:""},
 ] as const;
+type SignalId = typeof SIGNALS[number]["id"];
 
 export default function OTubePage() {
-  const [,navigate]  = useLocation();
-  const [cat,setCat] = useState("all");
-  const [query,setQuery] = useState("");
+  const [,navigate]    = useLocation();
+  const [signal, setSignal] = useState<SignalId>("all");
+  const [query,setQuery]    = useState("");
   const [showSearch,setShowSearch] = useState(false);
-  const [selected,setSelected] = useState<Reel|null>(null);
+  const [selected,setSelected]     = useState<Reel|null>(null);
   const [showSettings,setShowSettings] = useState(false);
-  const [settings,setSettings] = useState<PlayerSettings>(DEF_S);
-  const [monetize,setMonetize] = useState<MonetizationSettings>(DEF_M);
-  const [tab,setTab] = useState<"home"|"shorts"|"subs">("home");
-  const [notifDot,setNotifDot] = useState(true);
+  const [settings,setSettings]   = useState<PlayerSettings>(DEF_S);
+  const [monetize,setMonetize]   = useState<MonetizationSettings>(DEF_M);
+  const [notifDot,setNotifDot]   = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  const activeSig  = SIGNALS.find(s=>s.id===signal)!;
+  const tab        = activeSig.tab;
 
   const { data:raw=[], isLoading } = useListReels();
 
@@ -2080,161 +2160,194 @@ export default function OTubePage() {
 
   return (
     <>
-      {/* Aurora background blobs — fixed */}
+      {/* ── NEXUS AURORA SYSTEM — dynamic background ── */}
       <div className="fixed inset-0 pointer-events-none" style={{zIndex:0}}>
-        <div style={{position:"absolute",top:-120,left:-80,width:340,height:340,borderRadius:"50%",
-          background:"radial-gradient(circle,rgba(0,229,255,0.07) 0%,transparent 70%)",filter:"blur(40px)"}}/>
-        <div style={{position:"absolute",top:220,right:-100,width:280,height:280,borderRadius:"50%",
-          background:"radial-gradient(circle,rgba(157,0,255,0.06) 0%,transparent 70%)",filter:"blur(40px)"}}/>
-        <div style={{position:"absolute",bottom:160,left:40,width:220,height:220,borderRadius:"50%",
-          background:"radial-gradient(circle,rgba(255,107,0,0.05) 0%,transparent 70%)",filter:"blur(36px)"}}/>
+        {/* Primary aurora band — top */}
+        <motion.div
+          animate={{x:[-30,30,-30],y:[-10,20,-10],opacity:[0.06,0.1,0.06]}}
+          transition={{duration:14,repeat:Infinity,ease:"easeInOut"}}
+          style={{position:"absolute",top:-180,left:-120,width:500,height:500,borderRadius:"50%",
+            background:"radial-gradient(ellipse,rgba(0,255,238,0.18) 0%,transparent 65%)",
+            filter:"blur(60px)"}}/>
+        {/* Secondary aurora — right */}
+        <motion.div
+          animate={{x:[20,-20,20],y:[10,-30,10],opacity:[0.07,0.12,0.07]}}
+          transition={{duration:18,repeat:Infinity,ease:"easeInOut",delay:3}}
+          style={{position:"absolute",top:80,right:-140,width:420,height:420,borderRadius:"50%",
+            background:"radial-gradient(ellipse,rgba(119,0,255,0.16) 0%,transparent 65%)",
+            filter:"blur(55px)"}}/>
+        {/* Third aurora — bottom */}
+        <motion.div
+          animate={{x:[-15,25,-15],y:[5,-15,5],opacity:[0.05,0.09,0.05]}}
+          transition={{duration:22,repeat:Infinity,ease:"easeInOut",delay:6}}
+          style={{position:"absolute",bottom:100,left:-60,width:360,height:360,borderRadius:"50%",
+            background:"radial-gradient(ellipse,rgba(255,53,0,0.12) 0%,transparent 65%)",
+            filter:"blur(50px)"}}/>
+        {/* Quantum lattice — subtle dot grid */}
+        <div style={{position:"absolute",inset:0,
+          backgroundImage:"radial-gradient(rgba(0,255,238,0.025) 1px,transparent 1px)",
+          backgroundSize:"28px 28px"}}/>
       </div>
+
       <div className="h-full overflow-y-auto relative"
         style={{...DOT_BG,paddingBottom:100,zIndex:1}}
         onTouchStart={onTS} onTouchEnd={onTE}>
 
-        {/* ── HEADER — floating, no borders ── */}
+        {/* ── NEXUS BROADCAST HEADER — ultra-minimal ── */}
         <div className="sticky top-0 z-40"
-          style={{background:"rgba(0,0,0,0.75)",backdropFilter:"blur(28px)",
-            WebkitBackdropFilter:"blur(28px)"}}>
+          style={{background:"rgba(0,0,8,0.82)",backdropFilter:"blur(32px)",
+            WebkitBackdropFilter:"blur(32px)",
+            borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
 
-          <div className="px-4 pt-4 pb-3">
-            <AnimatePresence mode="wait">
-              {showSearch ? (
-                <motion.div key="search"
-                  initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}
-                  transition={{duration:0.18}}
-                  className="flex items-center gap-2 mb-3">
-                  <motion.button whileTap={{scale:0.85}}
-                    onClick={()=>{setShowSearch(false);setQuery("");}}
-                    style={{width:38,height:38,flexShrink:0,borderRadius:"50%",
-                      background:"rgba(255,255,255,0.08)",
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <ArrowLeft style={{width:15,height:15,color:"rgba(255,255,255,0.8)"}}/>
-                  </motion.button>
-                  <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5"
-                    style={{borderRadius:99,background:"rgba(255,255,255,0.07)",
-                      boxShadow:"0 0 0 1px rgba(255,255,255,0.1)"}}>
-                    <Search style={{width:13,height:13,color:"rgba(255,255,255,0.4)",flexShrink:0}}/>
-                    <input ref={searchRef} value={query} onChange={e=>setQuery(e.target.value)}
-                      placeholder="Video, kanal, qo'shiq..."
-                      className="flex-1 bg-transparent outline-none text-white text-[13px] placeholder:text-white/25"
-                      style={{fontFamily:"inherit"}}/>
-                    {query && <button onClick={()=>setQuery("")}><X style={{width:13,height:13,color:"rgba(255,255,255,0.3)"}}/></button>}
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div key="logo"
-                  initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}
-                  transition={{duration:0.18}}
-                  className="flex items-center justify-between mb-3.5">
-                  <div className="flex items-center gap-2.5">
-                    <OTubeMark size={34}/>
-                    <span className="font-black text-[21px]" style={{color:"white",letterSpacing:"-0.02em"}}>
-                      O<span style={{color:T.cyan}}>T</span>ube
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {/* Social gravity ticker */}
-                    <SocialTicker/>
-                    <motion.button whileTap={{scale:0.85}} onClick={()=>setNotifDot(false)}
-                      className="relative"
-                      style={{width:36,height:36,borderRadius:"50%",
-                        background:"rgba(255,255,255,0.07)",
-                        display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <Bell style={{width:14,height:14,color:"rgba(255,255,255,0.6)"}}/>
-                      {notifDot && <div className="absolute top-1.5 right-1.5"
-                        style={{width:7,height:7,borderRadius:"50%",background:"#ff3b30",
-                          boxShadow:"0 0 6px #ff3b30"}}/>}
-                    </motion.button>
-                    <motion.button whileTap={{scale:0.85}} onClick={()=>setShowSearch(true)}
-                      style={{width:36,height:36,borderRadius:"50%",
-                        background:"rgba(255,255,255,0.07)",
-                        display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <Search style={{width:14,height:14,color:"rgba(255,255,255,0.6)"}}/>
-                    </motion.button>
-                    <motion.button whileTap={{scale:0.85}} onClick={()=>setShowSettings(true)}
-                      style={{width:36,height:36,borderRadius:"50%",
-                        background:"rgba(255,255,255,0.07)",
-                        display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <Settings style={{width:14,height:14,color:"rgba(255,255,255,0.6)"}}/>
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Nav tabs — round pills */}
-            <div className="flex gap-2 overflow-x-auto mb-3" style={{scrollbarWidth:"none"}}>
-              {TABS.map(t=>(
-                <motion.button key={t.id} onClick={()=>setTab(t.id)}
-                  whileTap={{scale:0.93}}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 relative"
-                  style={{borderRadius:99,fontSize:10.5,fontWeight:700,letterSpacing:"0.06em",
-                    background:tab===t.id?"rgba(255,255,255,0.12)":"transparent",
-                    color:tab===t.id?"white":"rgba(255,255,255,0.35)",
-                    boxShadow:tab===t.id?`0 0 0 1px rgba(255,255,255,0.2), 0 0 18px ${T.cyan}22`:"none",
-                    transition:"all 0.2s"}}>
-                  {t.l}
-                  {t.badge && (
-                    <motion.span
-                      animate={{scale:[1,1.1,1]}} transition={{duration:2,repeat:Infinity}}
-                      style={{fontSize:7,fontWeight:900,color:"#000",background:"#00ff88",
-                        padding:"1px 5px",borderRadius:99,letterSpacing:"0.06em",
-                        boxShadow:"0 0 8px rgba(0,255,136,0.6)"}}>
-                      {t.badge}
-                    </motion.span>
-                  )}
-                  {t.id==="home" && tab==="home" && (
-                    <span style={{fontSize:8,color:`${T.cyan}88`,fontFamily:"monospace",fontWeight:700}}>
-                      {reels.length}
-                    </span>
-                  )}
+          <AnimatePresence mode="wait">
+            {showSearch ? (
+              <motion.div key="search"
+                initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}
+                transition={{duration:0.16}}
+                className="flex items-center gap-2 px-4 py-3">
+                <motion.button whileTap={{scale:0.82}}
+                  onClick={()=>{setShowSearch(false);setQuery("");}}
+                  style={{width:36,height:36,flexShrink:0,borderRadius:"50%",
+                    background:"rgba(255,255,255,0.07)",
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <ArrowLeft style={{width:14,height:14,color:"rgba(255,255,255,0.7)"}}/>
                 </motion.button>
-              ))}
-            </div>
-
-            {/* Category chips — round pills */}
-            {tab==="home" && (
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{scrollbarWidth:"none"}}>
-                {CATS.map(({id,label,Icon,col})=>{
-                  const active=cat===id;
-                  return (
-                    <motion.button key={id} whileTap={{scale:0.88}} onClick={()=>setCat(id)}
-                      className="flex items-center gap-1.5 flex-shrink-0"
-                      style={{padding:"5px 12px",borderRadius:99,
-                        background:active?`${col}22`:"rgba(255,255,255,0.05)",
-                        boxShadow:active?`0 0 0 1px ${col}55, 0 0 16px ${col}22`:"0 0 0 1px rgba(255,255,255,0.08)",
-                        transition:"all 0.2s"}}>
-                      <Icon style={{width:9,height:9,color:active?col:"rgba(255,255,255,0.35)"}}/>
-                      <span style={{fontSize:10,fontWeight:active?700:500,
-                        color:active?col:"rgba(255,255,255,0.45)"}}>
-                        {label}
-                      </span>
-                    </motion.button>
-                  );
-                })}
-              </div>
+                <div className="flex-1 flex items-center gap-2 px-3 py-2.5"
+                  style={{borderRadius:12,background:"rgba(255,255,255,0.06)",
+                    boxShadow:`0 0 0 1px ${T.aurora}22`}}>
+                  <Search style={{width:12,height:12,color:`${T.aurora}66`,flexShrink:0}}/>
+                  <input ref={searchRef} value={query} onChange={e=>setQuery(e.target.value)}
+                    placeholder="Signal qidirish..."
+                    className="flex-1 bg-transparent outline-none text-white text-[13px] placeholder:text-white/20"
+                    style={{fontFamily:"inherit"}}/>
+                  {query && <button onClick={()=>setQuery("")}>
+                    <X style={{width:12,height:12,color:"rgba(255,255,255,0.3)"}}/>
+                  </button>}
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div key="logo"
+                initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+                transition={{duration:0.16}}
+                className="flex items-center justify-between px-4 pt-3 pb-2">
+                {/* Brand — minimal holographic */}
+                <div className="flex items-center gap-2">
+                  <OTubeMark size={30}/>
+                  <div className="flex flex-col">
+                    <span style={{fontSize:18,fontWeight:900,color:"white",letterSpacing:"-0.03em",lineHeight:1}}>
+                      O<span style={{background:T.gAurora,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>T</span>ube
+                    </span>
+                    <motion.span
+                      animate={{opacity:[0.4,0.8,0.4]}} transition={{duration:3,repeat:Infinity}}
+                      style={{fontSize:7,fontWeight:700,color:T.aurora,letterSpacing:"0.22em",
+                        fontFamily:"monospace",lineHeight:1}}>
+                      NEXUS BROADCAST
+                    </motion.span>
+                  </div>
+                </div>
+                {/* Controls */}
+                <div className="flex items-center gap-1.5">
+                  <SocialTicker/>
+                  <motion.button whileTap={{scale:0.82}} onClick={()=>setNotifDot(false)}
+                    className="relative"
+                    style={{width:34,height:34,borderRadius:10,
+                      background:"rgba(255,255,255,0.05)",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <Bell style={{width:14,height:14,color:"rgba(255,255,255,0.55)"}}/>
+                    {notifDot && <motion.div
+                      animate={{scale:[1,1.3,1]}} transition={{duration:1.8,repeat:Infinity}}
+                      className="absolute top-1.5 right-1.5"
+                      style={{width:6,height:6,borderRadius:"50%",background:"#ff3b30",
+                        boxShadow:"0 0 8px #ff3b30"}}/>}
+                  </motion.button>
+                  <motion.button whileTap={{scale:0.82}} onClick={()=>setShowSearch(true)}
+                    style={{width:34,height:34,borderRadius:10,
+                      background:"rgba(255,255,255,0.05)",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <Search style={{width:14,height:14,color:"rgba(255,255,255,0.55)"}}/>
+                  </motion.button>
+                  <motion.button whileTap={{scale:0.82}} onClick={()=>setShowSettings(true)}
+                    style={{width:34,height:34,borderRadius:10,
+                      background:"rgba(255,255,255,0.05)",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <Settings style={{width:14,height:14,color:"rgba(255,255,255,0.55)"}}/>
+                  </motion.button>
+                </div>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
+
+          {/* ── SIGNAL NEXUS TUNER — 8 frequency nodes, replaces tab+cat ── */}
+          {!showSearch && (
+            <div className="flex overflow-x-auto px-3 pb-2.5 gap-1" style={{scrollbarWidth:"none"}}>
+              {SIGNALS.map(({id,Icon,label,col})=>{
+                const active = signal === id;
+                return (
+                  <motion.button key={id}
+                    whileTap={{scale:0.88}}
+                    onClick={()=>setSignal(id as SignalId)}
+                    className="flex-shrink-0 flex flex-col items-center relative"
+                    style={{minWidth:60,padding:"6px 4px 4px"}}>
+                    {/* Active line — top indicator (NOT YouTube underline, this is a TOP bar) */}
+                    <motion.div
+                      animate={{
+                        scaleX: active ? 1 : 0,
+                        opacity: active ? 1 : 0,
+                      }}
+                      style={{position:"absolute",top:0,left:8,right:8,height:2,
+                        background:`linear-gradient(90deg,transparent,${col},transparent)`,
+                        borderRadius:99,transformOrigin:"center",
+                        boxShadow:`0 0 8px ${col}`}}/>
+                    {/* Icon tile */}
+                    <motion.div
+                      animate={{
+                        background: active ? `${col}1a` : "rgba(255,255,255,0.03)",
+                        boxShadow: active ? `0 0 0 1px ${col}44, 0 0 20px ${col}18` : "0 0 0 1px rgba(255,255,255,0.05)",
+                      }}
+                      transition={{duration:0.25}}
+                      style={{width:40,height:40,borderRadius:13,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        marginBottom:4}}>
+                      <Icon style={{width:17,height:17,color:active?col:"rgba(255,255,255,0.28)",
+                        transition:"color 0.25s"}}/>
+                    </motion.div>
+                    {/* Label */}
+                    <span style={{fontSize:8,fontWeight:active?800:500,
+                      color:active?col:"rgba(255,255,255,0.22)",
+                      letterSpacing:"0.04em",transition:"all 0.25s"}}>
+                      {label}
+                    </span>
+                    {/* SHORTS badge */}
+                    {id==="shorts" && !active && (
+                      <motion.div animate={{scale:[1,1.08,1]}} transition={{duration:2.5,repeat:Infinity}}
+                        style={{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",
+                          background:T.pulse,boxShadow:`0 0 6px ${T.pulse}`}}/>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* ── CONTENT ── */}
+        {/* ── BROADCAST MATRIX — CONTENT ── */}
         <div className="px-3 pt-4 space-y-8">
           {isLoading ? (
             <div className="flex items-center justify-center py-24">
               <div className="flex flex-col items-center gap-4">
                 <OTubeMark size={56}/>
-                <div className="flex items-center gap-1">
-                  {[0,1,2,3].map(i=>(
+                {/* Signal scanner bars */}
+                <div className="flex items-end gap-1">
+                  {[14,22,18,28,16,24,20,26].map((h,i)=>(
                     <motion.div key={i}
-                      animate={{opacity:[0.3,1,0.3],scaleY:[0.5,1,0.5]}}
-                      transition={{duration:0.8,repeat:Infinity,delay:i*0.15}}
-                      style={{width:3,height:20,background:T.cyan}}/>
+                      animate={{height:[h*0.4, h, h*0.4],opacity:[0.3,1,0.3]}}
+                      transition={{duration:0.7,repeat:Infinity,delay:i*0.09,ease:"easeInOut"}}
+                      style={{width:3,borderRadius:99,
+                        background:i%3===0?T.aurora:i%3===1?T.orange:T.violet}}/>
                   ))}
                 </div>
-                <span style={{fontSize:10,color:T.cyan,letterSpacing:"0.18em",fontFamily:"monospace"}}>
-                  SIGNAL SCANNING...
+                <span style={{fontSize:9,color:T.aurora,letterSpacing:"0.22em",fontFamily:"monospace"}}>
+                  NEXUS SCANNING...
                 </span>
               </div>
             </div>
@@ -2255,12 +2368,12 @@ export default function OTubePage() {
             </div>
           ) : tab==="home" ? (
             <>
-              {/* Streak banner — always visible on home */}
+              {/* XP / Streak — compact broadcast banner */}
               {!query && <StreakBanner/>}
 
-              {/* Featured hero — edge-to-edge */}
+              {/* ── PRIME SIGNAL — cinematic hero ── */}
               {featured && !query && (
-                <div className="-mx-3 mb-2">
+                <div className="-mx-3 mb-0">
                   <HeroCard video={featured} onPlay={()=>setSelected(featured)}/>
                 </div>
               )}
@@ -2269,14 +2382,17 @@ export default function OTubePage() {
               {query && reels.length>0 && (
                 <section>
                   <div className="flex items-center gap-2 mb-4">
-                    <Search style={{width:13,height:13,color:"rgba(255,255,255,0.4)"}}/>
-                    <span style={{fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.5)"}}>
-                      "{query}" — {reels.length} ta natija
+                    <motion.div
+                      animate={{opacity:[0.5,1,0.5]}} transition={{duration:1.4,repeat:Infinity}}
+                      style={{width:8,height:8,borderRadius:"50%",background:T.aurora,
+                        boxShadow:`0 0 8px ${T.aurora}`}}/>
+                    <span style={{fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.45)",
+                      fontFamily:"monospace",letterSpacing:"0.06em"}}>
+                      "{query}" — {reels.length} signal
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {reels.map((v,i)=><BentoCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
-                  </div>
+                  {/* Asymmetric search grid */}
+                  <BroadcastMatrix reels={reels} onPlay={v=>setSelected(v)}/>
                 </section>
               )}
 
@@ -2285,28 +2401,22 @@ export default function OTubePage() {
                   {/* Continue Watching */}
                   <ContinueRow videos={reels.slice(2,7)} onPlay={v=>setSelected(v)}/>
 
-                  {/* Trending — horizontal scroll cinema strip */}
+                  {/* ── PULSE STREAM — trending, cinema horizontal ── */}
                   {trending.length>0 && (
-                    <section className="mb-8">
-                      <div className="flex items-center gap-2 mb-3">
-                        <ChBadge n="01" color={T.orange}/>
-                        <div className="flex items-center gap-1.5">
-                          <span style={{fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.55)",letterSpacing:"0.04em"}}>
-                            Trending
-                          </span>
-                          {/* Live trending pulse */}
-                          <motion.div className="flex items-center gap-1 px-2 py-0.5"
-                            style={{borderRadius:99,background:"rgba(255,45,85,0.12)",
-                              boxShadow:"0 0 0 1px rgba(255,45,85,0.3)"}}>
-                            <motion.div
-                              animate={{opacity:[1,0.2,1]}} transition={{duration:0.9,repeat:Infinity}}
-                              style={{width:4,height:4,borderRadius:"50%",background:"#ff2d55",
-                                boxShadow:"0 0 5px #ff2d55"}}/>
-                            <span style={{fontSize:7.5,fontWeight:700,color:"#ff2d55",letterSpacing:"0.08em"}}>
-                              LIVE
-                            </span>
-                          </motion.div>
-                        </div>
+                    <section className="mb-6">
+                      {/* Broadcast station divider */}
+                      <div className="flex items-center gap-3 mb-3 -mx-3 px-3">
+                        <motion.div
+                          animate={{opacity:[1,0.4,1]}} transition={{duration:1.1,repeat:Infinity}}
+                          style={{width:8,height:8,borderRadius:"50%",flexShrink:0,
+                            background:"#ff2d55",boxShadow:"0 0 10px #ff2d55"}}/>
+                        <span style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.7)",
+                          letterSpacing:"0.22em",fontFamily:"monospace"}}>PULSE STREAM</span>
+                        <div style={{flex:1,height:1,
+                          background:"linear-gradient(90deg,rgba(255,45,85,0.4),transparent)"}}/>
+                        <span style={{fontSize:8,color:"rgba(255,255,255,0.2)",fontFamily:"monospace",flexShrink:0}}>
+                          {trending.length} signal
+                        </span>
                       </div>
                       <div className="flex gap-3 overflow-x-auto -mx-3 px-3 pb-2"
                         style={{scrollbarWidth:"none"}}>
@@ -2315,35 +2425,18 @@ export default function OTubePage() {
                     </section>
                   )}
 
-                  {/* Mood rows — curated themed */}
-                  <MoodRow title="Kech uchun" emoji="🌙" col={T.violet}
-                    videos={reels.filter((_,i)=>i%3===0)}
-                    onPlay={v=>setSelected(v)}/>
-                  <MoodRow title="Energiya" emoji="⚡" col={T.orange}
-                    videos={reels.filter((_,i)=>i%2===0)}
-                    onPlay={v=>setSelected(v)}/>
-                  <MoodRow title="Kulgili" emoji="😂" col={T.cyan}
-                    videos={reels.filter((_,i)=>i%2===1)}
-                    onPlay={v=>setSelected(v)}/>
-
-                  {/* Discovery — organic alternating grid */}
+                  {/* ── DISCOVERY MATRIX — asymmetric organic grid ── */}
                   {grid.length>0 && (
                     <section>
-                      <div className="flex items-center gap-2 mb-3">
-                        <ChBadge n="02" color={T.violet}/>
-                        <span style={{fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.55)",letterSpacing:"0.04em"}}>
-                          Kashfiyot
-                        </span>
+                      <div className="flex items-center gap-3 mb-3 -mx-3 px-3">
+                        <div style={{width:8,height:8,borderRadius:2,flexShrink:0,
+                          background:T.nova,boxShadow:`0 0 8px ${T.nova}`}}/>
+                        <span style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.7)",
+                          letterSpacing:"0.22em",fontFamily:"monospace"}}>DISCOVERY MATRIX</span>
+                        <div style={{flex:1,height:1,
+                          background:`linear-gradient(90deg,${T.nova}55,transparent)`}}/>
                       </div>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        {grid.map((v,i)=>{
-                          const isWide = i===0 || i===4 || i===9;
-                          return (
-                            <BentoCard key={v.id} video={v} onPlay={()=>setSelected(v)}
-                              wide={isWide} idx={i}/>
-                          );
-                        })}
-                      </div>
+                      <BroadcastMatrix reels={grid} onPlay={v=>setSelected(v)}/>
                     </section>
                   )}
                 </>
@@ -2351,16 +2444,18 @@ export default function OTubePage() {
             </>
           ) : tab==="shorts" ? (
             <section>
-              <div className="flex items-center gap-2 mb-4">
-                <div style={{width:26,height:26,
-                  background:T.orange,display:"flex",alignItems:"center",justifyContent:"center",
-                  clipPath:"polygon(0 4px,4px 0,calc(100% - 4px) 0,100% 4px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px))"}}>
-                  <Zap style={{width:13,height:13,fill:"white",color:"white"}}/>
-                </div>
-                <span style={{fontSize:15,fontWeight:900,color:"white",letterSpacing:"0.05em"}}>SHORTS</span>
-                <span style={{fontSize:9,fontWeight:900,letterSpacing:"0.12em",
-                  color:T.orange,background:`${T.orange}18`,
-                  padding:"2px 8px",border:`1px solid ${T.orange}44`}}>
+              {/* Shorts header — broadcast style */}
+              <div className="flex items-center gap-3 mb-4 -mx-3 px-3">
+                <motion.div
+                  animate={{scale:[1,1.2,1],opacity:[1,0.7,1]}} transition={{duration:0.9,repeat:Infinity}}
+                  style={{width:10,height:10,borderRadius:"50%",flexShrink:0,
+                    background:T.orange,boxShadow:`0 0 12px ${T.orange}`}}/>
+                <span style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.7)",
+                  letterSpacing:"0.22em",fontFamily:"monospace"}}>SHORTS SIGNAL</span>
+                <div style={{flex:1,height:1,
+                  background:`linear-gradient(90deg,${T.orange}55,transparent)`}}/>
+                <span style={{fontSize:8,fontWeight:700,color:T.orange,fontFamily:"monospace",
+                  padding:"2px 8px",borderRadius:99,background:`${T.orange}18`,flexShrink:0}}>
                   VERTICAL
                 </span>
               </div>
@@ -2368,9 +2463,7 @@ export default function OTubePage() {
                 {shorts.map(v=><ShortsCard key={v.id} video={v} onPlay={()=>setSelected(v)}/>)}
               </div>
               <div className="h-4"/>
-              <div className="grid grid-cols-2 gap-2">
-                {raw.map((v,i)=><BentoCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
-              </div>
+              <BroadcastMatrix reels={raw} onPlay={v=>setSelected(v)}/>
             </section>
           ) : (
             /* CHANNELS tab */

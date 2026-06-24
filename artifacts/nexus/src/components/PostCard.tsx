@@ -327,13 +327,15 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
               }
             </div>
           </Link>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
-              <span className="font-semibold text-sm text-foreground">{post.author.displayName}</span>
-              {post.author.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+          <Link href={`/profile/${post.author.id}`}>
+            <div className="flex-1 min-w-0 cursor-pointer">
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-sm text-foreground hover:underline">{post.author.displayName}</span>
+                {post.author.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+              </div>
+              <span className="text-xs text-muted-foreground">@{post.author.username}</span>
             </div>
-            <span className="text-xs text-muted-foreground">@{post.author.username}</span>
-          </div>
+          </Link>
 
           {/* More menu */}
           <div className="relative" ref={menuRef}>

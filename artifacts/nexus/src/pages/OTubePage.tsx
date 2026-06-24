@@ -389,7 +389,8 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
 /* ─────────────────────────────────────────────────────── */
 function NexusPlayer({ video, onClose, settings }:
   { video:Reel; onClose:()=>void; settings:PlayerSettings }) {
-  const qc         = useQueryClient();
+  const qc             = useQueryClient();
+  const [, navPlayer]  = useLocation();
   const videoRef   = useRef<HTMLVideoElement>(null);
   const contRef    = useRef<HTMLDivElement>(null);
   const ctrlTimer  = useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -451,6 +452,10 @@ function NexusPlayer({ video, onClose, settings }:
   const followMut = useFollowUser({
     mutation: {
       onMutate: () => setSubbed(s => !s),
+      onSuccess: (data) => {
+        setSubbed(data.following);
+        qc.invalidateQueries({ queryKey: ["listReels"] });
+      },
       onError: () => setSubbed(video.author.isFollowing ?? false),
     },
   });
@@ -653,8 +658,9 @@ function NexusPlayer({ video, onClose, settings }:
                   <div className="flex-1 min-w-0">
                     {settings.showTitle && <>
                       <p className="text-white font-black text-[13px] truncate">{video.caption||"OTube Video"}</p>
-                      <p className="text-[10px] truncate mt-0.5"
-                        style={{color:"rgba(255,255,255,0.38)"}}>
+                      <p className="text-[10px] truncate mt-0.5 cursor-pointer"
+                        style={{color:"rgba(255,255,255,0.5)"}}
+                        onClick={(e)=>{e.stopPropagation(); onClose(); navPlayer(`/profile/${video.author.id}`);}}>
                         {video.author.displayName} · {fmt(video.viewsCount)} ko'rish
                       </p>
                     </>}
@@ -1172,12 +1178,22 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
   const COLORS = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55"];
   const col = COLORS[idx % COLORS.length];
   const [subbed, setSubbed] = useState(author.isFollowing ?? false);
+  const [, navigate] = useLocation();
+  const qc = useQueryClient();
   const followMut = useFollowUser({
     mutation: {
       onMutate: () => setSubbed(s => !s),
+      onSuccess: (data) => {
+        setSubbed(data.following);
+        qc.invalidateQueries({ queryKey: ["listReels"] });
+      },
       onError: () => setSubbed(author.isFollowing ?? false),
     },
   });
+  const goToProfile = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/profile/${author.id}`);
+  }, [author.id, navigate]);
   return (
     <motion.div className="flex items-center gap-3 mb-3"
       initial={{opacity:0,y:10}} animate={{opacity:1,y:0}}
@@ -1187,17 +1203,19 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
         backdropFilter:"blur(12px)",
         borderRadius:16,
         boxShadow:`0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06)`}}>
-      {/* Circular avatar */}
-      <div style={{width:44,height:44,flexShrink:0,overflow:"hidden",
-        borderRadius:"50%",
-        background:`radial-gradient(circle at 30% 30%, hsl(${idx*65}deg 60%,35%), hsl(${idx*65}deg 40%,12%))`,
-        boxShadow:`0 0 0 2px ${col}44, 0 0 20px ${col}22`,
-        display:"flex",alignItems:"center",justifyContent:"center"}}>
+      {/* Circular avatar — clickable → profile */}
+      <div onClick={goToProfile} className="cursor-pointer"
+        style={{width:44,height:44,flexShrink:0,overflow:"hidden",
+          borderRadius:"50%",
+          background:`radial-gradient(circle at 30% 30%, hsl(${idx*65}deg 60%,35%), hsl(${idx*65}deg 40%,12%))`,
+          boxShadow:`0 0 0 2px ${col}44, 0 0 20px ${col}22`,
+          display:"flex",alignItems:"center",justifyContent:"center"}}>
         {author.avatarUrl
           ? <img src={author.avatarUrl} alt="" className="w-full h-full object-cover"/>
           : <span style={{fontSize:17,fontWeight:900,color:"white"}}>{(author.displayName||author.username||"?")[0]}</span>}
       </div>
-      <div className="flex-1 min-w-0">
+      {/* Name — clickable → profile */}
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={goToProfile}>
         <p style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.9)"}}>
           {author.displayName}
         </p>
@@ -1214,7 +1232,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
           boxShadow: subbed?"none":`0 0 14px ${col}33`,
           opacity: followMut.isPending ? 0.6 : 1}}>
         <span style={{fontSize:10,fontWeight:700,color:subbed?"rgba(255,255,255,0.4)":col}}>
-          {subbed?"Obuna":"+ Obuna"}
+          {subbed?"✓ Obuna":"+ Obuna"}
         </span>
       </motion.button>
     </motion.div>

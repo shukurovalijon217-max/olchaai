@@ -48,6 +48,21 @@ const T = {
 const DOT_BG = { background: "#000000" } as const;
 
 /* ─────────────────────────────────────────────────────── */
+/* Global follow-state cache (module-level Map)            */
+/* Prevents per-card useState from resetting on re-mount   */
+/* ─────────────────────────────────────────────────────── */
+const followStateCache = new Map<number, boolean>();
+
+function getFollowState(authorId: number, serverValue: boolean | null | undefined): boolean {
+  if (followStateCache.has(authorId)) return followStateCache.get(authorId)!;
+  return serverValue ?? false;
+}
+
+function setFollowState(authorId: number, value: boolean) {
+  followStateCache.set(authorId, value);
+}
+
+/* ─────────────────────────────────────────────────────── */
 /* helpers                                                 */
 /* ─────────────────────────────────────────────────────── */
 function fmt(n: number) {
@@ -412,7 +427,7 @@ function NexusPlayer({ video, onClose, settings }:
   const [saved,     setSaved]     = useState(()=>{
     try { return JSON.parse(localStorage.getItem("otube_saved")||"[]").includes(video.id); } catch { return false; }
   });
-  const [subbed,    setSubbed]    = useState(video.author.isFollowing ?? false);
+  const [subbed,    setSubbed]    = useState(() => getFollowState(video.author.id, video.author.isFollowing));
   const [seekLeft,  setSeekLeft]  = useState(false);
   const [seekRight, setSeekRight] = useState(false);
   const [fastFwd,   setFastFwd]   = useState(false);
@@ -439,7 +454,7 @@ function NexusPlayer({ video, onClose, settings }:
       onSuccess: (data) => {
         setLiked(data.liked);
         setLikesCount(data.likesCount);
-        qc.invalidateQueries({ queryKey: ["listReels"] });
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
       },
       onError: () => {
         setLiked(liked);
@@ -451,12 +466,21 @@ function NexusPlayer({ video, onClose, settings }:
   /* Real follow mutation */
   const followMut = useFollowUser({
     mutation: {
-      onMutate: () => setSubbed(s => !s),
-      onSuccess: (data) => {
-        setSubbed(data.following);
-        qc.invalidateQueries({ queryKey: ["listReels"] });
+      onMutate: () => {
+        const next = !getFollowState(video.author.id, video.author.isFollowing);
+        setFollowState(video.author.id, next);
+        setSubbed(next);
       },
-      onError: () => setSubbed(video.author.isFollowing ?? false),
+      onSuccess: (data) => {
+        setFollowState(video.author.id, data.following);
+        setSubbed(data.following);
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
+      },
+      onError: () => {
+        const prev = !subbed;
+        setFollowState(video.author.id, prev);
+        setSubbed(prev);
+      },
     },
   });
 
@@ -1177,17 +1201,26 @@ function ChBadge({ n: _n, color=T.cyan }: { n:string; color?:string }) {
 function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
   const COLORS = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55"];
   const col = COLORS[idx % COLORS.length];
-  const [subbed, setSubbed] = useState(author.isFollowing ?? false);
+  const [subbed, setSubbed] = useState(() => getFollowState(author.id, author.isFollowing));
   const [, navigate] = useLocation();
   const qc = useQueryClient();
   const followMut = useFollowUser({
     mutation: {
-      onMutate: () => setSubbed(s => !s),
-      onSuccess: (data) => {
-        setSubbed(data.following);
-        qc.invalidateQueries({ queryKey: ["listReels"] });
+      onMutate: () => {
+        const next = !getFollowState(author.id, author.isFollowing);
+        setFollowState(author.id, next);
+        setSubbed(next);
       },
-      onError: () => setSubbed(author.isFollowing ?? false),
+      onSuccess: (data) => {
+        setFollowState(author.id, data.following);
+        setSubbed(data.following);
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
+      },
+      onError: () => {
+        const prev = getFollowState(author.id, author.isFollowing);
+        setFollowState(author.id, !prev);
+        setSubbed(!prev);
+      },
     },
   });
   const goToProfile = useCallback((e: React.MouseEvent) => {
@@ -1548,7 +1581,7 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
       onSuccess: (data) => {
         setLiked(data.liked);
         setLikesCount(data.likesCount);
-        qc.invalidateQueries({ queryKey: ["listReels"] });
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
       },
     },
   });

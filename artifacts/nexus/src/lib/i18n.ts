@@ -6,7 +6,13 @@ export type LangCode =
   | "uz" | "en" | "ru" | "zh" | "ar" | "es" | "fr" | "hi" | "pt" | "de"
   | "ja" | "ko" | "it" | "tr" | "nl" | "pl" | "fa" | "bn" | "id" | "vi"
   | "th" | "uk" | "sv" | "no" | "da" | "fi" | "el" | "cs" | "hu" | "ro"
-  | "he" | "ms" | "sw" | "tl" | "az" | "kk" | "ky" | "tk" | "tg" | "mn";
+  | "he" | "ms" | "sw" | "tl" | "az" | "kk" | "ky" | "tk" | "tg" | "mn"
+  | "af" | "am" | "be" | "bg" | "bs" | "ca" | "cy" | "et" | "eu" | "ga"
+  | "gl" | "gu" | "ha" | "hr" | "hy" | "ig" | "is" | "jv" | "ka" | "km"
+  | "kn" | "ku" | "lb" | "lo" | "lt" | "lv" | "mg" | "mi" | "mk" | "ml"
+  | "mr" | "mt" | "my" | "ne" | "ny" | "pa" | "ps" | "rw" | "si" | "sk"
+  | "sl" | "sm" | "sn" | "so" | "sq" | "sr" | "st" | "su" | "ta" | "te"
+  | "ur" | "xh" | "yo" | "zu" | "eo" | "fy" | "yi" | "sd" | "or" | "as";
 
 export const LANGUAGES: { code: LangCode; name: string; native: string; flag: string; rtl?: boolean }[] = [
   { code: "uz", name: "Uzbek", native: "O'zbek", flag: "🇺🇿" },
@@ -49,6 +55,66 @@ export const LANGUAGES: { code: LangCode; name: string; native: string; flag: st
   { code: "tk", name: "Turkmen", native: "Türkmen", flag: "🇹🇲" },
   { code: "tg", name: "Tajik", native: "Тоҷикӣ", flag: "🇹🇯" },
   { code: "mn", name: "Mongolian", native: "Монгол", flag: "🇲🇳" },
+  { code: "af", name: "Afrikaans", native: "Afrikaans", flag: "🇿🇦" },
+  { code: "am", name: "Amharic", native: "አማርኛ", flag: "🇪🇹" },
+  { code: "be", name: "Belarusian", native: "Беларуская", flag: "🇧🇾" },
+  { code: "bg", name: "Bulgarian", native: "Български", flag: "🇧🇬" },
+  { code: "bs", name: "Bosnian", native: "Bosanski", flag: "🇧🇦" },
+  { code: "ca", name: "Catalan", native: "Català", flag: "🇪🇸" },
+  { code: "cy", name: "Welsh", native: "Cymraeg", flag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿" },
+  { code: "et", name: "Estonian", native: "Eesti", flag: "🇪🇪" },
+  { code: "eu", name: "Basque", native: "Euskara", flag: "🇪🇸" },
+  { code: "ga", name: "Irish", native: "Gaeilge", flag: "🇮🇪" },
+  { code: "gl", name: "Galician", native: "Galego", flag: "🇪🇸" },
+  { code: "gu", name: "Gujarati", native: "ગુજરાતી", flag: "🇮🇳" },
+  { code: "ha", name: "Hausa", native: "Hausa", flag: "🇳🇬" },
+  { code: "hr", name: "Croatian", native: "Hrvatski", flag: "🇭🇷" },
+  { code: "hy", name: "Armenian", native: "Հայերեն", flag: "🇦🇲" },
+  { code: "ig", name: "Igbo", native: "Igbo", flag: "🇳🇬" },
+  { code: "is", name: "Icelandic", native: "Íslenska", flag: "🇮🇸" },
+  { code: "jv", name: "Javanese", native: "Basa Jawa", flag: "🇮🇩" },
+  { code: "ka", name: "Georgian", native: "ქართული", flag: "🇬🇪" },
+  { code: "km", name: "Khmer", native: "ខ្មែរ", flag: "🇰🇭" },
+  { code: "kn", name: "Kannada", native: "ಕನ್ನಡ", flag: "🇮🇳" },
+  { code: "ku", name: "Kurdish", native: "Kurdî", flag: "🇮🇶", rtl: true },
+  { code: "lb", name: "Luxembourgish", native: "Lëtzebuergesch", flag: "🇱🇺" },
+  { code: "lo", name: "Lao", native: "ລາວ", flag: "🇱🇦" },
+  { code: "lt", name: "Lithuanian", native: "Lietuvių", flag: "🇱🇹" },
+  { code: "lv", name: "Latvian", native: "Latviešu", flag: "🇱🇻" },
+  { code: "mg", name: "Malagasy", native: "Malagasy", flag: "🇲🇬" },
+  { code: "mi", name: "Māori", native: "Te Reo Māori", flag: "🇳🇿" },
+  { code: "mk", name: "Macedonian", native: "Македонски", flag: "🇲🇰" },
+  { code: "ml", name: "Malayalam", native: "മലയാളം", flag: "🇮🇳" },
+  { code: "mr", name: "Marathi", native: "मराठी", flag: "🇮🇳" },
+  { code: "mt", name: "Maltese", native: "Malti", flag: "🇲🇹" },
+  { code: "my", name: "Burmese", native: "မြန်မာ", flag: "🇲🇲" },
+  { code: "ne", name: "Nepali", native: "नेपाली", flag: "🇳🇵" },
+  { code: "ny", name: "Chichewa", native: "Chichewa", flag: "🇲🇼" },
+  { code: "pa", name: "Punjabi", native: "ਪੰਜਾਬੀ", flag: "🇮🇳" },
+  { code: "ps", name: "Pashto", native: "پښتو", flag: "🇦🇫", rtl: true },
+  { code: "rw", name: "Kinyarwanda", native: "Ikinyarwanda", flag: "🇷🇼" },
+  { code: "si", name: "Sinhala", native: "සිංහල", flag: "🇱🇰" },
+  { code: "sk", name: "Slovak", native: "Slovenčina", flag: "🇸🇰" },
+  { code: "sl", name: "Slovenian", native: "Slovenščina", flag: "🇸🇮" },
+  { code: "sm", name: "Samoan", native: "Gagana Samoa", flag: "🇼🇸" },
+  { code: "sn", name: "Shona", native: "ChiShona", flag: "🇿🇼" },
+  { code: "so", name: "Somali", native: "Soomaali", flag: "🇸🇴" },
+  { code: "sq", name: "Albanian", native: "Shqip", flag: "🇦🇱" },
+  { code: "sr", name: "Serbian", native: "Српски", flag: "🇷🇸" },
+  { code: "st", name: "Sesotho", native: "Sesotho", flag: "🇱🇸" },
+  { code: "su", name: "Sundanese", native: "Basa Sunda", flag: "🇮🇩" },
+  { code: "ta", name: "Tamil", native: "தமிழ்", flag: "🇮🇳" },
+  { code: "te", name: "Telugu", native: "తెలుగు", flag: "🇮🇳" },
+  { code: "ur", name: "Urdu", native: "اردو", flag: "🇵🇰", rtl: true },
+  { code: "xh", name: "Xhosa", native: "isiXhosa", flag: "🇿🇦" },
+  { code: "yo", name: "Yoruba", native: "Yorùbá", flag: "🇳🇬" },
+  { code: "zu", name: "Zulu", native: "isiZulu", flag: "🇿🇦" },
+  { code: "eo", name: "Esperanto", native: "Esperanto", flag: "🌍" },
+  { code: "fy", name: "Frisian", native: "Frysk", flag: "🇳🇱" },
+  { code: "yi", name: "Yiddish", native: "ייִדיש", flag: "🇮🇱", rtl: true },
+  { code: "sd", name: "Sindhi", native: "سنڌي", flag: "🇵🇰", rtl: true },
+  { code: "or", name: "Odia", native: "ଓଡ଼ିଆ", flag: "🇮🇳" },
+  { code: "as", name: "Assamese", native: "অসমীয়া", flag: "🇮🇳" },
 ];
 
 export const RTL_LANGS = new Set(LANGUAGES.filter(l => l.rtl).map(l => l.code));
@@ -1223,13 +1289,13 @@ i18n
   .init({
     resources,
     fallbackLng: "en",
-    supportedLngs: Object.keys(t),
     detection: {
       order: ["localStorage", "navigator"],
       caches: ["localStorage"],
       lookupLocalStorage: "olcha_lang",
     },
     interpolation: { escapeValue: false },
+    nonExplicitSupportedLngs: true,
   });
 
 export function applyRTL(lang: string) {

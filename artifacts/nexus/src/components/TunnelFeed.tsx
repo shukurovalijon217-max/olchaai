@@ -154,7 +154,7 @@ function TunnelPostCard({ post, isActive, colorIdx }: TunnelPostCardProps) {
             )}
           </div>
         </Link>
-        <div className="flex-1 min-w-0">
+        <Link href={`/profile/${post.author.id}`} className="flex-1 min-w-0 cursor-pointer min-w-0">
           <div className="flex items-center gap-1.5">
             <span
               style={{
@@ -173,7 +173,7 @@ function TunnelPostCard({ post, isActive, colorIdx }: TunnelPostCardProps) {
           <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
             @{post.author.username ?? "user"} · {formatTime(post.createdAt)}
           </span>
-        </div>
+        </Link>
         <div
           style={{
             fontSize: 9,

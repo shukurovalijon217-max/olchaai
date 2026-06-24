@@ -331,6 +331,7 @@ function BottomBar({
   onMute:()=>void; muted:boolean; analyzingId:number|null;
   neonColor:string; cinemaMode:boolean;
 }) {
+  const [, navigate] = useLocation();
   const [shareOk, setShareOk] = useState(false);
   const handleShare = async () => {
     try {
@@ -359,8 +360,9 @@ function BottomBar({
         boxShadow: `0 -2px 28px rgba(0,0,0,0.55), 0 8px 36px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.07), 0 0 0 1px ${neonColor}0d`,
       }}>
 
-        {/* ── Author ── */}
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        {/* ── Author — tap → profile ── */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 cursor-pointer"
+          onClick={() => reel.author?.id && navigate(`/profile/${reel.author.id}`)}>
           <div className="relative flex-shrink-0" style={{ width:34, height:34 }}>
             <motion.div className="absolute inset-[-2px] rounded-full"
               style={{ background:`conic-gradient(from 0deg,${neonColor}dd,#3b82f677,#06b6d455,${neonColor}dd)` }}

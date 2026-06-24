@@ -6,6 +6,7 @@ import {
   ChevronsRight, ChevronsLeft, Eye, DollarSign,
   UserPlus, UserCheck, Search, Link, User,
 } from "lucide-react";
+import { useLocation } from "wouter";
 import type { Post } from "@workspace/api-client-react";
 import { PostType, useLikePost } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
@@ -293,6 +294,7 @@ export default function FeedCard({ post }: FeedCardProps) {
   const theme  = getTheme(post.type);
   const enterV = ENTER[post.type] ?? ENTER[PostType.text];
   const { user } = useAuth();
+  const [, navigate] = useLocation();
 
   const [actionsOpen, setActionsOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
@@ -814,7 +816,9 @@ export default function FeedCard({ post }: FeedCardProps) {
         animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
         transition={{ delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="relative flex-shrink-0">
+        {/* Avatar — tap → profile */}
+        <div className="relative flex-shrink-0 cursor-pointer"
+          onClick={() => post.author?.id && navigate(`/profile/${post.author.id}`)}>
           {post.author?.avatarUrl ? (
             <img src={post.author.avatarUrl} alt=""
               className="w-9 h-9 rounded-full object-cover"
@@ -827,9 +831,11 @@ export default function FeedCard({ post }: FeedCardProps) {
           )}
           <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-black" />
         </div>
-        <div>
+        {/* Name — tap → profile */}
+        <div className="cursor-pointer"
+          onClick={() => post.author?.id && navigate(`/profile/${post.author.id}`)}>
           <div className="flex items-center gap-1">
-            <span className="text-white font-bold text-[13px] drop-shadow leading-none">
+            <span className="text-white font-bold text-[13px] drop-shadow leading-none hover:underline">
               {post.author?.displayName ?? "Foydalanuvchi"}
             </span>
             {post.author?.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />}

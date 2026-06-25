@@ -2941,8 +2941,8 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       </div>
 
       {/* Video preview */}
-      <div style={{flex:"0 0 auto",position:"relative",background:"#000",
-        aspectRatio:"9/16",maxHeight:"34vh",alignSelf:"center",width:"100%",overflow:"hidden"}}>
+      <div style={{flex:"0 0 220px",position:"relative",background:"#000",
+        width:"100%",overflow:"hidden"}}>
         {videoSrc ? (
           <video ref={videoRef} src={videoSrc} autoPlay loop muted playsInline
             style={{width:"100%",height:"100%",objectFit:"cover",filter:appliedCss}}/>

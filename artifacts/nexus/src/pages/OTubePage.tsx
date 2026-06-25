@@ -1301,6 +1301,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
 /* ─────────────────────────────────────────────────────── */
 function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
   const [expanded, setExpanded] = useState(false);
+  const [chaptersOpen, setChaptersOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({x:0,y:0});
   const onMouseMove = useCallback((e:React.MouseEvent<HTMLDivElement>)=>{
@@ -1420,38 +1421,53 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
       {/* AI Smart Chapters strip */}
       <div className="px-3 pb-3" onClick={e=>e.stopPropagation()}
         style={{background:"rgba(0,0,0,0.2)"}}>
-        <div className="flex items-center gap-1.5 mb-2">
-          <Brain style={{width:9,height:9,color:`${T.cyan}99`}}/>
-          <span style={{fontSize:8,fontWeight:700,color:`${T.cyan}70`,letterSpacing:"0.1em"}}>
-            AI CHAPTERS
-          </span>
-        </div>
-        <div className="flex gap-1">
-          {([
-            {label:"Kirish",    col:T.cyan,    flex:2},
-            {label:"Asosiy",   col:T.orange,  flex:5},
-            {label:"Kulminatsiya",col:"#ff2d55",flex:4},
-            {label:"Xulosa",   col:T.violet,  flex:2},
-          ] as const).map((ch,i)=>(
-            <motion.div key={i}
-              initial={{opacity:0,scaleX:0}} animate={{opacity:1,scaleX:1}}
-              transition={{delay:0.3+i*0.08,type:"spring",damping:20}}
-              style={{flex:ch.flex,height:3,borderRadius:99,
-                background:ch.col,opacity:0.55,transformOrigin:"left center"}}/>
-          ))}
-        </div>
-        <div className="flex mt-1">
-          {([
-            {label:"Kirish",    col:T.cyan,    flex:2},
-            {label:"Asosiy",   col:T.orange,  flex:5},
-            {label:"Kulminatsiya",col:"#ff2d55",flex:4},
-            {label:"Xulosa",   col:T.violet,  flex:2},
-          ] as const).map((ch,i)=>(
-            <div key={i} style={{flex:ch.flex,overflow:"hidden"}}>
-              <span style={{fontSize:6.5,color:ch.col,fontWeight:600,opacity:0.75,
-                whiteSpace:"nowrap"}}>{ch.label}</span>
-            </div>
-          ))}
+        <div className="flex items-center gap-1.5">
+          <motion.button
+            whileTap={{scale:0.8}}
+            onClick={e=>{e.stopPropagation();setChaptersOpen(o=>!o);}}
+            style={{width:18,height:18,borderRadius:6,display:"flex",alignItems:"center",
+              justifyContent:"center",flexShrink:0,
+              background:chaptersOpen?"rgba(0,229,255,0.18)":"rgba(0,229,255,0.07)",
+              border:`1px solid ${chaptersOpen?T.cyan+"66":"rgba(0,229,255,0.15)"}`,
+              transition:"all 0.2s"}}>
+            <Brain style={{width:9,height:9,color:chaptersOpen?T.cyan:`${T.cyan}70`}}/>
+          </motion.button>
+          <AnimatePresence>
+            {chaptersOpen && (
+              <motion.div
+                initial={{opacity:0,x:-6}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-6}}
+                transition={{duration:0.18}}
+                className="flex-1 flex flex-col gap-0.5">
+                <div className="flex gap-1">
+                  {([
+                    {label:"Kirish",      col:T.cyan,    flex:2},
+                    {label:"Asosiy",      col:T.orange,  flex:5},
+                    {label:"Kulminatsiya",col:"#ff2d55",  flex:4},
+                    {label:"Xulosa",      col:T.violet,  flex:2},
+                  ] as const).map((ch,i)=>(
+                    <motion.div key={i}
+                      initial={{scaleX:0}} animate={{scaleX:1}}
+                      transition={{delay:i*0.06,type:"spring",damping:20}}
+                      style={{flex:ch.flex,height:3,borderRadius:99,
+                        background:ch.col,opacity:0.65,transformOrigin:"left center"}}/>
+                  ))}
+                </div>
+                <div className="flex">
+                  {([
+                    {label:"Kirish",      col:T.cyan,    flex:2},
+                    {label:"Asosiy",      col:T.orange,  flex:5},
+                    {label:"Kulminatsiya",col:"#ff2d55",  flex:4},
+                    {label:"Xulosa",      col:T.violet,  flex:2},
+                  ] as const).map((ch,i)=>(
+                    <div key={i} style={{flex:ch.flex,overflow:"hidden"}}>
+                      <span style={{fontSize:6,color:ch.col,fontWeight:700,opacity:0.8,
+                        whiteSpace:"nowrap"}}>{ch.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>
@@ -1809,14 +1825,18 @@ function SocialTicker() {
 /* ─────────────────────────────────────────────────────── */
 function StreakBanner() {
   const [xp, setXp] = useState(1240);
+  const [visible, setVisible] = useState(true);
   useEffect(()=>{
-    const t = setInterval(()=>setXp(x=>x+(Math.random()>0.7?10:0)),4000);
-    return ()=>clearInterval(t);
+    const xpT = setInterval(()=>setXp(x=>x+(Math.random()>0.7?10:0)),4000);
+    const hideT = setTimeout(()=>setVisible(false), 3500);
+    return ()=>{ clearInterval(xpT); clearTimeout(hideT); };
   },[]);
-  const dots = [true,true,true,true,true,true,false]; // 6/7 kunlik streak
+  const dots = [true,true,true,true,true,true,false];
+  if (!visible) return null;
   return (
     <motion.div
       initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}}
+      exit={{opacity:0,y:-8,scale:0.96}}
       transition={{type:"spring",damping:22,delay:0.2}}
       className="mx-3 mb-4 px-4 py-3 flex items-center gap-3"
       style={{borderRadius:14,

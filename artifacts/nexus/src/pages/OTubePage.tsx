@@ -1949,34 +1949,39 @@ function ContinueRow({ videos, onPlay }: { videos:Reel[]; onPlay:(v:Reel)=>void 
 /* ─────────────────────────────────────────────────────── */
 /* Modal base — full-screen bottom sheet                   */
 /* ─────────────────────────────────────────────────────── */
-function ModalSheet({ children, onClose, title, accent = T.cyan }:
-  { children: React.ReactNode; onClose: ()=>void; title: string; accent?: string }) {
+function ModalSheet({ children, onClose, title, accent = T.cyan, rightSlot }:
+  { children: React.ReactNode; onClose:()=>void; title:string; accent?:string; rightSlot?:React.ReactNode }) {
   return (
-    <motion.div
-      initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
       className="fixed inset-0 z-[9900]"
-      style={{background:"rgba(0,0,8,0.92)",backdropFilter:"blur(20px)"}}>
-      <motion.div
-        initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
-        transition={{type:"spring",damping:28,stiffness:300}}
+      style={{background:"rgba(0,0,8,0.94)",backdropFilter:"blur(24px)"}}>
+      {/* Backdrop tap to close */}
+      <div className="absolute inset-0" onClick={onClose}/>
+      <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
+        transition={{type:"spring",damping:30,stiffness:320}}
         className="absolute bottom-0 left-0 right-0"
-        style={{background:"#07001a",borderRadius:"20px 20px 0 0",
-          border:`1px solid ${accent}22`,maxHeight:"92vh",overflowY:"auto"}}>
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.15)"}}/>
+        style={{background:"linear-gradient(180deg,#0b0120 0%,#06000f 100%)",
+          borderRadius:"24px 24px 0 0",
+          border:`1px solid ${accent}30`,
+          boxShadow:`0 -20px 60px ${accent}12, 0 -1px 0 ${accent}22`,
+          maxHeight:"94vh",overflowY:"auto"}}>
+        {/* Animated accent line */}
+        <div style={{height:3,background:`linear-gradient(90deg,transparent,${accent},transparent)`,
+          borderRadius:"24px 24px 0 0",opacity:0.6}}/>
+        <div className="flex justify-center pt-2 pb-1">
+          <div style={{width:40,height:4,borderRadius:2,background:"rgba(255,255,255,0.18)"}}/>
         </div>
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pb-3">
+        <div className="flex items-center justify-between px-5 pb-4 pt-1">
           <button onClick={onClose}
-            style={{width:32,height:32,borderRadius:8,background:"rgba(255,255,255,0.07)",
+            style={{width:34,height:34,borderRadius:10,background:"rgba(255,255,255,0.06)",
+              border:"1px solid rgba(255,255,255,0.08)",
               display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <ChevronLeft style={{width:16,height:16,color:"rgba(255,255,255,0.6)"}}/>
+            <ChevronLeft style={{width:16,height:16,color:"rgba(255,255,255,0.55)"}}/>
           </button>
-          <span style={{fontSize:14,fontWeight:800,color:"white",letterSpacing:"0.04em"}}>
-            {title}
-          </span>
-          <div style={{width:32}}/>
+          <div className="flex flex-col items-center">
+            <span style={{fontSize:15,fontWeight:900,color:"white",letterSpacing:"0.03em"}}>{title}</span>
+          </div>
+          <div style={{width:34}}>{rightSlot}</div>
         </div>
         {children}
       </motion.div>
@@ -1985,167 +1990,411 @@ function ModalSheet({ children, onClose, title, accent = T.cyan }:
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Upload Modal — real file upload + createReel            */
+/* Upload Modal — real file upload + createReel v2        */
 /* ─────────────────────────────────────────────────────── */
+const AI_TITLE_SUGGESTIONS = [
+  "OlCha'dagi eng zo'r moment 🔥","Buni ko'rmasangiz bo'lmaydi!","Signal kuchli | OlCha",
+  "Viral bo'ladigan video 🚀","OlCha NEXUS × Exclusive","Siz kutmagan narsa...",
+];
+const AI_TAG_SUGGESTIONS = ["olcha","viral","nexus","trending","signal","broadcast","exclusive","top"];
+
 function UploadModal({ onClose }: { onClose: ()=>void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const [step, setStep] = useState<0|1|2>(0);
   const [file, setFile] = useState<File|null>(null);
+  const [thumbFile, setThumbFile] = useState<File|null>(null);
+  const [thumbSrc, setThumbSrc] = useState("");
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
-  const [tags, setTags] = useState("");
+  const [tagList, setTagList] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [privacy, setPrivacy] = useState<"public"|"unlisted"|"private">("public");
+  const [monetize, setMonetize] = useState(false);
+  const [scheduled, setScheduled] = useState(false);
+  const [schedDate, setSchedDate] = useState("");
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<"idle"|"uploading"|"creating"|"done"|"error">("idle");
   const [errMsg, setErrMsg] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const fileRef  = useRef<HTMLInputElement>(null);
+  const thumbRef = useRef<HTMLInputElement>(null);
 
   const uploadUrlMut = useRequestUploadUrl();
   const createMut = useCreateReel({
     mutation: {
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: ["/api/reels"] });
-        setPhase("done");
-      },
-      onError: () => { setErrMsg("Video yaratishda xato"); setPhase("error"); },
+      onSuccess: () => { qc.invalidateQueries({queryKey:["/api/reels"]}); setPhase("done"); },
+      onError:   () => { setErrMsg("Video yaratishda xato"); setPhase("error"); },
     }
   });
 
-  const handleFile = (f: File) => { setFile(f); setTitle(f.name.replace(/\.[^.]+$/,"").slice(0,60)); };
-
-  const handleSubmit = async () => {
-    if (!file || !title.trim() || !user) return;
-    setPhase("uploading"); setProgress(0); setErrMsg("");
-    try {
-      const req: UploadUrlRequest = { name: file.name, size: file.size, contentType: file.type };
-      const { uploadURL, objectPath } = await uploadUrlMut.mutateAsync({ data: req });
-      const xhr = new XMLHttpRequest();
-      xhr.upload.onprogress = (e) => { if (e.lengthComputable) setProgress(Math.round(e.loaded/e.total*90)); };
-      await new Promise<void>((res, rej) => {
-        xhr.open("PUT", uploadURL);
-        xhr.setRequestHeader("Content-Type", file.type);
-        xhr.onload = () => xhr.status < 300 ? res() : rej(new Error("Upload failed"));
-        xhr.onerror = () => rej(new Error("Network error"));
-        xhr.send(file);
-      });
-      setProgress(95); setPhase("creating");
-      const videoUrl = `/api/storage/objects/${objectPath}`;
-      createMut.mutate({ data: {
-        authorId: user.id,
-        videoUrl,
-        caption: caption || title,
-        tags: tags.split(",").map(t=>t.trim()).filter(Boolean),
-        duration: 0,
-      }});
-      setProgress(100);
-    } catch (e: unknown) {
-      setErrMsg(e instanceof Error ? e.message : "Xato yuz berdi");
-      setPhase("error");
-    }
+  const handleFile = (f: File) => { setFile(f); setTitle(f.name.replace(/\.[^.]+$/,"").slice(0,60)); setStep(1); };
+  const handleThumb = (f: File) => { setThumbFile(f); setThumbSrc(URL.createObjectURL(f)); };
+  const addTag = (t: string) => { const v=t.trim().replace(/^#/,""); if(v&&!tagList.includes(v)) setTagList(p=>[...p,v]); setTagInput(""); };
+  const aiSuggest = () => {
+    setAiLoading(true);
+    setTimeout(()=>{
+      setTitle(AI_TITLE_SUGGESTIONS[Math.floor(Math.random()*AI_TITLE_SUGGESTIONS.length)]);
+      setTagList(AI_TAG_SUGGESTIONS.slice(0,4+Math.floor(Math.random()*3)));
+      setCaption("OlCha platformasida exclusive kontent. Signal kuchli — NEXUS BROADCAST. #OlCha #Viral");
+      setAiLoading(false);
+    }, 1400);
   };
 
+  const handleSubmit = async () => {
+    if (!file||!title.trim()||!user) return;
+    setPhase("uploading"); setProgress(0); setErrMsg("");
+    try {
+      const req: UploadUrlRequest = {name:file.name,size:file.size,contentType:file.type};
+      const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => { if(e.lengthComputable) setProgress(Math.round(e.loaded/e.total*88)); };
+      await new Promise<void>((res,rej)=>{
+        xhr.open("PUT",uploadURL); xhr.setRequestHeader("Content-Type",file.type);
+        xhr.onload=()=>xhr.status<300?res():rej(new Error("Upload failed"));
+        xhr.onerror=()=>rej(new Error("Network error")); xhr.send(file);
+      });
+      setProgress(95); setPhase("creating");
+      createMut.mutate({data:{
+        authorId:user.id, videoUrl:`/api/storage/objects/${objectPath}`,
+        caption:caption||title, tags:tagList, duration:0,
+        thumbnailUrl: thumbSrc||undefined,
+      }});
+      setProgress(100);
+    } catch(e:unknown) { setErrMsg(e instanceof Error?e.message:"Xato yuz berdi"); setPhase("error"); }
+  };
+
+  const PRIVACIES = [
+    {id:"public",   label:"Ommaviy",   icon:"🌐", desc:"Barcha ko'ra oladi"},
+    {id:"unlisted", label:"Havolali",  icon:"🔗", desc:"Havola orqali ko'radi"},
+    {id:"private",  label:"Shaxsiy",   icon:"🔒", desc:"Faqat siz ko'rasiz"},
+  ] as const;
+
   return (
-    <ModalSheet onClose={onClose} title="Video yuklash" accent={T.cyan}>
-      <div className="px-5 pb-8 flex flex-col gap-4">
-        {/* Drop zone */}
-        <motion.div whileTap={{scale:0.98}}
-          onClick={()=>fileRef.current?.click()}
-          style={{borderRadius:14,border:`1.5px dashed ${file?T.cyan+"88":"rgba(255,255,255,0.12)"}`,
-            background: file?"rgba(0,229,255,0.06)":"rgba(255,255,255,0.03)",
-            padding:"28px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer"}}>
-          {file ? (
-            <>
-              <Film style={{width:32,height:32,color:T.cyan}}/>
-              <span style={{fontSize:12,color:T.cyan,fontWeight:700}}>{file.name}</span>
-              <span style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>
-                {(file.size/1024/1024).toFixed(1)} MB · {file.type.split("/")[1]?.toUpperCase()}
-              </span>
-            </>
-          ) : (
-            <>
-              <Upload style={{width:32,height:32,color:"rgba(255,255,255,0.25)"}}/>
-              <span style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.55)"}}>Video tanlash</span>
-              <span style={{fontSize:10,color:"rgba(255,255,255,0.25)"}}>MP4, MOV, AVI · max 500MB</span>
-            </>
-          )}
-        </motion.div>
-        <input ref={fileRef} type="file" accept="video/*" className="hidden"
-          onChange={e=>e.target.files?.[0] && handleFile(e.target.files[0])}/>
-
-        {/* Fields */}
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          <div>
-            <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>SARLAVHA</span>
-            <input value={title} onChange={e=>setTitle(e.target.value)} maxLength={80}
-              placeholder="Video nomi..."
-              style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
-                background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-                color:"white",fontSize:13,outline:"none"}}/>
-          </div>
-          <div>
-            <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>TAVSIF</span>
-            <textarea value={caption} onChange={e=>setCaption(e.target.value)} rows={2} maxLength={300}
-              placeholder="Video haqida..."
-              style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
-                background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-                color:"white",fontSize:13,outline:"none",resize:"none"}}/>
-          </div>
-          <div>
-            <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>TEGLAR</span>
-            <input value={tags} onChange={e=>setTags(e.target.value)} placeholder="olcha, music, vlog"
-              style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
-                background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-                color:"white",fontSize:13,outline:"none"}}/>
-            <span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>vergul bilan ajrating</span>
-          </div>
+    <ModalSheet onClose={onClose} title="Video yuklash" accent={T.cyan}
+      rightSlot={file && (
+        <button onClick={aiSuggest} disabled={aiLoading}
+          style={{width:34,height:34,borderRadius:10,background:"rgba(0,229,255,0.1)",
+            border:`1px solid ${T.cyan}33`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Wand2 style={{width:14,height:14,color:aiLoading?"rgba(255,255,255,0.3)":T.cyan}}/>
+        </button>
+      )}>
+      {aiLoading && (
+        <div style={{margin:"0 20px 12px",padding:"10px 14px",borderRadius:12,
+          background:"rgba(0,229,255,0.06)",border:`1px solid ${T.cyan}22`,
+          display:"flex",alignItems:"center",gap:8}}>
+          <motion.div animate={{rotate:360}} transition={{duration:1,repeat:Infinity,ease:"linear"}}>
+            <Sparkles style={{width:14,height:14,color:T.cyan}}/>
+          </motion.div>
+          <span style={{fontSize:12,color:T.cyan}}>AI tahlil qilmoqda…</span>
         </div>
+      )}
 
-        {/* Progress */}
-        {(phase==="uploading"||phase==="creating") && (
-          <div>
-            <div className="flex justify-between mb-1">
-              <span style={{fontSize:10,color:T.cyan}}>{phase==="uploading"?"Yuklanmoqda…":"Saqlanmoqda…"}</span>
-              <span style={{fontSize:10,color:T.cyan}}>{progress}%</span>
+      {/* Step indicators */}
+      <div className="flex items-center gap-0 px-5 mb-4">
+        {["Fayl","Tafsilot","Sozlama"].map((s,i)=>(
+          <React.Fragment key={i}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+              <div style={{width:24,height:24,borderRadius:"50%",fontSize:10,fontWeight:800,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                background:step>=i?T.cyan:"rgba(255,255,255,0.08)",
+                color:step>=i?"#000":"rgba(255,255,255,0.3)"}}>
+                {step>i?"✓":i+1}
+              </div>
+              <span style={{fontSize:8,color:step>=i?T.cyan:"rgba(255,255,255,0.3)",fontWeight:700}}>{s}</span>
             </div>
-            <div style={{height:4,borderRadius:2,background:"rgba(255,255,255,0.08)"}}>
-              <motion.div animate={{width:`${progress}%`}} style={{height:"100%",borderRadius:2,background:T.gCyan}}/>
+            {i<2&&<div style={{flex:1,height:1,background:step>i?T.cyan:"rgba(255,255,255,0.08)",margin:"0 4px 12px"}}/>}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="px-5 pb-8 flex flex-col gap-4">
+        {/* Step 0: File */}
+        {step===0 && (
+          <motion.div whileTap={{scale:0.98}} onClick={()=>fileRef.current?.click()}
+            style={{borderRadius:16,border:`1.5px dashed rgba(0,229,255,0.3)`,
+              background:"rgba(0,229,255,0.04)",padding:"32px 16px",
+              display:"flex",flexDirection:"column",alignItems:"center",gap:12,cursor:"pointer"}}>
+            <div style={{width:56,height:56,borderRadius:16,background:"rgba(0,229,255,0.1)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Upload style={{width:24,height:24,color:T.cyan}}/>
             </div>
-          </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:14,fontWeight:800,color:"rgba(255,255,255,0.8)"}}>Video tanlash</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:4}}>MP4, MOV, AVI, MKV · max 2GB</div>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              {["4K","HDR","60fps"].map(b=>(
+                <span key={b} style={{padding:"3px 8px",borderRadius:99,fontSize:9,fontWeight:700,
+                  background:"rgba(0,229,255,0.08)",border:"1px solid rgba(0,229,255,0.2)",color:T.cyan}}>{b}</span>
+              ))}
+            </div>
+          </motion.div>
         )}
 
-        {phase==="done" && (
-          <div style={{padding:"12px",borderRadius:10,background:"rgba(0,255,136,0.08)",
-            border:"1px solid rgba(0,255,136,0.3)",display:"flex",alignItems:"center",gap:8}}>
-            <Check style={{width:16,height:16,color:"#00ff88"}}/>
-            <span style={{fontSize:12,color:"#00ff88",fontWeight:700}}>Video muvaffaqiyatli yuklandi!</span>
-          </div>
-        )}
-        {phase==="error" && (
-          <div style={{padding:"12px",borderRadius:10,background:"rgba(255,45,85,0.08)",
-            border:"1px solid rgba(255,45,85,0.3)"}}>
-            <span style={{fontSize:12,color:"#ff2d55"}}>{errMsg}</span>
-          </div>
+        {/* Step 1: Details */}
+        {step>=1 && file && (
+          <>
+            {/* File info bar */}
+            <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:12,
+              background:"rgba(0,229,255,0.06)",border:`1px solid ${T.cyan}22`}}>
+              <Film style={{width:18,height:18,color:T.cyan,flexShrink:0}}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.8)",
+                  overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{file.name}</div>
+                <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>
+                  {(file.size/1024/1024).toFixed(1)}MB · {file.type.split("/")[1]?.toUpperCase()}
+                </div>
+              </div>
+              <button onClick={()=>{setFile(null);setStep(0);}}
+                style={{width:22,height:22,borderRadius:"50%",background:"rgba(255,255,255,0.08)",
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <X style={{width:11,height:11,color:"rgba(255,255,255,0.5)"}}/>
+              </button>
+            </div>
+
+            {/* Thumbnail */}
+            <div>
+              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>MUQOVA RASM</span>
+              <div className="flex gap-3 mt-2">
+                <motion.div whileTap={{scale:0.96}} onClick={()=>thumbRef.current?.click()}
+                  style={{width:88,height:56,borderRadius:10,overflow:"hidden",cursor:"pointer",
+                    border:`1.5px dashed ${thumbSrc?"transparent":T.cyan+"44"}`,
+                    background:thumbSrc?"#000":"rgba(0,229,255,0.04)",
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {thumbSrc
+                    ? <img src={thumbSrc} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    : <ImagePlus style={{width:20,height:20,color:`${T.cyan}66`}}/>}
+                </motion.div>
+                <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",gap:4}}>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.55)"}}>Muqova rasm tanlang</span>
+                  <span style={{fontSize:9,color:"rgba(255,255,255,0.25)"}}>JPG, PNG · 16:9 tavsiya</span>
+                </div>
+              </div>
+              <input ref={thumbRef} type="file" accept="image/*" className="hidden"
+                onChange={e=>e.target.files?.[0]&&handleThumb(e.target.files[0])}/>
+            </div>
+
+            {/* Title */}
+            <div>
+              <div className="flex justify-between mb-1">
+                <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>SARLAVHA</span>
+                <span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{title.length}/100</span>
+              </div>
+              <input value={title} onChange={e=>setTitle(e.target.value)} maxLength={100}
+                placeholder="Video nomi..."
+                style={{width:"100%",padding:"11px 13px",borderRadius:12,
+                  background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",
+                  color:"white",fontSize:13,outline:"none"}}/>
+            </div>
+
+            {/* Description */}
+            <div>
+              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>TAVSIF</span>
+              <textarea value={caption} onChange={e=>setCaption(e.target.value)} rows={3} maxLength={500}
+                placeholder="Video haqida batafsil..."
+                style={{width:"100%",marginTop:4,padding:"11px 13px",borderRadius:12,
+                  background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",
+                  color:"white",fontSize:12,outline:"none",resize:"none"}}/>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>TEGLAR</span>
+              {tagList.length>0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
+                  {tagList.map(t=>(
+                    <span key={t} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px 3px 10px",
+                      borderRadius:99,background:"rgba(0,229,255,0.1)",border:`1px solid ${T.cyan}33`,
+                      fontSize:10,color:T.cyan,fontWeight:700}}>
+                      #{t}
+                      <button onClick={()=>setTagList(p=>p.filter(x=>x!==t))}
+                        style={{width:12,height:12,opacity:0.6,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <X style={{width:10,height:10}}/>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div style={{display:"flex",gap:8,marginTop:4}}>
+                <input value={tagInput} onChange={e=>setTagInput(e.target.value)}
+                  onKeyDown={e=>{if(e.key==="Enter"||e.key===","){e.preventDefault();addTag(tagInput);}}}
+                  placeholder="#teg qo'shing..."
+                  style={{flex:1,padding:"9px 12px",borderRadius:10,
+                    background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",
+                    color:"white",fontSize:12,outline:"none"}}/>
+                <button onClick={()=>addTag(tagInput)}
+                  style={{padding:"9px 14px",borderRadius:10,background:"rgba(0,229,255,0.12)",
+                    border:`1px solid ${T.cyan}33`,color:T.cyan,fontSize:12,fontWeight:700}}>+</button>
+              </div>
+              {/* Suggested tags */}
+              <div className="flex gap-1.5 flex-wrap mt-2">
+                {AI_TAG_SUGGESTIONS.filter(t=>!tagList.includes(t)).slice(0,5).map(t=>(
+                  <button key={t} onClick={()=>addTag(t)}
+                    style={{padding:"2px 8px",borderRadius:99,fontSize:9,
+                      background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",
+                      color:"rgba(255,255,255,0.4)"}}>
+                    #{t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <motion.button whileTap={{scale:0.96}} onClick={()=>setStep(2)}
+              style={{padding:"12px",borderRadius:12,background:T.gCyan,
+                fontSize:13,fontWeight:800,color:"#000"}}>
+              Keyingi →
+            </motion.button>
+          </>
         )}
 
-        {phase==="done" ? (
-          <motion.button whileTap={{scale:0.96}} onClick={onClose}
-            style={{padding:"13px",borderRadius:12,background:T.gCyan,
-              fontSize:13,fontWeight:800,color:"#000",letterSpacing:"0.04em"}}>
-            Yopish
-          </motion.button>
-        ) : (
-          <motion.button whileTap={{scale:0.96}} onClick={handleSubmit}
-            disabled={!file||!title.trim()||phase==="uploading"||phase==="creating"}
-            style={{padding:"13px",borderRadius:12,
-              background:(!file||!title.trim())?"rgba(255,255,255,0.06)":T.gCyan,
-              fontSize:13,fontWeight:800,color:(!file||!title.trim())?"rgba(255,255,255,0.25)":"#000",
-              opacity:(phase==="uploading"||phase==="creating")?0.7:1,letterSpacing:"0.04em"}}>
-            {phase==="uploading"?"Yuklanmoqda…":phase==="creating"?"Saqlanmoqda…":"Nashr qilish"}
-          </motion.button>
+        {/* Step 2: Settings */}
+        {step===2 && (
+          <>
+            {/* Privacy */}
+            <div>
+              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>KO'RINISH</span>
+              <div className="flex flex-col gap-2 mt-2">
+                {PRIVACIES.map(p=>(
+                  <button key={p.id} onClick={()=>setPrivacy(p.id)}
+                    style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",borderRadius:12,
+                      background:privacy===p.id?"rgba(0,229,255,0.1)":"rgba(255,255,255,0.03)",
+                      border:`1px solid ${privacy===p.id?T.cyan+"55":"rgba(255,255,255,0.07)"}`,
+                      textAlign:"left"}}>
+                    <span style={{fontSize:18}}>{p.icon}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:700,color:privacy===p.id?T.cyan:"rgba(255,255,255,0.75)"}}>{p.label}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{p.desc}</div>
+                    </div>
+                    {privacy===p.id&&<div style={{width:8,height:8,borderRadius:"50%",background:T.cyan}}/>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Monetize */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",
+              borderRadius:12,background:"rgba(255,196,0,0.06)",border:"1px solid rgba(255,196,0,0.2)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <DollarSign style={{width:18,height:18,color:T.gold}}/>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.85)"}}>Monetizatsiya</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>Reklamadan daromad oling</div>
+                </div>
+              </div>
+              <motion.button whileTap={{scale:0.9}} onClick={()=>setMonetize(m=>!m)}
+                style={{width:44,height:24,borderRadius:99,position:"relative",
+                  background:monetize?T.gold:"rgba(255,255,255,0.1)",transition:"all 0.2s"}}>
+                <motion.div animate={{x:monetize?20:2}}
+                  style={{position:"absolute",top:2,width:20,height:20,borderRadius:"50%",
+                    background:monetize?"#000":"rgba(255,255,255,0.5)"}}/>
+              </motion.button>
+            </div>
+
+            {/* Scheduled */}
+            <div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                padding:"12px 14px",borderRadius:12,background:"rgba(255,255,255,0.03)",
+                border:"1px solid rgba(255,255,255,0.07)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <Clock style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.75)"}}>Rejali nashr</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>Vaqtni belgilang</div>
+                  </div>
+                </div>
+                <motion.button whileTap={{scale:0.9}} onClick={()=>setScheduled(s=>!s)}
+                  style={{width:44,height:24,borderRadius:99,position:"relative",
+                    background:scheduled?T.cyan:"rgba(255,255,255,0.1)",transition:"all 0.2s"}}>
+                  <motion.div animate={{x:scheduled?20:2}}
+                    style={{position:"absolute",top:2,width:20,height:20,borderRadius:"50%",
+                      background:scheduled?"#000":"rgba(255,255,255,0.5)"}}/>
+                </motion.button>
+              </div>
+              {scheduled && (
+                <input type="datetime-local" value={schedDate} onChange={e=>setSchedDate(e.target.value)}
+                  style={{width:"100%",marginTop:6,padding:"10px 12px",borderRadius:10,
+                    background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",
+                    color:"white",fontSize:12,outline:"none"}}/>
+              )}
+            </div>
+
+            {/* Progress */}
+            {(phase==="uploading"||phase==="creating") && (
+              <div>
+                <div className="flex justify-between mb-1.5">
+                  <span style={{fontSize:10,color:T.cyan}}>{phase==="uploading"?"Yuklanmoqda…":"Saqlanmoqda…"}</span>
+                  <span style={{fontSize:10,color:T.cyan}}>{progress}%</span>
+                </div>
+                <div style={{height:6,borderRadius:3,background:"rgba(255,255,255,0.06)"}}>
+                  <motion.div animate={{width:`${progress}%`}} style={{height:"100%",borderRadius:3,background:T.gCyan}}/>
+                </div>
+              </div>
+            )}
+            {phase==="done" && (
+              <div style={{padding:"12px 14px",borderRadius:12,background:"rgba(0,255,136,0.08)",
+                border:"1px solid rgba(0,255,136,0.3)",display:"flex",alignItems:"center",gap:8}}>
+                <Check style={{width:16,height:16,color:"#00ff88"}}/>
+                <span style={{fontSize:12,color:"#00ff88",fontWeight:700}}>Video muvaffaqiyatli yuklandi!</span>
+              </div>
+            )}
+            {phase==="error" && (
+              <div style={{padding:"12px 14px",borderRadius:12,background:"rgba(255,45,85,0.08)",
+                border:"1px solid rgba(255,45,85,0.3)"}}>
+                <span style={{fontSize:12,color:"#ff2d55"}}>{errMsg}</span>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button onClick={()=>setStep(1)}
+                style={{flex:"0 0 44px",height:44,borderRadius:12,
+                  background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <ChevronLeft style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>
+              </button>
+              {phase==="done" ? (
+                <motion.button whileTap={{scale:0.96}} onClick={onClose}
+                  style={{flex:1,padding:"13px",borderRadius:12,
+                    background:"rgba(0,255,136,0.15)",border:"1px solid rgba(0,255,136,0.4)",
+                    fontSize:13,fontWeight:800,color:"#00ff88"}}>
+                  ✓ Tugallandi
+                </motion.button>
+              ) : (
+                <motion.button whileTap={{scale:0.96}} onClick={handleSubmit}
+                  disabled={!title.trim()||phase==="uploading"||phase==="creating"}
+                  style={{flex:1,padding:"13px",borderRadius:12,
+                    background:!title.trim()?"rgba(255,255,255,0.06)":T.gCyan,
+                    fontSize:13,fontWeight:800,
+                    color:!title.trim()?"rgba(255,255,255,0.25)":"#000",
+                    opacity:(phase==="uploading"||phase==="creating")?0.7:1}}>
+                  {phase==="uploading"?"Yuklanmoqda…":phase==="creating"?"Saqlanmoqda…":"🚀 Nashr qilish"}
+                </motion.button>
+              )}
+            </div>
+          </>
         )}
       </div>
+      <input ref={fileRef} type="file" accept="video/*" className="hidden"
+        onChange={e=>e.target.files?.[0]&&handleFile(e.target.files[0])}/>
     </ModalSheet>
   );
 }
+
+/* ─────────────────────────────────────────────────────── */
+/* Live Setup Modal v2                                     */
+/* ─────────────────────────────────────────────────────── */
+const LIVE_AUTO_MSGS = [
+  {u:"Sardor",m:"salom hammaga 👋",c:"#00e5ff"},
+  {u:"Nilufar",m:"zo'r efir! 🔥",c:"#ff6b00"},
+  {u:"Jasur",m:"OlCha > YouTube 💯",c:"#a855f7"},
+  {u:"Malika",m:"❤️ ajoyib!",c:"#ff2d55"},
+  {u:"Bobur",m:"birinchi marta ko'rdim",c:"#00ff88"},
+  {u:"Kamola",m:"🚀🚀🚀 signal!",c:"#ffd700"},
+  {u:"Ulugbek",m:"stream sifati a'lo 🎯",c:"#00ffee"},
+  {u:"Zulfiya",m:"obuna bo'ldim ✨",c:"#ff6b00"},
+];
+const LIVE_GIFTS = ["💎","🚀","🔥","❤️‍🔥","⚡","🌊","👑","💰"];
+
 
 /* ─────────────────────────────────────────────────────── */
 /* Live Setup Modal                                        */
@@ -2476,19 +2725,32 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
 function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [file, setFile]       = useState<File|null>(null);
-  const [videoSrc, setVideoSrc] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"trim"|"filters"|"text"|"stickers"|"music"|"speed">("trim");
-  const [filter, setFilter]   = useState("normal");
-  const [speed, setSpeed]     = useState(1);
-  const [caption, setCaption] = useState("");
+  const [file, setFile]         = useState<File|null>(null);
+  const [videoSrc, setVideoSrc] = useState("");
+  const [activeTab, setActiveTab] = useState<"trim"|"filters"|"text"|"stickers"|"music"|"speed"|"grading"|"ai"|"transitions">("trim");
+  const [filter, setFilter]     = useState("normal");
+  const [speed, setSpeed]       = useState(1);
+  const [caption, setCaption]   = useState("");
   const [textColor, setTextColor] = useState("#ffffff");
+  const [textFont, setTextFont]   = useState("bold");
+  const [textSize, setTextSize]   = useState(14);
+  const [textBg, setTextBg]       = useState(true);
   const [trimStart, setTrimStart] = useState(0);
-  const [trimEnd, setTrimEnd]   = useState(100);
-  const [music, setMusic]     = useState<string|null>(null);
-  const [stickers, setStickers] = useState<string[]>([]);
+  const [trimEnd, setTrimEnd]     = useState(100);
+  const [music, setMusic]         = useState<string|null>(null);
+  const [stickers, setStickers]   = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
-  const [published, setPublished] = useState(false);
+  const [published, setPublished]   = useState(false);
+  const [exportQ, setExportQ]     = useState<"720p"|"1080p"|"4K">("1080p");
+  const [transition, setTransition] = useState("cut");
+  const [aiRunning, setAiRunning] = useState<string|null>(null);
+  const [aiDone, setAiDone]       = useState<string[]>([]);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast]     = useState(100);
+  const [saturation, setSaturation] = useState(100);
+  const [temperature, setTemperature] = useState(0);
+  const [vignette, setVignette]     = useState(0);
+  const [drafts, setDrafts]         = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileRef  = useRef<HTMLInputElement>(null);
 
@@ -2501,338 +2763,682 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   });
 
   const FILTERS = [
-    { id:"normal",  name:"Normal",  css:"none",                             preview:"#1a0533" },
-    { id:"vivid",   name:"Vivid",   css:"saturate(1.9) contrast(1.15)",    preview:"#2d0044" },
-    { id:"cinema",  name:"Cinema",  css:"sepia(0.35) contrast(1.2) brightness(0.95)", preview:"#221100" },
-    { id:"neon",    name:"Neon",    css:"hue-rotate(195deg) saturate(2.2)",preview:"#001133" },
-    { id:"retro",   name:"Retro",   css:"sepia(0.65) brightness(0.88)",    preview:"#332200" },
-    { id:"bw",      name:"B&W",     css:"grayscale(1) contrast(1.35)",     preview:"#111111" },
-    { id:"warm",    name:"Warm",    css:"sepia(0.22) saturate(1.5) brightness(1.06)", preview:"#330d00" },
-    { id:"cool",    name:"Cool",    css:"hue-rotate(30deg) saturate(1.3)", preview:"#001a33" },
-    { id:"glitch",  name:"Glitch",  css:"hue-rotate(320deg) saturate(2.5) contrast(1.4)", preview:"#1a0022" },
+    { id:"normal",   name:"Normal",   css:"none",                                           preview:"#1a0533" },
+    { id:"vivid",    name:"Vivid",    css:"saturate(1.9) contrast(1.15)",                  preview:"#2d0044" },
+    { id:"cinema",   name:"Cinema",   css:"sepia(0.35) contrast(1.2) brightness(0.95)",    preview:"#221100" },
+    { id:"neon",     name:"Neon",     css:"hue-rotate(195deg) saturate(2.2)",              preview:"#001133" },
+    { id:"retro",    name:"Retro",    css:"sepia(0.65) brightness(0.88)",                  preview:"#332200" },
+    { id:"bw",       name:"B&W",      css:"grayscale(1) contrast(1.35)",                   preview:"#111111" },
+    { id:"warm",     name:"Warm",     css:"sepia(0.22) saturate(1.5) brightness(1.06)",    preview:"#330d00" },
+    { id:"cool",     name:"Cool",     css:"hue-rotate(30deg) saturate(1.3)",               preview:"#001a33" },
+    { id:"glitch",   name:"Glitch",   css:"hue-rotate(320deg) saturate(2.5) contrast(1.4)",preview:"#1a0022" },
+    { id:"galaxy",   name:"Galaxy",   css:"hue-rotate(240deg) saturate(1.8) brightness(0.8)",preview:"#000a33" },
+    { id:"sunset",   name:"Sunset",   css:"sepia(0.4) saturate(2) hue-rotate(-20deg)",    preview:"#331500" },
+    { id:"dream",    name:"Dream",    css:"blur(0.5px) saturate(1.4) brightness(1.1)",     preview:"#220033" },
   ];
-  const SPEEDS = [0.3, 0.5, 1, 1.5, 2, 3];
+
+  const SPEEDS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+
   const MUSICS = [
-    { id:"aurora",  name:"Aurora Wave",   emoji:"🌊" },
-    { id:"neon",    name:"Neon Pulse",    emoji:"⚡" },
-    { id:"chill",   name:"Chill Vibes",   emoji:"🎵" },
-    { id:"epic",    name:"Epic Drop",     emoji:"🔥" },
-    { id:"lofi",    name:"Lo-Fi Beats",   emoji:"🎹" },
-    { id:"none",    name:"Musiqasiz",     emoji:"🔇" },
+    { id:"aurora",   name:"Aurora Wave",      emoji:"🌊", bpm:96  },
+    { id:"neon",     name:"Neon Pulse",       emoji:"⚡", bpm:128 },
+    { id:"chill",    name:"Chill Vibes",      emoji:"🎵", bpm:80  },
+    { id:"epic",     name:"Epic Drop",        emoji:"🔥", bpm:140 },
+    { id:"lofi",     name:"Lo-Fi Beats",      emoji:"🎹", bpm:75  },
+    { id:"trap",     name:"Future Trap",      emoji:"🎤", bpm:144 },
+    { id:"ambient",  name:"Space Ambient",    emoji:"🌌", bpm:60  },
+    { id:"hiphop",   name:"OlCha Hip-Hop",    emoji:"🎧", bpm:92  },
+    { id:"none",     name:"Musiqasiz",        emoji:"🔇", bpm:0   },
   ];
-  const STICKER_LIST = ["🔥","⚡","💫","🎯","🚀","✨","💥","🌊","🎵","❤️","😎","🤩","💯","🏆","👑","🌈"];
+
+  const STICKER_LIST = ["🔥","⚡","💫","🎯","🚀","✨","💥","🌊","🎵","❤️","😎","🤩","💯","🏆","👑","🌈",
+    "🎬","📡","🛸","🦁","🐉","⭐","🌀","🎭","🎪","💎","🏅","🤖","👾","🕹️","🎮","🌟"];
+
+  const TRANSITIONS = [
+    {id:"cut",    name:"Cut",       emoji:"✂️"},
+    {id:"fade",   name:"Fade",      emoji:"🌅"},
+    {id:"dissolve",name:"Dissolve", emoji:"💧"},
+    {id:"slide",  name:"Slide",     emoji:"➡️"},
+    {id:"zoom",   name:"Zoom",      emoji:"🔍"},
+    {id:"spin",   name:"Spin",      emoji:"🌀"},
+    {id:"glitch", name:"Glitch",    emoji:"⚡"},
+    {id:"flash",  name:"Flash",     emoji:"💥"},
+    {id:"wipe",   name:"Wipe",      emoji:"🖌️"},
+    {id:"iris",   name:"Iris",      emoji:"👁️"},
+    {id:"push",   name:"Push",      emoji:"🏃"},
+    {id:"morph",  name:"Morph",     emoji:"🧬"},
+  ];
+
+  const AI_ACTIONS = [
+    {id:"autocut",  label:"Auto-Kesish",   icon:"✂️", desc:"Eng yaxshi momentlarni topadi"},
+    {id:"captions", label:"Auto-Sarlavha", icon:"📝", desc:"AI matn va tavsif yozadi"},
+    {id:"scene",    label:"Sahna Tahlili", icon:"🎬", desc:"Sahnalarni avtomatik ajratadi"},
+    {id:"beat",     label:"Beat Sinxron",  icon:"🎵", desc:"Musiqa ritmiga moslashtiradi"},
+    {id:"enhance",  label:"AI Enhance",    icon:"✨", desc:"Sifat va rangni yaxshilaydi"},
+    {id:"crop",     label:"Smart Crop",    icon:"🎯", desc:"Optimal framing aniqlaydi"},
+  ];
+
+  const TEXT_FONTS = [
+    {id:"bold",    name:"Bold",      css:"bold"},
+    {id:"italic",  name:"Italic",    css:"italic"},
+    {id:"neon",    name:"Neon",      css:"bold"},
+    {id:"outline", name:"Outline",   css:"bold"},
+    {id:"shadow",  name:"Shadow",    css:"bold"},
+  ];
 
   const handleFile = (f: File) => {
-    setFile(f);
-    const url = URL.createObjectURL(f);
-    setVideoSrc(url);
+    setFile(f); setVideoSrc(URL.createObjectURL(f));
     setTrimStart(0); setTrimEnd(100);
   };
 
-  useEffect(()=>{
-    if (videoRef.current) videoRef.current.playbackRate = speed;
-  },[speed]);
+  useEffect(()=>{ if(videoRef.current) videoRef.current.playbackRate=speed; },[speed]);
+
+  const gradingCss = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) hue-rotate(${temperature}deg)`;
+  const filterCss  = FILTERS.find(f=>f.id===filter)?.css||"none";
+  const appliedCss = filterCss==="none" ? gradingCss : `${filterCss} ${gradingCss}`;
+
+  const runAi = (id:string) => {
+    setAiRunning(id);
+    setTimeout(()=>{ setAiRunning(null); setAiDone(p=>[...p,id]); }, 1800+Math.random()*1200);
+  };
 
   const handlePublish = async () => {
-    if (!file || !caption.trim() || !user) return;
+    if (!file||!user) return;
     setPublishing(true);
     try {
-      const req: UploadUrlRequest = { name: file.name, size: file.size, contentType: file.type };
-      const { uploadURL, objectPath } = await uploadUrlMut.mutateAsync({ data: req });
-      const res = await fetch(uploadURL, { method:"PUT", headers:{"Content-Type":file.type}, body: file });
+      const req: UploadUrlRequest = {name:file.name,size:file.size,contentType:file.type};
+      const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
+      const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file});
       if (!res.ok) throw new Error("Upload failed");
-      createMut.mutate({ data: {
-        authorId: user.id,
-        videoUrl: `/api/storage/objects/${objectPath}`,
-        caption,
-        audioTrack: music && music!=="none" ? music : undefined,
-        tags: ["cipcat","olcha"],
-        duration: 0,
+      createMut.mutate({data:{
+        authorId:user.id,
+        videoUrl:`/api/storage/objects/${objectPath}`,
+        caption:caption||"CipCat Studio · OlCha",
+        audioTrack:music&&music!=="none"?music:undefined,
+        tags:["cipcat","olcha","studio"],
+        duration:0,
       }});
     } catch { setPublishing(false); }
   };
 
   const TABS = [
-    { id:"trim",     Icon:SlidersHorizontal, label:"Kesish" },
-    { id:"filters",  Icon:Palette,     label:"Filtr" },
-    { id:"text",     Icon:Type,        label:"Matn" },
-    { id:"stickers", Icon:Smile,       label:"Stiker" },
-    { id:"music",    Icon:Music,       label:"Musiqa" },
-    { id:"speed",    Icon:FastForward, label:"Tezlik" },
+    { id:"trim",        Icon:SlidersHorizontal, label:"Kesish"   },
+    { id:"filters",     Icon:Palette,            label:"Filtr"    },
+    { id:"grading",     Icon:Sliders,            label:"Grading"  },
+    { id:"text",        Icon:Type,               label:"Matn"     },
+    { id:"stickers",    Icon:Smile,              label:"Stiker"   },
+    { id:"transitions", Icon:Layers,             label:"O'tish"   },
+    { id:"music",       Icon:Music,              label:"Musiqa"   },
+    { id:"speed",       Icon:FastForward,        label:"Tezlik"   },
+    { id:"ai",          Icon:Sparkles,           label:"AI Edit"  },
   ] as const;
 
   return (
-    <motion.div
-      initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-      className="fixed inset-0 z-[9900] flex flex-col"
-      style={{background:"#04000f"}}>
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+      className="fixed inset-0 z-[9900] flex flex-col" style={{background:"#04000f"}}>
+
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-safe pt-3 pb-3"
-        style={{borderBottom:"1px solid rgba(168,85,247,0.15)"}}>
+      <div className="flex items-center justify-between px-4 pt-3 pb-3"
+        style={{borderBottom:"1px solid rgba(168,85,247,0.18)",background:"rgba(4,0,15,0.95)"}}>
         <button onClick={onClose}
-          style={{width:32,height:32,borderRadius:8,background:"rgba(255,255,255,0.07)",
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
+          style={{width:34,height:34,borderRadius:10,background:"rgba(255,255,255,0.07)",
+            border:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center"}}>
           <X style={{width:16,height:16,color:"rgba(255,255,255,0.6)"}}/>
         </button>
         <div className="flex items-center gap-2">
           <Scissors style={{width:14,height:14,color:T.violet}}/>
-          <span style={{fontSize:15,fontWeight:900,color:"white",letterSpacing:"0.06em"}}>
+          <span style={{fontSize:16,fontWeight:900,color:"white",letterSpacing:"0.08em"}}>
             Cip<span style={{background:T.gViolet,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Cat</span>
           </span>
-          <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.15em"}}>STUDIO</span>
+          <span style={{fontSize:8,color:T.violet,fontWeight:700,letterSpacing:"0.18em",
+            padding:"2px 6px",borderRadius:4,background:"rgba(119,0,255,0.15)",border:"1px solid rgba(119,0,255,0.3)"}}>
+            STUDIO v2
+          </span>
         </div>
-        <motion.button whileTap={{scale:0.9}}
-          onClick={handlePublish}
-          disabled={!file||!caption.trim()||publishing||published}
-          style={{padding:"6px 14px",borderRadius:99,fontSize:11,fontWeight:800,
-            background:(!file||!caption.trim()||published)?"rgba(255,255,255,0.06)":T.gViolet,
-            color:(!file||!caption.trim()||published)?"rgba(255,255,255,0.3)":"white",
-            opacity:publishing?0.7:1}}>
-          {published?"✓ Chop":publishing?"Saqlanmoqda…":"Nashr"}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          {/* Export quality */}
+          <select value={exportQ} onChange={e=>setExportQ(e.target.value as "720p"|"1080p"|"4K")}
+            style={{padding:"4px 6px",borderRadius:8,background:"rgba(168,85,247,0.1)",
+              border:"1px solid rgba(168,85,247,0.3)",color:T.violet,fontSize:9,fontWeight:700,
+              outline:"none",appearance:"none"}}>
+            {["720p","1080p","4K"].map(q=><option key={q} value={q}>{q}</option>)}
+          </select>
+          {/* Draft save */}
+          <motion.button whileTap={{scale:0.9}} onClick={()=>setDrafts(d=>d+1)}
+            style={{padding:"5px 8px",borderRadius:8,background:"rgba(255,255,255,0.06)",
+              border:"1px solid rgba(255,255,255,0.1)",fontSize:9,fontWeight:700,
+              color:"rgba(255,255,255,0.5)"}}>
+            {drafts>0?`💾 ${drafts}`:"💾"}
+          </motion.button>
+          {/* Publish */}
+          <motion.button whileTap={{scale:0.9}} onClick={handlePublish}
+            disabled={!file||publishing||published}
+            style={{padding:"6px 14px",borderRadius:99,fontSize:11,fontWeight:900,
+              background:(!file||published)?"rgba(255,255,255,0.06)":T.gViolet,
+              color:(!file||published)?"rgba(255,255,255,0.3)":"white",
+              opacity:publishing?0.7:1,
+              boxShadow:(!file||published)?"none":`0 2px 12px ${T.violet}55`}}>
+            {published?"✓":publishing?"…":"Nashr"}
+          </motion.button>
+        </div>
       </div>
 
       {/* Video preview */}
-      <div style={{flex:"0 0 auto",position:"relative",background:"#000",aspectRatio:"9/16",maxHeight:"36vh",
-        alignSelf:"center",width:"100%",overflow:"hidden"}}>
+      <div style={{flex:"0 0 auto",position:"relative",background:"#000",
+        aspectRatio:"9/16",maxHeight:"34vh",alignSelf:"center",width:"100%",overflow:"hidden"}}>
         {videoSrc ? (
           <video ref={videoRef} src={videoSrc} autoPlay loop muted playsInline
-            style={{width:"100%",height:"100%",objectFit:"cover",filter:FILTERS.find(f=>f.id===filter)?.css||"none"}}/>
+            style={{width:"100%",height:"100%",objectFit:"cover",filter:appliedCss}}/>
         ) : (
           <motion.div whileTap={{scale:0.97}} onClick={()=>fileRef.current?.click()}
             style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-              height:"100%",gap:10,cursor:"pointer"}}>
-            <div style={{width:56,height:56,borderRadius:16,background:"rgba(168,85,247,0.15)",
-              border:"1.5px dashed rgba(168,85,247,0.4)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <ImagePlus style={{width:22,height:22,color:T.violet}}/>
+              height:"100%",gap:10,cursor:"pointer",
+              background:"radial-gradient(ellipse at 50% 40%,rgba(168,85,247,0.08),transparent 60%)"}}>
+            <motion.div animate={{scale:[1,1.05,1]}} transition={{duration:2,repeat:Infinity}}
+              style={{width:60,height:60,borderRadius:18,background:"rgba(168,85,247,0.12)",
+                border:"1.5px dashed rgba(168,85,247,0.5)",display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:"0 0 30px rgba(168,85,247,0.15)"}}>
+              <ImagePlus style={{width:24,height:24,color:T.violet}}/>
+            </motion.div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontWeight:700}}>Video tanlang</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.2)",marginTop:2}}>MP4, MOV, AVI · max 2GB</div>
             </div>
-            <span style={{fontSize:13,color:"rgba(255,255,255,0.4)",fontWeight:700}}>Video tanlang</span>
-            <span style={{fontSize:10,color:"rgba(255,255,255,0.2)"}}>MP4, MOV · max 500MB</span>
+            <div style={{display:"flex",gap:6}}>
+              {["4K","HDR","60FPS"].map(b=>(
+                <span key={b} style={{padding:"2px 7px",borderRadius:99,fontSize:8,fontWeight:700,
+                  background:"rgba(168,85,247,0.1)",border:"1px solid rgba(168,85,247,0.25)",color:T.violet}}>{b}</span>
+              ))}
+            </div>
           </motion.div>
         )}
         {/* Stickers overlay */}
-        {stickers.length > 0 && (
+        {stickers.length>0 && (
           <div style={{position:"absolute",top:10,right:10,display:"flex",flexWrap:"wrap",
-            gap:2,maxWidth:80,justifyContent:"flex-end"}}>
+            gap:2,maxWidth:84,justifyContent:"flex-end",pointerEvents:"none"}}>
             {stickers.map((s,i)=>(
-              <span key={i} style={{fontSize:18,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.8))"}}>{s}</span>
+              <span key={i} style={{fontSize:18,filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.9))"}}>{s}</span>
             ))}
           </div>
         )}
+        {/* Text overlay */}
         {caption && (
-          <div style={{position:"absolute",bottom:16,left:0,right:0,textAlign:"center"}}>
-            <span style={{fontSize:13,fontWeight:800,color:textColor,
-              textShadow:"0 2px 8px rgba(0,0,0,0.9)",padding:"4px 10px",
-              borderRadius:6,background:"rgba(0,0,0,0.35)"}}>{caption}</span>
+          <div style={{position:"absolute",bottom:20,left:0,right:0,textAlign:"center",pointerEvents:"none"}}>
+            <span style={{fontSize:textSize,fontWeight:textFont==="italic"?"normal":900,
+              fontStyle:textFont==="italic"?"italic":"normal",
+              color:textColor,textShadow:"0 2px 10px rgba(0,0,0,0.95)",
+              padding:"4px 12px",borderRadius:7,
+              background:textBg?"rgba(0,0,0,0.45)":"transparent",
+              letterSpacing:"0.02em"}}>{caption}</span>
           </div>
         )}
-        {/* Trim bar */}
-        <div style={{position:"absolute",bottom:0,left:0,right:0,height:4,background:"rgba(0,0,0,0.4)"}}>
-          <div style={{position:"absolute",left:`${trimStart}%`,right:`${100-trimEnd}%`,
-            height:"100%",background:T.gViolet}}/>
+        {/* Vignette overlay */}
+        {vignette>0 && (
+          <div style={{position:"absolute",inset:0,pointerEvents:"none",
+            background:`radial-gradient(ellipse at 50% 50%,transparent ${100-vignette}%,rgba(0,0,0,${vignette/150}) 100%)`}}/>
+        )}
+        {/* Trim progress bar */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:5,background:"rgba(0,0,0,0.6)"}}>
+          <div style={{position:"absolute",left:`${trimStart}%`,width:`${trimEnd-trimStart}%`,
+            height:"100%",background:T.gViolet,opacity:0.8}}/>
+          <div style={{position:"absolute",left:`${trimStart}%`,width:3,height:"100%",background:"white",opacity:0.9}}/>
+          <div style={{position:"absolute",left:`${trimEnd}%`,width:3,height:"100%",background:"white",opacity:0.9,transform:"translateX(-3px)"}}/>
         </div>
+        {/* AI processing badge */}
+        {aiRunning && (
+          <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",
+            display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:99,
+            background:"rgba(168,85,247,0.7)",backdropFilter:"blur(8px)"}}>
+            <motion.div animate={{rotate:360}} transition={{duration:0.8,repeat:Infinity,ease:"linear"}}>
+              <Sparkles style={{width:10,height:10,color:"white"}}/>
+            </motion.div>
+            <span style={{fontSize:9,fontWeight:700,color:"white"}}>AI ishlayapti…</span>
+          </div>
+        )}
       </div>
       <input ref={fileRef} type="file" accept="video/*" className="hidden"
         onChange={e=>e.target.files?.[0]&&handleFile(e.target.files[0])}/>
 
-      {/* Timeline strip */}
-      <div style={{padding:"6px 16px",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-        <div className="flex gap-0.5" style={{overflowX:"auto",scrollbarWidth:"none"}}>
-          {Array.from({length:16}).map((_,i)=>(
-            <div key={i}
-              style={{flexShrink:0,width:20,height:24,borderRadius:3,
-                background: i/16*100>=trimStart && i/16*100<=trimEnd
-                  ? `rgba(168,85,247,${0.25+Math.sin(i)*0.15})`
-                  : "rgba(255,255,255,0.04)",
-                border: i/16*100>=trimStart && i/16*100<=trimEnd
-                  ? "1px solid rgba(168,85,247,0.3)" : "1px solid transparent"}}/>
-          ))}
+      {/* Multi-layer waveform timeline */}
+      <div style={{padding:"5px 12px",borderBottom:"1px solid rgba(255,255,255,0.06)",
+        background:"rgba(0,0,0,0.3)"}}>
+        <div style={{position:"relative",height:32}}>
+          {/* Track label */}
+          <div style={{position:"absolute",left:0,top:0,bottom:0,width:36,
+            display:"flex",flexDirection:"column",justifyContent:"space-around",gap:1}}>
+            {["VID","AUD"].map(l=>(
+              <span key={l} style={{fontSize:6,fontWeight:800,color:"rgba(255,255,255,0.3)",letterSpacing:"0.1em"}}>{l}</span>
+            ))}
+          </div>
+          {/* Video track */}
+          <div style={{position:"absolute",left:40,right:0,top:1,height:12,
+            background:"rgba(255,255,255,0.04)",borderRadius:3,overflow:"hidden"}}>
+            <div style={{position:"absolute",left:`${trimStart}%`,width:`${trimEnd-trimStart}%`,
+              top:0,bottom:0,background:`linear-gradient(90deg,${T.violet}44,${T.nova}55)`,borderRadius:2}}/>
+            {Array.from({length:24}).map((_,i)=>(
+              <div key={i} style={{position:"absolute",left:`${(i/24)*100}%`,top:1,bottom:1,width:1.5,
+                background:`rgba(168,85,247,${0.2+Math.abs(Math.sin(i*1.3))*0.5})`,borderRadius:1}}/>
+            ))}
+          </div>
+          {/* Audio waveform track */}
+          <div style={{position:"absolute",left:40,right:0,bottom:1,height:12,
+            background:"rgba(255,255,255,0.03)",borderRadius:3,overflow:"hidden"}}>
+            {music && music!=="none" && Array.from({length:32}).map((_,i)=>(
+              <div key={i} style={{position:"absolute",left:`${(i/32)*100}%`,
+                bottom:1,width:2,
+                height:`${30+Math.abs(Math.sin(i*2.1+1))*70}%`,
+                background:`rgba(0,229,255,${0.3+Math.abs(Math.sin(i*2.1))*0.4})`,borderRadius:1}}/>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Tool tabs */}
-      <div style={{borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-        <div className="flex overflow-x-auto px-3" style={{scrollbarWidth:"none",gap:4,paddingBottom:0}}>
+      {/* Tool tabs — scrollable */}
+      <div style={{borderBottom:"1px solid rgba(255,255,255,0.05)",background:"rgba(0,0,0,0.2)"}}>
+        <div className="flex overflow-x-auto px-2" style={{scrollbarWidth:"none",gap:2,paddingBottom:0}}>
           {TABS.map(({id,Icon,label})=>(
             <button key={id} onClick={()=>setActiveTab(id)}
-              style={{flexShrink:0,padding:"8px 12px",display:"flex",flexDirection:"column",
-                alignItems:"center",gap:2,borderBottom:`2px solid ${activeTab===id?T.violet:"transparent"}`,
+              style={{flexShrink:0,padding:"7px 10px",display:"flex",flexDirection:"column",
+                alignItems:"center",gap:1.5,
+                borderBottom:`2px solid ${activeTab===id?T.violet:"transparent"}`,
+                background:activeTab===id?"rgba(168,85,247,0.05)":"transparent",
                 transition:"all 0.15s"}}>
-              <Icon style={{width:14,height:14,color:activeTab===id?T.violet:"rgba(255,255,255,0.35)"}}/>
-              <span style={{fontSize:9,fontWeight:700,color:activeTab===id?T.violet:"rgba(255,255,255,0.3)",
-                letterSpacing:"0.05em"}}>{label}</span>
+              <Icon style={{width:13,height:13,color:activeTab===id?T.violet:"rgba(255,255,255,0.3)"}}/>
+              <span style={{fontSize:7.5,fontWeight:700,letterSpacing:"0.04em",
+                color:activeTab===id?T.violet:"rgba(255,255,255,0.28)"}}>{label}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Tool panel */}
-      <div style={{flex:1,overflowY:"auto",padding:"12px 16px",minHeight:0}}>
-        {/* Trim */}
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 20px",minHeight:0,scrollbarWidth:"none"}}>
+
+        {/* ── TRIM ── */}
         {activeTab==="trim" && (
           <div className="flex flex-col gap-4">
-            <div>
-              <div className="flex justify-between mb-2">
-                <span style={{fontSize:10,color:T.violet,fontWeight:700}}>BOSHLANISH</span>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{trimStart}%</span>
+            {[
+              {label:"BOSHLANISH",value:trimStart,set:setTrimStart,min:0,max:trimEnd-5},
+              {label:"TUGASH",    value:trimEnd,  set:setTrimEnd,  min:trimStart+5,max:100},
+            ].map(({label,value,set,min,max})=>(
+              <div key={label}>
+                <div className="flex justify-between mb-1.5">
+                  <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>{label}</span>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontFamily:"monospace"}}>{value}%</span>
+                </div>
+                <input type="range" min={min} max={max} value={value}
+                  onChange={e=>set(Number(e.target.value))}
+                  style={{width:"100%",accentColor:T.violet}}/>
               </div>
-              <input type="range" min={0} max={trimEnd-5} value={trimStart}
-                onChange={e=>setTrimStart(Number(e.target.value))}
-                style={{width:"100%",accentColor:T.violet}}/>
+            ))}
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {[{l:"15s",v:[0,25]},{l:"30s",v:[0,50]},{l:"60s",v:[0,100]},{l:"Soni",v:[25,75]}].map(p=>(
+                <button key={p.l} onClick={()=>{setTrimStart(p.v[0]);setTrimEnd(p.v[1]);}}
+                  style={{padding:"6px 12px",borderRadius:8,fontSize:10,fontWeight:700,
+                    background:"rgba(168,85,247,0.1)",border:"1px solid rgba(168,85,247,0.25)",color:T.violet}}>
+                  {p.l}
+                </button>
+              ))}
+            </div>
+            <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(168,85,247,0.07)",
+              border:"1px solid rgba(168,85,247,0.15)",display:"flex",justifyContent:"space-between"}}>
+              <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>Tanlangan</span>
+              <span style={{color:T.violet,fontWeight:800,fontSize:11}}>{trimEnd-trimStart}%</span>
+            </div>
+          </div>
+        )}
+
+        {/* ── FILTERS ── */}
+        {activeTab==="filters" && (
+          <div>
+            <div className="flex flex-wrap gap-3 justify-between">
+              {FILTERS.map(f=>(
+                <button key={f.id} onClick={()=>setFilter(f.id)}
+                  style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <div style={{width:52,height:52,borderRadius:12,background:f.preview,
+                    filter:f.css==="none"?"none":f.css,
+                    border:`2px solid ${filter===f.id?T.violet:"rgba(255,255,255,0.06)"}`,
+                    boxShadow:filter===f.id?`0 0 12px ${T.violet}66, 0 0 24px ${T.violet}22`:"none",
+                    transition:"all 0.2s"}}/>
+                  <span style={{fontSize:7.5,fontWeight:700,
+                    color:filter===f.id?T.violet:"rgba(255,255,255,0.3)"}}>{f.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── COLOR GRADING ── */}
+        {activeTab==="grading" && (
+          <div className="flex flex-col gap-4">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>Rang sozlamalari</span>
+              <button onClick={()=>{setBrightness(100);setContrast(100);setSaturation(100);setTemperature(0);setVignette(0);}}
+                style={{fontSize:10,color:T.violet,fontWeight:700}}>Reset</button>
+            </div>
+            {[
+              {label:"Yorqinlik",   value:brightness, set:setBrightness, min:50, max:200, unit:"%" },
+              {label:"Kontrast",    value:contrast,   set:setContrast,   min:50, max:200, unit:"%" },
+              {label:"To'yinganlik",value:saturation, set:setSaturation, min:0,  max:300, unit:"%" },
+              {label:"Harorat",     value:temperature,set:setTemperature,min:-60,max:60,  unit:"°" },
+              {label:"Vignette",    value:vignette,   set:setVignette,   min:0,  max:80,  unit:""  },
+            ].map(({label,value,set,min,max,unit})=>(
+              <div key={label}>
+                <div className="flex justify-between mb-1.5">
+                  <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.08em"}}>{label.toUpperCase()}</span>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontFamily:"monospace"}}>
+                    {value>0&&unit!=="%"?"+":""}{value}{unit}
+                  </span>
+                </div>
+                <input type="range" min={min} max={max} value={value}
+                  onChange={e=>set(Number(e.target.value))}
+                  style={{width:"100%",accentColor:T.violet}}/>
+              </div>
+            ))}
+            {/* Preview swatch */}
+            <div style={{height:40,borderRadius:12,overflow:"hidden",
+              background:"linear-gradient(135deg,#ff3500,#7700ff,#00ffee)",
+              filter:gradingCss}}/>
+          </div>
+        )}
+
+        {/* ── TEXT ── */}
+        {activeTab==="text" && (
+          <div className="flex flex-col gap-4">
+            <div>
+              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>MATN</span>
+              <input value={caption} onChange={e=>setCaption(e.target.value)} maxLength={80}
+                placeholder="Video ustiga matn..."
+                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
+                  background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
+                  color:textColor,fontSize:13,fontStyle:textFont==="italic"?"italic":"normal",
+                  fontWeight:textFont==="italic"?400:900,outline:"none"}}/>
             </div>
             <div>
-              <div className="flex justify-between mb-2">
-                <span style={{fontSize:10,color:T.violet,fontWeight:700}}>TUGASH</span>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{trimEnd}%</span>
+              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>RANG</span>
+              <div className="flex gap-2 flex-wrap mt-1.5">
+                {["#ffffff","#00ffee","#ff3500","#7700ff","#ffc400","#ff2d55","#00ff88","#ff6b00","#00e5ff","#a855f7"].map(c=>(
+                  <button key={c} onClick={()=>setTextColor(c)}
+                    style={{width:26,height:26,borderRadius:"50%",background:c,
+                      border:`3px solid ${textColor===c?"white":"transparent"}`,
+                      boxShadow:textColor===c?"0 0 0 1px rgba(255,255,255,0.4)":"none",
+                      transition:"all 0.15s"}}/>
+                ))}
               </div>
-              <input type="range" min={trimStart+5} max={100} value={trimEnd}
-                onChange={e=>setTrimEnd(Number(e.target.value))}
+            </div>
+            <div>
+              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>STIL</span>
+              <div className="flex gap-2 mt-1.5 flex-wrap">
+                {TEXT_FONTS.map(f=>(
+                  <button key={f.id} onClick={()=>setTextFont(f.id)}
+                    style={{padding:"5px 12px",borderRadius:8,fontSize:11,
+                      fontWeight:textFont===f.id?900:400,
+                      fontStyle:f.id==="italic"?"italic":"normal",
+                      background:textFont===f.id?"rgba(168,85,247,0.18)":"rgba(255,255,255,0.04)",
+                      border:`1px solid ${textFont===f.id?"rgba(168,85,247,0.4)":"rgba(255,255,255,0.07)"}`,
+                      color:textFont===f.id?T.violet:"rgba(255,255,255,0.5)"}}>
+                    {f.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between mb-1.5">
+                <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>O'LCHAM</span>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{textSize}px</span>
+              </div>
+              <input type="range" min={10} max={32} value={textSize}
+                onChange={e=>setTextSize(Number(e.target.value))}
                 style={{width:"100%",accentColor:T.violet}}/>
             </div>
-            <div style={{padding:"10px",borderRadius:10,background:"rgba(168,85,247,0.08)",
-              border:"1px solid rgba(168,85,247,0.15)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+              padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",
+              border:"1px solid rgba(255,255,255,0.06)"}}>
+              <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>Fon ko'rinishi</span>
+              <motion.button whileTap={{scale:0.9}} onClick={()=>setTextBg(b=>!b)}
+                style={{width:40,height:22,borderRadius:99,position:"relative",
+                  background:textBg?T.violet:"rgba(255,255,255,0.1)",transition:"all 0.2s"}}>
+                <motion.div animate={{x:textBg?18:2}}
+                  style={{position:"absolute",top:2,width:18,height:18,borderRadius:"50%",
+                    background:"white"}}/>
+              </motion.button>
+            </div>
+            {caption && (
+              <div style={{padding:"14px",borderRadius:12,background:"rgba(0,0,0,0.6)",
+                textAlign:"center",border:"1px solid rgba(255,255,255,0.06)"}}>
+                <span style={{fontSize:textSize,fontWeight:900,color:textColor,
+                  textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>{caption}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── STICKERS ── */}
+        {activeTab==="stickers" && (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap gap-2.5">
+              {STICKER_LIST.map(s=>(
+                <motion.button key={s} whileTap={{scale:0.8}}
+                  onClick={()=>setStickers(p=>[...p.slice(-8),s])}
+                  style={{width:42,height:42,borderRadius:10,fontSize:22,
+                    background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)",
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {s}
+                </motion.button>
+              ))}
+            </div>
+            {stickers.length>0 && (
+              <div style={{padding:"10px 12px",borderRadius:12,background:"rgba(255,255,255,0.04)",
+                border:"1px solid rgba(255,255,255,0.07)"}}>
+                <div className="flex justify-between mb-2">
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700}}>Qo'shilgan</span>
+                  <button onClick={()=>setStickers([])} style={{fontSize:10,color:"#ff2d55",fontWeight:700}}>Tozalash</button>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {stickers.map((s,i)=><span key={i} style={{fontSize:22}}>{s}</span>)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TRANSITIONS ── */}
+        {activeTab==="transitions" && (
+          <div className="flex flex-col gap-3">
+            <p style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>
+              Kliplar orasidagi o'tish effektini tanlang
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {TRANSITIONS.map(t=>(
+                <motion.button key={t.id} whileTap={{scale:0.92}}
+                  onClick={()=>setTransition(t.id)}
+                  style={{padding:"10px 6px",borderRadius:12,display:"flex",flexDirection:"column",
+                    alignItems:"center",gap:4,
+                    background:transition===t.id?"rgba(168,85,247,0.18)":"rgba(255,255,255,0.04)",
+                    border:`1px solid ${transition===t.id?"rgba(168,85,247,0.5)":"rgba(255,255,255,0.07)"}`,
+                    boxShadow:transition===t.id?`0 0 12px ${T.violet}33`:"none",
+                    transition:"all 0.15s"}}>
+                  <span style={{fontSize:20}}>{t.emoji}</span>
+                  <span style={{fontSize:9,fontWeight:700,
+                    color:transition===t.id?T.violet:"rgba(255,255,255,0.4)"}}>{t.name}</span>
+                </motion.button>
+              ))}
+            </div>
+            <div style={{padding:"10px 12px",borderRadius:10,
+              background:"rgba(168,85,247,0.07)",border:"1px solid rgba(168,85,247,0.15)"}}>
               <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>
-                Davomiylik: <span style={{color:T.violet,fontWeight:700}}>{trimEnd-trimStart}%</span>
+                Tanlangan: <span style={{color:T.violet,fontWeight:700}}>
+                  {TRANSITIONS.find(t=>t.id===transition)?.emoji} {TRANSITIONS.find(t=>t.id===transition)?.name}
+                </span>
               </span>
             </div>
           </div>
         )}
 
-        {/* Filters */}
-        {activeTab==="filters" && (
-          <div className="flex flex-wrap gap-3 justify-between">
-            {FILTERS.map(f=>(
-              <button key={f.id} onClick={()=>setFilter(f.id)}
-                style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <div style={{width:52,height:52,borderRadius:12,background:f.preview,
-                  filter:f.css==="none"?"none":f.css,
-                  border:`2px solid ${filter===f.id?T.violet:"rgba(255,255,255,0.07)"}`,
-                  boxShadow:filter===f.id?`0 0 10px ${T.violet}66`:"none"}}/>
-                <span style={{fontSize:8,fontWeight:700,
-                  color:filter===f.id?T.violet:"rgba(255,255,255,0.35)"}}>{f.name}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Text */}
-        {activeTab==="text" && (
-          <div className="flex flex-col gap-4">
-            <div>
-              <span style={{fontSize:10,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>MATN</span>
-              <input value={caption} onChange={e=>setCaption(e.target.value)} maxLength={60}
-                placeholder="Video ustiga matn..."
-                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
-                  background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-                  color:textColor,fontSize:13,outline:"none"}}/>
-            </div>
-            <div>
-              <span style={{fontSize:10,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>RANG</span>
-              <div className="flex gap-2 flex-wrap mt-2">
-                {["#ffffff","#00ffee","#ff3500","#7700ff","#ffc400","#ff2d55","#00ff88","#ff6b00"].map(c=>(
-                  <button key={c} onClick={()=>setTextColor(c)}
-                    style={{width:28,height:28,borderRadius:"50%",background:c,
-                      border:`3px solid ${textColor===c?"white":"transparent"}`,
-                      boxShadow:textColor===c?"0 0 0 1px rgba(255,255,255,0.3)":"none"}}/>
-                ))}
-              </div>
-            </div>
-            {caption && (
-              <div style={{padding:"12px",borderRadius:10,background:"rgba(255,255,255,0.04)",
-                textAlign:"center"}}>
-                <span style={{fontSize:14,fontWeight:800,color:textColor,
-                  textShadow:"0 2px 8px rgba(0,0,0,0.8)"}}>{caption}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Stickers */}
-        {activeTab==="stickers" && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap gap-3">
-              {STICKER_LIST.map(s=>(
-                <button key={s} onClick={()=>setStickers(prev=>[...prev.slice(-5),s])}
-                  style={{width:44,height:44,borderRadius:10,fontSize:22,
-                    background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)",
-                    display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  {s}
-                </button>
-              ))}
-            </div>
-            {stickers.length > 0 && (
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>Qo'shilgan stikerlar</span>
-                  <button onClick={()=>setStickers([])}
-                    style={{fontSize:10,color:"#ff2d55"}}>Tozalash</button>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {stickers.map((s,i)=>(
-                    <span key={i} style={{fontSize:20}}>{s}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Music */}
+        {/* ── MUSIC ── */}
         {activeTab==="music" && (
           <div className="flex flex-col gap-2">
             {MUSICS.map(m=>(
-              <button key={m.id} onClick={()=>setMusic(m.id)}
-                style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:12,
+              <motion.button key={m.id} whileTap={{scale:0.98}} onClick={()=>setMusic(m.id)}
+                style={{display:"flex",alignItems:"center",gap:12,padding:"11px 12px",borderRadius:12,
                   background:music===m.id?"rgba(168,85,247,0.15)":"rgba(255,255,255,0.03)",
                   border:`1px solid ${music===m.id?"rgba(168,85,247,0.5)":"rgba(255,255,255,0.06)"}`,
-                  textAlign:"left"}}>
-                <span style={{fontSize:20}}>{m.emoji}</span>
+                  textAlign:"left",transition:"all 0.15s"}}>
+                <div style={{width:38,height:38,borderRadius:10,
+                  background:music===m.id?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.06)",
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>
+                  {m.emoji}
+                </div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:12,fontWeight:700,color:music===m.id?T.violet:"rgba(255,255,255,0.75)"}}>{m.name}</div>
+                  {m.bpm>0 && <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:1}}>{m.bpm} BPM</div>}
                 </div>
-                {music===m.id && <Check style={{width:14,height:14,color:T.violet}}/>}
-              </button>
+                {music===m.id && (
+                  <motion.div animate={{scale:[1,1.3,1]}} transition={{duration:0.6,repeat:Infinity}}>
+                    <Check style={{width:14,height:14,color:T.violet}}/>
+                  </motion.div>
+                )}
+              </motion.button>
             ))}
           </div>
         )}
 
-        {/* Speed */}
+        {/* ── SPEED ── */}
         {activeTab==="speed" && (
           <div className="flex flex-col gap-4">
             <div className="flex gap-2 flex-wrap">
               {SPEEDS.map(s=>(
                 <button key={s} onClick={()=>setSpeed(s)}
-                  style={{flex:1,minWidth:60,padding:"10px 8px",borderRadius:10,
-                    fontSize:12,fontWeight:800,
+                  style={{flex:"1 1 60px",padding:"11px 8px",borderRadius:10,fontSize:12,fontWeight:800,
                     background:speed===s?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.04)",
                     border:`1px solid ${speed===s?T.violet+"66":"rgba(255,255,255,0.08)"}`,
-                    color:speed===s?T.violet:"rgba(255,255,255,0.45)"}}>
-                  {s}x
+                    color:speed===s?T.violet:"rgba(255,255,255,0.4)",
+                    boxShadow:speed===s?`0 0 10px ${T.violet}33`:"none",transition:"all 0.15s"}}>
+                  {s}×
                 </button>
               ))}
             </div>
-            <div style={{padding:"10px",borderRadius:10,background:"rgba(168,85,247,0.06)",
-              border:"1px solid rgba(168,85,247,0.12)"}}>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.45)"}}>
-                Joriy tezlik: <span style={{color:T.violet,fontWeight:800}}>{speed}x</span>
-                {speed < 1 && " · Sekin sur'at"}
-                {speed === 1 && " · Normal"}
-                {speed > 1 && " · Tez sur'at"}
-              </span>
+            <div style={{padding:"12px",borderRadius:12,background:"rgba(168,85,247,0.07)",
+              border:"1px solid rgba(168,85,247,0.15)"}}>
+              <div style={{fontSize:24,fontWeight:900,color:T.violet,textAlign:"center"}}>{speed}×</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",textAlign:"center",marginTop:2}}>
+                {speed<0.5?"Ultra sekin":speed<1?"Sekin sur'at":speed===1?"Normal":"Tez sur'at"}
+                {speed>=3?" · Time-lapse effekti":""}
+              </div>
             </div>
+            <div>
+              <div className="flex justify-between mb-1.5">
+                <span style={{fontSize:9,color:T.violet,fontWeight:700}}>TEZLIK SLYDER</span>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{speed}×</span>
+              </div>
+              <input type="range" min={25} max={400} step={25} value={speed*100}
+                onChange={e=>setSpeed(Number(e.target.value)/100)}
+                style={{width:"100%",accentColor:T.violet}}/>
+            </div>
+          </div>
+        )}
+
+        {/* ── AI EDIT ── */}
+        {activeTab==="ai" && (
+          <div className="flex flex-col gap-3">
+            <div style={{padding:"10px 12px",borderRadius:12,
+              background:"linear-gradient(135deg,rgba(168,85,247,0.08),rgba(119,0,255,0.05))",
+              border:"1px solid rgba(168,85,247,0.2)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                <Sparkles style={{width:12,height:12,color:T.violet}}/>
+                <span style={{fontSize:10,color:T.violet,fontWeight:700,letterSpacing:"0.08em"}}>AI MUHARRIR</span>
+              </div>
+              <p style={{fontSize:10,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>
+                Sun'iy intellekt videoingizni avtomatik optimallashtirib, professional sifat beradi.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {AI_ACTIONS.map(a=>(
+                <motion.button key={a.id} whileTap={{scale:0.97}}
+                  onClick={()=>!aiDone.includes(a.id)&&!aiRunning&&runAi(a.id)}
+                  disabled={!!aiRunning}
+                  style={{display:"flex",alignItems:"center",gap:12,padding:"12px",borderRadius:12,
+                    background:aiDone.includes(a.id)
+                      ?"rgba(0,255,136,0.07)"
+                      :aiRunning===a.id
+                      ?"rgba(168,85,247,0.12)"
+                      :"rgba(255,255,255,0.04)",
+                    border:`1px solid ${
+                      aiDone.includes(a.id)?"rgba(0,255,136,0.3)":
+                      aiRunning===a.id?"rgba(168,85,247,0.4)":"rgba(255,255,255,0.07)"}`,
+                    textAlign:"left",transition:"all 0.2s"}}>
+                  <div style={{width:36,height:36,borderRadius:10,fontSize:18,
+                    background:aiDone.includes(a.id)?"rgba(0,255,136,0.1)":"rgba(255,255,255,0.06)",
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {aiRunning===a.id ? (
+                      <motion.div animate={{rotate:360}} transition={{duration:0.7,repeat:Infinity,ease:"linear"}}>
+                        <Sparkles style={{width:14,height:14,color:T.violet}}/>
+                      </motion.div>
+                    ) : aiDone.includes(a.id) ? "✅" : a.icon}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:700,
+                      color:aiDone.includes(a.id)?"#00ff88":aiRunning===a.id?T.violet:"rgba(255,255,255,0.8)"}}>
+                      {a.label}
+                    </div>
+                    <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:1}}>{a.desc}</div>
+                  </div>
+                  {aiRunning===a.id && (
+                    <div style={{fontSize:9,color:T.violet,fontWeight:700}}>AI…</div>
+                  )}
+                  {aiDone.includes(a.id) && (
+                    <span style={{fontSize:9,color:"#00ff88",fontWeight:700}}>✓ Tayyor</span>
+                  )}
+                </motion.button>
+              ))}
+            </div>
+            {aiDone.length>0 && (
+              <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(0,255,136,0.06)",
+                border:"1px solid rgba(0,255,136,0.2)",display:"flex",alignItems:"center",gap:8}}>
+                <Check style={{width:12,height:12,color:"#00ff88"}}/>
+                <span style={{fontSize:10,color:"#00ff88",fontWeight:700}}>{aiDone.length} ta AI amal qo'llandi</span>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Bottom publish bar */}
-      {published && (
-        <div style={{padding:"12px 16px",borderTop:"1px solid rgba(0,255,136,0.2)",
-          background:"rgba(0,255,136,0.06)",display:"flex",alignItems:"center",gap:8}}>
-          <Check style={{width:16,height:16,color:"#00ff88"}}/>
-          <span style={{fontSize:12,color:"#00ff88",fontWeight:700,flex:1}}>Muvaffaqiyatli nashr qilindi!</span>
-          <button onClick={onClose} style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>Yopish</button>
-        </div>
-      )}
+      {/* Bottom bar */}
+      <div style={{borderTop:"1px solid rgba(255,255,255,0.07)",padding:"10px 16px",
+        background:"rgba(4,0,15,0.95)",display:"flex",alignItems:"center",gap:8}}>
+        {published ? (
+          <>
+            <Check style={{width:16,height:16,color:"#00ff88"}}/>
+            <span style={{fontSize:12,color:"#00ff88",fontWeight:700,flex:1}}>Muvaffaqiyatli nashr!</span>
+            <button onClick={onClose} style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Yopish ×</button>
+          </>
+        ) : (
+          <>
+            {file && (
+              <div style={{flex:1,fontSize:9,color:"rgba(255,255,255,0.3)"}}>
+                {file.name.slice(0,22)}… · {(file.size/1024/1024).toFixed(1)}MB · {exportQ}
+              </div>
+            )}
+            {!file && (
+              <motion.button whileTap={{scale:0.96}} onClick={()=>fileRef.current?.click()}
+                style={{flex:1,padding:"10px",borderRadius:10,fontSize:12,fontWeight:700,
+                  background:"rgba(168,85,247,0.1)",border:"1px solid rgba(168,85,247,0.3)",color:T.violet}}>
+                + Video tanlang
+              </motion.button>
+            )}
+            {file && (
+              <motion.button whileTap={{scale:0.96}} onClick={handlePublish}
+                disabled={publishing}
+                style={{padding:"10px 20px",borderRadius:12,fontSize:13,fontWeight:900,
+                  background:T.gViolet,color:"white",
+                  opacity:publishing?0.6:1,
+                  boxShadow:`0 4px 20px ${T.violet}44`}}>
+                {publishing?"Yuklanmoqda…":"🚀 Nashr qilish"}
+              </motion.button>
+            )}
+          </>
+        )}
+      </div>
     </motion.div>
   );
 }

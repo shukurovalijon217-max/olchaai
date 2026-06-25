@@ -2720,7 +2720,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* CipCat — full video editor (CapCut-inspired)           */
+/* OTube Studio — full video editor                       */
 /* ─────────────────────────────────────────────────────── */
 function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const { user } = useAuth();
@@ -2853,9 +2853,9 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       createMut.mutate({data:{
         authorId:user.id,
         videoUrl:`/api/storage/objects/${objectPath}`,
-        caption:caption||"CipCat Studio · OlCha",
+        caption:caption||"OTube Studio · OlCha",
         audioTrack:music&&music!=="none"?music:undefined,
-        tags:["cipcat","olcha","studio"],
+        tags:["otube-studio","olcha","studio"],
         duration:0,
       }});
     } catch { setPublishing(false); }
@@ -2886,14 +2886,31 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
           <X style={{width:16,height:16,color:"rgba(255,255,255,0.6)"}}/>
         </button>
         <div className="flex items-center gap-2">
-          <Scissors style={{width:14,height:14,color:T.violet}}/>
-          <span style={{fontSize:16,fontWeight:900,color:"white",letterSpacing:"0.08em"}}>
-            Cip<span style={{background:T.gViolet,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Cat</span>
-          </span>
-          <span style={{fontSize:8,color:T.violet,fontWeight:700,letterSpacing:"0.18em",
-            padding:"2px 6px",borderRadius:4,background:"rgba(119,0,255,0.15)",border:"1px solid rgba(119,0,255,0.3)"}}>
-            STUDIO v2
-          </span>
+          <motion.div
+            animate={{rotateY:[0,180,360]}}
+            transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}
+            style={{width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",
+              background:"linear-gradient(135deg,#ff3500,#ff6b00,#ffc400)",
+              borderRadius:7,boxShadow:"0 0 14px rgba(255,107,0,0.55), 0 0 28px rgba(255,53,0,0.25)"}}>
+            <Film style={{width:13,height:13,color:"white"}}/>
+          </motion.div>
+          <div style={{display:"flex",flexDirection:"column",lineHeight:1}}>
+            <span style={{fontSize:14,fontWeight:900,letterSpacing:"0.04em"}}>
+              <span style={{background:"linear-gradient(90deg,#ff6b00,#ffc400)",
+                WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>OTube</span>
+              <span style={{color:"white"}}> Studio</span>
+            </span>
+          </div>
+          <motion.span
+            animate={{opacity:[0.6,1,0.6]}}
+            transition={{duration:2,repeat:Infinity}}
+            style={{fontSize:7,fontWeight:800,letterSpacing:"0.18em",
+              padding:"2px 6px",borderRadius:4,
+              background:"linear-gradient(90deg,rgba(255,53,0,0.2),rgba(255,196,0,0.15))",
+              border:"1px solid rgba(255,107,0,0.35)",
+              color:"#ffc400"}}>
+            PRO
+          </motion.span>
         </div>
         <div className="flex items-center gap-2">
           {/* Export quality */}
@@ -3460,7 +3477,7 @@ function FloatingFAB() {
     { Icon: Radio,     label: "Jonli efir",      col: "#ff2d55", id: "live"      as const },
     { Icon: Zap,       label: "Short",           col: T.orange,  id: "short"     as const },
     { Icon: Swords,    label: "Challenge",       col: "#00ff88", id: "challenge" as const },
-    { Icon: Scissors,  label: "CipCat Studio",   col: T.violet,  id: "cipcat"    as const },
+    { Icon: Film,      label: "OTube Studio",   col: T.gold,    id: "cipcat"    as const },
   ];
 
   return (

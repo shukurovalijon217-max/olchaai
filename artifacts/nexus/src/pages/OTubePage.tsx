@@ -1978,18 +1978,18 @@ function FloatingFAB() {
           </motion.button>
         ))}
       </AnimatePresence>
-      <motion.button className="pointer-events-auto" whileTap={{scale:0.86}}
+      <motion.button className="pointer-events-auto" whileTap={{scale:0.88}}
         onClick={()=>setOpen(o=>!o)}
-        style={{width:54,height:54,borderRadius:"50%",
-          background:open?"rgba(255,255,255,0.08)":T.cyan,
-          boxShadow:open
-            ?"0 0 0 1px rgba(255,255,255,0.18), 0 4px 20px rgba(0,0,0,0.5)"
-            :`0 0 32px ${T.cyan}66, 0 0 0 1.5px ${T.cyan}, 0 4px 20px rgba(0,0,0,0.5)`,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          transition:"background 0.22s, box-shadow 0.22s"}}>
-        <motion.div animate={{rotate:open?45:0}} transition={{type:"spring",damping:18,stiffness:320}}>
-          <Plus style={{width:22,height:22,color:open?"rgba(255,255,255,0.65)":"#000"}}/>
-        </motion.div>
+        style={{padding:"8px 18px",borderRadius:12,
+          background:open?"rgba(255,255,255,0.06)":"rgba(0,229,255,0.10)",
+          border:`1px solid ${open?"rgba(255,255,255,0.18)":T.cyan+"55"}`,
+          boxShadow:open?"none":`0 0 14px ${T.cyan}33`,
+          backdropFilter:"blur(16px)",
+          transition:"background 0.2s, box-shadow 0.2s"}}>
+        <span style={{fontSize:18,fontWeight:900,letterSpacing:"0.12em",
+          color:open?"rgba(255,255,255,0.45)":T.cyan,lineHeight:1}}>
+          ···
+        </span>
       </motion.button>
     </div>
   );

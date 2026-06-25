@@ -1953,7 +1953,7 @@ function ModalSheet({ children, onClose, title, accent = T.cyan, rightSlot }:
   { children: React.ReactNode; onClose:()=>void; title:string; accent?:string; rightSlot?:React.ReactNode }) {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-      className="fixed inset-0 z-[9900]"
+      className="fixed inset-0 z-[10000]"
       style={{background:"rgba(0,0,8,0.94)",backdropFilter:"blur(24px)"}}>
       {/* Backdrop tap to close */}
       <div className="absolute inset-0" onClick={onClose}/>
@@ -2875,7 +2875,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-      className="fixed inset-0 z-[9900] flex flex-col" style={{background:"#04000f"}}>
+      className="fixed inset-0 z-[10000] flex flex-col" style={{background:"#04000f"}}>
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-3 pb-3"

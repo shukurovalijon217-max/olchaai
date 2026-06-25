@@ -114,36 +114,51 @@ function OTubeMark({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
       <defs>
-        <radialGradient id={`${id}s`} cx="38%" cy="30%" r="65%">
-          <stop offset="0%"   stopColor="#ff6b6b"/>
-          <stop offset="35%"  stopColor="#ef2020"/>
-          <stop offset="75%"  stopColor="#b91c1c"/>
-          <stop offset="100%" stopColor="#7f1d1d"/>
+        {/* Aurora sphere gradient — matches T.gAurora (#00ffee → #7700ff) */}
+        <radialGradient id={`${id}s`} cx="35%" cy="28%" r="68%">
+          <stop offset="0%"   stopColor="#66fff8"/>
+          <stop offset="30%"  stopColor="#00e5ff"/>
+          <stop offset="65%"  stopColor="#0077cc"/>
+          <stop offset="100%" stopColor="#7700ff"/>
         </radialGradient>
         <linearGradient id={`${id}r`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%"   stopColor="#ff4444"/>
-          <stop offset="100%" stopColor="#991b1b"/>
+          <stop offset="0%"   stopColor="#00ffee"/>
+          <stop offset="100%" stopColor="#6600cc"/>
         </linearGradient>
-        <filter id={`${id}g`} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
-          <feComposite in="SourceGraphic" in2="b" operator="over"/>
+        {/* Outer glow — cyan */}
+        <filter id={`${id}g`} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+          <feColorMatrix in="b" type="matrix"
+            values="0 0 0 0 0  0 1 1 0 0  0 0 1 0 0  0 0 0 1 0" result="colored"/>
+          <feComposite in="SourceGraphic" in2="colored" operator="over"/>
         </filter>
         <filter id={`${id}d`}>
-          <feDropShadow dx="0" dy="2" stdDeviation="3"
-            floodColor="#ef2020" floodOpacity="0.55"/>
+          <feDropShadow dx="0" dy="0" stdDeviation="4"
+            floodColor="#00e5ff" floodOpacity="0.7"/>
         </filter>
+        {/* Inner shimmer */}
+        <radialGradient id={`${id}sh`} cx="30%" cy="25%" r="50%">
+          <stop offset="0%"   stopColor="rgba(255,255,255,0.45)"/>
+          <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
+        </radialGradient>
       </defs>
+      {/* Outer ring glow */}
       <circle cx="24" cy="24" r="22.5"
-        stroke={`url(#${id}r)`} strokeWidth="1.2"
-        fill="rgba(0,0,0,0.35)" filter={`url(#${id}g)`}/>
+        stroke={`url(#${id}r)`} strokeWidth="1.5"
+        fill="rgba(0,0,20,0.5)" filter={`url(#${id}g)`}/>
+      {/* Main sphere */}
       <circle cx="24" cy="24" r="18"
         fill={`url(#${id}s)`} filter={`url(#${id}d)`}/>
-      <ellipse cx="18.5" cy="15.5" rx="6.5" ry="4"
-        fill="rgba(255,255,255,0.28)" transform="rotate(-18 18.5 15.5)"/>
-      <ellipse cx="30" cy="14" rx="2.5" ry="1.5"
-        fill="rgba(255,255,255,0.15)" transform="rotate(10 30 14)"/>
+      {/* Shimmer highlight */}
+      <circle cx="24" cy="24" r="18" fill={`url(#${id}sh)`}/>
+      {/* Specular top-left */}
+      <ellipse cx="17.5" cy="15" rx="6" ry="3.5"
+        fill="rgba(255,255,255,0.32)" transform="rotate(-20 17.5 15)"/>
+      <ellipse cx="29" cy="13.5" rx="2.2" ry="1.3"
+        fill="rgba(255,255,255,0.18)" transform="rotate(8 29 13.5)"/>
+      {/* Play triangle */}
       <path d="M20 16.5 L32 24 L20 31.5 Z"
-        fill="white" opacity="0.96"/>
+        fill="white" opacity="0.97"/>
     </svg>
   );
 }
@@ -706,7 +721,7 @@ function NexusPlayer({ video, onClose, settings }:
                       boxShadow: subbed?"none":`0 0 16px ${T.orange}44`,
                       opacity: followMut.isPending?0.7:1 }}>
                     <span style={{fontSize:10,fontWeight:700,color:subbed?"rgba(255,255,255,0.5)":"white"}}>
-                      {subbed?"✓ Obuna":"+ Obuna"}
+                      {subbed?"✓ Obuna":"··· Obuna"}
                     </span>
                   </motion.button>
 
@@ -1272,7 +1287,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
           boxShadow: subbed?"none":`0 0 14px ${col}33`,
           opacity: followMut.isPending ? 0.6 : 1}}>
         <span style={{fontSize:10,fontWeight:700,color:subbed?"rgba(255,255,255,0.4)":col}}>
-          {subbed?"✓ Obuna":"+ Obuna"}
+          {subbed?"✓ Obuna":"··· Obuna"}
         </span>
       </motion.button>
     </motion.div>

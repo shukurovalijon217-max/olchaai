@@ -9,7 +9,6 @@ import React, {
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import i18nInst, { LANGUAGES, applyRTL, type LangCode } from "../lib/i18n";
 import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl } from "@workspace/api-client-react";
 import type { Reel, UploadUrlRequest } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -1017,24 +1016,12 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
   { open:boolean;onClose:()=>void;settings:PlayerSettings;onSettings:(s:PlayerSettings)=>void;
     monetize:MonetizationSettings;onMonetize:(m:MonetizationSettings)=>void; }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<"player"|"monetize"|"lang">("player");
-  const [langApplied, setLangApplied] = useState(false);
+  const [tab, setTab] = useState<"player"|"monetize">("player");
   const sP = <K extends keyof PlayerSettings>(k:K,v:PlayerSettings[K])=>onSettings({...settings,[k]:v});
   const sM = <K extends keyof MonetizationSettings>(k:K,v:MonetizationSettings[K])=>onMonetize({...monetize,[k]:v});
   const views=12480;
   const rev = monetize.creatorMode
     ?(views*(monetize.adsEnabled?0.0018:0)+(monetize.membershipEnabled?18500:0)).toFixed(0):"0";
-
-  const POPULAR_LANGS: LangCode[] = ["uz","en","ru","zh","ar","es","fr","de","tr","ja","ko","hi"];
-  const currentLang = LANGUAGES.find(l=>l.code===i18nInst.language) ?? LANGUAGES[0];
-
-  const handleLangChange = (code: LangCode) => {
-    localStorage.setItem("olcha_lang", code);
-    i18nInst.changeLanguage(code);
-    applyRTL(code);
-    setLangApplied(true);
-    setTimeout(()=>setLangApplied(false), 2000);
-  };
 
   return (
     <AnimatePresence>
@@ -1076,16 +1063,15 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
             </div>
 
             {/* Tabs — round pills */}
-            <div className="flex gap-1.5 px-5 pb-3">
+            <div className="flex gap-2 px-5 pb-3">
               {([
                 {id:"player" as const,  label:t("otube.player_tab")},
                 {id:"monetize" as const,label:t("otube.monetize_tab")},
-                {id:"lang" as const,    label:t("otube.lang_tab")},
               ]).map(({id,label})=>(
                 <motion.button key={id} onClick={()=>setTab(id)}
                   whileTap={{scale:0.94}}
                   className="flex-1 py-2 text-center"
-                  style={{borderRadius:10,fontSize:10,fontWeight:600,
+                  style={{borderRadius:10,fontSize:11,fontWeight:600,
                     background:tab===id?"rgba(255,255,255,0.1)":"transparent",
                     color:tab===id?"white":"rgba(255,255,255,0.35)",
                     boxShadow:tab===id?"0 0 0 1px rgba(255,255,255,0.15)":"none",
@@ -1129,7 +1115,7 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                     ))}
                   </div>
                 </>
-              ) : tab==="monetize" ? (
+              ) : (
                 <>
                   {/* Revenue card */}
                   <div className="p-4 mt-1 mb-2"
@@ -1216,58 +1202,6 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                     <p style={{fontSize:10,color:"rgba(255,255,255,0.38)",lineHeight:1.7}}>
                       Min: 100 000 so'm. OlCha Pay orqali har oyning 15-sanasida chiqariladi.
                     </p>
-                  </div>
-                </>
-              ) : (
-                /* ── LANGUAGE TAB ── */
-                <>
-                  {/* Current language */}
-                  <div className="flex items-center gap-3 p-3.5 mb-3"
-                    style={{borderRadius:14,background:`rgba(0,229,255,0.06)`,
-                      boxShadow:`0 0 0 1px rgba(0,229,255,0.18)`}}>
-                    <span style={{fontSize:26}}>{currentLang.flag}</span>
-                    <div className="flex-1">
-                      <p style={{fontSize:12,fontWeight:700,color:"white"}}>{currentLang.native}</p>
-                      <p style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>{t("otube.lang_sub")}</p>
-                    </div>
-                    <AnimatePresence>
-                      {langApplied && (
-                        <motion.span
-                          initial={{opacity:0,scale:0.8}} animate={{opacity:1,scale:1}} exit={{opacity:0}}
-                          style={{fontSize:9,fontWeight:700,color:T.aurora,
-                            background:`${T.aurora}18`,borderRadius:99,padding:"3px 8px"}}>
-                          ✓ {t("otube.lang_applied")}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  <SecHead>{t("otube.lang_title")}</SecHead>
-                  <div className="grid grid-cols-4 gap-2 mt-1">
-                    {POPULAR_LANGS.map(code=>{
-                      const lang = LANGUAGES.find(l=>l.code===code);
-                      if (!lang) return null;
-                      const active = i18nInst.language === code;
-                      return (
-                        <motion.button key={code} whileTap={{scale:0.9}}
-                          onClick={()=>handleLangChange(code)}
-                          className="flex flex-col items-center gap-1 py-2.5 px-1"
-                          style={{borderRadius:12,
-                            background:active?`rgba(0,255,238,0.1)`:"rgba(255,255,255,0.04)",
-                            boxShadow:active?`0 0 0 1.5px ${T.aurora}55`:"0 0 0 1px rgba(255,255,255,0.07)",
-                            transition:"all 0.2s"}}>
-                          <span style={{fontSize:20}}>{lang.flag}</span>
-                          <span style={{fontSize:9,fontWeight:active?700:500,
-                            color:active?T.aurora:"rgba(255,255,255,0.5)"}}>
-                            {lang.code.toUpperCase()}
-                          </span>
-                          {active && (
-                            <div style={{width:4,height:4,borderRadius:"50%",
-                              background:T.aurora,boxShadow:`0 0 6px ${T.aurora}`}}/>
-                          )}
-                        </motion.button>
-                      );
-                    })}
                   </div>
                 </>
               )}

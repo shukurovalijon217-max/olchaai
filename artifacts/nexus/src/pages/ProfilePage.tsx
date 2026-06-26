@@ -85,7 +85,7 @@ function BottomSheet({ open, onClose, children, maxH = "70vh" }: {
   );
 }
 
-/* ─── 3D Avatar (compact) ─────────────────────────────────────── */
+/* ─── 3D Avatar ────────────────────────────────────────────────── */
 function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, onUploadClick, size = 96 }: {
   avatarUrl?: string | null; displayName: string; isVerified?: boolean;
   isUploading: boolean; isOwner: boolean; onUploadClick: () => void; size?: number;
@@ -102,62 +102,77 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
   }, [mouseX, mouseY]);
 
   const r = size / 2;
+  const bw = 3;
+  const total = size + bw * 2;
 
   return (
-    <div style={{ perspective: "700px", width: size, height: size }} className="relative"
+    <div style={{ width: total, height: total, position: "relative" }}
       onMouseMove={handleMouseMove} onMouseLeave={() => { mouseX.set(0); mouseY.set(0); }}>
-      <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d", width: size, height: size }} className="relative">
-        {/* Aura */}
-        <motion.div animate={{ scale: [1, 1.28, 1], opacity: [0.35, 0.7, 0.35] }} transition={{ duration: 3.5, repeat: Infinity }}
-          className="absolute -inset-6 rounded-full pointer-events-none"
-          style={{ background: `radial-gradient(circle, rgba(124,58,237,0.42) 0%, rgba(59,130,246,0.22) 55%, transparent 72%)`, filter: "blur(12px)" }} />
-        {/* Activity rings SVG */}
-        <svg className="absolute pointer-events-none" style={{ top: -22, left: -22, width: size + 44, height: size + 44, overflow: "visible" }}
-          viewBox={`0 0 ${size + 44} ${size + 44}`}>
-          <defs>
-            <linearGradient id="rg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#7c3aed"/><stop offset="100%" stopColor="#a78bfa"/></linearGradient>
-            <linearGradient id="rg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#3b82f6"/><stop offset="100%" stopColor="#67e8f9"/></linearGradient>
-          </defs>
-          <circle cx={r + 22} cy={r + 22} r={r + 18} fill="none" stroke="#7c3aed15" strokeWidth="4" />
-          <circle cx={r + 22} cy={r + 22} r={r + 10} fill="none" stroke="#3b82f615" strokeWidth="3.5" />
-          <motion.circle cx={r + 22} cy={r + 22} r={r + 18} fill="none" stroke="url(#rg1)" strokeWidth="4" strokeLinecap="round"
-            strokeDasharray={`${2 * Math.PI * (r + 18)}`}
-            animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 18)}`, `${0.18 * 2 * Math.PI * (r + 18)}`, `${2 * Math.PI * (r + 18)}`] }}
-            transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
-            style={{ rotate: "-90deg", transformOrigin: `${r + 22}px ${r + 22}px` }} />
-          <motion.circle cx={r + 22} cy={r + 22} r={r + 10} fill="none" stroke="url(#rg2)" strokeWidth="3.5" strokeLinecap="round"
-            strokeDasharray={`${2 * Math.PI * (r + 10)}`}
-            animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 10)}`, `${0.25 * 2 * Math.PI * (r + 10)}`, `${2 * Math.PI * (r + 10)}`] }}
-            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
-            style={{ rotate: "-90deg", transformOrigin: `${r + 22}px ${r + 22}px` }} />
-        </svg>
-        {/* Orbit particles */}
-        {[
-          { radius: 64, color: "#a78bfa", glow: "#7c3aed", sz: 9, dur: 5.5, delay: 0 },
-          { radius: 72, color: "#60a5fa", glow: "#3b82f6", sz: 7, dur: 7.5, delay: 1.8 },
-          { radius: 80, color: "#34d399", glow: "#10b981", sz: 6, dur: 9.5, delay: 3.5 },
-        ].map(({ radius, color, glow, sz, dur, delay }, i) => (
-          <motion.div key={i} className="absolute pointer-events-none"
-            style={{ top: "50%", left: "50%", width: 0, height: 0 }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: dur, repeat: Infinity, ease: "linear", delay }}>
-            <div style={{
-              position: "absolute",
-              width: sz, height: sz,
-              borderRadius: "50%",
-              background: color,
-              boxShadow: `0 0 ${sz * 2.5}px ${glow}, 0 0 ${sz * 5}px ${glow}55`,
-              top: -radius - sz / 2,
-              left: -sz / 2,
-            }} />
-          </motion.div>
-        ))}
-        {/* Spinning border */}
-        <div className="absolute inset-0 rounded-[20px] overflow-hidden" style={{ padding: "2px" }}>
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }}
-            className="absolute" style={{ width: "200%", height: "200%", top: "-50%", left: "-50%",
-              background: "conic-gradient(from 0deg, #7c3aed, #818cf8, #3b82f6, #06b6d4, #34d399, #f59e0b, #ec4899, #7c3aed)" }} />
-          <div className="relative w-full h-full rounded-[18px] overflow-hidden bg-background z-10 group/av cursor-pointer"
+
+      {/* ── Spinning rainbow border — outside preserve-3d so overflow-hidden clips correctly ── */}
+      <div style={{ position: "absolute", inset: 0, borderRadius: 20 + bw, overflow: "hidden" }}>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }}
+          style={{
+            position: "absolute", width: "200%", height: "200%", top: "-50%", left: "-50%",
+            background: "conic-gradient(from 0deg, #7c3aed, #818cf8, #3b82f6, #06b6d4, #34d399, #f59e0b, #ec4899, #7c3aed)",
+          }}
+        />
+        <div style={{ position: "absolute", inset: bw, borderRadius: 20, background: "var(--background)" }} />
+      </div>
+
+      {/* ── 3D content layer ── */}
+      <div style={{ perspective: "700px", position: "absolute", inset: bw }}>
+        <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d", width: size, height: size }} className="relative">
+
+          {/* Aura */}
+          <motion.div animate={{ scale: [1, 1.28, 1], opacity: [0.35, 0.7, 0.35] }} transition={{ duration: 3.5, repeat: Infinity }}
+            className="absolute -inset-6 rounded-full pointer-events-none"
+            style={{ background: "radial-gradient(circle, rgba(124,58,237,0.42) 0%, rgba(59,130,246,0.22) 55%, transparent 72%)", filter: "blur(12px)" }} />
+
+          {/* Activity rings SVG */}
+          <svg className="absolute pointer-events-none" style={{ top: -22, left: -22, width: size + 44, height: size + 44, overflow: "visible" }}
+            viewBox={`0 0 ${size + 44} ${size + 44}`}>
+            <defs>
+              <linearGradient id="rg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#7c3aed"/><stop offset="100%" stopColor="#a78bfa"/></linearGradient>
+              <linearGradient id="rg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#3b82f6"/><stop offset="100%" stopColor="#67e8f9"/></linearGradient>
+            </defs>
+            <circle cx={r + 22} cy={r + 22} r={r + 18} fill="none" stroke="#7c3aed15" strokeWidth="4" />
+            <circle cx={r + 22} cy={r + 22} r={r + 10} fill="none" stroke="#3b82f615" strokeWidth="3.5" />
+            <motion.circle cx={r + 22} cy={r + 22} r={r + 18} fill="none" stroke="url(#rg1)" strokeWidth="4" strokeLinecap="round"
+              strokeDasharray={`${2 * Math.PI * (r + 18)}`}
+              animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 18)}`, `${0.18 * 2 * Math.PI * (r + 18)}`, `${2 * Math.PI * (r + 18)}`] }}
+              transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
+              style={{ rotate: "-90deg", transformOrigin: `${r + 22}px ${r + 22}px` }} />
+            <motion.circle cx={r + 22} cy={r + 22} r={r + 10} fill="none" stroke="url(#rg2)" strokeWidth="3.5" strokeLinecap="round"
+              strokeDasharray={`${2 * Math.PI * (r + 10)}`}
+              animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 10)}`, `${0.25 * 2 * Math.PI * (r + 10)}`, `${2 * Math.PI * (r + 10)}`] }}
+              transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
+              style={{ rotate: "-90deg", transformOrigin: `${r + 22}px ${r + 22}px` }} />
+          </svg>
+
+          {/* Orbit particles */}
+          {[
+            { radius: 64, color: "#a78bfa", glow: "#7c3aed", sz: 9, dur: 5.5, delay: 0 },
+            { radius: 72, color: "#60a5fa", glow: "#3b82f6", sz: 7, dur: 7.5, delay: 1.8 },
+            { radius: 80, color: "#34d399", glow: "#10b981", sz: 6, dur: 9.5, delay: 3.5 },
+          ].map(({ radius, color, glow, sz, dur, delay }, i) => (
+            <motion.div key={i} className="absolute pointer-events-none"
+              style={{ top: "50%", left: "50%", width: 0, height: 0 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: dur, repeat: Infinity, ease: "linear", delay }}>
+              <div style={{
+                position: "absolute", width: sz, height: sz, borderRadius: "50%",
+                background: color,
+                boxShadow: `0 0 ${sz * 2.5}px ${glow}, 0 0 ${sz * 5}px ${glow}55`,
+                top: -radius - sz / 2, left: -sz / 2,
+              }} />
+            </motion.div>
+          ))}
+
+          {/* Avatar image */}
+          <div className="absolute inset-0 rounded-[20px] overflow-hidden z-10 group/av cursor-pointer"
             onClick={isOwner ? onUploadClick : undefined}>
             {isUploading ? (
               <div className="w-full h-full flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
@@ -171,30 +186,33 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
               </div>
             )}
             {isOwner && (
-              <div className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover/av:opacity-100 transition-opacity rounded-[18px]">
+              <div className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover/av:opacity-100 transition-opacity rounded-[20px]">
                 <Camera className="w-5 h-5 text-white" />
               </div>
             )}
           </div>
-        </div>
-        {/* Sheen */}
-        <motion.div animate={{ opacity: [0.1, 0.28, 0.1] }} transition={{ duration: 4, repeat: Infinity }}
-          className="absolute inset-0 rounded-[20px] pointer-events-none z-20"
-          style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 50%)", transform: "translateZ(14px)" }} />
-        {/* Verified */}
-        {isVerified && (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.3 }}
-            className="absolute -bottom-1.5 -right-1.5 z-30">
-            <motion.div animate={{ boxShadow: ["0 0 6px rgba(124,58,237,0.4)", "0 0 18px rgba(124,58,237,0.75)", "0 0 6px rgba(124,58,237,0.4)"] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-6 h-6 rounded-full bg-background flex items-center justify-center shadow-lg">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
-                <BadgeCheck className="w-3 h-3 text-white" />
-              </div>
+
+          {/* Sheen */}
+          <motion.div animate={{ opacity: [0.1, 0.28, 0.1] }} transition={{ duration: 4, repeat: Infinity }}
+            className="absolute inset-0 rounded-[20px] pointer-events-none z-20"
+            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 50%)", transform: "translateZ(14px)" }} />
+
+          {/* Verified */}
+          {isVerified && (
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.3 }}
+              className="absolute -bottom-1.5 -right-1.5 z-30">
+              <motion.div animate={{ boxShadow: ["0 0 6px rgba(124,58,237,0.4)", "0 0 18px rgba(124,58,237,0.75)", "0 0 6px rgba(124,58,237,0.4)"] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-6 h-6 rounded-full bg-background flex items-center justify-center shadow-lg">
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
+                  <BadgeCheck className="w-3 h-3 text-white" />
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </motion.div>
+          )}
+
+        </motion.div>
+      </div>
     </div>
   );
 }
@@ -694,8 +712,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           <motion.div animate={{ x: ["-100%", "200%"] }} transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }}
             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" style={{ skewX: -15 }} />
         </div>
-        <div className="px-4 -mt-14 flex items-end gap-4">
-          <div className="w-[120px] h-[120px] rounded-[20px] bg-muted animate-pulse shrink-0" />
+        <div className="px-4 -mt-11 flex items-end gap-4">
+          <div className="w-[102px] h-[102px] rounded-[23px] bg-muted animate-pulse shrink-0" />
           <div className="flex-1 pb-1 space-y-2">
             <div className="h-4 bg-muted rounded-lg animate-pulse w-1/2" />
             <div className="h-3 bg-muted rounded-lg animate-pulse w-1/3" />
@@ -797,12 +815,12 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       {/* ══ Profile Header ════════════════════════════════════════ */}
       <div className="px-4 relative z-10">
         {/* Avatar row */}
-        <div className="flex items-end justify-between" style={{ marginTop: -54 }}>
+        <div className="flex items-end justify-between" style={{ marginTop: -44 }}>
           <div className="relative z-10">
             <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
             <Avatar3D avatarUrl={user.avatarUrl} displayName={user.displayName} isVerified={user.isVerified}
-              isUploading={avatarUploading} isOwner={isOwner} onUploadClick={() => avatarInputRef.current?.click()} size={120} />
+              isUploading={avatarUploading} isOwner={isOwner} onUploadClick={() => avatarInputRef.current?.click()} size={96} />
           </div>
 
           {/* Action buttons */}

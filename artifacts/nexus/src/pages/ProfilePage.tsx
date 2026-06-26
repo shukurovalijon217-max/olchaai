@@ -123,27 +123,56 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
         <div style={{ position: "absolute", inset: bw, borderRadius: 20, background: "var(--background)" }} />
       </div>
 
-      {/* ── 3. Activity rings SVG — outside preserve-3d so always visible ── */}
-      <svg className="absolute pointer-events-none"
-        style={{ top: bw - 22, left: bw - 22, width: size + 44, height: size + 44, overflow: "visible" }}
-        viewBox={`0 0 ${size + 44} ${size + 44}`}>
-        <defs>
-          <linearGradient id="rg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#7c3aed"/><stop offset="100%" stopColor="#a78bfa"/></linearGradient>
-          <linearGradient id="rg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#3b82f6"/><stop offset="100%" stopColor="#67e8f9"/></linearGradient>
-        </defs>
-        <circle cx={r + 22} cy={r + 22} r={r + 18} fill="none" stroke="#7c3aed20" strokeWidth="4" />
-        <circle cx={r + 22} cy={r + 22} r={r + 10} fill="none" stroke="#3b82f620" strokeWidth="3.5" />
-        <motion.circle cx={r + 22} cy={r + 22} r={r + 18} fill="none" stroke="url(#rg1)" strokeWidth="4" strokeLinecap="round"
-          strokeDasharray={`${2 * Math.PI * (r + 18)}`}
-          animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 18)}`, `${0.15 * 2 * Math.PI * (r + 18)}`, `${2 * Math.PI * (r + 18)}`] }}
-          transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
-          transform={`rotate(-90, ${r + 22}, ${r + 22})`} />
-        <motion.circle cx={r + 22} cy={r + 22} r={r + 10} fill="none" stroke="url(#rg2)" strokeWidth="3.5" strokeLinecap="round"
-          strokeDasharray={`${2 * Math.PI * (r + 10)}`}
-          animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 10)}`, `${0.22 * 2 * Math.PI * (r + 10)}`, `${2 * Math.PI * (r + 10)}`] }}
-          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
-          transform={`rotate(-90, ${r + 22}, ${r + 22})`} />
-      </svg>
+      {/* ── 3. Activity rings SVG — outside preserve-3d, always visible spinning arcs ── */}
+      {(() => {
+        const cx = r + 22;
+        const cy = r + 22;
+        const r1 = r + 18;
+        const r2 = r + 10;
+        const c1 = 2 * Math.PI * r1;
+        const c2 = 2 * Math.PI * r2;
+        return (
+          <svg className="absolute pointer-events-none"
+            style={{ top: bw - 22, left: bw - 22, width: size + 44, height: size + 44, overflow: "visible" }}
+            viewBox={`0 0 ${size + 44} ${size + 44}`}>
+            <defs>
+              <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#7c3aed"/>
+                <stop offset="50%" stopColor="#a78bfa"/>
+                <stop offset="100%" stopColor="#c4b5fd"/>
+              </linearGradient>
+              <linearGradient id="rg2" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#06b6d4"/>
+                <stop offset="50%" stopColor="#60a5fa"/>
+                <stop offset="100%" stopColor="#67e8f9"/>
+              </linearGradient>
+            </defs>
+            {/* ghost tracks */}
+            <circle cx={cx} cy={cy} r={r1} fill="none" stroke="#7c3aed22" strokeWidth="4" />
+            <circle cx={cx} cy={cy} r={r2} fill="none" stroke="#3b82f622" strokeWidth="3.5" />
+            {/* outer arc — spins clockwise, always ~62% visible */}
+            <motion.g
+              animate={{ rotate: 360 }}
+              transition={{ duration: 5.5, repeat: Infinity, ease: "linear" }}
+              style={{ transformOrigin: `${cx}px ${cy}px` }}>
+              <circle cx={cx} cy={cy} r={r1} fill="none" stroke="url(#rg1)" strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={c1}
+                strokeDashoffset={c1 * 0.38} />
+            </motion.g>
+            {/* inner arc — spins counter-clockwise, always ~52% visible */}
+            <motion.g
+              animate={{ rotate: -360 }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 0.6 }}
+              style={{ transformOrigin: `${cx}px ${cy}px` }}>
+              <circle cx={cx} cy={cy} r={r2} fill="none" stroke="url(#rg2)" strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeDasharray={c2}
+                strokeDashoffset={c2 * 0.48} />
+            </motion.g>
+          </svg>
+        );
+      })()}
 
       {/* ── 4. Orbit particles — outside preserve-3d ── */}
       {[

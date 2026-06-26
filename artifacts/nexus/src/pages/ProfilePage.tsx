@@ -123,34 +123,26 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
         <div style={{ position: "absolute", inset: bw, borderRadius: 20, background: "var(--background)" }} />
       </div>
 
-      {/* ── 3. Spinning colored arc rings — conic-gradient + mask (no SVG transform issues) ── */}
-      {[
-        {
-          ringR: r + 20, thickness: 4, dur: 5.5, dir: 1 as const,
-          grad: `conic-gradient(from 0deg, #7c3aed 0%, #818cf8 18%, #3b82f6 38%, #06b6d4 58%, transparent 62%, transparent 100%)`,
-          shadow: "#7c3aed55",
-        },
-        {
-          ringR: r + 11, thickness: 3.5, dur: 3.8, dir: -1 as const,
-          grad: `conic-gradient(from 200deg, #06b6d4 0%, #60a5fa 22%, #a78bfa 48%, transparent 52%, transparent 100%)`,
-          shadow: "#3b82f655",
-        },
-      ].map(({ ringR, thickness, dur, dir, grad, shadow }, i) => {
-        const dia = (ringR + thickness) * 2;
-        const offset = total / 2 - ringR - thickness;
+      {/* ── 3. Spinning activity arc rings — CSS border approach, works on all browsers ── */}
+      {([
+        { ringR: r + 20, tk: 4,   dur: 7.2, dir:  1, cT: "#67e8f9", cL: "#3b82f6", glow: "#06b6d499" },
+        { ringR: r + 13, tk: 3.5, dur: 5.5, dir:  1, cT: "#60a5fa", cL: "#6366f1", glow: "#3b82f666" },
+        { ringR: r +  6, tk: 3,   dur: 9.5, dir: -1, cT: "#a78bfa", cL: "#7c3aed", glow: "#818cf855" },
+      ] as const).map(({ ringR, tk, dur, dir, cT, cL, glow }, i) => {
+        const dia    = (ringR + tk) * 2;
+        const offset = total / 2 - ringR - tk;
         return (
           <motion.div key={i}
             animate={{ rotate: dir * 360 }}
-            transition={{ duration: dur, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: dur, repeat: Infinity, ease: "linear", delay: i * 0.6 }}
             className="absolute pointer-events-none"
             style={{
-              top: offset, left: offset,
-              width: dia, height: dia,
+              top: offset, left: offset, width: dia, height: dia,
               borderRadius: "50%",
-              background: grad,
-              WebkitMask: `radial-gradient(farthest-side, transparent calc(100% - ${thickness}px), black calc(100% - ${thickness}px))`,
-              mask: `radial-gradient(farthest-side, transparent calc(100% - ${thickness}px), black calc(100% - ${thickness}px))`,
-              filter: `drop-shadow(0 0 6px ${shadow})`,
+              borderStyle: "solid", borderWidth: tk,
+              borderTopColor: cT, borderLeftColor: cL,
+              borderRightColor: "transparent", borderBottomColor: "transparent",
+              boxShadow: `0 0 8px ${glow}`,
             }}
           />
         );

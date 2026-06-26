@@ -1,213 +1,119 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
+import type { NotifPrefs, PrivacySettings } from "@/context/AuthContext";
 import {
   User, Lock, Bell, Palette, Shield, Globe, MapPin,
   Check, Loader2, Eye, EyeOff, Camera, ChevronRight, Search, X, Crown, Zap,
-  CircleDollarSign,
+  CircleDollarSign, AlertTriangle, Upload,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
 import { COUNTRIES, countryFlag, getCountryByCode } from "@/lib/countries";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | "language" | "location" | "monetization";
 
-/* ─── Panel color tokens ──────────────────────────────────── */
-const COLOR: Record<string, { icon: string; border: string; glow: string; badge: string; ring: string; scanFrom: string; scanTo: string }> = {
-  violet: {
-    icon: "bg-violet-500/20 text-violet-400",
-    border: "border-violet-500/50",
-    glow: "shadow-[0_0_30px_-5px_rgba(139,92,246,0.35)]",
-    badge: "bg-violet-500/20 text-violet-300",
-    ring: "ring-violet-500/30",
-    scanFrom: "from-violet-500/30",
-    scanTo: "to-transparent",
-  },
-  blue: {
-    icon: "bg-blue-500/20 text-blue-400",
-    border: "border-blue-500/50",
-    glow: "shadow-[0_0_30px_-5px_rgba(59,130,246,0.35)]",
-    badge: "bg-blue-500/20 text-blue-300",
-    ring: "ring-blue-500/30",
-    scanFrom: "from-blue-500/30",
-    scanTo: "to-transparent",
-  },
-  amber: {
-    icon: "bg-amber-500/20 text-amber-400",
-    border: "border-amber-500/50",
-    glow: "shadow-[0_0_30px_-5px_rgba(245,158,11,0.35)]",
-    badge: "bg-amber-500/20 text-amber-300",
-    ring: "ring-amber-500/30",
-    scanFrom: "from-amber-500/30",
-    scanTo: "to-transparent",
-  },
-  rose: {
-    icon: "bg-rose-500/20 text-rose-400",
-    border: "border-rose-500/50",
-    glow: "shadow-[0_0_30px_-5px_rgba(244,63,94,0.35)]",
-    badge: "bg-rose-500/20 text-rose-300",
-    ring: "ring-rose-500/30",
-    scanFrom: "from-rose-500/30",
-    scanTo: "to-transparent",
-  },
-  emerald: {
-    icon: "bg-emerald-500/20 text-emerald-400",
-    border: "border-emerald-500/50",
-    glow: "shadow-[0_0_30px_-5px_rgba(16,185,129,0.35)]",
-    badge: "bg-emerald-500/20 text-emerald-300",
-    ring: "ring-emerald-500/30",
-    scanFrom: "from-emerald-500/30",
-    scanTo: "to-transparent",
-  },
-  cyan: {
-    icon: "bg-cyan-500/20 text-cyan-400",
-    border: "border-cyan-500/50",
-    glow: "shadow-[0_0_30px_-5px_rgba(6,182,212,0.35)]",
-    badge: "bg-cyan-500/20 text-cyan-300",
-    ring: "ring-cyan-500/30",
-    scanFrom: "from-cyan-500/30",
-    scanTo: "to-transparent",
-  },
-  orange: {
-    icon: "bg-orange-500/20 text-orange-400",
-    border: "border-orange-500/50",
-    glow: "shadow-[0_0_30px_-5px_rgba(249,115,22,0.35)]",
-    badge: "bg-orange-500/20 text-orange-300",
-    ring: "ring-orange-500/30",
-    scanFrom: "from-orange-500/30",
-    scanTo: "to-transparent",
-  },
+/* ─── Default preferences ─────────────────────────────────── */
+const DEFAULT_NOTIF: NotifPrefs = {
+  likes: true, comments: true, followers: true,
+  messages: true, groups: false, premium: false,
+};
+const DEFAULT_PRIVACY: PrivacySettings = {
+  privateProfile: false, activityStatus: true,
+  readReceipts: true, suggestions: true, searchVisibility: true,
 };
 
-/* ─── Scan-line sweep on open ─────────────────────────────── */
+/* ─── Appearance state stored in localStorage ─────────────── */
+function getAppearance() {
+  try {
+    const raw = localStorage.getItem("olcha_appearance");
+    if (raw) return JSON.parse(raw) as { darkMode: boolean; animations: boolean; compactMode: boolean };
+  } catch { /* ignore */ }
+  return { darkMode: true, animations: true, compactMode: false };
+}
+function saveAppearance(val: { darkMode: boolean; animations: boolean; compactMode: boolean }) {
+  localStorage.setItem("olcha_appearance", JSON.stringify(val));
+  const html = document.documentElement;
+  if (!val.animations) html.classList.add("no-animations");
+  else html.classList.remove("no-animations");
+  if (val.compactMode) html.classList.add("compact-mode");
+  else html.classList.remove("compact-mode");
+}
+/* Apply stored appearance on module load */
+(function applyStoredAppearance() {
+  const a = getAppearance();
+  const html = document.documentElement;
+  if (!a.animations) html.classList.add("no-animations");
+  if (a.compactMode) html.classList.add("compact-mode");
+})();
+
+/* ─── Panel color tokens ──────────────────────────────────── */
+const COLOR: Record<string, { icon: string; border: string; glow: string; badge: string; ring: string; scanFrom: string; scanTo: string }> = {
+  violet: { icon: "bg-violet-500/20 text-violet-400", border: "border-violet-500/50", glow: "shadow-[0_0_30px_-5px_rgba(139,92,246,0.35)]", badge: "bg-violet-500/20 text-violet-300", ring: "ring-violet-500/30", scanFrom: "from-violet-500/30", scanTo: "to-transparent" },
+  blue:   { icon: "bg-blue-500/20 text-blue-400",     border: "border-blue-500/50",   glow: "shadow-[0_0_30px_-5px_rgba(59,130,246,0.35)]",   badge: "bg-blue-500/20 text-blue-300",   ring: "ring-blue-500/30",   scanFrom: "from-blue-500/30",   scanTo: "to-transparent" },
+  amber:  { icon: "bg-amber-500/20 text-amber-400",   border: "border-amber-500/50",  glow: "shadow-[0_0_30px_-5px_rgba(245,158,11,0.35)]",  badge: "bg-amber-500/20 text-amber-300",  ring: "ring-amber-500/30",  scanFrom: "from-amber-500/30",  scanTo: "to-transparent" },
+  rose:   { icon: "bg-rose-500/20 text-rose-400",     border: "border-rose-500/50",   glow: "shadow-[0_0_30px_-5px_rgba(244,63,94,0.35)]",   badge: "bg-rose-500/20 text-rose-300",   ring: "ring-rose-500/30",   scanFrom: "from-rose-500/30",   scanTo: "to-transparent" },
+  emerald:{ icon: "bg-emerald-500/20 text-emerald-400",border:"border-emerald-500/50",glow: "shadow-[0_0_30px_-5px_rgba(16,185,129,0.35)]",  badge: "bg-emerald-500/20 text-emerald-300",ring:"ring-emerald-500/30",scanFrom:"from-emerald-500/30",scanTo:"to-transparent" },
+  cyan:   { icon: "bg-cyan-500/20 text-cyan-400",     border: "border-cyan-500/50",   glow: "shadow-[0_0_30px_-5px_rgba(6,182,212,0.35)]",   badge: "bg-cyan-500/20 text-cyan-300",   ring: "ring-cyan-500/30",   scanFrom: "from-cyan-500/30",   scanTo: "to-transparent" },
+  orange: { icon: "bg-orange-500/20 text-orange-400", border: "border-orange-500/50", glow: "shadow-[0_0_30px_-5px_rgba(249,115,22,0.35)]",  badge: "bg-orange-500/20 text-orange-300",ring: "ring-orange-500/30", scanFrom: "from-orange-500/30", scanTo: "to-transparent" },
+};
+
+/* ─── Scan line ───────────────────────────────────────────── */
 function ScanLine({ color }: { color: string }) {
   const c = COLOR[color]!;
   return (
-    <motion.div
-      className={`absolute inset-x-0 top-0 h-12 bg-gradient-to-b ${c.scanFrom} ${c.scanTo} pointer-events-none`}
-      initial={{ y: 0, opacity: 1 }}
-      animate={{ y: "300%", opacity: 0 }}
-      transition={{ duration: 0.55, ease: "easeOut" }}
-    />
+    <motion.div className={`absolute inset-x-0 top-0 h-12 bg-gradient-to-b ${c.scanFrom} ${c.scanTo} pointer-events-none`}
+      initial={{ y: 0, opacity: 1 }} animate={{ y: "300%", opacity: 0 }} transition={{ duration: 0.55, ease: "easeOut" }} />
   );
 }
 
-/* ─── Stagger container ───────────────────────────────────── */
-const staggerContainer = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.055, delayChildren: 0.05 },
-  },
-};
-const staggerItem = {
-  hidden: { opacity: 0, y: 10, filter: "blur(4px)" },
-  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring" as const, stiffness: 380, damping: 28 } },
-};
+const staggerContainer = { hidden: {}, show: { transition: { staggerChildren: 0.055, delayChildren: 0.05 } } };
+const staggerItem = { hidden: { opacity: 0, y: 10, filter: "blur(4px)" }, show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring" as const, stiffness: 380, damping: 28 } } };
+
+function SF({ children }: { children: React.ReactNode }) {
+  return <motion.div variants={staggerItem}>{children}</motion.div>;
+}
 
 /* ─── Panel card wrapper ──────────────────────────────────── */
 interface PanelProps {
-  color: string;
-  icon: React.ElementType;
-  label: string;
-  preview?: React.ReactNode;
-  isOpen: boolean;
-  onToggle: () => void;
+  color: string; icon: React.ElementType; label: string;
+  preview?: React.ReactNode; isOpen: boolean; onToggle: () => void;
   children: React.ReactNode;
 }
-
 function Panel({ color, icon: Icon, label, preview, isOpen, onToggle, children }: PanelProps) {
   const c = COLOR[color]!;
-  const bodyRef = useRef<HTMLDivElement>(null);
-
   return (
-    <motion.div
-      layout
-      className={`relative rounded-2xl border transition-all duration-300 overflow-hidden ${
-        isOpen
-          ? `${c.border} ${c.glow} bg-white/[0.04] ring-1 ${c.ring}`
-          : "border-white/8 bg-white/[0.025] hover:bg-white/[0.04] hover:border-white/15"
-      }`}
-    >
-      {/* Liquid fill effect on active */}
+    <motion.div layout className={`relative rounded-2xl border transition-all duration-300 overflow-hidden ${isOpen ? `${c.border} ${c.glow} bg-white/[0.04] ring-1 ${c.ring}` : "border-white/8 bg-white/[0.025] hover:bg-white/[0.04] hover:border-white/15"}`}>
       <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className={`absolute inset-0 bg-gradient-to-br ${c.scanFrom} to-transparent pointer-events-none`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-        )}
+        {isOpen && <motion.div className={`absolute inset-0 bg-gradient-to-br ${c.scanFrom} to-transparent pointer-events-none`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} />}
       </AnimatePresence>
-
-      {/* Header button */}
-      <button
-        onClick={onToggle}
-        className="relative z-10 w-full flex items-center gap-4 px-5 py-4 text-left"
-      >
-        {/* Icon container */}
-        <motion.div
-          animate={{ scale: isOpen ? 1.08 : 1, rotate: isOpen ? 5 : 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${c.icon} ${
-            isOpen ? "shadow-lg" : ""
-          }`}
-        >
+      <button onClick={onToggle} className="relative z-10 w-full flex items-center gap-4 px-5 py-4 text-left">
+        <motion.div animate={{ scale: isOpen ? 1.08 : 1, rotate: isOpen ? 5 : 0 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${c.icon} ${isOpen ? "shadow-lg" : ""}`}>
           <Icon className="w-5 h-5" />
         </motion.div>
-
-        {/* Title + preview */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white leading-tight">{label}</p>
-          {preview && !isOpen && (
-            <p className="text-xs text-white/40 mt-0.5 truncate">{preview}</p>
-          )}
+          {preview && !isOpen && <p className="text-xs text-white/40 mt-0.5 truncate">{preview}</p>}
         </div>
-
-        {/* Expand indicator — morphing + to × */}
-        <motion.div
-          animate={{ rotate: isOpen ? 45 : 0, scale: isOpen ? 1.1 : 1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-            isOpen ? `${c.badge}` : "bg-white/8 text-white/40"
-          }`}
-        >
+        <motion.div animate={{ rotate: isOpen ? 45 : 0, scale: isOpen ? 1.1 : 1 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isOpen ? `${c.badge}` : "bg-white/8 text-white/40"}`}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <motion.line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             <motion.line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
         </motion.div>
       </button>
-
-      {/* Expandable content */}
       <AnimatePresence initial={false}>
         {isOpen && (
-          <motion.div
-            key="content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 320, damping: 35, mass: 0.8 }}
-            className="overflow-hidden relative"
-          >
-            {/* Scan line sweeps on open */}
+          <motion.div key="content" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", stiffness: 320, damping: 35, mass: 0.8 }} className="overflow-hidden relative">
             <ScanLine color={color} />
-
-            {/* Divider */}
-            <div className={`mx-5 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent`} />
-
-            {/* Content */}
-            <motion.div
-              ref={bodyRef}
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
-              className="relative z-10 px-5 py-5"
-            >
+            <div className="mx-5 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <motion.div variants={staggerContainer} initial="hidden" animate="show" className="relative z-10 px-5 py-5">
               {children}
             </motion.div>
           </motion.div>
@@ -217,44 +123,6 @@ function Panel({ color, icon: Icon, label, preview, isOpen, onToggle, children }
   );
 }
 
-/* ─── Stagger wrapper for form fields ────────────────────── */
-function SF({ children }: { children: React.ReactNode }) {
-  return <motion.div variants={staggerItem}>{children}</motion.div>;
-}
-
-/* ─── Toggle switch ───────────────────────────────────────── */
-function ToggleSetting({ label, description, defaultChecked = false, color = "violet" }: {
-  label: string; description: string; defaultChecked?: boolean; color?: string;
-}) {
-  const [on, setOn] = useState(defaultChecked);
-  const c = COLOR[color]!;
-  return (
-    <motion.div variants={staggerItem} className="flex items-center justify-between py-3.5 border-b border-white/6 last:border-0">
-      <div className="flex-1 pr-4">
-        <p className="text-sm font-medium text-white/85">{label}</p>
-        <p className="text-xs text-white/35 mt-0.5">{description}</p>
-      </div>
-      <button
-        onClick={() => setOn(v => !v)}
-        className={`relative w-12 h-6.5 rounded-full transition-all duration-300 flex-shrink-0 ${
-          on ? `${c.icon.split(" ")[0]} ring-1 ${c.ring}` : "bg-white/10"
-        }`}
-        style={{ height: "26px" }}
-      >
-        <motion.span
-          layout
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full shadow-md ${
-            on ? "bg-white" : "bg-white/50"
-          }`}
-          style={{ x: on ? "22px" : "0px" }}
-        />
-      </button>
-    </motion.div>
-  );
-}
-
-/* ─── Input field ─────────────────────────────────────────── */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <SF>
@@ -268,10 +136,38 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const INPUT = "w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all";
 
-/* ════════════════════════════════════════════════════════════
-   TAB CONTENT COMPONENTS
-═══════════════════════════════════════════════════════════════ */
+/* ─── Controlled Toggle ───────────────────────────────────── */
+function Toggle({ on, onChange, color = "violet" }: { on: boolean; onChange: (v: boolean) => void; color?: string }) {
+  const c = COLOR[color]!;
+  return (
+    <button onClick={() => onChange(!on)}
+      className={`relative w-12 rounded-full transition-all duration-300 flex-shrink-0 ${on ? `${c.icon.split(" ")[0]} ring-1 ${c.ring}` : "bg-white/10"}`}
+      style={{ height: "26px" }}>
+      <motion.span layout transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full shadow-md ${on ? "bg-white" : "bg-white/50"}`}
+        style={{ x: on ? "22px" : "0px" }} />
+    </button>
+  );
+}
 
+/* ─── Toggle row (controlled) ─────────────────────────────── */
+function ToggleRow({ label, description, on, onChange, color = "violet" }: {
+  label: string; description: string; on: boolean; onChange: (v: boolean) => void; color?: string;
+}) {
+  return (
+    <motion.div variants={staggerItem} className="flex items-center justify-between py-3.5 border-b border-white/6 last:border-0">
+      <div className="flex-1 pr-4">
+        <p className="text-sm font-medium text-white/85">{label}</p>
+        <p className="text-xs text-white/35 mt-0.5">{description}</p>
+      </div>
+      <Toggle on={on} onChange={onChange} color={color} />
+    </motion.div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   PROFILE
+═══════════════════════════════════════════════════════════════ */
 function ProfileContent() {
   const { t } = useTranslation();
   const { user, refetch } = useAuth();
@@ -282,14 +178,25 @@ function ProfileContent() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const { uploadFile: upAvatar, isUploading: avatarUploading } = useMediaUpload({
+    onSuccess: async (result) => {
+      setAvatarUrl(result.serveUrl);
+    },
+  });
+  const { uploadFile: upCover, isUploading: coverUploading } = useMediaUpload({
+    onSuccess: async (result) => {
+      setCoverUrl(result.serveUrl);
+    },
+  });
 
   const handleSave = async () => {
     setSaving(true); setError(null); setSuccess(false);
     try {
       const res = await fetch(`${API}/api/auth/profile`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
         body: JSON.stringify({ displayName, bio, avatarUrl, coverUrl }),
       });
       const data = await res.json();
@@ -302,20 +209,26 @@ function ProfileContent() {
 
   return (
     <div className="space-y-4">
-      {/* Avatar row */}
       <SF>
         <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/8">
           <div className="relative">
-            {avatarUrl ? (
+            {avatarUploading ? (
+              <div className="w-16 h-16 rounded-full bg-violet-500/20 flex items-center justify-center ring-2 ring-violet-500/30">
+                <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
+              </div>
+            ) : avatarUrl ? (
               <img src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-white/20" />
             ) : (
               <div className="w-16 h-16 rounded-full bg-violet-500/30 flex items-center justify-center text-xl font-bold text-violet-300 ring-2 ring-violet-500/30">
-                {(displayName || user?.displayName || "?")[0].toUpperCase()}
+                {(displayName || user?.displayName || "?")[0]?.toUpperCase()}
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center">
+            <button onClick={() => avatarInputRef.current?.click()}
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center hover:bg-violet-400 transition">
               <Camera className="w-3 h-3 text-white" />
-            </div>
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
           </div>
           <div>
             <p className="text-sm font-semibold text-white">{user?.displayName}</p>
@@ -326,8 +239,13 @@ function ProfileContent() {
               </span>
             )}
           </div>
+          <button onClick={() => avatarInputRef.current?.click()}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/25 text-violet-300 text-xs font-medium transition">
+            <Upload className="w-3 h-3" /> {t("settings.upload_photo") ?? "Rasm yuklash"}
+          </button>
         </div>
       </SF>
+
       <Field label={t("settings.name_label")}>
         <input value={displayName} onChange={e => setDisplayName(e.target.value)} className={INPUT} placeholder={t("settings.name_ph")} />
       </Field>
@@ -336,16 +254,23 @@ function ProfileContent() {
           className={`${INPUT} resize-none`} placeholder={t("settings.bio_ph")} />
         <p className="text-xs text-white/30 mt-1 text-right">{bio.length}/160</p>
       </Field>
-      <Field label="Avatar URL">
-        <input value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} className={INPUT} placeholder="https://..." />
-      </Field>
+
       <Field label={t("settings.cover_label")}>
-        <input value={coverUrl} onChange={e => setCoverUrl(e.target.value)} className={INPUT} placeholder="https://..." />
+        <div className="flex gap-2">
+          <input value={coverUrl} onChange={e => setCoverUrl(e.target.value)} className={`${INPUT} flex-1`} placeholder="https://..." />
+          <button onClick={() => coverInputRef.current?.click()} disabled={coverUploading}
+            className="px-3 py-2.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white/80 transition flex items-center gap-1.5 text-xs font-medium disabled:opacity-50">
+            {coverUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+          </button>
+          <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) upCover(f); e.target.value = ""; }} />
+        </div>
       </Field>
+
       {error && <SF><div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div></SF>}
       {success && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> {t("settings.profile_saved")}</div></SF>}
       <SF>
-        <button onClick={handleSave} disabled={saving}
+        <button onClick={handleSave} disabled={saving || avatarUploading || coverUploading}
           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/30 text-violet-300 text-sm font-semibold transition-all disabled:opacity-40">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {t("common.save")}
@@ -355,6 +280,9 @@ function ProfileContent() {
   );
 }
 
+/* ════════════════════════════════════════════════════════════
+   ACCOUNT
+═══════════════════════════════════════════════════════════════ */
 function AccountContent() {
   const { t } = useTranslation();
   const [current, setCurrent] = useState(""); const [newPass, setNewPass] = useState(""); const [confirm, setConfirm] = useState("");
@@ -418,34 +346,82 @@ function AccountContent() {
   );
 }
 
+/* ════════════════════════════════════════════════════════════
+   NOTIFICATIONS — saves to API
+═══════════════════════════════════════════════════════════════ */
 function NotificationsContent() {
   const { t } = useTranslation();
+  const { user, refetch } = useAuth();
+  const [prefs, setPrefs] = useState<NotifPrefs>({ ...DEFAULT_NOTIF, ...(user?.notifPrefs ?? {}) });
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const update = useCallback(async (key: keyof NotifPrefs, value: boolean) => {
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setSaving(true); setSuccess(false);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API}/api/auth/preferences`, {
+          method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
+          body: JSON.stringify({ notifPrefs: next }),
+        });
+        if (res.ok) { await refetch(); setSuccess(true); setTimeout(() => setSuccess(false), 2000); }
+      } finally { setSaving(false); }
+    }, 600);
+  }, [prefs, refetch]);
+
   return (
     <div>
-      <SF><p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">{t("settings.notifications")}</p></SF>
+      <SF><div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">{t("settings.notifications")}</p>
+        <div className="flex items-center gap-1.5">
+          {saving && <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />}
+          {success && <span className="flex items-center gap-1 text-xs text-green-400"><Check className="w-3 h-3" /> Saqlandi</span>}
+        </div>
+      </div></SF>
       <SF>
         <div className="rounded-xl border border-white/8 bg-white/3 divide-y divide-white/6 overflow-hidden">
-          <ToggleSetting color="amber" label={t("settings.notif_likes")} description={t("settings.notif_likes_desc")} defaultChecked />
-          <ToggleSetting color="amber" label={t("settings.notif_comments")} description={t("settings.notif_comments_desc")} defaultChecked />
-          <ToggleSetting color="amber" label={t("settings.notif_followers")} description={t("settings.notif_followers_desc")} defaultChecked />
-          <ToggleSetting color="amber" label={t("settings.notif_messages")} description={t("settings.notif_messages_desc")} defaultChecked />
-          <ToggleSetting color="amber" label={t("settings.notif_groups")} description={t("settings.notif_groups_desc")} />
-          <ToggleSetting color="amber" label={t("settings.notif_premium")} description={t("settings.notif_premium_desc")} />
+          <ToggleRow color="amber" label={t("settings.notif_likes")} description={t("settings.notif_likes_desc")} on={prefs.likes} onChange={v => update("likes", v)} />
+          <ToggleRow color="amber" label={t("settings.notif_comments")} description={t("settings.notif_comments_desc")} on={prefs.comments} onChange={v => update("comments", v)} />
+          <ToggleRow color="amber" label={t("settings.notif_followers")} description={t("settings.notif_followers_desc")} on={prefs.followers} onChange={v => update("followers", v)} />
+          <ToggleRow color="amber" label={t("settings.notif_messages")} description={t("settings.notif_messages_desc")} on={prefs.messages} onChange={v => update("messages", v)} />
+          <ToggleRow color="amber" label={t("settings.notif_groups")} description={t("settings.notif_groups_desc")} on={prefs.groups} onChange={v => update("groups", v)} />
+          <ToggleRow color="amber" label={t("settings.notif_premium")} description={t("settings.notif_premium_desc")} on={prefs.premium} onChange={v => update("premium", v)} />
         </div>
       </SF>
     </div>
   );
 }
 
+/* ════════════════════════════════════════════════════════════
+   APPEARANCE — localStorage + real CSS class application
+═══════════════════════════════════════════════════════════════ */
 function AppearanceContent() {
   const { t } = useTranslation();
+  const [app, setApp] = useState(getAppearance);
+
+  const update = (key: keyof typeof app, value: boolean) => {
+    const next = { ...app, [key]: value };
+    setApp(next);
+    saveAppearance(next);
+  };
+
   return (
     <div className="space-y-4">
       <SF>
         <div className="rounded-xl border border-white/8 bg-white/3 divide-y divide-white/6 overflow-hidden">
-          <ToggleSetting color="rose" label={t("settings.dark_mode")} description={t("settings.dark_mode_desc")} defaultChecked />
-          <ToggleSetting color="rose" label={t("settings.animations")} description={t("settings.animations_desc")} defaultChecked />
-          <ToggleSetting color="rose" label={t("settings.compact_mode")} description={t("settings.compact_mode_desc")} />
+          <ToggleRow color="rose" label={t("settings.dark_mode")} description={t("settings.dark_mode_desc")} on={app.darkMode} onChange={v => update("darkMode", v)} />
+          <ToggleRow color="rose" label={t("settings.animations")} description={t("settings.animations_desc")} on={app.animations} onChange={v => update("animations", v)} />
+          <ToggleRow color="rose" label={t("settings.compact_mode")} description={t("settings.compact_mode_desc")} on={app.compactMode} onChange={v => update("compactMode", v)} />
+        </div>
+      </SF>
+      <SF>
+        <div className="p-3 rounded-xl border border-white/8 bg-white/3 text-xs text-white/40 flex items-center gap-2">
+          <Check className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+          Sozlamalar qurilmangizda saqlanadi. Animatsiyalar va compact rejim darhol qo'llaniladi.
         </div>
       </SF>
       <SF>
@@ -468,43 +444,156 @@ function AppearanceContent() {
   );
 }
 
+/* ════════════════════════════════════════════════════════════
+   PRIVACY — saves to API + real Delete Account
+═══════════════════════════════════════════════════════════════ */
+function DeleteAccountModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
+  const [, navigate] = useLocation();
+  const { logout } = useAuth();
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+
+  const handleDelete = async () => {
+    if (!password) { setError("Parolni kiriting"); return; }
+    setDeleting(true); setError(null);
+    try {
+      const res = await fetch(`${API}/api/auth/account`, {
+        method: "DELETE", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Xato"); return; }
+      await logout();
+      navigate("/");
+    } catch { setError(t("common.network_error")); }
+    finally { setDeleting(false); }
+  };
+
+  return (
+    <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <motion.div className="w-full max-w-sm rounded-2xl border border-red-500/30 bg-[#120808] p-6 space-y-4"
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+          </div>
+          <div>
+            <p className="font-bold text-white">{t("settings.delete_account")}</p>
+            <p className="text-xs text-white/40">{t("settings.danger_irreversible")}</p>
+          </div>
+        </div>
+        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-xs text-red-300 space-y-1">
+          <p>• Barcha post, reel va hikoyalaringiz o'chiriladi</p>
+          <p>• Follower/following ma'lumotlari o'chiriladi</p>
+          <p>• Bu amalni qaytarib bo'lmaydi</p>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">Parol bilan tasdiqlang</label>
+          <div className="relative">
+            <input type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+              className={`${INPUT} pr-11`} placeholder="Joriy parolingiz" />
+            <button type="button" onClick={() => setShowPass(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
+              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} className="mt-0.5 accent-red-500" />
+          <span className="text-xs text-white/50">Men bu amalni anglayman va qaytarib bo'lmasligini bilaman</span>
+        </label>
+        {error && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>}
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-white/15 text-white/60 text-sm font-semibold hover:bg-white/5 transition">
+            Bekor qilish
+          </button>
+          <button onClick={handleDelete} disabled={deleting || !password || !confirmed}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 text-sm font-semibold transition disabled:opacity-40 flex items-center justify-center gap-2">
+            {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            O'chirib yuborish
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function PrivacyContent() {
   const { t } = useTranslation();
+  const { user, refetch } = useAuth();
+  const [settings, setSettings] = useState<PrivacySettings>({ ...DEFAULT_PRIVACY, ...(user?.privacySettings ?? {}) });
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const update = useCallback(async (key: keyof PrivacySettings, value: boolean) => {
+    const next = { ...settings, [key]: value };
+    setSettings(next);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setSaving(true); setSuccess(false);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API}/api/auth/preferences`, {
+          method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
+          body: JSON.stringify({ privacySettings: next }),
+        });
+        if (res.ok) { await refetch(); setSuccess(true); setTimeout(() => setSuccess(false), 2000); }
+      } finally { setSaving(false); }
+    }, 600);
+  }, [settings, refetch]);
+
   return (
     <div className="space-y-4">
+      <SF><div className="flex items-center justify-between mb-1">
+        <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">{t("settings.privacy")}</p>
+        <div className="flex items-center gap-1.5">
+          {saving && <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />}
+          {success && <span className="flex items-center gap-1 text-xs text-green-400"><Check className="w-3 h-3" /> Saqlandi</span>}
+        </div>
+      </div></SF>
       <SF>
         <div className="rounded-xl border border-white/8 bg-white/3 divide-y divide-white/6 overflow-hidden">
-          <ToggleSetting color="emerald" label={t("settings.priv_profile")} description={t("settings.priv_profile_desc")} />
-          <ToggleSetting color="emerald" label={t("settings.priv_activity")} description={t("settings.priv_activity_desc")} defaultChecked />
-          <ToggleSetting color="emerald" label={t("settings.priv_read")} description={t("settings.priv_read_desc")} defaultChecked />
-          <ToggleSetting color="emerald" label={t("settings.priv_suggest")} description={t("settings.priv_suggest_desc")} defaultChecked />
-          <ToggleSetting color="emerald" label={t("settings.priv_search")} description={t("settings.priv_search_desc")} defaultChecked />
+          <ToggleRow color="emerald" label={t("settings.priv_profile")} description={t("settings.priv_profile_desc")} on={settings.privateProfile} onChange={v => update("privateProfile", v)} />
+          <ToggleRow color="emerald" label={t("settings.priv_activity")} description={t("settings.priv_activity_desc")} on={settings.activityStatus} onChange={v => update("activityStatus", v)} />
+          <ToggleRow color="emerald" label={t("settings.priv_read")} description={t("settings.priv_read_desc")} on={settings.readReceipts} onChange={v => update("readReceipts", v)} />
+          <ToggleRow color="emerald" label={t("settings.priv_suggest")} description={t("settings.priv_suggest_desc")} on={settings.suggestions} onChange={v => update("suggestions", v)} />
+          <ToggleRow color="emerald" label={t("settings.priv_search")} description={t("settings.priv_search_desc")} on={settings.searchVisibility} onChange={v => update("searchVisibility", v)} />
         </div>
       </SF>
       <SF>
         <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5">
           <p className="text-sm font-semibold text-red-400 mb-1">{t("settings.danger_zone")}</p>
           <p className="text-xs text-white/35 mb-3">{t("settings.danger_irreversible")}</p>
-          <button className="px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-xs font-semibold hover:bg-red-500/10 transition">
+          <button onClick={() => setShowDeleteModal(true)}
+            className="px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-xs font-semibold hover:bg-red-500/10 transition flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5" />
             {t("settings.delete_account")}
           </button>
         </div>
       </SF>
+      <AnimatePresence>
+        {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
 
+/* ════════════════════════════════════════════════════════════
+   LANGUAGE — fully working
+═══════════════════════════════════════════════════════════════ */
 const POPULAR_LANGS: LangCode[] = ["uz", "en", "ru", "zh", "ar", "es", "fr", "hi", "tr", "de", "ja", "ko"];
 
 function LangRow({ lang, current, onSelect }: { lang: typeof LANGUAGES[0]; current: LangCode; onSelect: (c: LangCode) => void }) {
   const isSelected = lang.code === current;
   return (
-    <motion.button whileTap={{ scale: 0.97 }}
-      onClick={() => onSelect(lang.code)}
-      className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all text-left w-full ${
-        isSelected ? "bg-cyan-500/15 border border-cyan-500/35 ring-1 ring-cyan-500/20" : "border border-transparent hover:bg-white/6 hover:border-white/10"
-      }`}
-    >
+    <motion.button whileTap={{ scale: 0.97 }} onClick={() => onSelect(lang.code)}
+      className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all text-left w-full ${isSelected ? "bg-cyan-500/15 border border-cyan-500/35 ring-1 ring-cyan-500/20" : "border border-transparent hover:bg-white/6 hover:border-white/10"}`}>
       <span className="text-xl w-8 text-center flex-shrink-0">{lang.flag}</span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{lang.native}</p>
@@ -559,25 +648,20 @@ function LanguageContent() {
       <SF>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t("lang.search")}
-            className={`${INPUT} pl-9 pr-9`} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t("lang.search")} className={`${INPUT} pl-9 pr-9`} />
           {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"><X className="w-4 h-4" /></button>}
         </div>
       </SF>
       {filteredPopular.length > 0 && (
         <SF>
           {!search && <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">{t("lang.popular")}</p>}
-          <div className="space-y-1">
-            {filteredPopular.map(lang => <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} />)}
-          </div>
+          <div className="space-y-1">{filteredPopular.map(lang => <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} />)}</div>
         </SF>
       )}
       {otherLangs.length > 0 && (
         <SF>
           {!search && <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">{t("lang.all")}</p>}
-          <div className="space-y-1">
-            {otherLangs.map(lang => <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} />)}
-          </div>
+          <div className="space-y-1">{otherLangs.map(lang => <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} />)}</div>
         </SF>
       )}
       {filtered.length === 0 && <SF><div className="text-center py-8 text-white/30 text-sm"><Globe className="w-8 h-8 mx-auto mb-2 opacity-40" /><p>{t("lang.not_found")}</p></div></SF>}
@@ -586,7 +670,10 @@ function LanguageContent() {
   );
 }
 
-const ALL_TIMEZONES: { label: string; value: string }[] = [
+/* ════════════════════════════════════════════════════════════
+   LOCATION — saves to API
+═══════════════════════════════════════════════════════════════ */
+const ALL_TIMEZONES = [
   { label: "UTC+05:00 — Toshkent (O'zbekiston)", value: "Asia/Tashkent" },
   { label: "UTC+05:00 — Samarqand", value: "Asia/Samarkand" },
   { label: "UTC+06:00 — Olmaota (Qozog'iston)", value: "Asia/Almaty" },
@@ -731,10 +818,11 @@ function LocationContent() {
   );
 }
 
-/* ─── Monetization panel content ──────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   MONETIZATION — fetches from API
+═══════════════════════════════════════════════════════════════ */
 function MonetizationContent() {
   const { t } = useTranslation();
-  const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
@@ -743,7 +831,7 @@ function MonetizationContent() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch(`${API_BASE}/api/creator/monetization/eligibility`, { credentials: "include" });
+      const r = await fetch(`${API}/api/creator/monetization/eligibility`, { credentials: "include" });
       if (r.ok) setData(await r.json());
     } finally { setLoading(false); }
   };
@@ -753,7 +841,7 @@ function MonetizationContent() {
   const handleApply = async () => {
     setApplying(true); setApplyError("");
     try {
-      const r = await fetch(`${API_BASE}/api/creator/monetization/apply`, {
+      const r = await fetch(`${API}/api/creator/monetization/apply`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         credentials: "include", body: JSON.stringify({}),
       });
@@ -765,65 +853,35 @@ function MonetizationContent() {
 
   const pct = (cur: number, req: number) => Math.min(100, req > 0 ? Math.round(cur / req * 100) : 0);
   const fmt = (n: number) => n >= 1_000_000 ? `${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n/1_000).toFixed(0)}K` : String(n);
-  const uzs = (t: number) => Math.round(t / 100).toLocaleString("uz-UZ") + " so'm";
+  const uzs = (n: number) => Math.round(n / 100).toLocaleString("uz-UZ") + " so'm";
 
-  if (loading) return (
-    <div className="flex justify-center py-6">
-      <div className="w-6 h-6 rounded-full border-2 border-amber-500/30 border-t-amber-400 animate-spin" />
-    </div>
-  );
+  if (loading) return <div className="flex justify-center py-6"><div className="w-6 h-6 rounded-full border-2 border-amber-500/30 border-t-amber-400 animate-spin" /></div>;
 
   const s = data?.status ?? "none";
   const cr = data?.criteria;
 
   return (
     <div className="space-y-4">
-      {/* Status badge */}
       <SF>
-        <div className={`flex items-center gap-3 p-3.5 rounded-2xl border ${
-          s === "active"   ? "bg-emerald-500/10 border-emerald-500/30" :
-          s === "applied"  ? "bg-amber-500/10 border-amber-500/30" :
-          s === "rejected" ? "bg-red-500/10 border-red-500/30" :
-          "bg-white/5 border-white/10"
-        }`}>
-          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-            s === "active"   ? "bg-emerald-500/20 text-emerald-400" :
-            s === "applied"  ? "bg-amber-500/20 text-amber-400" :
-            s === "rejected" ? "bg-red-500/20 text-red-400" :
-            "bg-white/10 text-white/40"
-          }`}>
+        <div className={`flex items-center gap-3 p-3.5 rounded-2xl border ${s === "active" ? "bg-emerald-500/10 border-emerald-500/30" : s === "applied" ? "bg-amber-500/10 border-amber-500/30" : s === "rejected" ? "bg-red-500/10 border-red-500/30" : "bg-white/5 border-white/10"}`}>
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${s === "active" ? "bg-emerald-500/20 text-emerald-400" : s === "applied" ? "bg-amber-500/20 text-amber-400" : s === "rejected" ? "bg-red-500/20 text-red-400" : "bg-white/10 text-white/40"}`}>
             <CircleDollarSign className="w-4 h-4" />
           </div>
           <div className="flex-1">
-            <p className={`font-semibold text-sm ${
-              s === "active" ? "text-emerald-400" :
-              s === "applied" ? "text-amber-400" :
-              s === "rejected" ? "text-red-400" : "text-white/50"}`}>
-              {s === "active"   ? t("settings.mon_active") :
-               s === "applied"  ? t("settings.mon_pending") :
-               s === "rejected" ? t("settings.mon_rejected") :
-               t("settings.mon_inactive")}
+            <p className={`font-semibold text-sm ${s === "active" ? "text-emerald-400" : s === "applied" ? "text-amber-400" : s === "rejected" ? "text-red-400" : "text-white/50"}`}>
+              {s === "active" ? t("settings.mon_active") : s === "applied" ? t("settings.mon_pending") : s === "rejected" ? t("settings.mon_rejected") : t("settings.mon_inactive")}
             </p>
             <p className="text-xs text-white/35 mt-0.5">
-              {s === "active"   ? t("settings.mon_active_desc") :
-               s === "applied"  ? t("settings.mon_pending_desc") :
-               s === "rejected" ? (data?.rejectionReason ?? t("settings.mon_rejected")) :
-               t("settings.mon_inactive_desc")}
+              {s === "active" ? t("settings.mon_active_desc") : s === "applied" ? t("settings.mon_pending_desc") : s === "rejected" ? (data?.rejectionReason ?? t("settings.mon_rejected")) : t("settings.mon_inactive_desc")}
             </p>
           </div>
         </div>
       </SF>
-
-      {/* Eligibility criteria progress bars */}
       {s !== "active" && cr && (
         <SF>
           <div className="space-y-2.5">
             <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">{t("settings.mon_requirements")}</p>
-            {([
-              { key: "followers",    label: t("settings.mon_followers"), emoji: "👥" },
-              { key: "totalViews",   label: t("settings.mon_views"), emoji: "👁" },
-              { key: "contentCount", label: t("settings.mon_content"), emoji: "🎬" },
-            ] as const).map(({ key, label, emoji }) => {
+            {([ { key: "followers", label: t("settings.mon_followers"), emoji: "👥" }, { key: "totalViews", label: t("settings.mon_views"), emoji: "👁" }, { key: "contentCount", label: t("settings.mon_content"), emoji: "🎬" } ] as const).map(({ key, label, emoji }) => {
               const c = cr[key as keyof typeof cr];
               if (!c) return null;
               const p = pct(c.current, c.required);
@@ -832,17 +890,12 @@ function MonetizationContent() {
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-medium text-white/60">{emoji} {label}</span>
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-xs font-bold ${c.met ? "text-emerald-400" : "text-white/70"}`}>
-                        {fmt(c.current)} / {fmt(c.required)}
-                      </span>
+                      <span className={`text-xs font-bold ${c.met ? "text-emerald-400" : "text-white/70"}`}>{fmt(c.current)} / {fmt(c.required)}</span>
                       {c.met && <Check className="w-3 h-3 text-emerald-400" />}
                     </div>
                   </div>
                   <div className="w-full h-1.5 rounded-full bg-white/8 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${c.met ? "bg-emerald-400" : "bg-gradient-to-r from-amber-600 to-amber-400"}`}
-                      style={{ width: `${p}%` }}
-                    />
+                    <div className={`h-full rounded-full transition-all duration-700 ${c.met ? "bg-emerald-400" : "bg-gradient-to-r from-amber-600 to-amber-400"}`} style={{ width: `${p}%` }} />
                   </div>
                 </div>
               );
@@ -850,15 +903,10 @@ function MonetizationContent() {
           </div>
         </SF>
       )}
-
-      {/* Apply button */}
       {data?.canApply && (
         <SF>
-          {applyError && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm mb-2">{applyError}</div>
-          )}
-          <motion.button
-            whileTap={{ scale: 0.97 }} onClick={handleApply} disabled={applying}
+          {applyError && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm mb-2">{applyError}</div>}
+          <motion.button whileTap={{ scale: 0.97 }} onClick={handleApply} disabled={applying}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-50"
             style={{ background: "linear-gradient(135deg,#d97706,#f59e0b)", color: "#000" }}>
             {applying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CircleDollarSign className="w-4 h-4" />}
@@ -866,8 +914,6 @@ function MonetizationContent() {
           </motion.button>
         </SF>
       )}
-
-      {/* Earnings summary if active */}
       {s === "active" && data?.earnings && (
         <SF>
           <div className="rounded-xl p-3.5 bg-emerald-500/8 border border-emerald-500/20 space-y-1">
@@ -877,13 +923,7 @@ function MonetizationContent() {
           </div>
         </SF>
       )}
-
-      {/* No content yet */}
-      {!data && !loading && (
-        <SF>
-          <p className="text-sm text-white/30 text-center py-4">{t("settings.mon_no_data")}</p>
-        </SF>
-      )}
+      {!data && !loading && <SF><p className="text-sm text-white/30 text-center py-4">{t("settings.mon_no_data")}</p></SF>}
     </div>
   );
 }
@@ -898,81 +938,38 @@ export default function SettingsPage() {
   const currentLang = LANGUAGES.find(l => l.code === currentCode);
 
   const [openPanel, setOpenPanel] = useState<Tab | null>("profile");
-
   const toggle = (id: Tab) => setOpenPanel(prev => prev === id ? null : id);
 
-  const PANELS: {
-    id: Tab; icon: typeof User; label: string; color: string; preview?: React.ReactNode;
-  }[] = [
-    {
-      id: "profile", icon: User, color: "violet",
-      label: t("settings.profile"),
-      preview: user?.displayName ? `${user.displayName} · @${user.username}` : undefined,
-    },
-    {
-      id: "account", icon: Lock, color: "blue",
-      label: t("settings.account"),
-      preview: user?.email,
-    },
-    {
-      id: "notifications", icon: Bell, color: "amber",
-      label: t("settings.notifications"),
-      preview: t("settings.notif_preview"),
-    },
-    {
-      id: "appearance", icon: Palette, color: "rose",
-      label: t("settings.appearance"),
-      preview: t("settings.appearance_preview"),
-    },
-    {
-      id: "privacy", icon: Shield, color: "emerald",
-      label: t("settings.privacy"),
-      preview: t("settings.privacy_preview"),
-    },
-    {
-      id: "language", icon: Globe, color: "cyan",
-      label: t("settings.language"),
-      preview: currentLang ? `${currentLang.flag} ${currentLang.native}` : undefined,
-    },
-    {
-      id: "location", icon: MapPin, color: "orange",
-      label: t("settings.loc_time"),
-      preview: user?.country ? `${countryFlag(user.country)} ${getCountryByCode(user.country)?.name ?? ""}` : t("settings.lt_not_set"),
-    },
-    {
-      id: "monetization", icon: CircleDollarSign, color: "amber",
-      label: t("settings.monetization_label"),
-      preview: t("settings.monetization_preview"),
-    },
+  const PANELS: { id: Tab; icon: typeof User; label: string; color: string; preview?: React.ReactNode }[] = [
+    { id: "profile",       icon: User,              color: "violet", label: t("settings.profile"),              preview: user?.displayName ? `${user.displayName} · @${user.username}` : undefined },
+    { id: "account",       icon: Lock,              color: "blue",   label: t("settings.account"),              preview: user?.email },
+    { id: "notifications", icon: Bell,              color: "amber",  label: t("settings.notifications"),        preview: t("settings.notif_preview") },
+    { id: "appearance",    icon: Palette,           color: "rose",   label: t("settings.appearance"),           preview: t("settings.appearance_preview") },
+    { id: "privacy",       icon: Shield,            color: "emerald",label: t("settings.privacy"),              preview: t("settings.privacy_preview") },
+    { id: "language",      icon: Globe,             color: "cyan",   label: t("settings.language"),             preview: currentLang ? `${currentLang.flag} ${currentLang.native}` : undefined },
+    { id: "location",      icon: MapPin,            color: "orange", label: t("settings.loc_time"),             preview: user?.country ? `${countryFlag(user.country)} ${getCountryByCode(user.country)?.name ?? ""}` : t("settings.lt_not_set") },
+    { id: "monetization",  icon: CircleDollarSign,  color: "amber",  label: t("settings.monetization_label"),  preview: t("settings.monetization_preview") },
   ];
 
   const CONTENT: Record<Tab, React.ReactNode> = {
-    profile: <ProfileContent />,
-    account: <AccountContent />,
+    profile:       <ProfileContent />,
+    account:       <AccountContent />,
     notifications: <NotificationsContent />,
-    appearance: <AppearanceContent />,
-    privacy: <PrivacyContent />,
-    language: <LanguageContent />,
-    location: <LocationContent />,
-    monetization: <MonetizationContent />,
+    appearance:    <AppearanceContent />,
+    privacy:       <PrivacyContent />,
+    language:      <LanguageContent />,
+    location:      <LocationContent />,
+    monetization:  <MonetizationContent />,
   };
 
   return (
     <div className="min-h-screen bg-[#080810]">
-      {/* Background ambient */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/3 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/4 rounded-full blur-3xl" />
       </div>
-
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 pb-24">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-8">
           <div className="flex items-center gap-3 mb-1">
             <div className="w-8 h-8 rounded-lg bg-white/8 flex items-center justify-center">
               <Zap className="w-4 h-4 text-white/60" />
@@ -981,33 +978,11 @@ export default function SettingsPage() {
           </div>
           <p className="text-sm text-white/35 ml-11">{t("settings.subtitle")}</p>
         </motion.div>
-
-        {/* Panel stack */}
-        <motion.div
-          className="space-y-2"
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: {},
-            show: { transition: { staggerChildren: 0.07 } },
-          }}
-        >
+        <motion.div className="space-y-2" initial="hidden" animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}>
           {PANELS.map(({ id, icon, label, color, preview }) => (
-            <motion.div
-              key={id}
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.97 },
-                show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 380, damping: 28 } },
-              }}
-            >
-              <Panel
-                color={color}
-                icon={icon}
-                label={label}
-                preview={preview}
-                isOpen={openPanel === id}
-                onToggle={() => toggle(id)}
-              >
+            <motion.div key={id} variants={{ hidden: { opacity: 0, y: 20, scale: 0.97 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 380, damping: 28 } } }}>
+              <Panel color={color} icon={icon} label={label} preview={preview} isOpen={openPanel === id} onToggle={() => toggle(id)}>
                 {CONTENT[id]}
               </Panel>
             </motion.div>

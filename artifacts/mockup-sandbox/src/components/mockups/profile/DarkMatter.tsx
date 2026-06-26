@@ -1,261 +1,198 @@
 import { useState, useEffect } from "react";
 
-const mockUser = {
+const USER = {
   name: "Asilbek Nazarov",
   handle: "asilbek_nx",
-  bio: "Digital creator · 🇺🇿 Tashkent · Building the future one pixel at a time",
-  avatarUrl: null as string | null,
+  bio: "Digital creator & UI designer. Building bold futures from Tashkent 🇺🇿",
   isVerified: true,
   followers: 128400,
   following: 843,
   posts: 214,
 };
 
-const posts = [
-  { id: 1, emoji: "🚀", label: "Launch day!", likes: "12.4K", col: "from-violet-800 to-purple-900" },
-  { id: 2, emoji: "🌊", label: "New wave", likes: "8.1K", col: "from-cyan-800 to-blue-900" },
-  { id: 3, emoji: "✨", label: "Spark", likes: "6.7K", col: "from-pink-800 to-rose-900" },
-  { id: 4, emoji: "🔥", label: "Trending", likes: "21K", col: "from-orange-800 to-red-900" },
-  { id: 5, emoji: "🌿", label: "Chill", likes: "4.4K", col: "from-emerald-800 to-teal-900" },
-  { id: 6, emoji: "🎨", label: "Design", likes: "9.9K", col: "from-fuchsia-800 to-violet-900" },
+const POSTS = [
+  { id: 1, emoji: "🚀", likes: "12.4K", views: "340K" },
+  { id: 2, emoji: "🎨", likes: "8.1K",  views: "120K" },
+  { id: 3, emoji: "🌊", likes: "6.7K",  views: "98K"  },
+  { id: 4, emoji: "🔥", likes: "21K",   views: "600K" },
+  { id: 5, emoji: "✨", likes: "4.4K",  views: "70K"  },
+  { id: 6, emoji: "🎯", likes: "9.9K",  views: "210K" },
+  { id: 7, emoji: "💡", likes: "7.2K",  views: "150K" },
+  { id: 8, emoji: "🌿", likes: "3.8K",  views: "55K"  },
+  { id: 9, emoji: "⚡", likes: "15K",   views: "410K" },
 ];
 
-function fmt(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+function fmt(n: number) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
   return String(n);
 }
 
-function useCounter(target: number, delay = 0) {
+function useCount(target: number, delay = 0) {
   const [v, setV] = useState(0);
   useEffect(() => {
-    const t = setTimeout(() => {
-      let cur = 0;
-      const step = target / 45;
-      const id = setInterval(() => {
-        cur += step;
-        if (cur >= target) { setV(target); clearInterval(id); }
-        else setV(Math.floor(cur));
-      }, 15);
-      return () => clearInterval(id);
+    const to = setTimeout(() => {
+      let start = Date.now();
+      const dur = 950;
+      const tick = () => {
+        const p = Math.min((Date.now() - start) / dur, 1);
+        const e = 1 - Math.pow(1 - p, 4);
+        setV(Math.round(target * e));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
     }, delay);
-    return () => clearTimeout(t);
+    return () => clearTimeout(to);
   }, [target, delay]);
   return v;
 }
 
-function HexAvatar({ avatarUrl, name }: { avatarUrl: string | null; name: string }) {
+/* ── Big stat number card ── */
+function StatCard({ label, value, delay, accent }: { label: string; value: number; delay: number; accent: string }) {
+  const v = useCount(value, delay);
   return (
-    <div className="relative" style={{ width: 100, height: 115 }}>
-      {/* outer hex glow */}
-      <svg width="100" height="115" viewBox="0 0 100 115" className="absolute inset-0"
-        style={{ filter: "drop-shadow(0 0 16px rgba(251,146,60,0.7)) drop-shadow(0 0 32px rgba(251,146,60,0.4))" }}>
-        <polygon points="50,4 96,27 96,88 50,111 4,88 4,27"
-          fill="none" stroke="url(#hexGrad)" strokeWidth="2.5" />
-        <defs>
-          <linearGradient id="hexGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#fb923c" />
-            <stop offset="50%" stopColor="#f59e0b" />
-            <stop offset="100%" stopColor="#ef4444" />
-          </linearGradient>
-        </defs>
-      </svg>
-      {/* spinning dash ring */}
-      <svg width="100" height="115" viewBox="0 0 100 115" className="absolute inset-0 animate-spin"
-        style={{ animationDuration: "8s" }}>
-        <polygon points="50,1 99,26.5 99,88.5 50,114 1,88.5 1,26.5"
-          fill="none" stroke="rgba(251,146,60,0.3)" strokeWidth="1" strokeDasharray="8 4" />
-      </svg>
-      {/* avatar fill */}
-      <svg width="100" height="115" viewBox="0 0 100 115" className="absolute inset-0">
-        <defs>
-          <clipPath id="hexClip">
-            <polygon points="50,6 94,28.5 94,86.5 50,109 6,86.5 6,28.5" />
-          </clipPath>
-          <radialGradient id="hexFill" cx="50%" cy="40%" r="60%">
-            <stop offset="0%" stopColor="#2d1654" />
-            <stop offset="100%" stopColor="#0d0508" />
-          </radialGradient>
-        </defs>
-        <polygon points="50,6 94,28.5 94,86.5 50,109 6,86.5 6,28.5" fill="url(#hexFill)" clipPath="url(#hexClip)" />
-        {!avatarUrl && (
-          <text x="50" y="68" textAnchor="middle" fontSize="36" dominantBaseline="middle" clipPath="url(#hexClip)">
-            👤
-          </text>
-        )}
-        {avatarUrl && <image href={avatarUrl} x="6" y="6.5" width="88" height="102" clipPath="url(#hexClip)" preserveAspectRatio="xMidYMid slice" />}
-      </svg>
+    <div className="relative rounded-2xl py-5 flex flex-col items-center overflow-hidden"
+      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+      {/* top accent line */}
+      <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-2xl"
+        style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
+      <span className="text-[28px] font-black leading-none tracking-tight" style={{ color: "#fff" }}>
+        {fmt(v)}
+      </span>
+      <span className="text-[9px] font-bold tracking-[0.18em] uppercase mt-1.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+        {label}
+      </span>
     </div>
   );
 }
 
 export function DarkMatter() {
-  const [tab, setTab] = useState<"grid" | "reels">("grid");
+  const [tab, setTab] = useState<"posts" | "reels">("posts");
   const [followed, setFollowed] = useState(false);
-  const followers = useCounter(mockUser.followers);
-  const following = useCounter(mockUser.following, 200);
-  const postCount = useCounter(mockUser.posts, 400);
+
+  /* single accent: electric cyan-blue */
+  const ACCENT = "#22d3ee";
+  const BG     = "#05080f";
+  const BORDER = "rgba(255,255,255,0.07)";
 
   return (
-    <div className="min-h-screen text-white overflow-x-hidden select-none"
-      style={{ background: "#060408", fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen text-white overflow-x-hidden"
+      style={{ background: BG, fontFamily: "'Inter', sans-serif" }}>
 
-      {/* ─── Full-width cinematic cover ─── */}
-      <div className="relative h-56 overflow-hidden">
-        <div className="absolute inset-0"
-          style={{ background: "linear-gradient(160deg, #1a0a0a 0%, #110416 40%, #080416 100%)" }} />
-        {/* lava blobs */}
-        <div className="absolute -top-10 left-0 w-80 h-56 rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(251,146,60,0.38) 0%, transparent 65%)", filter: "blur(40px)", animation: "float 8s ease-in-out infinite" }} />
-        <div className="absolute -top-8 right-0 w-60 h-48 rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(239,68,68,0.3) 0%, transparent 65%)", filter: "blur(36px)", animation: "float 6s ease-in-out infinite 1.5s" }} />
-        <div className="absolute bottom-0 left-1/3 w-48 h-32 rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(234,179,8,0.22) 0%, transparent 65%)", filter: "blur(28px)", animation: "float 5s ease-in-out infinite 0.8s" }} />
-        {/* particle dots */}
-        {[
-          { l: "12%", t: "20%", s: 3 }, { l: "35%", t: "55%", s: 2 }, { l: "65%", t: "18%", s: 4 },
-          { l: "78%", t: "60%", s: 2.5 }, { l: "88%", t: "32%", s: 3 }, { l: "48%", t: "40%", s: 2 },
-        ].map((d, i) => (
-          <div key={i} className="absolute rounded-full animate-pulse"
-            style={{ left: d.l, top: d.t, width: d.s, height: d.s, background: "rgba(251,146,60,0.8)", boxShadow: `0 0 ${d.s * 4}px rgba(251,146,60,0.9)`, animationDelay: `${i * 0.4}s` }} />
-        ))}
+      {/* ══ Cover — dark ocean, single cyan beam ══ */}
+      <div className="relative h-52 overflow-hidden">
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #07111e 0%, #05080f 100%)" }} />
+        {/* single big cyan bloom top-right */}
+        <div className="absolute -top-20 right-0 w-[280px] h-[220px]"
+          style={{ background: "radial-gradient(ellipse, rgba(34,211,238,0.3) 0%, transparent 65%)", filter: "blur(48px)" }} />
+        {/* subtle bottom left */}
+        <div className="absolute bottom-0 -left-10 w-[180px] h-[120px]"
+          style={{ background: "radial-gradient(ellipse, rgba(34,211,238,0.12) 0%, transparent 65%)", filter: "blur(32px)" }} />
+        {/* vertical scanline */}
+        <div className="absolute top-0 bottom-0" style={{ right: "28%", width: 1, background: "linear-gradient(180deg, transparent, rgba(34,211,238,0.18), transparent)" }} />
         {/* bottom fade */}
-        <div className="absolute inset-x-0 bottom-0 h-24"
-          style={{ background: "linear-gradient(to top, #060408, transparent)" }} />
-        {/* top actions */}
-        <div className="absolute top-3 left-3 right-3 flex justify-between items-center">
-          <button className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-            style={{ background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)" }}>
-            ←
+        <div className="absolute inset-x-0 bottom-0 h-24" style={{ background: `linear-gradient(to top, ${BG}, transparent)` }} />
+      </div>
+
+      {/* ══ Avatar centered, large, floating ══ */}
+      <div className="flex flex-col items-center" style={{ marginTop: -68 }}>
+        {/* avatar container */}
+        <div className="relative mb-4" style={{ width: 112, height: 112 }}>
+          {/* outer accent ring */}
+          <div className="absolute inset-0 rounded-full"
+            style={{ boxShadow: `0 0 0 2px ${ACCENT}, 0 0 32px rgba(34,211,238,0.45)` }} />
+          {/* inner image */}
+          <div className="absolute inset-[3px] rounded-full overflow-hidden flex items-center justify-center text-4xl"
+            style={{ background: "linear-gradient(135deg, #091628, #060d1a)" }}>
+            👤
+          </div>
+          {/* verified dot */}
+          <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black"
+            style={{ background: ACCENT, color: "#000", border: `2.5px solid ${BG}`, fontWeight: 900, boxShadow: `0 0 12px rgba(34,211,238,0.7)` }}>
+            ✓
+          </div>
+        </div>
+
+        {/* name + handle */}
+        <h1 className="text-[22px] font-black tracking-tight mb-1">{USER.name}</h1>
+        <p className="text-[12px] font-bold tracking-wide mb-3" style={{ color: ACCENT, opacity: 0.8 }}>
+          @{USER.handle}
+        </p>
+        <p className="text-[13px] text-center leading-relaxed px-8 mb-5" style={{ color: "rgba(255,255,255,0.5)" }}>
+          {USER.bio}
+        </p>
+
+        {/* ══ STATS — 3 cards ══ */}
+        <div className="grid grid-cols-3 gap-2.5 w-full px-5 mb-5">
+          <StatCard label="Followers" value={USER.followers} delay={0}   accent={ACCENT} />
+          <StatCard label="Following" value={USER.following} delay={120} accent={ACCENT} />
+          <StatCard label="Posts"     value={USER.posts}     delay={240} accent={ACCENT} />
+        </div>
+
+        {/* ══ Action row ══ */}
+        <div className="flex gap-2.5 w-full px-5 mb-6">
+          <button onClick={() => setFollowed(f => !f)}
+            className="flex-1 h-11 rounded-2xl text-sm font-bold transition-all"
+            style={followed
+              ? { background: "rgba(255,255,255,0.06)", border: `1px solid ${BORDER}`, color: "rgba(255,255,255,0.45)" }
+              : { background: "transparent", border: `1.5px solid ${ACCENT}`, color: ACCENT, boxShadow: `0 0 18px rgba(34,211,238,0.25)` }}>
+            {followed ? "✓ Following" : "+ Follow"}
           </button>
-          <div className="flex gap-2">
-            <button className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-              style={{ background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)" }}>
-              ↑
-            </button>
-          </div>
+          <button className="flex-1 h-11 rounded-2xl text-sm font-bold"
+            style={{ background: ACCENT, color: "#000", boxShadow: `0 0 20px rgba(34,211,238,0.35)`, fontWeight: 800 }}>
+            Message
+          </button>
+          <button className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm"
+            style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${BORDER}` }}>
+            ···
+          </button>
         </div>
       </div>
 
-      {/* ─── Avatar + identity row ─── */}
-      <div className="flex items-end gap-4 px-5" style={{ marginTop: -60 }}>
-        <HexAvatar avatarUrl={mockUser.avatarUrl} name={mockUser.name} />
-        <div className="pb-2 flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <h1 className="text-lg font-black truncate">{mockUser.name}</h1>
-            {mockUser.isVerified && (
-              <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
-                style={{ background: "linear-gradient(135deg, #fb923c, #ef4444)", boxShadow: "0 0 10px rgba(251,146,60,0.6)" }}>
-                ✓
-              </span>
-            )}
-          </div>
-          <p className="text-xs font-mono mb-1" style={{ color: "rgba(251,146,60,0.7)" }}>@{mockUser.handle}</p>
-          {/* action buttons inline */}
-          <div className="flex gap-1.5 mt-1.5">
-            <button onClick={() => setFollowed(f => !f)}
-              className="px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all"
-              style={followed
-                ? { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.55)" }
-                : { background: "linear-gradient(135deg, #fb923c, #ef4444)", boxShadow: "0 0 18px rgba(251,146,60,0.5)", border: "none" }}>
-              {followed ? "✓ Following" : "+ Follow"}
-            </button>
-            <button className="px-3.5 py-1.5 rounded-full text-[11px] font-bold"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}>
-              Message
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── Bio ─── */}
-      <div className="px-5 mt-3 mb-4">
-        <p className="text-sm text-white/60 leading-relaxed">{mockUser.bio}</p>
-      </div>
-
-      {/* ─── STATS: large 3-column cards ─── */}
-      <div className="grid grid-cols-3 gap-2.5 px-5 mb-5">
-        {[
-          { label: "Followers", val: followers, accent: "#fb923c", border: "rgba(251,146,60,0.3)" },
-          { label: "Following", val: following, accent: "#f59e0b", border: "rgba(245,158,11,0.3)" },
-          { label: "Posts", val: postCount, accent: "#ef4444", border: "rgba(239,68,68,0.3)" },
-        ].map(s => (
-          <div key={s.label} className="relative rounded-2xl overflow-hidden py-4 flex flex-col items-center"
-            style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${s.border}` }}>
-            {/* top glow bar */}
-            <div className="absolute top-0 left-0 right-0 h-0.5"
-              style={{ background: `linear-gradient(90deg, transparent, ${s.accent}, transparent)`, opacity: 0.8 }} />
-            <span className="text-2xl font-black leading-none mb-1"
-              style={{ color: s.accent, textShadow: `0 0 20px ${s.accent}88` }}>
-              {fmt(s.val)}
-            </span>
-            <span className="text-[9px] uppercase tracking-widest font-bold"
-              style={{ color: "rgba(255,255,255,0.4)" }}>{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* ─── Tab bar: minimal with amber indicator ─── */}
-      <div className="flex px-5 gap-5 mb-4 border-b"
-        style={{ borderColor: "rgba(255,255,255,0.07)" }}>
-        {(["grid", "reels"] as const).map(t => (
+      {/* ══ Tabs ══ */}
+      <div className="flex border-b mx-5 mb-4" style={{ borderColor: BORDER }}>
+        {(["posts", "reels"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className="pb-2.5 text-xs font-bold uppercase tracking-widest relative transition-colors"
-            style={{ color: tab === t ? "#fb923c" : "rgba(255,255,255,0.3)" }}>
-            {t === "grid" ? "Posts" : "Reels"}
+            className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest relative transition-colors"
+            style={{ color: tab === t ? "#fff" : "rgba(255,255,255,0.28)" }}>
+            {t}
             {tab === t && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                style={{ background: "linear-gradient(90deg, #fb923c, #ef4444)", boxShadow: "0 0 8px rgba(251,146,60,0.8)" }} />
+              <span className="absolute bottom-[-1px] left-1/2 -translate-x-1/2 h-[2px] rounded-full"
+                style={{ width: 28, background: ACCENT, boxShadow: `0 0 8px rgba(34,211,238,0.8)` }} />
             )}
           </button>
         ))}
       </div>
 
-      {/* ─── Posts mosaic grid ─── */}
-      {tab === "grid" && (
-        <div className="px-5 pb-8">
-          {/* 2+1 mosaic pattern */}
-          <div className="grid grid-cols-3 gap-2 mb-2">
-            {/* large feature post */}
-            <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden relative" style={{ height: 180 }}>
-              <div className={`w-full h-full bg-gradient-to-br ${posts[0].col} flex items-center justify-center`}>
-                <div className="text-center">
-                  <div className="text-5xl mb-1">{posts[0].emoji}</div>
-                  <div className="text-xs text-white/60">{posts[0].label}</div>
-                </div>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] font-semibold">
-                <span>❤️ {posts[0].likes}</span>
-                <span className="bg-white/15 px-2 py-0.5 rounded-full text-[9px] backdrop-blur-sm">Top post</span>
+      {/* ══ Posts — 3-col uniform grid ══ */}
+      {tab === "posts" && (
+        <div className="px-5 pb-10">
+          {/* hero featured */}
+          <div className="w-full h-52 rounded-2xl mb-2 overflow-hidden relative flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, #071420, #051028)" }}>
+            <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 40% 50%, rgba(34,211,238,0.22) 0%, transparent 65%)" }} />
+            <div className="relative z-10 text-center">
+              <div className="text-5xl mb-2">🚀</div>
+              <div className="text-sm font-bold text-white/80">Launch day!</div>
+              <div className="flex gap-5 mt-2 justify-center text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
+                <span>♥ 12.4K</span><span>◎ 340K</span>
               </div>
             </div>
-            {/* two small posts on right */}
-            {posts.slice(1, 3).map(p => (
-              <div key={p.id} className="rounded-2xl overflow-hidden relative" style={{ height: 86 }}>
-                <div className={`w-full h-full bg-gradient-to-br ${p.col} flex items-center justify-center`}>
+            <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold"
+              style={{ background: "rgba(34,211,238,0.14)", border: "1px solid rgba(34,211,238,0.35)", color: ACCENT }}>
+              Top post
+            </div>
+          </div>
+          {/* grid */}
+          <div className="grid grid-cols-3 gap-[3px]">
+            {POSTS.slice(1).map(p => (
+              <div key={p.id} className="aspect-square overflow-hidden relative group"
+                style={{ background: "linear-gradient(135deg, #080f1c, #060b16)", borderRadius: 6 }}>
+                <div className="w-full h-full flex items-center justify-center">
                   <div className="text-2xl">{p.emoji}</div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-1 left-1.5 text-[9px] font-semibold text-white/70">
-                  ❤️ {p.likes}
-                </div>
-              </div>
-            ))}
-          </div>
-          {/* row of 3 */}
-          <div className="grid grid-cols-3 gap-2">
-            {posts.slice(3).map(p => (
-              <div key={p.id} className="aspect-square rounded-xl overflow-hidden relative">
-                <div className={`w-full h-full bg-gradient-to-br ${p.col} flex items-center justify-center`}>
-                  <div className="text-center">
-                    <div className="text-2xl">{p.emoji}</div>
-                    <div className="text-[9px] text-white/50 mt-0.5">{p.label}</div>
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-1 left-1.5 text-[9px] font-semibold text-white/65">
-                  ❤️ {p.likes}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 flex items-center justify-center">
+                  <span className="text-xs font-bold">♥ {p.likes}</span>
                 </div>
               </div>
             ))}
@@ -264,32 +201,26 @@ export function DarkMatter() {
       )}
 
       {tab === "reels" && (
-        <div className="px-5 pb-8">
-          <div className="grid grid-cols-2 gap-2.5">
-            {posts.map((p) => (
+        <div className="px-5 pb-10">
+          <div className="grid grid-cols-2 gap-2">
+            {POSTS.map(p => (
               <div key={p.id} className="rounded-2xl overflow-hidden relative" style={{ aspectRatio: "9/16" }}>
-                <div className={`w-full h-full bg-gradient-to-br ${p.col} flex items-center justify-center`}>
+                <div className="w-full h-full flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg, #071828, #050c18)" }}>
                   <div className="text-4xl">{p.emoji}</div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center text-[11px]">▶</div>
-                <div className="absolute bottom-2 left-2 right-2 flex justify-between text-[10px] font-semibold">
-                  <span>▶ {Math.floor(Math.random() * 90 + 10)}K</span>
-                  <span>❤️ {p.likes}</span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
+                <div className="absolute top-2 right-2 text-xs px-1.5 py-0.5 rounded font-bold"
+                  style={{ background: "rgba(0,0,0,0.55)" }}>▶</div>
+                <div className="absolute bottom-2 left-2 right-2 flex justify-between text-[10px] font-semibold text-white/80">
+                  <span>▶ {p.views}</span>
+                  <span>♥ {p.likes}</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(12px, -14px) scale(1.06); }
-          66% { transform: translate(-8px, 8px) scale(0.96); }
-        }
-      `}</style>
     </div>
   );
 }

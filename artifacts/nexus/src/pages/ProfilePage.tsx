@@ -694,8 +694,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           <motion.div animate={{ x: ["-100%", "200%"] }} transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }}
             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" style={{ skewX: -15 }} />
         </div>
-        <div className="px-5 -mt-10 flex items-end gap-4">
-          <div className="w-20 h-20 rounded-[18px] bg-muted animate-pulse shrink-0" />
+        <div className="px-4 -mt-14 flex items-end gap-4">
+          <div className="w-[120px] h-[120px] rounded-[20px] bg-muted animate-pulse shrink-0" />
           <div className="flex-1 pb-1 space-y-2">
             <div className="h-4 bg-muted rounded-lg animate-pulse w-1/2" />
             <div className="h-3 bg-muted rounded-lg animate-pulse w-1/3" />
@@ -797,12 +797,12 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       {/* ══ Profile Header ════════════════════════════════════════ */}
       <div className="px-4 relative z-10">
         {/* Avatar row */}
-        <div className="flex items-end justify-between" style={{ marginTop: -38 }}>
+        <div className="flex items-end justify-between" style={{ marginTop: -54 }}>
           <div className="relative z-10">
             <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
             <Avatar3D avatarUrl={user.avatarUrl} displayName={user.displayName} isVerified={user.isVerified}
-              isUploading={avatarUploading} isOwner={isOwner} onUploadClick={() => avatarInputRef.current?.click()} size={84} />
+              isUploading={avatarUploading} isOwner={isOwner} onUploadClick={() => avatarInputRef.current?.click()} size={120} />
           </div>
 
           {/* Action buttons */}

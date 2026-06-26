@@ -131,6 +131,27 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
             transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
             style={{ rotate: "-90deg", transformOrigin: `${r + 22}px ${r + 22}px` }} />
         </svg>
+        {/* Orbit particles */}
+        {[
+          { radius: size * 0.62, color: "#a78bfa", glow: "#7c3aed", sz: size * 0.09, dur: 5.5, delay: 0 },
+          { radius: size * 0.72, color: "#60a5fa", glow: "#3b82f6", sz: size * 0.075, dur: 7.5, delay: 1.8 },
+          { radius: size * 0.82, color: "#34d399", glow: "#10b981", sz: size * 0.065, dur: 9.5, delay: 3.5 },
+        ].map(({ radius, color, glow, sz, dur, delay }, i) => (
+          <motion.div key={i} className="absolute pointer-events-none"
+            style={{ top: "50%", left: "50%", width: 0, height: 0 }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: dur, repeat: Infinity, ease: "linear", delay }}>
+            <div style={{
+              position: "absolute",
+              width: sz, height: sz,
+              borderRadius: "50%",
+              background: color,
+              boxShadow: `0 0 ${sz * 2.5}px ${glow}, 0 0 ${sz * 5}px ${glow}55`,
+              top: -radius - sz / 2,
+              left: -sz / 2,
+            }} />
+          </motion.div>
+        ))}
         {/* Spinning border */}
         <div className="absolute inset-0 rounded-[20px] overflow-hidden" style={{ padding: "2px" }}>
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }}

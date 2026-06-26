@@ -123,56 +123,38 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
         <div style={{ position: "absolute", inset: bw, borderRadius: 20, background: "var(--background)" }} />
       </div>
 
-      {/* ── 3. Activity rings SVG — outside preserve-3d, always visible spinning arcs ── */}
-      {(() => {
-        const cx = r + 22;
-        const cy = r + 22;
-        const r1 = r + 18;
-        const r2 = r + 10;
-        const c1 = 2 * Math.PI * r1;
-        const c2 = 2 * Math.PI * r2;
+      {/* ── 3. Spinning colored arc rings — conic-gradient + mask (no SVG transform issues) ── */}
+      {[
+        {
+          ringR: r + 20, thickness: 4, dur: 5.5, dir: 1 as const,
+          grad: `conic-gradient(from 0deg, #7c3aed 0%, #818cf8 18%, #3b82f6 38%, #06b6d4 58%, transparent 62%, transparent 100%)`,
+          shadow: "#7c3aed55",
+        },
+        {
+          ringR: r + 11, thickness: 3.5, dur: 3.8, dir: -1 as const,
+          grad: `conic-gradient(from 200deg, #06b6d4 0%, #60a5fa 22%, #a78bfa 48%, transparent 52%, transparent 100%)`,
+          shadow: "#3b82f655",
+        },
+      ].map(({ ringR, thickness, dur, dir, grad, shadow }, i) => {
+        const dia = (ringR + thickness) * 2;
+        const offset = total / 2 - ringR - thickness;
         return (
-          <svg className="absolute pointer-events-none"
-            style={{ top: bw - 22, left: bw - 22, width: size + 44, height: size + 44, overflow: "visible" }}
-            viewBox={`0 0 ${size + 44} ${size + 44}`}>
-            <defs>
-              <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#7c3aed"/>
-                <stop offset="50%" stopColor="#a78bfa"/>
-                <stop offset="100%" stopColor="#c4b5fd"/>
-              </linearGradient>
-              <linearGradient id="rg2" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#06b6d4"/>
-                <stop offset="50%" stopColor="#60a5fa"/>
-                <stop offset="100%" stopColor="#67e8f9"/>
-              </linearGradient>
-            </defs>
-            {/* ghost tracks */}
-            <circle cx={cx} cy={cy} r={r1} fill="none" stroke="#7c3aed22" strokeWidth="4" />
-            <circle cx={cx} cy={cy} r={r2} fill="none" stroke="#3b82f622" strokeWidth="3.5" />
-            {/* outer arc — spins clockwise, always ~62% visible */}
-            <motion.g
-              animate={{ rotate: 360 }}
-              transition={{ duration: 5.5, repeat: Infinity, ease: "linear" }}
-              style={{ transformOrigin: `${cx}px ${cy}px` }}>
-              <circle cx={cx} cy={cy} r={r1} fill="none" stroke="url(#rg1)" strokeWidth="4"
-                strokeLinecap="round"
-                strokeDasharray={c1}
-                strokeDashoffset={c1 * 0.38} />
-            </motion.g>
-            {/* inner arc — spins counter-clockwise, always ~52% visible */}
-            <motion.g
-              animate={{ rotate: -360 }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 0.6 }}
-              style={{ transformOrigin: `${cx}px ${cy}px` }}>
-              <circle cx={cx} cy={cy} r={r2} fill="none" stroke="url(#rg2)" strokeWidth="3.5"
-                strokeLinecap="round"
-                strokeDasharray={c2}
-                strokeDashoffset={c2 * 0.48} />
-            </motion.g>
-          </svg>
+          <motion.div key={i}
+            animate={{ rotate: dir * 360 }}
+            transition={{ duration: dur, repeat: Infinity, ease: "linear" }}
+            className="absolute pointer-events-none"
+            style={{
+              top: offset, left: offset,
+              width: dia, height: dia,
+              borderRadius: "50%",
+              background: grad,
+              WebkitMask: `radial-gradient(farthest-side, transparent calc(100% - ${thickness}px), black calc(100% - ${thickness}px))`,
+              mask: `radial-gradient(farthest-side, transparent calc(100% - ${thickness}px), black calc(100% - ${thickness}px))`,
+              filter: `drop-shadow(0 0 6px ${shadow})`,
+            }}
+          />
         );
-      })()}
+      })}
 
       {/* ── 4. Orbit particles — outside preserve-3d ── */}
       {[

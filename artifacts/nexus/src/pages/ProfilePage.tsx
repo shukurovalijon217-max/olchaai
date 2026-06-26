@@ -132,18 +132,18 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
           <linearGradient id="rg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#7c3aed"/><stop offset="100%" stopColor="#a78bfa"/></linearGradient>
           <linearGradient id="rg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#3b82f6"/><stop offset="100%" stopColor="#67e8f9"/></linearGradient>
         </defs>
-        <circle cx={r + 22} cy={r + 22} r={r + 18} fill="none" stroke="#7c3aed15" strokeWidth="4" />
-        <circle cx={r + 22} cy={r + 22} r={r + 10} fill="none" stroke="#3b82f615" strokeWidth="3.5" />
+        <circle cx={r + 22} cy={r + 22} r={r + 18} fill="none" stroke="#7c3aed20" strokeWidth="4" />
+        <circle cx={r + 22} cy={r + 22} r={r + 10} fill="none" stroke="#3b82f620" strokeWidth="3.5" />
         <motion.circle cx={r + 22} cy={r + 22} r={r + 18} fill="none" stroke="url(#rg1)" strokeWidth="4" strokeLinecap="round"
           strokeDasharray={`${2 * Math.PI * (r + 18)}`}
-          animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 18)}`, `${0.18 * 2 * Math.PI * (r + 18)}`, `${2 * Math.PI * (r + 18)}`] }}
+          animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 18)}`, `${0.15 * 2 * Math.PI * (r + 18)}`, `${2 * Math.PI * (r + 18)}`] }}
           transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
-          style={{ rotate: "-90deg", transformOrigin: `${r + 22}px ${r + 22}px` }} />
+          transform={`rotate(-90, ${r + 22}, ${r + 22})`} />
         <motion.circle cx={r + 22} cy={r + 22} r={r + 10} fill="none" stroke="url(#rg2)" strokeWidth="3.5" strokeLinecap="round"
           strokeDasharray={`${2 * Math.PI * (r + 10)}`}
-          animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 10)}`, `${0.25 * 2 * Math.PI * (r + 10)}`, `${2 * Math.PI * (r + 10)}`] }}
+          animate={{ strokeDashoffset: [`${2 * Math.PI * (r + 10)}`, `${0.22 * 2 * Math.PI * (r + 10)}`, `${2 * Math.PI * (r + 10)}`] }}
           transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
-          style={{ rotate: "-90deg", transformOrigin: `${r + 22}px ${r + 22}px` }} />
+          transform={`rotate(-90, ${r + 22}, ${r + 22})`} />
       </svg>
 
       {/* ── 4. Orbit particles — outside preserve-3d ── */}

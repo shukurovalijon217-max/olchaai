@@ -429,6 +429,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
 /* ─────────────────────────────────────────────────────── */
 function NexusPlayer({ video, onClose, settings }:
   { video:Reel; onClose:()=>void; settings:PlayerSettings }) {
+  const { t } = useTranslation("otube");
   const qc             = useQueryClient();
   const [, navPlayer]  = useLocation();
   const videoRef   = useRef<HTMLVideoElement>(null);
@@ -765,23 +766,23 @@ function NexusPlayer({ video, onClose, settings }:
                   <ThumbsUp style={{width:15,height:15,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.7)"}}/>
                 </IBtn>
                 <IBtn onClick={()=>{setDisliked(d=>!d);if(liked){likeMut.mutate({id:video.id});}}}
-                  active={disliked} activeColor={T.orange} label="Ko'rmadim">
+                  active={disliked} activeColor={T.orange} label={t("otube.dislike")}>
                   <ThumbsDown style={{width:15,height:15,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.55)"}}/>
                 </IBtn>
-                <IBtn onClick={()=>void handleShare()} active={shared} activeColor="#10b981" label="Ulashish">
+                <IBtn onClick={()=>void handleShare()} active={shared} activeColor="#10b981" label={t("otube.share_btn")}>
                   {shared?<Check style={{width:15,height:15,color:"#10b981"}}/>
                          :<Share2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>}
                 </IBtn>
-                <IBtn onClick={toggleSave} active={saved} activeColor={T.violet} label="Saqlash">
+                <IBtn onClick={toggleSave} active={saved} activeColor={T.violet} label={t("otube.save_btn")}>
                   <Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.65)"}}/>
                 </IBtn>
                 <IBtn onClick={()=>setShowCom(c=>!c)} active={showCom} label={fmt(video.commentsCount??0)}>
                   <MessageCircle style={{width:15,height:15,color:showCom?T.cyan:"rgba(255,255,255,0.65)"}}/>
                 </IBtn>
-                <IBtn onClick={()=>setDonating(d=>!d)} active={donating} activeColor={T.orange} label="Yordam">
+                <IBtn onClick={()=>setDonating(d=>!d)} active={donating} activeColor={T.orange} label={t("otube.donate_btn")}>
                   <Star style={{width:15,height:15,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.55)"}}/>
                 </IBtn>
-                <IBtn onClick={()=>setDanmaku(d=>!d)} active={danmaku} activeColor="#ffd700" label="Reakciya">
+                <IBtn onClick={()=>setDanmaku(d=>!d)} active={danmaku} activeColor="#ffd700" label={t("otube.reaction")}>
                   <Sparkles style={{width:15,height:15,color:danmaku?"#ffd700":"rgba(255,255,255,0.55)"}}/>
                 </IBtn>
                 <IBtn onClick={()=>setAiDub(d=>!d)} active={aiDub} activeColor="#00ff88" label="AI Dub">
@@ -805,7 +806,7 @@ function NexusPlayer({ video, onClose, settings }:
                         background:"rgba(10,6,20,0.88)",backdropFilter:"blur(20px)",
                         boxShadow:`0 0 0 1px rgba(255,107,0,0.25), 0 8px 32px rgba(0,0,0,0.5)` }}>
                       <p style={{fontSize:11,fontWeight:700,color:"rgba(255,160,50,0.9)",marginBottom:10}}>
-                        ⭐ {video.author.displayName}ga yordam
+                        ⭐ {video.author.displayName} · {t("otube.donate_btn")}
                       </p>
                       <div className="flex gap-2 mb-3">
                         {["500","2000","10000","50000"].map(a=>(
@@ -824,7 +825,7 @@ function NexusPlayer({ video, onClose, settings }:
                         style={{borderRadius:12,background:"linear-gradient(90deg,#ff6b00,#ff3d00)",
                           boxShadow:"0 4px 16px rgba(255,80,0,0.35)"}}>
                         <span style={{fontSize:12,fontWeight:700,color:"white"}}>
-                          {donateAmt} so'm jo'natish
+                          {donateAmt} so'm · {t("otube.send_btn")}
                         </span>
                       </button>
                     </motion.div>
@@ -836,7 +837,7 @@ function NexusPlayer({ video, onClose, settings }:
                   className="w-full flex items-center justify-between mb-2"
                   style={{padding:"7px 12px",borderRadius:10,
                     background:"rgba(255,255,255,0.06)"}}>
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.55)",fontWeight:600}}>Tavsif</span>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.55)",fontWeight:600}}>{t("otube.description")}</span>
                   {showDesc?<ChevronDown style={{width:12,height:12,color:"rgba(255,255,255,0.4)"}}/>
                             :<ChevronRight style={{width:12,height:12,color:"rgba(255,255,255,0.4)"}}/>}
                 </button>
@@ -849,7 +850,7 @@ function NexusPlayer({ video, onClose, settings }:
                       <p style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.6,
                         padding:"8px 12px",background:"rgba(255,255,255,0.04)",borderRadius:10,marginBottom:6}}>
                         {video.caption} · @{video.author.username} ·{" "}
-                        {fmt(video.viewsCount)} ko'rish · {fmt(video.likesCount)} like
+                        {fmt(video.viewsCount)} {t("otube.views_short")} · {fmt(video.likesCount)} like
                       </p>
                     </motion.div>
                   )}
@@ -877,7 +878,7 @@ function NexusPlayer({ video, onClose, settings }:
                         </motion.button>
                       ))}
                       <span style={{fontSize:9,color:"rgba(0,255,136,0.6)",marginLeft:2}}>
-                        ✓ Faol
+                        ✓ {t("otube.active")}
                       </span>
                     </motion.div>
                   )}
@@ -893,7 +894,7 @@ function NexusPlayer({ video, onClose, settings }:
                     color:speed!==1?T.orange:"rgba(255,255,255,0.28)",
                     background:speed!==1?`${T.orange}18`:"rgba(255,255,255,0.05)",
                     padding:"3px 10px"}}>
-                    {speed}× TEZLIK
+                    {speed}× {t("otube.speed_label")}
                   </span>
                 </div>
 
@@ -2023,6 +2024,7 @@ const AI_TITLE_SUGGESTIONS = [
 const AI_TAG_SUGGESTIONS = ["olcha","viral","nexus","trending","signal","broadcast","exclusive","top"];
 
 function UploadModal({ onClose }: { onClose: ()=>void }) {
+  const { t } = useTranslation("otube");
   const { user } = useAuth();
   const qc = useQueryClient();
   const [step, setStep] = useState<0|1|2>(0);
@@ -2089,13 +2091,13 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
   };
 
   const PRIVACIES = [
-    {id:"public",   label:"Ommaviy",   icon:"🌐", desc:"Barcha ko'ra oladi"},
-    {id:"unlisted", label:"Havolali",  icon:"🔗", desc:"Havola orqali ko'radi"},
-    {id:"private",  label:"Shaxsiy",   icon:"🔒", desc:"Faqat siz ko'rasiz"},
+    {id:"public",   label:t("otube.privacy_public"),   icon:"🌐", desc:t("otube.privacy_pub_desc")},
+    {id:"unlisted", label:t("otube.privacy_unlisted"),  icon:"🔗", desc:t("otube.privacy_unl_desc")},
+    {id:"private",  label:t("otube.privacy_private"),   icon:"🔒", desc:t("otube.privacy_prv_desc")},
   ] as const;
 
   return (
-    <ModalSheet onClose={onClose} title="Video yuklash" accent={T.cyan}
+    <ModalSheet onClose={onClose} title={t("otube.upload_title")} accent={T.cyan}
       rightSlot={file && (
         <button onClick={aiSuggest} disabled={aiLoading}
           style={{width:34,height:34,borderRadius:10,background:"rgba(0,229,255,0.1)",
@@ -2110,13 +2112,13 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
           <motion.div animate={{rotate:360}} transition={{duration:1,repeat:Infinity,ease:"linear"}}>
             <Sparkles style={{width:14,height:14,color:T.cyan}}/>
           </motion.div>
-          <span style={{fontSize:12,color:T.cyan}}>AI tahlil qilmoqda…</span>
+          <span style={{fontSize:12,color:T.cyan}}>{t("otube.ai_analyzing")}</span>
         </div>
       )}
 
       {/* Step indicators */}
       <div className="flex items-center gap-0 px-5 mb-4">
-        {["Fayl","Tafsilot","Sozlama"].map((s,i)=>(
+        {[t("otube.step_file"),t("otube.step_detail"),t("otube.step_settings_lbl")].map((s,i)=>(
           <React.Fragment key={i}>
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
               <div style={{width:24,height:24,borderRadius:"50%",fontSize:10,fontWeight:800,
@@ -2144,7 +2146,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
               <Upload style={{width:24,height:24,color:T.cyan}}/>
             </div>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:14,fontWeight:800,color:"rgba(255,255,255,0.8)"}}>Video tanlash</div>
+              <div style={{fontSize:14,fontWeight:800,color:"rgba(255,255,255,0.8)"}}>{t("otube.select_video")}</div>
               <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:4}}>MP4, MOV, AVI, MKV · max 2GB</div>
             </div>
             <div style={{display:"flex",gap:8}}>
@@ -2179,7 +2181,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
 
             {/* Thumbnail */}
             <div>
-              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>MUQOVA RASM</span>
+              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.cover_image")}</span>
               <div className="flex gap-3 mt-2">
                 <motion.div whileTap={{scale:0.96}} onClick={()=>thumbRef.current?.click()}
                   style={{width:88,height:56,borderRadius:10,overflow:"hidden",cursor:"pointer",
@@ -2191,8 +2193,8 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
                     : <ImagePlus style={{width:20,height:20,color:`${T.cyan}66`}}/>}
                 </motion.div>
                 <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",gap:4}}>
-                  <span style={{fontSize:11,color:"rgba(255,255,255,0.55)"}}>Muqova rasm tanlang</span>
-                  <span style={{fontSize:9,color:"rgba(255,255,255,0.25)"}}>JPG, PNG · 16:9 tavsiya</span>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.55)"}}>{t("otube.cover_select")}</span>
+                  <span style={{fontSize:9,color:"rgba(255,255,255,0.25)"}}>{t("otube.cover_tip")}</span>
                 </div>
               </div>
               <input ref={thumbRef} type="file" accept="image/*" className="hidden"
@@ -2202,11 +2204,11 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
             {/* Title */}
             <div>
               <div className="flex justify-between mb-1">
-                <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>SARLAVHA</span>
+                <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.title_label")}</span>
                 <span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{title.length}/100</span>
               </div>
               <input value={title} onChange={e=>setTitle(e.target.value)} maxLength={100}
-                placeholder="Video nomi..."
+                placeholder={t("otube.video_title_ph")}
                 style={{width:"100%",padding:"11px 13px",borderRadius:12,
                   background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",
                   color:"white",fontSize:13,outline:"none"}}/>
@@ -2214,9 +2216,9 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
 
             {/* Description */}
             <div>
-              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>TAVSIF</span>
+              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.desc_label")}</span>
               <textarea value={caption} onChange={e=>setCaption(e.target.value)} rows={3} maxLength={500}
-                placeholder="Video haqida batafsil..."
+                placeholder={t("otube.video_desc_ph")}
                 style={{width:"100%",marginTop:4,padding:"11px 13px",borderRadius:12,
                   background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",
                   color:"white",fontSize:12,outline:"none",resize:"none"}}/>
@@ -2224,7 +2226,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
 
             {/* Tags */}
             <div>
-              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>TEGLAR</span>
+              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.tags_label")}</span>
               {tagList.length>0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
                   {tagList.map(t=>(
@@ -2243,7 +2245,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
               <div style={{display:"flex",gap:8,marginTop:4}}>
                 <input value={tagInput} onChange={e=>setTagInput(e.target.value)}
                   onKeyDown={e=>{if(e.key==="Enter"||e.key===","){e.preventDefault();addTag(tagInput);}}}
-                  placeholder="#teg qo'shing..."
+                  placeholder={t("otube.tag_ph")}
                   style={{flex:1,padding:"9px 12px",borderRadius:10,
                     background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",
                     color:"white",fontSize:12,outline:"none"}}/>
@@ -2267,7 +2269,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
             <motion.button whileTap={{scale:0.96}} onClick={()=>setStep(2)}
               style={{padding:"12px",borderRadius:12,background:T.gCyan,
                 fontSize:13,fontWeight:800,color:"#000"}}>
-              Keyingi →
+              {t("otube.next_btn")}
             </motion.button>
           </>
         )}
@@ -2277,7 +2279,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
           <>
             {/* Privacy */}
             <div>
-              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>KO'RINISH</span>
+              <span style={{fontSize:10,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.visibility_label")}</span>
               <div className="flex flex-col gap-2 mt-2">
                 {PRIVACIES.map(p=>(
                   <button key={p.id} onClick={()=>setPrivacy(p.id)}
@@ -2302,8 +2304,8 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <DollarSign style={{width:18,height:18,color:T.gold}}/>
                 <div>
-                  <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.85)"}}>Monetizatsiya</div>
-                  <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>Reklamadan daromad oling</div>
+                  <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.85)"}}>{t("otube.monetize_label")}</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{t("otube.monetize_sub")}</div>
                 </div>
               </div>
               <motion.button whileTap={{scale:0.9}} onClick={()=>setMonetize(m=>!m)}
@@ -2323,8 +2325,8 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                   <Clock style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>
                   <div>
-                    <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.75)"}}>Rejali nashr</div>
-                    <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>Vaqtni belgilang</div>
+                    <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.75)"}}>{t("otube.scheduled_label")}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{t("otube.scheduled_sub")}</div>
                   </div>
                 </div>
                 <motion.button whileTap={{scale:0.9}} onClick={()=>setScheduled(s=>!s)}
@@ -2347,7 +2349,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
             {(phase==="uploading"||phase==="creating") && (
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <span style={{fontSize:10,color:T.cyan}}>{phase==="uploading"?"Yuklanmoqda…":"Saqlanmoqda…"}</span>
+                  <span style={{fontSize:10,color:T.cyan}}>{phase==="uploading"?t("otube.uploading"):t("otube.saving")}</span>
                   <span style={{fontSize:10,color:T.cyan}}>{progress}%</span>
                 </div>
                 <div style={{height:6,borderRadius:3,background:"rgba(255,255,255,0.06)"}}>
@@ -2359,7 +2361,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
               <div style={{padding:"12px 14px",borderRadius:12,background:"rgba(0,255,136,0.08)",
                 border:"1px solid rgba(0,255,136,0.3)",display:"flex",alignItems:"center",gap:8}}>
                 <Check style={{width:16,height:16,color:"#00ff88"}}/>
-                <span style={{fontSize:12,color:"#00ff88",fontWeight:700}}>Video muvaffaqiyatli yuklandi!</span>
+                <span style={{fontSize:12,color:"#00ff88",fontWeight:700}}>{t("otube.upload_done")}</span>
               </div>
             )}
             {phase==="error" && (
@@ -2381,7 +2383,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
                   style={{flex:1,padding:"13px",borderRadius:12,
                     background:"rgba(0,255,136,0.15)",border:"1px solid rgba(0,255,136,0.4)",
                     fontSize:13,fontWeight:800,color:"#00ff88"}}>
-                  ✓ Tugallandi
+                  {t("otube.done_close")}
                 </motion.button>
               ) : (
                 <motion.button whileTap={{scale:0.96}} onClick={handleSubmit}
@@ -2391,7 +2393,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
                     fontSize:13,fontWeight:800,
                     color:!title.trim()?"rgba(255,255,255,0.25)":"#000",
                     opacity:(phase==="uploading"||phase==="creating")?0.7:1}}>
-                  {phase==="uploading"?"Yuklanmoqda…":phase==="creating"?"Saqlanmoqda…":"🚀 Nashr qilish"}
+                  {phase==="uploading"?t("otube.uploading"):phase==="creating"?t("otube.saving"):t("otube.publish_btn")}
                 </motion.button>
               )}
             </div>
@@ -2424,6 +2426,7 @@ const LIVE_GIFTS = ["💎","🚀","🔥","❤️‍🔥","⚡","🌊","👑","�
 /* Live Setup Modal                                        */
 /* ─────────────────────────────────────────────────────── */
 function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
+  const { t } = useTranslation("otube");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("gaming");
   const [quality, setQuality] = useState("1080p");
@@ -2443,7 +2446,7 @@ function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
   },[live]);
   const fmtTime = (s:number) => `${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
   return (
-    <ModalSheet onClose={onClose} title="Jonli efir" accent="#ff2d55">
+    <ModalSheet onClose={onClose} title={t("otube.live_modal_title")} accent="#ff2d55">
       <div className="px-5 pb-8 flex flex-col gap-4">
         {/* Camera preview */}
         <div style={{borderRadius:14,background:"#020008",aspectRatio:"16/9",position:"relative",overflow:"hidden",
@@ -2469,7 +2472,7 @@ function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
               height:"100%",gap:8}}>
               <Camera style={{width:28,height:28,color:"rgba(255,255,255,0.2)"}}/>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.2)"}}>Kamera tayyor</span>
+              <span style={{fontSize:11,color:"rgba(255,255,255,0.2)"}}>{t("otube.camera_ready")}</span>
             </div>
           )}
         </div>
@@ -2477,14 +2480,14 @@ function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
         {!live && (
           <>
             <div>
-              <span style={{fontSize:10,color:"#ff2d55",fontWeight:700,letterSpacing:"0.1em"}}>SARLAVHA</span>
-              <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Efir nomi..."
+              <span style={{fontSize:10,color:"#ff2d55",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.title_label")}</span>
+              <input value={title} onChange={e=>setTitle(e.target.value)} placeholder={t("otube.live_title_ph")}
                 style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
                   background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
                   color:"white",fontSize:13,outline:"none"}}/>
             </div>
             <div>
-              <span style={{fontSize:10,color:"#ff2d55",fontWeight:700,letterSpacing:"0.1em"}}>KATEGORIYA</span>
+              <span style={{fontSize:10,color:"#ff2d55",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.live_cat_label")}</span>
               <div className="flex flex-wrap gap-2 mt-2">
                 {CATS.map(c=>(
                   <button key={c} onClick={()=>setCategory(c)}
@@ -2498,7 +2501,7 @@ function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
               </div>
             </div>
             <div>
-              <span style={{fontSize:10,color:"#ff2d55",fontWeight:700,letterSpacing:"0.1em"}}>SIFAT</span>
+              <span style={{fontSize:10,color:"#ff2d55",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.live_qual_label")}</span>
               <div className="flex gap-2 mt-2">
                 {QUALS.map(q=>(
                   <button key={q} onClick={()=>setQuality(q)}
@@ -2519,12 +2522,12 @@ function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
             <div style={{flex:1,padding:"10px",borderRadius:10,background:"rgba(255,45,85,0.08)",
               border:"1px solid rgba(255,45,85,0.2)",textAlign:"center"}}>
               <div style={{fontSize:18,fontWeight:900,color:"#ff2d55"}}>{viewerCount}</div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>tomoshabin</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>{t("otube.live_viewers")}</div>
             </div>
             <div style={{flex:1,padding:"10px",borderRadius:10,background:"rgba(0,229,255,0.08)",
               border:"1px solid rgba(0,229,255,0.2)",textAlign:"center"}}>
               <div style={{fontSize:18,fontWeight:900,color:T.cyan,fontFamily:"monospace"}}>{fmtTime(elapsed)}</div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>davomiyligi</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>{t("otube.live_duration")}</div>
             </div>
           </div>
         )}
@@ -2534,7 +2537,7 @@ function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
             background:live?"rgba(255,45,85,0.15)":"linear-gradient(135deg,#ff2d55,#ff6b00)",
             border:live?"1px solid rgba(255,45,85,0.4)":"none",
             color:live?"#ff2d55":"white"}}>
-          {live?"⬛ Efirni tugatish":"🔴 Jonli efirni boshlash"}
+          {live?t("otube.end_live"):t("otube.start_live")}
         </motion.button>
       </div>
     </ModalSheet>
@@ -2545,6 +2548,7 @@ function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
 /* Short Creator Modal                                     */
 /* ─────────────────────────────────────────────────────── */
 function ShortModal({ onClose }: { onClose: ()=>void }) {
+  const { t } = useTranslation("otube");
   const [recording, setRecording] = useState(false);
   const [duration, setDuration] = useState<15|30|60>(30);
   const [elapsed, setElapsed] = useState(0);
@@ -2568,7 +2572,7 @@ function ShortModal({ onClose }: { onClose: ()=>void }) {
   },[recording, elapsed, duration]);
   const pct = Math.min(100, elapsed/duration*100);
   return (
-    <ModalSheet onClose={onClose} title="Short yaratish" accent={T.orange}>
+    <ModalSheet onClose={onClose} title={t("otube.short_modal_title")} accent={T.orange}>
       <div className="px-5 pb-8 flex flex-col gap-4">
         {/* Viewfinder */}
         <div style={{borderRadius:14,background:"#020008",aspectRatio:"9/16",maxHeight:320,
@@ -2618,7 +2622,7 @@ function ShortModal({ onClose }: { onClose: ()=>void }) {
         </div>
         {/* Filters */}
         <div>
-          <span style={{fontSize:10,color:T.orange,fontWeight:700,letterSpacing:"0.1em"}}>FILTR</span>
+          <span style={{fontSize:10,color:T.orange,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.filter_label")}</span>
           <div className="flex gap-2 overflow-x-auto mt-2 pb-1" style={{scrollbarWidth:"none"}}>
             {FILTERS.map(f=>(
               <button key={f.id} onClick={()=>setFilter(f.id)}
@@ -2636,7 +2640,7 @@ function ShortModal({ onClose }: { onClose: ()=>void }) {
           </div>
         </div>
         {/* Caption */}
-        <input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Izoh qo'shing..."
+        <input value={caption} onChange={e=>setCaption(e.target.value)} placeholder={t("otube.caption_ph")}
           style={{padding:"10px 12px",borderRadius:10,
             background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
             color:"white",fontSize:13,outline:"none"}}/>
@@ -2645,7 +2649,7 @@ function ShortModal({ onClose }: { onClose: ()=>void }) {
           <motion.button whileTap={{scale:0.96}} onClick={onClose}
             style={{padding:"13px",borderRadius:12,background:"linear-gradient(135deg,#00ff88,#00cc66)",
               fontSize:13,fontWeight:800,color:"#000"}}>
-            ✓ Nashr qilish
+            {t("otube.publish_short")}
           </motion.button>
         ) : (
           <motion.button whileTap={{scale:0.96}}
@@ -2654,7 +2658,7 @@ function ShortModal({ onClose }: { onClose: ()=>void }) {
               background:recording?"rgba(255,45,85,0.15)":T.gOrange,
               border:recording?"1px solid rgba(255,45,85,0.4)":"none",
               color:recording?"#ff2d55":"white"}}>
-            {recording?"⬛ To'xtatish":"⏺ Yozishni boshlash"}
+            {recording?t("otube.stop_rec"):t("otube.start_rec")}
           </motion.button>
         )}
       </div>
@@ -2666,6 +2670,7 @@ function ShortModal({ onClose }: { onClose: ()=>void }) {
 /* Challenge Modal                                         */
 /* ─────────────────────────────────────────────────────── */
 function ChallengeModal({ onClose }: { onClose: ()=>void }) {
+  const { t } = useTranslation("otube");
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [days, setDays] = useState(7);
@@ -2674,10 +2679,10 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
   const DAYS = [3,7,14,30];
   const updateRule = (i:number, v:string) => setRules(r=>{const n=[...r]; n[i]=v; return n;});
   return (
-    <ModalSheet onClose={onClose} title="Challenge yaratish" accent="#00ff88">
+    <ModalSheet onClose={onClose} title={t("otube.ch_modal_title")} accent="#00ff88">
       <div className="px-5 pb-8 flex flex-col gap-4">
         <div>
-          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>CHALLENGE NOMI</span>
+          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_name_label")}</span>
           <div style={{marginTop:4,display:"flex",alignItems:"center",gap:0,
             background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10}}>
             <span style={{padding:"10px 10px",color:"#00ff88",fontSize:16,fontWeight:900}}>#</span>
@@ -2688,20 +2693,20 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
           </div>
         </div>
         <div>
-          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>TAVSIF</span>
+          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_desc_label")}</span>
           <textarea value={desc} onChange={e=>setDesc(e.target.value)} rows={2} maxLength={200}
-            placeholder="Challenge haqida..."
+            placeholder={t("otube.ch_desc_ph")}
             style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
               background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
               color:"white",fontSize:13,outline:"none",resize:"none"}}/>
         </div>
         <div>
-          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>QOIDALAR</span>
+          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_rules_label")}</span>
           <div className="flex flex-col gap-2 mt-2">
             {rules.map((r,i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
                 <span style={{fontSize:10,fontWeight:900,color:"#00ff88",width:16}}>{i+1}.</span>
-                <input value={r} onChange={e=>updateRule(i,e.target.value)} placeholder={`Qoida ${i+1}`}
+                <input value={r} onChange={e=>updateRule(i,e.target.value)} placeholder={`${t("otube.ch_rule_ph")} ${i+1}`}
                   style={{flex:1,padding:"8px 10px",borderRadius:8,
                     background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",
                     color:"white",fontSize:12,outline:"none"}}/>
@@ -2710,7 +2715,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
           </div>
         </div>
         <div>
-          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>DAVOMIYLIGI</span>
+          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_dur_label")}</span>
           <div className="flex gap-2 mt-2">
             {DAYS.map(d=>(
               <button key={d} onClick={()=>setDays(d)}
@@ -2718,7 +2723,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
                   background:days===d?"rgba(0,255,136,0.15)":"rgba(255,255,255,0.04)",
                   border:`1px solid ${days===d?"rgba(0,255,136,0.5)":"rgba(255,255,255,0.08)"}`,
                   color:days===d?"#00ff88":"rgba(255,255,255,0.4)"}}>
-                {d} kun
+                {d} {t("otube.ch_days")}
               </button>
             ))}
           </div>
@@ -2727,7 +2732,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
           <div style={{padding:"12px",borderRadius:10,background:"rgba(0,255,136,0.08)",
             border:"1px solid rgba(0,255,136,0.3)",display:"flex",alignItems:"center",gap:8}}>
             <Trophy style={{width:16,height:16,color:"#00ff88"}}/>
-            <span style={{fontSize:12,color:"#00ff88",fontWeight:700}}>#{name} challenge yaratildi!</span>
+            <span style={{fontSize:12,color:"#00ff88",fontWeight:700}}>#{name} {t("otube.ch_created")}</span>
           </div>
         ) : null}
         <motion.button whileTap={{scale:0.96}}
@@ -2736,7 +2741,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
           style={{padding:"13px",borderRadius:12,letterSpacing:"0.04em",fontSize:13,fontWeight:800,
             background:!name.trim()?"rgba(255,255,255,0.06)":"linear-gradient(135deg,#00ff88,#00cc44)",
             color:!name.trim()?"rgba(255,255,255,0.25)":"#000"}}>
-          {done?"✓ Yaratildi":"Challenge boshlash 🏆"}
+          {done?t("otube.ch_done"):t("otube.ch_start")}
         </motion.button>
       </div>
     </ModalSheet>
@@ -3488,6 +3493,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 /* Floating FAB — speed dial with working modals          */
 /* ─────────────────────────────────────────────────────── */
 function FloatingFAB() {
+  const { t } = useTranslation("otube");
   const [open, setOpen] = useState(false);
   const [modal, setModal] = useState<"upload"|"live"|"short"|"challenge"|"cipcat"|null>(null);
 
@@ -3497,11 +3503,11 @@ function FloatingFAB() {
   };
 
   const items = [
-    { Icon: Upload,    label: "Yuklash",        col: T.cyan,    id: "upload"    as const },
-    { Icon: Radio,     label: "Jonli efir",      col: "#ff2d55", id: "live"      as const },
-    { Icon: Zap,       label: "Short",           col: T.orange,  id: "short"     as const },
-    { Icon: Swords,    label: "Challenge",       col: "#00ff88", id: "challenge" as const },
-    { Icon: Film,      label: "OTube Studio",   col: T.gold,    id: "cipcat"    as const },
+    { Icon: Upload,    label: t("otube.fab_upload"),    col: T.cyan,    id: "upload"    as const },
+    { Icon: Radio,     label: t("otube.fab_live"),      col: "#ff2d55", id: "live"      as const },
+    { Icon: Zap,       label: t("otube.fab_short"),     col: T.orange,  id: "short"     as const },
+    { Icon: Swords,    label: t("otube.fab_challenge"), col: "#00ff88", id: "challenge" as const },
+    { Icon: Film,      label: t("otube.fab_studio"),    col: T.gold,    id: "cipcat"    as const },
   ];
 
   return (

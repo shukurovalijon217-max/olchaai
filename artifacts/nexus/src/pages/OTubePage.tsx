@@ -1305,6 +1305,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
 /* Hero cinematic card                                     */
 /* ─────────────────────────────────────────────────────── */
 function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
+  const { t } = useTranslation("otube");
   const [expanded, setExpanded] = useState(false);
   const [chaptersOpen, setChaptersOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -1372,7 +1373,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
         <div className="absolute bottom-0 inset-x-0 p-4">
           <h2 style={{color:"white",fontWeight:900,fontSize:14,lineHeight:1.3,
             marginBottom:6,textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>
-            {video.caption||"OTube Tanlangan"}
+            {video.caption||t("otube.caption_default")}
           </h2>
           <div className="flex items-center gap-2">
             {video.author.avatarUrl && (
@@ -1481,6 +1482,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
 
 /* Watch Party quick-join button */
 function WatchPartyBtn({ videoId }: { videoId: number }) {
+  const { t } = useTranslation("otube");
   const [joined, setJoined] = useState(false);
   const [partyCount, setPartyCount] = useState(()=>3+Math.floor(videoId%12));
   return (
@@ -1492,7 +1494,7 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
         boxShadow:joined?`0 0 0 1px rgba(168,85,247,0.5), 0 0 16px rgba(168,85,247,0.2)`:"0 0 0 1px rgba(255,255,255,0.08)"}}>
       <Users style={{width:11,height:11,color:joined?"#a855f7":"rgba(255,255,255,0.45)"}}/>
       <span style={{fontSize:10,fontWeight:600,color:joined?"#a855f7":"rgba(255,255,255,0.5)"}}>
-        {joined?"👥 Birga ko'ryapsiz":"Birga ko'r"}
+        {joined?`👥 ${t("otube.watch_joined")}`:t("otube.watch_join")}
       </span>
       {joined ? (
         <motion.span
@@ -1511,6 +1513,7 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
 
 /* Live pulse — animated live viewer count */
 function LivePulse({ count }: { count: number }) {
+  const { t } = useTranslation("otube");
   const base = Math.max(10, count);
   const [live, setLive] = useState(base);
   useEffect(()=>{
@@ -1527,7 +1530,7 @@ function LivePulse({ count }: { count: number }) {
         style={{width:5,height:5,borderRadius:"50%",background:"#ff3b30",
           boxShadow:"0 0 6px #ff3b30"}}/>
       <span style={{fontSize:9.5,fontWeight:600,color:"rgba(255,100,80,0.9)",fontFamily:"monospace"}}>
-        {live.toLocaleString()} jonli
+        {live.toLocaleString()} {t("otube.live_count")}
       </span>
     </div>
   );
@@ -1894,6 +1897,7 @@ function StreakBanner() {
 /* Continue Watching row — videos with progress bars       */
 /* ─────────────────────────────────────────────────────── */
 function ContinueRow({ videos, onPlay }: { videos:Reel[]; onPlay:(v:Reel)=>void }) {
+  const { t } = useTranslation("otube");
   if (!videos.length) return null;
   const items = videos.slice(0,5);
   return (
@@ -1904,7 +1908,7 @@ function ContinueRow({ videos, onPlay }: { videos:Reel[]; onPlay:(v:Reel)=>void 
             boxShadow:`0 0 0 1px rgba(0,229,255,0.25)`}}>
           <ListVideo style={{width:10,height:10,color:T.cyan}}/>
           <span style={{fontSize:11,fontWeight:700,color:T.cyan,letterSpacing:"0.04em"}}>
-            Davom ettirish
+            {t("otube.continue_watching")}
           </span>
         </div>
         <div style={{flex:1,height:1,background:`linear-gradient(90deg,${T.cyan}33,transparent)`}}/>
@@ -2752,6 +2756,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
 /* OTube Studio — full video editor                       */
 /* ─────────────────────────────────────────────────────── */
 function CipCatModal({ onClose }: { onClose: ()=>void }) {
+  const { t } = useTranslation("otube");
   const { user } = useAuth();
   const qc = useQueryClient();
   const [file, setFile]         = useState<File|null>(null);
@@ -2839,12 +2844,12 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   ];
 
   const AI_ACTIONS = [
-    {id:"autocut",  label:"Auto-Kesish",   icon:"✂️", desc:"Eng yaxshi momentlarni topadi"},
-    {id:"captions", label:"Auto-Sarlavha", icon:"📝", desc:"AI matn va tavsif yozadi"},
-    {id:"scene",    label:"Sahna Tahlili", icon:"🎬", desc:"Sahnalarni avtomatik ajratadi"},
-    {id:"beat",     label:"Beat Sinxron",  icon:"🎵", desc:"Musiqa ritmiga moslashtiradi"},
-    {id:"enhance",  label:"AI Enhance",    icon:"✨", desc:"Sifat va rangni yaxshilaydi"},
-    {id:"crop",     label:"Smart Crop",    icon:"🎯", desc:"Optimal framing aniqlaydi"},
+    {id:"autocut",  label:t("otube.ai_autocut"),   icon:"✂️", desc:t("otube.ai_autocut_desc")},
+    {id:"captions", label:t("otube.ai_captions"),  icon:"📝", desc:t("otube.ai_captions_desc")},
+    {id:"scene",    label:t("otube.ai_scene"),      icon:"🎬", desc:t("otube.ai_scene_desc")},
+    {id:"beat",     label:t("otube.ai_beat"),       icon:"🎵", desc:t("otube.ai_beat_desc")},
+    {id:"enhance",  label:t("otube.ai_enhance"),    icon:"✨", desc:t("otube.ai_enhance_desc")},
+    {id:"crop",     label:t("otube.ai_crop"),       icon:"🎯", desc:t("otube.ai_crop_desc")},
   ];
 
   const TEXT_FONTS = [
@@ -2891,15 +2896,15 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   };
 
   const TABS = [
-    { id:"trim",        Icon:SlidersHorizontal, label:"Kesish"   },
-    { id:"filters",     Icon:Palette,            label:"Filtr"    },
-    { id:"grading",     Icon:Sliders,            label:"Grading"  },
-    { id:"text",        Icon:Type,               label:"Matn"     },
-    { id:"stickers",    Icon:Smile,              label:"Stiker"   },
-    { id:"transitions", Icon:Layers,             label:"O'tish"   },
-    { id:"music",       Icon:Music,              label:"Musiqa"   },
-    { id:"speed",       Icon:FastForward,        label:"Tezlik"   },
-    { id:"ai",          Icon:Sparkles,           label:"AI Edit"  },
+    { id:"trim",        Icon:SlidersHorizontal, label:t("otube.tab_trim")        },
+    { id:"filters",     Icon:Palette,            label:t("otube.tab_filters")     },
+    { id:"grading",     Icon:Sliders,            label:t("otube.tab_grading")     },
+    { id:"text",        Icon:Type,               label:t("otube.tab_text")        },
+    { id:"stickers",    Icon:Smile,              label:t("otube.tab_stickers")    },
+    { id:"transitions", Icon:Layers,             label:t("otube.tab_transitions") },
+    { id:"music",       Icon:Music,              label:t("otube.tab_music_lbl")   },
+    { id:"speed",       Icon:FastForward,        label:t("otube.tab_speed")       },
+    { id:"ai",          Icon:Sparkles,           label:t("otube.tab_ai")          },
   ] as const;
 
   return (
@@ -2964,7 +2969,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
               color:(!file||published)?"rgba(255,255,255,0.3)":"white",
               opacity:publishing?0.7:1,
               boxShadow:(!file||published)?"none":`0 2px 12px ${T.violet}55`}}>
-            {published?"✓":publishing?"…":"Nashr"}
+            {published?"✓":publishing?"…":t("otube.studio_publish")}
           </motion.button>
         </div>
       </div>
@@ -2987,7 +2992,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
               <ImagePlus style={{width:24,height:24,color:T.violet}}/>
             </motion.div>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontWeight:700}}>Video tanlang</div>
+              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontWeight:700}}>{t("otube.studio_select_video")}</div>
               <div style={{fontSize:9,color:"rgba(255,255,255,0.2)",marginTop:2}}>MP4, MOV, AVI · max 2GB</div>
             </div>
             <div style={{display:"flex",gap:6}}>
@@ -3104,8 +3109,8 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
         {activeTab==="trim" && (
           <div className="flex flex-col gap-4">
             {[
-              {label:"BOSHLANISH",value:trimStart,set:setTrimStart,min:0,max:trimEnd-5},
-              {label:"TUGASH",    value:trimEnd,  set:setTrimEnd,  min:trimStart+5,max:100},
+              {label:t("otube.studio_trim_start"),value:trimStart,set:setTrimStart,min:0,max:trimEnd-5},
+              {label:t("otube.studio_trim_end"),  value:trimEnd,  set:setTrimEnd,  min:trimStart+5,max:100},
             ].map(({label,value,set,min,max})=>(
               <div key={label}>
                 <div className="flex justify-between mb-1.5">
@@ -3118,7 +3123,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
               </div>
             ))}
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-              {[{l:"15s",v:[0,25]},{l:"30s",v:[0,50]},{l:"60s",v:[0,100]},{l:"Soni",v:[25,75]}].map(p=>(
+              {[{l:"15s",v:[0,25]},{l:"30s",v:[0,50]},{l:"60s",v:[0,100]},{l:t("otube.studio_preset_custom"),v:[25,75]}].map(p=>(
                 <button key={p.l} onClick={()=>{setTrimStart(p.v[0]);setTrimEnd(p.v[1]);}}
                   style={{padding:"6px 12px",borderRadius:8,fontSize:10,fontWeight:700,
                     background:"rgba(168,85,247,0.1)",border:"1px solid rgba(168,85,247,0.25)",color:T.violet}}>
@@ -3128,7 +3133,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
             </div>
             <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(168,85,247,0.07)",
               border:"1px solid rgba(168,85,247,0.15)",display:"flex",justifyContent:"space-between"}}>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>Tanlangan</span>
+              <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{t("otube.studio_selected")}</span>
               <span style={{color:T.violet,fontWeight:800,fontSize:11}}>{trimEnd-trimStart}%</span>
             </div>
           </div>
@@ -3158,16 +3163,16 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
         {activeTab==="grading" && (
           <div className="flex flex-col gap-4">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>Rang sozlamalari</span>
+              <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{t("otube.studio_color_settings")}</span>
               <button onClick={()=>{setBrightness(100);setContrast(100);setSaturation(100);setTemperature(0);setVignette(0);}}
                 style={{fontSize:10,color:T.violet,fontWeight:700}}>Reset</button>
             </div>
             {[
-              {label:"Yorqinlik",   value:brightness, set:setBrightness, min:50, max:200, unit:"%" },
-              {label:"Kontrast",    value:contrast,   set:setContrast,   min:50, max:200, unit:"%" },
-              {label:"To'yinganlik",value:saturation, set:setSaturation, min:0,  max:300, unit:"%" },
-              {label:"Harorat",     value:temperature,set:setTemperature,min:-60,max:60,  unit:"°" },
-              {label:"Vignette",    value:vignette,   set:setVignette,   min:0,  max:80,  unit:""  },
+              {label:t("otube.studio_brightness"),  value:brightness, set:setBrightness, min:50, max:200, unit:"%" },
+              {label:t("otube.studio_contrast"),    value:contrast,   set:setContrast,   min:50, max:200, unit:"%" },
+              {label:t("otube.studio_saturation"),  value:saturation, set:setSaturation, min:0,  max:300, unit:"%" },
+              {label:t("otube.studio_temperature"), value:temperature,set:setTemperature,min:-60,max:60,  unit:"°" },
+              {label:t("otube.studio_vignette"),    value:vignette,   set:setVignette,   min:0,  max:80,  unit:""  },
             ].map(({label,value,set,min,max,unit})=>(
               <div key={label}>
                 <div className="flex justify-between mb-1.5">
@@ -3230,7 +3235,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
             </div>
             <div>
               <div className="flex justify-between mb-1.5">
-                <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>O'LCHAM</span>
+                <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.studio_text_size")}</span>
                 <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{textSize}px</span>
               </div>
               <input type="range" min={10} max={32} value={textSize}
@@ -3240,7 +3245,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
               padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",
               border:"1px solid rgba(255,255,255,0.06)"}}>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>Fon ko'rinishi</span>
+              <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>{t("otube.studio_text_bg")}</span>
               <motion.button whileTap={{scale:0.9}} onClick={()=>setTextBg(b=>!b)}
                 style={{width:40,height:22,borderRadius:99,position:"relative",
                   background:textBg?T.violet:"rgba(255,255,255,0.1)",transition:"all 0.2s"}}>
@@ -3277,8 +3282,8 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
               <div style={{padding:"10px 12px",borderRadius:12,background:"rgba(255,255,255,0.04)",
                 border:"1px solid rgba(255,255,255,0.07)"}}>
                 <div className="flex justify-between mb-2">
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700}}>Qo'shilgan</span>
-                  <button onClick={()=>setStickers([])} style={{fontSize:10,color:"#ff2d55",fontWeight:700}}>Tozalash</button>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700}}>{t("otube.studio_stickers_added")}</span>
+                  <button onClick={()=>setStickers([])} style={{fontSize:10,color:"#ff2d55",fontWeight:700}}>{t("otube.studio_stickers_clear")}</button>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   {stickers.map((s,i)=><span key={i} style={{fontSize:22}}>{s}</span>)}
@@ -3292,7 +3297,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
         {activeTab==="transitions" && (
           <div className="flex flex-col gap-3">
             <p style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>
-              Kliplar orasidagi o'tish effektini tanlang
+              {t("otube.studio_transition_hint")}
             </p>
             <div className="grid grid-cols-3 gap-2">
               {TRANSITIONS.map(t=>(
@@ -3313,7 +3318,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
             <div style={{padding:"10px 12px",borderRadius:10,
               background:"rgba(168,85,247,0.07)",border:"1px solid rgba(168,85,247,0.15)"}}>
               <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>
-                Tanlangan: <span style={{color:T.violet,fontWeight:700}}>
+                {t("otube.studio_transition_selected")} <span style={{color:T.violet,fontWeight:700}}>
                   {TRANSITIONS.find(t=>t.id===transition)?.emoji} {TRANSITIONS.find(t=>t.id===transition)?.name}
                 </span>
               </span>
@@ -3368,13 +3373,13 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
               border:"1px solid rgba(168,85,247,0.15)"}}>
               <div style={{fontSize:24,fontWeight:900,color:T.violet,textAlign:"center"}}>{speed}×</div>
               <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",textAlign:"center",marginTop:2}}>
-                {speed<0.5?"Ultra sekin":speed<1?"Sekin sur'at":speed===1?"Normal":"Tez sur'at"}
-                {speed>=3?" · Time-lapse effekti":""}
+                {speed<0.5?t("otube.speed_ultra_slow"):speed<1?t("otube.speed_slow"):speed===1?t("otube.speed_normal"):t("otube.speed_fast")}
+                {speed>=3?t("otube.speed_timelapse"):""}
               </div>
             </div>
             <div>
               <div className="flex justify-between mb-1.5">
-                <span style={{fontSize:9,color:T.violet,fontWeight:700}}>TEZLIK SLYDER</span>
+                <span style={{fontSize:9,color:T.violet,fontWeight:700}}>{t("otube.speed_slider")}</span>
                 <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{speed}×</span>
               </div>
               <input type="range" min={25} max={400} step={25} value={speed*100}
@@ -3392,10 +3397,10 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
               border:"1px solid rgba(168,85,247,0.2)"}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                 <Sparkles style={{width:12,height:12,color:T.violet}}/>
-                <span style={{fontSize:10,color:T.violet,fontWeight:700,letterSpacing:"0.08em"}}>AI MUHARRIR</span>
+                <span style={{fontSize:10,color:T.violet,fontWeight:700,letterSpacing:"0.08em"}}>{t("otube.ai_editor_title")}</span>
               </div>
               <p style={{fontSize:10,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>
-                Sun'iy intellekt videoingizni avtomatik optimallashtirib, professional sifat beradi.
+                {t("otube.ai_editor_desc")}
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -3433,7 +3438,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
                     <div style={{fontSize:9,color:T.violet,fontWeight:700}}>AI…</div>
                   )}
                   {aiDone.includes(a.id) && (
-                    <span style={{fontSize:9,color:"#00ff88",fontWeight:700}}>✓ Tayyor</span>
+                    <span style={{fontSize:9,color:"#00ff88",fontWeight:700}}>{t("otube.ai_ready")}</span>
                   )}
                 </motion.button>
               ))}
@@ -3442,7 +3447,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
               <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(0,255,136,0.06)",
                 border:"1px solid rgba(0,255,136,0.2)",display:"flex",alignItems:"center",gap:8}}>
                 <Check style={{width:12,height:12,color:"#00ff88"}}/>
-                <span style={{fontSize:10,color:"#00ff88",fontWeight:700}}>{aiDone.length} ta AI amal qo'llandi</span>
+                <span style={{fontSize:10,color:"#00ff88",fontWeight:700}}>{t("otube.ai_applied",{count:aiDone.length})}</span>
               </div>
             )}
           </div>
@@ -3455,8 +3460,8 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
         {published ? (
           <>
             <Check style={{width:16,height:16,color:"#00ff88"}}/>
-            <span style={{fontSize:12,color:"#00ff88",fontWeight:700,flex:1}}>Muvaffaqiyatli nashr!</span>
-            <button onClick={onClose} style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Yopish ×</button>
+            <span style={{fontSize:12,color:"#00ff88",fontWeight:700,flex:1}}>{t("otube.studio_published")}</span>
+            <button onClick={onClose} style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{t("otube.studio_close")}</button>
           </>
         ) : (
           <>
@@ -3469,7 +3474,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
               <motion.button whileTap={{scale:0.96}} onClick={()=>fileRef.current?.click()}
                 style={{flex:1,padding:"10px",borderRadius:10,fontSize:12,fontWeight:700,
                   background:"rgba(168,85,247,0.1)",border:"1px solid rgba(168,85,247,0.3)",color:T.violet}}>
-                + Video tanlang
+                {t("otube.studio_add_video")}
               </motion.button>
             )}
             {file && (
@@ -3479,7 +3484,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
                   background:T.gViolet,color:"white",
                   opacity:publishing?0.6:1,
                   boxShadow:`0 4px 20px ${T.violet}44`}}>
-                {publishing?"Yuklanmoqda…":"🚀 Nashr qilish"}
+                {publishing?t("otube.uploading"):t("otube.publish_btn")}
               </motion.button>
             )}
           </>
@@ -3702,6 +3707,7 @@ const SIGNALS = [
 type SignalId = typeof SIGNALS[number]["id"];
 
 export default function OTubePage() {
+  const { t } = useTranslation("otube");
   const [,navigate]    = useLocation();
   const [signal, setSignal] = useState<SignalId>("all");
   const [query,setQuery]    = useState("");
@@ -3799,7 +3805,7 @@ export default function OTubePage() {
                     boxShadow:`0 0 0 1px ${T.aurora}22`}}>
                   <Search style={{width:12,height:12,color:`${T.aurora}66`,flexShrink:0}}/>
                   <input ref={searchRef} value={query} onChange={e=>setQuery(e.target.value)}
-                    placeholder="Signal qidirish..."
+                    placeholder={t("otube.search_signal_ph")}
                     className="flex-1 bg-transparent outline-none text-white text-[13px] placeholder:text-white/20"
                     style={{fontFamily:"inherit"}}/>
                   {query && <button onClick={()=>setQuery("")}>
@@ -3897,7 +3903,7 @@ export default function OTubePage() {
                     <span style={{fontSize:8,fontWeight:active?800:500,
                       color:active?col:"rgba(255,255,255,0.22)",
                       letterSpacing:"0.04em",transition:"all 0.25s"}}>
-                      {label}
+                      {t(`otube.signal_${id}`)}
                     </span>
                     {/* SHORTS badge */}
                     {id==="shorts" && !active && (
@@ -4053,7 +4059,7 @@ export default function OTubePage() {
               <div className="flex items-center gap-2 mb-4">
                 <Tv style={{width:16,height:16,color:T.cyan}}/>
                 <span style={{fontSize:13,fontWeight:900,letterSpacing:"0.1em",color:T.cyan}}>
-                  KANALLAR
+                  {t("otube.channels_label")}
                 </span>
               </div>
               {raw.slice(0,5).map((v,i)=>(
@@ -4063,7 +4069,7 @@ export default function OTubePage() {
               <div className="flex items-center gap-2 mb-3">
                 <Play style={{width:13,height:13,color:T.orange}}/>
                 <span style={{fontSize:10,fontWeight:900,letterSpacing:"0.12em",color:"rgba(255,255,255,0.6)"}}>
-                  SO'NGGI EFIRLAR
+                  {t("otube.recent_streams")}
                 </span>
               </div>
               {raw.slice(0,4).map(v=>(
@@ -4083,7 +4089,7 @@ export default function OTubePage() {
                     <p style={{fontSize:11.5,fontWeight:600,color:"rgba(255,255,255,0.82)"}}
                       className="line-clamp-2 leading-snug mb-1">{v.caption||"Video"}</p>
                     <p style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{v.author.displayName}</p>
-                    <span style={{fontSize:8.5,color:"rgba(255,255,255,0.3)",fontFamily:"monospace"}}>{fmt(v.viewsCount)} ko'rish</span>
+                    <span style={{fontSize:8.5,color:"rgba(255,255,255,0.3)",fontFamily:"monospace"}}>{fmt(v.viewsCount)} {t("otube.views")}</span>
                   </div>
                 </motion.div>
               ))}
@@ -4093,7 +4099,7 @@ export default function OTubePage() {
 
         {/* Swipe indicator */}
         <div className="flex items-end justify-center gap-3 py-10 pointer-events-none">
-          {[{l:"Lenta",a:false},{l:"Reels",a:false},{l:"OTube",a:true}].map(d=>(
+          {[{l:t("otube.sw_feed"),a:false},{l:"Reels",a:false},{l:"OTube",a:true}].map(d=>(
             <div key={d.l} className="flex flex-col items-center gap-1.5">
               <div style={{width:d.a?28:6,height:6,borderRadius:99,transition:"all 0.35s",
                 background:d.a?T.gCyan:"rgba(255,255,255,0.07)",

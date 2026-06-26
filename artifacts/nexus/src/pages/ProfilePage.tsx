@@ -5,7 +5,6 @@ import {
   ChevronRight, Pencil, Shield, HelpCircle, Globe, Users, Plus, Zap,
   Heart, MessageCircle, BarChart2, TrendingUp, Eye, Share2,
   Lock, Palette, Languages, DollarSign, ArrowUpRight,
-  Phone, Video, MessageSquare, Send,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -95,21 +94,11 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
   const mouseY = useMotionValue(0);
   const rotateX = useSpring(useTransform(mouseY, [-50, 50], [18, -18]), { stiffness: 260, damping: 18 });
   const rotateY = useSpring(useTransform(mouseX, [-50, 50], [-18, 18]), { stiffness: 260, damping: 18 });
-  const [menuOpen, setMenuOpen] = useState(false);
-
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     mouseX.set(e.clientX - rect.left - rect.width / 2);
     mouseY.set(e.clientY - rect.top - rect.height / 2);
   }, [mouseX, mouseY]);
-
-  const quickActions = [
-    { key: "call",    Icon: Phone,          color: "#22c55e", bg: "#15803d", label: "Qo'ng'iroq", angle: -85 },
-    { key: "video",   Icon: Video,          color: "#3b82f6", bg: "#1d4ed8", label: "Video",      angle: -35 },
-    { key: "sms",     Icon: MessageSquare,  color: "#f97316", bg: "#c2410c", label: "SMS",        angle: 15  },
-    { key: "post",    Icon: Send,           color: "#ec4899", bg: "#be185d", label: "Post",       angle: -135 },
-    { key: "comment", Icon: MessageCircle,  color: "#a855f7", bg: "#7e22ce", label: "Kommentari", angle: 165 },
-  ] as const;
 
   const r = size / 2;
   const bw = 3;
@@ -175,76 +164,11 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
         </motion.div>
       ))}
 
-      {/* ── 5. Radial quick-action menu (non-owner tap) ── */}
-      <AnimatePresence>
-        {menuOpen && !isOwner && (
-          <>
-            <motion.div
-              key="backdrop"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setMenuOpen(false)}
-              style={{ position: "fixed", inset: 0, zIndex: 45 }}
-            />
-            {quickActions.map(({ key, Icon, color, bg, label, angle }, idx) => {
-              const rad = (angle * Math.PI) / 180;
-              const btnR = 86;
-              const tx = btnR * Math.cos(rad);
-              const ty = btnR * Math.sin(rad);
-              return (
-                <motion.div key={key}
-                  initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
-                  animate={{ scale: 1, opacity: 1, x: tx, y: ty }}
-                  exit={{ scale: 0, opacity: 0, x: 0, y: 0 }}
-                  transition={{ type: "spring", stiffness: 380, damping: 22, delay: idx * 0.055 }}
-                  onClick={() => setMenuOpen(false)}
-                  style={{
-                    position: "absolute", top: "50%", left: "50%",
-                    marginTop: -20, marginLeft: -20,
-                    zIndex: 50, cursor: "pointer",
-                    display: "flex", flexDirection: "column", alignItems: "center",
-                    width: 40,
-                  }}>
-                  <motion.div
-                    whileHover={{ scale: 1.18 }} whileTap={{ scale: 0.88 }}
-                    style={{
-                      width: 40, height: 40, borderRadius: "50%",
-                      background: `radial-gradient(circle at 35% 35%, ${color}, ${bg})`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: `0 0 18px ${color}99, 0 4px 14px rgba(0,0,0,0.45)`,
-                    }}>
-                    <Icon size={18} color="white" />
-                  </motion.div>
-                  <div style={{
-                    color: "white", fontSize: 8, marginTop: 3,
-                    textShadow: "0 1px 4px rgba(0,0,0,0.9)", whiteSpace: "nowrap",
-                    fontWeight: 700, letterSpacing: "0.01em",
-                  }}>{label}</div>
-                </motion.div>
-              );
-            })}
-            <motion.div key="close"
-              initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 20, delay: 0.28 }}
-              onClick={() => setMenuOpen(false)}
-              style={{
-                position: "absolute", top: "50%", left: "50%",
-                width: 22, height: 22, marginTop: -11, marginLeft: -11,
-                borderRadius: "50%", background: "#ef4444",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", zIndex: 55,
-                boxShadow: "0 2px 10px rgba(239,68,68,0.6)",
-              }}>
-              <X size={11} color="white" />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* ── 6. Avatar image with 3D tilt ── */}
+      {/* ── 5. Avatar image with 3D tilt ── */}
       <div style={{ perspective: "700px", position: "absolute", inset: bw }}>
         <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d", width: size, height: size }} className="relative">
           <div className="absolute inset-0 rounded-[20px] overflow-hidden z-10 group/av cursor-pointer"
-            onClick={isOwner ? onUploadClick : () => setMenuOpen(m => !m)}>
+            onClick={isOwner ? onUploadClick : undefined}>
             {isUploading ? (
               <div className="w-full h-full flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
             ) : avatarUrl ? (

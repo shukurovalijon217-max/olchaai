@@ -1,5 +1,22 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
+export interface NotifPrefs {
+  likes: boolean;
+  comments: boolean;
+  followers: boolean;
+  messages: boolean;
+  groups: boolean;
+  premium: boolean;
+}
+
+export interface PrivacySettings {
+  privateProfile: boolean;
+  activityStatus: boolean;
+  readReceipts: boolean;
+  suggestions: boolean;
+  searchVisibility: boolean;
+}
+
 export interface AuthUser {
   id: number;
   username: string;
@@ -14,6 +31,8 @@ export interface AuthUser {
   status: string;
   country?: string | null;
   timezone?: string | null;
+  notifPrefs?: NotifPrefs | null;
+  privacySettings?: PrivacySettings | null;
   createdAt: string;
 }
 

@@ -1,7 +1,8 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
-import { usersTable } from "@workspace/db";
+import { usersTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@workspace/db";
+import type { NotifPrefs, PrivacySettings } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const router = Router();
@@ -153,6 +154,67 @@ router.patch("/auth/password", async (req, res) => {
     const newHash = await bcrypt.hash(newPassword, 12);
     await db.update(usersTable).set({ passwordHash: newHash }).where(eq(usersTable.id, userId));
     res.json({ ok: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
+router.patch("/auth/preferences", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+
+    const { notifPrefs, privacySettings } = req.body as {
+      notifPrefs?: Partial<NotifPrefs>;
+      privacySettings?: Partial<PrivacySettings>;
+    };
+
+    const [existing] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    if (!existing) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
+
+    const updates: Record<string, unknown> = {};
+    if (notifPrefs !== undefined) {
+      updates.notifPrefs = { ...DEFAULT_NOTIF_PREFS, ...(existing.notifPrefs ?? {}), ...notifPrefs };
+    }
+    if (privacySettings !== undefined) {
+      updates.privacySettings = { ...DEFAULT_PRIVACY_SETTINGS, ...(existing.privacySettings ?? {}), ...privacySettings };
+    }
+
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ error: "Hech narsa o'zgartirilmadi" }); return;
+    }
+
+    const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
+    const { passwordHash: _, ...safeUser } = updated;
+    res.json(safeUser);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
+router.delete("/auth/account", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+
+    const { password } = req.body as { password?: string };
+    if (!password) { res.status(400).json({ error: "Parolni tasdiqlang" }); return; }
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    if (!user?.passwordHash) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) { res.status(401).json({ error: "Parol noto'g'ri" }); return; }
+
+    await db.update(usersTable)
+      .set({ status: "deleted", email: `deleted_${userId}_${user.email}`, username: `deleted_${userId}` })
+      .where(eq(usersTable.id, userId));
+
+    req.session.destroy(() => {
+      res.json({ ok: true });
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Server xatosi" });

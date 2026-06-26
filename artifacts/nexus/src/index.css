@@ -1,6 +1,25 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ── Appearance: no-animations mode ── */
+.no-animations *, .no-animations *::before, .no-animations *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* ── Appearance: compact mode ── */
+.compact-mode .space-y-4 > * + * { margin-top: 0.5rem !important; }
+.compact-mode .space-y-6 > * + * { margin-top: 0.75rem !important; }
+.compact-mode .py-4 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+.compact-mode .py-5 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+.compact-mode .py-3 { padding-top: 0.35rem !important; padding-bottom: 0.35rem !important; }
+.compact-mode .px-4 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+.compact-mode .gap-4 { gap: 0.5rem !important; }
+.compact-mode .gap-3 { gap: 0.4rem !important; }
+.compact-mode .mb-4 { margin-bottom: 0.5rem !important; }
+.compact-mode .mb-6 { margin-bottom: 0.75rem !important; }
+
 /* ── Waving flag animation ── */
 @keyframes flag-wave {
   0%   { transform: rotate(0deg) skewX(0deg); }

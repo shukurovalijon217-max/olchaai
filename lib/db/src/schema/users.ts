@@ -1,6 +1,33 @@
-import { pgTable, text, serial, boolean, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+
+export interface NotifPrefs {
+  likes: boolean;
+  comments: boolean;
+  followers: boolean;
+  messages: boolean;
+  groups: boolean;
+  premium: boolean;
+}
+
+export interface PrivacySettings {
+  privateProfile: boolean;
+  activityStatus: boolean;
+  readReceipts: boolean;
+  suggestions: boolean;
+  searchVisibility: boolean;
+}
+
+export const DEFAULT_NOTIF_PREFS: NotifPrefs = {
+  likes: true, comments: true, followers: true,
+  messages: true, groups: false, premium: false,
+};
+
+export const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
+  privateProfile: false, activityStatus: true,
+  readReceipts: true, suggestions: true, searchVisibility: true,
+};
 
 export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -19,6 +46,8 @@ export const usersTable = pgTable("users", {
   status: text("status").notNull().default("active"),
   country: text("country"),
   timezone: text("timezone"),
+  notifPrefs: jsonb("notif_prefs").$type<NotifPrefs>(),
+  privacySettings: jsonb("privacy_settings").$type<PrivacySettings>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

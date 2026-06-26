@@ -133,9 +133,9 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
         </svg>
         {/* Orbit particles */}
         {[
-          { radius: size * 0.62, color: "#a78bfa", glow: "#7c3aed", sz: size * 0.09, dur: 5.5, delay: 0 },
-          { radius: size * 0.72, color: "#60a5fa", glow: "#3b82f6", sz: size * 0.075, dur: 7.5, delay: 1.8 },
-          { radius: size * 0.82, color: "#34d399", glow: "#10b981", sz: size * 0.065, dur: 9.5, delay: 3.5 },
+          { radius: 64, color: "#a78bfa", glow: "#7c3aed", sz: 9, dur: 5.5, delay: 0 },
+          { radius: 72, color: "#60a5fa", glow: "#3b82f6", sz: 7, dur: 7.5, delay: 1.8 },
+          { radius: 80, color: "#34d399", glow: "#10b981", sz: 6, dur: 9.5, delay: 3.5 },
         ].map(({ radius, color, glow, sz, dur, delay }, i) => (
           <motion.div key={i} className="absolute pointer-events-none"
             style={{ top: "50%", left: "50%", width: 0, height: 0 }}

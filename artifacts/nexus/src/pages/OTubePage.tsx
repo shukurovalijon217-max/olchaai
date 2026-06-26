@@ -429,7 +429,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
 /* ─────────────────────────────────────────────────────── */
 function NexusPlayer({ video, onClose, settings }:
   { video:Reel; onClose:()=>void; settings:PlayerSettings }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const qc             = useQueryClient();
   const [, navPlayer]  = useLocation();
   const videoRef   = useRef<HTMLVideoElement>(null);
@@ -1305,11 +1305,29 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
 /* Hero cinematic card                                     */
 /* ─────────────────────────────────────────────────────── */
 function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [chaptersOpen, setChaptersOpen] = useState(false);
+  const [quickTxt, setQuickTxt] = useState("");
   const cardRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({x:0,y:0});
+
+  const quickComment = useMutation({
+    mutationFn: async (content: string) => {
+      const r = await fetch(`/api/reels/${video.id}/comments`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ content }),
+      });
+      if (!r.ok) throw new Error("Izoh qo'shishda xatolik");
+      return r.json() as Promise<ApiComment>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reel-comments", video.id] });
+      setQuickTxt("");
+    },
+  });
   const onMouseMove = useCallback((e:React.MouseEvent<HTMLDivElement>)=>{
     const el = cardRef.current; if (!el) return;
     const r = el.getBoundingClientRect();
@@ -1424,6 +1442,41 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
         <LivePulse count={video.viewsCount}/>
       </div>
 
+      {/* Quick comment input row */}
+      {user && (
+        <div className="flex items-center gap-2 px-3 py-2" onClick={e=>e.stopPropagation()}
+          style={{background:"rgba(0,0,0,0.22)",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+          <div style={{width:26,height:26,flexShrink:0,borderRadius:"50%",overflow:"hidden",
+            background:"linear-gradient(135deg,rgba(0,229,255,0.2),rgba(157,0,255,0.2))",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {user.avatarUrl
+              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
+              : <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>
+                  {(user.displayName||user.username||"S")[0].toUpperCase()}
+                </span>}
+          </div>
+          <div className="flex-1 flex items-center gap-2 px-3 py-1.5"
+            style={{borderRadius:99,background:"rgba(255,255,255,0.06)",
+              boxShadow:"0 0 0 1px rgba(255,255,255,0.08)"}}>
+            <input
+              value={quickTxt}
+              onChange={e=>setQuickTxt(e.target.value)}
+              onKeyDown={e=>{if(e.key==="Enter"&&quickTxt.trim()){quickComment.mutate(quickTxt.trim());}}}
+              placeholder={t("otube.quick_comment_ph")}
+              className="flex-1 bg-transparent outline-none text-white placeholder:text-white/20"
+              style={{fontSize:11,fontFamily:"inherit"}}/>
+            {quickTxt && (
+              <motion.button whileTap={{scale:0.8}}
+                onClick={()=>{if(quickTxt.trim())quickComment.mutate(quickTxt.trim());}}
+                disabled={quickComment.isPending}
+                style={{color:quickComment.isPending?"rgba(0,229,255,0.3)":T.cyan,fontSize:15,lineHeight:1}}>
+                {quickComment.isPending?"…":"➤"}
+              </motion.button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* AI Smart Chapters strip */}
       <div className="px-3 pb-3" onClick={e=>e.stopPropagation()}
         style={{background:"rgba(0,0,0,0.2)"}}>
@@ -1482,7 +1535,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
 
 /* Watch Party quick-join button */
 function WatchPartyBtn({ videoId }: { videoId: number }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const [joined, setJoined] = useState(false);
   const [partyCount, setPartyCount] = useState(()=>3+Math.floor(videoId%12));
   return (
@@ -1513,7 +1566,7 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
 
 /* Live pulse — animated live viewer count */
 function LivePulse({ count }: { count: number }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const base = Math.max(10, count);
   const [live, setLive] = useState(base);
   useEffect(()=>{
@@ -1897,7 +1950,7 @@ function StreakBanner() {
 /* Continue Watching row — videos with progress bars       */
 /* ─────────────────────────────────────────────────────── */
 function ContinueRow({ videos, onPlay }: { videos:Reel[]; onPlay:(v:Reel)=>void }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   if (!videos.length) return null;
   const items = videos.slice(0,5);
   return (
@@ -2028,7 +2081,7 @@ const AI_TITLE_SUGGESTIONS = [
 const AI_TAG_SUGGESTIONS = ["olcha","viral","nexus","trending","signal","broadcast","exclusive","top"];
 
 function UploadModal({ onClose }: { onClose: ()=>void }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const { user } = useAuth();
   const qc = useQueryClient();
   const [step, setStep] = useState<0|1|2>(0);
@@ -2430,7 +2483,7 @@ const LIVE_GIFTS = ["💎","🚀","🔥","❤️‍🔥","⚡","🌊","👑","�
 /* Live Setup Modal                                        */
 /* ─────────────────────────────────────────────────────── */
 function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("gaming");
   const [quality, setQuality] = useState("1080p");
@@ -2552,7 +2605,7 @@ function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
 /* Short Creator Modal                                     */
 /* ─────────────────────────────────────────────────────── */
 function ShortModal({ onClose }: { onClose: ()=>void }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const [recording, setRecording] = useState(false);
   const [duration, setDuration] = useState<15|30|60>(30);
   const [elapsed, setElapsed] = useState(0);
@@ -2674,7 +2727,7 @@ function ShortModal({ onClose }: { onClose: ()=>void }) {
 /* Challenge Modal                                         */
 /* ─────────────────────────────────────────────────────── */
 function ChallengeModal({ onClose }: { onClose: ()=>void }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [days, setDays] = useState(7);
@@ -2756,7 +2809,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
 /* OTube Studio — full video editor                       */
 /* ─────────────────────────────────────────────────────── */
 function CipCatModal({ onClose }: { onClose: ()=>void }) {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const { user } = useAuth();
   const qc = useQueryClient();
   const [file, setFile]         = useState<File|null>(null);
@@ -3498,7 +3551,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 /* Floating FAB — speed dial with working modals          */
 /* ─────────────────────────────────────────────────────── */
 function FloatingFAB() {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [modal, setModal] = useState<"upload"|"live"|"short"|"challenge"|"cipcat"|null>(null);
 
@@ -3707,7 +3760,7 @@ const SIGNALS = [
 type SignalId = typeof SIGNALS[number]["id"];
 
 export default function OTubePage() {
-  const { t } = useTranslation("otube");
+  const { t } = useTranslation();
   const [,navigate]    = useLocation();
   const [signal, setSignal] = useState<SignalId>("all");
   const [query,setQuery]    = useState("");

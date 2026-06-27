@@ -9,6 +9,7 @@ import {
   Target, Clock, Tag, UserPlus, Heart, Shield, Repeat2, MapPin,
 } from "lucide-react";
 import MediaEditor, { type TextOverlay, TRENDING_CHALLENGES } from "@/components/MediaEditor";
+import DragMediaCanvas, { type CanvasLayer } from "@/components/DragMediaCanvas";
 import {
   useCreatePost, useCreateReel, useCreateStory,
   getListPostsQueryKey, getListReelsQueryKey, getListStoriesQueryKey,
@@ -402,6 +403,111 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const [collabCanvas,         setCollabCanvas]         = useState(false);
   const [collabCanvasInvites,  setCollabCanvasInvites]  = useState<string[]>([]);
   const [collabInviteInput,    setCollabInviteInput]    = useState("");
+
+  /* ── Drag Media Canvas state ── */
+  const [canvasLayers,    setCanvasLayers]    = useState<CanvasLayer[]>([]);
+  const [canvasOpen,      setCanvasOpen]      = useState(false);
+
+  /* ══ REEL MEGA FEATURES (50+) ══ */
+  const [reelVoiceChanger,    setReelVoiceChanger]    = useState("normal");
+  const [reelDuetMode,        setReelDuetMode]        = useState(false);
+  const [reelReactVideo,      setReelReactVideo]      = useState(false);
+  const [reelBoomerang,       setReelBoomerang]       = useState(false);
+  const [reelReverse,         setReelReverse]         = useState(false);
+  const [reelSlowMo,          setReelSlowMo]          = useState(false);
+  const [reelTimelapse,       setReelTimelapse]       = useState(false);
+  const [reelBlurBg,          setReelBlurBg]          = useState(false);
+  const [reelStabilize,       setReelStabilize]       = useState(false);
+  const [reelAutoEnhance,     setReelAutoEnhance]     = useState(false);
+  const [reelArFilter,        setReelArFilter]        = useState("none");
+  const [reelVignette,        setReelVignette]        = useState(0);
+  const [reelGrain,           setReelGrain]           = useState(0);
+  const [reelBrightness,      setReelBrightness]      = useState(100);
+  const [reelContrast,        setReelContrast]        = useState(100);
+  const [reelSaturation,      setReelSaturation]      = useState(100);
+  const [reelSharpness,       setReelSharpness]       = useState(0);
+  const [reelTransition,      setReelTransition]      = useState("cut");
+  const [reelTextAnim,        setReelTextAnim]        = useState("none");
+  const [reelCountdown,       setReelCountdown]       = useState(false);
+  const [reelProgressBar,     setReelProgressBar]     = useState("none");
+  const [reelWatermark,       setReelWatermark]       = useState("none");
+  const [reelSplitScreen,     setReelSplitScreen]     = useState("none");
+  const [reelPip,             setReelPip]             = useState(false);
+  const [reelCcLang,          setReelCcLang]          = useState("uz");
+  const [reelBgMusicVol,      setReelBgMusicVol]      = useState(80);
+  const [reelOrigVol,         setReelOrigVol]         = useState(100);
+  const [reelTrAudio,         setReelTrAudio]         = useState("");
+  const [reelBeatSync,        setReelBeatSync]        = useState(false);
+  const [reelPoll,            setReelPoll]            = useState(false);
+  const [reelPollQ,           setReelPollQ]           = useState("");
+  const [reelPollA,           setReelPollA]           = useState(["","","",""]);
+  const [reelChapters,        setReelChapters]        = useState<{time:string;title:string}[]>([]);
+  const [reelEndCard,         setReelEndCard]         = useState(false);
+  const [reelPinComment,      setReelPinComment]      = useState("");
+  const [reelFirstComment,    setReelFirstComment]    = useState("");
+  const [reel4k,              setReel4k]              = useState(false);
+  const [reelShareDiscover,   setReelShareDiscover]   = useState(true);
+  const [reelAgeGate,         setReelAgeGate]         = useState(false);
+  const [reelKenBurns,        setReelKenBurns]        = useState(false);
+  const [reelZoomAnim,        setReelZoomAnim]        = useState("none");
+  const [reelColorGrade,      setReelColorGrade]      = useState("none");
+  const [reelLyricsStyle,     setReelLyricsStyle]     = useState("none");
+  const [reelSoundwave,       setReelSoundwave]       = useState(false);
+  const [reelEditOpen,        setReelEditOpen]        = useState(false);
+  const [reelAudioEditOpen,   setReelAudioEditOpen]   = useState(false);
+  const [reelArOpen,          setReelArOpen]          = useState(false);
+
+  /* ══ STORY MEGA FEATURES (50+) ══ */
+  const [storyBg,             setStoryBg]             = useState("none");
+  const [storyBgColor,        setStoryBgColor]        = useState("#1a1a2e");
+  const [storyFont,           setStoryFont]           = useState("Inter");
+  const [storyFontSize,       setStoryFontSize]       = useState(24);
+  const [storyTextColor,      setStoryTextColor]      = useState("#ffffff");
+  const [storyTextShadow,     setStoryTextShadow]     = useState(false);
+  const [storyTextBold,       setStoryTextBold]       = useState(false);
+  const [storyTextItalic,     setStoryTextItalic]     = useState(false);
+  const [storyTextAlign,      setStoryTextAlign]      = useState("center");
+  const [storyTextBg,         setStoryTextBg]         = useState(false);
+  const [storyMention,        setStoryMention]        = useState("");
+  const [storyLocationTag,    setStoryLocationTag]    = useState("");
+  const [storyProduct,        setStoryProduct]        = useState("");
+  const [storyPoll,           setStoryPoll]           = useState(false);
+  const [storyPollQ,          setStoryPollQ]          = useState("");
+  const [storyPollA,          setStoryPollA]          = useState(["Ha","Yo'q"]);
+  const [storyQa,             setStoryQa]             = useState(false);
+  const [storyQaQ,            setStoryQaQ]            = useState("");
+  const [storyQuiz,           setStoryQuiz]           = useState(false);
+  const [storyQuizQ,          setStoryQuizQ]          = useState("");
+  const [storyQuizOpts,       setStoryQuizOpts]       = useState(["","","",""]);
+  const [storyQuizAns,        setStoryQuizAns]        = useState(0);
+  const [storyCountdown,      setStoryCountdown]      = useState(false);
+  const [storyCountdownDate,  setStoryCountdownDate]  = useState("");
+  const [storyEmojiSlider,    setStoryEmojiSlider]    = useState(false);
+  const [storyEmojiQ,         setStoryEmojiQ]         = useState("");
+  const [storyMusic,          setStoryMusic]          = useState("");
+  const [storyMusicVol,       setStoryMusicVol]       = useState(80);
+  const [storyGif,            setStoryGif]            = useState("");
+  const [storyArFilter,       setStoryArFilter]       = useState("none");
+  const [storyDraw,           setStoryDraw]           = useState(false);
+  const [storyBrushSize,      setStoryBrushSize]      = useState(4);
+  const [storyBrushColor,     setStoryBrushColor]     = useState("#ff4444");
+  const [storyCloseFriends,   setStoryCloseFriends]   = useState(false);
+  const [storyVanish,         setStoryVanish]         = useState(false);
+  const [storyAddYours,       setStoryAddYours]       = useState(false);
+  const [storyHighlight,      setStoryHighlight]      = useState(false);
+  const [storyHighlightName,  setStoryHighlightName]  = useState("");
+  const [storyBorder,         setStoryBorder]         = useState("none");
+  const [storyLayout,         setStoryLayout]         = useState("single");
+  const [storyWeather,        setStoryWeather]        = useState(false);
+  const [storyAltText,        setStoryAltText]        = useState("");
+  const [storyAutoTranslate,  setStoryAutoTranslate]  = useState(false);
+  const [storySchedule,       setStorySchedule]       = useState(false);
+  const [storyScheduleTime,   setStoryScheduleTime]   = useState("");
+  const [storyStickerOpen,    setStoryStickerOpen]    = useState(false);
+  const [storyDesignOpen,     setStoryDesignOpen]     = useState(false);
+  const [storyFontOpen,       setStoryFontOpen]       = useState(false);
+  const [storyCanvasLayers,   setStoryCanvasLayers]   = useState<CanvasLayer[]>([]);
+  const [storyCanvasOpen,     setStoryCanvasOpen]     = useState(false);
 
   const fetchBestTime = async () => {
     setBestTimeLoading(true); setBestTimeOpen(true);
@@ -841,6 +947,36 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                   {/* ═══ POST TAB ═══ */}
                   {tab === "post" && (
                     <div className="space-y-4">
+
+                      {/* ── 🎨 Drag & Drop Media Canvas ── */}
+                      <div>
+                        <button onClick={() => setCanvasOpen(p=>!p)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all"
+                          style={{ background:canvasOpen?"rgba(167,139,250,0.12)":"rgba(255,255,255,0.04)", border:canvasOpen?"1px solid rgba(167,139,250,0.4)":"1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center gap-2.5">
+                            <span style={{fontSize:20}}>🎨</span>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-white/85">Vizual Kanvas Muharrir</p>
+                              <p className="text-[10px] text-white/35">Rasm/Video/Matn/Emoji — xohlagan joyga surib qo'ying</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {canvasLayers.length > 0 && (
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full text-violet-300" style={{ background:"rgba(167,139,250,0.15)" }}>
+                                {canvasLayers.length} ta qatlam
+                              </span>
+                            )}
+                            <span className="text-white/40 text-xs">{canvasOpen ? "▲" : "▼"}</span>
+                          </div>
+                        </button>
+                        <AnimatePresence>
+                          {canvasOpen && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 overflow-hidden">
+                              <DragMediaCanvas layers={canvasLayers} onChange={setCanvasLayers} canvasW={248} canvasH={380}/>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
 
                       {/* ─── Multi-file drop zone ─── */}
                       {mediaQueue.length < 10 && (
@@ -2260,6 +2396,368 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                         </AnimatePresence>
                       </div>
 
+                      {/* ── 🎬 Reel Drag Canvas ── */}
+                      <div>
+                        <button onClick={()=>setReelEditOpen(p=>!p)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all"
+                          style={{ background:reelEditOpen?"rgba(220,38,38,0.12)":"rgba(255,255,255,0.04)", border:reelEditOpen?"1px solid rgba(220,38,38,0.35)":"1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center gap-2.5">
+                            <span style={{fontSize:18}}>🎬</span>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-white/85">Reel Vizual Muharrir</p>
+                              <p className="text-[10px] text-white/35">Overlay, matn, emoji, stiker — xohlagan joyga</p>
+                            </div>
+                          </div>
+                          <span className="text-white/40 text-xs">{reelEditOpen?"▲":"▼"}</span>
+                        </button>
+                        <AnimatePresence>
+                          {reelEditOpen && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 overflow-hidden">
+                              <DragMediaCanvas layers={canvasLayers} onChange={setCanvasLayers} canvasW={240} canvasH={360}/>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* ── 🎵 Audio Studio ── */}
+                      <div>
+                        <button onClick={()=>setReelAudioEditOpen(p=>!p)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all"
+                          style={{ background:reelAudioEditOpen?"rgba(251,191,36,0.1)":"rgba(255,255,255,0.04)", border:reelAudioEditOpen?"1px solid rgba(251,191,36,0.35)":"1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center gap-2.5">
+                            <span style={{fontSize:18}}>🎵</span>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-white/85">Audio Studio</p>
+                              <p className="text-[10px] text-white/35">Ovoz o'zgartirish, trending audio, beat sync</p>
+                            </div>
+                          </div>
+                          <span className="text-white/40 text-xs">{reelAudioEditOpen?"▲":"▼"}</span>
+                        </button>
+                        <AnimatePresence>
+                          {reelAudioEditOpen && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 space-y-3 overflow-hidden">
+                              {/* Voice Changer */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">🎙️ Ovoz o'zgartirish</p>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                  {[{id:"normal",e:"🗣️",l:"Asl"},{id:"robot",e:"🤖",l:"Robot"},{id:"chipmunk",e:"🐿️",l:"Chipmunk"},{id:"deep",e:"👹",l:"Bass"},{id:"echo",e:"🌊",l:"Echo"},{id:"alien",e:"👽",l:"Alien"},{id:"helium",e:"🎈",l:"Helium"},{id:"cave",e:"🏔️",l:"G'or"}].map(v=>(
+                                    <button key={v.id} onClick={()=>setReelVoiceChanger(v.id)}
+                                      className="flex flex-col items-center gap-0.5 py-2 rounded-xl text-[9px] font-bold transition-all"
+                                      style={{ background:reelVoiceChanger===v.id?"rgba(251,191,36,0.2)":"rgba(255,255,255,0.05)", border:reelVoiceChanger===v.id?"1.5px solid rgba(251,191,36,0.6)":"1.5px solid rgba(255,255,255,0.07)", color:reelVoiceChanger===v.id?"#fbbf24":"rgba(255,255,255,0.4)" }}>
+                                      <span style={{fontSize:16}}>{v.e}</span>{v.l}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* Trending Audio */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">📀 Trending Audio kutubxonasi</p>
+                                <div className="space-y-1.5">
+                                  {[{t:"Billie Jean",a:"Michael Jackson",v:"4.2M"},{t:"Blinding Lights",a:"The Weeknd",v:"8.1M"},{t:"As It Was",a:"Harry Styles",v:"6.5M"},{t:"Flowers",a:"Miley Cyrus",v:"5.3M"},{t:"Cruel Summer",a:"Taylor Swift",v:"7.8M"},{t:"STAY",a:"The Kid LAROI",v:"9.2M"}].map(s=>(
+                                    <button key={s.t} onClick={()=>setReelTrAudio(s.t)}
+                                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[10px] transition-all"
+                                      style={{ background:reelTrAudio===s.t?"rgba(251,191,36,0.15)":"rgba(255,255,255,0.04)", border:reelTrAudio===s.t?"1px solid rgba(251,191,36,0.5)":"1px solid rgba(255,255,255,0.07)" }}>
+                                      <div className="text-left">
+                                        <p className="font-bold text-white/75">{s.t}</p>
+                                        <p className="text-white/35">{s.a}</p>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[8px] text-amber-400">{s.v} foy.</span>
+                                        {reelTrAudio===s.t && <span className="text-amber-400">✓</span>}
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* Volume controls */}
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[9px] text-white/40 w-20">🎵 Fon mus.</span>
+                                  <input type="range" min={0} max={100} value={reelBgMusicVol} onChange={e=>setReelBgMusicVol(Number(e.target.value))} className="flex-1" style={{accentColor:"#fbbf24"}}/>
+                                  <span className="text-[9px] font-bold text-amber-300 w-8 text-right">{reelBgMusicVol}%</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[9px] text-white/40 w-20">🎤 Asl ovoz</span>
+                                  <input type="range" min={0} max={100} value={reelOrigVol} onChange={e=>setReelOrigVol(Number(e.target.value))} className="flex-1" style={{accentColor:"#fbbf24"}}/>
+                                  <span className="text-[9px] font-bold text-amber-300 w-8 text-right">{reelOrigVol}%</span>
+                                </div>
+                              </div>
+                              {/* Beat sync */}
+                              <button onClick={()=>setReelBeatSync(p=>!p)}
+                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all"
+                                style={{ background:reelBeatSync?"rgba(251,191,36,0.15)":"rgba(255,255,255,0.04)", border:reelBeatSync?"1px solid rgba(251,191,36,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelBeatSync?"#fbbf24":"rgba(255,255,255,0.45)" }}>
+                                🥁 Beat Sync — montaj ritmga mos keladi
+                                <div className="flex items-center px-0.5 rounded-full" style={{ background:reelBeatSync?"#fbbf24":"rgba(255,255,255,0.12)", justifyContent:reelBeatSync?"flex-end":"flex-start", height:20, width:36 }}>
+                                  <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                                </div>
+                              </button>
+                              {/* Sound wave */}
+                              <button onClick={()=>setReelSoundwave(p=>!p)}
+                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all"
+                                style={{ background:reelSoundwave?"rgba(96,165,250,0.15)":"rgba(255,255,255,0.04)", border:reelSoundwave?"1px solid rgba(96,165,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelSoundwave?"#60a5fa":"rgba(255,255,255,0.45)" }}>
+                                〰️ Sound Wave vizualizatsiya
+                                <div className="flex items-center px-0.5 rounded-full" style={{ background:reelSoundwave?"#60a5fa":"rgba(255,255,255,0.12)", justifyContent:reelSoundwave?"flex-end":"flex-start", height:20, width:36 }}>
+                                  <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                                </div>
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* ── 🌈 Reel AR & Effects ── */}
+                      <div>
+                        <button onClick={()=>setReelArOpen(p=>!p)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all"
+                          style={{ background:reelArOpen?"rgba(167,139,250,0.1)":"rgba(255,255,255,0.04)", border:reelArOpen?"1px solid rgba(167,139,250,0.35)":"1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center gap-2.5">
+                            <span style={{fontSize:18}}>🌈</span>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-white/85">AR Filtrlar & Effektlar</p>
+                              <p className="text-[10px] text-white/35">Yuz filtr, rang tuzatish, vizual effektlar</p>
+                            </div>
+                          </div>
+                          <span className="text-white/40 text-xs">{reelArOpen?"▲":"▼"}</span>
+                        </button>
+                        <AnimatePresence>
+                          {reelArOpen && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 space-y-3 overflow-hidden">
+                              {/* AR Face Filters */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">🎭 AR Yuz Filtrlari</p>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                  {[{id:"none",e:"🚫",l:"Yo'q"},{id:"glow",e:"✨",l:"Siyoh"},{id:"blur_face",e:"🌫️",l:"Xira yuz"},{id:"sunglasses",e:"🕶️",l:"Ko'zoynak"},{id:"crown",e:"👑",l:"Toj"},{id:"cat",e:"🐱",l:"Mushuk"},{id:"dog",e:"🐶",l:"It"},{id:"heart_eyes",e:"😍",l:"Yurak"}].map(f=>(
+                                    <button key={f.id} onClick={()=>setReelArFilter(f.id)}
+                                      className="flex flex-col items-center gap-0.5 py-2 rounded-xl text-[9px] font-bold transition-all"
+                                      style={{ background:reelArFilter===f.id?"rgba(167,139,250,0.25)":"rgba(255,255,255,0.05)", border:reelArFilter===f.id?"1.5px solid rgba(167,139,250,0.6)":"1.5px solid rgba(255,255,255,0.07)", color:reelArFilter===f.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
+                                      <span style={{fontSize:16}}>{f.e}</span>{f.l}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* Color Grade */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">🎨 Rang Gradatsiyasi (LUT)</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {[{id:"none",l:"Asl",c:"rgba(255,255,255,0.1)"},{id:"cinematic",l:"Sinematik",c:"rgba(96,165,250,0.4)"},{id:"warm_lut",l:"Issiq",c:"rgba(251,146,60,0.4)"},{id:"teal_orange",l:"Teal & Orange",c:"rgba(20,184,166,0.4)"},{id:"desert",l:"Sahro",c:"rgba(234,179,8,0.4)"},{id:"arctic",l:"Arktik",c:"rgba(147,197,253,0.4)"},{id:"moody",l:"Moody",c:"rgba(109,40,217,0.4)"},{id:"faded",l:"Faded",c:"rgba(148,163,184,0.4)"}].map(g=>(
+                                    <button key={g.id} onClick={()=>setReelColorGrade(g.id)}
+                                      className="px-2.5 py-1.5 rounded-lg text-[9px] font-bold transition-all"
+                                      style={{ background:reelColorGrade===g.id?g.c:`rgba(255,255,255,0.05)`, border:reelColorGrade===g.id?`1.5px solid ${g.c}`:"1.5px solid rgba(255,255,255,0.07)", color:reelColorGrade===g.id?"white":"rgba(255,255,255,0.4)" }}>
+                                      {g.l}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* Adjustment sliders */}
+                              <div className="space-y-2">
+                                {[
+                                  {l:"☀️ Yorqinlik",v:reelBrightness,s:setReelBrightness,min:50,max:150,def:100,c:"#fbbf24"},
+                                  {l:"◐ Kontrast",  v:reelContrast,  s:setReelContrast,  min:50,max:150,def:100,c:"#a78bfa"},
+                                  {l:"🌈 To'yinganlik",v:reelSaturation,s:setReelSaturation,min:0,max:200,def:100,c:"#34d399"},
+                                  {l:"🔪 O'tkirlik",v:reelSharpness,s:setReelSharpness,min:0,max:10,def:0,c:"#60a5fa"},
+                                  {l:"⭕ Vignette", v:reelVignette,  s:setReelVignette,  min:0,max:100,def:0,c:"#1e1e2e"},
+                                  {l:"🌫️ Don/Grain",v:reelGrain,    s:setReelGrain,    min:0,max:100,def:0,c:"#94a3b8"},
+                                ].map(({l,v,s,min,max,def,c})=>(
+                                  <div key={l} className="flex items-center gap-2">
+                                    <span className="text-[9px] text-white/40 w-24">{l}</span>
+                                    <input type="range" min={min} max={max} value={v} onChange={e=>s(Number(e.target.value))} className="flex-1" style={{accentColor:c}}/>
+                                    <button onClick={()=>s(def)} className="text-[8px] text-white/25 hover:text-white/50 w-6">↺</button>
+                                    <span className="text-[9px] text-white/40 w-6 text-right">{v}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              {/* Visual effects toggles */}
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {[
+                                  {l:"🔄 Ken Burns",v:reelKenBurns,s:setReelKenBurns,c:"#a78bfa"},
+                                  {l:"🫧 Fon Xira", v:reelBlurBg,  s:setReelBlurBg,  c:"#60a5fa"},
+                                  {l:"📡 Stabilizatsiya",v:reelStabilize,s:setReelStabilize,c:"#34d399"},
+                                  {l:"⚡ AI Yaxshilash",v:reelAutoEnhance,s:setReelAutoEnhance,c:"#fbbf24"},
+                                  {l:"📼 Boomerang",v:reelBoomerang,s:setReelBoomerang,c:"#f472b6"},
+                                  {l:"⏪ Teskari",   v:reelReverse, s:setReelReverse, c:"#fb923c"},
+                                  {l:"🐢 Sekin (0.25x)",v:reelSlowMo,s:setReelSlowMo,c:"#22d3ee"},
+                                  {l:"⚡ Timelapse (4x)",v:reelTimelapse,s:setReelTimelapse,c:"#e879f9"},
+                                ].map(({l,v,s,c})=>(
+                                  <button key={l} onClick={()=>s((p:boolean)=>!p)}
+                                    className="flex items-center gap-2 px-2.5 py-2 rounded-xl text-[9px] font-bold transition-all"
+                                    style={{ background:v?`${c}22`:"rgba(255,255,255,0.04)", border:v?`1px solid ${c}66`:"1px solid rgba(255,255,255,0.07)", color:v?c:"rgba(255,255,255,0.4)" }}>
+                                    <div className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{ background:v?c:"rgba(255,255,255,0.12)", justifyContent:v?"flex-end":"flex-start", height:16, width:28 }}>
+                                      <div className="w-3 h-3 rounded-full bg-white"/>
+                                    </div>
+                                    {l}
+                                  </button>
+                                ))}
+                              </div>
+                              {/* Zoom animation */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🔍 Zoom Animatsiyasi</p>
+                                <div className="flex gap-1.5">
+                                  {[{id:"none",l:"Yo'q"},{id:"in",l:"Zoom In"},{id:"out",l:"Zoom Out"},{id:"bounce",l:"Bounce"}].map(z=>(
+                                    <button key={z.id} onClick={()=>setReelZoomAnim(z.id)}
+                                      className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
+                                      style={{ background:reelZoomAnim===z.id?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.05)", border:reelZoomAnim===z.id?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelZoomAnim===z.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
+                                      {z.l}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* ── 📊 Reel Interaktiv Elementlar ── */}
+                      <div className="rounded-2xl p-3.5 space-y-3" style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)" }}>
+                        <p className="text-xs font-bold text-white/60">📊 Interaktiv Elementlar</p>
+                        {/* Transition */}
+                        <div>
+                          <p className="text-[10px] text-white/35 mb-1.5">🎞️ Kliplar orasidagi o'tish</p>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {[{id:"cut",l:"Kesish"},{id:"fade",l:"🌫️ Fade"},{id:"zoom",l:"🔍 Zoom"},{id:"slide",l:"↔️ Slide"},{id:"spin",l:"🌀 Spin"},{id:"glitch",l:"⚡ Glitch"}].map(t=>(
+                              <button key={t.id} onClick={()=>setReelTransition(t.id)}
+                                className="px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all"
+                                style={{ background:reelTransition===t.id?"rgba(220,38,38,0.2)":"rgba(255,255,255,0.05)", border:reelTransition===t.id?"1px solid rgba(220,38,38,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelTransition===t.id?"#fca5a5":"rgba(255,255,255,0.4)" }}>
+                                {t.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Text animation */}
+                        <div>
+                          <p className="text-[10px] text-white/35 mb-1.5">✍️ Matn animatsiya uslubi</p>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {[{id:"none",l:"Yo'q"},{id:"typewriter",l:"⌨️ Typewriter"},{id:"slide_in",l:"→ Slide"},{id:"bounce",l:"🏀 Bounce"},{id:"fade_in",l:"Fade In"},{id:"neon_blink",l:"💡 Neon"},{id:"wave",l:"〰️ Wave"},{id:"zoom_in",l:"🔍 Zoom"}].map(t=>(
+                              <button key={t.id} onClick={()=>setReelTextAnim(t.id)}
+                                className="px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all"
+                                style={{ background:reelTextAnim===t.id?"rgba(96,165,250,0.2)":"rgba(255,255,255,0.05)", border:reelTextAnim===t.id?"1px solid rgba(96,165,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelTextAnim===t.id?"#93c5fd":"rgba(255,255,255,0.4)" }}>
+                                {t.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Progress bar */}
+                        <div>
+                          <p className="text-[10px] text-white/35 mb-1.5">⏱️ Progress Bar uslubi</p>
+                          <div className="flex gap-1.5">
+                            {[{id:"none",l:"Yo'q"},{id:"top",l:"— Yuqori"},{id:"bottom",l:"— Pastki"},{id:"circle",l:"◯ Doira"}].map(p=>(
+                              <button key={p.id} onClick={()=>setReelProgressBar(p.id)}
+                                className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
+                                style={{ background:reelProgressBar===p.id?"rgba(52,211,153,0.2)":"rgba(255,255,255,0.05)", border:reelProgressBar===p.id?"1px solid rgba(52,211,153,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelProgressBar===p.id?"#6ee7b7":"rgba(255,255,255,0.4)" }}>
+                                {p.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Lyrics style */}
+                        <div>
+                          <p className="text-[10px] text-white/35 mb-1.5">🎤 Lyrics/Subtitle uslubi</p>
+                          <div className="flex gap-1.5">
+                            {[{id:"none",l:"Yo'q"},{id:"bottom_bar",l:"📝 Pastki"},{id:"karaoke",l:"🎤 Karaoke"},{id:"word_by_word",l:"💬 So'zma-so'z"}].map(ls=>(
+                              <button key={ls.id} onClick={()=>setReelLyricsStyle(ls.id)}
+                                className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
+                                style={{ background:reelLyricsStyle===ls.id?"rgba(251,191,36,0.2)":"rgba(255,255,255,0.05)", border:reelLyricsStyle===ls.id?"1px solid rgba(251,191,36,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelLyricsStyle===ls.id?"#fde68a":"rgba(255,255,255,0.4)" }}>
+                                {ls.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Split screen */}
+                        <div>
+                          <p className="text-[10px] text-white/35 mb-1.5">📺 Split Screen rejimi</p>
+                          <div className="flex gap-1.5">
+                            {[{id:"none",l:"Yo'q"},{id:"vertical",l:"| Vertikal"},{id:"horizontal",l:"— Gorizontal"},{id:"grid",l:"▦ Setka"}].map(ss=>(
+                              <button key={ss.id} onClick={()=>setReelSplitScreen(ss.id)}
+                                className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
+                                style={{ background:reelSplitScreen===ss.id?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.05)", border:reelSplitScreen===ss.id?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelSplitScreen===ss.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
+                                {ss.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* CC language */}
+                        <div>
+                          <p className="text-[10px] text-white/35 mb-1.5">🌐 Subtitr tili (AI avtomatik)</p>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {[{id:"uz",l:"🇺🇿 UZ"},{id:"ru",l:"🇷🇺 RU"},{id:"en",l:"🇬🇧 EN"},{id:"ko",l:"🇰🇷 KO"},{id:"zh",l:"🇨🇳 ZH"},{id:"ar",l:"🇸🇦 AR"},{id:"tr",l:"🇹🇷 TR"},{id:"de",l:"🇩🇪 DE"}].map(cc=>(
+                              <button key={cc.id} onClick={()=>setReelCcLang(cc.id)}
+                                className="px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all"
+                                style={{ background:reelCcLang===cc.id?"rgba(52,211,153,0.2)":"rgba(255,255,255,0.05)", border:reelCcLang===cc.id?"1px solid rgba(52,211,153,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelCcLang===cc.id?"#6ee7b7":"rgba(255,255,255,0.4)" }}>
+                                {cc.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Poll on reel */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-[10px] text-white/35">📊 Reel ichida So'rovnoma</p>
+                            <button onClick={()=>setReelPoll(p=>!p)} className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{ background:reelPoll?"#a78bfa":"rgba(255,255,255,0.12)", justifyContent:reelPoll?"flex-end":"flex-start", height:20, width:34 }}>
+                              <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                            </button>
+                          </div>
+                          <AnimatePresence>
+                            {reelPoll && (
+                              <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-1.5 overflow-hidden">
+                                <input placeholder="Savol kiriting…" value={reelPollQ} onChange={e=>setReelPollQ(e.target.value)}
+                                  className="w-full rounded-lg px-2.5 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                  style={{ background:"rgba(167,139,250,0.08)", border:"1px solid rgba(167,139,250,0.25)" }}/>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  {reelPollA.map((a,i)=>(
+                                    <input key={i} placeholder={`Variant ${i+1}`} value={a} onChange={e=>{ const n=[...reelPollA]; n[i]=e.target.value; setReelPollA(n); }}
+                                      className="rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                      style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)" }}/>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                        {/* Misc toggles */}
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {[
+                            {l:"⏱️ Countdown oyverk",v:reelCountdown,s:setReelCountdown,c:"#f87171"},
+                            {l:"🖼️ Picture-in-Pic",   v:reelPip,      s:setReelPip,      c:"#fbbf24"},
+                            {l:"🏁 End Card",          v:reelEndCard,  s:setReelEndCard,  c:"#34d399"},
+                            {l:"🔞 18+ Yosh chegara", v:reelAgeGate,  s:setReelAgeGate,  c:"#f87171"},
+                            {l:"📡 Discover'ga yuborish",v:reelShareDiscover,s:setReelShareDiscover,c:"#60a5fa"},
+                            {l:"🎯 Duet rejimi",       v:reelDuetMode, s:setReelDuetMode, c:"#a78bfa"},
+                            {l:"📹 React video",       v:reelReactVideo,s:setReelReactVideo,c:"#fb923c"},
+                            {l:"4K 🔷 Sifat",          v:reel4k,       s:setReel4k,       c:"#22d3ee"},
+                          ].map(({l,v,s,c})=>(
+                            <button key={l} onClick={()=>s((p:boolean)=>!p)}
+                              className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-[9px] font-bold transition-all"
+                              style={{ background:v?`${c}18`:"rgba(255,255,255,0.04)", border:v?`1px solid ${c}55`:"1px solid rgba(255,255,255,0.07)", color:v?c:"rgba(255,255,255,0.4)" }}>
+                              <div className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{ background:v?c:"rgba(255,255,255,0.12)", justifyContent:v?"flex-end":"flex-start", height:16, width:26 }}>
+                                <div className="w-2.5 h-2.5 rounded-full bg-white"/>
+                              </div>
+                              {l}
+                            </button>
+                          ))}
+                        </div>
+                        {/* First comment & pin */}
+                        <div className="space-y-1.5">
+                          <input placeholder="📌 Pinned birinchi izoh (avtomatik)…" value={reelFirstComment} onChange={e=>setReelFirstComment(e.target.value)}
+                            className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                            style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
+                          <input placeholder="📍 Eng yuqori izohni pin qiling…" value={reelPinComment} onChange={e=>setReelPinComment(e.target.value)}
+                            className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                            style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
+                        </div>
+                        {/* Watermark position */}
+                        <div>
+                          <p className="text-[10px] text-white/35 mb-1.5">💧 Suv belgisi joylashuvi</p>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {[{id:"none",l:"Yo'q"},{id:"tl",l:"↖ YC"},{id:"tr",l:"↗ YO"},{id:"bl",l:"↙ PC"},{id:"br",l:"↘ PO"},{id:"center",l:"✛ O'rta"}].map(w=>(
+                              <button key={w.id} onClick={()=>setReelWatermark(w.id)}
+                                className="px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all"
+                                style={{ background:reelWatermark===w.id?"rgba(52,211,153,0.2)":"rgba(255,255,255,0.05)", border:reelWatermark===w.id?"1px solid rgba(52,211,153,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelWatermark===w.id?"#6ee7b7":"rgba(255,255,255,0.4)" }}>
+                                {w.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Reel permissions */}
                       <div className="rounded-2xl p-3.5 space-y-3.5"
                         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -2414,6 +2912,452 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                               {r.l}
                             </button>
                           ))}
+                        </div>
+                      </div>
+
+                      {/* ── 🎨 Story Vizual Kanvas Muharrir ── */}
+                      <div>
+                        <button onClick={()=>setStoryCanvasOpen(p=>!p)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all"
+                          style={{ background:storyCanvasOpen?"rgba(251,191,36,0.12)":"rgba(255,255,255,0.04)", border:storyCanvasOpen?"1px solid rgba(251,191,36,0.4)":"1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center gap-2.5">
+                            <span style={{fontSize:18}}>🎨</span>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-white/85">Story Vizual Muharrir</p>
+                              <p className="text-[10px] text-white/35">Rasm, matn, emoji — xohlagan joyga drag qiling</p>
+                            </div>
+                          </div>
+                          <span className="text-white/40 text-xs">{storyCanvasOpen?"▲":"▼"}</span>
+                        </button>
+                        <AnimatePresence>
+                          {storyCanvasOpen && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 overflow-hidden">
+                              <DragMediaCanvas layers={storyCanvasLayers} onChange={setStoryCanvasLayers} canvasW={240} canvasH={400}/>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* ── 🎨 Story Dizayn Studio ── */}
+                      <div>
+                        <button onClick={()=>setStoryDesignOpen(p=>!p)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all"
+                          style={{ background:storyDesignOpen?"rgba(167,139,250,0.1)":"rgba(255,255,255,0.04)", border:storyDesignOpen?"1px solid rgba(167,139,250,0.35)":"1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center gap-2.5">
+                            <span style={{fontSize:18}}>🖌️</span>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-white/85">Dizayn Studio</p>
+                              <p className="text-[10px] text-white/35">Fon, shrift, rang, chegara, rasm joylash</p>
+                            </div>
+                          </div>
+                          <span className="text-white/40 text-xs">{storyDesignOpen?"▲":"▼"}</span>
+                        </button>
+                        <AnimatePresence>
+                          {storyDesignOpen && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 space-y-3 overflow-hidden">
+                              {/* Background */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">🖼️ Fon turi</p>
+                                <div className="grid grid-cols-4 gap-1.5 mb-2">
+                                  {[
+                                    {id:"none",      bg:"rgba(255,255,255,0.06)", label:"Yo'q"},
+                                    {id:"solid",     bg:storyBgColor,              label:"Rang"},
+                                    {id:"grad1",     bg:"linear-gradient(135deg,#7c3aed,#ec4899)", label:"🌸 Violet"},
+                                    {id:"grad2",     bg:"linear-gradient(135deg,#f59e0b,#ef4444)", label:"🔥 Olov"},
+                                    {id:"grad3",     bg:"linear-gradient(135deg,#06b6d4,#6366f1)", label:"🌊 Ko'k"},
+                                    {id:"grad4",     bg:"linear-gradient(135deg,#10b981,#059669)", label:"🌿 Yashil"},
+                                    {id:"grad5",     bg:"linear-gradient(135deg,#1a1a2e,#16213e)", label:"🌌 Kosmik"},
+                                    {id:"grad6",     bg:"linear-gradient(135deg,#ff6b6b,#feca57)", label:"🌅 Quyosh"},
+                                    {id:"pattern1",  bg:"repeating-linear-gradient(45deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 2px,transparent 2px,transparent 16px)", label:"▦ Grid"},
+                                    {id:"pattern2",  bg:"repeating-radial-gradient(circle at 0 0, transparent 0, rgba(255,255,255,0.04) 10px)", label:"● Dots"},
+                                    {id:"pattern3",  bg:"repeating-linear-gradient(0deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 20px)", label:"≡ Chiziq"},
+                                    {id:"pattern4",  bg:"linear-gradient(135deg,rgba(124,58,237,0.3) 0%,rgba(236,72,153,0.3) 50%,rgba(245,158,11,0.3) 100%)", label:"🌈 Aurora"},
+                                  ].map(b=>(
+                                    <button key={b.id} onClick={()=>setStoryBg(b.id)}
+                                      className="flex flex-col items-center gap-1 py-2 rounded-xl transition-all"
+                                      style={{ background:storyBg===b.id?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.04)", border:storyBg===b.id?"1.5px solid rgba(167,139,250,0.6)":"1.5px solid rgba(255,255,255,0.07)" }}>
+                                      <div className="w-8 h-6 rounded" style={{ background:b.bg }}/>
+                                      <span className="text-[8px] text-white/50">{b.label}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                                {storyBg==="solid" && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] text-white/40">Rang:</span>
+                                    <div className="flex gap-1.5 flex-wrap">
+                                      {["#1a1a2e","#7c3aed","#dc2626","#d97706","#059669","#0891b2","#db2777","#ffffff","#000000","#1e293b","#831843","#14532d"].map(c=>(
+                                        <button key={c} onClick={()=>setStoryBgColor(c)}
+                                          className="w-5 h-5 rounded-full border-2 transition-all"
+                                          style={{ background:c, borderColor:storyBgColor===c?"white":"transparent" }}/>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              {/* Font */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">✍️ Shrift uslubi</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {["Inter","Bebas Neue","Pacifico","Roboto Mono","Dancing Script","Playfair Display","Oswald","Permanent Marker","Comic Neue","Rajdhani"].map(f=>(
+                                    <button key={f} onClick={()=>setStoryFont(f)}
+                                      className="px-2.5 py-1.5 rounded-lg text-[9px] transition-all"
+                                      style={{ fontFamily:f, background:storyFont===f?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.05)", border:storyFont===f?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:storyFont===f?"#c4b5fd":"rgba(255,255,255,0.45)" }}>
+                                      {f.split(" ")[0]}Aa
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* Font size & text color */}
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[9px] text-white/40 w-16">Hajm</span>
+                                  <input type="range" min={12} max={72} value={storyFontSize} onChange={e=>setStoryFontSize(Number(e.target.value))} className="flex-1" style={{accentColor:"#a78bfa"}}/>
+                                  <span className="text-[9px] text-violet-300 w-8 text-right">{storyFontSize}px</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[9px] text-white/40 w-16">Rang</span>
+                                  <div className="flex gap-1.5 flex-wrap flex-1">
+                                    {["#ffffff","#000000","#f87171","#fbbf24","#34d399","#60a5fa","#c4b5fd","#f472b6","#fb923c","#22d3ee","#84cc16","#e879f9"].map(c=>(
+                                      <button key={c} onClick={()=>setStoryTextColor(c)}
+                                        className="w-4 h-4 rounded-full border-2 transition-all"
+                                        style={{ background:c, borderColor:storyTextColor===c?"white":"transparent" }}/>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                              {/* Text styles */}
+                              <div className="flex gap-1.5 flex-wrap">
+                                {[
+                                  {l:"B",s:"font-bold",v:storyTextBold,set:setStoryTextBold,active:"font-black text-white"},
+                                  {l:"I",s:"italic",   v:storyTextItalic,set:setStoryTextItalic,active:"italic text-white"},
+                                  {l:"💧 Soya",       s:"",v:storyTextShadow,set:setStoryTextShadow,active:""},
+                                  {l:"🎨 Fon",        s:"",v:storyTextBg,   set:setStoryTextBg,   active:""},
+                                ].map(({l,s,v,set})=>(
+                                  <button key={l} onClick={()=>set((p:boolean)=>!p)}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${s}`}
+                                    style={{ background:v?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.06)", border:v?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.08)", color:v?"#c4b5fd":"rgba(255,255,255,0.45)" }}>
+                                    {l}
+                                  </button>
+                                ))}
+                              </div>
+                              {/* Text alignment */}
+                              <div className="flex gap-1.5">
+                                {[{v:"left",e:"◀ Chap"},{v:"center",e:"▐ O'rta"},{v:"right",e:"▶ O'ng"}].map(a=>(
+                                  <button key={a.v} onClick={()=>setStoryTextAlign(a.v)}
+                                    className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
+                                    style={{ background:storyTextAlign===a.v?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.05)", border:storyTextAlign===a.v?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:storyTextAlign===a.v?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
+                                    {a.e}
+                                  </button>
+                                ))}
+                              </div>
+                              {/* Border style */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🖼 Chegara uslubi</p>
+                                <div className="flex gap-1.5 flex-wrap">
+                                  {[{id:"none",l:"Yo'q"},{id:"thin",l:"— Ingichka"},{id:"thick",l:"■ Qalin"},{id:"dashed",l:"- - Uzuq"},{id:"glow_v",l:"✨ Violet yilt."},{id:"glow_g",l:"💚 Yashil yilt."},{id:"neon_r",l:"🔴 Neon qizil"},{id:"rainbow",l:"🌈 Kamalak"}].map(b=>(
+                                    <button key={b.id} onClick={()=>setStoryBorder(b.id)}
+                                      className="px-2 py-1 rounded-lg text-[8px] font-bold transition-all"
+                                      style={{ background:storyBorder===b.id?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.05)", border:storyBorder===b.id?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:storyBorder===b.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
+                                      {b.l}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* Layout */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">📐 Collage tartibi</p>
+                                <div className="grid grid-cols-5 gap-1.5">
+                                  {[{id:"single",e:"▪"},{id:"v2",e:"◫"},{id:"h2",e:"⬛"},{id:"grid4",e:"▦"},{id:"big_small",e:"◱"}].map(l=>(
+                                    <button key={l.id} onClick={()=>setStoryLayout(l.id)}
+                                      className="py-2.5 rounded-xl text-sm transition-all"
+                                      style={{ background:storyLayout===l.id?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.05)", border:storyLayout===l.id?"1.5px solid rgba(167,139,250,0.5)":"1.5px solid rgba(255,255,255,0.07)" }}>
+                                      {l.e}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* AR filter */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🎭 AR Kamera Filtri</p>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                  {[{id:"none",e:"🚫",l:"Yo'q"},{id:"beauty",e:"✨",l:"Beauty"},{id:"vintage",e:"📷",l:"Vintage"},{id:"neon_glow",e:"💜",l:"Neon"},{id:"sparkles",e:"🌟",l:"Spora"},{id:"heart",e:"💗",l:"Yurak"},{id:"stars",e:"⭐",l:"Yulduz"},{id:"rainbow",e:"🌈",l:"Kamalak"}].map(f=>(
+                                    <button key={f.id} onClick={()=>setStoryArFilter(f.id)}
+                                      className="flex flex-col items-center gap-0.5 py-2 rounded-xl text-[9px] font-bold transition-all"
+                                      style={{ background:storyArFilter===f.id?"rgba(167,139,250,0.25)":"rgba(255,255,255,0.05)", border:storyArFilter===f.id?"1.5px solid rgba(167,139,250,0.6)":"1.5px solid rgba(255,255,255,0.07)", color:storyArFilter===f.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
+                                      <span style={{fontSize:16}}>{f.e}</span>{f.l}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* Alt text */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">♿ Maxsus ehtiyojlar uchun matn</p>
+                                <input placeholder="Story rasmini tasvirlang…" value={storyAltText} onChange={e=>setStoryAltText(e.target.value)}
+                                  className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                  style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* ── 🏷️ Story Stikerlar ── */}
+                      <div>
+                        <button onClick={()=>setStoryStickerOpen(p=>!p)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all"
+                          style={{ background:storyStickerOpen?"rgba(52,211,153,0.1)":"rgba(255,255,255,0.04)", border:storyStickerOpen?"1px solid rgba(52,211,153,0.35)":"1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center gap-2.5">
+                            <span style={{fontSize:18}}>🏷️</span>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-white/85">Interaktiv Stikerlar</p>
+                              <p className="text-[10px] text-white/35">So'rovnoma, savol, viktorina, sanash va yana ko'p</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {[storyPoll,storyQa,storyQuiz,storyCountdown,storyEmojiSlider,storyWeather,storyAddYours].filter(Boolean).length > 0 && (
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full text-emerald-300" style={{ background:"rgba(52,211,153,0.15)" }}>
+                                {[storyPoll,storyQa,storyQuiz,storyCountdown,storyEmojiSlider,storyWeather,storyAddYours].filter(Boolean).length} aktiv
+                              </span>
+                            )}
+                            <span className="text-white/40 text-xs ml-1">{storyStickerOpen?"▲":"▼"}</span>
+                          </div>
+                        </button>
+                        <AnimatePresence>
+                          {storyStickerOpen && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 space-y-3 overflow-hidden">
+                              {/* Poll */}
+                              <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider">📊 So'rovnoma</p>
+                                  <button onClick={()=>setStoryPoll(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{ background:storyPoll?"#34d399":"rgba(255,255,255,0.12)", justifyContent:storyPoll?"flex-end":"flex-start", height:20, width:34 }}>
+                                    <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                                  </button>
+                                </div>
+                                <AnimatePresence>
+                                  {storyPoll && (
+                                    <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-1.5 overflow-hidden">
+                                      <input placeholder="Savol: Qaysi rangni yaxshi ko'rasiz?" value={storyPollQ} onChange={e=>setStoryPollQ(e.target.value)}
+                                        className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                        style={{ background:"rgba(52,211,153,0.07)", border:"1px solid rgba(52,211,153,0.25)" }}/>
+                                      <div className="flex gap-1.5">
+                                        {storyPollA.map((a,i)=>(
+                                          <input key={i} placeholder={i===0?"Ha":"Yo'q"} value={a} onChange={e=>{ const n=[...storyPollA]; n[i]=e.target.value; setStoryPollA(n); }}
+                                            className="flex-1 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                            style={{ background:"rgba(52,211,153,0.07)", border:"1px solid rgba(52,211,153,0.2)" }}/>
+                                        ))}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                              {/* Q&A */}
+                              <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider">💬 Savol-Javob (Q&A)</p>
+                                  <button onClick={()=>setStoryQa(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{ background:storyQa?"#60a5fa":"rgba(255,255,255,0.12)", justifyContent:storyQa?"flex-end":"flex-start", height:20, width:34 }}>
+                                    <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                                  </button>
+                                </div>
+                                <AnimatePresence>
+                                  {storyQa && (
+                                    <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                                      <input placeholder="Savol yozing: Sizdan nima so'rasam?" value={storyQaQ} onChange={e=>setStoryQaQ(e.target.value)}
+                                        className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                        style={{ background:"rgba(96,165,250,0.08)", border:"1px solid rgba(96,165,250,0.25)" }}/>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                              {/* Quiz */}
+                              <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider">🧠 Viktorina (Quiz)</p>
+                                  <button onClick={()=>setStoryQuiz(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{ background:storyQuiz?"#a78bfa":"rgba(255,255,255,0.12)", justifyContent:storyQuiz?"flex-end":"flex-start", height:20, width:34 }}>
+                                    <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                                  </button>
+                                </div>
+                                <AnimatePresence>
+                                  {storyQuiz && (
+                                    <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-1.5 overflow-hidden">
+                                      <input placeholder="Savol: Olcha uchun qaysi javob to'g'ri?" value={storyQuizQ} onChange={e=>setStoryQuizQ(e.target.value)}
+                                        className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                        style={{ background:"rgba(167,139,250,0.08)", border:"1px solid rgba(167,139,250,0.25)" }}/>
+                                      <div className="grid grid-cols-2 gap-1.5">
+                                        {storyQuizOpts.map((o,i)=>(
+                                          <button key={i} onClick={()=>setStoryQuizAns(i)}
+                                            className="relative"
+                                            style={{}}>
+                                            <input value={o} onChange={e=>{ const n=[...storyQuizOpts]; n[i]=e.target.value; setStoryQuizOpts(n); }}
+                                              placeholder={`Variant ${i+1}`}
+                                              className="w-full rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                              style={{ background:storyQuizAns===i?"rgba(52,211,153,0.2)":"rgba(255,255,255,0.05)", border:storyQuizAns===i?"1.5px solid rgba(52,211,153,0.6)":"1px solid rgba(255,255,255,0.08)" }}/>
+                                            {storyQuizAns===i && <span className="absolute right-2 top-1.5 text-[10px] text-emerald-400">✓</span>}
+                                          </button>
+                                        ))}
+                                      </div>
+                                      <p className="text-[8px] text-white/25">To'g'ri javobni bosing (yashil — to'g'ri)</p>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                              {/* Countdown */}
+                              <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider">⏰ Sanash (Countdown)</p>
+                                  <button onClick={()=>setStoryCountdown(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{ background:storyCountdown?"#f59e0b":"rgba(255,255,255,0.12)", justifyContent:storyCountdown?"flex-end":"flex-start", height:20, width:34 }}>
+                                    <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                                  </button>
+                                </div>
+                                <AnimatePresence>
+                                  {storyCountdown && (
+                                    <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                                      <input type="datetime-local" value={storyCountdownDate} onChange={e=>setStoryCountdownDate(e.target.value)}
+                                        className="w-full rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                                        style={{ background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.25)", colorScheme:"dark" }}/>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                              {/* Emoji slider */}
+                              <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider">😍 Emoji Slider</p>
+                                  <button onClick={()=>setStoryEmojiSlider(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{ background:storyEmojiSlider?"#f472b6":"rgba(255,255,255,0.12)", justifyContent:storyEmojiSlider?"flex-end":"flex-start", height:20, width:34 }}>
+                                    <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                                  </button>
+                                </div>
+                                <AnimatePresence>
+                                  {storyEmojiSlider && (
+                                    <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                                      <input placeholder="Savol: Bugungi kayfiyatim…" value={storyEmojiQ} onChange={e=>setStoryEmojiQ(e.target.value)}
+                                        className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                        style={{ background:"rgba(244,114,182,0.08)", border:"1px solid rgba(244,114,182,0.25)" }}/>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                              {/* Location & Mention & Product */}
+                              <div className="space-y-1.5">
+                                <input placeholder="📍 Joylashuv (shahringiz nomi)" value={storyLocationTag} onChange={e=>setStoryLocationTag(e.target.value)}
+                                  className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                  style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
+                                <input placeholder="@ Do'stni tag qiling" value={storyMention} onChange={e=>setStoryMention(e.target.value)}
+                                  className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                  style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
+                                <input placeholder="🛍️ Mahsulot tagi (link)" value={storyProduct} onChange={e=>setStoryProduct(e.target.value)}
+                                  className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                  style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
+                              </div>
+                              {/* Music */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🎵 Musiqa Stikeri</p>
+                                <input placeholder="Qo'shiq nomi yoki artist…" value={storyMusic} onChange={e=>setStoryMusic(e.target.value)}
+                                  className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none mb-1.5"
+                                  style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
+                                {storyMusic && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] text-white/40 w-12">Ovoz</span>
+                                    <input type="range" min={0} max={100} value={storyMusicVol} onChange={e=>setStoryMusicVol(Number(e.target.value))} className="flex-1" style={{accentColor:"#a78bfa"}}/>
+                                    <span className="text-[9px] text-violet-300 w-8 text-right">{storyMusicVol}%</span>
+                                  </div>
+                                )}
+                              </div>
+                              {/* GIF */}
+                              <div>
+                                <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🎞️ GIF Stikeri</p>
+                                <input placeholder="GIF qidirish (masalan: celebrating…)" value={storyGif} onChange={e=>setStoryGif(e.target.value)}
+                                  className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                  style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
+                                {storyGif && (
+                                  <div className="flex gap-2 mt-1.5 overflow-x-auto pb-1">
+                                    {["🎉","🔥","💯","👏","😂","🙌","✨","💪"].map((g,i)=>(
+                                      <div key={i} className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl cursor-pointer hover:scale-110 transition-transform"
+                                        style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)" }}>
+                                        {g}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              {/* Special stickers */}
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {[
+                                  {l:"🌡️ Ob-havo stikeri",  v:storyWeather,      s:setStoryWeather,     c:"#22d3ee"},
+                                  {l:"➕ Add Yours zanjiri", v:storyAddYours,    s:setStoryAddYours,   c:"#34d399"},
+                                  {l:"🔁 Auto-tarjima",     v:storyAutoTranslate,s:setStoryAutoTranslate,c:"#60a5fa"},
+                                  {l:"💾 Avtomatik arxiv",  v:true,              s:()=>{},             c:"#94a3b8"},
+                                ].map(({l,v,s,c})=>(
+                                  <button key={l} onClick={()=>s((p:boolean)=>!p)}
+                                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-[9px] font-bold transition-all"
+                                    style={{ background:v?`${c}18`:"rgba(255,255,255,0.04)", border:v?`1px solid ${c}55`:"1px solid rgba(255,255,255,0.07)", color:v?c:"rgba(255,255,255,0.4)" }}>
+                                    <div className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{ background:v?c:"rgba(255,255,255,0.12)", justifyContent:v?"flex-end":"flex-start", height:16, width:26 }}>
+                                      <div className="w-2.5 h-2.5 rounded-full bg-white"/>
+                                    </div>
+                                    {l}
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* ── 🔒 Story Maxsus Sozlamalar ── */}
+                      <div className="rounded-2xl p-3.5 space-y-2.5" style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)" }}>
+                        <p className="text-xs font-bold text-white/60">🔒 Maxsus Sozlamalar</p>
+                        {/* Close Friends */}
+                        <button onClick={()=>setStoryCloseFriends(p=>!p)}
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all"
+                          style={{ background:storyCloseFriends?"rgba(52,211,153,0.12)":"rgba(255,255,255,0.04)", border:storyCloseFriends?"1px solid rgba(52,211,153,0.5)":"1px solid rgba(255,255,255,0.07)", color:storyCloseFriends?"#34d399":"rgba(255,255,255,0.45)" }}>
+                          <span>🟢 Faqat Yaqin Do'stlar</span>
+                          <div className="flex items-center px-0.5 rounded-full" style={{ background:storyCloseFriends?"#34d399":"rgba(255,255,255,0.12)", justifyContent:storyCloseFriends?"flex-end":"flex-start", height:20, width:36 }}>
+                            <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                          </div>
+                        </button>
+                        {/* Vanish mode */}
+                        <button onClick={()=>setStoryVanish(p=>!p)}
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all"
+                          style={{ background:storyVanish?"rgba(239,68,68,0.12)":"rgba(255,255,255,0.04)", border:storyVanish?"1px solid rgba(239,68,68,0.5)":"1px solid rgba(255,255,255,0.07)", color:storyVanish?"#f87171":"rgba(255,255,255,0.45)" }}>
+                          <span>👁️‍🗨️ Vanish — 1 marta ko'rilsa yo'qoladi</span>
+                          <div className="flex items-center px-0.5 rounded-full" style={{ background:storyVanish?"#ef4444":"rgba(255,255,255,0.12)", justifyContent:storyVanish?"flex-end":"flex-start", height:20, width:36 }}>
+                            <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                          </div>
+                        </button>
+                        {/* Highlight */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs text-white/60">⭐ Story Highlight'ga qo'shish</span>
+                            <button onClick={()=>setStoryHighlight(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{ background:storyHighlight?"#fbbf24":"rgba(255,255,255,0.12)", justifyContent:storyHighlight?"flex-end":"flex-start", height:20, width:34 }}>
+                              <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                            </button>
+                          </div>
+                          <AnimatePresence>
+                            {storyHighlight && (
+                              <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                                <input placeholder="Highlight nomi (masalan: Sayohat 2025)" value={storyHighlightName} onChange={e=>setStoryHighlightName(e.target.value)}
+                                  className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                  style={{ background:"rgba(251,191,36,0.07)", border:"1px solid rgba(251,191,36,0.25)" }}/>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                        {/* Schedule */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs text-white/60">📅 Story'ni rejalashtirish</span>
+                            <button onClick={()=>setStorySchedule(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{ background:storySchedule?"#a78bfa":"rgba(255,255,255,0.12)", justifyContent:storySchedule?"flex-end":"flex-start", height:20, width:34 }}>
+                              <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                            </button>
+                          </div>
+                          <AnimatePresence>
+                            {storySchedule && (
+                              <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                                <input type="datetime-local" value={storyScheduleTime} onChange={e=>setStoryScheduleTime(e.target.value)}
+                                  className="w-full rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                                  style={{ background:"rgba(167,139,250,0.08)", border:"1px solid rgba(167,139,250,0.25)", colorScheme:"dark" }}/>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </div>
                     </div>

@@ -15,11 +15,13 @@ function loadXY() {
     const s = localStorage.getItem(POS_KEY);
     if (s) {
       const p = JSON.parse(s) as { x: number; y: number };
-      /* clamp so it's never off-screen */
+      /* Strict clamp: keep avatar on the right edge only.
+         x must be in [-120, 0] — max 120px to the left of default right:40 position.
+         y must be in [-350, 80]  — vertical range within viewport. */
       if (
         typeof p.x === "number" && typeof p.y === "number" &&
-        Math.abs(p.x) < window.innerWidth - 40 &&
-        Math.abs(p.y) < window.innerHeight - 40
+        p.x >= -120 && p.x <= 0 &&
+        p.y >= -350 && p.y <= 80
       ) return p;
     }
   } catch { /* ignore */ }
@@ -150,6 +152,7 @@ export default function FloatingAvatar() {
       drag
       dragMomentum={false}
       dragElastic={0}
+      dragConstraints={{ left: -120, right: 0, top: -350, bottom: 80 }}
       style={{
         x: dragX,
         y: dragY,

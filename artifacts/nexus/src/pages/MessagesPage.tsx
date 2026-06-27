@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Search, Plus, MessageCircle, Ghost, Flame, Clock, X } from "lucide-react";
+import { Send, Search, Plus, MessageCircle, Ghost, Flame, Clock, X, ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useListConversations, useGetConversationMessages, useSendMessage, getGetConversationMessagesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,10 +14,11 @@ export default function MessagesPage() {
   const [text, setText] = useState("");
   const [ephemeral, setEphemeral] = useState(false);
   const [showEphemeralHint, setShowEphemeralHint] = useState(false);
+  const [showList, setShowList] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
-  const activeConv = convs.find(c => c.id === activeId) || convs[0];
+  const activeConv = convs.find(c => c.id === activeId) || (activeId === null ? undefined : convs[0]);
   const convId = activeConv?.id || null;
 
   const { data: messages = [] } = useGetConversationMessages(convId!, {
@@ -29,6 +30,11 @@ export default function MessagesPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleSelectConv = (id: number) => {
+    setActiveId(id);
+    setShowList(false);
+  };
 
   const handleSend = () => {
     if (!text.trim() || !convId) return;
@@ -44,10 +50,16 @@ export default function MessagesPage() {
     conv.participants?.find(p => p.id !== ME_ID) || conv.participants?.[0];
 
   return (
-    <div className="flex h-screen max-h-screen overflow-hidden">
-      {/* Conversations list */}
-      <div className="w-72 flex-shrink-0 border-r border-border bg-sidebar flex flex-col">
-        <div className="p-4 border-b border-border">
+    <div className="flex overflow-hidden" style={{ height: "100dvh", maxHeight: "100dvh" }}>
+      {/* ── Conversations sidebar ── */}
+      <div
+        className={`${showList ? "flex" : "hidden"} md:flex w-full md:w-72 flex-shrink-0 border-r border-border bg-sidebar flex-col`}
+      >
+        {/* Sidebar header */}
+        <div
+          className="border-b border-border flex-shrink-0"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)", paddingLeft: 16, paddingRight: 16, paddingBottom: 12 }}
+        >
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-foreground">{t("msg.title")}</h2>
             <button className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
@@ -63,6 +75,7 @@ export default function MessagesPage() {
           </div>
         </div>
 
+        {/* Conversation list */}
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {isLoading ? (
             [...Array(5)].map((_, i) => (
@@ -79,12 +92,12 @@ export default function MessagesPage() {
           ) : (
             convs.map((conv) => {
               const other = getOtherParticipant(conv);
-              const isActive = conv.id === (activeConv?.id);
+              const isActive = conv.id === activeConv?.id;
               return (
                 <motion.div
                   key={conv.id}
                   whileHover={{ x: 2 }}
-                  onClick={() => setActiveId(conv.id)}
+                  onClick={() => handleSelectConv(conv.id)}
                   className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isActive ? "bg-primary/10 border border-primary/20" : "hover:bg-muted"}`}
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex-shrink-0 flex items-center justify-center overflow-hidden">
@@ -110,25 +123,36 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      {/* Chat area */}
+      {/* ── Chat area ── */}
       {activeConv ? (
-        <div className="flex-1 flex flex-col">
+        <div className={`${!showList ? "flex" : "hidden"} md:flex flex-1 flex-col min-w-0`}>
           {/* Chat header */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden">
+          <div
+            className="flex items-center gap-3 px-4 border-b border-border flex-shrink-0"
+            style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)", paddingBottom: 12 }}
+          >
+            {/* Back button – mobile only */}
+            <button
+              onClick={() => setShowList(true)}
+              className="md:hidden w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground flex-shrink-0"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden flex-shrink-0">
               {getOtherParticipant(activeConv)?.avatarUrl ? (
                 <img src={getOtherParticipant(activeConv)!.avatarUrl!} alt="" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-sm font-bold text-primary">{getOtherParticipant(activeConv)?.displayName?.[0]}</span>
               )}
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-foreground text-sm">{getOtherParticipant(activeConv)?.displayName}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground text-sm truncate">{getOtherParticipant(activeConv)?.displayName}</p>
               <p className="text-xs text-emerald-400">{t("msg.active")}</p>
             </div>
 
             {/* Ephemeral toggle */}
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => { setEphemeral(v => !v); setShowEphemeralHint(true); setTimeout(() => setShowEphemeralHint(false), 2500); }}
@@ -163,7 +187,7 @@ export default function MessagesPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex items-center gap-2.5 px-5 py-2.5 bg-violet-500/8 border-b border-violet-500/20"
+                className="flex items-center gap-2.5 px-5 py-2.5 bg-violet-500/8 border-b border-violet-500/20 flex-shrink-0"
               >
                 <Ghost className="w-3.5 h-3.5 text-violet-400 flex-shrink-0 animate-pulse" />
                 <p className="text-xs text-violet-400 font-medium">{t("msg.ghost_banner")}</p>
@@ -206,7 +230,10 @@ export default function MessagesPage() {
           </div>
 
           {/* Input */}
-          <div className={`px-5 py-4 border-t transition-colors ${ephemeral ? "border-violet-500/30 bg-violet-500/5" : "border-border"}`}>
+          <div
+            className={`px-5 border-t transition-colors flex-shrink-0 ${ephemeral ? "border-violet-500/30 bg-violet-500/5" : "border-border"}`}
+            style={{ paddingTop: 12, paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}
+          >
             <div className="flex items-center gap-3">
               {ephemeral && (
                 <div className="w-7 h-7 rounded-lg bg-violet-500/15 flex items-center justify-center flex-shrink-0">
@@ -226,7 +253,7 @@ export default function MessagesPage() {
                 whileTap={{ scale: 0.9 }}
                 onClick={handleSend}
                 disabled={!text.trim()}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-opacity disabled:opacity-40 ${
+                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-opacity disabled:opacity-40 flex-shrink-0 ${
                   ephemeral ? "bg-violet-600 text-white hover:bg-violet-500" : "bg-primary text-primary-foreground hover:opacity-90"
                 }`}
               >
@@ -242,7 +269,8 @@ export default function MessagesPage() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
+        /* No conversation selected – desktop empty state */
+        <div className="hidden md:flex flex-1 flex-col items-center justify-center text-muted-foreground gap-3">
           <MessageCircle className="w-12 h-12 opacity-20" />
           <p className="text-sm">{t("msg.select_conv")}</p>
         </div>

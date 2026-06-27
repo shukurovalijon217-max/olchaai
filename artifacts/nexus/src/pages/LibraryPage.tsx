@@ -725,27 +725,29 @@ export default function LibraryPage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="sticky z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3" style={{ top: "env(safe-area-inset-top, 0px)" }}>
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+      <div className="sticky z-10 bg-background/95 backdrop-blur border-b border-border" style={{ top: "env(safe-area-inset-top, 0px)" }}>
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          {/* Row 1: title + stats */}
+          <div className="flex items-center gap-3 mb-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-base font-bold text-foreground">{t("library.title")}</h1>
               <p className="text-[11px] text-muted-foreground">{stats.total} · {stats.completed} {t("library.completed").toLowerCase()}</p>
             </div>
           </div>
+          {/* Row 2: tabs (full width, no truncation) */}
           <div className="flex items-center gap-0.5 bg-muted rounded-xl p-1">
             {([
               { id: "library", label: t("library.my") },
-              { id: "search", label: t("library.popular").slice(0, 0) || "🔍" },
+              { id: "search", label: "🔍" },
               { id: "popular", label: t("library.popular") },
               { id: "translate", label: t("library.translate_tab") },
             ] as { id: "library"|"search"|"popular"|"translate"; label: string }[]).map(tabItem => (
               <button key={tabItem.id} onClick={() => setTab(tabItem.id)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === tabItem.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                {tabItem.id === "search" ? "🔍" : tabItem.label}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${tab === tabItem.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                {tabItem.label}
               </button>
             ))}
           </div>

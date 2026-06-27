@@ -887,45 +887,68 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               isUploading={avatarUploading} isOwner={isOwner} onUploadClick={() => avatarInputRef.current?.click()} size={96} />
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-1.5 pb-1">
+          {/* Action buttons — micro-strip */}
+          <div className="flex items-center gap-1 pb-1">
             {isOwner ? (
               <>
-                <NeonBtn onClick={() => setShowLive(true)}
-                  gradient="linear-gradient(135deg, #dc2626, #ef4444)"
-                  glow="rgba(220,38,38,0.6)" className="h-8 relative">
-                  <motion.span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-300"
-                    animate={{ scale: [1, 1.8, 1], opacity: [0.8, 0, 0.8] }} transition={{ duration: 1.2, repeat: Infinity }} />
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-400" />
-                  <Radio className="w-3 h-3" /> {t("profile.live_btn")}
-                </NeonBtn>
-                <NeonBtn onClick={() => setShowSub(true)}
-                  gradient="linear-gradient(135deg, rgba(234,179,8,0.28), rgba(249,115,22,0.22))"
-                  glow="rgba(234,179,8,0.38)" className="h-8 border border-amber-500/28 text-amber-400">
-                  <Star className="w-3 h-3" /> {t("profile.plans_title")}
-                </NeonBtn>
-                <motion.button whileTap={{ scale: 0.88, rotate: 90 }} whileHover={{ scale: 1.1, rotate: 25 }}
+                {/* LIVE dot-button */}
+                <motion.button onClick={() => setShowLive(true)}
+                  whileTap={{ scale: 0.9 }} whileHover={{ scale: 1.05 }}
+                  className="relative flex items-center gap-1 px-2 h-6 rounded-full text-white text-[10px] font-black tracking-wide"
+                  style={{ background: "linear-gradient(135deg,#dc2626,#ef4444)", boxShadow: "0 0 10px rgba(220,38,38,0.55)" }}>
+                  <motion.span animate={{ opacity: [1, 0.1, 1] }} transition={{ duration: 0.9, repeat: Infinity }}
+                    className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />
+                  <Radio className="w-2.5 h-2.5" />
+                </motion.button>
+
+                {/* PLANS button */}
+                <motion.button onClick={() => setShowSub(true)}
+                  whileTap={{ scale: 0.9 }} whileHover={{ scale: 1.05 }}
+                  className="flex items-center gap-1 px-2 h-6 rounded-full text-[10px] font-black"
+                  style={{ background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.3)", color: "#fbbf24" }}>
+                  <Star className="w-2.5 h-2.5 fill-amber-400" />
+                  <span>{t("profile.sub_count")}</span>
+                </motion.button>
+
+                {/* SETTINGS icon */}
+                <motion.button onClick={() => setShowSettings(true)}
+                  whileTap={{ scale: 0.88, rotate: 90 }}
                   transition={{ type: "spring", stiffness: 300, damping: 18 }}
-                  onClick={() => setShowSettings(true)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground border border-white/12 bg-white/6 hover:bg-white/12 hover:border-violet-500/28 hover:text-foreground transition-all">
-                  <Settings className="w-3.5 h-3.5" />
+                  className="w-6 h-6 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <Settings className="w-3 h-3 text-muted-foreground" />
                 </motion.button>
               </>
             ) : (
-              <>
-                <NeonBtn onClick={handleFollow}
-                  gradient={following ? "linear-gradient(135deg, rgba(100,116,139,0.38), rgba(148,163,184,0.22))" : "linear-gradient(135deg, #7c3aed, #3b82f6)"}
-                  glow={following ? "rgba(148,163,184,0.25)" : "rgba(124,58,237,0.55)"}
-                  className={`h-8 ${following ? "border border-white/15 text-muted-foreground" : ""}`}>
-                  {following ? <><UserCheck className="w-3.5 h-3.5" /> {t("profile.following_btn")}</> : <><UserPlus className="w-3.5 h-3.5" /> {t("profile.follow_btn")}</>}
-                </NeonBtn>
-                <NeonBtn onClick={() => setShowSub(true)}
-                  gradient={isSubscribed ? "linear-gradient(135deg, rgba(234,179,8,0.2), rgba(249,115,22,0.14))" : "linear-gradient(135deg, rgba(100,116,139,0.28), rgba(148,163,184,0.18))"}
-                  glow={isSubscribed ? "rgba(234,179,8,0.32)" : "rgba(148,163,184,0.18)"}
-                  className={`h-8 border ${isSubscribed ? "border-amber-500/28 text-amber-400" : "border-white/12 text-muted-foreground"}`}>
-                  {isSubscribed ? <><Check className="w-3.5 h-3.5" /> {t("profile.subscribed")}</> : <><Bell className="w-3.5 h-3.5" /> {t("profile.subscription")}</>}
-                </NeonBtn>
-              </>
+              /* ── Visitor: combined segmented pill ── */
+              <div className="flex items-center rounded-full overflow-hidden"
+                style={{ border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(12px)" }}>
+                {/* Follow segment */}
+                <motion.button onClick={handleFollow} whileTap={{ scale: 0.94 }}
+                  className="flex items-center gap-1 pl-2.5 pr-2 h-6 text-[10px] font-black transition-colors"
+                  style={{
+                    color: following ? "#a3a3a3" : "#fff",
+                    background: following ? "transparent" : "linear-gradient(90deg,rgba(124,58,237,0.5),rgba(59,130,246,0.4))",
+                  }}>
+                  {following
+                    ? <><UserCheck className="w-2.5 h-2.5" /><span>{t("profile.following_btn")}</span></>
+                    : <><UserPlus className="w-2.5 h-2.5" /><span>{t("profile.follow_btn")}</span></>
+                  }
+                </motion.button>
+
+                {/* Divider */}
+                <div className="w-px h-3.5 bg-white/15 flex-shrink-0" />
+
+                {/* Subscribe segment */}
+                <motion.button onClick={() => setShowSub(true)} whileTap={{ scale: 0.94 }}
+                  className="flex items-center gap-1 pl-2 pr-2.5 h-6 text-[10px] font-black transition-colors"
+                  style={{ color: isSubscribed ? "#fbbf24" : "#a3a3a3" }}>
+                  {isSubscribed
+                    ? <><Check className="w-2.5 h-2.5" /><span>{t("profile.subscribed")}</span></>
+                    : <><Bell className="w-2.5 h-2.5" /><span>{t("profile.subscription")}</span></>
+                  }
+                </motion.button>
+              </div>
             )}
           </div>
         </div>

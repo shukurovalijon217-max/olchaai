@@ -7,6 +7,7 @@ import {
   MessageCircle, Share2, Users, Globe, Ban, Plus, Trash2,
   Sparkles, BarChart2, ChevronDown, ChevronUp,
   Target, Clock, Tag, UserPlus, Heart, Shield, Repeat2, MapPin,
+  Tv, Trophy, Scissors, LayoutTemplate, Award, Zap, Star, Flame,
 } from "lucide-react";
 import MediaEditor, { type TextOverlay, TRENDING_CHALLENGES } from "@/components/MediaEditor";
 import DragMediaCanvas, { type CanvasLayer } from "@/components/DragMediaCanvas";
@@ -20,7 +21,7 @@ import { useMediaUpload } from "@/hooks/useMediaUpload";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-type TabType = "post" | "reel" | "story";
+type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 type Permission = "everyone" | "followers" | "friends" | "none";
 type Visibility = "everyone" | "followers" | "friends" | "only_me";
 type DisplayFormat = "cover" | "contain" | "square";
@@ -509,6 +510,153 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const [storyCanvasLayers,   setStoryCanvasLayers]   = useState<CanvasLayer[]>([]);
   const [storyCanvasOpen,     setStoryCanvasOpen]     = useState(false);
 
+  /* ══ OTUBE STATE (50+) ══ */
+  const [otubeFile,           setOtubeFile]           = useState<File|null>(null);
+  const [otubePreview,        setOtubePreview]        = useState("");
+  const [otubeTitle,          setOtubeTitle]          = useState("");
+  const [otubeDesc,           setOtubeDesc]           = useState("");
+  const [otubeTags,           setOtubeTags]           = useState<string[]>([]);
+  const [otubeTagInput,       setOtubeTagInput]       = useState("");
+  const [otubeCategory,       setOtubeCategory]       = useState("");
+  const [otubeVisibility,     setOtubeVisibility]     = useState("public");
+  const [otubeThumbnail,      setOtubeThumbnail]      = useState("");
+  const [otubeThumbnailFile,  setOtubeThumbnailFile]  = useState<File|null>(null);
+  const [otubePlaylist,       setOtubePlaylist]       = useState("");
+  const [otubeLanguage,       setOtubeLanguage]       = useState("uz");
+  const [otubeRecordDate,     setOtubeRecordDate]     = useState("");
+  const [otubeLocation,       setOtubeLocation]       = useState("");
+  const [otubeLicense,        setOtubeLicense]        = useState("standard");
+  const [otubeAgeGate,        setOtubeAgeGate]        = useState(false);
+  const [otubeKids,           setOtubeKids]           = useState(false);
+  const [otubePaidPromo,      setOtubePaidPromo]      = useState(false);
+  const [otubeSynthetic,      setOtubeSynthetic]      = useState(false);
+  const [otubeNotifySubs,     setOtubeNotifySubs]     = useState(true);
+  const [otubePremiere,       setOtubePremiere]       = useState(false);
+  const [otubePremiereTime,   setOtubePremiereTime]   = useState("");
+  const [otubeScheduled,      setOtubeScheduled]      = useState(false);
+  const [otubeScheduleTime,   setOtubeScheduleTime]   = useState("");
+  const [otubeCommentMode,    setOtubeCommentMode]    = useState("all");
+  const [otubeAllowEmbed,     setOtubeAllowEmbed]     = useState(true);
+  const [otubeAllowDownload,  setOtubeAllowDownload]  = useState(false);
+  const [otubeHideLikes,      setOtubeHideLikes]      = useState(false);
+  const [otubeHideViews,      setOtubeHideViews]      = useState(false);
+  const [otubeChapters,       setOtubeChapters]       = useState<{ts:string;title:string}[]>([]);
+  const [otubeChapTs,         setOtubeChapTs]         = useState("");
+  const [otubeChapTitle,      setOtubeChapTitle]      = useState("");
+  const [otubeEndCard,        setOtubeEndCard]        = useState(false);
+  const [otubeCards,          setOtubeCards]          = useState<{type:string;text:string}[]>([]);
+  const [otubeCardType,       setOtubeCardType]       = useState("video");
+  const [otubeCardText,       setOtubeCardText]       = useState("");
+  const [otubeMonetize,       setOtubeMonetize]       = useState(false);
+  const [otubeMonetizeType,   setOtubeMonetizeType]   = useState("ads");
+  const [otubeMembersOnly,    setOtubeMembersOnly]    = useState(false);
+  const [otubeSuperThanks,    setOtubeSuperThanks]    = useState(true);
+  const [otubeSubtitles,      setOtubeSubtitles]      = useState<{lang:string;file?:File}[]>([]);
+  const [otubeSubLang,        setOtubeSubLang]        = useState("uz");
+  const [otubePinComment,     setOtubePinComment]     = useState("");
+  const [otubeFirstComment,   setOtubeFirstComment]   = useState("");
+  const [otubeIs360,          setOtubeIs360]          = useState(false);
+  const [otubeIsHdr,          setOtubeIsHdr]          = useState(false);
+  const [otubeIs4k,           setOtubeIs4k]           = useState(false);
+  const [otubeStabilize,      setOtubeStabilize]      = useState(false);
+  const [otubeAutoEnhance,    setOtubeAutoEnhance]    = useState(false);
+  const [otubeMerchandise,    setOtubeMerchandise]    = useState(false);
+  const [otubeAiTitle,        setOtubeAiTitle]        = useState<string[]>([]);
+  const [otubeAiTitleLoad,    setOtubeAiTitleLoad]    = useState(false);
+  const [otubeAiDesc,         setOtubeAiDesc]         = useState("");
+  const [otubeAiDescLoad,     setOtubeAiDescLoad]     = useState(false);
+  const [otubeAiTags,         setOtubeAiTags]         = useState<string[]>([]);
+  const [otubeAiTagsLoad,     setOtubeAiTagsLoad]     = useState(false);
+  const [otubeSeoScore,       setOtubeSeoScore]       = useState(0);
+  const [otubeEstRevenue,     setOtubeEstRevenue]     = useState("");
+  const [otubeSection,        setOtubeSection]        = useState<"basic"|"video"|"seo"|"monetize"|"advanced">("basic");
+  const [otubeCanvasLayers,   setOtubeCanvasLayers]   = useState<CanvasLayer[]>([]);
+
+  /* ══ CHALLENGE MEGA STATE (50+) ══ */
+  const [chalName,            setChalName]            = useState("");
+  const [chalDesc,            setChalDesc]            = useState("");
+  const [chalHashtag,         setChalHashtag]         = useState("#");
+  const [chalCategory,        setChalCategory]        = useState("");
+  const [chalStartDate,       setChalStartDate]       = useState("");
+  const [chalEndDate,         setChalEndDate]         = useState("");
+  const [chalContentType,     setChalContentType]     = useState("video");
+  const [chalMinLength,       setChalMinLength]       = useState(15);
+  const [chalMaxLength,       setChalMaxLength]       = useState(60);
+  const [chalPrize1,          setChalPrize1]          = useState("");
+  const [chalPrize2,          setChalPrize2]          = useState("");
+  const [chalPrize3,          setChalPrize3]          = useState("");
+  const [chalPrizePool,       setChalPrizePool]       = useState("");
+  const [chalEntryFee,        setChalEntryFee]        = useState("free");
+  const [chalEntryPrice,      setChalEntryPrice]      = useState("0");
+  const [chalMaxEntries,      setChalMaxEntries]      = useState(1);
+  const [chalMinFollowers,    setChalMinFollowers]    = useState(0);
+  const [chalMinLikes,        setChalMinLikes]        = useState(0);
+  const [chalAgeMin,          setChalAgeMin]          = useState(0);
+  const [chalVerifReq,        setChalVerifReq]        = useState(false);
+  const [chalTeamAllowed,     setChalTeamAllowed]     = useState(false);
+  const [chalTeamSize,        setChalTeamSize]        = useState(2);
+  const [chalDuetReq,         setChalDuetReq]         = useState(false);
+  const [chalCollabReq,       setChalCollabReq]       = useState(false);
+  const [chalReactionReq,     setChalReactionReq]     = useState(false);
+  const [chalCommentReq,      setChalCommentReq]      = useState(false);
+  const [chalThemeMusic,      setChalThemeMusic]      = useState("");
+  const [chalMusicRequired,   setChalMusicRequired]   = useState(false);
+  const [chalVotingType,      setChalVotingType]      = useState("community");
+  const [chalJudges,          setChalJudges]          = useState<string[]>([]);
+  const [chalJudgeInput,      setChalJudgeInput]      = useState("");
+  const [chalLeaderboard,     setChalLeaderboard]     = useState(true);
+  const [chalReviewMode,      setChalReviewMode]      = useState("auto");
+  const [chalGeoRestrict,     setChalGeoRestrict]     = useState<string[]>([]);
+  const [chalFeatured,        setChalFeatured]        = useState(false);
+  const [chalSponsor,         setChalSponsor]         = useState("");
+  const [chalSponsorUrl,      setChalSponsorUrl]      = useState("");
+  const [chalRules,           setChalRules]           = useState<string[]>(["","",""]);
+  const [chalBadge,           setChalBadge]           = useState("gold");
+  const [chalCertType,        setChalCertType]        = useState("digital");
+  const [chalAnnVideo,        setChalAnnVideo]        = useState("");
+  const [chalDemoVideo,       setChalDemoVideo]       = useState("");
+  const [chalWelcomeMsg,      setChalWelcomeMsg]      = useState("");
+  const [chalCompleteMsg,     setChalCompleteMsg]     = useState("");
+  const [chalNotifReminder,   setChalNotifReminder]   = useState(true);
+  const [chalReminderDays,    setChalReminderDays]    = useState(1);
+  const [chalReentry,         setChalReentry]         = useState(false);
+  const [chalDiscord,         setChalDiscord]         = useState("");
+  const [chalShareTemplate,   setChalShareTemplate]   = useState("");
+  const [chalWinnerDelay,     setChalWinnerDelay]     = useState(24);
+  const [chalSection,         setChalSection]         = useState<"setup"|"rules"|"prizes"|"advanced">("setup");
+  const [chalMyTag,           setChalMyTag]           = useState("");
+
+  /* OTube AI helpers */
+  const runOtubeAiTitle = async () => {
+    if (!otubeTitle.trim() && !otubeDesc.trim()) return;
+    setOtubeAiTitleLoad(true);
+    await new Promise(r => setTimeout(r, 1300));
+    const pool = [
+      `🔥 "${otubeTitle || "Kontent"}" — Sizni Hayratda Qoldiradigan 5 Sir`,
+      `⚡ Bu Videoni Ko'rmasdan Oldin Bilishingiz Kerak Bo'lgan Narsa`,
+      `💡 ${otubeTitle || "Mavzu"} Haqida Hech Kim Aytmagan Haqiqat`,
+      `🚀 ${new Date().getFullYear()}da Muvaffaqiyatga Erishish — ${otubeTitle || "To'liq Qo'llanma"}`,
+      `😱 Ishonmaysiz, Lekin Bu Rost: ${otubeTitle || "Ajoyib Kashfiyot"}`,
+    ];
+    setOtubeAiTitle(pool.slice(0,3));
+    setOtubeAiTitleLoad(false);
+    const score = Math.min(95, 40 + (otubeTitle.length > 5 ? 20 : 0) + (otubeTags.length > 3 ? 15 : 0) + (otubeDesc.length > 50 ? 20 : 0));
+    setOtubeSeoScore(score);
+  };
+  const runOtubeAiDesc = async () => {
+    setOtubeAiDescLoad(true);
+    await new Promise(r => setTimeout(r, 1500));
+    setOtubeAiDesc(`👋 Salom! Bugungi videoda ${otubeTitle || "ajoyib mavzu"} haqida gaplashamiz.\n\n📌 Videoda neler bor:\n• Asosiy nuqta 1\n• Asosiy nuqta 2\n• Muhim maslahat va sirlar\n\n🔔 Kanalga obuna bo'ling va qo'ng'iroq belgisini bosing!\n\n📱 Ijtimoiy tarmoqlarda bizni toping:\nInstagram: @olcha_official\nTelegram: t.me/olcha\n\n#olcha #${otubeCategory || "kontent"} #uzbek`);
+    setOtubeAiDescLoad(false);
+  };
+  const runOtubeAiTags = async () => {
+    setOtubeAiTagsLoad(true);
+    await new Promise(r => setTimeout(r, 1200));
+    const pool = ["olcha","uzbek","video","kontent","yangi","2025","viral","trending","qiziq","foydali","maslahat","hayot","biznes","texnologiya","muvaffaqiyat","motivatsiya","kreativ","original","exclusive","top"];
+    setOtubeAiTags(pool.sort(()=>Math.random()-0.5).slice(0,12));
+    setOtubeAiTagsLoad(false);
+  };
+
   const fetchBestTime = async () => {
     setBestTimeLoading(true); setBestTimeOpen(true);
     await new Promise(r => setTimeout(r, 1200));
@@ -789,6 +937,13 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     setReelAudioFile(null); setReelAudioPreview(""); setReelUploadResult(null); setReelAudioUploadResult(null);
     setReelCommentPerm("everyone"); setReelSharePerm("everyone");
     setStoryFile(null); setStoryPreview(""); setStoryCaption(""); setStoryUploadResult(null);
+    setOtubeFile(null); setOtubePreview(""); setOtubeTitle(""); setOtubeDesc(""); setOtubeTags([]); setOtubeTagInput("");
+    setOtubeCategory(""); setOtubeVisibility("public"); setOtubeThumbnail(""); setOtubeThumbnailFile(null);
+    setOtubeChapters([]); setOtubeCards([]); setOtubeAiTitle([]); setOtubeAiDesc(""); setOtubeAiTags([]);
+    setOtubeSeoScore(0); setOtubeEstRevenue(""); setOtubeSection("basic"); setOtubeCanvasLayers([]);
+    setChalName(""); setChalDesc(""); setChalHashtag("#"); setChalCategory(""); setChalStartDate(""); setChalEndDate("");
+    setChalPrize1(""); setChalPrize2(""); setChalPrize3(""); setChalPrizePool(""); setChalJudges([]);
+    setChalRules(["","",""]); setChalSection("setup"); setChalMyTag(""); setChalSponsor(""); setChalSponsorUrl("");
     setDone(false); setSubmitting(false);
     onClose();
   };
@@ -799,13 +954,17 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const canSubmit = !submitting && !upReelBusy && !upStoryBusy && !upReelAudioBusy && (
     (tab === "post" && queueAllDone && (postContent.trim() || mediaQueue.some(m => m.status === "done"))) ||
     (tab === "reel" && !!reelUploadResult && reelCaption.trim()) ||
-    (tab === "story" && !!storyUploadResult)
+    (tab === "story" && !!storyUploadResult) ||
+    (tab === "otube" && !!otubeFile && otubeTitle.trim().length > 0) ||
+    (tab === "challenge" && chalName.trim().length > 0 && chalHashtag.trim().length > 1)
   );
 
   const TABS: { id: TabType; icon: React.ElementType; label: string; grad: string; glow: string; accent: string }[] = [
-    { id: "post",  icon: ImagePlus, label: "Post",  grad: "linear-gradient(135deg,#7c3aed,#a78bfa)", glow: "rgba(124,58,237,0.45)", accent: "#a78bfa" },
-    { id: "reel",  icon: Film,      label: "Reel",  grad: "linear-gradient(135deg,#dc2626,#f87171)", glow: "rgba(239,68,68,0.45)",  accent: "#f87171" },
-    { id: "story", icon: Camera,    label: "Story", grad: "linear-gradient(135deg,#d97706,#fbbf24)", glow: "rgba(251,191,36,0.45)", accent: "#fbbf24" },
+    { id: "post",      icon: ImagePlus, label: "Post",      grad: "linear-gradient(135deg,#7c3aed,#a78bfa)", glow: "rgba(124,58,237,0.45)", accent: "#a78bfa" },
+    { id: "reel",      icon: Film,      label: "Reel",      grad: "linear-gradient(135deg,#dc2626,#f87171)", glow: "rgba(239,68,68,0.45)",  accent: "#f87171" },
+    { id: "story",     icon: Camera,    label: "Story",     grad: "linear-gradient(135deg,#d97706,#fbbf24)", glow: "rgba(251,191,36,0.45)", accent: "#fbbf24" },
+    { id: "otube",     icon: Tv,        label: "OTube",     grad: "linear-gradient(135deg,#059669,#34d399)", glow: "rgba(52,211,153,0.45)", accent: "#34d399" },
+    { id: "challenge", icon: Trophy,    label: "Challenge", grad: "linear-gradient(135deg,#b45309,#fb923c)", glow: "rgba(251,146,60,0.45)", accent: "#fb923c" },
   ];
 
   return (
@@ -3362,6 +3521,977 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                       </div>
                     </div>
                   )}
+
+                  {/* ══════════════════ OTUBE TAB ══════════════════ */}
+                  {tab === "otube" && (
+                    <div className="px-4 py-4 space-y-4">
+
+                      {/* Section nav */}
+                      <div className="flex gap-1.5 overflow-x-auto pb-1" style={{scrollbarWidth:"none"}}>
+                        {(["basic","video","seo","monetize","advanced"] as const).map(s => (
+                          <button key={s} onClick={()=>setOtubeSection(s)}
+                            className="flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all"
+                            style={{ background:otubeSection===s?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.07)", color:otubeSection===s?"white":"rgba(255,255,255,0.45)", border:otubeSection===s?"none":"1px solid rgba(255,255,255,0.08)" }}>
+                            {s==="basic"?"📝 Asosiy":s==="video"?"🎬 Video":s==="seo"?"🔍 SEO":s==="monetize"?"💰 Daromad":"⚙️ Ilg'or"}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* BASIC SECTION */}
+                      {otubeSection === "basic" && (<div className="space-y-4">
+
+                        {/* Video Upload */}
+                        <div className="rounded-2xl overflow-hidden" style={{border:"2px dashed rgba(52,211,153,0.3)", background:"rgba(5,150,105,0.06)"}}>
+                          {otubePreview ? (
+                            <div className="relative">
+                              <video src={otubePreview} className="w-full rounded-2xl" style={{maxHeight:220,objectFit:"cover"}} controls />
+                              <button onClick={()=>{setOtubeFile(null);setOtubePreview("");}}
+                                className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center" style={{background:"rgba(0,0,0,0.7)"}}>
+                                <X className="w-3.5 h-3.5 text-white"/>
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center py-10 cursor-pointer gap-3">
+                              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{background:"linear-gradient(135deg,#059669,#34d399)"}}>
+                                <Tv className="w-7 h-7 text-white"/>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm font-bold text-white">OTube Klip yuklash</p>
+                                <p className="text-[11px] text-white/40 mt-0.5">MP4, MOV, AVI — max 4GB · 4K/HDR qo'llab-quvvatlanadi</p>
+                              </div>
+                              <div className="flex items-center gap-3 text-[10px] text-white/30">
+                                <span>🎬 8K Ultra</span><span>•</span><span>🎵 Dolby Audio</span><span>•</span><span>⚡ 360° Video</span>
+                              </div>
+                              <input type="file" accept="video/*" className="hidden"
+                                onChange={e=>{const f=e.target.files?.[0];if(f){setOtubeFile(f);setOtubePreview(URL.createObjectURL(f));}e.target.value="";}}/>
+                            </label>
+                          )}
+                        </div>
+
+                        {/* Title */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📝 Sarlavha</p>
+                          <input value={otubeTitle} onChange={e=>setOtubeTitle(e.target.value)} maxLength={100}
+                            placeholder="Ajoyib sarlavha yozing (100 belgi)"
+                            className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                            style={{background:"rgba(5,150,105,0.1)",border:"1px solid rgba(52,211,153,0.25)"}}/>
+                          <div className="flex justify-between mt-1">
+                            <span className="text-[10px] text-white/30">{otubeTitle.length}/100</span>
+                            <button onClick={runOtubeAiTitle} disabled={otubeAiTitleLoad}
+                              className="text-[10px] font-bold flex items-center gap-1" style={{color:"#34d399"}}>
+                              {otubeAiTitleLoad?<><Loader2 className="w-3 h-3 animate-spin"/>Yaratilmoqda…</>:<><Sparkles className="w-3 h-3"/>AI Sarlavha</>}
+                            </button>
+                          </div>
+                          {otubeAiTitle.length > 0 && (
+                            <div className="mt-2 space-y-1.5">
+                              {otubeAiTitle.map((t,i)=>(
+                                <button key={i} onClick={()=>setOtubeTitle(t)}
+                                  className="w-full text-left px-3 py-2 rounded-xl text-xs text-white/70 transition-all hover:text-white"
+                                  style={{background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
+                                  {t}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📄 Tavsif</p>
+                          <textarea value={otubeDesc.length>0?otubeDesc:otubeAiDesc} onChange={e=>{setOtubeDesc(e.target.value);setOtubeAiDesc("");}} rows={4}
+                            placeholder="Video haqida batafsil tavsif yozing…"
+                            className="w-full rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-white/25 focus:outline-none resize-none"
+                            style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)"}}/>
+                          <button onClick={runOtubeAiDesc} disabled={otubeAiDescLoad}
+                            className="mt-1.5 text-[10px] font-bold flex items-center gap-1" style={{color:"#34d399"}}>
+                            {otubeAiDescLoad?<><Loader2 className="w-3 h-3 animate-spin"/>Yaratilmoqda…</>:<><Sparkles className="w-3 h-3"/>AI Tavsif yaratish</>}
+                          </button>
+                        </div>
+
+                        {/* Category */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">🗂 Kategoriya</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {["🎮 O'yin","🎵 Musiqa","📚 Ta'lim","🍳 Oshpazlik","🏋️ Sport","🎭 Ko'ngil ochar","✈️ Sayohat","💼 Biznes","🎨 San'at","🔬 Fan","💄 Go'zallik","🐾 Hayvonlar","🎬 Kino","🧘 Salomatlik","📰 Yangiliklar","🎤 Podkast"].map(cat=>(
+                              <button key={cat} onClick={()=>setOtubeCategory(cat===otubeCategory?"":cat)}
+                                className="px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all"
+                                style={{background:otubeCategory===cat?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeCategory===cat?"white":"rgba(255,255,255,0.5)",border:otubeCategory===cat?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                {cat}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Visibility */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">👁 Ko'rinish</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[{v:"public",e:"🌍",l:"Hammaga ochiq"},{v:"unlisted",e:"🔗",l:"Havolali"},{v:"private",e:"🔒",l:"Faqat men"},{v:"scheduled",e:"⏰",l:"Rejalashtirish"}].map(({v,e,l})=>(
+                              <button key={v} onClick={()=>{setOtubeVisibility(v);if(v==="scheduled")setOtubeScheduled(true);}}
+                                className="py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 px-3 transition-all"
+                                style={{background:otubeVisibility===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.05)",color:otubeVisibility===v?"white":"rgba(255,255,255,0.55)",border:otubeVisibility===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                <span>{e}</span>{l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {otubeScheduled && (
+                          <input type="datetime-local" value={otubeScheduleTime} onChange={e=>setOtubeScheduleTime(e.target.value)}
+                            className="w-full rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                            style={{background:"rgba(5,150,105,0.1)",border:"1px solid rgba(52,211,153,0.3)",colorScheme:"dark"}}/>
+                        )}
+
+                        {/* Notify Subs + Premiere */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {[{v:otubeNotifySubs,s:setOtubeNotifySubs,l:"🔔 Obunachilarga xabar"},{v:otubePremiere,s:setOtubePremiere,l:"🎬 Premyera rejimi"}].map(({v,s,l},i)=>(
+                            <button key={i} onClick={()=>s((p:boolean)=>!p)}
+                              className="py-2.5 px-3 rounded-xl text-[11px] font-bold flex items-center gap-2 transition-all"
+                              style={{background:v?"rgba(52,211,153,0.15)":"rgba(255,255,255,0.05)",color:v?"#34d399":"rgba(255,255,255,0.45)",border:v?"1px solid rgba(52,211,153,0.35)":"1px solid rgba(255,255,255,0.08)"}}>
+                              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{background:v?"#34d399":"rgba(255,255,255,0.2)"}}/>{l}
+                            </button>
+                          ))}
+                        </div>
+                        {otubePremiere && (
+                          <input type="datetime-local" value={otubePremiereTime} onChange={e=>setOtubePremiereTime(e.target.value)}
+                            className="w-full rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                            style={{background:"rgba(5,150,105,0.1)",border:"1px solid rgba(52,211,153,0.3)",colorScheme:"dark"}}
+                            placeholder="Premyera vaqtini belgilang"/>
+                        )}
+
+                      </div>)}
+
+                      {/* VIDEO SECTION */}
+                      {otubeSection === "video" && (<div className="space-y-4">
+
+                        {/* Thumbnail */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🖼 Muqova (Thumbnail)</p>
+                          <div className="grid grid-cols-3 gap-2 mb-2">
+                            {["Auto-kadr 1","Auto-kadr 2","Auto-kadr 3"].map((f,i)=>(
+                              <button key={i} onClick={()=>setOtubeThumbnail(`auto${i}`)}
+                                className="aspect-video rounded-xl flex items-center justify-center text-[9px] font-bold transition-all"
+                                style={{background:otubeThumbnail===`auto${i}`?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeThumbnail===`auto${i}`?"white":"rgba(255,255,255,0.4)",border:otubeThumbnail===`auto${i}`?"none":"1px solid rgba(255,255,255,0.1)"}}>
+                                {f}
+                              </button>
+                            ))}
+                          </div>
+                          <label className="w-full py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-bold cursor-pointer transition-all"
+                            style={{background:"rgba(52,211,153,0.1)",border:"1px dashed rgba(52,211,153,0.35)",color:"#34d399"}}>
+                            <Upload className="w-3.5 h-3.5"/>Maxsus muqova yuklash
+                            <input type="file" accept="image/*" className="hidden"
+                              onChange={e=>{const f=e.target.files?.[0];if(f){setOtubeThumbnailFile(f);setOtubeThumbnail(URL.createObjectURL(f));}e.target.value="";}}/>
+                          </label>
+                        </div>
+
+                        {/* Chapters */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📑 Bo'limlar (Chapters)</p>
+                          <div className="flex gap-2">
+                            <input value={otubeChapTs} onChange={e=>setOtubeChapTs(e.target.value)} placeholder="0:00" className="w-16 rounded-xl px-2 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}/>
+                            <input value={otubeChapTitle} onChange={e=>setOtubeChapTitle(e.target.value)} placeholder="Bo'lim nomi…" className="flex-1 rounded-xl px-3 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}/>
+                            <button onClick={()=>{if(otubeChapTs&&otubeChapTitle){setOtubeChapters(p=>[...p,{ts:otubeChapTs,title:otubeChapTitle}]);setOtubeChapTs("");setOtubeChapTitle("");}}}
+                              className="px-3 rounded-xl text-xs font-bold" style={{background:"linear-gradient(135deg,#059669,#34d399)",color:"white"}}>
+                              <Plus className="w-3.5 h-3.5"/>
+                            </button>
+                          </div>
+                          <div className="mt-2 space-y-1.5">
+                            {otubeChapters.map((ch,i)=>(
+                              <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{background:"rgba(52,211,153,0.07)",border:"1px solid rgba(52,211,153,0.15)"}}>
+                                <span className="text-[10px] font-mono text-emerald-400">{ch.ts}</span>
+                                <span className="text-xs text-white/70 flex-1">{ch.title}</span>
+                                <button onClick={()=>setOtubeChapters(p=>p.filter((_,j)=>j!==i))} className="text-red-400"><X className="w-3 h-3"/></button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Playlist */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📂 Pleylist</p>
+                          <input value={otubePlaylist} onChange={e=>setOtubePlaylist(e.target.value)} placeholder="Pleylist nomi (ixtiyoriy)"
+                            className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                            style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)"}}/>
+                        </div>
+
+                        {/* End Card + Cards */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🃏 End Card & Kartalar</p>
+                          <div className="flex items-center justify-between py-2 px-3 rounded-xl mb-2" style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)"}}>
+                            <span className="text-xs text-white/70">🎬 End card qo'shish</span>
+                            <button onClick={()=>setOtubeEndCard(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{background:otubeEndCard?"#34d399":"rgba(255,255,255,0.12)",justifyContent:otubeEndCard?"flex-end":"flex-start",height:20,width:34}}>
+                              <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                            </button>
+                          </div>
+                          <div className="flex gap-2">
+                            <select value={otubeCardType} onChange={e=>setOtubeCardType(e.target.value)} className="rounded-xl px-2 py-2 text-xs text-white focus:outline-none flex-shrink-0" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}>
+                              {["video","channel","playlist","link","poll"].map(t=><option key={t} value={t}>{t}</option>)}
+                            </select>
+                            <input value={otubeCardText} onChange={e=>setOtubeCardText(e.target.value)} placeholder="Karta matni…" className="flex-1 rounded-xl px-3 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}/>
+                            <button onClick={()=>{if(otubeCardText){setOtubeCards(p=>[...p,{type:otubeCardType,text:otubeCardText}]);setOtubeCardText("");}}}
+                              className="px-3 rounded-xl text-xs font-bold" style={{background:"linear-gradient(135deg,#059669,#34d399)",color:"white"}}>
+                              <Plus className="w-3.5 h-3.5"/>
+                            </button>
+                          </div>
+                          <div className="mt-2 space-y-1.5">
+                            {otubeCards.map((c,i)=>(
+                              <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{background:"rgba(52,211,153,0.06)",border:"1px solid rgba(52,211,153,0.15)"}}>
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{background:"rgba(52,211,153,0.2)",color:"#34d399"}}>{c.type}</span>
+                                <span className="text-xs text-white/70 flex-1">{c.text}</span>
+                                <button onClick={()=>setOtubeCards(p=>p.filter((_,j)=>j!==i))} className="text-red-400"><X className="w-3 h-3"/></button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Video Quality Toggles */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🎥 Video Sifat</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {[{v:otubeIs4k,s:setOtubeIs4k,l:"4K Ultra"},{v:otubeIsHdr,s:setOtubeIsHdr,l:"HDR"},{v:otubeIs360,s:setOtubeIs360,l:"360°"},{v:otubeStabilize,s:setOtubeStabilize,l:"Stabilizer"},{v:otubeAutoEnhance,s:setOtubeAutoEnhance,l:"AI Enhance"},{v:otubeSynthetic,s:setOtubeSynthetic,l:"AI Kontent"}].map(({v,s,l},i)=>(
+                              <button key={i} onClick={()=>s((p:boolean)=>!p)}
+                                className="py-2 rounded-xl text-[10px] font-bold transition-all"
+                                style={{background:v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:v?"white":"rgba(255,255,255,0.4)",border:v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                {l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Subtitles */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">💬 Subtitrlar</p>
+                          <div className="flex gap-2">
+                            <select value={otubeSubLang} onChange={e=>setOtubeSubLang(e.target.value)} className="rounded-xl px-2 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}>
+                              {["uz","en","ru","de","fr","zh","ar","tr","ko","ja"].map(l=><option key={l} value={l}>{l.toUpperCase()}</option>)}
+                            </select>
+                            <button onClick={()=>setOtubeSubtitles(p=>[...p,{lang:otubeSubLang}])}
+                              className="flex-1 py-2 rounded-xl text-xs font-bold" style={{background:"rgba(52,211,153,0.1)",border:"1px dashed rgba(52,211,153,0.3)",color:"#34d399"}}>
+                              + Subtitrl qo'shish
+                            </button>
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {otubeSubtitles.map((s,i)=>(
+                              <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px]" style={{background:"rgba(52,211,153,0.12)",color:"#34d399"}}>
+                                {s.lang.toUpperCase()} <button onClick={()=>setOtubeSubtitles(p=>p.filter((_,j)=>j!==i))}><X className="w-2.5 h-2.5"/></button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* OTube Canvas */}
+                        <div>
+                          <button onClick={()=>setOtubeCanvasLayers(p=>p.length>0?[]:p)} className="w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2" style={{background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)",color:"#34d399"}}>
+                            <LayoutTemplate className="w-3.5 h-3.5"/>Thumbnail Muharrir (Drag & Drop)
+                          </button>
+                          {otubeCanvasLayers.length>=0 && otubePreview && (
+                            <div className="mt-2">
+                              <DragMediaCanvas layers={otubeCanvasLayers} onChange={setOtubeCanvasLayers}/>
+                            </div>
+                          )}
+                        </div>
+
+                      </div>)}
+
+                      {/* SEO SECTION */}
+                      {otubeSection === "seo" && (<div className="space-y-4">
+
+                        {/* SEO Score */}
+                        <div className="rounded-2xl p-4 text-center" style={{background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📊 SEO Baho</p>
+                          <div className="relative w-20 h-20 mx-auto mb-2">
+                            <svg viewBox="0 0 36 36" className="w-20 h-20 -rotate-90">
+                              <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3"/>
+                              <circle cx="18" cy="18" r="15.9" fill="none" stroke={otubeSeoScore>=70?"#34d399":otubeSeoScore>=40?"#fbbf24":"#f87171"} strokeWidth="3"
+                                strokeDasharray={`${otubeSeoScore} ${100-otubeSeoScore}`} strokeLinecap="round"/>
+                            </svg>
+                            <span className="absolute inset-0 flex items-center justify-center text-xl font-bold" style={{color:otubeSeoScore>=70?"#34d399":otubeSeoScore>=40?"#fbbf24":"#f87171"}}>{otubeSeoScore}</span>
+                          </div>
+                          <p className="text-xs font-bold" style={{color:otubeSeoScore>=70?"#34d399":otubeSeoScore>=40?"#fbbf24":"#f87171"}}>{otubeSeoScore>=70?"Zo'r!":otubeSeoScore>=40?"Yaxshi":"Yaxshilash kerak"}</p>
+                          <button onClick={runOtubeAiTitle} disabled={otubeAiTitleLoad}
+                            className="mt-3 px-4 py-1.5 rounded-full text-[11px] font-bold" style={{background:"linear-gradient(135deg,#059669,#34d399)",color:"white"}}>
+                            AI bilan SEO ni oshirish
+                          </button>
+                        </div>
+
+                        {/* Tags */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">🏷 Teglar</p>
+                            <button onClick={runOtubeAiTags} disabled={otubeAiTagsLoad}
+                              className="text-[10px] font-bold flex items-center gap-1" style={{color:"#34d399"}}>
+                              {otubeAiTagsLoad?<><Loader2 className="w-3 h-3 animate-spin"/>…</>:<><Sparkles className="w-3 h-3"/>AI Teglar</>}
+                            </button>
+                          </div>
+                          <div className="flex gap-2 mb-2">
+                            <input value={otubeTagInput} onChange={e=>setOtubeTagInput(e.target.value)}
+                              onKeyDown={e=>{if(e.key==="Enter"&&otubeTagInput.trim()){setOtubeTags(p=>[...p,otubeTagInput.trim()]);setOtubeTagInput("");}}}
+                              placeholder="Teg qo'shish → Enter"
+                              className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
+                            <button onClick={()=>{if(otubeTagInput.trim()){setOtubeTags(p=>[...p,otubeTagInput.trim()]);setOtubeTagInput("");}}}
+                              className="px-3 rounded-xl text-xs font-bold" style={{background:"linear-gradient(135deg,#059669,#34d399)",color:"white"}}>
+                              <Plus className="w-3.5 h-3.5"/>
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[...otubeTags,...otubeAiTags.filter(t=>!otubeTags.includes(t))].map((t,i)=>(
+                              <button key={t} onClick={()=>setOtubeTags(p=>[...p.filter(x=>x!==t),...(otubeAiTags.includes(t)&&!otubeTags.includes(t)?[t]:[])])}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all"
+                                style={{background:otubeTags.includes(t)?"rgba(52,211,153,0.2)":"rgba(255,255,255,0.06)",color:otubeTags.includes(t)?"#34d399":"rgba(255,255,255,0.45)",border:otubeTags.includes(t)?"1px solid rgba(52,211,153,0.4)":"1px solid rgba(255,255,255,0.08)"}}>
+                                #{t}{otubeTags.includes(t)&&<X className="w-2.5 h-2.5" onClick={e=>{e.stopPropagation();setOtubeTags(p=>p.filter(x=>x!==t));}}/>}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Language + Location + Record Date */}
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">🌐 Video tili</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {["uz","en","ru","de","fr","zh","ar","tr"].map(l=>(
+                                <button key={l} onClick={()=>setOtubeLanguage(l)}
+                                  className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all"
+                                  style={{background:otubeLanguage===l?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeLanguage===l?"white":"rgba(255,255,255,0.5)"}}>
+                                  {l}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📍 Joylashuv</p>
+                            <input value={otubeLocation} onChange={e=>setOtubeLocation(e.target.value)} placeholder="Shahar, Mamlakat"
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📅 Yozib olingan sana</p>
+                            <input type="date" value={otubeRecordDate} onChange={e=>setOtubeRecordDate(e.target.value)}
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",colorScheme:"dark"}}/>
+                          </div>
+                        </div>
+
+                        {/* Pinned Comment + First Comment */}
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📌 Qo'llab-quvvatlangan izoh</p>
+                            <input value={otubePinComment} onChange={e=>setOtubePinComment(e.target.value)} placeholder="Videodagi eng muhim havolani yozing…"
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(52,211,153,0.07)",border:"1px solid rgba(52,211,153,0.2)"}}/>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">💬 Birinchi izoh</p>
+                            <input value={otubeFirstComment} onChange={e=>setOtubeFirstComment(e.target.value)} placeholder="Video chiqqanda birinchi izoh…"
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
+                          </div>
+                        </div>
+
+                      </div>)}
+
+                      {/* MONETIZE SECTION */}
+                      {otubeSection === "monetize" && (<div className="space-y-4">
+
+                        {/* Monetization toggle */}
+                        <div className="rounded-2xl p-4" style={{background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.25)"}}>
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <p className="text-sm font-bold text-white">💰 Monetizatsiya</p>
+                              <p className="text-[10px] text-white/40 mt-0.5">Reklamadan daromad oling</p>
+                            </div>
+                            <button onClick={()=>setOtubeMonetize(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{background:otubeMonetize?"#34d399":"rgba(255,255,255,0.12)",justifyContent:otubeMonetize?"flex-end":"flex-start",height:24,width:40}}>
+                              <div className="w-4 h-4 rounded-full bg-white"/>
+                            </button>
+                          </div>
+                          {otubeMonetize && (
+                            <div className="space-y-2">
+                              <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">Reklama turi</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {[{v:"ads",l:"📺 Reklama roliği"},{v:"sponsor",l:"🤝 Homiylik"},{v:"merch",l:"🛍 Tovar do'koni"},{v:"membership",l:"⭐ A'zolik"}].map(({v,l})=>(
+                                  <button key={v} onClick={()=>setOtubeMonetizeType(v)}
+                                    className="py-2.5 rounded-xl text-[11px] font-bold transition-all"
+                                    style={{background:otubeMonetizeType===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeMonetizeType===v?"white":"rgba(255,255,255,0.5)",border:otubeMonetizeType===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                    {l}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Revenue Estimate */}
+                        {otubeMonetize && (
+                          <div className="rounded-2xl p-4" style={{background:"linear-gradient(135deg,rgba(5,150,105,0.15),rgba(52,211,153,0.08))"}}>
+                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📈 Taxminiy daromad</p>
+                            <div className="grid grid-cols-3 gap-3 text-center">
+                              {[{l:"Kunlik",v:"$2–$8"},{l:"Haftalik",v:"$15–$55"},{l:"Oylik",v:"$60–$220"}].map(({l,v})=>(
+                                <div key={l}>
+                                  <p className="text-[10px] text-white/40">{l}</p>
+                                  <p className="text-base font-bold" style={{color:"#34d399"}}>{v}</p>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-[10px] text-white/25 mt-2 text-center">*Taxminiy — haqiqiy ko'rsatkichlar farq qilishi mumkin</p>
+                          </div>
+                        )}
+
+                        {/* Super Thanks, Members, Merchandise */}
+                        <div className="space-y-2">
+                          {[{v:otubeSuperThanks,s:setOtubeSuperThanks,e:"💝",l:"Super Thanks — tomoshabinlar sovg'a yuborsin"},{v:otubeMembersOnly,s:setOtubeMembersOnly,e:"👑",l:"Faqat a'zolar uchun (Members only)"},{v:otubeMerchandise,s:setOtubeMerchandise,e:"🛍",l:"Tovar javoni ko'rsatish"}].map(({v,s,e,l})=>(
+                            <div key={l} className="flex items-center justify-between px-3 py-3 rounded-xl" style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)"}}>
+                              <span className="text-xs text-white/70">{e} {l}</span>
+                              <button onClick={()=>s((p:boolean)=>!p)} className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{background:v?"#34d399":"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start",height:20,width:34}}>
+                                <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* License */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⚖️ Litsenziya</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[{v:"standard",l:"Standard (OlCha)"},{v:"cc",l:"Creative Commons"},{v:"commercial",l:"Tijorat maqsadli"},{v:"educational",l:"Ta'lim maqsadli"}].map(({v,l})=>(
+                              <button key={v} onClick={()=>setOtubeLicense(v)}
+                                className="py-2.5 px-3 rounded-xl text-[11px] font-bold transition-all"
+                                style={{background:otubeLicense===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeLicense===v?"white":"rgba(255,255,255,0.5)",border:otubeLicense===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                {l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>)}
+
+                      {/* ADVANCED SECTION */}
+                      {otubeSection === "advanced" && (<div className="space-y-4">
+
+                        {/* Comments & Interaction */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">💬 Izohlar</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[{v:"all",l:"Barcha izohlar"},{v:"hold",l:"Moderatsiya"},{v:"friends",l:"Obunachilargina"},{v:"off",l:"O'chirilgan"}].map(({v,l})=>(
+                              <button key={v} onClick={()=>setOtubeCommentMode(v)}
+                                className="py-2.5 rounded-xl text-[11px] font-bold transition-all"
+                                style={{background:otubeCommentMode===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeCommentMode===v?"white":"rgba(255,255,255,0.5)",border:otubeCommentMode===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                {l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Toggle options */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🔒 Maxfiylik & Boshqalar</p>
+                          <div className="space-y-1.5">
+                            {[{v:otubeAllowEmbed,s:setOtubeAllowEmbed,l:"🔗 Embed qilishga ruxsat"},{v:otubeAllowDownload,s:setOtubeAllowDownload,l:"⬇️ Yuklab olishga ruxsat"},{v:otubeHideLikes,s:setOtubeHideLikes,l:"👍 Like sonini yashirish"},{v:otubeHideViews,s:setOtubeHideViews,l:"👁 Ko'rishlar sonini yashirish"},{v:otubeAgeGate,s:setOtubeAgeGate,l:"🔞 18+ cheklov"},{v:otubeKids,s:setOtubeKids,l:"👶 Bolalar uchun kontent"},{v:otubePaidPromo,s:setOtubePaidPromo,l:"💼 Pullik reklama mavjud"},{v:otubeSynthetic,s:setOtubeSynthetic,l:"🤖 AI/Sintetik kontent"}].map(({v,s,l})=>(
+                              <div key={l} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                                <span className="text-xs text-white/65">{l}</span>
+                                <button onClick={()=>s((p:boolean)=>!p)} className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{background:v?"#34d399":"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start",height:20,width:34}}>
+                                  <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>)}
+
+                    </div>
+                  )}
+
+                  {/* ══════════════════ CHALLENGE TAB ══════════════════ */}
+                  {tab === "challenge" && (
+                    <div className="px-4 py-4 space-y-4">
+
+                      {/* Section nav */}
+                      <div className="flex gap-1.5">
+                        {(["setup","rules","prizes","advanced"] as const).map(s=>(
+                          <button key={s} onClick={()=>setChalSection(s)}
+                            className="flex-1 px-2 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all"
+                            style={{background:chalSection===s?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.07)",color:chalSection===s?"white":"rgba(255,255,255,0.45)",border:chalSection===s?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                            {s==="setup"?"🏆 Sozlash":s==="rules"?"📋 Qoidalar":s==="prizes"?"🎁 Mukofotlar":"⚙️ Ilg'or"}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Banner */}
+                      <div className="rounded-2xl p-4 text-center relative overflow-hidden" style={{background:"linear-gradient(135deg,rgba(180,83,9,0.3),rgba(251,146,60,0.15))"}}>
+                        <div className="absolute inset-0 opacity-10" style={{backgroundImage:"radial-gradient(circle at 20% 50%, #fb923c 0%, transparent 60%), radial-gradient(circle at 80% 50%, #f59e0b 0%, transparent 60%)"}}/>
+                        <Trophy className="w-8 h-8 mx-auto mb-2" style={{color:"#fb923c"}}/>
+                        <p className="text-sm font-black text-white">Challenge yaratish</p>
+                        <p className="text-[11px] text-white/50 mt-0.5">OlCha platformasida viral musobaqa boshlang</p>
+                      </div>
+
+                      {/* SETUP SECTION */}
+                      {chalSection === "setup" && (<div className="space-y-4">
+
+                        {/* Name */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">🏆 Challenge nomi</p>
+                          <input value={chalName} onChange={e=>setChalName(e.target.value)} maxLength={60}
+                            placeholder="Masalan: Ice Bucket Challenge"
+                            className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                            style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.3)"}}/>
+                        </div>
+
+                        {/* Hashtag */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider"># Xeshteg</p>
+                          <input value={chalHashtag} onChange={e=>setChalHashtag(e.target.value.startsWith("#")?e.target.value:"#"+e.target.value)}
+                            placeholder="#ChallengeName2025"
+                            className="w-full rounded-xl px-3 py-2.5 text-sm font-bold placeholder:text-white/25 focus:outline-none"
+                            style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.3)",color:"#fb923c"}}/>
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📝 Tavsif</p>
+                          <textarea value={chalDesc} onChange={e=>setChalDesc(e.target.value)} rows={3}
+                            placeholder="Challenge haqida batafsil tavsif — nimani qilish kerak, nima uchun va qanday qilib…"
+                            className="w-full rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-white/25 focus:outline-none resize-none"
+                            style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)"}}/>
+                        </div>
+
+                        {/* Category */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🗂 Kategoriya</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {["💃 Raqs","🏋️ Fitnes","🍳 Oshpaz","🎨 San'at","😂 Komediya","📚 Ta'lim","🎵 Musiqa","🌱 Ekologiya","💼 Biznes","🎮 O'yin","❤️ Mehr","🌍 Ijtimoiy"].map(cat=>(
+                              <button key={cat} onClick={()=>setChalCategory(cat===chalCategory?"":cat)}
+                                className="px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all"
+                                style={{background:chalCategory===cat?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalCategory===cat?"white":"rgba(255,255,255,0.5)"}}>
+                                {cat}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Dates */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">📅 Boshlanish</p>
+                            <input type="date" value={chalStartDate} onChange={e=>setChalStartDate(e.target.value)}
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                              style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.25)",colorScheme:"dark"}}/>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">📅 Tugash</p>
+                            <input type="date" value={chalEndDate} onChange={e=>setChalEndDate(e.target.value)}
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                              style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.25)",colorScheme:"dark"}}/>
+                          </div>
+                        </div>
+
+                        {/* Content type */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📹 Kontent turi</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {[{v:"video",e:"🎬",l:"Video"},{v:"photo",e:"📸",l:"Foto"},{v:"any",e:"🎭",l:"Istalgan"}].map(({v,e,l})=>(
+                              <button key={v} onClick={()=>setChalContentType(v)}
+                                className="py-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all"
+                                style={{background:chalContentType===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalContentType===v?"white":"rgba(255,255,255,0.5)",border:chalContentType===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                <span className="text-base">{e}</span>{l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Theme music */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">🎵 Mavzu Musiqasi</p>
+                          <div className="flex gap-2">
+                            <input value={chalThemeMusic} onChange={e=>setChalThemeMusic(e.target.value)} placeholder="Qo'shiq nomi yoki havolasi…"
+                              className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
+                            <button onClick={()=>setChalMusicRequired(p=>!p)}
+                              className="px-3 rounded-xl text-[10px] font-bold flex-shrink-0 transition-all"
+                              style={{background:chalMusicRequired?"rgba(251,146,60,0.2)":"rgba(255,255,255,0.06)",color:chalMusicRequired?"#fb923c":"rgba(255,255,255,0.4)",border:chalMusicRequired?"1px solid rgba(251,146,60,0.4)":"1px solid rgba(255,255,255,0.08)"}}>
+                              {chalMusicRequired?"Majburiy":"Ixtiyoriy"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Announce + Demo video */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">📢 E'lon Videosi</p>
+                            <input value={chalAnnVideo} onChange={e=>setChalAnnVideo(e.target.value)} placeholder="Video URL…"
+                              className="w-full rounded-xl px-3 py-2 text-[11px] text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)"}}/>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">🎬 Demo Video</p>
+                            <input value={chalDemoVideo} onChange={e=>setChalDemoVideo(e.target.value)} placeholder="Video URL…"
+                              className="w-full rounded-xl px-3 py-2 text-[11px] text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)"}}/>
+                          </div>
+                        </div>
+
+                        {/* Messages */}
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">👋 Xush kelibsiz xabari</p>
+                            <input value={chalWelcomeMsg} onChange={e=>setChalWelcomeMsg(e.target.value)} placeholder="Ishtirokchilarga xush kelibsiz xabari…"
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(251,146,60,0.06)",border:"1px solid rgba(251,146,60,0.2)"}}/>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">🎉 Tugatish xabari</p>
+                            <input value={chalCompleteMsg} onChange={e=>setChalCompleteMsg(e.target.value)} placeholder="Challeng yakunlanganda ko'rinadigan xabar…"
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(251,146,60,0.06)",border:"1px solid rgba(251,146,60,0.2)"}}/>
+                          </div>
+                        </div>
+
+                      </div>)}
+
+                      {/* RULES SECTION */}
+                      {chalSection === "rules" && (<div className="space-y-4">
+
+                        {/* Video Length */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⏱ Video Uzunligi</p>
+                          <div className="space-y-3">
+                            <div>
+                              <div className="flex justify-between mb-1">
+                                <span className="text-[10px] text-white/50">Min: {chalMinLength} soniya</span>
+                                <span className="text-[10px] text-white/50">Max: {chalMaxLength} soniya</span>
+                              </div>
+                              <div className="flex gap-3">
+                                <div className="flex-1">
+                                  <input type="range" min={5} max={300} value={chalMinLength} onChange={e=>setChalMinLength(+e.target.value)} className="w-full accent-orange-400"/>
+                                  <p className="text-[9px] text-white/30 text-center">Minimum</p>
+                                </div>
+                                <div className="flex-1">
+                                  <input type="range" min={5} max={600} value={chalMaxLength} onChange={e=>setChalMaxLength(+e.target.value)} className="w-full accent-orange-400"/>
+                                  <p className="text-[9px] text-white/30 text-center">Maksimum</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Rules List */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📋 Qoidalar ro'yxati</p>
+                          <div className="space-y-2">
+                            {chalRules.map((r,i)=>(
+                              <div key={i} className="flex gap-2">
+                                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1 text-[10px] font-black" style={{background:"linear-gradient(135deg,#b45309,#fb923c)",color:"white"}}>{i+1}</div>
+                                <input value={r} onChange={e=>setChalRules(p=>{const n=[...p];n[i]=e.target.value;return n;})}
+                                  placeholder={`${i+1}-qoida (masalan: Faqat original kontent)`}
+                                  className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                  style={{background:"rgba(251,146,60,0.07)",border:"1px solid rgba(251,146,60,0.2)"}}/>
+                                {i === chalRules.length-1 && <button onClick={()=>setChalRules(p=>[...p,""])} className="flex-shrink-0 mt-1"><Plus className="w-4 h-4" style={{color:"#fb923c"}}/></button>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Entry requirements */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">✅ Kirish Talablari</p>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
+                              <span className="text-xs text-white/60">Min. Izuvchilar soni</span>
+                              <div className="flex items-center gap-2">
+                                <button onClick={()=>setChalMinFollowers(p=>Math.max(0,p-100))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">-</span></button>
+                                <span className="text-xs font-bold text-white w-12 text-center">{chalMinFollowers.toLocaleString()}</span>
+                                <button onClick={()=>setChalMinFollowers(p=>p+100)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">+</span></button>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
+                              <span className="text-xs text-white/60">Min. Layklar soni</span>
+                              <div className="flex items-center gap-2">
+                                <button onClick={()=>setChalMinLikes(p=>Math.max(0,p-50))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">-</span></button>
+                                <span className="text-xs font-bold text-white w-12 text-center">{chalMinLikes.toLocaleString()}</span>
+                                <button onClick={()=>setChalMinLikes(p=>p+50)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">+</span></button>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
+                              <span className="text-xs text-white/60">Minimal yosh</span>
+                              <div className="flex items-center gap-2">
+                                <button onClick={()=>setChalAgeMin(p=>Math.max(0,p-1))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">-</span></button>
+                                <span className="text-xs font-bold text-white w-8 text-center">{chalAgeMin||"Yo'q"}</span>
+                                <button onClick={()=>setChalAgeMin(p=>p+1)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">+</span></button>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
+                              <span className="text-xs text-white/60">Har bir foydalanuvchidan max kirish</span>
+                              <div className="flex items-center gap-2">
+                                <button onClick={()=>setChalMaxEntries(p=>Math.max(1,p-1))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">-</span></button>
+                                <span className="text-xs font-bold text-white w-6 text-center">{chalMaxEntries}</span>
+                                <button onClick={()=>setChalMaxEntries(p=>p+1)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">+</span></button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Toggles */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⚙️ Kirish imkoniyatlari</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[{v:chalVerifReq,s:setChalVerifReq,l:"✅ Tasdiqlangan hisob"},{v:chalTeamAllowed,s:setChalTeamAllowed,l:"👥 Jamoaviy kirish"},{v:chalDuetReq,s:setChalDuetReq,l:"🔀 Duet talab"},{v:chalCollabReq,s:setChalCollabReq,l:"🤝 Kollab talab"},{v:chalReactionReq,s:setChalReactionReq,l:"😍 Reaksiya talab"},{v:chalCommentReq,s:setChalCommentReq,l:"💬 Izoh talab"},{v:chalReentry,s:setChalReentry,l:"🔄 Qayta ishtirok"},{v:chalLeaderboard,s:setChalLeaderboard,l:"📊 Liderlar jadvali"}].map(({v,s,l})=>(
+                              <button key={l} onClick={()=>s((p:boolean)=>!p)}
+                                className="py-2.5 px-2 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all"
+                                style={{background:v?"rgba(251,146,60,0.15)":"rgba(255,255,255,0.05)",color:v?"#fb923c":"rgba(255,255,255,0.45)",border:v?"1px solid rgba(251,146,60,0.35)":"1px solid rgba(255,255,255,0.07)"}}>
+                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{background:v?"#fb923c":"rgba(255,255,255,0.2)"}}/>{l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Team size if enabled */}
+                        {chalTeamAllowed && (
+                          <div className="px-3 py-3 rounded-xl" style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.25)"}}>
+                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">👥 Jamoa o'lchami</p>
+                            <div className="flex items-center gap-3 justify-center">
+                              <button onClick={()=>setChalTeamSize(p=>Math.max(2,p-1))} className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold" style={{background:"rgba(251,146,60,0.15)",color:"#fb923c"}}>-</button>
+                              <span className="text-2xl font-black text-white">{chalTeamSize}</span>
+                              <button onClick={()=>setChalTeamSize(p=>Math.min(10,p+1))} className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold" style={{background:"rgba(251,146,60,0.15)",color:"#fb923c"}}>+</button>
+                            </div>
+                            <p className="text-[10px] text-white/30 text-center mt-1">kishi / jamoa</p>
+                          </div>
+                        )}
+
+                        {/* Review mode */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🔍 Ko'rib chiqish rejimi</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[{v:"auto",l:"🤖 Avtomatik (AI)"},{v:"manual",l:"👤 Qo'lda tekshiruv"},{v:"community",l:"👥 Jamoa ovozi"},{v:"hybrid",l:"🔀 Aralash"}].map(({v,l})=>(
+                              <button key={v} onClick={()=>setChalReviewMode(v)}
+                                className="py-2.5 rounded-xl text-[11px] font-bold transition-all"
+                                style={{background:chalReviewMode===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalReviewMode===v?"white":"rgba(255,255,255,0.5)",border:chalReviewMode===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                {l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>)}
+
+                      {/* PRIZES SECTION */}
+                      {chalSection === "prizes" && (<div className="space-y-4">
+
+                        {/* Prize Pool */}
+                        <div className="rounded-2xl p-4 text-center" style={{background:"linear-gradient(135deg,rgba(180,83,9,0.25),rgba(251,146,60,0.12))"}}>
+                          <p className="text-2xl mb-1">🏆</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">Jami Mukofot Fondi</p>
+                          <input value={chalPrizePool} onChange={e=>setChalPrizePool(e.target.value)}
+                            placeholder="$ yoki UZS miqdori…"
+                            className="w-full text-center rounded-xl px-3 py-2.5 text-lg font-black focus:outline-none"
+                            style={{background:"rgba(251,146,60,0.1)",border:"1px solid rgba(251,146,60,0.3)",color:"#fb923c"}}/>
+                        </div>
+
+                        {/* 1st 2nd 3rd */}
+                        <div className="space-y-3">
+                          {[{e:"🥇",l:"1-o'rin",v:chalPrize1,s:setChalPrize1,col:"#fb923c"},{e:"🥈",l:"2-o'rin",v:chalPrize2,s:setChalPrize2,col:"#94a3b8"},{e:"🥉",l:"3-o'rin",v:chalPrize3,s:setChalPrize3,col:"#cd7c39"}].map(({e,l,v,s,col})=>(
+                            <div key={l} className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{background:"rgba(255,255,255,0.06)"}}>{e}</div>
+                              <div className="flex-1">
+                                <p className="text-[10px] font-bold mb-1" style={{color:col}}>{l}</p>
+                                <input value={v} onChange={e=>s(e.target.value)} placeholder="Mukofot nomi yoki miqdori…"
+                                  className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                  style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${col}33`}}/>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Badge type */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🏅 G'olib nishoni</p>
+                          <div className="flex flex-wrap gap-2">
+                            {["🥇 Oltin","🥈 Kumush","💎 Brilliant","⭐ Yulduz","🔥 Olov","👑 Toj","🚀 Raketa","🏆 Kubka"].map(b=>(
+                              <button key={b} onClick={()=>setChalBadge(b)}
+                                className="px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
+                                style={{background:chalBadge===b?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalBadge===b?"white":"rgba(255,255,255,0.5)"}}>
+                                {b}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Certificate */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📜 Sertifikat turi</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[{v:"digital",l:"💻 Digital sertifikat"},{v:"physical",l:"📮 Fizik sertifikat"},{v:"nft",l:"🎨 NFT sertifikat"},{v:"none",l:"❌ Sertifikatsiz"}].map(({v,l})=>(
+                              <button key={v} onClick={()=>setChalCertType(v)}
+                                className="py-2.5 rounded-xl text-[11px] font-bold transition-all"
+                                style={{background:chalCertType===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalCertType===v?"white":"rgba(255,255,255,0.5)",border:chalCertType===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                {l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Entry fee */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">💳 Kirish to'lovi</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {[{v:"free",l:"🎁 Bepul"},{v:"paid",l:"💰 Pullik"},{v:"token",l:"🪙 Token"}].map(({v,l})=>(
+                              <button key={v} onClick={()=>setChalEntryFee(v)}
+                                className="py-2.5 rounded-xl text-xs font-bold transition-all"
+                                style={{background:chalEntryFee===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalEntryFee===v?"white":"rgba(255,255,255,0.5)",border:chalEntryFee===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                {l}
+                              </button>
+                            ))}
+                          </div>
+                          {chalEntryFee !== "free" && (
+                            <input value={chalEntryPrice} onChange={e=>setChalEntryPrice(e.target.value)} placeholder="Miqdor ($ yoki token)"
+                              className="mt-2 w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.25)"}}/>
+                          )}
+                        </div>
+
+                      </div>)}
+
+                      {/* ADVANCED SECTION */}
+                      {chalSection === "advanced" && (<div className="space-y-4">
+
+                        {/* Voting */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🗳 Ovoz berish turi</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[{v:"community",l:"👥 Jamoa ovozi"},{v:"judges",l:"👨‍⚖️ Hakamlar"},{v:"hybrid",l:"🔀 Aralash"},{v:"ai",l:"🤖 AI baholash"}].map(({v,l})=>(
+                              <button key={v} onClick={()=>setChalVotingType(v)}
+                                className="py-2.5 rounded-xl text-xs font-bold transition-all"
+                                style={{background:chalVotingType===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalVotingType===v?"white":"rgba(255,255,255,0.5)",border:chalVotingType===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
+                                {l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Judges */}
+                        {(chalVotingType==="judges"||chalVotingType==="hybrid") && (
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">👨‍⚖️ Hakamlar Paneli</p>
+                            <div className="flex gap-2">
+                              <input value={chalJudgeInput} onChange={e=>setChalJudgeInput(e.target.value)}
+                                placeholder="@hakam_nomi"
+                                className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                                style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
+                              <button onClick={()=>{if(chalJudgeInput.trim()){setChalJudges(p=>[...p,chalJudgeInput.trim()]);setChalJudgeInput("");}}}
+                                className="px-3 rounded-xl text-xs font-bold" style={{background:"linear-gradient(135deg,#b45309,#fb923c)",color:"white"}}>
+                                <Plus className="w-3.5 h-3.5"/>
+                              </button>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {chalJudges.map((j,i)=>(
+                                <div key={i} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-bold" style={{background:"rgba(251,146,60,0.15)",color:"#fb923c"}}>
+                                  {j} <button onClick={()=>setChalJudges(p=>p.filter((_,k)=>k!==i))}><X className="w-2.5 h-2.5"/></button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Winner delay */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⏳ G'olib e'lonlash (soat)</p>
+                          <div className="flex items-center gap-3 justify-center px-3 py-3 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
+                            <button onClick={()=>setChalWinnerDelay(p=>Math.max(0,p-1))} className="w-9 h-9 rounded-xl flex items-center justify-center text-xl font-bold" style={{background:"rgba(251,146,60,0.15)",color:"#fb923c"}}>-</button>
+                            <span className="text-2xl font-black text-white w-16 text-center">{chalWinnerDelay}h</span>
+                            <button onClick={()=>setChalWinnerDelay(p=>p+1)} className="w-9 h-9 rounded-xl flex items-center justify-center text-xl font-bold" style={{background:"rgba(251,146,60,0.15)",color:"#fb923c"}}>+</button>
+                          </div>
+                        </div>
+
+                        {/* Sponsor */}
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">🤝 Homiy</p>
+                          <input value={chalSponsor} onChange={e=>setChalSponsor(e.target.value)} placeholder="Homiy kompaniya nomi"
+                            className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                            style={{background:"rgba(251,146,60,0.07)",border:"1px solid rgba(251,146,60,0.2)"}}/>
+                          <input value={chalSponsorUrl} onChange={e=>setChalSponsorUrl(e.target.value)} placeholder="https://homiy-sayti.com"
+                            className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                            style={{background:"rgba(251,146,60,0.07)",border:"1px solid rgba(251,146,60,0.2)"}}/>
+                        </div>
+
+                        {/* Notifications */}
+                        <div>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🔔 Bildirishnomalar</p>
+                          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl mb-2" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                            <span className="text-xs text-white/60">Eslatmalar yoqish</span>
+                            <button onClick={()=>setChalNotifReminder(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{background:chalNotifReminder?"#fb923c":"rgba(255,255,255,0.12)",justifyContent:chalNotifReminder?"flex-end":"flex-start",height:20,width:34}}>
+                              <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                            </button>
+                          </div>
+                          {chalNotifReminder && (
+                            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{background:"rgba(251,146,60,0.06)",border:"1px solid rgba(251,146,60,0.2)"}}>
+                              <span className="text-xs text-white/60 flex-1">Tugashdan necha kun oldin?</span>
+                              <div className="flex items-center gap-2">
+                                <button onClick={()=>setChalReminderDays(p=>Math.max(1,p-1))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.2)"}}><span className="text-orange-400 font-bold">-</span></button>
+                                <span className="text-xs font-bold text-white w-6 text-center">{chalReminderDays}</span>
+                                <button onClick={()=>setChalReminderDays(p=>p+1)} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.2)"}}><span className="text-orange-400 font-bold">+</span></button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Discord + Share template */}
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">💬 Discord Server</p>
+                            <input value={chalDiscord} onChange={e=>setChalDiscord(e.target.value)} placeholder="discord.gg/..."
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(88,101,242,0.1)",border:"1px solid rgba(88,101,242,0.3)"}}/>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">📤 Share shabloni</p>
+                            <input value={chalShareTemplate} onChange={e=>setChalShareTemplate(e.target.value)} placeholder="Men {chalHashtag} da ishtirok etyapman! Siz ham qo'shiling →"
+                              className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
+                              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
+                          </div>
+                        </div>
+
+                        {/* Featured + Geo */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between px-3 py-3 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
+                            <div>
+                              <p className="text-xs text-white/70">⭐ Bosh sahifada ko'rsatish</p>
+                              <p className="text-[10px] text-white/30">Challenge tavsiya qilinganlar ro'yxatida</p>
+                            </div>
+                            <button onClick={()=>setChalFeatured(p=>!p)} className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{background:chalFeatured?"#fb923c":"rgba(255,255,255,0.12)",justifyContent:chalFeatured?"flex-end":"flex-start",height:20,width:34}}>
+                              <div className="w-3.5 h-3.5 rounded-full bg-white"/>
+                            </button>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🌍 Geografik cheklov</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {["🇺🇿 O'zbekiston","🇷🇺 Rossiya","🇺🇸 AQSh","🇩🇪 Germaniya","🇹🇷 Turkiya","🌍 Hamma"].map(g=>(
+                                <button key={g} onClick={()=>setChalGeoRestrict(p=>p.includes(g)?p.filter(x=>x!==g):[...p,g])}
+                                  className="px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all"
+                                  style={{background:chalGeoRestrict.includes(g)?"rgba(251,146,60,0.2)":"rgba(255,255,255,0.06)",color:chalGeoRestrict.includes(g)?"#fb923c":"rgba(255,255,255,0.45)",border:chalGeoRestrict.includes(g)?"1px solid rgba(251,146,60,0.4)":"1px solid rgba(255,255,255,0.08)"}}>
+                                  {g}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stats preview */}
+                        <div className="rounded-2xl p-4" style={{background:"linear-gradient(135deg,rgba(180,83,9,0.2),rgba(251,146,60,0.08))"}}>
+                          <p className="text-[10px] font-bold text-white/45 mb-3 uppercase tracking-wider">📊 Challenge Prognozi</p>
+                          <div className="grid grid-cols-3 gap-3 text-center">
+                            {[{e:"👥",l:"Taxminiy ishtirokchilar",v:"500–2K"},{e:"👁",l:"Ko'rish",v:"50K+"},{e:"🔥",l:"Viral ehtimol",v:"78%"}].map(({e,l,v})=>(
+                              <div key={l}>
+                                <span className="text-xl">{e}</span>
+                                <p className="text-sm font-black mt-1" style={{color:"#fb923c"}}>{v}</p>
+                                <p className="text-[9px] text-white/30 leading-tight mt-0.5">{l}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>)}
+
+                    </div>
+                  )}
+
                 </>
               )}
             </div>

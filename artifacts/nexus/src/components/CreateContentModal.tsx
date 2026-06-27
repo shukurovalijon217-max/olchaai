@@ -551,10 +551,10 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     (tab === "story" && !!storyUploadResult)
   );
 
-  const TABS: { id: TabType; icon: React.ElementType; label: string }[] = [
-    { id: "post",  icon: ImagePlus, label: "Post"  },
-    { id: "reel",  icon: Film,      label: "Reel"  },
-    { id: "story", icon: Camera,    label: "Story" },
+  const TABS: { id: TabType; icon: React.ElementType; label: string; grad: string; glow: string; accent: string }[] = [
+    { id: "post",  icon: ImagePlus, label: "Post",  grad: "linear-gradient(135deg,#7c3aed,#a78bfa)", glow: "rgba(124,58,237,0.45)", accent: "#a78bfa" },
+    { id: "reel",  icon: Film,      label: "Reel",  grad: "linear-gradient(135deg,#dc2626,#f87171)", glow: "rgba(239,68,68,0.45)",  accent: "#f87171" },
+    { id: "story", icon: Camera,    label: "Story", grad: "linear-gradient(135deg,#d97706,#fbbf24)", glow: "rgba(251,191,36,0.45)", accent: "#fbbf24" },
   ];
 
   return (
@@ -599,29 +599,83 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
               <div className="w-8 h-1 rounded-full bg-white/15" />
             </div>
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
-              <h2 className="font-bold text-base text-white">Kontent yaratish</h2>
+            {/* Header with animated gradient accent line */}
+            <div className="relative flex items-center justify-between px-5 py-3.5">
+              <div className="flex items-center gap-2.5">
+                <motion.div
+                  key={tab}
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-7 h-7 rounded-xl flex items-center justify-center"
+                  style={{ background: TABS.find(t => t.id === tab)?.grad ?? "rgba(124,58,237,0.8)" }}
+                >
+                  {(() => { const T = TABS.find(t => t.id === tab); return T ? <T.icon className="w-3.5 h-3.5 text-white" /> : null; })()}
+                </motion.div>
+                <h2 className="font-bold text-base text-white">Kontent yaratish</h2>
+              </div>
               <button onClick={handleClose}
                 className="w-8 h-8 rounded-xl flex items-center justify-center"
                 style={{ background: "rgba(255,255,255,0.07)" }}>
                 <X className="w-4 h-4 text-white/70" />
               </button>
+              {/* Animated bottom gradient line */}
+              <motion.div
+                key={`accent-${tab}`}
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{ scaleX: 1, opacity: 1 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="absolute bottom-0 left-0 right-0 h-px"
+                style={{
+                  background: TABS.find(t => t.id === tab)?.grad ?? "linear-gradient(90deg,#7c3aed,#a78bfa)",
+                  transformOrigin: "left",
+                }}
+              />
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1 px-5 pt-4">
-              {TABS.map(t => (
-                <button key={t.id} onClick={() => setTab(t.id)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                  style={{
-                    background: tab === t.id ? "rgba(124,58,237,0.9)" : "rgba(255,255,255,0.06)",
-                    color: tab === t.id ? "white" : "rgba(255,255,255,0.45)",
-                  }}>
-                  <t.icon className="w-3.5 h-3.5" />
-                  {t.label}
-                </button>
-              ))}
+            {/* ── Dramatic Tab Bar ── */}
+            <div className="flex gap-2 px-4 pt-3.5 pb-0.5">
+              {TABS.map(t => {
+                const active = tab === t.id;
+                return (
+                  <motion.button
+                    key={t.id}
+                    onClick={() => setTab(t.id)}
+                    layout
+                    className="relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-black tracking-wide overflow-hidden transition-colors"
+                    style={{
+                      color: active ? "white" : "rgba(255,255,255,0.38)",
+                      background: active ? "transparent" : "rgba(255,255,255,0.04)",
+                      border: active ? "none" : "1px solid rgba(255,255,255,0.07)",
+                    }}
+                    whileHover={{ scale: active ? 1 : 1.03 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {/* Gradient fill for active tab */}
+                    {active && (
+                      <motion.div
+                        layoutId="tab-active-bg"
+                        className="absolute inset-0 rounded-2xl"
+                        style={{
+                          background: t.grad,
+                          boxShadow: `0 4px 18px ${t.glow}`,
+                        }}
+                        transition={{ type: "spring", stiffness: 460, damping: 30 }}
+                      />
+                    )}
+                    {/* Inner glow shimmer on active */}
+                    {active && (
+                      <motion.div
+                        className="absolute inset-0 rounded-2xl"
+                        style={{ background: "linear-gradient(180deg,rgba(255,255,255,0.14) 0%,transparent 60%)" }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      <t.icon className="w-3.5 h-3.5" />
+                      {t.label}
+                    </span>
+                  </motion.button>
+                );
+              })}
             </div>
 
             <div className="p-5 space-y-4 max-h-[78vh] overflow-y-auto">

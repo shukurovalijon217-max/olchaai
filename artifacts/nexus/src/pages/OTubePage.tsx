@@ -14,7 +14,7 @@ import type { Reel, UploadUrlRequest } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import {
-  Play, Pause, Volume2, VolumeX, ArrowLeft, Search, X, MoreVertical,
+  Play, Pause, Volume2, VolumeX, ArrowLeft, Search, X,
   Eye, Heart, Share2, Check, Film, Music2, Gamepad2,
   Zap, Sparkles, TrendingUp, Globe, Settings, Bell,
   RotateCcw, ChevronRight, ChevronDown, RefreshCw,
@@ -427,8 +427,8 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
 /* ─────────────────────────────────────────────────────── */
 /* NexusPlayer — BROADCAST STYLE                           */
 /* ─────────────────────────────────────────────────────── */
-function NexusPlayer({ video, onClose, onMinimize, settings }:
-  { video:Reel; onClose:()=>void; onMinimize?:()=>void; settings:PlayerSettings }) {
+function NexusPlayer({ video, onClose, settings }:
+  { video:Reel; onClose:()=>void; settings:PlayerSettings }) {
   const { t } = useTranslation();
   const qc             = useQueryClient();
   const [, navPlayer]  = useLocation();
@@ -697,15 +697,12 @@ function NexusPlayer({ video, onClose, onMinimize, settings }:
                 style={{ background:"linear-gradient(to bottom,rgba(0,0,0,0.85),transparent)",
                   padding:"14px 12px 40px" }}>
                 <div className="flex items-center gap-2">
-                  <motion.button whileTap={{scale:0.85}} onClick={onMinimize ?? onClose}
+                  <motion.button whileTap={{scale:0.85}} onClick={onClose}
                     style={{ width:40,height:40,flexShrink:0,borderRadius:"50%",
                       background:"rgba(0,0,0,0.5)",backdropFilter:"blur(12px)",
                       boxShadow:"0 0 0 1px rgba(255,255,255,0.12)",
                       display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    {onMinimize
-                      ? <ChevronDown style={{width:20,height:20,color:"rgba(255,255,255,0.85)"}}/>
-                      : <ArrowLeft style={{width:18,height:18,color:"rgba(255,255,255,0.85)"}}/>
-                    }
+                    <ArrowLeft style={{width:18,height:18,color:"rgba(255,255,255,0.85)"}}/>
                   </motion.button>
 
                   <div className="flex-1 min-w-0">
@@ -1683,68 +1680,6 @@ function TrendRow({ video, onPlay, idx }:
             </div>
           );
         })()}
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────── */
-/* YouTube-style video card — full-width 16:9 + info row   */
-/* ─────────────────────────────────────────────────────── */
-function YouTubeCard({ video, onPlay, idx=0 }:
-  { video:Reel; onPlay:()=>void; idx?:number }) {
-  const dur = `${Math.floor(1+(video.id%7))}:${String((video.id*17)%60).padStart(2,"0")}`;
-  return (
-    <motion.div
-      initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}
-      transition={{delay:idx*0.04,duration:0.22}}
-      className="cursor-pointer"
-      whileTap={{scale:0.985}} onClick={onPlay}>
-      {/* 16:9 thumbnail */}
-      <div style={{position:"relative",aspectRatio:"16/9",background:"#08001a"}}>
-        {video.thumbnailUrl
-          ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
-          : <div className="w-full h-full flex items-center justify-center"
-              style={{background:`linear-gradient(135deg,${T.bg2},${T.card})`}}>
-              <Play style={{width:44,height:44,color:T.violet,opacity:0.3}}/>
-            </div>
-        }
-        {/* Duration badge */}
-        <div className="absolute bottom-2 right-2 px-1.5 py-0.5"
-          style={{borderRadius:4,background:"rgba(0,0,0,0.84)"}}>
-          <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.92)",fontFamily:"monospace"}}>
-            {dur}
-          </span>
-        </div>
-      </div>
-      {/* Info row */}
-      <div className="flex gap-3 px-3 py-2.5 pb-3">
-        {/* Channel avatar */}
-        <div style={{width:36,height:36,borderRadius:"50%",flexShrink:0,overflow:"hidden",
-          background:`linear-gradient(135deg,${T.violet},${T.cyan})`}}>
-          {video.author.avatarUrl
-            ? <img src={video.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
-            : <div className="w-full h-full flex items-center justify-center">
-                <span style={{fontSize:14,fontWeight:900,color:"white"}}>
-                  {(video.author.displayName||"?")[0].toUpperCase()}
-                </span>
-              </div>
-          }
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="line-clamp-2 leading-snug mb-1"
-            style={{fontSize:13.5,fontWeight:600,color:"rgba(255,255,255,0.9)"}}>
-            {video.caption||"OTube Video"}
-          </p>
-          <p style={{fontSize:11.5,color:"rgba(255,255,255,0.4)"}}>
-            {video.author.displayName} · {fmt(video.viewsCount)} ko'rish
-          </p>
-        </div>
-        <button style={{width:24,height:36,display:"flex",alignItems:"center",justifyContent:"center",
-          flexShrink:0,opacity:0.35}}
-          onClick={e=>e.stopPropagation()}>
-          <MoreVertical style={{width:14,height:14,color:"white"}}/>
-        </button>
       </div>
     </motion.div>
   );
@@ -4970,68 +4905,6 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 /* ─────────────────────────────────────────────────────── */
 /* Floating FAB — speed dial with working modals          */
 /* ─────────────────────────────────────────────────────── */
-/* ─────────────────────────────────────────────────────── */
-/* MiniPlayer — persistent bottom bar (YouTube-style)       */
-/* ─────────────────────────────────────────────────────── */
-function MiniPlayer({ video, onExpand, onClose }:
-  { video:Reel; onExpand:()=>void; onClose:()=>void }) {
-  const [playing, setPlaying] = useState(true);
-  return (
-    <motion.div
-      initial={{y:80,opacity:0}} animate={{y:0,opacity:1}}
-      exit={{y:80,opacity:0}}
-      transition={{type:"spring",damping:24,stiffness:320}}
-      className="fixed left-0 right-0 z-[200]"
-      style={{bottom:"calc(env(safe-area-inset-bottom,0px) + 56px)",
-        background:"rgba(8,0,24,0.97)",
-        borderTop:"1px solid rgba(255,255,255,0.06)",
-        backdropFilter:"blur(28px)",
-        WebkitBackdropFilter:"blur(28px)"}}>
-      {/* Progress stripe */}
-      <div style={{height:2,background:"rgba(255,255,255,0.05)"}}>
-        <div style={{width:"35%",height:"100%",
-          background:`linear-gradient(90deg,${T.cyan},${T.violet})`}}/>
-      </div>
-      <div className="flex items-center gap-2.5 px-3 py-2" onClick={onExpand}>
-        {/* Thumbnail */}
-        <div style={{width:58,height:40,borderRadius:7,overflow:"hidden",flexShrink:0,
-          background:"#0a0018",boxShadow:"0 2px 12px rgba(0,0,0,0.6)"}}>
-          {video.thumbnailUrl
-            ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
-            : <div className="w-full h-full" style={{background:"#1a0040"}}/>
-          }
-        </div>
-        {/* Title */}
-        <div className="flex-1 min-w-0">
-          <p className="truncate" style={{fontSize:12.5,fontWeight:600,color:"rgba(255,255,255,0.9)"}}>
-            {video.caption||"OTube Video"}
-          </p>
-          <p style={{fontSize:10.5,color:"rgba(255,255,255,0.4)"}}>
-            {video.author.displayName}
-          </p>
-        </div>
-        {/* Controls */}
-        <div className="flex items-center gap-0.5" onClick={e=>e.stopPropagation()}>
-          <motion.button whileTap={{scale:0.85}}
-            onClick={()=>setPlaying(p=>!p)}
-            style={{width:38,height:38,borderRadius:"50%",background:"rgba(255,255,255,0.07)",
-              display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {playing
-              ? <Pause style={{width:16,height:16,fill:"white",color:"white"}}/>
-              : <Play style={{width:16,height:16,fill:"white",color:"white",marginLeft:2}}/>
-            }
-          </motion.button>
-          <motion.button whileTap={{scale:0.85}} onClick={onClose}
-            style={{width:38,height:38,borderRadius:"50%",
-              display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <X style={{width:15,height:15,color:"rgba(255,255,255,0.4)"}}/>
-          </motion.button>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 function FloatingFAB() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -5252,7 +5125,6 @@ export default function OTubePage() {
   const [settings,setSettings]   = useState<PlayerSettings>(DEF_S);
   const [monetize,setMonetize]   = useState<MonetizationSettings>(DEF_M);
   const [notifDot,setNotifDot]   = useState(true);
-  const [miniPlayer,setMiniPlayer] = useState<Reel|null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const activeSig  = SIGNALS.find(s=>s.id===signal)!;
@@ -5495,43 +5367,76 @@ export default function OTubePage() {
               {/* XP / Streak — compact broadcast banner */}
               {!query && <StreakBanner/>}
 
-              {/* ── Shorts horizontal row ── */}
-              {!query && shorts.length>0 && (
-                <section className="mb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <motion.div
-                      animate={{scale:[1,1.2,1]}} transition={{duration:0.9,repeat:Infinity}}
-                      style={{width:8,height:8,borderRadius:"50%",flexShrink:0,
-                        background:T.orange,boxShadow:`0 0 10px ${T.orange}`}}/>
-                    <span style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.6)",
-                      letterSpacing:"0.18em",fontFamily:"monospace"}}>SHORTS</span>
-                  </div>
-                  <div className="flex gap-2.5 overflow-x-auto -mx-3 px-3 pb-2"
-                    style={{scrollbarWidth:"none"}}>
-                    {shorts.map((v,i)=><TrendRow key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
-                  </div>
-                </section>
-              )}
-
-              {/* Search result label */}
-              {query && reels.length>0 && (
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
-                  <motion.div animate={{opacity:[0.5,1,0.5]}} transition={{duration:1.4,repeat:Infinity}}
-                    style={{width:8,height:8,borderRadius:"50%",background:T.aurora,
-                      boxShadow:`0 0 8px ${T.aurora}`}}/>
-                  <span style={{fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.45)",
-                    fontFamily:"monospace",letterSpacing:"0.06em"}}>
-                    "{query}" — {reels.length} natija
-                  </span>
+              {/* ── PRIME SIGNAL — cinematic hero ── */}
+              {featured && !query && (
+                <div className="-mx-3 mb-0">
+                  <HeroCard video={featured} onPlay={()=>setSelected(featured)}/>
                 </div>
               )}
 
-              {/* ── YouTube-style full-width video feed ── */}
-              <div className="-mx-3 -mb-4">
-                {reels.map((v,i)=>(
-                  <YouTubeCard key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>
-                ))}
-              </div>
+              {/* Search results */}
+              {query && reels.length>0 && (
+                <section>
+                  <div className="flex items-center gap-2 mb-4">
+                    <motion.div
+                      animate={{opacity:[0.5,1,0.5]}} transition={{duration:1.4,repeat:Infinity}}
+                      style={{width:8,height:8,borderRadius:"50%",background:T.aurora,
+                        boxShadow:`0 0 8px ${T.aurora}`}}/>
+                    <span style={{fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.45)",
+                      fontFamily:"monospace",letterSpacing:"0.06em"}}>
+                      "{query}" — {reels.length} signal
+                    </span>
+                  </div>
+                  {/* Asymmetric search grid */}
+                  <BroadcastMatrix reels={reels} onPlay={v=>setSelected(v)}/>
+                </section>
+              )}
+
+              {!query && (
+                <>
+                  {/* Continue Watching */}
+                  <ContinueRow videos={reels.slice(2,7)} onPlay={v=>setSelected(v)}/>
+
+                  {/* ── PULSE STREAM — trending, cinema horizontal ── */}
+                  {trending.length>0 && (
+                    <section className="mb-6">
+                      {/* Broadcast station divider */}
+                      <div className="flex items-center gap-3 mb-3 -mx-3 px-3">
+                        <motion.div
+                          animate={{opacity:[1,0.4,1]}} transition={{duration:1.1,repeat:Infinity}}
+                          style={{width:8,height:8,borderRadius:"50%",flexShrink:0,
+                            background:"#ff2d55",boxShadow:"0 0 10px #ff2d55"}}/>
+                        <span style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.7)",
+                          letterSpacing:"0.22em",fontFamily:"monospace"}}>PULSE STREAM</span>
+                        <div style={{flex:1,height:1,
+                          background:"linear-gradient(90deg,rgba(255,45,85,0.4),transparent)"}}/>
+                        <span style={{fontSize:8,color:"rgba(255,255,255,0.2)",fontFamily:"monospace",flexShrink:0}}>
+                          {trending.length} signal
+                        </span>
+                      </div>
+                      <div className="flex gap-3 overflow-x-auto -mx-3 px-3 pb-2"
+                        style={{scrollbarWidth:"none"}}>
+                        {trending.map((v,i)=><TrendRow key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* ── DISCOVERY MATRIX — asymmetric organic grid ── */}
+                  {grid.length>0 && (
+                    <section>
+                      <div className="flex items-center gap-3 mb-3 -mx-3 px-3">
+                        <div style={{width:8,height:8,borderRadius:2,flexShrink:0,
+                          background:T.nova,boxShadow:`0 0 8px ${T.nova}`}}/>
+                        <span style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.7)",
+                          letterSpacing:"0.22em",fontFamily:"monospace"}}>DISCOVERY MATRIX</span>
+                        <div style={{flex:1,height:1,
+                          background:`linear-gradient(90deg,${T.nova}55,transparent)`}}/>
+                      </div>
+                      <BroadcastMatrix reels={grid} onPlay={v=>setSelected(v)}/>
+                    </section>
+                  )}
+                </>
+              )}
             </>
           ) : tab==="shorts" ? (
             <section>
@@ -5619,19 +5524,7 @@ export default function OTubePage() {
       <AnimatePresence>
         {selected && (
           <NexusPlayer key={selected.id}
-            video={selected}
-            onClose={()=>{setSelected(null);setMiniPlayer(null);}}
-            onMinimize={()=>{setMiniPlayer(selected);setSelected(null);}}
-            settings={settings}/>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {miniPlayer && !selected && (
-          <MiniPlayer
-            video={miniPlayer}
-            onExpand={()=>{setSelected(miniPlayer);setMiniPlayer(null);}}
-            onClose={()=>setMiniPlayer(null)}/>
+            video={selected} onClose={()=>setSelected(null)} settings={settings}/>
         )}
       </AnimatePresence>
 

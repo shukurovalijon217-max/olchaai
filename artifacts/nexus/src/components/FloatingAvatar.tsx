@@ -155,7 +155,7 @@ export default function FloatingAvatar() {
         y: dragY,
         position: "fixed",
         right: 16,
-        bottom: 172,
+        bottom: 204,
         zIndex: 9992,
         touchAction: "none",
         userSelect: "none",
@@ -184,18 +184,15 @@ export default function FloatingAvatar() {
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
-            {/* Pulse rings */}
-            {[0, 1].map(i => (
-              <motion.div key={i}
-                style={{
-                  position: "absolute", inset: -(i * 5 + 3), borderRadius: "50%",
-                  border: `1.5px solid rgba(185,55,245,${0.55 - i * 0.18})`,
-                  boxShadow: `0 0 ${8 + i * 7}px rgba(165,35,220,${0.45 - i * 0.15})`,
-                }}
-                animate={{ scale: [1, 1.4 + i * 0.1, 1], opacity: [0.7, 0, 0.7] }}
-                transition={{ duration: 1.9 + i * 0.6, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
-              />
-            ))}
+            {/* Pulse ring — single subtle ring */}
+            <motion.div
+              style={{
+                position: "absolute", inset: -3, borderRadius: "50%",
+                border: "1px solid rgba(185,55,245,0.40)",
+              }}
+              animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+            />
             {/* Red sphere */}
             <div style={{
               position: "absolute", inset: 0, borderRadius: "50%",

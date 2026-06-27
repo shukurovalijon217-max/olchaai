@@ -16,61 +16,19 @@ const SPARKLE_ANGLES  = [0,30,60,90,120,150,180,210,240,270,300,330,15,75,135,19
 const SPARKLE_COLORS  = ["#a78bfa","#c084fc","#f0abfc","#fbbf24","#34d399","#38bdf8","#f87171","#fb923c"];
 const SPARKLE_SIZES   = [6, 5, 8, 4, 7, 5, 6, 4];
 
-/* ─── Content type cards for the bottom sheet ─── */
-const CONTENT_TYPES: {
+/* ─── Content type card config (static, no text) ─── */
+const CONTENT_TYPE_CONFIG: {
   id: TabType;
   emoji: string;
-  label: string;
-  desc: string;
   grad: string;
   glow: string;
   accent: string;
 }[] = [
-  {
-    id: "post",
-    emoji: "📝",
-    label: "Post",
-    desc: "Rasm, matn yoki so'rovnoma",
-    grad: "linear-gradient(135deg,#7c3aed,#a78bfa)",
-    glow: "rgba(124,58,237,0.4)",
-    accent: "#a78bfa",
-  },
-  {
-    id: "story",
-    emoji: "📖",
-    label: "Story",
-    desc: "24 soatlik qisqa hikoya",
-    grad: "linear-gradient(135deg,#d97706,#fbbf24)",
-    glow: "rgba(251,191,36,0.4)",
-    accent: "#fbbf24",
-  },
-  {
-    id: "reel",
-    emoji: "🎬",
-    label: "Reel",
-    desc: "Qisqa video, effektlar bilan",
-    grad: "linear-gradient(135deg,#dc2626,#f87171)",
-    glow: "rgba(239,68,68,0.4)",
-    accent: "#f87171",
-  },
-  {
-    id: "otube",
-    emoji: "🎥",
-    label: "OTube Klip",
-    desc: "Uzun video, OTube Studio",
-    grad: "linear-gradient(135deg,#059669,#34d399)",
-    glow: "rgba(52,211,153,0.4)",
-    accent: "#34d399",
-  },
-  {
-    id: "challenge",
-    emoji: "🏆",
-    label: "Challenge",
-    desc: "Musobaqa, sovrinlar, hakamlar",
-    grad: "linear-gradient(135deg,#b45309,#fb923c)",
-    glow: "rgba(251,146,60,0.4)",
-    accent: "#fb923c",
-  },
+  { id: "post",      emoji: "📝", grad: "linear-gradient(135deg,#7c3aed,#a78bfa)", glow: "rgba(124,58,237,0.4)",  accent: "#a78bfa" },
+  { id: "story",     emoji: "📖", grad: "linear-gradient(135deg,#d97706,#fbbf24)", glow: "rgba(251,191,36,0.4)", accent: "#fbbf24" },
+  { id: "reel",      emoji: "🎬", grad: "linear-gradient(135deg,#dc2626,#f87171)", glow: "rgba(239,68,68,0.4)",  accent: "#f87171" },
+  { id: "otube",     emoji: "🎥", grad: "linear-gradient(135deg,#059669,#34d399)", glow: "rgba(52,211,153,0.4)", accent: "#34d399" },
+  { id: "challenge", emoji: "🏆", grad: "linear-gradient(135deg,#b45309,#fb923c)", glow: "rgba(251,146,60,0.4)", accent: "#fb923c" },
 ];
 
 /* ─── Create Sheet (bottom drawer) ─── */
@@ -83,6 +41,12 @@ function CreateSheet({
   onClose: () => void;
   onSelect: (tab: TabType) => void;
 }) {
+  const { t } = useTranslation();
+  const CONTENT_TYPES = CONTENT_TYPE_CONFIG.map(ct => ({
+    ...ct,
+    label: t(`create.${ct.id}_label`),
+    desc:  t(`create.${ct.id}_desc`),
+  }));
   return (
     <AnimatePresence>
       {open && (
@@ -131,13 +95,13 @@ function CreateSheet({
             <div className="flex items-center justify-between px-5 py-3">
               <div>
                 <h2 className="font-black text-base text-white tracking-tight">
-                  Nima yaratmoqchisiz?
+                  {t("create.sheet_title")}
                 </h2>
                 <p
                   className="text-xs mt-0.5"
                   style={{ color: "rgba(255,255,255,0.35)" }}
                 >
-                  Kontent turini tanlang
+                  {t("create.sheet_sub")}
                 </p>
               </div>
               <motion.button

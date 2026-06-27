@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, ImagePlus, Video, Music, FileText, Upload, Loader2,
@@ -1002,12 +1003,13 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
     (tab === "challenge" && chalName.trim().length > 0 && chalHashtag.trim().length > 1)
   );
 
+  const { t } = useTranslation();
   const TABS: { id: TabType; icon: React.ElementType; label: string; grad: string; glow: string; accent: string }[] = [
-    { id: "post",      icon: ImagePlus, label: "Post",      grad: "linear-gradient(135deg,#7c3aed,#a78bfa)", glow: "rgba(124,58,237,0.45)", accent: "#a78bfa" },
-    { id: "reel",      icon: Film,      label: "Reel",      grad: "linear-gradient(135deg,#dc2626,#f87171)", glow: "rgba(239,68,68,0.45)",  accent: "#f87171" },
-    { id: "story",     icon: Camera,    label: "Story",     grad: "linear-gradient(135deg,#d97706,#fbbf24)", glow: "rgba(251,191,36,0.45)", accent: "#fbbf24" },
-    { id: "otube",     icon: Tv,        label: "OTube",     grad: "linear-gradient(135deg,#059669,#34d399)", glow: "rgba(52,211,153,0.45)", accent: "#34d399" },
-    { id: "challenge", icon: Trophy,    label: "Challenge", grad: "linear-gradient(135deg,#b45309,#fb923c)", glow: "rgba(251,146,60,0.45)", accent: "#fb923c" },
+    { id: "post",      icon: ImagePlus, label: t("create.tab_post"),      grad: "linear-gradient(135deg,#7c3aed,#a78bfa)", glow: "rgba(124,58,237,0.45)", accent: "#a78bfa" },
+    { id: "reel",      icon: Film,      label: t("create.tab_reel"),      grad: "linear-gradient(135deg,#dc2626,#f87171)", glow: "rgba(239,68,68,0.45)",  accent: "#f87171" },
+    { id: "story",     icon: Camera,    label: t("create.tab_story"),     grad: "linear-gradient(135deg,#d97706,#fbbf24)", glow: "rgba(251,191,36,0.45)", accent: "#fbbf24" },
+    { id: "otube",     icon: Tv,        label: t("create.tab_otube"),     grad: "linear-gradient(135deg,#059669,#34d399)", glow: "rgba(52,211,153,0.45)", accent: "#34d399" },
+    { id: "challenge", icon: Trophy,    label: t("create.tab_challenge"), grad: "linear-gradient(135deg,#b45309,#fb923c)", glow: "rgba(251,146,60,0.45)", accent: "#fb923c" },
   ];
 
   return (
@@ -1066,8 +1068,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                 </motion.div>
                 <h2 className="font-bold text-base text-white">
                   {singleTab
-                    ? (TABS.find(t => t.id === tab)?.label ?? "Kontent") + " yaratish"
-                    : "Kontent yaratish"}
+                    ? (TABS.find(tb => tb.id === tab)?.label ?? t("create.modal_title")) + " " + t("common.create", "yaratish")
+                    : t("create.modal_title")}
                 </h2>
               </div>
               <button onClick={handleClose}
@@ -1146,7 +1148,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                   <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: 2, duration: 0.4 }}>
                     <CheckCircle2 className="w-14 h-14 text-emerald-400" />
                   </motion.div>
-                  <p className="text-base font-bold text-white">Muvaffaqiyatli yuklandi!</p>
+                  <p className="text-base font-bold text-white">{t("create.success")}</p>
                 </motion.div>
               )}
 
@@ -4554,15 +4556,15 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                     className="w-full flex items-center justify-center gap-2 py-2 mb-2.5 rounded-2xl text-xs font-bold transition-all"
                     style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)", color: "#a5b4fc" }}>
                     {predictLoading
-                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Tahlil qilinmoqda…</>
-                      : <><Sparkles className="w-3.5 h-3.5" /> AI Bashorat — qancha like oladi?</>}
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t("create.ai_analyzing")}</>
+                      : <><Sparkles className="w-3.5 h-3.5" /> {t("create.ai_predict")}</>}
                   </button>
                 )}
                 <div className="flex gap-3">
                   <button onClick={handleClose}
                     className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-colors"
                     style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
-                    Bekor
+                    {t("create.cancel")}
                   </button>
                   <button
                     onClick={handleSubmit}
@@ -4574,10 +4576,10 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       boxShadow: canSubmit ? "0 4px 20px rgba(124,58,237,0.35)" : "none",
                     }}>
                     {submitting
-                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Yuklanmoqda…</>
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("create.publishing")}</>
                       : timeCapsule && scheduledAt
-                        ? <><span>⏳</span> Kapsulani saqlash</>
-                        : <><Upload className="w-4 h-4" /> E'lon qilish</>
+                        ? <><span>⏳</span> {t("create.capsule_save")}</>
+                        : <><Upload className="w-4 h-4" /> {t("create.publish")}</>
                     }
                   </button>
                 </div>

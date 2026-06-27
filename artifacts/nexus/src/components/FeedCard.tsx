@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
-  Heart, MessageCircle, Share2, Bookmark,
+  Heart, MessageCircle, Share2, Bookmark, Sparkles,
   VolumeX, Volume2, BadgeCheck, Check, Send, X,
   ChevronsRight, ChevronsLeft, Eye, DollarSign,
   UserPlus, UserCheck, Search, Link, User,
@@ -497,10 +497,10 @@ export default function FeedCard({ post }: FeedCardProps) {
   };
 
   const ACTIONS = [
-    { id: "like",    Icon: Heart,          label: "Layk",    count: likes,                   active: liked,      activeColor: "#f87171", fill: liked,  fn: handleLike },
-    { id: "comment", Icon: MessageCircle,  label: "Izoh",    count: post.commentsCount ?? 0, active: false,      activeColor: "#22d3ee", fill: false, fn: () => { setActionsOpen(false); setCommentOpen(o => !o); setShareOpen(false); } },
-    { id: "share",   Icon: Share2,         label: "Ulash",   count: shares,                  active: shareOpen,  activeColor: "#34d399", fill: false, fn: () => { setShareOpen(o => !o); setCommentOpen(false); setActionsOpen(false); } },
-    { id: "save",    Icon: Bookmark,       label: "Saqlash", count: saves,                   active: saved,      activeColor: "#fbbf24", fill: saved,  fn: () => { setSaved(s => { setSaves(n => s ? Math.max(0,n-1) : n+1); return !s; }); } },
+    { id: "like",    Icon: Heart,         count: likes,                   active: liked,     activeColor: "#f87171", fill: liked,  fn: handleLike },
+    { id: "comment", Icon: MessageCircle, count: post.commentsCount ?? 0, active: false,     activeColor: "#22d3ee", fill: false, fn: () => { setActionsOpen(false); setCommentOpen(o => !o); setShareOpen(false); } },
+    { id: "share",   Icon: Share2,        count: shares,                  active: shareOpen, activeColor: "#34d399", fill: false, fn: () => { setShareOpen(o => !o); setCommentOpen(false); setActionsOpen(false); } },
+    { id: "ai",      Icon: Sparkles,      count: 0,                       active: false,     activeColor: "#c084fc", fill: false, fn: () => { setActionsOpen(false); } },
   ];
 
   /* For photo — display format determines object-fit behaviour */
@@ -907,12 +907,12 @@ export default function FeedCard({ post }: FeedCardProps) {
         </motion.div>
       )}
 
-      {/* ══ LAYER 5 — ACTION ORB + PANEL (top-right) ══ */}
+      {/* ══ LAYER 5 — ACTION ORB + VERTICAL BUTTONS ══ */}
       <div className="absolute right-4" style={{ top: 20, zIndex: 30 }}>
 
-        {/* THE ORB — true glassmorphism, slightly smaller */}
+        {/* THE ORB */}
         <motion.button
-          onClick={() => { setActionsOpen(o => !o); setCommentOpen(false); }}
+          onClick={() => { setActionsOpen(o => !o); setCommentOpen(false); setShareOpen(false); }}
           aria-label="Amallar"
           className="relative w-8 h-8 rounded-full flex items-center justify-center focus:outline-none"
           style={{
@@ -924,87 +924,74 @@ export default function FeedCard({ post }: FeedCardProps) {
           }}
           whileTap={{ scale: 0.86 }}
         >
-          {/* subtle pulse ring */}
           {!actionsOpen && (
             <motion.span className="absolute inset-0 rounded-full"
               style={{ border: `1px solid ${theme.accent}88` }}
               animate={{ scale: [1, 1.65], opacity: [0.5, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} />
           )}
-
-          <div className="flex flex-col items-center gap-[3px]">
-            <motion.span className="w-[11px] h-[1.5px] rounded-full bg-white/90 block"
-              animate={{ rotate: actionsOpen ? 45 : 0, y: actionsOpen ? 4.5 : 0 }}
-              transition={{ duration: 0.22 }} />
-            <motion.span className="w-[11px] h-[1.5px] rounded-full bg-white/90 block"
-              animate={{ opacity: actionsOpen ? 0 : 1, scaleX: actionsOpen ? 0 : 1 }}
-              transition={{ duration: 0.18 }} />
-            <motion.span className="w-[11px] h-[1.5px] rounded-full bg-white/90 block"
-              animate={{ rotate: actionsOpen ? -45 : 0, y: actionsOpen ? -4.5 : 0 }}
-              transition={{ duration: 0.22 }} />
-          </div>
+          {/* Hamburger → chevron-up */}
+          <motion.div
+            animate={{ rotate: actionsOpen ? 180 : 0 }}
+            transition={{ duration: 0.25, ease: [0.16,1,0.3,1] }}
+            className="flex flex-col items-center gap-[3px]"
+          >
+            {actionsOpen ? (
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                <path d="M1 7L6 2L11 7" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : (
+              <>
+                <span className="w-[11px] h-[1.5px] rounded-full bg-white/90 block" />
+                <span className="w-[11px] h-[1.5px] rounded-full bg-white/90 block" />
+                <span className="w-[11px] h-[1.5px] rounded-full bg-white/90 block" />
+              </>
+            )}
+          </motion.div>
         </motion.button>
 
-        {/* SLIDE-DOWN PANEL — glassmorphism */}
-        <AnimatePresence>
-          {actionsOpen && (
-            <motion.div
-              initial={{ opacity: 0, scaleY: 0.45, y: -10 }}
-              animate={{ opacity: 1, scaleY: 1, y: 0 }}
-              exit={{ opacity: 0, scaleY: 0.45, y: -10 }}
-              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute right-0 mt-2.5 w-[158px] rounded-2xl overflow-hidden flex flex-col gap-0.5 p-1.5"
-              style={{
-                background: "rgba(255,255,255,0.08)",
-                backdropFilter: "blur(32px) saturate(2) brightness(1.1)",
-                WebkitBackdropFilter: "blur(32px) saturate(2) brightness(1.1)",
-                border: `1px solid rgba(255,255,255,0.18)`,
-                boxShadow: `0 8px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 20px ${theme.glow}`,
-                transformOrigin: "top right",
-              }}
-            >
-              <div className="h-[1px] rounded-full mx-2 mb-0.5"
-                style={{ background: `linear-gradient(90deg,transparent,${theme.accent}99,transparent)` }} />
-
-              {ACTIONS.map((action, i) => (
-                <motion.button
-                  key={action.id}
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-                  onClick={() => { action.fn(); if (action.id !== "share" && action.id !== "comment") setActionsOpen(false); }}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl w-full"
-                  style={{
-                    background: action.active ? `${action.activeColor}20` : "rgba(255,255,255,0.04)",
-                    border: action.active ? `1px solid ${action.activeColor}44` : "1px solid transparent",
-                  }}
-                  whileTap={{ scale: 0.93 }}
-                >
-                  {/* Icon + label */}
-                  <div className="flex items-center gap-2">
-                    <action.Icon className="w-4 h-4 flex-shrink-0"
-                      style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.85)" }}
-                      fill={action.fill ? action.activeColor : "none"} />
-                    <span className="text-[11px] font-semibold"
-                      style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.85)" }}>
-                      {action.label}
-                    </span>
-                  </div>
-                  {/* Count — fixed width so layout never shifts */}
-                  <span
-                    className="text-xs font-black tabular-nums text-right"
-                    style={{
-                      color: action.active ? action.activeColor : "rgba(255,255,255,0.55)",
-                      minWidth: "2.6rem",
-                    }}
-                  >
+        {/* VERTICAL ACTION BUTTONS — slide down from orb, glass backdrop only */}
+        <div className="absolute right-0 flex flex-col items-center gap-3 pt-3" style={{ top: "100%", minWidth: 40 }}>
+          <AnimatePresence>
+            {actionsOpen && ACTIONS.map((action, i) => (
+              <motion.button
+                key={action.id}
+                initial={{ opacity: 0, y: -24, scale: 0.55 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -18 * (i + 1), scale: 0.4 }}
+                transition={{ delay: i * 0.07, duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+                onClick={action.fn}
+                whileTap={{ scale: 0.88 }}
+                className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-2xl focus:outline-none"
+                style={{
+                  background: action.active
+                    ? `${action.activeColor}22`
+                    : "rgba(8,8,22,0.38)",
+                  backdropFilter: "blur(22px) saturate(2)",
+                  WebkitBackdropFilter: "blur(22px) saturate(2)",
+                  border: action.active
+                    ? `1px solid ${action.activeColor}55`
+                    : "1px solid rgba(255,255,255,0.14)",
+                  boxShadow: action.active
+                    ? `0 0 12px ${action.activeColor}44`
+                    : "0 2px 12px rgba(0,0,0,0.35)",
+                }}
+              >
+                <action.Icon
+                  className="w-[22px] h-[22px]"
+                  style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.88)" }}
+                  fill={action.fill ? action.activeColor : "none"}
+                />
+                {action.count > 0 && (
+                  <span className="text-[10px] font-black tabular-nums leading-none"
+                    style={{ color: action.active ? action.activeColor : "rgba(255,255,255,0.55)" }}>
                     {fmtNum(action.count)}
                   </span>
-                </motion.button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                )}
+              </motion.button>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* ══ LAYER 6 — BOTTOM-LEFT CONTROLS (volume + views + monetization) ══ */}

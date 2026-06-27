@@ -5193,7 +5193,8 @@ export default function OTubePage() {
         <div className="sticky top-0 z-40"
           style={{background:"rgba(0,0,8,0.82)",backdropFilter:"blur(32px)",
             WebkitBackdropFilter:"blur(32px)",
-            borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+            borderBottom:"1px solid rgba(255,255,255,0.04)",
+            paddingTop:"env(safe-area-inset-top, 0px)"}}>
 
           <AnimatePresence mode="wait">
             {showSearch ? (

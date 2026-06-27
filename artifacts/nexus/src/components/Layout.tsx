@@ -148,7 +148,7 @@ function MobileNavBtn({ href, icon: Icon, active, onNav }: {
         onClick={onNav}
         whileTap={{ scale: 0.78 }}
         className="relative flex items-center justify-center select-none"
-        style={{ width: 40, height: 40, borderRadius: "50%", overflow: "visible" }}
+        style={{ width: 44, height: 44, borderRadius: "50%", overflow: "visible" }}
       >
         {/* Active bg glow */}
         <motion.div

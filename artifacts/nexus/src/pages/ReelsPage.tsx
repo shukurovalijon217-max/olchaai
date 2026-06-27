@@ -397,10 +397,10 @@ function BottomBar({
         {/* ── Like ── */}
         <motion.button whileTap={{ scale:0.72 }} onClick={onLike}
           className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0"
-          style={{ width:37, height:38, borderRadius:"50%", cursor:"pointer",
+          style={{ width:44, height:44, borderRadius:"50%", cursor:"pointer",
             background: isLiked ? "rgba(239,68,68,0.22)" : "transparent",
             border: isLiked ? "1px solid rgba(239,68,68,0.42)" : "1px solid transparent" }}>
-          <Heart style={{ width:14, height:14,
+          <Heart style={{ width:15, height:15,
             color: isLiked ? "#f87171" : "rgba(255,255,255,0.65)",
             fill: isLiked ? "#f87171" : "none", transition:"all 0.15s" }}/>
           <span style={{ fontSize:8.5, color: isLiked ? "#fca5a5" : "rgba(255,255,255,0.42)",
@@ -410,8 +410,8 @@ function BottomBar({
         {/* ── Comment ── */}
         <motion.button whileTap={{ scale:0.72 }} onClick={onComment}
           className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0"
-          style={{ width:37, height:38, borderRadius:"50%", cursor:"pointer" }}>
-          <MessageCircle style={{ width:14, height:14, color:"rgba(255,255,255,0.65)" }}/>
+          style={{ width:44, height:44, borderRadius:"50%", cursor:"pointer" }}>
+          <MessageCircle style={{ width:15, height:15, color:"rgba(255,255,255,0.65)" }}/>
           <span style={{ fontSize:8.5, color:"rgba(255,255,255,0.42)", fontWeight:800, lineHeight:1 }}>
             {fmt(commentsCount)}
           </span>
@@ -420,22 +420,22 @@ function BottomBar({
         {/* ── Share ── */}
         <motion.button whileTap={{ scale:0.72 }} onClick={handleShare}
           className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0"
-          style={{ width:37, height:38, borderRadius:"50%", cursor:"pointer",
+          style={{ width:44, height:44, borderRadius:"50%", cursor:"pointer",
             background: shareOk ? "rgba(16,185,129,0.22)" : "transparent",
             border: shareOk ? "1px solid rgba(16,185,129,0.38)" : "1px solid transparent" }}>
           {shareOk
-            ? <Check style={{ width:14, height:14, color:"#6ee7b7" }}/>
-            : <Share2 style={{ width:14, height:14, color:"rgba(255,255,255,0.65)" }}/>
+            ? <Check style={{ width:15, height:15, color:"#6ee7b7" }}/>
+            : <Share2 style={{ width:15, height:15, color:"rgba(255,255,255,0.65)" }}/>
           }
         </motion.button>
 
         {/* ── AI ── */}
         <motion.button whileTap={{ scale:0.72 }} onClick={onAI}
           className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0"
-          style={{ width:37, height:38, borderRadius:"50%", cursor:"pointer" }}>
+          style={{ width:44, height:44, borderRadius:"50%", cursor:"pointer" }}>
           {analyzingId === reel.id
-            ? <Loader2 style={{ width:14, height:14, color:"#c4b5fd" }} className="animate-spin"/>
-            : <Brain style={{ width:14, height:14, color:"rgba(167,139,250,0.8)" }}/>
+            ? <Loader2 style={{ width:15, height:15, color:"#c4b5fd" }} className="animate-spin"/>
+            : <Brain style={{ width:15, height:15, color:"rgba(167,139,250,0.8)" }}/>
           }
         </motion.button>
 
@@ -443,8 +443,8 @@ function BottomBar({
 
         {/* ── Views ── */}
         <div className="flex flex-col items-center justify-center gap-[2px] flex-shrink-0 pointer-events-none"
-          style={{ width:33 }}>
-          <Eye style={{ width:12, height:12, color:"rgba(255,255,255,0.35)" }}/>
+          style={{ width:36 }}>
+          <Eye style={{ width:13, height:13, color:"rgba(255,255,255,0.35)" }}/>
           <span style={{ fontSize:8, color:"rgba(255,255,255,0.35)", fontWeight:700, lineHeight:1 }}>
             {fmt(reel.viewsCount??0)}
           </span>
@@ -453,12 +453,12 @@ function BottomBar({
         {/* ── Volume ── */}
         <motion.button whileTap={{ scale:0.72 }} onClick={onMute}
           className="flex items-center justify-center flex-shrink-0"
-          style={{ width:32, height:32, borderRadius:"50%", cursor:"pointer",
+          style={{ width:44, height:44, borderRadius:"50%", cursor:"pointer",
             background: muted ? "rgba(255,255,255,0.05)" : `${neonColor}1a`,
             border: muted ? "1px solid rgba(255,255,255,0.07)" : `1px solid ${neonColor}33` }}>
           {muted
-            ? <VolumeX style={{ width:13, height:13, color:"rgba(255,255,255,0.32)" }}/>
-            : <Volume2 style={{ width:13, height:13, color:"rgba(255,255,255,0.75)" }}/>
+            ? <VolumeX style={{ width:14, height:14, color:"rgba(255,255,255,0.32)" }}/>
+            : <Volume2 style={{ width:14, height:14, color:"rgba(255,255,255,0.75)" }}/>
           }
         </motion.button>
       </div>
@@ -1350,8 +1350,8 @@ export default function ReelsPage() {
             </div>
           </motion.div>
 
-          {/* Filmstrip — right */}
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2 items-center">
+          {/* Filmstrip — right (desktop only; hidden on mobile to prevent edge clipping) */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex flex-col gap-2 items-center">
             {feed.slice(Math.max(0,current-3),Math.min(feed.length,current+6)).map((r,relIdx)=>{
               const absIdx=Math.max(0,current-3)+relIdx;
               const isAct=absIdx===current, dist=Math.abs(absIdx-current);
@@ -1379,6 +1379,18 @@ export default function ReelsPage() {
               </span>
             )}
           </div>
+
+          {/* Mobile-only: minimal page counter (top-center, unobtrusive) */}
+          {feed.length>1 && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 md:hidden pointer-events-none">
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full"
+                style={{background:"rgba(0,0,0,0.38)",backdropFilter:"blur(8px)"}}>
+                <span className="text-[9px] font-black text-white/50 tabular-nums">
+                  {current+1} / {feed.length}
+                </span>
+              </div>
+            </div>
+          )}
         </>
       )}
 

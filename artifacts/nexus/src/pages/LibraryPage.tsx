@@ -850,7 +850,7 @@ export default function LibraryPage() {
         {tab === "search" && (
           <div className="space-y-5">
 
-            {/* ── Hero search bar ── */}
+            {/* ── Hero search bar (search button inside the input) ── */}
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
               className="relative">
               <motion.div
@@ -873,20 +873,31 @@ export default function LibraryPage() {
                   onKeyDown={e => e.key === "Enter" && doSearch()}
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
-                  placeholder="Kitob, mavzu, muallif... har qanday narsani qidiring"
-                  className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground text-sm focus:outline-none"
+                  placeholder="Kitob, mavzu, muallif..."
+                  className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground text-sm focus:outline-none min-w-0"
                 />
-                {searchQ && (
+                {searchQ && !searchLoading && (
                   <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }}
                     onClick={() => { setSearchQ(""); setSearchResults([]); setAiResult(null); }}
-                    className="text-muted-foreground hover:text-foreground transition-colors">
+                    className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
                     <X className="w-4 h-4" />
                   </motion.button>
                 )}
+                {/* ── Search submit button always visible ── */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => doSearch()}
+                  disabled={searchLoading || !searchQ.trim()}
+                  className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 hover:opacity-90 transition-opacity"
+                >
+                  {searchLoading
+                    ? <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    : <ArrowRight className="w-4 h-4" />}
+                </motion.button>
               </motion.div>
             </motion.div>
 
-            {/* ── Source selector ── */}
+            {/* ── Source selector (chips only, no extra search button) ── */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {([
                 { id: "all",     label: "Hammasi",    icon: Zap,        color: "text-primary",    bg: "bg-primary/10",    border: "border-primary/30" },
@@ -906,14 +917,6 @@ export default function LibraryPage() {
                   {s.label}
                 </motion.button>
               ))}
-
-              <button onClick={() => doSearch()} disabled={searchLoading || !searchQ.trim()}
-                className="flex-shrink-0 ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-all active:scale-95">
-                {searchLoading ? (
-                  <div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                ) : <ArrowRight className="w-3.5 h-3.5" />}
-                Qidirish
-              </button>
             </div>
 
             {/* ── Quick 3D web-search cards (show when query entered, no results yet) ── */}

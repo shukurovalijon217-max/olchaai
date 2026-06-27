@@ -272,7 +272,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex relative" style={{ background: "#0a0604" }}>
 
       {/* ── Language switcher (absolute top-right) ── */}
-      <div className="absolute top-5 right-5 z-50">
+      <div className="absolute right-4 z-50" style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
         <LangSwitcher />
       </div>
 

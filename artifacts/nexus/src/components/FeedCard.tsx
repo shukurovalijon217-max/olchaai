@@ -810,8 +810,8 @@ export default function FeedCard({ post }: FeedCardProps) {
 
       {/* ══ LAYER 4 — USER INFO (top-left) ══ */}
       <motion.div
-        className="absolute left-4 flex items-center gap-2.5"
-        style={{ top: 22, zIndex: 10 }}
+        className="absolute left-4 flex items-center gap-2"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)", zIndex: 10 }}
         initial={{ opacity: 0, x: -20 }}
         animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
         transition={{ delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
@@ -821,33 +821,33 @@ export default function FeedCard({ post }: FeedCardProps) {
           onClick={() => post.author?.id && navigate(`/profile/${post.author.id}`)}>
           {post.author?.avatarUrl ? (
             <img src={post.author.avatarUrl} alt=""
-              className="w-9 h-9 rounded-full object-cover"
-              style={{ boxShadow: `0 0 0 2px ${theme.accent}99, 0 0 14px ${theme.glow}` }} />
+              className="w-8 h-8 rounded-full object-cover"
+              style={{ boxShadow: `0 0 0 1.5px ${theme.accent}99, 0 0 10px ${theme.glow}` }} />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black text-white"
-              style={{ background: `linear-gradient(135deg,${theme.accent}cc,${theme.bg})`, boxShadow: `0 0 0 2px ${theme.accent}88,0 0 14px ${theme.glow}` }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white"
+              style={{ background: `linear-gradient(135deg,${theme.accent}cc,${theme.bg})`, boxShadow: `0 0 0 1.5px ${theme.accent}88,0 0 10px ${theme.glow}` }}>
               {post.author?.displayName?.[0]?.toUpperCase() ?? "?"}
             </div>
           )}
-          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-black" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-black" />
         </div>
         {/* Name — tap → profile */}
         <div className="cursor-pointer"
           onClick={() => post.author?.id && navigate(`/profile/${post.author.id}`)}>
           <div className="flex items-center gap-1">
-            <span className="text-white font-bold text-[13px] drop-shadow leading-none hover:underline">
+            <span className="text-white font-bold text-[12px] drop-shadow leading-none">
               {post.author?.displayName ?? "Foydalanuvchi"}
             </span>
-            {post.author?.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />}
+            {post.author?.isVerified && <BadgeCheck className="w-3 h-3 text-sky-400 flex-shrink-0" />}
           </div>
-          <span className="text-white/55 text-[11px] leading-none mt-0.5 block">@{post.author?.username ?? "user"}</span>
+          <span className="text-white/50 text-[10px] leading-none mt-0.5 block">@{post.author?.username ?? "user"}</span>
         </div>
       </motion.div>
 
       {/* Content-type badge */}
       <motion.div
-        className="absolute left-4 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-        style={{ top: 74, zIndex: 10, background: `${theme.accent}18`, border: `1px solid ${theme.accent}38`, color: theme.labelColor }}
+        className="absolute left-4 text-[9px] font-bold px-2 py-0.5 rounded-full"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 54px)", zIndex: 10, background: `${theme.accent}18`, border: `1px solid ${theme.accent}38`, color: theme.labelColor }}
         initial={{ opacity: 0, y: -6 }}
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -6 }}
         transition={{ delay: 0.28 }}
@@ -859,7 +859,7 @@ export default function FeedCard({ post }: FeedCardProps) {
       {(isVideo || isPhoto) && (
         <motion.div
           className="absolute left-1/2 -translate-x-1/2"
-          style={{ top: 22, zIndex: 20 }}
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)", zIndex: 20 }}
           initial={{ opacity: 0, scale: 0.85, y: -6 }}
           animate={showSubscribe ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.85, y: -6 }}
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
@@ -908,7 +908,7 @@ export default function FeedCard({ post }: FeedCardProps) {
       )}
 
       {/* ══ LAYER 5 — ACTION ORB + VERTICAL BUTTONS ══ */}
-      <div className="absolute right-4" style={{ top: 20, zIndex: 30 }}>
+      <div className="absolute right-4" style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)", zIndex: 30 }}>
 
         {/* THE ORB */}
         <motion.button

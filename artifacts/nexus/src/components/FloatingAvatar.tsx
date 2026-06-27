@@ -44,7 +44,7 @@ export default function FloatingAvatar() {
   const [, setLocation] = useLocation();
 
   const [isDot, setIsDot] = useState(() => {
-    try { return localStorage.getItem(DOT_KEY) === "1"; } catch { return false; }
+    try { return localStorage.getItem(DOT_KEY) !== "0"; } catch { return true; }
   });
 
   /* Drag position */

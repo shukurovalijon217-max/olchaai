@@ -14,7 +14,7 @@ import {
   getListCreatorPlansQueryKey, getCheckCreatorSubscriptionQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState, useRef, useCallback, ReactNode, ElementType } from "react";
+import { useState, useRef, useCallback, useEffect, ReactNode, ElementType } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { useLocation } from "wouter";
@@ -246,18 +246,34 @@ function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }
       </div>
 
       <div className="px-5 pb-5 space-y-3.5 overflow-y-auto max-h-[60vh]">
-        <div className="h-24 rounded-2xl overflow-hidden relative border border-white/8">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
-          <motion.div animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-0 flex items-center justify-center flex-col gap-1">
-            <div className="w-9 h-9 rounded-full border-2 border-white/20 flex items-center justify-center">
-              <Camera className="w-4 h-4 text-white/40" />
-            </div>
-            <span className="text-white/35 text-xs">{t("live_explore.camera")}</span>
-          </motion.div>
-          <div className="absolute top-2 left-2 flex items-center gap-1 bg-red-600 rounded-md px-2 py-0.5 shadow-[0_0_10px_rgba(220,38,38,0.6)]">
-            <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-white" />
-            <span className="text-white text-[10px] font-black tracking-widest">LIVE</span>
+        {/* ── Live preview card ── */}
+        <div className="h-28 rounded-2xl overflow-hidden relative" style={{ border: "1px solid rgba(239,68,68,0.22)" }}>
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #180a0a, #0f0505)" }} />
+          {/* animated pulse rings */}
+          <motion.div animate={{ scale: [1, 1.8, 1], opacity: [0.3, 0, 0.3] }} transition={{ duration: 2.2, repeat: Infinity }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-red-500/50" />
+          <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }} transition={{ duration: 2.2, repeat: Infinity, delay: 0.4 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-red-500/60" />
+          <div className="absolute inset-0 flex items-center justify-center flex-col gap-1.5">
+            <motion.div animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.6, repeat: Infinity }}
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(239,68,68,0.2)", border: "1.5px solid rgba(239,68,68,0.5)", boxShadow: "0 0 18px rgba(239,68,68,0.35)" }}>
+              <Camera className="w-4.5 h-4.5 text-red-400" />
+            </motion.div>
+            <span className="text-white/40 text-[11px] font-semibold">{t("live_explore.camera")}</span>
+          </div>
+          {/* LIVE badge */}
+          <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{ background: "rgba(220,38,38,0.9)", boxShadow: "0 0 12px rgba(220,38,38,0.6)" }}>
+            <motion.span animate={{ opacity: [1, 0.15, 1] }} transition={{ duration: 0.9, repeat: Infinity }}
+              className="w-1.5 h-1.5 rounded-full bg-white" />
+            <span className="text-white text-[10px] font-black tracking-[0.15em]">LIVE</span>
+          </div>
+          {/* viewer count mock */}
+          <div className="absolute top-2.5 right-3 flex items-center gap-1 px-2 py-1 rounded-full"
+            style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(6px)" }}>
+            <Users className="w-3 h-3 text-white/60" />
+            <span className="text-white/70 text-[10px] font-semibold">0</span>
           </div>
         </div>
 
@@ -343,53 +359,75 @@ function SubscriptionSheet({ open, onClose, isOwner, plans, isSubscribed, subscr
         {subError && <p className="text-red-400 text-xs text-center bg-red-500/10 rounded-xl py-2 mt-3">{subError}</p>}
 
         {plans.length === 0 && !creating ? (
-          <div className="py-10 text-center text-muted-foreground">
-            <motion.div animate={{ y: [-3, 3, -3] }} transition={{ duration: 3, repeat: Infinity }}
-              className="w-11 h-11 rounded-2xl bg-amber-500/10 mx-auto mb-2.5 flex items-center justify-center border border-amber-500/20">
-              <Star className="w-5 h-5 text-amber-500/50" />
+          <div className="py-12 text-center">
+            <motion.div animate={{ y: [-4, 4, -4], rotate: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg, rgba(234,179,8,0.15), rgba(249,115,22,0.1))", border: "1px solid rgba(234,179,8,0.2)", boxShadow: "0 0 24px rgba(234,179,8,0.1)" }}>
+              <Star className="w-6 h-6 text-amber-400" />
             </motion.div>
-            <p className="text-sm font-medium">{isOwner ? t("profile.no_plans_yet") : t("profile.no_subs_yet")}</p>
-            <p className="text-xs mt-1 opacity-55">{isOwner ? t("profile.create_first_plan") : t("profile.creator_no_plans")}</p>
+            <p className="text-sm font-bold text-foreground">{isOwner ? t("profile.no_plans_yet") : t("profile.no_subs_yet")}</p>
+            <p className="text-xs mt-1 text-muted-foreground/70">{isOwner ? t("profile.create_first_plan") : t("profile.creator_no_plans")}</p>
           </div>
         ) : (
-          <div className="space-y-2 mt-3">
+          <div className="space-y-3 mt-3">
             {plans.map((plan, idx) => (
-              <motion.div key={plan.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-                className="rounded-xl border border-amber-500/18 bg-white/3 p-3">
-                <div className="flex items-start justify-between mb-1.5">
-                  <div>
-                    <p className="text-sm font-bold text-foreground">{plan.name}</p>
-                    {plan.description && <p className="text-[10px] text-muted-foreground">{plan.description}</p>}
+              <motion.div key={plan.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06, type: "spring", stiffness: 260, damping: 24 }}
+                className="relative rounded-2xl overflow-hidden"
+                style={{ background: "linear-gradient(145deg, rgba(234,179,8,0.07), rgba(0,0,0,0))", border: "1px solid rgba(234,179,8,0.18)" }}>
+                {/* top accent line */}
+                <div className="absolute inset-x-0 top-0 h-[2px]"
+                  style={{ background: "linear-gradient(90deg, transparent, #f59e0b, #f97316, transparent)" }} />
+                <div className="p-4">
+                  {/* Plan name + price row */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                        <p className="text-sm font-black text-foreground">{plan.name}</p>
+                      </div>
+                      {plan.description && <p className="text-[11px] text-muted-foreground leading-snug">{plan.description}</p>}
+                    </div>
+                    <div className="text-right shrink-0 ml-4 bg-amber-500/10 rounded-xl px-3 py-1.5 border border-amber-500/20">
+                      <p className="text-base font-black text-amber-400 leading-none">{((plan.price ?? 0) / 100).toLocaleString()}</p>
+                      <p className="text-[9px] text-amber-400/55 font-semibold mt-0.5">{t("profile.per_month")}</p>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0 ml-3">
-                    <p className="text-sm font-black text-amber-400">{((plan.price ?? 0) / 100).toLocaleString()}</p>
-                    <p className="text-[10px] text-muted-foreground">{t("profile.per_month")}</p>
-                  </div>
-                </div>
-                {plan.perks && plan.perks.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {plan.perks.map((perk, i) => (
-                      <span key={i} className="flex items-center gap-0.5 text-[10px] text-muted-foreground bg-white/5 rounded-lg px-1.5 py-0.5">
-                        <Check className="w-2.5 h-2.5 text-emerald-400 shrink-0" /> {perk}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center justify-between pt-1.5 border-t border-white/6">
-                  <span className="text-[10px] text-muted-foreground">{plan.subscriberCount ?? 0} {t("profile.sub_count")}</span>
-                  {!isOwner && (
-                    isSubscribed ? (
-                      <motion.button whileTap={{ scale: 0.93 }} onClick={() => onUnsubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/8 text-muted-foreground hover:text-red-400 transition-colors">
-                        {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <BellOff className="w-3 h-3" />} {t("profile.cancel_sub")}
-                      </motion.button>
-                    ) : (
-                      <NeonBtn onClick={() => onSubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
-                        gradient="linear-gradient(135deg, #f59e0b, #f97316)" glow="rgba(245,158,11,0.5)" className="h-6 text-[10px]">
-                        {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3 fill-white" />} {t("profile.subscribe_label")}
-                      </NeonBtn>
-                    )
+
+                  {/* Perks */}
+                  {plan.perks && plan.perks.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {plan.perks.map((perk, i) => (
+                        <span key={i} className="flex items-center gap-1 text-[10px] font-semibold rounded-lg px-2 py-1"
+                          style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.22)", color: "#6ee7b7" }}>
+                          <Check className="w-3 h-3 shrink-0" /> {perk}
+                        </span>
+                      ))}
+                    </div>
                   )}
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-2.5 border-t border-white/6">
+                    <div className="flex items-center gap-1.5">
+                      <Users className="w-3 h-3 text-muted-foreground/50" />
+                      <span className="text-[10px] text-muted-foreground font-semibold">{plan.subscriberCount ?? 0} {t("profile.sub_count")}</span>
+                    </div>
+                    {!isOwner && (
+                      isSubscribed ? (
+                        <motion.button whileTap={{ scale: 0.93 }} onClick={() => onUnsubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold transition-colors"
+                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <BellOff className="w-3 h-3" />}
+                          {t("profile.cancel_sub")}
+                        </motion.button>
+                      ) : (
+                        <NeonBtn onClick={() => onSubscribe(plan.id)} disabled={subscribingPlanId === plan.id}
+                          gradient="linear-gradient(135deg, #f59e0b, #f97316)" glow="rgba(245,158,11,0.55)" className="h-7 text-[11px] px-3">
+                          {subscribingPlanId === plan.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3 fill-white" />}
+                          {t("profile.subscribe_label")}
+                        </NeonBtn>
+                      )
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -561,20 +599,49 @@ function SettingsSheet({ open, onClose, user, isOwner, onAvatarClick, onCoverCli
   );
 }
 
-/* ─── Compact Stat Pill ───────────────────────────────────────── */
-function StatPill({ value, label, color }: { value: number; label: string; color: string }) {
-  const fmt = (n: number) => n >= 1000000 ? `${(n / 1000000).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n);
+/* ─── Big Stat Node ───────────────────────────────────────────── */
+function BigStatNode({ value, label, accent, onClick }: {
+  value: number; label: string; accent: string; onClick?: () => void;
+}) {
+  const [displayed, setDisplayed] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const duration = 1100;
+    const startTime = performance.now();
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 4);
+      setDisplayed(Math.round(value * ease));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [value]);
+  const fmt = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
+
   return (
-    <div className="flex flex-col items-center cursor-default">
-      <motion.span
-        className="text-base font-black leading-tight"
-        style={{ color, textShadow: `0 0 14px ${color}80` }}
-        animate={{ textShadow: [`0 0 6px ${color}50`, `0 0 18px ${color}90`, `0 0 6px ${color}50`] }}
-        transition={{ duration: 3.5, repeat: Infinity }}>
-        {fmt(value ?? 0)}
+    <motion.div
+      onClick={onClick}
+      whileTap={onClick ? { scale: 0.96 } : undefined}
+      className={`relative flex flex-col items-center justify-center py-4 rounded-2xl overflow-hidden ${onClick ? "cursor-pointer" : "cursor-default"}`}
+      style={{
+        background: "rgba(255,255,255,0.035)",
+        border: `1px solid ${accent}30`,
+        boxShadow: `0 0 24px ${accent}14 inset`,
+      }}>
+      {/* top glow bar */}
+      <div className="absolute inset-x-0 top-0 h-[2px]"
+        style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)`, opacity: 0.7 }} />
+      {/* bloom */}
+      <motion.div className="absolute inset-0 pointer-events-none"
+        animate={{ opacity: [0.08, 0.18, 0.08] }} transition={{ duration: 3.5, repeat: Infinity }}
+        style={{ background: `radial-gradient(ellipse at 50% 0%, ${accent}55, transparent 70%)` }} />
+      <motion.span className="relative z-10 text-[26px] font-black leading-none tracking-tight"
+        style={{ color: accent, textShadow: `0 0 22px ${accent}88` }}>
+        {fmt(displayed)}
       </motion.span>
-      <span className="text-[10px] text-muted-foreground font-semibold mt-0.5">{label}</span>
-    </div>
+      <span className="relative z-10 text-[9px] text-muted-foreground font-bold mt-1.5 tracking-[0.18em] uppercase">{label}</span>
+    </motion.div>
   );
 }
 
@@ -606,15 +673,16 @@ function MicroStat({ icon: Icon, label, value, color, glow, delay }: {
 /* ─── Tab Button ──────────────────────────────────────────────── */
 function TabBtn({ active, icon: Icon, label, onClick }: { active: boolean; icon: ElementType; label: string; onClick: () => void }) {
   return (
-    <motion.button onClick={onClick} whileTap={{ scale: 0.94 }} whileHover={{ scale: 1.02 }}
-      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-sm font-bold relative overflow-hidden">
+    <motion.button onClick={onClick} whileTap={{ scale: 0.94 }}
+      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 relative">
+      <Icon className={`w-3.5 h-3.5 transition-colors ${active ? "text-violet-400" : "text-muted-foreground/50"}`} />
+      <span className={`text-xs font-bold tracking-wide transition-colors ${active ? "text-foreground" : "text-muted-foreground/50"}`}>{label}</span>
       {active && (
-        <motion.div layoutId="pf-tab-bg" className="absolute inset-0 rounded-xl"
+        <motion.div layoutId="pf-tab-underline"
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] rounded-full"
           transition={{ type: "spring", stiffness: 420, damping: 36 }}
-          style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.22), rgba(59,130,246,0.14))", boxShadow: "0 0 14px rgba(124,58,237,0.2), inset 0 1px 0 rgba(255,255,255,0.1)", border: "1px solid rgba(124,58,237,0.28)" }} />
+          style={{ width: 28, background: "linear-gradient(90deg,#7c3aed,#6366f1)", boxShadow: "0 0 8px rgba(124,58,237,0.75)" }} />
       )}
-      <Icon className={`w-3.5 h-3.5 relative z-10 ${active ? "text-violet-400" : "text-muted-foreground"}`} />
-      <span className={`relative z-10 text-xs ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
     </motion.button>
   );
 }
@@ -878,39 +946,25 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           {user.bio && <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2">{user.bio}</p>}
         </motion.div>
 
-        {/* ── Compact Stats Bar ──────────────────────────────────── */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
-          className="flex items-center justify-around py-3 px-2 mb-4 rounded-2xl border border-white/7"
-          style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(59,130,246,0.05), rgba(16,185,129,0.04))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}>
-
-          <StatPill value={myPosts.length} label={t("profile.posts")} color="#a78bfa" />
-
-          <div className="w-px h-8 bg-white/8 rounded-full" />
-
-          <StatPill value={user.followersCount ?? 0} label={t("profile.stat_followers")} color="#818cf8" />
-
-          <div className="w-px h-8 bg-white/8 rounded-full" />
-
-          <StatPill value={user.followingCount ?? 0} label={t("profile.stat_following")} color="#60a5fa" />
-
+        {/* ── Big Stats Grid ─────────────────────────────────────── */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
+          className="grid gap-2 mb-5"
+          style={{ gridTemplateColumns: isOwner && plans.length > 0 ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr" }}>
+          <BigStatNode value={myPosts.length} label={t("profile.posts")} accent="#a78bfa" />
+          <BigStatNode value={user.followersCount ?? 0} label={t("profile.stat_followers")} accent="#818cf8" />
+          <BigStatNode value={user.followingCount ?? 0} label={t("profile.stat_following")} accent="#60a5fa" />
           {isOwner && plans.length > 0 && (
-            <>
-              <div className="w-px h-8 bg-white/8 rounded-full" />
-              <motion.button onClick={() => setShowSub(true)} className="flex flex-col items-center cursor-pointer group">
-                <motion.span className="text-base font-black text-amber-400 leading-tight"
-                  style={{ textShadow: "0 0 14px rgba(245,158,11,0.6)" }}
-                  animate={{ textShadow: ["0 0 6px rgba(245,158,11,0.4)", "0 0 18px rgba(245,158,11,0.8)", "0 0 6px rgba(245,158,11,0.4)"] }}
-                  transition={{ duration: 3.5, repeat: Infinity }}>
-                  {plans.reduce((s, p) => s + (p.subscriberCount ?? 0), 0)}
-                </motion.span>
-                <span className="text-[10px] text-muted-foreground font-semibold mt-0.5">{t("profile.sub_count")}</span>
-              </motion.button>
-            </>
+            <BigStatNode
+              value={plans.reduce((s, p) => s + (p.subscriberCount ?? 0), 0)}
+              label={t("profile.sub_count")}
+              accent="#fbbf24"
+              onClick={() => setShowSub(true)}
+            />
           )}
         </motion.div>
 
         {/* ── Tabs ──────────────────────────────────────────────── */}
-        <div className="flex gap-1 mb-4 bg-white/4 rounded-2xl p-1 border border-white/7">
+        <div className="flex gap-0 mb-4 border-b border-white/8">
           {([
             ["posts", Grid3X3, t("profile.posts")],
             ["reels", Play, "Reels"],
@@ -921,59 +975,107 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         </div>
 
         {/* ── Posts Grid ────────────────────────────────────────── */}
-        {tab === "posts" && (
-          myPosts.length === 0 ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-muted-foreground">
-              <motion.div animate={{ y: [-3, 3, -3], opacity: [0.3, 0.55, 0.3] }} transition={{ duration: 3, repeat: Infinity }}
-                className="w-12 h-12 rounded-2xl bg-white/5 mx-auto mb-2.5 flex items-center justify-center">
-                <BookmarkIcon className="w-6 h-6 opacity-35" />
-              </motion.div>
-              <p className="text-sm font-medium">{t("profile.no_posts") || "No posts yet"}</p>
+        {tab === "posts" && myPosts.length === 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-muted-foreground">
+            <motion.div animate={{ y: [-3, 3, -3], opacity: [0.3, 0.55, 0.3] }} transition={{ duration: 3, repeat: Infinity }}
+              className="w-12 h-12 rounded-2xl bg-white/5 mx-auto mb-2.5 flex items-center justify-center">
+              <BookmarkIcon className="w-6 h-6 opacity-35" />
             </motion.div>
-          ) : (
-            <div className="grid grid-cols-3 gap-1">
-              {myPosts.map((post, i) => (
-                <motion.div key={post.id}
-                  initial={{ opacity: 0, scale: 0.88, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ delay: i * 0.03, type: "spring", stiffness: 280, damping: 22 }}>
-                  <Link href={`/post/${post.id}`}>
-                    <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
-                      className="aspect-square rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/post"
-                      style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
-                      {post.mediaUrl && post.type !== "video" ? (
-                        <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
-                      ) : post.mediaUrl && post.type === "video" ? (
-                        <div className="w-full h-full relative bg-black">
-                          <video src={post.mediaUrl} className="w-full h-full object-cover" muted preload="none" />
+            <p className="text-sm font-medium">{t("profile.no_posts") || "No posts yet"}</p>
+          </motion.div>
+        )}
+        {tab === "posts" && myPosts.length > 0 && (
+          <div className="space-y-1.5">
+            {/* ─── Hero featured post ─── */}
+            {topPost && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 24 }}>
+                <Link href={`/post/${topPost.id}`}>
+                  <motion.div whileTap={{ scale: 0.98 }}
+                    className="w-full rounded-2xl overflow-hidden relative cursor-pointer group/hero"
+                    style={{ height: 200, boxShadow: "0 4px 28px rgba(124,58,237,0.18)" }}>
+                    {topPost.mediaUrl && topPost.type !== "video"
+                      ? <img src={topPost.mediaUrl} alt="" className="w-full h-full object-cover" />
+                      : topPost.mediaUrl && topPost.type === "video"
+                      ? <div className="w-full h-full relative bg-black">
+                          <video src={topPost.mediaUrl} className="w-full h-full object-cover" muted preload="none" />
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }}
-                              className="w-8 h-8 rounded-full bg-black/50 border border-white/28 flex items-center justify-center">
-                              <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
-                            </motion.div>
+                            <div className="w-10 h-10 rounded-full bg-black/50 border border-white/28 flex items-center justify-center">
+                              <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                            </div>
                           </div>
                         </div>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center p-2"
-                          style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.16), rgba(59,130,246,0.1), rgba(16,185,129,0.07))" }}>
-                          <p className="text-[10px] text-foreground/75 line-clamp-4 text-center leading-relaxed">{post.content}</p>
+                      : <div className="w-full h-full flex items-center justify-center p-5"
+                          style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.18), rgba(59,130,246,0.12))" }}>
+                          <p className="text-sm text-foreground/85 line-clamp-5 text-center leading-relaxed">{topPost.content}</p>
                         </div>
-                      )}
-                      <motion.div className="absolute inset-0 bg-black/55 opacity-0 group-hover/post:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    }
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ background: "rgba(124,58,237,0.35)", border: "1px solid rgba(124,58,237,0.5)", backdropFilter: "blur(8px)" }}>
+                      <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                      <span className="text-[10px] font-black text-white tracking-wide">{t("profile.top_post")}</span>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 px-4 py-3 opacity-0 group-hover/hero:opacity-100 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 text-white">
+                          <Heart className="w-4 h-4 fill-white" />
+                          <span className="text-sm font-bold">{topPost.likesCount ?? 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-white">
+                          <MessageCircle className="w-4 h-4 fill-white" />
+                          <span className="text-sm font-bold">{topPost.commentsCount ?? 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {!topPost.mediaUrl && (
+                      <div className="absolute bottom-3 left-4 right-4">
+                        <p className="text-sm font-semibold text-white/90 line-clamp-2 leading-snug">{topPost.content}</p>
+                      </div>
+                    )}
+                  </motion.div>
+                </Link>
+              </motion.div>
+            )}
+            {/* ─── 3-col grid ─── */}
+            <div className="grid grid-cols-3 gap-1.5">
+              {myPosts.filter(p => p.id !== topPost?.id).map((post, i) => (
+                <motion.div key={post.id}
+                  initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.04 + 0.08, type: "spring", stiffness: 280, damping: 24 }}>
+                  <Link href={`/post/${post.id}`}>
+                    <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
+                      className="aspect-square rounded-xl overflow-hidden bg-card cursor-pointer relative group/post"
+                      style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.25)" }}>
+                      {post.mediaUrl && post.type !== "video"
+                        ? <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+                        : post.mediaUrl && post.type === "video"
+                        ? <div className="w-full h-full relative bg-black">
+                            <video src={post.mediaUrl} className="w-full h-full object-cover" muted preload="none" />
+                          </div>
+                        : <div className="w-full h-full flex items-center justify-center p-2"
+                            style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.16), rgba(59,130,246,0.1))" }}>
+                            <p className="text-[10px] text-foreground/75 line-clamp-4 text-center leading-relaxed">{post.content}</p>
+                          </div>
+                      }
+                      <motion.div className="absolute inset-0 bg-black/60 opacity-0 group-hover/post:opacity-100 transition-opacity flex items-center justify-center gap-2.5">
                         <div className="flex items-center gap-1 text-white">
-                          <Heart className="w-3.5 h-3.5 fill-white" />
-                          <span className="text-xs font-bold">{post.likesCount ?? 0}</span>
+                          <Heart className="w-3.5 h-3.5 fill-white" /><span className="text-xs font-bold">{post.likesCount ?? 0}</span>
                         </div>
                         <div className="flex items-center gap-1 text-white">
-                          <MessageCircle className="w-3.5 h-3.5 fill-white" />
-                          <span className="text-xs font-bold">{post.commentsCount ?? 0}</span>
+                          <MessageCircle className="w-3.5 h-3.5 fill-white" /><span className="text-xs font-bold">{post.commentsCount ?? 0}</span>
                         </div>
                       </motion.div>
+                      {post.type === "video" && (
+                        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-md bg-black/55 flex items-center justify-center">
+                          <Play className="w-2.5 h-2.5 text-white fill-white ml-0.5" />
+                        </div>
+                      )}
                     </motion.div>
                   </Link>
                 </motion.div>
               ))}
             </div>
-          )
+          </div>
         )}
 
         {/* ── Reels Grid ────────────────────────────────────────── */}

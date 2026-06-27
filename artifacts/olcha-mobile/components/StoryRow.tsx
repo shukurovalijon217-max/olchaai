@@ -2,13 +2,7 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
 export interface Story {
@@ -16,137 +10,112 @@ export interface Story {
   userId: number;
   username: string;
   avatarUrl?: string;
-  viewed: boolean;
+  viewed?: boolean;
 }
+
+const DEMO: Story[] = [
+  { id: 1, userId: 10, username: "aziz_k", viewed: false },
+  { id: 2, userId: 11, username: "malika", viewed: false },
+  { id: 3, userId: 12, username: "timur", viewed: false },
+  { id: 4, userId: 13, username: "nilu", viewed: true },
+  { id: 5, userId: 14, username: "bobur", viewed: true },
+  { id: 6, userId: 15, username: "dilo", viewed: true },
+];
 
 interface Props {
-  stories: Story[];
-  currentUserId?: number;
+  stories?: Story[];
   onAddStory?: () => void;
-  onViewStory?: (id: number) => void;
+  onView?: (id: number) => void;
 }
 
-const NAMES = ["Alex", "Mia", "Sam", "Zara", "Leo", "Noor", "Kai", "Jess"];
-
-const MOCK_STORIES: Story[] = NAMES.map((n, i) => ({
-  id: i + 1,
-  userId: i + 10,
-  username: n.toLowerCase(),
-  viewed: i > 3,
-}));
-
-export function StoryRow({ stories = MOCK_STORIES, currentUserId, onAddStory, onViewStory }: Props) {
+function StoryItem({ story, onView }: { story: Story; onView?: (id: number) => void }) {
   const colors = useColors();
-  const [viewed, setViewed] = useState<Set<number>>(new Set());
+  const [viewed, setViewed] = useState(story.viewed ?? false);
+  const initials = story.username.slice(0, 2).toUpperCase();
 
-  const handleView = (id: number) => {
+  const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setViewed((prev) => new Set([...prev, id]));
-    onViewStory?.(id);
+    setViewed(true);
+    onView?.(story.id);
   };
+
+  return (
+    <Pressable onPress={handlePress} style={si.wrap}>
+      {/* Story ring — gradient if new, muted if viewed */}
+      {viewed ? (
+        <View style={[si.ringViewed, { borderColor: colors.border }]}>
+          <View style={[si.innerBg, { backgroundColor: colors.background }]}>
+            {story.avatarUrl ? (
+              <Image source={{ uri: story.avatarUrl }} style={si.avatar} contentFit="cover" />
+            ) : (
+              <LinearGradient colors={["#1d2d40", "#2a3f58"]} style={si.avatar}>
+                <Text style={[si.initials, { color: colors.mutedForeground }]}>{initials}</Text>
+              </LinearGradient>
+            )}
+          </View>
+        </View>
+      ) : (
+        <LinearGradient
+          colors={["#7857ff", "#ec4899", "#f59e0b"]}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 1, y: 0 }}
+          style={si.ring}
+        >
+          <View style={[si.innerBg, { backgroundColor: colors.background }]}>
+            {story.avatarUrl ? (
+              <Image source={{ uri: story.avatarUrl }} style={si.avatar} contentFit="cover" />
+            ) : (
+              <LinearGradient colors={["#7857ff", "#9d19ff"]} style={si.avatar}>
+                <Text style={si.initials}>{initials}</Text>
+              </LinearGradient>
+            )}
+          </View>
+        </LinearGradient>
+      )}
+      <Text style={[si.name, { color: colors.textSecondary ?? colors.mutedForeground }]} numberOfLines={1}>
+        {story.username}
+      </Text>
+    </Pressable>
+  );
+}
+
+export function StoryRow({ stories = DEMO, onAddStory, onView }: Props) {
+  const colors = useColors();
 
   return (
     <FlatList
       horizontal
       data={stories}
-      keyExtractor={(s) => s.id.toString()}
+      keyExtractor={s => s.id.toString()}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={si.list}
       ListHeaderComponent={
-        <Pressable onPress={onAddStory} style={styles.item}>
+        <Pressable onPress={onAddStory} style={si.wrap}>
           <LinearGradient
-            colors={["#7c5cfc", "#9d00ff"]}
-            style={styles.ring}
+            colors={["#7857ff", "#9d19ff"]}
+            style={si.ring}
           >
-            <View style={[styles.avatarWrap, { backgroundColor: colors.card }]}>
-              <View style={[styles.addCircle, { backgroundColor: colors.primary + "22" }]}>
-                <Text style={[styles.plus, { color: colors.primary }]}>+</Text>
-              </View>
+            <View style={[si.innerBg, { backgroundColor: colors.background }]}>
+              <LinearGradient colors={["rgba(120,87,255,0.2)", "rgba(157,25,255,0.2)"]} style={si.avatar}>
+                <Text style={{ fontSize: 26, color: colors.primary, fontWeight: "300", lineHeight: 30 }}>+</Text>
+              </LinearGradient>
             </View>
           </LinearGradient>
-          <Text style={[styles.name, { color: colors.textSecondary ?? colors.mutedForeground }]} numberOfLines={1}>
-            Your Story
-          </Text>
+          <Text style={[si.name, { color: colors.mutedForeground }]}>Your Story</Text>
         </Pressable>
       }
-      renderItem={({ item }) => {
-        const isViewed = viewed.has(item.id) || item.viewed;
-        const initials = item.username.slice(0, 2).toUpperCase();
-        return (
-          <Pressable onPress={() => handleView(item.id)} style={styles.item}>
-            <LinearGradient
-              colors={isViewed ? [colors.border, colors.border] : ["#00e5ff", "#7c5cfc", "#ff2d9b"]}
-              style={styles.ring}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <View style={[styles.avatarWrap, { backgroundColor: colors.background }]}>
-                {item.avatarUrl ? (
-                  <Image source={{ uri: item.avatarUrl }} style={styles.avatar} contentFit="cover" />
-                ) : (
-                  <View style={[styles.avatar, { backgroundColor: colors.primary + "33", alignItems: "center", justifyContent: "center" }]}>
-                    <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 14 }}>{initials}</Text>
-                  </View>
-                )}
-              </View>
-            </LinearGradient>
-            <Text style={[styles.name, { color: colors.textSecondary ?? colors.mutedForeground }]} numberOfLines={1}>
-              {item.username}
-            </Text>
-          </Pressable>
-        );
-      }}
+      renderItem={({ item }) => <StoryItem story={item} onView={onView} />}
     />
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 12,
-  },
-  item: {
-    alignItems: "center",
-    width: 66,
-    gap: 5,
-  },
-  ring: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    padding: 2.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarWrap: {
-    width: 59,
-    height: 59,
-    borderRadius: 30,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatar: {
-    width: 59,
-    height: 59,
-    borderRadius: 30,
-  },
-  addCircle: {
-    width: 59,
-    height: 59,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  plus: {
-    fontSize: 28,
-    fontWeight: "300",
-    lineHeight: 32,
-  },
-  name: {
-    fontSize: 11,
-    textAlign: "center",
-    width: 64,
-  },
+const si = StyleSheet.create({
+  list: { paddingHorizontal: 12, paddingVertical: 12, gap: 12 },
+  wrap: { alignItems: "center", width: 68, gap: 5 },
+  ring: { width: 66, height: 66, borderRadius: 33, padding: 2.5, alignItems: "center", justifyContent: "center" },
+  ringViewed: { width: 66, height: 66, borderRadius: 33, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  innerBg: { width: 61, height: 61, borderRadius: 31, overflow: "hidden" },
+  avatar: { width: 61, height: 61, borderRadius: 31, alignItems: "center", justifyContent: "center" },
+  initials: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  name: { fontSize: 11, textAlign: "center", width: 68 },
 });

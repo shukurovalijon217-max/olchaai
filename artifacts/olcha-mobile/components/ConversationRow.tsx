@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -7,24 +8,22 @@ import { useColors } from "@/hooks/useColors";
 export interface Conversation {
   id: number;
   participantName: string;
+  participantUsername?: string;
   participantAvatar?: string;
   lastMessage?: string;
   lastMessageAt?: string;
   unreadCount?: number;
   isOnline?: boolean;
+  isPremium?: boolean;
 }
 
-function timeAgo(dateStr?: string): string {
-  if (!dateStr) return "";
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "now";
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}d`;
-  return new Date(dateStr).toLocaleDateString();
+function timeAgo(d?: string) {
+  if (!d) return "";
+  const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+  if (s < 60) return "now";
+  if (s < 3600) return `${Math.floor(s/60)}m`;
+  if (s < 86400) return `${Math.floor(s/3600)}h`;
+  return `${Math.floor(s/86400)}d`;
 }
 
 interface Props {
@@ -34,43 +33,57 @@ interface Props {
 export function ConversationRow({ conversation: c }: Props) {
   const colors = useColors();
   const router = useRouter();
-  const initials = c.participantName.slice(0, 2).toUpperCase();
+  const initials = c.participantName.slice(0,2).toUpperCase();
+  const hasUnread = (c.unreadCount ?? 0) > 0;
 
   return (
     <Pressable
-      style={[styles.row, { borderColor: colors.border }]}
+      style={[cr.row, { borderBottomColor: colors.borderSubtle ?? colors.border }]}
       onPress={() => router.push(`/messages/${c.id}` as never)}
     >
-      <View style={styles.avatarWrap}>
-        <View style={[styles.avatar, { backgroundColor: colors.primary + "33" }]}>
-          {c.participantAvatar ? (
-            <Image source={{ uri: c.participantAvatar }} style={styles.avatarImg} contentFit="cover" />
-          ) : (
-            <Text style={[styles.initials, { color: colors.primary }]}>{initials}</Text>
-          )}
-        </View>
+      <View style={cr.avatarWrap}>
+        <LinearGradient
+          colors={c.isPremium ? ["#f59e0b", "#ef4444"] : ["#7857ff", "#9d19ff"]}
+          style={cr.ring}
+        >
+          <View style={[cr.avatarInner, { backgroundColor: colors.background }]}>
+            {c.participantAvatar ? (
+              <Image source={{ uri: c.participantAvatar }} style={cr.avatar} contentFit="cover" />
+            ) : (
+              <LinearGradient colors={["#1d2d40", "#243550"]} style={cr.avatar}>
+                <Text style={[cr.initials, { color: colors.primary }]}>{initials}</Text>
+              </LinearGradient>
+            )}
+          </View>
+        </LinearGradient>
         {c.isOnline && (
-          <View style={[styles.onlineDot, { backgroundColor: colors.green, borderColor: colors.background }]} />
+          <View style={[cr.online, { backgroundColor: colors.green, borderColor: colors.background }]} />
         )}
       </View>
 
-      <View style={styles.body}>
-        <View style={styles.topRow}>
-          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-            {c.participantName}
-          </Text>
-          <Text style={[styles.time, { color: colors.mutedForeground }]}>
-            {timeAgo(c.lastMessageAt)}
-          </Text>
+      <View style={cr.body}>
+        <View style={cr.topRow}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <Text style={[cr.name, { color: hasUnread ? colors.text : colors.textSecondary ?? colors.mutedForeground }]}>
+              {c.participantName}
+            </Text>
+            {c.isPremium && (
+              <Text style={{ fontSize: 10 }}>👑</Text>
+            )}
+          </View>
+          <Text style={[cr.time, { color: colors.mutedForeground }]}>{timeAgo(c.lastMessageAt)}</Text>
         </View>
-        <View style={styles.bottomRow}>
-          <Text style={[styles.preview, { color: colors.mutedForeground }]} numberOfLines={1}>
-            {c.lastMessage ?? "Say hello!"}
+        <View style={cr.botRow}>
+          <Text
+            style={[cr.preview, { color: hasUnread ? colors.textSecondary ?? colors.text : colors.mutedForeground, fontWeight: hasUnread ? "500" : "400" }]}
+            numberOfLines={1}
+          >
+            {c.lastMessage ?? "Start a conversation..."}
           </Text>
-          {(c.unreadCount ?? 0) > 0 && (
-            <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.badgeText}>{c.unreadCount}</Text>
-            </View>
+          {hasUnread && (
+            <LinearGradient colors={["#7857ff", "#9d19ff"]} style={cr.badge}>
+              <Text style={cr.badgeTxt}>{c.unreadCount}</Text>
+            </LinearGradient>
           )}
         </View>
       </View>
@@ -78,56 +91,20 @@ export function ConversationRow({ conversation: c }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
+const cr = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth },
   avatarWrap: { position: "relative" },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarImg: { width: 50, height: 50, borderRadius: 25 },
-  initials: { fontSize: 16, fontWeight: "700" },
-  onlineDot: {
-    position: "absolute",
-    bottom: 1,
-    right: 1,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-  },
-  body: { flex: 1, gap: 3 },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  name: { fontSize: 15, fontWeight: "600", flex: 1, marginRight: 8 },
+  ring: { width: 54, height: 54, borderRadius: 27, padding: 1.5, alignItems: "center", justifyContent: "center" },
+  avatarInner: { width: 51, height: 51, borderRadius: 26, overflow: "hidden" },
+  avatar: { width: 51, height: 51, borderRadius: 26, alignItems: "center", justifyContent: "center" },
+  initials: { fontSize: 17, fontWeight: "700" },
+  online: { position: "absolute", bottom: 2, right: 2, width: 13, height: 13, borderRadius: 7, borderWidth: 2 },
+  body: { flex: 1, gap: 4 },
+  topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  name: { fontSize: 15, fontWeight: "600" },
   time: { fontSize: 12 },
-  bottomRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
+  botRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   preview: { fontSize: 13, flex: 1, marginRight: 8 },
-  badge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 5,
-  },
-  badgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
+  badge: { minWidth: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
+  badgeTxt: { color: "#fff", fontSize: 11, fontWeight: "700" },
 });

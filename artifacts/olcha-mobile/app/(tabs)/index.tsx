@@ -13,23 +13,33 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { AuroraBorder } from "@/components/AuroraBorder";
 
 interface CreateOption {
-  icon: keyof typeof Feather.glyphMap;
+  icon: string;
   label: string;
   sub: string;
   gradient: [string, string];
+  badge?: string;
   route: string;
 }
 
 const OPTIONS: CreateOption[] = [
-  { icon: "edit-3", label: "Post", sub: "Share thoughts & photos", gradient: ["#7c5cfc", "#9d00ff"], route: "/create/post" },
-  { icon: "book-open", label: "Story", sub: "24-hour moment", gradient: ["#00e5ff", "#7c5cfc"], route: "/create/story" },
-  { icon: "film", label: "Reel", sub: "Short-form video", gradient: ["#ff2d9b", "#ff6b00"], route: "/create/reel" },
-  { icon: "youtube" as keyof typeof Feather.glyphMap, label: "OTube", sub: "Long-form video", gradient: ["#ffc400", "#ff6b00"], route: "/create/otube" },
-  { icon: "zap", label: "Challenge", sub: "Start a trend", gradient: ["#00e676", "#00e5ff"], route: "/create/challenge" },
-  { icon: "shopping-bag", label: "Shop", sub: "Sell products", gradient: ["#ff6b00", "#ffc400"], route: "/create/shop" },
+  { icon: "edit-3", label: "Post", sub: "Fikr va rasmlarni ulashing", gradient: ["#7857ff", "#9d19ff"], badge: "Popular", route: "/create/post" },
+  { icon: "book-open", label: "Story", sub: "24 soatlik lahza", gradient: ["#22d3ee", "#7857ff"], route: "/create/story" },
+  { icon: "film", label: "Reel", sub: "Qisqa video", gradient: ["#ec4899", "#f97316"], badge: "Trending", route: "/create/reel" },
+  { icon: "play-circle", label: "OTube", sub: "Uzun formatli video", gradient: ["#f59e0b", "#ef4444"], route: "/create/otube" },
+  { icon: "zap", label: "Challenge", sub: "Trend boshlang", gradient: ["#10b981", "#22d3ee"], badge: "New", route: "/create/challenge" },
+  { icon: "shopping-bag", label: "Bozor", sub: "Mahsulot soting", gradient: ["#f97316", "#f59e0b"], route: "/create/shop" },
+  { icon: "radio", label: "Live", sub: "Jonli efir", gradient: ["#ef4444", "#ec4899"], route: "/create/live" },
+  { icon: "mic", label: "Spaces", sub: "Audio suhbat", gradient: ["#6366f1", "#7857ff"], route: "/create/spaces" },
 ];
+
+const BADGE_COLORS: Record<string, [string, string]> = {
+  "Popular": ["#7857ff", "#9d19ff"],
+  "Trending": ["#ec4899", "#f97316"],
+  "New": ["#10b981", "#22d3ee"],
+};
 
 export default function CreateScreen() {
   const colors = useColors();
@@ -44,84 +54,108 @@ export default function CreateScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Create</Text>
-        <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-          Share something with the world
-        </Text>
-      </View>
+    <View style={[s.container, { backgroundColor: colors.background }]}>
+      {/* Aurora gradient top */}
+      <LinearGradient
+        colors={["rgba(120,87,255,0.12)", "transparent"]}
+        style={[s.topGlow, { height: topPad + 120 }]}
+      />
 
       <ScrollView
-        contentContainerStyle={[styles.grid, { paddingBottom: 90 + botPad }]}
+        contentContainerStyle={[s.scroll, { paddingTop: topPad + 16, paddingBottom: 90 + botPad }]}
         showsVerticalScrollIndicator={false}
       >
-        {OPTIONS.map((opt) => (
-          <Pressable
-            key={opt.label}
-            style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => handleOption(opt)}
-          >
-            <LinearGradient
-              colors={opt.gradient}
-              style={styles.iconWrap}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+        {/* Header */}
+        <View style={s.header}>
+          <View>
+            <Text style={[s.title, { color: colors.text }]}>Yaratish</Text>
+            <Text style={[s.sub, { color: colors.mutedForeground }]}>Dunyoni hayratda qoldiring</Text>
+          </View>
+          <LinearGradient colors={["#7857ff", "#22d3ee"]} style={s.aiBtn}>
+            <Feather name="cpu" size={16} color="#fff" />
+            <Text style={s.aiBtnTxt}>AI Yordam</Text>
+          </LinearGradient>
+        </View>
+
+        {/* Quick actions */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.quick} style={s.quickScroll}>
+          {["Photo", "Video", "Text", "Poll"].map((q, i) => {
+            const qColors: [string, string][] = [["#22d3ee", "#7857ff"], ["#ec4899", "#f97316"], ["#818cf8", "#7857ff"], ["#f59e0b", "#10b981"]];
+            return (
+              <LinearGradient key={q} colors={qColors[i] ?? ["#7857ff", "#9d19ff"]} style={s.quickBtn}>
+                <Pressable style={s.quickInner} onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
+                  <Text style={s.quickTxt}>{q}</Text>
+                </Pressable>
+              </LinearGradient>
+            );
+          })}
+        </ScrollView>
+
+        {/* Main grid */}
+        <Text style={[s.sectionTitle, { color: colors.mutedForeground }]}>Barcha formatlar</Text>
+        <View style={s.grid}>
+          {OPTIONS.map(opt => (
+            <AuroraBorder
+              key={opt.label}
+              colors={[opt.gradient[0]+"60", opt.gradient[1]+"40", opt.gradient[0]+"20"]}
+              radius={16}
+              innerBg={colors.card}
+              style={{ flex: 1, minWidth: "47%" }}
             >
-              <Feather name={opt.icon} size={26} color="#fff" />
-            </LinearGradient>
-            <View style={styles.cardText}>
-              <Text style={[styles.cardLabel, { color: colors.text }]}>{opt.label}</Text>
-              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>{opt.sub}</Text>
-            </View>
-            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-          </Pressable>
-        ))}
+              <Pressable
+                style={s.card}
+                onPress={() => handleOption(opt)}
+                android_ripple={{ color: "rgba(120,87,255,0.2)" }}
+              >
+                <LinearGradient
+                  colors={opt.gradient}
+                  style={s.iconBox}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                >
+                  <Feather name={opt.icon as any} size={24} color="#fff" />
+                </LinearGradient>
+                {opt.badge && (
+                  <LinearGradient
+                    colors={BADGE_COLORS[opt.badge] ?? ["#7857ff", "#9d19ff"]}
+                    style={s.badge}
+                  >
+                    <Text style={s.badgeTxt}>{opt.badge}</Text>
+                  </LinearGradient>
+                )}
+                <Text style={[s.cardLabel, { color: colors.text }]}>{opt.label}</Text>
+                <Text style={[s.cardSub, { color: colors.mutedForeground }]}>{opt.sub}</Text>
+              </Pressable>
+            </AuroraBorder>
+          ))}
+        </View>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+  topGlow: { position: "absolute", top: 0, left: 0, right: 0, pointerEvents: "none" },
+  scroll: { paddingHorizontal: 16 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
+  title: { fontSize: 32, fontWeight: "800", letterSpacing: -0.5 },
+  sub: { fontSize: 14, marginTop: 2 },
+  aiBtn: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8,
   },
-  title: {
-    fontSize: 30,
-    fontWeight: "800",
-    fontFamily: "Inter_700Bold",
-    marginBottom: 4,
-  },
-  sub: {
-    fontSize: 14,
-  },
-  grid: {
-    paddingHorizontal: 16,
-    gap: 10,
-  },
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-    gap: 14,
-  },
-  iconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardText: { flex: 1 },
-  cardLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    fontFamily: "Inter_700Bold",
-    marginBottom: 2,
-  },
-  cardSub: { fontSize: 13 },
+  aiBtnTxt: { color: "#fff", fontSize: 13, fontWeight: "700" },
+  quickScroll: { marginHorizontal: -16, marginBottom: 16 },
+  quick: { paddingHorizontal: 16, gap: 8 },
+  quickBtn: { borderRadius: 20 },
+  quickInner: { paddingHorizontal: 16, paddingVertical: 8 },
+  quickTxt: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  sectionTitle: { fontSize: 12, fontWeight: "600", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 10 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  card: { padding: 14, gap: 8, minHeight: 120 },
+  iconBox: { width: 52, height: 52, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  badge: { position: "absolute", top: 10, right: 10, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  badgeTxt: { color: "#fff", fontSize: 10, fontWeight: "700" },
+  cardLabel: { fontSize: 16, fontWeight: "700", marginTop: 2 },
+  cardSub: { fontSize: 12, lineHeight: 16 },
 });

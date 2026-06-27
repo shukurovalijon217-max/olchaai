@@ -507,6 +507,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(loadOpen);
   const [moreOpen, setMoreOpen] = useState(false);
   const [navExpanded, setNavExpanded] = useState(false);
+  const [isMd, setIsMd] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
+  useEffect(() => {
+    const handler = () => setIsMd(window.innerWidth >= 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   /* ── Live clock ──────────────────────────────────────────────── */
   const [clockNow, setClockNow] = useState(() => new Date());
@@ -1108,7 +1114,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="min-h-screen pl-8 pb-28 md:pl-8 md:pb-0">
+      <main
+        className="min-h-screen pb-28 md:pb-0 transition-[padding] duration-300"
+        style={{ paddingLeft: isMd ? (isOpen ? "220px" : "40px") : "8px" }}
+      >
         <motion.div
           key={location}
           initial={{ opacity: 0, y: 14, scale: 0.993, filter: "blur(3px)" }}

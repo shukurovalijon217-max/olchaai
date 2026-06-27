@@ -341,6 +341,37 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   const [bestTimeLoading, setBestTimeLoading] = useState(false);
   const [bestTime, setBestTime] = useState<{time:string;reason:string}|null>(null);
 
+  /* ── NEXUS POWER ZONE state ── */
+  const [powerZoneOpen,     setPowerZoneOpen]     = useState(false);
+  const [multiLangEnabled,  setMultiLangEnabled]  = useState(false);
+  const [selectedLangs,     setSelectedLangs]     = useState<string[]>([]);
+  const [translating,       setTranslating]       = useState(false);
+  const [translations,      setTranslations]      = useState<Record<string,string>>({});
+  const [abTestEnabled,     setAbTestEnabled]     = useState(false);
+  const [captionB,          setCaptionB]          = useState("");
+  const [secretGate,        setSecretGate]        = useState(false);
+  const [secretCode,        setSecretCode]        = useState("");
+  const [crowdUnlock,       setCrowdUnlock]       = useState(false);
+  const [crowdThreshold,    setCrowdThreshold]    = useState(50);
+  const [remixDna,          setRemixDna]          = useState<"full"|"style"|"sound"|"none">("none");
+  const [chainEnabled,      setChainEnabled]      = useState(false);
+  const [chainTrigger,      setChainTrigger]      = useState("100likes");
+  const [chainAction,       setChainAction]       = useState("story");
+  const [monetizeEnabled,   setMonetizeEnabled]   = useState(false);
+  const [monetizeType,      setMonetizeType]      = useState<"tip"|"paytosee">("tip");
+  const [payToSeePrice,     setPayToSeePrice]     = useState("500");
+  const [sentimentMeter,    setSentimentMeter]    = useState(false);
+  const [aiDirectorOpen,    setAiDirectorOpen]    = useState(false);
+  const [aiDirectorLoading, setAiDirectorLoading] = useState(false);
+  const [aiDirectorTips,    setAiDirectorTips]    = useState<string[]>([]);
+  /* ── Reel Power state ── */
+  const [reelSpeed,         setReelSpeed]         = useState("1x");
+  const [reelGreenScreen,   setReelGreenScreen]   = useState(false);
+  const [reelAutoCaption,   setReelAutoCaption]   = useState(false);
+  /* ── Story Power state ── */
+  const [storySticker,      setStorySticker]      = useState<string|null>(null);
+  const [storyRing,         setStoryRing]         = useState(false);
+
   const fetchBestTime = async () => {
     setBestTimeLoading(true); setBestTimeOpen(true);
     await new Promise(r => setTimeout(r, 1200));
@@ -352,6 +383,38 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     ];
     setBestTime(times[Math.floor(Math.random() * times.length)]);
     setBestTimeLoading(false);
+  };
+
+  /* ── AI Director ── */
+  const runAiDirector = async () => {
+    setAiDirectorLoading(true); setAiDirectorOpen(true);
+    await new Promise(r => setTimeout(r, 1500));
+    const pool = [
+      "📐 Rule of Thirds: asosiy ob'ektni kadrning 1/3 chizig'iga qo'ying — professional effekt",
+      "💡 Chap tomondan tabiiy yorug'lik ishlating — yuz soyasi yumshoqroq va chiroyliroq ko'rinadi",
+      "🎨 Dominant rang 60% + ikkinchi rang 30% + aksent 10% — dizayn muvonaztligi qoidasi",
+      "⚡ Dastlabki 3 soniyada harakatni ko'rsating — scrolldan to'xtatib qoladi, retention 60% oshadi",
+      "📱 9:16 vertikal format — mobil tomoshabinlar 78% ko'proq tomosha qiladi",
+      "👁 To'g'ridan-to'g'ri kameraga qarang — ishonch va shaxsiy aloqa yaratadi",
+      "🔥 Slow-motion yoki jump-cut montaj qo'llang — engagement tadqiqotlarda 2.4x oshgan",
+      "🎵 Kontent kayfiyatiga mos musiqa tanlang — emotsional bog'liqlikni 3x kuchaytiradi",
+      "✂️ 7–15 soniya optimal reel uzunligi — completion rate eng yuqori shu oraliqda",
+      "🌅 Oltin soat (sunrise/sunset) yorug'ligi — natural estetika va renk issiqroq",
+    ];
+    setAiDirectorTips(pool.sort(() => Math.random() - 0.5).slice(0, 3));
+    setAiDirectorLoading(false);
+  };
+
+  /* ── Multi-Language Blast ── */
+  const runTranslate = async () => {
+    if (!selectedLangs.length || !postContent.trim()) return;
+    setTranslating(true);
+    await new Promise(r => setTimeout(r, 1200));
+    const labels: Record<string,string> = { en:"EN 🇬🇧", ru:"RU 🇷🇺", ko:"KO 🇰🇷", zh:"ZH 🇨🇳", ar:"AR 🇸🇦", tr:"TR 🇹🇷", de:"DE 🇩🇪", fr:"FR 🇫🇷" };
+    const result: Record<string,string> = {};
+    selectedLangs.forEach(l => { result[l] = `[${labels[l] ?? l.toUpperCase()}] ${postContent}`; });
+    setTranslations(result);
+    setTranslating(false);
   };
 
   const addFiles = (files: FileList) => {
@@ -1421,6 +1484,352 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                         </AnimatePresence>
                       </div>
 
+                      {/* ════════════════════════════════════════
+                          ⚡ NEXUS POWER ZONE — 10 unique features
+                      ════════════════════════════════════════ */}
+                      <div className="rounded-2xl overflow-hidden"
+                        style={{ background:"rgba(124,58,237,0.04)", border:"1px solid rgba(124,58,237,0.18)" }}>
+
+                        {/* Header */}
+                        <button className="w-full flex items-center justify-between px-3.5 py-3"
+                          onClick={() => setPowerZoneOpen(p=>!p)}>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
+                              style={{ background:"linear-gradient(135deg,#7c3aed,#ec4899,#f97316)" }}>
+                              ⚡
+                            </div>
+                            <div className="text-left">
+                              <p className="text-xs font-black text-white tracking-wide">NEXUS POWER ZONE</p>
+                              <p className="text-[10px] text-white/40">10 ta super funksiya — hech qayerda yo'q</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[8px] font-black px-2 py-0.5 rounded-full text-white"
+                              style={{ background:"linear-gradient(135deg,#7c3aed,#ec4899)" }}>
+                              YANGI
+                            </span>
+                            {powerZoneOpen ? <ChevronUp className="w-4 h-4 text-white/40"/> : <ChevronDown className="w-4 h-4 text-white/40"/>}
+                          </div>
+                        </button>
+
+                        <AnimatePresence>
+                          {powerZoneOpen && (
+                            <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                              <div className="px-3.5 pb-4 space-y-4 border-t border-white/5 pt-3">
+
+                                {/* ── 1. AI Director ── */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🎬 AI Rejissyor — professionallar maslahat beradi</p>
+                                  <button onClick={runAiDirector} disabled={aiDirectorLoading}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all"
+                                    style={{ background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.35)", color:"#c4b5fd" }}>
+                                    {aiDirectorLoading ? <><Loader2 className="w-3.5 h-3.5 animate-spin"/> Tahlil qilinmoqda…</> : <><Sparkles className="w-3.5 h-3.5"/> AI maslahat olish</>}
+                                  </button>
+                                  <AnimatePresence>
+                                    {aiDirectorOpen && !aiDirectorLoading && (
+                                      <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 space-y-1.5 overflow-hidden">
+                                        {aiDirectorTips.map((tip, i) => (
+                                          <motion.div key={i} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:i*0.08}}
+                                            className="px-3 py-2 rounded-xl text-[11px] text-white/75 leading-relaxed"
+                                            style={{ background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.2)" }}>
+                                            {tip}
+                                          </motion.div>
+                                        ))}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 2. Multi-Language Blast ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">🌍 Ko'p tilli Blast — bir vaqtda barcha tillarda</p>
+                                    <button onClick={() => setMultiLangEnabled(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 transition-all"
+                                      style={{ background:multiLangEnabled?"#34d399":"rgba(255,255,255,0.12)", justifyContent:multiLangEnabled?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white" />
+                                    </button>
+                                  </div>
+                                  {multiLangEnabled && (
+                                    <motion.div initial={{opacity:0}} animate={{opacity:1}} className="space-y-2">
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {[{c:"en",f:"🇬🇧"},{c:"ru",f:"🇷🇺"},{c:"ko",f:"🇰🇷"},{c:"zh",f:"🇨🇳"},{c:"ar",f:"🇸🇦"},{c:"tr",f:"🇹🇷"},{c:"de",f:"🇩🇪"},{c:"fr",f:"🇫🇷"}].map(l => {
+                                          const on = selectedLangs.includes(l.c);
+                                          return (
+                                            <button key={l.c}
+                                              onClick={() => setSelectedLangs(p => on ? p.filter(x=>x!==l.c) : [...p,l.c])}
+                                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-sm font-bold transition-all"
+                                              style={{ background:on?"rgba(34,211,153,0.15)":"rgba(255,255,255,0.06)", border:on?"1.5px solid rgba(34,211,153,0.5)":"1.5px solid rgba(255,255,255,0.08)", color:on?"#34d399":"rgba(255,255,255,0.45)" }}>
+                                              {l.f}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                      {selectedLangs.length > 0 && (
+                                        <button onClick={runTranslate} disabled={translating}
+                                          className="w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                                          style={{ background:"rgba(34,211,153,0.15)", border:"1px solid rgba(34,211,153,0.4)", color:"#34d399" }}>
+                                          {translating ? <><Loader2 className="w-3.5 h-3.5 animate-spin"/> Tarjima qilinmoqda…</> : `${selectedLangs.length} tilda tarjima qilish →`}
+                                        </button>
+                                      )}
+                                      {Object.entries(translations).map(([lang,text]) => (
+                                        <div key={lang} className="px-3 py-2 rounded-xl flex gap-2"
+                                          style={{ background:"rgba(34,211,153,0.07)", border:"1px solid rgba(34,211,153,0.2)" }}>
+                                          <span className="text-[9px] font-black text-emerald-400 uppercase flex-shrink-0 mt-0.5">{lang}:</span>
+                                          <span className="text-[10px] text-white/55 leading-relaxed">{text}</span>
+                                        </div>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </div>
+
+                                {/* ── 3. A/B Caption Test ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">🧪 A/B Caption Test — split test</p>
+                                    <button onClick={() => setAbTestEnabled(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 transition-all"
+                                      style={{ background:abTestEnabled?"#f59e0b":"rgba(255,255,255,0.12)", justifyContent:abTestEnabled?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white" />
+                                    </button>
+                                  </div>
+                                  <AnimatePresence>
+                                    {abTestEnabled && (
+                                      <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-2 overflow-hidden">
+                                        <div className="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-amber-400"
+                                          style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.25)" }}>
+                                          50% obunachilaring A izohni, 50% B izohni ko'radi → natijalar tahlil qilinadi
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                          <span className="mt-2.5 text-[10px] font-black text-amber-400 w-5 flex-shrink-0">A</span>
+                                          <div className="flex-1 px-3 py-2 rounded-xl text-[11px] text-white/40 italic"
+                                            style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.08)" }}>
+                                            {postContent || "(yuqoridagi asosiy izoh)"}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                          <span className="mt-2.5 text-[10px] font-black text-amber-400 w-5 flex-shrink-0">B</span>
+                                          <textarea placeholder="B variant izoh…" rows={2} value={captionB} onChange={e=>setCaptionB(e.target.value)}
+                                            className="flex-1 resize-none rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                                            style={{ background:"rgba(245,158,11,0.07)", border:"1px solid rgba(245,158,11,0.3)" }} />
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 4. Secret Code Gate ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">🔐 Secret Gate — maxfiy kirish kodi</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">Post ko'rinadi lekin kontent kod bilan ochiladi</p>
+                                    </div>
+                                    <button onClick={() => setSecretGate(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 transition-all ml-2"
+                                      style={{ background:secretGate?"#8b5cf6":"rgba(255,255,255,0.12)", justifyContent:secretGate?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white" />
+                                    </button>
+                                  </div>
+                                  <AnimatePresence>
+                                    {secretGate && (
+                                      <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-1.5 overflow-hidden">
+                                        <input placeholder="Maxfiy kodni kiriting (NEXUS2026)"
+                                          value={secretCode} onChange={e=>setSecretCode(e.target.value.toUpperCase())}
+                                          className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none font-mono tracking-widest"
+                                          style={{ background:"rgba(139,92,246,0.1)", border:"1px solid rgba(139,92,246,0.4)" }} />
+                                        {secretCode && (
+                                          <p className="text-[10px] text-violet-400 font-bold px-1">
+                                            🔑 Kod: <span className="font-mono tracking-widest">{secretCode}</span> — bilganlarga ulashing
+                                          </p>
+                                        )}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 5. Crowd Unlock ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">👥 Crowd Unlock — jamoaviy ochish</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">X kishi reaksiya bergandan so'ng ochiladi</p>
+                                    </div>
+                                    <button onClick={() => setCrowdUnlock(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 transition-all ml-2"
+                                      style={{ background:crowdUnlock?"#06b6d4":"rgba(255,255,255,0.12)", justifyContent:crowdUnlock?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white" />
+                                    </button>
+                                  </div>
+                                  <AnimatePresence>
+                                    {crowdUnlock && (
+                                      <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-2 overflow-hidden">
+                                        <div className="flex items-center gap-3">
+                                          <input type="range" min={10} max={500} step={10} value={crowdThreshold}
+                                            onChange={e=>setCrowdThreshold(Number(e.target.value))}
+                                            className="flex-1 accent-cyan-400" style={{ accentColor:"#22d3ee" }} />
+                                          <span className="text-sm font-black text-cyan-400 w-12 text-right">{crowdThreshold} 👤</span>
+                                        </div>
+                                        <div className="flex gap-1.5 flex-wrap">
+                                          {[10,25,50,100,250,500].map(v => (
+                                            <button key={v} onClick={() => setCrowdThreshold(v)}
+                                              className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all"
+                                              style={{ background:crowdThreshold===v?"rgba(6,182,212,0.25)":"rgba(255,255,255,0.06)", border:crowdThreshold===v?"1px solid rgba(6,182,212,0.6)":"1px solid rgba(255,255,255,0.08)", color:crowdThreshold===v?"#22d3ee":"rgba(255,255,255,0.4)" }}>
+                                              {v}
+                                            </button>
+                                          ))}
+                                        </div>
+                                        <p className="text-[9px] text-cyan-500/60">
+                                          Post blur ko'rinadi → {crowdThreshold} kishi reaksiya bergandan so'ng to'liq ochiladi
+                                        </p>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 6. Remix DNA ── */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🧬 Remix DNA — qayta yaratish ruxsati</p>
+                                  <div className="grid grid-cols-2 gap-1.5">
+                                    {[
+                                      { id:"none",     e:"🚫", l:"Remix yo'q",   d:"Hich kim",       c:"#f87171" },
+                                      { id:"template", e:"📋", l:"Shablon",       d:"Faqat format",   c:"#fbbf24" },
+                                      { id:"style",    e:"🎨", l:"Stil Remix",    d:"Rang/effekt",    c:"#818cf8" },
+                                      { id:"full",     e:"♻️", l:"To'liq Remix",  d:"Barcha huquqlar",c:"#34d399" },
+                                    ].map(r => (
+                                      <button key={r.id} onClick={() => setRemixDna(r.id as typeof remixDna)}
+                                        className="flex items-center gap-2 px-2.5 py-2.5 rounded-xl text-left transition-all"
+                                        style={{ background:remixDna===r.id?`${r.c}18`:"rgba(255,255,255,0.04)", border:remixDna===r.id?`1.5px solid ${r.c}66`:"1.5px solid rgba(255,255,255,0.07)" }}>
+                                        <span className="text-lg leading-none">{r.e}</span>
+                                        <div>
+                                          <p className="text-[10px] font-black" style={{ color:remixDna===r.id?r.c:"rgba(255,255,255,0.7)" }}>{r.l}</p>
+                                          <p className="text-[9px] text-white/30">{r.d}</p>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* ── 7. Engagement Chain ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">⚡ Engagement Chain — avtomatik zanjir</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">Engagement chegara oshganda avtomatik harakat</p>
+                                    </div>
+                                    <button onClick={() => setChainEnabled(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 transition-all ml-2"
+                                      style={{ background:chainEnabled?"#f97316":"rgba(255,255,255,0.12)", justifyContent:chainEnabled?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white" />
+                                    </button>
+                                  </div>
+                                  <AnimatePresence>
+                                    {chainEnabled && (
+                                      <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-2 overflow-hidden">
+                                        <div className="flex gap-2 items-center">
+                                          <select value={chainTrigger} onChange={e=>setChainTrigger(e.target.value)}
+                                            className="flex-1 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none"
+                                            style={{ background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.35)" }}>
+                                            <option value="50likes" style={{background:"#0e0e1a"}}>50 ta layk</option>
+                                            <option value="100likes" style={{background:"#0e0e1a"}}>100 ta layk</option>
+                                            <option value="500likes" style={{background:"#0e0e1a"}}>500 ta layk</option>
+                                            <option value="10comments" style={{background:"#0e0e1a"}}>10 ta izoh</option>
+                                            <option value="1kreach" style={{background:"#0e0e1a"}}>1 000 ko'rish</option>
+                                            <option value="10kreach" style={{background:"#0e0e1a"}}>10 000 ko'rish</option>
+                                          </select>
+                                          <span className="text-orange-400 font-black text-base">→</span>
+                                          <select value={chainAction} onChange={e=>setChainAction(e.target.value)}
+                                            className="flex-1 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none"
+                                            style={{ background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.35)" }}>
+                                            <option value="story" style={{background:"#0e0e1a"}}>Story'ga havolani joylashtir</option>
+                                            <option value="reel" style={{background:"#0e0e1a"}}>Reel sifatida qayta publish</option>
+                                            <option value="boost" style={{background:"#0e0e1a"}}>AI Boost faollashtir</option>
+                                            <option value="notify" style={{background:"#0e0e1a"}}>Barcha obunachilarga xabar</option>
+                                            <option value="pin" style={{background:"#0e0e1a"}}>Profil tepasiga pin qil</option>
+                                          </select>
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 8. Monetize Post ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">💰 Bu postdan pul ishlang</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">Tip Jar yoki Pay-to-See model</p>
+                                    </div>
+                                    <button onClick={() => setMonetizeEnabled(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 transition-all ml-2"
+                                      style={{ background:monetizeEnabled?"#fbbf24":"rgba(255,255,255,0.12)", justifyContent:monetizeEnabled?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white" />
+                                    </button>
+                                  </div>
+                                  <AnimatePresence>
+                                    {monetizeEnabled && (
+                                      <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-2 overflow-hidden">
+                                        <div className="flex gap-2">
+                                          {[{id:"tip",e:"🪙",l:"Tip Jar",d:"Ixtiyoriy sovg'a"},{id:"paytosee",e:"🔒",l:"Pay-to-See",d:"To'lov kerak"}].map(m => (
+                                            <button key={m.id} onClick={() => setMonetizeType(m.id as "tip"|"paytosee")}
+                                              className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl transition-all"
+                                              style={{ background:monetizeType===m.id?"rgba(251,191,36,0.15)":"rgba(255,255,255,0.05)", border:monetizeType===m.id?"1.5px solid rgba(251,191,36,0.6)":"1.5px solid rgba(255,255,255,0.08)" }}>
+                                              <span className="text-xl">{m.e}</span>
+                                              <span className="text-[10px] font-black" style={{ color:monetizeType===m.id?"#fbbf24":"rgba(255,255,255,0.5)" }}>{m.l}</span>
+                                              <span className="text-[9px] text-white/30">{m.d}</span>
+                                            </button>
+                                          ))}
+                                        </div>
+                                        {monetizeType === "paytosee" && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-xs text-white/45">Narx:</span>
+                                            <input type="number" min="100" step="100" value={payToSeePrice}
+                                              onChange={e=>setPayToSeePrice(e.target.value)}
+                                              className="flex-1 rounded-xl px-3 py-2 text-sm font-bold text-amber-400 focus:outline-none"
+                                              style={{ background:"rgba(251,191,36,0.08)", border:"1px solid rgba(251,191,36,0.3)" }} />
+                                            <span className="text-xs text-white/45 font-bold">so'm</span>
+                                          </div>
+                                        )}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 9. Live Sentiment Meter ── */}
+                                <div className="flex items-center gap-3 px-3.5 py-3 rounded-2xl cursor-pointer transition-all"
+                                  style={{ background:sentimentMeter?"rgba(99,102,241,0.12)":"rgba(255,255,255,0.03)", border:sentimentMeter?"1px solid rgba(99,102,241,0.5)":"1px solid rgba(255,255,255,0.06)" }}
+                                  onClick={() => setSentimentMeter(p=>!p)}>
+                                  <span style={{fontSize:22}}>📊</span>
+                                  <div className="flex-1">
+                                    <p className="text-xs font-bold text-white/80">Live Kayfiyat Metri</p>
+                                    <p className="text-[10px] text-white/40 mt-0.5">Tomoshabinlar kayfiyati real-vaqtda ko'rsatiladi — hech kimda yo'q!</p>
+                                  </div>
+                                  <div className="flex items-center px-0.5 rounded-full flex-shrink-0 transition-all"
+                                    style={{ background:sentimentMeter?"rgba(99,102,241,0.8)":"rgba(255,255,255,0.12)", justifyContent:sentimentMeter?"flex-end":"flex-start", height:22, width:40 }}>
+                                    <div className="w-4 h-4 rounded-full bg-white" />
+                                  </div>
+                                </div>
+
+                                {/* ── 10. Emotion Lock ── */}
+                                <div className="flex items-center gap-3 px-3.5 py-3 rounded-2xl cursor-pointer"
+                                  style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)" }}>
+                                  <span style={{fontSize:22}}>🎭</span>
+                                  <div className="flex-1">
+                                    <p className="text-xs font-bold text-white/80">Emotion Lock</p>
+                                    <p className="text-[10px] text-white/40 mt-0.5">Tomoshabin reaksiyasiga qarab post rangi/toni o'zgaradi</p>
+                                  </div>
+                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full text-white/50"
+                                    style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)" }}>
+                                    TEZ KUNDA
+                                  </span>
+                                </div>
+
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
                   </div>
                   )}
 
@@ -1473,6 +1882,42 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                             style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
                           />
                         </div>
+                      </div>
+
+                      {/* ── Reel Speed ── */}
+                      <div>
+                        <p className="text-xs font-bold text-white/45 mb-2">⚡ Tezlik</p>
+                        <div className="flex gap-2">
+                          {["0.3x","0.5x","1x","2x","3x"].map(s => (
+                            <button key={s} onClick={() => setReelSpeed(s)}
+                              className="flex-1 py-2 rounded-xl text-xs font-black transition-all"
+                              style={{ background:reelSpeed===s?"linear-gradient(135deg,#7c3aed,#a78bfa)":"rgba(255,255,255,0.06)", color:reelSpeed===s?"white":"rgba(255,255,255,0.4)", boxShadow:reelSpeed===s?"0 2px 12px rgba(124,58,237,0.35)":"none" }}>
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* ── Reel Power Toggles ── */}
+                      <div className="space-y-2">
+                        {[
+                          { label:"🟢 Green Screen",      desc:"Reel orqa fonini almashtirasiz",          val:reelGreenScreen,  set:setReelGreenScreen,  color:"#34d399" },
+                          { label:"📝 AI Auto-Captions", desc:"AI avtomatik subtitr qo'shadi",            val:reelAutoCaption,  set:setReelAutoCaption,  color:"#60a5fa" },
+                        ].map(t => (
+                          <div key={t.label}
+                            className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl cursor-pointer transition-all"
+                            style={{ background:t.val?`${t.color}12`:"rgba(255,255,255,0.04)", border:t.val?`1px solid ${t.color}55`:"1px solid rgba(255,255,255,0.06)" }}
+                            onClick={() => t.set((p:boolean)=>!p)}>
+                            <div className="flex-1">
+                              <p className="text-xs font-bold text-white/80">{t.label}</p>
+                              <p className="text-[10px] text-white/35 mt-0.5">{t.desc}</p>
+                            </div>
+                            <div className="flex items-center px-0.5 rounded-full transition-all"
+                              style={{ background:t.val?t.color:"rgba(255,255,255,0.12)", justifyContent:t.val?"flex-end":"flex-start", height:22, width:40 }}>
+                              <div className="w-4 h-4 rounded-full bg-white" />
+                            </div>
+                          </div>
+                        ))}
                       </div>
 
                       {/* Reel permissions */}
@@ -1551,6 +1996,45 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                         className="w-full rounded-2xl px-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none"
                         style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
                       />
+
+                      {/* ── Interactive Stickers ── */}
+                      <div>
+                        <p className="text-xs font-bold text-white/45 mb-2">🎯 Interaktiv Stiker — tomoshabinlarni jalb qiling</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { id:"qa",        e:"❓", l:"Savol & Javob",    d:"Kuzatuvchilar javob yozadi",     c:"#818cf8" },
+                            { id:"slider",    e:"😍", l:"Emoji Slider",     d:"Hissiy darajani baholaydi",      c:"#f472b6" },
+                            { id:"quiz",      e:"🧠", l:"Quiz / Test",      d:"Ko'p javobli savol",             c:"#34d399" },
+                            { id:"countdown", e:"⏱", l:"Countdown",        d:"Tadbirga qolgan vaqt hisoblagich",c:"#f97316" },
+                          ].map(st => (
+                            <button key={st.id}
+                              onClick={() => setStorySticker(storySticker===st.id ? null : st.id)}
+                              className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all"
+                              style={{ background:storySticker===st.id?`${st.c}18`:"rgba(255,255,255,0.04)", border:storySticker===st.id?`1.5px solid ${st.c}66`:"1.5px solid rgba(255,255,255,0.07)" }}>
+                              <span className="text-xl leading-none">{st.e}</span>
+                              <div>
+                                <p className="text-[10px] font-black" style={{ color:storySticker===st.id?st.c:"rgba(255,255,255,0.75)" }}>{st.l}</p>
+                                <p className="text-[9px] text-white/30 leading-tight">{st.d}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* ── Story Ring ── */}
+                      <div className="flex items-center gap-3 px-3.5 py-3 rounded-2xl cursor-pointer transition-all"
+                        style={{ background:storyRing?"rgba(168,85,247,0.12)":"rgba(255,255,255,0.04)", border:storyRing?"1px solid rgba(168,85,247,0.5)":"1px solid rgba(255,255,255,0.06)" }}
+                        onClick={() => setStoryRing(p=>!p)}>
+                        <span style={{fontSize:22}}>💍</span>
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-white/80">Story Ring — zanjir story</p>
+                          <p className="text-[10px] text-white/40 mt-0.5">Sizning story'ingiz boshqalar story'si bilan zanjirlanadi — Instagram'da yo'q!</p>
+                        </div>
+                        <div className="flex items-center px-0.5 rounded-full transition-all"
+                          style={{ background:storyRing?"rgba(168,85,247,0.8)":"rgba(255,255,255,0.12)", justifyContent:storyRing?"flex-end":"flex-start", height:22, width:40 }}>
+                          <div className="w-4 h-4 rounded-full bg-white" />
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>

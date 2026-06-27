@@ -55,7 +55,7 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Search header */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-amber-900/20 px-4 py-3">
+      <div className="sticky z-30 bg-background/95 backdrop-blur border-b border-amber-900/20 px-4 py-3" style={{ top: "env(safe-area-inset-top, 0px)" }}>
         <div className="relative max-w-2xl mx-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500" />
           <input

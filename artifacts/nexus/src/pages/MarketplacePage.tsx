@@ -223,7 +223,7 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* ── Sticky header ─────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-amber-900/20 px-4 py-3 space-y-3">
+      <div className="sticky z-30 bg-background/95 backdrop-blur border-b border-amber-900/20 px-4 py-3 space-y-3" style={{ top: "env(safe-area-inset-top, 0px)" }}>
         {/* Top row */}
         <div className="flex items-center gap-2">
           <ShoppingBag className="w-5 h-5 text-amber-500 flex-shrink-0" />

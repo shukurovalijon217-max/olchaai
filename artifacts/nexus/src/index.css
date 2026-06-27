@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ── iOS / Android safe-area: push ALL content below the status bar ── */
+html {
+  background-color: #060d1a;
+}
+body {
+  background-color: #060d1a;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* ── Appearance: no-animations mode ── */
 .no-animations *, .no-animations *::before, .no-animations *::after {
   animation-duration: 0.001ms !important;

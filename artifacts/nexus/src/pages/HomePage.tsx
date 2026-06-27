@@ -1,8 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Flame, Plus, ChevronDown, ImagePlus, Film, Camera, X,
-  Tv, Trophy, Zap,
+  Flame, Plus, ChevronDown, X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
@@ -11,6 +10,11 @@ import FeedCard from "@/components/FeedCard";
 import CreateContentModal from "@/components/CreateContentModal";
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
+
+/* ─── FAB sparkle constants ─── */
+const SPARKLE_ANGLES  = [0,30,60,90,120,150,180,210,240,270,300,330,15,75,135,195,255,315];
+const SPARKLE_COLORS  = ["#a78bfa","#c084fc","#f0abfc","#fbbf24","#34d399","#38bdf8","#f87171","#fb923c"];
+const SPARKLE_SIZES   = [6, 5, 8, 4, 7, 5, 6, 4];
 
 /* ─── Content type cards for the bottom sheet ─── */
 const CONTENT_TYPES: {
@@ -246,6 +250,7 @@ export default function HomePage() {
   const [sheetOpen,  setSheetOpen]  = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createTab,  setCreateTab]  = useState<TabType>("post");
+  const [sparkling,  setSparkling]  = useState(false);
 
   const feedRef = useRef<HTMLDivElement>(null);
   const displayPosts = feed?.posts?.length ? feed.posts : posts;
@@ -255,6 +260,19 @@ export default function HomePage() {
     const h = feedRef.current.clientHeight;
     feedRef.current.scrollBy({ top: h, behavior: "smooth" });
   };
+
+  /* FAB tap: burst sparkle then open sheet */
+  const handleFabClick = useCallback(() => {
+    setSparkling(true);
+    setTimeout(() => { setSparkling(false); setSheetOpen(true); }, 480);
+  }, []);
+
+  /* auto-kill sparkle if still on */
+  useEffect(() => {
+    if (!sparkling) return;
+    const t = setTimeout(() => setSparkling(false), 900);
+    return () => clearTimeout(t);
+  }, [sparkling]);
 
   const handleSelect = (tab: TabType) => {
     setTimeout(() => {
@@ -342,54 +360,109 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* ── FAB "+" button ── */}
+      {/* ── FAB "+" button with sparkle burst ── */}
       <AnimatePresence>
         {!createOpen && displayPosts.length > 0 && (
-          <motion.button
-            initial={{ opacity: 0, y: 14, scale: 0.85 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 14, scale: 0.85 }}
-            whileTap={{ scale: 0.88 }}
-            onClick={() => setSheetOpen(true)}
-            className="fixed z-50 w-14 h-14 rounded-full flex items-center justify-center"
-            style={{
-              bottom: 14,
-              left: "50%",
-              marginLeft: -28,
-              background: sheetOpen
-                ? "linear-gradient(135deg,#6d28d9,#7c3aed)"
-                : "linear-gradient(135deg,#7c3aed,#9333ea)",
-              boxShadow: sheetOpen
-                ? "0 0 0 6px rgba(124,58,237,0.18), 0 0 0 14px rgba(124,58,237,0.07), 0 6px 28px rgba(124,58,237,0.6)"
-                : "0 4px 22px rgba(124,58,237,0.45), 0 0 0 2px rgba(255,255,255,0.12)",
-              border: "1.5px solid rgba(255,255,255,0.18)",
-            }}
+          <div
+            className="fixed z-50"
+            style={{ bottom: 14, left: "50%", transform: "translateX(-50%)" }}
           >
-            <motion.div
-              animate={{ rotate: sheetOpen ? 45 : 0 }}
-              transition={{ type: "spring", stiffness: 380, damping: 22 }}
-            >
-              <Plus className="w-6 h-6 text-white drop-shadow" />
-            </motion.div>
+            {/* Sparkle particles — burst when tapped */}
+            <AnimatePresence>
+              {sparkling && SPARKLE_ANGLES.map((angle, i) => {
+                const rad = (angle * Math.PI) / 180;
+                const dist = 36 + Math.random() * 18;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ x: 0, y: 0, scale: 0, opacity: 1 }}
+                    animate={{
+                      x: Math.cos(rad) * dist,
+                      y: Math.sin(rad) * dist,
+                      scale: [0, 1.3, 0],
+                      opacity: [1, 1, 0],
+                    }}
+                    transition={{ duration: 0.55, ease: "easeOut", delay: i * 0.018 }}
+                    className="absolute rounded-full pointer-events-none"
+                    style={{
+                      width: SPARKLE_SIZES[i % SPARKLE_SIZES.length],
+                      height: SPARKLE_SIZES[i % SPARKLE_SIZES.length],
+                      background: SPARKLE_COLORS[i % SPARKLE_COLORS.length],
+                      boxShadow: `0 0 6px ${SPARKLE_COLORS[i % SPARKLE_COLORS.length]}`,
+                      top: "50%", left: "50%",
+                      marginTop: -SPARKLE_SIZES[i % SPARKLE_SIZES.length] / 2,
+                      marginLeft: -SPARKLE_SIZES[i % SPARKLE_SIZES.length] / 2,
+                    }}
+                  />
+                );
+              })}
+            </AnimatePresence>
 
-            {/* Pulse rings when closed */}
-            {!sheetOpen && (
-              <>
-                <motion.span
-                  className="absolute inset-0 rounded-full"
-                  style={{ border: "1.5px solid rgba(124,58,237,0.45)" }}
-                  animate={{ scale: [1, 1.55], opacity: [0.6, 0] }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
-                />
-                <motion.span
-                  className="absolute inset-0 rounded-full"
-                  style={{ border: "1.5px solid rgba(124,58,237,0.3)" }}
-                  animate={{ scale: [1, 1.9], opacity: [0.5, 0] }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
-                />
-              </>
-            )}
-          </motion.button>
+            {/* The FAB button itself */}
+            <motion.button
+              initial={{ opacity: 0, y: 14, scale: 0.85 }}
+              animate={{
+                opacity: 1, y: 0,
+                scale: sparkling ? [1, 1.18, 0.92, 1] : 1,
+              }}
+              exit={{ opacity: 0, y: 14, scale: 0.85 }}
+              transition={sparkling ? { duration: 0.4, ease: "easeOut" } : undefined}
+              whileTap={{ scale: 0.88 }}
+              onClick={handleFabClick}
+              className="relative w-14 h-14 rounded-full flex items-center justify-center overflow-visible"
+              style={{
+                background: sheetOpen
+                  ? "linear-gradient(135deg,#6d28d9,#7c3aed)"
+                  : "linear-gradient(135deg,#7c3aed,#9333ea)",
+                boxShadow: sparkling
+                  ? "0 0 0 8px rgba(124,58,237,0.25), 0 0 0 18px rgba(124,58,237,0.1), 0 8px 32px rgba(124,58,237,0.7)"
+                  : sheetOpen
+                    ? "0 0 0 6px rgba(124,58,237,0.18), 0 6px 28px rgba(124,58,237,0.6)"
+                    : "0 4px 22px rgba(124,58,237,0.45), 0 0 0 2px rgba(255,255,255,0.12)",
+                border: "1.5px solid rgba(255,255,255,0.18)",
+              }}
+            >
+              <motion.div
+                animate={{ rotate: sheetOpen ? 45 : 0 }}
+                transition={{ type: "spring", stiffness: 380, damping: 22 }}
+              >
+                <Plus className="w-6 h-6 text-white drop-shadow" />
+              </motion.div>
+
+              {/* Idle pulse rings */}
+              {!sheetOpen && !sparkling && (
+                <>
+                  <motion.span
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{ border: "1.5px solid rgba(124,58,237,0.45)" }}
+                    animate={{ scale: [1, 1.55], opacity: [0.6, 0] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+                  />
+                  <motion.span
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{ border: "1.5px solid rgba(124,58,237,0.28)" }}
+                    animate={{ scale: [1, 1.95], opacity: [0.5, 0] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut", delay: 0.55 }}
+                  />
+                </>
+              )}
+
+              {/* Sparkling inner glow ring */}
+              <AnimatePresence>
+                {sparkling && (
+                  <motion.span
+                    key="glow"
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    initial={{ scale: 1, opacity: 0.8 }}
+                    animate={{ scale: 2.2, opacity: 0 }}
+                    exit={{}}
+                    transition={{ duration: 0.55, ease: "easeOut" }}
+                    style={{ background: "radial-gradient(circle, rgba(167,139,250,0.55) 0%, transparent 70%)" }}
+                  />
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </div>
         )}
       </AnimatePresence>
 

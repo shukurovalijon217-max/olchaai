@@ -225,6 +225,11 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   const [tab,  setTab]  = useState<TabType>(defaultTab);
   const [done, setDone] = useState(false);
 
+  /* sync tab when modal re-opens with a different defaultTab */
+  useEffect(() => {
+    if (open) { setTab(defaultTab); setDone(false); }
+  }, [open, defaultTab]);
+
   /* post state — multi-file queue */
   type MediaItem = { id: string; file: File; preview: string; status: "idle"|"uploading"|"done"|"error"; progress: number; serveUrl?: string };
   const [mediaQueue,    setMediaQueue]    = useState<MediaItem[]>([]);

@@ -447,7 +447,7 @@ export default function HomePage() {
               animate={{
                 opacity: 1,
                 y: 0,
-                scale: sparkling ? [1, 1.15, 0.94, 1] : 1,
+                scale: sparkling ? [1, 1.12, 0.96, 1] : 1,
               }}
               exit={{ opacity: 0, y: 14, scale: 0.8 }}
               transition={sparkling ? { duration: 0.38, ease: "easeOut" } : { type: "spring", stiffness: 380, damping: 24 }}
@@ -456,25 +456,25 @@ export default function HomePage() {
               onClick={handleFabClick}
               className="relative flex items-center justify-center overflow-visible"
               style={{
-                width: 58,
-                height: 58,
+                width: 44,
+                height: 44,
                 borderRadius: "50%",
                 background: sheetOpen
                   ? "rgba(255,255,255,0.14)"
                   : "rgba(255,255,255,0.08)",
                 backdropFilter: "blur(28px)",
                 WebkitBackdropFilter: "blur(28px)",
-                border: "1px solid rgba(255,255,255,0.2)",
+                border: "1px solid rgba(255,255,255,0.18)",
                 boxShadow: sparkling
-                  ? "0 0 0 10px rgba(255,255,255,0.06), 0 0 0 22px rgba(255,255,255,0.03), 0 12px 40px rgba(0,0,0,0.4)"
-                  : "0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.18)",
+                  ? "0 0 0 8px rgba(255,255,255,0.05), 0 8px 28px rgba(0,0,0,0.4)"
+                  : "0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.16)",
               }}
             >
               {/* Inner glass highlight */}
               <div
                 className="absolute inset-0 rounded-full pointer-events-none"
                 style={{
-                  background: "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.22) 0%, transparent 65%)",
+                  background: "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 65%)",
                 }}
               />
 
@@ -485,30 +485,22 @@ export default function HomePage() {
               >
                 <MoreHorizontal
                   style={{
-                    width: 22,
-                    height: 22,
-                    color: "rgba(255,255,255,0.85)",
-                    filter: "drop-shadow(0 0 6px rgba(255,255,255,0.4))",
+                    width: 18,
+                    height: 18,
+                    color: "rgba(255,255,255,0.80)",
+                    filter: "drop-shadow(0 0 4px rgba(255,255,255,0.3))",
                   }}
                 />
               </motion.div>
 
-              {/* Idle aurora pulse rings */}
+              {/* Single subtle pulse ring */}
               {!sheetOpen && !sparkling && (
-                <>
-                  <motion.span
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ border: "1px solid rgba(255,255,255,0.22)" }}
-                    animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
-                  />
-                  <motion.span
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ border: "1px solid rgba(255,255,255,0.12)" }}
-                    animate={{ scale: [1, 2.1], opacity: [0.4, 0] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", delay: 0.7 }}
-                  />
-                </>
+                <motion.span
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  style={{ border: "1px solid rgba(255,255,255,0.18)" }}
+                  animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
+                />
               )}
 
               {/* Sparkle inner flash */}

@@ -384,27 +384,28 @@ function MuniPanel() {
       {/* Toggle button */}
       <motion.button
         onClick={() => setOpen(v => !v)}
-        whileHover={{ scale: 1.08 }}
+        whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-28 right-4 z-[80] md:bottom-6 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center"
-        style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)", boxShadow: "0 0 24px rgba(124,58,237,0.6), 0 0 48px rgba(59,130,246,0.3)" }}
+        className="fixed bottom-28 right-4 z-[80] md:bottom-6 w-10 h-10 rounded-full flex items-center justify-center"
+        style={{
+          background: "rgba(255,255,255,0.10)",
+          backdropFilter: "blur(24px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.8)",
+          border: "1px solid rgba(255,255,255,0.22)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18)",
+        }}
       >
         <AnimatePresence mode="wait">
           {open ? (
             <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-              <X className="w-5 h-5 text-white" />
+              <X className="w-4 h-4 text-white/80" />
             </motion.div>
           ) : (
             <motion.div key="bot" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-              <Zap className="w-5 h-5 text-white" />
+              <Zap className="w-4 h-4 text-white/80" />
             </motion.div>
           )}
         </AnimatePresence>
-        {!open && (
-          <motion.div className="absolute inset-0 rounded-full" animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
-            transition={{ duration: 2.5, repeat: Infinity }}
-            style={{ background: "radial-gradient(circle, rgba(124,58,237,0.5), transparent)", pointerEvents: "none" }} />
-        )}
       </motion.button>
 
       {/* Chat panel */}
@@ -415,7 +416,7 @@ function MuniPanel() {
             animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: 32, scale: 0.88, rotateX: 10, filter: "blur(6px)" }}
             transition={{ type: "spring", stiffness: 420, damping: 32 }}
-            className="fixed bottom-36 right-4 z-[79] md:bottom-24 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            className="fixed bottom-[160px] right-4 z-[79] md:bottom-20 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col"
             style={{ perspective: 800, background: "hsl(var(--card))", border: "1px solid rgba(124,58,237,0.25)", boxShadow: "0 0 60px rgba(124,58,237,0.2), 0 24px 48px rgba(0,0,0,0.4)", maxHeight: "60vh" }}
           >
             {/* Header */}

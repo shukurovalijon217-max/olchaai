@@ -30,6 +30,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   defaultTab?: TabType;
+  singleTab?: boolean;
 }
 
 const ACCEPT = {
@@ -214,7 +215,7 @@ function UploadZone({
 }
 
 /* ─── MAIN MODAL ─── */
-export default function CreateContentModal({ open, onClose, defaultTab = "post" }: Props) {
+export default function CreateContentModal({ open, onClose, defaultTab = "post", singleTab = false }: Props) {
   const { user }     = useAuth();
   const qc           = useQueryClient();
   const createPost   = useCreatePost();
@@ -1021,7 +1022,11 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                 >
                   {(() => { const T = TABS.find(t => t.id === tab); return T ? <T.icon className="w-3.5 h-3.5 text-white" /> : null; })()}
                 </motion.div>
-                <h2 className="font-bold text-base text-white">Kontent yaratish</h2>
+                <h2 className="font-bold text-base text-white">
+                  {singleTab
+                    ? (TABS.find(t => t.id === tab)?.label ?? "Kontent") + " yaratish"
+                    : "Kontent yaratish"}
+                </h2>
               </div>
               <button onClick={handleClose}
                 className="w-8 h-8 rounded-xl flex items-center justify-center"
@@ -1042,7 +1047,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
               />
             </div>
 
-            {/* ── Dramatic Tab Bar ── */}
+            {/* ── Dramatic Tab Bar — hidden in singleTab mode ── */}
+            {!singleTab && (
             <div className="flex gap-2 px-4 pt-3.5 pb-0.5">
               {TABS.map(t => {
                 const active = tab === t.id;
@@ -1087,6 +1093,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                 );
               })}
             </div>
+            )}
 
             <div className="p-5 space-y-4 max-h-[78vh] overflow-y-auto">
 

@@ -371,6 +371,37 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
   /* ── Story Power state ── */
   const [storySticker,      setStorySticker]      = useState<string|null>(null);
   const [storyRing,         setStoryRing]         = useState(false);
+  const [storyDuration,     setStoryDuration]     = useState("24h");
+  const [storyLink,         setStoryLink]         = useState("");
+  const [storyReplyMode,    setStoryReplyMode]    = useState("all");
+  /* ── Hashtag Storm state ── */
+  const [hashtagStormOpen,     setHashtagStormOpen]     = useState(false);
+  const [hashtagStormLoading,  setHashtagStormLoading]  = useState(false);
+  const [hashtagSuggestions,   setHashtagSuggestions]   = useState<{tag:string;reach:string}[]>([]);
+  const [selectedHashtags,     setSelectedHashtags]     = useState<string[]>([]);
+  /* ── Self-Destruct state ── */
+  const [selfDestruct,         setSelfDestruct]         = useState(false);
+  const [selfDestructTime,     setSelfDestructTime]     = useState("24h");
+  /* ── Content Series state ── */
+  const [seriesEnabled,        setSeriesEnabled]        = useState(false);
+  const [seriesTitle,          setSeriesTitle]          = useState("");
+  const [seriesEpisode,        setSeriesEpisode]        = useState(1);
+  /* ── Geo-Bloom state ── */
+  const [geoBloomEnabled,      setGeoBloomEnabled]      = useState(false);
+  const [geoBloomRadius,       setGeoBloomRadius]       = useState(50);
+  /* ── Voice Caption state ── */
+  const [voiceCapRecording,    setVoiceCapRecording]    = useState(false);
+  const [voiceCapTranscribing, setVoiceCapTranscribing] = useState(false);
+  /* ── Reel extras state ── */
+  const [reelFilter,           setReelFilter]           = useState("none");
+  const [reelLoop,             setReelLoop]             = useState("normal");
+  const [reelHookOpen,         setReelHookOpen]         = useState(false);
+  const [reelHookLoading,      setReelHookLoading]      = useState(false);
+  const [reelHooks,            setReelHooks]            = useState<string[]>([]);
+  /* ── Collab Canvas state ── */
+  const [collabCanvas,         setCollabCanvas]         = useState(false);
+  const [collabCanvasInvites,  setCollabCanvasInvites]  = useState<string[]>([]);
+  const [collabInviteInput,    setCollabInviteInput]    = useState("");
 
   const fetchBestTime = async () => {
     setBestTimeLoading(true); setBestTimeOpen(true);
@@ -415,6 +446,57 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
     selectedLangs.forEach(l => { result[l] = `[${labels[l] ?? l.toUpperCase()}] ${postContent}`; });
     setTranslations(result);
     setTranslating(false);
+  };
+
+  /* ── Hashtag Storm ── */
+  const runHashtagStorm = async () => {
+    setHashtagStormLoading(true); setHashtagStormOpen(true);
+    await new Promise(r => setTimeout(r, 1400));
+    const pool: {tag:string;reach:string}[] = [
+      {tag:"#viral",reach:"12.4M"},{tag:"#trending",reach:"8.1M"},{tag:"#nexus",reach:"450K"},
+      {tag:"#olcha",reach:"220K"},{tag:"#content",reach:"5.2M"},{tag:"#creator",reach:"3.8M"},
+      {tag:"#reels",reach:"11.6M"},{tag:"#fyp",reach:"18.4M"},{tag:"#explore",reach:"6.1M"},
+      {tag:"#daily",reach:"4.8M"},{tag:"#lifestyle",reach:"3.5M"},{tag:"#growth",reach:"2.2M"},
+      {tag:"#motivation",reach:"5.3M"},{tag:"#success",reach:"4.9M"},{tag:"#fun",reach:"9.7M"},
+      {tag:"#original",reach:"1.4M"},{tag:"#exclusive",reach:"820K"},{tag:"#new",reach:"14.9M"},
+      {tag:"#art",reach:"7.4M"},{tag:"#community",reach:"2.9M"},
+    ];
+    setHashtagSuggestions(pool.sort(() => Math.random() - 0.5).slice(0, 16));
+    setHashtagStormLoading(false);
+  };
+
+  /* ── Reel AI Hook Generator ── */
+  const runReelHooks = async () => {
+    setReelHookLoading(true); setReelHookOpen(true);
+    await new Promise(r => setTimeout(r, 1300));
+    const pool = [
+      "\"Hech kim sizga aytmagan sir bor...\"",
+      "\"Buni ko'rgandan keyin hayotingiz o'zgaradi\"",
+      "\"3 soniyada diqqatingizni tortadigan narsani ko'rsataman\"",
+      "\"Nima? Bu mumkin emas deb o'ylardim, lekin...\"",
+      "\"Hammangiz bu xatoni qilyapsiz — tomosha qiling\"",
+      "\"Bu faqat 10 soniya oladi, lekin natijasi 10 yilga yetadi\"",
+      "\"Kim bu narsani bilardi? Men bilmagan ekanman!\"",
+      "\"Stop scrolling — buning oxirida hammasi tushuntiriladi\"",
+    ];
+    setReelHooks(pool.sort(() => Math.random() - 0.5).slice(0, 3));
+    setReelHookLoading(false);
+  };
+
+  /* ── Voice Caption (mock) ── */
+  const runVoiceCaption = async () => {
+    setVoiceCapRecording(true);
+    await new Promise(r => setTimeout(r, 2000));
+    setVoiceCapRecording(false);
+    setVoiceCapTranscribing(true);
+    await new Promise(r => setTimeout(r, 1200));
+    setVoiceCapTranscribing(false);
+    const samples = [
+      "Bu post haqida ko'p narsalar aytmoqchi edim, eng muhimi — izchillik!",
+      "Har kuni yangi narsa o'rganing. Bugun ham bir kashfiyot qildim.",
+      "Siz ham bu holatda bo'lgansiz deyman — mana mening yechimim.",
+    ];
+    setPostContent(samples[Math.floor(Math.random() * samples.length)]);
   };
 
   const addFiles = (files: FileList) => {
@@ -1824,6 +1906,202 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                                   </span>
                                 </div>
 
+                                {/* ── 11. 🎤 Voice Caption ── */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🎤 Ovozdan Izoh — AI transkripsiya</p>
+                                  <button onClick={runVoiceCaption} disabled={voiceCapRecording || voiceCapTranscribing}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all"
+                                    style={{ background: voiceCapRecording ? "rgba(239,68,68,0.2)" : voiceCapTranscribing ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)", border: voiceCapRecording ? "1px solid rgba(239,68,68,0.5)" : voiceCapTranscribing ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.1)", color: voiceCapRecording ? "#f87171" : voiceCapTranscribing ? "#a5b4fc" : "rgba(255,255,255,0.55)" }}>
+                                    {voiceCapRecording ? <><div className="w-2 h-2 rounded-full bg-red-400 animate-pulse"/> Yozib olinmoqda (2s)…</> :
+                                     voiceCapTranscribing ? <><Loader2 className="w-3.5 h-3.5 animate-spin"/> AI transkripsiya qilmoqda…</> :
+                                     <><span>🎤</span> Ovozdan izoh yozdirish</>}
+                                  </button>
+                                  <p className="text-[9px] text-white/25 mt-1 px-1">Gapiring → AI avtomatik izohga aylantiradi</p>
+                                </div>
+
+                                {/* ── 12. 🏷️ Hashtag Storm ── */}
+                                <div>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🏷️ AI Hashtag Storm — 16 ta trend teg</p>
+                                  <button onClick={runHashtagStorm} disabled={hashtagStormLoading}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all"
+                                    style={{ background:"rgba(251,191,36,0.12)", border:"1px solid rgba(251,191,36,0.3)", color:"#fbbf24" }}>
+                                    {hashtagStormLoading ? <><Loader2 className="w-3.5 h-3.5 animate-spin"/> Trend teglar tahlil qilinmoqda…</> : <><span>🌪️</span> Hashtag Storm ishlatish</>}
+                                  </button>
+                                  <AnimatePresence>
+                                    {hashtagStormOpen && !hashtagStormLoading && (
+                                      <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 overflow-hidden">
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {hashtagSuggestions.map(h => {
+                                            const picked = selectedHashtags.includes(h.tag);
+                                            return (
+                                              <button key={h.tag}
+                                                onClick={() => {
+                                                  setSelectedHashtags(p => picked ? p.filter(x=>x!==h.tag) : [...p,h.tag]);
+                                                  if (!picked) setPostContent(c => c + (c ? " " : "") + h.tag);
+                                                  else setPostContent(c => c.replace(" " + h.tag, "").replace(h.tag, "").trim());
+                                                }}
+                                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all"
+                                                style={{ background:picked?"rgba(251,191,36,0.2)":"rgba(255,255,255,0.06)", border:picked?"1px solid rgba(251,191,36,0.6)":"1px solid rgba(255,255,255,0.08)", color:picked?"#fbbf24":"rgba(255,255,255,0.45)" }}>
+                                                {h.tag}
+                                                <span className="text-[8px] opacity-60">{h.reach}</span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                        {selectedHashtags.length > 0 && (
+                                          <p className="text-[9px] text-amber-400 mt-1.5 px-1 font-semibold">{selectedHashtags.length} ta teg tanlandi</p>
+                                        )}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 13. ⏰ Self-Destruct Timer ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">⏰ Auto Self-Destruct — o'z-o'zidan o'chadi</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">Post belgilangan vaqtdan keyin avtomatik o'chiriladi</p>
+                                    </div>
+                                    <button onClick={()=>setSelfDestruct(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 ml-2 transition-all"
+                                      style={{ background:selfDestruct?"#ef4444":"rgba(255,255,255,0.12)", justifyContent:selfDestruct?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white"/>
+                                    </button>
+                                  </div>
+                                  <AnimatePresence>
+                                    {selfDestruct && (
+                                      <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                                        <div className="flex gap-1.5 flex-wrap">
+                                          {["1h","3h","6h","12h","24h","48h","72h"].map(t => (
+                                            <button key={t} onClick={()=>setSelfDestructTime(t)}
+                                              className="px-3 py-1.5 rounded-xl text-[10px] font-black transition-all"
+                                              style={{ background:selfDestructTime===t?"rgba(239,68,68,0.25)":"rgba(255,255,255,0.06)", border:selfDestructTime===t?"1.5px solid rgba(239,68,68,0.7)":"1.5px solid rgba(255,255,255,0.08)", color:selfDestructTime===t?"#f87171":"rgba(255,255,255,0.4)" }}>
+                                              {t}
+                                            </button>
+                                          ))}
+                                        </div>
+                                        <p className="text-[9px] text-red-400/70 mt-1.5 px-0.5">💣 {selfDestructTime} dan keyin barcha platformalarda o'chiriladi</p>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 14. 🧩 Content Series ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">🧩 Kontent Seriyasi — Netflix uslub</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">Postingizni seriya epizodi sifatida belgilang</p>
+                                    </div>
+                                    <button onClick={()=>setSeriesEnabled(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 ml-2 transition-all"
+                                      style={{ background:seriesEnabled?"#f59e0b":"rgba(255,255,255,0.12)", justifyContent:seriesEnabled?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white"/>
+                                    </button>
+                                  </div>
+                                  <AnimatePresence>
+                                    {seriesEnabled && (
+                                      <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-2 overflow-hidden">
+                                        <input placeholder="Seriya nomi (masalan: Hayotim Sahifalari)" value={seriesTitle} onChange={e=>setSeriesTitle(e.target.value)}
+                                          className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                                          style={{ background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.3)" }} />
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs text-white/45">Epizod:</span>
+                                          <div className="flex gap-1.5">
+                                            {[1,2,3,4,5,6,7,8].map(n => (
+                                              <button key={n} onClick={()=>setSeriesEpisode(n)}
+                                                className="w-7 h-7 rounded-lg text-xs font-black transition-all"
+                                                style={{ background:seriesEpisode===n?"rgba(245,158,11,0.3)":"rgba(255,255,255,0.06)", border:seriesEpisode===n?"1.5px solid rgba(245,158,11,0.7)":"1.5px solid rgba(255,255,255,0.08)", color:seriesEpisode===n?"#fbbf24":"rgba(255,255,255,0.4)" }}>
+                                                {n}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                        {seriesTitle && <p className="text-[10px] text-amber-400 px-0.5 font-semibold">📺 {seriesTitle} — Epizod {seriesEpisode}</p>}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 15. 🌐 Geo-Bloom ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">🌐 Geo-Bloom — joylashuvdan tarqalish</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">Post avval sizga yaqin foydalanuvchilarga ko'rsatiladi</p>
+                                    </div>
+                                    <button onClick={()=>setGeoBloomEnabled(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 ml-2 transition-all"
+                                      style={{ background:geoBloomEnabled?"#22d3ee":"rgba(255,255,255,0.12)", justifyContent:geoBloomEnabled?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white"/>
+                                    </button>
+                                  </div>
+                                  <AnimatePresence>
+                                    {geoBloomEnabled && (
+                                      <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-2 overflow-hidden">
+                                        <div className="flex items-center gap-3">
+                                          <input type="range" min={1} max={200} step={5} value={geoBloomRadius} onChange={e=>setGeoBloomRadius(Number(e.target.value))} className="flex-1" style={{accentColor:"#22d3ee"}}/>
+                                          <span className="text-xs font-black text-cyan-400 w-14 text-right">{geoBloomRadius} km</span>
+                                        </div>
+                                        <div className="flex gap-1.5">
+                                          {[1,5,10,25,50,100,200].map(v => (
+                                            <button key={v} onClick={()=>setGeoBloomRadius(v)}
+                                              className="px-2 py-1 rounded-lg text-[9px] font-bold transition-all"
+                                              style={{ background:geoBloomRadius===v?"rgba(34,211,238,0.25)":"rgba(255,255,255,0.06)", border:geoBloomRadius===v?"1px solid rgba(34,211,238,0.6)":"1px solid rgba(255,255,255,0.08)", color:geoBloomRadius===v?"#22d3ee":"rgba(255,255,255,0.4)" }}>
+                                              {v}km
+                                            </button>
+                                          ))}
+                                        </div>
+                                        <p className="text-[9px] text-cyan-500/60">🗺️ {geoBloomRadius} km radiusdagi foydalanuvchilarga birinchi ko'rsatiladi</p>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* ── 16. 🤝 Live Collab Canvas ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">🤝 Live Collab Canvas — birgalikda yarating</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">Do'stlaringizni publish qilishdan oldin tahrirga taklif qiling</p>
+                                    </div>
+                                    <button onClick={()=>setCollabCanvas(p=>!p)}
+                                      className="flex items-center px-0.5 rounded-full flex-shrink-0 ml-2 transition-all"
+                                      style={{ background:collabCanvas?"#a78bfa":"rgba(255,255,255,0.12)", justifyContent:collabCanvas?"flex-end":"flex-start", height:22, width:40 }}>
+                                      <div className="w-4 h-4 rounded-full bg-white"/>
+                                    </button>
+                                  </div>
+                                  <AnimatePresence>
+                                    {collabCanvas && (
+                                      <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-2 overflow-hidden">
+                                        <div className="flex gap-2">
+                                          <input placeholder="@foydalanuvchi nomi" value={collabInviteInput} onChange={e=>setCollabInviteInput(e.target.value)}
+                                            onKeyDown={e=>{ if(e.key==="Enter"&&collabInviteInput.trim()){ setCollabCanvasInvites(p=>[...p,collabInviteInput.trim()]); setCollabInviteInput(""); } }}
+                                            className="flex-1 rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                                            style={{ background:"rgba(167,139,250,0.1)", border:"1px solid rgba(167,139,250,0.35)" }}/>
+                                          <button onClick={()=>{ if(collabInviteInput.trim()){ setCollabCanvasInvites(p=>[...p,collabInviteInput.trim()]); setCollabInviteInput(""); }}}
+                                            className="px-3 py-2 rounded-xl text-xs font-bold"
+                                            style={{ background:"rgba(167,139,250,0.2)", color:"#a78bfa" }}>
+                                            +Qo'sh
+                                          </button>
+                                        </div>
+                                        {collabCanvasInvites.length > 0 && (
+                                          <div className="flex flex-wrap gap-1.5">
+                                            {collabCanvasInvites.map(inv => (
+                                              <span key={inv} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-violet-300"
+                                                style={{ background:"rgba(167,139,250,0.15)", border:"1px solid rgba(167,139,250,0.35)" }}>
+                                                {inv}
+                                                <button onClick={()=>setCollabCanvasInvites(p=>p.filter(x=>x!==inv))} className="opacity-60">×</button>
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
                               </div>
                             </motion.div>
                           )}
@@ -1918,6 +2196,68 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                             </div>
                           </div>
                         ))}
+                      </div>
+
+                      {/* ── 🎨 Cinematic Color Filter ── */}
+                      <div>
+                        <p className="text-xs font-bold text-white/45 mb-2">🎨 Sinematik Filtr</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { id:"none",    label:"Asl",      preview:"rgba(255,255,255,0.08)", border:"rgba(255,255,255,0.15)" },
+                            { id:"warm",    label:"🌅 Issiq",  preview:"rgba(251,146,60,0.35)",  border:"rgba(251,146,60,0.7)"  },
+                            { id:"cool",    label:"❄️ Sovuq",  preview:"rgba(96,165,250,0.35)",  border:"rgba(96,165,250,0.7)"  },
+                            { id:"vintage", label:"📷 Vintage",preview:"rgba(251,191,36,0.25)", border:"rgba(251,191,36,0.6)"  },
+                            { id:"neon",    label:"🌈 Neon",   preview:"rgba(167,139,250,0.35)", border:"rgba(167,139,250,0.7)" },
+                            { id:"bw",      label:"⬛ B&W",    preview:"rgba(255,255,255,0.12)", border:"rgba(255,255,255,0.45)" },
+                          ].map(f => (
+                            <button key={f.id} onClick={() => setReelFilter(f.id)}
+                              className="flex flex-col items-center gap-1.5 py-2.5 rounded-xl transition-all"
+                              style={{ background:reelFilter===f.id?f.preview:"rgba(255,255,255,0.04)", border:reelFilter===f.id?`1.5px solid ${f.border}`:"1.5px solid rgba(255,255,255,0.07)" }}>
+                              <div className="w-8 h-8 rounded-lg" style={{ background:f.preview, border:`1px solid ${f.border}` }}/>
+                              <span className="text-[9px] font-bold" style={{ color:reelFilter===f.id?"white":"rgba(255,255,255,0.4)" }}>{f.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* ── 🔄 Loop Type ── */}
+                      <div>
+                        <p className="text-xs font-bold text-white/45 mb-2">🔄 Loop turi</p>
+                        <div className="flex gap-2">
+                          {[{id:"normal",e:"▶️",l:"Oddiy"},{id:"pingpong",e:"↔️",l:"Ping-Pong"},{id:"stilend",e:"⏸",l:"Oxiri muzlab"}].map(l => (
+                            <button key={l.id} onClick={() => setReelLoop(l.id)}
+                              className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-[10px] font-bold transition-all"
+                              style={{ background:reelLoop===l.id?"rgba(124,58,237,0.2)":"rgba(255,255,255,0.04)", border:reelLoop===l.id?"1.5px solid rgba(124,58,237,0.6)":"1.5px solid rgba(255,255,255,0.07)", color:reelLoop===l.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
+                              <span className="text-base">{l.e}</span>
+                              {l.l}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* ── 🎯 AI Hook Generator ── */}
+                      <div>
+                        <p className="text-xs font-bold text-white/45 mb-2">🎯 AI Ochilish Iborasi — birinchi 3 soniya</p>
+                        <button onClick={runReelHooks} disabled={reelHookLoading}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all"
+                          style={{ background:"rgba(220,38,38,0.15)", border:"1px solid rgba(220,38,38,0.35)", color:"#fca5a5" }}>
+                          {reelHookLoading ? <><Loader2 className="w-3.5 h-3.5 animate-spin"/> Eng yaxshi hooklar tanlanmoqda…</> : <><Sparkles className="w-3.5 h-3.5"/> AI hook taklifi (scroll stopper)</>}
+                        </button>
+                        <AnimatePresence>
+                          {reelHookOpen && !reelHookLoading && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 space-y-1.5 overflow-hidden">
+                              {reelHooks.map((hook, i) => (
+                                <motion.button key={i} initial={{opacity:0,x:-6}} animate={{opacity:1,x:0}} transition={{delay:i*0.07}}
+                                  onClick={() => setReelCaption(hook.replace(/"/g,""))}
+                                  className="w-full text-left px-3 py-2.5 rounded-xl text-[11px] text-white/75 hover:bg-white/5 transition-colors"
+                                  style={{ background:"rgba(220,38,38,0.08)", border:"1px solid rgba(220,38,38,0.2)" }}>
+                                  {hook}
+                                </motion.button>
+                              ))}
+                              <p className="text-[9px] text-white/25 px-1">Bosib caption'ga qo'shish</p>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {/* Reel permissions */}
@@ -2033,6 +2373,47 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post" 
                         <div className="flex items-center px-0.5 rounded-full transition-all"
                           style={{ background:storyRing?"rgba(168,85,247,0.8)":"rgba(255,255,255,0.12)", justifyContent:storyRing?"flex-end":"flex-start", height:22, width:40 }}>
                           <div className="w-4 h-4 rounded-full bg-white" />
+                        </div>
+                      </div>
+
+                      {/* ── ⏰ Story Duration ── */}
+                      <div>
+                        <p className="text-xs font-bold text-white/45 mb-2">⏰ Story davomiyligi</p>
+                        <div className="flex gap-2">
+                          {[{v:"6h",l:"6 soat"},{v:"12h",l:"12 soat"},{v:"24h",l:"24 soat"},{v:"48h",l:"48 soat"}].map(d => (
+                            <button key={d.v} onClick={() => setStoryDuration(d.v)}
+                              className="flex-1 py-2 rounded-xl text-[10px] font-black transition-all"
+                              style={{ background:storyDuration===d.v?"rgba(251,191,36,0.2)":"rgba(255,255,255,0.05)", border:storyDuration===d.v?"1.5px solid rgba(251,191,36,0.6)":"1.5px solid rgba(255,255,255,0.07)", color:storyDuration===d.v?"#fbbf24":"rgba(255,255,255,0.4)" }}>
+                              {d.l}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* ── 🔗 Swipe Link ── */}
+                      <div>
+                        <p className="text-xs font-bold text-white/45 mb-2">🔗 Swipe Up havolasi</p>
+                        <div className="flex gap-2 items-center">
+                          <input placeholder="https://olcha.uz/..." value={storyLink} onChange={e=>setStoryLink(e.target.value)}
+                            className="flex-1 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                            style={{ background:"rgba(52,211,153,0.07)", border:"1px solid rgba(52,211,153,0.25)" }}/>
+                          {storyLink && <span className="text-emerald-400 text-lg">✓</span>}
+                        </div>
+                        <p className="text-[9px] text-white/25 mt-1 px-1">Tomoshabinlar yuqoriga swipalab havola ochadi</p>
+                      </div>
+
+                      {/* ── 💬 Reply Mode ── */}
+                      <div>
+                        <p className="text-xs font-bold text-white/45 mb-2">💬 Kim javob yoza oladi</p>
+                        <div className="flex gap-2">
+                          {[{v:"all",e:"🌐",l:"Hammasi"},{v:"followers",e:"👥",l:"Obunachi"},{v:"none",e:"🔕",l:"Hech kim"}].map(r => (
+                            <button key={r.v} onClick={() => setStoryReplyMode(r.v)}
+                              className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-[10px] font-bold transition-all"
+                              style={{ background:storyReplyMode===r.v?"rgba(96,165,250,0.2)":"rgba(255,255,255,0.04)", border:storyReplyMode===r.v?"1.5px solid rgba(96,165,250,0.6)":"1.5px solid rgba(255,255,255,0.07)", color:storyReplyMode===r.v?"#93c5fd":"rgba(255,255,255,0.4)" }}>
+                              <span className="text-base">{r.e}</span>
+                              {r.l}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>

@@ -5190,11 +5190,10 @@ export default function OTubePage() {
         onTouchStart={onTS} onTouchEnd={onTE}>
 
         {/* ── NEXUS BROADCAST HEADER — ultra-minimal ── */}
-        <div className="sticky top-0 z-40"
-          style={{background:"rgba(0,0,8,0.82)",backdropFilter:"blur(32px)",
+        <div className="sticky z-40"
+          style={{top:"env(safe-area-inset-top, 0px)",background:"rgba(0,0,8,0.82)",backdropFilter:"blur(32px)",
             WebkitBackdropFilter:"blur(32px)",
-            borderBottom:"1px solid rgba(255,255,255,0.04)",
-            paddingTop:"env(safe-area-inset-top, 0px)"}}>
+            borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
 
           <AnimatePresence mode="wait">
             {showSearch ? (

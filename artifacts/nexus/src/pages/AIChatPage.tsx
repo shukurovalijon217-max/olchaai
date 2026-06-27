@@ -274,7 +274,7 @@ export default function AIChatPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3">
+      <div className="sticky z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3" style={{ top: "env(safe-area-inset-top, 0px)" }}>
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">

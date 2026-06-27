@@ -669,7 +669,7 @@ function ActionHub({
 
   return (
     <div
-      style={{ position:"absolute", top:14, right:12, width:HUB, height:HUB, zIndex:30, overflow:"visible" }}
+      style={{ position:"absolute", top:"calc(env(safe-area-inset-top, 0px) + 10px)", right:12, width:HUB, height:HUB, zIndex:30, overflow:"visible" }}
       onPointerDown={e=>e.stopPropagation()} onPointerUp={e=>e.stopPropagation()}>
 
       {/* Shockwave ring */}
@@ -945,7 +945,7 @@ function ReelSlide({
       </div>
 
       {/* floating card */}
-      <div className="absolute inset-x-1 top-0 bottom-0 rounded-[28px] overflow-hidden"
+      <div className="absolute inset-x-0 md:inset-x-1 top-0 bottom-0 rounded-none md:rounded-[28px] overflow-hidden"
         style={{
           boxShadow:`0 0 52px ${neonColor}22, 0 24px 64px rgba(0,0,0,0.82)`,
           border:`1.5px solid ${neonColor}18`,
@@ -1249,8 +1249,8 @@ export default function ReelsPage() {
   void fmAnimate;
 
   return (
-    <div className="relative flex items-center justify-center overflow-hidden"
-      style={{height:"calc(100vh - 60px)", minHeight:480, background:"#000"}}
+    <div className="-ml-2 md:ml-0 relative flex items-center justify-center overflow-hidden"
+      style={{height:"calc(100dvh - 60px)", minHeight:480, background:"#000"}}
       onWheel={handleWheel} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
 
       {/* global ambient */}

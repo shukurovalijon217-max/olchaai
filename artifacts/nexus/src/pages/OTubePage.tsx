@@ -3358,8 +3358,18 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const [watermark,    setWatermark]    = useState(false);
   const [watermarkPos, setWatermarkPos] = useState("br");
   const [colorLimiter, setColorLimiter] = useState(false);
+  const [thumbImageSrc, setThumbImageSrc] = useState<string>("");
+  const [thumbVideoSrc, setThumbVideoSrc] = useState<string>("");
+  const [thumbMediaType, setThumbMediaType] = useState<"none"|"image"|"video">("none");
+  const [thumbTextSize, setThumbTextSize] = useState(16);
+  const [thumbTextColor, setThumbTextColor] = useState("#ffffff");
+  const [thumbTextPos, setThumbTextPos] = useState<"top"|"center"|"bottom">("center");
+  const [thumbFilter, setThumbFilter] = useState("none");
+  const [transPreview, setTransPreview] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileRef  = useRef<HTMLInputElement>(null);
+  const thumbImgRef = useRef<HTMLInputElement>(null);
+  const thumbVidRef = useRef<HTMLInputElement>(null);
 
   const uploadUrlMut = useRequestUploadUrl();
   const createMut    = useCreateReel({
@@ -3629,6 +3639,10 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       </div>
       <input ref={fileRef} type="file" accept="video/*" className="hidden"
         onChange={e=>e.target.files?.[0]&&handleFile(e.target.files[0])}/>
+      <input ref={thumbImgRef} type="file" accept="image/*" className="hidden"
+        onChange={e=>{const f=e.target.files?.[0];if(f){setThumbImageSrc(URL.createObjectURL(f));setThumbMediaType("image");}}}/>
+      <input ref={thumbVidRef} type="file" accept="video/*" className="hidden"
+        onChange={e=>{const f=e.target.files?.[0];if(f){setThumbVideoSrc(URL.createObjectURL(f));setThumbMediaType("video");}}}/>
 
       {/* Multi-layer waveform timeline */}
       <div style={{padding:"5px 12px",borderBottom:"1px solid rgba(255,255,255,0.06)",
@@ -3979,32 +3993,83 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
         {/* ── TRANSITIONS ── */}
         {activeTab==="transitions" && (
           <div className="flex flex-col gap-3">
+            {/* Live preview strip */}
+            <div style={{borderRadius:12,overflow:"hidden",height:70,position:"relative",
+              background:"rgba(168,85,247,0.06)",border:"1px solid rgba(168,85,247,0.18)"}}>
+              <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",
+                justifyContent:"center",gap:0}}>
+                {/* Before clip */}
+                <motion.div
+                  animate={transPreview?{x:[0,-10,0],opacity:[1,0,0]}:{}}
+                  transition={{duration:0.6,ease:"easeInOut"}}
+                  style={{flex:1,height:"100%",background:`linear-gradient(135deg,${T.violet}44,${T.nova}44)`,
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{fontSize:22}}>🎬</span>
+                </motion.div>
+                {/* Transition indicator */}
+                <motion.div
+                  animate={transPreview?{scale:[1,1.4,1],opacity:[0.6,1,0.6]}:{}}
+                  transition={{duration:0.6,repeat:transPreview?Infinity:0}}
+                  style={{width:32,height:32,borderRadius:"50%",
+                    background:"rgba(168,85,247,0.7)",display:"flex",alignItems:"center",
+                    justifyContent:"center",flexShrink:0,zIndex:2,
+                    boxShadow:`0 0 16px ${T.violet}88`}}>
+                  <span style={{fontSize:14}}>{TRANSITIONS.find(tr=>tr.id===transition)?.emoji}</span>
+                </motion.div>
+                {/* After clip */}
+                <motion.div
+                  animate={transPreview?{x:[10,0,0],opacity:[0,1,1]}:{}}
+                  transition={{duration:0.6,ease:"easeInOut"}}
+                  style={{flex:1,height:"100%",background:`linear-gradient(135deg,${T.cyan}33,${T.aurora}33)`,
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{fontSize:22}}>✨</span>
+                </motion.div>
+              </div>
+              {/* Preview button */}
+              <motion.button whileTap={{scale:0.9}}
+                onClick={()=>{setTransPreview(true);setTimeout(()=>setTransPreview(false),2000);}}
+                style={{position:"absolute",top:6,right:8,padding:"3px 10px",borderRadius:99,
+                  fontSize:8,fontWeight:800,background:T.violet,color:"white",letterSpacing:"0.06em"}}>
+                ▶ PREVIEW
+              </motion.button>
+              <div style={{position:"absolute",bottom:6,left:10,fontSize:8,color:"rgba(255,255,255,0.35)"}}>
+                {TRANSITIONS.find(tr=>tr.id===transition)?.name} o'tish effekti
+              </div>
+            </div>
+
             <p style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>
               {t("otube.studio_transition_hint")}
             </p>
             <div className="grid grid-cols-3 gap-2">
-              {TRANSITIONS.map(t=>(
-                <motion.button key={t.id} whileTap={{scale:0.92}}
-                  onClick={()=>setTransition(t.id)}
+              {TRANSITIONS.map(tr=>(
+                <motion.button key={tr.id} whileTap={{scale:0.92}}
+                  onClick={()=>{setTransition(tr.id);setTransPreview(true);setTimeout(()=>setTransPreview(false),1600);}}
                   style={{padding:"10px 6px",borderRadius:12,display:"flex",flexDirection:"column",
                     alignItems:"center",gap:4,
-                    background:transition===t.id?"rgba(168,85,247,0.18)":"rgba(255,255,255,0.04)",
-                    border:`1px solid ${transition===t.id?"rgba(168,85,247,0.5)":"rgba(255,255,255,0.07)"}`,
-                    boxShadow:transition===t.id?`0 0 12px ${T.violet}33`:"none",
+                    background:transition===tr.id?"rgba(168,85,247,0.18)":"rgba(255,255,255,0.04)",
+                    border:`1px solid ${transition===tr.id?"rgba(168,85,247,0.5)":"rgba(255,255,255,0.07)"}`,
+                    boxShadow:transition===tr.id?`0 0 12px ${T.violet}33`:"none",
                     transition:"all 0.15s"}}>
-                  <span style={{fontSize:20}}>{t.emoji}</span>
+                  <span style={{fontSize:20}}>{tr.emoji}</span>
                   <span style={{fontSize:9,fontWeight:700,
-                    color:transition===t.id?T.violet:"rgba(255,255,255,0.4)"}}>{t.name}</span>
+                    color:transition===tr.id?T.violet:"rgba(255,255,255,0.4)"}}>{tr.name}</span>
                 </motion.button>
               ))}
             </div>
             <div style={{padding:"10px 12px",borderRadius:10,
-              background:"rgba(168,85,247,0.07)",border:"1px solid rgba(168,85,247,0.15)"}}>
+              background:"rgba(168,85,247,0.07)",border:"1px solid rgba(168,85,247,0.15)",
+              display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>
                 {t("otube.studio_transition_selected")} <span style={{color:T.violet,fontWeight:700}}>
-                  {TRANSITIONS.find(t=>t.id===transition)?.emoji} {TRANSITIONS.find(t=>t.id===transition)?.name}
+                  {TRANSITIONS.find(tr=>tr.id===transition)?.emoji} {TRANSITIONS.find(tr=>tr.id===transition)?.name}
                 </span>
               </span>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:8,color:"rgba(255,255,255,0.3)"}}>Davomiyligi</span>
+                <select style={{padding:"3px 6px",borderRadius:6,background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",color:T.violet,fontSize:9,fontWeight:700,outline:"none",appearance:"none"}}>
+                  {["0.3s","0.5s","0.8s","1.0s","1.5s"].map(d=><option key={d}>{d}</option>)}
+                </select>
+              </div>
             </div>
           </div>
         )}
@@ -4281,11 +4346,116 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
         {/* ── THUMBNAIL CREATOR ── */}
         {activeTab==="thumbnail" && (
           <div className="flex flex-col gap-4">
-            {/* Style picker */}
+
+            {/* ── UPLOAD MEDIA ── */}
             <div>
-              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🖼 MUQOVA USLUBI</div>
+              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>📸 MUQOVA MEDIA</div>
+              <div className="flex gap-2">
+                {/* Upload image */}
+                <motion.button whileTap={{scale:0.95}} onClick={()=>thumbImgRef.current?.click()}
+                  style={{flex:1,padding:"14px 8px",borderRadius:12,display:"flex",flexDirection:"column",
+                    alignItems:"center",gap:6,
+                    background:thumbMediaType==="image"?"rgba(255,196,0,0.12)":"rgba(255,255,255,0.04)",
+                    border:`1.5px dashed ${thumbMediaType==="image"?T.gold:"rgba(255,255,255,0.12)"}`,
+                    cursor:"pointer"}}>
+                  <span style={{fontSize:24}}>🖼</span>
+                  <span style={{fontSize:9,fontWeight:700,color:thumbMediaType==="image"?T.gold:"rgba(255,255,255,0.4)"}}>Rasm yuklash</span>
+                  <span style={{fontSize:7,color:"rgba(255,255,255,0.25)"}}>JPG, PNG, WEBP</span>
+                </motion.button>
+                {/* Upload video frame */}
+                <motion.button whileTap={{scale:0.95}} onClick={()=>thumbVidRef.current?.click()}
+                  style={{flex:1,padding:"14px 8px",borderRadius:12,display:"flex",flexDirection:"column",
+                    alignItems:"center",gap:6,
+                    background:thumbMediaType==="video"?"rgba(0,229,255,0.1)":"rgba(255,255,255,0.04)",
+                    border:`1.5px dashed ${thumbMediaType==="video"?T.cyan:"rgba(255,255,255,0.12)"}`,
+                    cursor:"pointer"}}>
+                  <span style={{fontSize:24}}>🎬</span>
+                  <span style={{fontSize:9,fontWeight:700,color:thumbMediaType==="video"?T.cyan:"rgba(255,255,255,0.4)"}}>Video muqova</span>
+                  <span style={{fontSize:7,color:"rgba(255,255,255,0.25)"}}>MP4, MOV, AVI</span>
+                </motion.button>
+                {/* Capture from current video */}
+                {videoSrc && (
+                  <motion.button whileTap={{scale:0.95}} onClick={()=>{
+                    const v=videoRef.current;
+                    if(!v)return;
+                    const c=document.createElement("canvas");
+                    c.width=v.videoWidth||640;c.height=v.videoHeight||360;
+                    c.getContext("2d")?.drawImage(v,0,0);
+                    setThumbImageSrc(c.toDataURL("image/jpeg",0.92));setThumbMediaType("image");
+                  }}
+                    style={{flex:1,padding:"14px 8px",borderRadius:12,display:"flex",flexDirection:"column",
+                      alignItems:"center",gap:6,
+                      background:"rgba(168,85,247,0.07)",
+                      border:"1.5px dashed rgba(168,85,247,0.3)",cursor:"pointer"}}>
+                    <span style={{fontSize:24}}>📷</span>
+                    <span style={{fontSize:9,fontWeight:700,color:T.violet}}>Kadr olish</span>
+                    <span style={{fontSize:7,color:"rgba(255,255,255,0.25)"}}>Hozirgi frame</span>
+                  </motion.button>
+                )}
+                {/* Clear */}
+                {thumbMediaType!=="none" && (
+                  <motion.button whileTap={{scale:0.95}} onClick={()=>{setThumbMediaType("none");setThumbImageSrc("");setThumbVideoSrc("");}}
+                    style={{width:44,borderRadius:12,display:"flex",flexDirection:"column",alignItems:"center",
+                      justifyContent:"center",gap:4,background:"rgba(255,53,0,0.08)",
+                      border:"1.5px dashed rgba(255,53,0,0.3)",cursor:"pointer"}}>
+                    <span style={{fontSize:16}}>🗑</span>
+                    <span style={{fontSize:7,color:"rgba(255,53,0,0.7)"}}>O'ch</span>
+                  </motion.button>
+                )}
+              </div>
+            </div>
+
+            {/* ── LIVE PREVIEW ── */}
+            <div style={{aspectRatio:"16/9",borderRadius:14,overflow:"hidden",position:"relative",
+              background:thumbMediaType==="image"&&thumbImageSrc
+                ? `url(${thumbImageSrc}) center/cover`
+                : thumbStyle==="gradient"?`linear-gradient(135deg,${thumbBg},${T.violet}66)`
+                : thumbStyle==="neon"?`radial-gradient(ellipse at 30% 40%,${T.cyan}44,${thumbBg})`
+                : thumbStyle==="cinematic"?`linear-gradient(180deg,${thumbBg} 0%,rgba(0,0,0,0.9) 100%)`
+                : thumbStyle==="bold"?`linear-gradient(135deg,${T.orange},${T.violet})`
+                : thumbBg,
+              border:"2px solid rgba(255,196,0,0.2)",boxShadow:"0 8px 32px rgba(0,0,0,0.6)"}}>
+
+              {/* Video preview for video thumbnail */}
+              {thumbMediaType==="video" && thumbVideoSrc && (
+                <video src={thumbVideoSrc} autoPlay loop muted playsInline
+                  style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
+              )}
+
+              {/* Overlays */}
+              {thumbStyle==="neon" && <div style={{position:"absolute",inset:0,boxShadow:`inset 0 0 50px ${T.cyan}44`}}/>}
+              {thumbStyle==="cinematic" && <div style={{position:"absolute",top:0,left:0,right:0,height:"12%",background:"rgba(0,0,0,0.85)"}}/> }
+              {thumbStyle==="cinematic" && <div style={{position:"absolute",bottom:0,left:0,right:0,height:"12%",background:"rgba(0,0,0,0.85)"}}/> }
+
+              {/* Emoji */}
+              <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+                alignItems:"center",
+                justifyContent:thumbTextPos==="top"?"flex-start":thumbTextPos==="bottom"?"flex-end":"center",
+                padding:thumbTextPos==="top"?"16px 0 0":"0 0 16px",gap:6,pointerEvents:"none"}}>
+                <span style={{fontSize:36,filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.8))"}}>{thumbEmoji}</span>
+                {thumbCaption && (
+                  <span style={{fontSize:thumbTextSize,fontWeight:900,color:thumbTextColor,
+                    textShadow:"0 2px 16px rgba(0,0,0,0.95)",textAlign:"center",
+                    lineHeight:1.2,letterSpacing:"0.01em",
+                    background:"rgba(0,0,0,0.35)",borderRadius:8,padding:"4px 12px",
+                    backdropFilter:"blur(4px)"}}>
+                    {thumbCaption}
+                  </span>
+                )}
+              </div>
+
+              {/* PRO badge */}
+              <div style={{position:"absolute",top:8,right:8,padding:"2px 7px",borderRadius:6,
+                background:"linear-gradient(90deg,#ff6b00,#ffc400)",fontSize:8,fontWeight:900,color:"#000"}}>
+                PRO
+              </div>
+            </div>
+
+            {/* ── STYLE PRESETS ── */}
+            <div>
+              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🎨 USLUB</div>
               <div className="flex flex-wrap gap-2">
-                {[{v:"gradient",l:"Gradient"},{v:"solid",l:"Qattiq"},{v:"blur",l:"Loyqa Fon"},{v:"neon",l:"Neon"},{v:"cinematic",l:"Kino"},{v:"minimal",l:"Minimal"},{v:"bold",l:"Bold"}].map(({v,l})=>(
+                {[{v:"gradient",l:"Gradient"},{v:"solid",l:"Qattiq"},{v:"neon",l:"Neon"},{v:"cinematic",l:"Kino"},{v:"minimal",l:"Minimal"},{v:"bold",l:"Bold"},{v:"blur",l:"Loyqa"}].map(({v,l})=>(
                   <button key={v} onClick={()=>setThumbStyle(v)}
                     style={{padding:"7px 12px",borderRadius:9,fontSize:10,fontWeight:700,
                       background:thumbStyle===v?"rgba(255,196,0,0.15)":"rgba(255,255,255,0.04)",
@@ -4296,45 +4466,90 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
                 ))}
               </div>
             </div>
-            {/* Thumbnail preview */}
-            <div style={{aspectRatio:"16/9",borderRadius:12,overflow:"hidden",position:"relative",
-              background:thumbStyle==="gradient"?`linear-gradient(135deg,${thumbBg},${T.violet}66)`:thumbBg,
-              border:"1px solid rgba(255,255,255,0.1)"}}>
-              <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6}}>
-                <span style={{fontSize:40}}>{thumbEmoji}</span>
-                {thumbCaption && <span style={{fontSize:14,fontWeight:900,color:"white",textShadow:"0 2px 10px rgba(0,0,0,0.9)",textAlign:"center",padding:"0 16px"}}>{thumbCaption}</span>}
-              </div>
-              {thumbStyle==="neon" && <div style={{position:"absolute",inset:0,boxShadow:`inset 0 0 40px ${T.cyan}33`}}/>}
-            </div>
-            {/* Caption input */}
+
+            {/* ── TEXT ── */}
             <div>
               <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:6}}>📝 MUQOVA MATNI</div>
               <input value={thumbCaption} onChange={e=>setThumbCaption(e.target.value)} maxLength={60}
                 placeholder="Ajoyib sarlavha yozing…"
                 style={{width:"100%",padding:"10px 12px",borderRadius:10,background:"rgba(255,196,0,0.07)",
                   border:"1px solid rgba(255,196,0,0.25)",color:"white",fontSize:12,outline:"none"}}/>
-            </div>
-            {/* Background color */}
-            <div>
-              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:6}}>🎨 FON RANGI</div>
-              <div className="flex gap-2 flex-wrap">
-                {["#000022","#ff3500","#7700ff","#00e5ff","#ff6b00","#00ff77","#111","#220033"].map(c=>(
-                  <button key={c} onClick={()=>setThumbBg(c)}
-                    style={{width:32,height:32,borderRadius:8,background:c,
-                      border:`2px solid ${thumbBg===c?T.gold:"rgba(255,255,255,0.15)"}`,cursor:"pointer"}}/>
+              {/* Text size & color & position */}
+              <div className="flex gap-2 mt-2" style={{alignItems:"center"}}>
+                <span style={{fontSize:8,color:"rgba(255,255,255,0.35)",minWidth:30}}>Hajm</span>
+                <input type="range" min={10} max={28} value={thumbTextSize} onChange={e=>setThumbTextSize(+e.target.value)}
+                  style={{flex:1,accentColor:T.gold}}/>
+                <span style={{fontSize:9,color:T.gold,fontWeight:700,minWidth:24}}>{thumbTextSize}px</span>
+              </div>
+              <div className="flex gap-2 mt-2 flex-wrap" style={{alignItems:"center"}}>
+                <span style={{fontSize:8,color:"rgba(255,255,255,0.35)",minWidth:30}}>Rang</span>
+                {["#ffffff","#ffc400","#ff3500","#00e5ff","#00ff77","#ff2d55","#a855f7"].map(c=>(
+                  <button key={c} onClick={()=>setThumbTextColor(c)}
+                    style={{width:22,height:22,borderRadius:"50%",background:c,flexShrink:0,
+                      border:`2px solid ${thumbTextColor===c?"white":"transparent"}`}}/>
                 ))}
-                <input type="color" value={thumbBg} onChange={e=>setThumbBg(e.target.value)}
-                  style={{width:32,height:32,borderRadius:8,cursor:"pointer",border:"none",padding:0,background:"transparent"}}/>
+                <input type="color" value={thumbTextColor} onChange={e=>setThumbTextColor(e.target.value)}
+                  style={{width:22,height:22,borderRadius:"50%",border:"none",padding:0,background:"transparent",cursor:"pointer"}}/>
+              </div>
+              <div className="flex gap-2 mt-2">
+                {([["top","⬆️ Yuqori"],["center","⬛ Markaz"],["bottom","⬇️ Pastki"]] as const).map(([v,l])=>(
+                  <button key={v} onClick={()=>setThumbTextPos(v)}
+                    style={{flex:1,padding:"6px 4px",borderRadius:8,fontSize:9,fontWeight:700,
+                      background:thumbTextPos===v?"rgba(255,196,0,0.15)":"rgba(255,255,255,0.04)",
+                      color:thumbTextPos===v?T.gold:T.txtSub,
+                      border:`1px solid ${thumbTextPos===v?T.gold+"44":"rgba(255,255,255,0.06)"}`}}>
+                    {l}
+                  </button>
+                ))}
               </div>
             </div>
-            {/* Emoji picker */}
-            <div>
-              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:6}}>✨ EMOJI</div>
-              <div className="flex flex-wrap gap-2">
-                {["🔥","⚡","💥","🚀","👑","🏆","💎","🌊","🎬","🎵","🤩","💯","🌈","⭐","🎯","🦁"].map(e=>(
-                  <button key={e} onClick={()=>setThumbEmoji(e)} style={{fontSize:22,borderRadius:8,padding:"4px",background:thumbEmoji===e?"rgba(255,196,0,0.15)":"transparent",border:`1px solid ${thumbEmoji===e?T.gold+"55":"transparent"}`}}>{e}</button>
-                ))}
+
+            {/* ── BACKGROUND COLOR ── */}
+            {thumbMediaType==="none" && (
+              <div>
+                <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:6}}>🎨 FON RANGI</div>
+                <div className="flex gap-2 flex-wrap">
+                  {["#000022","#0a0018","#ff3500","#7700ff","#00e5ff","#ff6b00","#00ff77","#111","#220033","#002233","#001a0d","#1a0000"].map(c=>(
+                    <button key={c} onClick={()=>setThumbBg(c)}
+                      style={{width:30,height:30,borderRadius:8,background:c,flexShrink:0,
+                        border:`2px solid ${thumbBg===c?T.gold:"rgba(255,255,255,0.12)"}`,cursor:"pointer"}}/>
+                  ))}
+                  <input type="color" value={thumbBg} onChange={e=>setThumbBg(e.target.value)}
+                    style={{width:30,height:30,borderRadius:8,cursor:"pointer",border:"none",padding:0,background:"transparent"}}/>
+                </div>
               </div>
+            )}
+
+            {/* ── EMOJI PICKER (60+) ── */}
+            <div>
+              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>✨ EMOJI TANLASH</div>
+              {[
+                {label:"Trend",list:["🔥","⚡","💥","🚀","💫","✨","🌟","⭐","🎯","💯"]},
+                {label:"Mukofot",list:["🏆","👑","🥇","🥈","🥉","🎖","🏅","💎","💰","🎁"]},
+                {label:"Media",list:["🎬","🎵","🎸","🎹","🎤","🎧","📡","📸","🎥","🎞"]},
+                {label:"Sport",list:["⚽","🏀","🎾","🏈","🤺","🥊","🏄","🤸","⛷","🏆"]},
+                {label:"Tabiyt",list:["🌊","🌈","🌸","🌺","🍀","🌙","☀️","❄️","🌪","🦋"]},
+                {label:"Hayvon",list:["🦁","🐉","🦅","🐺","🐯","🦊","🦄","🐬","🦈","🦉"]},
+                {label:"His",list:["❤️","🤩","😎","🥳","🤯","😍","🥰","😤","🤑","😈"]},
+                {label:"Texno",list:["🤖","👾","🕹","💻","📱","🛸","🔮","⚙️","🔬","🧬"]},
+              ].map(({label,list})=>(
+                <div key={label} style={{marginBottom:8}}>
+                  <div style={{fontSize:7,color:"rgba(255,255,255,0.3)",marginBottom:4,letterSpacing:"0.1em"}}>{label.toUpperCase()}</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                    {list.map(e=>(
+                      <motion.button key={e} whileTap={{scale:0.85}} onClick={()=>setThumbEmoji(e)}
+                        style={{fontSize:22,width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",
+                          justifyContent:"center",
+                          background:thumbEmoji===e?"rgba(255,196,0,0.2)":"rgba(255,255,255,0.04)",
+                          border:`1.5px solid ${thumbEmoji===e?T.gold:"rgba(255,255,255,0.06)"}`,
+                          boxShadow:thumbEmoji===e?`0 0 10px ${T.gold}44`:"none",
+                          transition:"all 0.15s"}}>
+                        {e}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

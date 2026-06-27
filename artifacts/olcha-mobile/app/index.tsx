@@ -105,8 +105,8 @@ function NativeShell() {
         thirdPartyCookiesEnabled
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={false}
-        allowsBackForwardNavigationGestures={Platform.OS === "ios"}
-        pullToRefreshEnabled
+        allowsBackForwardNavigationGestures={false}
+        pullToRefreshEnabled={false}
         bounces={false}
         allowsFullscreenVideo
         userAgent={`OlCha/1.0 Mobile/${Platform.OS} (${Platform.Version})`}

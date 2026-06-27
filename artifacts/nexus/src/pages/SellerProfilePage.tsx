@@ -84,7 +84,7 @@ export default function SellerProfilePage({ sellerId }: { sellerId: number }) {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-amber-900/20 px-4 py-3 flex items-center gap-3">
+      <div className="top-0 z-30 bg-background/95 backdrop-blur border-b border-amber-900/20 px-4 py-3 flex items-center gap-3 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
         <button onClick={() => navigate("/bozor")} className="p-1.5 rounded-full hover:bg-amber-950/40">
           <ArrowLeft className="w-5 h-5" />
         </button>

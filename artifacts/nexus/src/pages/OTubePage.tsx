@@ -695,7 +695,8 @@ function NexusPlayer({ video, onClose, settings }:
               {/* TOP bar */}
               <div className="absolute top-0 inset-x-0 pointer-events-auto"
                 style={{ background:"linear-gradient(to bottom,rgba(0,0,0,0.85),transparent)",
-                  padding:"14px 12px 40px" }}>
+                  paddingTop:"calc(env(safe-area-inset-top, 0px) + 14px)",
+                  paddingLeft:"12px", paddingRight:"12px", paddingBottom:"40px" }}>
                 <div className="flex items-center gap-2">
                   <motion.button whileTap={{scale:0.85}} onClick={onClose}
                     style={{ width:40,height:40,flexShrink:0,borderRadius:"50%",
@@ -3502,8 +3503,9 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       className="fixed inset-0 z-[10000] flex flex-col" style={{background:"#04000f"}}>
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-3"
-        style={{borderBottom:"1px solid rgba(168,85,247,0.18)",background:"rgba(4,0,15,0.95)"}}>
+      <div className="flex items-center justify-between px-4 pb-3"
+        style={{borderBottom:"1px solid rgba(168,85,247,0.18)",background:"rgba(4,0,15,0.95)",
+          paddingTop:"calc(env(safe-area-inset-top, 0px) + 12px)"}}>
         <button onClick={onClose}
           style={{width:34,height:34,borderRadius:10,background:"rgba(255,255,255,0.07)",
             border:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center"}}>

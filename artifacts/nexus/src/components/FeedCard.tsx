@@ -4,11 +4,12 @@ import {
   Heart, MessageCircle, Share2, Bookmark, Sparkles,
   VolumeX, Volume2, BadgeCheck, Check, Send, X,
   ChevronsRight, ChevronsLeft, Eye, DollarSign,
-  UserPlus, UserCheck, Search, Link, User,
+  UserPlus, UserCheck, Search, Link, User, Trash2,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import type { Post } from "@workspace/api-client-react";
-import { PostType, useLikePost } from "@workspace/api-client-react";
+import { PostType, useLikePost, useDeletePost, getListPostsQueryKey, getGetAiFeedQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 
 /* ─────────────────────────────────────────────────
@@ -331,7 +332,29 @@ export default function FeedCard({ post }: FeedCardProps) {
   const audioRef   = useRef<HTMLAudioElement | null>(null);
   const isInView   = useInView(cardRef, { amount: 0.55 });
 
-  const likePost = useLikePost();
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleted, setDeleted]             = useState(false);
+  const [deleting, setDeleting]           = useState(false);
+
+  const queryClient = useQueryClient();
+  const likePost   = useLikePost();
+  const deletePost = useDeletePost({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetAiFeedQueryKey() });
+        setDeleted(true);
+      },
+      onSettled: () => setDeleting(false),
+    },
+  });
+
+  const isOwner = !!user && !!post.author && user.id === post.author.id;
+
+  const handleDelete = useCallback(() => {
+    setDeleting(true);
+    deletePost.mutate({ id: post.id });
+  }, [deletePost, post.id]);
 
   const isVideo = post.type === PostType.video;
   const isPhoto = post.type === PostType.photo;
@@ -501,6 +524,7 @@ export default function FeedCard({ post }: FeedCardProps) {
     { id: "comment", Icon: MessageCircle, count: post.commentsCount ?? 0, active: false,     activeColor: "#22d3ee", fill: false, fn: () => { setActionsOpen(false); setCommentOpen(o => !o); setShareOpen(false); } },
     { id: "share",   Icon: Share2,        count: shares,                  active: shareOpen, activeColor: "#34d399", fill: false, fn: () => { setShareOpen(o => !o); setCommentOpen(false); setActionsOpen(false); } },
     { id: "ai",      Icon: Sparkles,      count: 0,                       active: false,     activeColor: "#c084fc", fill: false, fn: () => { setActionsOpen(false); } },
+    ...(isOwner ? [{ id: "delete", Icon: Trash2, count: 0, active: false, activeColor: "#f87171", fill: false, fn: () => { setActionsOpen(false); setDeleteConfirm(true); } }] : []),
   ];
 
   /* For photo — display format determines object-fit behaviour */
@@ -525,6 +549,8 @@ export default function FeedCard({ post }: FeedCardProps) {
   };
 
   const isVideoUrl = (url: string) => /\.(mp4|webm|mov|avi|m4v)(\?|$)/i.test(url);
+
+  if (deleted) return null;
 
   return (
     <div
@@ -1544,10 +1570,96 @@ export default function FeedCard({ post }: FeedCardProps) {
         )}
       </AnimatePresence>
 
+      {/* ══ LAYER 9 — DELETE CONFIRMATION PANEL ══ */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-x-0 bottom-0 rounded-t-3xl overflow-hidden"
+            style={{
+              zIndex: 50,
+              background: "rgba(20,6,6,0.92)",
+              backdropFilter: "blur(40px) saturate(2)",
+              WebkitBackdropFilter: "blur(40px) saturate(2)",
+              border: "1px solid rgba(248,113,113,0.25)",
+              borderBottom: "none",
+              boxShadow: "0 -8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(248,113,113,0.15)",
+            }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-8 h-1 rounded-full bg-white/20" />
+            </div>
+
+            {/* Icon + title */}
+            <div className="flex flex-col items-center gap-2 px-6 pt-4 pb-5">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(248,113,113,0.15)", border: "1px solid rgba(248,113,113,0.35)" }}
+              >
+                <Trash2 className="w-6 h-6" style={{ color: "#f87171" }} />
+              </div>
+              <p className="text-white font-black text-[17px] mt-1">Postni o'chirishni tasdiqlaysizmi?</p>
+              <p className="text-white/45 text-[13px] text-center leading-snug">
+                Bu amal qaytarib bo'lmaydi. Post va uning barcha kontent va izohlari o'chiriladi.
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 px-5 pb-8">
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={() => setDeleteConfirm(false)}
+                className="flex-1 py-3.5 rounded-2xl font-bold text-[15px]"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  color: "rgba(255,255,255,0.75)",
+                }}
+              >
+                Bekor qilish
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 py-3.5 rounded-2xl font-black text-[15px] text-white flex items-center justify-center gap-2"
+                style={{
+                  background: deleting ? "rgba(248,113,113,0.3)" : "rgba(248,113,113,0.85)",
+                  border: "1px solid rgba(248,113,113,0.5)",
+                  boxShadow: deleting ? "none" : "0 0 20px rgba(248,113,113,0.35)",
+                }}
+              >
+                {deleting ? (
+                  <motion.div
+                    className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                  />
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    O'chirish
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Click-outside backdrop */}
       {(actionsOpen || commentOpen) && (
         <div className="absolute inset-0" style={{ zIndex: 20 }}
           onClick={() => { setActionsOpen(false); setCommentOpen(false); }} />
+      )}
+      {deleteConfirm && (
+        <div className="absolute inset-0" style={{ zIndex: 49 }}
+          onClick={() => setDeleteConfirm(false)} />
       )}
     </div>
   );

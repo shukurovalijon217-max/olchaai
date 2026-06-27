@@ -849,6 +849,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   const { uploadFile: upReel,      isUploading: upReelBusy,      progress: upReelProg }      = useMediaUpload({ onSuccess: r => setReelUploadResult(r) });
   const { uploadFile: upReelAudio, isUploading: upReelAudioBusy, progress: upReelAudioProg } = useMediaUpload({ onSuccess: r => setReelAudioUploadResult(r) });
   const { uploadFile: upStory,     isUploading: upStoryBusy,     progress: upStoryProg }     = useMediaUpload({ onSuccess: r => setStoryUploadResult(r) });
+  const [otubeUploadResult, setOtubeUploadResult] = useState<{ serveUrl: string } | null>(null);
+  const [otubeUploadProg,   setOtubeUploadProg]   = useState(0);
+  const { uploadFile: upOtube, isUploading: upOtubeBusy, progress: upOtubeProg } = useMediaUpload({ onSuccess: r => { setOtubeUploadResult(r); setOtubeUploadProg(100); } });
 
   const handleFile = (
     file: File,
@@ -921,6 +924,39 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
           },
         });
         qc.invalidateQueries({ queryKey: getListStoriesQueryKey() });
+      } else if (tab === "otube") {
+        if (!otubeUploadResult) return;
+        await createReel.mutateAsync({
+          data: {
+            authorId: user.id,
+            videoUrl: otubeUploadResult.serveUrl,
+            caption: [otubeTitle, otubeDesc].filter(Boolean).join("\n\n"),
+          },
+        });
+        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
+        qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
+      } else if (tab === "challenge") {
+        const challengeMeta = JSON.stringify({
+          hashtag: chalHashtag,
+          category: chalCategory,
+          startDate: chalStartDate,
+          endDate: chalEndDate,
+          prize1: chalPrize1,
+          prize2: chalPrize2,
+          prize3: chalPrize3,
+        });
+        await fetch(`${API}/api/posts`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            authorId: user.id,
+            content: `${chalName}\n\n${chalDesc || ""}\n\n${chalHashtag}`,
+            type: "text",
+            tags: ["_type:challenge", `_meta:${challengeMeta}`],
+          }),
+        });
+        qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
       }
       setDone(true);
       setTimeout(() => handleClose(), 1500);
@@ -944,6 +980,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
     setReelCommentPerm("everyone"); setReelSharePerm("everyone");
     setStoryFile(null); setStoryPreview(""); setStoryCaption(""); setStoryUploadResult(null);
     setOtubeFile(null); setOtubePreview(""); setOtubeTitle(""); setOtubeDesc(""); setOtubeTags([]); setOtubeTagInput("");
+    setOtubeUploadResult(null); setOtubeUploadProg(0);
     setOtubeCategory(""); setOtubeVisibility("public"); setOtubeThumbnail(""); setOtubeThumbnailFile(null);
     setOtubeChapters([]); setOtubeCards([]); setOtubeAiTitle([]); setOtubeAiDesc(""); setOtubeAiTags([]);
     setOtubeSeoScore(0); setOtubeEstRevenue(""); setOtubeSection("basic"); setOtubeCanvasLayers([]);
@@ -957,11 +994,11 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   const queueUploading = mediaQueue.some(m => m.status === "uploading" || m.status === "idle");
   const queueAllDone   = mediaQueue.length === 0 || mediaQueue.every(m => m.status === "done");
 
-  const canSubmit = !submitting && !upReelBusy && !upStoryBusy && !upReelAudioBusy && (
+  const canSubmit = !submitting && !upReelBusy && !upStoryBusy && !upReelAudioBusy && !upOtubeBusy && (
     (tab === "post" && queueAllDone && (postContent.trim() || mediaQueue.some(m => m.status === "done"))) ||
     (tab === "reel" && !!reelUploadResult && reelCaption.trim()) ||
     (tab === "story" && !!storyUploadResult) ||
-    (tab === "otube" && !!otubeFile && otubeTitle.trim().length > 0) ||
+    (tab === "otube" && !!otubeUploadResult && otubeTitle.trim().length > 0) ||
     (tab === "challenge" && chalName.trim().length > 0 && chalHashtag.trim().length > 1)
   );
 
@@ -3575,7 +3612,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 <span>🎬 8K Ultra</span><span>•</span><span>🎵 Dolby Audio</span><span>•</span><span>⚡ 360° Video</span>
                               </div>
                               <input type="file" accept="video/*" className="hidden"
-                                onChange={e=>{const f=e.target.files?.[0];if(f){setOtubeFile(f);setOtubePreview(URL.createObjectURL(f));}e.target.value="";}}/>
+                                onChange={e=>{const f=e.target.files?.[0];if(f){setOtubeFile(f);setOtubePreview(URL.createObjectURL(f));setOtubeUploadResult(null);setOtubeUploadProg(0);upOtube(f);}e.target.value="";}}/>
                             </label>
                           )}
                         </div>

@@ -73,9 +73,9 @@ const initials = (name?: string) =>
   (name ?? "?").split(" ").slice(0,2).map(w => w[0]?.toUpperCase()).join("");
 
 /* ─── Design constants ───────────────────────────────────────── */
-const HUB  = 46;
-const SUB  = 40;
-const STEP = 52;
+const HUB  = 36;
+const SUB  = 32;
+const STEP = 44;
 
 // Vertical cascade: 4 sub-circles drop straight DOWN from hub
 const FAN_OFFSETS = [0, 1, 2, 3].map(i => ({ dx: 0, dy: (i + 1) * STEP }));
@@ -631,7 +631,7 @@ function ActionHub({
   // Sub-circle definitions (5 items, arc from left → down)
   const subs = [
     {
-      id:"like", icon:<Heart className={`w-[18px] h-[18px] ${isLiked?"fill-red-400 text-red-400":"text-white/80"}`}/>,
+      id:"like", icon:<Heart className={`w-[14px] h-[14px] ${isLiked?"fill-red-400 text-red-400":"text-white/80"}`}/>,
       color:"#ef4444", bg: isLiked?"rgba(239,68,68,0.45)":"rgba(10,7,24,0.56)",
       border: isLiked?"rgba(239,68,68,0.5)":"rgba(255,255,255,0.13)",
       glow: isLiked?"rgba(239,68,68,0.45)":undefined,
@@ -639,7 +639,7 @@ function ActionHub({
       onClick: () => { onLike(); pulse(); },
     },
     {
-      id:"comment", icon:<MessageCircle className="w-[18px] h-[18px] text-white/80"/>,
+      id:"comment", icon:<MessageCircle className="w-[14px] h-[14px] text-white/80"/>,
       color:"#60a5fa", bg:"rgba(59,130,246,0.34)", border:"rgba(96,165,250,0.38)", glow:"rgba(59,130,246,0.32)",
       label: fmt(commentsCount), labelColor:"#93c5fd",
       onClick: () => { onComment(); onToggle(); },
@@ -647,8 +647,8 @@ function ActionHub({
     {
       id:"share",
       icon: shareOk
-        ? <Check className="w-[18px] h-[18px] text-emerald-300"/>
-        : <Share2 className="w-[18px] h-[18px] text-white/80"/>,
+        ? <Check className="w-[14px] h-[14px] text-emerald-300"/>
+        : <Share2 className="w-[14px] h-[14px] text-white/80"/>,
       color: shareOk?"#10b981":"rgba(255,255,255,0.5)",
       bg: shareOk?"rgba(16,185,129,0.4)":"rgba(10,7,24,0.56)",
       border: shareOk?"rgba(16,185,129,0.45)":"rgba(255,255,255,0.13)",
@@ -659,8 +659,8 @@ function ActionHub({
     {
       id:"ai",
       icon: analyzingId===reelId
-        ? <Loader2 className="w-[18px] h-[18px] text-violet-300 animate-spin"/>
-        : <Brain className="w-[18px] h-[18px] text-violet-200"/>,
+        ? <Loader2 className="w-[14px] h-[14px] text-violet-300 animate-spin"/>
+        : <Brain className="w-[14px] h-[14px] text-violet-200"/>,
       color:"#a78bfa", bg:"rgba(124,58,237,0.42)", border:"rgba(167,139,250,0.42)", glow:"rgba(124,58,237,0.38)",
       label:"", labelColor:"#c4b5fd",
       onClick: () => { onAI(); pulse(); },
@@ -703,18 +703,18 @@ function ActionHub({
 
         {/* Rotating + → × */}
         <motion.div
-          animate={{ rotate: open ? 45 : 0, scale: open ? 1.1 : 1 }}
+          animate={{ rotate: open ? 45 : 0, scale: open ? 1.05 : 1 }}
           transition={{ type:"spring", damping:12, stiffness:280 }}>
-          <Plus className="w-5 h-5 text-white"/>
+          <Plus className="w-4 h-4 text-white"/>
         </motion.div>
 
         {/* Idle pulsing ring */}
         {!open && (
           <motion.div
-            animate={{ opacity:[0.35,0,0.35], scale:[1,1.28,1] }}
+            animate={{ opacity:[0.3,0,0.3], scale:[1,1.22,1] }}
             transition={{ duration:3.2, repeat:Infinity, ease:"easeInOut" }}
-            style={{ position:"absolute", inset:-3, borderRadius:"50%",
-              border:`1px solid ${neonColor}55`, pointerEvents:"none" }}
+            style={{ position:"absolute", inset:-2, borderRadius:"50%",
+              border:`1px solid ${neonColor}44`, pointerEvents:"none" }}
           />
         )}
       </motion.button>

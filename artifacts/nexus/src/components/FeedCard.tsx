@@ -952,9 +952,9 @@ export default function FeedCard({ post }: FeedCardProps) {
         >
           {!actionsOpen && (
             <motion.span className="absolute inset-0 rounded-full"
-              style={{ border: `1px solid ${theme.accent}88` }}
-              animate={{ scale: [1, 1.65], opacity: [0.5, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} />
+              style={{ border: `1px solid ${theme.accent}66` }}
+              animate={{ scale: [1, 1.28], opacity: [0.4, 0] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }} />
           )}
           {/* Hamburger → chevron-up */}
           <motion.div

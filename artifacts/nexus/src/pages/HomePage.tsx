@@ -456,8 +456,8 @@ export default function HomePage() {
               onClick={handleFabClick}
               className="relative flex items-center justify-center overflow-visible"
               style={{
-                width: 44,
-                height: 44,
+                width: 36,
+                height: 36,
                 borderRadius: "50%",
                 background: sheetOpen
                   ? "rgba(255,255,255,0.14)"
@@ -485,10 +485,10 @@ export default function HomePage() {
               >
                 <MoreHorizontal
                   style={{
-                    width: 18,
-                    height: 18,
+                    width: 15,
+                    height: 15,
                     color: "rgba(255,255,255,0.80)",
-                    filter: "drop-shadow(0 0 4px rgba(255,255,255,0.3))",
+                    filter: "drop-shadow(0 0 3px rgba(255,255,255,0.25))",
                   }}
                 />
               </motion.div>

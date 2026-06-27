@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Flame, Plus, ChevronDown, X,
+  Flame, MoreHorizontal, ChevronDown, X,
+  PenLine, BookOpen, Film, MonitorPlay, Trophy,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
@@ -11,25 +12,80 @@ import CreateContentModal from "@/components/CreateContentModal";
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 
-/* ─── FAB sparkle constants ─── */
-const SPARKLE_ANGLES  = [0,30,60,90,120,150,180,210,240,270,300,330,15,75,135,195,255,315];
-const SPARKLE_COLORS  = ["#a78bfa","#c084fc","#f0abfc","#fbbf24","#34d399","#38bdf8","#f87171","#fb923c"];
-const SPARKLE_SIZES   = [6, 5, 8, 4, 7, 5, 6, 4];
+/* ─── FAB sparkle constants (rainbow burst) ─── */
+const SPARKLE_ANGLES = [0,30,60,90,120,150,180,210,240,270,300,330,15,75,135,195,255,315];
+const SPARKLE_COLORS = [
+  "#f472b6","#fb923c","#facc15","#4ade80","#38bdf8",
+  "#a78bfa","#f87171","#34d399","#c084fc","#fbbf24",
+];
+const SPARKLE_SIZES = [7, 5, 9, 4, 8, 5, 7, 4, 6, 5];
 
-/* ─── Content type card config (static, no text) ─── */
+/* ─── Content type config ─── */
 const CONTENT_TYPE_CONFIG: {
   id: TabType;
-  emoji: string;
+  Icon: React.ElementType;
   grad: string;
   glow: string;
   accent: string;
+  shimmer: string;
 }[] = [
-  { id: "post",      emoji: "📝", grad: "linear-gradient(135deg,#7c3aed,#a78bfa)", glow: "rgba(124,58,237,0.4)",  accent: "#a78bfa" },
-  { id: "story",     emoji: "📖", grad: "linear-gradient(135deg,#d97706,#fbbf24)", glow: "rgba(251,191,36,0.4)", accent: "#fbbf24" },
-  { id: "reel",      emoji: "🎬", grad: "linear-gradient(135deg,#dc2626,#f87171)", glow: "rgba(239,68,68,0.4)",  accent: "#f87171" },
-  { id: "otube",     emoji: "🎥", grad: "linear-gradient(135deg,#059669,#34d399)", glow: "rgba(52,211,153,0.4)", accent: "#34d399" },
-  { id: "challenge", emoji: "🏆", grad: "linear-gradient(135deg,#b45309,#fb923c)", glow: "rgba(251,146,60,0.4)", accent: "#fb923c" },
+  {
+    id: "post",
+    Icon: PenLine,
+    grad: "linear-gradient(140deg,#6d28d9 0%,#4f46e5 60%,#7c3aed 100%)",
+    glow: "rgba(109,40,217,0.55)",
+    accent: "#a78bfa",
+    shimmer: "rgba(167,139,250,0.35)",
+  },
+  {
+    id: "story",
+    Icon: BookOpen,
+    grad: "linear-gradient(140deg,#d97706 0%,#ec4899 70%,#f472b6 100%)",
+    glow: "rgba(236,72,153,0.5)",
+    accent: "#fbbf24",
+    shimmer: "rgba(249,168,212,0.35)",
+  },
+  {
+    id: "reel",
+    Icon: Film,
+    grad: "linear-gradient(140deg,#dc2626 0%,#f97316 65%,#fbbf24 100%)",
+    glow: "rgba(220,38,38,0.55)",
+    accent: "#f87171",
+    shimmer: "rgba(251,146,60,0.35)",
+  },
+  {
+    id: "otube",
+    Icon: MonitorPlay,
+    grad: "linear-gradient(140deg,#0891b2 0%,#06b6d4 50%,#34d399 100%)",
+    glow: "rgba(6,182,212,0.5)",
+    accent: "#67e8f9",
+    shimmer: "rgba(52,211,153,0.35)",
+  },
+  {
+    id: "challenge",
+    Icon: Trophy,
+    grad: "linear-gradient(140deg,#ea580c 0%,#f59e0b 50%,#eab308 100%)",
+    glow: "rgba(234,88,12,0.55)",
+    accent: "#fb923c",
+    shimmer: "rgba(251,191,36,0.35)",
+  },
 ];
+
+/* ─── Shimmer animation for cards ─── */
+function CardShimmer({ color }: { color: string }) {
+  return (
+    <motion.div
+      className="absolute inset-0 pointer-events-none"
+      initial={{ x: "-100%", opacity: 0 }}
+      animate={{ x: ["−100%", "200%"], opacity: [0, 0.6, 0] }}
+      transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 2.5, ease: "easeInOut" }}
+      style={{
+        background: `linear-gradient(105deg, transparent 30%, ${color} 50%, transparent 70%)`,
+        borderRadius: "inherit",
+      }}
+    />
+  );
+}
 
 /* ─── Create Sheet (bottom drawer) ─── */
 function CreateSheet({
@@ -47,6 +103,7 @@ function CreateSheet({
     label: t(`create.${ct.id}_label`),
     desc:  t(`create.${ct.id}_desc`),
   }));
+
   return (
     <AnimatePresence>
       {open && (
@@ -60,9 +117,9 @@ function CreateSheet({
             onClick={onClose}
             className="fixed inset-0 z-40"
             style={{
-              background: "rgba(0,0,0,0.65)",
-              backdropFilter: "blur(6px)",
-              WebkitBackdropFilter: "blur(6px)",
+              background: "rgba(0,0,0,0.6)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
           />
 
@@ -72,22 +129,37 @@ function CreateSheet({
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 400, damping: 34 }}
+            transition={{ type: "spring", stiffness: 420, damping: 36 }}
             className="fixed bottom-0 left-0 right-0 z-50"
             style={{
-              background: "rgba(6,6,18,0.98)",
-              borderRadius: "24px 24px 0 0",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(6,4,20,0.97)",
+              borderRadius: "28px 28px 0 0",
+              border: "1px solid rgba(255,255,255,0.07)",
               borderBottom: "none",
-              boxShadow: "0 -8px 40px rgba(0,0,0,0.7)",
-              paddingBottom: "env(safe-area-inset-bottom, 16px)",
+              boxShadow: "0 -12px 60px rgba(0,0,0,0.8), 0 -1px 0 rgba(255,255,255,0.05)",
+              paddingBottom: "env(safe-area-inset-bottom, 20px)",
             }}
           >
+            {/* Holographic top accent */}
+            <motion.div
+              animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+              style={{
+                position: "absolute",
+                top: 0, left: 0, right: 0,
+                height: 2,
+                borderRadius: "28px 28px 0 0",
+                background: "linear-gradient(90deg,#6d28d9,#ec4899,#f97316,#06b6d4,#4ade80,#a78bfa,#6d28d9)",
+                backgroundSize: "300% 100%",
+              }}
+            />
+
             {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div
-                className="w-9 h-1 rounded-full"
-                style={{ background: "rgba(255,255,255,0.18)" }}
+            <div className="flex justify-center pt-3.5 pb-0.5">
+              <motion.div
+                animate={{ width: [28, 40, 28], opacity: [0.35, 0.6, 0.35] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.25)" }}
               />
             </div>
 
@@ -97,10 +169,7 @@ function CreateSheet({
                 <h2 className="font-black text-base text-white tracking-tight">
                   {t("create.sheet_title")}
                 </h2>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: "rgba(255,255,255,0.35)" }}
-                >
+                <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.38)" }}>
                   {t("create.sheet_sub")}
                 </p>
               </div>
@@ -108,95 +177,113 @@ function CreateSheet({
                 whileTap={{ scale: 0.88 }}
                 onClick={onClose}
                 className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.07)" }}
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
               >
-                <X className="w-4 h-4 text-white/60" />
+                <X className="w-4 h-4 text-white/50" />
               </motion.button>
             </div>
 
-            {/* Content type cards */}
-            <div className="px-4 pb-4 flex flex-col gap-2.5">
-              {CONTENT_TYPES.map((ct, i) => (
-                <motion.button
-                  key={ct.id}
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.04, type: "spring", damping: 22, stiffness: 300 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => { onClose(); onSelect(ct.id); }}
-                  className="flex items-center gap-3.5 w-full text-left"
-                  style={{
-                    padding: "13px 14px",
-                    borderRadius: 16,
-                    background: "rgba(255,255,255,0.04)",
-                    border: `1px solid rgba(255,255,255,0.07)`,
-                    position: "relative",
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* Subtle left accent */}
-                  <div
+            {/* Content type grid */}
+            <div className="px-4 pb-5 grid grid-cols-2 gap-3">
+              {CONTENT_TYPES.map((ct, i) => {
+                const isLast = i === CONTENT_TYPES.length - 1;
+                return (
+                  <motion.button
+                    key={ct.id}
+                    initial={{ opacity: 0, y: 18, scale: 0.92 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: i * 0.055, type: "spring", damping: 20, stiffness: 340 }}
+                    whileTap={{ scale: 0.94 }}
+                    onClick={() => { onClose(); onSelect(ct.id); }}
+                    className={`relative overflow-hidden text-left ${isLast ? "col-span-2" : ""}`}
                     style={{
-                      position: "absolute",
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 3,
-                      borderRadius: "16px 0 0 16px",
+                      minHeight: isLast ? 76 : 110,
+                      borderRadius: 20,
                       background: ct.grad,
-                      boxShadow: `0 0 8px ${ct.glow}`,
-                    }}
-                  />
-
-                  {/* Emoji icon */}
-                  <div
-                    className="flex-shrink-0 flex items-center justify-center"
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 12,
-                      background: ct.grad,
-                      boxShadow: `0 4px 14px ${ct.glow}`,
-                    }}
-                  >
-                    <span style={{ fontSize: 20 }}>{ct.emoji}</span>
-                  </div>
-
-                  {/* Text */}
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className="font-bold text-sm"
-                      style={{ color: "rgba(255,255,255,0.92)" }}
-                    >
-                      {ct.label}
-                    </div>
-                    <div
-                      className="text-xs mt-0.5 truncate"
-                      style={{ color: "rgba(255,255,255,0.38)" }}
-                    >
-                      {ct.desc}
-                    </div>
-                  </div>
-
-                  {/* Arrow */}
-                  <div
-                    className="flex-shrink-0"
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 8,
-                      background: "rgba(255,255,255,0.06)",
+                      boxShadow: `0 8px 28px ${ct.glow}, 0 0 0 1px rgba(255,255,255,0.08)`,
+                      padding: isLast ? "14px 18px" : "16px 14px",
+                      flexDirection: isLast ? "row" : "column",
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 12,
-                      color: ct.accent,
+                      alignItems: isLast ? "center" : "flex-start",
+                      gap: isLast ? 16 : 0,
                     }}
                   >
-                    ›
-                  </div>
-                </motion.button>
-              ))}
+                    {/* Shimmer sweep */}
+                    <CardShimmer color={ct.shimmer} />
+
+                    {/* Subtle radial glow at top-right */}
+                    <div
+                      className="absolute pointer-events-none"
+                      style={{
+                        top: -20, right: -20,
+                        width: 80, height: 80,
+                        borderRadius: "50%",
+                        background: "rgba(255,255,255,0.12)",
+                        filter: "blur(20px)",
+                      }}
+                    />
+
+                    {/* Icon container */}
+                    <div
+                      className="flex-shrink-0 flex items-center justify-center"
+                      style={{
+                        width: isLast ? 44 : 40,
+                        height: isLast ? 44 : 40,
+                        borderRadius: 13,
+                        background: "rgba(0,0,0,0.22)",
+                        backdropFilter: "blur(8px)",
+                        boxShadow: "0 2px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
+                        marginBottom: isLast ? 0 : 10,
+                      }}
+                    >
+                      <ct.Icon
+                        style={{
+                          width: isLast ? 20 : 18,
+                          height: isLast ? 20 : 18,
+                          color: "white",
+                          filter: "drop-shadow(0 0 8px rgba(255,255,255,0.6))",
+                        }}
+                      />
+                    </div>
+
+                    {/* Text */}
+                    <div className="flex-1 min-w-0">
+                      <div
+                        className="font-black text-white leading-tight"
+                        style={{ fontSize: isLast ? 15 : 13 }}
+                      >
+                        {ct.label}
+                      </div>
+                      <div
+                        className="text-xs mt-0.5 truncate"
+                        style={{ color: "rgba(255,255,255,0.62)" }}
+                      >
+                        {ct.desc}
+                      </div>
+                    </div>
+
+                    {/* Arrow badge (last card only) */}
+                    {isLast && (
+                      <div
+                        className="flex-shrink-0 flex items-center justify-center"
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 9,
+                          background: "rgba(0,0,0,0.2)",
+                          fontSize: 16,
+                          color: "rgba(255,255,255,0.85)",
+                        }}
+                      >
+                        ›
+                      </div>
+                    )}
+                  </motion.button>
+                );
+              })}
             </div>
           </motion.div>
         </>
@@ -228,14 +315,13 @@ export default function HomePage() {
   /* FAB tap: burst sparkle then open sheet */
   const handleFabClick = useCallback(() => {
     setSparkling(true);
-    setTimeout(() => { setSparkling(false); setSheetOpen(true); }, 480);
+    setTimeout(() => { setSparkling(false); setSheetOpen(true); }, 460);
   }, []);
 
-  /* auto-kill sparkle if still on */
   useEffect(() => {
     if (!sparkling) return;
-    const t = setTimeout(() => setSparkling(false), 900);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setSparkling(false), 900);
+    return () => clearTimeout(id);
   }, [sparkling]);
 
   const handleSelect = (tab: TabType) => {
@@ -245,7 +331,7 @@ export default function HomePage() {
     }, 120);
   };
 
-  /* ── Horizontal swipe → Reels ── */
+  /* Horizontal swipe → Reels */
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
 
@@ -258,9 +344,7 @@ export default function HomePage() {
     (e: React.TouchEvent) => {
       const dx = e.changedTouches[0].clientX - touchStartX.current;
       const dy = e.changedTouches[0].clientY - touchStartY.current;
-      if (Math.abs(dx) > Math.abs(dy) && dx < -70) {
-        navigate("/reels");
-      }
+      if (Math.abs(dx) > Math.abs(dy) && dx < -70) navigate("/reels");
     },
     [navigate]
   );
@@ -282,10 +366,7 @@ export default function HomePage() {
         className="relative"
       >
         {isLoading ? (
-          <div
-            className="flex items-center justify-center"
-            style={{ height: "100dvh", background: "#06060f" }}
-          >
+          <div className="flex items-center justify-center" style={{ height: "100dvh", background: "#06060f" }}>
             <div className="flex flex-col items-center gap-4">
               <motion.div
                 className="w-12 h-12 rounded-full border-2 border-violet-500 border-t-transparent"
@@ -296,10 +377,7 @@ export default function HomePage() {
             </div>
           </div>
         ) : displayPosts.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center gap-6"
-            style={{ height: "100dvh", background: "#06060f" }}
-          >
+          <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f" }}>
             <motion.div
               animate={{ opacity: [0.3, 0.7, 0.3] }}
               transition={{ duration: 2.5, repeat: Infinity }}
@@ -313,7 +391,7 @@ export default function HomePage() {
               onClick={() => setSheetOpen(true)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold"
             >
-              <Plus className="w-4 h-4" />
+              <MoreHorizontal className="w-4 h-4" />
               {t("home.create_post")}
             </motion.button>
           </div>
@@ -324,18 +402,19 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* ── FAB "+" button with sparkle burst ── */}
+      {/* ── FAB — Glass "···" button ── */}
       <AnimatePresence>
         {!createOpen && displayPosts.length > 0 && (
           <div
             className="fixed z-50"
-            style={{ bottom: 14, left: "50%", transform: "translateX(-50%)" }}
+            style={{ bottom: 18, left: "50%", transform: "translateX(-50%)" }}
           >
-            {/* Sparkle particles — burst when tapped */}
+            {/* Rainbow sparkle burst */}
             <AnimatePresence>
               {sparkling && SPARKLE_ANGLES.map((angle, i) => {
                 const rad = (angle * Math.PI) / 180;
-                const dist = 36 + Math.random() * 18;
+                const dist = 38 + (i % 3) * 10;
+                const sz = SPARKLE_SIZES[i % SPARKLE_SIZES.length];
                 return (
                   <motion.div
                     key={i}
@@ -343,85 +422,106 @@ export default function HomePage() {
                     animate={{
                       x: Math.cos(rad) * dist,
                       y: Math.sin(rad) * dist,
-                      scale: [0, 1.3, 0],
-                      opacity: [1, 1, 0],
+                      scale: [0, 1.4, 0],
+                      opacity: [1, 0.9, 0],
                     }}
-                    transition={{ duration: 0.55, ease: "easeOut", delay: i * 0.018 }}
+                    transition={{ duration: 0.5, ease: "easeOut", delay: i * 0.014 }}
                     className="absolute rounded-full pointer-events-none"
                     style={{
-                      width: SPARKLE_SIZES[i % SPARKLE_SIZES.length],
-                      height: SPARKLE_SIZES[i % SPARKLE_SIZES.length],
+                      width: sz,
+                      height: sz,
                       background: SPARKLE_COLORS[i % SPARKLE_COLORS.length],
-                      boxShadow: `0 0 6px ${SPARKLE_COLORS[i % SPARKLE_COLORS.length]}`,
+                      boxShadow: `0 0 8px 2px ${SPARKLE_COLORS[i % SPARKLE_COLORS.length]}`,
                       top: "50%", left: "50%",
-                      marginTop: -SPARKLE_SIZES[i % SPARKLE_SIZES.length] / 2,
-                      marginLeft: -SPARKLE_SIZES[i % SPARKLE_SIZES.length] / 2,
+                      marginTop: -sz / 2,
+                      marginLeft: -sz / 2,
                     }}
                   />
                 );
               })}
             </AnimatePresence>
 
-            {/* The FAB button itself */}
+            {/* Glass FAB pill */}
             <motion.button
-              initial={{ opacity: 0, y: 14, scale: 0.85 }}
+              initial={{ opacity: 0, y: 14, scale: 0.8 }}
               animate={{
-                opacity: 1, y: 0,
-                scale: sparkling ? [1, 1.18, 0.92, 1] : 1,
+                opacity: 1,
+                y: 0,
+                scale: sparkling ? [1, 1.15, 0.94, 1] : 1,
               }}
-              exit={{ opacity: 0, y: 14, scale: 0.85 }}
-              transition={sparkling ? { duration: 0.4, ease: "easeOut" } : undefined}
+              exit={{ opacity: 0, y: 14, scale: 0.8 }}
+              transition={sparkling ? { duration: 0.38, ease: "easeOut" } : { type: "spring", stiffness: 380, damping: 24 }}
+              whileHover={{ scale: 1.06 }}
               whileTap={{ scale: 0.88 }}
               onClick={handleFabClick}
-              className="relative w-14 h-14 rounded-full flex items-center justify-center overflow-visible"
+              className="relative flex items-center justify-center overflow-visible"
               style={{
+                width: 58,
+                height: 58,
+                borderRadius: "50%",
                 background: sheetOpen
-                  ? "linear-gradient(135deg,#6d28d9,#7c3aed)"
-                  : "linear-gradient(135deg,#7c3aed,#9333ea)",
+                  ? "rgba(255,255,255,0.14)"
+                  : "rgba(255,255,255,0.08)",
+                backdropFilter: "blur(28px)",
+                WebkitBackdropFilter: "blur(28px)",
+                border: "1px solid rgba(255,255,255,0.2)",
                 boxShadow: sparkling
-                  ? "0 0 0 8px rgba(124,58,237,0.25), 0 0 0 18px rgba(124,58,237,0.1), 0 8px 32px rgba(124,58,237,0.7)"
-                  : sheetOpen
-                    ? "0 0 0 6px rgba(124,58,237,0.18), 0 6px 28px rgba(124,58,237,0.6)"
-                    : "0 4px 22px rgba(124,58,237,0.45), 0 0 0 2px rgba(255,255,255,0.12)",
-                border: "1.5px solid rgba(255,255,255,0.18)",
+                  ? "0 0 0 10px rgba(255,255,255,0.06), 0 0 0 22px rgba(255,255,255,0.03), 0 12px 40px rgba(0,0,0,0.4)"
+                  : "0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.18)",
               }}
             >
+              {/* Inner glass highlight */}
+              <div
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{
+                  background: "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.22) 0%, transparent 65%)",
+                }}
+              />
+
+              {/* Three dots icon */}
               <motion.div
-                animate={{ rotate: sheetOpen ? 45 : 0 }}
-                transition={{ type: "spring", stiffness: 380, damping: 22 }}
+                animate={{ rotate: sheetOpen ? 90 : 0 }}
+                transition={{ type: "spring", stiffness: 360, damping: 22 }}
               >
-                <Plus className="w-6 h-6 text-white drop-shadow" />
+                <MoreHorizontal
+                  style={{
+                    width: 22,
+                    height: 22,
+                    color: "rgba(255,255,255,0.85)",
+                    filter: "drop-shadow(0 0 6px rgba(255,255,255,0.4))",
+                  }}
+                />
               </motion.div>
 
-              {/* Idle pulse rings */}
+              {/* Idle aurora pulse rings */}
               {!sheetOpen && !sparkling && (
                 <>
                   <motion.span
                     className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ border: "1.5px solid rgba(124,58,237,0.45)" }}
-                    animate={{ scale: [1, 1.55], opacity: [0.6, 0] }}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+                    style={{ border: "1px solid rgba(255,255,255,0.22)" }}
+                    animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
                   />
                   <motion.span
                     className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ border: "1.5px solid rgba(124,58,237,0.28)" }}
-                    animate={{ scale: [1, 1.95], opacity: [0.5, 0] }}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut", delay: 0.55 }}
+                    style={{ border: "1px solid rgba(255,255,255,0.12)" }}
+                    animate={{ scale: [1, 2.1], opacity: [0.4, 0] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", delay: 0.7 }}
                   />
                 </>
               )}
 
-              {/* Sparkling inner glow ring */}
+              {/* Sparkle inner flash */}
               <AnimatePresence>
                 {sparkling && (
                   <motion.span
-                    key="glow"
+                    key="flash"
                     className="absolute inset-0 rounded-full pointer-events-none"
-                    initial={{ scale: 1, opacity: 0.8 }}
-                    animate={{ scale: 2.2, opacity: 0 }}
+                    initial={{ scale: 1, opacity: 0.7 }}
+                    animate={{ scale: 2.4, opacity: 0 }}
                     exit={{}}
-                    transition={{ duration: 0.55, ease: "easeOut" }}
-                    style={{ background: "radial-gradient(circle, rgba(167,139,250,0.55) 0%, transparent 70%)" }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    style={{ background: "radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 65%)" }}
                   />
                 )}
               </AnimatePresence>
@@ -440,18 +540,19 @@ export default function HomePage() {
             transition={{ delay: 1.5 }}
             onClick={scrollDown}
             className="fixed z-40 flex flex-col items-center gap-1 pointer-events-auto"
-            style={{ bottom: 80, right: 20 }}
+            style={{ bottom: 88, right: 20 }}
           >
             <motion.div
               animate={{ y: [0, 5, 0] }}
               transition={{ duration: 1.4, repeat: Infinity }}
               className="w-8 h-8 rounded-full flex items-center justify-center"
               style={{
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                backdropFilter: "blur(12px)",
               }}
             >
-              <ChevronDown className="w-4 h-4 text-white/60" />
+              <ChevronDown className="w-4 h-4 text-white/55" />
             </motion.div>
           </motion.button>
         )}
@@ -464,7 +565,7 @@ export default function HomePage() {
         onSelect={handleSelect}
       />
 
-      {/* ── Create Content Modal (singleTab — no tab bar confusion) ── */}
+      {/* ── Create Content Modal ── */}
       <CreateContentModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}

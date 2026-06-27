@@ -2728,77 +2728,539 @@ function ShortModal({ onClose }: { onClose: ()=>void }) {
 /* ─────────────────────────────────────────────────────── */
 function ChallengeModal({ onClose }: { onClose: ()=>void }) {
   const { t } = useTranslation();
-  const [name, setName] = useState("");
-  const [desc, setDesc] = useState("");
-  const [days, setDays] = useState(7);
-  const [rules, setRules] = useState(["","",""]);
-  const [done, setDone] = useState(false);
-  const DAYS = [3,7,14,30];
-  const updateRule = (i:number, v:string) => setRules(r=>{const n=[...r]; n[i]=v; return n;});
+  const G = "#00ff88";
+  /* ── 50+ state vars ── */
+  const [section,      setSection]      = useState<"setup"|"rules"|"prizes"|"media"|"community"|"advanced">("setup");
+  const [name,         setName]         = useState("");
+  const [desc,         setDesc]         = useState("");
+  const [category,     setCategory]     = useState("dance");
+  const [tags,         setTags]         = useState<string[]>([]);
+  const [tagInput,     setTagInput]      = useState("");
+  const [coverEmoji,   setCoverEmoji]    = useState("🏆");
+  const [coverBg,      setCoverBg]       = useState("#001a0a");
+  const [days,         setDays]         = useState(7);
+  const [startDate,    setStartDate]    = useState("");
+  const [endDate,      setEndDate]      = useState("");
+  const [rules,        setRules]        = useState(["","",""]);
+  const [minLen,       setMinLen]       = useState(15);
+  const [maxLen,       setMaxLen]       = useState(60);
+  const [maxEntries,   setMaxEntries]   = useState(3);
+  const [ageMin,       setAgeMin]       = useState(13);
+  const [followersMin, setFollowersMin] = useState(0);
+  const [teamAllowed,  setTeamAllowed]  = useState(false);
+  const [reactionReq,  setReactionReq]  = useState(false);
+  const [commentReq,   setCommentReq]   = useState(false);
+  const [duetAllowed,  setDuetAllowed]  = useState(true);
+  const [hashtagReq,   setHashtagReq]   = useState(true);
+  const [judgeType,    setJudgeType]    = useState<"vote"|"jury"|"mixed">("mixed");
+  const [prize1,       setPrize1]       = useState("");
+  const [prize2,       setPrize2]       = useState("");
+  const [prize3,       setPrize3]       = useState("");
+  const [prizePool,    setPrizePool]    = useState("0");
+  const [badge1,       setBadge1]       = useState("🥇");
+  const [badge2,       setBadge2]       = useState("🥈");
+  const [badge3,       setBadge3]       = useState("🥉");
+  const [certEnabled,  setCertEnabled]  = useState(true);
+  const [leaderboard,  setLeaderboard]  = useState(true);
+  const [themeMusic,   setThemeMusic]   = useState("");
+  const [demoUrl,      setDemoUrl]      = useState("");
+  const [shareTemplate,setShareTemplate]= useState("");
+  const [discordLink,  setDiscordLink]  = useState("");
+  const [votingOpen,   setVotingOpen]   = useState(true);
+  const [publicResult, setPublicResult] = useState(true);
+  const [geoRestrict,  setGeoRestrict]  = useState(false);
+  const [geoCountry,   setGeoCountry]   = useState("uz");
+  const [sponsorName,  setSponsorName]  = useState("");
+  const [winnerDelay,  setWinnerDelay]  = useState(3);
+  const [autoExtend,   setAutoExtend]   = useState(false);
+  const [notifyAll,    setNotifyAll]    = useState(true);
+  const [notifyWinner, setNotifyWinner] = useState(true);
+  const [boostEnabled, setBoostEnabled] = useState(false);
+  const [accessCode,   setAccessCode]   = useState("");
+  const [privateChallenge, setPrivateChallenge] = useState(false);
+  const [done,         setDone]         = useState(false);
+
+  const DAYS_OPT = [3,7,14,30,60,90];
+  const CATS = [{v:"dance",e:"💃",l:"Raqs"},{v:"music",e:"🎵",l:"Musiqa"},{v:"comedy",e:"😂",l:"Kulgili"},{v:"sport",e:"⚽",l:"Sport"},{v:"food",e:"🍜",l:"Taom"},{v:"art",e:"🎨",l:"San'at"},{v:"gaming",e:"🎮",l:"Gaming"},{v:"beauty",e:"💄",l:"Go'zallik"},{v:"education",e:"📚",l:"Ta'lim"},{v:"travel",e:"✈️",l:"Sayohat"},{v:"fitness",e:"💪",l:"Fitnes"},{v:"diy",e:"🛠",l:"DIY"}];
+  const updateRule = (i:number, v:string) => setRules(r=>{const n=[...r];n[i]=v;return n;});
+  const addTag = () => { if(tagInput.trim()){setTags(p=>[...p,tagInput.trim()]);setTagInput(""); } };
+
+  const SECTIONS = [
+    {v:"setup",     e:"⚙️", l:"Sozlama"},
+    {v:"rules",     e:"📋", l:"Qoidalar"},
+    {v:"prizes",    e:"🏆", l:"Mukofot"},
+    {v:"media",     e:"🎬", l:"Media"},
+    {v:"community", e:"👥", l:"Jamiyat"},
+    {v:"advanced",  e:"🔧", l:"Ilg'or"},
+  ] as const;
+
   return (
-    <ModalSheet onClose={onClose} title={t("otube.ch_modal_title")} accent="#00ff88">
-      <div className="px-5 pb-8 flex flex-col gap-4">
-        <div>
-          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_name_label")}</span>
-          <div style={{marginTop:4,display:"flex",alignItems:"center",gap:0,
-            background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10}}>
-            <span style={{padding:"10px 10px",color:"#00ff88",fontSize:16,fontWeight:900}}>#</span>
-            <input value={name} onChange={e=>setName(e.target.value.replace(/\s+/g,""))}
-              placeholder="MyChallengeOlcha"
-              style={{flex:1,padding:"10px 8px 10px 0",background:"transparent",
-                color:"white",fontSize:13,outline:"none",border:"none"}}/>
+    <ModalSheet onClose={onClose} title={t("otube.ch_modal_title")} accent={G}>
+      {/* Section nav */}
+      <div style={{overflowX:"auto",borderBottom:`1px solid rgba(0,255,136,0.12)`,scrollbarWidth:"none"}}>
+        <div className="flex px-2" style={{gap:2}}>
+          {SECTIONS.map(({v,e,l})=>(
+            <button key={v} onClick={()=>setSection(v)}
+              style={{flexShrink:0,padding:"8px 10px",display:"flex",flexDirection:"column",alignItems:"center",gap:1.5,
+                borderBottom:`2px solid ${section===v?G:"transparent"}`,
+                background:section===v?"rgba(0,255,136,0.05)":"transparent",transition:"all 0.15s"}}>
+              <span style={{fontSize:13}}>{e}</span>
+              <span style={{fontSize:7.5,fontWeight:700,letterSpacing:"0.04em",color:section===v?G:"rgba(255,255,255,0.28)"}}>{l}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="px-5 pb-8 flex flex-col gap-4" style={{overflowY:"auto",scrollbarWidth:"none"}}>
+
+        {/* ── SETUP ── */}
+        {section==="setup" && <>
+          {/* Name */}
+          <div style={{marginTop:16}}>
+            <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_name_label")}</span>
+            <div style={{marginTop:4,display:"flex",alignItems:"center",
+              background:"rgba(255,255,255,0.05)",border:"1px solid rgba(0,255,136,0.2)",borderRadius:10}}>
+              <span style={{padding:"10px 10px",color:G,fontSize:16,fontWeight:900}}>#</span>
+              <input value={name} onChange={e=>setName(e.target.value.replace(/\s+/g,""))}
+                placeholder="MyChallengeOlcha" maxLength={40}
+                style={{flex:1,padding:"10px 8px 10px 0",background:"transparent",color:"white",fontSize:13,outline:"none",border:"none"}}/>
+              <span style={{padding:"10px 10px",fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:700}}>{name.length}/40</span>
+            </div>
           </div>
-        </div>
-        <div>
-          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_desc_label")}</span>
-          <textarea value={desc} onChange={e=>setDesc(e.target.value)} rows={2} maxLength={200}
-            placeholder={t("otube.ch_desc_ph")}
-            style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
-              background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-              color:"white",fontSize:13,outline:"none",resize:"none"}}/>
-        </div>
-        <div>
-          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_rules_label")}</span>
-          <div className="flex flex-col gap-2 mt-2">
-            {rules.map((r,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:10,fontWeight:900,color:"#00ff88",width:16}}>{i+1}.</span>
-                <input value={r} onChange={e=>updateRule(i,e.target.value)} placeholder={`${t("otube.ch_rule_ph")} ${i+1}`}
-                  style={{flex:1,padding:"8px 10px",borderRadius:8,
-                    background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",
-                    color:"white",fontSize:12,outline:"none"}}/>
+          {/* Description */}
+          <div>
+            <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_desc_label")}</span>
+            <textarea value={desc} onChange={e=>setDesc(e.target.value)} rows={3} maxLength={300}
+              placeholder={t("otube.ch_desc_ph")}
+              style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
+                background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
+                color:"white",fontSize:12,outline:"none",resize:"none"}}/>
+          </div>
+          {/* Category */}
+          <div>
+            <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>📂 KATEGORIYA</span>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {CATS.map(({v,e,l})=>(
+                <button key={v} onClick={()=>setCategory(v)}
+                  style={{padding:"7px 10px",borderRadius:10,fontSize:10,fontWeight:700,
+                    background:category===v?"rgba(0,255,136,0.15)":"rgba(255,255,255,0.04)",
+                    color:category===v?G:"rgba(255,255,255,0.4)",
+                    border:`1px solid ${category===v?"rgba(0,255,136,0.4)":"rgba(255,255,255,0.07)"}`,
+                    display:"flex",alignItems:"center",gap:4}}>
+                  <span>{e}</span>{l}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Tags */}
+          <div>
+            <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>🏷 TEGLAR</span>
+            <div style={{display:"flex",gap:6,marginTop:4}}>
+              <input value={tagInput} onChange={e=>setTagInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addTag()} placeholder="teg qo'shing…"
+                style={{flex:1,padding:"8px 10px",borderRadius:9,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:11,outline:"none"}}/>
+              <button onClick={addTag} style={{padding:"8px 12px",borderRadius:9,background:"rgba(0,255,136,0.12)",color:G,fontSize:18,fontWeight:900}}>+</button>
+            </div>
+            {tags.length>0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {tags.map((tag,i)=>(
+                  <span key={i} style={{padding:"3px 10px",borderRadius:99,fontSize:10,fontWeight:700,
+                    background:"rgba(0,255,136,0.1)",border:"1px solid rgba(0,255,136,0.25)",color:G,
+                    display:"flex",alignItems:"center",gap:4}}>
+                    #{tag}
+                    <button onClick={()=>setTags(p=>p.filter((_,j)=>j!==i))} style={{fontSize:12,color:"rgba(0,255,136,0.5)"}}>×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Duration */}
+          <div>
+            <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_dur_label")}</span>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              {DAYS_OPT.map(d=>(
+                <button key={d} onClick={()=>setDays(d)}
+                  style={{flex:"1 1 50px",padding:"9px 4px",borderRadius:10,fontSize:11,fontWeight:700,
+                    background:days===d?"rgba(0,255,136,0.15)":"rgba(255,255,255,0.04)",
+                    border:`1px solid ${days===d?"rgba(0,255,136,0.5)":"rgba(255,255,255,0.08)"}`,
+                    color:days===d?G:"rgba(255,255,255,0.4)"}}>
+                  {d}k
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Custom dates */}
+          <div className="flex gap-3">
+            <div style={{flex:1}}>
+              <span style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontWeight:700,letterSpacing:"0.08em"}}>📅 BOSHLANISH</span>
+              <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+                style={{width:"100%",marginTop:4,padding:"9px 10px",borderRadius:9,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:11,outline:"none"}}/>
+            </div>
+            <div style={{flex:1}}>
+              <span style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontWeight:700,letterSpacing:"0.08em"}}>📅 TUGASH</span>
+              <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}
+                style={{width:"100%",marginTop:4,padding:"9px 10px",borderRadius:9,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:11,outline:"none"}}/>
+            </div>
+          </div>
+          {/* Cover */}
+          <div>
+            <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>🖼 MUQOVA</span>
+            <div style={{marginTop:6,aspectRatio:"16/6",borderRadius:12,position:"relative",overflow:"hidden",
+              background:`linear-gradient(135deg,${coverBg},rgba(0,255,136,0.15))`,border:"1px solid rgba(0,255,136,0.15)"}}>
+              <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4}}>
+                <span style={{fontSize:36}}>{coverEmoji}</span>
+                <span style={{fontSize:14,fontWeight:900,color:G,textShadow:`0 0 20px ${G}66`}}>#{name||"Challenge"}</span>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-2">
+              {["🏆","🔥","⚡","💪","🎵","💃","🎯","🌊","🚀","✨","🤩","👑"].map(e=>(
+                <button key={e} onClick={()=>setCoverEmoji(e)} style={{fontSize:20,borderRadius:8,padding:"4px",background:coverEmoji===e?"rgba(0,255,136,0.15)":"transparent",border:`1px solid ${coverEmoji===e?"rgba(0,255,136,0.3)":"transparent"}`}}>{e}</button>
+              ))}
+            </div>
+            <div className="flex gap-2 mt-1.5">
+              {["#001a0a","#0a0022","#1a0800","#001a22","#1a001a","#0a1a00"].map(c=>(
+                <button key={c} onClick={()=>setCoverBg(c)} style={{width:28,height:28,borderRadius:7,background:c,border:`2px solid ${coverBg===c?G:"rgba(255,255,255,0.1)"}`,cursor:"pointer"}}/>
+              ))}
+            </div>
+          </div>
+        </>}
+
+        {/* ── RULES ── */}
+        {section==="rules" && <>
+          <div style={{marginTop:16}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_rules_label")}</span>
+              <button onClick={()=>setRules(p=>[...p,""])} style={{fontSize:10,color:G,fontWeight:700}}>+ Qo'shish</button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {rules.map((r,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:10,fontWeight:900,color:G,width:18,textAlign:"center"}}>{i+1}.</span>
+                  <input value={r} onChange={e=>updateRule(i,e.target.value)} placeholder={`${t("otube.ch_rule_ph")} ${i+1}…`}
+                    style={{flex:1,padding:"9px 10px",borderRadius:9,
+                      background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none"}}/>
+                  {rules.length>1 && <button onClick={()=>setRules(p=>p.filter((_,j)=>j!==i))} style={{color:"#ff2d55",fontSize:18}}>×</button>}
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Video length */}
+          <div>
+            <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>⏱ VIDEO DAVOMIYLIGI (soniya)</span>
+            <div className="flex gap-3 mt-2">
+              <div style={{flex:1}}>
+                <div style={{fontSize:8,color:"rgba(255,255,255,0.35)",marginBottom:4}}>MINIMAL</div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>{minLen}s</span>
+                </div>
+                <input type="range" min={5} max={maxLen-5} value={minLen} onChange={e=>setMinLen(+e.target.value)} style={{width:"100%",accentColor:G}}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:8,color:"rgba(255,255,255,0.35)",marginBottom:4}}>MAKSIMAL</div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>{maxLen}s</span>
+                </div>
+                <input type="range" min={minLen+5} max={600} value={maxLen} onChange={e=>setMaxLen(+e.target.value)} style={{width:"100%",accentColor:G}}/>
+              </div>
+            </div>
+          </div>
+          {/* Entry limit */}
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>📹 MAX ISHTIROKCHI VIDEOLARI</span>
+              <span style={{fontSize:12,color:G,fontWeight:800}}>{maxEntries} ta</span>
+            </div>
+            <input type="range" min={1} max={20} value={maxEntries} onChange={e=>setMaxEntries(+e.target.value)} style={{width:"100%",accentColor:G}}/>
+          </div>
+          {/* Age restriction */}
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>🔞 YOSH CHEGARASI</span>
+              <span style={{fontSize:12,color:G,fontWeight:800}}>{ageMin}+</span>
+            </div>
+            <div className="flex gap-2">
+              {[13,16,18,21].map(a=>(
+                <button key={a} onClick={()=>setAgeMin(a)}
+                  style={{flex:1,padding:"9px",borderRadius:9,fontSize:11,fontWeight:700,
+                    background:ageMin===a?"rgba(0,255,136,0.12)":"rgba(255,255,255,0.04)",
+                    color:ageMin===a?G:"rgba(255,255,255,0.4)",
+                    border:`1px solid ${ageMin===a?"rgba(0,255,136,0.35)":"rgba(255,255,255,0.07)"}`}}>
+                  {a}+
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Min followers */}
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>👥 MIN OBUNACHILAR</span>
+              <span style={{fontSize:12,color:G,fontWeight:800}}>{followersMin===0?"Cheksiz":followersMin>=1000?`${followersMin/1000}K+`:followersMin+"+"}
+              </span>
+            </div>
+            <input type="range" min={0} max={10000} step={100} value={followersMin} onChange={e=>setFollowersMin(+e.target.value)} style={{width:"100%",accentColor:G}}/>
+          </div>
+          {/* Toggles */}
+          <div className="flex flex-col gap-2">
+            {[
+              {v:teamAllowed,s:setTeamAllowed,l:"👥 Jamoaviy ishtirok ruxsat etiladi"},
+              {v:reactionReq,s:setReactionReq,l:"❤️ Reaktsiya talab qilinadi"},
+              {v:commentReq,s:setCommentReq,l:"💬 Izoh talab qilinadi"},
+              {v:duetAllowed,s:setDuetAllowed,l:"🎤 Duet qilishga ruxsat"},
+              {v:hashtagReq,s:setHashtagReq,l:"# Hashtag qo'yish majburiy"},
+            ].map(({v,s,l})=>(
+              <div key={l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                <span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>{l}</span>
+                <button onClick={()=>s((p:boolean)=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:v?"rgba(0,255,136,0.6)":"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start"}}>
+                  <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+                </button>
               </div>
             ))}
           </div>
-        </div>
-        <div>
-          <span style={{fontSize:10,color:"#00ff88",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.ch_dur_label")}</span>
-          <div className="flex gap-2 mt-2">
-            {DAYS.map(d=>(
-              <button key={d} onClick={()=>setDays(d)}
-                style={{flex:1,padding:"8px",borderRadius:10,fontSize:11,fontWeight:700,
-                  background:days===d?"rgba(0,255,136,0.15)":"rgba(255,255,255,0.04)",
-                  border:`1px solid ${days===d?"rgba(0,255,136,0.5)":"rgba(255,255,255,0.08)"}`,
-                  color:days===d?"#00ff88":"rgba(255,255,255,0.4)"}}>
-                {d} {t("otube.ch_days")}
+          {/* Judge type */}
+          <div>
+            <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>⚖️ HUKAMLAR TIZIMI</span>
+            <div className="flex gap-2 mt-2">
+              {([["vote","🗳 Ovoz","Ommaviy ovoz"],["jury","👨‍⚖️ Hakamlar","Mutaxassis"],[  "mixed","🎯 Aralash","Ikkalasi"]] as const).map(([v,e,l])=>(
+                <button key={v} onClick={()=>setJudgeType(v)}
+                  style={{flex:1,padding:"10px 4px",borderRadius:10,fontSize:9,fontWeight:700,
+                    background:judgeType===v?"rgba(0,255,136,0.15)":"rgba(255,255,255,0.04)",
+                    color:judgeType===v?G:"rgba(255,255,255,0.4)",
+                    border:`1px solid ${judgeType===v?"rgba(0,255,136,0.4)":"rgba(255,255,255,0.07)"}`,
+                    display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                  <span style={{fontSize:14}}>{e.split(" ")[0]}</span>{l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>}
+
+        {/* ── PRIZES ── */}
+        {section==="prizes" && <>
+          <div style={{marginTop:16,padding:"12px",borderRadius:12,background:"linear-gradient(135deg,rgba(0,255,136,0.07),rgba(255,196,0,0.05))",border:"1px solid rgba(0,255,136,0.2)"}}>
+            <div style={{fontSize:11,fontWeight:700,color:G,marginBottom:2}}>🏆 Mukofot Jamgʻarmasi</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+              <span style={{fontSize:26,fontWeight:900,color:G}}>{(+prizePool).toLocaleString()}</span>
+              <span style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>UZS</span>
+            </div>
+          </div>
+          {/* Prize pool */}
+          <div>
+            <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>💰 UMUMIY JAMGʻARMA (UZS)</span>
+            <input value={prizePool} onChange={e=>setPrizePool(e.target.value.replace(/\D/g,""))} placeholder="0"
+              style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(0,255,136,0.06)",border:"1px solid rgba(0,255,136,0.2)",color:"white",fontSize:13,fontWeight:700,outline:"none"}}/>
+            <div className="flex gap-2 mt-2">
+              {["10000","50000","100000","500000","1000000"].map(p=>(
+                <button key={p} onClick={()=>setPrizePool(p)} style={{flex:1,padding:"7px 4px",borderRadius:8,fontSize:9,fontWeight:700,background:"rgba(0,255,136,0.07)",color:G,border:"1px solid rgba(0,255,136,0.2)"}}>
+                  {+p>=1000000?"1M":+p>=1000?`${+p/1000}K`:p}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* 1st–3rd place prizes */}
+          {[{n:1,b:badge1,sB:setBadge1,p:prize1,sP:setPrize1,col:"#ffd700",title:"1-O'RIN"},{n:2,b:badge2,sB:setBadge2,p:prize2,sP:setPrize2,col:"#c0c0c0",title:"2-O'RIN"},{n:3,b:badge3,sB:setBadge3,p:prize3,sP:setPrize3,col:"#cd7f32",title:"3-O'RIN"}].map(({n,b,sB,p,sP,col,title})=>(
+            <div key={n} style={{padding:"12px",borderRadius:12,background:"rgba(255,255,255,0.04)",border:`1px solid rgba(255,255,255,0.07)`}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <span style={{fontSize:24}}>{b}</span>
+                <div>
+                  <div style={{fontSize:10,fontWeight:800,color:col,letterSpacing:"0.08em"}}>{title}</div>
+                  <div className="flex gap-1 mt-1">
+                    {["🥇","🏅","👑","⭐","💎","🎖","🎗"].map(e=>(
+                      <button key={e} onClick={()=>sB(e)} style={{fontSize:14,borderRadius:6,padding:"2px",background:b===e?"rgba(255,255,255,0.1)":"transparent"}}>{e}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <input value={p} onChange={e=>sP(e.target.value)} placeholder={`${title} mukofoti…`}
+                style={{width:"100%",padding:"9px 11px",borderRadius:9,background:"rgba(255,255,255,0.04)",border:`1px solid ${col}22`,color:"white",fontSize:11,outline:"none"}}/>
+            </div>
+          ))}
+          {/* Certificate */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px",borderRadius:10,background:"rgba(0,255,136,0.05)",border:"1px solid rgba(0,255,136,0.15)"}}>
+            <div>
+              <div style={{fontSize:11,fontWeight:700,color:G}}>📜 Sertifikat</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>Ishtirokchilarga raqamli sertifikat</div>
+            </div>
+            <button onClick={()=>setCertEnabled(p=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:certEnabled?"rgba(0,255,136,0.6)":"rgba(255,255,255,0.12)",justifyContent:certEnabled?"flex-end":"flex-start"}}>
+              <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+            </button>
+          </div>
+        </>}
+
+        {/* ── MEDIA ── */}
+        {section==="media" && <>
+          <div style={{marginTop:16}} className="flex flex-col gap-4">
+            <div>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>🎵 MAVZU MUSIQASI</span>
+              <input value={themeMusic} onChange={e=>setThemeMusic(e.target.value)} placeholder="Musiqa nomi yoki URL…"
+                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(0,255,136,0.15)",color:"white",fontSize:12,outline:"none"}}/>
+              <div className="flex gap-2 mt-2">
+                {[{e:"🌊",l:"Aurora"},{e:"⚡",l:"Neon"},{e:"🔥",l:"Epic"},{e:"🎵",l:"Chill"},{e:"🎤",l:"Trap"},{e:"🥁",l:"Beat"}].map(({e,l})=>(
+                  <button key={l} onClick={()=>setThemeMusic(l)}
+                    style={{flex:1,padding:"8px 4px",borderRadius:9,fontSize:9,fontWeight:700,
+                      background:themeMusic===l?"rgba(0,255,136,0.12)":"rgba(255,255,255,0.04)",
+                      color:themeMusic===l?G:"rgba(255,255,255,0.4)",
+                      border:`1px solid ${themeMusic===l?"rgba(0,255,136,0.3)":"rgba(255,255,255,0.07)"}`,
+                      display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                    <span style={{fontSize:16}}>{e}</span>{l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>🎬 DEMO VIDEO URL</span>
+              <input value={demoUrl} onChange={e=>setDemoUrl(e.target.value)} placeholder="OlCha yoki YouTube havolasi…"
+                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none"}}/>
+            </div>
+            <div>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>📢 ULASHISH SHABLONI</span>
+              <textarea value={shareTemplate} onChange={e=>setShareTemplate(e.target.value)} rows={2} maxLength={200}
+                placeholder="Men #{name} challengeda! @OlCha orqali qo'shiling…"
+                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none",resize:"none"}}/>
+            </div>
+          </div>
+        </>}
+
+        {/* ── COMMUNITY ── */}
+        {section==="community" && <>
+          <div style={{marginTop:16}} className="flex flex-col gap-4">
+            <div>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>💬 DISCORD HAVOLASI</span>
+              <input value={discordLink} onChange={e=>setDiscordLink(e.target.value)} placeholder="discord.gg/mychallenge"
+                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none"}}/>
+            </div>
+            {/* Leaderboard */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px",borderRadius:10,background:"rgba(0,255,136,0.05)",border:"1px solid rgba(0,255,136,0.15)"}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:G}}>🏅 Liderlar Taxtasi</div>
+                <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>Real vaqt reyting ko'rsatiladi</div>
+              </div>
+              <button onClick={()=>setLeaderboard(p=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:leaderboard?"rgba(0,255,136,0.6)":"rgba(255,255,255,0.12)",justifyContent:leaderboard?"flex-end":"flex-start"}}>
+                <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
               </button>
-            ))}
+            </div>
+            {/* Voting open */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>🗳 Ochiq Ovozlash</div>
+                <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>Har kim ovoz bera oladi</div>
+              </div>
+              <button onClick={()=>setVotingOpen(p=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:votingOpen?"rgba(0,255,136,0.6)":"rgba(255,255,255,0.12)",justifyContent:votingOpen?"flex-end":"flex-start"}}>
+                <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+              </button>
+            </div>
+            {/* Public result */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>👁 Natijalar Ochiq</div>
+                <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>Hamma natijalarni ko'ra oladi</div>
+              </div>
+              <button onClick={()=>setPublicResult(p=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:publicResult?"rgba(0,255,136,0.6)":"rgba(255,255,255,0.12)",justifyContent:publicResult?"flex-end":"flex-start"}}>
+                <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+              </button>
+            </div>
+            {/* Estimated stats */}
+            <div style={{padding:"14px",borderRadius:12,background:"rgba(0,255,136,0.04)",border:"1px solid rgba(0,255,136,0.12)"}}>
+              <div style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.08em",marginBottom:10}}>📊 PROGNOZ</div>
+              <div className="flex gap-4">
+                {[{l:"Ishtirokchi",v:"1.2K–5K",e:"👥"},{l:"Ko'rishlar",v:"50K+",e:"👁"},{l:"Viral Ball",v:"87%",e:"🚀"}].map(({l,v,e})=>(
+                  <div key={l} style={{flex:1,textAlign:"center"}}>
+                    <div style={{fontSize:18}}>{e}</div>
+                    <div style={{fontSize:12,fontWeight:800,color:G}}>{v}</div>
+                    <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-        {done ? (
-          <div style={{padding:"12px",borderRadius:10,background:"rgba(0,255,136,0.08)",
-            border:"1px solid rgba(0,255,136,0.3)",display:"flex",alignItems:"center",gap:8}}>
-            <Trophy style={{width:16,height:16,color:"#00ff88"}}/>
-            <span style={{fontSize:12,color:"#00ff88",fontWeight:700}}>#{name} {t("otube.ch_created")}</span>
+        </>}
+
+        {/* ── ADVANCED ── */}
+        {section==="advanced" && <>
+          <div style={{marginTop:16}} className="flex flex-col gap-4">
+            {/* Sponsor */}
+            <div>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>🤝 HOMIY NOMI</span>
+              <input value={sponsorName} onChange={e=>setSponsorName(e.target.value)} placeholder="Kompaniya yoki brendat nomi…"
+                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none"}}/>
+            </div>
+            {/* Geo restriction */}
+            <div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                <div>
+                  <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>🌍 Geo Cheklov</div>
+                  <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>Faqat tanlangan davlatlar</div>
+                </div>
+                <button onClick={()=>setGeoRestrict(p=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:geoRestrict?"rgba(0,255,136,0.6)":"rgba(255,255,255,0.12)",justifyContent:geoRestrict?"flex-end":"flex-start"}}>
+                  <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+                </button>
+              </div>
+              {geoRestrict && (
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {["uz","ru","kz","kg","tj","tr","az"].map(c=>(
+                    <button key={c} onClick={()=>setGeoCountry(c)}
+                      style={{padding:"6px 14px",borderRadius:8,fontSize:10,fontWeight:700,
+                        background:geoCountry===c?"rgba(0,255,136,0.15)":"rgba(255,255,255,0.04)",
+                        color:geoCountry===c?G:"rgba(255,255,255,0.4)",
+                        border:`1px solid ${geoCountry===c?"rgba(0,255,136,0.4)":"rgba(255,255,255,0.07)"}`}}>
+                      {c.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Winner announcement delay */}
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>⏳ G'OLIBNI E'LON QILISH KECHIKISHI</span>
+                <span style={{fontSize:12,color:G,fontWeight:800}}>{winnerDelay} kun</span>
+              </div>
+              <input type="range" min={0} max={14} value={winnerDelay} onChange={e=>setWinnerDelay(+e.target.value)} style={{width:"100%",accentColor:G}}/>
+            </div>
+            {/* Access code */}
+            <div>
+              <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>🔐 KIRISH KODI (ixtiyoriy)</span>
+              <input value={accessCode} onChange={e=>setAccessCode(e.target.value)} placeholder="Maxfiy kod (bo'sh = hammaga ochiq)"
+                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none"}}/>
+            </div>
+            {/* Toggles */}
+            <div className="flex flex-col gap-2">
+              {[
+                {v:privateChallenge,s:setPrivateChallenge,l:"🔒 Maxfiy Challenge (faqat taklif bilan)"},
+                {v:autoExtend,s:setAutoExtend,l:"⏰ Avtomatik muddat uzaytirish"},
+                {v:boostEnabled,s:setBoostEnabled,l:"🚀 OlCha Boost — kengaytirilgan ko'rish"},
+                {v:notifyAll,s:setNotifyAll,l:"🔔 Barcha ishtirokchilarga xabar"},
+                {v:notifyWinner,s:setNotifyWinner,l:"🏆 G'olibga maxsus bildirishnoma"},
+              ].map(({v,s,l})=>(
+                <div key={l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>{l}</span>
+                  <button onClick={()=>s((p:boolean)=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:v?"rgba(0,255,136,0.6)":"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start"}}>
+                    <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        ) : null}
+        </>}
+
+        {/* ── Done banner ── */}
+        {done && (
+          <div style={{padding:"14px",borderRadius:12,background:"rgba(0,255,136,0.08)",border:"1px solid rgba(0,255,136,0.35)",display:"flex",alignItems:"center",gap:10}}>
+            <Trophy style={{width:20,height:20,color:G}}/>
+            <div>
+              <div style={{fontSize:13,color:G,fontWeight:800}}>#{name} yaratildi!</div>
+              <div style={{fontSize:10,color:"rgba(0,255,136,0.6)"}}>{days} kunlik · {CATS.find(c=>c.v===category)?.l} · {judgeType==="vote"?"Ommaviy ovoz":judgeType==="jury"?"Hakamlar":"Aralash"}</div>
+            </div>
+          </div>
+        )}
+
+        {/* CTA */}
         <motion.button whileTap={{scale:0.96}}
           onClick={()=>{if(name.trim())setDone(true);}}
           disabled={!name.trim()}
-          style={{padding:"13px",borderRadius:12,letterSpacing:"0.04em",fontSize:13,fontWeight:800,
+          style={{padding:"14px",borderRadius:14,letterSpacing:"0.04em",fontSize:13,fontWeight:900,
             background:!name.trim()?"rgba(255,255,255,0.06)":"linear-gradient(135deg,#00ff88,#00cc44)",
-            color:!name.trim()?"rgba(255,255,255,0.25)":"#000"}}>
-          {done?t("otube.ch_done"):t("otube.ch_start")}
+            color:!name.trim()?"rgba(255,255,255,0.25)":"#000",
+            boxShadow:name.trim()?`0 4px 20px rgba(0,255,136,0.4)`:"none"}}>
+          {done?"✅ "+t("otube.ch_done"):"🚀 "+t("otube.ch_start")}
         </motion.button>
       </div>
     </ModalSheet>
@@ -2814,7 +3276,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const qc = useQueryClient();
   const [file, setFile]         = useState<File|null>(null);
   const [videoSrc, setVideoSrc] = useState("");
-  const [activeTab, setActiveTab] = useState<"trim"|"filters"|"text"|"stickers"|"music"|"speed"|"grading"|"ai"|"transitions">("trim");
+  const [activeTab, setActiveTab] = useState<"trim"|"filters"|"text"|"stickers"|"music"|"speed"|"grading"|"ai"|"transitions"|"audio"|"subtitle"|"thumbnail"|"export"|"ar"|"chapters"|"collab">("trim");
   const [filter, setFilter]     = useState("normal");
   const [speed, setSpeed]       = useState(1);
   const [caption, setCaption]   = useState("");
@@ -2838,6 +3300,64 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const [temperature, setTemperature] = useState(0);
   const [vignette, setVignette]     = useState(0);
   const [drafts, setDrafts]         = useState(0);
+
+  /* ══ STUDIO MEGA (50+) ══ */
+  const [sharpness,    setSharpness]    = useState(0);
+  const [highlights,   setHighlights]   = useState(0);
+  const [shadows,      setShadows]      = useState(0);
+  const [blacks,       setBlacks]       = useState(0);
+  const [whites,       setWhites]       = useState(0);
+  const [hueShift,     setHueShift]     = useState(0);
+  const [noiseReduce,  setNoiseReduce]  = useState(0);
+  const [dehaze,       setDehaze]       = useState(0);
+  const [reverseClip,  setReverseClip]  = useState(false);
+  const [freezeFrame,  setFreezeFrame]  = useState(false);
+  const [stabilize,    setStabilize]    = useState(false);
+  const [autoColor,    setAutoColor]    = useState(false);
+  const [splitScreen,  setSplitScreen]  = useState<"off"|"v"|"h">("off");
+  const [blurBg,       setBlurBg]       = useState(false);
+  const [portrait,     setPortrait]     = useState(false);
+  const [boomerang,    setBoomerang]    = useState(false);
+  const [textPos,      setTextPos]      = useState<"top"|"center"|"bottom">("bottom");
+  const [textAnim,     setTextAnim]     = useState("none");
+  const [textOutline,  setTextOutline]  = useState(false);
+  const [textShadow,   setTextShadow]   = useState(false);
+  const [caption2,     setCaption2]     = useState("");
+  const [caption3,     setCaption3]     = useState("");
+  const [voiceChanger, setVoiceChanger] = useState("original");
+  const [voiceVol,     setVoiceVol]     = useState(100);
+  const [musicVol,     setMusicVol]     = useState(80);
+  const [echoPct,      setEchoPct]      = useState(0);
+  const [reverbPct,    setReverbPct]    = useState(0);
+  const [pitchShift,   setPitchShift]   = useState(0);
+  const [fadeIn,       setFadeIn]       = useState(0);
+  const [fadeOut,      setFadeOut]      = useState(0);
+  const [beatSync,     setBeatSync]     = useState(false);
+  const [noiseGate,    setNoiseGate]    = useState(false);
+  const [subtitleLang, setSubtitleLang] = useState("uz");
+  const [subtitleStyle,setSubtitleStyle]= useState("classic");
+  const [subtitleLines,setSubtitleLines]= useState<string[]>(["Assalomu alaykum!", "Bu mening videom"]);
+  const [thumbCaption, setThumbCaption] = useState("");
+  const [thumbBg,      setThumbBg]      = useState("#000022");
+  const [thumbEmoji,   setThumbEmoji]   = useState("🔥");
+  const [thumbStyle,   setThumbStyle]   = useState("gradient");
+  const [outFormat,    setOutFormat]    = useState("mp4");
+  const [outBitrate,   setOutBitrate]   = useState("8");
+  const [outFps,       setOutFps]       = useState("60");
+  const [arFilter,     setArFilter]     = useState("none");
+  const [lut,          setLut]          = useState("none");
+  const [chaptersS,    setChaptersS]    = useState<{ts:string;label:string}[]>([]);
+  const [chapTs,       setChapTs]       = useState("");
+  const [chapLabel,    setChapLabel]    = useState("");
+  const [collabEmail,  setCollabEmail]  = useState("");
+  const [collaborators,setCollaborators]= useState<string[]>([]);
+  const [pinComment,   setPinComment]   = useState("");
+  const [firstComment, setFirstComment] = useState("");
+  const [toneMap,      setToneMap]      = useState("sdr");
+  const [cropMode,     setCropMode]     = useState("16:9");
+  const [watermark,    setWatermark]    = useState(false);
+  const [watermarkPos, setWatermarkPos] = useState("br");
+  const [colorLimiter, setColorLimiter] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileRef  = useRef<HTMLInputElement>(null);
 
@@ -2958,6 +3478,13 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
     { id:"music",       Icon:Music,              label:t("otube.tab_music_lbl")   },
     { id:"speed",       Icon:FastForward,        label:t("otube.tab_speed")       },
     { id:"ai",          Icon:Sparkles,           label:t("otube.tab_ai")          },
+    { id:"audio",       Icon:Mic2,               label:"Audio"                    },
+    { id:"subtitle",    Icon:AlignCenter,        label:"Subtitle"                 },
+    { id:"thumbnail",   Icon:ImagePlus,          label:"Thumb"                    },
+    { id:"export",      Icon:Upload,             label:"Export"                   },
+    { id:"ar",          Icon:Wand2,              label:"AR"                       },
+    { id:"chapters",    Icon:ListVideo,          label:"Chapters"                 },
+    { id:"collab",      Icon:Users,              label:"Kollab"                   },
   ] as const;
 
   return (
@@ -3217,9 +3744,11 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
           <div className="flex flex-col gap-4">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{t("otube.studio_color_settings")}</span>
-              <button onClick={()=>{setBrightness(100);setContrast(100);setSaturation(100);setTemperature(0);setVignette(0);}}
-                style={{fontSize:10,color:T.violet,fontWeight:700}}>Reset</button>
+              <button onClick={()=>{setBrightness(100);setContrast(100);setSaturation(100);setTemperature(0);setVignette(0);setSharpness(0);setHighlights(0);setShadows(0);setBlacks(0);setWhites(0);setHueShift(0);setNoiseReduce(0);setDehaze(0);}}
+                style={{fontSize:10,color:T.violet,fontWeight:700}}>Reset All</button>
             </div>
+            {/* Section: Basic */}
+            <div style={{fontSize:8,color:T.violet,fontWeight:800,letterSpacing:"0.12em"}}>⚡ ASOSIY</div>
             {[
               {label:t("otube.studio_brightness"),  value:brightness, set:setBrightness, min:50, max:200, unit:"%" },
               {label:t("otube.studio_contrast"),    value:contrast,   set:setContrast,   min:50, max:200, unit:"%" },
@@ -3239,6 +3768,37 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
                   style={{width:"100%",accentColor:T.violet}}/>
               </div>
             ))}
+            {/* Section: Advanced */}
+            <div style={{fontSize:8,color:T.aurora,fontWeight:800,letterSpacing:"0.12em",marginTop:4}}>🎬 KENGAYTIRILGAN</div>
+            {[
+              {label:"Sharpness",   value:sharpness,  set:setSharpness,  min:-50, max:100, unit:"",  col:T.aurora },
+              {label:"Highlights",  value:highlights, set:setHighlights, min:-100,max:100, unit:"",  col:T.gold   },
+              {label:"Shadows",     value:shadows,    set:setShadows,    min:-100,max:100, unit:"",  col:"#8899aa"},
+              {label:"Whites",      value:whites,     set:setWhites,     min:-100,max:100, unit:"",  col:"#eeeeff"},
+              {label:"Blacks",      value:blacks,     set:setBlacks,     min:-100,max:100, unit:"",  col:"#446688"},
+              {label:"Hue Shift",   value:hueShift,   set:setHueShift,   min:-180,max:180, unit:"°", col:T.orange  },
+              {label:"Dehaze",      value:dehaze,     set:setDehaze,     min:0,   max:100, unit:"",  col:T.cyan   },
+              {label:"Noise Red.",  value:noiseReduce,set:setNoiseReduce,min:0,   max:100, unit:"",  col:T.violet },
+            ].map(({label,value,set,min,max,unit,col})=>(
+              <div key={label}>
+                <div className="flex justify-between mb-1.5">
+                  <span style={{fontSize:9,color:col,fontWeight:700,letterSpacing:"0.08em"}}>{label.toUpperCase()}</span>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontFamily:"monospace"}}>
+                    {value>0&&unit!=="%"?"+":""}{value}{unit}
+                  </span>
+                </div>
+                <input type="range" min={min} max={max} value={value}
+                  onChange={e=>set(Number(e.target.value))}
+                  style={{width:"100%",accentColor:col}}/>
+              </div>
+            ))}
+            {/* Auto-color toggle */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderRadius:10,background:"rgba(0,255,238,0.05)",border:"1px solid rgba(0,255,238,0.15)"}}>
+              <span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>🤖 Avto Rang Korreksiya (AI)</span>
+              <button onClick={()=>setAutoColor(p=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:autoColor?T.aurora:"rgba(255,255,255,0.12)",justifyContent:autoColor?"flex-end":"flex-start"}}>
+                <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+              </button>
+            </div>
             {/* Preview swatch */}
             <div style={{height:40,borderRadius:12,overflow:"hidden",
               background:"linear-gradient(135deg,#ff3500,#7700ff,#00ffee)",
@@ -3249,29 +3809,69 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
         {/* ── TEXT ── */}
         {activeTab==="text" && (
           <div className="flex flex-col gap-4">
+            {/* Layer 1 */}
             <div>
-              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>MATN</span>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>📝 MATN 1</span>
+                <span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{caption.length}/80</span>
+              </div>
               <input value={caption} onChange={e=>setCaption(e.target.value)} maxLength={80}
                 placeholder="Video ustiga matn..."
-                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
+                style={{width:"100%",padding:"10px 12px",borderRadius:10,
                   background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
                   color:textColor,fontSize:13,fontStyle:textFont==="italic"?"italic":"normal",
                   fontWeight:textFont==="italic"?400:900,outline:"none"}}/>
             </div>
+            {/* Layer 2 */}
             <div>
-              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>RANG</span>
+              <span style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>📝 MATN 2 (Taglavha)</span>
+              <input value={caption2} onChange={e=>setCaption2(e.target.value)} maxLength={60}
+                placeholder="Ikkinchi qator…"
+                style={{width:"100%",marginTop:4,padding:"9px 12px",borderRadius:10,
+                  background:"rgba(0,229,255,0.05)",border:"1px solid rgba(0,229,255,0.12)",
+                  color:"white",fontSize:11,outline:"none"}}/>
+            </div>
+            {/* Layer 3 */}
+            <div>
+              <span style={{fontSize:9,color:T.orange,fontWeight:700,letterSpacing:"0.1em"}}>📝 MATN 3 (Tepa)</span>
+              <input value={caption3} onChange={e=>setCaption3(e.target.value)} maxLength={40}
+                placeholder="Yuqori satr matni…"
+                style={{width:"100%",marginTop:4,padding:"9px 12px",borderRadius:10,
+                  background:"rgba(255,107,0,0.05)",border:"1px solid rgba(255,107,0,0.15)",
+                  color:"white",fontSize:11,outline:"none"}}/>
+            </div>
+            {/* Position */}
+            <div>
+              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>📍 POZITSIYA</span>
+              <div className="flex gap-2 mt-1.5">
+                {([["top","Yuqori"],["center","Markaz"],["bottom","Pastki"]] as const).map(([v,l])=>(
+                  <button key={v} onClick={()=>setTextPos(v)}
+                    style={{flex:1,padding:"8px",borderRadius:9,fontSize:10,fontWeight:700,
+                      background:textPos===v?"rgba(168,85,247,0.18)":"rgba(255,255,255,0.04)",
+                      color:textPos===v?T.violet:"rgba(255,255,255,0.4)",
+                      border:`1px solid ${textPos===v?"rgba(168,85,247,0.4)":"rgba(255,255,255,0.07)"}`}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Color */}
+            <div>
+              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>🎨 RANG</span>
               <div className="flex gap-2 flex-wrap mt-1.5">
                 {["#ffffff","#00ffee","#ff3500","#7700ff","#ffc400","#ff2d55","#00ff88","#ff6b00","#00e5ff","#a855f7"].map(c=>(
                   <button key={c} onClick={()=>setTextColor(c)}
                     style={{width:26,height:26,borderRadius:"50%",background:c,
                       border:`3px solid ${textColor===c?"white":"transparent"}`,
-                      boxShadow:textColor===c?"0 0 0 1px rgba(255,255,255,0.4)":"none",
-                      transition:"all 0.15s"}}/>
+                      boxShadow:textColor===c?"0 0 0 1px rgba(255,255,255,0.4)":"none",transition:"all 0.15s"}}/>
                 ))}
+                <input type="color" value={textColor} onChange={e=>setTextColor(e.target.value)}
+                  style={{width:26,height:26,borderRadius:"50%",border:"none",cursor:"pointer",padding:0,background:"transparent"}}/>
               </div>
             </div>
+            {/* Style */}
             <div>
-              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>STIL</span>
+              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>✍️ STIL</span>
               <div className="flex gap-2 mt-1.5 flex-wrap">
                 {TEXT_FONTS.map(f=>(
                   <button key={f.id} onClick={()=>setTextFont(f.id)}
@@ -3286,32 +3886,62 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
                 ))}
               </div>
             </div>
+            {/* Animation */}
+            <div>
+              <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>🎬 ANIMATSIYA</span>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {[{v:"none",l:"Yo'q"},{v:"typewriter",l:"Yozuv"},{v:"zoom",l:"Zoom"},{v:"slide",l:"Slide"},{v:"fade",l:"Fade"},{v:"bounce",l:"Sakrash"},{v:"wave",l:"To'lqin"},{v:"glitch",l:"Glitch"}].map(({v,l})=>(
+                  <button key={v} onClick={()=>setTextAnim(v)}
+                    style={{padding:"5px 10px",borderRadius:7,fontSize:10,fontWeight:700,
+                      background:textAnim===v?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.04)",
+                      color:textAnim===v?T.violet:"rgba(255,255,255,0.4)",
+                      border:`1px solid ${textAnim===v?T.violet+"55":"rgba(255,255,255,0.07)"}`}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Size */}
             <div>
               <div className="flex justify-between mb-1.5">
                 <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.studio_text_size")}</span>
                 <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{textSize}px</span>
               </div>
-              <input type="range" min={10} max={32} value={textSize}
+              <input type="range" min={10} max={48} value={textSize}
                 onChange={e=>setTextSize(Number(e.target.value))}
                 style={{width:"100%",accentColor:T.violet}}/>
             </div>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-              padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",
-              border:"1px solid rgba(255,255,255,0.06)"}}>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>{t("otube.studio_text_bg")}</span>
-              <motion.button whileTap={{scale:0.9}} onClick={()=>setTextBg(b=>!b)}
-                style={{width:40,height:22,borderRadius:99,position:"relative",
-                  background:textBg?T.violet:"rgba(255,255,255,0.1)",transition:"all 0.2s"}}>
-                <motion.div animate={{x:textBg?18:2}}
-                  style={{position:"absolute",top:2,width:18,height:18,borderRadius:"50%",
-                    background:"white"}}/>
-              </motion.button>
+            {/* Toggles */}
+            <div className="flex flex-col gap-2">
+              {[{v:textBg,s:setTextBg,l:t("otube.studio_text_bg")},{v:textOutline,s:setTextOutline,l:"Chegara (Outline)"},{v:textShadow,s:setTextShadow,l:"Soya (Drop Shadow)"}].map(({v,s,l})=>(
+                <div key={l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                  padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)"}}>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>{l}</span>
+                  <motion.button whileTap={{scale:0.9}} onClick={()=>s((b:boolean)=>!b)}
+                    style={{width:40,height:22,borderRadius:99,position:"relative",
+                      background:v?T.violet:"rgba(255,255,255,0.1)",transition:"all 0.2s"}}>
+                    <motion.div animate={{x:v?18:2}}
+                      style={{position:"absolute",top:2,width:18,height:18,borderRadius:"50%",background:"white"}}/>
+                  </motion.button>
+                </div>
+              ))}
             </div>
+            {/* Preview */}
             {caption && (
               <div style={{padding:"14px",borderRadius:12,background:"rgba(0,0,0,0.6)",
-                textAlign:"center",border:"1px solid rgba(255,255,255,0.06)"}}>
-                <span style={{fontSize:textSize,fontWeight:900,color:textColor,
-                  textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>{caption}</span>
+                textAlign:"center",border:"1px solid rgba(255,255,255,0.06)",position:"relative",minHeight:80}}>
+                {caption3 && <div style={{position:"absolute",top:8,left:0,right:0,textAlign:"center"}}><span style={{fontSize:10,color:T.orange,fontWeight:700}}>{caption3}</span></div>}
+                <span style={{
+                  fontSize:textSize,fontWeight:textFont==="italic"?400:900,
+                  fontStyle:textFont==="italic"?"italic":"normal",
+                  color:textColor,
+                  textShadow:textShadow?"0 2px 12px rgba(0,0,0,0.95)":"0 1px 4px rgba(0,0,0,0.8)",
+                  WebkitTextStroke:textOutline?`0.5px ${textColor==="white"?"#666":textColor}`:undefined,
+                  padding:"4px 10px",borderRadius:6,
+                  background:textBg?"rgba(0,0,0,0.45)":"transparent"}}>
+                  {caption}
+                </span>
+                {caption2 && <div style={{marginTop:4}}><span style={{fontSize:10,color:"rgba(255,255,255,0.6)"}}>{caption2}</span></div>}
               </div>
             )}
           </div>
@@ -3505,6 +4135,516 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
             )}
           </div>
         )}
+
+        {/* ── AUDIO STUDIO ── */}
+        {activeTab==="audio" && (
+          <div className="flex flex-col gap-4">
+            {/* Voice changer */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🎙 OVOZ REJIMI</div>
+              <div className="flex flex-wrap gap-2">
+                {[{v:"original",e:"🎙",l:"Asl"},{v:"robot",e:"🤖",l:"Robot"},{v:"chipmunk",e:"🐿",l:"Chipmunk"},{v:"bass",e:"🎸",l:"Bass"},{v:"echo",e:"🌊",l:"Echo"},{v:"alien",e:"👾",l:"Alien"},{v:"cave",e:"🏔",l:"G'or"},{v:"helium",e:"🎈",l:"Helium"}].map(({v,e,l})=>(
+                  <button key={v} onClick={()=>setVoiceChanger(v)}
+                    style={{padding:"8px 10px",borderRadius:10,fontSize:10,fontWeight:700,
+                      background:voiceChanger===v?T.gCyan:"rgba(255,255,255,0.05)",
+                      color:voiceChanger===v?"#000":T.txtSub,
+                      border:`1px solid ${voiceChanger===v?T.cyan:"rgba(255,255,255,0.08)"}`,
+                      display:"flex",alignItems:"center",gap:4}}>
+                    <span>{e}</span>{l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Volume controls */}
+            <div className="flex flex-col gap-3">
+              {[{l:"🎙 Ovoz balandligi",v:voiceVol,s:setVoiceVol,c:T.cyan},{l:"🎵 Musiqa balandligi",v:musicVol,s:setMusicVol,c:T.violet}].map(({l,v,s,c})=>(
+                <div key={l}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                    <span style={{fontSize:9,color:"rgba(255,255,255,0.45)",fontWeight:700}}>{l}</span>
+                    <span style={{fontSize:10,color:c,fontWeight:700}}>{v}%</span>
+                  </div>
+                  <input type="range" min={0} max={200} value={v} onChange={e=>s(+e.target.value)} style={{width:"100%",accentColor:c}}/>
+                </div>
+              ))}
+            </div>
+            {/* Effects */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🎚 EFFEKTLAR</div>
+              <div className="flex flex-col gap-3">
+                {[{l:"🌊 Echo",v:echoPct,s:setEchoPct},{l:"🔔 Reverb",v:reverbPct,s:setReverbPct},{l:"🎵 Pitch Shift",v:pitchShift,s:setPitchShift,min:-12,max:12},{l:"🎬 Fade In",v:fadeIn,s:setFadeIn,max:5},{l:"🎬 Fade Out",v:fadeOut,s:setFadeOut,max:5}].map(({l,v,s,min=-0,max=100})=>(
+                  <div key={l}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                      <span style={{fontSize:9,color:"rgba(255,255,255,0.45)",fontWeight:700}}>{l}</span>
+                      <span style={{fontSize:10,color:T.violet,fontWeight:700}}>{v}</span>
+                    </div>
+                    <input type="range" min={min} max={max} value={v} onChange={e=>s(+e.target.value)} style={{width:"100%",accentColor:T.violet}}/>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Toggles */}
+            <div className="flex flex-col gap-2">
+              {[{v:beatSync,s:setBeatSync,l:"🥁 Beat Sync — musiqaga mos kesish"},{v:noiseGate,s:setNoiseGate,l:"🔇 Noise Gate — fon shovqinini o'chirish"}].map(({v,s,l})=>(
+                <div key={l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>{l}</span>
+                  <button onClick={()=>s((p:boolean)=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:v?T.cyan:"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start"}}>
+                    <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+                  </button>
+                </div>
+              ))}
+            </div>
+            {/* Equalizer */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🎛 EKVALAYZR</div>
+              <div style={{display:"flex",gap:8,alignItems:"flex-end",height:60}}>
+                {[60,120,500,1000,4000,8000,16000].map((freq,i)=>(
+                  <div key={freq} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                    <div style={{flex:1,width:"100%",background:"rgba(255,255,255,0.04)",borderRadius:2,position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",bottom:0,left:0,right:0,height:`${40+Math.sin(i*0.9)*30}%`,background:`linear-gradient(180deg,${T.cyan},${T.violet}55)`,borderRadius:2}}/>
+                    </div>
+                    <span style={{fontSize:6,color:"rgba(255,255,255,0.3)",fontWeight:700}}>{freq>=1000?`${freq/1000}k`:freq}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── SUBTITLE / CAPTIONS ── */}
+        {activeTab==="subtitle" && (
+          <div className="flex flex-col gap-4">
+            <div>
+              <div style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🌐 SUBTITRL TILI</div>
+              <div className="flex flex-wrap gap-2">
+                {["uz","en","ru","de","fr","zh","ar","tr","ko","ja"].map(l=>(
+                  <button key={l} onClick={()=>setSubtitleLang(l)}
+                    style={{padding:"6px 12px",borderRadius:8,fontSize:10,fontWeight:800,
+                      background:subtitleLang===l?T.gViolet:"rgba(255,255,255,0.05)",
+                      color:subtitleLang===l?"white":T.txtSub,
+                      border:`1px solid ${subtitleLang===l?T.violet:"rgba(255,255,255,0.08)"}`}}>
+                    {l.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🎨 SUBTITRL USLUBI</div>
+              <div className="flex flex-wrap gap-2">
+                {[{v:"classic",l:"Klassik"},{v:"neon",l:"Neon"},{v:"shadow",l:"Soya"},{v:"outline",l:"Chegara"},{v:"bubble",l:"Pufakcha"},{v:"karaoke",l:"Karaoke"},{v:"minimal",l:"Minimal"}].map(({v,l})=>(
+                  <button key={v} onClick={()=>setSubtitleStyle(v)}
+                    style={{padding:"7px 11px",borderRadius:9,fontSize:10,fontWeight:700,
+                      background:subtitleStyle===v?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.04)",
+                      color:subtitleStyle===v?T.violet:T.txtSub,
+                      border:`1px solid ${subtitleStyle===v?T.violet+"66":"rgba(255,255,255,0.07)"}`}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>📝 SUBTITR SATRLARI</span>
+                <button onClick={()=>setSubtitleLines(p=>[...p,""])} style={{fontSize:10,color:T.violet,fontWeight:700}}>+ Qo'shish</button>
+              </div>
+              <div className="flex flex-col gap-2">
+                {subtitleLines.map((line,i)=>(
+                  <div key={i} style={{display:"flex",gap:6}}>
+                    <span style={{fontSize:9,fontWeight:700,color:T.violet,width:16,marginTop:10}}>{i+1}</span>
+                    <input value={line} onChange={e=>{const n=[...subtitleLines];n[i]=e.target.value;setSubtitleLines(n);}}
+                      placeholder={`${i+1}-satr matni…`}
+                      style={{flex:1,padding:"8px 10px",borderRadius:8,background:"rgba(168,85,247,0.07)",
+                        border:"1px solid rgba(168,85,247,0.2)",color:"white",fontSize:11,outline:"none"}}/>
+                    <button onClick={()=>setSubtitleLines(p=>p.filter((_,j)=>j!==i))} style={{color:"#ff2d55",fontSize:16,marginTop:4}}>×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Preview */}
+            <div style={{borderRadius:10,background:"rgba(0,0,0,0.6)",padding:"24px 12px",textAlign:"center",position:"relative",border:"1px solid rgba(255,255,255,0.07)"}}>
+              <div style={{position:"absolute",bottom:12,left:0,right:0,textAlign:"center"}}>
+                <span style={{
+                  fontSize:13,fontWeight:subtitleStyle==="neon"?900:700,
+                  color:subtitleStyle==="neon"?T.cyan:subtitleStyle==="karaoke"?"#ffc400":"white",
+                  textShadow:subtitleStyle==="neon"?`0 0 12px ${T.cyan}`:subtitleStyle==="shadow"?"0 2px 8px rgba(0,0,0,0.9)":"none",
+                  padding:"4px 14px",borderRadius:6,
+                  background:subtitleStyle==="bubble"?"rgba(0,0,0,0.7)":subtitleStyle==="outline"?"transparent":"rgba(0,0,0,0.45)",
+                  WebkitTextStroke:subtitleStyle==="outline"?"0.5px white":"none",
+                }}>
+                  {subtitleLines[0]||"Subtitrl ko'rinishi"}
+                </span>
+              </div>
+              <span style={{fontSize:10,color:"rgba(255,255,255,0.2)",display:"block"}}>Preview</span>
+            </div>
+          </div>
+        )}
+
+        {/* ── THUMBNAIL CREATOR ── */}
+        {activeTab==="thumbnail" && (
+          <div className="flex flex-col gap-4">
+            {/* Style picker */}
+            <div>
+              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🖼 MUQOVA USLUBI</div>
+              <div className="flex flex-wrap gap-2">
+                {[{v:"gradient",l:"Gradient"},{v:"solid",l:"Qattiq"},{v:"blur",l:"Loyqa Fon"},{v:"neon",l:"Neon"},{v:"cinematic",l:"Kino"},{v:"minimal",l:"Minimal"},{v:"bold",l:"Bold"}].map(({v,l})=>(
+                  <button key={v} onClick={()=>setThumbStyle(v)}
+                    style={{padding:"7px 12px",borderRadius:9,fontSize:10,fontWeight:700,
+                      background:thumbStyle===v?"rgba(255,196,0,0.15)":"rgba(255,255,255,0.04)",
+                      color:thumbStyle===v?T.gold:T.txtSub,
+                      border:`1px solid ${thumbStyle===v?T.gold+"55":"rgba(255,255,255,0.07)"}`}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Thumbnail preview */}
+            <div style={{aspectRatio:"16/9",borderRadius:12,overflow:"hidden",position:"relative",
+              background:thumbStyle==="gradient"?`linear-gradient(135deg,${thumbBg},${T.violet}66)`:thumbBg,
+              border:"1px solid rgba(255,255,255,0.1)"}}>
+              <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6}}>
+                <span style={{fontSize:40}}>{thumbEmoji}</span>
+                {thumbCaption && <span style={{fontSize:14,fontWeight:900,color:"white",textShadow:"0 2px 10px rgba(0,0,0,0.9)",textAlign:"center",padding:"0 16px"}}>{thumbCaption}</span>}
+              </div>
+              {thumbStyle==="neon" && <div style={{position:"absolute",inset:0,boxShadow:`inset 0 0 40px ${T.cyan}33`}}/>}
+            </div>
+            {/* Caption input */}
+            <div>
+              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:6}}>📝 MUQOVA MATNI</div>
+              <input value={thumbCaption} onChange={e=>setThumbCaption(e.target.value)} maxLength={60}
+                placeholder="Ajoyib sarlavha yozing…"
+                style={{width:"100%",padding:"10px 12px",borderRadius:10,background:"rgba(255,196,0,0.07)",
+                  border:"1px solid rgba(255,196,0,0.25)",color:"white",fontSize:12,outline:"none"}}/>
+            </div>
+            {/* Background color */}
+            <div>
+              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:6}}>🎨 FON RANGI</div>
+              <div className="flex gap-2 flex-wrap">
+                {["#000022","#ff3500","#7700ff","#00e5ff","#ff6b00","#00ff77","#111","#220033"].map(c=>(
+                  <button key={c} onClick={()=>setThumbBg(c)}
+                    style={{width:32,height:32,borderRadius:8,background:c,
+                      border:`2px solid ${thumbBg===c?T.gold:"rgba(255,255,255,0.15)"}`,cursor:"pointer"}}/>
+                ))}
+                <input type="color" value={thumbBg} onChange={e=>setThumbBg(e.target.value)}
+                  style={{width:32,height:32,borderRadius:8,cursor:"pointer",border:"none",padding:0,background:"transparent"}}/>
+              </div>
+            </div>
+            {/* Emoji picker */}
+            <div>
+              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:6}}>✨ EMOJI</div>
+              <div className="flex flex-wrap gap-2">
+                {["🔥","⚡","💥","🚀","👑","🏆","💎","🌊","🎬","🎵","🤩","💯","🌈","⭐","🎯","🦁"].map(e=>(
+                  <button key={e} onClick={()=>setThumbEmoji(e)} style={{fontSize:22,borderRadius:8,padding:"4px",background:thumbEmoji===e?"rgba(255,196,0,0.15)":"transparent",border:`1px solid ${thumbEmoji===e?T.gold+"55":"transparent"}`}}>{e}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── EXPORT SETTINGS ── */}
+        {activeTab==="export" && (
+          <div className="flex flex-col gap-4">
+            <div style={{padding:"12px",borderRadius:12,background:"linear-gradient(135deg,rgba(0,229,255,0.06),rgba(119,0,255,0.06))",border:"1px solid rgba(0,229,255,0.12)"}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.cyan,marginBottom:4}}>📦 Eksport Sozlamalari</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Video formati, sifati va maxsus parametrlarni sozlang</div>
+            </div>
+            {/* Format */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>📹 FORMAT</div>
+              <div className="flex gap-2">
+                {["mp4","mov","avi","webm","mkv"].map(f=>(
+                  <button key={f} onClick={()=>setOutFormat(f)}
+                    style={{flex:1,padding:"10px 4px",borderRadius:10,fontSize:11,fontWeight:800,
+                      background:outFormat===f?T.gCyan:"rgba(255,255,255,0.04)",
+                      color:outFormat===f?"#000":T.txtSub,
+                      border:`1px solid ${outFormat===f?T.cyan:"rgba(255,255,255,0.08)"}`}}>
+                    {f.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Resolution */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>📺 O'LCHAM</div>
+              <div className="flex flex-wrap gap-2">
+                {[{v:"720p",l:"720p HD"},{v:"1080p",l:"1080p FHD"},{v:"4K",l:"4K UHD"},{v:"8K",l:"8K Ultra"},{v:"480p",l:"480p SD"},{v:"360p",l:"360p"}].map(({v,l})=>(
+                  <button key={v} onClick={()=>setExportQ(v==="8K"||v==="480p"||v==="360p"?"720p":v as "720p"|"1080p"|"4K")}
+                    style={{padding:"8px 14px",borderRadius:9,fontSize:10,fontWeight:700,
+                      background:exportQ===v?"rgba(0,229,255,0.12)":"rgba(255,255,255,0.04)",
+                      color:exportQ===v?T.cyan:T.txtSub,
+                      border:`1px solid ${exportQ===v?T.cyan+"55":"rgba(255,255,255,0.07)"}`}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* FPS */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🎞 FPS (Kadr/Soniya)</div>
+              <div className="flex gap-2">
+                {["24","30","60","120","240"].map(f=>(
+                  <button key={f} onClick={()=>setOutFps(f)}
+                    style={{flex:1,padding:"10px 4px",borderRadius:10,fontSize:11,fontWeight:800,
+                      background:outFps===f?T.gViolet:"rgba(255,255,255,0.04)",
+                      color:outFps===f?"white":T.txtSub,
+                      border:`1px solid ${outFps===f?T.violet:"rgba(255,255,255,0.08)"}`}}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Bitrate */}
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                <span style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>⚡ BITREYT ({outBitrate} Mbps)</span>
+                <span style={{fontSize:10,color:T.violet,fontWeight:700}}>{+outBitrate < 6?"Tejamkor":+outBitrate<12?"Optimal":"Ultra"}</span>
+              </div>
+              <input type="range" min={1} max={50} value={+outBitrate} onChange={e=>setOutBitrate(e.target.value)} style={{width:"100%",accentColor:T.cyan}}/>
+            </div>
+            {/* Special options */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>⚙️ MAXSUS PARAMETRLAR</div>
+              <div className="flex flex-col gap-2">
+                {[{v:stabilize,s:setStabilize,l:"📷 Video Stabilizator"},{v:autoColor,s:setAutoColor,l:"🎨 Avto Rang Korreksiya"},{v:colorLimiter,s:setColorLimiter,l:"🎯 Broadcast Color Limiter"},{v:watermark,s:setWatermark,l:"💧 OlCha Suv Belgisi"}].map(({v,s,l})=>(
+                  <div key={l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                    <span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>{l}</span>
+                    <button onClick={()=>s((p:boolean)=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:v?T.cyan:"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start"}}>
+                      <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+                    </button>
+                  </div>
+                ))}
+                {watermark && (
+                  <div>
+                    <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",marginBottom:6}}>Suv belgisi pozitsiyasi</div>
+                    <div className="flex gap-2">
+                      {[{v:"tl",l:"⬆️L"},{v:"tr",l:"⬆️R"},{v:"bl",l:"⬇️L"},{v:"br",l:"⬇️R"},{v:"center",l:"⏺"}].map(({v,l})=>(
+                        <button key={v} onClick={()=>setWatermarkPos(v)}
+                          style={{flex:1,padding:"8px",borderRadius:8,fontSize:10,fontWeight:700,
+                            background:watermarkPos===v?"rgba(0,229,255,0.12)":"rgba(255,255,255,0.04)",
+                            color:watermarkPos===v?T.cyan:T.txtSub,border:`1px solid ${watermarkPos===v?T.cyan+"55":"rgba(255,255,255,0.07)"}`}}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Tone mapping */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🌈 TON XARITASI</div>
+              <div className="flex gap-2">
+                {["sdr","hdr","hdr10","hlg","pq"].map(t=>(
+                  <button key={t} onClick={()=>setToneMap(t)}
+                    style={{flex:1,padding:"9px 4px",borderRadius:9,fontSize:9,fontWeight:800,textTransform:"uppercase",
+                      background:toneMap===t?T.gAurora:"rgba(255,255,255,0.04)",
+                      color:toneMap===t?"#000":T.txtSub,border:`1px solid ${toneMap===t?T.aurora:"rgba(255,255,255,0.07)"}`}}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── AR FILTERS ── */}
+        {activeTab==="ar" && (
+          <div className="flex flex-col gap-4">
+            <div>
+              <div style={{fontSize:9,color:T.aurora,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🎭 AR YUZ FILTRLARI</div>
+              <div className="flex flex-wrap gap-2">
+                {[{v:"none",e:"❌",l:"Off"},{v:"glow",e:"✨",l:"Glow"},{v:"blur",e:"🌫",l:"Blur Bg"},{v:"glasses",e:"🕶",l:"Ko'zoynak"},{v:"crown",e:"👑",l:"Toj"},{v:"cat",e:"🐱",l:"Mushuk"},{v:"dog",e:"🐶",l:"It"},{v:"heart",e:"💕",l:"Yurak"},{v:"fire",e:"🔥",l:"Olov"},{v:"holo",e:"🔮",l:"Holo"},{v:"matrix",e:"💊",l:"Matrix"},{v:"cyber",e:"🤖",l:"Cyber"}].map(({v,e,l})=>(
+                  <button key={v} onClick={()=>setArFilter(v)}
+                    style={{padding:"8px 10px",borderRadius:10,fontSize:10,fontWeight:700,
+                      background:arFilter===v?"rgba(0,255,238,0.15)":"rgba(255,255,255,0.04)",
+                      color:arFilter===v?T.aurora:T.txtSub,
+                      border:`1px solid ${arFilter===v?T.aurora+"55":"rgba(255,255,255,0.07)"}`,
+                      display:"flex",alignItems:"center",gap:4}}>
+                    <span>{e}</span>{l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* LUT presets */}
+            <div>
+              <div style={{fontSize:9,color:T.aurora,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🎨 LUT PRESETLARI</div>
+              <div className="flex flex-wrap gap-2">
+                {[{v:"none",l:"Asl"},{v:"cinema",l:"Kino"},{v:"teal",l:"Teal & Orange"},{v:"moody",l:"Moody"},{v:"faded",l:"Faded"},{v:"warm",l:"Issiq"},{v:"arctic",l:"Arktik"},{v:"sahara",l:"Sahro"},{v:"neon",l:"Neon Tokyo"},{v:"vintage",l:"Vintage"},{v:"matte",l:"Matte"}].map(({v,l})=>(
+                  <button key={v} onClick={()=>setLut(v)}
+                    style={{padding:"7px 12px",borderRadius:9,fontSize:10,fontWeight:700,
+                      background:lut===v?"rgba(0,255,238,0.12)":"rgba(255,255,255,0.04)",
+                      color:lut===v?T.aurora:T.txtSub,
+                      border:`1px solid ${lut===v?T.aurora+"44":"rgba(255,255,255,0.07)"}`}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Video effects */}
+            <div>
+              <div style={{fontSize:9,color:T.aurora,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🎬 VIDEO EFFEKTLAR</div>
+              <div className="flex flex-wrap gap-2">
+                {[{v:reverseClip,s:setReverseClip,l:"⏪ Teskari"},{v:boomerang,s:setBoomerang,l:"🔄 Boomerang"},{v:freezeFrame,s:setFreezeFrame,l:"⏸ Muzlatish"},{v:blurBg,s:setBlurBg,l:"🌫 Fon Loyqa"},{v:portrait,s:setPortrait,l:"🖼 Portrait Mode"},{v:stabilize,s:setStabilize,l:"📷 Stabilize"}].map(({v,s,l})=>(
+                  <button key={l} onClick={()=>s((p:boolean)=>!p)}
+                    style={{padding:"8px 12px",borderRadius:10,fontSize:10,fontWeight:700,
+                      background:v?"rgba(0,255,238,0.15)":"rgba(255,255,255,0.04)",
+                      color:v?T.aurora:T.txtSub,
+                      border:`1px solid ${v?T.aurora+"55":"rgba(255,255,255,0.07)"}`}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Crop mode */}
+            <div>
+              <div style={{fontSize:9,color:T.aurora,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>✂️ KESISH NISBATI</div>
+              <div className="flex gap-2 flex-wrap">
+                {["16:9","9:16","1:1","4:3","3:4","21:9","4:5"].map(r=>(
+                  <button key={r} onClick={()=>setCropMode(r)}
+                    style={{padding:"8px 12px",borderRadius:9,fontSize:10,fontWeight:800,
+                      background:cropMode===r?T.gAurora:"rgba(255,255,255,0.04)",
+                      color:cropMode===r?"#000":T.txtSub,border:`1px solid ${cropMode===r?T.aurora:"rgba(255,255,255,0.07)"}`}}>
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Split screen */}
+            <div>
+              <div style={{fontSize:9,color:T.aurora,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>📺 SPLIT SCREEN</div>
+              <div className="flex gap-2">
+                {[{v:"off" as const,l:"❌ Off"},{v:"v" as const,l:"↕️ Vertikal"},{v:"h" as const,l:"↔️ Gorizontal"}].map(({v,l})=>(
+                  <button key={v} onClick={()=>setSplitScreen(v)}
+                    style={{flex:1,padding:"10px",borderRadius:10,fontSize:10,fontWeight:700,
+                      background:splitScreen===v?"rgba(0,255,238,0.12)":"rgba(255,255,255,0.04)",
+                      color:splitScreen===v?T.aurora:T.txtSub,border:`1px solid ${splitScreen===v?T.aurora+"44":"rgba(255,255,255,0.07)"}`}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── CHAPTERS ── */}
+        {activeTab==="chapters" && (
+          <div className="flex flex-col gap-4">
+            <div style={{padding:"10px 12px",borderRadius:12,background:"rgba(255,196,0,0.06)",border:"1px solid rgba(255,196,0,0.2)"}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.gold,marginBottom:2}}>📑 Bo'limlar</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Videoni bo'limlarga bo'ling — tomoshabinlar kerakli joyga sakrashsin</div>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <input value={chapTs} onChange={e=>setChapTs(e.target.value)} placeholder="0:00"
+                style={{width:52,padding:"9px 8px",borderRadius:9,background:"rgba(255,255,255,0.05)",
+                  border:"1px solid rgba(255,255,255,0.1)",color:"white",fontSize:11,outline:"none",textAlign:"center"}}/>
+              <input value={chapLabel} onChange={e=>setChapLabel(e.target.value)} placeholder="Bo'lim nomi…"
+                style={{flex:1,padding:"9px 12px",borderRadius:9,background:"rgba(255,255,255,0.05)",
+                  border:"1px solid rgba(255,255,255,0.1)",color:"white",fontSize:11,outline:"none"}}/>
+              <button onClick={()=>{if(chapTs&&chapLabel){setChaptersS(p=>[...p,{ts:chapTs,label:chapLabel}]);setChapTs("");setChapLabel("");}}}
+                style={{padding:"9px 14px",borderRadius:9,background:T.gViolet,color:"white",fontSize:13,fontWeight:900}}>+</button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {chaptersS.length===0 && (
+                <div style={{padding:"20px",textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:11}}>
+                  Hali bo'lim qo'shilmagan
+                </div>
+              )}
+              {chaptersS.map((ch,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,
+                  background:"rgba(168,85,247,0.07)",border:"1px solid rgba(168,85,247,0.15)"}}>
+                  <span style={{fontSize:10,fontWeight:800,color:T.violet,fontFamily:"monospace",minWidth:36}}>{ch.ts}</span>
+                  <span style={{flex:1,fontSize:12,color:"rgba(255,255,255,0.75)"}}>{ch.label}</span>
+                  <button onClick={()=>setChaptersS(p=>p.filter((_,j)=>j!==i))} style={{color:"#ff2d55",fontSize:16}}>×</button>
+                </div>
+              ))}
+            </div>
+            {/* Timeline visual */}
+            {chaptersS.length>0 && (
+              <div style={{position:"relative",height:24,background:"rgba(255,255,255,0.04)",borderRadius:6,overflow:"hidden"}}>
+                <div style={{position:"absolute",inset:0,background:`linear-gradient(90deg,${T.violet}55,${T.nova}22)`,borderRadius:6}}/>
+                {chaptersS.map((ch,i)=>(
+                  <div key={i} style={{position:"absolute",top:0,bottom:0,left:`${i/(chaptersS.length)*100}%`,width:2,background:T.gold}}/>
+                ))}
+              </div>
+            )}
+            {/* Pin comment + First comment */}
+            <div className="flex flex-col gap-2 mt-2">
+              <div style={{fontSize:9,color:T.gold,fontWeight:700,letterSpacing:"0.1em",marginBottom:4}}>📌 IZOHLAR</div>
+              <input value={pinComment} onChange={e=>setPinComment(e.target.value)} placeholder="📌 Pinlangan izoh (video havolasi, resurslar…)"
+                style={{width:"100%",padding:"9px 12px",borderRadius:9,background:"rgba(255,196,0,0.06)",
+                  border:"1px solid rgba(255,196,0,0.2)",color:"white",fontSize:11,outline:"none"}}/>
+              <input value={firstComment} onChange={e=>setFirstComment(e.target.value)} placeholder="💬 Birinchi izoh (video chiqishi bilan avtomatik)"
+                style={{width:"100%",padding:"9px 12px",borderRadius:9,background:"rgba(255,255,255,0.04)",
+                  border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:11,outline:"none"}}/>
+            </div>
+          </div>
+        )}
+
+        {/* ── COLLAB EDITOR ── */}
+        {activeTab==="collab" && (
+          <div className="flex flex-col gap-4">
+            <div style={{padding:"12px",borderRadius:12,background:"linear-gradient(135deg,rgba(0,229,255,0.07),rgba(168,85,247,0.05))",border:"1px solid rgba(0,229,255,0.15)"}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.cyan,marginBottom:2}}>👥 Birgalikda Tahrirlash</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Do'stlaringizni studioga taklif qiling — real vaqtda birga tahrirlang</div>
+            </div>
+            {/* Invite */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>✉️ TAKLIF YUBORISH</div>
+              <div style={{display:"flex",gap:8}}>
+                <input value={collabEmail} onChange={e=>setCollabEmail(e.target.value)} placeholder="@foydalanuvchi yoki email…"
+                  style={{flex:1,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",
+                    border:"1px solid rgba(0,229,255,0.2)",color:"white",fontSize:11,outline:"none"}}/>
+                <button onClick={()=>{if(collabEmail.trim()){setCollaborators(p=>[...p,collabEmail.trim()]);setCollabEmail("");}}}
+                  style={{padding:"10px 16px",borderRadius:10,background:T.gCyan,color:"#000",fontSize:12,fontWeight:900}}>
+                  Taklif
+                </button>
+              </div>
+            </div>
+            {/* Active collaborators */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>👤 HAMMUHARRILAR</div>
+              {collaborators.length===0 ? (
+                <div style={{padding:"20px",textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:11}}>Hali hammuharrir yo'q</div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {collaborators.map((c,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:"rgba(0,229,255,0.06)",border:"1px solid rgba(0,229,255,0.15)"}}>
+                      <div style={{width:32,height:32,borderRadius:99,background:`linear-gradient(135deg,${T.cyan},${T.violet})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"white"}}>{c[0]?.toUpperCase()}</div>
+                      <span style={{flex:1,fontSize:11,color:"rgba(255,255,255,0.7)"}}>{c}</span>
+                      <span style={{fontSize:9,padding:"2px 8px",borderRadius:99,background:"rgba(0,255,136,0.12)",color:"#00ff88",fontWeight:700}}>Kutilmoqda</span>
+                      <button onClick={()=>setCollaborators(p=>p.filter((_,j)=>j!==i))} style={{color:"#ff2d55",fontSize:16}}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Permissions */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>🔒 RUXSATLAR</div>
+              <div className="flex flex-col gap-2">
+                {[{l:"✏️ Tahrirlash ruxsati"},{l:"👁️ Ko'rish (faqat)"},{l:"💬 Izoh qoldirish"},{l:"📤 Export qilish"},{l:"🗑 O'chirish"},{l:"⚙️ Sozlamalarni o'zgartirish"}].map(({l},i)=>(
+                  <div key={l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 12px",borderRadius:9,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                    <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>{l}</span>
+                    <button style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:i<3?T.cyan:"rgba(255,255,255,0.12)",justifyContent:i<3?"flex-end":"flex-start"}}>
+                      <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Version history */}
+            <div>
+              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>📋 VERSIYA TARIXI</div>
+              <div className="flex flex-col gap-1.5">
+                {[{t:"Hozirgina",l:"Autosave — 2 daqiqa oldin"},{t:"12:34",l:"Hammuharrir: text qo'shdi"},{t:"12:30",l:"Siz: filter o'zgartirdi"},{t:"12:25",l:"Siz: video yukladi"}].map(({t,l},i)=>(
+                  <div key={i} style={{display:"flex",gap:8,padding:"8px 12px",borderRadius:8,background:"rgba(255,255,255,0.03)"}}>
+                    <span style={{fontSize:9,color:T.violet,fontWeight:700,minWidth:36}}>{t}</span>
+                    <span style={{fontSize:10,color:"rgba(255,255,255,0.45)"}}>{l}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Bottom bar */}

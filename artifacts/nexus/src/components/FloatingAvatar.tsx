@@ -154,7 +154,7 @@ export default function FloatingAvatar() {
         x: dragX,
         y: dragY,
         position: "fixed",
-        right: 16,
+        right: 40,
         bottom: 204,
         zIndex: 9992,
         touchAction: "none",

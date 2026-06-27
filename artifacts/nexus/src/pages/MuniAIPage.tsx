@@ -163,7 +163,7 @@ export default function MuniAIPage() {
       </div>
 
       {/* Header */}
-      <div className="relative z-10 px-4 pt-6 pb-4 border-b border-amber-900/30">
+      <div className="relative z-10 px-4 pb-4 border-b border-amber-900/30" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 24px)" }}>
         <div className="max-w-2xl mx-auto">
           {/* Title */}
           <div className="flex items-center justify-between mb-5">

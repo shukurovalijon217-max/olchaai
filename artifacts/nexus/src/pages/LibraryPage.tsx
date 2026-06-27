@@ -1077,8 +1077,9 @@ export default function LibraryPage() {
                           {item.thumbnailUrl ? (
                             <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <BookOpen className="w-8 h-8 text-muted-foreground opacity-40" />
+                            <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ background: "linear-gradient(135deg,#1a1035 0%,#0d1a2e 100%)" }}>
+                              <span className="text-4xl font-black" style={{ color: "rgba(120,87,255,0.4)" }}>{item.title?.[0]?.toUpperCase()}</span>
+                              <BookOpen className="w-5 h-5" style={{ color: "rgba(120,87,255,0.25)" }} />
                             </div>
                           )}
                           <button onClick={() => !inLib && addBook(item)} disabled={inLib || addingId === item.id}
@@ -1161,8 +1162,9 @@ export default function LibraryPage() {
                         {item.thumbnailUrl ? (
                           <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <BookOpen className="w-8 h-8 text-muted-foreground opacity-40" />
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ background: "linear-gradient(135deg,#1a1035 0%,#0d1a2e 100%)" }}>
+                            <span className="text-4xl font-black" style={{ color: "rgba(120,87,255,0.4)" }}>{item.title?.[0]?.toUpperCase()}</span>
+                            <BookOpen className="w-5 h-5" style={{ color: "rgba(120,87,255,0.25)" }} />
                           </div>
                         )}
                         <button onClick={() => !inLib && addBook(item)} disabled={inLib || addingId === item.id}

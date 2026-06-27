@@ -57,7 +57,7 @@ function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => 
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-black/20">
+      <div className="flex items-center gap-3 px-4 border-b border-white/10 bg-black/20" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)", paddingBottom: "12px" }}>
         <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="p-2 rounded-xl bg-white/5 hover:bg-white/10">
           <ChevronLeft className="w-4 h-4 text-white" />
         </motion.button>
@@ -239,7 +239,7 @@ export default function AITwinPage() {
 
   return (
     <div className="h-full flex flex-col bg-[#0a0604]">
-      <div className="p-4 pb-2">
+      <div className="px-4 pb-2" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}>
         <h1 className="text-white font-bold text-xl flex items-center gap-2 mb-1">
           <Bot className="w-5 h-5 text-blue-400" /> {t("twin.title")}
         </h1>

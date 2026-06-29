@@ -5,6 +5,7 @@
  * NEXUS Super Social Platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { GroupSettings } from './groupSettings';
 
 export interface Group {
   id: number;
@@ -20,4 +21,11 @@ export interface Group {
   isMember?: boolean;
   category?: string;
   createdAt: string;
+  privacyLevel?: string;
+  joinType?: string;
+  groupType?: string;
+  icon?: string;
+  themeColor?: string;
+  maxMembers?: number;
+  settings?: GroupSettings;
 }

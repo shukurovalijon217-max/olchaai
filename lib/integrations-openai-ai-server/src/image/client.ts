@@ -19,9 +19,9 @@ export async function generateImageUrl(
     prompt,
     size,
     n: 1,
-  } as Parameters<typeof openai.images.generate>[0]);
+  } as Parameters<typeof openai.images.generate>[0]) as { data?: { url?: string; b64_json?: string }[] };
 
-  const item = (response.data ?? [])[0] as { url?: string; b64_json?: string } | undefined;
+  const item = (response.data ?? [])[0];
   if (item?.url) return item.url;
   if (item?.b64_json) return `data:image/png;base64,${item.b64_json}`;
   throw new Error("No image returned from OpenAI");

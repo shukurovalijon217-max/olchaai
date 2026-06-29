@@ -5,11 +5,20 @@
  * NEXUS Super Social Platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { GroupInputSettings } from './groupInputSettings';
 
 export interface GroupInput {
   name: string;
   description: string;
+  coverUrl?: string;
   avatarUrl?: string;
   isPrivate?: boolean;
+  privacyLevel?: string;
+  joinType?: string;
   category?: string;
+  groupType?: string;
+  icon?: string;
+  themeColor?: string;
+  maxMembers?: number;
+  settings?: GroupInputSettings;
 }

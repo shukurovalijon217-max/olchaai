@@ -19,7 +19,7 @@ function loadXY() {
       if (
         typeof p.x === "number" && typeof p.y === "number" &&
         p.x >= -120 && p.x <= 0 &&
-        p.y >= -350 && p.y <= 80
+        p.y >= -350 && p.y <= 0   /* never allow downward drag */
       ) return p;
     }
   } catch { /* ignore */ }
@@ -110,8 +110,9 @@ export default function FloatingAvatar() {
       dock();
       return;
     }
-    /* Clamp x ≤ 0 on snap-back */
+    /* Clamp x ≤ 0, y ≤ 0 (never allow rightward or downward drift) */
     if (dragX.get() > 0) dragX.set(0);
+    if (dragY.get() > 0) dragY.set(0);
     try { localStorage.setItem(POS_KEY, JSON.stringify({ x: dragX.get(), y: dragY.get() })); } catch {}
   };
 

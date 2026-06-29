@@ -13,6 +13,7 @@ import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUplo
 import type { Reel, UploadUrlRequest } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { useDockedState } from "@/hooks/useDockedState";
 import {
   Play, Pause, Volume2, VolumeX, ArrowLeft, Search, X,
   Eye, Heart, Share2, Check, Film, Music2, Gamepad2,
@@ -4942,15 +4943,14 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 /* ─────────────────────────────────────────────────────── */
 /* Floating FAB — circular, swipe-to-edge collapsible     */
 /* ─────────────────────────────────────────────────────── */
-const FAB_SIZE = 54; /* Same visual weight as FloatingAvatar orb (62px) */
-const FAB_BOTTOM = "calc(env(safe-area-inset-bottom, 0px) + 120px)";
+const ORB     = 62;  /* Unified orb size — matches FloatingAvatar */
+const FAB_BOT = "calc(env(safe-area-inset-bottom, 0px) + 56px)";
 
 function FloatingFAB() {
   const { t } = useTranslation();
   const [open,  setOpen]  = useState(false);
-  const [edged, setEdged] = useState(false); /* docked to right edge */
   const [modal, setModal] = useState<"upload"|"live"|"short"|"challenge"|"cipcat"|null>(null);
-  const fabX = useMotionValue(0);
+  const { edged, dock } = useDockedState();
 
   const openModal = (id: "upload"|"live"|"short"|"challenge"|"cipcat") => {
     setOpen(false);
@@ -4965,118 +4965,105 @@ function FloatingFAB() {
     { Icon: Film,      label: t("otube.fab_studio"),    col: T.gold,    id: "cipcat"    as const },
   ];
 
-  /* Drag-end: if moved right >36px → dock to edge */
-  const onFabDragEnd = (_: unknown, info: { offset: { x: number; y: number } }) => {
-    if (info.offset.x > 36) {
-      void animate(fabX, FAB_SIZE + 24, { type:"spring", stiffness:320, damping:28 });
-      setEdged(true);
-      setOpen(false);
-    } else {
-      void animate(fabX, 0, { type:"spring", stiffness:400, damping:30 });
-    }
+  const onFabDragEnd = (_: unknown, info: { offset: { x: number } }) => {
+    if (info.offset.x > 36) { dock(); setOpen(false); }
   };
 
-  const restoreFAB = () => {
-    void animate(fabX, 0, { type:"spring", stiffness:400, damping:28 });
-    setEdged(false);
-  };
+  /* When docked, the shared DockEdgeTab in Layout renders the glass strip */
+  if (edged) return (
+    <AnimatePresence>
+      {modal==="upload"    && <UploadModal     onClose={()=>setModal(null)}/>}
+      {modal==="live"      && <LiveSetupModal  onClose={()=>setModal(null)}/>}
+      {modal==="short"     && <ShortModal      onClose={()=>setModal(null)}/>}
+      {modal==="challenge" && <ChallengeModal  onClose={()=>setModal(null)}/>}
+      {modal==="cipcat"    && <CipCatModal     onClose={()=>setModal(null)}/>}
+    </AnimatePresence>
+  );
 
   return (
     <>
-      {/* ── EDGE TAB — visible only when docked ── */}
-      <AnimatePresence>
-        {edged && (
-          <motion.div
-            key="fab-tab"
-            className="fixed z-50 cursor-pointer"
-            style={{ right: 0, bottom: FAB_BOTTOM }}
-            initial={{ x: 50 }} animate={{ x: 0 }} exit={{ x: 50 }}
-            transition={{ type:"spring", stiffness:360, damping:28 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.35}
-            onDragEnd={(_: unknown, info: { offset: { x: number } }) => {
-              if (info.offset.x < -22) restoreFAB();
-            }}
-            onClick={restoreFAB}
-          >
-            <div style={{
-              width: 10, height: FAB_SIZE,
-              borderRadius: "8px 0 0 8px",
-              background: "rgba(0,229,255,0.18)",
-              border: "1.5px solid rgba(0,229,255,0.38)",
-              borderRight: "none",
-              backdropFilter: "blur(12px)",
-              boxShadow: "-3px 0 16px rgba(0,229,255,0.18)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {/* chevron indicator */}
-              <div style={{
-                width: 3, height: 20, borderRadius: 99,
-                background: "rgba(0,229,255,0.6)",
-              }}/>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        style={{ right: 16, bottom: FAB_BOT, position:"fixed", zIndex:50 }}
+        onDragEnd={onFabDragEnd as never}
+        className="flex flex-col items-end gap-3 pointer-events-none"
+      >
+        {/* Expanded pill items */}
+        <AnimatePresence>
+          {open && items.map((item, i) => (
+            <motion.button key={i}
+              initial={{opacity:0,x:20,scale:0.8}} animate={{opacity:1,x:0,scale:1}}
+              exit={{opacity:0,x:20,scale:0.8}}
+              transition={{delay:i*0.04,type:"spring",damping:22,stiffness:300}}
+              onClick={()=>openModal(item.id)}
+              className="flex items-center gap-2 pointer-events-auto"
+              style={{padding:"7px 14px 7px 10px",borderRadius:99,
+                background:"rgba(4,1,16,0.9)",backdropFilter:"blur(24px)",
+                boxShadow:`0 0 0 1px ${item.col}44, 0 6px 20px rgba(0,0,0,0.55)`}}>
+              <div style={{width:26,height:26,borderRadius:"50%",
+                background:`${item.col}22`,display:"flex",alignItems:"center",
+                justifyContent:"center",boxShadow:`0 0 0 1px ${item.col}55`}}>
+                <item.Icon style={{width:11,height:11,color:item.col}}/>
+              </div>
+              <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.88)"}}>
+                {item.label}
+              </span>
+            </motion.button>
+          ))}
+        </AnimatePresence>
 
-      {/* ── MAIN FAB DOCK ── */}
-      {!edged && (
-        <motion.div
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.18}
-          style={{ x: fabX, right: 16, bottom: FAB_BOTTOM, position:"fixed", zIndex:50 }}
-          onDragEnd={onFabDragEnd as never}
-          className="flex flex-col items-end gap-3 pointer-events-none"
+        {/* ── Main orb trigger (same size & glow as FloatingAvatar) ── */}
+        <motion.button
+          className="pointer-events-auto"
+          whileTap={{scale:0.88}}
+          onClick={()=>setOpen(o=>!o)}
+          style={{
+            position:"relative", width:ORB, height:ORB, borderRadius:"50%",
+            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+          }}
         >
-          {/* Expanded items — pill labels */}
-          <AnimatePresence>
-            {open && items.map((item, i) => (
-              <motion.button key={i}
-                initial={{opacity:0,x:20,scale:0.8}} animate={{opacity:1,x:0,scale:1}}
-                exit={{opacity:0,x:20,scale:0.8}}
-                transition={{delay:i*0.04,type:"spring",damping:22,stiffness:300}}
-                onClick={()=>openModal(item.id)}
-                className="flex items-center gap-2 pointer-events-auto"
-                style={{padding:"7px 14px 7px 10px",borderRadius:99,
-                  background:"rgba(4,1,16,0.9)",backdropFilter:"blur(24px)",
-                  boxShadow:`0 0 0 1px ${item.col}44, 0 6px 20px rgba(0,0,0,0.55)`}}>
-                <div style={{width:26,height:26,borderRadius:"50%",
-                  background:`${item.col}22`,display:"flex",alignItems:"center",
-                  justifyContent:"center",boxShadow:`0 0 0 1px ${item.col}55`}}>
-                  <item.Icon style={{width:11,height:11,color:item.col}}/>
-                </div>
-                <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.88)"}}>
-                  {item.label}
-                </span>
-              </motion.button>
-            ))}
-          </AnimatePresence>
-
-          {/* Main circular trigger — same size as FloatingAvatar orb */}
-          <motion.button
-            className="pointer-events-auto"
-            whileTap={{scale:0.88}}
-            onClick={()=>setOpen(o=>!o)}
-            style={{
-              width: FAB_SIZE, height: FAB_SIZE, borderRadius: "50%",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              background: open
-                ? "rgba(255,255,255,0.07)"
-                : `radial-gradient(circle at 38% 32%, rgba(0,229,255,0.22) 0%, rgba(0,100,180,0.12) 100%)`,
-              border: `1.5px solid ${open ? "rgba(255,255,255,0.15)" : T.cyan + "55"}`,
-              boxShadow: open ? "none" : `0 0 20px ${T.cyan}33, 0 0 0 0.5px ${T.cyan}44`,
-              backdropFilter: "blur(18px)",
-              flexShrink: 0,
-            }}>
-            <span style={{fontSize:20,fontWeight:900,letterSpacing:"0.08em",
-              color:open?"rgba(255,255,255,0.4)":T.cyan,lineHeight:1}}>
-              {open ? "×" : "···"}
-            </span>
-          </motion.button>
-        </motion.div>
-      )}
+          {/* Pulsing glow rings */}
+          {[0,1,2].map(i=>(
+            <motion.div key={i}
+              style={{
+                position:"absolute", inset:-(i*8+5), borderRadius:"50%", pointerEvents:"none",
+                border:`${1.5-i*0.3}px solid rgba(180,50,245,${0.42-i*0.1})`,
+                boxShadow:`0 0 ${12+i*10}px rgba(155,30,220,${0.32-i*0.08})`,
+              }}
+              animate={{scale:[1,1.05+i*0.025,1],opacity:[0.5-i*0.1,0.88-i*0.16,0.5-i*0.1]}}
+              transition={{duration:2.3+i*0.6,repeat:Infinity,ease:"easeInOut",delay:i*0.45+0.5}}
+            />
+          ))}
+          {/* Glass body */}
+          <div style={{
+            position:"absolute", inset:0, borderRadius:"50%",
+            background:open
+              ?"rgba(255,255,255,0.07)"
+              :"radial-gradient(circle at 38% 32%, rgba(180,50,245,0.22) 0%, rgba(80,20,160,0.12) 100%)",
+            border:`1.5px solid ${open?"rgba(255,255,255,0.15)":"rgba(180,50,245,0.55)"}`,
+            boxShadow:open?"none":"inset 0 2px 12px rgba(0,0,0,0.5), 0 0 20px rgba(155,30,220,0.4)",
+            backdropFilter:"blur(18px)",
+          }}/>
+          {/* Glass shine */}
+          <div style={{
+            position:"absolute", top:8, left:9,
+            width:"38%", height:"34%",
+            borderRadius:"50% 50% 50% 50% / 60% 60% 40% 40%",
+            background:"radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.5) 0%, transparent 70%)",
+            pointerEvents:"none", zIndex:10,
+          }}/>
+          {/* Icon */}
+          <span style={{
+            fontSize:open?26:20, fontWeight:900, letterSpacing:"0.08em",
+            color:open?"rgba(255,255,255,0.45)":"rgba(220,120,255,0.92)",
+            lineHeight:1, position:"relative", zIndex:5,
+          }}>
+            {open?"×":"···"}
+          </span>
+        </motion.button>
+      </motion.div>
 
       {/* Modals */}
       <AnimatePresence>

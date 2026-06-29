@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import FloatingAvatar from "@/components/FloatingAvatar";
+import { useDockedState } from "@/hooks/useDockedState";
 import { useAuth } from "@/context/AuthContext";
 import { countryFlag, getCountryByCode, getCountryByTimezone } from "@/lib/countries";
 
@@ -326,6 +327,10 @@ function MuniPanel() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const { edged, dock } = useDockedState();
+
+  /* Auto-close panel when dock hides all orbs */
+  useEffect(() => { if (edged) setOpen(false); }, [edged]);
 
   const SUGGESTS = ["suggest_1", "suggest_2", "suggest_3", "suggest_4"];
 
@@ -381,32 +386,73 @@ function MuniPanel() {
 
   return (
     <>
-      {/* Toggle button */}
-      <motion.button
-        onClick={() => setOpen(v => !v)}
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.9 }}
-        className="fixed bottom-28 right-4 z-[80] md:bottom-6 w-10 h-10 rounded-full flex items-center justify-center"
-        style={{
-          background: "rgba(255,255,255,0.10)",
-          backdropFilter: "blur(24px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.8)",
-          border: "1px solid rgba(255,255,255,0.22)",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18)",
-        }}
-      >
-        <AnimatePresence mode="wait">
-          {open ? (
-            <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-              <X className="w-4 h-4 text-white/80" />
-            </motion.div>
-          ) : (
-            <motion.div key="bot" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-              <Zap className="w-4 h-4 text-white/80" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
+      {/* ── Jarvis orb toggle — same size & glow as FloatingAvatar ── */}
+      {!edged && (
+        <motion.button
+          onClick={() => setOpen(v => !v)}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={(_: unknown, info: { offset: { x: number } }) => {
+            if (info.offset.x > 36) dock();
+          }}
+          whileTap={{ scale: 0.88 }}
+          className="fixed z-[80] md:hidden"
+          style={{
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 130px)",
+            right: 16,
+            width: 62, height: 62, borderRadius: "50%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          {/* Pulsing glow rings */}
+          {[0,1,2].map(i=>(
+            <motion.div key={i}
+              style={{
+                position:"absolute", inset:-(i*8+5), borderRadius:"50%", pointerEvents:"none",
+                border:`${1.5-i*0.3}px solid rgba(180,50,245,${0.42-i*0.1})`,
+                boxShadow:`0 0 ${12+i*10}px rgba(155,30,220,${0.32-i*0.08})`,
+              }}
+              animate={{scale:[1,1.05+i*0.025,1],opacity:[0.5-i*0.1,0.88-i*0.16,0.5-i*0.1]}}
+              transition={{duration:2.3+i*0.6,repeat:Infinity,ease:"easeInOut",delay:i*0.45+1.0}}
+            />
+          ))}
+          {/* Glass body */}
+          <div style={{
+            position:"absolute", inset:0, borderRadius:"50%",
+            background:open
+              ?"rgba(255,255,255,0.07)"
+              :"radial-gradient(circle at 38% 32%, rgba(180,50,245,0.22) 0%, rgba(80,20,160,0.12) 100%)",
+            border:`1.5px solid ${open?"rgba(255,255,255,0.15)":"rgba(180,50,245,0.55)"}`,
+            boxShadow:open?"none":"inset 0 2px 12px rgba(0,0,0,0.5), 0 0 20px rgba(155,30,220,0.4)",
+            backdropFilter:"blur(18px)",
+          }}/>
+          {/* Glass shine */}
+          <div style={{
+            position:"absolute", top:8, left:9,
+            width:"38%", height:"34%",
+            borderRadius:"50% 50% 50% 50% / 60% 60% 40% 40%",
+            background:"radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.5) 0%, transparent 70%)",
+            pointerEvents:"none", zIndex:10,
+          }}/>
+          {/* Icon */}
+          <AnimatePresence mode="wait">
+            {open ? (
+              <motion.div key="x"
+                initial={{rotate:-90,opacity:0}} animate={{rotate:0,opacity:1}} exit={{rotate:90,opacity:0}}
+                style={{position:"relative",zIndex:5}}>
+                <X style={{width:22,height:22,color:"rgba(220,120,255,0.9)"}}/>
+              </motion.div>
+            ) : (
+              <motion.div key="zap"
+                initial={{rotate:90,opacity:0}} animate={{rotate:0,opacity:1}} exit={{rotate:-90,opacity:0}}
+                style={{position:"relative",zIndex:5}}>
+                <Zap style={{width:22,height:22,color:"rgba(220,120,255,0.9)"}}/>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.button>
+      )}
 
       {/* Chat panel */}
       <AnimatePresence>
@@ -416,7 +462,7 @@ function MuniPanel() {
             animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: 32, scale: 0.88, rotateX: 10, filter: "blur(6px)" }}
             transition={{ type: "spring", stiffness: 420, damping: 32 }}
-            className="fixed bottom-[160px] right-4 z-[79] md:bottom-20 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            className="fixed bottom-[200px] right-4 z-[79] md:bottom-20 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col"
             style={{ perspective: 800, background: "hsl(var(--card))", border: "1px solid rgba(124,58,237,0.25)", boxShadow: "0 0 60px rgba(124,58,237,0.2), 0 24px 48px rgba(0,0,0,0.4)", maxHeight: "60vh" }}
           >
             {/* Header */}
@@ -1135,6 +1181,52 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ── MUNI FLOATING AI ── */}
       <MuniPanel />
+
+      {/* ── SHARED DOCK EDGE TAB — restores all three orbs at once ── */}
+      <DockEdgeTab />
     </div>
+  );
+}
+
+/* ─── Shared transparent glass tab — shown when all orbs are docked ── */
+function DockEdgeTab() {
+  const { edged, undock } = useDockedState();
+  return (
+    <AnimatePresence>
+      {edged && (
+        <motion.div
+          key="dock-edge-tab"
+          className="fixed cursor-pointer"
+          style={{ right: 0, bottom: "calc(env(safe-area-inset-bottom, 0px) + 56px)", zIndex: 9993 }}
+          initial={{ x: 60 }} animate={{ x: 0 }} exit={{ x: 60 }}
+          transition={{ type:"spring", stiffness:360, damping:28 }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.35}
+          onDragEnd={(_: unknown, info: { offset: { x: number } }) => {
+            if (info.offset.x < -22) undock();
+          }}
+          onClick={undock}
+        >
+          <div style={{
+            width: 10,
+            height: 222,
+            borderRadius: "8px 0 0 8px",
+            background: "rgba(140,40,220,0.10)",
+            border: "1.5px solid rgba(180,50,245,0.32)",
+            borderRight: "none",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            boxShadow: "-3px 0 24px rgba(140,30,220,0.18)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <div style={{
+              width: 3, height: 52, borderRadius: 99,
+              background: "linear-gradient(to bottom, transparent 0%, rgba(200,80,255,0.65) 30%, rgba(200,80,255,0.65) 70%, transparent 100%)",
+            }}/>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

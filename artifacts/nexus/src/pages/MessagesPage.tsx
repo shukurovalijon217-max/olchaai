@@ -9,7 +9,8 @@ import {
   CheckCheck, ChevronDown, Image as ImageIcon, File, Sticker,
   MapPin, BarChart3, AtSign, Hash, Bold, Italic,
   StopCircle, Volume2, Play, Pause, Radio, Users, Lock,
-  MicOff, CameraOff, RotateCcw, Bell,
+  MicOff, CameraOff, RotateCcw, Bell, Palette, Download,
+  Laugh, Clock3, AlignLeft, Zap, Heart, ThumbsUp,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -589,6 +590,11 @@ export default function MessagesPage() {
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [showPinnedPanel, setShowPinnedPanel] = useState(false);
   const [showStarredPanel, setShowStarredPanel] = useState(false);
+  const [showBgPicker, setShowBgPicker] = useState(false);
+  const [chatBgId, setChatBgId] = useState(() => localStorage.getItem("olcha_chat_bg") || "glass");
+  const [showFmtBar, setShowFmtBar] = useState(false);
+  const [scheduleMode, setScheduleMode] = useState(false);
+  const [scheduleTime, setScheduleTime] = useState("");
 
   // Chat state
   const [text, setText] = useState("");
@@ -916,6 +922,7 @@ export default function MessagesPage() {
                       {[
                         { icon: Users,    label: "Profilni ko'rish",      action: () => { setShowProfilePanel(true); setShowChatMenu(false); } },
                         { icon: Search,   label: "Xabarda qidirish",       action: () => { setShowMsgSearch(true); setShowChatMenu(false); } },
+                        { icon: Palette,  label: "Fon tanlash",             action: () => { setShowBgPicker(true); setShowChatMenu(false); } },
                         { icon: Pin,      label: "Mahkamlangan xabarlar",  action: () => { setShowPinnedPanel(true); setShowChatMenu(false); } },
                         { icon: Star,     label: "Yulduzli xabarlar",      action: () => { setShowStarredPanel(true); setShowChatMenu(false); } },
                         { icon: Bell,     label: convId && mutedConvs.has(convId) ? "Ovozni yoqish" : "Ovozni o'chirish",
@@ -1016,6 +1023,55 @@ export default function MessagesPage() {
                     </button>
                   </div>
                 </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Background picker panel ─────────────── */}
+          <AnimatePresence>
+            {showBgPicker && (
+              <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                className="absolute inset-0 z-40 bg-background flex flex-col">
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
+                  <button onClick={() => setShowBgPicker(false)} className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center">
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="font-semibold text-foreground">Fon tanlash</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                  <p className="text-xs text-muted-foreground mb-3 px-1">Suhbat foni</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: "glass",   label: "🪟 Shisha",     style: { background: "rgba(255,255,255,0.05)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)" } },
+                      { id: "dark",    label: "⚫ Qora",        style: { background: "linear-gradient(135deg,#0d0d0d,#1a1a2e)" } },
+                      { id: "purple",  label: "💜 Binafsha",   style: { background: "linear-gradient(135deg,#1e0533,#0d1b4b)" } },
+                      { id: "blue",    label: "🔵 Ko'k",        style: { background: "linear-gradient(135deg,#020818,#0c2340)" } },
+                      { id: "sunset",  label: "🌅 Quyosh",     style: { background: "linear-gradient(135deg,#1a0a00,#2d0b2e)" } },
+                      { id: "emerald", label: "💚 Yashil",      style: { background: "linear-gradient(135deg,#001a12,#002a1a)" } },
+                      { id: "rose",    label: "🌸 Atirgul",    style: { background: "linear-gradient(135deg,#1a001a,#2a0010)" } },
+                      { id: "aurora",  label: "🌌 Aurora",     style: { background: "linear-gradient(135deg,#0d1117,#1a0533,#0d2b4b,#001a12)" } },
+                      { id: "dots",    label: "⚬ Nuqtalar",   style: { background: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)", backgroundSize: "20px 20px", backgroundColor: "#0f0c1c" } },
+                      { id: "grid",    label: "▦ To'r",         style: { backgroundImage: "linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize: "28px 28px", backgroundColor: "#0a0a1a" } },
+                      { id: "carbon",  label: "🔳 Carbon",     style: { backgroundImage: "repeating-linear-gradient(45deg,#1a1a1a 0,#1a1a1a 1px,#0d0d0d 0,#0d0d0d 50%)", backgroundSize: "6px 6px" } },
+                    ].map(th => (
+                      <button key={th.id} onClick={() => { setChatBgId(th.id); localStorage.setItem("olcha_chat_bg", th.id); }}
+                        className={`relative h-24 rounded-2xl overflow-hidden transition-all ${chatBgId === th.id ? "ring-2 ring-primary scale-[1.02]" : "hover:scale-[1.01] opacity-80 hover:opacity-100"}`}
+                        style={th.style}>
+                        <div className="absolute inset-0 flex items-end p-2">
+                          <span className="text-xs text-white/80 font-medium bg-black/40 rounded-lg px-2 py-0.5">{th.label}</span>
+                        </div>
+                        {chatBgId === th.id && (
+                          <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="w-3 h-3 text-primary-foreground" />
+                          </div>
+                        )}
+                        {/* Sample bubbles preview */}
+                        <div className="absolute top-2 left-2 px-2 py-1 rounded-xl rounded-bl-sm bg-card/60 text-[8px] text-white/70">Salom!</div>
+                        <div className="absolute top-2 right-8 px-2 py-1 rounded-xl rounded-br-sm bg-primary/60 text-[8px] text-white/70">Yaxshi!</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -1176,9 +1232,25 @@ export default function MessagesPage() {
             )}
           </AnimatePresence>
 
-          {/* Messages */}
+          {/* Messages area with glass/bg effect */}
           <div ref={listRef} onScroll={handleScroll}
-            className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            className="flex-1 overflow-y-auto px-4 py-4 space-y-3 relative"
+            style={(() => {
+              const themes: Record<string, React.CSSProperties> = {
+                glass:    { background: "rgba(var(--background-rgb,15,12,28),0.45)", backdropFilter: "blur(20px)" },
+                dark:     { background: "linear-gradient(135deg,#0d0d0d 0%,#1a1a2e 100%)" },
+                purple:   { background: "linear-gradient(135deg,#1e0533 0%,#0d1b4b 100%)" },
+                blue:     { background: "linear-gradient(135deg,#020818 0%,#0c2340 100%)" },
+                sunset:   { background: "linear-gradient(135deg,#1a0a00 0%,#2d0b2e 100%)" },
+                emerald:  { background: "linear-gradient(135deg,#001a12 0%,#002a1a 100%)" },
+                rose:     { background: "linear-gradient(135deg,#1a001a 0%,#2a0010 100%)" },
+                dots:     { background: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "24px 24px", backgroundColor: "#0f0c1c" },
+                grid:     { backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "32px 32px", backgroundColor: "#0a0a1a" },
+                aurora:   { background: "linear-gradient(135deg,#0d1117 0%,#1a0533 30%,#0d2b4b 60%,#001a12 100%)" },
+                carbon:   { backgroundImage: "repeating-linear-gradient(45deg,#1a1a1a 0,#1a1a1a 1px,#0d0d0d 0,#0d0d0d 50%)", backgroundSize: "6px 6px" },
+              };
+              return themes[chatBgId] ?? themes.glass;
+            })()}>
             {displayMsgs.map((msg, i) => {
               const isMe = msg.senderId === ME_ID;
               const prevMsg = displayMsgs[i - 1];
@@ -1296,6 +1368,52 @@ export default function MessagesPage() {
               )}
             </AnimatePresence>
 
+            {/* Formatting toolbar */}
+            <AnimatePresence>
+              {showFmtBar && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                  className="flex items-center gap-1 px-1 pb-1 overflow-x-auto">
+                  {[
+                    { icon: Bold,      label: "Qalin",    wrap: ["**","**"] },
+                    { icon: Italic,    label: "Kursiv",   wrap: ["_","_"] },
+                    { icon: AlignLeft, label: "Blok",     wrap: ["> ",""] },
+                    { icon: Hash,      label: "Kod",      wrap: ["`","`"] },
+                    { icon: AtSign,    label: "Mention",  wrap: ["@",""] },
+                  ].map(fmt => (
+                    <button key={fmt.label}
+                      onClick={() => setText(prev => `${prev}${fmt.wrap[0]}${fmt.wrap[1]}`)}
+                      className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      title={fmt.label}>
+                      <fmt.icon className="w-3.5 h-3.5" />
+                    </button>
+                  ))}
+                  <div className="w-px h-5 bg-border mx-1 flex-shrink-0" />
+                  {["❤️","😂","🔥","👍","🎉","💯"].map(e => (
+                    <button key={e} onClick={() => setText(prev => prev + e)}
+                      className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center text-base transition-colors">
+                      {e}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Schedule mode bar */}
+            <AnimatePresence>
+              {scheduleMode && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                  className="flex items-center gap-2 px-1 pb-1">
+                  <Clock3 className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                  <span className="text-xs text-muted-foreground">Yuborish vaqti:</span>
+                  <input type="datetime-local" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)}
+                    className="flex-1 text-xs bg-muted rounded-lg px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                  <button onClick={() => setScheduleMode(false)} className="text-muted-foreground hover:text-foreground">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="flex items-end gap-2">
               {/* Attach button */}
               <button onClick={() => { setShowAttach(v => !v); setShowEmoji(false); }}
@@ -1304,33 +1422,43 @@ export default function MessagesPage() {
               </button>
 
               {/* Text input */}
-              <div className={`flex-1 flex items-end rounded-2xl border overflow-hidden transition-colors ${ephemeral ? "border-violet-500/40 bg-violet-500/5" : "border-border bg-card"}`}>
+              <div className={`flex-1 flex flex-col rounded-2xl border overflow-hidden transition-colors ${ephemeral ? "border-violet-500/40 bg-violet-500/5" : "border-border bg-card"}`}>
                 <textarea value={text} onChange={e => setText(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder={ephemeral ? t("msg.ghost_ph") : t("msg.msg_ph")}
+                  placeholder={ephemeral ? t("msg.ghost_ph") : scheduleMode ? "Rejalashtirilgan xabar..." : t("msg.msg_ph")}
                   rows={1}
-                  className="flex-1 px-4 py-2.5 bg-transparent text-foreground text-sm placeholder:text-muted-foreground focus:outline-none resize-none max-h-28"
+                  className="flex-1 px-4 pt-2.5 pb-1 bg-transparent text-foreground text-sm placeholder:text-muted-foreground focus:outline-none resize-none max-h-28"
                   style={{ fieldSizing: "content" } as React.CSSProperties} />
-                <button onClick={() => { setShowEmoji(v => !v); setShowAttach(false); }}
-                  className={`px-2 mb-1 self-end flex items-center justify-center transition-colors ${showEmoji ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                  <Smile className="w-5 h-5" />
-                </button>
+                <div className="flex items-center px-2 pb-1.5 gap-1">
+                  <button onClick={() => { setShowEmoji(v => !v); setShowAttach(false); }}
+                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${showEmoji ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                    <Smile className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setShowFmtBar(v => !v)}
+                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${showFmtBar ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                    title="Formatlash">
+                    <Bold className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => setScheduleMode(v => !v)}
+                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${scheduleMode ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                    title="Rejalash">
+                    <Clock3 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               {/* Right button: Send | Mic | Camera */}
               {text.trim() ? (
                 <motion.button whileTap={{ scale: 0.9 }} onClick={handleSend}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mb-0.5 ${ephemeral ? "bg-violet-600 text-white" : "bg-primary text-primary-foreground"}`}>
-                  {ephemeral ? <Ghost className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mb-0.5 ${scheduleMode ? "bg-amber-600 text-white" : ephemeral ? "bg-violet-600 text-white" : "bg-primary text-primary-foreground"}`}>
+                  {scheduleMode ? <Clock3 className="w-4 h-4" /> : ephemeral ? <Ghost className="w-4 h-4" /> : <Send className="w-4 h-4" />}
                 </motion.button>
               ) : (
                 <div className="flex items-center gap-1 flex-shrink-0 mb-0.5">
-                  {/* Round video camera */}
                   <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowRoundVid(true)}
                     className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors">
                     <Camera className="w-4 h-4" />
                   </motion.button>
-                  {/* Voice */}
                   <motion.button
                     onPointerDown={startVoice}
                     onPointerUp={stopVoice}

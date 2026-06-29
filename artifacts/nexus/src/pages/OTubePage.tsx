@@ -5640,8 +5640,8 @@ export default function OTubePage() {
         settings={settings} onSettings={setSettings}
         monetize={monetize} onMonetize={setMonetize}/>
 
-      {/* Floating action button — only when player closed */}
-      {!selected && <FloatingFAB/>}
+      {/* Floating action button — only when player closed and NOT in full-screen shorts view */}
+      {!selected && tab !== "shorts" && <FloatingFAB/>}
     </>
   );
 }

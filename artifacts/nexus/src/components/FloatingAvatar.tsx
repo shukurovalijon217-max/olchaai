@@ -53,6 +53,12 @@ export default function FloatingAvatar() {
   const dragX = useMotionValue(initXY.x);
   const dragY = useMotionValue(initXY.y);
 
+  /* Mount-time guard — clear any downward drift stored before the clamp fix */
+  useEffect(() => {
+    if (dragY.get() > 0) dragY.set(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /* Reset position when restored from edge */
   useEffect(() => {
     if (!edged) {

@@ -1,15 +1,15 @@
 import {
   motion, AnimatePresence,
-  useMotionValue, useSpring, useTransform, useAnimation, animate,
+  useMotionValue, useSpring, useTransform, useAnimation,
 } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
+import { useDockedState } from "@/hooks/useDockedState";
 
 /* ── Storage ──────────────────────────────────────────────────── */
-const POS_KEY  = "olcha_fab_xy";
-const DOT_KEY  = "olcha_fab_dot";
-const EDGE_KEY = "olcha_fab_edged";
+const POS_KEY = "olcha_fab_xy";
+const DOT_KEY = "olcha_fab_dot";
 
 function loadXY() {
   try {
@@ -37,27 +37,30 @@ const SPARKS = Array.from({ length: 6 }, (_, i) => ({
 const SIZE     = 62;
 const DOT_SIZE = 20;
 const RING_R   = SIZE * 0.60;
-/* How far right (px from default position) triggers "edged" snap */
-const EDGE_SNAP = 48;
 
 /* ── Component ────────────────────────────────────────────────── */
 export default function FloatingAvatar() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const { edged, dock } = useDockedState();
 
   const [isDot, setIsDot] = useState(() => {
     try { return localStorage.getItem(DOT_KEY) !== "0"; } catch { return true; }
-  });
-
-  /* Edge-dock state — persisted so refresh keeps position */
-  const [edged, setEdged] = useState(() => {
-    try { return localStorage.getItem(EDGE_KEY) === "1"; } catch { return false; }
   });
 
   /* Drag position */
   const initXY = loadXY();
   const dragX = useMotionValue(initXY.x);
   const dragY = useMotionValue(initXY.y);
+
+  /* Reset position when restored from edge */
+  useEffect(() => {
+    if (!edged) {
+      const { x, y } = loadXY();
+      dragX.set(x);
+      dragY.set(y);
+    }
+  }, [edged, dragX, dragY]);
 
   /* 3-D tilt */
   const tiltRef = useRef<HTMLDivElement>(null);
@@ -85,7 +88,7 @@ export default function FloatingAvatar() {
   }, [isDot, controls]);
 
   /* Drag click detection */
-  const didDrag  = useRef(false);
+  const didDrag    = useRef(false);
   const clickCount = useRef(0);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -102,23 +105,15 @@ export default function FloatingAvatar() {
   };
 
   const onDragEnd = (_: unknown, info: { offset: { x: number; y: number } }) => {
-    /* If dragged right past threshold → snap to edge */
-    if (info.offset.x > EDGE_SNAP) {
-      void animate(dragX, SIZE + 28, { type: "spring", stiffness: 360, damping: 28 });
-      setEdged(true);
-      try { localStorage.setItem(EDGE_KEY, "1"); } catch {}
-    } else {
-      /* Snap back to saved position (clamp x ≤ 0) */
-      if (dragX.get() > 0) void animate(dragX, 0, { type: "spring", stiffness: 400, damping: 30 });
-      try { localStorage.setItem(POS_KEY, JSON.stringify({ x: dragX.get(), y: dragY.get() })); } catch {}
+    /* Swipe right → dock all floating elements */
+    if (info.offset.x > 36) {
+      dock();
+      return;
     }
+    /* Clamp x ≤ 0 on snap-back */
+    if (dragX.get() > 0) dragX.set(0);
+    try { localStorage.setItem(POS_KEY, JSON.stringify({ x: dragX.get(), y: dragY.get() })); } catch {}
   };
-
-  const restoreFromEdge = useCallback(() => {
-    void animate(dragX, 0, { type: "spring", stiffness: 400, damping: 28 });
-    setEdged(false);
-    try { localStorage.setItem(EDGE_KEY, "0"); } catch {}
-  }, [dragX]);
 
   /* Close: eye-close squish → dot */
   const closeBubble = useCallback(async () => {
@@ -159,61 +154,23 @@ export default function FloatingAvatar() {
   }, [isDot, openBubble, closeBubble, setLocation]);
 
   if (!user) return null;
+  /* When docked, the shared DockEdgeTab in Layout renders the glass tab */
+  if (edged) return null;
 
   const initials = user.displayName
     .split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
-  /* ── Edge-docked: show small vertical tab ── */
-  if (edged) {
-    return (
-      <AnimatePresence>
-        <motion.div
-          key="avatar-edge-tab"
-          className="fixed cursor-pointer"
-          style={{ right: 0, bottom: 270, zIndex: 9992 }}
-          initial={{ x: SIZE + 28 }} animate={{ x: 0 }} exit={{ x: SIZE + 28 }}
-          transition={{ type: "spring", stiffness: 360, damping: 28 }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.35}
-          onDragEnd={(_: unknown, info: { offset: { x: number } }) => {
-            if (info.offset.x < -22) restoreFromEdge();
-          }}
-          onClick={restoreFromEdge}
-        >
-          <div style={{
-            width: 10,
-            height: SIZE,
-            borderRadius: "8px 0 0 8px",
-            background: "rgba(180,50,245,0.18)",
-            border: "1.5px solid rgba(180,50,245,0.38)",
-            borderRight: "none",
-            backdropFilter: "blur(12px)",
-            boxShadow: "-3px 0 16px rgba(155,30,220,0.2)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <div style={{
-              width: 3, height: 22, borderRadius: 99,
-              background: "rgba(200,80,255,0.7)",
-            }}/>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-    );
-  }
-
-  /* ── Normal orb ── */
   return (
     <motion.div
       drag
       dragMomentum={false}
       dragElastic={0}
-      dragConstraints={{ left: -120, right: SIZE + 28, top: -350, bottom: 80 }}
+      dragConstraints={{ left: -120, right: 0, top: -350, bottom: 80 }}
       style={{
         x: dragX,
         y: dragY,
         position: "fixed",
-        right: 40,
+        right: 16,
         bottom: 204,
         zIndex: 9992,
         touchAction: "none",
@@ -417,7 +374,6 @@ export default function FloatingAvatar() {
                 pointerEvents: "none", zIndex: -1,
               }}
             />
-
           </motion.div>
         )}
       </AnimatePresence>

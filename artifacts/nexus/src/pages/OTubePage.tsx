@@ -789,6 +789,15 @@ function NexusPlayer({ video, onClose, settings }:
                 <IBtn onClick={()=>setAiDub(d=>!d)} active={aiDub} activeColor="#00ff88" label="AI Dub">
                   <Gauge style={{width:15,height:15,color:aiDub?"#00ff88":"rgba(255,255,255,0.55)"}}/>
                 </IBtn>
+                <IBtn onClick={()=>{
+                  if (!video.videoUrl) return;
+                  const a = document.createElement("a");
+                  a.href = video.videoUrl;
+                  a.download = `${video.caption||"otube-video"}.mp4`;
+                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                }} active={false} label="Yuklab">
+                  <Upload style={{width:15,height:15,color:"rgba(255,255,255,0.65)",transform:"rotate(180deg)"}}/>
+                </IBtn>
               </div>
 
               {/* BOTTOM controls */}
@@ -1364,6 +1373,9 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
       <div style={{aspectRatio:expanded?"4/3":"16/9",position:"relative",transition:"all 0.4s cubic-bezier(.4,0,.2,1)",overflow:"hidden"}}>
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt={video.caption} className="w-full h-full object-cover"/>
+          : video.videoUrl
+          ? <video src={video.videoUrl} autoPlay muted playsInline loop
+              className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
           : <div className="w-full h-full flex items-center justify-center"
               style={{background:"linear-gradient(135deg,#0d0028,#000510)"}}>
               <Film className="w-14 h-14 text-white/8"/>
@@ -1614,6 +1626,9 @@ function TrendRow({ video, onPlay, idx }:
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
               style={{transform:"scale(1.04)"}}/>
+          : video.videoUrl
+          ? <video src={video.videoUrl} autoPlay muted playsInline loop
+              className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
           : <div className="w-full h-full"
               style={{background:`linear-gradient(175deg,${col}28,#000010)`}}/>}
 
@@ -1758,6 +1773,10 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
               style={{transition:"transform 0.4s"}}/>
+          : video.videoUrl
+          ? <video src={video.videoUrl} autoPlay muted playsInline loop
+              className="w-full h-full object-cover"
+              style={{pointerEvents:"none"}}/>
           : <div className="w-full h-full flex items-center justify-center"
               style={{background:`linear-gradient(135deg,${accent}18,#000)`}}>
               <Film style={{width:wide?32:20,height:wide?32:20,color:"rgba(255,255,255,0.08)"}}/>
@@ -1988,6 +2007,8 @@ function ContinueRow({ videos, onPlay }: { videos:Reel[]; onPlay:(v:Reel)=>void 
               <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
                 {v.thumbnailUrl
                   ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                  : v.videoUrl
+                  ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                   : <div className="w-full h-full"
                       style={{background:`linear-gradient(135deg,${T.cyan}14,#000)`}}/>}
                 <div className="absolute inset-0 pointer-events-none"
@@ -2140,7 +2161,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
       });
       setProgress(95); setPhase("creating");
       createMut.mutate({data:{
-        authorId:user.id, videoUrl:`/api/storage/objects/${objectPath}`,
+        authorId:user.id, videoUrl:`/api/storage${objectPath}`,
         caption:caption||title, tags:tagList, duration:0,
         thumbnailUrl: thumbSrc||undefined,
       }});
@@ -3470,7 +3491,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       if (!res.ok) throw new Error("Upload failed");
       createMut.mutate({data:{
         authorId:user.id,
-        videoUrl:`/api/storage/objects/${objectPath}`,
+        videoUrl:`/api/storage${objectPath}`,
         caption:caption||"OTube Studio · OlCha",
         audioTrack:music&&music!=="none"?music:undefined,
         tags:["otube-studio","olcha","studio"],
@@ -5005,6 +5026,8 @@ function MoodRow({ title, emoji, col, videos, onPlay }:
             <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
               {v.thumbnailUrl
                 ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                : v.videoUrl
+                ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                 : <div className="w-full h-full"
                     style={{background:`linear-gradient(135deg,${col}22,#000)`}}/>}
               <div className="absolute inset-0 pointer-events-none"
@@ -5034,6 +5057,8 @@ function ShortsCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
         boxShadow:`0 4px 20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)`}}>
       {video.thumbnailUrl
         ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+        : video.videoUrl
+        ? <video src={video.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
         : <div className="w-full h-full" style={{background:"linear-gradient(180deg,#1a0028,#000510)"}}/>}
       <div className="absolute inset-0 pointer-events-none"
         style={{background:"linear-gradient(to top,rgba(0,0,0,0.88) 0%,transparent 55%)"}}/>
@@ -5493,6 +5518,8 @@ export default function OTubePage() {
                     position:"relative",overflow:"hidden"}}>
                     {v.thumbnailUrl
                       ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                      : v.videoUrl
+                      ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                       : <div className="w-full h-full" style={{background:"#0a0218"}}/>}
                   </div>
                   <div className="flex-1 min-w-0">

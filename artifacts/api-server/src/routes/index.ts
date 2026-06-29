@@ -39,6 +39,7 @@ import nexusCoreRouter from "./nexusCore";
 import platformCostsRouter from "./platformCosts";
 import aiAutopilotRouter from "./aiAutopilot";
 import monetizationRouter from "./monetization";
+import gifsRouter from "./gifs";
 
 const router: IRouter = Router();
 
@@ -82,5 +83,6 @@ router.use(nexusCoreRouter);
 router.use(platformCostsRouter);
 router.use(aiAutopilotRouter);
 router.use(monetizationRouter);
+router.use(gifsRouter);
 
 export default router;

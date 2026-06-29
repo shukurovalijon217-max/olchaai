@@ -520,6 +520,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   /* ══ OTUBE STATE (50+) ══ */
   const [otubeFile,           setOtubeFile]           = useState<File|null>(null);
   const [otubePreview,        setOtubePreview]        = useState("");
+  const [otubeOrientation,    setOtubeOrientation]    = useState<"9:16"|"16:9"|"1:1">("9:16");
   const [otubeTitle,          setOtubeTitle]          = useState("");
   const [otubeDesc,           setOtubeDesc]           = useState("");
   const [otubeTags,           setOtubeTags]           = useState<string[]>([]);
@@ -3591,28 +3592,47 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       {/* BASIC SECTION */}
                       {otubeSection === "basic" && (<div className="space-y-4">
 
-                        {/* Video Upload — TikTok-style vertical player */}
+                        {/* Video Upload */}
                         {otubePreview ? (
                           <div className="space-y-2">
-                            {/* Portrait video preview */}
-                            <div className="relative rounded-2xl overflow-hidden mx-auto"
-                              style={{aspectRatio:"9/16",maxHeight:340,maxWidth:192,background:"#000",
-                                boxShadow:"0 0 0 1.5px rgba(52,211,153,0.3), 0 8px 32px rgba(0,0,0,0.6)"}}>
+                            {/* Orientation toggle row — ABOVE video, no overlap */}
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-white/40 mr-1">Ko'rinish:</span>
+                              {([
+                                {id:"9:16" as const, icon:"📱", label:"Vertikal"},
+                                {id:"16:9" as const, icon:"📺", label:"Gorizontal"},
+                                {id:"1:1"  as const, icon:"⬜", label:"Kvadrat"},
+                              ]).map(o=>(
+                                <button key={o.id} onClick={()=>setOtubeOrientation(o.id)}
+                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all"
+                                  style={otubeOrientation===o.id
+                                    ?{background:"rgba(52,211,153,0.18)",border:"1px solid rgba(52,211,153,0.5)",color:"#34d399"}
+                                    :{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.4)"}}>
+                                  <span>{o.icon}</span><span>{o.label}</span>
+                                </button>
+                              ))}
+                            </div>
+
+                            {/* Video player — no overlaid badges */}
+                            <div className="rounded-2xl overflow-hidden mx-auto"
+                              style={{
+                                aspectRatio: otubeOrientation==="9:16"?"9/16":otubeOrientation==="16:9"?"16/9":"1/1",
+                                maxHeight: otubeOrientation==="9:16"?320:otubeOrientation==="16:9"?220:220,
+                                maxWidth: otubeOrientation==="9:16"?180:otubeOrientation==="16:9"?"100%":220,
+                                background:"#000",
+                                boxShadow:"0 0 0 1.5px rgba(52,211,153,0.25), 0 8px 28px rgba(0,0,0,0.55)"
+                              }}>
                               <video src={otubePreview}
                                 className="w-full h-full"
-                                style={{objectFit:"contain"}}
+                                style={{objectFit:"contain",display:"block"}}
                                 controls
                                 playsInline/>
-                              {/* Format badge */}
-                              <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold"
-                                style={{background:"rgba(5,150,105,0.85)",color:"white",backdropFilter:"blur(6px)"}}>
-                                OTube
-                              </div>
                             </div>
-                            {/* File info + remove — separate row, no overlap */}
-                            <div className="flex items-center gap-2 px-1">
+
+                            {/* File info + remove — below video, clean row */}
+                            <div className="flex items-center gap-2 px-0.5 pt-0.5">
                               <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-bold text-white/70 truncate">{otubeFile?.name}</p>
+                                <p className="text-[11px] font-semibold text-white/60 truncate">{otubeFile?.name}</p>
                                 <p className="text-[9px] text-white/30">
                                   {otubeFile ? `${(otubeFile.size/1024/1024).toFixed(1)} MB` : ""}
                                   {otubeUploadResult ? " · ✓ Yuklandi" : otubeUploadProg>0 ? ` · ${otubeUploadProg}%` : ""}
@@ -3620,7 +3640,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               </div>
                               <button onClick={()=>{setOtubeFile(null);setOtubePreview("");setOtubeUploadResult(null);setOtubeUploadProg(0);}}
                                 className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold"
-                                style={{background:"rgba(255,59,48,0.12)",border:"1px solid rgba(255,59,48,0.3)",color:"#ff3b30"}}>
+                                style={{background:"rgba(255,59,48,0.1)",border:"1px solid rgba(255,59,48,0.3)",color:"#ff3b30"}}>
                                 <X className="w-3 h-3"/>Olib tashlash
                               </button>
                             </div>

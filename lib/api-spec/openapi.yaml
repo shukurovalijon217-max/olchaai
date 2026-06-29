@@ -1749,6 +1749,7 @@ components:
         themeColor: { type: string }
         maxMembers: { type: integer }
         settings: { type: object }
+        creatorId: { type: ["integer", "null"] }
 
     GroupInput:
       type: object

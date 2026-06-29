@@ -624,7 +624,8 @@ export const ListGroupsResponseItem = zod.object({
   "maxMembers": zod.number().optional(),
   "settings": zod.object({
 
-}).passthrough().optional()
+}).passthrough().optional(),
+  "creatorId": zod.number().nullish()
 })
 export const ListGroupsResponse = zod.array(ListGroupsResponseItem)
 
@@ -876,7 +877,8 @@ export const GetAiSuggestionsResponse = zod.object({
   "maxMembers": zod.number().optional(),
   "settings": zod.object({
 
-}).passthrough().optional()
+}).passthrough().optional(),
+  "creatorId": zod.number().nullish()
 })),
   "topics": zod.array(zod.string())
 })

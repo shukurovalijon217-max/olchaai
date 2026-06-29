@@ -28,4 +28,6 @@ export interface Group {
   themeColor?: string;
   maxMembers?: number;
   settings?: GroupSettings;
+  /** @nullable */
+  creatorId?: number | null;
 }

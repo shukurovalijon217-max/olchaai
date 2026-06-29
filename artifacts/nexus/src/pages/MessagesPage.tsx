@@ -164,19 +164,19 @@ function AttachMenu({
 }
 
 /* ── GIF Picker ─────────────────────────────────────────────── */
-interface GiphyGif { id: string; title: string; images: { fixed_height_small: { url: string }; original: { url: string } } }
+interface TenorGif { id: string; title: string; preview: string; original: string }
 const GIF_CATS = ["funny","cute","wow","sad","love","dance","win","cat","dog","anime"];
 
 function GifPickerModal({ onPick, onClose }: { onPick:(url:string)=>void; onClose:()=>void }) {
   const [q, setQ] = useState("funny");
-  const [gifs, setGifs] = useState<GiphyGif[]>([]);
+  const [gifs, setGifs] = useState<TenorGif[]>([]);
   const [loading, setLoading] = useState(false);
   const search = async (query: string) => {
     setLoading(true);
     try {
-      const r = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(query)}&limit=21&rating=g`);
+      const r = await fetch(`${API}/api/gifs/search?q=${encodeURIComponent(query)}&limit=21`);
       const d = await r.json();
-      setGifs(d.data || []);
+      setGifs(d.results || []);
     } catch { setGifs([]); }
     setLoading(false);
   };
@@ -219,16 +219,16 @@ function GifPickerModal({ onPick, onClose }: { onPick:(url:string)=>void; onClos
           ) : (
             <div className="grid grid-cols-3 gap-1.5">
               {gifs.map(gif=>(
-                <button key={gif.id} onClick={()=>onPick(gif.images.original.url)}
+                <button key={gif.id} onClick={()=>onPick(gif.original)}
                   className="overflow-hidden rounded-xl hover:scale-[1.04] transition-transform active:scale-95">
-                  <img src={gif.images.fixed_height_small.url} alt={gif.title}
+                  <img src={gif.preview} alt={gif.title}
                     className="w-full object-cover" style={{aspectRatio:"1.4"}} loading="lazy"/>
                 </button>
               ))}
             </div>
           )}
         </div>
-        <p className="text-center text-[9px] text-muted-foreground py-1 flex-shrink-0">Powered by GIPHY</p>
+        <p className="text-center text-[9px] text-muted-foreground py-1 flex-shrink-0">Powered by Tenor</p>
       </motion.div>
     </motion.div>
   );

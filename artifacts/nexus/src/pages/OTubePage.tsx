@@ -4943,7 +4943,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 /* ─────────────────────────────────────────────────────── */
 /* Floating FAB — circular, swipe-to-edge collapsible     */
 /* ─────────────────────────────────────────────────────── */
-const ORB     = 62;  /* Unified orb size — matches FloatingAvatar */
+const ORB     = 44;  /* Unified orb size — matches FloatingAvatar */
 const FAB_BOT = "calc(env(safe-area-inset-bottom, 0px) + 56px)";
 
 function FloatingFAB() {
@@ -5028,9 +5028,9 @@ function FloatingFAB() {
           {[0,1,2].map(i=>(
             <motion.div key={i}
               style={{
-                position:"absolute", inset:-(i*8+5), borderRadius:"50%", pointerEvents:"none",
-                border:`${1.5-i*0.3}px solid rgba(180,50,245,${0.42-i*0.1})`,
-                boxShadow:`0 0 ${12+i*10}px rgba(155,30,220,${0.32-i*0.08})`,
+                position:"absolute", inset:-(i*6+4), borderRadius:"50%", pointerEvents:"none",
+                border:`${1.2-i*0.25}px solid rgba(180,50,245,${0.42-i*0.1})`,
+                boxShadow:`0 0 ${8+i*8}px rgba(155,30,220,${0.28-i*0.07})`,
               }}
               animate={{scale:[1,1.05+i*0.025,1],opacity:[0.5-i*0.1,0.88-i*0.16,0.5-i*0.1]}}
               transition={{duration:2.3+i*0.6,repeat:Infinity,ease:"easeInOut",delay:i*0.45+0.5}}
@@ -5048,15 +5048,15 @@ function FloatingFAB() {
           }}/>
           {/* Glass shine */}
           <div style={{
-            position:"absolute", top:8, left:9,
-            width:"38%", height:"34%",
+            position:"absolute", top:6, left:7,
+            width:"36%", height:"32%",
             borderRadius:"50% 50% 50% 50% / 60% 60% 40% 40%",
             background:"radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.5) 0%, transparent 70%)",
             pointerEvents:"none", zIndex:10,
           }}/>
           {/* Icon */}
           <span style={{
-            fontSize:open?26:20, fontWeight:900, letterSpacing:"0.08em",
+            fontSize:open?18:14, fontWeight:900, letterSpacing:"0.08em",
             color:open?"rgba(255,255,255,0.45)":"rgba(220,120,255,0.92)",
             lineHeight:1, position:"relative", zIndex:5,
           }}>

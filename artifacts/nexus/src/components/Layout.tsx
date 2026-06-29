@@ -390,18 +390,12 @@ function MuniPanel() {
       {!edged && (
         <motion.button
           onClick={() => setOpen(v => !v)}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
-          onDragEnd={(_: unknown, info: { offset: { x: number } }) => {
-            if (info.offset.x > 36) dock();
-          }}
           whileTap={{ scale: 0.88 }}
           className="fixed z-[80] md:hidden"
           style={{
-            bottom: "calc(env(safe-area-inset-bottom, 0px) + 130px)",
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 108px)",
             right: 16,
-            width: 62, height: 62, borderRadius: "50%",
+            width: 44, height: 44, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >
@@ -409,9 +403,9 @@ function MuniPanel() {
           {[0,1,2].map(i=>(
             <motion.div key={i}
               style={{
-                position:"absolute", inset:-(i*8+5), borderRadius:"50%", pointerEvents:"none",
-                border:`${1.5-i*0.3}px solid rgba(180,50,245,${0.42-i*0.1})`,
-                boxShadow:`0 0 ${12+i*10}px rgba(155,30,220,${0.32-i*0.08})`,
+                position:"absolute", inset:-(i*6+4), borderRadius:"50%", pointerEvents:"none",
+                border:`${1.2-i*0.25}px solid rgba(180,50,245,${0.42-i*0.1})`,
+                boxShadow:`0 0 ${8+i*8}px rgba(155,30,220,${0.28-i*0.07})`,
               }}
               animate={{scale:[1,1.05+i*0.025,1],opacity:[0.5-i*0.1,0.88-i*0.16,0.5-i*0.1]}}
               transition={{duration:2.3+i*0.6,repeat:Infinity,ease:"easeInOut",delay:i*0.45+1.0}}
@@ -424,13 +418,13 @@ function MuniPanel() {
               ?"rgba(255,255,255,0.07)"
               :"radial-gradient(circle at 38% 32%, rgba(180,50,245,0.22) 0%, rgba(80,20,160,0.12) 100%)",
             border:`1.5px solid ${open?"rgba(255,255,255,0.15)":"rgba(180,50,245,0.55)"}`,
-            boxShadow:open?"none":"inset 0 2px 12px rgba(0,0,0,0.5), 0 0 20px rgba(155,30,220,0.4)",
+            boxShadow:open?"none":"inset 0 2px 8px rgba(0,0,0,0.5), 0 0 14px rgba(155,30,220,0.4)",
             backdropFilter:"blur(18px)",
           }}/>
           {/* Glass shine */}
           <div style={{
-            position:"absolute", top:8, left:9,
-            width:"38%", height:"34%",
+            position:"absolute", top:6, left:7,
+            width:"36%", height:"32%",
             borderRadius:"50% 50% 50% 50% / 60% 60% 40% 40%",
             background:"radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.5) 0%, transparent 70%)",
             pointerEvents:"none", zIndex:10,
@@ -441,13 +435,13 @@ function MuniPanel() {
               <motion.div key="x"
                 initial={{rotate:-90,opacity:0}} animate={{rotate:0,opacity:1}} exit={{rotate:90,opacity:0}}
                 style={{position:"relative",zIndex:5}}>
-                <X style={{width:22,height:22,color:"rgba(220,120,255,0.9)"}}/>
+                <X style={{width:16,height:16,color:"rgba(220,120,255,0.9)"}}/>
               </motion.div>
             ) : (
               <motion.div key="zap"
                 initial={{rotate:90,opacity:0}} animate={{rotate:0,opacity:1}} exit={{rotate:-90,opacity:0}}
                 style={{position:"relative",zIndex:5}}>
-                <Zap style={{width:22,height:22,color:"rgba(220,120,255,0.9)"}}/>
+                <Zap style={{width:16,height:16,color:"rgba(220,120,255,0.9)"}}/>
               </motion.div>
             )}
           </AnimatePresence>
@@ -462,7 +456,7 @@ function MuniPanel() {
             animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: 32, scale: 0.88, rotateX: 10, filter: "blur(6px)" }}
             transition={{ type: "spring", stiffness: 420, damping: 32 }}
-            className="fixed bottom-[200px] right-4 z-[79] md:bottom-20 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            className="fixed bottom-[160px] right-4 z-[79] md:bottom-20 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col"
             style={{ perspective: 800, background: "hsl(var(--card))", border: "1px solid rgba(124,58,237,0.25)", boxShadow: "0 0 60px rgba(124,58,237,0.2), 0 24px 48px rgba(0,0,0,0.4)", maxHeight: "60vh" }}
           >
             {/* Header */}
@@ -1210,7 +1204,7 @@ function DockEdgeTab() {
         >
           <div style={{
             width: 10,
-            height: 222,
+            height: 148,
             borderRadius: "8px 0 0 8px",
             background: "rgba(140,40,220,0.10)",
             border: "1.5px solid rgba(180,50,245,0.32)",

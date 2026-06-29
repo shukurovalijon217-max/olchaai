@@ -34,7 +34,7 @@ const SPARKS = Array.from({ length: 6 }, (_, i) => ({
   warm: i % 2 === 0,
 }));
 
-const SIZE     = 62;
+const SIZE     = 44;
 const DOT_SIZE = 20;
 const RING_R   = SIZE * 0.60;
 
@@ -171,7 +171,7 @@ export default function FloatingAvatar() {
         y: dragY,
         position: "fixed",
         right: 16,
-        bottom: 204,
+        bottom: 160,
         zIndex: 9992,
         touchAction: "none",
         userSelect: "none",

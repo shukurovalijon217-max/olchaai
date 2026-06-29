@@ -612,6 +612,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const y = useMotionValue(loadY());
   const dragControls = useDragControls();
 
+  /* ── Floating back button — tap-to-show ──────────────────── */
+  const [showBack, setShowBack] = useState(false);
+  const backTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    setShowBack(false);
+    if (backTimer.current) clearTimeout(backTimer.current);
+  }, [location]);
+
+  useEffect(() => {
+    if (isMd || location === "/") return;
+    const show = () => {
+      setShowBack(true);
+      if (backTimer.current) clearTimeout(backTimer.current);
+      backTimer.current = setTimeout(() => setShowBack(false), 2200);
+    };
+    document.addEventListener("pointerdown", show, { passive: true });
+    return () => {
+      document.removeEventListener("pointerdown", show);
+      if (backTimer.current) clearTimeout(backTimer.current);
+    };
+  }, [location, isMd]);
+
   useEffect(() => {
     const update = () => setMaxY(Math.max(100, window.innerHeight - 360));
     update();
@@ -1178,63 +1201,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
-      {/* ══ MOBILE TOP HEADER ════════════════════════════════════ */}
-      <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center gap-2 px-3 h-14"
-        style={{
-          background: "rgba(6, 6, 18, 0.88)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-        }}
-      >
-        {/* Back button or logo */}
-        {location !== "/" ? (
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            onClick={() => window.history.back()}
-            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)" }}
-          >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </motion.button>
-        ) : (
-          <Link href="/">
-            <div className="flex-shrink-0">
-              <NexusLogo ringSize={28} showText={false} />
-            </div>
-          </Link>
-        )}
-
-        {/* Page title */}
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-foreground text-sm truncate leading-tight">
-            {getPageTitle(location, t)}
-          </p>
-        </div>
-
-        {/* Right actions */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <Link href="/search">
-            <motion.div whileTap={{ scale: 0.85 }}
-              className="w-9 h-9 flex items-center justify-center rounded-xl"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)" }}>
-              <Search className="w-4 h-4 text-muted-foreground" />
-            </motion.div>
-          </Link>
-          <Link href="/notifications">
-            <motion.div whileTap={{ scale: 0.85 }}
-              className="w-9 h-9 flex items-center justify-center rounded-xl"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)" }}>
-              <Bell className="w-4 h-4 text-muted-foreground" />
-            </motion.div>
-          </Link>
-        </div>
-      </div>
-
       {/* ── MAIN CONTENT ── */}
       <main
-        className="min-h-screen pb-28 md:pb-0 pt-14 md:pt-0 transition-[padding] duration-300"
+        className="min-h-screen pb-28 md:pb-0 transition-[padding] duration-300"
         style={{ paddingLeft: isMd ? (isOpen ? "220px" : "40px") : "8px" }}
       >
         <motion.div
@@ -1257,6 +1226,48 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── DOCK EDGE TABS ── */}
       <DockEdgeTab side="right" />
       <DockEdgeTab side="left" />
+
+      {/* ══ FLOATING BACK BUTTON — tap to show, mobile only ════ */}
+      <AnimatePresence>
+        {showBack && location !== "/" && (
+          <motion.button
+            key="float-back"
+            className="md:hidden fixed z-[9990]"
+            style={{
+              left: 10,
+              top: "calc(env(safe-area-inset-top, 20px) + 100px)",
+              pointerEvents: "auto",
+            }}
+            initial={{ opacity: 0, x: -28, scale: 0.7 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: -24, scale: 0.75 }}
+            transition={{ type: "spring", stiffness: 500, damping: 32 }}
+            whileTap={{ scale: 0.78 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              window.history.back();
+            }}
+          >
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                background: "rgba(8, 6, 22, 0.75)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.13)",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.07)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <ChevronLeft style={{ width: 17, height: 17, color: "rgba(255,255,255,0.9)" }} />
+            </div>
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

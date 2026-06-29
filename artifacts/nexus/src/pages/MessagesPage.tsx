@@ -412,9 +412,9 @@ function MsgBubble({
   };
 
   const isNoBubble = msg.type==="video_note"||msg.type==="sticker";
-  const bubbleCls = `max-w-xs relative ${isNoBubble?"bg-transparent":isMe
-    ?"bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
-    :"bg-card border border-border text-foreground rounded-2xl rounded-bl-sm"}`;
+  const bubbleCls = `max-w-xs relative ${isNoBubble?"":isMe
+    ?"text-white rounded-2xl rounded-br-sm shadow-lg"
+    :"bg-card/90 border border-white/8 text-foreground rounded-2xl rounded-bl-sm shadow-sm"}`;
 
   return (
     <motion.div
@@ -454,7 +454,7 @@ function MsgBubble({
           drag={!isMe?"x":false}
           dragConstraints={{left:0,right:60}}
           dragElastic={{left:0,right:0.5}}
-          style={!isMe?{x}:undefined}
+          style={!isMe?{x}:(!isNoBubble?{background:"linear-gradient(135deg,#7c3aed 0%,#6d28d9 40%,#5b21b6 100%)"}:undefined)}
           onDragEnd={(_, info) => {
             if (!isMe && info.offset.x > 35) onReply(msg);
             x.set(0);
@@ -854,14 +854,26 @@ export default function MessagesPage() {
   });
   const sendApi = useSendMessage();
 
+  const lastApiTs = apiMsgs[apiMsgs.length-1]?.createdAt
+    ? new Date(apiMsgs[apiMsgs.length-1].createdAt as string) : new Date(0);
   const allMsgs: LocalMsg[] = [
     ...apiMsgs.map(m=>({
       id:String(m.id), senderId:m.senderId, type:"text" as MsgType, content:m.content,
       reactions:[], starred:false, pinned:false, deleted:false, edited:false, forwarded:false,
       status:"read" as const, ts:new Date(m.createdAt||Date.now()),
     })),
-    ...localMsgs.filter(lm=>lm.ts>(apiMsgs[apiMsgs.length-1]?.createdAt
-      ?new Date(apiMsgs[apiMsgs.length-1].createdAt as string):new Date(0))),
+    ...localMsgs.filter(lm=>{
+      // Non-text messages (video_note, voice, sticker, image, file, poll) ALWAYS kept
+      if(lm.type!=="text") return true;
+      // Text messages: keep if newer than last API message (avoids showing sent before confirm)
+      // OR if no matching API message exists (simple dedup by content+sender within 30s)
+      const hasMatch = apiMsgs.some(am=>
+        am.senderId===lm.senderId &&
+        am.content===lm.content &&
+        Math.abs(new Date(am.createdAt as string).getTime()-lm.ts.getTime())<30000
+      );
+      return !hasMatch && lm.ts>lastApiTs;
+    }),
   ].sort((a,b)=>a.ts.getTime()-b.ts.getTime());
 
   const displayMsgs = allMsgs
@@ -949,9 +961,12 @@ export default function MessagesPage() {
     uploadBlob(file,file.name,file.type).then(url=>updateMsg("last",{mediaUrl:url})).catch(()=>{});
   };
   const handleVideoNote = (blob:Blob,dur:number) => {
-    const url = URL.createObjectURL(blob);
-    addMsg({type:"video_note",mediaUrl:url,duration:dur});
+    const tempUrl = URL.createObjectURL(blob);
+    const msg = addMsg({type:"video_note",mediaUrl:tempUrl,duration:dur});
     setShowRoundVid(false);
+    uploadBlob(blob,`video_${Date.now()}.webm`,"video/webm")
+      .then(serverUrl=>{ updateMsg(msg.id,{mediaUrl:serverUrl}); URL.revokeObjectURL(tempUrl); })
+      .catch(()=>{});
   };
   const startVoice = async () => {
     try {
@@ -971,8 +986,12 @@ export default function MessagesPage() {
     voiceRecRef.current.stop();
     voiceRecRef.current.onstop=()=>{
       const blob = new Blob(voiceChunks.current,{type:"audio/webm"});
-      const url = URL.createObjectURL(blob);
-      addMsg({type:"voice",mediaUrl:url,duration:voiceElapsed});
+      const tempUrl = URL.createObjectURL(blob);
+      const dur = voiceElapsed;
+      const m = addMsg({type:"voice",mediaUrl:tempUrl,duration:dur});
+      uploadBlob(blob,`voice_${Date.now()}.webm`,"audio/webm")
+        .then(serverUrl=>{ updateMsg(m.id,{mediaUrl:serverUrl}); URL.revokeObjectURL(tempUrl); })
+        .catch(()=>{});
     };
     if(voiceTimer.current) clearInterval(voiceTimer.current);
     setVoiceRec(false);

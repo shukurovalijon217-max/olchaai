@@ -1,23 +1,21 @@
 import {
   motion, AnimatePresence,
-  useMotionValue, useSpring, useTransform, useAnimation,
+  useMotionValue, useSpring, useTransform, useAnimation, animate,
 } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 
 /* ── Storage ──────────────────────────────────────────────────── */
-const POS_KEY = "olcha_fab_xy";
-const DOT_KEY = "olcha_fab_dot";
+const POS_KEY  = "olcha_fab_xy";
+const DOT_KEY  = "olcha_fab_dot";
+const EDGE_KEY = "olcha_fab_edged";
 
 function loadXY() {
   try {
     const s = localStorage.getItem(POS_KEY);
     if (s) {
       const p = JSON.parse(s) as { x: number; y: number };
-      /* Strict clamp: keep avatar on the right edge only.
-         x must be in [-120, 0] — max 120px to the left of default right:40 position.
-         y must be in [-350, 80]  — vertical range within viewport. */
       if (
         typeof p.x === "number" && typeof p.y === "number" &&
         p.x >= -120 && p.x <= 0 &&
@@ -36,9 +34,11 @@ const SPARKS = Array.from({ length: 6 }, (_, i) => ({
   warm: i % 2 === 0,
 }));
 
-const SIZE = 62;
+const SIZE     = 62;
 const DOT_SIZE = 20;
-const RING_R = SIZE * 0.60;
+const RING_R   = SIZE * 0.60;
+/* How far right (px from default position) triggers "edged" snap */
+const EDGE_SNAP = 48;
 
 /* ── Component ────────────────────────────────────────────────── */
 export default function FloatingAvatar() {
@@ -47,6 +47,11 @@ export default function FloatingAvatar() {
 
   const [isDot, setIsDot] = useState(() => {
     try { return localStorage.getItem(DOT_KEY) !== "0"; } catch { return true; }
+  });
+
+  /* Edge-dock state — persisted so refresh keeps position */
+  const [edged, setEdged] = useState(() => {
+    try { return localStorage.getItem(EDGE_KEY) === "1"; } catch { return false; }
   });
 
   /* Drag position */
@@ -64,10 +69,8 @@ export default function FloatingAvatar() {
   /* Bubble animation controls */
   const controls = useAnimation();
 
-  /* ── KEY FIX: animate bubble to visible whenever it becomes visible ── */
   useEffect(() => {
     if (!isDot) {
-      /* Eye-open sequence: scaleY grows from 0, like an eye opening */
       controls.start({
         scaleY: [0, 0.1, 0.4, 0.82, 1],
         scaleX: [0.25, 0.9, 1.15, 1.05, 1],
@@ -82,7 +85,7 @@ export default function FloatingAvatar() {
   }, [isDot, controls]);
 
   /* Drag click detection */
-  const didDrag = useRef(false);
+  const didDrag  = useRef(false);
   const clickCount = useRef(0);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -97,9 +100,25 @@ export default function FloatingAvatar() {
   const onDrag = (_: unknown, info: { offset: { x: number; y: number } }) => {
     if (Math.abs(info.offset.x) > 7 || Math.abs(info.offset.y) > 7) didDrag.current = true;
   };
-  const onDragEnd = () => {
-    try { localStorage.setItem(POS_KEY, JSON.stringify({ x: dragX.get(), y: dragY.get() })); } catch {}
+
+  const onDragEnd = (_: unknown, info: { offset: { x: number; y: number } }) => {
+    /* If dragged right past threshold → snap to edge */
+    if (info.offset.x > EDGE_SNAP) {
+      void animate(dragX, SIZE + 28, { type: "spring", stiffness: 360, damping: 28 });
+      setEdged(true);
+      try { localStorage.setItem(EDGE_KEY, "1"); } catch {}
+    } else {
+      /* Snap back to saved position (clamp x ≤ 0) */
+      if (dragX.get() > 0) void animate(dragX, 0, { type: "spring", stiffness: 400, damping: 30 });
+      try { localStorage.setItem(POS_KEY, JSON.stringify({ x: dragX.get(), y: dragY.get() })); } catch {}
+    }
   };
+
+  const restoreFromEdge = useCallback(() => {
+    void animate(dragX, 0, { type: "spring", stiffness: 400, damping: 28 });
+    setEdged(false);
+    try { localStorage.setItem(EDGE_KEY, "0"); } catch {}
+  }, [dragX]);
 
   /* Close: eye-close squish → dot */
   const closeBubble = useCallback(async () => {
@@ -109,13 +128,11 @@ export default function FloatingAvatar() {
       opacity: [1, 1, 0.92, 0.65, 0],
       transition: { duration: 0.6, times: [0, 0.25, 0.55, 0.8, 1], ease: "easeIn" },
     });
-    /* Reset scale for next open */
     controls.set({ scaleY: 0, scaleX: 0.25, opacity: 0 });
     setIsDot(true);
     try { localStorage.setItem(DOT_KEY, "1"); } catch {}
   }, [controls]);
 
-  /* Open: just show bubble, useEffect handles animation */
   const openBubble = useCallback(() => {
     setIsDot(false);
     try { localStorage.setItem(DOT_KEY, "0"); } catch {}
@@ -141,18 +158,57 @@ export default function FloatingAvatar() {
     }, 270);
   }, [isDot, openBubble, closeBubble, setLocation]);
 
-  /* Don't render if not logged in */
   if (!user) return null;
 
   const initials = user.displayName
     .split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
+  /* ── Edge-docked: show small vertical tab ── */
+  if (edged) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          key="avatar-edge-tab"
+          className="fixed cursor-pointer"
+          style={{ right: 0, bottom: 270, zIndex: 9992 }}
+          initial={{ x: SIZE + 28 }} animate={{ x: 0 }} exit={{ x: SIZE + 28 }}
+          transition={{ type: "spring", stiffness: 360, damping: 28 }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.35}
+          onDragEnd={(_: unknown, info: { offset: { x: number } }) => {
+            if (info.offset.x < -22) restoreFromEdge();
+          }}
+          onClick={restoreFromEdge}
+        >
+          <div style={{
+            width: 10,
+            height: SIZE,
+            borderRadius: "8px 0 0 8px",
+            background: "rgba(180,50,245,0.18)",
+            border: "1.5px solid rgba(180,50,245,0.38)",
+            borderRight: "none",
+            backdropFilter: "blur(12px)",
+            boxShadow: "-3px 0 16px rgba(155,30,220,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <div style={{
+              width: 3, height: 22, borderRadius: 99,
+              background: "rgba(200,80,255,0.7)",
+            }}/>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  /* ── Normal orb ── */
   return (
     <motion.div
       drag
       dragMomentum={false}
       dragElastic={0}
-      dragConstraints={{ left: -120, right: 0, top: -350, bottom: 80 }}
+      dragConstraints={{ left: -120, right: SIZE + 28, top: -350, bottom: 80 }}
       style={{
         x: dragX,
         y: dragY,
@@ -165,7 +221,7 @@ export default function FloatingAvatar() {
         cursor: "grab",
       }}
       onDrag={onDrag as never}
-      onDragEnd={onDragEnd}
+      onDragEnd={onDragEnd as never}
       onClick={handleClick}
       whileTap={{ cursor: "grabbing" } as never}
     >
@@ -187,7 +243,6 @@ export default function FloatingAvatar() {
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
-            {/* Pulse ring — single subtle ring */}
             <motion.div
               style={{
                 position: "absolute", inset: -3, borderRadius: "50%",
@@ -196,13 +251,11 @@ export default function FloatingAvatar() {
               animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
               transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
             />
-            {/* Red sphere */}
             <div style={{
               position: "absolute", inset: 0, borderRadius: "50%",
               background: "radial-gradient(circle at 35% 28%, #ff6b6b 0%, #e53e3e 35%, #c53030 65%, #742a2a 100%)",
               boxShadow: "inset -2px 2px 5px rgba(0,0,0,0.4), inset 1px -1px 3px rgba(255,255,255,0.15)",
             }} />
-            {/* Sphere highlight */}
             <div style={{
               position: "absolute", top: "14%", left: "18%",
               width: "38%", height: "32%",
@@ -210,7 +263,6 @@ export default function FloatingAvatar() {
               background: "radial-gradient(ellipse, rgba(255,255,255,0.65) 0%, transparent 70%)",
               pointerEvents: "none",
             }} />
-            {/* Glow */}
             <motion.div
               style={{
                 position: "absolute", inset: 0, borderRadius: "50%",
@@ -226,7 +278,6 @@ export default function FloatingAvatar() {
           <motion.div
             key="bubble"
             ref={tiltRef}
-            /* initial is scaleY:0 — useEffect animates it in */
             initial={{ scaleY: 0, scaleX: 0.25, opacity: 0 }}
             exit={{ scale: 0, opacity: 0, transition: { duration: 0.15 } }}
             animate={controls}
@@ -366,6 +417,22 @@ export default function FloatingAvatar() {
                 pointerEvents: "none", zIndex: -1,
               }}
             />
+
+            {/* Swipe-right hint label — shows briefly on first render */}
+            <motion.div
+              initial={{ opacity: 0.7, x: 0 }}
+              animate={{ opacity: 0, x: -8 }}
+              transition={{ delay: 2.5, duration: 1.2, ease: "easeOut" }}
+              style={{
+                position: "absolute", right: SIZE + 6, top: "50%", transform: "translateY(-50%)",
+                whiteSpace: "nowrap", fontSize: 9, fontWeight: 700,
+                color: "rgba(200,80,255,0.8)", pointerEvents: "none",
+                background: "rgba(0,0,0,0.5)", borderRadius: 6,
+                padding: "2px 6px", backdropFilter: "blur(6px)",
+              }}
+            >
+              ← yashirish
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

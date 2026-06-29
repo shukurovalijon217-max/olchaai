@@ -6,7 +6,7 @@
 import React, {
   useState, useRef, useEffect, useCallback, useMemo,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl } from "@workspace/api-client-react";
@@ -4940,12 +4940,17 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* Floating FAB — speed dial with working modals          */
+/* Floating FAB — circular, swipe-to-edge collapsible     */
 /* ─────────────────────────────────────────────────────── */
+const FAB_SIZE = 54; /* Same visual weight as FloatingAvatar orb (62px) */
+const FAB_BOTTOM = "calc(env(safe-area-inset-bottom, 0px) + 120px)";
+
 function FloatingFAB() {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const [open,  setOpen]  = useState(false);
+  const [edged, setEdged] = useState(false); /* docked to right edge */
   const [modal, setModal] = useState<"upload"|"live"|"short"|"challenge"|"cipcat"|null>(null);
+  const fabX = useMotionValue(0);
 
   const openModal = (id: "upload"|"live"|"short"|"challenge"|"cipcat") => {
     setOpen(false);
@@ -4960,45 +4965,118 @@ function FloatingFAB() {
     { Icon: Film,      label: t("otube.fab_studio"),    col: T.gold,    id: "cipcat"    as const },
   ];
 
+  /* Drag-end: if moved right >36px → dock to edge */
+  const onFabDragEnd = (_: unknown, info: { offset: { x: number; y: number } }) => {
+    if (info.offset.x > 36) {
+      void animate(fabX, FAB_SIZE + 24, { type:"spring", stiffness:320, damping:28 });
+      setEdged(true);
+      setOpen(false);
+    } else {
+      void animate(fabX, 0, { type:"spring", stiffness:400, damping:30 });
+    }
+  };
+
+  const restoreFAB = () => {
+    void animate(fabX, 0, { type:"spring", stiffness:400, damping:28 });
+    setEdged(false);
+  };
+
   return (
     <>
-      <div className="fixed right-4 z-50 flex flex-col items-end gap-2.5 pointer-events-none" style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 168px)" }}>
-        <AnimatePresence>
-          {open && items.map((item, i) => (
-            <motion.button key={i}
-              initial={{opacity:0,x:24,scale:0.75}} animate={{opacity:1,x:0,scale:1}}
-              exit={{opacity:0,x:24,scale:0.75}}
-              transition={{delay:i*0.05,type:"spring",damping:22,stiffness:280}}
-              onClick={()=>openModal(item.id)}
-              className="flex items-center gap-2 pointer-events-auto"
-              style={{padding:"8px 14px 8px 10px",borderRadius:99,
-                background:"rgba(4,1,16,0.88)",backdropFilter:"blur(24px)",
-                boxShadow:`0 0 0 1px ${item.col}33, 0 6px 24px rgba(0,0,0,0.55)`}}>
-              <div style={{width:28,height:28,borderRadius:"50%",background:`${item.col}22`,
-                display:"flex",alignItems:"center",justifyContent:"center",
-                boxShadow:`0 0 0 1px ${item.col}55`}}>
-                <item.Icon style={{width:12,height:12,color:item.col}}/>
-              </div>
-              <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.88)"}}>
-                {item.label}
-              </span>
-            </motion.button>
-          ))}
-        </AnimatePresence>
-        <motion.button className="pointer-events-auto" whileTap={{scale:0.88}}
-          onClick={()=>setOpen(o=>!o)}
-          style={{padding:"8px 18px",borderRadius:12,
-            background:open?"rgba(255,255,255,0.06)":"rgba(0,229,255,0.10)",
-            border:`1px solid ${open?"rgba(255,255,255,0.18)":T.cyan+"55"}`,
-            boxShadow:open?"none":`0 0 14px ${T.cyan}33`,
-            backdropFilter:"blur(16px)",
-            transition:"background 0.2s, box-shadow 0.2s"}}>
-          <span style={{fontSize:18,fontWeight:900,letterSpacing:"0.12em",
-            color:open?"rgba(255,255,255,0.45)":T.cyan,lineHeight:1}}>
-            ···
-          </span>
-        </motion.button>
-      </div>
+      {/* ── EDGE TAB — visible only when docked ── */}
+      <AnimatePresence>
+        {edged && (
+          <motion.div
+            key="fab-tab"
+            className="fixed z-50 cursor-pointer"
+            style={{ right: 0, bottom: FAB_BOTTOM }}
+            initial={{ x: 50 }} animate={{ x: 0 }} exit={{ x: 50 }}
+            transition={{ type:"spring", stiffness:360, damping:28 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.35}
+            onDragEnd={(_: unknown, info: { offset: { x: number } }) => {
+              if (info.offset.x < -22) restoreFAB();
+            }}
+            onClick={restoreFAB}
+          >
+            <div style={{
+              width: 10, height: FAB_SIZE,
+              borderRadius: "8px 0 0 8px",
+              background: "rgba(0,229,255,0.18)",
+              border: "1.5px solid rgba(0,229,255,0.38)",
+              borderRight: "none",
+              backdropFilter: "blur(12px)",
+              boxShadow: "-3px 0 16px rgba(0,229,255,0.18)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {/* chevron indicator */}
+              <div style={{
+                width: 3, height: 20, borderRadius: 99,
+                background: "rgba(0,229,255,0.6)",
+              }}/>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MAIN FAB DOCK ── */}
+      {!edged && (
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.18}
+          style={{ x: fabX, right: 16, bottom: FAB_BOTTOM, position:"fixed", zIndex:50 }}
+          onDragEnd={onFabDragEnd as never}
+          className="flex flex-col items-end gap-3 pointer-events-none"
+        >
+          {/* Expanded items — pill labels */}
+          <AnimatePresence>
+            {open && items.map((item, i) => (
+              <motion.button key={i}
+                initial={{opacity:0,x:20,scale:0.8}} animate={{opacity:1,x:0,scale:1}}
+                exit={{opacity:0,x:20,scale:0.8}}
+                transition={{delay:i*0.04,type:"spring",damping:22,stiffness:300}}
+                onClick={()=>openModal(item.id)}
+                className="flex items-center gap-2 pointer-events-auto"
+                style={{padding:"7px 14px 7px 10px",borderRadius:99,
+                  background:"rgba(4,1,16,0.9)",backdropFilter:"blur(24px)",
+                  boxShadow:`0 0 0 1px ${item.col}44, 0 6px 20px rgba(0,0,0,0.55)`}}>
+                <div style={{width:26,height:26,borderRadius:"50%",
+                  background:`${item.col}22`,display:"flex",alignItems:"center",
+                  justifyContent:"center",boxShadow:`0 0 0 1px ${item.col}55`}}>
+                  <item.Icon style={{width:11,height:11,color:item.col}}/>
+                </div>
+                <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.88)"}}>
+                  {item.label}
+                </span>
+              </motion.button>
+            ))}
+          </AnimatePresence>
+
+          {/* Main circular trigger — same size as FloatingAvatar orb */}
+          <motion.button
+            className="pointer-events-auto"
+            whileTap={{scale:0.88}}
+            onClick={()=>setOpen(o=>!o)}
+            style={{
+              width: FAB_SIZE, height: FAB_SIZE, borderRadius: "50%",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: open
+                ? "rgba(255,255,255,0.07)"
+                : `radial-gradient(circle at 38% 32%, rgba(0,229,255,0.22) 0%, rgba(0,100,180,0.12) 100%)`,
+              border: `1.5px solid ${open ? "rgba(255,255,255,0.15)" : T.cyan + "55"}`,
+              boxShadow: open ? "none" : `0 0 20px ${T.cyan}33, 0 0 0 0.5px ${T.cyan}44`,
+              backdropFilter: "blur(18px)",
+              flexShrink: 0,
+            }}>
+            <span style={{fontSize:20,fontWeight:900,letterSpacing:"0.08em",
+              color:open?"rgba(255,255,255,0.4)":T.cyan,lineHeight:1}}>
+              {open ? "×" : "···"}
+            </span>
+          </motion.button>
+        </motion.div>
+      )}
 
       {/* Modals */}
       <AnimatePresence>

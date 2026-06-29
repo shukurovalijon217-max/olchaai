@@ -9,10 +9,12 @@ import {
   Briefcase, FlaskConical, Heart, Palette, Info, Settings2,
   BarChart3, CalendarDays, Volume2, Sparkles, Code, Clock,
   Bell, Languages, Repeat2, Star, Flame, Swords, Brush,
+  Trash2, AlertTriangle,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useListGroups, useJoinGroup, useCreateGroup, getListGroupsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -113,6 +115,29 @@ interface GroupMember {
   isVerified: boolean;
   isPremium: boolean;
   joinedAt: string;
+}
+
+interface GroupPost {
+  id: number;
+  groupId: number;
+  authorId: number;
+  authorUsername: string;
+  authorDisplayName: string;
+  authorAvatarUrl: string | null;
+  content: string;
+  mediaUrl: string | null;
+  likesCount: number;
+  createdAt: string;
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Hozir";
+  if (mins < 60) return `${mins} daqiqa oldin`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} soat oldin`;
+  return `${Math.floor(hours / 24)} kun oldin`;
 }
 
 type PrivacyLevel = "public" | "private" | "secret";
@@ -274,6 +299,12 @@ export default function GroupsPage() {
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [newPostContent, setNewPostContent] = useState("");
+  const [groupPosts, setGroupPosts] = useState<GroupPost[]>([]);
+  const [groupPostsLoading, setGroupPostsLoading] = useState(false);
+  const [submittingPost, setSubmittingPost] = useState(false);
+  const [deleteGroupConfirm, setDeleteGroupConfirm] = useState(false);
+
+  const { user } = useAuth();
 
   const f = <K extends keyof FormState>(key: K, val: FormState[K]) =>
     setForm(prev => ({ ...prev, [key]: val }));
@@ -410,16 +441,31 @@ export default function GroupsPage() {
   };
 
   // ── Group detail helpers ──────────────────────────────────────
+  const fetchGroupPosts = useCallback(async (groupId: number) => {
+    setGroupPostsLoading(true);
+    try {
+      const r = await fetch(`${API}/api/groups/${groupId}/posts`, { credentials: "include" });
+      if (r.ok) setGroupPosts(await r.json());
+    } catch { /* silent */ } finally {
+      setGroupPostsLoading(false);
+    }
+  }, []);
+
   const openGroup = (group: GroupRow) => {
     setSelectedGroup(group);
     setActiveDetailTab("feed");
     setGroupMembers([]);
+    setGroupPosts([]);
     setNewPostContent("");
+    setDeleteGroupConfirm(false);
+    fetchGroupPosts(group.id);
   };
 
   const closeDetail = () => {
     setSelectedGroup(null);
     setGroupMembers([]);
+    setGroupPosts([]);
+    setDeleteGroupConfirm(false);
   };
 
   const fetchMembers = useCallback(async (groupId: number) => {
@@ -431,6 +477,53 @@ export default function GroupsPage() {
       setMembersLoading(false);
     }
   }, []);
+
+  const handleSubmitPost = async () => {
+    if (!newPostContent.trim() || !selectedGroup || submittingPost) return;
+    setSubmittingPost(true);
+    try {
+      const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ content: newPostContent.trim() }),
+      });
+      if (r.ok) {
+        const newPost: GroupPost = await r.json();
+        setGroupPosts(prev => [newPost, ...prev]);
+        setNewPostContent("");
+        setSelectedGroup(prev => prev ? { ...prev, postsCount: (prev.postsCount ?? 0) + 1 } : null);
+        qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+      }
+    } catch { /* silent */ } finally {
+      setSubmittingPost(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: number) => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (r.ok) {
+      setGroupPosts(prev => prev.filter(p => p.id !== postId));
+      setSelectedGroup(prev => prev ? { ...prev, postsCount: Math.max(0, (prev.postsCount ?? 0) - 1) } : null);
+      qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (r.ok) {
+      closeDetail();
+      qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+    }
+  };
 
   useEffect(() => {
     if (selectedGroup && activeDetailTab === "members" && groupMembers.length === 0) {
@@ -1024,23 +1117,86 @@ export default function GroupsPage() {
                         <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Sparkles className="w-4 h-4" /></button>
                       </div>
                       <button
-                        disabled={!newPostContent.trim()}
-                        onClick={() => setNewPostContent("")}
-                        className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity"
+                        disabled={!newPostContent.trim() || submittingPost}
+                        onClick={handleSubmitPost}
+                        className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5"
                       >
-                        Yuborish
+                        {submittingPost
+                          ? <><div className="w-3 h-3 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Yuborilmoqda</>
+                          : "Yuborish"
+                        }
                       </button>
                     </div>
                   </div>
 
-                  {/* Empty feed state */}
-                  <div className="text-center py-16 text-muted-foreground">
-                    <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
-                      <MessageSquare className="w-9 h-9 opacity-30" />
+                  {/* Posts list */}
+                  {groupPostsLoading ? (
+                    <div className="space-y-3">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="bg-card border border-border rounded-2xl p-4 animate-pulse">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-9 h-9 rounded-full bg-muted flex-shrink-0" />
+                            <div className="flex-1 space-y-1.5">
+                              <div className="h-3 bg-muted rounded w-1/3" />
+                              <div className="h-2 bg-muted rounded w-1/4" />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="h-3 bg-muted rounded w-full" />
+                            <div className="h-3 bg-muted rounded w-3/4" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <p className="font-semibold text-foreground mb-1">Hali postlar yo'q</p>
-                    <p className="text-sm">Bu guruhda birinchi bo'lib post yozing!</p>
-                  </div>
+                  ) : groupPosts.length === 0 ? (
+                    <div className="text-center py-16 text-muted-foreground">
+                      <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
+                        <MessageSquare className="w-9 h-9 opacity-30" />
+                      </div>
+                      <p className="font-semibold text-foreground mb-1">Hali postlar yo'q</p>
+                      <p className="text-sm">Bu guruhda birinchi bo'lib post yozing!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {groupPosts.map(post => (
+                        <motion.div key={post.id}
+                          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                          className="bg-card border border-border rounded-2xl p-4">
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-9 h-9 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground font-bold text-sm">
+                                {post.authorAvatarUrl
+                                  ? <img src={post.authorAvatarUrl} alt="" className="w-full h-full object-cover" />
+                                  : post.authorDisplayName[0]?.toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-foreground leading-tight">{post.authorDisplayName}</p>
+                                <p className="text-[11px] text-muted-foreground">@{post.authorUsername} · {timeAgo(post.createdAt)}</p>
+                              </div>
+                            </div>
+                            {(user?.id === post.authorId || user?.id === (selectedGroup as any)?.creatorId) && (
+                              <button
+                                onClick={() => handleDeletePost(post.id)}
+                                className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                                title="Postni o'chirish"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                          {post.mediaUrl && (
+                            <img src={post.mediaUrl} alt="" className="mt-3 rounded-xl w-full object-cover max-h-72" />
+                          )}
+                          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Heart className="w-3.5 h-3.5" /> {post.likesCount}
+                            </span>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1114,6 +1270,47 @@ export default function GroupsPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Delete group — only visible to creator */}
+                  {user?.id === (selectedGroup as any).creatorId && (
+                    <div className="pt-2">
+                      {!deleteGroupConfirm ? (
+                        <button
+                          onClick={() => setDeleteGroupConfirm(true)}
+                          className="w-full py-3 rounded-2xl border border-destructive/30 text-destructive text-sm font-semibold hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Guruhni o'chirish
+                        </button>
+                      ) : (
+                        <div className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 space-y-3">
+                          <div className="flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-bold text-foreground">Guruhni o'chirasizmi?</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                Bu amalni qaytarib bo'lmaydi. Barcha postlar va a'zolar ro'yxati o'chiriladi.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setDeleteGroupConfirm(false)}
+                              className="flex-1 py-2 rounded-xl border border-border text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors"
+                            >
+                              Bekor qilish
+                            </button>
+                            <button
+                              onClick={handleDeleteGroup}
+                              className="flex-1 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+                            >
+                              Ha, o'chirish
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

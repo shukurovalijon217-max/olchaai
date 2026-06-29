@@ -306,6 +306,22 @@ const bottomNavItems = [
   { href: "/settings", icon: Settings, key: "nav.settings" },
 ];
 
+/* ─── Page title helper ──────────────────────────────────────── */
+function getPageTitle(location: string, t: (k: string) => string): string {
+  const all = [...navItems, ...bottomNavItems, ...adminNavItems];
+  const match = all.find(item =>
+    location === item.href || (item.href !== "/" && location.startsWith(item.href))
+  );
+  if (match) return t(match.key);
+  if (location.startsWith("/post/")) return t("nav.home");
+  if (location.startsWith("/profile/")) return t("nav.profile");
+  if (location.startsWith("/coview")) return "CoView";
+  if (location.startsWith("/bozor/sotuvchi")) return t("nav.marketplace");
+  if (location.startsWith("/bozor/")) return t("nav.marketplace");
+  if (location.startsWith("/live/")) return t("nav.live");
+  return "OlCha";
+}
+
 const adminNavItems = [
   { href: "/admin", icon: ShieldCheck, key: "nav.admin" },
 ];
@@ -1162,9 +1178,63 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
+      {/* ══ MOBILE TOP HEADER ════════════════════════════════════ */}
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center gap-2 px-3 h-14"
+        style={{
+          background: "rgba(6, 6, 18, 0.88)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
+        {/* Back button or logo */}
+        {location !== "/" ? (
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            onClick={() => window.history.back()}
+            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)" }}
+          >
+            <ChevronLeft className="w-5 h-5 text-foreground" />
+          </motion.button>
+        ) : (
+          <Link href="/">
+            <div className="flex-shrink-0">
+              <NexusLogo ringSize={28} showText={false} />
+            </div>
+          </Link>
+        )}
+
+        {/* Page title */}
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-foreground text-sm truncate leading-tight">
+            {getPageTitle(location, t)}
+          </p>
+        </div>
+
+        {/* Right actions */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <Link href="/search">
+            <motion.div whileTap={{ scale: 0.85 }}
+              className="w-9 h-9 flex items-center justify-center rounded-xl"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)" }}>
+              <Search className="w-4 h-4 text-muted-foreground" />
+            </motion.div>
+          </Link>
+          <Link href="/notifications">
+            <motion.div whileTap={{ scale: 0.85 }}
+              className="w-9 h-9 flex items-center justify-center rounded-xl"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)" }}>
+              <Bell className="w-4 h-4 text-muted-foreground" />
+            </motion.div>
+          </Link>
+        </div>
+      </div>
+
       {/* ── MAIN CONTENT ── */}
       <main
-        className="min-h-screen pb-28 md:pb-0 transition-[padding] duration-300"
+        className="min-h-screen pb-28 md:pb-0 pt-14 md:pt-0 transition-[padding] duration-300"
         style={{ paddingLeft: isMd ? (isOpen ? "220px" : "40px") : "8px" }}
       >
         <motion.div

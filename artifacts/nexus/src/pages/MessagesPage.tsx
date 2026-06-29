@@ -9,7 +9,7 @@ import {
   CheckCheck, ChevronDown, Image as ImageIcon, File, Sticker,
   MapPin, BarChart3, AtSign, Hash, Bold, Italic,
   StopCircle, Volume2, Play, Pause, Radio, Users, Lock,
-  MicOff, CameraOff, RotateCcw,
+  MicOff, CameraOff, RotateCcw, Bell,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -361,19 +361,19 @@ function ContextMenu({
   onPin: () => void; onDelete: () => void; onForward: () => void; onClose: () => void;
 }) {
   const items = [
-    { icon: Reply,   label: "Javob berish", action: onReply },
-    { icon: Forward, label: "Yo'naltirish", action: onForward },
-    { icon: Copy,    label: "Nusxa",        action: onCopy },
-    { icon: Star,    label: msg.starred ? "Yulduzdan olish" : "Yulduzga qo'shish", action: onStar },
-    { icon: Pin,     label: msg.pinned ? "Mahkamlashni olib tashlash" : "Mahkamlash", action: onPin },
-    ...(isMe ? [{ icon: Trash2, label: "O'chirish", action: onDelete }] : []),
+    { icon: Reply,   label: "Javob berish",                                          action: onReply,   danger: false },
+    { icon: Forward, label: "Yo'naltirish",                                           action: onForward, danger: false },
+    { icon: Copy,    label: "Nusxa olish",                                            action: onCopy,    danger: false },
+    { icon: Star,    label: msg.starred ? "Yulduzdan olish" : "Yulduzga qo'shish",   action: onStar,    danger: false },
+    { icon: Pin,     label: msg.pinned  ? "Mahkamni olib tashlash" : "Mahkamlash",   action: onPin,     danger: false },
+    { icon: Trash2,  label: "O'chirish",                                              action: onDelete,  danger: true  },
   ];
   return (
     <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-      className={`absolute z-50 bottom-full mb-1 ${isMe ? "right-0" : "left-0"} bg-card border border-border rounded-2xl shadow-2xl overflow-hidden min-w-[180px]`}>
+      className={`absolute z-50 bottom-full mb-1 ${isMe ? "right-0" : "left-0"} bg-card border border-border rounded-2xl shadow-2xl overflow-hidden min-w-[190px]`}>
       {items.map((it, i) => (
         <button key={i} onClick={() => { it.action(); onClose(); }}
-          className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors text-left ${it.label === "O'chirish" ? "text-destructive" : "text-foreground"}`}>
+          className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors text-left ${it.danger ? "text-destructive" : "text-foreground"}`}>
           <it.icon className="w-4 h-4 flex-shrink-0 opacity-70" />
           {it.label}
         </button>
@@ -384,11 +384,12 @@ function ContextMenu({
 
 /* ── Message bubble ─────────────────────────────────────────── */
 function MsgBubble({
-  msg, isMe, onReply, onUpdate,
+  msg, isMe, onReply, onUpdate, onDelete,
 }: {
   msg: LocalMsg; isMe: boolean;
   onReply: (m: LocalMsg) => void;
   onUpdate: (id: string, patch: Partial<LocalMsg>) => void;
+  onDelete: (id: string) => void;
 }) {
   const [showCtx, setShowCtx] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
@@ -402,17 +403,8 @@ function MsgBubble({
     setShowReactions(false);
   };
 
-  if (msg.deleted) {
-    return (
-      <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-        <div className="px-4 py-2 rounded-2xl bg-muted/50 border border-border text-xs text-muted-foreground italic">
-          Xabar o'chirildi
-        </div>
-      </div>
-    );
-  }
-
-  const bubbleCls = `max-w-xs relative ${isMe
+  const isNoBubble = msg.type === "video_note" || msg.type === "sticker";
+  const bubbleCls = `max-w-xs relative ${isNoBubble ? "bg-transparent" : isMe
     ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
     : "bg-card border border-border text-foreground rounded-2xl rounded-bl-sm"}`;
 
@@ -424,7 +416,7 @@ function MsgBubble({
     >
       {/* Reply indicator */}
       {msg.replyTo && (
-        <div className={`mb-1 px-3 py-1.5 rounded-xl border-l-2 border-primary bg-muted/50 text-xs max-w-xs`}>
+        <div className="mb-1 px-3 py-1.5 rounded-xl border-l-2 border-primary bg-muted/50 text-xs max-w-xs">
           <p className="font-semibold text-primary text-[10px]">{msg.replyTo.sender}</p>
           <p className="text-muted-foreground truncate">{msg.replyTo.content}</p>
         </div>
@@ -462,9 +454,17 @@ function MsgBubble({
               <VoiceWaveform duration={msg.duration || 5} isMe={isMe} />
             </div>
           )}
+          {/* Round video — no bubble bg, just circle */}
           {msg.type === "video_note" && msg.mediaUrl && (
-            <div className="p-2">
+            <div className="flex flex-col items-center gap-1">
               <VideoNoteBubble url={msg.mediaUrl} />
+              <div className="flex items-center gap-1">
+                {msg.starred && <Star className="w-2.5 h-2.5 text-yellow-400 fill-current" />}
+                <span className="text-[10px] text-muted-foreground">{formatTs(msg.ts)}</span>
+                {isMe && (msg.status === "read"
+                  ? <CheckCheck className="w-3 h-3 text-cyan-300" />
+                  : <CheckCheck className="w-3 h-3 text-muted-foreground/50" />)}
+              </div>
             </div>
           )}
           {msg.type === "file" && (
@@ -478,11 +478,21 @@ function MsgBubble({
               </div>
             </div>
           )}
+          {/* Sticker — no bubble bg */}
           {msg.type === "sticker" && (
-            <div className="p-2 text-5xl">{msg.emoji}</div>
+            <div className="flex flex-col items-center">
+              <span className="text-6xl leading-none select-none">{msg.emoji}</span>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="text-[10px] text-muted-foreground">{formatTs(msg.ts)}</span>
+                {isMe && (msg.status === "read"
+                  ? <CheckCheck className="w-3 h-3 text-cyan-300" />
+                  : <CheckCheck className="w-3 h-3 text-muted-foreground/50" />)}
+              </div>
+            </div>
           )}
 
-          {/* Timestamp + status */}
+          {/* Timestamp + status — only for bubble types */}
+          {!isNoBubble && (
           <div className={`flex items-center gap-1 px-3 pb-2 justify-end ${msg.type === "image" ? "absolute bottom-1 right-1 bg-black/40 rounded-lg px-1.5" : ""}`}>
             {msg.starred && <Star className="w-2.5 h-2.5 opacity-60 fill-current" />}
             {msg.edited && <span className="text-[9px] opacity-50">tahrirlangan</span>}
@@ -495,6 +505,7 @@ function MsgBubble({
               : <Check className="w-3 h-3 opacity-60 flex-shrink-0" />
             )}
           </div>
+          )}
         </motion.div>
 
         {/* Quick react button (show on hover) */}
@@ -530,7 +541,7 @@ function MsgBubble({
               onCopy={() => { navigator.clipboard.writeText(msg.content || ""); }}
               onStar={() => onUpdate(msg.id, { starred: !msg.starred })}
               onPin={() => onUpdate(msg.id, { pinned: !msg.pinned })}
-              onDelete={() => onUpdate(msg.id, { deleted: true })}
+              onDelete={() => onDelete(msg.id)}
               onForward={() => onUpdate(msg.id, { forwarded: true })}
               onClose={() => setShowCtx(false)}
             />
@@ -569,6 +580,12 @@ export default function MessagesPage() {
   const [msgSearch, setMsgSearch] = useState("");
   const [showMsgSearch, setShowMsgSearch] = useState(false);
   const [tab, setTab] = useState<"all" | "unread" | "groups">("all");
+  const [showChatMenu, setShowChatMenu] = useState(false);
+  const [mutedConvs, setMutedConvs] = useState<Set<number>>(new Set());
+  const [blockedConvs, setBlockedConvs] = useState<Set<number>>(new Set());
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [hiddenMsgIds, setHiddenMsgIds] = useState<Set<string>>(new Set());
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; isMe: boolean } | null>(null);
 
   // Chat state
   const [text, setText] = useState("");
@@ -618,9 +635,9 @@ export default function MessagesPage() {
     ...localMsgs.filter(lm => lm.ts > (apiMsgs[apiMsgs.length - 1]?.createdAt ? new Date(apiMsgs[apiMsgs.length - 1].createdAt as string) : new Date(0))),
   ].sort((a, b) => a.ts.getTime() - b.ts.getTime());
 
-  const displayMsgs = msgSearch
-    ? allMsgs.filter(m => m.content?.toLowerCase().includes(msgSearch.toLowerCase()))
-    : allMsgs;
+  const displayMsgs = allMsgs
+    .filter(m => !hiddenMsgIds.has(m.id))
+    .filter(m => !msgSearch || m.content?.toLowerCase().includes(msgSearch.toLowerCase()));
 
   // Filtered conversations
   const filteredConvs = convs.filter(c => {
@@ -879,11 +896,126 @@ export default function MessagesPage() {
                 className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${ephemeral ? "bg-violet-500/20 text-violet-400" : "hover:bg-muted text-muted-foreground hover:text-foreground"}`}>
                 <Ghost className={`w-4 h-4 ${ephemeral ? "animate-pulse" : ""}`} />
               </button>
-              <button className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-                <MoreVertical className="w-4 h-4" />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowChatMenu(v => !v)}
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${showChatMenu ? "bg-muted text-foreground" : "hover:bg-muted text-muted-foreground hover:text-foreground"}`}>
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+                <AnimatePresence>
+                  {showChatMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.92, y: -4 }}
+                      className="absolute top-full right-0 mt-1 z-50 w-52 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+                    >
+                      {[
+                        { icon: Users,    label: "Profilni ko'rish",      action: () => {} },
+                        { icon: Search,   label: "Xabarda qidirish",       action: () => { setShowMsgSearch(true); setShowChatMenu(false); } },
+                        { icon: Pin,      label: "Mahkamlangan xabarlar",  action: () => {} },
+                        { icon: Star,     label: "Yulduzli xabarlar",      action: () => {} },
+                        { icon: Bell,     label: convId && mutedConvs.has(convId) ? "Ovozni yoqish" : "Ovozni o'chirish",
+                          action: () => {
+                            if (!convId) return;
+                            setMutedConvs(prev => { const s = new Set(prev); s.has(convId) ? s.delete(convId) : s.add(convId); return s; });
+                            setShowChatMenu(false);
+                          }
+                        },
+                        { icon: Trash2,   label: "Tarixni tozalash",       action: () => { setShowClearConfirm(true); setShowChatMenu(false); }, danger: true },
+                        { icon: Lock,     label: convId && blockedConvs.has(convId) ? "Blokdan chiqarish" : "Bloklash",
+                          action: () => {
+                            if (!convId) return;
+                            setBlockedConvs(prev => { const s = new Set(prev); s.has(convId) ? s.delete(convId) : s.add(convId); return s; });
+                            setShowChatMenu(false);
+                          }, danger: true
+                        },
+                      ].map((item, i) => (
+                        <button key={i} onClick={item.action}
+                          className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors text-left ${item.danger ? "text-destructive" : "text-foreground"}`}>
+                          <item.icon className="w-4 h-4 flex-shrink-0 opacity-70" />
+                          {item.label}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
+
+          {/* Clear history confirm */}
+          <AnimatePresence>
+            {showClearConfirm && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-6">
+                <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+                  className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm">
+                  <h3 className="font-bold text-foreground mb-1">Tarixni tozalash</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Barcha xabarlar o'chiriladi. Bu amalni qaytarib bo'lmaydi.</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowClearConfirm(false)}
+                      className="flex-1 py-2 rounded-xl border border-border text-sm text-muted-foreground hover:bg-muted">
+                      Bekor qilish
+                    </button>
+                    <button onClick={() => { setLocalMsgs([]); setShowClearConfirm(false); }}
+                      className="flex-1 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold">
+                      O'chirish
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Delete message confirm */}
+          <AnimatePresence>
+            {deleteTarget && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-6"
+                onClick={() => setDeleteTarget(null)}>
+                <motion.div initial={{ scale: 0.9, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 12 }}
+                  className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm"
+                  onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-destructive/15 flex items-center justify-center flex-shrink-0">
+                      <Trash2 className="w-5 h-5 text-destructive" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">Xabarni o'chirish</h3>
+                      <p className="text-xs text-muted-foreground">Kim uchun o'chirishni tanlang</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {deleteTarget.isMe && (
+                      <button
+                        onClick={() => {
+                          setHiddenMsgIds(prev => new Set([...prev, deleteTarget.id]));
+                          setLocalMsgs(prev => prev.filter(m => m.id !== deleteTarget.id));
+                          setDeleteTarget(null);
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
+                        Hamma uchun o'chirish
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setHiddenMsgIds(prev => new Set([...prev, deleteTarget.id]));
+                        setLocalMsgs(prev => prev.filter(m => m.id !== deleteTarget.id));
+                        setDeleteTarget(null);
+                      }}
+                      className="w-full py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-muted transition-colors">
+                      Faqat men uchun o'chirish
+                    </button>
+                    <button onClick={() => setDeleteTarget(null)}
+                      className="w-full py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      Bekor qilish
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Pinned message */}
           <AnimatePresence>
@@ -931,6 +1063,7 @@ export default function MessagesPage() {
                   )}
                   <MsgBubble msg={msg} isMe={isMe}
                     onReply={m => setReplyTo(m)}
+                    onDelete={(id) => setDeleteTarget({ id, isMe })}
                     onUpdate={(id, patch) => setLocalMsgs(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m))} />
                 </div>
               );

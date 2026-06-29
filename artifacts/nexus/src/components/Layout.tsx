@@ -327,9 +327,9 @@ function MuniPanel() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
-  const { edged, dock } = useDockedState();
   const [location] = useLocation();
   const isOTube = location === "/otube";
+  const { edged, dock } = useDockedState(isOTube ? "left" : "right");
 
   /* Auto-close panel when dock hides all orbs */
   useEffect(() => { if (edged) setOpen(false); }, [edged]);
@@ -1184,46 +1184,56 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── MUNI FLOATING AI ── */}
       <MuniPanel />
 
-      {/* ── SHARED DOCK EDGE TAB — restores all three orbs at once ── */}
-      <DockEdgeTab />
+      {/* ── DOCK EDGE TABS ── */}
+      <DockEdgeTab side="right" />
+      <DockEdgeTab side="left" />
     </div>
   );
 }
 
-/* ─── Shared transparent glass tab — shown when all orbs are docked ── */
-function DockEdgeTab() {
-  const { edged, undock } = useDockedState();
+/* ─── Glass edge tab — appears when orbs are docked to that side ── */
+function DockEdgeTab({ side }: { side: "left" | "right" }) {
+  const { edged, undock } = useDockedState(side);
+  const isRight = side === "right";
   return (
     <AnimatePresence>
       {edged && (
         <motion.div
-          key="dock-edge-tab"
+          key={`dock-edge-tab-${side}`}
           className="fixed cursor-pointer"
-          style={{ right: 0, bottom: "calc(env(safe-area-inset-bottom, 0px) + 56px)", zIndex: 9993 }}
-          initial={{ x: 60 }} animate={{ x: 0 }} exit={{ x: 60 }}
+          style={{
+            ...(isRight ? { right: 0 } : { left: 0 }),
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 56px)",
+            zIndex: 9993,
+          }}
+          initial={{ x: isRight ? 60 : -60 }}
+          animate={{ x: 0 }}
+          exit={{ x: isRight ? 60 : -60 }}
           transition={{ type:"spring", stiffness:360, damping:28 }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.35}
           onDragEnd={(_: unknown, info: { offset: { x: number } }) => {
-            if (info.offset.x < -22) undock();
+            if (isRight ? info.offset.x < -22 : info.offset.x > 22) undock();
           }}
           onClick={undock}
         >
           <div style={{
             width: 10,
-            height: 176,
-            borderRadius: "8px 0 0 8px",
+            height: isRight ? 176 : 60,
+            borderRadius: isRight ? "8px 0 0 8px" : "0 8px 8px 0",
             background: "rgba(140,40,220,0.10)",
             border: "1.5px solid rgba(180,50,245,0.32)",
-            borderRight: "none",
+            ...(isRight ? { borderRight: "none" } : { borderLeft: "none" }),
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            boxShadow: "-3px 0 24px rgba(140,30,220,0.18)",
+            boxShadow: isRight
+              ? "-3px 0 24px rgba(140,30,220,0.18)"
+              : "3px 0 24px rgba(140,30,220,0.18)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <div style={{
-              width: 3, height: 52, borderRadius: 99,
+              width: 3, height: 32, borderRadius: 99,
               background: "linear-gradient(to bottom, transparent 0%, rgba(200,80,255,0.65) 30%, rgba(200,80,255,0.65) 70%, transparent 100%)",
             }}/>
           </div>

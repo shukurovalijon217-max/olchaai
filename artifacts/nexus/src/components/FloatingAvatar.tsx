@@ -42,7 +42,7 @@ const RING_R   = SIZE * 0.60;
 export default function FloatingAvatar() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const { edged, dock } = useDockedState();
+  const { edged, dock } = useDockedState("right");
 
   const [isDot, setIsDot] = useState(() => {
     try { return localStorage.getItem(DOT_KEY) !== "0"; } catch { return true; }

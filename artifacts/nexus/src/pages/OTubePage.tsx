@@ -4950,7 +4950,7 @@ function FloatingFAB() {
   const { t } = useTranslation();
   const [open,  setOpen]  = useState(false);
   const [modal, setModal] = useState<"upload"|"live"|"short"|"challenge"|"cipcat"|null>(null);
-  const { edged, dock } = useDockedState();
+  const { edged, dock } = useDockedState("right");
 
   const openModal = (id: "upload"|"live"|"short"|"challenge"|"cipcat") => {
     setOpen(false);

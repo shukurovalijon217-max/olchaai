@@ -586,6 +586,9 @@ export default function MessagesPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [hiddenMsgIds, setHiddenMsgIds] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; isMe: boolean } | null>(null);
+  const [showProfilePanel, setShowProfilePanel] = useState(false);
+  const [showPinnedPanel, setShowPinnedPanel] = useState(false);
+  const [showStarredPanel, setShowStarredPanel] = useState(false);
 
   // Chat state
   const [text, setText] = useState("");
@@ -911,10 +914,10 @@ export default function MessagesPage() {
                       className="absolute top-full right-0 mt-1 z-50 w-52 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
                     >
                       {[
-                        { icon: Users,    label: "Profilni ko'rish",      action: () => {} },
+                        { icon: Users,    label: "Profilni ko'rish",      action: () => { setShowProfilePanel(true); setShowChatMenu(false); } },
                         { icon: Search,   label: "Xabarda qidirish",       action: () => { setShowMsgSearch(true); setShowChatMenu(false); } },
-                        { icon: Pin,      label: "Mahkamlangan xabarlar",  action: () => {} },
-                        { icon: Star,     label: "Yulduzli xabarlar",      action: () => {} },
+                        { icon: Pin,      label: "Mahkamlangan xabarlar",  action: () => { setShowPinnedPanel(true); setShowChatMenu(false); } },
+                        { icon: Star,     label: "Yulduzli xabarlar",      action: () => { setShowStarredPanel(true); setShowChatMenu(false); } },
                         { icon: Bell,     label: convId && mutedConvs.has(convId) ? "Ovozni yoqish" : "Ovozni o'chirish",
                           action: () => {
                             if (!convId) return;
@@ -1015,6 +1018,134 @@ export default function MessagesPage() {
                 </motion.div>
               </motion.div>
             )}
+          </AnimatePresence>
+
+          {/* ── Profile panel ───────────────────────── */}
+          <AnimatePresence>
+            {showProfilePanel && (() => {
+              const other = activeConv?.participants?.find(p => p.id !== ME_ID);
+              return (
+                <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                  className="absolute inset-0 z-40 bg-background flex flex-col">
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
+                    <button onClick={() => setShowProfilePanel(false)} className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center">
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <span className="font-semibold text-foreground">Profil</span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-6">
+                    <div className="flex flex-col items-center gap-3 mb-6">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-3xl font-bold text-primary-foreground">
+                        {other?.displayName?.[0]?.toUpperCase() || "?"}
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-lg text-foreground">{other?.displayName || "Foydalanuvchi"}</p>
+                        <p className="text-sm text-primary">@{other?.username || "username"}</p>
+                        <p className="text-xs text-muted-foreground mt-1">🟢 Onlayn</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {[
+                        { label: "Xabarlar", value: String(displayMsgs.length) },
+                        { label: "Media fayllar", value: String(displayMsgs.filter(m => m.type === "image" || m.type === "video_note").length) },
+                        { label: "Ovozli xabarlar", value: String(displayMsgs.filter(m => m.type === "voice").length) },
+                      ].map(row => (
+                        <div key={row.label} className="flex items-center justify-between px-4 py-3 bg-muted/40 rounded-xl">
+                          <span className="text-sm text-muted-foreground">{row.label}</span>
+                          <span className="text-sm font-semibold text-foreground">{row.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex flex-col gap-2">
+                      <button onClick={() => { setMutedConvs(prev => { const s = new Set(prev); convId && (s.has(convId) ? s.delete(convId) : s.add(convId)); return s; }); }}
+                        className="flex items-center gap-3 w-full px-4 py-3 bg-muted/40 rounded-xl text-sm text-foreground hover:bg-muted transition-colors">
+                        <Bell className="w-4 h-4 opacity-60" />
+                        {convId && mutedConvs.has(convId) ? "Ovozni yoqish" : "Ovozni o'chirish"}
+                      </button>
+                      <button onClick={() => { setBlockedConvs(prev => { const s = new Set(prev); convId && (s.has(convId) ? s.delete(convId) : s.add(convId)); return s; }); }}
+                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors">
+                        <Lock className="w-4 h-4 opacity-70" />
+                        {convId && blockedConvs.has(convId) ? "Blokdan chiqarish" : "Bloklash"}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })()}
+          </AnimatePresence>
+
+          {/* ── Pinned messages panel ────────────── */}
+          <AnimatePresence>
+            {showPinnedPanel && (() => {
+              const pinned = displayMsgs.filter(m => m.pinned);
+              return (
+                <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                  className="absolute inset-0 z-40 bg-background flex flex-col">
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
+                    <button onClick={() => setShowPinnedPanel(false)} className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center">
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <span className="font-semibold text-foreground">Mahkamlangan xabarlar</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{pinned.length} ta</span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    {pinned.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                        <Pin className="w-10 h-10 mb-2 opacity-20" />
+                        <p className="text-sm">Mahkamlangan xabarlar yo'q</p>
+                      </div>
+                    ) : pinned.map(m => (
+                      <div key={m.id} className="flex items-start gap-3 p-3 bg-muted/40 rounded-xl">
+                        <Pin className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground line-clamp-2">{m.content || "📎 Media"}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{formatTs(m.ts)}</p>
+                        </div>
+                        <button onClick={() => { setPinnedMsg(m); setShowPinnedPanel(false); }}
+                          className="text-xs text-primary hover:underline flex-shrink-0">Ko'rish</button>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              );
+            })()}
+          </AnimatePresence>
+
+          {/* ── Starred messages panel ───────────── */}
+          <AnimatePresence>
+            {showStarredPanel && (() => {
+              const starred = displayMsgs.filter(m => m.starred);
+              return (
+                <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                  className="absolute inset-0 z-40 bg-background flex flex-col">
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
+                    <button onClick={() => setShowStarredPanel(false)} className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center">
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <span className="font-semibold text-foreground">Yulduzli xabarlar</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{starred.length} ta</span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    {starred.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                        <Star className="w-10 h-10 mb-2 opacity-20" />
+                        <p className="text-sm">Yulduzli xabarlar yo'q</p>
+                      </div>
+                    ) : starred.map(m => (
+                      <div key={m.id} className="flex items-start gap-3 p-3 bg-muted/40 rounded-xl">
+                        <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground line-clamp-2">{m.content || "📎 Media"}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{formatTs(m.ts)}</p>
+                        </div>
+                        <button onClick={() => setLocalMsgs(prev => prev.map(x => x.id === m.id ? { ...x, starred: false } : x))}
+                          className="text-xs text-destructive hover:underline flex-shrink-0">Olib tashlash</button>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              );
+            })()}
           </AnimatePresence>
 
           {/* Pinned message */}

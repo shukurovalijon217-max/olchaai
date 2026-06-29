@@ -252,12 +252,12 @@ export default function LivePage({ liveId }: LivePageProps) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-screen bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+    return <div className="flex items-center justify-center h-[calc(100dvh-3.5rem)] md:h-screen bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
-  if (!stream) return <div className="flex items-center justify-center h-screen text-muted-foreground">{t("live_page.not_found")}</div>;
+  if (!stream) return <div className="flex items-center justify-center h-[calc(100dvh-3.5rem)] md:h-screen text-muted-foreground">{t("live_page.not_found")}</div>;
 
   return (
-    <div className="relative w-full h-screen bg-black flex flex-col overflow-hidden max-w-2xl mx-auto">
+    <div className="relative w-full h-[calc(100dvh-3.5rem)] md:h-screen bg-black flex flex-col overflow-hidden max-w-2xl mx-auto">
 
       {/* Video area */}
       <div className="relative flex-1 bg-black">

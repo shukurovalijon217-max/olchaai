@@ -21,6 +21,7 @@ import {
   useGetConversationMessages,
   useSendMessage,
   useCreateConversation,
+  useListUsers,
   getGetConversationMessagesQueryKey,
   getListConversationsQueryKey,
   type Conversation,
@@ -62,12 +63,14 @@ interface LocalMsg {
 
 /* ── Emoji sets ─────────────────────────────────────────────── */
 const EMOJI_CATS: Record<string, string[]> = {
-  "😊": ["😊","😂","🥹","😅","😆","🤣","😁","😄","😃","😀","🙂","😉","🥰","😍","🤩","😘","😗","😚","😙","🥲","😇","🤗","🤭","🫢","🫡","🤫","🤔","🤐","😐","😑","😶","😏","😒","🙄","😬","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖"],
-  "👍": ["👍","👎","👊","✊","🤛","🤜","🤞","✌️","🤟","🤘","🤙","👋","🤚","🖐","✋","🖖","👌","🤌","🤏","🫰","🫵","🫱","🫲","🫳","🫴","👈","👉","👆","☝️","👇","🙌","🙏","🫶","👏","🤝","💅","🤳","💪"],
-  "❤️": ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☯️","🕉️","🔯","✡️","🛐"],
-  "🎉": ["🎉","🎊","🎈","🎁","🎀","🎗","🎟","🎫","🏆","🥇","🥈","🥉","🏅","🎖","🎯","🎱","🎮","🕹","🎲","🎭","🎨","🖼","🎬","🎤","🎧","🎼","🎵","🎶","🎹","🥁"],
-  "🌟": ["🌟","⭐","💫","✨","🔥","💥","🌈","☀️","🌤","⛅","🌥","☁️","🌦","🌧","⛈","🌩","🌨","❄️","🌬","💨","🌀","🌊","🌙","🌛","🌜","🌝","🌞","🪐","⚡","🌺"],
-  "🍕": ["🍕","🍔","🌮","🌯","🥗","🍱","🍜","🍝","🍛","🍣","🍤","🦐","🦞","🦀","🦑","🥟","🍙","🍚","🍘","🍥","🥮","🍡","🧁","🎂","🍰","🍭","🍬","🍫"],
+  "😊": ["😊","😂","🥹","😅","😆","🤣","😁","😄","😃","😀","🙂","😉","🥰","😍","🤩","😘","😗","😚","😙","🥲","😇","🤗","🤭","🫢","🫡","🤫","🤔","🤐","😐","😑","😶","😏","😒","🙄","😬","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","🥸","🤡","👻","💀","☠️","👽","👾","🤖","🎃","😈","👿","🤠","🥳","🤑","🤒","🤕"],
+  "👍": ["👍","👎","👊","✊","🤛","🤜","🤞","✌️","🤟","🤘","🤙","👋","🤚","🖐","✋","🖖","👌","🤌","🤏","🫰","🫵","🫱","🫲","🫳","🫴","👈","👉","👆","☝️","👇","🙌","🙏","🫶","👏","🤝","💅","🤳","💪","🦾","🦿","🦵","🦶","👂","🦻","👃","🧠","🫀","🫁","🦷","🦴","👀","👁","👅","👄","🫦"],
+  "❤️": ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","❤️‍🔥","❤️‍🩹","🩷","🩵","🩶","🫀"],
+  "🎉": ["🎉","🎊","🎈","🎁","🎀","🎗","🎟","🎫","🏆","🥇","🥈","🥉","🏅","🎖","🎯","🎱","🎮","🕹","🎲","🎭","🎨","🖼","🎬","🎤","🎧","🎼","🎵","🎶","🎹","🥁","🎸","🎺","🎻","🪗","🎷","🪘","🎙","🎚","🎛","📻","📺","📷","📸","📹","🎥","📽","🎞"],
+  "🌟": ["🌟","⭐","💫","✨","🔥","💥","🌈","☀️","🌤","⛅","🌥","☁️","🌦","🌧","⛈","🌩","🌨","❄️","🌬","💨","🌀","🌊","🌙","🌛","🌜","🌝","🌞","🪐","⚡","🌺","🌸","🌼","🌻","🌹","🌷","🍀","🌿","🌱","🌲","🌴","🌵","🎋","🎍","🍁","🍂","🍃","🪴","🌾"],
+  "🍕": ["🍕","🍔","🌮","🌯","🥗","🍱","🍜","🍝","🍛","🍣","🍤","🦐","🦞","🦀","🦑","🥟","🍙","🍚","🍘","🍥","🥮","🍡","🧁","🎂","🍰","🍭","🍬","🍫","🍩","🍪","🍦","🧃","🥤","🍺","🍻","🥂","🍷","🥃","☕","🫖","🧋","🍵","🥛","🍼","🫗"],
+  "🐶": ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈","🙉","🙊","🐔","🐧","🐦","🐤","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦟","🦗","🕷","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦀","🐡","🐟","🐬","🐳","🐋","🦈","🦭","🐊","🐅","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🦬","🐃"],
+  "⚽": ["⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🎱","🏓","🏸","🥊","🥋","🥅","⛳","🎣","🤿","🎽","🎿","🛷","🥌","🎯","🪃","🏋️","🤼","🤺","🏇","⛷","🏂","🪂","🏊","🚴","🧗","🤾","🏌️","🏄","🚣","🧘","🏆","🥇","🎖","🏅","🥈","🥉"],
 };
 const ALL_EMOJIS = Object.values(EMOJI_CATS).flat();
 const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🔥","🎉","💯"];
@@ -157,6 +160,131 @@ function AttachMenu({
         </button>
       ))}
     </div>
+  );
+}
+
+/* ── GIF Picker ─────────────────────────────────────────────── */
+interface GiphyGif { id: string; title: string; images: { fixed_height_small: { url: string }; original: { url: string } } }
+const GIF_CATS = ["funny","cute","wow","sad","love","dance","win","cat","dog","anime"];
+
+function GifPickerModal({ onPick, onClose }: { onPick:(url:string)=>void; onClose:()=>void }) {
+  const [q, setQ] = useState("funny");
+  const [gifs, setGifs] = useState<GiphyGif[]>([]);
+  const [loading, setLoading] = useState(false);
+  const search = async (query: string) => {
+    setLoading(true);
+    try {
+      const r = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(query)}&limit=21&rating=g`);
+      const d = await r.json();
+      setGifs(d.data || []);
+    } catch { setGifs([]); }
+    setLoading(false);
+  };
+  useEffect(()=>{ search("funny"); },[]);
+  return (
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end"
+      onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <motion.div initial={{y:300}} animate={{y:0}} exit={{y:300}} transition={{type:"spring",damping:30,stiffness:320}}
+        className="w-full bg-card border-t border-border rounded-t-3xl shadow-2xl" style={{maxHeight:"70vh",display:"flex",flexDirection:"column"}}>
+        <div className="p-3 border-b border-border flex items-center gap-2 flex-shrink-0">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
+            <input className="w-full pl-8 pr-3 py-2 bg-muted rounded-xl text-sm focus:outline-none text-foreground"
+              placeholder="GIF qidirish..." value={q}
+              onChange={e=>setQ(e.target.value)}
+              onKeyDown={e=>{ if(e.key==="Enter") search(q); }}/>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80">
+            <X className="w-4 h-4"/>
+          </button>
+        </div>
+        <div className="flex gap-2 px-3 py-2 overflow-x-auto flex-shrink-0 border-b border-border/40" style={{scrollbarWidth:"none"}}>
+          {GIF_CATS.map(cat=>(
+            <button key={cat} onClick={()=>{ setQ(cat); search(cat); }}
+              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${q===cat?"bg-primary text-primary-foreground":"bg-muted text-muted-foreground hover:text-foreground"}`}>
+              {cat}
+            </button>
+          ))}
+        </div>
+        <div className="overflow-y-auto p-2 flex-1">
+          {loading ? (
+            <div className="grid grid-cols-3 gap-1.5">
+              {[...Array(9)].map((_,i)=>(
+                <div key={i} className="bg-muted rounded-xl animate-pulse" style={{aspectRatio:"1.4"}}/>
+              ))}
+            </div>
+          ) : gifs.length===0 ? (
+            <div className="text-center py-10 text-muted-foreground text-sm">GIF topilmadi</div>
+          ) : (
+            <div className="grid grid-cols-3 gap-1.5">
+              {gifs.map(gif=>(
+                <button key={gif.id} onClick={()=>onPick(gif.images.original.url)}
+                  className="overflow-hidden rounded-xl hover:scale-[1.04] transition-transform active:scale-95">
+                  <img src={gif.images.fixed_height_small.url} alt={gif.title}
+                    className="w-full object-cover" style={{aspectRatio:"1.4"}} loading="lazy"/>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <p className="text-center text-[9px] text-muted-foreground py-1 flex-shrink-0">Powered by GIPHY</p>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ── Contact Picker ─────────────────────────────────────────── */
+interface PickableUser { id: number; displayName: string; username: string; avatarUrl?: string | null; bio?: string | null }
+
+function ContactPickerModal({ users, onPick, onClose }: {
+  users: PickableUser[];
+  onPick:(u:PickableUser)=>void;
+  onClose:()=>void;
+}) {
+  const [q, setQ] = useState("");
+  const filtered = users.filter(u=>
+    (u.displayName||"").toLowerCase().includes(q.toLowerCase()) ||
+    (u.username||"").toLowerCase().includes(q.toLowerCase())
+  );
+  return (
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end"
+      onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <motion.div initial={{y:300}} animate={{y:0}} exit={{y:300}} transition={{type:"spring",damping:30,stiffness:320}}
+        className="w-full bg-card border-t border-border rounded-t-3xl shadow-2xl" style={{maxHeight:"70vh",display:"flex",flexDirection:"column"}}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
+          <span className="font-bold text-foreground">Kontakt ulashish</span>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80">
+            <X className="w-4 h-4"/>
+          </button>
+        </div>
+        <div className="px-3 py-2 flex-shrink-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
+            <input className="w-full pl-8 pr-3 py-2 bg-muted rounded-xl text-sm focus:outline-none text-foreground"
+              placeholder="Foydalanuvchi qidirish..." value={q} onChange={e=>setQ(e.target.value)} autoFocus/>
+          </div>
+        </div>
+        <div className="overflow-y-auto flex-1">
+          {filtered.length===0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">Foydalanuvchi topilmadi</div>
+          ) : filtered.map(user=>(
+            <button key={user.id} onClick={()=>{ onPick(user); onClose(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex-shrink-0 overflow-hidden flex items-center justify-center text-primary font-bold text-sm">
+                {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/> : (user.displayName?.[0]||"?").toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>
+                <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+              </div>
+              <UserPlus className="w-4 h-4 text-primary flex-shrink-0"/>
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -820,6 +948,10 @@ export default function MessagesPage() {
   const [convCtxPos, setConvCtxPos] = useState({x:0,y:0});
   const [notifPrefs, setNotifPrefs] = useState<Record<number,"all"|"mentions"|"none">>({});
   const [showNewConv, setShowNewConv] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [showContactPicker, setShowContactPicker] = useState(false);
+
+  const { data: allUsers = [] } = useListUsers({});
 
   // Chat state
   const [text, setText] = useState("");
@@ -1089,9 +1221,9 @@ export default function MessagesPage() {
                 className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
                 <UserPlus className="w-4 h-4"/>
               </button>
-              <button onClick={()=>setShowNewConv(true)} title="Guruh yaratish"
+              <button onClick={()=>{ window.location.href="/groups"; }} title="Guruhlar"
                 className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
-                <Plus className="w-4 h-4"/>
+                <Users className="w-4 h-4"/>
               </button>
             </div>
           </div>
@@ -1773,11 +1905,20 @@ export default function MessagesPage() {
                   <AttachMenu
                     onPhoto={()=>imgInputRef.current?.click()}
                     onFile={()=>fileInputRef.current?.click()}
-                    onLocation={()=>addMsg({type:"text",content:"📍 Joylashuv: Toshkent, O'zbekiston (41.2995° N, 69.2401° E)"})}
+                    onLocation={()=>{
+                      if(navigator.geolocation){
+                        navigator.geolocation.getCurrentPosition(
+                          pos=>addMsg({type:"text",content:`📍 Joylashuv: ${pos.coords.latitude.toFixed(5)}° N, ${pos.coords.longitude.toFixed(5)}° E`}),
+                          ()=>addMsg({type:"text",content:"📍 Joylashuv: Toshkent, O'zbekiston (41.29950° N, 69.24010° E)"})
+                        );
+                      } else {
+                        addMsg({type:"text",content:"📍 Joylashuv: Toshkent, O'zbekiston (41.29950° N, 69.24010° E)"});
+                      }
+                    }}
                     onPoll={()=>{ setShowAttach(false); setShowPollCreator(true); }}
-                    onSticker={()=>{ const s=["🎉","🔥","💯","❤️","😂","🚀","✨","👑"]; addMsg({type:"sticker",emoji:s[Math.floor(Math.random()*s.length)]}); }}
-                    onContact={()=>addMsg({type:"text",content:`👤 Kontakt kartochkasi: ${getOther(activeConv)?.displayName||"Foydalanuvchi"} (@${getOther(activeConv)?.username||"user"})`})}
-                    onGif={()=>{ const gifs=["🎭","🎪","🎡","🎢","🎠"]; addMsg({type:"sticker",emoji:gifs[Math.floor(Math.random()*gifs.length)]}); }}
+                    onSticker={()=>{ setShowAttach(false); setShowEmoji(true); }}
+                    onContact={()=>{ setShowAttach(false); setShowContactPicker(true); }}
+                    onGif={()=>{ setShowAttach(false); setShowGifPicker(true); }}
                     onClose={()=>setShowAttach(false)}
                   />
                 </motion.div>
@@ -2010,6 +2151,25 @@ export default function MessagesPage() {
               setShowPollCreator(false);
             }}
             onClose={()=>setShowPollCreator(false)}/>
+        )}
+      </AnimatePresence>
+
+      {/* ── GIF picker ───────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showGifPicker&&(
+          <GifPickerModal
+            onPick={(url)=>{ addMsg({type:"image",mediaUrl:url,content:""}); setShowGifPicker(false); }}
+            onClose={()=>setShowGifPicker(false)}/>
+        )}
+      </AnimatePresence>
+
+      {/* ── Contact picker ───────────────────────────────────────── */}
+      <AnimatePresence>
+        {showContactPicker&&(
+          <ContactPickerModal
+            users={allUsers}
+            onPick={(u)=>{ addMsg({type:"text",content:`👤 *${u.displayName}*\n@${u.username}${u.bio?"\n"+u.bio:""}`}); }}
+            onClose={()=>setShowContactPicker(false)}/>
         )}
       </AnimatePresence>
     </div>

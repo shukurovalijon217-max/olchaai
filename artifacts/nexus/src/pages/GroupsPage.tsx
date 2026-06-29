@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, ElementType } from "react";
+import { useState, useRef, useCallback, useEffect, ElementType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Lock, Plus, Search, X, ChevronLeft, ChevronRight,
@@ -105,6 +105,16 @@ const COLORS_CARD = [
 ];
 
 /* ── Types ──────────────────────────────────────────────────── */
+interface GroupMember {
+  id: number;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isVerified: boolean;
+  isPremium: boolean;
+  joinedAt: string;
+}
+
 type PrivacyLevel = "public" | "private" | "secret";
 type JoinType     = "auto" | "manual" | "invite";
 type PermLevel    = "all" | "members" | "verified" | "admins";
@@ -257,6 +267,14 @@ export default function GroupsPage() {
   const [created, setCreated] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // ── Group detail state ────────────────────────────────────────
+  type GroupRow = (typeof groups)[0];
+  const [selectedGroup, setSelectedGroup] = useState<GroupRow | null>(null);
+  const [activeDetailTab, setActiveDetailTab] = useState<"feed" | "members" | "about">("feed");
+  const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [newPostContent, setNewPostContent] = useState("");
+
   const f = <K extends keyof FormState>(key: K, val: FormState[K]) =>
     setForm(prev => ({ ...prev, [key]: val }));
 
@@ -331,6 +349,35 @@ export default function GroupsPage() {
     setShowCreate(false);
     setTimeout(() => { setStep(1); setForm(DEFAULT_FORM); setCreated(false); setCreating(false); }, 300);
   };
+
+  // ── Group detail helpers ──────────────────────────────────────
+  const openGroup = (group: GroupRow) => {
+    setSelectedGroup(group);
+    setActiveDetailTab("feed");
+    setGroupMembers([]);
+    setNewPostContent("");
+  };
+
+  const closeDetail = () => {
+    setSelectedGroup(null);
+    setGroupMembers([]);
+  };
+
+  const fetchMembers = useCallback(async (groupId: number) => {
+    setMembersLoading(true);
+    try {
+      const r = await fetch(`${API}/api/groups/${groupId}/members`, { credentials: "include" });
+      if (r.ok) setGroupMembers(await r.json());
+    } catch { /* silent */ } finally {
+      setMembersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedGroup && activeDetailTab === "members" && groupMembers.length === 0) {
+      fetchMembers(selectedGroup.id);
+    }
+  }, [selectedGroup, activeDetailTab, groupMembers.length, fetchMembers]);
 
   /* ── Step content ──────────────────────────────────────────── */
   const renderStep = () => {
@@ -766,7 +813,8 @@ export default function GroupsPage() {
             return (
               <motion.div key={group.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
-                className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/20 transition-colors">
+                onClick={() => openGroup(group)}
+                className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/20 transition-colors cursor-pointer">
                 <div className={`h-24 bg-gradient-to-br ${COLORS_CARD[i % COLORS_CARD.length]} flex items-center justify-center relative overflow-hidden`}>
                   {group.coverUrl
                     ? <img src={group.coverUrl} alt="" className="w-full h-full object-cover" />
@@ -784,7 +832,7 @@ export default function GroupsPage() {
                       <h3 className="font-bold text-foreground">{group.name}</h3>
                       <p className="text-xs text-muted-foreground">{group.category}</p>
                     </div>
-                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleJoin(group.id)}
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={e => { e.stopPropagation(); handleJoin(group.id); }}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors flex-shrink-0 ${
                         isMember
                           ? "bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
@@ -804,6 +852,215 @@ export default function GroupsPage() {
           })}
         </div>
       )}
+
+      {/* ── Group Detail Overlay ───────────────────────────────── */}
+      <AnimatePresence>
+        {selectedGroup && (
+          <motion.div
+            key="group-detail"
+            initial={{ x: "100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 28, stiffness: 280 }}
+            className="fixed inset-0 z-50 bg-background overflow-y-auto"
+          >
+            {/* Cover + header */}
+            <div className="relative">
+              <div
+                className={`h-48 w-full bg-gradient-to-br ${COLORS_CARD[selectedGroup.id % COLORS_CARD.length]} relative flex items-center justify-center overflow-hidden`}
+              >
+                {selectedGroup.coverUrl ? (
+                  <img src={selectedGroup.coverUrl} alt="" className="w-full h-full object-cover absolute inset-0" />
+                ) : (
+                  <span className="text-8xl font-black text-white/10 select-none">
+                    {selectedGroup.name[0]}
+                  </span>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/30" />
+              </div>
+
+              {/* Back button */}
+              <button
+                onClick={closeDetail}
+                className="absolute top-4 left-4 w-9 h-9 rounded-xl bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              {/* Group info overlay on cover */}
+              <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
+                <h2 className="text-xl font-bold text-white drop-shadow-lg">{selectedGroup.name}</h2>
+                <div className="flex items-center gap-3 mt-1 text-white/80 text-xs">
+                  {selectedGroup.isPrivate
+                    ? <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> Yopiq guruh</span>
+                    : <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> Ochiq guruh</span>}
+                  {selectedGroup.category && <span>• {selectedGroup.category}</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Stats + Join row */}
+            <div className="px-5 py-3 flex items-center justify-between border-b border-border bg-card/50">
+              <div className="flex items-center gap-4 text-sm">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <Users className="w-4 h-4" />
+                  <span className="font-semibold text-foreground">{(selectedGroup.membersCount ?? 0).toLocaleString()}</span>
+                  <span>a'zo</span>
+                </span>
+                <span className="text-muted-foreground/40">•</span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <MessageSquare className="w-4 h-4" />
+                  <span className="font-semibold text-foreground">{(selectedGroup.postsCount ?? 0).toLocaleString()}</span>
+                  <span>post</span>
+                </span>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={e => { e.stopPropagation(); handleJoin(selectedGroup.id); setSelectedGroup(prev => prev ? { ...prev, isMember: !prev.isMember, membersCount: prev.isMember ? prev.membersCount - 1 : prev.membersCount + 1 } : null); }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+                  (joinedIds.has(selectedGroup.id) || selectedGroup.isMember)
+                    ? "bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                    : "bg-primary text-primary-foreground hover:opacity-90"
+                }`}
+              >
+                {(joinedIds.has(selectedGroup.id) || selectedGroup.isMember) ? "Chiqish" : "Qo'shilish"}
+              </motion.button>
+            </div>
+
+            {/* Tab bar */}
+            <div className="flex border-b border-border sticky top-0 bg-background z-10">
+              {(["feed", "members", "about"] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveDetailTab(tab)}
+                  className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
+                    activeDetailTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab === "feed" ? "Lenta" : tab === "members" ? "A'zolar" : "Haqida"}
+                  {activeDetailTab === tab && (
+                    <motion.div layoutId="detail-tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            <div className="max-w-2xl mx-auto px-4 py-5">
+              {activeDetailTab === "feed" && (
+                <div className="space-y-4">
+                  {/* Post composer */}
+                  <div className="bg-card border border-border rounded-2xl p-4">
+                    <textarea
+                      value={newPostContent}
+                      onChange={e => setNewPostContent(e.target.value)}
+                      placeholder="Guruh bilan fikringizni baham ko'ring..."
+                      rows={3}
+                      className="w-full bg-transparent text-foreground text-sm placeholder:text-muted-foreground focus:outline-none resize-none"
+                    />
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><ImageIcon className="w-4 h-4" /></button>
+                        <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Mic className="w-4 h-4" /></button>
+                        <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Sparkles className="w-4 h-4" /></button>
+                      </div>
+                      <button
+                        disabled={!newPostContent.trim()}
+                        onClick={() => setNewPostContent("")}
+                        className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity"
+                      >
+                        Yuborish
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Empty feed state */}
+                  <div className="text-center py-16 text-muted-foreground">
+                    <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
+                      <MessageSquare className="w-9 h-9 opacity-30" />
+                    </div>
+                    <p className="font-semibold text-foreground mb-1">Hali postlar yo'q</p>
+                    <p className="text-sm">Bu guruhda birinchi bo'lib post yozing!</p>
+                  </div>
+                </div>
+              )}
+
+              {activeDetailTab === "members" && (
+                <div>
+                  {membersLoading ? (
+                    <div className="space-y-3">
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-3 animate-pulse">
+                          <div className="w-11 h-11 rounded-full bg-muted flex-shrink-0" />
+                          <div className="flex-1 space-y-1.5">
+                            <div className="h-3 bg-muted rounded w-1/3" />
+                            <div className="h-2 bg-muted rounded w-1/4" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : groupMembers.length === 0 ? (
+                    <div className="text-center py-16 text-muted-foreground">
+                      <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                      <p className="font-semibold text-foreground mb-1">A'zolar yo'q</p>
+                      <p className="text-sm">Guruhga qo'shiling va do'stlarni taklif qiling!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {groupMembers.map((member, i) => (
+                        <motion.div key={member.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.04 }}
+                          className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/50 transition-colors">
+                          <div className="w-11 h-11 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground">
+                            {member.avatarUrl
+                              ? <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" />
+                              : <span className="font-bold text-base">{member.displayName[0]?.toUpperCase()}</span>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-semibold text-sm text-foreground truncate">{member.displayName}</p>
+                              {member.isVerified && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                              {member.isPremium && <Crown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                            </div>
+                            <p className="text-xs text-muted-foreground">@{member.username}</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeDetailTab === "about" && (
+                <div className="space-y-5">
+                  {selectedGroup.description && (
+                    <div className="bg-card border border-border rounded-2xl p-4">
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Tavsif</p>
+                      <p className="text-sm text-foreground leading-relaxed">{selectedGroup.description}</p>
+                    </div>
+                  )}
+
+                  <div className="bg-card border border-border rounded-2xl divide-y divide-border">
+                    {[
+                      { icon: Globe, label: "Maxfiylik", value: selectedGroup.isPrivate ? "Yopiq guruh" : "Ochiq guruh" },
+                      { icon: Hash, label: "Kategoriya", value: selectedGroup.category || "Belgilanmagan" },
+                      { icon: Users, label: "A'zolar soni", value: (selectedGroup.membersCount ?? 0).toLocaleString() },
+                      { icon: MessageSquare, label: "Postlar soni", value: (selectedGroup.postsCount ?? 0).toLocaleString() },
+                      { icon: CalendarDays, label: "Yaratilgan", value: selectedGroup.createdAt ? new Date(selectedGroup.createdAt).toLocaleDateString("uz-UZ", { year: "numeric", month: "long", day: "numeric" }) : "—" },
+                    ].map(({ icon: Icon, label, value }) => (
+                      <div key={label} className="flex items-center gap-3 px-4 py-3">
+                        <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground flex-1">{label}</span>
+                        <span className="text-sm font-semibold text-foreground">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Create Group Modal ─────────────────────────────────── */}
       <AnimatePresence>

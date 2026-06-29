@@ -3322,6 +3322,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const [temperature, setTemperature] = useState(0);
   const [vignette, setVignette]     = useState(0);
   const [drafts, setDrafts]         = useState(0);
+  const [audioOn, setAudioOn]       = useState(false);
 
   /* ══ STUDIO MEGA (50+) ══ */
   const [sharpness,    setSharpness]    = useState(0);
@@ -3591,8 +3592,21 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       <div style={{flex:"0 0 220px",position:"relative",background:"#000",
         width:"100%",overflow:"hidden"}}>
         {videoSrc ? (
-          <video ref={videoRef} src={videoSrc} autoPlay loop muted playsInline
-            style={{width:"100%",height:"100%",objectFit:"cover",filter:appliedCss}}/>
+          <>
+            <video ref={videoRef} src={videoSrc} autoPlay loop muted={!audioOn} playsInline
+              style={{width:"100%",height:"100%",objectFit:"cover",filter:appliedCss}}/>
+            {/* Audio toggle — top-right of preview, does NOT overlap waveform */}
+            <button onClick={()=>setAudioOn(a=>!a)}
+              style={{position:"absolute",top:8,right:8,width:32,height:32,borderRadius:"50%",
+                background:audioOn?"rgba(0,229,255,0.3)":"rgba(0,0,0,0.55)",
+                backdropFilter:"blur(8px)",border:`1px solid ${audioOn?"rgba(0,229,255,0.6)":"rgba(255,255,255,0.15)"}`,
+                display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",
+                boxShadow:audioOn?"0 0 10px rgba(0,229,255,0.5)":"none"}}>
+              {audioOn
+                ? <Volume2 style={{width:14,height:14,color:"#00e5ff"}}/>
+                : <VolumeX style={{width:14,height:14,color:"rgba(255,255,255,0.5)"}}/>}
+            </button>
+          </>
         ) : (
           <motion.div whileTap={{scale:0.97}} onClick={()=>fileRef.current?.click()}
             style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",

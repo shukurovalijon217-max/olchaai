@@ -1019,18 +1019,33 @@ export default function MessagesPage() {
   const filesInChat = displayMsgs.filter(m=>m.type==="file");
 
   // Chat area themes
-  const BG_THEMES: Record<string,React.CSSProperties> = {
-    glass:   {background:"rgba(var(--background-rgb,15,12,28),0.45)",backdropFilter:"blur(20px)"},
-    dark:    {background:"linear-gradient(135deg,#0d0d0d 0%,#1a1a2e 100%)"},
-    purple:  {background:"linear-gradient(135deg,#1e0533 0%,#0d1b4b 100%)"},
-    blue:    {background:"linear-gradient(135deg,#020818 0%,#0c2340 100%)"},
-    sunset:  {background:"linear-gradient(135deg,#1a0a00 0%,#2d0b2e 100%)"},
-    emerald: {background:"linear-gradient(135deg,#001a12 0%,#002a1a 100%)"},
-    rose:    {background:"linear-gradient(135deg,#1a001a 0%,#2a0010 100%)"},
-    dots:    {background:"radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px)",backgroundSize:"24px 24px",backgroundColor:"#0f0c1c"},
-    grid:    {backgroundImage:"linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px)",backgroundSize:"32px 32px",backgroundColor:"#0a0a1a"},
-    aurora:  {background:"linear-gradient(135deg,#0d1117 0%,#1a0533 30%,#0d2b4b 60%,#001a12 100%)"},
-    carbon:  {backgroundImage:"repeating-linear-gradient(45deg,#1a1a1a 0,#1a1a1a 1px,#0d0d0d 0,#0d0d0d 50%)",backgroundSize:"6px 6px"},
+  const BG_THEMES: Record<string,{style:React.CSSProperties;label:string;emoji:string}> = {
+    white_glass: { emoji:"🪟", label:"Oq shisha",  style:{ background:"rgba(255,255,255,0.18)", backdropFilter:"blur(28px) saturate(180%)", backgroundColor:"rgba(235,240,255,0.55)", backgroundImage:"radial-gradient(ellipse at top,rgba(200,210,255,0.4) 0%,transparent 70%)" } },
+    glass:       { emoji:"🫧", label:"Qora shisha", style:{ background:"rgba(10,8,25,0.55)",   backdropFilter:"blur(24px) saturate(160%)", backgroundImage:"radial-gradient(ellipse at top,rgba(100,60,200,0.15) 0%,transparent 70%)" } },
+    dark:        { emoji:"🌑", label:"Qora",        style:{ background:"linear-gradient(160deg,#08080f 0%,#12101e 50%,#0a0a0f 100%)" } },
+    midnight:    { emoji:"🌌", label:"Yarim tun",   style:{ background:"linear-gradient(170deg,#000510 0%,#020818 40%,#050b22 70%,#000810 100%)", backgroundImage:"radial-gradient(ellipse at 20% 20%,rgba(59,130,246,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(139,92,246,0.08) 0%,transparent 60%)" } },
+    galaxy:      { emoji:"🌠", label:"Galaktika",   style:{ background:"linear-gradient(135deg,#02000a 0%,#0d0520 35%,#15083a 65%,#020010 100%)", backgroundImage:"radial-gradient(ellipse at 30% 40%,rgba(139,92,246,0.25) 0%,transparent 55%),radial-gradient(ellipse at 75% 60%,rgba(59,130,246,0.15) 0%,transparent 50%)" } },
+    purple:      { emoji:"💜", label:"Binafsha",    style:{ background:"linear-gradient(145deg,#1a0030 0%,#2d1060 40%,#1a0840 70%,#0d0525 100%)", backgroundImage:"radial-gradient(ellipse at 60% 30%,rgba(167,139,250,0.2) 0%,transparent 60%)" } },
+    violet:      { emoji:"🔮", label:"Violet",      style:{ background:"linear-gradient(135deg,#0f0020 0%,#250050 30%,#180038 60%,#0a001a 100%)", backgroundImage:"radial-gradient(circle at 50% 0%,rgba(192,132,252,0.3) 0%,transparent 50%),radial-gradient(circle at 80% 100%,rgba(99,102,241,0.2) 0%,transparent 50%)" } },
+    aurora:      { emoji:"🌌", label:"Aurora",      style:{ background:"linear-gradient(160deg,#050d12 0%,#0a1a2e 25%,#0e1040 50%,#151a0a 75%,#0a1008 100%)", backgroundImage:"radial-gradient(ellipse at 20% 30%,rgba(34,211,238,0.18) 0%,transparent 50%),radial-gradient(ellipse at 80% 60%,rgba(139,92,246,0.15) 0%,transparent 50%),radial-gradient(ellipse at 50% 90%,rgba(52,211,153,0.12) 0%,transparent 50%)" } },
+    ocean:       { emoji:"🌊", label:"Okean",       style:{ background:"linear-gradient(170deg,#000d1a 0%,#001a35 30%,#00253d 60%,#001520 100%)", backgroundImage:"radial-gradient(ellipse at 30% 50%,rgba(6,182,212,0.2) 0%,transparent 60%),radial-gradient(ellipse at 70% 20%,rgba(59,130,246,0.12) 0%,transparent 50%)" } },
+    blue:        { emoji:"💙", label:"Ko'k",        style:{ background:"linear-gradient(145deg,#010c1f 0%,#021533 40%,#051a40 70%,#010a1a 100%)", backgroundImage:"radial-gradient(ellipse at 50% 60%,rgba(59,130,246,0.2) 0%,transparent 55%)" } },
+    teal:        { emoji:"🩵", label:"To'q yashil", style:{ background:"linear-gradient(145deg,#001415 0%,#002a2c 40%,#003030 70%,#001010 100%)", backgroundImage:"radial-gradient(ellipse at 40% 40%,rgba(20,184,166,0.25) 0%,transparent 60%)" } },
+    emerald:     { emoji:"💚", label:"Zumrad",      style:{ background:"linear-gradient(145deg,#001208 0%,#002818 40%,#003020 70%,#000f05 100%)", backgroundImage:"radial-gradient(ellipse at 35% 50%,rgba(52,211,153,0.2) 0%,transparent 60%)" } },
+    forest:      { emoji:"🌲", label:"O'rmon",      style:{ background:"linear-gradient(160deg,#030d05 0%,#081a08 30%,#0d2510 60%,#051005 100%)", backgroundImage:"radial-gradient(ellipse at 60% 40%,rgba(74,222,128,0.12) 0%,transparent 55%),radial-gradient(ellipse at 20% 80%,rgba(21,128,61,0.15) 0%,transparent 50%)" } },
+    sunset:      { emoji:"🌅", label:"Quyosh botishi",style:{ background:"linear-gradient(160deg,#150800 0%,#2d1200 25%,#3d1000 50%,#250828 75%,#150010 100%)", backgroundImage:"radial-gradient(ellipse at 60% 20%,rgba(251,146,60,0.25) 0%,transparent 55%),radial-gradient(ellipse at 30% 70%,rgba(192,38,211,0.2) 0%,transparent 55%)" } },
+    fire:        { emoji:"🔥", label:"Olov",        style:{ background:"linear-gradient(160deg,#1a0500 0%,#300a00 30%,#3d0f00 55%,#200500 80%,#100200 100%)", backgroundImage:"radial-gradient(ellipse at 50% 30%,rgba(249,115,22,0.3) 0%,transparent 55%),radial-gradient(ellipse at 30% 70%,rgba(239,68,68,0.2) 0%,transparent 50%)" } },
+    rose:        { emoji:"🌹", label:"Qizil atirgul",style:{ background:"linear-gradient(145deg,#180010 0%,#2d0020 40%,#350828 70%,#180010 100%)", backgroundImage:"radial-gradient(ellipse at 50% 40%,rgba(244,63,94,0.2) 0%,transparent 60%)" } },
+    cherry:      { emoji:"🌸", label:"Gilos",       style:{ background:"linear-gradient(145deg,#1a0018 0%,#2d0030 40%,#1e0838 70%,#0d0018 100%)", backgroundImage:"radial-gradient(ellipse at 40% 30%,rgba(236,72,153,0.22) 0%,transparent 55%),radial-gradient(ellipse at 70% 70%,rgba(139,92,246,0.18) 0%,transparent 55%)" } },
+    pastel:      { emoji:"🎀", label:"Pastel",      style:{ background:"linear-gradient(145deg,#16101e 0%,#1e1428 40%,#181028 70%,#100c1e 100%)", backgroundImage:"radial-gradient(ellipse at 30% 30%,rgba(244,114,182,0.2) 0%,transparent 55%),radial-gradient(ellipse at 70% 70%,rgba(167,139,250,0.2) 0%,transparent 55%),radial-gradient(ellipse at 60% 20%,rgba(125,211,252,0.12) 0%,transparent 45%)" } },
+    neon:        { emoji:"⚡", label:"Neon",        style:{ background:"linear-gradient(145deg,#050015 0%,#0a001f 40%,#080025 70%,#030010 100%)", backgroundImage:"radial-gradient(ellipse at 25% 35%,rgba(0,255,200,0.15) 0%,transparent 50%),radial-gradient(ellipse at 75% 65%,rgba(255,0,200,0.15) 0%,transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(100,50,255,0.1) 0%,transparent 60%)" } },
+    sand:        { emoji:"🏜️", label:"Cho'l",       style:{ background:"linear-gradient(160deg,#120d05 0%,#1e1508 30%,#261a0a 60%,#150e05 100%)", backgroundImage:"radial-gradient(ellipse at 50% 30%,rgba(217,119,6,0.2) 0%,transparent 55%),radial-gradient(ellipse at 20% 70%,rgba(180,83,9,0.12) 0%,transparent 50%)" } },
+    gray:        { emoji:"🩶", label:"Kulrang",     style:{ background:"linear-gradient(145deg,#0d0d0d 0%,#181818 40%,#1a1a1a 70%,#0d0d0d 100%)" } },
+    dots:        { emoji:"🔵", label:"Nuqtalar",    style:{ background:"radial-gradient(circle,rgba(139,92,246,0.12) 1.5px,transparent 1.5px)", backgroundSize:"22px 22px", backgroundColor:"#09070f", backgroundImage:"radial-gradient(ellipse at 50% 50%,rgba(109,40,217,0.08) 0%,transparent 70%)" } },
+    hex:         { emoji:"⬡",  label:"Olti burchak",style:{ backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(139,92,246,0.06) 27px,rgba(139,92,246,0.06) 28px),repeating-linear-gradient(60deg,transparent,transparent 27px,rgba(139,92,246,0.06) 27px,rgba(139,92,246,0.06) 28px),repeating-linear-gradient(120deg,transparent,transparent 27px,rgba(139,92,246,0.06) 27px,rgba(139,92,246,0.06) 28px)", backgroundColor:"#08060e" } },
+    grid:        { emoji:"▦",  label:"To'r",        style:{ backgroundImage:"linear-gradient(rgba(139,92,246,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.06) 1px,transparent 1px)", backgroundSize:"32px 32px", backgroundColor:"#07060d" } },
+    carbon:      { emoji:"⬛", label:"Carbon",      style:{ backgroundImage:"repeating-linear-gradient(45deg,#111111 0,#111111 1px,#0a0a0a 0,#0a0a0a 50%)", backgroundSize:"6px 6px" } },
+    linen:       { emoji:"📜", label:"Keten",       style:{ backgroundImage:"repeating-linear-gradient(0deg,rgba(255,255,255,0.015) 0px,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 4px),repeating-linear-gradient(90deg,rgba(255,255,255,0.01) 0px,rgba(255,255,255,0.01) 1px,transparent 1px,transparent 6px)", backgroundColor:"#0e0b07", background:"linear-gradient(145deg,#0e0b07,#14100a)" } },
   };
 
   return (
@@ -1314,17 +1329,39 @@ export default function MessagesPage() {
                 className="absolute inset-0 z-40 bg-background flex flex-col">
                 <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
                   <button onClick={()=>setShowBgPicker(false)} className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center"><ChevronLeft className="w-5 h-5"/></button>
-                  <span className="font-semibold">Chat foni</span>
+                  <span className="font-semibold">Suhbat foni</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{Object.keys(BG_THEMES).length} ta fon</span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4">
-                  <div className="grid grid-cols-3 gap-3">
-                    {Object.entries(BG_THEMES).map(([id,style])=>(
-                      <button key={id} onClick={()=>{ setChatBgId(id); localStorage.setItem("olcha_chat_bg",id); setShowBgPicker(false); }}
-                        className={`aspect-square rounded-2xl border-2 transition-all ${chatBgId===id?"border-primary scale-95":"border-transparent hover:border-border"}`}
-                        style={{...style,minHeight:80}}>
-                        <span className="text-[10px] text-white/60 capitalize">{id}</span>
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(BG_THEMES).map(([id,theme])=>{
+                      const isActive = chatBgId===id;
+                      return (
+                        <button key={id}
+                          onClick={()=>{ setChatBgId(id); localStorage.setItem("olcha_chat_bg",id); setShowBgPicker(false); }}
+                          className={`relative rounded-2xl overflow-hidden border-2 transition-all ${isActive?"border-primary":"border-transparent hover:border-border/60"}`}
+                          style={{height:110}}>
+                          {/* Background preview */}
+                          <div className="absolute inset-0" style={theme.style}/>
+                          {/* Mini chat bubbles preview */}
+                          <div className="absolute inset-0 flex flex-col justify-center px-2 gap-1.5">
+                            <div className="self-end">
+                              <div className="bg-primary text-[8px] text-primary-foreground px-2 py-1 rounded-xl rounded-br-sm max-w-[70px]">Salom!</div>
+                            </div>
+                            <div className="self-start">
+                              <div className={`text-[8px] px-2 py-1 rounded-xl rounded-bl-sm max-w-[70px] ${id==="white_glass"?"bg-black/10 text-gray-800":"bg-white/10 text-white"}`}>Yaxshi!</div>
+                            </div>
+                          </div>
+                          {/* Label */}
+                          <div className="absolute bottom-0 inset-x-0 px-2 py-1.5 flex items-center gap-1"
+                            style={{background:id==="white_glass"?"rgba(255,255,255,0.4)":"rgba(0,0,0,0.5)",backdropFilter:"blur(4px)"}}>
+                            <span className="text-sm leading-none">{theme.emoji}</span>
+                            <span className={`text-[11px] font-semibold truncate ${id==="white_glass"?"text-gray-800":"text-white"}`}>{theme.label}</span>
+                            {isActive&&<div className="ml-auto w-4 h-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><Check className="w-2.5 h-2.5 text-primary-foreground"/></div>}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </motion.div>
@@ -1610,7 +1647,7 @@ export default function MessagesPage() {
           {/* Messages area */}
           <div ref={listRef} onScroll={handleScroll}
             className="flex-1 overflow-y-auto px-4 py-4 space-y-3 relative"
-            style={BG_THEMES[chatBgId]??BG_THEMES.glass}>
+            style={BG_THEMES[chatBgId]?.style??BG_THEMES.glass.style}>
             {displayMsgs.map((msg,i)=>{
               const isMe = msg.senderId===ME_ID;
               const prevMsg = displayMsgs[i-1];

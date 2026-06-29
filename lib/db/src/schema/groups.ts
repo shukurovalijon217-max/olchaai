@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -13,6 +13,13 @@ export const groupsTable = pgTable("groups", {
   postsCount: integer("posts_count").notNull().default(0),
   isPrivate: boolean("is_private").notNull().default(false),
   category: text("category").default("general"),
+  privacyLevel: text("privacy_level").notNull().default("public"),
+  joinType: text("join_type").notNull().default("auto"),
+  groupType: text("group_type").default("community"),
+  icon: text("icon").default("🌟"),
+  themeColor: text("theme_color").default("#7857ff"),
+  maxMembers: integer("max_members").default(0),
+  settings: jsonb("settings"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

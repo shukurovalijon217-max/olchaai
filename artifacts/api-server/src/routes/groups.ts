@@ -82,8 +82,35 @@ router.get("/groups/:id/posts", async (req, res) => {
 
 router.post("/groups", async (req, res) => {
   try {
-    const { name, description, avatarUrl, isPrivate, category } = req.body;
-    const [group] = await db.insert(groupsTable).values({ name, description, avatarUrl, isPrivate: isPrivate || false, category }).returning();
+    const {
+      name, description, coverUrl, avatarUrl, isPrivate, category,
+      privacyLevel, joinType, groupType, icon, themeColor, maxMembers,
+      settings,
+    } = req.body;
+
+    if (!name?.trim() || !description?.trim()) {
+      return res.status(400).json({ error: "name and description are required" });
+    }
+
+    const resolvedPrivacyLevel = privacyLevel || (isPrivate ? "private" : "public");
+    const resolvedIsPrivate = resolvedPrivacyLevel !== "public";
+
+    const [group] = await db.insert(groupsTable).values({
+      name: name.trim(),
+      description: description.trim(),
+      coverUrl: coverUrl || null,
+      avatarUrl: avatarUrl || null,
+      isPrivate: resolvedIsPrivate,
+      category: category || "general",
+      privacyLevel: resolvedPrivacyLevel,
+      joinType: joinType || "auto",
+      groupType: groupType || "community",
+      icon: icon || "🌟",
+      themeColor: themeColor || "#7857ff",
+      maxMembers: maxMembers ?? 0,
+      settings: settings ?? null,
+    }).returning();
+
     res.status(201).json({ ...group, isMember: false });
   } catch (err) {
     req.log.error(err);

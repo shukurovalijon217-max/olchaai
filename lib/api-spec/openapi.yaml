@@ -1742,6 +1742,13 @@ components:
         isMember: { type: boolean }
         category: { type: string }
         createdAt: { type: string }
+        privacyLevel: { type: string }
+        joinType: { type: string }
+        groupType: { type: string }
+        icon: { type: string }
+        themeColor: { type: string }
+        maxMembers: { type: integer }
+        settings: { type: object }
 
     GroupInput:
       type: object
@@ -1749,9 +1756,17 @@ components:
       properties:
         name: { type: string }
         description: { type: string }
+        coverUrl: { type: string }
         avatarUrl: { type: string }
         isPrivate: { type: boolean }
+        privacyLevel: { type: string }
+        joinType: { type: string }
         category: { type: string }
+        groupType: { type: string }
+        icon: { type: string }
+        themeColor: { type: string }
+        maxMembers: { type: integer }
+        settings: { type: object }
 
     JoinResult:
       type: object

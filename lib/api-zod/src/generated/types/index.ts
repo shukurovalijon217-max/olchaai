@@ -45,6 +45,8 @@ export * from './getAiSuggestionsParams';
 export * from './giftCatalogItem';
 export * from './group';
 export * from './groupInput';
+export * from './groupInputSettings';
+export * from './groupSettings';
 export * from './healthStatus';
 export * from './joinResult';
 export * from './likeResult';

@@ -615,7 +615,16 @@ export const ListGroupsResponseItem = zod.object({
   "isPrivate": zod.boolean(),
   "isMember": zod.boolean().optional(),
   "category": zod.string().optional(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "privacyLevel": zod.string().optional(),
+  "joinType": zod.string().optional(),
+  "groupType": zod.string().optional(),
+  "icon": zod.string().optional(),
+  "themeColor": zod.string().optional(),
+  "maxMembers": zod.number().optional(),
+  "settings": zod.object({
+
+}).passthrough().optional()
 })
 export const ListGroupsResponse = zod.array(ListGroupsResponseItem)
 
@@ -626,9 +635,19 @@ export const ListGroupsResponse = zod.array(ListGroupsResponseItem)
 export const CreateGroupBody = zod.object({
   "name": zod.string(),
   "description": zod.string(),
+  "coverUrl": zod.string().optional(),
   "avatarUrl": zod.string().optional(),
   "isPrivate": zod.boolean().optional(),
-  "category": zod.string().optional()
+  "privacyLevel": zod.string().optional(),
+  "joinType": zod.string().optional(),
+  "category": zod.string().optional(),
+  "groupType": zod.string().optional(),
+  "icon": zod.string().optional(),
+  "themeColor": zod.string().optional(),
+  "maxMembers": zod.number().optional(),
+  "settings": zod.object({
+
+}).passthrough().optional()
 })
 
 
@@ -848,7 +867,16 @@ export const GetAiSuggestionsResponse = zod.object({
   "isPrivate": zod.boolean(),
   "isMember": zod.boolean().optional(),
   "category": zod.string().optional(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "privacyLevel": zod.string().optional(),
+  "joinType": zod.string().optional(),
+  "groupType": zod.string().optional(),
+  "icon": zod.string().optional(),
+  "themeColor": zod.string().optional(),
+  "maxMembers": zod.number().optional(),
+  "settings": zod.object({
+
+}).passthrough().optional()
 })),
   "topics": zod.array(zod.string())
 })

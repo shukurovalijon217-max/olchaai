@@ -225,6 +225,8 @@ export interface MessageInput {
   mediaUrl?: string;
 }
 
+export type GroupSettings = { [key: string]: unknown };
+
 export interface Group {
   id: number;
   name: string;
@@ -239,14 +241,31 @@ export interface Group {
   isMember?: boolean;
   category?: string;
   createdAt: string;
+  privacyLevel?: string;
+  joinType?: string;
+  groupType?: string;
+  icon?: string;
+  themeColor?: string;
+  maxMembers?: number;
+  settings?: GroupSettings;
 }
+
+export type GroupInputSettings = { [key: string]: unknown };
 
 export interface GroupInput {
   name: string;
   description: string;
+  coverUrl?: string;
   avatarUrl?: string;
   isPrivate?: boolean;
+  privacyLevel?: string;
+  joinType?: string;
   category?: string;
+  groupType?: string;
+  icon?: string;
+  themeColor?: string;
+  maxMembers?: number;
+  settings?: GroupInputSettings;
 }
 
 export interface JoinResult {

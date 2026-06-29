@@ -310,14 +310,73 @@ export default function GroupsPage() {
     if (!form.name.trim() || !form.description.trim()) return;
     setCreating(true);
     try {
-      const coverUrl = await uploadCover();
+      const uploadedCoverUrl = await uploadCover();
+
+      const settings = {
+        privacy: {
+          ageRestriction: form.ageRestriction,
+          showMemberList: form.showMemberList,
+          showOnlineMembers: form.showOnlineMembers,
+          searchDiscovery: form.searchDiscovery,
+          requireApproval: form.requireApproval,
+        },
+        permissions: {
+          post: form.postPermission,
+          comment: form.commentPermission,
+          media: form.mediaPermission,
+          invite: form.invitePermission,
+          event: form.eventPermission,
+          poll: form.pollPermission,
+          externalLinks: form.allowExternalLinks,
+          anonymousPosts: form.allowAnonymousPosts,
+          crossPosting: form.allowCrossPosting,
+        },
+        features: {
+          polls: form.featPolls,
+          events: form.featEvents,
+          voiceRooms: form.featVoiceRooms,
+          liveStreams: form.featLiveStreams,
+          marketplace: form.featMarketplace,
+          badges: form.featBadges,
+          pinnedPosts: form.featPinnedPosts,
+          fileSharing: form.featFileSharing,
+          aiModeration: form.featAiModeration,
+          weeklyDigest: form.featWeeklyDigest,
+          announcements: form.featAnnouncements,
+          autoTranslate: form.featAutoTranslate,
+          codeSnippets: form.featCodeSnippets,
+          scheduledPosts: form.featScheduledPosts,
+        },
+        extra: {
+          missionStatement: form.missionStatement,
+          welcomeMessage: form.welcomeMessage,
+          rules: form.rules.filter(r => r.trim()),
+          tags: form.tags.filter(t => t.trim()),
+          websiteUrl: form.websiteUrl,
+          contactEmail: form.contactEmail,
+          telegramLink: form.telegramLink,
+          instagramLink: form.instagramLink,
+          joinQuestion1: form.joinQuestion1,
+          joinQuestion2: form.joinQuestion2,
+          joinQuestion3: form.joinQuestion3,
+        },
+      };
+
       create.mutate(
         {
           data: {
             name: form.name.trim(),
-            description: `${form.description.trim()}\n\n${form.about.trim()}`.trim(),
-            avatarUrl: coverUrl || undefined,
+            description: `${form.description.trim()}${form.about.trim() ? `\n\n${form.about.trim()}` : ""}`,
+            coverUrl: uploadedCoverUrl || undefined,
             isPrivate: form.privacy !== "public",
+            privacyLevel: form.privacy,
+            joinType: form.joinType,
+            category: form.category || undefined,
+            groupType: form.groupType || undefined,
+            icon: form.icon,
+            themeColor: form.themeColor,
+            maxMembers: form.maxMembers || undefined,
+            settings,
           },
         },
         {

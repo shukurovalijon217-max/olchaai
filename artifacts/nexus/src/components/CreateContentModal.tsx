@@ -3591,17 +3591,42 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       {/* BASIC SECTION */}
                       {otubeSection === "basic" && (<div className="space-y-4">
 
-                        {/* Video Upload */}
-                        <div className="rounded-2xl overflow-hidden" style={{border:"2px dashed rgba(52,211,153,0.3)", background:"rgba(5,150,105,0.06)"}}>
-                          {otubePreview ? (
-                            <div className="relative">
-                              <video src={otubePreview} className="w-full rounded-2xl" style={{maxHeight:220,objectFit:"cover"}} controls />
-                              <button onClick={()=>{setOtubeFile(null);setOtubePreview("");}}
-                                className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center" style={{background:"rgba(0,0,0,0.7)"}}>
-                                <X className="w-3.5 h-3.5 text-white"/>
+                        {/* Video Upload — TikTok-style vertical player */}
+                        {otubePreview ? (
+                          <div className="space-y-2">
+                            {/* Portrait video preview */}
+                            <div className="relative rounded-2xl overflow-hidden mx-auto"
+                              style={{aspectRatio:"9/16",maxHeight:340,maxWidth:192,background:"#000",
+                                boxShadow:"0 0 0 1.5px rgba(52,211,153,0.3), 0 8px 32px rgba(0,0,0,0.6)"}}>
+                              <video src={otubePreview}
+                                className="w-full h-full"
+                                style={{objectFit:"contain"}}
+                                controls
+                                playsInline/>
+                              {/* Format badge */}
+                              <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold"
+                                style={{background:"rgba(5,150,105,0.85)",color:"white",backdropFilter:"blur(6px)"}}>
+                                OTube
+                              </div>
+                            </div>
+                            {/* File info + remove — separate row, no overlap */}
+                            <div className="flex items-center gap-2 px-1">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-bold text-white/70 truncate">{otubeFile?.name}</p>
+                                <p className="text-[9px] text-white/30">
+                                  {otubeFile ? `${(otubeFile.size/1024/1024).toFixed(1)} MB` : ""}
+                                  {otubeUploadResult ? " · ✓ Yuklandi" : otubeUploadProg>0 ? ` · ${otubeUploadProg}%` : ""}
+                                </p>
+                              </div>
+                              <button onClick={()=>{setOtubeFile(null);setOtubePreview("");setOtubeUploadResult(null);setOtubeUploadProg(0);}}
+                                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold"
+                                style={{background:"rgba(255,59,48,0.12)",border:"1px solid rgba(255,59,48,0.3)",color:"#ff3b30"}}>
+                                <X className="w-3 h-3"/>Olib tashlash
                               </button>
                             </div>
-                          ) : (
+                          </div>
+                        ) : (
+                          <div className="rounded-2xl overflow-hidden" style={{border:"2px dashed rgba(52,211,153,0.3)", background:"rgba(5,150,105,0.06)"}}>
                             <label className="flex flex-col items-center justify-center py-10 cursor-pointer gap-3">
                               <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{background:"linear-gradient(135deg,#059669,#34d399)"}}>
                                 <Tv className="w-7 h-7 text-white"/>
@@ -3616,8 +3641,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <input type="file" accept="video/*" className="hidden"
                                 onChange={e=>{const f=e.target.files?.[0];if(f){setOtubeFile(f);setOtubePreview(URL.createObjectURL(f));setOtubeUploadResult(null);setOtubeUploadProg(0);upOtube(f);}e.target.value="";}}/>
                             </label>
-                          )}
-                        </div>
+                          </div>
+                        )}
 
                         {/* Title */}
                         <div>

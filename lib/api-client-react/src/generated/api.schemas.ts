@@ -723,6 +723,18 @@ export type ListNotificationsParams = {
 unread?: boolean;
 };
 
+export type MarkAllNotificationsRead200 = {
+  updated?: number;
+};
+
+export type ClearAllNotifications200 = {
+  deleted?: number;
+};
+
+export type DeleteNotification200 = {
+  ok?: boolean;
+};
+
 export type GetAiFeedParams = {
 userId?: number;
 };

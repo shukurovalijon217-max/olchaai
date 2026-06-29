@@ -72,7 +72,7 @@ function MuniMessage({ msg, streaming }: { msg: Msg; streaming: boolean }) {
 }
 
 export default function MuniAIPage() {
-  const { t, i18n } = useTranslation("jarvis");
+  const { t, i18n } = useTranslation();
   const [mode, setMode] = useState<Mode>("wisdom");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -173,7 +173,7 @@ export default function MuniAIPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-amber-100 tracking-wide">Muni AI</h1>
-                <p className="text-xs text-amber-400/60">{t("subtitle")}</p>
+                <p className="text-xs text-amber-400/60">{t("muni.subtitle")}</p>
               </div>
             </div>
             <button onClick={clearChat} className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors">
@@ -202,7 +202,7 @@ export default function MuniAIPage() {
                   : "bg-white/5 border border-white/10 text-white/50 hover:text-white/70"
               }`}
             >
-              <Brain className="w-3.5 h-3.5" /> {t("mode_wisdom")}
+              <Brain className="w-3.5 h-3.5" /> {t("muni.mode_wisdom")}
             </button>
             <button
               onClick={() => setMode("trader")}
@@ -212,7 +212,7 @@ export default function MuniAIPage() {
                   : "bg-white/5 border border-white/10 text-white/50 hover:text-white/70"
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5" /> {t("mode_trader")}
+              <TrendingUp className="w-3.5 h-3.5" /> {t("muni.mode_trader")}
             </button>
           </div>
         </div>
@@ -235,7 +235,7 @@ export default function MuniAIPage() {
                 </div>
                 <div>
                   <p className="text-white/40 text-sm">
-                    {mode === "wisdom" ? t("wisdom_hint") : t("trader_hint")}
+                    {mode === "wisdom" ? t("muni.wisdom_hint") : t("muni.trader_hint")}
                   </p>
                 </div>
               </motion.div>
@@ -259,7 +259,7 @@ export default function MuniAIPage() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-            placeholder={mode === "wisdom" ? t("wisdom_ph") : t("trader_ph")}
+            placeholder={mode === "wisdom" ? t("muni.wisdom_ph") : t("muni.trader_ph")}
             className="flex-1 bg-white/5 border border-amber-900/30 focus:border-amber-500/40 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none transition-colors"
           />
           <button

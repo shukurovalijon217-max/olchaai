@@ -418,21 +418,6 @@ export default function FloatingAvatar() {
               }}
             />
 
-            {/* Swipe-right hint label — shows briefly on first render */}
-            <motion.div
-              initial={{ opacity: 0.7, x: 0 }}
-              animate={{ opacity: 0, x: -8 }}
-              transition={{ delay: 2.5, duration: 1.2, ease: "easeOut" }}
-              style={{
-                position: "absolute", right: SIZE + 6, top: "50%", transform: "translateY(-50%)",
-                whiteSpace: "nowrap", fontSize: 9, fontWeight: 700,
-                color: "rgba(200,80,255,0.8)", pointerEvents: "none",
-                background: "rgba(0,0,0,0.5)", borderRadius: 6,
-                padding: "2px 6px", backdropFilter: "blur(6px)",
-              }}
-            >
-              ← yashirish
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

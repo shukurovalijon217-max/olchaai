@@ -62,7 +62,7 @@ interface LocalMsg {
 
 /* ── Emoji sets ─────────────────────────────────────────────── */
 const EMOJI_CATS: Record<string, string[]> = {
-  "😊": ["😊","😂","🥹","😅","😆","🤣","😁","😄","😃","😀","🙂","😏","😉","🥰","😍","🤩","😘","😗","😚","😙","🥲","😇","🤗","🤭","🫢","🫡","🤫","🤔","🤐","😐","😑","😶","😏","😒","🙄","😬","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖"],
+  "😊": ["😊","😂","🥹","😅","😆","🤣","😁","😄","😃","😀","🙂","😉","🥰","😍","🤩","😘","😗","😚","😙","🥲","😇","🤗","🤭","🫢","🫡","🤫","🤔","🤐","😐","😑","😶","😏","😒","🙄","😬","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖"],
   "👍": ["👍","👎","👊","✊","🤛","🤜","🤞","✌️","🤟","🤘","🤙","👋","🤚","🖐","✋","🖖","👌","🤌","🤏","🫰","🫵","🫱","🫲","🫳","🫴","👈","👉","👆","☝️","👇","🙌","🙏","🫶","👏","🤝","💅","🤳","💪"],
   "❤️": ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☯️","🕉️","🔯","✡️","🛐"],
   "🎉": ["🎉","🎊","🎈","🎁","🎀","🎗","🎟","🎫","🏆","🥇","🥈","🥉","🏅","🎖","🎯","🎱","🎮","🕹","🎲","🎭","🎨","🖼","🎬","🎤","🎧","🎼","🎵","🎶","🎹","🥁"],
@@ -819,6 +819,7 @@ export default function MessagesPage() {
   const [convCtxMenu, setConvCtxMenu] = useState<number|null>(null);
   const [convCtxPos, setConvCtxPos] = useState({x:0,y:0});
   const [notifPrefs, setNotifPrefs] = useState<Record<number,"all"|"mentions"|"none">>({});
+  const [showNewConv, setShowNewConv] = useState(false);
 
   // Chat state
   const [text, setText] = useState("");
@@ -1084,10 +1085,12 @@ export default function MessagesPage() {
                   {selectedMsgs.size} ta tanlandi
                 </button>
               )}
-              <button className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
+              <button onClick={()=>setShowNewConv(true)} title="Yangi suhbat"
+                className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
                 <UserPlus className="w-4 h-4"/>
               </button>
-              <button className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
+              <button onClick={()=>setShowNewConv(true)} title="Guruh yaratish"
+                className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
                 <Plus className="w-4 h-4"/>
               </button>
             </div>
@@ -1745,7 +1748,7 @@ export default function MessagesPage() {
           </AnimatePresence>
 
           {/* Input area */}
-          <div className={`px-3 flex-shrink-0 border-t transition-colors ${ephemeral?"border-violet-500/30 bg-violet-500/5":"border-border"}`}
+          <div className={`px-3 flex-shrink-0 border-t transition-colors relative ${ephemeral?"border-violet-500/30 bg-violet-500/5":"border-border"}`}
             style={{paddingTop:10,paddingBottom:"calc(env(safe-area-inset-bottom,0px) + 10px)"}}>
 
             {/* Emoji picker */}
@@ -1837,18 +1840,42 @@ export default function MessagesPage() {
                   rows={1}
                   className="flex-1 px-4 pt-2.5 pb-1 bg-transparent text-foreground text-sm placeholder:text-muted-foreground focus:outline-none resize-none max-h-28"
                   style={{fieldSizing:"content"} as React.CSSProperties}/>
-                <div className="flex items-center px-2 pb-1.5 gap-1">
+                <div className="flex items-center px-2 pb-1.5 gap-0.5 overflow-x-auto">
                   <button onClick={()=>{ setShowEmoji(v=>!v); setShowAttach(false); }}
-                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${showEmoji?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                    title="Emoji"
+                    className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${showEmoji?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                     <Smile className="w-4 h-4"/>
                   </button>
                   <button onClick={()=>setShowFmtBar(v=>!v)}
-                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${showFmtBar?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                    title="Formatlash"
+                    className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${showFmtBar?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                     <Bold className="w-3.5 h-3.5"/>
                   </button>
                   <button onClick={()=>setScheduleMode(v=>!v)}
-                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${scheduleMode?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                    title="Vaqt belgilash"
+                    className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${scheduleMode?"text-amber-500 bg-amber-500/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                     <Clock3 className="w-3.5 h-3.5"/>
+                  </button>
+                  <button onClick={()=>setEphemeral(v=>!v)}
+                    title="Ko'rinmas xabar"
+                    className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${ephemeral?"text-violet-400 bg-violet-500/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                    <Ghost className="w-3.5 h-3.5"/>
+                  </button>
+                  <div className="w-px h-4 bg-border mx-0.5 flex-shrink-0"/>
+                  {["❤️","😂","🔥","👍","🎉","🥰"].map(em=>(
+                    <button key={em} onClick={()=>setText(p=>p+em)}
+                      className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-sm hover:bg-muted transition-colors">{em}</button>
+                  ))}
+                  <div className="w-px h-4 bg-border mx-0.5 flex-shrink-0"/>
+                  <button onClick={()=>addMsg({type:"text",content:"📍 Joylashuv: Toshkent, O'zbekiston"})}
+                    title="Joylashuv"
+                    className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-sm hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+                    <MapPin className="w-3.5 h-3.5"/>
+                  </button>
+                  <button onClick={()=>{ setText(p=>p+"@"); textareaRef.current?.focus(); }}
+                    title="Mention"
+                    className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+                    <AtSign className="w-3.5 h-3.5"/>
                   </button>
                 </div>
               </div>
@@ -1898,6 +1925,62 @@ export default function MessagesPage() {
       <AnimatePresence>
         {callState&&(
           <CallUI type={callState.type} name={callState.name} avatar={callState.avatar} onEnd={()=>setCallState(null)}/>
+        )}
+      </AnimatePresence>
+
+      {/* ── New conversation modal ────────────────────────────── */}
+      <AnimatePresence>
+        {showNewConv&&(
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center"
+            onClick={()=>setShowNewConv(false)}>
+            <motion.div initial={{y:40,opacity:0}} animate={{y:0,opacity:1}} exit={{y:40,opacity:0}}
+              transition={{type:"spring",damping:28,stiffness:300}}
+              className="bg-card border border-border rounded-t-3xl md:rounded-3xl w-full md:max-w-sm max-h-[70vh] flex flex-col shadow-2xl"
+              onClick={e=>e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 py-4 border-b border-border flex-shrink-0">
+                <span className="font-bold text-foreground text-base">Yangi suhbat</span>
+                <button onClick={()=>setShowNewConv(false)} className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center"><X className="w-4 h-4"/></button>
+              </div>
+              <div className="px-4 py-3 flex-shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
+                  <input placeholder="Kontakt qidirish..."
+                    className="w-full pl-8 pr-3 py-2 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground focus:outline-none border border-transparent focus:border-primary/40 transition-colors"/>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1">
+                <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-wide">Suhbatlar</p>
+                {convs.slice(0,8).map(conv=>{
+                  const o = getOther(conv);
+                  return (
+                    <button key={conv.id}
+                      onClick={()=>{ setActiveId(conv.id); setShowList(false); setShowNewConv(false); }}
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-muted transition-colors text-left">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        {o?.avatarUrl ? <img src={o.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary text-sm">{o?.displayName?.[0]||"?"}</span>}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{o?.displayName||"Unknown"}</p>
+                        <p className="text-xs text-muted-foreground">@{o?.username||"user"}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+                <div className="pt-2 border-t border-border mt-2">
+                  <button className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-muted transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-5 h-5 text-emerald-400"/>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Guruh yaratish</p>
+                      <p className="text-xs text-muted-foreground">Ko'p a'zoli suhbat</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 

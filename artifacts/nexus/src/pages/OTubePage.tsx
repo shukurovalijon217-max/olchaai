@@ -760,6 +760,90 @@ function NexusPlayer({ video, onClose, settings, onPip }:
         <SeekFlash side="right" visible={seekRight}/>
         <DanmakuOverlay active={danmaku}/>
 
+        {/* ── RIGHT SIDE ACTION PANEL — floating on video (TikTok/Reels uslubi) ── */}
+        <div style={{
+          position:"absolute", right:10, bottom:24,
+          display:"flex", flexDirection:"column", alignItems:"center",
+          gap:18, zIndex:22, pointerEvents:"auto",
+        }}>
+          {/* Like */}
+          <motion.button whileTap={{scale:0.82}}
+            onClick={(e)=>{e.stopPropagation();likeMut.mutate({id:video.id});}}
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <div style={{width:48,height:48,borderRadius:"50%",
+              background:liked?"rgba(0,229,255,0.18)":"rgba(0,0,0,0.60)",
+              backdropFilter:"blur(14px)",
+              border:`1.5px solid ${liked?"rgba(0,229,255,0.55)":"rgba(255,255,255,0.18)"}`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              boxShadow:liked?"0 0 20px rgba(0,229,255,0.4)":"0 4px 14px rgba(0,0,0,0.5)"}}>
+              <Heart style={{width:21,height:21,fill:liked?T.cyan:"none",color:liked?T.cyan:"white"}}/>
+            </div>
+            <span style={{fontSize:10,fontWeight:700,color:liked?T.cyan:"rgba(255,255,255,0.82)",
+              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{fmt(likesCount)}</span>
+          </motion.button>
+          {/* Comment */}
+          <motion.button whileTap={{scale:0.82}}
+            onClick={(e)=>{e.stopPropagation();setShowCom(c=>!c);}}
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <div style={{width:48,height:48,borderRadius:"50%",
+              background:showCom?"rgba(0,229,255,0.18)":"rgba(0,0,0,0.60)",
+              backdropFilter:"blur(14px)",
+              border:`1.5px solid ${showCom?"rgba(0,229,255,0.55)":"rgba(255,255,255,0.18)"}`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              boxShadow:showCom?"0 0 20px rgba(0,229,255,0.4)":"0 4px 14px rgba(0,0,0,0.5)"}}>
+              <MessageCircle style={{width:21,height:21,color:showCom?T.cyan:"white"}}/>
+            </div>
+            <span style={{fontSize:10,fontWeight:700,color:showCom?T.cyan:"rgba(255,255,255,0.82)",
+              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{fmt(video.commentsCount??0)}</span>
+          </motion.button>
+          {/* Share */}
+          <motion.button whileTap={{scale:0.82}}
+            onClick={(e)=>{e.stopPropagation();void handleShare();}}
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <div style={{width:48,height:48,borderRadius:"50%",
+              background:shared?"rgba(16,185,129,0.18)":"rgba(0,0,0,0.60)",
+              backdropFilter:"blur(14px)",
+              border:`1.5px solid ${shared?"rgba(16,185,129,0.55)":"rgba(255,255,255,0.18)"}`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              boxShadow:shared?"0 0 20px rgba(16,185,129,0.4)":"0 4px 14px rgba(0,0,0,0.5)"}}>
+              {shared?<Check style={{width:21,height:21,color:"#10b981"}}/>
+                     :<Share2 style={{width:21,height:21,color:"white"}}/>}
+            </div>
+            <span style={{fontSize:10,fontWeight:700,color:shared?"#10b981":"rgba(255,255,255,0.82)",
+              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Ulash</span>
+          </motion.button>
+          {/* Save */}
+          <motion.button whileTap={{scale:0.82}}
+            onClick={(e)=>{e.stopPropagation();toggleSave();}}
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <div style={{width:48,height:48,borderRadius:"50%",
+              background:saved?"rgba(157,0,255,0.18)":"rgba(0,0,0,0.60)",
+              backdropFilter:"blur(14px)",
+              border:`1.5px solid ${saved?"rgba(157,0,255,0.55)":"rgba(255,255,255,0.18)"}`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              boxShadow:saved?"0 0 20px rgba(157,0,255,0.4)":"0 4px 14px rgba(0,0,0,0.5)"}}>
+              <Bookmark style={{width:21,height:21,fill:saved?T.violet:"none",color:saved?T.violet:"white"}}/>
+            </div>
+            <span style={{fontSize:10,fontWeight:700,color:saved?T.violet:"rgba(255,255,255,0.82)",
+              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Saqlash</span>
+          </motion.button>
+          {/* More */}
+          <motion.button whileTap={{scale:0.82}}
+            onClick={(e)=>{e.stopPropagation();setShowMore(m=>!m);}}
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <div style={{width:48,height:48,borderRadius:"50%",
+              background:showMore?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.60)",
+              backdropFilter:"blur(14px)",
+              border:`1.5px solid ${showMore?"rgba(255,255,255,0.45)":"rgba(255,255,255,0.18)"}`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              boxShadow:"0 4px 14px rgba(0,0,0,0.5)"}}>
+              <MoreVertical style={{width:21,height:21,color:"white"}}/>
+            </div>
+            <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.82)",
+              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Ko'proq</span>
+          </motion.button>
+        </div>
+
         {/* Landscape: back button */}
         {isLandscape && (
           <motion.button whileTap={{scale:0.82}} onClick={onClose}
@@ -1040,26 +1124,6 @@ function NexusPlayer({ video, onClose, settings, onPip }:
               fontSize:11,fontWeight:700,color:subbed?"rgba(255,255,255,0.45)":"white"}}>
             {subbed?"✓ Obuna":"+Obuna"}
           </motion.button>
-        </div>
-
-        {/* ── ACTION ROW ── */}
-        <div style={{display:"flex",alignItems:"stretch",gap:6,padding:"0 10px 8px"}}>
-          <ABtn onClick={()=>likeMut.mutate({id:video.id})} active={liked} col={T.cyan} label={fmt(likesCount)}>
-            <Heart style={{width:17,height:17,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.52)"}}/>
-          </ABtn>
-          <ABtn onClick={()=>setShowCom(c=>!c)} active={showCom} col={T.cyan} label={fmt(video.commentsCount??0)}>
-            <MessageCircle style={{width:17,height:17,color:showCom?T.cyan:"rgba(255,255,255,0.52)"}}/>
-          </ABtn>
-          <ABtn onClick={()=>void handleShare()} active={shared} col="#10b981" label="Ulash">
-            {shared?<Check style={{width:17,height:17,color:"#10b981"}}/>
-                   :<Share2 style={{width:17,height:17,color:"rgba(255,255,255,0.52)"}}/>}
-          </ABtn>
-          <ABtn onClick={toggleSave} active={saved} col={T.violet} label="Saqlash">
-            <Bookmark style={{width:17,height:17,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.52)"}}/>
-          </ABtn>
-          <ABtn onClick={()=>setShowMore(m=>!m)} active={showMore} col="rgba(255,255,255,0.8)" label="Ko'proq">
-            <MoreVertical style={{width:17,height:17,color:showMore?"white":"rgba(255,255,255,0.52)"}}/>
-          </ABtn>
         </div>
 
         {/* ── MEDIA CONTROLS ── */}

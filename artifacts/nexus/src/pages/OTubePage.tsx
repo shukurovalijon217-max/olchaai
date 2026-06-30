@@ -6,6 +6,7 @@
 import React, {
   useState, useRef, useEffect, useCallback, useMemo,
 } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -5241,7 +5242,6 @@ function CoverflowRow({ videos, onPlay }: { videos: Reel[]; onPlay:(v:Reel)=>voi
                   width:176,
                   height:210,
                   zIndex,
-                  transformStyle:"preserve-3d",
                   borderRadius:18,
                   overflow:"hidden",
                   cursor:isCenter?"pointer":"pointer",
@@ -5871,12 +5871,15 @@ export default function OTubePage() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {selected && (
-          <NexusPlayer key={selected.id}
-            video={selected} onClose={()=>setSelected(null)} settings={settings}/>
-        )}
-      </AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {selected && (
+            <NexusPlayer key={selected.id}
+              video={selected} onClose={()=>setSelected(null)} settings={settings}/>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <SettingsDrawer open={showSettings} onClose={()=>setShowSettings(false)}
         settings={settings} onSettings={setSettings}

@@ -9,7 +9,8 @@ import {
   Briefcase, FlaskConical, Heart, Palette, Info, Settings2,
   BarChart3, CalendarDays, Volume2, Sparkles, Code, Clock,
   Bell, Languages, Repeat2, Star, Flame, Swords, Brush,
-  Trash2, AlertTriangle,
+  Trash2, AlertTriangle, MoreHorizontal, MessageCircle, Bookmark,
+  Flag, Copy, UserMinus,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useListGroups, useJoinGroup, useCreateGroup, getListGroupsQueryKey } from "@workspace/api-client-react";
@@ -115,6 +116,8 @@ interface GroupMember {
   avatarUrl: string | null;
   isVerified: boolean;
   isPremium: boolean;
+  role: string;
+  isMuted: boolean;
   joinedAt: string;
 }
 
@@ -149,9 +152,63 @@ interface GroupPost {
   authorAvatarUrl: string | null;
   content: string;
   mediaUrl: string | null;
+  postType: string;
+  isPinned: boolean;
+  likesCount: number;
+  reactionsCount: number;
+  commentsCount: number;
+  bookmarksCount: number;
+  isLikedByMe: boolean;
+  myReaction: string | null;
+  isBookmarked: boolean;
+  createdAt: string;
+}
+
+interface GroupComment {
+  id: number;
+  postId: number;
+  authorId: number;
+  authorUsername: string;
+  authorDisplayName: string;
+  authorAvatarUrl: string | null;
+  parentId: number | null;
+  content: string;
   likesCount: number;
   isLikedByMe: boolean;
   createdAt: string;
+}
+
+interface GroupPoll {
+  id: number;
+  groupId: number;
+  creatorId: number;
+  question: string;
+  options: string[];
+  totalVotes: number;
+  voteCounts: number[];
+  myVoteIndex: number | null;
+  endsAt: string | null;
+  isAnonymous: boolean;
+  createdAt: string;
+}
+
+const REACTIONS: { type: string; emoji: string; label: string }[] = [
+  { type: "heart", emoji: "❤️", label: "Sevaman" },
+  { type: "fire",  emoji: "🔥", label: "Ajoyib" },
+  { type: "laugh", emoji: "😂", label: "Kulgili" },
+  { type: "wow",   emoji: "😮", label: "Hayratda" },
+  { type: "clap",  emoji: "👏", label: "Bravo" },
+  { type: "sad",   emoji: "😢", label: "Achinish" },
+];
+
+function renderContent(text: string) {
+  const parts = text.split(/(\s+)/);
+  return parts.map((part, i) => {
+    if (/^#\w+/.test(part)) return <span key={i} className="text-primary font-semibold">{part}</span>;
+    if (/^@\w+/.test(part)) return <span key={i} className="text-blue-400 font-semibold">{part}</span>;
+    if (/^https?:\/\/\S+/.test(part)) return <a key={i} href={part} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2 break-all">{part}</a>;
+    return part;
+  });
 }
 
 function timeAgo(dateStr: string): string {
@@ -331,6 +388,36 @@ export default function GroupsPage() {
   const [postImagePreview, setPostImagePreview] = useState<string>("");
   const [uploadingPostImage, setUploadingPostImage] = useState(false);
   const postFileRef = useRef<HTMLInputElement>(null);
+
+  // ── Post features state ──────────────────────────────────────
+  const [commentsByPost, setCommentsByPost] = useState<Record<number, GroupComment[]>>({});
+  const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
+  const [loadingComments, setLoadingComments] = useState<Set<number>>(new Set());
+  const [newCommentText, setNewCommentText] = useState<Record<number, string>>({});
+  const [submittingComment, setSubmittingComment] = useState<Set<number>>(new Set());
+  const [reactionPickerPostId, setReactionPickerPostId] = useState<number | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [postFilter, setPostFilter] = useState<"all" | "media" | "polls">("all");
+  const [postSort, setPostSort] = useState<"newest" | "popular">("newest");
+  const [polls, setPolls] = useState<GroupPoll[]>([]);
+  const [showPollCompose, setShowPollCompose] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [submittingPoll, setSubmittingPoll] = useState(false);
+  const [reportPostId, setReportPostId] = useState<number | null>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [groupStats, setGroupStats] = useState<{ posts: number; members: number; totalLikes: number; totalComments: number } | null>(null);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [loadingInvite, setLoadingInvite] = useState(false);
+  const [postMenuOpenId, setPostMenuOpenId] = useState<number | null>(null);
+  const [memberMenuId, setMemberMenuId] = useState<number | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 2500);
+  };
 
   // ── Settings panel state ─────────────────────────────────────
   const [showSettings, setShowSettings] = useState(false);
@@ -714,11 +801,239 @@ export default function GroupsPage() {
     }
   };
 
+  // ── Reaction helpers ─────────────────────────────────────────
+  const handleReact = useCallback(async (postId: number, reactionType: string) => {
+    if (!selectedGroup) return;
+    setReactionPickerPostId(null);
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}/react`, {
+      method: "POST", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reactionType }),
+    });
+    if (r.ok) {
+      const { myReaction, reactionsCount } = await r.json();
+      setGroupPosts(prev => prev.map(p => p.id === postId ? { ...p, myReaction, reactionsCount } : p));
+    }
+  }, [selectedGroup]);
+
+  // ── Comment helpers ──────────────────────────────────────────
+  const toggleComments = useCallback(async (postId: number) => {
+    setExpandedComments(prev => {
+      const next = new Set(prev);
+      if (next.has(postId)) { next.delete(postId); return next; }
+      next.add(postId); return next;
+    });
+    if (!commentsByPost[postId]) {
+      if (!selectedGroup) return;
+      setLoadingComments(prev => new Set([...prev, postId]));
+      try {
+        const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}/comments`, { credentials: "include" });
+        if (r.ok) {
+          const data = await r.json();
+          setCommentsByPost(prev => ({ ...prev, [postId]: data }));
+        }
+      } finally {
+        setLoadingComments(prev => { const n = new Set(prev); n.delete(postId); return n; });
+      }
+    }
+  }, [selectedGroup, commentsByPost]);
+
+  const handleSubmitComment = useCallback(async (postId: number) => {
+    const text = newCommentText[postId]?.trim();
+    if (!text || !selectedGroup) return;
+    setSubmittingComment(prev => new Set([...prev, postId]));
+    try {
+      const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}/comments`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: text }),
+      });
+      if (r.ok) {
+        const newComment = await r.json();
+        setCommentsByPost(prev => ({ ...prev, [postId]: [newComment, ...(prev[postId] ?? [])] }));
+        setNewCommentText(prev => ({ ...prev, [postId]: "" }));
+        setGroupPosts(prev => prev.map(p => p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p));
+      }
+    } finally {
+      setSubmittingComment(prev => { const n = new Set(prev); n.delete(postId); return n; });
+    }
+  }, [selectedGroup, newCommentText]);
+
+  const handleDeleteComment = useCallback(async (postId: number, commentId: number) => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}/comments/${commentId}`, {
+      method: "DELETE", credentials: "include",
+    });
+    if (r.ok) {
+      setCommentsByPost(prev => ({ ...prev, [postId]: (prev[postId] ?? []).filter(c => c.id !== commentId) }));
+      setGroupPosts(prev => prev.map(p => p.id === postId ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) } : p));
+    }
+  }, [selectedGroup]);
+
+  const handleLikeComment = useCallback(async (postId: number, commentId: number) => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}/comments/${commentId}/like`, {
+      method: "POST", credentials: "include",
+    });
+    if (r.ok) {
+      const { liked, likesCount } = await r.json();
+      setCommentsByPost(prev => ({
+        ...prev,
+        [postId]: (prev[postId] ?? []).map(c => c.id === commentId ? { ...c, isLikedByMe: liked, likesCount } : c),
+      }));
+    }
+  }, [selectedGroup]);
+
+  // ── Bookmark helper ──────────────────────────────────────────
+  const handleBookmark = useCallback(async (postId: number) => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}/bookmark`, {
+      method: "POST", credentials: "include",
+    });
+    if (r.ok) {
+      const { bookmarked } = await r.json();
+      setGroupPosts(prev => prev.map(p => p.id === postId
+        ? { ...p, isBookmarked: bookmarked, bookmarksCount: bookmarked ? p.bookmarksCount + 1 : Math.max(0, p.bookmarksCount - 1) }
+        : p));
+      showToast(bookmarked ? "Saqlandi ✓" : "Saqlash bekor qilindi");
+    }
+  }, [selectedGroup]);
+
+  // ── Pin helper ───────────────────────────────────────────────
+  const handlePin = useCallback(async (postId: number) => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}/pin`, {
+      method: "POST", credentials: "include",
+    });
+    if (r.ok) {
+      const { pinned } = await r.json();
+      setGroupPosts(prev => prev.map(p => ({
+        ...p,
+        isPinned: p.id === postId ? pinned : false,
+      })).sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
+      setPostMenuOpenId(null);
+      showToast(pinned ? "Post pin qilindi 📌" : "Pin olib tashlandi");
+    }
+  }, [selectedGroup]);
+
+  // ── Report helper ────────────────────────────────────────────
+  const handleSubmitReport = useCallback(async () => {
+    if (!reportPostId || !selectedGroup || !reportReason.trim()) return;
+    setSubmittingReport(true);
+    try {
+      const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${reportPostId}/report`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reportReason.trim() }),
+      });
+      if (r.ok) {
+        setReportPostId(null);
+        setReportReason("");
+        showToast("Shikoyat yuborildi ✓");
+      }
+    } finally {
+      setSubmittingReport(false);
+    }
+  }, [reportPostId, reportReason, selectedGroup]);
+
+  // ── Poll helpers ─────────────────────────────────────────────
+  const fetchPolls = useCallback(async (groupId: number) => {
+    const r = await fetch(`${API}/api/groups/${groupId}/polls`, { credentials: "include" });
+    if (r.ok) setPolls(await r.json());
+  }, []);
+
+  const handleCreatePoll = useCallback(async () => {
+    if (!selectedGroup || !pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2) return;
+    setSubmittingPoll(true);
+    try {
+      const r = await fetch(`${API}/api/groups/${selectedGroup.id}/polls`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: pollQuestion.trim(), options: pollOptions.filter(o => o.trim()) }),
+      });
+      if (r.ok) {
+        const newPoll = await r.json();
+        setPolls(prev => [newPoll, ...prev]);
+        setPollQuestion(""); setPollOptions(["", ""]);
+        setShowPollCompose(false);
+        showToast("So'rovnoma yaratildi ✓");
+      }
+    } finally {
+      setSubmittingPoll(false);
+    }
+  }, [selectedGroup, pollQuestion, pollOptions]);
+
+  const handleVotePoll = useCallback(async (pollId: number, optionIndex: number) => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/polls/${pollId}/vote`, {
+      method: "POST", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ optionIndex }),
+    });
+    if (r.ok) {
+      const { totalVotes, voteCounts, myVoteIndex } = await r.json();
+      setPolls(prev => prev.map(p => p.id === pollId ? { ...p, totalVotes, voteCounts, myVoteIndex } : p));
+    }
+  }, [selectedGroup]);
+
+  // ── Member management ────────────────────────────────────────
+  const handleKickMember = useCallback(async (memberId: number) => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/members/${memberId}`, {
+      method: "DELETE", credentials: "include",
+    });
+    if (r.ok) {
+      setGroupMembers(prev => prev.filter(m => m.id !== memberId));
+      setSelectedGroup(prev => prev ? { ...prev, membersCount: Math.max(0, (prev.membersCount ?? 0) - 1) } : null);
+      setMemberMenuId(null);
+      showToast("A'zo chiqarib yuborildi");
+    }
+  }, [selectedGroup]);
+
+  const handleChangeRole = useCallback(async (memberId: number, role: string) => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/members/${memberId}/role`, {
+      method: "PATCH", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    });
+    if (r.ok) {
+      setGroupMembers(prev => prev.map(m => m.id === memberId ? { ...m, role } : m));
+      setMemberMenuId(null);
+      showToast(`Rol o'zgartirildi: ${role}`);
+    }
+  }, [selectedGroup]);
+
+  // ── Invite link ──────────────────────────────────────────────
+  const fetchInviteLink = useCallback(async () => {
+    if (!selectedGroup || inviteLink) return;
+    setLoadingInvite(true);
+    try {
+      const r = await fetch(`${API}/api/groups/${selectedGroup.id}/invite-link`, { credentials: "include" });
+      if (r.ok) { const { link } = await r.json(); setInviteLink(link); }
+    } finally {
+      setLoadingInvite(false);
+    }
+  }, [selectedGroup, inviteLink]);
+
+  // ── Stats ────────────────────────────────────────────────────
+  const fetchGroupStats = useCallback(async () => {
+    if (!selectedGroup) return;
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/stats`, { credentials: "include" });
+    if (r.ok) setGroupStats(await r.json());
+  }, [selectedGroup]);
+
   useEffect(() => {
     if (selectedGroup && activeDetailTab === "members" && groupMembers.length === 0) {
       fetchMembers(selectedGroup.id);
     }
   }, [selectedGroup, activeDetailTab, groupMembers.length, fetchMembers]);
+
+  useEffect(() => {
+    if (selectedGroup && activeDetailTab === "feed" && polls.length === 0) {
+      fetchPolls(selectedGroup.id);
+    }
+  }, [selectedGroup, activeDetailTab]);
 
   /* ── Step content ──────────────────────────────────────────── */
   const renderStep = () => {
@@ -1349,7 +1664,12 @@ export default function GroupsPage() {
                           <ImageIcon className="w-4 h-4" />
                         </button>
                         <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Mic className="w-4 h-4" /></button>
-                        <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Sparkles className="w-4 h-4" /></button>
+                        <button
+                          onClick={() => setShowPollCompose(s => !s)}
+                          className={`p-1.5 rounded-lg hover:bg-muted transition-colors ${showPollCompose ? "text-primary" : ""}`}
+                          title="So'rovnoma yaratish">
+                          <BarChart3 className="w-4 h-4" />
+                        </button>
                       </div>
                       <button
                         disabled={!newPostContent.trim() || submittingPost}
@@ -1363,6 +1683,120 @@ export default function GroupsPage() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Poll compose panel */}
+                  <AnimatePresence>
+                    {showPollCompose && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+                        className="bg-card border border-primary/20 rounded-2xl p-4 space-y-3 overflow-hidden">
+                        <div className="flex items-center gap-2 mb-1">
+                          <BarChart3 className="w-4 h-4 text-primary" />
+                          <p className="text-sm font-bold text-foreground">So'rovnoma yaratish</p>
+                          <button onClick={() => setShowPollCompose(false)} className="ml-auto text-muted-foreground hover:text-foreground">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <input
+                          value={pollQuestion}
+                          onChange={e => setPollQuestion(e.target.value)}
+                          placeholder="Savol yozing..."
+                          className="w-full bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/40"
+                        />
+                        <div className="space-y-2">
+                          {pollOptions.map((opt, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <input
+                                value={opt}
+                                onChange={e => {
+                                  const next = [...pollOptions];
+                                  next[idx] = e.target.value;
+                                  setPollOptions(next);
+                                }}
+                                placeholder={`Variant ${idx + 1}`}
+                                className="flex-1 bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/40"
+                              />
+                              {pollOptions.length > 2 && (
+                                <button onClick={() => setPollOptions(p => p.filter((_, i) => i !== idx))}
+                                  className="p-1.5 text-muted-foreground hover:text-destructive transition-colors">
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          {pollOptions.length < 6 && (
+                            <button onClick={() => setPollOptions(p => [...p, ""])}
+                              className="text-xs text-primary font-semibold flex items-center gap-1 hover:opacity-80">
+                              <Plus className="w-3.5 h-3.5" /> Variant qo'shish
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex justify-end">
+                          <button
+                            onClick={handleCreatePoll}
+                            disabled={!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2 || submittingPoll}
+                            className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5">
+                            {submittingPoll
+                              ? <><div className="w-3 h-3 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Yuklanmoqda</>
+                              : "Yaratish"
+                            }
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Filter + Sort bar */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex gap-1 bg-muted/60 p-1 rounded-xl">
+                      {(["all", "media", "polls"] as const).map(f => (
+                        <button key={f} onClick={() => setPostFilter(f)}
+                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${postFilter === f ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                          {f === "all" ? "Barchasi" : f === "media" ? "📷 Media" : "📊 So'rovnomalar"}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-1 bg-muted/60 p-1 rounded-xl">
+                      {(["newest", "popular"] as const).map(s => (
+                        <button key={s} onClick={() => setPostSort(s)}
+                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${postSort === s ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                          {s === "newest" ? "🕒 Yangi" : "🔥 Mashhur"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Polls section */}
+                  {postFilter !== "media" && polls.length > 0 && (
+                    <div className="space-y-3">
+                      {polls.map(poll => (
+                        <div key={poll.id} className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-2xl p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-base">📊</span>
+                            <p className="font-semibold text-sm text-foreground">{poll.question}</p>
+                          </div>
+                          <div className="space-y-2">
+                            {poll.options.map((opt, idx) => {
+                              const pct = poll.totalVotes > 0 ? Math.round((poll.voteCounts[idx] ?? 0) / poll.totalVotes * 100) : 0;
+                              const isMyVote = poll.myVoteIndex === idx;
+                              return (
+                                <button key={idx}
+                                  onClick={() => handleVotePoll(poll.id, idx)}
+                                  className={`w-full text-left relative overflow-hidden rounded-xl border transition-all ${isMyVote ? "border-primary" : "border-border hover:border-primary/40"}`}>
+                                  <div className="absolute inset-y-0 left-0 bg-primary/15 transition-all" style={{ width: `${pct}%` }} />
+                                  <div className="relative flex items-center justify-between px-3 py-2">
+                                    <span className={`text-xs font-semibold ${isMyVote ? "text-primary" : "text-foreground"}`}>{opt}</span>
+                                    <span className="text-xs text-muted-foreground">{pct}%</span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">{poll.totalVotes} ovoz</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Posts list */}
                   {groupPostsLoading ? (
@@ -1383,7 +1817,10 @@ export default function GroupsPage() {
                         </div>
                       ))}
                     </div>
-                  ) : groupPosts.length === 0 ? (
+                  ) : groupPosts.filter(p =>
+                    postFilter === "media" ? !!p.mediaUrl :
+                    postFilter === "polls" ? p.postType === "poll" : true
+                  ).length === 0 ? (
                     <div className="text-center py-16 text-muted-foreground">
                       <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
                         <MessageSquare className="w-9 h-9 opacity-30" />
@@ -1393,61 +1830,252 @@ export default function GroupsPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {groupPosts.map(post => (
-                        <motion.div key={post.id}
-                          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                          className="bg-card border border-border rounded-2xl p-4">
-                          <div className="flex items-start justify-between gap-2 mb-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-9 h-9 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground font-bold text-sm">
-                                {post.authorAvatarUrl
-                                  ? <img src={post.authorAvatarUrl} alt="" className="w-full h-full object-cover" />
-                                  : post.authorDisplayName[0]?.toUpperCase()}
+                      {groupPosts
+                        .filter(p =>
+                          postFilter === "media" ? !!p.mediaUrl :
+                          postFilter === "polls" ? p.postType === "poll" : true
+                        )
+                        .sort((a, b) =>
+                          (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0) ||
+                          (postSort === "popular"
+                            ? (b.reactionsCount + b.commentsCount) - (a.reactionsCount + a.commentsCount)
+                            : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                        )
+                        .map(post => {
+                        const isCreatorOrAdmin = user?.id === (selectedGroup as any)?.creatorId ||
+                          groupMembers.find(m => m.id === user?.id)?.role === "admin";
+                        const commentsOpen = expandedComments.has(post.id);
+                        const postComments = commentsByPost[post.id] ?? [];
+                        const myReactionEmoji = post.myReaction ? REACTIONS.find(r => r.type === post.myReaction)?.emoji : null;
+
+                        return (
+                          <motion.div key={post.id}
+                            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                            className={`bg-card border rounded-2xl overflow-hidden ${post.isPinned ? "border-amber-400/40 shadow-amber-400/10 shadow-md" : "border-border"}`}>
+                            {post.isPinned && (
+                              <div className="flex items-center gap-1.5 px-4 pt-3 pb-0">
+                                <span className="text-xs">📌</span>
+                                <span className="text-xs font-semibold text-amber-500">Muhim post</span>
                               </div>
-                              <div>
-                                <p className="text-sm font-semibold text-foreground leading-tight">{post.authorDisplayName}</p>
-                                <p className="text-[11px] text-muted-foreground">@{post.authorUsername} · {timeAgo(post.createdAt)}</p>
-                              </div>
-                            </div>
-                            {(user?.id === post.authorId || user?.id === (selectedGroup as any)?.creatorId) && (
-                              <button
-                                onClick={() => handleDeletePost(post.id)}
-                                className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
-                                title="Postni o'chirish"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
                             )}
-                          </div>
-                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{post.content}</p>
-                          {post.mediaUrl && (
-                            <img src={post.mediaUrl} alt="" className="mt-3 rounded-xl w-full object-cover max-h-72" />
-                          )}
-                          <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
-                            <motion.button
-                              whileTap={{ scale: 0.85 }}
-                              onClick={() => handleLikePost(post.id)}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                post.isLikedByMe
-                                  ? "bg-rose-500/15 text-rose-500"
-                                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                              }`}
-                            >
-                              <Heart className={`w-3.5 h-3.5 transition-all ${post.isLikedByMe ? "fill-rose-500" : ""}`} />
-                              {post.likesCount > 0 && <span>{post.likesCount}</span>}
-                              <span className="hidden sm:inline">Layk</span>
-                            </motion.button>
-                            <motion.button
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => handleSharePost(post)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
-                            >
-                              <Repeat2 className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">Ulashish</span>
-                            </motion.button>
-                          </div>
-                        </motion.div>
-                      ))}
+
+                            <div className="p-4">
+                              {/* Author row */}
+                              <div className="flex items-start justify-between gap-2 mb-3">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-9 h-9 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground font-bold text-sm">
+                                    {post.authorAvatarUrl
+                                      ? <img src={post.authorAvatarUrl} alt="" className="w-full h-full object-cover" />
+                                      : post.authorDisplayName[0]?.toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-foreground leading-tight">{post.authorDisplayName}</p>
+                                    <p className="text-[11px] text-muted-foreground">@{post.authorUsername} · {timeAgo(post.createdAt)}</p>
+                                  </div>
+                                </div>
+                                {/* Post menu */}
+                                <div className="relative flex-shrink-0">
+                                  <button onClick={() => setPostMenuOpenId(postMenuOpenId === post.id ? null : post.id)}
+                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+                                    <MoreHorizontal className="w-3.5 h-3.5" />
+                                  </button>
+                                  <AnimatePresence>
+                                    {postMenuOpenId === post.id && (
+                                      <motion.div initial={{ opacity: 0, scale: 0.92, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.92, y: -4 }} transition={{ duration: 0.12 }}
+                                        className="absolute right-0 top-8 z-30 bg-card border border-border rounded-xl shadow-xl py-1 min-w-[150px]">
+                                        <button onClick={() => handleBookmark(post.id)}
+                                          className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2">
+                                          <Bookmark className={`w-3.5 h-3.5 ${post.isBookmarked ? "fill-primary text-primary" : ""}`} />
+                                          {post.isBookmarked ? "Saqlangan" : "Saqlash"}
+                                        </button>
+                                        {isCreatorOrAdmin && (
+                                          <button onClick={() => handlePin(post.id)}
+                                            className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2">
+                                            <span>{post.isPinned ? "📌 Pin olib tashlash" : "📌 Pin qilish"}</span>
+                                          </button>
+                                        )}
+                                        <button onClick={() => { setReportPostId(post.id); setPostMenuOpenId(null); }}
+                                          className="w-full text-left px-3 py-2 text-xs hover:bg-muted text-orange-500 flex items-center gap-2">
+                                          <Flag className="w-3.5 h-3.5" /> Shikoyat
+                                        </button>
+                                        {(user?.id === post.authorId || isCreatorOrAdmin) && (
+                                          <button onClick={() => { handleDeletePost(post.id); setPostMenuOpenId(null); }}
+                                            className="w-full text-left px-3 py-2 text-xs hover:bg-muted text-destructive flex items-center gap-2">
+                                            <Trash2 className="w-3.5 h-3.5" /> O'chirish
+                                          </button>
+                                        )}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              </div>
+
+                              {/* Content */}
+                              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{renderContent(post.content)}</p>
+
+                              {/* Media */}
+                              {post.mediaUrl && (
+                                <button onClick={() => setLightboxUrl(post.mediaUrl)} className="mt-3 w-full block">
+                                  <img src={post.mediaUrl} alt="" className="rounded-xl w-full object-cover max-h-72 hover:opacity-95 transition-opacity cursor-zoom-in" />
+                                </button>
+                              )}
+
+                              {/* Reaction summary */}
+                              {post.reactionsCount > 0 && (
+                                <div className="flex items-center gap-1 mt-2">
+                                  {REACTIONS.filter(r => {
+                                    return true;
+                                  }).slice(0, 3).map(r => (
+                                    <span key={r.type} className="text-sm">{r.emoji}</span>
+                                  ))}
+                                  <span className="text-xs text-muted-foreground ml-1">{post.reactionsCount}</span>
+                                </div>
+                              )}
+
+                              {/* Action bar */}
+                              <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border flex-wrap">
+                                {/* Reaction picker trigger */}
+                                <div className="relative">
+                                  <motion.button whileTap={{ scale: 0.85 }}
+                                    onClick={() => setReactionPickerPostId(reactionPickerPostId === post.id ? null : post.id)}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                      post.myReaction ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    }`}>
+                                    <span className="text-sm leading-none">{myReactionEmoji ?? "👍"}</span>
+                                    {post.reactionsCount > 0 && <span>{post.reactionsCount}</span>}
+                                  </motion.button>
+                                  <AnimatePresence>
+                                    {reactionPickerPostId === post.id && (
+                                      <motion.div initial={{ opacity: 0, scale: 0.8, y: 4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.8, y: 4 }} transition={{ duration: 0.12 }}
+                                        className="absolute bottom-10 left-0 z-20 bg-card border border-border rounded-2xl shadow-xl p-2 flex gap-1">
+                                        {REACTIONS.map(r => (
+                                          <motion.button key={r.type} whileHover={{ scale: 1.3 }} whileTap={{ scale: 0.9 }}
+                                            onClick={() => handleReact(post.id, r.type)}
+                                            title={r.label}
+                                            className={`text-xl p-1 rounded-lg transition-colors ${post.myReaction === r.type ? "bg-primary/15" : "hover:bg-muted"}`}>
+                                            {r.emoji}
+                                          </motion.button>
+                                        ))}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
+                                {/* Like button */}
+                                <motion.button whileTap={{ scale: 0.85 }}
+                                  onClick={() => handleLikePost(post.id)}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                    post.isLikedByMe ? "bg-rose-500/15 text-rose-500" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                  }`}>
+                                  <Heart className={`w-3.5 h-3.5 ${post.isLikedByMe ? "fill-rose-500" : ""}`} />
+                                  {post.likesCount > 0 && <span>{post.likesCount}</span>}
+                                </motion.button>
+
+                                {/* Comment toggle */}
+                                <motion.button whileTap={{ scale: 0.9 }}
+                                  onClick={() => toggleComments(post.id)}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                    commentsOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                  }`}>
+                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  {post.commentsCount > 0 && <span>{post.commentsCount}</span>}
+                                </motion.button>
+
+                                {/* Share */}
+                                <motion.button whileTap={{ scale: 0.9 }}
+                                  onClick={() => handleSharePost(post)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
+                                  <Repeat2 className="w-3.5 h-3.5" />
+                                </motion.button>
+
+                                <div className="flex-1" />
+
+                                {/* Bookmark shortcut */}
+                                <motion.button whileTap={{ scale: 0.9 }}
+                                  onClick={() => handleBookmark(post.id)}
+                                  className={`p-1.5 rounded-xl text-xs transition-all ${post.isBookmarked ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                                  <Bookmark className={`w-3.5 h-3.5 ${post.isBookmarked ? "fill-primary" : ""}`} />
+                                </motion.button>
+                              </div>
+
+                              {/* Comments section */}
+                              <AnimatePresence>
+                                {commentsOpen && (
+                                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+                                    className="mt-3 pt-3 border-t border-border space-y-3 overflow-hidden">
+                                    {/* Comment input */}
+                                    <div className="flex items-start gap-2">
+                                      <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">
+                                        {user?.displayName?.[0]?.toUpperCase() ?? "?"}
+                                      </div>
+                                      <div className="flex-1 flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2">
+                                        <input
+                                          value={newCommentText[post.id] ?? ""}
+                                          onChange={e => setNewCommentText(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmitComment(post.id); } }}
+                                          placeholder="Izoh yozing..."
+                                          className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
+                                        />
+                                        <motion.button whileTap={{ scale: 0.9 }}
+                                          onClick={() => handleSubmitComment(post.id)}
+                                          disabled={!newCommentText[post.id]?.trim() || submittingComment.has(post.id)}
+                                          className="text-primary disabled:opacity-40 flex-shrink-0">
+                                          <Send className="w-3.5 h-3.5" />
+                                        </motion.button>
+                                      </div>
+                                    </div>
+
+                                    {/* Comments list */}
+                                    {loadingComments.has(post.id) ? (
+                                      <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+                                        <div className="w-3 h-3 border border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+                                        Yuklanmoqda...
+                                      </div>
+                                    ) : postComments.length === 0 ? (
+                                      <p className="text-xs text-muted-foreground py-1">Hali izohlar yo'q. Birinchi bo'ling!</p>
+                                    ) : (
+                                      <div className="space-y-2.5">
+                                        {postComments.map(comment => (
+                                          <div key={comment.id} className="flex items-start gap-2 group">
+                                            <div className="w-7 h-7 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-xs font-bold text-muted-foreground">
+                                              {comment.authorAvatarUrl
+                                                ? <img src={comment.authorAvatarUrl} alt="" className="w-full h-full object-cover" />
+                                                : comment.authorDisplayName[0]?.toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <div className="bg-muted/60 rounded-xl px-3 py-2">
+                                                <p className="text-[11px] font-semibold text-foreground">{comment.authorDisplayName}</p>
+                                                <p className="text-xs text-foreground leading-relaxed mt-0.5">{comment.content}</p>
+                                              </div>
+                                              <div className="flex items-center gap-3 mt-1 px-1">
+                                                <button onClick={() => handleLikeComment(post.id, comment.id)}
+                                                  className={`text-[10px] font-semibold flex items-center gap-1 ${comment.isLikedByMe ? "text-rose-400" : "text-muted-foreground hover:text-foreground"}`}>
+                                                  <Heart className={`w-2.5 h-2.5 ${comment.isLikedByMe ? "fill-rose-400" : ""}`} />
+                                                  {comment.likesCount > 0 && comment.likesCount}
+                                                </button>
+                                                <span className="text-[10px] text-muted-foreground">{timeAgo(comment.createdAt)}</span>
+                                                {(user?.id === comment.authorId || isCreatorOrAdmin) && (
+                                                  <button onClick={() => handleDeleteComment(post.id, comment.id)}
+                                                    className="text-[10px] text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    O'chirish
+                                                  </button>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1455,6 +2083,31 @@ export default function GroupsPage() {
 
               {activeDetailTab === "members" && (
                 <div>
+                  {/* Invite link banner (creator only) */}
+                  {user?.id === (selectedGroup as any)?.creatorId && (
+                    <div className="mb-4 bg-primary/8 border border-primary/20 rounded-2xl p-4">
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-2">
+                          <Link className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-semibold text-foreground">Taklif havolasi</span>
+                        </div>
+                        <button onClick={fetchInviteLink} disabled={loadingInvite}
+                          className="text-xs text-primary font-semibold hover:opacity-80 transition-opacity disabled:opacity-50">
+                          {loadingInvite ? "Yuklanmoqda..." : inviteLink ? "Yangilash" : "Ko'rsatish"}
+                        </button>
+                      </div>
+                      {inviteLink && (
+                        <div className="flex items-center gap-2 bg-muted/60 rounded-xl px-3 py-2">
+                          <p className="text-xs text-muted-foreground flex-1 truncate font-mono">{inviteLink}</p>
+                          <button onClick={() => { navigator.clipboard.writeText(inviteLink); showToast("Nusxa olindi ✓"); }}
+                            className="text-xs text-primary font-semibold flex-shrink-0 flex items-center gap-1">
+                            <Copy className="w-3 h-3" /> Nusxa
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {membersLoading ? (
                     <div className="space-y-3">
                       {[...Array(6)].map((_, i) => (
@@ -1475,25 +2128,64 @@ export default function GroupsPage() {
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      {groupMembers.map((member, i) => (
-                        <motion.div key={member.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.04 }}
-                          className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/50 transition-colors">
-                          <div className="w-11 h-11 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground">
-                            {member.avatarUrl
-                              ? <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" />
-                              : <span className="font-bold text-base">{member.displayName[0]?.toUpperCase()}</span>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <p className="font-semibold text-sm text-foreground truncate">{member.displayName}</p>
-                              {member.isVerified && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
-                              {member.isPremium && <Crown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                      {groupMembers.map((member, i) => {
+                        const isCreator = member.id === (selectedGroup as any)?.creatorId;
+                        const iAmCreator = user?.id === (selectedGroup as any)?.creatorId;
+                        const canManage = iAmCreator && !isCreator && member.id !== user?.id;
+
+                        return (
+                          <motion.div key={member.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.04 }}
+                            className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/50 transition-colors">
+                            <div className="w-11 h-11 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground">
+                              {member.avatarUrl
+                                ? <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                : <span className="font-bold text-base">{member.displayName[0]?.toUpperCase()}</span>}
                             </div>
-                            <p className="text-xs text-muted-foreground">@{member.username}</p>
-                          </div>
-                        </motion.div>
-                      ))}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="font-semibold text-sm text-foreground truncate">{member.displayName}</p>
+                                {member.isVerified && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                                {member.isPremium && <Crown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                                {isCreator && <span className="text-[10px] bg-amber-400/20 text-amber-600 font-bold px-1.5 py-0.5 rounded-md">Asoschı</span>}
+                                {(member as any).role === "admin" && !isCreator && <span className="text-[10px] bg-primary/20 text-primary font-bold px-1.5 py-0.5 rounded-md">Admin</span>}
+                                {(member as any).role === "moderator" && <span className="text-[10px] bg-blue-500/20 text-blue-500 font-bold px-1.5 py-0.5 rounded-md">Mod</span>}
+                                {(member as any).isMuted && <span className="text-[10px] bg-orange-500/20 text-orange-500 font-bold px-1.5 py-0.5 rounded-md">🔇</span>}
+                              </div>
+                              <p className="text-xs text-muted-foreground">@{member.username}</p>
+                            </div>
+                            {canManage && (
+                              <div className="relative flex-shrink-0">
+                                <button onClick={() => setMemberMenuId(memberMenuId === member.id ? null : member.id)}
+                                  className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </button>
+                                <AnimatePresence>
+                                  {memberMenuId === member.id && (
+                                    <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0.92 }} transition={{ duration: 0.12 }}
+                                      className="absolute right-0 top-8 z-30 bg-card border border-border rounded-xl shadow-xl py-1 min-w-[160px]">
+                                      <div className="px-3 py-1.5 text-[10px] text-muted-foreground font-semibold uppercase tracking-wide border-b border-border">Rol o'zgartirish</div>
+                                      {["member", "moderator", "admin"].map(role => (
+                                        <button key={role} onClick={() => handleChangeRole(member.id, role)}
+                                          className={`w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 ${(member as any).role === role ? "text-primary font-semibold" : "text-foreground"}`}>
+                                          {role === "member" ? "👤 A'zo" : role === "moderator" ? "🛡️ Moderator" : "⚡ Admin"}
+                                          {(member as any).role === role && <Check className="w-3 h-3 ml-auto" />}
+                                        </button>
+                                      ))}
+                                      <div className="border-t border-border my-1" />
+                                      <button onClick={() => handleKickMember(member.id)}
+                                        className="w-full text-left px-3 py-2 text-xs hover:bg-muted text-destructive flex items-center gap-2">
+                                        <UserMinus className="w-3.5 h-3.5" /> Guruhdan chiqarish
+                                      </button>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1976,6 +2668,75 @@ export default function GroupsPage() {
               )}
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Lightbox ─────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setLightboxUrl(null)}
+            className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out">
+            <motion.img
+              initial={{ scale: 0.92 }} animate={{ scale: 1 }} exit={{ scale: 0.92 }}
+              src={lightboxUrl} alt=""
+              className="max-w-full max-h-full rounded-2xl object-contain shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            />
+            <button onClick={() => setLightboxUrl(null)}
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Report modal ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {reportPostId && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] bg-black/60 flex items-center justify-center p-4"
+            onClick={() => setReportPostId(null)}>
+            <motion.div initial={{ scale: 0.93, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.93, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <Flag className="w-5 h-5 text-orange-400" />
+                <h3 className="text-base font-bold text-foreground">Shikoyat yuborish</h3>
+              </div>
+              <div className="space-y-2 mb-4">
+                {["Spam", "Noto'g'ri ma'lumot", "Nafrat nutqi", "Zo'ravonlik", "Boshqa"].map(reason => (
+                  <button key={reason} onClick={() => setReportReason(reason)}
+                    className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-all border ${
+                      reportReason === reason ? "border-orange-400 bg-orange-400/10 text-orange-400 font-semibold" : "border-border text-foreground hover:bg-muted"
+                    }`}>
+                    {reason}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setReportPostId(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-colors">
+                  Bekor qilish
+                </button>
+                <button onClick={handleSubmitReport} disabled={!reportReason || submittingReport}
+                  className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity">
+                  {submittingReport ? "Yuborilmoqda..." : "Yuborish"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Toast notification ──────────────────────────────────── */}
+      <AnimatePresence>
+        {toastMsg && (
+          <motion.div initial={{ opacity: 0, y: 24, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.9 }} transition={{ duration: 0.2 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[300] bg-foreground text-background text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl pointer-events-none whitespace-nowrap">
+            {toastMsg}
+          </motion.div>
         )}
       </AnimatePresence>
 

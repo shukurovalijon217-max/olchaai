@@ -28,7 +28,7 @@ import {
   ListVideo, ShieldCheck, Crosshair, Scissors, Timer, Sliders,
   Type, Smile, Music, ChevronLeft, Camera, Mic2, ImagePlus,
   Wand2, AlignCenter, FastForward, Palette, SlidersHorizontal,
-  PictureInPicture2,
+  PictureInPicture2, MoreVertical,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────── */
@@ -445,6 +445,8 @@ function NexusPlayer({ video, onClose, settings, onPip }:
 
   const [playing,   setPlaying]   = useState(false);
   const [muted,     setMuted]     = useState(settings.muteDefault);
+  const [isLandscape, setIsLandscape] = useState(() => window.innerWidth > window.innerHeight);
+  const [showMore,  setShowMore]  = useState(false);
   const [progress,  setProgress]  = useState(0);
   const [duration,  setDuration]  = useState(0);
   const [curTime,   setCurTime]   = useState(0);
@@ -541,6 +543,13 @@ function NexusPlayer({ video, onClose, settings, onPip }:
     }
     return () => { document.body.style.overflow = ""; };
   }, [settings.autoplay]);
+
+  useEffect(() => {
+    const update = () => setIsLandscape(window.innerWidth > window.innerHeight);
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => { window.removeEventListener("resize", update); window.removeEventListener("orientationchange", update); };
+  }, []);
 
   useEffect(() => {
     const h = () => setIsFull(!!document.fullscreenElement);
@@ -701,7 +710,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
           src={video.videoUrl??undefined}
           poster={video.thumbnailUrl??undefined}
           muted={muted} playsInline loop={settings.loop}
-          style={{objectFit:"contain",width:"100%",height:"100%"}}
+          style={{objectFit: isLandscape ? "cover" : "contain", width:"100%",height:"100%"}}
           onTimeUpdate={()=>{
             const v=videoRef.current;
             if(v&&isFinite(v.duration)&&v.duration>0){setCurTime(v.currentTime);setProgress(v.currentTime/v.duration);}
@@ -808,55 +817,118 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                 </AnimatePresence>
               </div>
 
-              {/* RIGHT sidebar */}
-              <div className="absolute right-2.5 pointer-events-auto flex flex-col gap-1.5"
-                style={{
-                  top:68, bottom:96,
-                  overflowY:"auto",
-                  scrollbarWidth:"none",
-                  WebkitOverflowScrolling:"touch",
-                  alignItems:"center",
-                }}>
-                <IBtn onClick={()=>likeMut.mutate({ id: video.id })}
-                  active={liked} activeColor={T.cyan} label={fmt(likesCount)}>
-                  <ThumbsUp style={{width:15,height:15,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.7)"}}/>
-                </IBtn>
-                <IBtn onClick={()=>{setDisliked(d=>!d);if(liked){likeMut.mutate({id:video.id});}}}
-                  active={disliked} activeColor={T.orange} label={t("otube.dislike")}>
-                  <ThumbsDown style={{width:15,height:15,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.55)"}}/>
-                </IBtn>
-                <IBtn onClick={()=>void handleShare()} active={shared} activeColor="#10b981" label={t("otube.share_btn")}>
-                  {shared?<Check style={{width:15,height:15,color:"#10b981"}}/>
-                         :<Share2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>}
-                </IBtn>
-                <IBtn onClick={toggleSave} active={saved} activeColor={T.violet} label={t("otube.save_btn")}>
-                  <Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.65)"}}/>
-                </IBtn>
-                <IBtn onClick={()=>setShowCom(c=>!c)} active={showCom} label={fmt(video.commentsCount??0)}>
-                  <MessageCircle style={{width:15,height:15,color:showCom?T.cyan:"rgba(255,255,255,0.65)"}}/>
-                </IBtn>
-                <IBtn onClick={()=>setDonating(d=>!d)} active={donating} activeColor={T.orange} label={t("otube.donate_btn")}>
-                  <Star style={{width:15,height:15,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.55)"}}/>
-                </IBtn>
-                <IBtn onClick={()=>setDanmaku(d=>!d)} active={danmaku} activeColor="#ffd700" label={t("otube.reaction")}>
-                  <Sparkles style={{width:15,height:15,color:danmaku?"#ffd700":"rgba(255,255,255,0.55)"}}/>
-                </IBtn>
-                <IBtn onClick={()=>setAiDub(d=>!d)} active={aiDub} activeColor="#00ff88" label="AI Dub">
-                  <Gauge style={{width:15,height:15,color:aiDub?"#00ff88":"rgba(255,255,255,0.55)"}}/>
-                </IBtn>
-                <IBtn onClick={()=>{
-                  if (!video.videoUrl) return;
-                  const a = document.createElement("a");
-                  a.href = video.videoUrl;
-                  a.download = `${video.caption||"otube-video"}.mp4`;
-                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                }} active={false} label="Yuklab">
-                  <Upload style={{width:15,height:15,color:"rgba(255,255,255,0.65)",transform:"rotate(180deg)"}}/>
-                </IBtn>
-                <IBtn onClick={()=>{ void handlePip(); }} active={false} activeColor={T.cyan} label="Mini">
-                  <PictureInPicture2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>
-                </IBtn>
-              </div>
+              {/* RIGHT sidebar — portrait: scrollable column / landscape: single circle */}
+              {isLandscape ? (
+                /* ── LANDSCAPE: single "⋯" circle that expands to action grid ── */
+                <div className="absolute right-3 bottom-[88px] pointer-events-auto flex flex-col items-center gap-2">
+                  <motion.button
+                    whileTap={{scale:0.82}}
+                    onClick={e=>{e.stopPropagation();setShowMore(m=>!m);}}
+                    style={{
+                      width:44,height:44,borderRadius:"50%",
+                      background: showMore?`${T.cyan}28`:"rgba(0,0,0,0.6)",
+                      backdropFilter:"blur(16px)",
+                      boxShadow: showMore?`0 0 0 1.5px ${T.cyan}66`:"0 0 0 1px rgba(255,255,255,0.18)",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                    }}>
+                    <MoreVertical style={{width:17,height:17,color: showMore?T.cyan:"rgba(255,255,255,0.82)"}}/>
+                  </motion.button>
+                  {/* Expanded grid — pops up above the circle */}
+                  <AnimatePresence>
+                    {showMore && (
+                      <motion.div
+                        initial={{opacity:0,scale:0.7,y:12}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:0.7,y:12}}
+                        transition={{type:"spring",damping:22,stiffness:340}}
+                        onClick={e=>e.stopPropagation()}
+                        style={{
+                          position:"absolute",bottom:"calc(100% + 8px)",right:0,
+                          background:"rgba(8,0,22,0.92)",backdropFilter:"blur(24px)",
+                          borderRadius:18,padding:"12px 10px",
+                          boxShadow:`0 8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08)`,
+                          display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,
+                          width:172,
+                        }}>
+                        {[
+                          {icon:<ThumbsUp style={{width:14,height:14,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.7)"}}/>, label:fmt(likesCount), act:()=>likeMut.mutate({id:video.id}), active:liked, col:T.cyan},
+                          {icon:<ThumbsDown style={{width:14,height:14,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.55)"}}/>, label:t("otube.dislike"), act:()=>{setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}, active:disliked, col:T.orange},
+                          {icon:shared?<Check style={{width:14,height:14,color:"#10b981"}}/>:<Share2 style={{width:14,height:14,color:"rgba(255,255,255,0.7)"}}/>, label:t("otube.share_btn"), act:()=>void handleShare(), active:shared, col:"#10b981"},
+                          {icon:<Bookmark style={{width:14,height:14,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.65)"}}/>, label:t("otube.save_btn"), act:toggleSave, active:saved, col:T.violet},
+                          {icon:<MessageCircle style={{width:14,height:14,color:showCom?T.cyan:"rgba(255,255,255,0.65)"}}/>, label:fmt(video.commentsCount??0), act:()=>setShowCom(c=>!c), active:showCom, col:T.cyan},
+                          {icon:<Star style={{width:14,height:14,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.55)"}}/>, label:t("otube.donate_btn"), act:()=>setDonating(d=>!d), active:donating, col:T.orange},
+                          {icon:<Sparkles style={{width:14,height:14,color:danmaku?"#ffd700":"rgba(255,255,255,0.55)"}}/>, label:t("otube.reaction"), act:()=>setDanmaku(d=>!d), active:danmaku, col:"#ffd700"},
+                          {icon:<Gauge style={{width:14,height:14,color:aiDub?"#00ff88":"rgba(255,255,255,0.55)"}}/>, label:"AI Dub", act:()=>setAiDub(d=>!d), active:aiDub, col:"#00ff88"},
+                          {icon:<PictureInPicture2 style={{width:14,height:14,color:"rgba(255,255,255,0.7)"}}/>, label:"Mini", act:()=>void handlePip(), active:false, col:T.cyan},
+                        ].map((b,i)=>(
+                          <motion.button key={i} whileTap={{scale:0.75}}
+                            onClick={()=>b.act()}
+                            style={{
+                              display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+                              padding:"8px 4px",borderRadius:12,
+                              background:b.active?`${b.col}22`:"rgba(255,255,255,0.04)",
+                              boxShadow:b.active?`0 0 0 1px ${b.col}55`:"none",
+                            }}>
+                            {b.icon}
+                            <span style={{fontSize:7,color:"rgba(255,255,255,0.45)",fontWeight:600,lineHeight:1,textAlign:"center"}}>
+                              {b.label}
+                            </span>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                /* ── PORTRAIT: scrollable vertical sidebar ── */
+                <div className="absolute right-2.5 pointer-events-auto flex flex-col gap-1.5"
+                  style={{
+                    top:"calc(env(safe-area-inset-top, 44px) + 66px)",
+                    bottom:100,
+                    overflowY:"auto",
+                    scrollbarWidth:"none",
+                    WebkitOverflowScrolling:"touch" as React.CSSProperties["WebkitOverflowScrolling"],
+                    alignItems:"center",
+                  }}>
+                  <IBtn onClick={()=>likeMut.mutate({ id: video.id })}
+                    active={liked} activeColor={T.cyan} label={fmt(likesCount)}>
+                    <ThumbsUp style={{width:15,height:15,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.7)"}}/>
+                  </IBtn>
+                  <IBtn onClick={()=>{setDisliked(d=>!d);if(liked){likeMut.mutate({id:video.id});}}}
+                    active={disliked} activeColor={T.orange} label={t("otube.dislike")}>
+                    <ThumbsDown style={{width:15,height:15,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.55)"}}/>
+                  </IBtn>
+                  <IBtn onClick={()=>void handleShare()} active={shared} activeColor="#10b981" label={t("otube.share_btn")}>
+                    {shared?<Check style={{width:15,height:15,color:"#10b981"}}/>
+                           :<Share2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>}
+                  </IBtn>
+                  <IBtn onClick={toggleSave} active={saved} activeColor={T.violet} label={t("otube.save_btn")}>
+                    <Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.65)"}}/>
+                  </IBtn>
+                  <IBtn onClick={()=>setShowCom(c=>!c)} active={showCom} label={fmt(video.commentsCount??0)}>
+                    <MessageCircle style={{width:15,height:15,color:showCom?T.cyan:"rgba(255,255,255,0.65)"}}/>
+                  </IBtn>
+                  <IBtn onClick={()=>setDonating(d=>!d)} active={donating} activeColor={T.orange} label={t("otube.donate_btn")}>
+                    <Star style={{width:15,height:15,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.55)"}}/>
+                  </IBtn>
+                  <IBtn onClick={()=>setDanmaku(d=>!d)} active={danmaku} activeColor="#ffd700" label={t("otube.reaction")}>
+                    <Sparkles style={{width:15,height:15,color:danmaku?"#ffd700":"rgba(255,255,255,0.55)"}}/>
+                  </IBtn>
+                  <IBtn onClick={()=>setAiDub(d=>!d)} active={aiDub} activeColor="#00ff88" label="AI Dub">
+                    <Gauge style={{width:15,height:15,color:aiDub?"#00ff88":"rgba(255,255,255,0.55)"}}/>
+                  </IBtn>
+                  <IBtn onClick={()=>{
+                    if (!video.videoUrl) return;
+                    const a = document.createElement("a");
+                    a.href = video.videoUrl;
+                    a.download = `${video.caption||"otube-video"}.mp4`;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                  }} active={false} label="Yuklab">
+                    <Upload style={{width:15,height:15,color:"rgba(255,255,255,0.65)",transform:"rotate(180deg)"}}/>
+                  </IBtn>
+                  <IBtn onClick={()=>{ void handlePip(); }} active={false} activeColor={T.cyan} label="Mini">
+                    <PictureInPicture2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>
+                  </IBtn>
+                </div>
+              )}
 
               {/* BOTTOM controls */}
               <div className="absolute bottom-0 inset-x-0 pointer-events-auto"

@@ -29,7 +29,8 @@ async function uploadFile(file: File): Promise<string> {
   if (!r.ok) throw new Error("Yuklash URL olishda xato");
   const { uploadURL, objectPath } = await r.json();
   await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-  return `${API}/api/storage/objects/${objectPath}`;
+  const cleanPath = String(objectPath).replace(/^\/+/, "");
+  return `${API}/api/storage/objects/${cleanPath}`;
 }
 
 /* ── Constants ──────────────────────────────────────────────── */
@@ -127,6 +128,7 @@ interface GroupPost {
   content: string;
   mediaUrl: string | null;
   likesCount: number;
+  isLikedByMe: boolean;
   createdAt: string;
 }
 
@@ -303,6 +305,10 @@ export default function GroupsPage() {
   const [groupPostsLoading, setGroupPostsLoading] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
   const [deleteGroupConfirm, setDeleteGroupConfirm] = useState(false);
+  const [postImageFile, setPostImageFile] = useState<File | null>(null);
+  const [postImagePreview, setPostImagePreview] = useState<string>("");
+  const [uploadingPostImage, setUploadingPostImage] = useState(false);
+  const postFileRef = useRef<HTMLInputElement>(null);
 
   const { user } = useAuth();
 
@@ -458,6 +464,8 @@ export default function GroupsPage() {
     setGroupPosts([]);
     setNewPostContent("");
     setDeleteGroupConfirm(false);
+    setPostImageFile(null);
+    setPostImagePreview("");
     fetchGroupPosts(group.id);
   };
 
@@ -466,6 +474,8 @@ export default function GroupsPage() {
     setGroupMembers([]);
     setGroupPosts([]);
     setDeleteGroupConfirm(false);
+    setPostImageFile(null);
+    setPostImagePreview("");
   };
 
   const fetchMembers = useCallback(async (groupId: number) => {
@@ -478,25 +488,70 @@ export default function GroupsPage() {
     }
   }, []);
 
+  const handlePostImageChange = useCallback(async (file: File) => {
+    setPostImagePreview(URL.createObjectURL(file));
+    setPostImageFile(file);
+  }, []);
+
   const handleSubmitPost = async () => {
     if (!newPostContent.trim() || !selectedGroup || submittingPost) return;
     setSubmittingPost(true);
     try {
+      let mediaUrl: string | null = null;
+      if (postImageFile) {
+        setUploadingPostImage(true);
+        try {
+          mediaUrl = await uploadFile(postImageFile);
+        } finally {
+          setUploadingPostImage(false);
+        }
+      }
       const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ content: newPostContent.trim() }),
+        body: JSON.stringify({ content: newPostContent.trim(), mediaUrl }),
       });
       if (r.ok) {
         const newPost: GroupPost = await r.json();
         setGroupPosts(prev => [newPost, ...prev]);
         setNewPostContent("");
+        setPostImageFile(null);
+        setPostImagePreview("");
         setSelectedGroup(prev => prev ? { ...prev, postsCount: (prev.postsCount ?? 0) + 1 } : null);
         qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
       }
     } catch { /* silent */ } finally {
       setSubmittingPost(false);
+    }
+  };
+
+  const handleLikePost = async (postId: number) => {
+    if (!selectedGroup) return;
+    setGroupPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const nowLiked = !p.isLikedByMe;
+      return { ...p, isLikedByMe: nowLiked, likesCount: nowLiked ? p.likesCount + 1 : Math.max(0, p.likesCount - 1) };
+    }));
+    try {
+      const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}/like`, {
+        method: "POST", credentials: "include",
+      });
+      if (r.ok) {
+        const { liked, likesCount } = await r.json();
+        setGroupPosts(prev => prev.map(p => p.id === postId ? { ...p, isLikedByMe: liked, likesCount } : p));
+      }
+    } catch { /* silent */ }
+  };
+
+  const handleSharePost = async (post: GroupPost) => {
+    const text = `${post.authorDisplayName}: ${post.content}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: selectedGroup?.name ?? "OlCha", text, url: window.location.href });
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(text).catch(() => {});
     }
   };
 
@@ -1022,12 +1077,16 @@ export default function GroupsPage() {
                 className={`h-48 w-full bg-gradient-to-br ${COLORS_CARD[selectedGroup.id % COLORS_CARD.length]} relative flex items-center justify-center overflow-hidden`}
               >
                 {selectedGroup.coverUrl ? (
-                  <img src={selectedGroup.coverUrl} alt="" className="w-full h-full object-cover absolute inset-0" />
-                ) : (
-                  <span className="text-8xl font-black text-white/10 select-none">
-                    {selectedGroup.name[0]}
-                  </span>
-                )}
+                  <img
+                    src={selectedGroup.coverUrl}
+                    alt=""
+                    className="w-full h-full object-cover absolute inset-0"
+                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                ) : null}
+                <span className="text-8xl font-black text-white/10 select-none absolute">
+                  {selectedGroup.name[0]}
+                </span>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/30" />
               </div>
 
@@ -1110,9 +1169,40 @@ export default function GroupsPage() {
                       rows={3}
                       className="w-full bg-transparent text-foreground text-sm placeholder:text-muted-foreground focus:outline-none resize-none"
                     />
+                    {/* Image preview in composer */}
+                    {postImagePreview && (
+                      <div className="relative mt-2 mb-1">
+                        <img src={postImagePreview} alt="" className="rounded-xl w-full max-h-48 object-cover" />
+                        <button
+                          onClick={() => { setPostImageFile(null); setPostImagePreview(""); }}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                        {uploadingPostImage && (
+                          <div className="absolute inset-0 rounded-xl bg-black/50 flex items-center justify-center">
+                            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {/* Hidden file input */}
+                    <input
+                      ref={postFileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handlePostImageChange(f); e.target.value = ""; }}
+                    />
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><ImageIcon className="w-4 h-4" /></button>
+                        <button
+                          onClick={() => postFileRef.current?.click()}
+                          className={`p-1.5 rounded-lg hover:bg-muted transition-colors ${postImageFile ? "text-primary" : ""}`}
+                          title="Rasm qo'shish"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                        </button>
                         <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Mic className="w-4 h-4" /></button>
                         <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Sparkles className="w-4 h-4" /></button>
                       </div>
@@ -1188,10 +1278,28 @@ export default function GroupsPage() {
                           {post.mediaUrl && (
                             <img src={post.mediaUrl} alt="" className="mt-3 rounded-xl w-full object-cover max-h-72" />
                           )}
-                          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Heart className="w-3.5 h-3.5" /> {post.likesCount}
-                            </span>
+                          <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
+                            <motion.button
+                              whileTap={{ scale: 0.85 }}
+                              onClick={() => handleLikePost(post.id)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                post.isLikedByMe
+                                  ? "bg-rose-500/15 text-rose-500"
+                                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                              }`}
+                            >
+                              <Heart className={`w-3.5 h-3.5 transition-all ${post.isLikedByMe ? "fill-rose-500" : ""}`} />
+                              {post.likesCount > 0 && <span>{post.likesCount}</span>}
+                              <span className="hidden sm:inline">Layk</span>
+                            </motion.button>
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleSharePost(post)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                            >
+                              <Repeat2 className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Ulashish</span>
+                            </motion.button>
                           </div>
                         </motion.div>
                       ))}

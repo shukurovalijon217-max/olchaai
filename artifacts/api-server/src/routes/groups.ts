@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
-import { groupsTable, groupMembersTable, groupPostsTable, usersTable } from "@workspace/db";
+import { groupsTable, groupMembersTable, groupPostsTable, groupPostLikesTable, usersTable } from "@workspace/db";
 import { eq, sql, ilike, and, desc } from "drizzle-orm";
 
 const router = Router();
@@ -159,6 +159,7 @@ router.get("/groups/:id/posts", async (req: Request, res: Response): Promise<voi
     const groupId = Number(req.params.id);
     if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
     const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const userId = (req as any).session?.userId;
 
     const posts = await db
       .select({
@@ -179,7 +180,15 @@ router.get("/groups/:id/posts", async (req: Request, res: Response): Promise<voi
       .orderBy(desc(groupPostsTable.createdAt))
       .limit(limit);
 
-    res.json(posts);
+    let likedIds = new Set<number>();
+    if (userId && posts.length > 0) {
+      const likes = await db.select({ postId: groupPostLikesTable.postId })
+        .from(groupPostLikesTable)
+        .where(eq(groupPostLikesTable.userId, userId));
+      likes.forEach(l => likedIds.add(l.postId));
+    }
+
+    res.json(posts.map(p => ({ ...p, isLikedByMe: likedIds.has(p.id) })));
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -220,6 +229,7 @@ router.post("/groups/:id/posts", async (req: Request, res: Response): Promise<vo
 
     res.status(201).json({
       ...post,
+      isLikedByMe: false,
       authorUsername: author?.username ?? "",
       authorDisplayName: author?.displayName ?? "",
       authorAvatarUrl: author?.avatarUrl ?? null,
@@ -260,6 +270,44 @@ router.delete("/groups/:id/posts/:postId", async (req: Request, res: Response): 
       .where(eq(groupsTable.id, groupId));
 
     res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── Like / unlike group post ───────────────────────────────── */
+router.post("/groups/:id/posts/:postId/like", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const postId = Number(req.params.postId);
+    if (isNaN(postId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const userId = (req as any).session?.userId;
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+    const [existing] = await db.select().from(groupPostLikesTable)
+      .where(and(eq(groupPostLikesTable.postId, postId), eq(groupPostLikesTable.userId, userId)));
+
+    let liked: boolean;
+    if (existing) {
+      await db.delete(groupPostLikesTable)
+        .where(and(eq(groupPostLikesTable.postId, postId), eq(groupPostLikesTable.userId, userId)));
+      await db.update(groupPostsTable)
+        .set({ likesCount: sql`GREATEST(${groupPostsTable.likesCount} - 1, 0)` })
+        .where(eq(groupPostsTable.id, postId));
+      liked = false;
+    } else {
+      await db.insert(groupPostLikesTable).values({ postId, userId });
+      await db.update(groupPostsTable)
+        .set({ likesCount: sql`${groupPostsTable.likesCount} + 1` })
+        .where(eq(groupPostsTable.id, postId));
+      liked = true;
+    }
+
+    const [updated] = await db.select({ likesCount: groupPostsTable.likesCount })
+      .from(groupPostsTable).where(eq(groupPostsTable.id, postId));
+
+    res.json({ liked, likesCount: updated?.likesCount ?? 0 });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

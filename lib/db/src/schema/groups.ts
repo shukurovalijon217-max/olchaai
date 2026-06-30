@@ -41,6 +41,13 @@ export const groupPostsTable = pgTable("group_posts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const groupPostLikesTable = pgTable("group_post_likes", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => groupPostsTable.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertGroupSchema = createInsertSchema(groupsTable).omit({ id: true, createdAt: true, membersCount: true, postsCount: true });
 export type InsertGroup = z.infer<typeof insertGroupSchema>;
 export type Group = typeof groupsTable.$inferSelect;

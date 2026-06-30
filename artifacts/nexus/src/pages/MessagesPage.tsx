@@ -1,6 +1,7 @@
 import {
   useState, useRef, useEffect, useCallback, ElementType,
 } from "react";
+import DrawingCanvas from "@/components/DrawingCanvas";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
   Send, Search, Plus, MessageCircle, Ghost, Clock, X,
@@ -13,7 +14,7 @@ import {
   Clock3, AlignLeft, Heart, ThumbsUp, Pencil,
   PhoneOff, Archive, UserPlus, Share2, Flag, Download,
   CheckSquare, Square, Layers, Link, Globe,
-  BellOff, BellRing, Zap, Headphones,
+  BellOff, BellRing, Zap, Headphones, PenLine,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -32,7 +33,7 @@ import { useAuth } from "@/context/AuthContext";
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 /* ── Types ──────────────────────────────────────────────────── */
-type MsgType = "text" | "image" | "voice" | "video_note" | "file" | "sticker" | "poll";
+type MsgType = "text" | "image" | "voice" | "video_note" | "file" | "sticker" | "poll" | "drawing";
 
 interface Reaction { emoji: string; count: number; mine: boolean }
 interface ReplyRef { id: string; content: string; sender: string }
@@ -541,8 +542,8 @@ function MsgBubble({
 
   const isNoBubble = msg.type==="video_note"||msg.type==="sticker";
   const bubbleCls = `max-w-xs relative ${isNoBubble?"":isMe
-    ?"text-white rounded-2xl rounded-br-sm shadow-lg"
-    :"bg-card/90 border border-white/8 text-foreground rounded-2xl rounded-bl-sm shadow-sm"}`;
+    ?"text-white rounded-[20px] rounded-br-[4px] shadow-xl shadow-primary/20"
+    :"text-foreground rounded-[20px] rounded-bl-[4px] shadow-lg shadow-black/30"}`;
 
   return (
     <motion.div
@@ -582,7 +583,9 @@ function MsgBubble({
           drag={!isMe?"x":false}
           dragConstraints={{left:0,right:60}}
           dragElastic={{left:0,right:0.5}}
-          style={!isMe?{x}:(!isNoBubble?{background:"linear-gradient(135deg,#7c3aed 0%,#6d28d9 40%,#5b21b6 100%)"}:undefined)}
+          style={!isMe
+            ? {x, background:"linear-gradient(135deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%)", backdropFilter:"blur(12px)", border:"1px solid rgba(255,255,255,0.09)"}
+            : (!isNoBubble ? {background:"linear-gradient(145deg,#8b5cf6 0%,#7c3aed 45%,#5b21b6 100%)", boxShadow:"0 4px 24px rgba(124,58,237,0.4)"} : undefined)}
           onDragEnd={(_, info) => {
             if (!isMe && info.offset.x > 35) onReply(msg);
             x.set(0);
@@ -615,6 +618,15 @@ function MsgBubble({
                 <div className="overflow-hidden rounded-2xl">
                   <img src={msg.mediaUrl} alt="" className="max-w-[220px] max-h-[220px] object-cover"/>
                   {msg.content&&<p className="px-3 py-2 text-sm">{msg.content}</p>}
+                </div>
+              )}
+              {msg.type==="drawing"&&msg.mediaUrl&&(
+                <div className="overflow-hidden rounded-2xl relative group/draw">
+                  <img src={msg.mediaUrl} alt="Chizma" className="max-w-[240px] max-h-[200px] object-contain bg-[#1a1a2e]"/>
+                  <div className="absolute top-1.5 left-2 flex items-center gap-1 opacity-60">
+                    <PenLine className="w-3 h-3 text-white"/>
+                    <span className="text-[9px] text-white font-medium">Chizma</span>
+                  </div>
                 </div>
               )}
               {msg.type==="voice"&&(
@@ -950,6 +962,7 @@ export default function MessagesPage() {
   const [showNewConv, setShowNewConv] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [showContactPicker, setShowContactPicker] = useState(false);
+  const [showDraw, setShowDraw] = useState(false);
 
   const { data: allUsers = [] } = useListUsers({});
 
@@ -1136,6 +1149,14 @@ export default function MessagesPage() {
     setVoiceRec(false);
     setVoiceElapsed(0);
   };
+  const handleDrawingSend = (blob: Blob, dataUrl: string) => {
+    setShowDraw(false);
+    const msg = addMsg({ type: "drawing", mediaUrl: dataUrl });
+    uploadBlob(blob, `drawing_${Date.now()}.png`, "image/png")
+      .then(url => updateMsg(msg.id, { mediaUrl: url }))
+      .catch(() => {});
+  };
+
   const handleSticker = (emoji:string) => {
     addMsg({type:"sticker",emoji});
     setShowEmoji(false);
@@ -2018,6 +2039,11 @@ export default function MessagesPage() {
                     className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                     <AtSign className="w-3.5 h-3.5"/>
                   </button>
+                  <button onClick={()=>{ setShowDraw(true); setShowEmoji(false); setShowAttach(false); }}
+                    title="Kanvasda chiz"
+                    className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${showDraw?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                    <PenLine className="w-3.5 h-3.5"/>
+                  </button>
                 </div>
               </div>
 
@@ -2054,6 +2080,13 @@ export default function MessagesPage() {
           <p className="text-sm">{t("msg.select_conv")}</p>
         </div>
       )}
+
+      {/* ── Drawing canvas ───────────────────────────────────────── */}
+      <AnimatePresence>
+        {showDraw&&(
+          <DrawingCanvas onSend={handleDrawingSend} onClose={()=>setShowDraw(false)}/>
+        )}
+      </AnimatePresence>
 
       {/* ── Round video recorder ─────────────────────────────────── */}
       <AnimatePresence>

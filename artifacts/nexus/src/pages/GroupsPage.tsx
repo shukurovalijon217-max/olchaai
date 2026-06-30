@@ -4,7 +4,7 @@ import {
   Users, Lock, Plus, Search, X, ChevronLeft, ChevronRight,
   Globe, Eye, EyeOff, Shield, Zap, Image as ImageIcon,
   MessageSquare, Upload, Check, AlertCircle, Crown, Mic,
-  Radio, ShoppingBag, Award, Pin, File, Bot, Mail, Send,
+  Radio, ShoppingBag, Award, Pin, File as FileIcon, Bot, Mail, Send,
   Instagram, Hash, Link, BookOpen, Music, Utensils, Plane,
   Briefcase, FlaskConical, Heart, Palette, Info, Settings2,
   BarChart3, CalendarDays, Volume2, Sparkles, Code, Clock,
@@ -414,6 +414,26 @@ export default function GroupsPage() {
   const [postMenuOpenId, setPostMenuOpenId] = useState<number | null>(null);
   const [memberMenuId, setMemberMenuId] = useState<number | null>(null);
 
+  // ── Voice recording state ─────────────────────────────────────
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── AI assist state ───────────────────────────────────────────
+  const [showAiAssist, setShowAiAssist] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+
+  // ── Internal share modal state ────────────────────────────────
+  const [sharePost, setSharePost] = useState<GroupPost | null>(null);
+  const [shareComment, setShareComment] = useState("");
+  const [sharingPost, setSharingPost] = useState(false);
+
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 2500);
@@ -714,24 +734,148 @@ export default function GroupsPage() {
     setPostImageFile(file);
   }, []);
 
+  /* ── Voice recording ─────────────────────────────────────────── */
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
+      recordingChunksRef.current = [];
+      mr.ondataavailable = e => { if (e.data.size > 0) recordingChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(recordingChunksRef.current, { type: "audio/webm" });
+        setAudioBlob(blob);
+        setAudioPreviewUrl(URL.createObjectURL(blob));
+      };
+      mr.start(100);
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(t => {
+          if (t >= 59) { handleStopRecording(); return 60; }
+          return t + 1;
+        });
+      }, 1000);
+    } catch {
+      showToast("Mikrofon ruxsat berilmadi");
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    setIsRecording(false);
+  };
+
+  const handleCancelRecording = () => {
+    handleStopRecording();
+    setAudioBlob(null);
+    setAudioPreviewUrl(null);
+    setRecordingTime(0);
+  };
+
+  /* ── AI text assist ──────────────────────────────────────────── */
+  const handleAiAssist = async () => {
+    if (!aiPrompt.trim() || aiLoading) return;
+    setAiLoading(true);
+    try {
+      const r = await fetch(`${API}/api/ai/group-assist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          prompt: aiPrompt.trim(),
+          groupName: selectedGroup?.name,
+          groupCategory: selectedGroup?.category,
+        }),
+      });
+      if (r.ok) {
+        const { text } = await r.json();
+        setNewPostContent(prev => prev ? prev + "\n" + text : text);
+        setAiPrompt("");
+        setShowAiAssist(false);
+        showToast("AI matni qo'shildi ✓");
+      } else {
+        showToast("AI xizmati hozir mavjud emas");
+      }
+    } catch {
+      showToast("AI xizmatiga ulanishda xato");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  /* ── Internal OlCha share ─────────────────────────────────────── */
+  const handleShareToFeed = async () => {
+    if (!sharePost || sharingPost) return;
+    setSharingPost(true);
+    try {
+      const content = shareComment.trim()
+        ? `${shareComment}\n\n📢 "${sharePost.content.slice(0, 80)}${sharePost.content.length > 80 ? "..." : ""}"`
+        : `📢 "${selectedGroup?.name}" guruhidan: ${sharePost.content.slice(0, 100)}${sharePost.content.length > 100 ? "..." : ""}`;
+      const r = await fetch(`${API}/api/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ content, mediaUrl: sharePost.mediaUrl ?? null }),
+      });
+      if (r.ok) {
+        showToast("Post lentangizga ulashildi ✓");
+        setSharePost(null);
+        setShareComment("");
+      } else {
+        showToast("Ulashishda xato");
+      }
+    } catch {
+      showToast("Ulashishda xato");
+    } finally {
+      setSharingPost(false);
+    }
+  };
+
   const handleSubmitPost = async () => {
-    if (!newPostContent.trim() || !selectedGroup || submittingPost) return;
+    if (!selectedGroup || submittingPost) return;
+    const hasText = newPostContent.trim().length > 0;
+    const hasImage = !!postImageFile;
+    const hasAudio = !!audioBlob;
+    if (!hasText && !hasImage && !hasAudio) return;
+
     setSubmittingPost(true);
     try {
       let mediaUrl: string | null = null;
-      if (postImageFile) {
+
+      if (hasImage) {
         setUploadingPostImage(true);
         try {
-          mediaUrl = await uploadFile(postImageFile);
-        } finally {
+          mediaUrl = await uploadFile(postImageFile!);
+        } catch {
+          showToast("Rasm yuklanmadi, qayta urinib ko'ring");
           setUploadingPostImage(false);
+          return;
         }
+        setUploadingPostImage(false);
+      } else if (hasAudio) {
+        setUploadingAudio(true);
+        try {
+          const audioFile = new File([audioBlob!], `voice-${Date.now()}.webm`, { type: "audio/webm" });
+          mediaUrl = await uploadFile(audioFile);
+        } catch {
+          showToast("Audio yuklanmadi");
+          setUploadingAudio(false);
+          return;
+        }
+        setUploadingAudio(false);
       }
+
+      const content = hasText ? newPostContent.trim() : (hasAudio ? "🎤 Ovozli xabar" : "");
       const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ content: newPostContent.trim(), mediaUrl }),
+        body: JSON.stringify({ content, mediaUrl, postType: hasAudio ? "voice" : "text" }),
       });
       if (r.ok) {
         const newPost: GroupPost = await r.json();
@@ -739,11 +883,22 @@ export default function GroupsPage() {
         setNewPostContent("");
         setPostImageFile(null);
         setPostImagePreview("");
+        setAudioBlob(null);
+        setAudioPreviewUrl(null);
+        setRecordingTime(0);
         setSelectedGroup(prev => prev ? { ...prev, postsCount: (prev.postsCount ?? 0) + 1 } : null);
         qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+        showToast("Post yuborildi ✓");
+      } else {
+        const errData = await r.json().catch(() => ({}));
+        showToast((errData as any).error ?? "Post yuborishda xato");
       }
-    } catch { /* silent */ } finally {
+    } catch {
+      showToast("Post yuborishda xato");
+    } finally {
       setSubmittingPost(false);
+      setUploadingPostImage(false);
+      setUploadingAudio(false);
     }
   };
 
@@ -1315,7 +1470,7 @@ export default function GroupsPage() {
             on={form.featBadges}      onToggle={() => f("featBadges",      !form.featBadges)} accent="text-yellow-400" />
           <ToggleRow icon={Pin}       label="Muhrlangan postlar"  desc="Muhim postlarni yuqoriga qo'yish"
             on={form.featPinnedPosts} onToggle={() => f("featPinnedPosts", !form.featPinnedPosts)} />
-          <ToggleRow icon={File}      label="Fayl ulashish"       desc="Hujjat, PDF, arxiv ulashish"
+          <ToggleRow icon={FileIcon}  label="Fayl ulashish"       desc="Hujjat, PDF, arxiv ulashish"
             on={form.featFileSharing} onToggle={() => f("featFileSharing", !form.featFileSharing)} />
           <ToggleRow icon={Bot}       label="AI moderatsiya"      desc="Spam va zararli kontent filtrlanadi"
             on={form.featAiModeration} onToggle={() => f("featAiModeration", !form.featAiModeration)} accent="text-violet-400" />
@@ -1646,6 +1801,59 @@ export default function GroupsPage() {
                         )}
                       </div>
                     )}
+                    {/* Audio preview */}
+                    {audioPreviewUrl && !isRecording && (
+                      <div className="mt-2 mb-1 flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2">
+                        <Volume2 className="w-4 h-4 text-primary flex-shrink-0" />
+                        <audio src={audioPreviewUrl} controls className="flex-1 h-8" style={{ minWidth: 0, maxWidth: "100%" }} />
+                        <button onClick={handleCancelRecording}
+                          className="p-1 text-muted-foreground hover:text-destructive transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                        {uploadingAudio && <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />}
+                      </div>
+                    )}
+
+                    {/* Recording indicator */}
+                    {isRecording && (
+                      <div className="mt-2 mb-1 flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+                        <span className="text-xs font-semibold text-red-400">Yozilmoqda... {recordingTime}s</span>
+                        <button onClick={handleStopRecording}
+                          className="ml-auto px-3 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/30 transition-colors">
+                          To'xtatish
+                        </button>
+                      </div>
+                    )}
+
+                    {/* AI Assist input */}
+                    <AnimatePresence>
+                      {showAiAssist && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }}
+                          className="mt-2 overflow-hidden">
+                          <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-xl px-3 py-2">
+                            <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                            <input
+                              autoFocus
+                              value={aiPrompt}
+                              onChange={e => setAiPrompt(e.target.value)}
+                              onKeyDown={e => { if (e.key === "Enter") handleAiAssist(); if (e.key === "Escape") setShowAiAssist(false); }}
+                              placeholder="AI nima haqida yozsin? (Enter bosing)"
+                              className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
+                            />
+                            {aiLoading
+                              ? <div className="w-3.5 h-3.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                              : <button onClick={handleAiAssist} className="text-primary hover:opacity-70"><Send className="w-3.5 h-3.5" /></button>
+                            }
+                            <button onClick={() => { setShowAiAssist(false); setAiPrompt(""); }} className="text-muted-foreground hover:text-foreground">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     {/* Hidden file input */}
                     <input
                       ref={postFileRef}
@@ -1656,29 +1864,52 @@ export default function GroupsPage() {
                     />
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                       <div className="flex items-center gap-2 text-muted-foreground">
+                        {/* Image */}
                         <button
                           onClick={() => postFileRef.current?.click()}
-                          className={`p-1.5 rounded-lg hover:bg-muted transition-colors ${postImageFile ? "text-primary" : ""}`}
+                          disabled={isRecording || !!audioBlob}
+                          className={`p-1.5 rounded-lg hover:bg-muted transition-colors disabled:opacity-30 ${postImageFile ? "text-primary" : ""}`}
                           title="Rasm qo'shish"
                         >
                           <ImageIcon className="w-4 h-4" />
                         </button>
-                        <button className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Mic className="w-4 h-4" /></button>
+                        {/* Mic */}
+                        <button
+                          disabled={!!postImageFile}
+                          onClick={isRecording ? handleStopRecording : (audioBlob ? handleCancelRecording : handleStartRecording)}
+                          title={isRecording ? "Yozishni to'xtatish" : "Ovozli xabar"}
+                          className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${
+                            isRecording ? "text-red-400 bg-red-500/10 animate-pulse" :
+                            audioBlob ? "text-primary bg-primary/10" :
+                            "hover:bg-muted"
+                          }`}
+                        >
+                          <Mic className="w-4 h-4" />
+                        </button>
+                        {/* Poll */}
                         <button
                           onClick={() => setShowPollCompose(s => !s)}
                           className={`p-1.5 rounded-lg hover:bg-muted transition-colors ${showPollCompose ? "text-primary" : ""}`}
                           title="So'rovnoma yaratish">
                           <BarChart3 className="w-4 h-4" />
                         </button>
+                        {/* AI Sparkles */}
+                        <button
+                          onClick={() => { setShowAiAssist(s => !s); setAiPrompt(""); }}
+                          className={`p-1.5 rounded-lg hover:bg-muted transition-colors ${showAiAssist ? "text-primary" : ""}`}
+                          title="AI yordamida yozish"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                        </button>
                       </div>
                       <button
-                        disabled={!newPostContent.trim() || submittingPost}
+                        disabled={(!newPostContent.trim() && !postImageFile && !audioBlob) || submittingPost}
                         onClick={handleSubmitPost}
                         className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5"
                       >
                         {submittingPost
                           ? <><div className="w-3 h-3 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Yuborilmoqda</>
-                          : "Yuborish"
+                          : <><Send className="w-3 h-3" /> Yuborish</>
                         }
                       </button>
                     </div>
@@ -1915,11 +2146,21 @@ export default function GroupsPage() {
                               <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{renderContent(post.content)}</p>
 
                               {/* Media */}
-                              {post.mediaUrl && (
+                              {post.mediaUrl && post.postType === "voice" ? (
+                                <div className="mt-3 flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2">
+                                  <Volume2 className="w-4 h-4 text-primary flex-shrink-0" />
+                                  <audio src={post.mediaUrl} controls className="flex-1 h-8" style={{ minWidth: 0 }} />
+                                </div>
+                              ) : post.mediaUrl ? (
                                 <button onClick={() => setLightboxUrl(post.mediaUrl)} className="mt-3 w-full block">
-                                  <img src={post.mediaUrl} alt="" className="rounded-xl w-full object-cover max-h-72 hover:opacity-95 transition-opacity cursor-zoom-in" />
+                                  <img
+                                    src={post.mediaUrl}
+                                    alt=""
+                                    className="rounded-xl w-full object-cover max-h-72 hover:opacity-95 transition-opacity cursor-zoom-in"
+                                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                  />
                                 </button>
-                              )}
+                              ) : null}
 
                               {/* Reaction summary */}
                               {post.reactionsCount > 0 && (
@@ -1983,9 +2224,9 @@ export default function GroupsPage() {
                                   {post.commentsCount > 0 && <span>{post.commentsCount}</span>}
                                 </motion.button>
 
-                                {/* Share */}
+                                {/* Share - OlCha internal */}
                                 <motion.button whileTap={{ scale: 0.9 }}
-                                  onClick={() => handleSharePost(post)}
+                                  onClick={() => { setSharePost(post); setShareComment(""); }}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
                                   <Repeat2 className="w-3.5 h-3.5" />
                                 </motion.button>
@@ -2687,6 +2928,55 @@ export default function GroupsPage() {
               className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Internal share modal ─────────────────────────────────── */}
+      <AnimatePresence>
+        {sharePost && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] bg-black/60 flex items-center justify-center p-4"
+            onClick={() => setSharePost(null)}>
+            <motion.div initial={{ scale: 0.93, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.93, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <Repeat2 className="w-5 h-5 text-primary" />
+                <h3 className="text-base font-bold text-foreground">OlCha'da ulashish</h3>
+                <button onClick={() => setSharePost(null)} className="ml-auto text-muted-foreground hover:text-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              {/* Original post preview */}
+              <div className="bg-muted/40 border border-border rounded-xl p-3 mb-3">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">{sharePost.authorDisplayName}</p>
+                <p className="text-sm text-foreground line-clamp-3">{sharePost.content}</p>
+                {sharePost.mediaUrl && (
+                  <img src={sharePost.mediaUrl} alt="" className="mt-2 rounded-lg w-full max-h-24 object-cover" />
+                )}
+              </div>
+              <textarea
+                value={shareComment}
+                onChange={e => setShareComment(e.target.value)}
+                placeholder="Fikringizni qo'shing (ixtiyoriy)..."
+                rows={2}
+                className="w-full bg-muted/50 text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/40 resize-none mb-3"
+              />
+              <div className="flex gap-2">
+                <button onClick={() => setSharePost(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-colors">
+                  Bekor qilish
+                </button>
+                <button onClick={handleShareToFeed} disabled={sharingPost}
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5">
+                  {sharingPost
+                    ? <><div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Ulashilmoqda</>
+                    : <><Send className="w-3.5 h-3.5" /> Lentaga ulashish</>
+                  }
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

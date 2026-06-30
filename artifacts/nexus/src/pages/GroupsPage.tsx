@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, ElementType } from "react";
+import { playSmsSound, getFeaturePref } from "@/lib/sounds";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Lock, Plus, Search, X, ChevronLeft, ChevronRight,
@@ -463,6 +464,52 @@ export default function GroupsPage() {
     setSettingsForm(prev => ({ ...prev, [key]: val }));
 
   const { user } = useAuth();
+
+  // 🔔 Sound: track new group posts from others
+  const prevPostIdsRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (!user) return;
+    const newFromOthers = groupPosts.filter(p => !prevPostIdsRef.current.has(p.id) && p.authorId !== user.id);
+    if (newFromOthers.length > 0 && prevPostIdsRef.current.size > 0) {
+      if (getFeaturePref("sound_notif", true)) playSmsSound();
+    }
+    prevPostIdsRef.current = new Set(groupPosts.map(p => p.id));
+  }, [groupPosts.length]);
+
+  // 🔔 Sound: track new group comments from others
+  const prevGroupCommentCountRef = useRef(0);
+  useEffect(() => {
+    if (!user) return;
+    const total = Object.values(commentsByPost)
+      .flat()
+      .filter(c => c.authorId !== user.id).length;
+    if (total > prevGroupCommentCountRef.current && prevGroupCommentCountRef.current > 0) {
+      if (getFeaturePref("sound_notif", true)) playSmsSound();
+    }
+    prevGroupCommentCountRef.current = total;
+  }, [Object.values(commentsByPost).reduce((s, arr) => s + arr.length, 0)]);
+
+  // 🔔 Poll for new group posts every 25s when a group is open
+  const selectedGroupIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!selectedGroup) { selectedGroupIdRef.current = null; return; }
+    selectedGroupIdRef.current = selectedGroup.id;
+    const iv = setInterval(async () => {
+      const gid = selectedGroupIdRef.current;
+      if (!gid) return;
+      try {
+        const r = await fetch(`${API}/api/groups/${gid}/posts`, { credentials: "include" });
+        if (!r.ok) return;
+        const fresh: GroupPost[] = await r.json();
+        const prevIds = prevPostIdsRef.current;
+        const hasNew = fresh.some(p => !prevIds.has(p.id) && p.authorId !== user?.id);
+        if (hasNew) {
+          setGroupPosts(fresh);
+        }
+      } catch { /* silent */ }
+    }, 25000);
+    return () => clearInterval(iv);
+  }, [selectedGroup?.id]);
 
   const f = <K extends keyof FormState>(key: K, val: FormState[K]) =>
     setForm(prev => ({ ...prev, [key]: val }));

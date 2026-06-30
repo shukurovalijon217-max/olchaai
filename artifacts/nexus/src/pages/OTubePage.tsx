@@ -28,6 +28,7 @@ import {
   ListVideo, ShieldCheck, Crosshair, Scissors, Timer, Sliders,
   Type, Smile, Music, ChevronLeft, Camera, Mic2, ImagePlus,
   Wand2, AlignCenter, FastForward, Palette, SlidersHorizontal,
+  PictureInPicture2,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────── */
@@ -429,8 +430,8 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
 /* ─────────────────────────────────────────────────────── */
 /* NexusPlayer — BROADCAST STYLE                           */
 /* ─────────────────────────────────────────────────────── */
-function NexusPlayer({ video, onClose, settings }:
-  { video:Reel; onClose:()=>void; settings:PlayerSettings }) {
+function NexusPlayer({ video, onClose, settings, onPip }:
+  { video:Reel; onClose:()=>void; settings:PlayerSettings; onPip?:(time:number)=>void }) {
   const { t } = useTranslation();
   const qc             = useQueryClient();
   const [, navPlayer]  = useLocation();
@@ -614,6 +615,41 @@ function NexusPlayer({ video, onClose, settings }:
     else await navigator.clipboard.writeText(window.location.href);}catch{}
     setShared(true);setTimeout(()=>setShared(false),2000);
   },[video.caption]);
+
+  const handlePip = useCallback(async()=>{
+    const v = videoRef.current;
+    if (v && document.pictureInPictureEnabled && !document.pictureInPictureElement) {
+      try { await v.requestPictureInPicture(); return; } catch {}
+    }
+    if (onPip) { onPip(v?.currentTime ?? 0); onClose(); }
+  },[onPip, onClose]);
+
+  useEffect(()=>{
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: video.caption || 'OTube Video',
+      artist: video.author.displayName,
+      album: 'OTube — NEXUS Platform',
+      artwork: video.thumbnailUrl
+        ? [{ src: video.thumbnailUrl, sizes:'512x512', type:'image/jpeg' }]
+        : [],
+    });
+    navigator.mediaSession.setActionHandler('play', ()=>{
+      videoRef.current?.play(); setPlaying(true);
+    });
+    navigator.mediaSession.setActionHandler('pause', ()=>{
+      videoRef.current?.pause(); setPlaying(false);
+    });
+    return ()=>{
+      navigator.mediaSession.setActionHandler('play', null);
+      navigator.mediaSession.setActionHandler('pause', null);
+    };
+  },[video]);
+
+  useEffect(()=>{
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+  },[playing]);
 
   /* Icon button helper — round */
   const IBtn = ({ onClick, active=false, activeColor=T.cyan, children, label }:
@@ -799,6 +835,9 @@ function NexusPlayer({ video, onClose, settings }:
                   document.body.appendChild(a); a.click(); document.body.removeChild(a);
                 }} active={false} label="Yuklab">
                   <Upload style={{width:15,height:15,color:"rgba(255,255,255,0.65)",transform:"rotate(180deg)"}}/>
+                </IBtn>
+                <IBtn onClick={()=>{ void handlePip(); }} active={false} activeColor={T.cyan} label="Mini">
+                  <PictureInPicture2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>
                 </IBtn>
               </div>
 
@@ -5457,6 +5496,103 @@ const SIGNALS = [
 ] as const;
 type SignalId = typeof SIGNALS[number]["id"];
 
+/* ─────────────────────────────────────────────────────── */
+/* MiniPlayer — draggable floating PiP window              */
+/* ─────────────────────────────────────────────────────── */
+function MiniPlayer({ video, startTime, onClose, onExpand }:{
+  video:Reel; startTime:number; onClose:()=>void; onExpand:()=>void;
+}) {
+  const vRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(true);
+
+  useEffect(()=>{
+    const v = vRef.current; if (!v) return;
+    v.currentTime = startTime;
+    v.play().catch(()=>{});
+  },[startTime]);
+
+  const toggle = ()=>{
+    const v = vRef.current; if (!v) return;
+    if (v.paused){ v.play().catch(()=>{}); setPlaying(true); }
+    else { v.pause(); setPlaying(false); }
+  };
+
+  return createPortal(
+    <motion.div
+      drag dragMomentum={false}
+      initial={{scale:0.6,opacity:0,y:40}}
+      animate={{scale:1,opacity:1,y:0}}
+      exit={{scale:0.5,opacity:0,y:40}}
+      transition={{type:"spring",damping:22,stiffness:320}}
+      style={{
+        position:"fixed", bottom:110, right:14,
+        width:204, height:128, borderRadius:16,
+        overflow:"hidden", zIndex:9998,
+        boxShadow:"0 8px 40px rgba(0,0,0,0.78), 0 0 0 1.5px rgba(0,229,255,0.22)",
+        touchAction:"none", cursor:"grab",
+      }}
+    >
+      {/* Video */}
+      {video.videoUrl
+        ? <video ref={vRef} src={video.videoUrl} playsInline loop muted={false}
+            style={{width:"100%",height:"100%",objectFit:"cover",pointerEvents:"none"}}/>
+        : video.thumbnailUrl
+        ? <img src={video.thumbnailUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+        : <div style={{width:"100%",height:"100%",background:"#050010"}}/>}
+
+      {/* Dark overlay */}
+      <div style={{position:"absolute",inset:0,
+        background:"linear-gradient(to top,rgba(0,0,0,0.72) 0%,rgba(0,0,0,0.1) 60%,transparent 100%)"}}/>
+
+      {/* Top buttons */}
+      <div style={{position:"absolute",top:6,left:6,right:6,display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <motion.button whileTap={{scale:0.8}} onClick={e=>{e.stopPropagation();onExpand();}}
+          style={{width:28,height:28,borderRadius:"50%",background:"rgba(0,0,0,0.55)",
+            backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.15)",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Maximize2 style={{width:12,height:12,color:"rgba(255,255,255,0.85)"}}/>
+        </motion.button>
+        <motion.button whileTap={{scale:0.8}} onClick={e=>{e.stopPropagation();onClose();}}
+          style={{width:28,height:28,borderRadius:"50%",background:"rgba(0,0,0,0.55)",
+            backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.15)",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <X style={{width:12,height:12,color:"rgba(255,255,255,0.85)"}}/>
+        </motion.button>
+      </div>
+
+      {/* Center play/pause tap */}
+      <motion.div whileTap={{scale:0.9}}
+        onClick={e=>{e.stopPropagation();toggle();}}
+        style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <AnimatePresence>
+          {!playing && (
+            <motion.div key="pip-play"
+              initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:1.4}}
+              style={{width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,0.55)",
+                backdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.2)",
+                display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Play style={{width:14,height:14,fill:"white",color:"white",marginLeft:2}}/>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Bottom title */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"4px 8px 6px"}}>
+        <p style={{fontSize:9.5,fontWeight:600,color:"rgba(255,255,255,0.82)",
+          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+          {video.caption||"Video"}
+        </p>
+      </div>
+
+      {/* Cyan accent line */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,height:2,
+        background:`linear-gradient(90deg,${T.cyan},${T.violet})`}}/>
+    </motion.div>,
+    document.body
+  );
+}
+
 export default function OTubePage() {
   const { t } = useTranslation();
   const [,navigate]    = useLocation();
@@ -5464,6 +5600,7 @@ export default function OTubePage() {
   const [query,setQuery]    = useState("");
   const [showSearch,setShowSearch] = useState(false);
   const [selected,setSelected]     = useState<Reel|null>(null);
+  const [pipVideo,setPipVideo]     = useState<{video:Reel;startTime:number}|null>(null);
   const [showSettings,setShowSettings] = useState(false);
   const [settings,setSettings]   = useState<PlayerSettings>(DEF_S);
   const [monetize,setMonetize]   = useState<MonetizationSettings>(DEF_M);
@@ -5875,11 +6012,30 @@ export default function OTubePage() {
         <AnimatePresence>
           {selected && (
             <NexusPlayer key={selected.id}
-              video={selected} onClose={()=>setSelected(null)} settings={settings}/>
+              video={selected} onClose={()=>setSelected(null)} settings={settings}
+              onPip={(time)=>{
+                setPipVideo({video:selected, startTime:time});
+                setSelected(null);
+              }}/>
           )}
         </AnimatePresence>,
         document.body
       )}
+
+      <AnimatePresence>
+        {pipVideo && (
+          <MiniPlayer
+            key={pipVideo.video.id}
+            video={pipVideo.video}
+            startTime={pipVideo.startTime}
+            onClose={()=>setPipVideo(null)}
+            onExpand={()=>{
+              setSelected(pipVideo.video);
+              setPipVideo(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       <SettingsDrawer open={showSettings} onClose={()=>setShowSettings(false)}
         settings={settings} onSettings={setSettings}

@@ -788,11 +788,20 @@ function CallUI({
     return ()=>{ streamRef.current?.getTracks().forEach(t=>t.stop()); };
   },[type]);
 
-  /* ── attach stream to pip video when it mounts (minimized mode) ── */
+  /* ── reattach stream when switching between full/pip modes ── */
   useEffect(()=>{
-    if (minimized && pipVidRef.current && streamRef.current) {
-      pipVidRef.current.srcObject = streamRef.current;
-      pipVidRef.current.play().catch(()=>{});
+    if (!streamRef.current) return;
+    if (minimized) {
+      if (pipVidRef.current) {
+        pipVidRef.current.srcObject = streamRef.current;
+        pipVidRef.current.play().catch(()=>{});
+      }
+    } else {
+      /* maximized — localVidRef just remounted, reattach */
+      if (localVidRef.current) {
+        localVidRef.current.srcObject = streamRef.current;
+        localVidRef.current.play().catch(()=>{});
+      }
     }
   },[minimized]);
 

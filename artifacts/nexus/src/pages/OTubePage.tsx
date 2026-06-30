@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl, useListNotifications, markAllNotificationsRead } from "@workspace/api-client-react";
+import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl, useListNotifications, markAllNotificationsRead, useDeleteReel } from "@workspace/api-client-react";
 import type { Reel, UploadUrlRequest, Notification } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -29,7 +29,7 @@ import {
   ListVideo, ShieldCheck, Crosshair, Scissors, Timer, Sliders,
   Type, Smile, Music, ChevronLeft, Camera, Mic2, ImagePlus,
   Wand2, AlignCenter, FastForward, Palette, SlidersHorizontal,
-  PictureInPicture2, MoreVertical,
+  PictureInPicture2, MoreVertical, Trash2,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────── */
@@ -436,6 +436,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const { t } = useTranslation();
   const qc             = useQueryClient();
   const [, navPlayer]  = useLocation();
+  const { user }       = useAuth();
   const videoRef   = useRef<HTMLVideoElement>(null);
   const contRef    = useRef<HTMLDivElement>(null);
   const ctrlTimer  = useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -512,6 +513,17 @@ function NexusPlayer({ video, onClose, settings, onPip }:
         const prev = !subbed;
         setFollowState(video.author.id, prev);
         setSubbed(prev);
+      },
+    },
+  });
+
+  const isOwner = !!user && user.id === video.author.id;
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const deleteMut = useDeleteReel({
+    mutation: {
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
+        onClose();
       },
     },
   });
@@ -859,6 +871,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                           {icon:<Sparkles style={{width:14,height:14,color:danmaku?"#ffd700":"rgba(255,255,255,0.55)"}}/>, label:t("otube.reaction"), act:()=>setDanmaku(d=>!d), active:danmaku, col:"#ffd700"},
                           {icon:<Gauge style={{width:14,height:14,color:aiDub?"#00ff88":"rgba(255,255,255,0.55)"}}/>, label:"AI Dub", act:()=>setAiDub(d=>!d), active:aiDub, col:"#00ff88"},
                           {icon:<PictureInPicture2 style={{width:14,height:14,color:"rgba(255,255,255,0.7)"}}/>, label:"Mini", act:()=>void handlePip(), active:false, col:T.cyan},
+                          ...(isOwner ? [{icon:<Trash2 style={{width:14,height:14,color:"#ff3b30"}}/>, label:"O'chir", act:()=>setConfirmDelete(true), active:false, col:"#ff3b30"}] : []),
                         ].map((b,i)=>(
                           <motion.button key={i} whileTap={{scale:0.75}}
                             onClick={()=>b.act()}
@@ -928,8 +941,76 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                   <IBtn onClick={()=>{ void handlePip(); }} active={false} activeColor={T.cyan} label="Mini">
                     <PictureInPicture2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>
                   </IBtn>
+                  {isOwner && (
+                    <IBtn
+                      onClick={()=>setConfirmDelete(true)}
+                      active={false} activeColor="#ff3b30" label="O'chir">
+                      <Trash2 style={{width:15,height:15,color:"#ff3b30"}}/>
+                    </IBtn>
+                  )}
                 </div>
               )}
+
+              {/* DELETE CONFIRM MODAL */}
+              <AnimatePresence>
+                {confirmDelete && (
+                  <motion.div
+                    initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+                    onClick={e=>e.stopPropagation()}
+                    style={{
+                      position:"absolute",inset:0,zIndex:200,
+                      background:"rgba(0,0,0,0.72)",backdropFilter:"blur(8px)",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      pointerEvents:"auto",
+                    }}>
+                    <motion.div
+                      initial={{scale:0.85,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:0.85,opacity:0}}
+                      style={{
+                        background:"rgba(12,4,28,0.97)",borderRadius:22,padding:"28px 24px 20px",
+                        boxShadow:"0 16px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,59,48,0.25)",
+                        maxWidth:300,width:"90%",textAlign:"center",
+                      }}>
+                      <div style={{
+                        width:52,height:52,borderRadius:"50%",
+                        background:"rgba(255,59,48,0.15)",
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        margin:"0 auto 14px",
+                        boxShadow:"0 0 0 1px rgba(255,59,48,0.35)",
+                      }}>
+                        <Trash2 style={{width:22,height:22,color:"#ff3b30"}}/>
+                      </div>
+                      <p style={{fontSize:16,fontWeight:800,color:"white",marginBottom:8}}>
+                        Videoni o'chirish
+                      </p>
+                      <p style={{fontSize:12,color:"rgba(255,255,255,0.45)",marginBottom:22,lineHeight:1.5}}>
+                        Bu amalni qaytarib bo'lmaydi. Video va uning barcha sharhlari butunlay o'chiriladi.
+                      </p>
+                      <div style={{display:"flex",gap:10}}>
+                        <button
+                          onClick={()=>setConfirmDelete(false)}
+                          style={{
+                            flex:1,padding:"11px 0",borderRadius:14,
+                            background:"rgba(255,255,255,0.07)",
+                            fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.7)",
+                          }}>
+                          Bekor
+                        </button>
+                        <button
+                          onClick={()=>deleteMut.mutate({ id: video.id })}
+                          disabled={deleteMut.isPending}
+                          style={{
+                            flex:1,padding:"11px 0",borderRadius:14,
+                            background:deleteMut.isPending?"rgba(255,59,48,0.4)":"#ff3b30",
+                            fontSize:13,fontWeight:700,color:"white",
+                            opacity:deleteMut.isPending?0.7:1,
+                          }}>
+                          {deleteMut.isPending ? "O'chirilmoqda…" : "O'chirish"}
+                        </button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* BOTTOM controls */}
               <div className="absolute bottom-0 inset-x-0 pointer-events-auto"

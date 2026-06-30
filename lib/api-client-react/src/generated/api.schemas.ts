@@ -735,6 +735,10 @@ offset?: number;
 userId?: number;
 };
 
+export type DeleteReel200 = {
+  ok?: boolean;
+};
+
 export type ListGroupsParams = {
 search?: string;
 limit?: number;

@@ -41,6 +41,7 @@ import type {
   CreatorPlanInput,
   CreatorSubscription,
   DeleteNotification200,
+  DeleteReel200,
   FollowResult,
   GetAdminAnalyticsParams,
   GetAiFeedParams,
@@ -1539,6 +1540,76 @@ export const useCreateReel = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateReelMutationOptions(options));
+    }
+
+export const getDeleteReelUrl = (id: number,) => {
+
+
+
+
+  return `/api/reels/${id}`
+}
+
+/**
+ * @summary Delete a reel (owner only)
+ */
+export const deleteReel = async (id: number, options?: RequestInit): Promise<DeleteReel200> => {
+
+  return customFetch<DeleteReel200>(getDeleteReelUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteReelMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReel>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteReel>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteReel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteReel>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteReel(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteReelMutationResult = NonNullable<Awaited<ReturnType<typeof deleteReel>>>
+
+    export type DeleteReelMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a reel (owner only)
+ */
+export const useDeleteReel = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReel>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteReel>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteReelMutationOptions(options));
     }
 
 export const getLikeReelUrl = (id: number,) => {

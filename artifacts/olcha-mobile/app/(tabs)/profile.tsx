@@ -2,12 +2,13 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Dimensions,
   FlatList,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,23 +18,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { AuroraBorder } from "@/components/AuroraBorder";
+import { apiFetch } from "@/utils/api";
 
 const { width: W } = Dimensions.get("window");
 const IMG = (W - 4) / 3;
 
-const MEDIA = [
-  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400",
-  "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400",
-  "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=400",
-  "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400",
-  "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400",
-  "https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=400",
-  "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400",
-  "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400",
-  "https://images.unsplash.com/photo-1495121605193-b116b5b9c5fe?w=400",
-];
-
 type PTab = "posts" | "reels" | "tagged";
+
+interface ApiPost {
+  id: number;
+  mediaUrl?: string;
+  mediaType?: string;
+  thumbnailUrl?: string;
+}
 
 function StatCard({ value, label, color }: { value: string; label: string; color: string }) {
   const colors = useColors();
@@ -47,36 +44,73 @@ function StatCard({ value, label, color }: { value: string; label: string; color
   );
 }
 
+function fmtNum(n?: number) {
+  if (!n) return "0";
+  if (n >= 1e6) return (n/1e6).toFixed(1)+"M";
+  if (n >= 1000) return (n/1000).toFixed(1)+"K";
+  return n.toString();
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [pTab, setPTab] = useState<PTab>("posts");
+  const [userPosts, setUserPosts] = useState<ApiPost[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : 0;
+
+  const fetchUserPosts = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await apiFetch(`/api/posts?userId=${user.id}&limit=30`);
+      if (res.ok) {
+        const data = await res.json() as ApiPost[];
+        setUserPosts(data ?? []);
+      }
+    } catch {}
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchUserPosts();
+  }, [fetchUserPosts]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refreshUser(), fetchUserPosts()]);
+    setRefreshing(false);
+  }, [refreshUser, fetchUserPosts]);
 
   const displayName = user?.displayName ?? "OlCha User";
   const username = user?.username ?? "olcha_user";
   const initials = displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+
+  const mediaItems = userPosts.filter(p => p.mediaUrl || p.thumbnailUrl);
 
   return (
     <ScrollView
       style={[p.container, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: 90 + botPad }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
+        />
+      }
     >
-      {/* Aurora banner */}
       <LinearGradient
         colors={["#1a0050", "#0d1424", colors.background]}
         style={[p.banner, { paddingTop: topPad }]}
       >
-        {/* Floating orbs */}
         <View style={[p.orb1, { backgroundColor: "rgba(120,87,255,0.25)" }]} />
         <View style={[p.orb2, { backgroundColor: "rgba(34,211,238,0.15)" }]} />
       </LinearGradient>
 
-      {/* Top actions */}
       <View style={[p.topActions, { top: topPad + 10 }]}>
         <Pressable style={[p.actionBtn, { backgroundColor: "rgba(13,20,36,0.7)" }]}>
           <Feather name="share-2" size={17} color={colors.text} />
@@ -91,7 +125,6 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Avatar */}
       <View style={[p.avatarSection, { marginTop: -(topPad + 40) }]}>
         <LinearGradient
           colors={["#7857ff", "#9d19ff", "#22d3ee"]}
@@ -116,12 +149,13 @@ export default function ProfileScreen() {
       </View>
 
       <View style={p.info}>
-        {/* Name + verified */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Text style={[p.displayName, { color: colors.text }]}>{displayName}</Text>
-          <View style={[p.verBadge, { backgroundColor: "rgba(120,87,255,0.25)" }]}>
-            <Feather name="check" size={11} color={colors.primary} />
-          </View>
+          {user?.isVerified && (
+            <View style={[p.verBadge, { backgroundColor: "rgba(120,87,255,0.25)" }]}>
+              <Feather name="check" size={11} color={colors.primary} />
+            </View>
+          )}
         </View>
         <Text style={[p.username, { color: colors.mutedForeground }]}>@{username}</Text>
 
@@ -131,14 +165,12 @@ export default function ProfileScreen() {
           <Text style={[p.bio, { color: colors.mutedForeground }]}>Bio qo'shish uchun profil tahrirlang ✨</Text>
         )}
 
-        {/* Stats */}
         <View style={p.statsRow}>
-          <StatCard value="42" label="Posts" color={colors.cyan} />
-          <StatCard value={user?.followersCount?.toString() ?? "1.2K"} label="Followers" color={colors.primary} />
-          <StatCard value={user?.followingCount?.toString() ?? "340"} label="Following" color={colors.rose} />
+          <StatCard value={fmtNum(userPosts.length || user?.postsCount)} label="Posts" color={colors.cyan} />
+          <StatCard value={fmtNum(user?.followersCount)} label="Followers" color={colors.primary} />
+          <StatCard value={fmtNum(user?.followingCount)} label="Following" color={colors.rose} />
         </View>
 
-        {/* Action buttons */}
         <View style={p.btnRow}>
           <AuroraBorder
             colors={["#7857ff", "#9d19ff", "#22d3ee"]}
@@ -162,7 +194,6 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Tab bar */}
       <View style={[p.tabBar, { borderColor: colors.border }]}>
         {([
           { key: "posts" as PTab, icon: "grid" as const },
@@ -186,14 +217,25 @@ export default function ProfileScreen() {
         ))}
       </View>
 
-      {/* Media grid */}
       <View style={p.grid}>
-        {MEDIA.map((url, i) => (
-          <Pressable key={i} style={{ width: IMG, height: IMG, margin: 1 }}>
-            <Image source={{ uri: url }} style={{ width: IMG, height: IMG }} contentFit="cover" />
-            {/* Hover overlay placeholder */}
-          </Pressable>
-        ))}
+        {mediaItems.length > 0 ? (
+          mediaItems.map((post, i) => (
+            <Pressable key={post.id} style={{ width: IMG, height: IMG, margin: 1 }}>
+              <Image
+                source={{ uri: post.mediaUrl ?? post.thumbnailUrl ?? "" }}
+                style={{ width: IMG, height: IMG }}
+                contentFit="cover"
+              />
+            </Pressable>
+          ))
+        ) : (
+          <View style={{ width: "100%", alignItems: "center", paddingVertical: 40 }}>
+            <Feather name="image" size={40} color={colors.mutedForeground} />
+            <Text style={{ color: colors.mutedForeground, marginTop: 12 }}>
+              {pTab === "posts" ? "Postlar yo'q" : pTab === "reels" ? "Reellar yo'q" : "Teglar yo'q"}
+            </Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -202,8 +244,8 @@ export default function ProfileScreen() {
 const p = StyleSheet.create({
   container: { flex: 1 },
   banner: { height: 200, position: "relative", overflow: "hidden" },
-  orb1: { position: "absolute", width: 180, height: 180, borderRadius: 90, top: -30, left: -40, filter: "blur(30px)" as any },
-  orb2: { position: "absolute", width: 140, height: 140, borderRadius: 70, top: 10, right: -30, filter: "blur(25px)" as any },
+  orb1: { position: "absolute", width: 180, height: 180, borderRadius: 90, top: -30, left: -40 },
+  orb2: { position: "absolute", width: 140, height: 140, borderRadius: 70, top: 10, right: -30 },
   topActions: { position: "absolute", left: 16, right: 16, flexDirection: "row", justifyContent: "space-between", zIndex: 10 },
   actionBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.12)" },
   avatarSection: { paddingHorizontal: 20, paddingBottom: 4 },

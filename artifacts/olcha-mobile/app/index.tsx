@@ -95,6 +95,7 @@ function NativeShell() {
           </TouchableOpacity>
         </View>
       )}
+      {/* @ts-ignore WebView type overload conflict with react-native-webview */}
       <WebView
         ref={wvRef}
         source={{ uri: NEXUS_URL }}
@@ -113,7 +114,7 @@ function NativeShell() {
         onLoadStart={() => { setLoading(true); setError(false); }}
         onLoadEnd={() => setLoading(false)}
         onError={() => { setLoading(false); setError(true); }}
-        onNavigationStateChange={nav => setCanGoBack(nav.canGoBack)}
+        onNavigationStateChange={(nav: { canGoBack: boolean }) => setCanGoBack(nav.canGoBack)}
         onContentProcessDidTerminate={() => wvRef.current?.reload()}
         injectedJavaScriptBeforeContentLoaded={`
           // Tell the web app it's running inside OlCha native shell

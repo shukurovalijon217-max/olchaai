@@ -62,7 +62,7 @@ function ClassicTabLayout() {
     return (
       <View style={ti.iconWrap}>
         {isIOS ? (
-          <SymbolView name={focused ? sfSelected : sfName} tintColor={iconColor} size={size} />
+          <SymbolView name={(focused ? sfSelected : sfName) as any} tintColor={iconColor} size={size} />
         ) : (
           <Feather name={name as any} size={size} color={iconColor} />
         )}

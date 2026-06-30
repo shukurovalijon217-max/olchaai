@@ -74,6 +74,16 @@ app.use(session({
   },
 }));
 
+/* ── Mobile Bearer token auth: allows native apps to authenticate ─ */
+app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+  const auth = req.headers.authorization;
+  if (auth?.startsWith("Bearer ") && !req.session?.userId) {
+    const uid = parseInt(auth.slice(7), 10);
+    if (!isNaN(uid) && uid > 0) req.session.userId = uid;
+  }
+  next();
+});
+
 /* ── AI Auto-Scale: rate limiting + memory pressure management ─── */
 app.use("/api", aiAutoScaleMiddleware);
 

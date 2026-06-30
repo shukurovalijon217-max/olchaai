@@ -529,7 +529,16 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   useEffect(() => {
     document.body.style.overflow = "hidden";
     const v = videoRef.current;
-    if (v && settings.autoplay) v.play().then(()=>setPlaying(true)).catch(()=>{});
+    if (v && settings.autoplay) {
+      v.play()
+        .then(()=>setPlaying(true))
+        .catch(()=>{
+          /* browser blocks unmuted autoplay → try muted */
+          setMuted(true);
+          v.muted = true;
+          v.play().then(()=>setPlaying(true)).catch(()=>{});
+        });
+    }
     return () => { document.body.style.overflow = ""; };
   }, [settings.autoplay]);
 
@@ -656,18 +665,19 @@ function NexusPlayer({ video, onClose, settings, onPip }:
     { onClick:()=>void; active?:boolean; activeColor?:string; children:React.ReactNode; label:string }) => (
     <motion.button whileTap={{scale:0.72}}
       onClick={e=>{e.stopPropagation();onClick();}}
-      className="flex flex-col items-center gap-1">
+      className="flex flex-col items-center gap-[3px]"
+      style={{flexShrink:0}}>
       <div style={{
-        width:42,height:42,flexShrink:0,borderRadius:"50%",
+        width:38,height:38,flexShrink:0,borderRadius:"50%",
         background: active?`${activeColor}28`:"rgba(0,0,0,0.45)",
         backdropFilter:"blur(12px)",
-        boxShadow: active?`0 0 0 1.5px ${activeColor}66, 0 0 16px ${activeColor}33`
+        boxShadow: active?`0 0 0 1.5px ${activeColor}66, 0 0 14px ${activeColor}33`
                         :"0 0 0 1px rgba(255,255,255,0.1)",
         display:"flex",alignItems:"center",justifyContent:"center",
       }}>
         {children}
       </div>
-      <span style={{fontSize:8,color:"rgba(255,255,255,0.28)",fontWeight:600}}>
+      <span style={{fontSize:7.5,color:"rgba(255,255,255,0.28)",fontWeight:600,lineHeight:1}}>
         {label}
       </span>
     </motion.button>
@@ -799,7 +809,14 @@ function NexusPlayer({ video, onClose, settings, onPip }:
               </div>
 
               {/* RIGHT sidebar */}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-auto flex flex-col gap-2.5">
+              <div className="absolute right-2.5 pointer-events-auto flex flex-col gap-1.5"
+                style={{
+                  top:68, bottom:96,
+                  overflowY:"auto",
+                  scrollbarWidth:"none",
+                  WebkitOverflowScrolling:"touch",
+                  alignItems:"center",
+                }}>
                 <IBtn onClick={()=>likeMut.mutate({ id: video.id })}
                   active={liked} activeColor={T.cyan} label={fmt(likesCount)}>
                   <ThumbsUp style={{width:15,height:15,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.7)"}}/>

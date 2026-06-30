@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { playSmsSound, getFeaturePref } from "@/lib/sounds";
 import { motion } from "framer-motion";
 import { ArrowLeft, Send, Heart, BadgeCheck, Loader2, Mic } from "lucide-react";
 import { Link } from "wouter";
@@ -63,6 +64,16 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
       setCommentLikes(s => ({ ...s, [commentId]: prev }));
     }
   };
+
+  // 🔔 Sound: play when new comments from others arrive
+  const prevCommentCountRef = useRef(0);
+  useEffect(() => {
+    const fromOthers = comments.filter(c => c.author?.id !== user?.id);
+    if (fromOthers.length > prevCommentCountRef.current && prevCommentCountRef.current > 0) {
+      if (getFeaturePref("sound_notif", true)) playSmsSound();
+    }
+    prevCommentCountRef.current = fromOthers.length;
+  }, [comments.length]);
 
   const [voiceComments, setVoiceComments] = useState<VoiceCommentData[]>([]);
   const [playingId, setPlayingId] = useState<number | null>(null);

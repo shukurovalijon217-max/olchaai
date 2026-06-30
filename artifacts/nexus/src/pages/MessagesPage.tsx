@@ -104,32 +104,76 @@ async function uploadBlob(blob: Blob, name: string, mime: string): Promise<strin
   return `${API}/api/storage${j.objectPath}`;
 }
 
-/* ── EmojiPicker ────────────────────────────────────────────── */
-function EmojiPicker({ onPick }: { onPick: (e: string) => void }) {
+/* ── EmojiPicker (bottom-sheet modal) ──────────────────────── */
+function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; onClose: () => void }) {
   const [cat, setCat] = useState("😊");
-  const stickers = ["🎉","🔥","💯","❤️","😂","🚀","✨","👑","💎","🌈","🦄","🎸"];
+  const [search, setSearch] = useState("");
+  const stickers = ["🎉","🔥","💯","❤️","😂","🚀","✨","👑","💎","🌈","🦄","🎸","🫶","💪","🌙","⭐","🍕","🏆","🎯","🎭"];
+  const cats = Object.keys(EMOJI_CATS);
+
+  const filteredEmojis = search.trim()
+    ? ALL_EMOJIS.filter(e => e.includes(search.trim())).slice(0, 56)
+    : (cat === "sticker" ? stickers : (EMOJI_CATS[cat] || []));
+
   return (
-    <div className="bg-card border border-border rounded-2xl shadow-2xl w-64 overflow-hidden">
-      <div className="flex border-b border-border">
-        {Object.keys(EMOJI_CATS).map(k=>(
-          <button key={k} onClick={()=>setCat(k)} className={`flex-1 py-2 text-sm ${cat===k?"border-b-2 border-primary":""}`}>{k}</button>
-        ))}
-        <button onClick={()=>setCat("sticker")} className={`flex-1 py-2 text-sm ${cat==="sticker"?"border-b-2 border-primary":""}`}>🎭</button>
-      </div>
-      {cat==="sticker" ? (
-        <div className="grid grid-cols-6 gap-1 p-2 max-h-40 overflow-y-auto">
-          {stickers.map(s=>(
-            <button key={s} onClick={()=>onPick(s)} className="text-2xl p-1 hover:bg-muted rounded-lg transition-colors">{s}</button>
-          ))}
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+      className="fixed inset-0 z-50 bg-black/40 flex items-end"
+      onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
+        transition={{type:"spring",damping:30,stiffness:320}}
+        className="w-full bg-card border-t border-border rounded-t-3xl shadow-2xl flex flex-col"
+        style={{maxHeight:"55vh"}}
+        onClick={e=>e.stopPropagation()}>
+
+        {/* Handle bar */}
+        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div className="w-9 h-1 rounded-full bg-border"/>
         </div>
-      ) : (
-        <div className="grid grid-cols-7 gap-0.5 p-2 max-h-40 overflow-y-auto">
-          {EMOJI_CATS[cat]?.map(e=>(
-            <button key={e} onClick={()=>onPick(e)} className="text-xl p-1 hover:bg-muted rounded-lg transition-colors leading-none">{e}</button>
-          ))}
+
+        {/* Search */}
+        <div className="px-3 pb-2 flex-shrink-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
+            <input
+              className="w-full pl-8 pr-3 py-2 bg-muted rounded-xl text-sm focus:outline-none text-foreground"
+              placeholder="Emoji qidirish..."
+              value={search}
+              onChange={e=>setSearch(e.target.value)}/>
+          </div>
         </div>
-      )}
-    </div>
+
+        {/* Category tabs */}
+        {!search && (
+          <div className="flex gap-1 px-3 pb-2 overflow-x-auto flex-shrink-0" style={{scrollbarWidth:"none"}}>
+            {cats.map(k=>(
+              <button key={k} onClick={()=>setCat(k)}
+                className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-lg transition-colors ${cat===k?"bg-primary/20 border border-primary/40":"hover:bg-muted"}`}>
+                {k}
+              </button>
+            ))}
+            <button onClick={()=>setCat("sticker")}
+              className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-lg transition-colors ${cat==="sticker"?"bg-primary/20 border border-primary/40":"hover:bg-muted"}`}>
+              🎭
+            </button>
+          </div>
+        )}
+
+        {/* Emoji grid */}
+        <div className="overflow-y-auto flex-1 px-2 pb-4">
+          <div className="grid grid-cols-8 gap-0.5">
+            {filteredEmojis.map((e,i)=>(
+              <button key={`${e}-${i}`} onClick={()=>onPick(e)}
+                className="w-full aspect-square flex items-center justify-center text-2xl rounded-xl hover:bg-muted active:scale-90 transition-all leading-none">
+                {e}
+              </button>
+            ))}
+          </div>
+          {filteredEmojis.length === 0 && (
+            <p className="text-center text-muted-foreground text-sm py-8">Topilmadi</p>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -165,7 +209,7 @@ function AttachMenu({
 }
 
 /* ── GIF Picker ─────────────────────────────────────────────── */
-interface TenorGif { id: string; title: string; preview: string; original: string }
+interface TenorGif { id: string; title: string; preview: string; original: string; originalRaw?: string }
 const GIF_CATS = ["funny","cute","wow","sad","love","dance","win","cat","dog","anime"];
 
 function GifPickerModal({ onPick, onClose }: { onPick:(url:string)=>void; onClose:()=>void }) {
@@ -2146,17 +2190,17 @@ export default function MessagesPage() {
           <div className={`px-3 flex-shrink-0 border-t transition-colors relative ${ephemeral?"border-violet-500/30 bg-violet-500/5":"border-border"}`}
             style={{paddingTop:10,paddingBottom:"calc(env(safe-area-inset-bottom,0px) + 10px)"}}>
 
-            {/* Emoji picker */}
+            {/* Emoji picker — rendered as portal-style modal via AnimatePresence */}
             <AnimatePresence>
               {showEmoji&&(
-                <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}
-                  className="absolute bottom-full mb-2 left-3 z-30">
-                  <EmojiPicker onPick={e=>{
+                <EmojiPicker
+                  onPick={e=>{
                     if(["😊","😂","❤️","👍","🔥","🎉","😭","🤣"].includes(e)) handleSticker(e);
                     else setText(prev=>prev+e);
                     setShowEmoji(false);
-                  }}/>
-                </motion.div>
+                  }}
+                  onClose={()=>setShowEmoji(false)}
+                />
               )}
             </AnimatePresence>
 

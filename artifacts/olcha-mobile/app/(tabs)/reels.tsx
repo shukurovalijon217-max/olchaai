@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   Platform,
@@ -15,79 +15,65 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ReelCard, type Reel } from "@/components/ReelCard";
 import { useColors } from "@/hooks/useColors";
-import { apiFetch } from "@/utils/api";
 
-const { height: H } = Dimensions.get("window");
+const { width: W, height: H } = Dimensions.get("window");
 
-interface ApiReel {
-  id: number;
-  authorId: number;
-  title?: string;
-  description?: string;
-  caption?: string;
-  thumbnailUrl?: string;
-  videoUrl?: string;
-  likesCount?: number;
-  commentsCount?: number;
-  viewsCount?: number;
-  createdAt: string;
-  isLiked?: boolean;
-  tags?: string[];
-  author?: {
-    id: number;
-    username: string;
-    displayName: string;
-    avatarUrl?: string;
-    isVerified?: boolean;
-  };
-}
-
-function mapReel(r: ApiReel): Reel {
-  return {
-    id: r.id,
-    authorId: r.authorId,
-    authorName: r.author?.displayName ?? "OlCha User",
-    authorUsername: r.author?.username ?? "user",
-    authorAvatar: r.author?.avatarUrl ?? undefined,
-    isVerified: r.author?.isVerified ?? false,
-    thumbnailUrl: r.thumbnailUrl ?? undefined,
-    videoUrl: r.videoUrl ?? undefined,
-    caption: r.caption ?? r.description ?? r.title ?? undefined,
-    audioTrack: "Original Sound",
-    likesCount: r.likesCount ?? 0,
-    commentsCount: r.commentsCount ?? 0,
-    viewsCount: r.viewsCount ?? undefined,
-    isLiked: r.isLiked ?? false,
-    tags: r.tags ?? [],
-  };
-}
+const MOCK: Reel[] = [
+  {
+    id: 1, authorId: 1, authorName: "Aziz Karimov", authorUsername: "azizk",
+    isVerified: true,
+    thumbnailUrl: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800",
+    caption: "OlCha'da reel qilish — eng oson va eng go'zal tajriba. Sizda ham bormi?",
+    audioTrack: "Dua Lipa — Levitating",
+    likesCount: 142000, commentsCount: 3420, viewsCount: 2800000,
+    isLiked: false, tags: ["olcha", "tech", "uzbekistan"],
+  },
+  {
+    id: 2, authorId: 2, authorName: "Malika Yusupova", authorUsername: "malika_y",
+    isVerified: true,
+    thumbnailUrl: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800",
+    caption: "Registon quyosh botayotganda — dunyo manzaralari sirasida top 10 da! 🌅 Samarqand forever 💜",
+    audioTrack: "Original Sound · malika_y",
+    likesCount: 389000, commentsCount: 12470, viewsCount: 8900000,
+    isLiked: true, tags: ["samarkand", "travel", "uzbekistan"],
+  },
+  {
+    id: 3, authorId: 3, authorName: "Timur Dev", authorUsername: "timur_dev",
+    thumbnailUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
+    caption: "2am coding session + coffee + dark theme = perfection ☕ Ship it!",
+    audioTrack: "Lo-fi Hip Hop Beats",
+    likesCount: 56700, commentsCount: 1280, viewsCount: 1200000,
+    isLiked: false, tags: ["coding", "devlife", "startup"],
+  },
+  {
+    id: 4, authorId: 4, authorName: "Dilnoza Art", authorUsername: "dilnoza_art",
+    isVerified: false,
+    thumbnailUrl: "https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=800",
+    caption: "O'zbek naqshlari + zamonaviy dizayn = yangi estetika. Bu kolleksiya 3 oy mehnat!",
+    audioTrack: "Traditional Uzbek Beat Remix",
+    likesCount: 221000, commentsCount: 4560, viewsCount: 4500000,
+    isLiked: false, tags: ["art", "design", "uzbek"],
+  },
+  {
+    id: 5, authorId: 5, authorName: "Kamol Umarov", authorUsername: "kamol_u",
+    isVerified: true,
+    thumbnailUrl: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800",
+    caption: "Morning routine that changed my life. Wake up 5am, gym, meditate, code. Results? Judge yourself 💪",
+    audioTrack: "Rocky Theme — Survivor",
+    likesCount: 891000, commentsCount: 23400, viewsCount: 18000000,
+    isLiked: false, tags: ["motivation", "fitness", "mindset"],
+  },
+];
 
 type FilterTab = "all" | "trending" | "following";
 
 export default function ReelsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [reels, setReels] = useState<Reel[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const tabBarH = Platform.OS === "web" ? 84 : 58;
-
-  const fetchReels = useCallback(async () => {
-    try {
-      const res = await apiFetch("/api/reels?limit=20");
-      if (res.ok) {
-        const data = await res.json() as ApiReel[];
-        setReels((data ?? []).map(mapReel));
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    fetchReels().finally(() => setLoading(false));
-  }, [fetchReels]);
 
   const onViewable = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0 && viewableItems[0].index != null) {
@@ -96,15 +82,6 @@ export default function ReelsScreen() {
   }, []);
 
   const viewConfig = useRef({ itemVisiblePercentThreshold: 60 });
-
-  if (loading) {
-    return (
-      <View style={[rs.container, { justifyContent: "center", alignItems: "center" }]}>
-        <ActivityIndicator size="large" color="#7857ff" />
-        <Text style={{ color: "rgba(255,255,255,0.5)", marginTop: 12, fontSize: 14 }}>OTube yuklanmoqda...</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={[rs.container, { backgroundColor: "#000" }]}>
@@ -138,33 +115,26 @@ export default function ReelsScreen() {
         </LinearGradient>
       </View>
 
-      {reels.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Feather name="play-circle" size={64} color="rgba(255,255,255,0.2)" />
-          <Text style={{ color: "rgba(255,255,255,0.4)", marginTop: 16, fontSize: 16 }}>OTube video yo'q</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={reels}
-          keyExtractor={r => r.id.toString()}
-          renderItem={({ item, index }) => (
-            <ReelCard reel={item} isActive={index === activeIdx} tabBarHeight={tabBarH} />
-          )}
-          pagingEnabled
-          showsVerticalScrollIndicator={false}
-          snapToInterval={H}
-          decelerationRate="fast"
-          onViewableItemsChanged={onViewable}
-          viewabilityConfig={viewConfig.current}
-          getItemLayout={(_, idx) => ({ length: H, offset: H * idx, index: idx })}
-        />
-      )}
+      <FlatList
+        data={MOCK}
+        keyExtractor={r => r.id.toString()}
+        renderItem={({ item, index }) => (
+          <ReelCard reel={item} isActive={index === activeIdx} tabBarHeight={tabBarH} />
+        )}
+        pagingEnabled
+        showsVerticalScrollIndicator={false}
+        snapToInterval={H}
+        decelerationRate="fast"
+        onViewableItemsChanged={onViewable}
+        viewabilityConfig={viewConfig.current}
+        getItemLayout={(_, idx) => ({ length: H, offset: H * idx, index: idx })}
+      />
     </View>
   );
 }
 
 const rs = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1 },
   topBar: {
     position: "absolute",
     left: 0, right: 0,

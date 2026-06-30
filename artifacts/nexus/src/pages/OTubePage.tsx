@@ -713,27 +713,46 @@ function NexusPlayer({ video, onClose, settings, onPip }:
       {/* ══ TOP BAR — portrait only ══ */}
       {!isLandscape && (
         <div style={{
-          flexShrink:0,display:"flex",alignItems:"center",gap:10,
+          flexShrink:0,display:"flex",alignItems:"center",gap:8,
           paddingTop:"calc(env(safe-area-inset-top,0px) + 8px)",
-          paddingBottom:8,paddingLeft:12,paddingRight:12,
-          background:"rgba(2,0,8,0.94)",backdropFilter:"blur(20px)",
+          paddingBottom:8,paddingLeft:12,paddingRight:10,
+          background:"rgba(2,0,8,0.97)",backdropFilter:"blur(20px)",
           borderBottom:"1px solid rgba(255,255,255,0.05)",
         }}>
           <motion.button whileTap={{scale:0.82}} onClick={onClose}
-            style={{width:38,height:38,flexShrink:0,borderRadius:"50%",
+            style={{width:36,height:36,flexShrink:0,borderRadius:"50%",
               background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.08)",
               display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <ArrowLeft style={{width:18,height:18,color:"rgba(255,255,255,0.82)"}}/>
+            <ArrowLeft style={{width:17,height:17,color:"rgba(255,255,255,0.82)"}}/>
           </motion.button>
           <div style={{flex:1,minWidth:0}}>
             <p style={{margin:0,fontSize:13,fontWeight:700,color:"white",
               overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
               {video.caption||"OTube Video"}
             </p>
-            <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.35)"}}>
-              {fmt(video.viewsCount)} ko'rish
+            <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.35)",
+              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {video.author.displayName||video.author.username} · {fmt(video.viewsCount)} ko'rish
             </p>
           </div>
+          <motion.button whileTap={{scale:0.9}}
+            onClick={(e)=>{e.stopPropagation();followMut.mutate({id:video.author.id});}}
+            disabled={followMut.isPending}
+            style={{padding:"7px 13px",borderRadius:99,flexShrink:0,
+              background:subbed?"rgba(255,255,255,0.08)":"rgba(255,107,0,0.92)",
+              border:`1px solid ${subbed?"rgba(255,255,255,0.1)":"transparent"}`,
+              boxShadow:subbed?"none":"0 0 14px rgba(255,107,0,0.35)",
+              fontSize:11,fontWeight:700,color:subbed?"rgba(255,255,255,0.45)":"white"}}>
+            {subbed?"✓ Obuna":"···Obuna"}
+          </motion.button>
+          <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();toggleFull();}}
+            style={{width:32,height:32,flexShrink:0,borderRadius:"50%",
+              background:"rgba(255,255,255,0.07)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {isFull
+              ?<Minimize2 style={{width:14,height:14,color:"rgba(255,255,255,0.7)"}}/>
+              :<Maximize2 style={{width:14,height:14,color:"rgba(255,255,255,0.7)"}}/>}
+          </motion.button>
         </div>
       )}
 
@@ -760,88 +779,96 @@ function NexusPlayer({ video, onClose, settings, onPip }:
         <SeekFlash side="right" visible={seekRight}/>
         <DanmakuOverlay active={danmaku}/>
 
-        {/* ── RIGHT SIDE ACTION PANEL — floating on video (TikTok/Reels uslubi) ── */}
+        {/* ── RIGHT SIDE ACTION PANEL — screenshot IMG_0634 dizayni ── */}
         <div style={{
-          position:"absolute", right:10, bottom:24,
+          position:"absolute", right:0, top:0, bottom:0,
+          width:58,
           display:"flex", flexDirection:"column", alignItems:"center",
-          gap:18, zIndex:22, pointerEvents:"auto",
+          justifyContent:"center",
+          gap:2, zIndex:22, pointerEvents:"auto",
+          paddingTop:8, paddingBottom:8,
+          overflowY:"auto", scrollbarWidth:"none",
         }}>
-          {/* Like */}
-          <motion.button whileTap={{scale:0.82}}
-            onClick={(e)=>{e.stopPropagation();likeMut.mutate({id:video.id});}}
-            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-            <div style={{width:48,height:48,borderRadius:"50%",
-              background:liked?"rgba(0,229,255,0.18)":"rgba(0,0,0,0.60)",
-              backdropFilter:"blur(14px)",
-              border:`1.5px solid ${liked?"rgba(0,229,255,0.55)":"rgba(255,255,255,0.18)"}`,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              boxShadow:liked?"0 0 20px rgba(0,229,255,0.4)":"0 4px 14px rgba(0,0,0,0.5)"}}>
-              <Heart style={{width:21,height:21,fill:liked?T.cyan:"none",color:liked?T.cyan:"white"}}/>
-            </div>
-            <span style={{fontSize:10,fontWeight:700,color:liked?T.cyan:"rgba(255,255,255,0.82)",
-              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{fmt(likesCount)}</span>
-          </motion.button>
-          {/* Comment */}
-          <motion.button whileTap={{scale:0.82}}
-            onClick={(e)=>{e.stopPropagation();setShowCom(c=>!c);}}
-            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-            <div style={{width:48,height:48,borderRadius:"50%",
-              background:showCom?"rgba(0,229,255,0.18)":"rgba(0,0,0,0.60)",
-              backdropFilter:"blur(14px)",
-              border:`1.5px solid ${showCom?"rgba(0,229,255,0.55)":"rgba(255,255,255,0.18)"}`,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              boxShadow:showCom?"0 0 20px rgba(0,229,255,0.4)":"0 4px 14px rgba(0,0,0,0.5)"}}>
-              <MessageCircle style={{width:21,height:21,color:showCom?T.cyan:"white"}}/>
-            </div>
-            <span style={{fontSize:10,fontWeight:700,color:showCom?T.cyan:"rgba(255,255,255,0.82)",
-              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{fmt(video.commentsCount??0)}</span>
-          </motion.button>
-          {/* Share */}
-          <motion.button whileTap={{scale:0.82}}
-            onClick={(e)=>{e.stopPropagation();void handleShare();}}
-            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-            <div style={{width:48,height:48,borderRadius:"50%",
-              background:shared?"rgba(16,185,129,0.18)":"rgba(0,0,0,0.60)",
-              backdropFilter:"blur(14px)",
-              border:`1.5px solid ${shared?"rgba(16,185,129,0.55)":"rgba(255,255,255,0.18)"}`,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              boxShadow:shared?"0 0 20px rgba(16,185,129,0.4)":"0 4px 14px rgba(0,0,0,0.5)"}}>
-              {shared?<Check style={{width:21,height:21,color:"#10b981"}}/>
-                     :<Share2 style={{width:21,height:21,color:"white"}}/>}
-            </div>
-            <span style={{fontSize:10,fontWeight:700,color:shared?"#10b981":"rgba(255,255,255,0.82)",
-              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Ulash</span>
-          </motion.button>
-          {/* Save */}
-          <motion.button whileTap={{scale:0.82}}
-            onClick={(e)=>{e.stopPropagation();toggleSave();}}
-            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-            <div style={{width:48,height:48,borderRadius:"50%",
-              background:saved?"rgba(157,0,255,0.18)":"rgba(0,0,0,0.60)",
-              backdropFilter:"blur(14px)",
-              border:`1.5px solid ${saved?"rgba(157,0,255,0.55)":"rgba(255,255,255,0.18)"}`,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              boxShadow:saved?"0 0 20px rgba(157,0,255,0.4)":"0 4px 14px rgba(0,0,0,0.5)"}}>
-              <Bookmark style={{width:21,height:21,fill:saved?T.violet:"none",color:saved?T.violet:"white"}}/>
-            </div>
-            <span style={{fontSize:10,fontWeight:700,color:saved?T.violet:"rgba(255,255,255,0.82)",
-              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Saqlash</span>
-          </motion.button>
-          {/* More */}
-          <motion.button whileTap={{scale:0.82}}
-            onClick={(e)=>{e.stopPropagation();setShowMore(m=>!m);}}
-            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-            <div style={{width:48,height:48,borderRadius:"50%",
-              background:showMore?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.60)",
-              backdropFilter:"blur(14px)",
-              border:`1.5px solid ${showMore?"rgba(255,255,255,0.45)":"rgba(255,255,255,0.18)"}`,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              boxShadow:"0 4px 14px rgba(0,0,0,0.5)"}}>
-              <MoreVertical style={{width:21,height:21,color:"white"}}/>
-            </div>
-            <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.82)",
-              textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Ko'proq</span>
-          </motion.button>
+          {([
+            {
+              icon:<ThumbsUp style={{width:19,height:19,fill:liked?"white":"none",color:"white"}}/>,
+              label:fmt(likesCount), col:"rgba(255,255,255,0.9)", active:liked,
+              act:()=>likeMut.mutate({id:video.id}),
+            },
+            {
+              icon:<ThumbsDown style={{width:19,height:19,fill:disliked?"white":"none",color:"white"}}/>,
+              label:"Ko'rmadim", col:"rgba(255,255,255,0.9)", active:disliked,
+              act:()=>{setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});},
+            },
+            {
+              icon:<Share2 style={{width:19,height:19,color:"white"}}/>,
+              label:"Ulashish", col:"rgba(255,255,255,0.9)", active:shared,
+              act:()=>void handleShare(),
+            },
+            {
+              icon:<Bookmark style={{width:19,height:19,fill:saved?T.violet:"none",color:saved?T.violet:"white"}}/>,
+              label:"Saqlash", col:saved?T.violet:"rgba(255,255,255,0.9)", active:saved,
+              bg:saved?"rgba(120,0,255,0.85)":"rgba(30,30,40,0.75)",
+              act:()=>toggleSave(),
+            },
+            {
+              icon:<MessageCircle style={{width:19,height:19,color:"white"}}/>,
+              label:fmt(video.commentsCount??0), col:"rgba(255,255,255,0.9)", active:showCom,
+              act:()=>setShowCom(c=>!c),
+            },
+            {
+              icon:<Star style={{width:19,height:19,color:"white"}}/>,
+              label:"Yordam", col:"rgba(255,255,255,0.9)", active:donating,
+              act:()=>{setDonating(d=>!d);setShowMore(false);},
+            },
+            {
+              icon:<Sparkles style={{width:19,height:19,color:"white"}}/>,
+              label:"Reakciya", col:"rgba(255,255,255,0.9)", active:danmaku,
+              act:()=>setDanmaku(d=>!d),
+            },
+            {
+              icon:<Brain style={{width:19,height:19,color:"white"}}/>,
+              label:"AI Dub", col:"rgba(255,255,255,0.9)", active:aiDub,
+              act:()=>{setAiDub(d=>!d);setShowMore(false);},
+            },
+            {
+              icon:<Upload style={{width:19,height:19,color:"white",transform:"rotate(180deg)"}}/>,
+              label:"Yuklab", col:"rgba(255,255,255,0.9)", active:false,
+              act:()=>{
+                if(!video.videoUrl)return;
+                const a=document.createElement("a");a.href=video.videoUrl;
+                a.download=`${video.caption||"video"}.mp4`;
+                document.body.appendChild(a);a.click();document.body.removeChild(a);
+              },
+            },
+            {
+              icon:<PictureInPicture2 style={{width:19,height:19,color:"white"}}/>,
+              label:"Mini", col:"rgba(255,255,255,0.9)", active:false,
+              act:()=>void handlePip(),
+            },
+          ] as Array<{icon:React.ReactNode;label:string;col:string;active:boolean;bg?:string;act:()=>void}>)
+            .map((b,i)=>(
+            <motion.button key={i} whileTap={{scale:0.82}}
+              onClick={(e)=>{e.stopPropagation();b.act();}}
+              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+                padding:"5px 0",width:"100%"}}>
+              <div style={{
+                width:42,height:42,borderRadius:"50%",
+                background:b.bg??(b.active?"rgba(60,60,80,0.9)":"rgba(30,30,40,0.75)"),
+                backdropFilter:"blur(16px)",
+                border:`1px solid ${b.active?"rgba(255,255,255,0.25)":"rgba(255,255,255,0.12)"}`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:"0 2px 10px rgba(0,0,0,0.55)",
+              }}>
+                {b.icon}
+              </div>
+              <span style={{fontSize:9,fontWeight:600,color:b.col,
+                textShadow:"0 1px 4px rgba(0,0,0,0.95)",lineHeight:1.2,textAlign:"center",
+                maxWidth:50,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                {b.label}
+              </span>
+            </motion.button>
+          ))}
         </div>
 
         {/* Landscape: back button */}

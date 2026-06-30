@@ -97,6 +97,58 @@ router.post("/groups", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/* ── Update group (creator only) ────────────────────────────── */
+router.put("/groups/:id", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const userId = (req as any).session?.userId;
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+    const [group] = await db.select().from(groupsTable).where(eq(groupsTable.id, id));
+    if (!group) { res.status(404).json({ error: "Group not found" }); return; }
+
+    if (group.creatorId !== userId) {
+      res.status(403).json({ error: "Only the group creator can update the group" });
+      return;
+    }
+
+    const {
+      name, description, coverUrl, category, privacyLevel, joinType,
+      icon, themeColor, maxMembers, settings,
+    } = req.body;
+
+    const updateData: Record<string, unknown> = {};
+    if (name?.trim())        updateData.name = name.trim();
+    if (description?.trim()) updateData.description = description.trim();
+    if (coverUrl !== undefined) updateData.coverUrl = coverUrl || null;
+    if (category !== undefined) updateData.category = category;
+    if (icon !== undefined)  updateData.icon = icon;
+    if (themeColor !== undefined) updateData.themeColor = themeColor;
+    if (maxMembers !== undefined) updateData.maxMembers = Number(maxMembers) || 0;
+    if (settings !== undefined) updateData.settings = settings;
+    if (joinType !== undefined) updateData.joinType = joinType;
+    if (privacyLevel !== undefined) {
+      updateData.privacyLevel = privacyLevel;
+      updateData.isPrivate = privacyLevel !== "public";
+    }
+
+    const [updated] = await db.update(groupsTable)
+      .set(updateData as any)
+      .where(eq(groupsTable.id, id))
+      .returning();
+
+    const [mem] = await db.select().from(groupMembersTable)
+      .where(and(eq(groupMembersTable.groupId, id), eq(groupMembersTable.userId, userId)));
+
+    res.json({ ...updated, isMember: !!mem });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 /* ── Delete group (creator only) ────────────────────────────── */
 router.delete("/groups/:id", async (req: Request, res: Response): Promise<void> => {
   try {

@@ -118,6 +118,28 @@ interface GroupMember {
   joinedAt: string;
 }
 
+interface SettingsForm {
+  name: string;
+  description: string;
+  category: string;
+  groupType: string;
+  privacyLevel: "public" | "private" | "secret";
+  joinType: "auto" | "manual" | "invite";
+  icon: string;
+  themeColor: string;
+  maxMembers: number;
+  coverUrl: string;
+  coverFile: File | null;
+  coverPreview: string;
+  welcomeMessage: string;
+  rules: string[];
+  tags: string[];
+  websiteUrl: string;
+  contactEmail: string;
+  telegramLink: string;
+  instagramLink: string;
+}
+
 interface GroupPost {
   id: number;
   groupId: number;
@@ -310,6 +332,25 @@ export default function GroupsPage() {
   const [uploadingPostImage, setUploadingPostImage] = useState(false);
   const postFileRef = useRef<HTMLInputElement>(null);
 
+  // ── Settings panel state ─────────────────────────────────────
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsCoverUploading, setSettingsCoverUploading] = useState(false);
+  const [newRuleText, setNewRuleText] = useState("");
+  const [newTagText, setNewTagText] = useState("");
+  const settingsCoverRef = useRef<HTMLInputElement>(null);
+  const DEFAULT_SETTINGS_FORM: SettingsForm = {
+    name: "", description: "", category: "", groupType: "",
+    privacyLevel: "public", joinType: "auto", icon: "🌟", themeColor: "#7857ff",
+    maxMembers: 0, coverUrl: "", coverFile: null, coverPreview: "",
+    welcomeMessage: "", rules: [], tags: [],
+    websiteUrl: "", contactEmail: "", telegramLink: "", instagramLink: "",
+  };
+  const [settingsForm, setSettingsForm] = useState<SettingsForm>(DEFAULT_SETTINGS_FORM);
+
+  const sf = <K extends keyof SettingsForm>(key: K, val: SettingsForm[K]) =>
+    setSettingsForm(prev => ({ ...prev, [key]: val }));
+
   const { user } = useAuth();
 
   const f = <K extends keyof FormState>(key: K, val: FormState[K]) =>
@@ -445,6 +486,99 @@ export default function GroupsPage() {
     setShowCreate(false);
     setTimeout(() => { setStep(1); setForm(DEFAULT_FORM); setCreated(false); setCreating(false); }, 300);
   };
+
+  // ── Settings panel helpers ────────────────────────────────────
+  const handleOpenSettings = useCallback(() => {
+    if (!selectedGroup) return;
+    const g = selectedGroup as any;
+    const extra = g.settings?.extra ?? {};
+    setSettingsForm({
+      name: g.name ?? "",
+      description: g.description ?? "",
+      category: g.category ?? "",
+      groupType: g.groupType ?? "",
+      privacyLevel: g.privacyLevel ?? "public",
+      joinType: g.joinType ?? "auto",
+      icon: g.icon ?? "🌟",
+      themeColor: g.themeColor ?? "#7857ff",
+      maxMembers: g.maxMembers ?? 0,
+      coverUrl: g.coverUrl ?? "",
+      coverFile: null,
+      coverPreview: "",
+      welcomeMessage: extra.welcomeMessage ?? "",
+      rules: Array.isArray(extra.rules) ? extra.rules : [],
+      tags: Array.isArray(extra.tags) ? extra.tags : [],
+      websiteUrl: extra.websiteUrl ?? "",
+      contactEmail: extra.contactEmail ?? "",
+      telegramLink: extra.telegramLink ?? "",
+      instagramLink: extra.instagramLink ?? "",
+    });
+    setNewRuleText("");
+    setNewTagText("");
+    setShowSettings(true);
+  }, [selectedGroup]);
+
+  const handleSettingsCoverChange = useCallback(async (file: File) => {
+    sf("coverPreview", URL.createObjectURL(file));
+    sf("coverFile", file);
+  }, []);
+
+  const handleSaveSettings = useCallback(async () => {
+    if (!selectedGroup) return;
+    setSettingsSaving(true);
+    try {
+      let finalCoverUrl = settingsForm.coverUrl;
+
+      if (settingsForm.coverFile) {
+        setSettingsCoverUploading(true);
+        try {
+          const url = await uploadFile(settingsForm.coverFile);
+          finalCoverUrl = url;
+        } finally {
+          setSettingsCoverUploading(false);
+        }
+      }
+
+      const payload = {
+        name: settingsForm.name,
+        description: settingsForm.description,
+        category: settingsForm.category,
+        privacyLevel: settingsForm.privacyLevel,
+        joinType: settingsForm.joinType,
+        icon: settingsForm.icon,
+        themeColor: settingsForm.themeColor,
+        maxMembers: settingsForm.maxMembers,
+        coverUrl: finalCoverUrl,
+        settings: {
+          extra: {
+            welcomeMessage: settingsForm.welcomeMessage,
+            rules: settingsForm.rules,
+            tags: settingsForm.tags,
+            websiteUrl: settingsForm.websiteUrl,
+            contactEmail: settingsForm.contactEmail,
+            telegramLink: settingsForm.telegramLink,
+            instagramLink: settingsForm.instagramLink,
+          }
+        },
+      };
+
+      const res = await fetch(`${API}/api/groups/${selectedGroup.id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setSelectedGroup(updated);
+        qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+        setShowSettings(false);
+      }
+    } catch { /* silent */ } finally {
+      setSettingsSaving(false);
+    }
+  }, [selectedGroup, settingsForm, qc]);
 
   // ── Group detail helpers ──────────────────────────────────────
   const fetchGroupPosts = useCallback(async (groupId: number) => {
@@ -1098,6 +1232,17 @@ export default function GroupsPage() {
                 <ChevronLeft className="w-5 h-5" />
               </button>
 
+              {/* Settings button — creator only */}
+              {user?.id === (selectedGroup as any).creatorId && (
+                <button
+                  onClick={handleOpenSettings}
+                  className="absolute top-4 right-4 w-9 h-9 rounded-xl bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                  title="Guruh sozlamalari"
+                >
+                  <Settings2 className="w-5 h-5" />
+                </button>
+              )}
+
               {/* Group info overlay on cover */}
               <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
                 <h2 className="text-xl font-bold text-white drop-shadow-lg">{selectedGroup.name}</h2>
@@ -1421,6 +1566,306 @@ export default function GroupsPage() {
                   )}
                 </div>
               )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Settings Cover File Input ──────────────────────────── */}
+      <input ref={settingsCoverRef} type="file" accept="image/*" className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleSettingsCoverChange(f); e.target.value = ""; }} />
+
+      {/* ── Group Settings Overlay ─────────────────────────────── */}
+      <AnimatePresence>
+        {showSettings && selectedGroup && (
+          <motion.div
+            key="group-settings"
+            initial={{ x: "100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 28, stiffness: 280 }}
+            className="fixed inset-0 z-[60] bg-background overflow-y-auto"
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 py-3">
+              <button onClick={() => setShowSettings(false)}
+                className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="text-center">
+                <p className="text-sm font-bold text-foreground">Guruh sozlamalari</p>
+                <p className="text-xs text-muted-foreground truncate max-w-[160px]">{selectedGroup.name}</p>
+              </div>
+              <button
+                onClick={handleSaveSettings}
+                disabled={settingsSaving || settingsCoverUploading || !settingsForm.name.trim()}
+                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50 transition-opacity"
+              >
+                {settingsSaving ? "..." : "Saqlash"}
+              </button>
+            </div>
+
+            <div className="px-4 py-5 space-y-5 max-w-lg mx-auto pb-20">
+
+              {/* Cover image */}
+              <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                <div
+                  className={`h-36 w-full bg-gradient-to-br ${COLORS_CARD[selectedGroup.id % COLORS_CARD.length]} relative flex items-center justify-center cursor-pointer group`}
+                  onClick={() => settingsCoverRef.current?.click()}
+                >
+                  {(settingsForm.coverPreview || settingsForm.coverUrl) ? (
+                    <img
+                      src={settingsForm.coverPreview || settingsForm.coverUrl}
+                      alt="" className="w-full h-full object-cover absolute inset-0"
+                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-black/60 rounded-xl px-3 py-1.5 text-white text-xs font-semibold">
+                      <ImageIcon className="w-3.5 h-3.5" /> Cover rasmni o'zgartirish
+                    </div>
+                  </div>
+                  {settingsCoverUploading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="text-3xl cursor-pointer" onClick={() => {
+                    const icons = GROUP_ICONS;
+                    const cur = icons.indexOf(settingsForm.icon);
+                    sf("icon", icons[(cur + 1) % icons.length]);
+                  }}>{settingsForm.icon}</div>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Ikon</p>
+                    <p className="text-xs text-muted-foreground">Bosing — o'zgartirish</p>
+                  </div>
+                  <div className="ml-auto flex items-center gap-2">
+                    {THEME_COLORS.map(tc => (
+                      <button key={tc.hex} onClick={() => sf("themeColor", tc.hex)}
+                        className={`w-6 h-6 rounded-full transition-transform ${settingsForm.themeColor === tc.hex ? "scale-125 ring-2 ring-offset-1 ring-offset-card" : "hover:scale-110"}`}
+                        style={{ backgroundColor: tc.hex, ...(settingsForm.themeColor === tc.hex ? { ringColor: tc.hex } : {}) }}
+                        title={tc.label} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Basic info */}
+              <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Asosiy ma'lumot</p>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Guruh nomi *</label>
+                  <input
+                    value={settingsForm.name}
+                    onChange={e => sf("name", e.target.value)}
+                    placeholder="Guruh nomi..."
+                    maxLength={60}
+                    className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Tavsif</label>
+                  <textarea
+                    value={settingsForm.description}
+                    onChange={e => sf("description", e.target.value)}
+                    placeholder="Guruh haqida qisqacha..."
+                    rows={3}
+                    maxLength={500}
+                    className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors resize-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Kategoriya</label>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.map(cat => (
+                      <button key={cat.id} onClick={() => sf("category", cat.id === settingsForm.category ? "" : cat.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                          settingsForm.category === cat.id
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}>
+                        <cat.icon className="w-3 h-3" />{cat.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Xush kelibsiz xabari</label>
+                  <textarea
+                    value={settingsForm.welcomeMessage}
+                    onChange={e => sf("welcomeMessage", e.target.value)}
+                    placeholder="Yangi a'zolarga xabar..."
+                    rows={2}
+                    maxLength={300}
+                    className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Privacy */}
+              <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Maxfiylik</p>
+                <div className="space-y-2">
+                  {([
+                    { v: "public",  label: "Ochiq",    desc: "Hamma ko'radi va qo'shila oladi",          icon: Globe },
+                    { v: "private", label: "Yopiq",    desc: "Faqat taklif bilan qo'shilish mumkin",     icon: Lock },
+                    { v: "secret",  label: "Maxfiy",   desc: "Faqat a'zolarga ko'rinadi",                icon: Shield },
+                  ] as const).map(opt => (
+                    <button key={opt.v} onClick={() => sf("privacyLevel", opt.v)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors text-left ${
+                        settingsForm.privacyLevel === opt.v
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-background hover:bg-muted/40"
+                      }`}>
+                      <opt.icon className={`w-4 h-4 flex-shrink-0 ${settingsForm.privacyLevel === opt.v ? "text-primary" : "text-muted-foreground"}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold ${settingsForm.privacyLevel === opt.v ? "text-primary" : "text-foreground"}`}>{opt.label}</p>
+                        <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                      </div>
+                      {settingsForm.privacyLevel === opt.v && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Qo'shilish turi</label>
+                  <div className="flex gap-2">
+                    {([
+                      { v: "auto",   label: "Avtomatik" },
+                      { v: "manual", label: "Qo'lda" },
+                      { v: "invite", label: "Taklif" },
+                    ] as const).map(opt => (
+                      <button key={opt.v} onClick={() => sf("joinType", opt.v)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                          settingsForm.joinType === opt.v
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-background text-muted-foreground hover:bg-muted/40"
+                        }`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Maksimal a'zolar soni (0 = cheksiz)</label>
+                  <input
+                    type="number" min={0} max={100000}
+                    value={settingsForm.maxMembers || ""}
+                    onChange={e => sf("maxMembers", Number(e.target.value) || 0)}
+                    placeholder="0 (cheksiz)"
+                    className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Rules */}
+              <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Guruh qoidalari</p>
+                <div className="space-y-2">
+                  {settingsForm.rules.map((rule, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 bg-background rounded-xl border border-border">
+                      <span className="text-xs font-bold text-muted-foreground w-5 text-center">{idx + 1}</span>
+                      <p className="text-sm text-foreground flex-1">{rule}</p>
+                      <button onClick={() => sf("rules", settingsForm.rules.filter((_, i) => i !== idx))}
+                        className="w-6 h-6 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={newRuleText}
+                    onChange={e => setNewRuleText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && newRuleText.trim()) {
+                        sf("rules", [...settingsForm.rules, newRuleText.trim()]);
+                        setNewRuleText("");
+                      }
+                    }}
+                    placeholder="Yangi qoida qo'shing..."
+                    maxLength={200}
+                    className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <button
+                    onClick={() => { if (newRuleText.trim()) { sf("rules", [...settingsForm.rules, newRuleText.trim()]); setNewRuleText(""); } }}
+                    disabled={!newRuleText.trim()}
+                    className="px-3 py-2 rounded-xl bg-primary/10 text-primary text-sm font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Teglar</p>
+                {settingsForm.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {settingsForm.tags.map((tag, idx) => (
+                      <span key={idx} className="flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-lg">
+                        #{tag}
+                        <button onClick={() => sf("tags", settingsForm.tags.filter((_, i) => i !== idx))}
+                          className="ml-0.5 hover:text-primary/70"><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    value={newTagText}
+                    onChange={e => setNewTagText(e.target.value.replace(/\s/g, ""))}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && newTagText.trim() && !settingsForm.tags.includes(newTagText.trim())) {
+                        sf("tags", [...settingsForm.tags, newTagText.trim()]);
+                        setNewTagText("");
+                      }
+                    }}
+                    placeholder="#teg qo'shing..."
+                    maxLength={30}
+                    className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <button
+                    onClick={() => { if (newTagText.trim() && !settingsForm.tags.includes(newTagText.trim())) { sf("tags", [...settingsForm.tags, newTagText.trim()]); setNewTagText(""); } }}
+                    disabled={!newTagText.trim() || settingsForm.tags.includes(newTagText.trim())}
+                    className="px-3 py-2 rounded-xl bg-primary/10 text-primary text-sm font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Links */}
+              <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Aloqa va havolalar</p>
+                {[
+                  { key: "websiteUrl",    label: "Veb-sayt",       ph: "https://example.com" },
+                  { key: "contactEmail",  label: "Email",          ph: "info@example.com" },
+                  { key: "telegramLink",  label: "Telegram",       ph: "https://t.me/guruh" },
+                  { key: "instagramLink", label: "Instagram",      ph: "@guruh_nomi" },
+                ].map(({ key, label, ph }) => (
+                  <div key={key} className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground">{label}</label>
+                    <input
+                      value={(settingsForm as any)[key]}
+                      onChange={e => sf(key as keyof SettingsForm, e.target.value as any)}
+                      placeholder={ph}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Save button (bottom) */}
+              <button
+                onClick={handleSaveSettings}
+                disabled={settingsSaving || settingsCoverUploading || !settingsForm.name.trim()}
+                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm disabled:opacity-50 transition-opacity"
+              >
+                {settingsSaving ? "Saqlanmoqda..." : "O'zgarishlarni saqlash"}
+              </button>
+
             </div>
           </motion.div>
         )}

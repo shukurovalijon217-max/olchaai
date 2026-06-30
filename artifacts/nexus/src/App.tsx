@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { PipProvider } from "@/context/PipContext";
 import Layout from "@/components/Layout";
 import HomePage from "@/pages/HomePage";
 import ReelsPage from "@/pages/ReelsPage";
@@ -245,9 +246,11 @@ export default function App() {
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <AuthProvider>
-              <ErrorBoundary>
-                <Router />
-              </ErrorBoundary>
+              <PipProvider>
+                <ErrorBoundary>
+                  <Router />
+                </ErrorBoundary>
+              </PipProvider>
             </AuthProvider>
           </WouterRouter>
           <Toaster />

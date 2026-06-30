@@ -14,6 +14,7 @@ import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUplo
 import type { Reel, UploadUrlRequest, Notification } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { usePip } from "@/context/PipContext";
 import { useDockedState } from "@/hooks/useDockedState";
 import {
   Play, Pause, Volume2, VolumeX, ArrowLeft, Search, X,
@@ -5716,101 +5717,7 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* MiniPlayer — draggable floating PiP window              */
-/* ─────────────────────────────────────────────────────── */
-function MiniPlayer({ video, startTime, onClose, onExpand }:{
-  video:Reel; startTime:number; onClose:()=>void; onExpand:()=>void;
-}) {
-  const vRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(true);
-
-  useEffect(()=>{
-    const v = vRef.current; if (!v) return;
-    v.currentTime = startTime;
-    v.play().catch(()=>{});
-  },[startTime]);
-
-  const toggle = ()=>{
-    const v = vRef.current; if (!v) return;
-    if (v.paused){ v.play().catch(()=>{}); setPlaying(true); }
-    else { v.pause(); setPlaying(false); }
-  };
-
-  return createPortal(
-    <motion.div
-      drag dragMomentum={false}
-      initial={{scale:0.6,opacity:0,y:40}}
-      animate={{scale:1,opacity:1,y:0}}
-      exit={{scale:0.5,opacity:0,y:40}}
-      transition={{type:"spring",damping:22,stiffness:320}}
-      style={{
-        position:"fixed", bottom:110, right:14,
-        width:204, height:128, borderRadius:16,
-        overflow:"hidden", zIndex:9998,
-        boxShadow:"0 8px 40px rgba(0,0,0,0.78), 0 0 0 1.5px rgba(0,229,255,0.22)",
-        touchAction:"none", cursor:"grab",
-      }}
-    >
-      {/* Video */}
-      {video.videoUrl
-        ? <video ref={vRef} src={video.videoUrl} playsInline loop muted={false}
-            style={{width:"100%",height:"100%",objectFit:"cover",pointerEvents:"none"}}/>
-        : video.thumbnailUrl
-        ? <img src={video.thumbnailUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-        : <div style={{width:"100%",height:"100%",background:"#050010"}}/>}
-
-      {/* Dark overlay */}
-      <div style={{position:"absolute",inset:0,
-        background:"linear-gradient(to top,rgba(0,0,0,0.72) 0%,rgba(0,0,0,0.1) 60%,transparent 100%)"}}/>
-
-      {/* Top buttons */}
-      <div style={{position:"absolute",top:6,left:6,right:6,display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <motion.button whileTap={{scale:0.8}} onClick={e=>{e.stopPropagation();onExpand();}}
-          style={{width:28,height:28,borderRadius:"50%",background:"rgba(0,0,0,0.55)",
-            backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.15)",
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <Maximize2 style={{width:12,height:12,color:"rgba(255,255,255,0.85)"}}/>
-        </motion.button>
-        <motion.button whileTap={{scale:0.8}} onClick={e=>{e.stopPropagation();onClose();}}
-          style={{width:28,height:28,borderRadius:"50%",background:"rgba(0,0,0,0.55)",
-            backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.15)",
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <X style={{width:12,height:12,color:"rgba(255,255,255,0.85)"}}/>
-        </motion.button>
-      </div>
-
-      {/* Center play/pause tap */}
-      <motion.div whileTap={{scale:0.9}}
-        onClick={e=>{e.stopPropagation();toggle();}}
-        style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <AnimatePresence>
-          {!playing && (
-            <motion.div key="pip-play"
-              initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:1.4}}
-              style={{width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,0.55)",
-                backdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.2)",
-                display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <Play style={{width:14,height:14,fill:"white",color:"white",marginLeft:2}}/>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      {/* Bottom title */}
-      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"4px 8px 6px"}}>
-        <p style={{fontSize:9.5,fontWeight:600,color:"rgba(255,255,255,0.82)",
-          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-          {video.caption||"Video"}
-        </p>
-      </div>
-
-      {/* Cyan accent line */}
-      <div style={{position:"absolute",bottom:0,left:0,right:0,height:2,
-        background:`linear-gradient(90deg,${T.cyan},${T.violet})`}}/>
-    </motion.div>,
-    document.body
-  );
-}
+/* MiniPlayer moved to global PipContext — no local component needed */
 
 export default function OTubePage() {
   const { t } = useTranslation();
@@ -5819,8 +5726,8 @@ export default function OTubePage() {
   const [query,setQuery]    = useState("");
   const [showSearch,setShowSearch] = useState(false);
   const [selected,setSelected]     = useState<Reel|null>(null);
-  const [pipVideo,setPipVideo]     = useState<{video:Reel;startTime:number}|null>(null);
   const [showNotifPanel,setShowNotifPanel] = useState(false);
+  const { openPip, setExpandHandler } = usePip();
   const [showSettings,setShowSettings] = useState(false);
   const [settings,setSettings]   = useState<PlayerSettings>(DEF_S);
   const [monetize,setMonetize]   = useState<MonetizationSettings>(DEF_M);
@@ -6233,30 +6140,17 @@ export default function OTubePage() {
         <AnimatePresence>
           {selected && (
             <NexusPlayer key={selected.id}
-              video={selected} onClose={()=>setSelected(null)} settings={settings}
+              video={selected} onClose={()=>{ setSelected(null); setExpandHandler(null); }} settings={settings}
               onPip={(time)=>{
-                setPipVideo({video:selected, startTime:time});
+                const vid = selected;
+                openPip(vid, time);
+                setExpandHandler(()=>()=>{ setSelected(vid); });
                 setSelected(null);
               }}/>
           )}
         </AnimatePresence>,
         document.body
       )}
-
-      <AnimatePresence>
-        {pipVideo && (
-          <MiniPlayer
-            key={pipVideo.video.id}
-            video={pipVideo.video}
-            startTime={pipVideo.startTime}
-            onClose={()=>setPipVideo(null)}
-            onExpand={()=>{
-              setSelected(pipVideo.video);
-              setPipVideo(null);
-            }}
-          />
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {showNotifPanel && (

@@ -5638,9 +5638,13 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
           boxShadow:"-12px 0 60px rgba(0,0,0,0.8)",
         }}
       >
-        {/* Header */}
-        <div style={{ padding:"16px 16px 12px", borderBottom:"1px solid rgba(255,255,255,0.06)",
-          display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        {/* Header — safe area for iOS notch/Dynamic Island */}
+        <div style={{
+          paddingTop:"calc(env(safe-area-inset-top, 44px) + 12px)",
+          paddingLeft:16, paddingRight:16, paddingBottom:12,
+          borderBottom:"1px solid rgba(255,255,255,0.06)",
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+        }}>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             <Bell style={{ width:16, height:16, color:T.cyan }}/>
             <span style={{ fontSize:13, fontWeight:800, color:"white", letterSpacing:"0.04em" }}>

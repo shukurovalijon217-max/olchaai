@@ -758,73 +758,229 @@ function CallUI({
 }: {
   type:"voice"|"video"; name:string; avatar?:string; onEnd:()=>void;
 }) {
-  const [muted, setMuted] = useState(false);
-  const [speaker, setSpeaker] = useState(true);
-  const [elapsed, setElapsed] = useState(0);
-  const [status, setStatus] = useState<"calling"|"connected">("calling");
+  const [muted,     setMuted]     = useState(false);
+  const [speaker,   setSpeaker]   = useState(true);
+  const [cameraOn,  setCameraOn]  = useState(type === "video");
+  const [elapsed,   setElapsed]   = useState(0);
+  const [status,    setStatus]    = useState<"calling"|"connected">("calling");
+  const [camError,  setCamError]  = useState(false);
+  const localVidRef = useRef<HTMLVideoElement>(null);
+  const streamRef   = useRef<MediaStream|null>(null);
 
+  /* ── request camera + mic on mount for video calls ── */
   useEffect(()=>{
-    const t = setTimeout(()=>setStatus("connected"),2000);
+    if (type !== "video") return;
+    navigator.mediaDevices.getUserMedia({ video: { facingMode:"user" }, audio: true })
+      .then(stream => {
+        streamRef.current = stream;
+        if (localVidRef.current) {
+          localVidRef.current.srcObject = stream;
+          localVidRef.current.play().catch(()=>{});
+        }
+      })
+      .catch(()=>{ setCameraOn(false); setCamError(true); });
+    return ()=>{ streamRef.current?.getTracks().forEach(t=>t.stop()); };
+  },[type]);
+
+  /* ── sync mute with audio track ── */
+  useEffect(()=>{
+    streamRef.current?.getAudioTracks().forEach(t=>{ t.enabled = !muted; });
+  },[muted]);
+
+  /* ── camera toggle ── */
+  const toggleCamera = () => {
+    const tracks = streamRef.current?.getVideoTracks();
+    if (tracks?.length) {
+      const next = !cameraOn;
+      tracks.forEach(t=>{ t.enabled = next; });
+      setCameraOn(next);
+    }
+  };
+
+  /* ── call connected timer ── */
+  useEffect(()=>{
+    const t = setTimeout(()=>setStatus("connected"), 2000);
     return ()=>clearTimeout(t);
   },[]);
 
   useEffect(()=>{
     if(status!=="connected") return;
-    const i = setInterval(()=>setElapsed(p=>p+1),1000);
+    const i = setInterval(()=>setElapsed(p=>p+1), 1000);
     return ()=>clearInterval(i);
   },[status]);
 
+  const isVideo = type === "video";
+
   return (
-    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-      className="fixed inset-0 z-50 bg-gradient-to-b from-gray-900 to-black flex flex-col items-center justify-between py-16">
-      {/* Top info */}
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative">
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-4xl font-bold text-primary-foreground overflow-hidden">
-            {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover"/> : name[0]?.toUpperCase()}
+    <motion.div
+      initial={{opacity:0,scale:0.96}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.96}}
+      transition={{duration:0.25,ease:"easeOut"}}
+      className="fixed inset-0 z-50 overflow-hidden"
+      style={{background: isVideo && cameraOn ? "#000" : "linear-gradient(180deg,#0f172a 0%,#020617 100%)"}}>
+
+      {/* ── Local camera feed (fullscreen background) ── */}
+      {isVideo && (
+        <video
+          ref={localVidRef}
+          autoPlay muted playsInline
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+          style={{opacity: cameraOn ? 1 : 0, transform:"scaleX(-1)"}}
+        />
+      )}
+
+      {/* ── Dark gradient overlay ── */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{background: isVideo
+          ? "linear-gradient(180deg,rgba(0,0,0,0.55) 0%,transparent 28%,transparent 55%,rgba(0,0,0,0.75) 100%)"
+          : "transparent"}}/>
+
+      {/* ── Animated background blobs for voice calls ── */}
+      {!isVideo && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            animate={{scale:[1,1.2,1],opacity:[0.15,0.25,0.15]}}
+            transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}
+            className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full"
+            style={{background:"radial-gradient(circle,rgba(139,92,246,0.4),transparent 70%)"}}/>
+          <motion.div
+            animate={{scale:[1.2,1,1.2],opacity:[0.1,0.2,0.1]}}
+            transition={{duration:4,repeat:Infinity,ease:"easeInOut",delay:1}}
+            className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full"
+            style={{background:"radial-gradient(circle,rgba(59,130,246,0.3),transparent 70%)"}}/>
+        </div>
+      )}
+
+      {/* ── Main content ── */}
+      <div className="relative z-10 flex flex-col items-center justify-between h-full"
+        style={{paddingTop:"env(safe-area-inset-top,48px)",paddingBottom:40}}>
+
+        {/* Top: caller info */}
+        <div className="flex flex-col items-center gap-5 pt-4">
+          {/* Avatar — hide when video is live */}
+          <motion.div
+            animate={{opacity: isVideo && cameraOn && status==="connected" ? 0 : 1}}
+            transition={{duration:0.4}}
+            className="relative">
+            <div className="w-28 h-28 rounded-full overflow-hidden shadow-2xl"
+              style={{boxShadow: status==="calling"
+                ? "0 0 0 4px rgba(139,92,246,0.3),0 0 40px rgba(139,92,246,0.2)"
+                : "0 8px 32px rgba(0,0,0,0.4)"}}>
+              {avatar
+                ? <img src={avatar} alt="" className="w-full h-full object-cover"/>
+                : <div className="w-full h-full bg-gradient-to-br from-primary to-violet-700 flex items-center justify-center text-4xl font-bold text-white">
+                    {name[0]?.toUpperCase()}
+                  </div>}
+            </div>
+            {/* Calling pulse rings */}
+            {status==="calling" && (
+              <>
+                <motion.div animate={{scale:[1,1.5],opacity:[0.5,0]}} transition={{duration:1.4,repeat:Infinity}}
+                  className="absolute inset-0 rounded-full border-2 border-primary/60"/>
+                <motion.div animate={{scale:[1,1.8],opacity:[0.3,0]}} transition={{duration:1.4,repeat:Infinity,delay:0.4}}
+                  className="absolute inset-0 rounded-full border border-primary/40"/>
+                <motion.div animate={{scale:[1,2.1],opacity:[0.2,0]}} transition={{duration:1.4,repeat:Infinity,delay:0.8}}
+                  className="absolute inset-0 rounded-full border border-primary/20"/>
+              </>
+            )}
+          </motion.div>
+
+          {/* Name + status */}
+          <div className="text-center">
+            <p className="text-white text-2xl font-bold tracking-tight drop-shadow-lg">{name}</p>
+            <motion.p
+              animate={status==="calling"?{opacity:[0.5,1,0.5]}:{opacity:1}}
+              transition={{duration:1.5,repeat:status==="calling"?Infinity:0}}
+              className="text-white/60 text-sm mt-1.5">
+              {status==="calling"
+                ? (isVideo ? "📹 Video qo'ng'iroq..." : "📞 Qo'ng'iroq qilinmoqda...")
+                : formatDur(elapsed)}
+            </motion.p>
+            {camError && isVideo && (
+              <p className="text-amber-400 text-xs mt-1">⚠ Kamera ruxsat berilmagan</p>
+            )}
           </div>
-          {status==="calling"&&(
-            <>
-              <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-ping"/>
-              <div className="absolute -inset-3 rounded-full border border-primary/20 animate-ping" style={{animationDelay:"0.3s"}}/>
-            </>
+
+          {/* Video type badge */}
+          {isVideo && (
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+              style={{background:"rgba(255,255,255,0.1)",backdropFilter:"blur(12px)",color:"rgba(255,255,255,0.7)"}}>
+              <Video className="w-3 h-3"/>
+              Video qo'ng'iroq
+            </div>
           )}
         </div>
-        <div className="text-center">
-          <p className="text-white text-xl font-bold">{name}</p>
-          <p className="text-white/60 text-sm mt-1">
-            {status==="calling" ? (type==="voice"?"Qo'ng'iroq qilinmoqda...":"Video qo'ng'iroq...") : formatDur(elapsed)}
-          </p>
-        </div>
-        {type==="video"&&status==="connected"&&(
-          <div className="w-24 h-32 rounded-2xl bg-gray-800 border border-white/10 overflow-hidden absolute top-4 right-4 flex items-center justify-center">
-            <Camera className="w-6 h-6 text-white/40"/>
-          </div>
-        )}
-      </div>
 
-      {/* Controls */}
-      <div className="flex flex-col items-center gap-6 w-full px-10">
-        <div className="grid grid-cols-3 gap-6 w-full max-w-xs">
-          {[
-            { icon: muted?MicOff:Mic, label:muted?"Ovoz yoq":"Ovoz o'ch", action:()=>setMuted(v=>!v), active:muted },
-            { icon: Headphones,        label:speaker?"Dinamik":"Quloqchin",action:()=>setSpeaker(v=>!v), active:!speaker },
-            { icon: type==="video"?VideoOff:Video, label:"Kamera",          action:()=>{}, active:false },
-          ].map((btn,i)=>(
-            <div key={i} className="flex flex-col items-center gap-2">
-              <button onClick={btn.action}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${btn.active?"bg-white text-black":"bg-white/10 text-white"}`}>
-                <btn.icon className="w-6 h-6"/>
-              </button>
-              <span className="text-white/50 text-xs">{btn.label}</span>
+        {/* Bottom: controls */}
+        <div className="flex flex-col items-center gap-7 w-full px-8">
+          {/* 3 control buttons */}
+          <div className="grid grid-cols-3 gap-5 w-full max-w-[280px]">
+            {/* Mic */}
+            <div className="flex flex-col items-center gap-2">
+              <motion.button whileTap={{scale:0.88}} onClick={()=>setMuted(v=>!v)}
+                className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200"
+                style={{
+                  background: muted ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.12)",
+                  backdropFilter:"blur(16px)",
+                  boxShadow: muted ? "0 4px 20px rgba(255,255,255,0.25)" : "none",
+                }}>
+                {muted
+                  ? <MicOff className="w-6 h-6 text-gray-900"/>
+                  : <Mic className="w-6 h-6 text-white"/>}
+              </motion.button>
+              <span className="text-white/55 text-[11px]">{muted ? "Ovoz yoq" : "Ovoz o'ch"}</span>
             </div>
-          ))}
+
+            {/* Speaker */}
+            <div className="flex flex-col items-center gap-2">
+              <motion.button whileTap={{scale:0.88}} onClick={()=>setSpeaker(v=>!v)}
+                className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200"
+                style={{
+                  background: !speaker ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.12)",
+                  backdropFilter:"blur(16px)",
+                  boxShadow: !speaker ? "0 4px 20px rgba(255,255,255,0.25)" : "none",
+                }}>
+                {speaker
+                  ? <Volume2 className="w-6 h-6 text-white"/>
+                  : <Headphones className="w-6 h-6 text-gray-900"/>}
+              </motion.button>
+              <span className="text-white/55 text-[11px]">{speaker ? "Dinamik" : "Quloqchin"}</span>
+            </div>
+
+            {/* Camera (only interactive for video calls) */}
+            <div className="flex flex-col items-center gap-2">
+              <motion.button whileTap={{scale:0.88}}
+                onClick={isVideo ? toggleCamera : undefined}
+                className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200"
+                style={{
+                  background: isVideo && !cameraOn ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.12)",
+                  backdropFilter:"blur(16px)",
+                  boxShadow: isVideo && !cameraOn ? "0 4px 20px rgba(255,255,255,0.25)" : "none",
+                  opacity: isVideo ? 1 : 0.35,
+                  cursor: isVideo ? "pointer" : "default",
+                }}>
+                {isVideo && !cameraOn
+                  ? <VideoOff className="w-6 h-6 text-gray-900"/>
+                  : <Video className="w-6 h-6 text-white"/>}
+              </motion.button>
+              <span className="text-white/55 text-[11px]">
+                {isVideo ? (cameraOn ? "Kamera" : "Kamera yoq") : "Kamera"}
+              </span>
+            </div>
+          </div>
+
+          {/* End call */}
+          <motion.button
+            whileTap={{scale:0.9}}
+            onClick={onEnd}
+            className="w-16 h-16 rounded-full flex items-center justify-center"
+            style={{
+              background:"linear-gradient(135deg,#ef4444,#dc2626)",
+              boxShadow:"0 0 0 4px rgba(239,68,68,0.2),0 8px 32px rgba(239,68,68,0.45)",
+            }}>
+            <PhoneOff className="w-7 h-7 text-white"/>
+          </motion.button>
+          <span className="text-white/30 text-xs tracking-wide">Qo'ng'iroqni tugatish</span>
         </div>
-        <button onClick={onEnd}
-          className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/30">
-          <PhoneOff className="w-7 h-7 text-white"/>
-        </button>
-        <span className="text-white/30 text-xs">Qo'ng'iroqni tugatish</span>
       </div>
     </motion.div>
   );

@@ -10,8 +10,8 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl } from "@workspace/api-client-react";
-import type { Reel, UploadUrlRequest } from "@workspace/api-client-react";
+import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl, useListNotifications, markAllNotificationsRead } from "@workspace/api-client-react";
+import type { Reel, UploadUrlRequest, Notification } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { useDockedState } from "@/hooks/useDockedState";
@@ -5514,6 +5514,132 @@ const SIGNALS = [
 type SignalId = typeof SIGNALS[number]["id"];
 
 /* ─────────────────────────────────────────────────────── */
+/* NotifPanel — slide-in notifications drawer              */
+/* ─────────────────────────────────────────────────────── */
+function NotifPanel({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient();
+  const { data: notifs = [], isLoading } = useListNotifications();
+
+  useEffect(() => {
+    markAllNotificationsRead().then(() => {
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    }).catch(() => {});
+  }, [qc]);
+
+  const typeIcon = (type: string) => {
+    if (type === "like")    return "❤️";
+    if (type === "comment") return "💬";
+    if (type === "follow")  return "👤";
+    if (type === "gift")    return "🎁";
+    if (type === "system")  return "📢";
+    return "🔔";
+  };
+
+  const timeAgoN = (d: string | Date) => {
+    const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+    if (s < 60)  return `${s}s`;
+    if (s < 3600) return `${Math.floor(s/60)}m`;
+    if (s < 86400) return `${Math.floor(s/3600)}h`;
+    return `${Math.floor(s/86400)}k`;
+  };
+
+  return createPortal(
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ position:"fixed", inset:0, zIndex:10001, background:"rgba(0,0,0,0.55)", backdropFilter:"blur(4px)" }}
+    >
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type:"spring", damping:28, stiffness:300 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          position:"absolute", top:0, right:0, bottom:0,
+          width: Math.min(340, window.innerWidth - 40),
+          background:"linear-gradient(180deg,#0d0020 0%,#060014 100%)",
+          borderLeft:"1px solid rgba(255,255,255,0.08)",
+          display:"flex", flexDirection:"column",
+          boxShadow:"-12px 0 60px rgba(0,0,0,0.8)",
+        }}
+      >
+        {/* Header */}
+        <div style={{ padding:"16px 16px 12px", borderBottom:"1px solid rgba(255,255,255,0.06)",
+          display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <Bell style={{ width:16, height:16, color:T.cyan }}/>
+            <span style={{ fontSize:13, fontWeight:800, color:"white", letterSpacing:"0.04em" }}>
+              Bildirishnomalar
+            </span>
+          </div>
+          <motion.button whileTap={{ scale:0.8 }} onClick={onClose}
+            style={{ width:30, height:30, borderRadius:8, background:"rgba(255,255,255,0.06)",
+              display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <X style={{ width:14, height:14, color:"rgba(255,255,255,0.5)" }}/>
+          </motion.button>
+        </div>
+
+        {/* List */}
+        <div style={{ flex:1, overflowY:"auto", scrollbarWidth:"none", padding:"8px 0" }}>
+          {isLoading ? (
+            <div style={{ padding:32, textAlign:"center" }}>
+              <motion.div animate={{ rotate:360 }} transition={{ duration:1, repeat:Infinity, ease:"linear" }}
+                style={{ width:24, height:24, borderRadius:"50%", border:`2px solid ${T.cyan}`, borderTopColor:"transparent", margin:"0 auto" }}/>
+            </div>
+          ) : notifs.length === 0 ? (
+            <div style={{ padding:"48px 24px", textAlign:"center" }}>
+              <Bell style={{ width:32, height:32, color:"rgba(255,255,255,0.15)", margin:"0 auto 10px" }}/>
+              <p style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>Hozircha bildirishnoma yo'q</p>
+            </div>
+          ) : (
+            notifs.map((n: Notification) => (
+              <motion.div key={n.id}
+                initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }}
+                style={{
+                  padding:"10px 16px", display:"flex", alignItems:"flex-start", gap:10,
+                  borderBottom:"1px solid rgba(255,255,255,0.04)",
+                  background: n.isRead ? "transparent" : "rgba(0,229,255,0.04)",
+                }}>
+                {/* Avatar or emoji */}
+                <div style={{ width:36, height:36, borderRadius:"50%", flexShrink:0,
+                  background:"rgba(255,255,255,0.07)", overflow:"hidden",
+                  display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>
+                  {n.actorAvatar
+                    ? <img src={n.actorAvatar} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+                    : <span>{typeIcon(n.type)}</span>}
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  {n.actorName && (
+                    <span style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.75)" }}>
+                      {n.actorName}{" "}
+                    </span>
+                  )}
+                  <span style={{ fontSize:11, color:"rgba(255,255,255,0.55)" }}>{n.message}</span>
+                  <p style={{ fontSize:9.5, color:"rgba(255,255,255,0.25)", marginTop:3 }}>
+                    {timeAgoN(n.createdAt)}
+                  </p>
+                </div>
+                {!n.isRead && (
+                  <div style={{ width:7, height:7, borderRadius:"50%", background:T.cyan,
+                    boxShadow:`0 0 8px ${T.cyan}`, flexShrink:0, marginTop:6 }}/>
+                )}
+              </motion.div>
+            ))
+          )}
+        </div>
+
+        {/* Cyan accent */}
+        <div style={{ height:2, background:`linear-gradient(90deg,${T.cyan},${T.violet})` }}/>
+      </motion.div>
+    </motion.div>,
+    document.body
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
 /* MiniPlayer — draggable floating PiP window              */
 /* ─────────────────────────────────────────────────────── */
 function MiniPlayer({ video, startTime, onClose, onExpand }:{
@@ -5618,6 +5744,7 @@ export default function OTubePage() {
   const [showSearch,setShowSearch] = useState(false);
   const [selected,setSelected]     = useState<Reel|null>(null);
   const [pipVideo,setPipVideo]     = useState<{video:Reel;startTime:number}|null>(null);
+  const [showNotifPanel,setShowNotifPanel] = useState(false);
   const [showSettings,setShowSettings] = useState(false);
   const [settings,setSettings]   = useState<PlayerSettings>(DEF_S);
   const [monetize,setMonetize]   = useState<MonetizationSettings>(DEF_M);
@@ -5741,13 +5868,14 @@ export default function OTubePage() {
                 {/* Controls */}
                 <div className="flex items-center gap-1.5">
                   <SocialTicker/>
-                  <motion.button whileTap={{scale:0.82}} onClick={()=>setNotifDot(false)}
+                  <motion.button whileTap={{scale:0.82}} onClick={()=>{setShowNotifPanel(true);setNotifDot(false);}}
                     className="relative"
                     style={{width:34,height:34,borderRadius:10,
-                      background:"rgba(255,255,255,0.05)",
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <Bell style={{width:14,height:14,color:"rgba(255,255,255,0.55)"}}/>
-                    {notifDot && <motion.div
+                      background: showNotifPanel?"rgba(0,229,255,0.12)":"rgba(255,255,255,0.05)",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      boxShadow: showNotifPanel?`0 0 0 1px ${T.cyan}55`:"none"}}>
+                    <Bell style={{width:14,height:14,color: showNotifPanel?T.cyan:"rgba(255,255,255,0.55)"}}/>
+                    {notifDot && !showNotifPanel && <motion.div
                       animate={{scale:[1,1.3,1]}} transition={{duration:1.8,repeat:Infinity}}
                       className="absolute top-1.5 right-1.5"
                       style={{width:6,height:6,borderRadius:"50%",background:"#ff3b30",
@@ -6051,6 +6179,12 @@ export default function OTubePage() {
               setPipVideo(null);
             }}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showNotifPanel && (
+          <NotifPanel key="notif-panel" onClose={()=>setShowNotifPanel(false)}/>
         )}
       </AnimatePresence>
 

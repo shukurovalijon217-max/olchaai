@@ -106,6 +106,29 @@ router.get("/music/search", async (req: any, res) => {
   }
 });
 
+/* ── GET /music/proxy — stream iTunes preview audio (avoids iOS CORS) ── */
+router.get("/music/proxy", async (req: any, res) => {
+  try {
+    const rawUrl = String(req.query.url ?? "").trim();
+    if (!rawUrl || !rawUrl.startsWith("https://audio-ssl.itunes.apple.com/")) {
+      res.status(400).json({ error: "invalid url" }); return;
+    }
+    const upstream = await fetch(rawUrl, { signal: AbortSignal.timeout(10000) });
+    if (!upstream.ok || !upstream.body) { res.status(502).json({ error: "upstream failed" }); return; }
+    const ct = upstream.headers.get("content-type") ?? "audio/mp4";
+    const cl = upstream.headers.get("content-length");
+    res.setHeader("Content-Type", ct);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    if (cl) res.setHeader("Content-Length", cl);
+    const { Readable } = await import("stream");
+    Readable.fromWeb(upstream.body as any).pipe(res);
+  } catch (err) {
+    req.log.warn(err, "music proxy failed");
+    if (!res.headersSent) res.status(502).json({ error: "proxy error" });
+  }
+});
+
 /* ── POST /posts/ai-predict — predict engagement ───────────── */
 router.post("/posts/ai-predict", async (req: any, res) => {
   try {

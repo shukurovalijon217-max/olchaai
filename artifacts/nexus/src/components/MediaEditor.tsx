@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2, Wand2, Mic, Scissors, Palette, Camera } from "lucide-react";
+import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2, Wand2, Mic, Scissors, Palette, Camera, Download } from "lucide-react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 
 export type TextOverlay = {
@@ -24,7 +24,7 @@ interface Props {
   files: File[];
   initialOverlays?: TextOverlay[];
   initialAudioName?: string;
-  onDone: (overlays: TextOverlay[], audioName: string, filterName: string, audioUrl?: string) => void;
+  onDone: (overlays: TextOverlay[], audioName: string, filterName: string, audioUrl?: string, trimStart?: number, trimEnd?: number) => void;
   onClose: () => void;
 }
 
@@ -1248,7 +1248,9 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             onClick={() => {
               const resolvedAudioUrl = audioServerUrl
                 || (audioUploadUrl && !audioUploadUrl.startsWith("blob:") ? audioUploadUrl : undefined);
-              onDone(items, audioName, filterName, resolvedAudioUrl);
+              onDone(items, audioName, filterName, resolvedAudioUrl,
+                audioName ? audioTrimStart : undefined,
+                audioName ? audioTrimEnd   : undefined);
             }}
             disabled={audioUploading}
             className="px-4 py-1.5 rounded-full text-sm font-bold text-white"
@@ -2128,7 +2130,8 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                             setMusicQuery(name);
                             setMusicApiResults([]);
                             if (song.preview) {
-                              loadAudioUrl(song.preview, name, false);
+                              const proxyUrl = `${API_BASE}/api/music/proxy?url=${encodeURIComponent(song.preview)}`;
+                              loadAudioUrl(proxyUrl, name, false);
                             } else {
                               setAudioName(name);
                               setAudioUploadUrl("");
@@ -2447,13 +2450,41 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                       </button>
                     </div>
 
-                    {/* Confirm */}
-                    <button onClick={() => setPanel("none")}
-                      className="w-full py-3.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2"
-                      style={{ background:"linear-gradient(135deg,#be123c,#f43f5e)", boxShadow:"0 0 20px rgba(244,63,94,0.4)" }}>
-                      <Check className="w-4 h-4" />
-                      Tasdiqlash — {fmtTime(audioTrimEnd - audioTrimStart)} tanlandi
-                    </button>
+                    {/* Download + Confirm row */}
+                    <div className="flex gap-2">
+                      {/* ⬇ Download button */}
+                      <button
+                        onClick={async () => {
+                          const url = audioServerUrl || (audioUploadUrl && !audioUploadUrl.startsWith("blob:") ? audioUploadUrl : audioUploadUrl);
+                          if (!url) return;
+                          try {
+                            const resp = await fetch(url);
+                            const blob = await resp.blob();
+                            const a = document.createElement("a");
+                            a.href = URL.createObjectURL(blob);
+                            a.download = `${audioName || "qo'shiq"}.m4a`;
+                            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                            setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+                          } catch {
+                            const a = document.createElement("a");
+                            a.href = url; a.target = "_blank"; a.download = `${audioName || "qo'shiq"}.m4a`;
+                            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                          }
+                        }}
+                        className="flex-shrink-0 px-4 py-3.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-1.5"
+                        style={{ background:"linear-gradient(135deg,#0e7490,#0891b2)", boxShadow:"0 0 16px rgba(6,182,212,0.35)" }}
+                        title="Yuklab olish">
+                        <Download className="w-4 h-4" />
+                        Yuklab
+                      </button>
+                      {/* ✓ Confirm */}
+                      <button onClick={() => setPanel("none")}
+                        className="flex-1 py-3.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2"
+                        style={{ background:"linear-gradient(135deg,#be123c,#f43f5e)", boxShadow:"0 0 20px rgba(244,63,94,0.4)" }}>
+                        <Check className="w-4 h-4" />
+                        {fmtTime(audioTrimEnd - audioTrimStart)} tasdiqlash
+                      </button>
+                    </div>
                   </>
                 )}
               </div>

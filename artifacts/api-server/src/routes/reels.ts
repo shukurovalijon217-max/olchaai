@@ -162,6 +162,30 @@ router.post("/reels", async (req, res) => {
   }
 });
 
+/* ── DELETE /reels/:id ──────────────────────────────────────── */
+router.delete("/reels/:id", async (req, res) => {
+  try {
+    const reelId = Number(req.params.id);
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+    const [reel] = await db.select({ authorId: reelsTable.authorId })
+      .from(reelsTable).where(eq(reelsTable.id, reelId)).limit(1);
+
+    if (!reel) { res.status(404).json({ error: "Not found" }); return; }
+    if (reel.authorId !== userId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+    await db.delete(reelCommentsTable).where(eq(reelCommentsTable.reelId, reelId));
+    await db.delete(reelLikesTable).where(eq(reelLikesTable.reelId, reelId));
+    await db.delete(reelsTable).where(eq(reelsTable.id, reelId));
+
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 /* ── POST /reels/:id/like ───────────────────────────────────── */
 router.post("/reels/:id/like", async (req, res) => {
   try {

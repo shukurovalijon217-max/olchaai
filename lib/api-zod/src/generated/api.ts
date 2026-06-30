@@ -440,6 +440,18 @@ export const CreateReelBody = zod.object({
 
 
 /**
+ * @summary Delete a reel (owner only)
+ */
+export const DeleteReelParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteReelResponse = zod.object({
+  "ok": zod.boolean().optional()
+})
+
+
+/**
  * @summary Like a reel
  */
 export const LikeReelParams = zod.object({

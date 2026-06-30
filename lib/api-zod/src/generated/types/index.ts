@@ -37,6 +37,7 @@ export * from './creatorPlan';
 export * from './creatorPlanInput';
 export * from './creatorSubscription';
 export * from './deleteNotification200';
+export * from './deleteReel200';
 export * from './followResult';
 export * from './getAdminAnalyticsParams';
 export * from './getAdminAnalyticsPeriod';

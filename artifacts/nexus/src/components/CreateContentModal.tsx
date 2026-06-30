@@ -297,6 +297,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   const [postOverlays, setPostOverlays] = useState<TextOverlay[]>([]);
   const [postAudioName, setPostAudioName] = useState("");
   const [postAudioUrl, setPostAudioUrl] = useState("");
+  const [postAudioTrimStart, setPostAudioTrimStart] = useState<number|undefined>(undefined);
+  const [postAudioTrimEnd,   setPostAudioTrimEnd]   = useState<number|undefined>(undefined);
   const [postFilterName, setPostFilterName] = useState("none");
 
   /* ── mood state ── */
@@ -776,10 +778,12 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
     setEditorOpen(true);
   };
 
-  const handleEditorDone = (overlays: TextOverlay[], audioName: string, filterName: string, audioUrl?: string) => {
+  const handleEditorDone = (overlays: TextOverlay[], audioName: string, filterName: string, audioUrl?: string, trimStart?: number, trimEnd?: number) => {
     setPostOverlays(overlays);
     setPostAudioName(audioName);
     setPostAudioUrl(audioUrl && !audioUrl.startsWith("blob:") ? audioUrl : "");
+    setPostAudioTrimStart(trimStart);
+    setPostAudioTrimEnd(trimEnd);
     setPostFilterName(filterName);
     setEditorOpen(false);
   };
@@ -891,6 +895,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
             overlays: postOverlays.length > 0 ? JSON.stringify(postOverlays) : undefined,
             audioName: postAudioName || undefined,
             audioUrl: postAudioUrl || undefined,
+            audioTrimStart: postAudioTrimStart,
+            audioTrimEnd: postAudioTrimEnd,
             filterName: postFilterName !== "none" ? postFilterName : undefined,
             mood: mood || undefined,
             pollQuestion: pollEnabled && pollQuestion.trim() ? pollQuestion.trim() : undefined,

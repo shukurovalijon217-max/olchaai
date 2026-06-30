@@ -368,18 +368,35 @@ export default function FeedCard({ post }: FeedCardProps) {
     else { v.pause(); v.currentTime = 0; }
   }, [isInView]);
 
-  /* auto-play background music for image posts */
+  /* auto-play background music for image posts — respects trim range */
   useEffect(() => {
     const audioUrl = (post as any).audioUrl as string | undefined;
     if (!audioUrl || !isPhoto) return;
+    const trimStart = (post as any).audioTrimStart as number | undefined;
+    const trimEnd   = (post as any).audioTrimEnd   as number | undefined;
     if (!audioRef.current) {
       const a = new Audio(audioUrl);
-      a.loop = true;
+      a.loop = false;
       a.volume = 0.65;
+      if (trimStart != null) a.currentTime = trimStart;
+      /* loop within the trimmed segment */
+      a.addEventListener("timeupdate", () => {
+        if (trimEnd != null && a.currentTime >= trimEnd) {
+          a.currentTime = trimStart ?? 0;
+          a.play().catch(() => {});
+        }
+      });
+      a.addEventListener("ended", () => {
+        a.currentTime = trimStart ?? 0;
+        a.play().catch(() => {});
+      });
       audioRef.current = a;
     }
     audioRef.current.muted = muted;
     if (isInView) {
+      if (trimStart != null && audioRef.current.currentTime < trimStart) {
+        audioRef.current.currentTime = trimStart;
+      }
       audioRef.current.play().catch(() => {});
     } else {
       audioRef.current.pause();

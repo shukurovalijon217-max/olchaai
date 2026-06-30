@@ -318,4 +318,31 @@ router.post("/ai/moderation", async (req, res) => {
   }
 });
 
+/* ── AI group post text assist ───────────────────────────────── */
+router.post("/ai/group-assist", async (req, res) => {
+  try {
+    const { prompt, groupName, groupCategory } = req.body;
+    if (!prompt?.trim()) { res.status(400).json({ error: "prompt required" }); return; }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Siz "${groupName || "guruh"}" nomli guruh uchun post yozishga yordam berasiz (kategoriya: ${groupCategory || "umumiy"}). Foydalanuvchi ko'rsatmasi asosida qisqa, qiziqarli, va guruhga mos post matni yozing. 1-3 jumladan oshirmang. Faqat postning o'zini yozing, izoh qo'shmang.`,
+        },
+        { role: "user", content: prompt.trim() },
+      ],
+      max_tokens: 200,
+      temperature: 0.8,
+    });
+
+    const text = completion.choices[0]?.message?.content?.trim() ?? "";
+    res.json({ text });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "AI xizmati hozir mavjud emas" });
+  }
+});
+
 export default router;

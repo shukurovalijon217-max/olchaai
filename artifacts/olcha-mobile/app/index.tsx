@@ -14,12 +14,10 @@ import WebView from "react-native-webview";
 const DOMAIN = process.env.EXPO_PUBLIC_DOMAIN ?? "";
 const NEXUS_URL = DOMAIN ? `https://${DOMAIN}/` : "http://localhost:18245/";
 
-/* ── Web fallback: iframe embed ── */
 function IframeShell() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    // Small delay so the shell mounts first
     const t = setTimeout(() => setLoaded(true), 100);
     return () => clearTimeout(t);
   }, []);
@@ -51,7 +49,6 @@ function IframeShell() {
   );
 }
 
-/* ── Native: full-screen WebView ── */
 function NativeShell() {
   const insets = useSafeAreaInsets();
   const wvRef = useRef<WebView>(null);
@@ -59,15 +56,14 @@ function NativeShell() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Android hardware back button
   useEffect(() => {
     if (Platform.OS !== "android") return;
     const handler = BackHandler.addEventListener("hardwareBackPress", () => {
       if (canGoBack && wvRef.current) {
         wvRef.current.goBack();
-        return true; // prevent default (exit)
+        return true;
       }
-      return false; // allow exit
+      return false;
     });
     return () => handler.remove();
   }, [canGoBack]);
@@ -95,7 +91,6 @@ function NativeShell() {
           </TouchableOpacity>
         </View>
       )}
-      {/* @ts-ignore WebView type overload conflict with react-native-webview */}
       <WebView
         ref={wvRef}
         source={{ uri: NEXUS_URL }}
@@ -114,10 +109,9 @@ function NativeShell() {
         onLoadStart={() => { setLoading(true); setError(false); }}
         onLoadEnd={() => setLoading(false)}
         onError={() => { setLoading(false); setError(true); }}
-        onNavigationStateChange={(nav: { canGoBack: boolean }) => setCanGoBack(nav.canGoBack)}
+        onNavigationStateChange={nav => setCanGoBack(nav.canGoBack)}
         onContentProcessDidTerminate={() => wvRef.current?.reload()}
         injectedJavaScriptBeforeContentLoaded={`
-          // Tell the web app it's running inside OlCha native shell
           window.__OLCHA_NATIVE__ = true;
           window.__OLCHA_PLATFORM__ = '${Platform.OS}';
           true;

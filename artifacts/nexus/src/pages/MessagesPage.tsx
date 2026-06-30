@@ -14,7 +14,7 @@ import {
   Clock3, AlignLeft, Heart, ThumbsUp, Pencil,
   PhoneOff, Archive, UserPlus, Share2, Flag, Download,
   CheckSquare, Square, Layers, Link, Globe,
-  BellOff, BellRing, Zap, Headphones, PenLine,
+  BellOff, BellRing, Zap, Headphones, PenLine, Minimize2, Maximize2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -764,8 +764,10 @@ function CallUI({
   const [elapsed,   setElapsed]   = useState(0);
   const [status,    setStatus]    = useState<"calling"|"connected">("calling");
   const [camError,  setCamError]  = useState(false);
-  const localVidRef = useRef<HTMLVideoElement>(null);
-  const streamRef   = useRef<MediaStream|null>(null);
+  const [minimized, setMinimized] = useState(false);
+  const localVidRef  = useRef<HTMLVideoElement>(null);
+  const pipVidRef    = useRef<HTMLVideoElement>(null);
+  const streamRef    = useRef<MediaStream|null>(null);
 
   /* ── request camera + mic on mount for video calls ── */
   useEffect(()=>{
@@ -777,10 +779,22 @@ function CallUI({
           localVidRef.current.srcObject = stream;
           localVidRef.current.play().catch(()=>{});
         }
+        if (pipVidRef.current) {
+          pipVidRef.current.srcObject = stream;
+          pipVidRef.current.play().catch(()=>{});
+        }
       })
       .catch(()=>{ setCameraOn(false); setCamError(true); });
     return ()=>{ streamRef.current?.getTracks().forEach(t=>t.stop()); };
   },[type]);
+
+  /* ── attach stream to pip video when it mounts (minimized mode) ── */
+  useEffect(()=>{
+    if (minimized && pipVidRef.current && streamRef.current) {
+      pipVidRef.current.srcObject = streamRef.current;
+      pipVidRef.current.play().catch(()=>{});
+    }
+  },[minimized]);
 
   /* ── sync mute with audio track ── */
   useEffect(()=>{
@@ -810,6 +824,60 @@ function CallUI({
   },[status]);
 
   const isVideo = type === "video";
+
+  /* ── Mini PiP window (minimized mode) ── */
+  if (minimized) {
+    return (
+      <motion.div
+        initial={{scale:0.5,opacity:0,x:80,y:80}}
+        animate={{scale:1,opacity:1,x:0,y:0}}
+        exit={{scale:0.5,opacity:0}}
+        transition={{type:"spring",stiffness:340,damping:28}}
+        onClick={()=>setMinimized(false)}
+        className="fixed bottom-28 right-4 z-50 cursor-pointer select-none"
+        style={{
+          width:140,
+          borderRadius:20,
+          overflow:"hidden",
+          boxShadow:"0 8px 32px rgba(0,0,0,0.6),0 0 0 1.5px rgba(255,255,255,0.12)",
+        }}>
+        {/* video/avatar background */}
+        <div className="relative" style={{height:180,background:"#111"}}>
+          {isVideo && cameraOn
+            ? <video ref={pipVidRef} autoPlay muted playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{transform:"scaleX(-1)"}}/>
+            : avatar
+              ? <img src={avatar} alt="" className="absolute inset-0 w-full h-full object-cover"/>
+              : <div className="absolute inset-0 flex items-center justify-center"
+                  style={{background:"linear-gradient(135deg,#7c3aed,#4f46e5)"}}>
+                  <span className="text-white text-4xl font-bold">{name[0]?.toUpperCase()}</span>
+                </div>
+          }
+          {/* dark overlay at bottom */}
+          <div className="absolute inset-0" style={{background:"linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 55%)"}}/>
+          {/* expand icon top-right */}
+          <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
+            style={{background:"rgba(0,0,0,0.45)",backdropFilter:"blur(8px)"}}>
+            <Maximize2 className="w-3 h-3 text-white"/>
+          </div>
+          {/* name + timer */}
+          <div className="absolute bottom-2 left-0 right-0 text-center">
+            <p className="text-white text-[11px] font-semibold leading-tight truncate px-2">{name}</p>
+            <p className="text-white/60 text-[10px]">{formatDur(elapsed)}</p>
+          </div>
+        </div>
+        {/* end call strip */}
+        <button
+          onClick={e=>{ e.stopPropagation(); onEnd(); }}
+          className="w-full flex items-center justify-center gap-1.5 py-2"
+          style={{background:"rgba(239,68,68,0.9)"}}>
+          <PhoneOff className="w-3.5 h-3.5 text-white"/>
+          <span className="text-white text-[11px] font-semibold">Tugatish</span>
+        </button>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -849,6 +917,15 @@ function CallUI({
             style={{background:"radial-gradient(circle,rgba(59,130,246,0.3),transparent 70%)"}}/>
         </div>
       )}
+
+      {/* ── Minimize button (top-right) ── */}
+      <motion.button
+        whileTap={{scale:0.85}}
+        onClick={()=>setMinimized(true)}
+        className="absolute top-12 right-4 z-20 w-9 h-9 rounded-full flex items-center justify-center"
+        style={{background:"rgba(255,255,255,0.12)",backdropFilter:"blur(16px)"}}>
+        <Minimize2 className="w-4 h-4 text-white"/>
+      </motion.button>
 
       {/* ── Main content ── */}
       <div className="relative z-10 flex flex-col items-center justify-between h-full"

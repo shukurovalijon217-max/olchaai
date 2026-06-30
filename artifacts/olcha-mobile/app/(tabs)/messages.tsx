@@ -2,13 +2,11 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
-  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -17,21 +15,16 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConversationRow, type Conversation } from "@/components/ConversationRow";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/contexts/AuthContext";
-import { apiFetch } from "@/utils/api";
 
-interface ApiConversation {
-  id: number;
-  lastMessage?: string;
-  updatedAt?: string;
-  participants?: Array<{
-    id: number;
-    username: string;
-    displayName: string;
-    avatarUrl?: string;
-    isPremium?: boolean;
-  }>;
-}
+const CONVOS: Conversation[] = [
+  { id: 1, participantName: "Aziz Karimov", participantUsername: "azizk", lastMessage: "Hey, yangi postingni ko'rdim 🔥", lastMessageAt: new Date(Date.now()-180000).toISOString(), unreadCount: 3, isOnline: true, isPremium: true },
+  { id: 2, participantName: "Malika Yusupova", participantUsername: "malika_y", lastMessage: "Samarqandga bormoqchimisiz? 🌙", lastMessageAt: new Date(Date.now()-900000).toISOString(), unreadCount: 1, isOnline: true },
+  { id: 3, participantName: "Timur Rashidov", participantUsername: "timur_dev", lastMessage: "Kollab qilaylikmi bu project'da?", lastMessageAt: new Date(Date.now()-3600000).toISOString(), unreadCount: 0, isOnline: false },
+  { id: 4, participantName: "Nilufar Hassan", participantUsername: "nilufar.h", lastMessage: "Dizayning juda zo'r chiqibdi! ✨", lastMessageAt: new Date(Date.now()-86400000).toISOString(), unreadCount: 0, isOnline: false, isPremium: true },
+  { id: 5, participantName: "Bobur Tashkentov", participantUsername: "bobur_t", lastMessage: "Meetup'ga kelasizmi keyingi hafta?", lastMessageAt: new Date(Date.now()-172800000).toISOString(), unreadCount: 0, isOnline: true },
+  { id: 6, participantName: "Dilorom Saydullayeva", participantUsername: "dilo_art", lastMessage: "Rasm zo'r chiqibdi mashallah 🎨", lastMessageAt: new Date(Date.now()-259200000).toISOString(), unreadCount: 0, isOnline: false },
+  { id: 7, participantName: "Kamol Umarov", participantUsername: "kamol_u", lastMessage: "Gym ko'rishamizmi? 💪", lastMessageAt: new Date(Date.now()-604800000).toISOString(), unreadCount: 0, isOnline: true, isPremium: true },
+];
 
 type MsgTab = "all" | "requests" | "groups";
 
@@ -39,54 +32,15 @@ export default function MessagesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
-  const [convos, setConvos] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [msgTab, setMsgTab] = useState<MsgTab>("all");
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : 0;
 
-  const fetchConvos = useCallback(async () => {
-    try {
-      const res = await apiFetch("/api/conversations");
-      if (res.ok) {
-        const data = await res.json() as ApiConversation[];
-        const mapped: Conversation[] = (data ?? []).map(c => {
-          const other = c.participants?.find(p => p.id !== user?.id) ?? c.participants?.[0];
-          return {
-            id: c.id,
-            participantName: other?.displayName ?? "User",
-            participantUsername: other?.username ?? "user",
-            participantAvatar: other?.avatarUrl ?? undefined,
-            lastMessage: c.lastMessage ?? undefined,
-            lastMessageAt: c.updatedAt ?? undefined,
-            unreadCount: 0,
-            isOnline: false,
-            isPremium: other?.isPremium ?? false,
-          };
-        });
-        setConvos(mapped);
-      }
-    } catch {}
-  }, [user?.id]);
-
-  useEffect(() => {
-    setLoading(true);
-    fetchConvos().finally(() => setLoading(false));
-  }, [fetchConvos]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchConvos();
-    setRefreshing(false);
-  }, [fetchConvos]);
-
-  const filtered = convos.filter(c =>
+  const filtered = CONVOS.filter(c =>
     c.participantName.toLowerCase().includes(search.toLowerCase())
   );
-  const unreadTotal = convos.reduce((s, c) => s + (c.unreadCount ?? 0), 0);
+  const unreadTotal = CONVOS.reduce((s, c) => s + (c.unreadCount ?? 0), 0);
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
@@ -150,40 +104,24 @@ export default function MessagesScreen() {
         </View>
       </View>
 
-      {loading ? (
-        <View style={[s.loadingWrap, { marginTop: topPad + 126 }]}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={c => c.id.toString()}
-          renderItem={({ item }) => <ConversationRow conversation={item} />}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-              colors={[colors.primary]}
-            />
-          }
-          contentContainerStyle={{ paddingBottom: 90 + botPad, paddingTop: topPad + 126 }}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={s.empty}>
-              <LinearGradient colors={["rgba(120,87,255,0.15)", "rgba(157,25,255,0.1)"]} style={s.emptyIcon}>
-                <Feather name="message-circle" size={36} color={colors.primary} />
-              </LinearGradient>
-              <Text style={[s.emptyTitle, { color: colors.text }]}>
-                {search ? "Topilmadi" : "Xabar yo'q"}
-              </Text>
-              <Text style={[s.emptySubtitle, { color: colors.mutedForeground }]}>
-                {search ? `"${search}" bo'yicha natija yo'q` : "Birinchi xabarni yuborish uchun yangi suhbat boshlang"}
-              </Text>
-            </View>
-          }
-        />
-      )}
+      <FlatList
+        data={filtered}
+        keyExtractor={c => c.id.toString()}
+        renderItem={({ item }) => <ConversationRow conversation={item} />}
+        contentContainerStyle={{ paddingBottom: 90 + botPad, paddingTop: topPad + 126 }}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={s.empty}>
+            <LinearGradient colors={["rgba(120,87,255,0.15)", "rgba(157,25,255,0.1)"]} style={s.emptyIcon}>
+              <Feather name="message-circle" size={36} color={colors.primary} />
+            </LinearGradient>
+            <Text style={[s.emptyTitle, { color: colors.text }]}>Xabar yo'q</Text>
+            <Text style={[s.emptySubtitle, { color: colors.mutedForeground }]}>
+              Birinchi xabarni yuborish uchun yangi suhbat boshlang
+            </Text>
+          </View>
+        }
+      />
     </View>
   );
 }
@@ -208,7 +146,6 @@ const s = StyleSheet.create({
   tabRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginBottom: 4 },
   tabBtn: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6 },
   tabTxt: { fontSize: 13, fontWeight: "600" },
-  loadingWrap: { flex: 1, alignItems: "center", paddingTop: 60 },
   empty: { alignItems: "center", paddingTop: 60, gap: 12, paddingHorizontal: 40 },
   emptyIcon: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center" },
   emptyTitle: { fontSize: 18, fontWeight: "700" },

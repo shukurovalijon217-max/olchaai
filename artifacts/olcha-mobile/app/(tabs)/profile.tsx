@@ -2,13 +2,12 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Dimensions,
   FlatList,
   Platform,
   Pressable,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,19 +17,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { AuroraBorder } from "@/components/AuroraBorder";
-import { apiFetch } from "@/utils/api";
 
 const { width: W } = Dimensions.get("window");
 const IMG = (W - 4) / 3;
 
-type PTab = "posts" | "reels" | "tagged";
+const MEDIA = [
+  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400",
+  "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400",
+  "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=400",
+  "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400",
+  "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400",
+  "https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=400",
+  "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400",
+  "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400",
+  "https://images.unsplash.com/photo-1495121605193-b116b5b9c5fe?w=400",
+];
 
-interface ApiPost {
-  id: number;
-  mediaUrl?: string;
-  mediaType?: string;
-  thumbnailUrl?: string;
-}
+type PTab = "posts" | "reels" | "tagged";
 
 function StatCard({ value, label, color }: { value: string; label: string; color: string }) {
   const colors = useColors();
@@ -44,64 +47,24 @@ function StatCard({ value, label, color }: { value: string; label: string; color
   );
 }
 
-function fmtNum(n?: number) {
-  if (!n) return "0";
-  if (n >= 1e6) return (n/1e6).toFixed(1)+"M";
-  if (n >= 1000) return (n/1000).toFixed(1)+"K";
-  return n.toString();
-}
-
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout } = useAuth();
   const [pTab, setPTab] = useState<PTab>("posts");
-  const [userPosts, setUserPosts] = useState<ApiPost[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : 0;
-
-  const fetchUserPosts = useCallback(async () => {
-    if (!user?.id) return;
-    try {
-      const res = await apiFetch(`/api/posts?userId=${user.id}&limit=30`);
-      if (res.ok) {
-        const data = await res.json() as ApiPost[];
-        setUserPosts(data ?? []);
-      }
-    } catch {}
-  }, [user?.id]);
-
-  useEffect(() => {
-    fetchUserPosts();
-  }, [fetchUserPosts]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await Promise.all([refreshUser(), fetchUserPosts()]);
-    setRefreshing(false);
-  }, [refreshUser, fetchUserPosts]);
 
   const displayName = user?.displayName ?? "OlCha User";
   const username = user?.username ?? "olcha_user";
   const initials = displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-
-  const mediaItems = userPosts.filter(p => p.mediaUrl || p.thumbnailUrl);
 
   return (
     <ScrollView
       style={[p.container, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: 90 + botPad }}
       showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={colors.primary}
-          colors={[colors.primary]}
-        />
-      }
     >
       <LinearGradient
         colors={["#1a0050", "#0d1424", colors.background]}
@@ -151,11 +114,9 @@ export default function ProfileScreen() {
       <View style={p.info}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Text style={[p.displayName, { color: colors.text }]}>{displayName}</Text>
-          {user?.isVerified && (
-            <View style={[p.verBadge, { backgroundColor: "rgba(120,87,255,0.25)" }]}>
-              <Feather name="check" size={11} color={colors.primary} />
-            </View>
-          )}
+          <View style={[p.verBadge, { backgroundColor: "rgba(120,87,255,0.25)" }]}>
+            <Feather name="check" size={11} color={colors.primary} />
+          </View>
         </View>
         <Text style={[p.username, { color: colors.mutedForeground }]}>@{username}</Text>
 
@@ -166,9 +127,9 @@ export default function ProfileScreen() {
         )}
 
         <View style={p.statsRow}>
-          <StatCard value={fmtNum(userPosts.length || user?.postsCount)} label="Posts" color={colors.cyan} />
-          <StatCard value={fmtNum(user?.followersCount)} label="Followers" color={colors.primary} />
-          <StatCard value={fmtNum(user?.followingCount)} label="Following" color={colors.rose} />
+          <StatCard value="42" label="Posts" color={colors.cyan} />
+          <StatCard value={user?.followersCount?.toString() ?? "1.2K"} label="Followers" color={colors.primary} />
+          <StatCard value={user?.followingCount?.toString() ?? "340"} label="Following" color={colors.rose} />
         </View>
 
         <View style={p.btnRow}>
@@ -218,24 +179,11 @@ export default function ProfileScreen() {
       </View>
 
       <View style={p.grid}>
-        {mediaItems.length > 0 ? (
-          mediaItems.map((post, i) => (
-            <Pressable key={post.id} style={{ width: IMG, height: IMG, margin: 1 }}>
-              <Image
-                source={{ uri: post.mediaUrl ?? post.thumbnailUrl ?? "" }}
-                style={{ width: IMG, height: IMG }}
-                contentFit="cover"
-              />
-            </Pressable>
-          ))
-        ) : (
-          <View style={{ width: "100%", alignItems: "center", paddingVertical: 40 }}>
-            <Feather name="image" size={40} color={colors.mutedForeground} />
-            <Text style={{ color: colors.mutedForeground, marginTop: 12 }}>
-              {pTab === "posts" ? "Postlar yo'q" : pTab === "reels" ? "Reellar yo'q" : "Teglar yo'q"}
-            </Text>
-          </View>
-        )}
+        {MEDIA.map((url, i) => (
+          <Pressable key={i} style={{ width: IMG, height: IMG, margin: 1 }}>
+            <Image source={{ uri: url }} style={{ width: IMG, height: IMG }} contentFit="cover" />
+          </Pressable>
+        ))}
       </View>
     </ScrollView>
   );

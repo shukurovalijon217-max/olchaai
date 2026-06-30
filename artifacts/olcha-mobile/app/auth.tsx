@@ -30,8 +30,7 @@ export default function AuthScreen() {
   const { login, register } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
-  const [identifier, setIdentifier] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -43,18 +42,14 @@ export default function AuthScreen() {
 
   const submit = async () => {
     setError("");
-    if (!identifier.trim() || !password.trim()) { setError("Barcha maydonlarni to'ldiring"); return; }
+    if (!username.trim() || !password.trim()) { setError("Barcha maydonlarni to'ldiring"); return; }
     if (mode === "register" && !displayName.trim()) { setError("Ism kiritilishi shart"); return; }
-    if (mode === "register" && !email.trim()) { setError("Email kiritilishi shart"); return; }
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      if (mode === "login") {
-        await login(identifier.trim(), password);
-      } else {
-        await register(identifier.trim(), displayName.trim(), email.trim(), password);
-      }
-      router.replace("/(tabs)/feed");
+      if (mode === "login") await login(username.trim(), password);
+      else await register(username.trim(), displayName.trim(), password);
+      router.replace("/" as never);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Xatolik yuz berdi");
     } finally {
@@ -128,12 +123,12 @@ export default function AuthScreen() {
               <View style={a.fields}>
                 {mode === "register" && (
                   <View style={a.field}>
-                    <Text style={[a.label, { color: colors.mutedForeground }]}>To'liq ism</Text>
+                    <Text style={[a.label, { color: colors.mutedForeground }]}>Ism</Text>
                     <View style={[a.input, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
                       <Feather name="user" size={15} color={colors.mutedForeground} />
                       <TextInput
                         style={[a.inputTxt, { color: colors.text }]}
-                        placeholder="Ismingiz"
+                        placeholder="To'liq ismingiz"
                         placeholderTextColor={colors.mutedForeground}
                         value={displayName} onChangeText={setDisplayName}
                         autoCapitalize="words"
@@ -143,36 +138,18 @@ export default function AuthScreen() {
                 )}
 
                 <View style={a.field}>
-                  <Text style={[a.label, { color: colors.mutedForeground }]}>
-                    {mode === "login" ? "Username yoki Email" : "Username"}
-                  </Text>
+                  <Text style={[a.label, { color: colors.mutedForeground }]}>Username</Text>
                   <View style={[a.input, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
                     <Feather name="at-sign" size={15} color={colors.mutedForeground} />
                     <TextInput
                       style={[a.inputTxt, { color: colors.text }]}
-                      placeholder={mode === "login" ? "username yoki email" : "username"}
+                      placeholder="username"
                       placeholderTextColor={colors.mutedForeground}
-                      value={identifier} onChangeText={setIdentifier}
+                      value={username} onChangeText={setUsername}
                       autoCapitalize="none" autoCorrect={false}
                     />
                   </View>
                 </View>
-
-                {mode === "register" && (
-                  <View style={a.field}>
-                    <Text style={[a.label, { color: colors.mutedForeground }]}>Email</Text>
-                    <View style={[a.input, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
-                      <Feather name="mail" size={15} color={colors.mutedForeground} />
-                      <TextInput
-                        style={[a.inputTxt, { color: colors.text }]}
-                        placeholder="email@example.com"
-                        placeholderTextColor={colors.mutedForeground}
-                        value={email} onChangeText={setEmail}
-                        autoCapitalize="none" keyboardType="email-address" autoCorrect={false}
-                      />
-                    </View>
-                  </View>
-                )}
 
                 <View style={a.field}>
                   <Text style={[a.label, { color: colors.mutedForeground }]}>Parol</Text>

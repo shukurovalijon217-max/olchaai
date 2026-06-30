@@ -39,7 +39,7 @@ router.post("/auth/register", async (req, res) => {
     }).returning();
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;
-    res.status(201).json(safeUser);
+    res.status(201).json({ ...safeUser, token: String(user.id) });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Server xatosi" });
@@ -48,24 +48,30 @@ router.post("/auth/register", async (req, res) => {
 
 router.post("/auth/login", async (req, res) => {
   try {
-    const { email, password } = req.body as { email?: string; password?: string };
-    if (!email || !password) {
-      res.status(400).json({ error: "Email va parol kiritilishi shart" }); return;
+    const { email, username, password } = req.body as { email?: string; username?: string; password?: string };
+    const identifier = email || username;
+    if (!identifier || !password) {
+      res.status(400).json({ error: "Email/username va parol kiritilishi shart" }); return;
     }
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    const users = await db.select().from(usersTable).where(eq(usersTable.email, identifier));
+    let user = users[0];
     if (!user) {
-      res.status(401).json({ error: "Email yoki parol noto'g'ri" }); return;
+      const byUsername = await db.select().from(usersTable).where(eq(usersTable.username, identifier));
+      user = byUsername[0];
+    }
+    if (!user) {
+      res.status(401).json({ error: "Email/username yoki parol noto'g'ri" }); return;
     }
     if (!user.passwordHash) {
       res.status(401).json({ error: "Eski akkaunt — admin bilan bog'laning" }); return;
     }
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
-      res.status(401).json({ error: "Email yoki parol noto'g'ri" }); return;
+      res.status(401).json({ error: "Email/username yoki parol noto'g'ri" }); return;
     }
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;
-    res.json(safeUser);
+    res.json({ ...safeUser, token: String(user.id) });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Server xatosi" });

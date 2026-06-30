@@ -2,8 +2,9 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -15,90 +16,98 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PostCard, type Post } from "@/components/PostCard";
 import { StoryRow } from "@/components/StoryRow";
+import { SkeletonCard } from "@/components/SkeletonCard";
 import { useColors } from "@/hooks/useColors";
-
-const POSTS: Post[] = [
-  {
-    id: 1, authorId: 1, authorName: "Aziz Karimov", authorUsername: "azizk",
-    isVerified: true,
-    content: "OlCha'ning AI-powered feed algoritmi boshqa platformalarnikidan butunlay farqli. Har bir foydalanuvchi uchun real-time personalization! 🚀",
-    mediaType: "photo",
-    mediaUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900",
-    likesCount: 4200, commentsCount: 312, viewsCount: 89000,
-    createdAt: new Date(Date.now()-3600000).toISOString(), isLiked: false,
-  },
-  {
-    id: 2, authorId: 2, authorName: "Malika Yusupova", authorUsername: "malika_y",
-    isVerified: true,
-    content: "Samarqandning Registon maydoni quyosh botayotganda dunyadagi eng go'zal manzaralardan biri. Bu erda bo'lish har safar yangiday his tug'diradi ✨",
-    mediaType: "photo",
-    mediaUrl: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=900",
-    likesCount: 15800, commentsCount: 847, viewsCount: 234000,
-    createdAt: new Date(Date.now()-7200000).toISOString(), isLiked: true,
-  },
-  {
-    id: 3, authorId: 3, authorName: "Timur Rashidov", authorUsername: "timur_dev",
-    content: "Ijtimoiy tarmoqlar kelajagi — AI va shaxsiylashtirishda. OlCha aynan shu yo'lda. Boshqalar hali tushunmayapti, biz esa allaqachon qurmoqdamiz.",
-    mediaType: "text",
-    likesCount: 2340, commentsCount: 189,
-    createdAt: new Date(Date.now()-14400000).toISOString(), isLiked: false,
-  },
-  {
-    id: 4, authorId: 4, authorName: "Nilufar Hassan", authorUsername: "nilufar.h",
-    isVerified: true,
-    content: "Tong sahari kod yozish — qahva va ilhom bilan 🌅 OlCha mobile interfeysi shunchalar yoqimli ki, ishlamay bo'lmayapti!",
-    mediaType: "photo",
-    mediaUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=900",
-    likesCount: 8700, commentsCount: 423, viewsCount: 67000,
-    createdAt: new Date(Date.now()-86400000).toISOString(), isLiked: false,
-  },
-  {
-    id: 5, authorId: 5, authorName: "Bobur Tashkentov", authorUsername: "bobur_t",
-    content: "O'zbekiston texnologiya sektori 2024-yilda 340% o'sdi. Biz global darajada raqobatlasha olamiz. OlCha — buning isboti!",
-    mediaType: "text",
-    likesCount: 6500, commentsCount: 291,
-    createdAt: new Date(Date.now()-172800000).toISOString(), isLiked: false,
-  },
-  {
-    id: 6, authorId: 6, authorName: "Dilorom Art", authorUsername: "dilo_art",
-    isVerified: false,
-    content: "An'anaviy o'zbek naqshlari va zamonaviy dizayn uyg'unlashganda — sof sehrdir 🎨 Mening yangi kolleksiyamdan bir parcha.",
-    mediaType: "photo",
-    mediaUrl: "https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=900",
-    likesCount: 12400, commentsCount: 678, viewsCount: 198000,
-    createdAt: new Date(Date.now()-259200000).toISOString(), isLiked: false,
-  },
-];
+import { apiFetch } from "@/utils/api";
 
 type FeedTab = "for-you" | "following";
+
+interface ApiPost {
+  id: number;
+  authorId: number;
+  content: string;
+  mediaType?: string;
+  mediaUrl?: string;
+  likesCount?: number;
+  commentsCount?: number;
+  viewsCount?: number;
+  createdAt: string;
+  isLiked?: boolean;
+  author?: {
+    id: number;
+    username: string;
+    displayName: string;
+    avatarUrl?: string;
+    isVerified?: boolean;
+  };
+}
+
+function mapPost(p: ApiPost): Post {
+  return {
+    id: p.id,
+    authorId: p.authorId,
+    authorName: p.author?.displayName ?? "OlCha User",
+    authorUsername: p.author?.username ?? "user",
+    authorAvatar: p.author?.avatarUrl ?? undefined,
+    isVerified: p.author?.isVerified ?? false,
+    content: p.content,
+    mediaType: (p.mediaType as Post["mediaType"]) ?? "text",
+    mediaUrl: p.mediaUrl ?? undefined,
+    likesCount: p.likesCount ?? 0,
+    commentsCount: p.commentsCount ?? 0,
+    viewsCount: p.viewsCount ?? undefined,
+    createdAt: p.createdAt,
+    isLiked: p.isLiked ?? false,
+  };
+}
 
 export default function FeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [tab, setTab] = useState<FeedTab>("for-you");
-  const [posts, setPosts] = useState<Post[]>(POSTS);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : 0;
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise(r => setTimeout(r, 1400));
-    setRefreshing(false);
+  const fetchPosts = useCallback(async () => {
+    try {
+      const res = await apiFetch("/api/posts?limit=30");
+      if (res.ok) {
+        const data = await res.json() as ApiPost[];
+        setPosts((data ?? []).map(mapPost));
+      }
+    } catch {}
   }, []);
 
-  const handleLike = useCallback((id: number) => {
+  useEffect(() => {
+    setLoading(true);
+    fetchPosts().finally(() => setLoading(false));
+  }, [fetchPosts]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchPosts();
+    setRefreshing(false);
+  }, [fetchPosts]);
+
+  const handleLike = useCallback(async (id: number) => {
     setPosts(prev =>
       prev.map(p =>
-        p.id === id ? { ...p, isLiked: !p.isLiked, likesCount: p.isLiked ? p.likesCount-1 : p.likesCount+1 } : p
+        p.id === id
+          ? { ...p, isLiked: !p.isLiked, likesCount: p.isLiked ? p.likesCount - 1 : p.likesCount + 1 }
+          : p
       )
     );
+    try {
+      await apiFetch(`/api/posts/${id}/like`, { method: "POST" });
+    } catch {}
   }, []);
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
-      {/* Glass header */}
       <View style={[s.header, { paddingTop: topPad }]}>
         {Platform.OS === "ios" ? (
           <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
@@ -107,7 +116,6 @@ export default function FeedScreen() {
         )}
         <View style={s.headerContent}>
           <View style={s.logoRow}>
-            {/* Aurora logo text */}
             <LinearGradient
               colors={["#7857ff", "#22d3ee", "#ec4899"]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
@@ -129,7 +137,6 @@ export default function FeedScreen() {
             </Pressable>
           </View>
         </View>
-        {/* Feed tabs */}
         <View style={[s.tabs, { borderBottomColor: colors.borderSubtle ?? colors.border }]}>
           {(["for-you", "following"] as FeedTab[]).map(t => (
             <Pressable key={t} onPress={() => setTab(t)} style={s.tabBtn}>
@@ -148,35 +155,47 @@ export default function FeedScreen() {
         </View>
       </View>
 
-      <FlatList
-        data={posts}
-        keyExtractor={p => p.id.toString()}
-        renderItem={({ item }) => <PostCard post={item} onLike={handleLike} />}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-        ListHeaderComponent={
-          <>
-            <View style={[s.storiesBorder, { borderBottomColor: colors.borderSubtle ?? colors.border }]}>
-              <StoryRow />
+      {loading ? (
+        <View style={[s.loadingList, { marginTop: topPad + 80 }]}>
+          {[1,2,3].map(i => <SkeletonCard key={i} />)}
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={p => p.id.toString()}
+          renderItem={({ item }) => <PostCard post={item} onLike={handleLike} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+          ListHeaderComponent={
+            <>
+              <View style={[s.storiesBorder, { borderBottomColor: colors.borderSubtle ?? colors.border }]}>
+                <StoryRow />
+              </View>
+              <View style={[s.divider, { backgroundColor: "rgba(255,255,255,0.03)" }]}>
+                <Feather name="zap" size={12} color={colors.amber} />
+                <Text style={[s.dividerTxt, { color: colors.mutedForeground }]}>
+                  AI-curated for you
+                </Text>
+              </View>
+            </>
+          }
+          ListEmptyComponent={
+            <View style={s.empty}>
+              <Feather name="inbox" size={48} color={colors.mutedForeground} />
+              <Text style={[s.emptyTxt, { color: colors.mutedForeground }]}>Postlar topilmadi</Text>
             </View>
-            <View style={[s.divider, { backgroundColor: "rgba(255,255,255,0.03)" }]}>
-              <Feather name="zap" size={12} color={colors.amber} />
-              <Text style={[s.dividerTxt, { color: colors.mutedForeground }]}>
-                AI-curated for you
-              </Text>
-            </View>
-          </>
-        }
-        contentContainerStyle={{ paddingBottom: 90 + botPad, paddingTop: 8 }}
-        showsVerticalScrollIndicator={false}
-        style={{ marginTop: topPad + 80 }}
-      />
+          }
+          contentContainerStyle={{ paddingBottom: 90 + botPad, paddingTop: 8 }}
+          showsVerticalScrollIndicator={false}
+          style={{ marginTop: topPad + 80 }}
+        />
+      )}
     </View>
   );
 }
@@ -203,7 +222,6 @@ const s = StyleSheet.create({
     fontSize: 26, fontWeight: "800", letterSpacing: -0.5,
     color: "transparent",
     paddingHorizontal: 2,
-    // Gradient text via -webkit-text-fill-color on web; on native just shows gradient bg
   },
   aiBadge: {
     borderRadius: 5, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2,
@@ -230,4 +248,7 @@ const s = StyleSheet.create({
     marginBottom: 4,
   },
   dividerTxt: { fontSize: 12 },
+  loadingList: { paddingHorizontal: 12, paddingTop: 8 },
+  empty: { alignItems: "center", paddingTop: 60, gap: 12 },
+  emptyTxt: { fontSize: 15 },
 });

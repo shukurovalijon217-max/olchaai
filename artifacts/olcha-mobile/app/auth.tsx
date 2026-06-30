@@ -30,7 +30,8 @@ export default function AuthScreen() {
   const { login, register } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -42,14 +43,18 @@ export default function AuthScreen() {
 
   const submit = async () => {
     setError("");
-    if (!username.trim() || !password.trim()) { setError("Barcha maydonlarni to'ldiring"); return; }
+    if (!identifier.trim() || !password.trim()) { setError("Barcha maydonlarni to'ldiring"); return; }
     if (mode === "register" && !displayName.trim()) { setError("Ism kiritilishi shart"); return; }
+    if (mode === "register" && !email.trim()) { setError("Email kiritilishi shart"); return; }
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      if (mode === "login") await login(username.trim(), password);
-      else await register(username.trim(), displayName.trim(), password);
-      router.replace("/" as never);
+      if (mode === "login") {
+        await login(identifier.trim(), password);
+      } else {
+        await register(identifier.trim(), displayName.trim(), email.trim(), password);
+      }
+      router.replace("/(tabs)/feed");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Xatolik yuz berdi");
     } finally {
@@ -59,7 +64,6 @@ export default function AuthScreen() {
 
   return (
     <View style={[a.container, { backgroundColor: colors.background }]}>
-      {/* Aurora background */}
       <LinearGradient
         colors={["#1a0050", "#0d0030", "transparent"]}
         style={[StyleSheet.absoluteFill, { height: "55%" }]}
@@ -74,7 +78,6 @@ export default function AuthScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo */}
           <View style={a.logoWrap}>
             <LinearGradient
               colors={["#7857ff", "#22d3ee", "#ec4899"]}
@@ -91,7 +94,6 @@ export default function AuthScreen() {
             </Text>
           </View>
 
-          {/* Card */}
           <AuroraBorder
             colors={["#7857ff", "#9d19ff", "#22d3ee"]}
             radius={20}
@@ -99,7 +101,6 @@ export default function AuthScreen() {
             style={{ marginTop: 28 }}
           >
             <View style={a.cardInner}>
-              {/* Mode toggle */}
               <View style={[a.modeTabs, { backgroundColor: "rgba(255,255,255,0.05)" }]}>
                 {(["login", "register"] as Mode[]).map(m => (
                   <Pressable
@@ -124,16 +125,15 @@ export default function AuthScreen() {
                 ))}
               </View>
 
-              {/* Fields */}
               <View style={a.fields}>
                 {mode === "register" && (
                   <View style={a.field}>
-                    <Text style={[a.label, { color: colors.mutedForeground }]}>Ism</Text>
+                    <Text style={[a.label, { color: colors.mutedForeground }]}>To'liq ism</Text>
                     <View style={[a.input, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
                       <Feather name="user" size={15} color={colors.mutedForeground} />
                       <TextInput
                         style={[a.inputTxt, { color: colors.text }]}
-                        placeholder="To'liq ismingiz"
+                        placeholder="Ismingiz"
                         placeholderTextColor={colors.mutedForeground}
                         value={displayName} onChangeText={setDisplayName}
                         autoCapitalize="words"
@@ -143,18 +143,36 @@ export default function AuthScreen() {
                 )}
 
                 <View style={a.field}>
-                  <Text style={[a.label, { color: colors.mutedForeground }]}>Username</Text>
+                  <Text style={[a.label, { color: colors.mutedForeground }]}>
+                    {mode === "login" ? "Username yoki Email" : "Username"}
+                  </Text>
                   <View style={[a.input, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
                     <Feather name="at-sign" size={15} color={colors.mutedForeground} />
                     <TextInput
                       style={[a.inputTxt, { color: colors.text }]}
-                      placeholder="username"
+                      placeholder={mode === "login" ? "username yoki email" : "username"}
                       placeholderTextColor={colors.mutedForeground}
-                      value={username} onChangeText={setUsername}
+                      value={identifier} onChangeText={setIdentifier}
                       autoCapitalize="none" autoCorrect={false}
                     />
                   </View>
                 </View>
+
+                {mode === "register" && (
+                  <View style={a.field}>
+                    <Text style={[a.label, { color: colors.mutedForeground }]}>Email</Text>
+                    <View style={[a.input, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
+                      <Feather name="mail" size={15} color={colors.mutedForeground} />
+                      <TextInput
+                        style={[a.inputTxt, { color: colors.text }]}
+                        placeholder="email@example.com"
+                        placeholderTextColor={colors.mutedForeground}
+                        value={email} onChangeText={setEmail}
+                        autoCapitalize="none" keyboardType="email-address" autoCorrect={false}
+                      />
+                    </View>
+                  </View>
+                )}
 
                 <View style={a.field}>
                   <Text style={[a.label, { color: colors.mutedForeground }]}>Parol</Text>
@@ -174,7 +192,6 @@ export default function AuthScreen() {
                 </View>
               </View>
 
-              {/* Error */}
               {error ? (
                 <View style={[a.errorBox, { backgroundColor: "rgba(239,68,68,0.12)", borderColor: "rgba(239,68,68,0.3)" }]}>
                   <Feather name="alert-circle" size={14} color={colors.red ?? "#ef4444"} />
@@ -182,11 +199,7 @@ export default function AuthScreen() {
                 </View>
               ) : null}
 
-              {/* Submit */}
-              <LinearGradient
-                colors={["#7857ff", "#9d19ff"]}
-                style={a.submitGrad}
-              >
+              <LinearGradient colors={["#7857ff", "#9d19ff"]} style={a.submitGrad}>
                 <Pressable style={a.submitBtn} onPress={submit} disabled={loading}>
                   {loading ? (
                     <ActivityIndicator color="#fff" size="small" />

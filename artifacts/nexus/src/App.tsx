@@ -40,6 +40,7 @@ import FactCheckPage from "@/pages/FactCheckPage";
 import CoSpacesPage from "@/pages/CoSpacesPage";
 import MuniAIPage from "@/pages/MuniAIPage";
 import VoiceTranslatorPage from "@/pages/VoiceTranslatorPage";
+import FeatureHubPage from "@/pages/FeatureHubPage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -225,6 +226,9 @@ function Router() {
       )} />
       <Route path="/voice-translate" component={() => (
         <ProtectedRoute><Layout><VoiceTranslatorPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/features" component={() => (
+        <ProtectedRoute><Layout><FeatureHubPage /></Layout></ProtectedRoute>
       )} />
       <Route path="/" component={() => (
         <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

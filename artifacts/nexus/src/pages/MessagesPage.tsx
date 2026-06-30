@@ -1,6 +1,7 @@
 import {
   useState, useRef, useEffect, useCallback, ElementType,
 } from "react";
+import { playMessageSound, playCallRingtone, getFeaturePref } from "@/lib/sounds";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
@@ -1354,6 +1355,30 @@ export default function MessagesPage() {
     const interval = setInterval(cycle, 20000);
     return ()=>{clearTimeout(t1);clearTimeout(t2);clearInterval(interval);};
   },[activeId]);
+
+  // 🔔 Sound: play ringtone when a call starts, stop when call ends
+  const stopRingtoneRef = useRef<(()=>void)|null>(null);
+  useEffect(()=>{
+    if(callState) {
+      if(getFeaturePref("sound_notif",true)) {
+        stopRingtoneRef.current = playCallRingtone();
+      }
+    } else {
+      stopRingtoneRef.current?.();
+      stopRingtoneRef.current = null;
+    }
+    return ()=>{ stopRingtoneRef.current?.(); stopRingtoneRef.current=null; };
+  },[!!callState]);
+
+  // 🔔 Sound: play message ping when new messages from others arrive
+  const lastMsgCountRef = useRef(0);
+  useEffect(()=>{
+    const incoming = allMsgs.filter(m=>m.senderId!==ME_ID);
+    if(incoming.length > lastMsgCountRef.current && lastMsgCountRef.current > 0) {
+      if(getFeaturePref("sound_notif",true)) playMessageSound();
+    }
+    lastMsgCountRef.current = incoming.length;
+  },[allMsgs.length]);
 
   const addMsg = (patch:Partial<LocalMsg>) => {
     const msg:LocalMsg = {

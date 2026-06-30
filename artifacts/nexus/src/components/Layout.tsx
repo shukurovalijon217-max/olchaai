@@ -300,6 +300,7 @@ const navItems = [
   { href: "/spaces", icon: Sparkles, key: "nav.spaces" },
   { href: "/muni", icon: Star, key: "nav.muni" },
   { href: "/voice-translate", icon: Languages, key: "nav.voice_translate" },
+  { href: "/features", icon: Zap, key: "nav.features" },
 ];
 
 const bottomNavItems = [

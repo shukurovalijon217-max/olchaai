@@ -5157,6 +5157,243 @@ function ShortsCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
 }
 
 /* ─────────────────────────────────────────────────────── */
+/* COVERFLOW CAROUSEL — 3D card stack, center protrudes    */
+/* ─────────────────────────────────────────────────────── */
+function CoverflowRow({ videos, onPlay }: { videos: Reel[]; onPlay:(v:Reel)=>void }) {
+  const [active, setActive] = useState(Math.min(2, Math.floor(videos.length / 2)));
+  const dragStartX = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  if (!videos.length) return null;
+
+  const prev = () => setActive(a => Math.max(0, a - 1));
+  const next = () => setActive(a => Math.min(videos.length - 1, a + 1));
+
+  /* distance-based 3D values */
+  const cardStyle = (idx: number) => {
+    const dist = idx - active;
+    const abs  = Math.abs(dist);
+    if (abs > 2) return null;
+    const rotateY   = dist * -30;
+    const tX        = dist * 115;
+    const tZ        = abs === 0 ? 52 : abs === 1 ? -14 : -44;
+    const scale     = abs === 0 ? 1.0 : abs === 1 ? 0.84 : 0.68;
+    const opacity   = abs === 0 ? 1   : abs === 1 ? 0.82 : 0.52;
+    const zIndex    = 20 - abs;
+    const brightness= abs === 0 ? 1   : abs === 1 ? 0.80 : 0.55;
+    return { rotateY, tX, tZ, scale, opacity, zIndex, brightness };
+  };
+
+  const ACCENT = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55", T.gold];
+
+  return (
+    <section className="mb-8">
+      {/* Section header */}
+      <div className="flex items-center gap-3 mb-4 -mx-3 px-3">
+        <motion.div
+          animate={{opacity:[1,0.4,1],scale:[1,1.15,1]}}
+          transition={{duration:1.6,repeat:Infinity}}
+          style={{width:8,height:8,borderRadius:2,flexShrink:0,
+            background:T.aurora,boxShadow:`0 0 10px ${T.aurora}`}}/>
+        <span style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.7)",
+          letterSpacing:"0.22em",fontFamily:"monospace"}}>COVERFLOW · 3D</span>
+        <div style={{flex:1,height:1,
+          background:`linear-gradient(90deg,${T.aurora}55,transparent)`}}/>
+        <span style={{fontSize:8,color:"rgba(255,255,255,0.22)",fontFamily:"monospace"}}>
+          {active + 1}/{videos.length}
+        </span>
+      </div>
+
+      {/* 3D stage */}
+      <div className="relative" style={{height:220,perspective:1100,perspectiveOrigin:"50% 50%"}}>
+        <div
+          ref={containerRef}
+          className="absolute inset-0"
+          style={{transformStyle:"preserve-3d"}}
+          onPointerDown={e=>{dragStartX.current=e.clientX;}}
+          onPointerUp={e=>{
+            const dx=dragStartX.current-e.clientX;
+            if(Math.abs(dx)>38){dx>0?next():prev();}
+          }}
+        >
+          {videos.map((v,idx)=>{
+            const s=cardStyle(idx);
+            if(!s) return null;
+            const {rotateY,tX,tZ,scale,opacity,zIndex,brightness}=s;
+            const isCenter=idx===active;
+            const accent=ACCENT[idx%ACCENT.length];
+            return (
+              <motion.div
+                key={v.id}
+                animate={{
+                  rotateY,
+                  x:tX,
+                  z:tZ,
+                  scale,
+                  opacity,
+                  filter:`brightness(${brightness})`,
+                }}
+                transition={{type:"spring",damping:28,stiffness:280,mass:0.9}}
+                style={{
+                  position:"absolute",
+                  left:"50%",top:0,
+                  marginLeft:-88,
+                  width:176,
+                  height:210,
+                  zIndex,
+                  transformStyle:"preserve-3d",
+                  borderRadius:18,
+                  overflow:"hidden",
+                  cursor:isCenter?"pointer":"pointer",
+                  boxShadow: isCenter
+                    ? `0 12px 48px rgba(0,0,0,0.85), 0 0 0 1px ${accent}44, 0 0 40px ${accent}28`
+                    : `0 6px 24px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06)`,
+                }}
+                onClick={()=>isCenter?onPlay(v):setActive(idx)}
+                whileTap={isCenter?{scale:scale*0.96}:undefined}
+              >
+                {/* Thumbnail / video */}
+                {v.thumbnailUrl
+                  ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                  : v.videoUrl
+                  ? <video src={v.videoUrl} autoPlay muted playsInline loop
+                      className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+                  : <div className="w-full h-full"
+                      style={{background:`linear-gradient(135deg,${accent}28,#050010)`}}/>}
+
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{background:"linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.18) 55%,transparent 100%)"}}/>
+
+                {/* Center card: play ring glow */}
+                {isCenter && (
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none"
+                    animate={{opacity:[0.4,0.7,0.4]}}
+                    transition={{duration:2.2,repeat:Infinity}}
+                    style={{borderRadius:18,
+                      boxShadow:`inset 0 0 0 1.5px ${accent}`,
+                      background:"transparent"}}/>
+                )}
+
+                {/* Center card: play button */}
+                {isCenter && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <motion.div
+                      animate={{scale:[1,1.08,1],opacity:[0.85,1,0.85]}}
+                      transition={{duration:1.8,repeat:Infinity}}
+                      style={{
+                        width:46,height:46,borderRadius:"50%",
+                        background:`radial-gradient(circle,${accent}44 0%,rgba(0,0,0,0.55) 100%)`,
+                        backdropFilter:"blur(12px)",
+                        border:`1.5px solid ${accent}88`,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        boxShadow:`0 0 24px ${accent}44`,
+                      }}>
+                      <Play style={{width:18,height:18,color:"white",fill:"white",marginLeft:2}}/>
+                    </motion.div>
+                  </div>
+                )}
+
+                {/* Card index badge */}
+                <div className="absolute top-2.5 left-2.5">
+                  <div style={{
+                    padding:"2px 7px",borderRadius:99,
+                    background:"rgba(0,0,0,0.68)",
+                    backdropFilter:"blur(8px)",
+                    border:`1px solid ${isCenter?accent+"55":"rgba(255,255,255,0.1)"}`,
+                    fontSize:8,fontWeight:800,color:isCenter?accent:"rgba(255,255,255,0.4)",
+                    fontFamily:"monospace",letterSpacing:"0.06em",
+                  }}>
+                    {String(idx+1).padStart(2,"0")}
+                  </div>
+                </div>
+
+                {/* Bottom info */}
+                <div className="absolute bottom-0 inset-x-0 p-3">
+                  <p style={{fontSize:isCenter?11:9,fontWeight:700,color:"white",
+                    lineHeight:1.3,letterSpacing:"0.01em"}}
+                    className="line-clamp-2">{v.caption||"Video"}</p>
+                  {isCenter && (
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex items-center gap-1">
+                        <Eye style={{width:9,height:9,color:T.txtSub}}/>
+                        <span style={{fontSize:8,color:T.txtSub,fontFamily:"monospace"}}>
+                          {v.viewsCount??0}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Heart style={{width:9,height:9,color:"#ff4d6d"}}/>
+                        <span style={{fontSize:8,color:T.txtSub,fontFamily:"monospace"}}>
+                          {v.likesCount??0}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom accent line */}
+                <div className="absolute bottom-0 inset-x-0 h-[2px] pointer-events-none"
+                  style={{background:isCenter?accent:"transparent",opacity:0.7}}/>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* ← Prev arrow */}
+        <motion.button
+          whileTap={{scale:0.82}}
+          onClick={prev}
+          disabled={active===0}
+          className="absolute left-1 top-1/2 -translate-y-1/2 disabled:opacity-20"
+          style={{
+            zIndex:40,width:32,height:32,borderRadius:"50%",
+            background:"rgba(0,0,8,0.75)",backdropFilter:"blur(16px)",
+            border:"1px solid rgba(255,255,255,0.12)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            boxShadow:"0 2px 12px rgba(0,0,0,0.6)",
+          }}>
+          <ChevronLeft style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>
+        </motion.button>
+
+        {/* → Next arrow */}
+        <motion.button
+          whileTap={{scale:0.82}}
+          onClick={next}
+          disabled={active===videos.length-1}
+          className="absolute right-1 top-1/2 -translate-y-1/2 disabled:opacity-20"
+          style={{
+            zIndex:40,width:32,height:32,borderRadius:"50%",
+            background:"rgba(0,0,8,0.75)",backdropFilter:"blur(16px)",
+            border:"1px solid rgba(255,255,255,0.12)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            boxShadow:"0 2px 12px rgba(0,0,0,0.6)",
+          }}>
+          <ChevronRight style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>
+        </motion.button>
+      </div>
+
+      {/* Dot indicators */}
+      <div className="flex justify-center gap-1.5 mt-3">
+        {videos.slice(0,Math.min(videos.length,10)).map((_,i)=>(
+          <motion.button
+            key={i}
+            onClick={()=>setActive(i)}
+            animate={{
+              width: i===active ? 18 : 6,
+              opacity: i===active ? 1 : 0.28,
+              background: i===active ? T.aurora : "rgba(255,255,255,0.4)",
+            }}
+            transition={{type:"spring",damping:22,stiffness:400}}
+            style={{height:4,borderRadius:99,flexShrink:0}}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
 /* BROADCAST MATRIX — asymmetric organic grid               */
 /* Pattern: [full] → [pair] → [trio] → [full] → repeat    */
 /* ─────────────────────────────────────────────────────── */
@@ -5478,6 +5715,11 @@ export default function OTubePage() {
                 <div className="-mx-3 mb-0">
                   <HeroCard video={featured} onPlay={()=>setSelected(featured)}/>
                 </div>
+              )}
+
+              {/* ── COVERFLOW 3D — center card protrudes forward ── */}
+              {!query && reels.length > 2 && (
+                <CoverflowRow videos={reels.slice(0, 10)} onPlay={v=>setSelected(v)}/>
               )}
 
               {/* Search results */}

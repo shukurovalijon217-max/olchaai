@@ -682,24 +682,17 @@ function NexusPlayer({ video, onClose, settings, onPip }:
     navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
   },[playing]);
 
-  /* Icon button helper — round */
-  const IBtn = ({ onClick, active=false, activeColor=T.cyan, children, label }:
-    { onClick:()=>void; active?:boolean; activeColor?:string; children:React.ReactNode; label:string }) => (
-    <motion.button whileTap={{scale:0.72}}
+  /* ── Action pill button ── */
+  const ABtn = ({ onClick, active=false, col=T.cyan, children, label, flex=1 }:
+    { onClick:()=>void; active?:boolean; col?:string; children:React.ReactNode; label:string; flex?:number }) => (
+    <motion.button whileTap={{scale:0.82}}
       onClick={e=>{e.stopPropagation();onClick();}}
-      className="flex flex-col items-center gap-[3px]"
-      style={{flexShrink:0}}>
-      <div style={{
-        width:38,height:38,flexShrink:0,borderRadius:"50%",
-        background: active?`${activeColor}28`:"rgba(0,0,0,0.45)",
-        backdropFilter:"blur(12px)",
-        boxShadow: active?`0 0 0 1.5px ${activeColor}66, 0 0 14px ${activeColor}33`
-                        :"0 0 0 1px rgba(255,255,255,0.1)",
-        display:"flex",alignItems:"center",justifyContent:"center",
-      }}>
-        {children}
-      </div>
-      <span style={{fontSize:7.5,color:"rgba(255,255,255,0.28)",fontWeight:600,lineHeight:1}}>
+      style={{flex,display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+        padding:"8px 4px",borderRadius:14,
+        background:active?`${col}18`:"rgba(255,255,255,0.04)",
+        border:`1px solid ${active?`${col}44`:"rgba(255,255,255,0.06)"}`}}>
+      {children}
+      <span style={{fontSize:9,fontWeight:700,color:active?col:"rgba(255,255,255,0.38)",lineHeight:1}}>
         {label}
       </span>
     </motion.button>
@@ -709,12 +702,44 @@ function NexusPlayer({ video, onClose, settings, onPip }:
     <motion.div ref={contRef}
       initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
       transition={{duration:0.18}}
-      className="fixed inset-0 z-[9999] flex flex-col"
-      style={{ background: settings.cinemaMode?"#000":"#03000a" }}
+      style={{
+        position:"fixed",inset:0,zIndex:9999,
+        display:"flex",flexDirection:isLandscape?"row":"column",
+        background:"#020008",
+        fontFamily:"'Inter','SF Pro Display',system-ui,sans-serif",
+      }}
       onMouseMove={resetCtrl} onTouchMove={resetCtrl}
     >
-      {/* Video */}
-      <div className="relative flex-1 flex items-center justify-center select-none"
+      {/* ══ TOP BAR — portrait only ══ */}
+      {!isLandscape && (
+        <div style={{
+          flexShrink:0,display:"flex",alignItems:"center",gap:10,
+          paddingTop:"calc(env(safe-area-inset-top,0px) + 8px)",
+          paddingBottom:8,paddingLeft:12,paddingRight:12,
+          background:"rgba(2,0,8,0.94)",backdropFilter:"blur(20px)",
+          borderBottom:"1px solid rgba(255,255,255,0.05)",
+        }}>
+          <motion.button whileTap={{scale:0.82}} onClick={onClose}
+            style={{width:38,height:38,flexShrink:0,borderRadius:"50%",
+              background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.08)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <ArrowLeft style={{width:18,height:18,color:"rgba(255,255,255,0.82)"}}/>
+          </motion.button>
+          <div style={{flex:1,minWidth:0}}>
+            <p style={{margin:0,fontSize:13,fontWeight:700,color:"white",
+              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {video.caption||"OTube Video"}
+            </p>
+            <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.35)"}}>
+              {fmt(video.viewsCount)} ko'rish
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ══ VIDEO AREA ══ */}
+      <div
+        style={{flex:1,position:"relative",overflow:"hidden",background:"#000",cursor:"pointer"}}
         onClick={handleTap}
         onTouchStart={startHold} onTouchEnd={endHold}
         onMouseDown={startHold} onMouseUp={endHold}>
@@ -723,7 +748,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
           src={video.videoUrl??undefined}
           poster={video.thumbnailUrl??undefined}
           muted={muted} playsInline loop={settings.loop}
-          style={{objectFit: isLandscape ? "cover" : "contain", width:"100%",height:"100%"}}
+          style={{width:"100%",height:"100%",objectFit:"contain",display:"block"}}
           onTimeUpdate={()=>{
             const v=videoRef.current;
             if(v&&isFinite(v.duration)&&v.duration>0){setCurTime(v.currentTime);setProgress(v.currentTime/v.duration);}
@@ -735,458 +760,357 @@ function NexusPlayer({ video, onClose, settings, onPip }:
         <SeekFlash side="right" visible={seekRight}/>
         <DanmakuOverlay active={danmaku}/>
 
-        {/* 2× badge */}
+        {/* Landscape: back button */}
+        {isLandscape && (
+          <motion.button whileTap={{scale:0.82}} onClick={onClose}
+            style={{position:"absolute",top:12,left:12,width:38,height:38,
+              borderRadius:"50%",background:"rgba(0,0,0,0.55)",backdropFilter:"blur(12px)",
+              border:"1px solid rgba(255,255,255,0.1)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <ArrowLeft style={{width:17,height:17,color:"rgba(255,255,255,0.85)"}}/>
+          </motion.button>
+        )}
+
+        {/* Fast forward badge */}
         <AnimatePresence>
           {fastFwd && (
-            <motion.div initial={{opacity:0,scale:0.7}} animate={{opacity:1,scale:1}} exit={{opacity:0}}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none px-5 py-2"
-              style={{ borderRadius:99,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(12px)",
-                boxShadow:`0 0 0 1px ${T.orange}44` }}>
-              <span style={{fontSize:18,fontWeight:900,color:T.orange,letterSpacing:"0.12em"}}>2× TEZLIK</span>
+            <motion.div initial={{opacity:0,scale:0.75}} animate={{opacity:1,scale:1}} exit={{opacity:0}}
+              style={{position:"absolute",top:"50%",left:"50%",
+                transform:"translate(-50%,-50%)",pointerEvents:"none",
+                borderRadius:99,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(10px)",
+                padding:"8px 22px",border:`1px solid ${T.orange}55`}}>
+              <span style={{fontSize:17,fontWeight:900,color:T.orange,letterSpacing:"0.1em"}}>2× TEZLIK</span>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Center play/pause */}
+        <AnimatePresence>
+          {!playing && (
+            <motion.div key="pause-icon"
+              initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}}
+              exit={{opacity:0,scale:1.4}} transition={{duration:0.14}}
+              style={{position:"absolute",top:"50%",left:"50%",
+                transform:"translate(-50%,-50%)",pointerEvents:"none",
+                width:72,height:72,borderRadius:"50%",
+                background:"rgba(0,0,0,0.52)",backdropFilter:"blur(14px)",
+                border:"1.5px solid rgba(255,255,255,0.18)",
+                display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Play style={{width:28,height:28,fill:"white",color:"white",marginLeft:4}}/>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Speed picker */}
         <AnimatePresence>
           {showSpeed && <SpeedPicker speed={speed} onSpeed={applySpeed} onClose={()=>setShowSpeed(false)}/>}
         </AnimatePresence>
+        {/* Comments panel */}
         <AnimatePresence>
           {showCom && <CommentsPanel reelId={video.id} onClose={()=>setShowCom(false)}/>}
         </AnimatePresence>
 
-        {/* Controls */}
+        {/* ══ MORE OPTIONS SHEET ══ */}
         <AnimatePresence>
-          {showCtrl && (
-            <motion.div key="ctrls"
-              initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-              transition={{duration:0.18}}
-              className="absolute inset-0 pointer-events-none">
-
-              {/* TOP bar */}
-              <div className="absolute top-0 inset-x-0 pointer-events-auto"
-                style={{ background:"linear-gradient(to bottom,rgba(0,0,0,0.85),transparent)",
-                  paddingTop:"calc(env(safe-area-inset-top, 0px) + 14px)",
-                  paddingLeft:"12px", paddingRight:"12px", paddingBottom:"40px" }}>
-                <div className="flex items-center gap-2">
-                  <motion.button whileTap={{scale:0.85}} onClick={onClose}
-                    style={{ width:40,height:40,flexShrink:0,borderRadius:"50%",
-                      background:"rgba(0,0,0,0.5)",backdropFilter:"blur(12px)",
-                      boxShadow:"0 0 0 1px rgba(255,255,255,0.12)",
-                      display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <ArrowLeft style={{width:18,height:18,color:"rgba(255,255,255,0.85)"}}/>
-                  </motion.button>
-
-                  <div className="flex-1 min-w-0">
-                    {settings.showTitle && <>
-                      <p className="text-white font-black text-[13px] truncate">{video.caption||"OTube Video"}</p>
-                      <p className="text-[10px] truncate mt-0.5 cursor-pointer"
-                        style={{color:"rgba(255,255,255,0.5)"}}
-                        onClick={(e)=>{e.stopPropagation(); onClose(); navPlayer(`/profile/${video.author.id}`);}}>
-                        {video.author.displayName} · {fmt(video.viewsCount)} ko'rish
-                      </p>
-                    </>}
-                  </div>
-
-                  {/* Subscribe */}
-                  <motion.button whileTap={{scale:0.88}}
-                    onClick={()=>followMut.mutate({ id: video.author.id })}
-                    disabled={followMut.isPending}
-                    style={{ padding:"6px 14px",flexShrink:0,borderRadius:99,
-                      background: subbed?"rgba(255,255,255,0.1)":`${T.orange}dd`,
-                      boxShadow: subbed?"none":`0 0 16px ${T.orange}44`,
-                      opacity: followMut.isPending?0.7:1 }}>
-                    <span style={{fontSize:10,fontWeight:700,color:subbed?"rgba(255,255,255,0.5)":"white"}}>
-                      {subbed?"✓ Obuna":"··· Obuna"}
+          {showMore && (
+            <motion.div
+              initial={{opacity:0,y:80}} animate={{opacity:1,y:0}} exit={{opacity:0,y:80}}
+              transition={{type:"spring",damping:28,stiffness:320}}
+              onClick={e=>e.stopPropagation()}
+              style={{position:"absolute",bottom:0,inset:"auto 0 0 0",zIndex:50,
+                background:"rgba(5,0,16,0.97)",backdropFilter:"blur(28px)",
+                borderTopLeftRadius:22,borderTopRightRadius:22,
+                border:"1px solid rgba(255,255,255,0.07)",
+                padding:"14px 14px 24px"}}>
+              <div style={{width:36,height:3,borderRadius:3,
+                background:"rgba(255,255,255,0.15)",margin:"0 auto 14px"}}/>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                {[
+                  {icon:<ThumbsUp style={{width:18,height:18,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:liked?"Yoqdim":"Yoqtirish",col:T.cyan,on:liked,act:()=>likeMut.mutate({id:video.id})},
+                  {icon:<ThumbsDown style={{width:18,height:18,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Yoqmadi",col:T.orange,on:disliked,act:()=>{setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}},
+                  {icon:<Sparkles style={{width:18,height:18,color:danmaku?"#ffd700":"rgba(255,255,255,0.5)"}}/>,label:"Reaktsiya",col:"#ffd700",on:danmaku,act:()=>{setDanmaku(d=>!d);setShowMore(false);}},
+                  {icon:<Gauge style={{width:18,height:18,color:showSpeed?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Tezlik",col:T.orange,on:showSpeed,act:()=>{setShowSpeed(s=>!s);setShowMore(false);}},
+                  {icon:<Brain style={{width:18,height:18,color:aiDub?"#00ff88":"rgba(255,255,255,0.5)"}}/>,label:"AI Dub",col:"#00ff88",on:aiDub,act:()=>{setAiDub(d=>!d);setShowMore(false);}},
+                  {icon:<Star style={{width:18,height:18,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Sovg'a",col:T.orange,on:donating,act:()=>{setDonating(d=>!d);setShowMore(false);}},
+                  {icon:<Upload style={{width:18,height:18,color:"rgba(255,255,255,0.5)",transform:"rotate(180deg)"}}/>,label:"Yuklab",col:"rgba(200,200,200,0.7)",on:false,act:()=>{if(!video.videoUrl)return;const a=document.createElement("a");a.href=video.videoUrl;a.download=`${video.caption||"video"}.mp4`;document.body.appendChild(a);a.click();document.body.removeChild(a);setShowMore(false);}},
+                  {icon:<PictureInPicture2 style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>,label:"Mini",col:T.cyan,on:false,act:()=>{void handlePip();setShowMore(false);}},
+                  ...(isOwner?[{icon:<Trash2 style={{width:18,height:18,color:"#ff3b30"}}/>,label:"O'chirish",col:"#ff3b30",on:false,act:()=>{setConfirmDelete(true);setShowMore(false);}}]:[]),
+                ].map((b,i)=>(
+                  <motion.button key={i} whileTap={{scale:0.82}} onClick={()=>b.act()}
+                    style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5,
+                      padding:"10px 4px",borderRadius:14,
+                      background:b.on?`${b.col}18`:"rgba(255,255,255,0.04)",
+                      border:`1px solid ${b.on?`${b.col}44`:"rgba(255,255,255,0.06)"}`}}>
+                    {b.icon}
+                    <span style={{fontSize:9.5,color:"rgba(255,255,255,0.38)",fontWeight:600,lineHeight:1,textAlign:"center"}}>
+                      {b.label}
                     </span>
                   </motion.button>
-
-                  {/* Fullscreen */}
-                  <motion.button whileTap={{scale:0.85}} onClick={toggleFull}
-                    style={{ width:38,height:38,flexShrink:0,borderRadius:"50%",
-                      background:"rgba(0,0,0,0.4)",backdropFilter:"blur(10px)",
-                      boxShadow:"0 0 0 1px rgba(255,255,255,0.1)",
-                      display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    {isFull
-                      ? <Minimize2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>
-                      : <Maximize2 style={{width:15,height:15,color:"rgba(255,255,255,0.6)"}}/>}
-                  </motion.button>
-                </div>
+                ))}
               </div>
-
-              {/* CENTER paused */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <AnimatePresence>
-                  {!playing && (
-                    <motion.div key="ppause"
-                      initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}}
-                      exit={{opacity:0,scale:1.4}} transition={{duration:0.15}}
-                      style={{ width:74,height:74,borderRadius:"50%",
-                        background:"rgba(0,0,0,0.5)",backdropFilter:"blur(18px)",
-                        boxShadow:`0 0 0 2px rgba(255,255,255,0.2), 0 0 40px rgba(0,229,255,0.2)`,
-                        display:"flex",alignItems:"center",justifyContent:"center" }}>
-                      <Play style={{width:28,height:28,fill:"white",color:"white",marginLeft:4}}/>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* RIGHT sidebar — portrait: scrollable column / landscape: single circle */}
-              {isLandscape ? (
-                /* ── LANDSCAPE: single "⋯" circle that expands to action grid ── */
-                <div className="absolute right-3 bottom-[88px] pointer-events-auto flex flex-col items-center gap-2">
-                  <motion.button
-                    whileTap={{scale:0.82}}
-                    onClick={e=>{e.stopPropagation();setShowMore(m=>!m);}}
-                    style={{
-                      width:44,height:44,borderRadius:"50%",
-                      background: showMore?`${T.cyan}28`:"rgba(0,0,0,0.6)",
-                      backdropFilter:"blur(16px)",
-                      boxShadow: showMore?`0 0 0 1.5px ${T.cyan}66`:"0 0 0 1px rgba(255,255,255,0.18)",
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                    }}>
-                    <MoreVertical style={{width:17,height:17,color: showMore?T.cyan:"rgba(255,255,255,0.82)"}}/>
-                  </motion.button>
-                  {/* Expanded grid — pops up above the circle */}
-                  <AnimatePresence>
-                    {showMore && (
-                      <motion.div
-                        initial={{opacity:0,scale:0.7,y:12}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:0.7,y:12}}
-                        transition={{type:"spring",damping:22,stiffness:340}}
-                        onClick={e=>e.stopPropagation()}
-                        style={{
-                          position:"absolute",bottom:"calc(100% + 8px)",right:0,
-                          background:"rgba(8,0,22,0.92)",backdropFilter:"blur(24px)",
-                          borderRadius:18,padding:"12px 10px",
-                          boxShadow:`0 8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08)`,
-                          display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,
-                          width:172,
-                        }}>
-                        {[
-                          {icon:<ThumbsUp style={{width:14,height:14,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.7)"}}/>, label:fmt(likesCount), act:()=>likeMut.mutate({id:video.id}), active:liked, col:T.cyan},
-                          {icon:<ThumbsDown style={{width:14,height:14,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.55)"}}/>, label:t("otube.dislike"), act:()=>{setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}, active:disliked, col:T.orange},
-                          {icon:shared?<Check style={{width:14,height:14,color:"#10b981"}}/>:<Share2 style={{width:14,height:14,color:"rgba(255,255,255,0.7)"}}/>, label:t("otube.share_btn"), act:()=>void handleShare(), active:shared, col:"#10b981"},
-                          {icon:<Bookmark style={{width:14,height:14,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.65)"}}/>, label:t("otube.save_btn"), act:toggleSave, active:saved, col:T.violet},
-                          {icon:<MessageCircle style={{width:14,height:14,color:showCom?T.cyan:"rgba(255,255,255,0.65)"}}/>, label:fmt(video.commentsCount??0), act:()=>setShowCom(c=>!c), active:showCom, col:T.cyan},
-                          {icon:<Star style={{width:14,height:14,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.55)"}}/>, label:t("otube.donate_btn"), act:()=>setDonating(d=>!d), active:donating, col:T.orange},
-                          {icon:<Sparkles style={{width:14,height:14,color:danmaku?"#ffd700":"rgba(255,255,255,0.55)"}}/>, label:t("otube.reaction"), act:()=>setDanmaku(d=>!d), active:danmaku, col:"#ffd700"},
-                          {icon:<Gauge style={{width:14,height:14,color:aiDub?"#00ff88":"rgba(255,255,255,0.55)"}}/>, label:"AI Dub", act:()=>setAiDub(d=>!d), active:aiDub, col:"#00ff88"},
-                          {icon:<PictureInPicture2 style={{width:14,height:14,color:"rgba(255,255,255,0.7)"}}/>, label:"Mini", act:()=>void handlePip(), active:false, col:T.cyan},
-                          ...(isOwner ? [{icon:<Trash2 style={{width:14,height:14,color:"#ff3b30"}}/>, label:"O'chir", act:()=>setConfirmDelete(true), active:false, col:"#ff3b30"}] : []),
-                        ].map((b,i)=>(
-                          <motion.button key={i} whileTap={{scale:0.75}}
-                            onClick={()=>b.act()}
-                            style={{
-                              display:"flex",flexDirection:"column",alignItems:"center",gap:3,
-                              padding:"8px 4px",borderRadius:12,
-                              background:b.active?`${b.col}22`:"rgba(255,255,255,0.04)",
-                              boxShadow:b.active?`0 0 0 1px ${b.col}55`:"none",
-                            }}>
-                            {b.icon}
-                            <span style={{fontSize:7,color:"rgba(255,255,255,0.45)",fontWeight:600,lineHeight:1,textAlign:"center"}}>
-                              {b.label}
-                            </span>
-                          </motion.button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                /* ── PORTRAIT: scrollable vertical sidebar ── */
-                <div className="absolute right-2.5 pointer-events-auto flex flex-col gap-1.5"
-                  style={{
-                    top:"calc(env(safe-area-inset-top, 44px) + 66px)",
-                    bottom:100,
-                    overflowY:"auto",
-                    scrollbarWidth:"none",
-                    WebkitOverflowScrolling:"touch" as React.CSSProperties["WebkitOverflowScrolling"],
-                    alignItems:"center",
-                  }}>
-                  <IBtn onClick={()=>likeMut.mutate({ id: video.id })}
-                    active={liked} activeColor={T.cyan} label={fmt(likesCount)}>
-                    <ThumbsUp style={{width:15,height:15,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.7)"}}/>
-                  </IBtn>
-                  <IBtn onClick={()=>{setDisliked(d=>!d);if(liked){likeMut.mutate({id:video.id});}}}
-                    active={disliked} activeColor={T.orange} label={t("otube.dislike")}>
-                    <ThumbsDown style={{width:15,height:15,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.55)"}}/>
-                  </IBtn>
-                  <IBtn onClick={()=>void handleShare()} active={shared} activeColor="#10b981" label={t("otube.share_btn")}>
-                    {shared?<Check style={{width:15,height:15,color:"#10b981"}}/>
-                           :<Share2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>}
-                  </IBtn>
-                  <IBtn onClick={toggleSave} active={saved} activeColor={T.violet} label={t("otube.save_btn")}>
-                    <Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.65)"}}/>
-                  </IBtn>
-                  <IBtn onClick={()=>setShowCom(c=>!c)} active={showCom} label={fmt(video.commentsCount??0)}>
-                    <MessageCircle style={{width:15,height:15,color:showCom?T.cyan:"rgba(255,255,255,0.65)"}}/>
-                  </IBtn>
-                  <IBtn onClick={()=>setDonating(d=>!d)} active={donating} activeColor={T.orange} label={t("otube.donate_btn")}>
-                    <Star style={{width:15,height:15,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.55)"}}/>
-                  </IBtn>
-                  <IBtn onClick={()=>setDanmaku(d=>!d)} active={danmaku} activeColor="#ffd700" label={t("otube.reaction")}>
-                    <Sparkles style={{width:15,height:15,color:danmaku?"#ffd700":"rgba(255,255,255,0.55)"}}/>
-                  </IBtn>
-                  <IBtn onClick={()=>setAiDub(d=>!d)} active={aiDub} activeColor="#00ff88" label="AI Dub">
-                    <Gauge style={{width:15,height:15,color:aiDub?"#00ff88":"rgba(255,255,255,0.55)"}}/>
-                  </IBtn>
-                  <IBtn onClick={()=>{
-                    if (!video.videoUrl) return;
-                    const a = document.createElement("a");
-                    a.href = video.videoUrl;
-                    a.download = `${video.caption||"otube-video"}.mp4`;
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                  }} active={false} label="Yuklab">
-                    <Upload style={{width:15,height:15,color:"rgba(255,255,255,0.65)",transform:"rotate(180deg)"}}/>
-                  </IBtn>
-                  <IBtn onClick={()=>{ void handlePip(); }} active={false} activeColor={T.cyan} label="Mini">
-                    <PictureInPicture2 style={{width:15,height:15,color:"rgba(255,255,255,0.7)"}}/>
-                  </IBtn>
-                  {isOwner && (
-                    <IBtn
-                      onClick={()=>setConfirmDelete(true)}
-                      active={false} activeColor="#ff3b30" label="O'chir">
-                      <Trash2 style={{width:15,height:15,color:"#ff3b30"}}/>
-                    </IBtn>
-                  )}
+              {aiDub && (
+                <div style={{display:"flex",gap:8,marginTop:10}}>
+                  {(["uz","ru","en"] as const).map(l=>(
+                    <motion.button key={l} whileTap={{scale:0.9}} onClick={()=>setDubLang(l)}
+                      style={{flex:1,padding:"8px 0",borderRadius:10,fontSize:12,fontWeight:700,
+                        background:dubLang===l?"rgba(0,255,136,0.18)":"rgba(255,255,255,0.05)",
+                        color:dubLang===l?"#00ff88":"rgba(255,255,255,0.35)",
+                        border:`1px solid ${dubLang===l?"rgba(0,255,136,0.4)":"rgba(255,255,255,0.07)"}`}}>
+                      {l.toUpperCase()}
+                    </motion.button>
+                  ))}
                 </div>
               )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-              {/* DELETE CONFIRM MODAL */}
-              <AnimatePresence>
-                {confirmDelete && (
-                  <motion.div
-                    initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-                    onClick={e=>e.stopPropagation()}
-                    style={{
-                      position:"absolute",inset:0,zIndex:200,
-                      background:"rgba(0,0,0,0.72)",backdropFilter:"blur(8px)",
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      pointerEvents:"auto",
-                    }}>
-                    <motion.div
-                      initial={{scale:0.85,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:0.85,opacity:0}}
-                      style={{
-                        background:"rgba(12,4,28,0.97)",borderRadius:22,padding:"28px 24px 20px",
-                        boxShadow:"0 16px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,59,48,0.25)",
-                        maxWidth:300,width:"90%",textAlign:"center",
-                      }}>
-                      <div style={{
-                        width:52,height:52,borderRadius:"50%",
-                        background:"rgba(255,59,48,0.15)",
-                        display:"flex",alignItems:"center",justifyContent:"center",
-                        margin:"0 auto 14px",
-                        boxShadow:"0 0 0 1px rgba(255,59,48,0.35)",
-                      }}>
-                        <Trash2 style={{width:22,height:22,color:"#ff3b30"}}/>
-                      </div>
-                      <p style={{fontSize:16,fontWeight:800,color:"white",marginBottom:8}}>
-                        Videoni o'chirish
-                      </p>
-                      <p style={{fontSize:12,color:"rgba(255,255,255,0.45)",marginBottom:22,lineHeight:1.5}}>
-                        Bu amalni qaytarib bo'lmaydi. Video va uning barcha sharhlari butunlay o'chiriladi.
-                      </p>
-                      <div style={{display:"flex",gap:10}}>
-                        <button
-                          onClick={()=>setConfirmDelete(false)}
-                          style={{
-                            flex:1,padding:"11px 0",borderRadius:14,
-                            background:"rgba(255,255,255,0.07)",
-                            fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.7)",
-                          }}>
-                          Bekor
-                        </button>
-                        <button
-                          onClick={()=>deleteMut.mutate({ id: video.id })}
-                          disabled={deleteMut.isPending}
-                          style={{
-                            flex:1,padding:"11px 0",borderRadius:14,
-                            background:deleteMut.isPending?"rgba(255,59,48,0.4)":"#ff3b30",
-                            fontSize:13,fontWeight:700,color:"white",
-                            opacity:deleteMut.isPending?0.7:1,
-                          }}>
-                          {deleteMut.isPending ? "O'chirilmoqda…" : "O'chirish"}
-                        </button>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* BOTTOM controls */}
-              <div className="absolute bottom-0 inset-x-0 pointer-events-auto"
-                style={{ background:"linear-gradient(to top,rgba(0,0,0,0.92),transparent)",
-                  padding:"40px 12px 16px" }}>
-
-                {/* Donate panel */}
-                <AnimatePresence>
-                  {donating && (
-                    <motion.div
-                      initial={{opacity:0,y:12,scale:0.95}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:12,scale:0.95}}
-                      className="mb-3 p-3.5"
-                      onClick={e=>e.stopPropagation()}
-                      style={{ borderRadius:18,
-                        background:"rgba(10,6,20,0.88)",backdropFilter:"blur(20px)",
-                        boxShadow:`0 0 0 1px rgba(255,107,0,0.25), 0 8px 32px rgba(0,0,0,0.5)` }}>
-                      <p style={{fontSize:11,fontWeight:700,color:"rgba(255,160,50,0.9)",marginBottom:10}}>
-                        ⭐ {video.author.displayName} · {t("otube.donate_btn")}
-                      </p>
-                      <div className="flex gap-2 mb-3">
-                        {["500","2000","10000","50000"].map(a=>(
-                          <button key={a} onClick={()=>setDonateAmt(a)}
-                            style={{flex:1,padding:"7px 0",textAlign:"center",borderRadius:10,
-                              background:donateAmt===a?`${T.orange}28`:"rgba(255,255,255,0.06)",
-                              boxShadow:donateAmt===a?`0 0 0 1.5px ${T.orange}66`:"0 0 0 1px rgba(255,255,255,0.08)"}}>
-                            <span style={{fontSize:10.5,fontWeight:700,color:donateAmt===a?T.orange:"rgba(255,255,255,0.45)"}}>
-                              {Number(a)>=1000?`${Number(a)/1000}K`:a}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                      <button onClick={()=>setDonating(false)}
-                        className="w-full py-2.5 flex items-center justify-center gap-2"
-                        style={{borderRadius:12,background:"linear-gradient(90deg,#ff6b00,#ff3d00)",
-                          boxShadow:"0 4px 16px rgba(255,80,0,0.35)"}}>
-                        <span style={{fontSize:12,fontWeight:700,color:"white"}}>
-                          {donateAmt} so'm · {t("otube.send_btn")}
-                        </span>
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Description toggle */}
-                <button onClick={e=>{e.stopPropagation();setShowDesc(d=>!d);}}
-                  className="w-full flex items-center justify-between mb-2"
-                  style={{padding:"7px 12px",borderRadius:10,
-                    background:"rgba(255,255,255,0.06)"}}>
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.55)",fontWeight:600}}>{t("otube.description")}</span>
-                  {showDesc?<ChevronDown style={{width:12,height:12,color:"rgba(255,255,255,0.4)"}}/>
-                            :<ChevronRight style={{width:12,height:12,color:"rgba(255,255,255,0.4)"}}/>}
+        {/* ══ DONATE SHEET ══ */}
+        <AnimatePresence>
+          {donating && (
+            <motion.div
+              initial={{opacity:0,y:80}} animate={{opacity:1,y:0}} exit={{opacity:0,y:80}}
+              transition={{type:"spring",damping:28,stiffness:320}}
+              onClick={e=>e.stopPropagation()}
+              style={{position:"absolute",bottom:0,inset:"auto 0 0 0",zIndex:50,
+                background:"rgba(5,0,16,0.97)",backdropFilter:"blur(28px)",
+                borderTopLeftRadius:22,borderTopRightRadius:22,
+                border:`1px solid rgba(255,107,0,0.2)`,
+                padding:"14px 14px 28px"}}>
+              <div style={{width:36,height:3,borderRadius:3,
+                background:"rgba(255,255,255,0.15)",margin:"0 auto 14px"}}/>
+              <p style={{fontSize:13,fontWeight:800,color:"rgba(255,160,50,0.9)",marginBottom:12,textAlign:"center"}}>
+                ⭐ {video.author.displayName} ga sovg'a
+              </p>
+              <div style={{display:"flex",gap:8,marginBottom:12}}>
+                {["500","2000","10000","50000"].map(a=>(
+                  <button key={a} onClick={()=>setDonateAmt(a)}
+                    style={{flex:1,padding:"10px 0",borderRadius:12,textAlign:"center",
+                      background:donateAmt===a?"rgba(255,107,0,0.2)":"rgba(255,255,255,0.05)",
+                      border:`1px solid ${donateAmt===a?"rgba(255,107,0,0.5)":"rgba(255,255,255,0.07)"}`}}>
+                    <span style={{fontSize:12,fontWeight:700,color:donateAmt===a?T.orange:"rgba(255,255,255,0.4)"}}>
+                      {Number(a)>=1000?`${Number(a)/1000}K`:a}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setDonating(false)}
+                  style={{flex:1,padding:"11px 0",borderRadius:12,
+                    background:"rgba(255,255,255,0.06)",fontSize:13,fontWeight:700,
+                    color:"rgba(255,255,255,0.5)"}}>Bekor</button>
+                <button style={{flex:2,padding:"11px 0",borderRadius:12,
+                  background:"linear-gradient(90deg,#ff6b00,#ff3500)",fontSize:13,fontWeight:700,
+                  color:"white",boxShadow:"0 4px 14px rgba(255,80,0,0.3)"}}>
+                  {donateAmt} so'm · Yuborish
                 </button>
-                <AnimatePresence>
-                  {showDesc && (
-                    <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}}
-                      exit={{height:0,opacity:0}}
-                      className="overflow-hidden mb-2"
-                      onClick={e=>e.stopPropagation()}>
-                      <p style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.6,
-                        padding:"8px 12px",background:"rgba(255,255,255,0.04)",borderRadius:10,marginBottom:6}}>
-                        {video.caption} · @{video.author.username} ·{" "}
-                        {fmt(video.viewsCount)} {t("otube.views_short")} · {fmt(video.likesCount)} like
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* AI Neural Dub strip */}
-                <AnimatePresence>
-                  {aiDub && (
-                    <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}
-                      className="flex items-center gap-2 mb-2" onClick={e=>e.stopPropagation()}>
-                      <div className="flex items-center gap-1 px-2 py-1"
-                        style={{borderRadius:99,background:"rgba(0,255,136,0.12)",
-                          boxShadow:"0 0 0 1px rgba(0,255,136,0.3)"}}>
-                        <Sparkles style={{width:9,height:9,color:"#00ff88"}}/>
-                        <span style={{fontSize:9,fontWeight:700,color:"#00ff88"}}>AI DUB</span>
-                      </div>
-                      {(["uz","ru","en"] as const).map(l=>(
-                        <motion.button key={l} whileTap={{scale:0.9}} onClick={()=>setDubLang(l)}
-                          className="px-3 py-1"
-                          style={{borderRadius:99,fontSize:10,fontWeight:700,
-                            background:dubLang===l?"rgba(0,255,136,0.18)":"rgba(255,255,255,0.06)",
-                            color:dubLang===l?"#00ff88":"rgba(255,255,255,0.4)",
-                            boxShadow:dubLang===l?"0 0 0 1.5px rgba(0,255,136,0.5)":"none"}}>
-                          {l.toUpperCase()}
-                        </motion.button>
-                      ))}
-                      <span style={{fontSize:9,color:"rgba(0,255,136,0.6)",marginLeft:2}}>
-                        ✓ {t("otube.active")}
-                      </span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Quality + Speed badges */}
-                <div className="flex justify-between items-center mb-2">
-                  <span style={{fontSize:9,fontWeight:600,color:"rgba(255,255,255,0.35)",
-                    background:"rgba(255,255,255,0.06)",padding:"3px 10px",borderRadius:99}}>
-                    {settings.quality}
-                  </span>
-                  <span style={{fontSize:9,fontWeight:600,borderRadius:99,
-                    color:speed!==1?T.orange:"rgba(255,255,255,0.28)",
-                    background:speed!==1?`${T.orange}18`:"rgba(255,255,255,0.05)",
-                    padding:"3px 10px"}}>
-                    {speed}× {t("otube.speed_label")}
-                  </span>
-                </div>
-
-                {/* Scrubber */}
-                <div className="relative flex items-center h-5 mb-2.5"
-                  onClick={e=>e.stopPropagation()}>
-                  <div className="absolute inset-x-0 h-[2px]"
-                    style={{background:"rgba(255,255,255,0.1)"}}>
-                    <div className="h-full"
-                      style={{width:`${progress*100}%`,
-                        background:`linear-gradient(90deg,${T.cyan},${T.violet})`}}/>
-                  </div>
-                  <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
-                    style={{left:`calc(${progress*100}% - 6px)`,
-                      width:12,height:12,borderRadius:"50%",background:"white",
-                      boxShadow:`0 0 10px rgba(255,255,255,0.7), 0 0 0 2px rgba(255,255,255,0.3)`}}/>
-                  <input type="range" min={0} max={1} step={0.001} value={progress}
-                    onChange={e=>scrub(Number(e.target.value))}
-                    className="absolute inset-0 w-full opacity-0 cursor-pointer"
-                    onClick={e=>e.stopPropagation()}/>
-                </div>
-
-                {/* Bottom row */}
-                <div className="flex items-center gap-2" onClick={e=>e.stopPropagation()}>
-                  <motion.button whileTap={{scale:0.82}} onClick={togglePlay}
-                    style={{ width:46,height:46,flexShrink:0,borderRadius:"50%",
-                      background:"rgba(255,255,255,0.12)",backdropFilter:"blur(12px)",
-                      boxShadow:`0 0 0 1.5px rgba(255,255,255,0.2)`,
-                      display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    {playing
-                      ? <Pause style={{width:17,height:17,fill:"white",color:"white"}}/>
-                      : <Play  style={{width:17,height:17,fill:"white",color:"white",marginLeft:2}}/>}
-                  </motion.button>
-
-                  {/* Restart */}
-                  <button onClick={()=>{const v=videoRef.current;if(v){v.currentTime=0;setProgress(0);setCurTime(0);}}}
-                    style={{width:34,height:34,flexShrink:0,borderRadius:"50%",
-                      background:"rgba(255,255,255,0.06)",
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <RotateCcw style={{width:13,height:13,color:"rgba(255,255,255,0.45)"}}/>
-                  </button>
-
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontFamily:"monospace",flexShrink:0}}>
-                    {fmtTime(curTime)}/{fmtTime(duration)}
-                  </span>
-
-                  <div className="flex-1"/>
-
-                  {/* Speed */}
-                  <button onClick={()=>setShowSpeed(s=>!s)}
-                    style={{width:34,height:34,flexShrink:0,borderRadius:"50%",
-                      background:showSpeed?`${T.orange}22`:"rgba(255,255,255,0.06)",
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <Gauge style={{width:14,height:14,color:showSpeed?T.orange:"rgba(255,255,255,0.45)"}}/>
-                  </button>
-
-                  {/* Volume */}
-                  <button onClick={()=>setMuted(m=>!m)}
-                    style={{width:34,height:34,flexShrink:0,borderRadius:"50%",
-                      background:muted?"rgba(255,255,255,0.06)":`rgba(0,229,255,0.12)`,
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    {muted
-                      ? <VolumeX style={{width:14,height:14,color:"rgba(255,255,255,0.3)"}}/>
-                      : <Volume2 style={{width:14,height:14,color:"rgba(0,229,255,0.8)"}}/>}
-                  </button>
-                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ══ DELETE CONFIRM ══ */}
+        <AnimatePresence>
+          {confirmDelete && (
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+              onClick={e=>e.stopPropagation()}
+              style={{position:"absolute",inset:0,zIndex:100,
+                background:"rgba(0,0,0,0.75)",backdropFilter:"blur(10px)",
+                display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"auto"}}>
+              <motion.div initial={{scale:0.85,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:0.85,opacity:0}}
+                style={{background:"rgba(10,3,25,0.98)",borderRadius:22,padding:"28px 22px 20px",
+                  maxWidth:300,width:"90%",textAlign:"center",
+                  border:"1px solid rgba(255,59,48,0.2)"}}>
+                <div style={{width:52,height:52,borderRadius:"50%",background:"rgba(255,59,48,0.12)",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  margin:"0 auto 14px",border:"1px solid rgba(255,59,48,0.3)"}}>
+                  <Trash2 style={{width:22,height:22,color:"#ff3b30"}}/>
+                </div>
+                <p style={{fontSize:16,fontWeight:800,color:"white",marginBottom:8}}>Videoni o'chirish</p>
+                <p style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:22,lineHeight:1.5}}>
+                  Bu amalni qaytarib bo'lmaydi. Video va barcha sharhlari o'chiriladi.
+                </p>
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>setConfirmDelete(false)}
+                    style={{flex:1,padding:"11px 0",borderRadius:14,
+                      background:"rgba(255,255,255,0.07)",fontSize:13,fontWeight:700,
+                      color:"rgba(255,255,255,0.6)"}}>Bekor</button>
+                  <button onClick={()=>deleteMut.mutate({id:video.id})} disabled={deleteMut.isPending}
+                    style={{flex:1,padding:"11px 0",borderRadius:14,
+                      background:deleteMut.isPending?"rgba(255,59,48,0.4)":"#ff3b30",
+                      fontSize:13,fontWeight:700,color:"white"}}>
+                    {deleteMut.isPending?"O'chirilmoqda…":"O'chirish"}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ══ STAGE CONTROL PANEL ══ */}
+      <div style={{
+        flexShrink:0,
+        width:isLandscape?230:undefined,
+        background:"rgba(4,0,14,0.98)",
+        backdropFilter:"blur(28px)",
+        borderTop:!isLandscape?"1px solid rgba(255,255,255,0.05)":undefined,
+        borderLeft:isLandscape?"1px solid rgba(255,255,255,0.05)":undefined,
+        display:"flex",flexDirection:"column",gap:0,
+        paddingBottom:"calc(env(safe-area-inset-bottom,0px) + 8px)",
+      }}>
+        {/* Landscape: back + title */}
+        {isLandscape && (
+          <div style={{padding:"12px 14px 8px",
+            borderBottom:"1px solid rgba(255,255,255,0.05)",
+            display:"flex",alignItems:"center",gap:8}}>
+            <motion.button whileTap={{scale:0.85}} onClick={onClose}
+              style={{width:34,height:34,borderRadius:"50%",flexShrink:0,
+                background:"rgba(255,255,255,0.07)",
+                display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <ArrowLeft style={{width:16,height:16,color:"rgba(255,255,255,0.75)"}}/>
+            </motion.button>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{margin:0,fontSize:12,fontWeight:700,color:"white",
+                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                {video.caption||"OTube Video"}
+              </p>
+              <p style={{margin:0,fontSize:9.5,color:"rgba(255,255,255,0.35)"}}>
+                {fmt(video.viewsCount)} ko'rish
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── SCRUBBER ── */}
+        <div style={{padding:"10px 14px 6px",display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:9.5,color:"rgba(255,255,255,0.3)",fontFamily:"monospace",flexShrink:0}}>
+            {fmtTime(curTime)}
+          </span>
+          <div style={{flex:1,position:"relative",height:4,borderRadius:4,
+            background:"rgba(255,255,255,0.1)"}}>
+            <div style={{height:"100%",borderRadius:4,
+              background:`linear-gradient(90deg,${T.cyan},${T.violet})`,
+              width:`${progress*100}%`,transition:"width 0.1s linear"}}/>
+            <div style={{position:"absolute",top:"50%",transform:"translateY(-50%)",
+              left:`calc(${progress*100}% - 7px)`,
+              width:14,height:14,borderRadius:"50%",background:"white",
+              boxShadow:"0 0 10px rgba(255,255,255,0.65)",pointerEvents:"none"}}/>
+            <input type="range" min={0} max={1} step={0.001} value={progress}
+              onChange={e=>scrub(Number(e.target.value))}
+              onClick={e=>e.stopPropagation()}
+              style={{position:"absolute",inset:"-10px 0",opacity:0,cursor:"pointer",width:"100%"}}/>
+          </div>
+          <span style={{fontSize:9.5,color:"rgba(255,255,255,0.3)",fontFamily:"monospace",flexShrink:0}}>
+            {fmtTime(duration)}
+          </span>
+        </div>
+
+        {/* ── AUTHOR ROW ── */}
+        <div style={{display:"flex",alignItems:"center",gap:10,padding:"4px 12px 10px"}}>
+          <div style={{width:34,height:34,flexShrink:0,borderRadius:"50%",overflow:"hidden",
+            background:`hsl(${(video.author.id*71)%360},45%,20%)`,cursor:"pointer"}}
+            onClick={(e)=>{e.stopPropagation();onClose();navPlayer(`/profile/${video.author.id}`);}}>
+            {video.author.avatarUrl
+              ?<img src={video.author.avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              :<span style={{display:"flex",alignItems:"center",justifyContent:"center",
+                height:"100%",fontSize:13,fontWeight:900,color:"white"}}>
+                {(video.author.displayName||"?")[0].toUpperCase()}
+              </span>}
+          </div>
+          <div style={{flex:1,minWidth:0,cursor:"pointer"}}
+            onClick={(e)=>{e.stopPropagation();onClose();navPlayer(`/profile/${video.author.id}`);}}>
+            <p style={{margin:0,fontSize:12,fontWeight:700,color:"white",
+              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {video.author.displayName||video.author.username}
+              {video.author.isVerified && <span style={{color:T.cyan,marginLeft:3,fontSize:10}}>✓</span>}
+            </p>
+            <p style={{margin:0,fontSize:9.5,color:"rgba(255,255,255,0.35)",
+              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {video.caption||""}
+            </p>
+          </div>
+          <motion.button whileTap={{scale:0.9}}
+            onClick={(e)=>{e.stopPropagation();followMut.mutate({id:video.author.id});}}
+            disabled={followMut.isPending}
+            style={{padding:"6px 14px",borderRadius:99,flexShrink:0,
+              background:subbed?"rgba(255,255,255,0.07)":"rgba(255,107,0,0.88)",
+              border:`1px solid ${subbed?"rgba(255,255,255,0.1)":"rgba(255,107,0,0.45)"}`,
+              boxShadow:subbed?"none":"0 0 10px rgba(255,107,0,0.25)",
+              fontSize:11,fontWeight:700,color:subbed?"rgba(255,255,255,0.45)":"white"}}>
+            {subbed?"✓ Obuna":"+Obuna"}
+          </motion.button>
+        </div>
+
+        {/* ── ACTION ROW ── */}
+        <div style={{display:"flex",alignItems:"stretch",gap:6,padding:"0 10px 8px"}}>
+          <ABtn onClick={()=>likeMut.mutate({id:video.id})} active={liked} col={T.cyan} label={fmt(likesCount)}>
+            <Heart style={{width:17,height:17,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.52)"}}/>
+          </ABtn>
+          <ABtn onClick={()=>setShowCom(c=>!c)} active={showCom} col={T.cyan} label={fmt(video.commentsCount??0)}>
+            <MessageCircle style={{width:17,height:17,color:showCom?T.cyan:"rgba(255,255,255,0.52)"}}/>
+          </ABtn>
+          <ABtn onClick={()=>void handleShare()} active={shared} col="#10b981" label="Ulash">
+            {shared?<Check style={{width:17,height:17,color:"#10b981"}}/>
+                   :<Share2 style={{width:17,height:17,color:"rgba(255,255,255,0.52)"}}/>}
+          </ABtn>
+          <ABtn onClick={toggleSave} active={saved} col={T.violet} label="Saqlash">
+            <Bookmark style={{width:17,height:17,fill:saved?T.violet:"none",color:saved?T.violet:"rgba(255,255,255,0.52)"}}/>
+          </ABtn>
+          <ABtn onClick={()=>setShowMore(m=>!m)} active={showMore} col="rgba(255,255,255,0.8)" label="Ko'proq">
+            <MoreVertical style={{width:17,height:17,color:showMore?"white":"rgba(255,255,255,0.52)"}}/>
+          </ABtn>
+        </div>
+
+        {/* ── MEDIA CONTROLS ── */}
+        <div style={{display:"flex",alignItems:"center",gap:8,padding:"0 10px"}}>
+          <motion.button whileTap={{scale:0.82}} onClick={(e)=>{e.stopPropagation();togglePlay();}}
+            style={{width:42,height:42,flexShrink:0,borderRadius:"50%",
+              background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.14)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {playing
+              ?<Pause style={{width:16,height:16,fill:"white",color:"white"}}/>
+              :<Play  style={{width:16,height:16,fill:"white",color:"white",marginLeft:2}}/>}
+          </motion.button>
+          <motion.button whileTap={{scale:0.85}}
+            onClick={(e)=>{e.stopPropagation();const v=videoRef.current;if(v){v.currentTime=0;setProgress(0);setCurTime(0);}}}
+            style={{width:32,height:32,flexShrink:0,borderRadius:"50%",
+              background:"rgba(255,255,255,0.05)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <RotateCcw style={{width:13,height:13,color:"rgba(255,255,255,0.4)"}}/>
+          </motion.button>
+          <div style={{flex:1}}/>
+          <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();setShowSpeed(s=>!s);}}
+            style={{padding:"5px 10px",borderRadius:8,
+              background:speed!==1?`${T.orange}1a`:"rgba(255,255,255,0.05)",
+              border:`1px solid ${speed!==1?`${T.orange}44`:"rgba(255,255,255,0.07)"}`,
+              fontSize:11,fontWeight:700,color:speed!==1?T.orange:"rgba(255,255,255,0.38)"}}>
+            {speed}×
+          </motion.button>
+          <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();setMuted(m=>!m);}}
+            style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
+              background:muted?"rgba(255,255,255,0.05)":"rgba(0,229,255,0.1)",
+              border:`1px solid ${muted?"rgba(255,255,255,0.07)":"rgba(0,229,255,0.28)"}`,
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {muted
+              ?<VolumeX style={{width:13,height:13,color:"rgba(255,255,255,0.35)"}}/>
+              :<Volume2 style={{width:13,height:13,color:"#00e5ff"}}/>}
+          </motion.button>
+          <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();void handlePip();}}
+            style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
+              background:"rgba(255,255,255,0.05)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <PictureInPicture2 style={{width:13,height:13,color:"rgba(255,255,255,0.4)"}}/>
+          </motion.button>
+          <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();toggleFull();}}
+            style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
+              background:"rgba(255,255,255,0.05)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {isFull
+              ?<Minimize2 style={{width:13,height:13,color:"rgba(255,255,255,0.4)"}}/>
+              :<Maximize2 style={{width:13,height:13,color:"rgba(255,255,255,0.4)"}}/>}
+          </motion.button>
+        </div>
       </div>
     </motion.div>
   );

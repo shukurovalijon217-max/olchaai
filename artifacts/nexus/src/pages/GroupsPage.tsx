@@ -10,8 +10,9 @@ import {
   BarChart3, CalendarDays, Volume2, Sparkles, Code, Clock,
   Bell, Languages, Repeat2, Star, Flame, Swords, Brush,
   Trash2, AlertTriangle, MoreHorizontal, MessageCircle, Bookmark,
-  Flag, Copy, UserMinus,
+  Flag, Copy, UserMinus, PenLine,
 } from "lucide-react";
+import DrawingCanvas from "@/components/DrawingCanvas";
 import { useTranslation } from "react-i18next";
 import { useListGroups, useJoinGroup, useCreateGroup, getListGroupsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -426,6 +427,9 @@ export default function GroupsPage() {
 
   // ── AI assist state ───────────────────────────────────────────
   const [showAiAssist, setShowAiAssist] = useState(false);
+  const [showDraw, setShowDraw] = useState(false);
+  const [drawingBlob, setDrawingBlob] = useState<Blob | null>(null);
+  const [drawingPreview, setDrawingPreview] = useState<string | null>(null);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -778,6 +782,12 @@ export default function GroupsPage() {
   };
 
   /* ── AI text assist ──────────────────────────────────────────── */
+  const handleDrawingSend = (blob: Blob, dataUrl: string) => {
+    setShowDraw(false);
+    setDrawingBlob(blob);
+    setDrawingPreview(dataUrl);
+  };
+
   const handleAiAssist = async () => {
     if (!aiPrompt.trim() || aiLoading) return;
     setAiLoading(true);
@@ -841,13 +851,23 @@ export default function GroupsPage() {
     const hasText = newPostContent.trim().length > 0;
     const hasImage = !!postImageFile;
     const hasAudio = !!audioBlob;
-    if (!hasText && !hasImage && !hasAudio) return;
+    const hasDrawing = !!drawingBlob;
+    if (!hasText && !hasImage && !hasAudio && !hasDrawing) return;
 
     setSubmittingPost(true);
     try {
       let mediaUrl: string | null = null;
 
-      if (hasImage) {
+      if (drawingBlob) {
+        try {
+          const drawFile = new File([drawingBlob], `drawing-${Date.now()}.png`, { type: "image/png" });
+          mediaUrl = await uploadFile(drawFile);
+        } catch {
+          showToast("Chizma yuklanmadi");
+          setSubmittingPost(false);
+          return;
+        }
+      } else if (hasImage) {
         setUploadingPostImage(true);
         try {
           mediaUrl = await uploadFile(postImageFile!);
@@ -886,6 +906,8 @@ export default function GroupsPage() {
         setAudioBlob(null);
         setAudioPreviewUrl(null);
         setRecordingTime(0);
+        setDrawingBlob(null);
+        setDrawingPreview(null);
         setSelectedGroup(prev => prev ? { ...prev, postsCount: (prev.postsCount ?? 0) + 1 } : null);
         qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
         showToast("Post yuborildi ✓");
@@ -1784,6 +1806,22 @@ export default function GroupsPage() {
                       rows={3}
                       className="w-full bg-transparent text-foreground text-sm placeholder:text-muted-foreground focus:outline-none resize-none"
                     />
+                    {/* Drawing preview in composer */}
+                    {drawingPreview && (
+                      <div className="relative mt-2 mb-1">
+                        <img src={drawingPreview} alt="Chizma" className="rounded-xl w-full max-h-48 object-contain bg-[#1a1a2e]" />
+                        <div className="absolute top-2 left-2 flex items-center gap-1 opacity-70">
+                          <PenLine className="w-3 h-3 text-white" />
+                          <span className="text-[9px] text-white font-medium">Chizma</span>
+                        </div>
+                        <button
+                          onClick={() => { setDrawingBlob(null); setDrawingPreview(null); }}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                     {/* Image preview in composer */}
                     {postImagePreview && (
                       <div className="relative mt-2 mb-1">
@@ -1901,9 +1939,17 @@ export default function GroupsPage() {
                         >
                           <Sparkles className="w-4 h-4" />
                         </button>
+                        {/* Drawing canvas */}
+                        <button
+                          onClick={() => setShowDraw(true)}
+                          className={`p-1.5 rounded-lg hover:bg-muted transition-colors ${showDraw ? "text-primary" : ""}`}
+                          title="Kanvasda chiz"
+                        >
+                          <PenLine className="w-4 h-4" />
+                        </button>
                       </div>
                       <button
-                        disabled={(!newPostContent.trim() && !postImageFile && !audioBlob) || submittingPost}
+                        disabled={(!newPostContent.trim() && !postImageFile && !audioBlob && !drawingBlob) || submittingPost}
                         onClick={handleSubmitPost}
                         className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5"
                       >
@@ -3016,6 +3062,13 @@ export default function GroupsPage() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Drawing canvas modal ────────────────────────────────── */}
+      <AnimatePresence>
+        {showDraw && (
+          <DrawingCanvas onSend={handleDrawingSend} onClose={() => setShowDraw(false)} />
         )}
       </AnimatePresence>
 

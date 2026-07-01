@@ -271,6 +271,7 @@ function PhoneInput({ value, dialCode, onChangeValue, onChangeDialCode }:{
   onChangeValue: (v:string)=>void;
   onChangeDialCode: (d:string, flag:string)=>void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -341,7 +342,7 @@ function PhoneInput({ value, dialCode, onChangeValue, onChangeDialCode }:{
                   autoFocus
                   value={search}
                   onChange={e=>setSearch(e.target.value)}
-                  placeholder="Davlat qidirish..."
+                  placeholder={t("auth.phone_search")}
                   className="w-full pl-8 pr-7 py-2 rounded-lg text-xs focus:outline-none"
                   style={{background:"rgba(25,10,3,0.9)", border:"1px solid rgba(80,35,8,0.5)", color:"#c8a060"}}
                 />
@@ -355,7 +356,7 @@ function PhoneInput({ value, dialCode, onChangeValue, onChangeDialCode }:{
             {/* List */}
             <div style={{maxHeight:220,overflowY:"auto",scrollbarWidth:"none"}}>
               {filtered.length === 0 && (
-                <div style={{padding:"16px",textAlign:"center",fontSize:11,color:"rgba(160,90,30,0.5)"}}>Topilmadi</div>
+                <div style={{padding:"16px",textAlign:"center",fontSize:11,color:"rgba(160,90,30,0.5)"}}>{t("settings.lt_not_found")}</div>
               )}
               {filtered.map(c=>{
                 const active = c.dial === dialCode && c.iso === selected.iso;
@@ -610,7 +611,7 @@ export default function LoginPage() {
   };
 
   const doRegister = async () => {
-    if (!form.phone.trim()) { setError("Telefon raqami kiritilishi shart"); return; }
+    if (!form.phone.trim()) { setError(t("auth.phone_req")); return; }
     const fullPhone = dialCode + form.phone.replace(/[^\d]/g, "");
     setLoading(true);
     setError("");
@@ -789,7 +790,7 @@ export default function LoginPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#6a4020" }}>
-                      TELEFON RAQAMI
+                      {t("auth.phone")}
                     </label>
                     <PhoneInput
                       value={form.phone}
@@ -798,7 +799,7 @@ export default function LoginPage() {
                       onChangeDialCode={(d) => setDialCode(d)}
                     />
                     <p className="text-[10px] mt-1" style={{ color: "#4a2810" }}>
-                      1 raqam = 1 akkount. Feyk himoya.
+                      {t("auth.phone_hint")}
                     </p>
                   </div>
                 </>

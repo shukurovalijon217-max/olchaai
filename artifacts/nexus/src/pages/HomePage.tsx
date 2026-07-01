@@ -524,30 +524,6 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* ── Tunnel Feed button ── */}
-      {!tunnelOpen && displayPosts.length > 0 && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={() => setTunnelOpen(true)}
-          className="fixed z-40 flex flex-col items-center gap-1"
-          style={{ bottom: 90, left: 20 }}
-        >
-          <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center"
-            style={{
-              background: "linear-gradient(135deg,#7c3aed,#4f46e5)",
-              boxShadow: "0 0 18px rgba(124,58,237,0.6), 0 4px 12px rgba(0,0,0,0.35)",
-              border: "1px solid rgba(167,139,250,0.4)",
-            }}
-          >
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-[9px] font-bold text-violet-300/80 tracking-wide">TUNIL</span>
-        </motion.button>
-      )}
 
       {/* ── Tunnel Feed overlay ── */}
       <AnimatePresence>

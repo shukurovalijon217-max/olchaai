@@ -229,7 +229,7 @@ export default function LoginPage() {
   const { login, register } = useAuth();
 
   const [form, setForm] = useState({
-    username: "", displayName: "", email: "", password: ""
+    username: "", displayName: "", email: "", phone: "", password: ""
   });
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -238,10 +238,11 @@ export default function LoginPage() {
   };
 
   const doRegister = async () => {
+    if (!form.phone.trim()) { setError("Telefon raqami kiritilishi shart"); return; }
     setLoading(true);
     setError("");
     try {
-      const res = await register(form.username, form.displayName, form.email, form.password);
+      const res = await register(form.username, form.displayName, form.email, form.phone, form.password);
       if (res.error) { setError(res.error); return; }
       setLocation("/");
     } finally {
@@ -412,6 +413,27 @@ export default function LoginPage() {
                       placeholder="Asilbek Karimov"
                       autoComplete="name"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#6a4020" }}>
+                      TELEFON RAQAMI
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold select-none pointer-events-none" style={{ color: "#8a5530" }}>🇺🇿</span>
+                      <input
+                        type="tel"
+                        value={form.phone}
+                        onChange={set("phone")}
+                        required
+                        className="w-full pl-9 pr-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                        style={{ background: "rgba(30,12,4,0.9)", border: "1px solid #2a1408", color: "#c8a060" }}
+                        placeholder="+998 90 123 45 67"
+                        autoComplete="tel"
+                      />
+                    </div>
+                    <p className="text-[10px] mt-1" style={{ color: "#4a2810" }}>
+                      1 raqam = 1 akkount. Feyk himoya.
+                    </p>
                   </div>
                 </>
               )}

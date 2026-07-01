@@ -34,6 +34,7 @@ export const usersTable = pgTable("users", {
   username: text("username").notNull().unique(),
   displayName: text("display_name").notNull(),
   email: text("email").notNull().unique(),
+  phone: text("phone").unique(),
   passwordHash: text("password_hash"),
   bio: text("bio"),
   avatarUrl: text("avatar_url"),

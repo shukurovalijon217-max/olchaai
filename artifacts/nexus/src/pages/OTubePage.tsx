@@ -770,7 +770,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
           src={video.videoUrl??undefined}
           poster={video.thumbnailUrl??undefined}
           muted={muted} playsInline loop={settings.loop}
-          style={{width:"100%",height:"100%",objectFit:"contain",display:"block"}}
+          style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
           onTimeUpdate={()=>{
             const v=videoRef.current;
             if(v&&isFinite(v.duration)&&v.duration>0){setCurTime(v.currentTime);setProgress(v.currentTime/v.duration);}
@@ -784,7 +784,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
 
         {/* ── RIGHT SIDE ACTION PANEL — auto-hide on idle ── */}
         <div style={{
-          position:"absolute", right:0, top:0, bottom:132,
+          position:"absolute", right:0, top:0, bottom:168,
           width:50,
           display:"flex", flexDirection:"column", alignItems:"center",
           justifyContent:"center",
@@ -4091,6 +4091,80 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
               border:"1px solid rgba(168,85,247,0.15)",display:"flex",justifyContent:"space-between"}}>
               <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{t("otube.studio_selected")}</span>
               <span style={{color:T.violet,fontWeight:800,fontSize:11}}>{trimEnd-trimStart}%</span>
+            </div>
+
+            {/* ── VIDEO O'LCHAMLARI ── */}
+            <div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                <span style={{fontSize:9,color:T.violet,fontWeight:700,letterSpacing:"0.1em"}}>VIDEO O'LCHAMLARI</span>
+                <span style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"monospace"}}>{cropMode}</span>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+                {([
+                  {ratio:"9:16",  label:"Vertikal",   sub:"TikTok · Reels",  w:27,h:48,platform:"📱"},
+                  {ratio:"16:9",  label:"Gorizontal",  sub:"YouTube · OTube", w:48,h:27,platform:"🖥️"},
+                  {ratio:"1:1",   label:"Kvadrat",     sub:"Instagram",       w:38,h:38,platform:"□"},
+                  {ratio:"4:5",   label:"Portrait",    sub:"Instagram Feed",  w:34,h:42,platform:"📷"},
+                  {ratio:"4:3",   label:"Klassik",     sub:"TV Format",       w:44,h:33,platform:"📺"},
+                  {ratio:"21:9",  label:"CinemaScope", sub:"Kino",            w:48,h:20,platform:"🎬"},
+                ] as const).map(({ratio,label,sub,w,h,platform})=>{
+                  const active = cropMode===ratio;
+                  return (
+                    <button key={ratio} onClick={()=>setCropMode(ratio)}
+                      style={{
+                        display:"flex",flexDirection:"column",alignItems:"center",gap:5,
+                        padding:"10px 6px",borderRadius:12,
+                        background:active?"rgba(168,85,247,0.18)":"rgba(255,255,255,0.04)",
+                        border:`1.5px solid ${active?T.violet:"rgba(255,255,255,0.07)"}`,
+                        boxShadow:active?`0 0 14px ${T.violet}55`:"none",
+                        transition:"all 0.18s",cursor:"pointer",
+                      }}>
+                      {/* Aspect ratio visual */}
+                      <div style={{
+                        width:w/2+4, height:h/2+4,
+                        borderRadius:3,
+                        border:`2px solid ${active?T.violet:"rgba(255,255,255,0.2)"}`,
+                        background:active?"rgba(168,85,247,0.25)":"rgba(255,255,255,0.06)",
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        fontSize:8, color:active?T.violet:"rgba(255,255,255,0.3)",
+                        transition:"all 0.18s",
+                        flexShrink:0,
+                      }}>{platform}</div>
+                      <div style={{textAlign:"center"}}>
+                        <div style={{fontSize:9.5,fontWeight:800,color:active?"white":"rgba(255,255,255,0.55)",lineHeight:1.2}}>{ratio}</div>
+                        <div style={{fontSize:7.5,color:active?T.violet:"rgba(255,255,255,0.28)",fontWeight:600,lineHeight:1.3}}>{label}</div>
+                        <div style={{fontSize:6.5,color:"rgba(255,255,255,0.2)",marginTop:1}}>{sub}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Screen size presets */}
+              <div style={{marginTop:10,padding:"9px 12px",borderRadius:10,
+                background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                <div style={{fontSize:8.5,color:"rgba(255,255,255,0.35)",marginBottom:7,fontWeight:600}}>EKRAN O'LCHAMIGA MOSLASH</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {([
+                    {l:"iPhone",   r:"9:16",  px:"1080×1920"},
+                    {l:"Android",  r:"9:16",  px:"1080×1920"},
+                    {l:"iPad",     r:"4:3",   px:"2048×1536"},
+                    {l:"Desktop",  r:"16:9",  px:"1920×1080"},
+                    {l:"4K TV",    r:"16:9",  px:"3840×2160"},
+                    {l:"Story",    r:"9:16",  px:"1080×1920"},
+                  ] as const).map(({l,r,px})=>(
+                    <button key={l+r+px} onClick={()=>setCropMode(r)}
+                      style={{padding:"5px 9px",borderRadius:7,fontSize:8.5,fontWeight:700,
+                        background:cropMode===r?"rgba(168,85,247,0.15)":"rgba(255,255,255,0.05)",
+                        border:`1px solid ${cropMode===r?T.violet:"rgba(255,255,255,0.08)"}`,
+                        color:cropMode===r?T.violet:"rgba(255,255,255,0.4)",
+                        display:"flex",flexDirection:"column",alignItems:"center",gap:1,
+                        transition:"all 0.15s"}}>
+                      <span>{l}</span>
+                      <span style={{fontSize:6.5,opacity:0.7,fontFamily:"monospace"}}>{px}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -1206,7 +1206,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ── MAIN CONTENT ── */}
       <main
-        className={`transition-[padding] duration-300 ${isImmersive ? "overflow-hidden" : "min-h-screen pb-28 md:pb-0"}`}
+        className={`transition-[padding] duration-300 ${isImmersive ? "" : "min-h-screen pb-28 md:pb-0"}`}
         style={{ paddingLeft: isMd ? (isOpen ? "220px" : "40px") : isImmersive ? "0" : "8px" }}
       >
         <motion.div

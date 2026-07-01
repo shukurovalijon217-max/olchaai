@@ -408,8 +408,8 @@ export default function HomePage() {
       <AnimatePresence>
         {!createOpen && displayPosts.length > 0 && (
           <div
-            className="fixed z-50"
-            style={{ bottom: 18, left: "50%", transform: "translateX(-50%)" }}
+            className="fixed z-[60]"
+            style={{ bottom: 82, left: "50%", transform: "translateX(-50%)" }}
           >
             {/* Rainbow sparkle burst */}
             <AnimatePresence>

@@ -570,6 +570,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { t } = useTranslation();
+  const isImmersive = location === "/" || location === "/reels" || location === "/otube";
   const [isOpen, setIsOpen] = useState(loadOpen);
   const [moreOpen, setMoreOpen] = useState(false);
   const [navExpanded, setNavExpanded] = useState(false);
@@ -1204,15 +1205,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ── MAIN CONTENT ── */}
       <main
-        className="min-h-screen pb-28 md:pb-0 transition-[padding] duration-300"
-        style={{ paddingLeft: isMd ? (isOpen ? "220px" : "40px") : "8px" }}
+        className={`transition-[padding] duration-300 ${isImmersive ? "overflow-hidden" : "min-h-screen pb-28 md:pb-0"}`}
+        style={{ paddingLeft: isMd ? (isOpen ? "220px" : "40px") : isImmersive ? "0" : "8px" }}
       >
         <motion.div
           key={location}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.18, ease: "easeOut" }}
-          className="min-h-screen"
+          className={isImmersive ? undefined : "min-h-screen"}
         >
           {children}
         </motion.div>
@@ -1222,7 +1223,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <FloatingAvatar />
 
       {/* ── MUNI FLOATING AI ── */}
-      <MuniPanel />
+      {!isImmersive && <MuniPanel />}
 
       {/* ── DOCK EDGE TABS ── */}
       <DockEdgeTab side="right" />
@@ -1230,7 +1231,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ══ FLOATING BACK BUTTON — tap to show, mobile only ════ */}
       <AnimatePresence>
-        {showBack && location !== "/" && (
+        {showBack && location !== "/" && !isImmersive && (
           <motion.button
             key="float-back"
             className="md:hidden fixed z-[9990]"

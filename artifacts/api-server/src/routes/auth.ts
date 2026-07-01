@@ -15,27 +15,38 @@ declare module "express-session" {
 
 router.post("/auth/register", async (req, res) => {
   try {
-    const { username, displayName, email, password } = req.body as {
-      username?: string; displayName?: string; email?: string; password?: string;
+    const { username, displayName, email, phone, password } = req.body as {
+      username?: string; displayName?: string; email?: string; phone?: string; password?: string;
     };
-    if (!username || !displayName || !email || !password) {
+    if (!username || !displayName || !email || !phone || !password) {
       res.status(400).json({ error: "Barcha maydonlar to'ldirilishi shart" }); return;
     }
     if (password.length < 6) {
       res.status(400).json({ error: "Parol kamida 6 ta belgidan iborat bo'lishi kerak" }); return;
     }
-    const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    // Normalize phone: keep digits and + only
+    const normalizedPhone = phone.replace(/[^\d+]/g, "");
+    if (normalizedPhone.length < 9) {
+      res.status(400).json({ error: "Telefon raqami noto'g'ri" }); return;
+    }
+    const [existing, existingUsername, existingPhone] = await Promise.all([
+      db.select().from(usersTable).where(eq(usersTable.email, email)),
+      db.select().from(usersTable).where(eq(usersTable.username, username)),
+      db.select().from(usersTable).where(eq(usersTable.phone, normalizedPhone)),
+    ]);
     if (existing.length > 0) {
       res.status(409).json({ error: "Bu email allaqachon ro'yxatdan o'tgan" }); return;
     }
-    const existingUsername = await db.select().from(usersTable).where(eq(usersTable.username, username));
     if (existingUsername.length > 0) {
       res.status(409).json({ error: "Bu username band" }); return;
+    }
+    if (existingPhone.length > 0) {
+      res.status(409).json({ error: "Bu telefon raqami allaqachon ro'yxatdan o'tgan. Har bir raqamga faqat 1 ta akkount." }); return;
     }
     const passwordHash = await bcrypt.hash(password, 12);
     const isAdmin = username.toLowerCase() === "omen";
     const [user] = await db.insert(usersTable).values({
-      username, displayName, email, passwordHash, isAdmin,
+      username, displayName, email, phone: normalizedPhone, passwordHash, isAdmin,
     }).returning();
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;

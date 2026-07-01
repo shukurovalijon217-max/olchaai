@@ -56,7 +56,7 @@ router.post("/auth/send-otp", async (req, res) => {
     await db.insert(emailVerifications).values({ email, otp, expiresAt });
 
     const { error: sendError } = await getResend().emails.send({
-      from: "OlCha <onboarding@resend.dev>",
+      from: "OlCha <noreply@olcha.com>",
       to: email,
       subject: `${otp} — OlCha tasdiqlash kodi`,
       html: `

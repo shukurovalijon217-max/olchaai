@@ -2,13 +2,14 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, MoreHorizontal, ChevronDown, X,
-  PenLine, BookOpen, Film, MonitorPlay, Trophy,
+  PenLine, BookOpen, Film, MonitorPlay, Trophy, Zap,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { useListPosts, useGetAiFeed } from "@workspace/api-client-react";
 import FeedCard from "@/components/FeedCard";
 import CreateContentModal from "@/components/CreateContentModal";
+import TunnelFeed from "@/components/TunnelFeed";
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 
@@ -302,6 +303,7 @@ export default function HomePage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createTab,  setCreateTab]  = useState<TabType>("post");
   const [sparkling,  setSparkling]  = useState(false);
+  const [tunnelOpen, setTunnelOpen] = useState(false);
 
   const feedRef = useRef<HTMLDivElement>(null);
   const displayPosts = feed?.posts?.length ? feed.posts : posts;
@@ -519,6 +521,50 @@ export default function HomePage() {
               </AnimatePresence>
             </motion.button>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Tunnel Feed button ── */}
+      {!tunnelOpen && displayPosts.length > 0 && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
+          onClick={() => setTunnelOpen(true)}
+          className="fixed z-40 flex flex-col items-center gap-1"
+          style={{ bottom: 90, left: 20 }}
+        >
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center"
+            style={{
+              background: "linear-gradient(135deg,#7c3aed,#4f46e5)",
+              boxShadow: "0 0 18px rgba(124,58,237,0.6), 0 4px 12px rgba(0,0,0,0.35)",
+              border: "1px solid rgba(167,139,250,0.4)",
+            }}
+          >
+            <Zap className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-[9px] font-bold text-violet-300/80 tracking-wide">TUNIL</span>
+        </motion.button>
+      )}
+
+      {/* ── Tunnel Feed overlay ── */}
+      <AnimatePresence>
+        {tunnelOpen && (
+          <motion.div
+            key="tunnel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[200]"
+          >
+            <TunnelFeed
+              initialPosts={displayPosts as any}
+              onExit={() => setTunnelOpen(false)}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 

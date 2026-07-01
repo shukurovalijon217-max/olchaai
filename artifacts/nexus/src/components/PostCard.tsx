@@ -391,6 +391,16 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                 <Music className="w-4 h-4 text-amber-400" />
               </div>
               <audio controls src={url} className="flex-1 h-8 min-w-0" style={{ accentColor: "var(--primary)" }} />
+              <a
+                href={url}
+                download
+                className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                style={{ background: "rgba(251,191,36,0.12)", color: "#fbbf24" }}
+                title="Yuklab olish"
+                onClick={e => e.stopPropagation()}
+              >
+                <Download className="w-4 h-4" />
+              </a>
             </div>
           );
           if (isVideo) return (

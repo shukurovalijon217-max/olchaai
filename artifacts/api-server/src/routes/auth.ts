@@ -56,7 +56,7 @@ router.post("/auth/send-otp", async (req, res) => {
     await db.insert(emailVerifications).values({ email, otp, expiresAt });
 
     const { error: sendError } = await getResend().emails.send({
-      from: "OlCha <noreply@olcha.uz>",
+      from: "OlCha <onboarding@resend.dev>",
       to: email,
       subject: `${otp} — OlCha tasdiqlash kodi`,
       html: `
@@ -71,8 +71,14 @@ router.post("/auth/send-otp", async (req, res) => {
     });
 
     if (sendError) {
-      req.log.error(sendError, "Resend error");
-      res.status(500).json({ error: "Email yuborishda xato. API kalitni tekshiring." }); return;
+      req.log.error({ resendError: sendError }, "Resend send failed");
+      const msg = (sendError as { message?: string }).message ?? "";
+      const isDomainError = msg.includes("verify a domain") || msg.includes("testing emails");
+      res.status(500).json({
+        error: isDomainError
+          ? "Email yuborishda xato: Resend da domen tasdiqlanmagan. resend.com/domains sahifasiga boring."
+          : "Email yuborishda xato. Keyinroq urinib ko'ring.",
+      }); return;
     }
 
     res.json({ ok: true, message: "Kod emailga yuborildi" });

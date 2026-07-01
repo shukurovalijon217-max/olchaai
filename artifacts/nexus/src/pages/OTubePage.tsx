@@ -1117,44 +1117,39 @@ function NexusPlayer({ video, onClose, settings, onPip }:
           </span>
         </div>
 
-        {/* ── AUTHOR ROW ── */}
-        <div style={{display:"flex",alignItems:"center",gap:10,padding:"4px 12px 10px"}}>
-          <div style={{width:34,height:34,flexShrink:0,borderRadius:"50%",overflow:"hidden",
-            background:`hsl(${(video.author.id*71)%360},45%,20%)`,cursor:"pointer"}}
-            onClick={(e)=>{e.stopPropagation();onClose();navPlayer(`/profile/${video.author.id}`);}}>
-            {video.author.avatarUrl
-              ?<img src={video.author.avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-              :<span style={{display:"flex",alignItems:"center",justifyContent:"center",
-                height:"100%",fontSize:13,fontWeight:900,color:"white"}}>
-                {(video.author.displayName||"?")[0].toUpperCase()}
-              </span>}
-          </div>
-          <div style={{flex:1,minWidth:0,cursor:"pointer"}}
-            onClick={(e)=>{e.stopPropagation();onClose();navPlayer(`/profile/${video.author.id}`);}}>
-            <p style={{margin:0,fontSize:12,fontWeight:700,color:"white",
-              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {video.author.displayName||video.author.username}
-              {video.author.isVerified && <span style={{color:T.cyan,marginLeft:3,fontSize:10}}>✓</span>}
-            </p>
-            <p style={{margin:0,fontSize:9.5,color:"rgba(255,255,255,0.35)",
-              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {video.caption||""}
-            </p>
-          </div>
-          <motion.button whileTap={{scale:0.9}}
-            onClick={(e)=>{e.stopPropagation();followMut.mutate({id:video.author.id});}}
-            disabled={followMut.isPending}
-            style={{padding:"6px 14px",borderRadius:99,flexShrink:0,
-              background:subbed?"rgba(255,255,255,0.07)":"rgba(255,107,0,0.88)",
-              border:`1px solid ${subbed?"rgba(255,255,255,0.1)":"rgba(255,107,0,0.45)"}`,
-              boxShadow:subbed?"none":"0 0 10px rgba(255,107,0,0.25)",
-              fontSize:11,fontWeight:700,color:subbed?"rgba(255,255,255,0.45)":"white"}}>
-            {subbed?"✓ Obuna":"+Obuna"}
-          </motion.button>
+        {/* ── TAVSIF ── */}
+        <div style={{flexShrink:0,padding:"2px 12px 6px",
+          borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+          <button onClick={(e)=>{e.stopPropagation();setShowDesc(d=>!d);}}
+            style={{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",
+              padding:"4px 0",cursor:"pointer"}}>
+            <span style={{fontSize:10.5,fontWeight:700,color:"rgba(255,255,255,0.45)"}}>Tavsif</span>
+            <ChevronDown style={{width:11,height:11,color:"rgba(255,255,255,0.3)",
+              transform:showDesc?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.2s"}}/>
+          </button>
+          <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.38)",lineHeight:1.4,
+            overflow:"hidden",textOverflow:"ellipsis",
+            display:"-webkit-box",WebkitLineClamp:showDesc?10:1,WebkitBoxOrient:"vertical" as const}}>
+            {video.caption||"Video"} · @{video.author.username} · {fmt(video.viewsCount)} ko'rish · {fmt(likesCount)} like
+          </p>
         </div>
 
         {/* ── MEDIA CONTROLS ── */}
-        <div style={{display:"flex",alignItems:"center",gap:8,padding:"0 10px"}}>
+        {/* Quality + Speed chips row */}
+        <div style={{display:"flex",alignItems:"center",gap:6,padding:"2px 12px 0"}}>
+          <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.35)",
+            padding:"3px 9px",borderRadius:6,background:"rgba(255,255,255,0.07)",
+            border:"1px solid rgba(255,255,255,0.1)"}}>Auto</span>
+          <button onClick={(e)=>{e.stopPropagation();setShowSpeed(s=>!s);}}
+            style={{fontSize:10,fontWeight:600,color:speed!==1?T.orange:"rgba(255,255,255,0.35)",
+              padding:"3px 9px",borderRadius:6,background:"rgba(255,255,255,0.07)",
+              border:`1px solid ${speed!==1?"rgba(255,107,0,0.4)":"rgba(255,255,255,0.1)"}`,
+              display:"flex",alignItems:"center",gap:3}}>
+            {speed}× TEZLIK
+            <ChevronRight style={{width:10,height:10}}/>
+          </button>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px 8px"}}>
           <motion.button whileTap={{scale:0.82}} onClick={(e)=>{e.stopPropagation();togglePlay();}}
             style={{width:42,height:42,flexShrink:0,borderRadius:"50%",
               background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.14)",
@@ -1170,14 +1165,10 @@ function NexusPlayer({ video, onClose, settings, onPip }:
               display:"flex",alignItems:"center",justifyContent:"center"}}>
             <RotateCcw style={{width:13,height:13,color:"rgba(255,255,255,0.4)"}}/>
           </motion.button>
-          <div style={{flex:1}}/>
-          <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();setShowSpeed(s=>!s);}}
-            style={{padding:"5px 10px",borderRadius:8,
-              background:speed!==1?`${T.orange}1a`:"rgba(255,255,255,0.05)",
-              border:`1px solid ${speed!==1?`${T.orange}44`:"rgba(255,255,255,0.07)"}`,
-              fontSize:11,fontWeight:700,color:speed!==1?T.orange:"rgba(255,255,255,0.38)"}}>
-            {speed}×
-          </motion.button>
+          <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.35)",
+            fontFamily:"monospace",flex:1}}>
+            {fmtTime(curTime)}/{fmtTime(duration)}
+          </span>
           <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();setMuted(m=>!m);}}
             style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
               background:muted?"rgba(255,255,255,0.05)":"rgba(0,229,255,0.1)",
@@ -1186,12 +1177,6 @@ function NexusPlayer({ video, onClose, settings, onPip }:
             {muted
               ?<VolumeX style={{width:13,height:13,color:"rgba(255,255,255,0.35)"}}/>
               :<Volume2 style={{width:13,height:13,color:"#00e5ff"}}/>}
-          </motion.button>
-          <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();void handlePip();}}
-            style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
-              background:"rgba(255,255,255,0.05)",
-              display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <PictureInPicture2 style={{width:13,height:13,color:"rgba(255,255,255,0.4)"}}/>
           </motion.button>
           <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();toggleFull();}}
             style={{width:32,height:32,borderRadius:"50%",flexShrink:0,

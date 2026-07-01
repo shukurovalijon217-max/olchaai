@@ -11,6 +11,256 @@ import SafetyConsentModal from "@/components/SafetyConsentModal";
 /* ─── Popular languages shown first ──────────────────────────── */
 const POPULAR = ["uz", "en", "ru", "zh", "ar", "es", "fr", "hi", "tr", "de", "ja", "ko"];
 
+/* ─── All country dial codes ────────────────────────────────── */
+const COUNTRIES = [
+  { iso:"UZ", flag:"🇺🇿", name:"O'zbekiston",       dial:"+998" },
+  { iso:"RU", flag:"🇷🇺", name:"Rossiya",            dial:"+7"   },
+  { iso:"KZ", flag:"🇰🇿", name:"Qozog'iston",        dial:"+7"   },
+  { iso:"KG", flag:"🇰🇬", name:"Qirg'iziston",       dial:"+996" },
+  { iso:"TJ", flag:"🇹🇯", name:"Tojikiston",         dial:"+992" },
+  { iso:"TM", flag:"🇹🇲", name:"Turkmaniston",       dial:"+993" },
+  { iso:"AZ", flag:"🇦🇿", name:"Ozarbayjon",         dial:"+994" },
+  { iso:"TR", flag:"🇹🇷", name:"Turkiya",            dial:"+90"  },
+  { iso:"US", flag:"🇺🇸", name:"AQSh",               dial:"+1"   },
+  { iso:"GB", flag:"🇬🇧", name:"Britaniya",          dial:"+44"  },
+  { iso:"DE", flag:"🇩🇪", name:"Germaniya",          dial:"+49"  },
+  { iso:"FR", flag:"🇫🇷", name:"Fransiya",           dial:"+33"  },
+  { iso:"IT", flag:"🇮🇹", name:"Italiya",            dial:"+39"  },
+  { iso:"ES", flag:"🇪🇸", name:"Ispaniya",           dial:"+34"  },
+  { iso:"PL", flag:"🇵🇱", name:"Polsha",             dial:"+48"  },
+  { iso:"UA", flag:"🇺🇦", name:"Ukraina",            dial:"+380" },
+  { iso:"BY", flag:"🇧🇾", name:"Belarus",            dial:"+375" },
+  { iso:"GE", flag:"🇬🇪", name:"Gruziya",            dial:"+995" },
+  { iso:"AM", flag:"🇦🇲", name:"Armaniston",         dial:"+374" },
+  { iso:"CN", flag:"🇨🇳", name:"Xitoy",              dial:"+86"  },
+  { iso:"IN", flag:"🇮🇳", name:"Hindiston",          dial:"+91"  },
+  { iso:"PK", flag:"🇵🇰", name:"Pokiston",           dial:"+92"  },
+  { iso:"BD", flag:"🇧🇩", name:"Bangladesh",         dial:"+880" },
+  { iso:"ID", flag:"🇮🇩", name:"Indoneziya",         dial:"+62"  },
+  { iso:"MY", flag:"🇲🇾", name:"Malayziya",          dial:"+60"  },
+  { iso:"PH", flag:"🇵🇭", name:"Filippin",           dial:"+63"  },
+  { iso:"TH", flag:"🇹🇭", name:"Tailand",            dial:"+66"  },
+  { iso:"VN", flag:"🇻🇳", name:"Vyetnam",            dial:"+84"  },
+  { iso:"KR", flag:"🇰🇷", name:"Janubiy Koreya",     dial:"+82"  },
+  { iso:"JP", flag:"🇯🇵", name:"Yaponiya",           dial:"+81"  },
+  { iso:"SA", flag:"🇸🇦", name:"Saudiya Arabistoni", dial:"+966" },
+  { iso:"AE", flag:"🇦🇪", name:"BAA",                dial:"+971" },
+  { iso:"IR", flag:"🇮🇷", name:"Eron",               dial:"+98"  },
+  { iso:"IQ", flag:"🇮🇶", name:"Iroq",               dial:"+964" },
+  { iso:"AF", flag:"🇦🇫", name:"Afg'oniston",        dial:"+93"  },
+  { iso:"EG", flag:"🇪🇬", name:"Misr",               dial:"+20"  },
+  { iso:"NG", flag:"🇳🇬", name:"Nigeriya",           dial:"+234" },
+  { iso:"ET", flag:"🇪🇹", name:"Efiopiya",           dial:"+251" },
+  { iso:"ZA", flag:"🇿🇦", name:"Janubiy Afrika",     dial:"+27"  },
+  { iso:"KE", flag:"🇰🇪", name:"Keniya",             dial:"+254" },
+  { iso:"TZ", flag:"🇹🇿", name:"Tanzaniya",          dial:"+255" },
+  { iso:"GH", flag:"🇬🇭", name:"Gana",               dial:"+233" },
+  { iso:"MA", flag:"🇲🇦", name:"Marokash",           dial:"+212" },
+  { iso:"DZ", flag:"🇩🇿", name:"Jazoir",             dial:"+213" },
+  { iso:"TN", flag:"🇹🇳", name:"Tunis",              dial:"+216" },
+  { iso:"BR", flag:"🇧🇷", name:"Braziliya",          dial:"+55"  },
+  { iso:"MX", flag:"🇲🇽", name:"Meksika",            dial:"+52"  },
+  { iso:"AR", flag:"🇦🇷", name:"Argentina",          dial:"+54"  },
+  { iso:"CO", flag:"🇨🇴", name:"Kolumbiya",          dial:"+57"  },
+  { iso:"CL", flag:"🇨🇱", name:"Chili",              dial:"+56"  },
+  { iso:"PE", flag:"🇵🇪", name:"Peru",               dial:"+51"  },
+  { iso:"VE", flag:"🇻🇪", name:"Venesuela",          dial:"+58"  },
+  { iso:"CA", flag:"🇨🇦", name:"Kanada",             dial:"+1"   },
+  { iso:"AU", flag:"🇦🇺", name:"Avstraliya",         dial:"+61"  },
+  { iso:"NZ", flag:"🇳🇿", name:"Yangi Zelandiya",    dial:"+64"  },
+  { iso:"NL", flag:"🇳🇱", name:"Niderlandiya",       dial:"+31"  },
+  { iso:"BE", flag:"🇧🇪", name:"Belgiya",            dial:"+32"  },
+  { iso:"CH", flag:"🇨🇭", name:"Shveytsariya",      dial:"+41"  },
+  { iso:"AT", flag:"🇦🇹", name:"Avstriya",           dial:"+43"  },
+  { iso:"SE", flag:"🇸🇪", name:"Shvetsiya",          dial:"+46"  },
+  { iso:"NO", flag:"🇳🇴", name:"Norvegiya",          dial:"+47"  },
+  { iso:"DK", flag:"🇩🇰", name:"Daniya",             dial:"+45"  },
+  { iso:"FI", flag:"🇫🇮", name:"Finlandiya",         dial:"+358" },
+  { iso:"PT", flag:"🇵🇹", name:"Portugaliya",        dial:"+351" },
+  { iso:"CZ", flag:"🇨🇿", name:"Chexiya",            dial:"+420" },
+  { iso:"HU", flag:"🇭🇺", name:"Vengriya",           dial:"+36"  },
+  { iso:"RO", flag:"🇷🇴", name:"Ruminiya",           dial:"+40"  },
+  { iso:"BG", flag:"🇧🇬", name:"Bolgariya",          dial:"+359" },
+  { iso:"HR", flag:"🇭🇷", name:"Xorvatiya",          dial:"+385" },
+  { iso:"RS", flag:"🇷🇸", name:"Serbiya",            dial:"+381" },
+  { iso:"SK", flag:"🇸🇰", name:"Slovakiya",          dial:"+421" },
+  { iso:"SI", flag:"🇸🇮", name:"Sloveniya",          dial:"+386" },
+  { iso:"LT", flag:"🇱🇹", name:"Litva",              dial:"+370" },
+  { iso:"LV", flag:"🇱🇻", name:"Latviya",            dial:"+371" },
+  { iso:"EE", flag:"🇪🇪", name:"Estoniya",           dial:"+372" },
+  { iso:"IL", flag:"🇮🇱", name:"Isroil",             dial:"+972" },
+  { iso:"JO", flag:"🇯🇴", name:"Iordaniya",          dial:"+962" },
+  { iso:"LB", flag:"🇱🇧", name:"Livan",              dial:"+961" },
+  { iso:"SY", flag:"🇸🇾", name:"Suriya",             dial:"+963" },
+  { iso:"YE", flag:"🇾🇪", name:"Yaman",              dial:"+967" },
+  { iso:"OM", flag:"🇴🇲", name:"Ummon",              dial:"+968" },
+  { iso:"KW", flag:"🇰🇼", name:"Quvayt",             dial:"+965" },
+  { iso:"QA", flag:"🇶🇦", name:"Qatar",              dial:"+974" },
+  { iso:"BH", flag:"🇧🇭", name:"Bahrayn",            dial:"+973" },
+  { iso:"SG", flag:"🇸🇬", name:"Singapur",           dial:"+65"  },
+  { iso:"HK", flag:"🇭🇰", name:"Gonkong",            dial:"+852" },
+  { iso:"TW", flag:"🇹🇼", name:"Tayvan",             dial:"+886" },
+  { iso:"MN", flag:"🇲🇳", name:"Mo'g'uliston",       dial:"+976" },
+  { iso:"NP", flag:"🇳🇵", name:"Nepal",              dial:"+977" },
+  { iso:"LK", flag:"🇱🇰", name:"Shri-Lanka",         dial:"+94"  },
+  { iso:"MM", flag:"🇲🇲", name:"Myanma",             dial:"+95"  },
+  { iso:"KH", flag:"🇰🇭", name:"Kambodja",           dial:"+855" },
+  { iso:"LA", flag:"🇱🇦", name:"Laos",               dial:"+856" },
+  { iso:"UG", flag:"🇺🇬", name:"Uganda",             dial:"+256" },
+  { iso:"RW", flag:"🇷🇼", name:"Ruanda",             dial:"+250" },
+  { iso:"SN", flag:"🇸🇳", name:"Senegal",            dial:"+221" },
+  { iso:"CI", flag:"🇨🇮", name:"Kot-d'Ivuar",        dial:"+225" },
+  { iso:"CM", flag:"🇨🇲", name:"Kamerun",            dial:"+237" },
+  { iso:"SD", flag:"🇸🇩", name:"Sudan",              dial:"+249" },
+  { iso:"LY", flag:"🇱🇾", name:"Liviya",             dial:"+218" },
+  { iso:"ZM", flag:"🇿🇲", name:"Zambiya",            dial:"+260" },
+  { iso:"ZW", flag:"🇿🇼", name:"Zimbabve",           dial:"+263" },
+  { iso:"MZ", flag:"🇲🇿", name:"Mozambik",           dial:"+258" },
+  { iso:"MG", flag:"🇲🇬", name:"Madagaskar",         dial:"+261" },
+  { iso:"AO", flag:"🇦🇴", name:"Angola",             dial:"+244" },
+  { iso:"EC", flag:"🇪🇨", name:"Ekvador",            dial:"+593" },
+  { iso:"BO", flag:"🇧🇴", name:"Boliviya",           dial:"+591" },
+  { iso:"PY", flag:"🇵🇾", name:"Paragvay",           dial:"+595" },
+  { iso:"UY", flag:"🇺🇾", name:"Urugvay",            dial:"+598" },
+  { iso:"CU", flag:"🇨🇺", name:"Kuba",               dial:"+53"  },
+  { iso:"DO", flag:"🇩🇴", name:"Dominikan Resp.",    dial:"+1809"},
+  { iso:"GT", flag:"🇬🇹", name:"Gvatemala",          dial:"+502" },
+  { iso:"HN", flag:"🇭🇳", name:"Gonduras",           dial:"+504" },
+  { iso:"SV", flag:"🇸🇻", name:"Salvador",           dial:"+503" },
+  { iso:"NI", flag:"🇳🇮", name:"Nikaragua",          dial:"+505" },
+  { iso:"CR", flag:"🇨🇷", name:"Kosta-Rika",         dial:"+506" },
+  { iso:"PA", flag:"🇵🇦", name:"Panama",             dial:"+507" },
+  { iso:"GR", flag:"🇬🇷", name:"Gretsiya",           dial:"+30"  },
+  { iso:"IE", flag:"🇮🇪", name:"Irlandiya",          dial:"+353" },
+  { iso:"IS", flag:"🇮🇸", name:"Islandiya",          dial:"+354" },
+  { iso:"MK", flag:"🇲🇰", name:"Shimoliy Makedoniya",dial:"+389" },
+  { iso:"AL", flag:"🇦🇱", name:"Albaniya",           dial:"+355" },
+  { iso:"BA", flag:"🇧🇦", name:"Bosniya va Gersegovina",dial:"+387"},
+  { iso:"ME", flag:"🇲🇪", name:"Chernogoriya",       dial:"+382" },
+  { iso:"XK", flag:"🇽🇰", name:"Kosovo",             dial:"+383" },
+  { iso:"MD", flag:"🇲🇩", name:"Moldova",            dial:"+373" },
+] as const;
+
+type Country = typeof COUNTRIES[number];
+
+/* ─── Phone Input with Country Picker ───────────────────────── */
+function PhoneInput({ value, dialCode, onChangeValue, onChangeDialCode }:{
+  value: string;
+  dialCode: string;
+  onChangeValue: (v:string)=>void;
+  onChangeDialCode: (d:string, flag:string)=>void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = COUNTRIES.find(c => c.dial === dialCode) ?? COUNTRIES[0];
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const q = search.toLowerCase();
+  const filtered = COUNTRIES.filter(c =>
+    !q || c.name.toLowerCase().includes(q) || c.dial.includes(q) || c.iso.toLowerCase().includes(q)
+  );
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="flex gap-2">
+        {/* Country selector button */}
+        <button type="button" onClick={()=>setOpen(o=>!o)}
+          className="flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-semibold shrink-0 transition-all"
+          style={{
+            background:"rgba(30,12,4,0.9)", border:`1px solid ${open?"rgba(160,90,30,0.7)":"#2a1408"}`,
+            color:"#c8a060", minWidth:80,
+            boxShadow: open ? "0 0 12px rgba(180,90,20,0.2)" : "none",
+          }}>
+          <span style={{fontSize:18,lineHeight:1}}>{selected.flag}</span>
+          <span style={{fontSize:11,color:"#a07040"}}>{selected.dial}</span>
+          <motion.span
+            animate={{rotate:open?180:0}} transition={{duration:0.2}}
+            style={{fontSize:8,color:"rgba(160,90,30,0.6)",marginLeft:1}}>▼</motion.span>
+        </button>
+        {/* Number input */}
+        <input
+          type="tel"
+          value={value}
+          onChange={e=>onChangeValue(e.target.value)}
+          className="flex-1 px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+          style={{background:"rgba(30,12,4,0.9)", border:"1px solid #2a1408", color:"#c8a060"}}
+          placeholder="90 123 45 67"
+          autoComplete="tel-national"
+        />
+      </div>
+
+      {/* Dropdown */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{opacity:0,y:-6,scale:0.97}}
+            animate={{opacity:1,y:0,scale:1}}
+            exit={{opacity:0,y:-4,scale:0.97}}
+            transition={{duration:0.15}}
+            style={{
+              position:"absolute",top:"calc(100% + 6px)",left:0,right:0,zIndex:200,
+              background:"rgba(10,5,2,0.98)", border:"1px solid rgba(100,50,15,0.5)",
+              borderRadius:14, overflow:"hidden",
+              boxShadow:"0 20px 50px rgba(0,0,0,0.85)",
+              backdropFilter:"blur(20px)",
+            }}>
+            {/* Search */}
+            <div style={{padding:"10px 10px 6px", borderBottom:"1px solid rgba(80,35,8,0.4)"}}>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{color:"#7a4820"}}/>
+                <input
+                  autoFocus
+                  value={search}
+                  onChange={e=>setSearch(e.target.value)}
+                  placeholder="Davlat qidirish..."
+                  className="w-full pl-8 pr-7 py-2 rounded-lg text-xs focus:outline-none"
+                  style={{background:"rgba(25,10,3,0.9)", border:"1px solid rgba(80,35,8,0.5)", color:"#c8a060"}}
+                />
+                {search && (
+                  <button onClick={()=>setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2" style={{color:"#7a4820"}}>
+                    <X className="w-3 h-3"/>
+                  </button>
+                )}
+              </div>
+            </div>
+            {/* List */}
+            <div style={{maxHeight:220,overflowY:"auto",scrollbarWidth:"none"}}>
+              {filtered.length === 0 && (
+                <div style={{padding:"16px",textAlign:"center",fontSize:11,color:"rgba(160,90,30,0.5)"}}>Topilmadi</div>
+              )}
+              {filtered.map(c=>{
+                const active = c.dial === dialCode && c.iso === selected.iso;
+                return (
+                  <button key={c.iso} type="button"
+                    onClick={()=>{ onChangeDialCode(c.dial, c.flag); setOpen(false); setSearch(""); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors"
+                    style={{
+                      background: active?"rgba(100,50,10,0.35)":"transparent",
+                      borderLeft: active?"2px solid rgba(200,120,40,0.7)":"2px solid transparent",
+                    }}>
+                    <span style={{fontSize:16,width:22,textAlign:"center",lineHeight:1}}>{c.flag}</span>
+                    <span style={{fontSize:11,color:active?"#d4a960":"rgba(160,90,30,0.8)",flex:1,textAlign:"left"}}>{c.name}</span>
+                    <span style={{fontSize:10,color:active?"#c89040":"rgba(120,60,20,0.6)",fontFamily:"monospace",fontWeight:700}}>{c.dial}</span>
+                    {active && <Check className="w-3 h-3 shrink-0" style={{color:"#c8a040"}}/>}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 /* ─── 3D Animated Language Switcher ─────────────────────────── */
 function LangSwitcher() {
   const { i18n: i18nInst } = useTranslation();
@@ -231,6 +481,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({
     username: "", displayName: "", email: "", phone: "", password: ""
   });
+  const [dialCode, setDialCode] = useState("+998");
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [k]: e.target.value }));
@@ -239,10 +490,11 @@ export default function LoginPage() {
 
   const doRegister = async () => {
     if (!form.phone.trim()) { setError("Telefon raqami kiritilishi shart"); return; }
+    const fullPhone = dialCode + form.phone.replace(/[^\d]/g, "");
     setLoading(true);
     setError("");
     try {
-      const res = await register(form.username, form.displayName, form.email, form.phone, form.password);
+      const res = await register(form.username, form.displayName, form.email, fullPhone, form.password);
       if (res.error) { setError(res.error); return; }
       setLocation("/");
     } finally {
@@ -418,19 +670,12 @@ export default function LoginPage() {
                     <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#6a4020" }}>
                       TELEFON RAQAMI
                     </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold select-none pointer-events-none" style={{ color: "#8a5530" }}>🇺🇿</span>
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={set("phone")}
-                        required
-                        className="w-full pl-9 pr-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
-                        style={{ background: "rgba(30,12,4,0.9)", border: "1px solid #2a1408", color: "#c8a060" }}
-                        placeholder="+998 90 123 45 67"
-                        autoComplete="tel"
-                      />
-                    </div>
+                    <PhoneInput
+                      value={form.phone}
+                      dialCode={dialCode}
+                      onChangeValue={v => { setForm(f=>({...f, phone:v})); setError(""); }}
+                      onChangeDialCode={(d) => setDialCode(d)}
+                    />
                     <p className="text-[10px] mt-1" style={{ color: "#4a2810" }}>
                       1 raqam = 1 akkount. Feyk himoya.
                     </p>

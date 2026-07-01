@@ -55,11 +55,7 @@ router.post("/auth/send-otp", async (req, res) => {
 
     await db.insert(emailVerifications).values({ email, otp, expiresAt });
 
-    const { error: sendError } = await getResend().emails.send({
-      from: "OlCha <noreply@olcha.com>",
-      to: email,
-      subject: `${otp} — OlCha tasdiqlash kodi`,
-      html: `
+    const emailHtml = `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0502;color:#c8a060;border-radius:16px">
           <div style="font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:8px">OlCha</div>
           <div style="font-size:14px;color:#7a4820;margin-bottom:32px">AI-powered ijtimoiy koinot</div>
@@ -67,18 +63,26 @@ router.post("/auth/send-otp", async (req, res) => {
           <div style="font-size:48px;font-weight:900;letter-spacing:12px;color:#e8b060;background:rgba(50,20,5,0.8);border-radius:12px;padding:20px 24px;text-align:center;margin-bottom:24px">${otp}</div>
           <div style="font-size:12px;color:#4a2810">Bu kod 10 daqiqa ichida yaroqli. Agar siz yubormasangiz, xabarni e'tiborsiz qoldiring.</div>
         </div>
-      `,
-    });
+      `;
+
+    const emailPayload = { to: email, subject: `${otp} — OlCha tasdiqlash kodi`, html: emailHtml };
+
+    // Try verified domain first, fall back to Resend shared domain
+    let { error: sendError } = await getResend().emails.send({ from: "OlCha <noreply@olcha.com>", ...emailPayload });
+
+    if (sendError) {
+      const msg = (sendError as { message?: string }).message ?? "";
+      const isDomainNotVerified = msg.includes("verify a domain") || msg.includes("testing emails") || msg.includes("not verified");
+      if (isDomainNotVerified) {
+        req.log.warn("olcha.com domain not verified yet, falling back to onboarding@resend.dev");
+        const fallback = await getResend().emails.send({ from: "OlCha <onboarding@resend.dev>", ...emailPayload });
+        sendError = fallback.error ?? null;
+      }
+    }
 
     if (sendError) {
       req.log.error({ resendError: sendError }, "Resend send failed");
-      const msg = (sendError as { message?: string }).message ?? "";
-      const isDomainError = msg.includes("verify a domain") || msg.includes("testing emails");
-      res.status(500).json({
-        error: isDomainError
-          ? "Email yuborishda xato: Resend da domen tasdiqlanmagan. resend.com/domains sahifasiga boring."
-          : "Email yuborishda xato. Keyinroq urinib ko'ring.",
-      }); return;
+      res.status(500).json({ error: "Email yuborishda xato. Keyinroq urinib ko'ring." }); return;
     }
 
     res.json({ ok: true, message: "Kod emailga yuborildi" });

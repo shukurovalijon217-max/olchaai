@@ -784,12 +784,12 @@ function NexusPlayer({ video, onClose, settings, onPip }:
 
         {/* ── RIGHT SIDE ACTION PANEL — auto-hide on idle ── */}
         <div style={{
-          position:"absolute", right:0, top:0, bottom:0,
-          width:48,
+          position:"absolute", right:0, top:0, bottom:132,
+          width:50,
           display:"flex", flexDirection:"column", alignItems:"center",
           justifyContent:"center",
-          gap:1, zIndex:22,
-          paddingTop:6, paddingBottom:6,
+          gap:0, zIndex:22,
+          paddingTop:8, paddingBottom:8,
           overflowY:"auto", scrollbarWidth:"none",
           opacity: showCtrl ? 1 : 0,
           pointerEvents: showCtrl ? "auto" : "none",
@@ -1122,10 +1122,10 @@ function NexusPlayer({ video, onClose, settings, onPip }:
         {!isLandscape && (
           <div style={{
             position:"absolute", bottom:0, left:0, right:0, zIndex:20,
-            background:"linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.7) 50%,transparent 100%)",
+            background:"linear-gradient(to top,rgba(0,0,0,0.96) 0%,rgba(0,0,0,0.72) 55%,transparent 100%)",
             opacity:showCtrl?1:0, pointerEvents:showCtrl?"auto":"none",
             transition:"opacity 0.25s ease",
-            paddingBottom:"calc(env(safe-area-inset-bottom,0px)+6px)",
+            paddingBottom:"max(env(safe-area-inset-bottom,0px), 12px)",
             display:"flex",flexDirection:"column",gap:0,
           }}>
             {/* ── SCRUBBER ── */}

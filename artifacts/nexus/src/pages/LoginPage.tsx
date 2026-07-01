@@ -605,12 +605,60 @@ export default function LoginPage() {
   });
   const [dialCode, setDialCode] = useState("+998");
 
+  // OTP state
+  const [otpStep, setOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [k]: e.target.value }));
     setError("");
+    if (k === "email") { setEmailVerified(false); setOtpStep(false); }
+  };
+
+  const startCountdown = () => {
+    setCountdown(60);
+    const iv = setInterval(() => {
+      setCountdown(c => { if (c <= 1) { clearInterval(iv); return 0; } return c - 1; });
+    }, 1000);
+  };
+
+  const sendOtp = async () => {
+    if (!form.email.includes("@")) { setError("Email manzil noto'g'ri"); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) { setError(data.error || "Server xatosi. Keyinroq urinib ko'ring."); return; }
+      setOtpStep(true);
+      setOtpCode("");
+      startCountdown();
+    } finally { setLoading(false); }
+  };
+
+  const verifyOtp = async () => {
+    if (otpCode.length !== 6) { setError("6 raqamli kodni kiriting"); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, otp: otpCode }),
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) { setError(data.error || "Kod noto'g'ri"); return; }
+      setEmailVerified(true);
+      setOtpStep(false);
+    } finally { setLoading(false); }
   };
 
   const doRegister = async () => {
+    if (!emailVerified) { setError("Avval email ni tasdiqlang"); return; }
     if (!form.phone.trim()) { setError(t("auth.phone_req")); return; }
     const fullPhone = dialCode + form.phone.replace(/[^\d]/g, "");
     setLoading(true);
@@ -808,17 +856,130 @@ export default function LoginPage() {
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#6a4020" }}>
                   {t("auth.email")}
+                  {tab === "signup" && emailVerified && (
+                    <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold" style={{ color: "#5cb85c" }}>
+                      <Check className="w-3 h-3" /> Tasdiqlandi
+                    </span>
+                  )}
                 </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={set("email")}
-                  required
-                  className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
-                  style={{ background: "rgba(30,12,4,0.9)", border: "1px solid #2a1408", color: "#c8a060" }}
-                  placeholder="siz@olcha.uz"
-                  autoComplete="email"
-                />
+
+                {/* Email input + Send OTP button (signup only) */}
+                {tab === "signup" ? (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={set("email")}
+                        required
+                        disabled={emailVerified}
+                        className="flex-1 px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                        style={{
+                          background: emailVerified ? "rgba(20,8,2,0.9)" : "rgba(30,12,4,0.9)",
+                          border: emailVerified ? "1px solid rgba(92,184,92,0.3)" : "1px solid #2a1408",
+                          color: emailVerified ? "#5cb85c" : "#c8a060",
+                          opacity: emailVerified ? 0.8 : 1,
+                        }}
+                        placeholder="siz@olcha.uz"
+                        autoComplete="email"
+                      />
+                      {!emailVerified && (
+                        <button
+                          type="button"
+                          onClick={sendOtp}
+                          disabled={loading || !form.email.includes("@")}
+                          className="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                          style={{
+                            background: form.email.includes("@") ? "rgba(180,80,20,0.8)" : "rgba(60,25,8,0.5)",
+                            color: form.email.includes("@") ? "#e8c080" : "#5a3a20",
+                            border: "1px solid rgba(120,50,10,0.4)",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {loading ? "..." : otpStep ? (countdown > 0 ? `${countdown}s` : "Qayta") : "Kod yuborish"}
+                        </button>
+                      )}
+                      {emailVerified && (
+                        <button
+                          type="button"
+                          onClick={() => { setEmailVerified(false); setOtpStep(false); setOtpCode(""); }}
+                          className="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                          style={{ background: "rgba(30,12,4,0.9)", color: "#7a4820", border: "1px solid #2a1408" }}
+                        >
+                          O'zgartir
+                        </button>
+                      )}
+                    </div>
+
+                    {/* OTP input step */}
+                    <AnimatePresence>
+                      {otpStep && !emailVerified && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(20,8,2,0.95)", border: "1px solid rgba(100,45,10,0.4)" }}>
+                            <p className="text-[10px]" style={{ color: "#7a5030" }}>
+                              📧 <strong style={{ color: "#c8a060" }}>{form.email}</strong> ga 6 raqamli kod yuborildi
+                            </p>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={6}
+                                value={otpCode}
+                                onChange={e => { setOtpCode(e.target.value.replace(/\D/g, "")); setError(""); }}
+                                className="flex-1 px-4 py-2.5 rounded-lg text-sm text-center font-mono font-bold tracking-widest focus:outline-none"
+                                style={{
+                                  background: "rgba(30,12,4,0.9)", border: "1px solid rgba(120,55,15,0.5)",
+                                  color: "#e8b060", fontSize: 18, letterSpacing: 8,
+                                }}
+                                placeholder="• • • • • •"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={verifyOtp}
+                                disabled={loading || otpCode.length !== 6}
+                                className="shrink-0 px-4 py-2 rounded-lg text-xs font-bold transition-all"
+                                style={{
+                                  background: otpCode.length === 6 ? "rgba(92,184,92,0.2)" : "rgba(30,12,4,0.5)",
+                                  color: otpCode.length === 6 ? "#5cb85c" : "#4a2810",
+                                  border: `1px solid ${otpCode.length === 6 ? "rgba(92,184,92,0.4)" : "rgba(40,15,5,0.5)"}`,
+                                }}
+                              >
+                                {loading ? "..." : "Tasdiqlash"}
+                              </button>
+                            </div>
+                            {countdown > 0 && (
+                              <p className="text-[10px]" style={{ color: "#4a2810" }}>Qayta yuborish: {countdown}s</p>
+                            )}
+                            {countdown === 0 && (
+                              <button type="button" onClick={sendOtp} disabled={loading}
+                                className="text-[10px] underline" style={{ color: "#7a4820" }}>
+                                Kodni qayta yuborish
+                              </button>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={set("email")}
+                    required
+                    className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                    style={{ background: "rgba(30,12,4,0.9)", border: "1px solid #2a1408", color: "#c8a060" }}
+                    placeholder="siz@olcha.uz"
+                    autoComplete="email"
+                  />
+                )}
               </div>
 
               <div>

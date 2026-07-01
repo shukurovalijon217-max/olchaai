@@ -1,9 +1,26 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import { Resend } from "resend";
 import { db } from "@workspace/db";
 import { usersTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@workspace/db";
 import type { NotifPrefs, PrivacySettings } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
+import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
+
+const getResend = () => {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY muhit o'zgaruvchisi o'rnatilmagan");
+  return new Resend(key);
+};
+
+const emailVerifications = pgTable("email_verifications", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  otp: text("otp").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  verified: boolean("verified").default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
 
 const router = Router();
 
@@ -13,6 +30,88 @@ declare module "express-session" {
   }
 }
 
+/* ── Send Email OTP ─────────────────────────────────────────── */
+router.post("/auth/send-otp", async (req, res) => {
+  try {
+    const { email } = req.body as { email?: string };
+    if (!email || !email.includes("@")) {
+      res.status(400).json({ error: "Email manzil noto'g'ri" }); return;
+    }
+
+    // Rate limit: max 3 OTP per email per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recent = await db.select().from(emailVerifications)
+      .where(and(eq(emailVerifications.email, email), gt(emailVerifications.createdAt, oneHourAgo)));
+    if (recent.length >= 3) {
+      res.status(429).json({ error: "1 soat ichida ko'pi bilan 3 ta kod yuboriladi. Keyinroq urinib ko'ring." }); return;
+    }
+
+    // Delete old unverified codes for this email
+    await db.delete(emailVerifications)
+      .where(and(eq(emailVerifications.email, email), eq(emailVerifications.verified, false)));
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    await db.insert(emailVerifications).values({ email, otp, expiresAt });
+
+    const { error: sendError } = await getResend().emails.send({
+      from: "OlCha <noreply@olcha.uz>",
+      to: email,
+      subject: `${otp} — OlCha tasdiqlash kodi`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0502;color:#c8a060;border-radius:16px">
+          <div style="font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:8px">OlCha</div>
+          <div style="font-size:14px;color:#7a4820;margin-bottom:32px">AI-powered ijtimoiy koinot</div>
+          <div style="font-size:14px;color:#a07040;margin-bottom:16px">Ro'yxatdan o'tish tasdiqlash kodi:</div>
+          <div style="font-size:48px;font-weight:900;letter-spacing:12px;color:#e8b060;background:rgba(50,20,5,0.8);border-radius:12px;padding:20px 24px;text-align:center;margin-bottom:24px">${otp}</div>
+          <div style="font-size:12px;color:#4a2810">Bu kod 10 daqiqa ichida yaroqli. Agar siz yubormasangiz, xabarni e'tiborsiz qoldiring.</div>
+        </div>
+      `,
+    });
+
+    if (sendError) {
+      req.log.error(sendError, "Resend error");
+      res.status(500).json({ error: "Email yuborishda xato. API kalitni tekshiring." }); return;
+    }
+
+    res.json({ ok: true, message: "Kod emailga yuborildi" });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
+/* ── Verify Email OTP ───────────────────────────────────────── */
+router.post("/auth/verify-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body as { email?: string; otp?: string };
+    if (!email || !otp) {
+      res.status(400).json({ error: "Email va kod kiritilishi shart" }); return;
+    }
+
+    const now = new Date();
+    const [record] = await db.select().from(emailVerifications)
+      .where(and(
+        eq(emailVerifications.email, email),
+        eq(emailVerifications.otp, otp),
+        eq(emailVerifications.verified, false),
+        gt(emailVerifications.expiresAt, now),
+      ));
+
+    if (!record) {
+      res.status(400).json({ error: "Kod noto'g'ri yoki muddati o'tgan" }); return;
+    }
+
+    await db.update(emailVerifications).set({ verified: true }).where(eq(emailVerifications.id, record.id));
+    res.json({ ok: true, verified: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
+/* ── Register ───────────────────────────────────────────────── */
 router.post("/auth/register", async (req, res) => {
   try {
     const { username, displayName, email, phone, password } = req.body as {
@@ -24,6 +123,14 @@ router.post("/auth/register", async (req, res) => {
     if (password.length < 6) {
       res.status(400).json({ error: "Parol kamida 6 ta belgidan iborat bo'lishi kerak" }); return;
     }
+
+    // Check email is verified via OTP
+    const [verified] = await db.select().from(emailVerifications)
+      .where(and(eq(emailVerifications.email, email), eq(emailVerifications.verified, true)));
+    if (!verified) {
+      res.status(403).json({ error: "Email tasdiqlanmagan. Avval OTP kodni kiriting." }); return;
+    }
+
     // Normalize phone: keep digits and + only
     const normalizedPhone = phone.replace(/[^\d+]/g, "");
     if (normalizedPhone.length < 9) {
@@ -48,6 +155,10 @@ router.post("/auth/register", async (req, res) => {
     const [user] = await db.insert(usersTable).values({
       username, displayName, email, phone: normalizedPhone, passwordHash, isAdmin,
     }).returning();
+
+    // Clean up verification record
+    await db.delete(emailVerifications).where(eq(emailVerifications.email, email));
+
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;
     res.status(201).json({ ...safeUser, token: String(user.id) });

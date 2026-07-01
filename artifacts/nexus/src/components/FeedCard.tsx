@@ -696,7 +696,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
       {/* ═══ LAYER 20: RIGHT ORB COLUMN ═══ */}
       <div
         className="absolute right-3 flex flex-col items-center gap-4"
-        style={{ zIndex: 20, bottom: 110, top: "auto" }}
+        style={{ zIndex: 20, bottom: 164, top: "auto" }}
         onPointerDown={e => e.stopPropagation()}
       >
         {/* Like */}
@@ -831,13 +831,15 @@ export default function FeedCard({ post, index }: FeedCardProps) {
           </div>
         )}
 
-        <div className="flex items-center gap-3 px-4 py-3"
+        <div className="flex items-center gap-3 px-4 pt-3"
           style={{
             background: "rgba(4,3,14,0.82)",
             backdropFilter: "blur(28px) saturate(2)",
             WebkitBackdropFilter: "blur(28px) saturate(2)",
             borderTop: `1px solid ${accent}18`,
             boxShadow: `0 -4px 24px rgba(0,0,0,0.45), inset 0 1px 0 ${accent}12`,
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)",
+            paddingRight: "max(1rem, calc(env(safe-area-inset-right, 0px) + 68px))",
           }}>
 
           {/* Avatar */}

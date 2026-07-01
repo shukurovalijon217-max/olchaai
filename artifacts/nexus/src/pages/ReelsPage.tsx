@@ -749,7 +749,8 @@ function ReelSlide({
         </AnimatePresence>
 
         {/* ─── CAPTION + TAGS + AUDIO (above bottom bar) ─── */}
-        <div className="absolute bottom-[82px] left-14 right-4 pointer-events-auto">
+        <div className="absolute left-14 right-4 pointer-events-auto"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 170px)" }}>
           {caption && (
             <p className="text-white text-[12.5px] leading-snug mb-2 font-semibold"
               style={{ textShadow: "0 1px 14px rgba(0,0,0,1)" }}>
@@ -775,7 +776,8 @@ function ReelSlide({
         </div>
 
         {/* ─── BOTTOM BAR: author + waveform ─── */}
-        <div className="absolute bottom-0 left-0 right-0 pointer-events-auto">
+        <div className="absolute left-0 right-0 pointer-events-auto"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)" }}>
           {/* Waveform strip */}
           <div className="px-4 pb-1 flex">
             <Waveform active={isActive && !muted} color={neonColor} />
@@ -827,8 +829,9 @@ function ReelSlide({
           </div>
         </div>
 
-        {/* ─── Progress bar (thin, at very bottom of video) ─── */}
-        <div className="absolute pointer-events-none" style={{ bottom: 80, left: 0, right: 0, height: 2, zIndex: 32 }}>
+        {/* ─── Progress bar (thin, just above bottom bar) ─── */}
+        <div className="absolute pointer-events-none"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)", left: 0, right: 0, height: 2, zIndex: 32 }}>
           <div style={{ width: `${progress * 100}%`, height: "100%",
             background: `linear-gradient(90deg, ${neonColor}, #06b6d4)`,
             boxShadow: `0 0 6px ${neonColor}bb`, transition: "width 0.12s linear" }} />

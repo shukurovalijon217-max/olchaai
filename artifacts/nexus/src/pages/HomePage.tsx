@@ -352,7 +352,7 @@ export default function HomePage() {
   );
 
   return (
-    <div className="-ml-2 md:ml-0 -mr-0 -mt-0 relative">
+    <div className="relative">
 
       {/* ── SNAP SCROLL FEED ── */}
       <div

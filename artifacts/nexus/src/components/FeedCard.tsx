@@ -246,6 +246,15 @@ export default function FeedCard({ post, index }: FeedCardProps) {
   const [holdMode,  setHoldMode]  = useState<"fast" | "slow" | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* ORB column tap-to-show */
+  const [orbsVisible, setOrbsVisible] = useState(false);
+  const orbHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showOrbsBriefly = useCallback(() => {
+    setOrbsVisible(true);
+    if (orbHideTimer.current) clearTimeout(orbHideTimer.current);
+    orbHideTimer.current = setTimeout(() => setOrbsVisible(false), 2800);
+  }, []);
+
   /* Album carousel */
   const allMedia: string[] = (() => {
     const urls: string[] = (post as any).mediaUrls ?? [];
@@ -468,6 +477,11 @@ export default function FeedCard({ post, index }: FeedCardProps) {
         height: "100dvh",
         scrollSnapAlign: "start",
         background: isVideo ? "#060308" : isPhoto ? "#040810" : "#04040e",
+      }}
+      onClick={(e) => {
+        const rect = cardRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        if (e.clientX > rect.left + rect.width * 0.55) showOrbsBriefly();
       }}
     >
 
@@ -693,11 +707,13 @@ export default function FeedCard({ post, index }: FeedCardProps) {
         )}
       </div>
 
-      {/* ═══ LAYER 20: RIGHT ORB COLUMN ═══ */}
-      <div
-        className="absolute right-3 flex flex-col items-center gap-4"
-        style={{ zIndex: 20, bottom: 120, top: "auto" }}
-        onPointerDown={e => e.stopPropagation()}
+      {/* ═══ LAYER 20: RIGHT ORB COLUMN — tap right side to show ═══ */}
+      <motion.div
+        className="absolute right-3 flex flex-col items-center gap-3"
+        style={{ zIndex: 20, top: 72, pointerEvents: orbsVisible ? "auto" : "none" }}
+        animate={{ opacity: orbsVisible ? 1 : 0, x: orbsVisible ? 0 : 10 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+        onPointerDown={e => { e.stopPropagation(); showOrbsBriefly(); }}
       >
         {/* Like */}
         <div className="relative">
@@ -767,7 +783,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
             onClick={() => setMuted(m => !m)}
           />
         )}
-      </div>
+      </motion.div>
 
       {/* ═══ LAYER 18: CAPTION + MOOD + POLL + TAGS (bottom-left) ═══ */}
       <motion.div
@@ -845,9 +861,8 @@ export default function FeedCard({ post, index }: FeedCardProps) {
           <div className="relative flex-shrink-0 cursor-pointer"
             style={{ width: 38, height: 38 }}
             onClick={() => post.author?.id && navigate(`/profile/${post.author.id}`)}>
-            <motion.div className="absolute inset-[-2px] rounded-full pointer-events-none"
-              style={{ background: `conic-gradient(from 0deg, ${accent}dd, #3b82f677, #06b6d455, ${accent}dd)` }}
-              animate={{ rotate: 360 }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} />
+            <div className="absolute inset-[-1.5px] rounded-full pointer-events-none"
+              style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
             <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
               style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
               {post.author?.avatarUrl

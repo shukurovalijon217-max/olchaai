@@ -682,7 +682,8 @@ export default function FeedCard({ post, index }: FeedCardProps) {
       )}
 
       {/* ═══ LAYER 10: TOP — post type + timestamp ═══ */}
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4" style={{ zIndex: 15 }}>
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4"
+        style={{ zIndex: 15, paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}>
         <motion.div
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
           initial={{ opacity: 0, x: -12 }} animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -12 }}
@@ -849,11 +850,10 @@ export default function FeedCard({ post, index }: FeedCardProps) {
 
         <div className="flex items-center gap-3 px-4 py-3"
           style={{
-            background: "rgba(4,3,14,0.82)",
-            backdropFilter: "blur(28px) saturate(2)",
-            WebkitBackdropFilter: "blur(28px) saturate(2)",
-            borderTop: `1px solid ${accent}18`,
-            boxShadow: `0 -4px 24px rgba(0,0,0,0.45), inset 0 1px 0 ${accent}12`,
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(4,3,14,0.72) 100%)",
+            backdropFilter: "blur(20px) saturate(1.8)",
+            WebkitBackdropFilter: "blur(20px) saturate(1.8)",
+            borderTop: `1px solid ${accent}14`,
             paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
           }}>
 
@@ -886,7 +886,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => { setSubscribed(s => !s); showSubscribeBriefly(); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black flex-shrink-0 mr-16 md:mr-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black flex-shrink-0"
               style={{
                 background: subscribed
                   ? `linear-gradient(135deg, ${accent}33, ${accent}18)`

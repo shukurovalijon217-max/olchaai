@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable, followsTable } from "@workspace/db";
+import { reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable, followsTable, walletsTable, transactionsTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray, not, count } from "drizzle-orm";
 import { accumulateViewEarning } from "./monetization";
 import { scanContentAsync } from "../moderation/aiFilter";
@@ -312,6 +312,68 @@ router.post("/reels/:id/comments", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── POST /reels/:id/gift — send a tip from wallet to creator ── */
+router.post("/reels/:id/gift", async (req, res) => {
+  try {
+    const reelId = Number(req.params.id);
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+
+    const { amount } = req.body as { amount?: number };
+    if (!amount || amount < 100) { res.status(400).json({ error: "Minimal miqdor 100 so'm" }); return; }
+
+    const [reel] = await db.select({ authorId: reelsTable.authorId }).from(reelsTable).where(eq(reelsTable.id, reelId));
+    if (!reel) { res.status(404).json({ error: "Video topilmadi" }); return; }
+    if (reel.authorId === userId) { res.status(400).json({ error: "O'z videongizga sovg'a yubora olmaysiz" }); return; }
+
+    /* Get or create sender wallet */
+    let senderWallet = await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, userId) });
+    if (!senderWallet) {
+      const [w] = await db.insert(walletsTable).values({ userId }).returning();
+      senderWallet = w;
+    }
+    if (senderWallet.balance < amount) {
+      res.status(400).json({ error: "Hamyonda mablag' yetarli emas", balance: senderWallet.balance, required: amount });
+      return;
+    }
+
+    /* Get or create receiver wallet */
+    let receiverWallet = reel.authorId
+      ? await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, reel.authorId) })
+      : null;
+    if (!receiverWallet && reel.authorId) {
+      const [w] = await db.insert(walletsTable).values({ userId: reel.authorId }).returning();
+      receiverWallet = w;
+    }
+
+    /* Deduct from sender */
+    const newBal = senderWallet.balance - amount;
+    await db.update(walletsTable).set({ balance: newBal, updatedAt: new Date() }).where(eq(walletsTable.id, senderWallet.id));
+    await db.insert(transactionsTable).values({
+      userId, walletId: senderWallet.id,
+      type: "transfer_out", amount, currency: "UZS", status: "completed", paymentMethod: "internal",
+      description: `⭐ Video uchun sovg'a yuborildi (reel #${reelId})`,
+    });
+
+    /* Credit to author earnings */
+    if (receiverWallet && reel.authorId) {
+      await db.update(walletsTable)
+        .set({ earningsBalance: receiverWallet.earningsBalance + amount, updatedAt: new Date() })
+        .where(eq(walletsTable.id, receiverWallet.id));
+      await db.insert(transactionsTable).values({
+        userId: reel.authorId, walletId: receiverWallet.id,
+        type: "content_revenue", amount, currency: "UZS", status: "completed", paymentMethod: "internal",
+        description: `⭐ Video uchun sovg'a olindi (reel #${reelId})`,
+      });
+    }
+
+    res.json({ ok: true, newBalance: newBal });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Sovg'a yuborishda xato" });
   }
 });
 

@@ -696,7 +696,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
       {/* ═══ LAYER 20: RIGHT ORB COLUMN ═══ */}
       <div
         className="absolute right-3 flex flex-col items-center gap-4"
-        style={{ zIndex: 20, bottom: 164, top: "auto" }}
+        style={{ zIndex: 20, bottom: 120, top: "auto" }}
         onPointerDown={e => e.stopPropagation()}
       >
         {/* Like */}
@@ -831,15 +831,14 @@ export default function FeedCard({ post, index }: FeedCardProps) {
           </div>
         )}
 
-        <div className="flex items-center gap-3 px-4 pt-3"
+        <div className="flex items-center gap-3 px-4 py-3"
           style={{
             background: "rgba(4,3,14,0.82)",
             backdropFilter: "blur(28px) saturate(2)",
             WebkitBackdropFilter: "blur(28px) saturate(2)",
             borderTop: `1px solid ${accent}18`,
             boxShadow: `0 -4px 24px rgba(0,0,0,0.45), inset 0 1px 0 ${accent}12`,
-            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)",
-            paddingRight: "max(1rem, calc(env(safe-area-inset-right, 0px) + 68px))",
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
           }}>
 
           {/* Avatar */}
@@ -872,16 +871,18 @@ export default function FeedCard({ post, index }: FeedCardProps) {
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => { setSubscribed(s => !s); showSubscribeBriefly(); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold flex-shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black flex-shrink-0 mr-16 md:mr-0"
               style={{
-                background: subscribed ? `${accent}22` : `${accent}`,
+                background: subscribed
+                  ? `linear-gradient(135deg, ${accent}33, ${accent}18)`
+                  : `linear-gradient(135deg, ${accent}, ${accent}cc)`,
                 color: subscribed ? accent : "#000",
-                border: subscribed ? `1px solid ${accent}44` : "none",
-                boxShadow: subscribed ? "none" : `0 0 12px ${accent}55`,
-                transition: "all 0.2s",
+                border: subscribed ? `1px solid ${accent}55` : "none",
+                boxShadow: subscribed ? `0 0 8px ${accent}30` : `0 0 16px ${accent}66, 0 2px 8px rgba(0,0,0,0.4)`,
+                transition: "all 0.22s",
               }}
             >
-              {subscribed ? <UserCheck className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+              {subscribed ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
               {subscribed ? "Obuna" : "Obuna bo'l"}
             </motion.button>
           )}

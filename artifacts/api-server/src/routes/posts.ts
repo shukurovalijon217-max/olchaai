@@ -284,12 +284,12 @@ router.get("/posts/:id/votes", async (req: any, res) => {
 /* ── POST /posts — instant response, AI scan in background ─── */
 router.post("/posts", async (req: any, res) => {
   try {
-    const { authorId, content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, pollQuestion, pollOptions, mood, filterName, tags } = req.body;
+    const { authorId, content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, audioTrimStart, audioTrimEnd, pollQuestion, pollOptions, mood, filterName, tags } = req.body;
     const sessionUserId: number | undefined = req.session?.userId;
 
     const [post] = await db
       .insert(postsTable)
-      .values({ authorId, content, type: type || "text", mediaUrl, mediaUrls, overlays: overlays ?? null, audioName: audioName ?? null, audioUrl: audioUrl ?? null, pollQuestion: pollQuestion ?? null, pollOptions: pollOptions ?? null, mood: mood ?? null, filterName: filterName ?? null, tags, isFlagged: false })
+      .values({ authorId, content, type: type || "text", mediaUrl, mediaUrls, overlays: overlays ?? null, audioName: audioName ?? null, audioUrl: audioUrl ?? null, audioTrimStart: audioTrimStart != null ? String(audioTrimStart) : null, audioTrimEnd: audioTrimEnd != null ? String(audioTrimEnd) : null, pollQuestion: pollQuestion ?? null, pollOptions: pollOptions ?? null, mood: mood ?? null, filterName: filterName ?? null, tags, isFlagged: false })
       .returning();
 
     const [enriched] = await batchEnrichPosts([post], sessionUserId);

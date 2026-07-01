@@ -372,8 +372,8 @@ export default function FeedCard({ post }: FeedCardProps) {
   useEffect(() => {
     const audioUrl = (post as any).audioUrl as string | undefined;
     if (!audioUrl || !isPhoto) return;
-    const trimStart = (post as any).audioTrimStart as number | undefined;
-    const trimEnd   = (post as any).audioTrimEnd   as number | undefined;
+    const trimStart = (post as any).audioTrimStart != null ? Number((post as any).audioTrimStart) : undefined;
+    const trimEnd   = (post as any).audioTrimEnd   != null ? Number((post as any).audioTrimEnd)   : undefined;
     if (!audioRef.current) {
       const a = new Audio(audioUrl);
       a.loop = false;

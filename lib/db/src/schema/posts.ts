@@ -13,6 +13,8 @@ export const postsTable = pgTable("posts", {
   overlays: text("overlays"),
   audioName: text("audio_name"),
   audioUrl: text("audio_url"),
+  audioTrimStart: text("audio_trim_start"),
+  audioTrimEnd: text("audio_trim_end"),
   pollQuestion: text("poll_question"),
   pollOptions: text("poll_options"),
   mood: text("mood"),

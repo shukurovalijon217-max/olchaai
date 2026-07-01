@@ -1207,15 +1207,19 @@ export default function FeedCard({ post }: FeedCardProps) {
 
       {/* ══ LAYER 6.5 — MUSIC (transparent, letters only) ══ */}
       {!isText && !!(post as any).audioName && (
-        <div
-          className="absolute flex items-center gap-1.5"
+        <a
+          href={(post as any).audioUrl ?? "#"}
+          download={(post as any).audioName ?? true}
+          className="absolute flex items-center gap-1.5 cursor-pointer"
           style={{
             left: 16,
             bottom: commentOpen ? 270 : 120,
             zIndex: 11,
             maxWidth: 200,
             transition: "bottom 0.32s cubic-bezier(0.16,1,0.3,1)",
+            textDecoration: "none",
           }}
+          onClick={e => e.stopPropagation()}
         >
           {/* Bouncing note */}
           <span
@@ -1245,7 +1249,7 @@ export default function FeedCard({ post }: FeedCardProps) {
               {(post as any).audioName}
             </span>
           </div>
-        </div>
+        </a>
       )}
 
       {/* ══ LAYER 7 — CAPTION + POLL + MOOD (video & photo, bottom-left) ══ */}

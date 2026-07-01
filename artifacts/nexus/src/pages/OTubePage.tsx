@@ -779,60 +779,63 @@ function NexusPlayer({ video, onClose, settings, onPip }:
         <SeekFlash side="right" visible={seekRight}/>
         <DanmakuOverlay active={danmaku}/>
 
-        {/* ── RIGHT SIDE ACTION PANEL — screenshot IMG_0634 dizayni ── */}
+        {/* ── RIGHT SIDE ACTION PANEL — auto-hide on idle ── */}
         <div style={{
           position:"absolute", right:0, top:0, bottom:0,
-          width:58,
+          width:48,
           display:"flex", flexDirection:"column", alignItems:"center",
           justifyContent:"center",
-          gap:2, zIndex:22, pointerEvents:"auto",
-          paddingTop:8, paddingBottom:8,
+          gap:1, zIndex:22,
+          paddingTop:6, paddingBottom:6,
           overflowY:"auto", scrollbarWidth:"none",
+          opacity: showCtrl ? 1 : 0,
+          pointerEvents: showCtrl ? "auto" : "none",
+          transition:"opacity 0.25s ease",
         }}>
           {([
             {
-              icon:<ThumbsUp style={{width:19,height:19,fill:liked?"white":"none",color:"white"}}/>,
+              icon:<ThumbsUp style={{width:15,height:15,fill:liked?"white":"none",color:"white"}}/>,
               label:fmt(likesCount), col:"rgba(255,255,255,0.9)", active:liked,
               act:()=>likeMut.mutate({id:video.id}),
             },
             {
-              icon:<ThumbsDown style={{width:19,height:19,fill:disliked?"white":"none",color:"white"}}/>,
+              icon:<ThumbsDown style={{width:15,height:15,fill:disliked?"white":"none",color:"white"}}/>,
               label:"Ko'rmadim", col:"rgba(255,255,255,0.9)", active:disliked,
               act:()=>{setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});},
             },
             {
-              icon:<Share2 style={{width:19,height:19,color:"white"}}/>,
+              icon:<Share2 style={{width:15,height:15,color:"white"}}/>,
               label:"Ulashish", col:"rgba(255,255,255,0.9)", active:shared,
               act:()=>void handleShare(),
             },
             {
-              icon:<Bookmark style={{width:19,height:19,fill:saved?T.violet:"none",color:saved?T.violet:"white"}}/>,
+              icon:<Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"white"}}/>,
               label:"Saqlash", col:saved?T.violet:"rgba(255,255,255,0.9)", active:saved,
               bg:saved?"rgba(120,0,255,0.85)":"rgba(30,30,40,0.75)",
               act:()=>toggleSave(),
             },
             {
-              icon:<MessageCircle style={{width:19,height:19,color:"white"}}/>,
+              icon:<MessageCircle style={{width:15,height:15,color:"white"}}/>,
               label:fmt(video.commentsCount??0), col:"rgba(255,255,255,0.9)", active:showCom,
               act:()=>setShowCom(c=>!c),
             },
             {
-              icon:<Star style={{width:19,height:19,color:"white"}}/>,
+              icon:<Star style={{width:15,height:15,color:"white"}}/>,
               label:"Yordam", col:"rgba(255,255,255,0.9)", active:donating,
               act:()=>{setDonating(d=>!d);setShowMore(false);},
             },
             {
-              icon:<Sparkles style={{width:19,height:19,color:"white"}}/>,
+              icon:<Sparkles style={{width:15,height:15,color:"white"}}/>,
               label:"Reakciya", col:"rgba(255,255,255,0.9)", active:danmaku,
               act:()=>setDanmaku(d=>!d),
             },
             {
-              icon:<Brain style={{width:19,height:19,color:"white"}}/>,
+              icon:<Brain style={{width:15,height:15,color:"white"}}/>,
               label:"AI Dub", col:"rgba(255,255,255,0.9)", active:aiDub,
               act:()=>{setAiDub(d=>!d);setShowMore(false);},
             },
             {
-              icon:<Upload style={{width:19,height:19,color:"white",transform:"rotate(180deg)"}}/>,
+              icon:<Upload style={{width:15,height:15,color:"white",transform:"rotate(180deg)"}}/>,
               label:"Yuklab", col:"rgba(255,255,255,0.9)", active:false,
               act:()=>{
                 if(!video.videoUrl)return;
@@ -842,29 +845,35 @@ function NexusPlayer({ video, onClose, settings, onPip }:
               },
             },
             {
-              icon:<PictureInPicture2 style={{width:19,height:19,color:"white"}}/>,
+              icon:<PictureInPicture2 style={{width:15,height:15,color:"white"}}/>,
               label:"Mini", col:"rgba(255,255,255,0.9)", active:false,
               act:()=>void handlePip(),
             },
+            ...(isOwner ? [{
+              icon:<Trash2 style={{width:15,height:15,color:"#ff4444"}}/>,
+              label:"O'chirish", col:"#ff6666", active:false,
+              bg:"rgba(255,30,30,0.18)",
+              act:()=>setConfirmDelete(true),
+            }] : []),
           ] as Array<{icon:React.ReactNode;label:string;col:string;active:boolean;bg?:string;act:()=>void}>)
             .map((b,i)=>(
             <motion.button key={i} whileTap={{scale:0.82}}
               onClick={(e)=>{e.stopPropagation();b.act();}}
               style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-                padding:"5px 0",width:"100%"}}>
+                padding:"4px 0",width:"100%"}}>
               <div style={{
-                width:42,height:42,borderRadius:"50%",
+                width:34,height:34,borderRadius:"50%",
                 background:b.bg??(b.active?"rgba(60,60,80,0.9)":"rgba(30,30,40,0.75)"),
                 backdropFilter:"blur(16px)",
                 border:`1px solid ${b.active?"rgba(255,255,255,0.25)":"rgba(255,255,255,0.12)"}`,
                 display:"flex",alignItems:"center",justifyContent:"center",
-                boxShadow:"0 2px 10px rgba(0,0,0,0.55)",
+                boxShadow:"0 2px 8px rgba(0,0,0,0.55)",
               }}>
                 {b.icon}
               </div>
-              <span style={{fontSize:9,fontWeight:600,color:b.col,
+              <span style={{fontSize:8,fontWeight:600,color:b.col,
                 textShadow:"0 1px 4px rgba(0,0,0,0.95)",lineHeight:1.2,textAlign:"center",
-                maxWidth:50,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                maxWidth:44,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                 {b.label}
               </span>
             </motion.button>

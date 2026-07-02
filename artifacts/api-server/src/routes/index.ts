@@ -40,6 +40,8 @@ import platformCostsRouter from "./platformCosts";
 import aiAutopilotRouter from "./aiAutopilot";
 import monetizationRouter from "./monetization";
 import gifsRouter from "./gifs";
+import treasuryRouter from "./treasury";
+import aiAdminActionsRouter from "./aiAdminActions";
 
 const router: IRouter = Router();
 
@@ -84,5 +86,7 @@ router.use(platformCostsRouter);
 router.use(aiAutopilotRouter);
 router.use(monetizationRouter);
 router.use(gifsRouter);
+router.use(treasuryRouter);
+router.use(aiAdminActionsRouter);
 
 export default router;

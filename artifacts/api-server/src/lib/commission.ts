@@ -1,6 +1,7 @@
 import { db } from "@workspace/db";
 import { platformSettingsTable, walletsTable, transactionsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { creditTreasury } from "../routes/treasury";
 
 const DEFAULT_COMMISSION_RATE = 10; // %
 
@@ -91,6 +92,14 @@ export async function applyCommission(
       amount: commission,
       status: "completed",
       paymentMethod: "internal",
+      description: `Komissiya (${rate}%) — foydalanuvchi #${fromUserId} ${type}`,
+      reference: `COM-${ref}`,
+    });
+
+    // Mirror commission to platform treasury
+    await creditTreasury({
+      amount: commission,
+      source: type === "deposit" ? "other" : "marketplace",
       description: `Komissiya (${rate}%) — foydalanuvchi #${fromUserId} ${type}`,
       reference: `COM-${ref}`,
     });

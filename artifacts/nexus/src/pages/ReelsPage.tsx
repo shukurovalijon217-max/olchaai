@@ -816,8 +816,11 @@ function ReelSlide({
             {/* Follow btn */}
             <motion.button whileTap={{ scale: 0.88 }}
               className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[12px] font-black flex-shrink-0"
-              style={{ background: `${neonColor}`, color: "#000",
-                boxShadow: `0 0 16px ${neonColor}66, 0 2px 8px rgba(0,0,0,0.5)` }}>
+              style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(14px)",
+                WebkitBackdropFilter: "blur(14px)",
+                border: `1px solid ${neonColor}55`,
+                color: "#fff",
+                boxShadow: `0 0 12px ${neonColor}33, inset 0 1px 0 rgba(255,255,255,0.18)` }}>
               <Plus className="w-3.5 h-3.5" /> Obuna
             </motion.button>
           </div>

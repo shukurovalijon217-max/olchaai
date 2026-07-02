@@ -677,142 +677,124 @@ export default function FeedCard({ post, index }: FeedCardProps) {
         </>
       )}
 
-      {/* ═══ LAYER 10: TOP OVERLAY — avatar (always) + controls (on tap) ═══ */}
-      <div className="absolute top-0 left-0 right-0"
-        style={{ zIndex: 18, paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)" }}>
+      {/* ═══ LAYER 10: TOP UI — avatar (always) + subscribe (always) + tap overlay ═══ */}
+      <div className="absolute top-0 left-0 right-0" style={{ zIndex: 18 }}>
 
-        {/* Author avatar — top-left, only when overlay is hidden */}
-        <AnimatePresence>
-          {!overlayVisible && (
-            <motion.div
-              key="avatar-solo"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              className="absolute left-3"
-              style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)", zIndex: 19 }}
+        {/* ── Avatar — ALWAYS visible, top-left ── */}
+        <div
+          className="absolute left-3"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)", zIndex: 20 }}
+        >
+          <div
+            className="relative cursor-pointer"
+            style={{ width: 40, height: 40 }}
+            onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
+          >
+            <div className="absolute inset-[-2px] rounded-full pointer-events-none"
+              style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
+            <div className="absolute inset-[2.5px] rounded-full overflow-hidden z-10 flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
+              {post.author?.avatarUrl
+                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        {/* ── Subscribe — ALWAYS visible, top-right (only for other users' posts) ── */}
+        {!isOwner && (
+          <div
+            className="absolute right-3"
+            style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)", zIndex: 20 }}
+          >
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={(e) => { e.stopPropagation(); setSubscribed(s => !s); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[11px] font-black"
+              style={{
+                background: subscribed ? `${accent}22` : "rgba(0,0,0,0.45)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+                border: subscribed ? `1px solid ${accent}66` : "1px solid rgba(255,255,255,0.22)",
+                color: subscribed ? accent : "rgba(255,255,255,0.92)",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.35)",
+              }}
             >
-              <div
-                className="relative cursor-pointer"
-                style={{ width: 38, height: 38 }}
-                onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
-              >
-                <div className="absolute inset-[-1.5px] rounded-full pointer-events-none"
-                  style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
-                <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
-                  {post.author?.avatarUrl
-                    ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
-                    : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
-                  }
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {subscribed ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+              {subscribed ? "Obuna" : "+ Obuna"}
+            </motion.button>
+          </div>
+        )}
 
-        {/* Tap overlay: back + avatar + name + subscribe (replaces solo avatar) */}
+        {/* ── Tap overlay: gradient bg + author name appears between avatar and subscribe ── */}
         <AnimatePresence>
           {overlayVisible && (
             <motion.div
               key="top-overlay"
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="flex items-center gap-2 px-3"
-              style={{
-                background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)",
-                paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)",
-                paddingBottom: 10,
-              }}
-              onPointerDown={e => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-0 left-0 right-0 pointer-events-none"
+              style={{ zIndex: 19 }}
             >
-              {/* Back arrow */}
-              <motion.button
-                whileTap={{ scale: 0.82 }}
-                onClick={(e) => { e.stopPropagation(); window.history.back(); }}
-                className="flex items-center justify-center flex-shrink-0"
-                style={{
-                  width: 34, height: 34, borderRadius: "50%",
-                  background: "rgba(0,0,0,0.35)",
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                }}
-              >
-                <ChevronLeft className="w-5 h-5 text-white" />
-              </motion.button>
-
-              {/* Avatar (inside overlay row) */}
-              <div
-                className="relative flex-shrink-0 cursor-pointer"
-                style={{ width: 34, height: 34 }}
-                onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
-              >
-                <div className="absolute inset-[-1.5px] rounded-full pointer-events-none"
-                  style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
-                <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
-                  {post.author?.avatarUrl
-                    ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
-                    : <span className="text-[10px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
-                  }
-                </div>
-              </div>
-
-              {/* Author name + username */}
-              <div
-                className="flex-1 min-w-0 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
-              >
-                <div className="flex items-center gap-1">
-                  <span className="text-white font-black text-[13px] truncate"
-                    style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
-                    {post.author?.displayName ?? "OlCha"}
-                  </span>
-                  {(post.author as any)?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: accent }} />}
-                </div>
-                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  @{post.author?.username ?? "user"}
-                </span>
-              </div>
-
-              {/* Subscribe button */}
-              {!isOwner && (
-                <motion.button
-                  whileTap={{ scale: 0.88 }}
-                  onClick={(e) => { e.stopPropagation(); setSubscribed(s => !s); showSubscribeBriefly(); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[11px] font-black flex-shrink-0"
-                  style={{
-                    background: "rgba(255,255,255,0.13)",
-                    backdropFilter: "blur(24px)",
-                    WebkitBackdropFilter: "blur(24px)",
-                    border: subscribed ? `1px solid ${accent}66` : "1px solid rgba(255,255,255,0.26)",
-                    color: subscribed ? accent : "rgba(255,255,255,0.92)",
-                    boxShadow: "0 2px 14px rgba(0,0,0,0.28)",
-                  }}
+              <div style={{
+                background: "linear-gradient(to bottom, rgba(0,0,0,0.58) 0%, transparent 100%)",
+                paddingTop: "calc(env(safe-area-inset-top, 0px) + 4px)",
+                paddingBottom: 14,
+                paddingLeft: 60,
+                paddingRight: !isOwner ? 110 : 16,
+              }}>
+                <div
+                  className="flex flex-col justify-center cursor-pointer pointer-events-auto"
+                  style={{ minHeight: 40 }}
+                  onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
                 >
-                  {subscribed ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-                  {subscribed ? "Obuna" : "+ Obuna"}
-                </motion.button>
-              )}
-
-              {/* Timestamp pill */}
-              {post.createdAt && (
-                <span className="text-[9px] flex-shrink-0" style={{ color: "rgba(255,255,255,0.35)" }}>
-                  {(() => {
-                    const diff = Date.now() - new Date(post.createdAt).getTime();
-                    return diff < 3600000 ? `${Math.floor(diff / 60000)}d`
-                      : diff < 86400000 ? `${Math.floor(diff / 3600000)}s`
-                      : `${Math.floor(diff / 86400000)}k`;
-                  })()}
-                </span>
-              )}
+                  <div className="flex items-center gap-1">
+                    <span className="text-white font-black text-[13px] truncate"
+                      style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
+                      {post.author?.displayName ?? "OlCha"}
+                    </span>
+                    {(post.author as any)?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: accent }} />}
+                  </div>
+                  <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.42)" }}>
+                    @{post.author?.username ?? "user"}
+                  </span>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Back arrow — appears on tap, overlays the avatar ── */}
+        <AnimatePresence>
+          {overlayVisible && (
+            <motion.button
+              key="back-btn"
+              initial={{ opacity: 0, scale: 0.75 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.75 }}
+              transition={{ duration: 0.18 }}
+              whileTap={{ scale: 0.82 }}
+              onClick={(e) => { e.stopPropagation(); window.history.back(); }}
+              className="absolute left-3 flex items-center justify-center"
+              style={{
+                top: "calc(env(safe-area-inset-top, 0px) + 10px)",
+                width: 40, height: 40, borderRadius: "50%",
+                background: "rgba(0,0,0,0.62)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.16)",
+                zIndex: 21,
+              }}
+              onPointerDown={e => e.stopPropagation()}
+            >
+              <ChevronLeft className="w-5 h-5 text-white" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
       </div>
 
       {/* ═══ LAYER 20: RIGHT ORB COLUMN — tap to show ═══ */}

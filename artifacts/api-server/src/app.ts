@@ -10,6 +10,7 @@ import { WebhookHandlers } from "./stripe/webhookHandlers";
 import { creditTreasury } from "./routes/treasury";
 import { systemMonitor, normalisePath } from "./lib/systemMonitor";
 import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
+import { securityShield } from "./middlewares/securityShield";
 
 const app: Express = express();
 
@@ -106,8 +107,8 @@ app.post(
   }
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
 const isProd = process.env["NODE_ENV"] === "production";
 const PgSession = connectPgSimple(session);
@@ -129,6 +130,9 @@ app.use(session({
     sameSite: isProd ? "none" : "lax",
   },
 }));
+
+/* ── NEXUS Security Shield — Pentagon-grade auto-defense ─────── */
+app.use(securityShield);
 
 /* ── Mobile Bearer token auth: HMAC-signed token ──────────────── */
 app.use("/api", (req: Request, res: Response, next: NextFunction) => {

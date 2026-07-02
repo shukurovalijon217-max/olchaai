@@ -42,6 +42,7 @@ import monetizationRouter from "./monetization";
 import gifsRouter from "./gifs";
 import treasuryRouter from "./treasury";
 import aiAdminActionsRouter from "./aiAdminActions";
+import securityRouter from "./security";
 
 const router: IRouter = Router();
 
@@ -88,5 +89,6 @@ router.use(monetizationRouter);
 router.use(gifsRouter);
 router.use(treasuryRouter);
 router.use(aiAdminActionsRouter);
+router.use(securityRouter);
 
 export default router;

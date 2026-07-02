@@ -32,28 +32,42 @@ if (cluster.isPrimary) {
       logger.warn("DATABASE_URL not set — skipping Stripe init");
       return;
     }
-    try {
-      // Only primary-like worker (id=1) runs migrations to avoid race
-      if (cluster.worker?.id === 1) {
-        logger.info("Initializing Stripe schema...");
-        await runMigrations({ databaseUrl });
-        logger.info("Stripe schema ready");
+    // Only worker 1 (or single-process) handles Stripe setup
+    if (cluster.worker?.id !== 1) return;
+
+    // Retry helper — Stripe migrations sometimes need a moment to commit
+    const retry = async <T>(fn: () => Promise<T>, attempts = 3, delayMs = 2000): Promise<T> => {
+      for (let i = 0; i < attempts; i++) {
+        try { return await fn(); }
+        catch (err) {
+          if (i === attempts - 1) throw err;
+          logger.warn({ attempt: i + 1, err }, "Retrying Stripe init step...");
+          await new Promise(r => setTimeout(r, delayMs));
+        }
       }
+      throw new Error("unreachable");
+    };
+
+    try {
+      logger.info("Initializing Stripe schema...");
+      await retry(() => runMigrations({ databaseUrl }));
+      logger.info("Stripe schema ready");
 
       const stripeSync = await getStripeSync();
       const domain = process.env.REPLIT_DOMAINS?.split(",")[0];
-      if (domain && cluster.worker?.id === 1) {
-        await stripeSync.findOrCreateManagedWebhook(`https://${domain}/api/stripe/webhook`);
+      if (domain) {
+        await retry(() =>
+          stripeSync.findOrCreateManagedWebhook(`https://${domain}/api/stripe/webhook`)
+        );
         logger.info("Stripe webhook configured");
       }
 
-      if (cluster.worker?.id === 1) {
-        stripeSync.syncBackfill()
-          .then(() => logger.info("Stripe data synced"))
-          .catch((err) => logger.warn({ err }, "Stripe backfill error (non-fatal)"));
-      }
+      stripeSync.syncBackfill()
+        .then(() => logger.info("Stripe data synced"))
+        .catch((err) => logger.warn({ err }, "Stripe backfill error (non-fatal)"));
+
     } catch (err) {
-      logger.warn({ err }, "Stripe init failed (non-fatal) — check Stripe integration");
+      logger.warn({ err }, "Stripe init failed (non-fatal) — payments may be unavailable");
     }
   }
 

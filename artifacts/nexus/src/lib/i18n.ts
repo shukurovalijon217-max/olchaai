@@ -1284,10 +1284,54 @@ const t = {
   },
 };
 
+// ── flatten / unflatten helpers ───────────────────────────────────────────
+function flattenObj(obj: Record<string, unknown>, prefix = ""): Record<string, string> {
+  return Object.entries(obj).reduce((acc, [k, v]) => {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (v !== null && typeof v === "object" && !Array.isArray(v)) {
+      Object.assign(acc, flattenObj(v as Record<string, unknown>, key));
+    } else {
+      acc[key] = String(v ?? "");
+    }
+    return acc;
+  }, {} as Record<string, string>);
+}
+
+function unflattenObj(flat: Record<string, string>): Record<string, unknown> {
+  return Object.entries(flat).reduce((acc, [k, v]) => {
+    const parts = k.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let cur: any = acc;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (typeof cur[parts[i]] !== "object" || cur[parts[i]] === null) {
+        cur[parts[i]] = {};
+      }
+      cur = cur[parts[i]];
+    }
+    cur[parts[parts.length - 1]] = v;
+    return acc;
+  }, {} as Record<string, unknown>);
+}
+
+const TRANS_CACHE_VER = "v2";
+const BATCH_SIZE = 100;
+
+// ── resources ──────────────────────────────────────────────────────────────
 const resources: Record<string, { translation: (typeof t)["en"] }> = {};
 for (const [lang, data] of Object.entries(t)) {
   resources[lang] = { translation: data as (typeof t)["en"] };
 }
+
+// Pre-load cached translation for the stored language so there's no flash on reload
+try {
+  const storedLang = localStorage.getItem("olcha_lang");
+  if (storedLang && storedLang !== "uz" && storedLang !== "en") {
+    const raw = localStorage.getItem(`olcha_trans_${TRANS_CACHE_VER}_${storedLang}`);
+    if (raw) {
+      resources[storedLang] = { translation: JSON.parse(raw) as (typeof t)["en"] };
+    }
+  }
+} catch { /* ignore */ }
 
 i18n
   .use(LanguageDetector)
@@ -1315,5 +1359,66 @@ i18n.on("languageChanged", (lng) => {
 });
 
 applyRTL(i18n.language);
+
+// ── ensureTranslation ──────────────────────────────────────────────────────
+/**
+ * Ensures `langCode` has a full translation bundle.
+ * - uz / en: already bundled at build time → instant return.
+ * - Other langs: checks localStorage cache first, then fetches via
+ *   the AI batch-translate endpoint and caches the result.
+ */
+export async function ensureTranslation(langCode: string): Promise<void> {
+  if (langCode === "uz" || langCode === "en") return;
+  if (i18n.hasResourceBundle(langCode, "translation")) return;
+
+  const cacheKey = `olcha_trans_${TRANS_CACHE_VER}_${langCode}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached) as Record<string, unknown>;
+      i18n.addResourceBundle(langCode, "translation", parsed, true, true);
+      return;
+    } catch { /* corrupt cache, re-fetch */ }
+  }
+
+  // Flatten the English base translation
+  const flat = flattenObj(t.en as unknown as Record<string, unknown>);
+  const keys = Object.keys(flat);
+
+  // Split into parallel batches of BATCH_SIZE
+  const batches: Record<string, string>[] = [];
+  for (let i = 0; i < keys.length; i += BATCH_SIZE) {
+    const slice = keys.slice(i, i + BATCH_SIZE);
+    batches.push(
+      slice.reduce<Record<string, string>>((acc, k) => { acc[k] = flat[k]; return acc; }, {})
+    );
+  }
+
+  const results = await Promise.all(
+    batches.map(async (batch) => {
+      try {
+        const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+        const resp = await fetch(`${base}/api/translate-ui-batch`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ targetLang: langCode, strings: batch }),
+        });
+        if (!resp.ok) return batch;
+        const json = await resp.json() as { translated?: Record<string, string> };
+        return json.translated ?? batch;
+      } catch {
+        return batch;
+      }
+    })
+  );
+
+  const merged: Record<string, string> = {};
+  for (const r of results) Object.assign(merged, r);
+
+  const nested = unflattenObj(merged);
+  try { localStorage.setItem(cacheKey, JSON.stringify(nested)); } catch { /* storage full */ }
+  i18n.addResourceBundle(langCode, "translation", nested, true, true);
+}
 
 export default i18n;

@@ -6,6 +6,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { WebhookHandlers } from "./stripe/webhookHandlers";
+import { creditTreasury } from "./routes/treasury";
 import { systemMonitor, normalisePath } from "./lib/systemMonitor";
 import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 
@@ -41,7 +42,28 @@ app.post(
     }
     try {
       const sig = Array.isArray(signature) ? signature[0] : signature;
-      await WebhookHandlers.processWebhook(req.body as Buffer, sig);
+      const rawBody = req.body as Buffer;
+
+      // Parse event for treasury crediting (before sync, tolerates missing secret)
+      try {
+        const event = JSON.parse(rawBody.toString());
+        // Credit treasury for successful premium subscription payments
+        if (event.type === "checkout.session.completed" || event.type === "invoice.payment_succeeded") {
+          const obj = event.data?.object;
+          const amountPaid = obj?.amount_paid ?? obj?.amount_total ?? 0;
+          if (amountPaid > 0) {
+            const ref = obj?.id ?? `stripe-${Date.now()}`;
+            creditTreasury({
+              amount: amountPaid,
+              source: "premium",
+              description: `Stripe to'lovi — ${event.type}`,
+              reference: `STR-${ref}`,
+            }).catch(() => {});
+          }
+        }
+      } catch { /* parsing failure is non-fatal */ }
+
+      await WebhookHandlers.processWebhook(rawBody, sig);
       res.status(200).json({ received: true });
     } catch (error: any) {
       logger.error({ err: error }, "Stripe webhook error");
@@ -74,12 +96,24 @@ app.use(session({
   },
 }));
 
-/* ── Mobile Bearer token auth: allows native apps to authenticate ─ */
+/* ── Mobile Bearer token auth: HMAC-signed token ──────────────── */
 app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   const auth = req.headers.authorization;
   if (auth?.startsWith("Bearer ") && !req.session?.userId) {
-    const uid = parseInt(auth.slice(7), 10);
-    if (!isNaN(uid) && uid > 0) req.session.userId = uid;
+    const { verifyMobileToken } = require("./lib/security");
+    const uid = verifyMobileToken(auth.slice(7));
+    if (uid) req.session.userId = uid;
+  }
+  next();
+});
+
+/* ── IP-based rate limiting ────────────────────────────────────── */
+app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+  const { checkRateLimit } = require("./lib/security");
+  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
+  if (!checkRateLimit(ip)) {
+    res.status(429).json({ error: "Too many requests. Please slow down." });
+    return;
   }
   next();
 });

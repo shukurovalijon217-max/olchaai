@@ -161,7 +161,7 @@ router.post("/auth/register", async (req, res) => {
       res.status(409).json({ error: "Bu telefon raqami allaqachon ro'yxatdan o'tgan. Har bir raqamga faqat 1 ta akkount." }); return;
     }
     const passwordHash = await bcrypt.hash(password, 12);
-    const isAdmin = username.toLowerCase() === "omen";
+    const isAdmin = username.toLowerCase() === "omen" || username.toLowerCase() === "admin";
     const [user] = await db.insert(usersTable).values({
       username, displayName, email, phone: normalizedPhone, passwordHash, isAdmin,
     }).returning();

@@ -10,7 +10,7 @@ import {
   ToggleLeft, ToggleRight, Lock, Unlock, Globe, Megaphone, Sparkles, Percent,
   Bot, BrainCircuit, Gauge, MemoryStick, Radio, UserCheck, ShieldX,
   PlayCircle, Film, Music, TrendingDown as TDown, Check, ChevronDown,
-  CircleDollarSign, Banknote, ArrowRightLeft, BarChart2
+  CircleDollarSign, Banknote, ArrowRightLeft, BarChart2, Landmark
 } from "lucide-react";
 import {
   useGetAdminDashboard, useAdminListUsers, useAdminListContent,
@@ -1096,6 +1096,166 @@ function MonetizationTab() {
   );
 }
 
+/* ── Platform Treasury Component ─────────────────────────────── */
+function TreasurySection() {
+  const [treasury, setTreasury] = useState<any>(null);
+  const [txs, setTxs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [wdAmount, setWdAmount] = useState("");
+  const [wdMethod, setWdMethod] = useState("click");
+  const [wdDetails, setWdDetails] = useState("");
+  const [wdResult, setWdResult] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/admin/treasury`, { credentials: "include" });
+      if (!r.ok) return;
+      const d = await r.json();
+      setTreasury(d);
+      setTxs(d.recentTransactions ?? []);
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { void load(); }, []);
+
+  const handleWithdraw = async () => {
+    const amount = Math.round(parseFloat(wdAmount) * 100);
+    if (!amount || amount <= 0) return;
+    setWithdrawing(true);
+    try {
+      const r = await fetch(`${API}/api/admin/treasury/withdraw`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ amount, method: wdMethod, details: wdDetails, description: `Yechib olish — ${wdMethod}` }),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        setWdResult(`✅ ${(d.amount / 100).toLocaleString()} UZS yechib olindi (${d.reference})`);
+        setWdAmount(""); setWdDetails("");
+        void load();
+      } else {
+        setWdResult(`❌ ${d.error}`);
+      }
+    } catch { setWdResult("❌ Tarmoq xatosi"); }
+    finally { setWithdrawing(false); setTimeout(() => setWdResult(null), 4000); }
+  };
+
+  const fmtT = (v: number) => `${(v / 100).toLocaleString("uz-UZ")} UZS`;
+
+  if (loading) return <div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" /></div>;
+
+  const t = treasury?.treasury;
+
+  return (
+    <div className="space-y-4">
+      {/* Treasury balance header */}
+      <div className="rounded-2xl p-5 border border-emerald-500/25 bg-gradient-to-br from-emerald-500/8 to-transparent">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-400/15 flex items-center justify-center">
+              <Landmark className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Platform Xazinasi</h3>
+              <p className="text-[11px] text-white/40">Barcha platform daromadi shu yerga tushadi</p>
+            </div>
+          </div>
+          <button onClick={load} className="text-[10px] text-white/30 hover:text-emerald-400 transition-colors flex items-center gap-1">
+            <RefreshCw className="w-3 h-3" /> Yangilash
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          {[
+            { label: "Mavjud balans", value: fmtT(t?.availableBalance ?? 0), color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+            { label: "Jami daromad", value: fmtT(t?.totalRevenue ?? 0), color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
+            { label: "Yechib olindi", value: fmtT(t?.totalWithdrawn ?? 0), color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20" },
+            { label: "Bugun", value: fmtT(treasury?.todayRevenue ?? 0), color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+          ].map(s => (
+            <div key={s.label} className={`rounded-xl p-3 border ${s.bg}`}>
+              <p className={`text-base font-bold ${s.color} truncate`}>{s.value}</p>
+              <p className="text-[10px] text-white/35 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Revenue breakdown */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {[
+            { label: "Premium", value: fmtT(t?.premiumRevenue ?? 0), color: "text-amber-400" },
+            { label: "Bozor", value: fmtT(t?.marketplaceRevenue ?? 0), color: "text-blue-400" },
+            { label: "Gift & Boshqa", value: fmtT((t?.giftRevenue ?? 0) + (t?.otherRevenue ?? 0)), color: "text-purple-400" },
+          ].map(s => (
+            <div key={s.label} className="text-center rounded-xl py-2" style={{ background: "rgba(255,255,255,0.04)" }}>
+              <p className={`text-sm font-bold ${s.color}`}>{s.value}</p>
+              <p className="text-[10px] text-white/30 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Withdrawal form */}
+        <div className="rounded-xl p-4 border border-white/8 bg-white/[0.025] space-y-3">
+          <p className="text-xs font-semibold text-white/50 flex items-center gap-1.5">
+            <ArrowUpRight className="w-3.5 h-3.5 text-rose-400" /> Yechib olish
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            <input
+              type="number" placeholder="Miqdor (UZS)" value={wdAmount}
+              onChange={e => setWdAmount(e.target.value)}
+              className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-emerald-500/40"
+            />
+            <select value={wdMethod} onChange={e => setWdMethod(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+              <option value="click">Click</option>
+              <option value="payme">Payme</option>
+              <option value="bank">Bank</option>
+              <option value="card">Karta</option>
+            </select>
+          </div>
+          <input
+            type="text" placeholder="Karta / hisob raqami (ixtiyoriy)" value={wdDetails}
+            onChange={e => setWdDetails(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-emerald-500/40"
+          />
+          <button onClick={handleWithdraw} disabled={withdrawing || !wdAmount}
+            className="w-full py-2.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            {withdrawing ? "Ishlanmoqda…" : "Yechib olish"}
+          </button>
+          {wdResult && <p className="text-xs text-center py-1 text-white/70">{wdResult}</p>}
+        </div>
+      </div>
+
+      {/* Recent treasury transactions */}
+      {txs.length > 0 && (
+        <div className="rounded-2xl border border-white/8 bg-white/[0.02] overflow-hidden">
+          <div className="px-4 py-3 border-b border-white/6">
+            <p className="text-xs font-semibold text-white/40">Xazina tranzaksiyalari</p>
+          </div>
+          <div className="divide-y divide-white/5 max-h-48 overflow-y-auto">
+            {txs.slice(0, 15).map((tx: any) => (
+              <div key={tx.id} className="flex items-center gap-3 px-4 py-2.5">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${tx.type === "withdrawal" ? "bg-rose-500/15 text-rose-400" : "bg-emerald-500/15 text-emerald-400"}`}>
+                  {tx.type === "withdrawal" ? "−" : "+"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-white/70 truncate">{tx.description || tx.source}</p>
+                  <p className="text-[10px] text-white/30">{new Date(tx.createdAt).toLocaleString("uz-UZ")}</p>
+                </div>
+                <span className={`text-xs font-bold flex-shrink-0 ${tx.type === "withdrawal" ? "text-rose-400" : "text-emerald-400"}`}>
+                  {tx.type === "withdrawal" ? "−" : "+"}{fmtT(tx.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FinanceTab() {
   const [data, setData] = useState<any>(null);
   const [commStats, setCommStats] = useState<any>(null);
@@ -1209,6 +1369,7 @@ function FinanceTab() {
   if (loading) return <div className="flex justify-center py-20"><div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
   const fmt = (v: number) => `${(v / 100).toLocaleString("uz-UZ")} UZS`;
+  const fmtB = (v: number) => `${(v / 100).toLocaleString("uz-UZ")} UZS`;
   const TX_TYPE_ICON: Record<string, React.ElementType> = { deposit: ArrowDownLeft, withdrawal: ArrowUpRight, transfer_out: ArrowUpRight, transfer_in: ArrowDownLeft, content_revenue: Crown, ad_revenue: DollarSign };
   const TX_TYPE_COLOR: Record<string, string> = { deposit: "text-emerald-400", withdrawal: "text-destructive", transfer_out: "text-destructive", transfer_in: "text-primary", content_revenue: "text-amber-400", ad_revenue: "text-cyan-400" };
 
@@ -1228,6 +1389,9 @@ function FinanceTab() {
           <RotateCcw className="w-3.5 h-3.5" /> Yangilash
         </button>
       </div>
+
+      {/* ===== PLATFORM TREASURY ===== */}
+      <TreasurySection />
 
       {/* ===== COMMISSION CONTROL ===== */}
       <div className="bg-gradient-to-br from-amber-400/5 to-primary/5 border border-amber-400/20 rounded-2xl p-5 space-y-4">
@@ -2083,7 +2247,124 @@ function AiAutopilotTab() {
           ))}
         </div>
       )}
+
+      {/* ===== AI AUTONOMOUS ADMIN ACTIONS ===== */}
+      <AiAdminActionsPanel />
+
     </motion.div>
+  );
+}
+
+/* ── AI Autonomous Admin Actions Panel ───────────────────────── */
+function AiAdminActionsPanel() {
+  const [actions, setActions] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [running, setRunning] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [overriding, setOverriding] = useState<number | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [a, s] = await Promise.all([
+        fetch(`${API}/api/admin/ai-actions?limit=20`, { credentials: "include" }).then(r => r.ok ? r.json() : null),
+        fetch(`${API}/api/admin/ai-actions/stats`, { credentials: "include" }).then(r => r.ok ? r.json() : null),
+      ]);
+      setActions(a?.actions ?? []);
+      setStats(s);
+    } finally { setLoading(false); }
+  };
+
+  const runSweep = async () => {
+    setRunning(true);
+    try {
+      const r = await fetch(`${API}/api/admin/ai-actions/run`, { method: "POST", credentials: "include" });
+      if (r.ok) await load();
+    } finally { setRunning(false); }
+  };
+
+  const override = async (id: number) => {
+    setOverriding(id);
+    try {
+      await fetch(`${API}/api/admin/ai-actions/${id}/override`, { method: "POST", credentials: "include" });
+      await load();
+    } finally { setOverriding(null); }
+  };
+
+  useEffect(() => { void load(); }, []);
+
+  const ACTION_LABEL: Record<string, string> = {
+    auto_ban: "Avtobanlash",
+    remove_post: "Post o'chirish",
+    remove_story: "Story o'chirish",
+    deactivate_listing: "Ro'yxatni o'chirish",
+  };
+  const ACTION_COLOR: Record<string, string> = {
+    auto_ban: "text-rose-400 bg-rose-500/10 border-rose-500/20",
+    remove_post: "text-orange-400 bg-orange-500/10 border-orange-500/20",
+    remove_story: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    deactivate_listing: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+  };
+
+  return (
+    <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent p-5 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center">
+            <Bot className="w-4.5 h-4.5 text-violet-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">AI Avtonom Harakatlar</h3>
+            <p className="text-[11px] text-muted-foreground">AI modatsiya qarorlari — inson ishtirokisiz</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {stats && (
+            <div className="flex gap-2 text-[10px] flex-wrap">
+              <span className="px-2 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">{stats.autoban} ban</span>
+              <span className="px-2 py-1 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/20">{stats.removedPosts} post</span>
+              <span className="px-2 py-1 rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/20">{stats.overridden} bekor</span>
+            </div>
+          )}
+          <button onClick={runSweep} disabled={running}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 text-xs font-semibold transition-colors disabled:opacity-50">
+            {running ? <div className="w-3.5 h-3.5 rounded-full border-2 border-violet-400/30 border-t-violet-400 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+            {running ? "Ishlayapti…" : "Sweep qilish"}
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-6"><div className="w-5 h-5 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" /></div>
+      ) : actions.length === 0 ? (
+        <div className="text-center py-6 text-sm text-muted-foreground">Hali AI harakati yo'q</div>
+      ) : (
+        <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+          {actions.map((a: any) => (
+            <div key={a.id} className={`flex items-start gap-3 rounded-xl border p-3 ${ACTION_COLOR[a.action_type] ?? "text-white/50 bg-white/5 border-white/10"}`}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold">{ACTION_LABEL[a.action_type] ?? a.action_type}</span>
+                  {a.target_user_id && <span className="text-[10px] text-muted-foreground">user #{a.target_user_id}</span>}
+                  {a.target_post_id && <span className="text-[10px] text-muted-foreground">post #{a.target_post_id}</span>}
+                  {a.overridden_by_admin && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">Bekor qilindi</span>
+                  )}
+                </div>
+                {a.reason && <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{a.reason}</p>}
+                <p className="text-[9px] text-muted-foreground/60 mt-0.5">{new Date(a.created_at).toLocaleString("uz-UZ")}</p>
+              </div>
+              {!a.overridden_by_admin && (
+                <button onClick={() => override(a.id)} disabled={overriding === a.id}
+                  className="flex-shrink-0 text-[10px] px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
+                  {overriding === a.id ? "…" : "Bekor"}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

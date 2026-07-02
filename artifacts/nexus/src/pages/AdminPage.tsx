@@ -2413,9 +2413,21 @@ export default function AdminPage() {
   const { data: analytics } = useGetAdminAnalytics({ period: "7d" });
   const { data: aiStatus } = useGetAiSystemStatus();
   const { status: aiCore, events: aiCoreEvents, online: aiCoreOnline, lastRefresh: aiCoreRefresh } = useAiCore();
+  const [aiUsageStats, setAiUsageStats] = useState<any>(null);
+  const [aiUsageLoading, setAiUsageLoading] = useState(false);
   const suspend = useSuspendUser();
   const togglePremium = useTogglePremium();
   const qc = useQueryClient();
+
+  useEffect(() => {
+    if (openPanel === "ai" && !aiUsageStats && !aiUsageLoading) {
+      setAiUsageLoading(true);
+      fetch(`${API}/api/admin/ai-usage`, { credentials: "include" })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setAiUsageStats(d); })
+        .finally(() => setAiUsageLoading(false));
+    }
+  }, [openPanel]);
 
   const handleSuspend = (id: number, isSuspended: boolean) => {
     suspend.mutate({ id, data: { suspend: !isSuspended } }, {
@@ -2921,6 +2933,86 @@ export default function AdminPage() {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  </AdminSF>
+
+                  {/* ── AI Premium Usage Stats ── */}
+                  <AdminSF>
+                    <div className="rounded-2xl p-4 border border-violet-500/20 bg-violet-500/5">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-semibold text-white/50 flex items-center gap-2">
+                          <Cpu className="w-3.5 h-3.5 text-violet-400" /> AI Premium — Foydalanish statistikasi
+                        </p>
+                        <button
+                          onClick={() => { setAiUsageStats(null); setAiUsageLoading(true);
+                            fetch(`${API}/api/admin/ai-usage`, { credentials: "include" })
+                              .then(r => r.ok ? r.json() : null).then(d => { if (d) setAiUsageStats(d); })
+                              .finally(() => setAiUsageLoading(false)); }}
+                          className="text-[10px] text-violet-400/60 hover:text-violet-400 transition-colors flex items-center gap-1"
+                        >
+                          <RefreshCw className="w-3 h-3" /> Yangilash
+                        </button>
+                      </div>
+                      {aiUsageLoading ? (
+                        <div className="flex justify-center py-4">
+                          <div className="w-5 h-5 rounded-full border-2 border-violet-400/30 border-t-violet-400 animate-spin" />
+                        </div>
+                      ) : aiUsageStats ? (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {[
+                              { label: "Jami foydalanuvchi",  value: aiUsageStats.totalUsers,        color: "text-white" },
+                              { label: "Premium",              value: aiUsageStats.premiumUsers,      color: "text-amber-400" },
+                              { label: "Limitga yetganlar",   value: aiUsageStats.freeUsersAtLimit,  color: "text-rose-400" },
+                              { label: "Jami AI so'rovlar",   value: aiUsageStats.totalAiCalls,      color: "text-violet-400" },
+                            ].map(s => (
+                              <div key={s.label} className="text-center rounded-xl py-2.5 px-2" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                                <p className={`text-base font-bold ${s.color}`}>{s.value}</p>
+                                <p className="text-[10px] text-white/35 mt-0.5 leading-tight">{s.label}</p>
+                              </div>
+                            ))}
+                          </div>
+                          {/* Free tier progress */}
+                          <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[11px] text-white/40">Bepul limitga yetgan foydalanuvchilar</span>
+                              <span className="text-[11px] text-rose-400 font-semibold">
+                                {aiUsageStats.totalUsers > 0 ? Math.round((aiUsageStats.freeUsersAtLimit / Math.max(aiUsageStats.totalUsers - aiUsageStats.premiumUsers, 1)) * 100) : 0}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+                              <div className="h-full rounded-full bg-gradient-to-r from-rose-500 to-orange-400 transition-all"
+                                style={{ width: `${aiUsageStats.totalUsers > 0 ? Math.min(100, Math.round((aiUsageStats.freeUsersAtLimit / Math.max(aiUsageStats.totalUsers - aiUsageStats.premiumUsers, 1)) * 100)) : 0}%` }} />
+                            </div>
+                          </div>
+                          {/* Top users */}
+                          {aiUsageStats.topUsers?.length > 0 && (
+                            <div>
+                              <p className="text-[10px] text-white/30 mb-2 font-semibold uppercase tracking-wide">Top AI foydalanuvchilar</p>
+                              <div className="space-y-1.5">
+                                {aiUsageStats.topUsers.slice(0, 5).map((u: any, i: number) => (
+                                  <div key={u.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
+                                    <span className="text-[10px] text-white/25 font-bold w-4 text-right">{i + 1}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-semibold text-white/80 truncate">{u.displayName || u.username}</p>
+                                      <p className="text-[10px] text-white/30 truncate">@{u.username}</p>
+                                    </div>
+                                    {u.isPremium && (
+                                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-400">PRO</span>
+                                    )}
+                                    <span className="text-xs font-bold text-violet-400 flex-shrink-0">{u.aiUsageCount} so'rov</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <p className="text-[10px] text-white/20 text-center">
+                            Bepul limit: {aiUsageStats.freeLimit} so'rov · Premium foydalanuvchilar cheksiz foydalanadi
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-white/30 text-center py-3">Ma'lumot yuklanmadi</p>
+                      )}
                     </div>
                   </AdminSF>
                 </div>

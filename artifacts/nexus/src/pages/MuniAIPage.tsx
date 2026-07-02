@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Sparkles, TrendingUp, Send, RotateCcw, Star } from "lucide-react";
+import { Brain, Sparkles, TrendingUp, Send, RotateCcw, Star, Crown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import AIPaywall from "@/components/AIPaywall";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -78,6 +79,8 @@ export default function MuniAIPage() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [quote, setQuote] = useState<Quote>(FALLBACK_QUOTES[0]!);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [aiUsage, setAiUsage] = useState<{ used: number; remaining: number; limit: number; isPremium: boolean } | null>(null);
   const nextId = useRef(1);
   const bottomRef = useRef<HTMLDivElement>(null);
   const esRef = useRef<EventSource | null>(null);
@@ -119,6 +122,15 @@ export default function MuniAIPage() {
         body: JSON.stringify({ message: text, mode, history }),
       });
 
+      if (resp.status === 402) {
+        const data = await resp.json();
+        setAiUsage({ used: data.used, remaining: 0, limit: data.limit ?? 5, isPremium: false });
+        setMessages(prev => prev.filter(m => m.id !== assistantMsg.id));
+        setShowPaywall(true);
+        setStreaming(false);
+        return;
+      }
+
       if (!resp.ok || !resp.body) { setStreaming(false); return; }
 
       const reader = resp.body.getReader();
@@ -140,7 +152,11 @@ export default function MuniAIPage() {
                 m.id === assistantMsg.id ? { ...m, content: m.content + json.content } : m
               ));
             }
-            if (json.done) setStreaming(false);
+            if (json.done) {
+              setStreaming(false);
+              const usage = (json as any).usage;
+              if (usage) setAiUsage({ ...usage, limit: 5 });
+            }
           } catch { /* skip malformed */ }
         }
       }
@@ -274,6 +290,14 @@ export default function MuniAIPage() {
           </button>
         </div>
       </div>
+
+      <AIPaywall
+        show={showPaywall}
+        used={aiUsage?.used ?? 5}
+        limit={aiUsage?.limit ?? 5}
+        onClose={() => setShowPaywall(false)}
+        featureName="Muni AI"
+      />
     </div>
   );
 }

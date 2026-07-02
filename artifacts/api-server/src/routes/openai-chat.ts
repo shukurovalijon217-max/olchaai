@@ -3,8 +3,26 @@ import { db } from "@workspace/db";
 import { aiConversations as conversations, aiMessages as messages } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 
 const router = Router();
+
+/* ─── GET usage (for frontend badge) ─────────────────────────── */
+router.get("/ai/usage", async (req, res) => {
+  if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const access = await checkAIAccess(req.session.userId);
+    res.json({
+      used: access.used,
+      limit: access.limit,
+      remaining: access.remaining,
+      isPremium: access.isPremium,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 router.get("/openai/conversations", async (req, res) => {
   if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
@@ -100,6 +118,18 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
   if (!content) { res.status(400).json({ error: "content required" }); return; }
 
   try {
+    /* ── Free tier check BEFORE any DB writes or SSE headers ─── */
+    const access = await checkAIAccess(req.session.userId);
+    if (!access.allowed) {
+      res.status(402).json({
+        error: "AI_LIMIT_REACHED",
+        used: access.used,
+        limit: AI_FREE_LIMIT,
+        remaining: 0,
+      });
+      return;
+    }
+
     const [conv] = await db
       .select()
       .from(conversations)
@@ -141,7 +171,10 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
     }
 
     await db.insert(messages).values({ conversationId: convId, role: "assistant", content: fullResponse });
-    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    await incrementAIUsage(req.session.userId);
+
+    const newAccess = await checkAIAccess(req.session.userId);
+    res.write(`data: ${JSON.stringify({ done: true, usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium } })}\n\n`);
     res.end();
   } catch (err) {
     req.log.error(err);
@@ -154,7 +187,14 @@ router.post("/openai/generate-caption", async (req, res) => {
   if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const { topic, tone, platform } = req.body;
   if (!topic) { res.status(400).json({ error: "topic required" }); return; }
+
   try {
+    const access = await checkAIAccess(req.session.userId);
+    if (!access.allowed) {
+      res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: AI_FREE_LIMIT, remaining: 0 });
+      return;
+    }
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       max_completion_tokens: 500,
@@ -170,7 +210,9 @@ router.post("/openai/generate-caption", async (req, res) => {
       ],
     });
     const caption = response.choices[0]?.message?.content ?? "";
-    res.json({ caption });
+    await incrementAIUsage(req.session.userId);
+    const newAccess = await checkAIAccess(req.session.userId);
+    res.json({ caption, usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium } });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "AI xatosi" });
@@ -181,10 +223,19 @@ router.post("/openai/generate-image", async (req, res) => {
   if (!req.session.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const { prompt } = req.body;
   if (!prompt) { res.status(400).json({ error: "prompt required" }); return; }
+
   try {
+    const access = await checkAIAccess(req.session.userId);
+    if (!access.allowed) {
+      res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: AI_FREE_LIMIT, remaining: 0 });
+      return;
+    }
+
     const { generateImageUrl } = await import("@workspace/integrations-openai-ai-server/image");
     const url = await generateImageUrl(prompt, "1024x1024");
-    res.json({ url });
+    await incrementAIUsage(req.session.userId);
+    const newAccess = await checkAIAccess(req.session.userId);
+    res.json({ url, usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium } });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Rasm yaratishda xato" });
@@ -226,6 +277,12 @@ router.post("/openai/voice-chat", async (req, res) => {
   if (!audioBase64) { res.status(400).json({ error: "audioBase64 required" }); return; }
 
   try {
+    const access = await checkAIAccess(req.session.userId);
+    if (!access.allowed) {
+      res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: AI_FREE_LIMIT, remaining: 0 });
+      return;
+    }
+
     const buffer = Buffer.from(audioBase64, "base64");
     const file = new File([buffer], "audio.webm", { type: "audio/webm" });
 
@@ -261,10 +318,14 @@ router.post("/openai/voice-chat", async (req, res) => {
     });
     const audioBuffer = Buffer.from(await ttsResponse.arrayBuffer());
 
+    await incrementAIUsage(req.session.userId);
+    const newAccess = await checkAIAccess(req.session.userId);
+
     res.json({
       transcript,
       response: aiText,
       audioBase64: audioBuffer.toString("base64"),
+      usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium },
     });
   } catch (err) {
     req.log.error(err);

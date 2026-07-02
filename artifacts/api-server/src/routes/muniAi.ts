@@ -6,6 +6,7 @@
 */
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 
 const router = Router();
 
@@ -61,6 +62,24 @@ router.post("/muni/chat", async (req, res) => {
 
   if (!message?.trim()) { res.status(400).json({ error: "message required" }); return; }
 
+  try {
+    /* ── Free tier check BEFORE SSE headers ─────────────────── */
+    const access = await checkAIAccess(req.session.userId);
+    if (!access.allowed) {
+      res.status(402).json({
+        error: "AI_LIMIT_REACHED",
+        used: access.used,
+        limit: AI_FREE_LIMIT,
+        remaining: 0,
+      });
+      return;
+    }
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+    return;
+  }
+
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
@@ -94,7 +113,10 @@ router.post("/muni/chat", async (req, res) => {
         res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
       }
     }
-    res.write(`data: ${JSON.stringify({ done: true, fullText: full })}\n\n`);
+
+    await incrementAIUsage(req.session.userId);
+    const newAccess = await checkAIAccess(req.session.userId);
+    res.write(`data: ${JSON.stringify({ done: true, fullText: full, usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium } })}\n\n`);
     res.end();
   } catch (err) {
     req.log.error(err);

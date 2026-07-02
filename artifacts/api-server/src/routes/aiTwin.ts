@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { aiTwinConfigTable, aiTwinChatsTable, aiTwinMessagesTable, usersTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 
 const router = Router();
 
@@ -67,6 +68,13 @@ router.post("/twin/:userId/chat", requireAuth, async (req: any, res) => {
     const [cfg] = await db.select().from(aiTwinConfigTable).where(eq(aiTwinConfigTable.userId, twinOwnerId));
     if (!cfg?.isEnabled) { res.status(403).json({ error: "AI egizak faol emas" }); return; }
 
+    /* ── Free tier check ──────────────────────────────────────── */
+    const access = await checkAIAccess(visitorId);
+    if (!access.allowed) {
+      res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: AI_FREE_LIMIT, remaining: 0 });
+      return;
+    }
+
     let currentChatId = chatId;
     if (!currentChatId) {
       const [chat] = await db.insert(aiTwinChatsTable).values({ twinOwnerId, visitorId }).returning();
@@ -100,8 +108,10 @@ Xuddi o'sha odam kabi muloyim, samimiy va qisqa javob bering.`;
     const reply = completion.choices[0]?.message?.content ?? "...";
     await db.insert(aiTwinMessagesTable).values({ chatId: currentChatId, role: "assistant", content: reply });
     await db.update(aiTwinConfigTable).set({ lastActiveAt: new Date() }).where(eq(aiTwinConfigTable.userId, twinOwnerId));
+    await incrementAIUsage(visitorId);
+    const newAccess = await checkAIAccess(visitorId);
 
-    res.json({ chatId: currentChatId, reply });
+    res.json({ chatId: currentChatId, reply, usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium } });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server xatosi" }); }
 });
 

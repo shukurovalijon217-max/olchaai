@@ -3,11 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
   Bot, Send, Plus, Trash2, MessageSquare, Sparkles, Image, FileText,
-  Wand2, ChevronRight, Mic, MicOff, Volume2, Loader2, StopCircle,
+  Wand2, ChevronRight, Mic, MicOff, Volume2, Loader2, StopCircle, Crown,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import AIPaywall from "@/components/AIPaywall";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+interface AIUsage { used: number; remaining: number; limit: number; isPremium: boolean; }
 
 interface Message { id: number; role: "user" | "assistant"; content: string; createdAt: string; }
 interface Conversation { id: number; title: string; createdAt: string; }
@@ -29,6 +32,9 @@ export default function AIChatPage() {
   const [imageResult, setImageResult] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [aiUsage, setAiUsage] = useState<AIUsage | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [voiceLoading, setVoiceLoading] = useState(false);
@@ -56,6 +62,10 @@ export default function AIChatPage() {
 
   useEffect(() => {
     loadConversations();
+    fetch(`${API}/api/ai/usage`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setAiUsage(d))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -140,6 +150,15 @@ export default function AIChatPage() {
         credentials: "include",
         body: JSON.stringify({ content: sentInput }),
       });
+
+      if (r.status === 402) {
+        const data = await r.json();
+        setAiUsage({ used: data.used, remaining: 0, limit: data.limit, isPremium: false });
+        setMsgs(prev => prev.filter(m => m.id !== aiMsgId));
+        setShowPaywall(true);
+        return;
+      }
+
       if (!r.body) return;
 
       const reader = r.body.getReader();
@@ -158,6 +177,9 @@ export default function AIChatPage() {
             const parsed = JSON.parse(line.slice(6));
             if (parsed.content) {
               setMsgs(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: m.content + parsed.content } : m));
+            }
+            if (parsed.done && parsed.usage) {
+              setAiUsage({ ...parsed.usage, limit: 5 });
             }
           } catch { /* skip */ }
         }
@@ -208,11 +230,16 @@ export default function AIChatPage() {
         body: JSON.stringify({ audioBase64: base64 }),
       });
 
-      if (r.ok) {
+      if (r.status === 402) {
+        const data = await r.json();
+        setAiUsage({ used: data.used, remaining: 0, limit: data.limit, isPremium: false });
+        setShowPaywall(true);
+      } else if (r.ok) {
         const data = await r.json();
         setVoiceTranscript(data.transcript ?? "");
         setVoiceResponse(data.response ?? "");
         setVoiceAudio(data.audioBase64 ?? null);
+        if (data.usage) setAiUsage({ ...data.usage, limit: 5 });
         if (data.audioBase64) {
           const audio = new Audio(`data:audio/mp3;base64,${data.audioBase64}`);
           audio.play().catch(() => {});
@@ -242,9 +269,14 @@ export default function AIChatPage() {
         credentials: "include",
         body: JSON.stringify({ topic: captionTopic, tone: "qiziqarli", platform: "OlCha" }),
       });
-      if (r.ok) {
+      if (r.status === 402) {
+        const data = await r.json();
+        setAiUsage({ used: data.used, remaining: 0, limit: data.limit, isPremium: false });
+        setShowPaywall(true);
+      } else if (r.ok) {
         const data = await r.json();
         setCaptionResult(data.caption || "");
+        if (data.usage) setAiUsage({ ...data.usage, limit: 5 });
       }
     } finally {
       setCaptionLoading(false);
@@ -262,9 +294,14 @@ export default function AIChatPage() {
         credentials: "include",
         body: JSON.stringify({ prompt: imagePrompt }),
       });
-      if (r.ok) {
+      if (r.status === 402) {
+        const data = await r.json();
+        setAiUsage({ used: data.used, remaining: 0, limit: data.limit, isPremium: false });
+        setShowPaywall(true);
+      } else if (r.ok) {
         const data = await r.json();
         setImageResult(data.url || data.b64_json || "");
+        if (data.usage) setAiUsage({ ...data.usage, limit: 5 });
       }
     } finally {
       setImageLoading(false);
@@ -285,13 +322,31 @@ export default function AIChatPage() {
               <p className="text-[11px] text-muted-foreground">{t("ai.subtitle")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 bg-muted rounded-xl p-1 overflow-x-auto">
-            {TABS.map(tab_ => (
-              <button key={tab_.id} onClick={() => setTab(tab_.id as typeof tab)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${tab === tab_.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                {tab_.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            {aiUsage && (
+              aiUsage.isPremium ? (
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                  style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.2), rgba(59,130,246,0.2))", border: "1px solid rgba(124,58,237,0.35)" }}>
+                  <Crown className="w-3 h-3 text-violet-400" />
+                  <span className="text-violet-300">Premium</span>
+                </div>
+              ) : (
+                <button onClick={() => setShowPaywall(true)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all hover:opacity-80"
+                  style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.25)" }}>
+                  <span className="text-violet-400">{aiUsage.used}/{aiUsage.limit}</span>
+                  <span className="text-muted-foreground">free</span>
+                </button>
+              )
+            )}
+            <div className="flex items-center gap-1 bg-muted rounded-xl p-1 overflow-x-auto">
+              {TABS.map(tab_ => (
+                <button key={tab_.id} onClick={() => setTab(tab_.id as typeof tab)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${tab === tab_.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                  {tab_.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -590,6 +645,14 @@ export default function AIChatPage() {
           </div>
         )}
       </div>
+
+      <AIPaywall
+        show={showPaywall}
+        used={aiUsage?.used ?? 5}
+        limit={aiUsage?.limit ?? 5}
+        onClose={() => setShowPaywall(false)}
+        featureName="OlCha AI"
+      />
     </div>
   );
 }

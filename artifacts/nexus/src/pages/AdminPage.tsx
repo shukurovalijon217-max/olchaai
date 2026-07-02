@@ -10,7 +10,8 @@ import {
   ToggleLeft, ToggleRight, Lock, Unlock, Globe, Megaphone, Sparkles, Percent,
   Bot, BrainCircuit, Gauge, MemoryStick, Radio, UserCheck, ShieldX,
   PlayCircle, Film, Music, TrendingDown as TDown, Check, ChevronDown,
-  CircleDollarSign, Banknote, ArrowRightLeft, BarChart2, Landmark
+  CircleDollarSign, Banknote, ArrowRightLeft, BarChart2, Landmark,
+  Server, Cloud, CreditCard, CalendarClock
 } from "lucide-react";
 import {
   useGetAdminDashboard, useAdminListUsers, useAdminListContent,
@@ -1256,6 +1257,153 @@ function TreasurySection() {
   );
 }
 
+/* ────────────────────────────────────────────────────────────────
+   INFRA COSTS PANEL — Auto-pay infrastructure costs from treasury
+   ──────────────────────────────────────────────────────────────── */
+function InfraCostsPanel() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
+  const [paidMsg, setPaidMsg] = useState<string | null>(null);
+
+  const load = () => {
+    setLoading(true);
+    fetch(`${API}/api/admin/infra-costs`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setData(d); })
+      .finally(() => setLoading(false));
+  };
+  useEffect(load, []);
+
+  const payNow = async () => {
+    setPaying(true);
+    setPaidMsg(null);
+    try {
+      const r = await fetch(`${API}/api/admin/infra-costs/pay-now`, { method: "POST", credentials: "include" });
+      const d = await r.json();
+      if (d.paid > 0) setPaidMsg(`✅ ${d.paid} ta to'lov amalga oshirildi — $${(d.totalCents / 100).toFixed(2)}`);
+      else setPaidMsg("ℹ️ To'lanadigan hisob yo'q (navbatdagi sana hali kelmagan)");
+      load();
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const PROVIDER_ICON: Record<string, React.ElementType> = {
+    replit: Server, openai: Cpu, stripe: CreditCard, resend: Cloud,
+  };
+  const PROVIDER_COLOR: Record<string, string> = {
+    replit: "text-violet-400", openai: "text-emerald-400", stripe: "text-blue-400", resend: "text-amber-400",
+  };
+
+  const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+  const s = data?.summary ?? {};
+
+  return (
+    <div className="bg-gradient-to-br from-blue-400/5 to-cyan-400/5 border border-blue-400/20 rounded-2xl p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-blue-400/15 flex items-center justify-center">
+            <Server className="w-4 h-4 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Infratuzilma Xarajatlari</h3>
+            <p className="text-xs text-muted-foreground">Hosting, AI API, baza — treasury-dan avto-to'lov</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={load} disabled={loading} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors">
+            <RotateCcw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Yangilash
+          </button>
+          <button onClick={payNow} disabled={paying} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-400/20 text-xs font-semibold hover:bg-blue-500/25 transition-colors">
+            <Zap className="w-3 h-3" /> {paying ? "To'layapti…" : "Hozir To'la"}
+          </button>
+        </div>
+      </div>
+
+      {paidMsg && (
+        <div className="px-3 py-2 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 text-xs">{paidMsg}</div>
+      )}
+
+      {/* Summary row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-background/40 border border-border/50 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-foreground">{fmt(s.monthlyEstimateCents ?? 0)}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Oylik baholash</p>
+        </div>
+        <div className="bg-background/40 border border-border/50 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-emerald-400">{fmt(s.paidLast30Days ?? 0)}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">So'nggi 30 kun to'landi</p>
+        </div>
+        <div className="bg-background/40 border border-border/50 rounded-xl p-3 text-center">
+          <div className="flex items-center justify-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <p className="text-xs font-semibold text-emerald-400">Avto-to'lov YOQIQ</p>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">Treasury-dan avto</p>
+        </div>
+      </div>
+
+      {/* Next auto-pay */}
+      {s.nextAutoPay && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/30 border border-border/50">
+          <CalendarClock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Keyingi avto-to'lov: <span className="text-foreground font-medium">{new Date(s.nextAutoPay).toLocaleDateString("uz-UZ", { year: "numeric", month: "long", day: "numeric" })}</span>
+          </p>
+        </div>
+      )}
+
+      {/* Cost items */}
+      <div className="space-y-2">
+        {loading ? (
+          <div className="text-center py-6 text-muted-foreground text-sm">Yuklanmoqda…</div>
+        ) : (data?.costs ?? []).map((cost: any) => {
+          const Icon = PROVIDER_ICON[cost.provider] ?? Globe;
+          const iconColor = PROVIDER_COLOR[cost.provider] ?? "text-muted-foreground";
+          return (
+            <div key={cost.id} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-background/40 border border-border/50 hover:bg-muted/20 transition-colors">
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center bg-muted/50`}>
+                <Icon className={`w-3.5 h-3.5 ${iconColor}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground">{cost.service_name}</p>
+                <p className="text-[10px] text-muted-foreground">{cost.provider} · {cost.billing_cycle}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                {cost.amount_cents > 0 ? (
+                  <p className="text-sm font-bold text-foreground">{fmt(cost.amount_cents)}<span className="text-[10px] text-muted-foreground">/oy</span></p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Foydalanishga qarab</p>
+                )}
+                <div className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 ${cost.auto_pay_enabled ? "bg-emerald-400/10 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
+                  {cost.auto_pay_enabled ? "avto-to'lov" : "qo'lda"}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Recent payments */}
+      {(data?.recentPayments ?? []).length > 0 && (
+        <div>
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-2">So'nggi to'lovlar</p>
+          <div className="space-y-1">
+            {(data.recentPayments as any[]).slice(0, 5).map((p: any) => (
+              <div key={p.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/20 text-xs">
+                <span className="text-foreground/70">{p.service_name}</span>
+                <span className="text-emerald-400 font-medium">{fmt(p.amount_cents)}</span>
+                <span className="text-muted-foreground">{new Date(p.paid_at).toLocaleDateString("uz-UZ")}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FinanceTab() {
   const [data, setData] = useState<any>(null);
   const [commStats, setCommStats] = useState<any>(null);
@@ -1389,6 +1537,9 @@ function FinanceTab() {
           <RotateCcw className="w-3.5 h-3.5" /> Yangilash
         </button>
       </div>
+
+      {/* ===== INFRA COSTS — Auto-pay hosting from treasury ===== */}
+      <InfraCostsPanel />
 
       {/* ===== PLATFORM TREASURY ===== */}
       <TreasurySection />

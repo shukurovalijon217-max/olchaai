@@ -5,6 +5,7 @@ import { eq, sql, desc, and, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
+import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
 
 const router = Router();
 
@@ -66,16 +67,23 @@ router.get("/posts", async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 20, 100);
     const offset = Number(req.query.offset) || 0;
 
-    let posts;
-    if (userId) {
-      posts = await db.select().from(postsTable).where(eq(postsTable.authorId, userId)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
-    } else if (type && type !== "all") {
-      posts = await db.select().from(postsTable).where(eq(postsTable.type, type)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
-    } else {
-      posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
-    }
+    // Cache key: anonymous/public feed only (viewer-specific feeds not cached)
+    const cacheKey = !viewerId && offset < 60 ? `list:${type ?? "all"}:${limit}:${offset}` : null;
 
-    res.json(await batchEnrichPosts(posts, viewerId));
+    const enriched = await cacheAside("posts", cacheKey ?? `__skip__${Date.now()}`, async () => {
+      let posts;
+      if (userId) {
+        posts = await db.select().from(postsTable).where(eq(postsTable.authorId, userId)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+      } else if (type && type !== "all") {
+        posts = await db.select().from(postsTable).where(eq(postsTable.type, type)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+      } else {
+        posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+      }
+      return batchEnrichPosts(posts, viewerId);
+    }, cacheKey ? 15 : 0);
+
+    if (cacheKey) res.setHeader("X-Cache", "HIT");
+    res.json(enriched);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

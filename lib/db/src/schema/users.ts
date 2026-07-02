@@ -49,6 +49,7 @@ export const usersTable = pgTable("users", {
   timezone: text("timezone"),
   notifPrefs: jsonb("notif_prefs").$type<NotifPrefs>(),
   privacySettings: jsonb("privacy_settings").$type<PrivacySettings>(),
+  aiUsageCount: integer("ai_usage_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

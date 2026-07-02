@@ -1,7 +1,7 @@
 import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
 import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable } from "@workspace/db";
-import { eq, sql, desc, sum } from "drizzle-orm";
+import { eq, sql, desc, sum, and } from "drizzle-orm";
 import { getCommissionRate, setCommissionRate } from "../lib/commission";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
 import { getStripeSync } from "../stripe/stripeClient";
@@ -154,6 +154,42 @@ router.get("/admin/ai-system", async (req, res) => {
         { module: "Moderation", suggestion: "Retrain hate speech classifier on new dataset", impact: "high" },
       ],
       metricsHistory,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ─── GET /admin/ai-usage ─── AI usage stats for admin panel ─── */
+router.get("/admin/ai-usage", async (req, res) => {
+  try {
+    const userId = req.session?.userId;
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+    const [admin] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, userId));
+    if (!admin?.isAdmin) { res.status(403).json({ error: "Forbidden" }); return; }
+
+    const [totalUsers] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable);
+    const [premiumUsers] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable).where(eq(usersTable.isPremium, true));
+    const [freeAtLimit] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable)
+      .where(and(eq(usersTable.isPremium, false), sql`${usersTable.aiUsageCount} >= 5`));
+    const [totalAiCalls] = await db.select({ total: sql<number>`COALESCE(SUM(ai_usage_count), 0)::int` }).from(usersTable);
+
+    const topUsers = await db.select({
+      id: usersTable.id,
+      username: usersTable.username,
+      displayName: usersTable.displayName,
+      isPremium: usersTable.isPremium,
+      aiUsageCount: usersTable.aiUsageCount,
+    }).from(usersTable).orderBy(desc(usersTable.aiUsageCount)).limit(10);
+
+    res.json({
+      totalUsers: totalUsers?.count ?? 0,
+      premiumUsers: premiumUsers?.count ?? 0,
+      freeUsersAtLimit: freeAtLimit?.count ?? 0,
+      totalAiCalls: totalAiCalls?.total ?? 0,
+      freeLimit: 5,
+      topUsers,
     });
   } catch (err) {
     req.log.error(err);

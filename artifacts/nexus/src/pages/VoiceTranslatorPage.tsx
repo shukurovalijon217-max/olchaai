@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, Languages, Volume2, ChevronDown, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { LANGUAGES } from "@/lib/i18n";
 import { useTranslation } from "react-i18next";
+import AIPaywall from "@/components/AIPaywall";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -141,6 +142,8 @@ export default function VoiceTranslatorPage() {
   const [textMode, setTextMode] = useState(false);
   const [textInput, setTextInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [aiUsage, setAiUsage] = useState<{ used: number; remaining: number; limit: number; isPremium: boolean } | null>(null);
 
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -186,8 +189,15 @@ export default function VoiceTranslatorPage() {
         credentials: "include",
         body: JSON.stringify({ audioBase64: base64, targetLang, sourceLang }),
       });
-      const data = await resp.json() as TranslateResult & { error?: string };
+      const data = await resp.json() as TranslateResult & { error?: string; usage?: { used: number; remaining: number; isPremium: boolean } };
+      if (resp.status === 402) {
+        const d = data as any;
+        setAiUsage({ used: d.used, remaining: 0, limit: d.limit ?? 5, isPremium: false });
+        setShowPaywall(true);
+        return;
+      }
       if (!resp.ok || !data.success) { setError(data.error ?? t("translate_error")); return; }
+      if (data.usage) setAiUsage({ ...data.usage, limit: 5 });
       setResult(data);
     } catch {
       setError(t("translate_error_retry"));
@@ -212,7 +222,7 @@ export default function VoiceTranslatorPage() {
       setResult({ success: true, voiceProfile: null, ...data });
     } catch { setError(t("translate_error")); }
     finally { setProcessing(false); }
-  }, [textInput, targetLang, t]);
+  }, [textInput, targetLang, t, setAiUsage, setShowPaywall]);
 
   const playAudio = useCallback(() => {
     if (!result?.audioBase64) return;
@@ -360,6 +370,14 @@ export default function VoiceTranslatorPage() {
           )}
         </AnimatePresence>
       </div>
+
+      <AIPaywall
+        show={showPaywall}
+        used={aiUsage?.used ?? 5}
+        limit={aiUsage?.limit ?? 5}
+        onClose={() => setShowPaywall(false)}
+        featureName="Voice Translator"
+      />
     </div>
   );
 }

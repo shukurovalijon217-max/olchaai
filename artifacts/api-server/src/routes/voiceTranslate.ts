@@ -9,6 +9,7 @@
 */
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 
 const router = Router();
 
@@ -45,6 +46,13 @@ router.post("/voice/translate", async (req, res) => {
   if (!audioBase64) { res.status(400).json({ error: "audioBase64 required" }); return; }
 
   try {
+    /* ── Free tier check ─────────────────────────────────────── */
+    const access = await checkAIAccess(req.session.userId as number);
+    if (!access.allowed) {
+      res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: AI_FREE_LIMIT, remaining: 0 });
+      return;
+    }
+
     /* ── Step 1: Whisper STT ─────────────────────────────────── */
     const buffer = Buffer.from(audioBase64, "base64");
     const file = new File([buffer], "audio.webm", { type: "audio/webm" });
@@ -151,6 +159,9 @@ Rules:
 
     const audioOut = Buffer.from(await ttsRes.arrayBuffer());
 
+    await incrementAIUsage(req.session.userId as number);
+    const newAccess = await checkAIAccess(req.session.userId as number);
+
     res.json({
       success: true,
       originalText,
@@ -158,6 +169,7 @@ Rules:
       audioBase64: audioOut.toString("base64"),
       voiceProfile: profile,
       targetLang,
+      usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium },
     });
   } catch (err) {
     req.log.error(err);
@@ -176,6 +188,12 @@ router.post("/voice/translate-text", async (req, res) => {
   if (!text?.trim()) { res.status(400).json({ error: "text required" }); return; }
 
   try {
+    const access = await checkAIAccess(req.session.userId as number);
+    if (!access.allowed) {
+      res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: AI_FREE_LIMIT, remaining: 0 });
+      return;
+    }
+
     const langNames: Record<string, string> = {
       en: "English", uz: "Uzbek", ru: "Russian", zh: "Chinese",
       ar: "Arabic", es: "Spanish", fr: "French", de: "German",

@@ -783,15 +783,11 @@ function ReelSlide({
             <Waveform active={isActive && !muted} color={neonColor} />
           </div>
 
-          {/* Author strip */}
-          <div className="flex items-center gap-3 px-4 py-3"
-            style={{ background: "rgba(3,2,12,0.84)", backdropFilter: "blur(28px) saturate(2)",
-              WebkitBackdropFilter: "blur(28px) saturate(2)",
-              borderTop: `1px solid ${neonColor}18`,
-              boxShadow: `0 -4px 20px rgba(0,0,0,0.4), inset 0 1px 0 ${neonColor}10` }}>
+          {/* Author strip — transparent, floats on gradient */}
+          <div className="flex items-center gap-2.5 px-4 py-2">
 
             {/* Avatar */}
-            <div className="relative flex-shrink-0 cursor-pointer" style={{ width: 36, height: 36 }}
+            <div className="relative flex-shrink-0 cursor-pointer" style={{ width: 38, height: 38 }}
               onClick={() => reel.author?.id && navigate(`/profile/${reel.author.id}`)}>
               <motion.div className="absolute inset-[-2px] rounded-full pointer-events-none"
                 style={{ background: `conic-gradient(from 0deg, ${neonColor}dd, #3b82f677, #06b6d455, ${neonColor}dd)` }}
@@ -804,27 +800,28 @@ function ReelSlide({
               </div>
             </div>
 
-            {/* Name */}
+            {/* Name + username — single line */}
             <div className="flex-1 min-w-0 cursor-pointer" onClick={() => reel.author?.id && navigate(`/profile/${reel.author.id}`)}>
               <div className="flex items-center gap-1">
-                <span className="text-white font-black text-[12px] truncate">{reel.author?.displayName ?? "OlCha"}</span>
-                {reel.author?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: neonColor }} />}
+                <span className="text-white font-black text-[13px] truncate"
+                  style={{ textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}>
+                  {reel.author?.displayName ?? "OlCha"}
+                </span>
+                {reel.author?.isVerified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: neonColor }} />}
+                {reel._aiSuggested && <Zap className="w-3 h-3 text-violet-400 flex-shrink-0" />}
               </div>
-              {reel._aiSuggested
-                ? <div className="flex items-center gap-0.5">
-                    <Zap className="w-[9px] h-[9px] text-violet-400" />
-                    <span className="text-[8px] font-bold text-violet-400">AI tavsiya</span>
-                  </div>
-                : <span className="text-[9.5px] text-white/30">@{reel.author?.username}</span>
-              }
+              <span className="text-[10px] text-white/45"
+                style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
+                @{reel.author?.username}
+              </span>
             </div>
 
             {/* Follow btn */}
             <motion.button whileTap={{ scale: 0.88 }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-black flex-shrink-0"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[12px] font-black flex-shrink-0"
               style={{ background: `${neonColor}`, color: "#000",
-                boxShadow: `0 0 14px ${neonColor}55` }}>
-              <Plus className="w-3 h-3" /> Obuna
+                boxShadow: `0 0 16px ${neonColor}66, 0 2px 8px rgba(0,0,0,0.5)` }}>
+              <Plus className="w-3.5 h-3.5" /> Obuna
             </motion.button>
           </div>
         </div>

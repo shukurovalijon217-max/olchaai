@@ -485,11 +485,12 @@ function LeftOrb({
 
 /* ─── REEL SLIDE ─────────────────────────────────────────────── */
 function ReelSlide({
-  reel, isActive, muted, accent,
+  reel, isActive, muted, accent, user,
   onLike, isLiked, onAnalyze, analyzingId, analysis,
   onComment, onShare, onMute,
 }: {
   reel: FeedItem; isActive: boolean; muted: boolean; accent: string;
+  user: { id: number; displayName?: string; avatarUrl?: string | null } | null;
   onLike: () => void; isLiked: boolean;
   onAnalyze: () => void; analyzingId: number | null; analysis?: Analysis;
   onComment: () => void; onShare: () => void; onMute: () => void;
@@ -505,6 +506,48 @@ function ReelSlide({
   const [lastTap,   setLastTap]   = useState(0);
   const holdTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* Share */
+  const [shareOpen,    setShareOpen]    = useState(false);
+  const [shareQuery,   setShareQuery]   = useState("");
+  const [shareResults, setShareResults] = useState<{ id: number; displayName?: string; username?: string; avatarUrl?: string | null }[]>([]);
+  const [shareSending, setShareSending] = useState<number | null>(null);
+  const [shareSent,    setShareSent]    = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!shareOpen || !shareQuery.trim()) { setShareResults([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API}/api/users?search=${encodeURIComponent(shareQuery)}&limit=10`, { credentials: "include" });
+        if (res.ok) setShareResults(await res.json());
+      } catch { /* ignore */ }
+    }, 320);
+    return () => clearTimeout(t);
+  }, [shareQuery, shareOpen]);
+
+  const handleSendToUser = async (toUser: { id: number; displayName?: string; username?: string }) => {
+    if (!user || shareSending) return;
+    setShareSending(toUser.id);
+    const content = `📤 *${reel.author?.displayName ?? "OlCha"}* tomonidan reel:\n${window.location.origin}/reels`;
+    try {
+      const convRes = await fetch(`${API}/api/conversations`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantIds: [user.id, toUser.id] }),
+      });
+      if (!convRes.ok) throw new Error();
+      const conv = await convRes.json() as { id: number };
+      await fetch(`${API}/api/conversations/${conv.id}/messages`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ senderId: user.id, content }),
+      });
+      setShareSent(toUser.id);
+      setTimeout(() => {
+        setShareSent(null); setShareSending(null);
+        setShareOpen(false); setShareQuery(""); setShareResults([]);
+      }, 1600);
+    } catch { setShareSending(null); }
+  };
 
   /* Auto-hide UI after 3s */
   const resetHideTimer = useCallback(() => {
@@ -712,9 +755,9 @@ function ReelSlide({
 
           {/* Share */}
           <LeftOrb
-            icon={<Share2 className="w-[18px] h-[18px]" style={{ color: "rgba(255,255,255,0.78)" }} />}
-            active={false} activeColor="#34d399"
-            onClick={onShare}
+            icon={<Share2 className="w-[18px] h-[18px]" style={{ color: shareOpen ? "#34d399" : "rgba(255,255,255,0.78)" }} />}
+            active={shareOpen} activeColor="#34d399"
+            onClick={() => { onShare(); setShareOpen(v => !v); }}
           />
 
           {/* AI analysis */}
@@ -838,6 +881,75 @@ function ReelSlide({
         </div>
 
       </motion.div>{/* /ui layer */}
+
+      {/* ─── SHARE SHEET ─── */}
+      <AnimatePresence>
+        {shareOpen && (
+          <motion.div
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 340 }}
+            className="absolute bottom-0 left-0 right-0 rounded-t-[28px] overflow-hidden"
+            style={{ zIndex: 60, maxHeight: "72vh", background: "rgba(4,3,16,0.96)",
+              backdropFilter: "blur(36px)", WebkitBackdropFilter: "blur(36px)",
+              border: "1px solid rgba(52,211,153,0.18)", borderBottom: "none",
+              boxShadow: "0 -8px 40px rgba(0,0,0,0.7)" }}
+            onPointerDown={e => e.stopPropagation()}
+            onPointerUp={e => e.stopPropagation()}
+          >
+            <div className="flex justify-center pt-3">
+              <div className="w-9 h-1 rounded-full bg-white/15" />
+            </div>
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.06]">
+              <Share2 className="w-4 h-4 text-emerald-400" />
+              <span className="text-white font-bold text-[14px]">Ulashish</span>
+              <button onClick={() => { setShareOpen(false); setShareQuery(""); setShareResults([]); }}
+                className="ml-auto p-1"><X className="w-4 h-4 text-white/45" /></button>
+            </div>
+            <div className="px-5 pt-3 pb-2">
+              <input
+                value={shareQuery}
+                onChange={e => setShareQuery(e.target.value)}
+                placeholder="OlCha foydalanuvchisini qidirish..."
+                className="w-full px-4 py-2.5 rounded-2xl text-white text-[13px] placeholder:text-white/30 focus:outline-none"
+                style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+              />
+            </div>
+            <div className="px-5 pb-6 overflow-y-auto space-y-1" style={{ maxHeight: 220 }}>
+              {shareResults.length === 0 && shareQuery.trim() && (
+                <p className="text-white/30 text-[13px] text-center py-4">Topilmadi</p>
+              )}
+              {shareResults.length === 0 && !shareQuery.trim() && (
+                <p className="text-white/20 text-[12px] text-center py-4">Qidirish orqali OlCha foydalanuvchilarini toping</p>
+              )}
+              {shareResults.map(u => (
+                <div key={u.id} className="flex items-center gap-3 py-2">
+                  <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
+                    {u.avatarUrl
+                      ? <img src={u.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
+                          {(u.displayName ?? "?").slice(0, 2).toUpperCase()}
+                        </div>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-white text-[13px] font-semibold truncate block">{u.displayName}</span>
+                    <span className="text-white/40 text-[11px]">@{u.username}</span>
+                  </div>
+                  <motion.button whileTap={{ scale: 0.88 }}
+                    onClick={() => handleSendToUser(u)} disabled={!!shareSending}
+                    className="px-3 py-1.5 rounded-xl text-[11px] font-bold flex-shrink-0"
+                    style={{
+                      background: shareSent === u.id ? "rgba(52,211,153,0.2)" : "rgba(52,211,153,0.85)",
+                      color: shareSent === u.id ? "#6ee7b7" : "#000",
+                    }}>
+                    {shareSent === u.id ? "✓" : shareSending === u.id ? "…" : "Yuborish"}
+                  </motion.button>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
@@ -967,15 +1079,11 @@ export default function ReelsPage() {
     } catch { /* ignore */ } finally { setAnalyzingId(null); }
   }, [analysisMap]);
 
-  const handleShare = useCallback(async (reelId: number) => {
+  const handleShare = useCallback((reelId: number) => {
     fetch(`${API}/api/interactions`, {
       method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
       body: JSON.stringify({ contentType: "reel", contentId: reelId, interactionType: "share" }),
     }).catch(() => {});
-    try {
-      if (navigator.share) await navigator.share({ title: "OlCha Reel", url: `${window.location.origin}/reels` });
-      else await navigator.clipboard.writeText(`${window.location.origin}/reels`);
-    } catch { /* ignore */ }
   }, []);
 
   const reel = feed[current];
@@ -1057,6 +1165,7 @@ export default function ReelsPage() {
                   isActive
                   muted={muted}
                   accent={AURORA_COLS[current % AURORA_COLS.length]}
+                  user={user}
                   onLike={() => handleLike(reel.id)}
                   isLiked={likedIds.has(reel.id)}
                   onAnalyze={() => handleAnalyze(reel.id, reel.caption ?? undefined, reel.thumbnailUrl ?? undefined)}

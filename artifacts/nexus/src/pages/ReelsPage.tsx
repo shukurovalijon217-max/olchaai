@@ -750,7 +750,7 @@ function ReelSlide({
         </AnimatePresence>
 
         {/* ─── CAPTION + TAGS + AUDIO (above bottom bar) ─── */}
-        <div className="absolute left-14 right-4 pointer-events-auto"
+        <div className="absolute left-4 right-4 pointer-events-auto"
           style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 170px)" }}>
           {caption && (
             <p className="text-white text-[12.5px] leading-snug mb-2 font-semibold"
@@ -767,12 +767,15 @@ function ReelSlide({
             </div>
           )}
           <div className="flex flex-wrap gap-1.5">
-            {reel.tags?.slice(0, 3).map(tag => (
-              <span key={tag} className="text-[10px] font-bold"
-                style={{ color: neonColor, textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}>
-                #{tag}
-              </span>
-            ))}
+            {(reel.tags ?? [])
+              .filter(t => !t.startsWith("_") && !t.includes(":") && !t.toLowerCase().includes("otube") && !t.toLowerCase().includes("olcha"))
+              .slice(0, 3)
+              .map(tag => (
+                <span key={tag} className="text-[10px] font-bold"
+                  style={{ color: neonColor, textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}>
+                  #{tag}
+                </span>
+              ))}
           </div>
         </div>
 

@@ -1224,7 +1224,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {!isImmersive && <FloatingAvatar />}
 
       {/* ── MUNI FLOATING AI ── */}
-      {location !== "/reels" && location !== "/" && <MuniPanel />}
+      {location !== "/reels" && <MuniPanel />}
 
       {/* ── DOCK EDGE TABS ── */}
       <DockEdgeTab side="right" />

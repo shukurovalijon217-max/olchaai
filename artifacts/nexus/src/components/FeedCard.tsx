@@ -463,7 +463,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
   try { overlays = JSON.parse((post as any).overlays || "[]"); } catch { overlays = []; }
 
   let moodLabel = (post as any).mood as string | undefined;
-  const tags: string[] = post.tags ?? [];
+  const tags: string[] = (post.tags ?? []).filter(t => !t.startsWith("_") && !t.includes(":"));
   const hasPoll = !!(post as any).pollQuestion;
 
   if (deleted) return null;
@@ -681,38 +681,51 @@ export default function FeedCard({ post, index }: FeedCardProps) {
       <div className="absolute top-0 left-0 right-0"
         style={{ zIndex: 18, paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)" }}>
 
-        {/* Author avatar — always visible, top-left */}
-        <div className="absolute left-3" style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)" }}>
-          <div
-            className="relative cursor-pointer"
-            style={{ width: 38, height: 38 }}
-            onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
-          >
-            <div className="absolute inset-[-1.5px] rounded-full pointer-events-none"
-              style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
-            <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
-              {post.author?.avatarUrl
-                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
-                : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
-              }
-            </div>
-          </div>
-        </div>
+        {/* Author avatar — top-left, only when overlay is hidden */}
+        <AnimatePresence>
+          {!overlayVisible && (
+            <motion.div
+              key="avatar-solo"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="absolute left-3"
+              style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)", zIndex: 19 }}
+            >
+              <div
+                className="relative cursor-pointer"
+                style={{ width: 38, height: 38 }}
+                onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
+              >
+                <div className="absolute inset-[-1.5px] rounded-full pointer-events-none"
+                  style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
+                <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
+                  {post.author?.avatarUrl
+                    ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
+                  }
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Tap overlay: back arrow + author name + subscribe */}
+        {/* Tap overlay: back + avatar + name + subscribe (replaces solo avatar) */}
         <AnimatePresence>
           {overlayVisible && (
             <motion.div
               key="top-overlay"
-              initial={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className="flex items-center gap-2 px-3 py-2"
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="flex items-center gap-2 px-3"
               style={{
-                background: "linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, transparent 100%)",
+                background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)",
                 paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)",
+                paddingBottom: 10,
               }}
               onPointerDown={e => e.stopPropagation()}
             >
@@ -722,8 +735,8 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                 onClick={(e) => { e.stopPropagation(); window.history.back(); }}
                 className="flex items-center justify-center flex-shrink-0"
                 style={{
-                  width: 36, height: 36, borderRadius: "50%",
-                  background: "rgba(0,0,0,0.38)",
+                  width: 34, height: 34, borderRadius: "50%",
+                  background: "rgba(0,0,0,0.35)",
                   backdropFilter: "blur(20px)",
                   WebkitBackdropFilter: "blur(20px)",
                   border: "1px solid rgba(255,255,255,0.14)",
@@ -732,8 +745,26 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                 <ChevronLeft className="w-5 h-5 text-white" />
               </motion.button>
 
-              {/* Author name + username (next to avatar space) */}
-              <div className="flex-1 min-w-0 pl-9"
+              {/* Avatar (inside overlay row) */}
+              <div
+                className="relative flex-shrink-0 cursor-pointer"
+                style={{ width: 34, height: 34 }}
+                onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
+              >
+                <div className="absolute inset-[-1.5px] rounded-full pointer-events-none"
+                  style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
+                <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
+                  {post.author?.avatarUrl
+                    ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    : <span className="text-[10px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
+                  }
+                </div>
+              </div>
+
+              {/* Author name + username */}
+              <div
+                className="flex-1 min-w-0 cursor-pointer"
                 onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
               >
                 <div className="flex items-center gap-1">
@@ -743,28 +774,24 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                   </span>
                   {(post.author as any)?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: accent }} />}
                 </div>
-                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>
+                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
                   @{post.author?.username ?? "user"}
                 </span>
               </div>
 
-              {/* Subscribe button — top right */}
+              {/* Subscribe button */}
               {!isOwner && (
                 <motion.button
                   whileTap={{ scale: 0.88 }}
                   onClick={(e) => { e.stopPropagation(); setSubscribed(s => !s); showSubscribeBriefly(); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[11px] font-black flex-shrink-0"
                   style={{
-                    background: subscribed
-                      ? "rgba(255,255,255,0.10)"
-                      : "rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.13)",
                     backdropFilter: "blur(24px)",
                     WebkitBackdropFilter: "blur(24px)",
-                    border: subscribed
-                      ? `1px solid ${accent}66`
-                      : "1px solid rgba(255,255,255,0.28)",
-                    color: subscribed ? accent : "rgba(255,255,255,0.9)",
-                    boxShadow: "0 2px 16px rgba(0,0,0,0.3)",
+                    border: subscribed ? `1px solid ${accent}66` : "1px solid rgba(255,255,255,0.26)",
+                    color: subscribed ? accent : "rgba(255,255,255,0.92)",
+                    boxShadow: "0 2px 14px rgba(0,0,0,0.28)",
                   }}
                 >
                   {subscribed ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}

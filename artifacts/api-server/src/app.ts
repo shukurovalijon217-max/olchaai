@@ -12,6 +12,7 @@ import { creditTreasury } from "./routes/treasury";
 import { systemMonitor, normalisePath } from "./lib/systemMonitor";
 import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 import { securityShield } from "./middlewares/securityShield";
+import { resilienceMiddleware } from "./middlewares/resilience";
 
 const app: Express = express();
 
@@ -169,6 +170,11 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
 
 /* ── AI Auto-Scale: rate limiting + memory pressure management ─── */
 app.use("/api", aiAutoScaleMiddleware);
+
+/* ── Resilience: timeout + load shedder + concurrency cap ────────
+   Prevents any request from hanging forever and sheds excess load
+   gracefully instead of crashing. ──────────────────────────────── */
+app.use("/api", resilienceMiddleware);
 
 /* ── NEXUS Core: Self-Healing middleware ─────────────────────────
    1. If circuit breaker is OPEN for this endpoint → 503 immediately

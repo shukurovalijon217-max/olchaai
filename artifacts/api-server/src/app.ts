@@ -1,5 +1,6 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pinoHttp from "pino-http";
@@ -12,6 +13,14 @@ import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 
 const app: Express = express();
 
+/* ── Security: HTTP headers via Helmet ─────────────────────────── */
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // CSP handled by frontend build tool
+  hsts: { maxAge: 31536000, includeSubDomains: true },
+}));
+
+/* ── Request logger ─────────────────────────────────────────────── */
 app.use(
   pinoHttp({
     logger,
@@ -26,10 +35,35 @@ app.use(
   }),
 );
 
-app.use(cors({
-  origin: true,
-  credentials: true,
-}));
+/* ── CORS — only allow Replit preview domains + configured domains ─ */
+const ALLOWED_ORIGINS = new Set([
+  ...(process.env["REPLIT_DOMAINS"] ?? "").split(",").map(d => `https://${d.trim()}`).filter(Boolean),
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:80",
+]);
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  cors({
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+      if (/^https:\/\/[\w-]+\.replit\.app$/.test(origin) ||
+          /^https:\/\/[\w-]+\.repl\.co$/.test(origin) ||
+          ALLOWED_ORIGINS.has(origin)) {
+        return cb(null, true);
+      }
+      cb(null, false);
+    },
+    credentials: true,
+  })(req, res, (err) => {
+    if (err) { res.status(403).json({ error: "CORS: origin not allowed" }); return; }
+    // If cors said false (not allowed), respond 403
+    if (!res.getHeader("Access-Control-Allow-Origin") && req.headers.origin) {
+      res.status(403).json({ error: "CORS: origin not allowed" }); return;
+    }
+    next();
+  });
+});
 
 // Stripe webhook MUST be registered BEFORE express.json() middleware
 app.post(

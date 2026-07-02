@@ -6,6 +6,7 @@ import { usersTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@work
 import type { NotifPrefs, PrivacySettings } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput } from "../lib/security";
 
 const getResend = () => {
   const key = process.env.RESEND_API_KEY;
@@ -180,11 +181,25 @@ router.post("/auth/register", async (req, res) => {
 
 router.post("/auth/login", async (req, res) => {
   try {
-    const { email, username, password } = req.body as { email?: string; username?: string; password?: string };
-    const identifier = email || username;
+    const rawIdentifier = req.body?.email || req.body?.username;
+    const rawPassword = req.body?.password;
+
+    const identifier = sanitizeInput(rawIdentifier, 254);
+    const password = sanitizeInput(rawPassword, 128);
+
     if (!identifier || !password) {
       res.status(400).json({ error: "Email/username va parol kiritilishi shart" }); return;
     }
+
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
+
+    // Brute-force check
+    const bf = checkLoginBruteForce(ip, identifier);
+    if (!bf.allowed) {
+      const mins = Math.ceil((bf.remainingMs ?? 0) / 60000);
+      res.status(429).json({ error: `Juda ko'p urinish. ${mins} daqiqadan so'ng qayta urinib ko'ring.` }); return;
+    }
+
     const users = await db.select().from(usersTable).where(eq(usersTable.email, identifier));
     let user = users[0];
     if (!user) {
@@ -192,6 +207,7 @@ router.post("/auth/login", async (req, res) => {
       user = byUsername[0];
     }
     if (!user) {
+      recordLoginFailure(ip, identifier);
       res.status(401).json({ error: "Email/username yoki parol noto'g'ri" }); return;
     }
     if (!user.passwordHash) {
@@ -199,8 +215,10 @@ router.post("/auth/login", async (req, res) => {
     }
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
+      recordLoginFailure(ip, identifier);
       res.status(401).json({ error: "Email/username yoki parol noto'g'ri" }); return;
     }
+    clearLoginAttempts(ip, identifier);
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;
     res.json({ ...safeUser, token: String(user.id) });

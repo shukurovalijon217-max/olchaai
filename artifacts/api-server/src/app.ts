@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import compression from "compression";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pinoHttp from "pino-http";
@@ -13,6 +14,16 @@ import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 import { securityShield } from "./middlewares/securityShield";
 
 const app: Express = express();
+
+/* ── Gzip/Brotli compression — faster responses globally ────────── */
+app.use(compression({
+  level: 6,
+  threshold: 1024, // compress responses > 1KB
+  filter: (req, res) => {
+    if (req.headers["x-no-compression"]) return false;
+    return compression.filter(req, res);
+  },
+}));
 
 /* ── Security: HTTP headers via Helmet ─────────────────────────── */
 app.use(helmet({

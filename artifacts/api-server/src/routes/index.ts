@@ -43,6 +43,7 @@ import gifsRouter from "./gifs";
 import treasuryRouter from "./treasury";
 import aiAdminActionsRouter from "./aiAdminActions";
 import securityRouter from "./security";
+import infraCostsRouter from "./infraCosts";
 
 const router: IRouter = Router();
 
@@ -90,5 +91,6 @@ router.use(gifsRouter);
 router.use(treasuryRouter);
 router.use(aiAdminActionsRouter);
 router.use(securityRouter);
+router.use(infraCostsRouter);
 
 export default router;

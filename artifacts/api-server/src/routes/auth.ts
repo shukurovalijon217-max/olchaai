@@ -135,13 +135,6 @@ router.post("/auth/register", async (req, res) => {
       res.status(400).json({ error: "Parol kamida 6 ta belgidan iborat bo'lishi kerak" }); return;
     }
 
-    // Check email is verified via OTP
-    const [verified] = await db.select().from(emailVerifications)
-      .where(and(eq(emailVerifications.email, email), eq(emailVerifications.verified, true)));
-    if (!verified) {
-      res.status(403).json({ error: "Email tasdiqlanmagan. Avval OTP kodni kiriting." }); return;
-    }
-
     // Normalize phone: keep digits and + only
     const normalizedPhone = phone.replace(/[^\d+]/g, "");
     if (normalizedPhone.length < 9) {
@@ -166,9 +159,6 @@ router.post("/auth/register", async (req, res) => {
     const [user] = await db.insert(usersTable).values({
       username, displayName, email, phone: normalizedPhone, passwordHash, isAdmin,
     }).returning();
-
-    // Clean up verification record
-    await db.delete(emailVerifications).where(eq(emailVerifications.email, email));
 
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;

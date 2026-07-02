@@ -659,7 +659,8 @@ function ReelSlide({
         style={{ zIndex: 28 }}>
 
         {/* ─── TOP BAR: progress ring + views + mute ─── */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4 pointer-events-auto">
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pointer-events-auto"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 44px) + 10px)" }}>
           {/* Left: views */}
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
             style={{ background: "rgba(0,0,0,0.42)", backdropFilter: "blur(18px)",
@@ -765,10 +766,10 @@ function ReelSlide({
               <AudioChip track={reel.audioTrack} color={neonColor} />
             </div>
           )}
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {reel.tags?.slice(0, 3).map(tag => (
-              <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                style={{ color: neonColor, background: `${neonColor}14`, border: `1px solid ${neonColor}24` }}>
+              <span key={tag} className="text-[10px] font-bold"
+                style={{ color: neonColor, textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}>
                 #{tag}
               </span>
             ))}
@@ -778,13 +779,9 @@ function ReelSlide({
         {/* ─── BOTTOM BAR: author + waveform ─── */}
         <div className="absolute left-0 right-0 pointer-events-auto"
           style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)" }}>
-          {/* Waveform strip */}
-          <div className="px-4 pb-1 flex">
-            <Waveform active={isActive && !muted} color={neonColor} />
-          </div>
-
           {/* Author strip — transparent, floats on gradient */}
-          <div className="flex items-center gap-2.5 px-4 py-2">
+          <div className="flex items-center gap-2.5 px-4 py-2"
+            onPointerDown={e => e.stopPropagation()} onPointerUp={e => e.stopPropagation()}>
 
             {/* Avatar */}
             <div className="relative flex-shrink-0 cursor-pointer" style={{ width: 38, height: 38 }}

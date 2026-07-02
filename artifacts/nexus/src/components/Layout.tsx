@@ -419,7 +419,7 @@ function MuniPanel() {
           whileTap={{ scale: 0.88 }}
           className="fixed z-[80] md:hidden"
           style={{
-            bottom: "calc(env(safe-area-inset-bottom, 0px) + 120px)",
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)",
             ...(isLeftSide ? { left: 16 } : { right: 16 }),
             width: 44, height: 44, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -482,7 +482,7 @@ function MuniPanel() {
             animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: 32, scale: 0.88, rotateX: 10, filter: "blur(6px)" }}
             transition={{ type: "spring", stiffness: 420, damping: 32 }}
-            className={`fixed bottom-[172px] z-[79] md:bottom-20 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col ${isLeftSide ? "left-4" : "right-4"}`}
+            className={`fixed bottom-[76px] z-[79] md:bottom-20 w-[calc(100vw-2rem)] max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col ${isLeftSide ? "left-4" : "right-4"}`}
             style={{ perspective: 800, background: "hsl(var(--card))", border: "1px solid rgba(124,58,237,0.25)", boxShadow: "0 0 60px rgba(124,58,237,0.2), 0 24px 48px rgba(0,0,0,0.4)", maxHeight: "60vh" }}
           >
             {/* Header */}

@@ -243,6 +243,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
   const [deleting,      setDeleting]      = useState(false);
 
   const [menuOpen,  setMenuOpen]  = useState(false);
+  const [reported,  setReported]  = useState(false);
   const [holdMode,  setHoldMode]  = useState<"fast" | "slow" | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -391,7 +392,17 @@ export default function FeedCard({ post, index }: FeedCardProps) {
 
   const handleCopyLink = async () => {
     const url = `${window.location.origin}/post/${post.id}`;
-    try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const el = document.createElement("input");
+      el.value = url;
+      el.style.position = "fixed"; el.style.opacity = "0";
+      document.body.appendChild(el);
+      el.select();
+      try { document.execCommand("copy"); } catch { /* ignore */ }
+      document.body.removeChild(el);
+    }
     setLinkCopied(true); setShares(s => s + 1);
     setTimeout(() => setLinkCopied(false), 2200);
   };
@@ -1048,26 +1059,32 @@ export default function FeedCard({ post, index }: FeedCardProps) {
 
       {/* ═══ PANEL: OPTIONS MENU ═══ */}
       <AnimatePresence>
-        {menuOpen && !isOwner && (
+        {menuOpen && (
           <motion.div key="menu"
-            initial={{ opacity: 0, y: 8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.92, y: 6 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92, y: 6 }}
             transition={{ type: "spring", damping: 24, stiffness: 360 }}
-            className="absolute right-16 rounded-2xl overflow-hidden"
-            style={{ bottom: 180, zIndex: 41, minWidth: 170, background: "rgba(6,4,18,0.92)",
+            className="absolute right-3 rounded-2xl overflow-hidden"
+            style={{ top: "calc(env(safe-area-inset-top, 0px) + 58px)", zIndex: 41, minWidth: 186, background: "rgba(6,4,18,0.94)",
               backdropFilter: "blur(30px)", border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.55)" }}
+              boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}
             onPointerDown={e => e.stopPropagation()}
           >
-            {[
-              { icon: <Flag className="w-4 h-4 text-amber-400" />, label: "Shikoyat qilish", fn: () => setMenuOpen(false) },
-              { icon: <Link className="w-4 h-4 text-blue-400" />, label: "Havolani nusxalash", fn: () => { handleCopyLink(); setMenuOpen(false); } },
-            ].map(item => (
-              <button key={item.label} onClick={item.fn}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors">
-                {item.icon}
-                <span className="text-white text-[13px] font-medium">{item.label}</span>
+            {/* Copy link — for everyone */}
+            <button onClick={() => { handleCopyLink(); setMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors">
+              <Link className="w-4 h-4 text-blue-400 flex-shrink-0" />
+              <span className="text-white text-[13px] font-medium">{linkCopied ? "✓ Nusxalandi!" : "Havolani nusxalash"}</span>
+            </button>
+            {/* Report — only for others' posts */}
+            {!isOwner && (
+              <button onClick={() => { setReported(true); setMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors border-t border-white/[0.06]">
+                <Flag className="w-4 h-4 flex-shrink-0" style={{ color: reported ? "#6ee7b7" : "#fbbf24" }} />
+                <span className="text-[13px] font-medium" style={{ color: reported ? "#6ee7b7" : "rgba(255,255,255,0.9)" }}>
+                  {reported ? "Shikoyat yuborildi" : "Shikoyat qilish"}
+                </span>
               </button>
-            ))}
+            )}
           </motion.div>
         )}
       </AnimatePresence>

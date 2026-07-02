@@ -9,7 +9,7 @@ import {
   CircleDollarSign, AlertTriangle, Upload,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
+import { LANGUAGES, type LangCode, applyRTL, ensureTranslation } from "@/lib/i18n";
 import { COUNTRIES, countryFlag, getCountryByCode } from "@/lib/countries";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 
@@ -589,18 +589,20 @@ function PrivacyContent() {
 ═══════════════════════════════════════════════════════════════ */
 const POPULAR_LANGS: LangCode[] = ["uz", "en", "ru", "zh", "ar", "es", "fr", "hi", "tr", "de", "ja", "ko"];
 
-function LangRow({ lang, current, onSelect }: { lang: typeof LANGUAGES[0]; current: LangCode; onSelect: (c: LangCode) => void }) {
+function LangRow({ lang, current, onSelect, loadingCode }: { lang: typeof LANGUAGES[0]; current: LangCode; onSelect: (c: LangCode) => void; loadingCode: LangCode | null }) {
   const isSelected = lang.code === current;
+  const isLoading = loadingCode === lang.code;
   return (
-    <motion.button whileTap={{ scale: 0.97 }} onClick={() => onSelect(lang.code)}
-      className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all text-left w-full ${isSelected ? "bg-cyan-500/15 border border-cyan-500/35 ring-1 ring-cyan-500/20" : "border border-transparent hover:bg-white/6 hover:border-white/10"}`}>
+    <motion.button whileTap={{ scale: 0.97 }} onClick={() => onSelect(lang.code)} disabled={!!loadingCode}
+      className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all text-left w-full ${isSelected ? "bg-cyan-500/15 border border-cyan-500/35 ring-1 ring-cyan-500/20" : isLoading ? "bg-amber-500/10 border border-amber-500/30" : "border border-transparent hover:bg-white/6 hover:border-white/10"}`}>
       <span className="text-xl w-8 text-center flex-shrink-0">{lang.flag}</span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{lang.native}</p>
-        <p className="text-xs text-white/40 truncate">{lang.name}</p>
+        <p className="text-xs text-white/40 truncate">{isLoading ? "Translating with AI…" : lang.name}</p>
       </div>
-      {lang.rtl && <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 flex-shrink-0">RTL</span>}
-      {isSelected && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500 }}><Check className="w-4 h-4 text-cyan-400 flex-shrink-0" /></motion.div>}
+      {lang.rtl && !isLoading && <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 flex-shrink-0">RTL</span>}
+      {isLoading && <Loader2 className="w-4 h-4 text-amber-400 animate-spin flex-shrink-0" />}
+      {isSelected && !isLoading && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500 }}><Check className="w-4 h-4 text-cyan-400 flex-shrink-0" /></motion.div>}
     </motion.button>
   );
 }
@@ -609,6 +611,7 @@ function LanguageContent() {
   const { t, i18n: i18nInst } = useTranslation();
   const [search, setSearch] = useState("");
   const [applied, setApplied] = useState(false);
+  const [translating, setTranslating] = useState<LangCode | null>(null);
   const currentCode = i18nInst.language.split("-")[0] as LangCode;
 
   const filtered = useMemo(() => {
@@ -622,12 +625,18 @@ function LanguageContent() {
   const filteredPopular = search ? filtered.filter(l => POPULAR_LANGS.includes(l.code)) : popularLangs;
   const currentLang = LANGUAGES.find(l => l.code === currentCode) ?? LANGUAGES[0];
 
-  const handleChange = (code: LangCode) => {
+  const handleChange = async (code: LangCode) => {
+    if (translating) return;
     localStorage.setItem("olcha_lang", code);
+    if (code !== "uz" && code !== "en" && !i18nInst.hasResourceBundle(code, "translation")) {
+      setTranslating(code);
+      try { await ensureTranslation(code); } catch { /* fallback to en */ }
+      setTranslating(null);
+    }
     i18nInst.changeLanguage(code);
     applyRTL(code);
     setApplied(true);
-    setTimeout(() => setApplied(false), 2000);
+    setTimeout(() => setApplied(false), 3000);
   };
 
   return (
@@ -644,7 +653,15 @@ function LanguageContent() {
           <Check className="w-5 h-5 text-cyan-400" />
         </div>
       </SF>
-      {applied && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> {t("lang.applied")}</div></SF>}
+      {translating && (
+        <SF>
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+            <span>AI tarjima qilinmoqda… ({LANGUAGES.find(l => l.code === translating)?.native})</span>
+          </div>
+        </SF>
+      )}
+      {applied && !translating && <SF><div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2"><Check className="w-4 h-4" /> {t("lang.applied")}</div></SF>}
       <SF>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -655,13 +672,13 @@ function LanguageContent() {
       {filteredPopular.length > 0 && (
         <SF>
           {!search && <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">{t("lang.popular")}</p>}
-          <div className="space-y-1">{filteredPopular.map(lang => <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} />)}</div>
+          <div className="space-y-1">{filteredPopular.map(lang => <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} loadingCode={translating} />)}</div>
         </SF>
       )}
       {otherLangs.length > 0 && (
         <SF>
           {!search && <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">{t("lang.all")}</p>}
-          <div className="space-y-1">{otherLangs.map(lang => <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} />)}</div>
+          <div className="space-y-1">{otherLangs.map(lang => <LangRow key={lang.code} lang={lang} current={currentCode} onSelect={handleChange} loadingCode={translating} />)}</div>
         </SF>
       )}
       {filtered.length === 0 && <SF><div className="text-center py-8 text-white/30 text-sm"><Globe className="w-8 h-8 mx-auto mb-2 opacity-40" /><p>{t("lang.not_found")}</p></div></SF>}

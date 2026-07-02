@@ -24,7 +24,7 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar
 } from "recharts";
 
-type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "finance" | "monetization" | "notify" | "settings" | "nexus-core" | "ai-autopilot";
+type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "nexus-shield" | "finance" | "monetization" | "notify" | "settings" | "nexus-core" | "ai-autopilot";
 
 const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "dashboard", key: "admin.dashboard", icon: BarChart3 },
@@ -2255,6 +2255,187 @@ function AiAutopilotTab() {
   );
 }
 
+/* ── NEXUS Security Shield Panel ────────────────────────────── */
+function SecurityShieldPanel() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [unbanning, setUnbanning] = useState<string | null>(null);
+  const [manualIp, setManualIp] = useState("");
+  const [manualReason, setManualReason] = useState("");
+  const [banning, setBanning] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/admin/security`, { credentials: "include" });
+      setData(await r.json());
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const unban = async (ip: string) => {
+    setUnbanning(ip);
+    await fetch(`${API}/api/admin/security/ban/${encodeURIComponent(ip)}`, { method: "DELETE", credentials: "include" });
+    setUnbanning(null);
+    load();
+  };
+
+  const banManual = async () => {
+    if (!manualIp.trim()) return;
+    setBanning(true);
+    await fetch(`${API}/api/admin/security/ban`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+      body: JSON.stringify({ ip: manualIp.trim(), reason: manualReason || "manual_admin_ban", permanent: false }),
+    });
+    setBanning(false);
+    setManualIp(""); setManualReason("");
+    load();
+  };
+
+  const SEV_COLOR: Record<string, string> = {
+    critical: "text-red-400 bg-red-400/10",
+    high: "text-orange-400 bg-orange-400/10",
+    medium: "text-yellow-400 bg-yellow-400/10",
+    low: "text-blue-400 bg-blue-400/10",
+  };
+
+  const EVENT_ICON: Record<string, string> = {
+    sql_injection: "💉", xss: "📜", command_injection: "💻", path_traversal: "🗂️",
+    ssrf: "🌐", honeypot_trap: "🍯", scanner_user_agent: "🤖", prototype_pollution: "⚗️",
+    session_hijack_attempt: "👤", null_byte_url: "🔣", oversized_headers: "📦",
+    ssti: "🎭", xxe: "📋",
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-12">
+      <div className="w-6 h-6 border-2 border-rose-400/30 border-t-rose-400 rounded-full animate-spin" />
+    </div>
+  );
+
+  const s = data?.summary ?? {};
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Bugun hujumlar", val: s.eventsToday ?? 0, color: "text-rose-400", icon: ShieldX },
+          { label: "Kritik (24h)", val: s.criticalLast24h ?? 0, color: "text-red-400", icon: AlertTriangle },
+          { label: "Banned IP-lar", val: s.bannedIps ?? 0, color: "text-orange-400", icon: Lock },
+        ].map(({ label, val, color, icon: Icon }) => (
+          <div key={label} className="bg-muted/40 rounded-2xl p-4 border border-border">
+            <Icon className={`w-5 h-5 ${color} mb-2`} />
+            <div className={`text-2xl font-bold ${color}`}>{val}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Top attackers */}
+      {(data?.topAttackers?.length ?? 0) > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+            <ShieldX className="w-4 h-4 text-rose-400" /> Top hujumchilar (7 kun)
+          </h4>
+          <div className="space-y-1.5">
+            {data.topAttackers.map((a: any) => (
+              <div key={a.ip} className="flex items-center gap-3 bg-muted/40 rounded-xl px-3 py-2 border border-border">
+                <span className="font-mono text-xs text-foreground flex-1">{a.ip}</span>
+                <span className="text-xs text-muted-foreground">{a.attacks} hujum</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${SEV_COLOR[a.max_severity] ?? "text-muted-foreground bg-muted"}`}>{a.max_severity}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Attack types */}
+      {(data?.attackTypes?.length ?? 0) > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-orange-400" /> Hujum turlari (7 kun)
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {data.attackTypes.map((t: any) => (
+              <span key={t.event_type} className="flex items-center gap-1 bg-muted/50 border border-border rounded-full px-3 py-1 text-xs">
+                {EVENT_ICON[t.event_type] ?? "⚠️"} <span className="font-medium">{t.event_type.replace(/_/g, " ")}</span>
+                <span className="text-rose-400 font-bold ml-1">{t.count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Active bans */}
+      {(data?.activeBans?.length ?? 0) > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+            <Lock className="w-4 h-4 text-red-400" /> Aktiv ban-lar ({data.activeBans.length})
+          </h4>
+          <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+            {data.activeBans.map((b: any) => (
+              <div key={b.ip} className="flex items-center gap-3 bg-red-950/20 border border-red-900/30 rounded-xl px-3 py-2">
+                <span className="font-mono text-xs flex-1 text-red-300">{b.ip}</span>
+                <span className="text-xs text-muted-foreground truncate max-w-[120px]">{b.reason?.replace(/_/g, " ")}</span>
+                <span className={`text-xs font-bold ${b.permanent ? "text-red-400" : "text-orange-400"}`}>{b.permanent ? "DOIMIY" : `${b.strikes}⚡`}</span>
+                <button onClick={() => unban(b.ip)} disabled={unbanning === b.ip}
+                  className="text-xs px-2 py-1 bg-muted rounded-lg text-muted-foreground hover:text-foreground transition disabled:opacity-50 flex-shrink-0">
+                  {unbanning === b.ip ? "..." : "Olib tashlash"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Manual ban */}
+      <div className="bg-muted/30 border border-border rounded-2xl p-4 space-y-3">
+        <h4 className="text-sm font-semibold flex items-center gap-2"><Lock className="w-4 h-4 text-rose-400" /> Qo'lda ban qo'shish</h4>
+        <div className="flex gap-2">
+          <input value={manualIp} onChange={e => setManualIp(e.target.value)} placeholder="IP manzil (masalan: 1.2.3.4)"
+            className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-rose-400/50" />
+          <input value={manualReason} onChange={e => setManualReason(e.target.value)} placeholder="Sabab"
+            className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-rose-400/50" />
+          <button onClick={banManual} disabled={banning || !manualIp.trim()}
+            className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50">
+            {banning ? "..." : "Ban"}
+          </button>
+        </div>
+      </div>
+
+      {/* Recent events */}
+      {(data?.recentEvents?.length ?? 0) > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+            <Eye className="w-4 h-4 text-amber-400" /> So'nggi voqealar
+          </h4>
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+            {data.recentEvents.map((e: any) => (
+              <div key={e.id} className="flex items-start gap-2 bg-muted/30 border border-border rounded-xl px-3 py-2 text-xs">
+                <span className="text-base leading-tight flex-shrink-0">{EVENT_ICON[e.event_type] ?? "⚠️"}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-muted-foreground">{e.ip}</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${SEV_COLOR[e.severity] ?? ""}`}>{e.severity}</span>
+                    <span className="text-muted-foreground/60 ml-auto">{new Date(e.created_at).toLocaleTimeString()}</span>
+                  </div>
+                  <div className="text-muted-foreground mt-0.5">{e.event_type.replace(/_/g, " ")} {e.path && <span className="font-mono opacity-60">{e.path}</span>}</div>
+                  {e.payload && <div className="font-mono text-rose-400/70 truncate mt-0.5">{e.payload}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button onClick={load} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition">
+        <RefreshCw className="w-3.5 h-3.5" /> Yangilash
+      </button>
+    </motion.div>
+  );
+}
+
 /* ── AI Autonomous Admin Actions Panel ───────────────────────── */
 function AiAdminActionsPanel() {
   const [actions, setActions] = useState<any[]>([]);
@@ -3378,6 +3559,15 @@ export default function AdminPage() {
               preview="Kontent xavfsizligi va moderatsiya"
               isOpen={openPanel === "safeguard"} onToggle={() => toggle("safeguard")}>
               <SafeGuardTab />
+            </AdminPanel>
+          </motion.div>
+
+          {/* ── NEXUS SHIELD ──────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="rose" icon={ShieldX} label="NEXUS Xavfsizlik Qalqoni"
+              preview="Hujumlar, ban-list, real-vaqt monitoring"
+              isOpen={openPanel === "nexus-shield"} onToggle={() => toggle("nexus-shield" as any)}>
+              <SecurityShieldPanel />
             </AdminPanel>
           </motion.div>
 

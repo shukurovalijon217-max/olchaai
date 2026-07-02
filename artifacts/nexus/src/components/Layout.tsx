@@ -347,10 +347,6 @@ function MuniPanel() {
   const [location] = useLocation();
   const isOTube = location === "/otube";
   const isLeftSide = isOTube || location === "/";
-  const { edged, dock } = useDockedState(isLeftSide ? "left" : "right");
-
-  /* Auto-close panel when dock hides all orbs */
-  useEffect(() => { if (edged) setOpen(false); }, [edged]);
 
   const SUGGESTS = ["suggest_1", "suggest_2", "suggest_3", "suggest_4"];
 
@@ -407,19 +403,13 @@ function MuniPanel() {
   return (
     <>
       {/* ── Jarvis orb toggle — same size & glow as FloatingAvatar ── */}
-      {!edged && (
+      {(
         <motion.button
           onClick={() => setOpen(v => !v)}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
-          onDragEnd={(_: unknown, info: { offset: { x: number } }) => {
-            if (isLeftSide ? info.offset.x < -36 : info.offset.x > 36) dock();
-          }}
           whileTap={{ scale: 0.88 }}
           className="fixed z-[80] md:hidden"
           style={{
-            bottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)",
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)",
             ...(isLeftSide ? { left: 16 } : { right: 16 }),
             width: 44, height: 44, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",

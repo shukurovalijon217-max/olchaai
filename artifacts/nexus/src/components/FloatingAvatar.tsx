@@ -16,11 +16,7 @@ function loadXY() {
     const s = localStorage.getItem(POS_KEY);
     if (s) {
       const p = JSON.parse(s) as { x: number; y: number };
-      if (
-        typeof p.x === "number" && typeof p.y === "number" &&
-        p.x >= -120 && p.x <= 0 &&
-        p.y >= -350 && p.y <= 0   /* never allow downward drag */
-      ) return p;
+      if (typeof p.x === "number" && typeof p.y === "number") return p;
     }
   } catch { /* ignore */ }
   return { x: 0, y: 0 };
@@ -112,13 +108,10 @@ export default function FloatingAvatar() {
 
   const onDragEnd = (_: unknown, info: { offset: { x: number; y: number } }) => {
     /* Swipe right → dock all floating elements */
-    if (info.offset.x > 36) {
+    if (info.offset.x > 60) {
       dock();
       return;
     }
-    /* Clamp x ≤ 0, y ≤ 0 (never allow rightward or downward drift) */
-    if (dragX.get() > 0) dragX.set(0);
-    if (dragY.get() > 0) dragY.set(0);
     try { localStorage.setItem(POS_KEY, JSON.stringify({ x: dragX.get(), y: dragY.get() })); } catch {}
   };
 
@@ -171,8 +164,8 @@ export default function FloatingAvatar() {
     <motion.div
       drag
       dragMomentum={false}
-      dragElastic={0}
-      dragConstraints={{ left: -120, right: 0, top: -350, bottom: 80 }}
+      dragElastic={0.08}
+      dragConstraints={{ left: -1800, right: 120, top: -1800, bottom: 600 }}
       style={{
         x: dragX,
         y: dragY,

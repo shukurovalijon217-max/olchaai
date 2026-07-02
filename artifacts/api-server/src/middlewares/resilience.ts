@@ -8,8 +8,8 @@
  */
 import type { Request, Response, NextFunction } from "express";
 
-const REQUEST_TIMEOUT_MS = 30_000; // 30s max per request
-const MEM_SHED_THRESHOLD = 0.90;   // shed load when heap > 90%
+const REQUEST_TIMEOUT_MS = 30_000;   // 30s max per request
+const RSS_SHED_THRESHOLD_MB = 800;   // shed load when RSS > 800 MB (absolute, not heap ratio)
 const HEAVY_ENDPOINTS = new Set(["/api/ai/feed", "/api/ai/chat", "/api/posts"]);
 const HEAVY_MAX_CONCURRENT = 100;
 
@@ -43,9 +43,9 @@ export function loadShedder(req: Request, res: Response, next: NextFunction) {
   }
 
   const mem = process.memoryUsage();
-  const heapUsedRatio = mem.heapUsed / mem.heapTotal;
+  const rssMb = mem.rss / 1024 / 1024;
 
-  if (heapUsedRatio > MEM_SHED_THRESHOLD) {
+  if (rssMb > RSS_SHED_THRESHOLD_MB) {
     res.status(503)
       .setHeader("Retry-After", "5")
       .json({

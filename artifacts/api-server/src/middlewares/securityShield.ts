@@ -376,7 +376,8 @@ export async function securityShield(req: Request, res: Response, next: NextFunc
     try { decoded = decodeURIComponent(queryStr); } catch { decoded = queryStr; }
     const queryAttack = scanValue(decoded);
     if (queryAttack) {
-      await strike(ip, `query_${queryAttack.type}`, path, queryAttack.severity, decoded.slice(0, 200), ua, userId);
+      const qSev = queryAttack.severity === "low" ? "medium" : queryAttack.severity;
+      await strike(ip, `query_${queryAttack.type}`, path, qSev, decoded.slice(0, 200), ua, userId);
       await banIp(ip, queryAttack.type, queryAttack.severity === "critical" ? 24 * 60 * 60_000 : 60 * 60_000);
       decoyResponse(res);
       return;
@@ -387,7 +388,8 @@ export async function securityShield(req: Request, res: Response, next: NextFunc
   if (req.body && typeof req.body === "object") {
     const bodyAttack = deepScan(req.body);
     if (bodyAttack) {
-      await strike(ip, `body_${bodyAttack.type}`, path, bodyAttack.severity, bodyAttack.sample, ua, userId);
+      const bSev = bodyAttack.severity === "low" ? "medium" : bodyAttack.severity;
+      await strike(ip, `body_${bodyAttack.type}`, path, bSev, bodyAttack.sample, ua, userId);
       await banIp(ip, bodyAttack.type, bodyAttack.severity === "critical" ? 24 * 60 * 60_000 : 60 * 60_000);
       decoyResponse(res);
       return;

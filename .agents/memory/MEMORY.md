@@ -15,3 +15,4 @@
 - [Object storage GCS round-trip optimization](object-storage-perf.md) — never re-fetch metadata already fetched; collapse exists()+getMetadata()+getMetadata() into one call, root cause of mobile media lag.
 - [olcha-mobile WebView typecheck workaround](mobile-webview-typecheck.md) — keep the @ts-ignore above <WebView> in index.tsx or workspace typecheck breaks; version mismatch causes "never" overload errors.
 - [WebView continuous-animation freeze pattern](webview-animation-perf.md) — unconditional Framer Motion `repeat: Infinity` animations per feed card cause mobile WebView freeze; gate by useInView.
+- [Global floating chrome overlay interception](floating-chrome-overlay-interception.md) — fixed-position AI orb/dock tabs in shared Layout can swallow taps on full-screen overlays even with lower z-index; gate chrome behind a shared context flag, not z-index alone.

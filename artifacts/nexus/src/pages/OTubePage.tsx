@@ -437,6 +437,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const qc             = useQueryClient();
   const [, navPlayer]  = useLocation();
   const { user }       = useAuth();
+  const { setPlayerOpen } = usePip();
   const videoRef   = useRef<HTMLVideoElement>(null);
   const contRef    = useRef<HTMLDivElement>(null);
   const ctrlTimer  = useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -573,10 +574,28 @@ function NexusPlayer({ video, onClose, settings, onPip }:
     return () => document.removeEventListener("fullscreenchange", h);
   }, []);
 
+  /* Tell the global chrome (Muni assistant orb, dock edge tabs, avatar bubble)
+     to hide while this full-screen player is mounted, so they stop swallowing
+     taps meant for the player's own top-bar / action-panel buttons. */
+  useEffect(() => {
+    setPlayerOpen(true);
+    return () => setPlayerOpen(false);
+  }, [setPlayerOpen]);
+
   const toggleFull = useCallback(async () => {
-    const el = contRef.current; if (!el) return;
-    if (!document.fullscreenElement) { try { await el.requestFullscreen(); } catch{} }
-    else { try { await document.exitFullscreen(); } catch{} }
+    const el = contRef.current;
+    const v = videoRef.current as (HTMLVideoElement & { webkitEnterFullscreen?: () => void; webkitDisplayingFullscreen?: boolean }) | null;
+    if (!document.fullscreenElement) {
+      if (el?.requestFullscreen) {
+        try { await el.requestFullscreen(); return; } catch { /* fall through to iOS fallback */ }
+      }
+      /* iOS Safari has no generic Fullscreen API — only <video> supports native fullscreen there */
+      if (v?.webkitEnterFullscreen && !v.webkitDisplayingFullscreen) {
+        try { v.webkitEnterFullscreen(); } catch { /* nothing else we can do */ }
+      }
+    } else if (document.exitFullscreen) {
+      try { await document.exitFullscreen(); } catch{}
+    }
   }, []);
 
   const resetCtrl = useCallback(() => {
@@ -742,10 +761,12 @@ function NexusPlayer({ video, onClose, settings, onPip }:
             onClick={(e)=>{e.stopPropagation();followMut.mutate({id:video.author.id});}}
             disabled={followMut.isPending}
             style={{padding:"7px 13px",borderRadius:99,flexShrink:0,
-              background:subbed?"rgba(255,255,255,0.08)":"rgba(255,107,0,0.92)",
-              border:`1px solid ${subbed?"rgba(255,255,255,0.1)":"transparent"}`,
-              boxShadow:subbed?"none":"0 0 14px rgba(255,107,0,0.35)",
-              fontSize:11,fontWeight:700,color:subbed?"rgba(255,255,255,0.45)":"white"}}>
+              background:"rgba(255,255,255,0.07)",
+              backdropFilter:"blur(10px)",
+              border:`1px solid ${subbed?"rgba(255,255,255,0.1)":"rgba(255,107,0,0.55)"}`,
+              boxShadow:subbed?"none":"0 0 14px rgba(255,107,0,0.22)",
+              opacity:followMut.isPending?0.6:1,
+              fontSize:11,fontWeight:700,color:subbed?"rgba(255,255,255,0.45)":"#ff9a52"}}>
             {subbed?"✓ Obuna":"···Obuna"}
           </motion.button>
           <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();toggleFull();}}

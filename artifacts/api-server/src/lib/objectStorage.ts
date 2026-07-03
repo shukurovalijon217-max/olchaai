@@ -95,8 +95,16 @@ export class ObjectStorageService {
     const cacheTtlSec = typeof options === "number" ? options : (options?.cacheTtlSec ?? 3600);
     const range = typeof options === "number" ? undefined : options?.range;
 
-    const [metadata] = await file.getMetadata();
-    const aclPolicy = await getObjectAclPolicy(file);
+    let metadata: Record<string, any>;
+    try {
+      const result = await file.getMetadata();
+      metadata = result[0];
+    } catch (err) {
+      const code = (err as { code?: number })?.code;
+      if (code === 404) throw new ObjectNotFoundError();
+      throw err;
+    }
+    const aclPolicy = await getObjectAclPolicy(file, metadata);
     const isPublic = aclPolicy?.visibility === "public";
     const totalSize = metadata.size ? Number(metadata.size) : undefined;
 
@@ -170,12 +178,9 @@ export class ObjectStorageService {
     const objectEntityPath = `${entityDir}${entityId}`;
     const { bucketName, objectName } = parseObjectPath(objectEntityPath);
     const bucket = objectStorageClient.bucket(bucketName);
-    const objectFile = bucket.file(objectName);
-    const [exists] = await objectFile.exists();
-    if (!exists) {
-      throw new ObjectNotFoundError();
-    }
-    return objectFile;
+    /* No existence round-trip here — downloadObject()'s getMetadata() call
+       both confirms existence and fetches the data we need in one request. */
+    return bucket.file(objectName);
   }
 
   normalizeObjectEntityPath(rawPath: string): string {

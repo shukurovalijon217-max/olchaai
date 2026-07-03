@@ -6,6 +6,7 @@ import {
 } from "@workspace/db";
 import { desc, eq, and, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { checkAIAccess, incrementAIUsage } from "../lib/aiAccess";
 
 const router = Router();
 
@@ -197,6 +198,12 @@ router.post("/ai/analyze-content", async (req, res) => {
       );
     if (existing) { res.json(existing); return; }
 
+    const access = await checkAIAccess(userId);
+    if (!access.allowed) {
+      res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: access.limit, remaining: 0 });
+      return;
+    }
+
     const textContent = caption || "(no caption)";
     const userContent: unknown = imageUrl
       ? [
@@ -245,6 +252,7 @@ Tags: 3-6 relevant hashtags without #.`,
       .onConflictDoNothing()
       .returning();
 
+    await incrementAIUsage(userId);
     res.json(saved ?? analysisData);
   } catch (err) {
     req.log.error(err);
@@ -320,9 +328,17 @@ router.post("/ai/moderation", async (req, res) => {
 
 /* ── AI group post text assist ───────────────────────────────── */
 router.post("/ai/group-assist", async (req, res) => {
+  const userId = (req.session as any)?.userId as number | undefined;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const { prompt, groupName, groupCategory } = req.body;
     if (!prompt?.trim()) { res.status(400).json({ error: "prompt required" }); return; }
+
+    const access = await checkAIAccess(userId);
+    if (!access.allowed) {
+      res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: access.limit, remaining: 0 });
+      return;
+    }
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -338,6 +354,7 @@ router.post("/ai/group-assist", async (req, res) => {
     });
 
     const text = completion.choices[0]?.message?.content?.trim() ?? "";
+    await incrementAIUsage(userId);
     res.json({ text });
   } catch (err) {
     req.log.error(err);

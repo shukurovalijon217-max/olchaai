@@ -12,6 +12,7 @@ import NexusLogo from "@/components/NexusLogo";
 import FloatingAvatar from "@/components/FloatingAvatar";
 import { useDockedState } from "@/hooks/useDockedState";
 import { useAuth } from "@/context/AuthContext";
+import { usePip } from "@/context/PipContext";
 import { countryFlag, getCountryByCode, getCountryByTimezone } from "@/lib/countries";
 
 /* ─── Icon color palette ─────────────────────────────────────── */
@@ -561,6 +562,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { t } = useTranslation();
+  const { playerOpen } = usePip();
   const isImmersive = location === "/" || location === "/reels" || location === "/otube";
   const [isOpen, setIsOpen] = useState(loadOpen);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -1211,14 +1213,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* ── FLOATING USER AVATAR BUBBLE ── */}
-      {!isImmersive && <FloatingAvatar />}
+      {!isImmersive && !playerOpen && <FloatingAvatar />}
 
       {/* ── MUNI FLOATING AI ── */}
-      {location !== "/reels" && <MuniPanel />}
+      {location !== "/reels" && !playerOpen && <MuniPanel />}
 
-      {/* ── DOCK EDGE TABS ── */}
-      <DockEdgeTab side="right" />
-      <DockEdgeTab side="left" />
+      {/* ── DOCK EDGE TABS — hidden while a full-screen player is open ── */}
+      {!playerOpen && <DockEdgeTab side="right" />}
+      {!playerOpen && <DockEdgeTab side="left" />}
 
       {/* ══ FLOATING BACK BUTTON — tap to show, mobile only ════ */}
       <AnimatePresence>

@@ -15,6 +15,11 @@ interface PipCtx {
   closePip: () => void;
   expandPip: (() => void) | null;
   setExpandHandler: (fn: (() => void) | null) => void;
+  /* True while a full-screen video overlay (e.g. OTube's NexusPlayer) is open,
+     so global floating chrome (Muni assistant, dock tabs, avatar bubble) can hide
+     and stop swallowing taps meant for the player's own controls. */
+  playerOpen: boolean;
+  setPlayerOpen: (open: boolean) => void;
 }
 
 const PipContext = createContext<PipCtx>({
@@ -23,6 +28,8 @@ const PipContext = createContext<PipCtx>({
   closePip: () => {},
   expandPip: null,
   setExpandHandler: () => {},
+  playerOpen: false,
+  setPlayerOpen: () => {},
 });
 
 export function usePip() { return useContext(PipContext); }
@@ -254,6 +261,7 @@ function GlobalMiniPlayer({ pip, onClose, onExpand }: {
 export function PipProvider({ children }: { children: ReactNode }) {
   const [pip,         setPip]         = useState<PipState | null>(null);
   const [expandFn,    setExpandFn]    = useState<(() => void) | null>(null);
+  const [playerOpen,  setPlayerOpen]  = useState(false);
 
   const openPip = useCallback((video: Reel, startTime: number) => {
     setPip({ video, startTime });
@@ -266,7 +274,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <PipContext.Provider value={{ pip, openPip, closePip, expandPip: expandFn, setExpandHandler }}>
+    <PipContext.Provider value={{ pip, openPip, closePip, expandPip: expandFn, setExpandHandler, playerOpen, setPlayerOpen }}>
       {children}
       <AnimatePresence>
         {pip && (

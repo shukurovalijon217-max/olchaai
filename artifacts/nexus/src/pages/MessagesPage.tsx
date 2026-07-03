@@ -1,7 +1,7 @@
 import {
   useState, useRef, useEffect, useCallback, ElementType,
 } from "react";
-import { playMessageSound, playCallRingtone, getFeaturePref } from "@/lib/sounds";
+import { playMessageSound, getFeaturePref } from "@/lib/sounds";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
@@ -10,12 +10,12 @@ import {
   MoreVertical, Reply, Forward, Copy, Trash2, Star, Pin, Check,
   CheckCheck, ChevronDown, Image as ImageIcon, File, 
   MapPin, BarChart3, AtSign, Hash, Bold, Italic,
-  StopCircle, Volume2, Play, Pause, Users, Lock,
-  MicOff, VideoOff, Bell, Palette, 
+  StopCircle, Play, Pause, Users, Lock,
+  Bell, Palette,
   Clock3, AlignLeft, Heart, ThumbsUp, Pencil,
-  PhoneOff, Archive, UserPlus, Share2, Flag, Download,
+  Archive, UserPlus, Share2, Flag, Download,
   CheckSquare, Square, Layers, Link, Globe,
-  BellOff, BellRing, Zap, Headphones, PenLine, Minimize2, Maximize2,
+  BellOff, BellRing, Zap, PenLine,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,6 +30,8 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { useCall } from "@/context/CallContext";
+import { useRealtime } from "@/context/RealtimeContext";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -797,326 +799,6 @@ function MsgBubble({
   );
 }
 
-/* ── CallUI overlay ─────────────────────────────────────────── */
-function CallUI({
-  type, name, avatar, onEnd,
-}: {
-  type:"voice"|"video"; name:string; avatar?:string; onEnd:()=>void;
-}) {
-  const [muted,     setMuted]     = useState(false);
-  const [speaker,   setSpeaker]   = useState(true);
-  const [cameraOn,  setCameraOn]  = useState(type === "video");
-  const [elapsed,   setElapsed]   = useState(0);
-  const [status,    setStatus]    = useState<"calling"|"connected">("calling");
-  const [camError,  setCamError]  = useState(false);
-  const [minimized, setMinimized] = useState(false);
-  const localVidRef  = useRef<HTMLVideoElement>(null);
-  const pipVidRef    = useRef<HTMLVideoElement>(null);
-  const streamRef    = useRef<MediaStream|null>(null);
-
-  /* ── request camera + mic on mount for video calls ── */
-  useEffect(()=>{
-    if (type !== "video") return;
-    navigator.mediaDevices.getUserMedia({ video: { facingMode:"user" }, audio: true })
-      .then(stream => {
-        streamRef.current = stream;
-        if (localVidRef.current) {
-          localVidRef.current.srcObject = stream;
-          localVidRef.current.play().catch(()=>{});
-        }
-        if (pipVidRef.current) {
-          pipVidRef.current.srcObject = stream;
-          pipVidRef.current.play().catch(()=>{});
-        }
-      })
-      .catch(()=>{ setCameraOn(false); setCamError(true); });
-    return ()=>{ streamRef.current?.getTracks().forEach(t=>t.stop()); };
-  },[type]);
-
-  /* ── reattach stream when switching between full/pip modes ── */
-  useEffect(()=>{
-    if (!streamRef.current) return;
-    if (minimized) {
-      if (pipVidRef.current) {
-        pipVidRef.current.srcObject = streamRef.current;
-        pipVidRef.current.play().catch(()=>{});
-      }
-    } else {
-      /* maximized — localVidRef just remounted, reattach */
-      if (localVidRef.current) {
-        localVidRef.current.srcObject = streamRef.current;
-        localVidRef.current.play().catch(()=>{});
-      }
-    }
-  },[minimized]);
-
-  /* ── sync mute with audio track ── */
-  useEffect(()=>{
-    streamRef.current?.getAudioTracks().forEach(t=>{ t.enabled = !muted; });
-  },[muted]);
-
-  /* ── camera toggle ── */
-  const toggleCamera = () => {
-    const tracks = streamRef.current?.getVideoTracks();
-    if (tracks?.length) {
-      const next = !cameraOn;
-      tracks.forEach(t=>{ t.enabled = next; });
-      setCameraOn(next);
-    }
-  };
-
-  /* ── call connected timer ── */
-  useEffect(()=>{
-    const t = setTimeout(()=>setStatus("connected"), 2000);
-    return ()=>clearTimeout(t);
-  },[]);
-
-  useEffect(()=>{
-    if(status!=="connected") return;
-    const i = setInterval(()=>setElapsed(p=>p+1), 1000);
-    return ()=>clearInterval(i);
-  },[status]);
-
-  const isVideo = type === "video";
-
-  /* ── Mini PiP window (minimized mode) ── */
-  if (minimized) {
-    return (
-      <motion.div
-        initial={{scale:0.5,opacity:0,x:80,y:80}}
-        animate={{scale:1,opacity:1,x:0,y:0}}
-        exit={{scale:0.5,opacity:0}}
-        transition={{type:"spring",stiffness:340,damping:28}}
-        onClick={()=>setMinimized(false)}
-        className="fixed bottom-28 right-4 z-50 cursor-pointer select-none"
-        style={{
-          width:140,
-          borderRadius:20,
-          overflow:"hidden",
-          boxShadow:"0 8px 32px rgba(0,0,0,0.6),0 0 0 1.5px rgba(255,255,255,0.12)",
-        }}>
-        {/* video/avatar background */}
-        <div className="relative" style={{height:180,background:"#111"}}>
-          {isVideo && cameraOn
-            ? <video ref={pipVidRef} autoPlay muted playsInline
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{transform:"scaleX(-1)"}}/>
-            : avatar
-              ? <img src={avatar} alt="" className="absolute inset-0 w-full h-full object-cover"/>
-              : <div className="absolute inset-0 flex items-center justify-center"
-                  style={{background:"linear-gradient(135deg,#7c3aed,#4f46e5)"}}>
-                  <span className="text-white text-4xl font-bold">{name[0]?.toUpperCase()}</span>
-                </div>
-          }
-          {/* dark overlay at bottom */}
-          <div className="absolute inset-0" style={{background:"linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 55%)"}}/>
-          {/* expand icon top-right */}
-          <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
-            style={{background:"rgba(0,0,0,0.45)",backdropFilter:"blur(8px)"}}>
-            <Maximize2 className="w-3 h-3 text-white"/>
-          </div>
-          {/* name + timer */}
-          <div className="absolute bottom-2 left-0 right-0 text-center">
-            <p className="text-white text-[11px] font-semibold leading-tight truncate px-2">{name}</p>
-            <p className="text-white/60 text-[10px]">{formatDur(elapsed)}</p>
-          </div>
-        </div>
-        {/* end call strip */}
-        <button
-          onClick={e=>{ e.stopPropagation(); onEnd(); }}
-          className="w-full flex items-center justify-center gap-1.5 py-2"
-          style={{background:"rgba(239,68,68,0.9)"}}>
-          <PhoneOff className="w-3.5 h-3.5 text-white"/>
-          <span className="text-white text-[11px] font-semibold">Tugatish</span>
-        </button>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div
-      initial={{opacity:0,scale:0.96}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.96}}
-      transition={{duration:0.25,ease:"easeOut"}}
-      className="fixed inset-0 z-50 overflow-hidden"
-      style={{background: isVideo && cameraOn ? "#000" : "linear-gradient(180deg,#0f172a 0%,#020617 100%)"}}>
-
-      {/* ── Local camera feed (fullscreen background) ── */}
-      {isVideo && (
-        <video
-          ref={localVidRef}
-          autoPlay muted playsInline
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-          style={{opacity: cameraOn ? 1 : 0, transform:"scaleX(-1)"}}
-        />
-      )}
-
-      {/* ── Dark gradient overlay ── */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{background: isVideo
-          ? "linear-gradient(180deg,rgba(0,0,0,0.55) 0%,transparent 28%,transparent 55%,rgba(0,0,0,0.75) 100%)"
-          : "transparent"}}/>
-
-      {/* ── Animated background blobs for voice calls ── */}
-      {!isVideo && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{scale:[1,1.2,1],opacity:[0.15,0.25,0.15]}}
-            transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}
-            className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full"
-            style={{background:"radial-gradient(circle,rgba(139,92,246,0.4),transparent 70%)"}}/>
-          <motion.div
-            animate={{scale:[1.2,1,1.2],opacity:[0.1,0.2,0.1]}}
-            transition={{duration:4,repeat:Infinity,ease:"easeInOut",delay:1}}
-            className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full"
-            style={{background:"radial-gradient(circle,rgba(59,130,246,0.3),transparent 70%)"}}/>
-        </div>
-      )}
-
-      {/* ── Minimize button (top-right) ── */}
-      <motion.button
-        whileTap={{scale:0.85}}
-        onClick={()=>setMinimized(true)}
-        className="absolute top-12 right-4 z-20 w-9 h-9 rounded-full flex items-center justify-center"
-        style={{background:"rgba(255,255,255,0.12)",backdropFilter:"blur(16px)"}}>
-        <Minimize2 className="w-4 h-4 text-white"/>
-      </motion.button>
-
-      {/* ── Main content ── */}
-      <div className="relative z-10 flex flex-col items-center justify-between h-full"
-        style={{paddingTop:"env(safe-area-inset-top,48px)",paddingBottom:40}}>
-
-        {/* Top: caller info */}
-        <div className="flex flex-col items-center gap-5 pt-4">
-          {/* Avatar — hide when video is live */}
-          <motion.div
-            animate={{opacity: isVideo && cameraOn && status==="connected" ? 0 : 1}}
-            transition={{duration:0.4}}
-            className="relative">
-            <div className="w-28 h-28 rounded-full overflow-hidden shadow-2xl"
-              style={{boxShadow: status==="calling"
-                ? "0 0 0 4px rgba(139,92,246,0.3),0 0 40px rgba(139,92,246,0.2)"
-                : "0 8px 32px rgba(0,0,0,0.4)"}}>
-              {avatar
-                ? <img src={avatar} alt="" className="w-full h-full object-cover"/>
-                : <div className="w-full h-full bg-gradient-to-br from-primary to-violet-700 flex items-center justify-center text-4xl font-bold text-white">
-                    {name[0]?.toUpperCase()}
-                  </div>}
-            </div>
-            {/* Calling pulse rings */}
-            {status==="calling" && (
-              <>
-                <motion.div animate={{scale:[1,1.5],opacity:[0.5,0]}} transition={{duration:1.4,repeat:Infinity}}
-                  className="absolute inset-0 rounded-full border-2 border-primary/60"/>
-                <motion.div animate={{scale:[1,1.8],opacity:[0.3,0]}} transition={{duration:1.4,repeat:Infinity,delay:0.4}}
-                  className="absolute inset-0 rounded-full border border-primary/40"/>
-                <motion.div animate={{scale:[1,2.1],opacity:[0.2,0]}} transition={{duration:1.4,repeat:Infinity,delay:0.8}}
-                  className="absolute inset-0 rounded-full border border-primary/20"/>
-              </>
-            )}
-          </motion.div>
-
-          {/* Name + status */}
-          <div className="text-center">
-            <p className="text-white text-2xl font-bold tracking-tight drop-shadow-lg">{name}</p>
-            <motion.p
-              animate={status==="calling"?{opacity:[0.5,1,0.5]}:{opacity:1}}
-              transition={{duration:1.5,repeat:status==="calling"?Infinity:0}}
-              className="text-white/60 text-sm mt-1.5">
-              {status==="calling"
-                ? (isVideo ? "📹 Video qo'ng'iroq..." : "📞 Qo'ng'iroq qilinmoqda...")
-                : formatDur(elapsed)}
-            </motion.p>
-            {camError && isVideo && (
-              <p className="text-amber-400 text-xs mt-1">⚠ Kamera ruxsat berilmagan</p>
-            )}
-          </div>
-
-          {/* Video type badge */}
-          {isVideo && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
-              style={{background:"rgba(255,255,255,0.1)",backdropFilter:"blur(12px)",color:"rgba(255,255,255,0.7)"}}>
-              <Video className="w-3 h-3"/>
-              Video qo'ng'iroq
-            </div>
-          )}
-        </div>
-
-        {/* Bottom: controls */}
-        <div className="flex flex-col items-center gap-7 w-full px-8">
-          {/* 3 control buttons */}
-          <div className="grid grid-cols-3 gap-5 w-full max-w-[280px]">
-            {/* Mic */}
-            <div className="flex flex-col items-center gap-2">
-              <motion.button whileTap={{scale:0.88}} onClick={()=>setMuted(v=>!v)}
-                className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200"
-                style={{
-                  background: muted ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.12)",
-                  backdropFilter:"blur(16px)",
-                  boxShadow: muted ? "0 4px 20px rgba(255,255,255,0.25)" : "none",
-                }}>
-                {muted
-                  ? <MicOff className="w-6 h-6 text-gray-900"/>
-                  : <Mic className="w-6 h-6 text-white"/>}
-              </motion.button>
-              <span className="text-white/55 text-[11px]">{muted ? "Ovoz yoq" : "Ovoz o'ch"}</span>
-            </div>
-
-            {/* Speaker */}
-            <div className="flex flex-col items-center gap-2">
-              <motion.button whileTap={{scale:0.88}} onClick={()=>setSpeaker(v=>!v)}
-                className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200"
-                style={{
-                  background: !speaker ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.12)",
-                  backdropFilter:"blur(16px)",
-                  boxShadow: !speaker ? "0 4px 20px rgba(255,255,255,0.25)" : "none",
-                }}>
-                {speaker
-                  ? <Volume2 className="w-6 h-6 text-white"/>
-                  : <Headphones className="w-6 h-6 text-gray-900"/>}
-              </motion.button>
-              <span className="text-white/55 text-[11px]">{speaker ? "Dinamik" : "Quloqchin"}</span>
-            </div>
-
-            {/* Camera (only interactive for video calls) */}
-            <div className="flex flex-col items-center gap-2">
-              <motion.button whileTap={{scale:0.88}}
-                onClick={isVideo ? toggleCamera : undefined}
-                className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200"
-                style={{
-                  background: isVideo && !cameraOn ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.12)",
-                  backdropFilter:"blur(16px)",
-                  boxShadow: isVideo && !cameraOn ? "0 4px 20px rgba(255,255,255,0.25)" : "none",
-                  opacity: isVideo ? 1 : 0.35,
-                  cursor: isVideo ? "pointer" : "default",
-                }}>
-                {isVideo && !cameraOn
-                  ? <VideoOff className="w-6 h-6 text-gray-900"/>
-                  : <Video className="w-6 h-6 text-white"/>}
-              </motion.button>
-              <span className="text-white/55 text-[11px]">
-                {isVideo ? (cameraOn ? "Kamera" : "Kamera yoq") : "Kamera"}
-              </span>
-            </div>
-          </div>
-
-          {/* End call */}
-          <motion.button
-            whileTap={{scale:0.9}}
-            onClick={onEnd}
-            className="w-16 h-16 rounded-full flex items-center justify-center"
-            style={{
-              background:"linear-gradient(135deg,#ef4444,#dc2626)",
-              boxShadow:"0 0 0 4px rgba(239,68,68,0.2),0 8px 32px rgba(239,68,68,0.45)",
-            }}>
-            <PhoneOff className="w-7 h-7 text-white"/>
-          </motion.button>
-          <span className="text-white/30 text-xs tracking-wide">Qo'ng'iroqni tugatish</span>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 /* ── ForwardModal ───────────────────────────────────────────── */
 function ForwardModal({
   convs, me, onForward, onClose,
@@ -1239,7 +921,8 @@ export default function MessagesPage() {
   const [showFmtBar, setShowFmtBar] = useState(false);
   const [scheduleMode, setScheduleMode] = useState(false);
   const [scheduleTime, setScheduleTime] = useState("");
-  const [callState, setCallState] = useState<{type:"voice"|"video";name:string;avatar?:string}|null>(null);
+  const { startCall } = useCall();
+  const { subscribe, send: sendRealtime } = useRealtime();
   const [forwardMsgId, setForwardMsgId] = useState<string|null>(null);
   const [showPollCreator, setShowPollCreator] = useState(false);
   const [selectedMsgs, setSelectedMsgs] = useState<Set<string>>(new Set());
@@ -1333,42 +1016,44 @@ export default function MessagesPage() {
     setShowScrollBtn(el.scrollHeight-el.scrollTop-el.clientHeight>200);
   };
 
-  // My typing indicator
+  // My typing indicator — sends real dm_typing events to the other participant
   useEffect(()=>{
     if(!activeConv) return;
+    const other = getOther(activeConv);
     if(typingTimer.current) clearTimeout(typingTimer.current);
     if(text.length>0) {
+      if(!typing && other?.id) sendRealtime({ type:"dm_typing", toId:other.id, roomId:String(activeConv.id), payload:{conversationId:activeConv.id, isTyping:true} });
       setTyping(true);
-      typingTimer.current = setTimeout(()=>setTyping(false),2000);
-    } else setTyping(false);
+      typingTimer.current = setTimeout(()=>{
+        setTyping(false);
+        if(other?.id) sendRealtime({ type:"dm_typing", toId:other.id, roomId:String(activeConv.id), payload:{conversationId:activeConv.id, isTyping:false} });
+      },2000);
+    } else if(typing) {
+      setTyping(false);
+      if(other?.id) sendRealtime({ type:"dm_typing", toId:other.id, roomId:String(activeConv.id), payload:{conversationId:activeConv.id, isTyping:false} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   },[text]);
 
-  // Partner typing simulation
+  // Real partner typing indicator via Go realtime relay
   useEffect(()=>{
-    if(!activeConv) return;
-    let t1: ReturnType<typeof setTimeout>, t2: ReturnType<typeof setTimeout>;
-    const cycle = () => {
-      const delay = 8000+Math.random()*12000;
-      t1 = setTimeout(()=>{ setPartnerTyping(true); t2=setTimeout(()=>setPartnerTyping(false),2000+Math.random()*3000); },delay);
-    };
-    cycle();
-    const interval = setInterval(cycle, 20000);
-    return ()=>{clearTimeout(t1);clearTimeout(t2);clearInterval(interval);};
-  },[activeId]);
+    return subscribe("dm_typing", (msg)=>{
+      const p = msg.payload ?? {};
+      if(p.conversationId!==activeId) return;
+      setPartnerTyping(!!p.isTyping);
+    });
+  },[subscribe,activeId]);
 
-  // 🔔 Sound: play ringtone when a call starts, stop when call ends
-  const stopRingtoneRef = useRef<(()=>void)|null>(null);
+  // Real-time incoming DM messages — refresh conversation list + open thread
   useEffect(()=>{
-    if(callState) {
-      if(getFeaturePref("sound_notif",true)) {
-        stopRingtoneRef.current = playCallRingtone();
-      }
-    } else {
-      stopRingtoneRef.current?.();
-      stopRingtoneRef.current = null;
-    }
-    return ()=>{ stopRingtoneRef.current?.(); stopRingtoneRef.current=null; };
-  },[!!callState]);
+    return subscribe("dm_message", (msg)=>{
+      const p = msg.payload ?? {};
+      const convIdFromMsg = p.conversationId;
+      if(convIdFromMsg) qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convIdFromMsg)});
+      qc.invalidateQueries({queryKey:getListConversationsQueryKey()});
+      if(getFeaturePref("sound_notif",true) && convIdFromMsg!==activeId) playMessageSound();
+    });
+  },[subscribe,qc,activeId]);
 
   // 🔔 Sound: play message ping when new messages from others arrive
   const lastMsgCountRef = useRef(0);
@@ -1691,12 +1376,12 @@ export default function MessagesPage() {
                     <Search className="w-4 h-4"/>
                   </button>}
               <button
-                onClick={()=>{ const o=getOther(activeConv); setCallState({type:"voice",name:o?.displayName||"?",avatar:o?.avatarUrl||undefined}); }}
+                onClick={()=>{ const o=getOther(activeConv); if(o?.id) startCall({id:o.id,name:o.displayName||"?",avatar:o.avatarUrl||undefined},"voice"); }}
                 className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
                 <Phone className="w-4 h-4"/>
               </button>
               <button
-                onClick={()=>{ const o=getOther(activeConv); setCallState({type:"video",name:o?.displayName||"?",avatar:o?.avatarUrl||undefined}); }}
+                onClick={()=>{ const o=getOther(activeConv); if(o?.id) startCall({id:o.id,name:o.displayName||"?",avatar:o.avatarUrl||undefined},"video"); }}
                 className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
                 <Video className="w-4 h-4"/>
               </button>
@@ -1891,9 +1576,9 @@ export default function MessagesPage() {
                           { icon:MessageCircle, label:"Xabar",   color:"bg-primary/15 text-primary",
                             action:()=>setShowProfilePanel(false) },
                           { icon:Phone,         label:"Qo'ng'iroq", color:"bg-green-500/15 text-green-400",
-                            action:()=>{ setShowProfilePanel(false); setCallState({type:"voice",name:other?.displayName||"?",avatar:other?.avatarUrl||undefined}); } },
+                            action:()=>{ setShowProfilePanel(false); if(other?.id) startCall({id:other.id,name:other.displayName||"?",avatar:other.avatarUrl||undefined},"voice"); } },
                           { icon:Video,         label:"Video",   color:"bg-blue-500/15 text-blue-400",
-                            action:()=>{ setShowProfilePanel(false); setCallState({type:"video",name:other?.displayName||"?",avatar:other?.avatarUrl||undefined}); } },
+                            action:()=>{ setShowProfilePanel(false); if(other?.id) startCall({id:other.id,name:other.displayName||"?",avatar:other.avatarUrl||undefined},"video"); } },
                           { icon:Share2,        label:"Ulashish", color:"bg-purple-500/15 text-purple-400",
                             action:()=>{ navigator.share?.({title:other?.displayName||"",text:`OlCha: @${other?.username}`}).catch(()=>{}); } },
                         ].map((btn,i)=>(
@@ -2403,13 +2088,6 @@ export default function MessagesPage() {
       <AnimatePresence>
         {showRoundVid&&(
           <RoundVideoRecorder onSend={handleVideoNote} onClose={()=>setShowRoundVid(false)}/>
-        )}
-      </AnimatePresence>
-
-      {/* ── Call UI ──────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {callState&&(
-          <CallUI type={callState.type} name={callState.name} avatar={callState.avatar} onEnd={()=>setCallState(null)}/>
         )}
       </AnimatePresence>
 

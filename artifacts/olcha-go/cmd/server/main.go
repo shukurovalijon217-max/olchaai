@@ -421,6 +421,21 @@ func handleWSMessage(hub *Hub, liveHub *LiveHub, coViewHub *CoViewHub, c *Client
                 })
                 coViewHub.broadcastRoom(hub, msg.RoomID, chatMsg, c.userID)
 
+        // ── Direct-message typing indicator ──
+        case "dm_typing":
+                if msg.ToID == 0 {
+                        return
+                }
+                relay(hub, msg.ToID, "dm_typing", msg.RoomID, c.userID, msg.Payload)
+
+        // ── 1:1 call signaling (voice/video) — relayed peer-to-peer, no server state ──
+        case "call_invite", "call_accept", "call_decline", "call_hangup", "call_offer", "call_answer", "call_ice":
+                if msg.ToID == 0 {
+                        return
+                }
+                relay(hub, msg.ToID, msg.Type, msg.RoomID, c.userID, msg.Payload)
+                log.Debug().Str("type", msg.Type).Int("from", c.userID).Int("to", msg.ToID).Msg("call:relay")
+
         default:
                 log.Debug().Int("userID", c.userID).Str("type", msg.Type).Msg("ws:unknown_msg")
         }

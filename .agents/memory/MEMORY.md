@@ -14,3 +14,4 @@
 - [HMAC Bearer auth](hmac-bearer-auth.md) — signMobileToken/verifyMobileToken in lib/security.ts; format userId:hmac16chars; old plain userId tokens break on upgrade; rate limit 300 req/min per IP.
 - [Object storage GCS round-trip optimization](object-storage-perf.md) — never re-fetch metadata already fetched; collapse exists()+getMetadata()+getMetadata() into one call, root cause of mobile media lag.
 - [olcha-mobile WebView typecheck workaround](mobile-webview-typecheck.md) — keep the @ts-ignore above <WebView> in index.tsx or workspace typecheck breaks; version mismatch causes "never" overload errors.
+- [WebView continuous-animation freeze pattern](webview-animation-perf.md) — unconditional Framer Motion `repeat: Infinity` animations per feed card cause mobile WebView freeze; gate by useInView.

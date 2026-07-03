@@ -91,6 +91,7 @@ function NativeShell() {
           </TouchableOpacity>
         </View>
       )}
+      {/* @ts-ignore WebView type overload conflict with react-native-webview */}
       <WebView
         ref={wvRef}
         source={{ uri: NEXUS_URL }}
@@ -101,7 +102,7 @@ function NativeShell() {
         thirdPartyCookiesEnabled
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={false}
-        allowsBackForwardNavigationGestures={false}
+        allowsBackForwardNavigationGestures={true}
         pullToRefreshEnabled={false}
         bounces={false}
         allowsFullscreenVideo
@@ -109,7 +110,7 @@ function NativeShell() {
         onLoadStart={() => { setLoading(true); setError(false); }}
         onLoadEnd={() => setLoading(false)}
         onError={() => { setLoading(false); setError(true); }}
-        onNavigationStateChange={nav => setCanGoBack(nav.canGoBack)}
+        onNavigationStateChange={(nav: { canGoBack: boolean }) => setCanGoBack(nav.canGoBack)}
         onContentProcessDidTerminate={() => wvRef.current?.reload()}
         injectedJavaScriptBeforeContentLoaded={`
           window.__OLCHA_NATIVE__ = true;

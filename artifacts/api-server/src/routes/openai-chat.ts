@@ -141,9 +141,13 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
       .select()
       .from(messages)
       .where(eq(messages.conversationId, convId))
-      .orderBy(messages.createdAt);
+      .orderBy(messages.createdAt)
+      .limit(200);
 
-    const chatMessages = history.map(m => ({ role: m.role as "user" | "assistant" | "system", content: m.content }));
+    /* Cap context sent to OpenAI to the most recent 30 messages to keep
+       latency and token usage bounded on long-running conversations. */
+    const recentHistory = history.slice(-30);
+    const chatMessages = recentHistory.map(m => ({ role: m.role as "user" | "assistant" | "system", content: m.content }));
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");

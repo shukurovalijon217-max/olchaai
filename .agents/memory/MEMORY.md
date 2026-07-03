@@ -12,3 +12,5 @@
 - [Platform Treasury system](platform-treasury.md) — platform_treasury + treasury_transactions tables; creditTreasury() in routes/treasury.ts; admin creds: nexusai / Admin@OlCha2024!; db.execute() returns QueryResult not array — use .rows[0].
 - [AI Admin Actions system](ai-admin-actions.md) — ai_admin_actions table; routes at /api/admin/ai-actions; POST /run does autonomous sweep; marketplace table fix: use try-catch per step; db.execute() pattern: use (res as any).rows?.[0].
 - [HMAC Bearer auth](hmac-bearer-auth.md) — signMobileToken/verifyMobileToken in lib/security.ts; format userId:hmac16chars; old plain userId tokens break on upgrade; rate limit 300 req/min per IP.
+- [Object storage GCS round-trip optimization](object-storage-perf.md) — never re-fetch metadata already fetched; collapse exists()+getMetadata()+getMetadata() into one call, root cause of mobile media lag.
+- [olcha-mobile WebView typecheck workaround](mobile-webview-typecheck.md) — keep the @ts-ignore above <WebView> in index.tsx or workspace typecheck breaks; version mismatch causes "never" overload errors.

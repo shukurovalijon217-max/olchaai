@@ -75,10 +75,10 @@ function Waveform({ active, color }: { active: boolean; color: string }) {
 
 /* ─── ACTION ORB ─────────────────────────────────────────────── */
 function Orb({
-  icon, count, active, activeColor, onClick,
+  icon, count, active, activeColor, onClick, inView = true,
 }: {
   icon: React.ReactNode; count?: number; active?: boolean;
-  activeColor: string; onClick: () => void;
+  activeColor: string; onClick: () => void; inView?: boolean;
 }) {
   return (
     <motion.button
@@ -98,7 +98,7 @@ function Orb({
             : "0 2px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
         }}
       >
-        {active && (
+        {active && inView && (
           <motion.div
             className="absolute inset-0 rounded-full pointer-events-none"
             animate={{ opacity: [0.2, 0.5, 0.2] }}
@@ -504,15 +504,15 @@ export default function FeedCard({ post, index }: FeedCardProps) {
       {isText && (
         <>
           <motion.div className="absolute inset-0 pointer-events-none"
-            animate={{ opacity: [0.45, 0.75, 0.45] }}
-            transition={{ duration: 6, repeat: Infinity }}
+            animate={isInView ? { opacity: [0.45, 0.75, 0.45] } : { opacity: 0.45 }}
+            transition={isInView ? { duration: 6, repeat: Infinity } : { duration: 0.3 }}
             style={{
               zIndex: 0,
               background: `radial-gradient(ellipse at 28% 42%, ${accent}22 0%, transparent 55%),
                            radial-gradient(ellipse at 72% 65%, rgba(59,130,246,0.14) 0%, transparent 55%)`,
             }}
           />
-          {Array.from({ length: 12 }).map((_, i) => <Particle key={i} color={accent} />)}
+          {isInView && Array.from({ length: 12 }).map((_, i) => <Particle key={i} color={accent} />)}
         </>
       )}
 
@@ -822,7 +822,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
             icon={<Heart className="w-[17px] h-[17px]"
               style={{ color: liked ? "#f87171" : "rgba(255,255,255,0.75)",
                 fill: liked ? "#f87171" : "none", transition: "all 0.18s" }} />}
-            count={likes} active={liked} activeColor="#f87171"
+            count={likes} active={liked} activeColor="#f87171" inView={isInView}
             onClick={handleLike}
           />
           {/* Floating number on like */}
@@ -842,14 +842,14 @@ export default function FeedCard({ post, index }: FeedCardProps) {
         {/* Comment */}
         <Orb
           icon={<MessageCircle className="w-[17px] h-[17px]" style={{ color: commentOpen ? "#22d3ee" : "rgba(255,255,255,0.75)" }} />}
-          count={post.commentsCount ?? 0} active={commentOpen} activeColor="#22d3ee"
+          count={post.commentsCount ?? 0} active={commentOpen} activeColor="#22d3ee" inView={isInView}
           onClick={() => { setCommentOpen(o => !o); setShareOpen(false); setMenuOpen(false); }}
         />
 
         {/* Share */}
         <Orb
           icon={<Share2 className="w-[17px] h-[17px]" style={{ color: shareOpen ? "#34d399" : copied ? "#34d399" : "rgba(255,255,255,0.75)" }} />}
-          count={shares} active={shareOpen || copied} activeColor="#34d399"
+          count={shares} active={shareOpen || copied} activeColor="#34d399" inView={isInView}
           onClick={() => { setShareOpen(o => !o); setCommentOpen(false); setMenuOpen(false); }}
         />
 
@@ -866,7 +866,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
             ? <Trash2 className="w-[17px] h-[17px]" style={{ color: "rgba(248,113,113,0.8)" }} />
             : <MoreHorizontal className="w-[17px] h-[17px]" style={{ color: "rgba(255,255,255,0.65)" }} />
           }
-          active={menuOpen} activeColor={isOwner ? "#f87171" : "#818cf8"}
+          active={menuOpen} activeColor={isOwner ? "#f87171" : "#818cf8"} inView={isInView}
           onClick={() => {
             if (isOwner) { setDeleteConfirm(true); }
             else { setMenuOpen(o => !o); setCommentOpen(false); setShareOpen(false); }
@@ -880,7 +880,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
               ? <VolumeX className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.45)" }} />
               : <Volume2 className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.85)" }} />
             }
-            active={!muted} activeColor={accent}
+            active={!muted} activeColor={accent} inView={isInView}
             onClick={() => setMuted(m => !m)}
           />
         )}

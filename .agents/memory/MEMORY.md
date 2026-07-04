@@ -26,3 +26,4 @@
 - [Testing Stripe Checkout Sessions](stripe-checkout-testing.md) — no payment_intent exists until the hosted page loads; curl can verify creation + unpaid-rejection + idempotency, not the paid-credit path.
 - [OlchaAI brand visual identity spec](brand-visual-identity.md) — fixed per-letter wordmark color spec, no-black-square favicon rule, and why search/OG appearance needs separate meta-tag fixes.
 - [Trust proxy required for secure session cookies](trust-proxy-session-cookies.md) — missing app.set("trust proxy",1) silently breaks ALL login-gated features in prod only, dev unaffected.
+- [Silent userId fallback breaks toggle actions](silent-userid-fallback.md) — a route defaulting session userId to a hardcoded value (not 401ing) silently acts on the wrong user; feels like "the button does nothing".

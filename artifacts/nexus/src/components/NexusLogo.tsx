@@ -480,7 +480,7 @@ export default function NexusLogo({
         })}
       </div>
 
-      {/* ── OlCha matni ── */}
+      {/* ── OlchaAI matni ── */}
       {showText && (
         <motion.span
           animate={{ opacity: [0.88, 1, 0.88] }}
@@ -497,7 +497,7 @@ export default function NexusLogo({
             lineHeight: 1,
           }}
         >
-          OlCha
+          OlchaAI
         </motion.span>
       )}
     </div>

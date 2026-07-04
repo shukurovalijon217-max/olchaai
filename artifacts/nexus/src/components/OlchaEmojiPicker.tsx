@@ -1,5 +1,5 @@
 /**
- * OlchaEmojiPicker — OlCha platformasining o'ziga xos 9D holographic emoji tanlash paneli.
+ * OlchaEmojiPicker — OlchaAI platformasining o'ziga xos 9D holographic emoji tanlash paneli.
  */
 import { Component, type ReactNode, Suspense, lazy } from "react";
 import { motion } from "framer-motion";

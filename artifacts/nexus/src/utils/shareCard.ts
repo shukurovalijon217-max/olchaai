@@ -88,7 +88,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Blob> {
   ctx.textAlign = "right";
   ctx.font = "bold 19px -apple-system,system-ui,sans-serif";
   ctx.fillStyle = "#d97706";
-  ctx.fillText("OlCha", W - 28, H - 31);
+  ctx.fillText("OlchaAI", W - 28, H - 31);
 
   ctx.font = "10px -apple-system,system-ui,sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.28)";

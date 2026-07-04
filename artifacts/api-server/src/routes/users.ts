@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { usersTable, followsTable, postsTable } from "@workspace/db";
 import { eq, ilike, sql, and, desc } from "drizzle-orm";
+import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 
 const router = Router();
 
@@ -78,8 +79,9 @@ router.get("/users/:id/posts", async (req, res) => {
     const id = Number(req.params.id);
     const limit = Math.min(Number(req.query.limit) || 30, 100);
     const offset = Number(req.query.offset) || 0;
+    const midnightCond = await midnightVisibilityConditionForReq(req);
     const posts = await db.select().from(postsTable)
-      .where(eq(postsTable.authorId, id))
+      .where(and(eq(postsTable.authorId, id), midnightCond))
       .orderBy(desc(postsTable.createdAt))
       .limit(limit).offset(offset);
     res.json(posts);

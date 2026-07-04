@@ -11,6 +11,7 @@ import (
         "os"
         "sort"
         "strconv"
+        "strings"
         "sync"
         "time"
 
@@ -687,6 +688,32 @@ func handleStats(hub *Hub) http.HandlerFunc {
         }
 }
 
+// ─── Presence endpoint ─────────────────────────────────────────────────────────
+// GET /go/presence?ids=1,2,3 — returns which of the given userIDs currently have
+// an active WebSocket connection. This is the only real "online" source of truth;
+// ghost-mode masking of these results happens in the Express layer, not here.
+
+func handlePresence(hub *Hub) http.HandlerFunc {
+        return func(w http.ResponseWriter, r *http.Request) {
+                idsParam := r.URL.Query().Get("ids")
+                result := map[string]bool{}
+                if idsParam != "" {
+                        for _, part := range strings.Split(idsParam, ",") {
+                                id, err := strconv.Atoi(strings.TrimSpace(part))
+                                if err != nil {
+                                        continue
+                                }
+                                hub.mu.RLock()
+                                _, online := hub.clients[id]
+                                hub.mu.RUnlock()
+                                result[strconv.Itoa(id)] = online
+                        }
+                }
+                w.Header().Set("Content-Type", "application/json")
+                json.NewEncoder(w).Encode(map[string]any{"presence": result})
+        }
+}
+
 // ─── Notify endpoint ───────────────────────────────────────────────────────────
 
 type NotifyReq struct {
@@ -812,6 +839,7 @@ func main() {
         mux.HandleFunc("/go/trending", handleTrending(db))
         mux.HandleFunc("/go/notify", handleNotify(hub))
         mux.HandleFunc("/go/stats", handleStats(hub))
+        mux.HandleFunc("/go/presence", handlePresence(hub))
         mux.HandleFunc("/go/live/rooms", handleLiveRooms(liveHub))
         mux.HandleFunc("/go/live/end-room", handleLiveForceEnd(hub, liveHub))
 

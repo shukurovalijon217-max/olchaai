@@ -1,0 +1,10 @@
+---
+name: Express router.use(middleware) without a path leaks globally
+description: A sub-router's requireAuth/requireAdmin registered via router.use(fn) with no path argument gates every request that falls through to it, not just its own routes — read this when debugging unexplained 401/403 on unrelated endpoints.
+---
+
+`router.use(someAuthMiddleware)` with no path string applies to every request that reaches that router instance, not just requests matching routes defined later in the same file. If that sub-router is mounted at the app/combined-router root (`router.use(subRouter)`, no prefix), its unconditional auth middleware becomes a global gate for any request that isn't matched by an earlier-mounted router — including completely unrelated features and even nonexistent paths that should 404.
+
+**Why:** In this codebase two admin route files (`infraCosts.ts`, `security.ts`) both did `router.use(requireAdmin)` before their actual `/admin/...` routes, intending to scope auth to just those routes. Since both were mounted late in `routes/index.ts` with no path prefix, every request that didn't match any of the ~25 routers mounted before them (including a brand-new public endpoint and outright typo'd URLs) fell through into these routers and got an unconditional 401 from `requireAdmin` — before Express ever got a chance to 404. This looked exactly like a bug in the new feature's own auth logic; debug logs placed inside the new route's own file never fired because the request never reached it.
+
+**How to apply:** When a public/unauthenticated endpoint mysteriously returns 401/403 with no matching log lines from its own route file, don't assume the bug is local. First test a deliberately nonexistent `/api/...` path — if it also returns the same auth error instead of 404, an earlier-mounted router has an unscoped `router.use(middleware)` gate. Grep all route files for `router.use(<authFn>)` with no path argument and scope it to the actual route prefix, e.g. `router.use("/admin/infra-costs", requireAdmin)`.

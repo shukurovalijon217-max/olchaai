@@ -6,6 +6,7 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
+import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 
 const router = Router();
 
@@ -70,14 +71,16 @@ router.get("/posts", async (req, res) => {
     // Cache key: anonymous/public feed only (viewer-specific feeds not cached)
     const cacheKey = !viewerId && offset < 60 ? `list:${type ?? "all"}:${limit}:${offset}` : null;
 
+    const midnightCond = await midnightVisibilityConditionForReq(req);
+
     const enriched = await cacheAside("posts", cacheKey ?? `__skip__${Date.now()}`, async () => {
       let posts;
       if (userId) {
-        posts = await db.select().from(postsTable).where(eq(postsTable.authorId, userId)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+        posts = await db.select().from(postsTable).where(and(eq(postsTable.authorId, userId), midnightCond)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
       } else if (type && type !== "all") {
-        posts = await db.select().from(postsTable).where(eq(postsTable.type, type)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+        posts = await db.select().from(postsTable).where(and(eq(postsTable.type, type), midnightCond)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
       } else {
-        posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+        posts = await db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
       }
       return batchEnrichPosts(posts, viewerId);
     }, cacheKey ? 15 : 0);
@@ -292,12 +295,12 @@ router.get("/posts/:id/votes", async (req: any, res) => {
 /* ── POST /posts — instant response, AI scan in background ─── */
 router.post("/posts", async (req: any, res) => {
   try {
-    const { authorId, content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, audioTrimStart, audioTrimEnd, pollQuestion, pollOptions, mood, filterName, tags } = req.body;
+    const { authorId, content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, audioTrimStart, audioTrimEnd, pollQuestion, pollOptions, mood, filterName, tags, midnightOnly } = req.body;
     const sessionUserId: number | undefined = req.session?.userId;
 
     const [post] = await db
       .insert(postsTable)
-      .values({ authorId, content, type: type || "text", mediaUrl, mediaUrls, overlays: overlays ?? null, audioName: audioName ?? null, audioUrl: audioUrl ?? null, audioTrimStart: audioTrimStart != null ? String(audioTrimStart) : null, audioTrimEnd: audioTrimEnd != null ? String(audioTrimEnd) : null, pollQuestion: pollQuestion ?? null, pollOptions: pollOptions ?? null, mood: mood ?? null, filterName: filterName ?? null, tags, isFlagged: false })
+      .values({ authorId, content, type: type || "text", mediaUrl, mediaUrls, overlays: overlays ?? null, audioName: audioName ?? null, audioUrl: audioUrl ?? null, audioTrimStart: audioTrimStart != null ? String(audioTrimStart) : null, audioTrimEnd: audioTrimEnd != null ? String(audioTrimEnd) : null, pollQuestion: pollQuestion ?? null, pollOptions: pollOptions ?? null, mood: mood ?? null, filterName: filterName ?? null, tags, isFlagged: false, midnightOnly: !!midnightOnly })
       .returning();
 
     const [enriched] = await batchEnrichPosts([post], sessionUserId);
@@ -343,7 +346,8 @@ router.post("/posts", async (req: any, res) => {
 router.get("/posts/trending", async (req, res) => {
   try {
     const viewerId = (req.session as any)?.userId as number | undefined;
-    const posts = await db.select().from(postsTable).orderBy(desc(postsTable.likesCount)).limit(10);
+    const midnightCond = await midnightVisibilityConditionForReq(req);
+    const posts = await db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.likesCount)).limit(10);
     res.json(await batchEnrichPosts(posts, viewerId));
   } catch (err) {
     req.log.error(err);
@@ -356,7 +360,8 @@ router.get("/posts/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     const viewerId = (req.session as any)?.userId as number | undefined;
-    const [post] = await db.select().from(postsTable).where(eq(postsTable.id, id));
+    const midnightCond = await midnightVisibilityConditionForReq(req);
+    const [post] = await db.select().from(postsTable).where(and(eq(postsTable.id, id), midnightCond));
     if (!post) { res.status(404).json({ error: "Not found" }); return; }
     const [enriched] = await batchEnrichPosts([post], viewerId);
     res.json(enriched);

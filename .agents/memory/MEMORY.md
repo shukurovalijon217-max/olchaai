@@ -1,4 +1,4 @@
-- [OlCha platform stack](olcha-stack.md) — Go real-time (:8099/go/*), Express API (:8080/api/*), Nexus web (/); always rebuild Go binary after changes. Mobile app removed.
+- [OlCha platform stack](olcha-stack.md) — Go real-time (:8099/go/*), Express API (:8080/api/*), Nexus web (/), Expo mobile; always rebuild Go binary after changes.
 - [Orval codegen conflict fix](orval-codegen-conflict.md) — inline OpenAPI request body schemas cause duplicate type exports; always use $ref to component schemas for request bodies.
 - [Nexus frontend import conventions](nexus-imports.md) — Nexus pages must import hooks from @workspace/api-client-react and user from useAuth(), not api-zod or useCurrentUser.
 - [OpenAI integration setup](openai-integration.md) — Uses OPENAI_API_KEY directly (not Replit proxy); ai_conversations/ai_messages tables; image gen uses dall-e-3 with response_format b64_json.
@@ -18,3 +18,5 @@
 - [Global floating chrome overlay interception](floating-chrome-overlay-interception.md) — fixed-position AI orb/dock tabs in shared Layout can swallow taps on full-screen overlays even with lower z-index; gate chrome behind a shared context flag, not z-index alone.
 - [React Query invalidate key must match active params](react-query-invalidate-key-match.md) — getXQueryKey() invalidation silently no-ops if called with different params than the live hook used.
 - [Toggle buttons need distinct text per state](ui-toggle-icon-only-state.md) — icon-only state changes (follow/like/save) look broken to tests and users; always vary the label text too.
+- [Express router.use(middleware) without a path leaks globally](express-router-use-no-path.md) — unscoped requireAuth/requireAdmin on a late-mounted sub-router gates ALL unmatched requests, not just its own routes.
+- [Midnight Confessions visibility semantics](midnight-confess-visibility.md) — midnight-only posts hide from everyone including the author outside the window; only admin moderation is exempt.

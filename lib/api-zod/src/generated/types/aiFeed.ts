@@ -13,4 +13,7 @@ export interface AiFeed {
   posts: Post[];
   reels: Reel[];
   suggestedUsers: User[];
+  /** 0-100 share of the feed's personalization signal concentrated in a single tag (echo chamber detector) */
+  echoScore?: number;
+  echoTopTag?: string | null;
 }

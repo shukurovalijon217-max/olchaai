@@ -17,7 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useCallback, useEffect, ReactNode, ElementType } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
 import ProfileOrb from "@/components/ProfileOrb";
 
@@ -700,7 +700,10 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"posts" | "reels" | "analytics">("posts");
   const { user: me } = useAuth();
-  const isOwner = me?.id === userId;
+  const search = useSearch();
+  const mirrorMode = new URLSearchParams(search).get("mirror") === "1";
+  const actuallyOwner = me?.id === userId;
+  const isOwner = actuallyOwner && !mirrorMode;
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [, navigate] = useLocation();
@@ -802,6 +805,21 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
   return (
     <div className="max-w-2xl mx-auto pb-10 relative">
+
+      {actuallyOwner && mirrorMode && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="mx-4 mt-3 mb-1 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 flex items-center gap-3 z-20 relative">
+          <span className="text-lg">🪞</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-cyan-300 text-xs font-bold">{t("profile.mirror_banner_title")}</p>
+            <p className="text-cyan-300/60 text-[10px] mt-0.5">{t("profile.mirror_banner_desc")}</p>
+          </div>
+          <button onClick={() => navigate(`/profile/${userId}`)}
+            className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold text-cyan-200 bg-cyan-500/15 border border-cyan-500/30">
+            {t("profile.mirror_exit")}
+          </button>
+        </motion.div>
+      )}
 
       {/* ══ Cover ══════════════════════════════════════════════════ */}
       <div className="h-40 overflow-hidden relative group/cover rounded-b-3xl z-10">

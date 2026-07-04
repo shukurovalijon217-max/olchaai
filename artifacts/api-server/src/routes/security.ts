@@ -19,7 +19,7 @@ const requireAdmin: RequestHandler = async (req, res, next) => {
   next();
 };
 
-router.use(requireAdmin);
+router.use("/admin/security", requireAdmin);
 
 /* GET /api/admin/security — events + ban list */
 router.get("/admin/security", async (req, res) => {

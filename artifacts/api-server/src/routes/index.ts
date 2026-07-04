@@ -44,6 +44,9 @@ import treasuryRouter from "./treasury";
 import aiAdminActionsRouter from "./aiAdminActions";
 import securityRouter from "./security";
 import infraCostsRouter from "./infraCosts";
+import anonInboxRouter from "./anonInbox";
+import ghostRouter from "./ghost";
+import focusShieldRouter from "./focusShield";
 
 const router: IRouter = Router();
 
@@ -92,5 +95,8 @@ router.use(treasuryRouter);
 router.use(aiAdminActionsRouter);
 router.use(securityRouter);
 router.use(infraCostsRouter);
+router.use(anonInboxRouter);
+router.use(ghostRouter);
+router.use(focusShieldRouter);
 
 export default router;

@@ -1,44 +1,70 @@
-# [Project name]
+# OlCha — AI-powered super social platform
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+OlCha (olchaai.com) is an AI-powered social network: a feed-based platform (posts, reels, stories, marketplace, live, messaging) layered with a set of unique "Funksiyalar Hub" (Feature Hub) AI/privacy features not found on other social networks.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
+- `pnpm --filter @workspace/api-server run dev` — run the Express API server (port 8080, mounted at `/api`)
+- `pnpm --filter @workspace/nexus run dev` — run the Nexus web frontend (mounted at `/`)
+- `pnpm --filter @workspace/ai-core run dev` — run the AI Core service (moderation, analytics, orchestrator; port 9000)
+- `cd artifacts/olcha-go && go build -o bin/olcha-go ./cmd/server/` — rebuild the Go real-time service after any Go source change, then restart its workflow (port 8099, mounted at `/go`)
+- `pnpm run typecheck` — full typecheck across all packages (libs first, then artifacts)
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec (`lib/api-spec/openapi.yaml`)
+- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only); if this hangs on a TTY prompt in this sandbox, fall back to a targeted `psql "$DATABASE_URL" -c "ALTER TABLE ... ADD COLUMN IF NOT EXISTS ..."`
 - Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
+- API: Express 5 (`artifacts/api-server`)
+- Web: React + Vite (`artifacts/nexus`)
+- Mobile: Expo (`artifacts/olcha-mobile`)
+- Real-time/presence: Go (`artifacts/olcha-go`)
+- AI service: Node (`artifacts/ai-core`) — moderation, sentiment/content analysis, feed personalization signals
+- DB: PostgreSQL + Drizzle ORM (`lib/db`)
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
+- API codegen: Orval (from OpenAPI spec in `lib/api-spec`)
 - Build: esbuild (CJS bundle)
+- Payments: Stripe (creator subscriptions/plans, premium tiers)
+- AI: OpenAI (`OPENAI_API_KEY` used directly, not via Replit AI proxy)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/nexus` — main web app (feed, reels, marketplace, messaging, Feature Hub, settings)
+- `artifacts/api-server/src/routes` — Express route modules, one file per domain (posts, users, auth, messages, search, ai, admin, focusShield, ghost/presence, anonInbox, etc.)
+- `artifacts/api-server/src/lib` — shared server helpers (e.g. `midnightVisibility.ts`)
+- `artifacts/ai-core` — standalone AI service (moderation queue, analytics, orchestrator heartbeat)
+- `artifacts/olcha-go/cmd/server/main.go` — Go real-time/presence service source
+- `artifacts/olcha-mobile` — Expo mobile client
+- `lib/db/src/schema` — Drizzle schema, source of truth for the DB shape
+- `lib/api-spec/openapi.yaml` — source of truth for the API contract; run codegen after editing
+- `artifacts/nexus/src/lib/i18n.ts` — all UI copy, keyed by namespace (e.g. `featurehub.*`), with `uz` as the source-of-truth language and `en` maintained by hand; other languages auto-translate and fall back to `en` per-key when a key is missing
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- **Funksiyalar Hub (Feature Hub) features are real, schema-backed features, not client-only toggles.** Each of the 12 features either reuses an existing table/column or adds one, with server-side enforcement (visibility filtering, muting, scheduled delivery, etc.) gated by a per-user preference toggle. `grow_together` and `social_aura` are an intentional, architect-approved exception and remain locked "coming soon."
+- **i18n fallback strategy:** i18next `fallbackLng: "en"` means any auto-translated language bundle missing a key silently falls back to English for that key — new keys don't require bumping the translation cache version unless doing a broad content overhaul.
+- **Midnight Confessions posts (`midnightOnly` on `posts`) are hidden from everyone, including the author, outside the 23:00–05:00 local window** (per-user `users.timezone`, UTC fallback) — this matches the literal feature description ("posts only visible 23:00–05:00") rather than giving the author a standing exemption. The admin moderation route intentionally ignores this filter so moderators always see everything.
+- **Focus Shield mutes notifications, it does not block message delivery** — messages from non-allowlisted senders during the configured hours are still stored and delivered, only the notify/sound signal is suppressed.
+- Cross-service routing goes through the shared reverse proxy (`localhost:80`), path-scoped per artifact (`/api`, `/go`, `/` for web). Never call service ports directly, and never add per-artifact CORS/proxy configs to reach another artifact.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+OlCha is a full social feed platform (posts, reels, stories, live, marketplace, groups, messaging, notifications) plus a "Funksiyalar Hub" of 12 distinctive features: Sound Notifications, Time Capsule (delayed message delivery), Anonymous Question Box, Mirror Mode (view your own profile as a stranger), Ghost Mode (temporary invisible presence), Energy Broadcast (24h energy-level status), Emotion Radar (pre-post sentiment check), Echo Chamber Detector (feed diversity warning), Focus Shield (scoped notification muting), Midnight Confessions (posts only visible 23:00–05:00), and two locked "coming soon" features (Grow Together, Social Aura).
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- User communicates in Uzbek; keep responses in Uzbek — plain, structured, non-technical where possible.
+- `uz` is the source-of-truth language for all UI copy; write `en` by hand alongside it, let other languages auto-translate with fallback.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- `drizzle-kit push` / `push --force` hang on a TTY prompt in this sandbox — use a targeted `psql "$DATABASE_URL" -c "ALTER TABLE ..."` instead for one-off column additions, then keep `lib/db/src/schema` in sync by hand.
+- There is pre-existing schema drift: a few live DB columns on `posts` (e.g. `scheduled_at`, `hot_take`, `aura_score`, `audio_trim_start/end` as `real`) are not yet reflected in `lib/db/src/schema/posts.ts`. Not caused by recent work — worth reconciling in a future pass.
+- The Playwright-based e2e testing tool (`runTest`) has repeatedly hit "Maximum testing iterations (10) reached" in this environment, even for minimal login-only smoke tests. When this happens, fall back to full curl-based verification (auth cookie flow + direct endpoint checks) plus `pnpm run typecheck` and workflow log inspection.
+- `POST /api/posts` expects `authorId` in the request body (not derived from the session) — pass it explicitly when testing via curl.
+- Always run `pnpm --filter @workspace/api-spec run codegen` after editing `lib/api-spec/openapi.yaml`, and rebuild the Go binary after any change under `artifacts/olcha-go`, before restarting workflows.
 
 ## Pointers
 

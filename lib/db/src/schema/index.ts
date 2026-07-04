@@ -26,3 +26,5 @@ export * from "./factCheck";
 export * from "./coSpaces";
 export * from "./platformCosts";
 export * from "./monetization";
+export * from "./chat";
+export * from "./anonInbox";

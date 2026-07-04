@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, MoreHorizontal, ChevronDown, X,
-  PenLine, BookOpen, Film, MonitorPlay, Trophy, Zap,
+  PenLine, BookOpen, Film, MonitorPlay, Trophy, Zap, Radio,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
@@ -10,8 +10,62 @@ import { useListPosts, useGetAiFeed } from "@workspace/api-client-react";
 import FeedCard from "@/components/FeedCard";
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
+import { getFeaturePref } from "@/lib/sounds";
+
+const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
+
+interface FolloweeEnergy {
+  userId: number;
+  username: string;
+  displayName?: string | null;
+  avatar?: string | null;
+  energyLevel: number;
+}
+
+/* ── energy_broadcast: shows followees' current energy level ── */
+function FolloweesEnergyBar() {
+  const { t } = useTranslation();
+  const [entries, setEntries] = useState<FolloweeEnergy[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API}/api/mood/following/energy`, { credentials: "include" })
+      .then(r => (r.ok ? r.json() : []))
+      .then((data: FolloweeEnergy[]) => { if (!cancelled) setEntries(Array.isArray(data) ? data : []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="absolute top-3 left-3 right-3 z-30 flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+      <span className="text-white/40 text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-1">
+        <Zap className="w-3 h-3 text-amber-400" /> {t("home.energy_bar_title")}
+      </span>
+      {entries.slice(0, 12).map(e => {
+        const pct = Math.min(100, Math.max(0, e.energyLevel * 10));
+        const ringColor = pct >= 70 ? "#22c55e" : pct >= 40 ? "#f59e0b" : "#ef4444";
+        return (
+          <div key={e.userId} className="flex flex-col items-center shrink-0" style={{ width: 40 }}>
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
+              style={{ border: `2px solid ${ringColor}`, background: "#1a1a2e" }}
+              title={`${e.displayName || e.username}: ${pct}%`}
+            >
+              {e.avatar
+                ? <img src={e.avatar} alt={e.username} className="w-full h-full object-cover" />
+                : <span className="text-[10px] text-white/70">{(e.displayName || e.username)?.[0]?.toUpperCase()}</span>}
+            </div>
+            <span className="text-[9px] text-white/50 mt-0.5 truncate w-full text-center">{pct}%</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 /* ─── FAB sparkle constants (rainbow burst) ─── */
 const SPARKLE_ANGLES = [0,30,60,90,120,150,180,210,240,270,300,330,15,75,135,195,255,315];
@@ -304,9 +358,17 @@ export default function HomePage() {
   const [createTab,  setCreateTab]  = useState<TabType>("post");
   const [sparkling,  setSparkling]  = useState(false);
   const [tunnelOpen, setTunnelOpen] = useState(false);
+  const [echoDismissed, setEchoDismissed] = useState(false);
 
   const feedRef = useRef<HTMLDivElement>(null);
   const displayPosts = feed?.posts?.length ? feed.posts : posts;
+
+  const ECHO_THRESHOLD = 55;
+  const showEchoBanner =
+    !echoDismissed &&
+    getFeaturePref("echo_detector", true) &&
+    (feed?.echoScore ?? 0) >= ECHO_THRESHOLD &&
+    !!feed?.echoTopTag;
 
   const scrollDown = () => {
     if (!feedRef.current) return;
@@ -353,6 +415,56 @@ export default function HomePage() {
 
   return (
     <div className="relative">
+
+      {/* ── TOP OVERLAY STACK: energy broadcast bar + echo detector banner ── */}
+      <div className="absolute top-3 left-3 right-3 z-40 flex flex-col gap-2">
+        <FolloweesEnergyBar />
+
+      {/* ── ECHO DETECTOR BANNER ── */}
+      <AnimatePresence>
+        {showEchoBanner && (
+          <motion.div
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -80, opacity: 0 }}
+            transition={{ type: "spring", damping: 22, stiffness: 260 }}
+            className="rounded-2xl p-3.5 flex items-start gap-3"
+            style={{
+              background: "rgba(15,10,30,0.92)",
+              border: "1px solid rgba(167,139,250,0.35)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <div className="w-9 h-9 rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0">
+              <Radio className="w-4.5 h-4.5 text-violet-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-sm font-semibold">{t("home.echo_title")}</p>
+              <p className="text-white/60 text-xs mt-0.5 leading-snug">
+                {t("home.echo_desc", { score: feed?.echoScore ?? 0, tag: feed?.echoTopTag ?? "" })}
+              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  onClick={() => { setEchoDismissed(true); navigate("/explore"); }}
+                  className="text-xs font-semibold text-violet-300"
+                >
+                  {t("home.echo_explore")}
+                </button>
+                <button
+                  onClick={() => setEchoDismissed(true)}
+                  className="text-xs text-white/40"
+                >
+                  {t("home.echo_dismiss")}
+                </button>
+              </div>
+            </div>
+            <button onClick={() => setEchoDismissed(true)} className="text-white/40 shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </div>
 
       {/* ── SNAP SCROLL FEED ── */}
       <div

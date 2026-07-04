@@ -222,6 +222,7 @@ export const ListPostsResponseItem = zod.object({
   "sharesCount": zod.number().optional(),
   "isLiked": zod.boolean().optional(),
   "isFlagged": zod.boolean().optional(),
+  "midnightOnly": zod.boolean().optional(),
   "createdAt": zod.string()
 })
 export const ListPostsResponse = zod.array(ListPostsResponseItem)
@@ -235,7 +236,8 @@ export const CreatePostBody = zod.object({
   "content": zod.string(),
   "type": zod.enum(['photo', 'video', 'text']),
   "mediaUrl": zod.string().optional(),
-  "tags": zod.array(zod.string()).optional()
+  "tags": zod.array(zod.string()).optional(),
+  "midnightOnly": zod.boolean().optional()
 })
 
 
@@ -274,6 +276,7 @@ export const GetPostResponse = zod.object({
   "sharesCount": zod.number().optional(),
   "isLiked": zod.boolean().optional(),
   "isFlagged": zod.boolean().optional(),
+  "midnightOnly": zod.boolean().optional(),
   "createdAt": zod.string()
 })
 
@@ -375,6 +378,7 @@ export const GetTrendingPostsResponseItem = zod.object({
   "sharesCount": zod.number().optional(),
   "isLiked": zod.boolean().optional(),
   "isFlagged": zod.boolean().optional(),
+  "midnightOnly": zod.boolean().optional(),
   "createdAt": zod.string()
 })
 export const GetTrendingPostsResponse = zod.array(GetTrendingPostsResponseItem)
@@ -570,7 +574,9 @@ export const GetConversationMessagesResponseItem = zod.object({
   "content": zod.string(),
   "mediaUrl": zod.string().nullish(),
   "isRead": zod.boolean().optional(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "scheduledAt": zod.string().nullish().describe('time_capsule: if set, the message is only delivered to other participants once this time passes'),
+  "isPending": zod.boolean().optional().describe('true when scheduledAt is in the future (only ever shown to the sender)')
 })
 export const GetConversationMessagesResponse = zod.array(GetConversationMessagesResponseItem)
 
@@ -585,7 +591,8 @@ export const SendMessageParams = zod.object({
 export const SendMessageBody = zod.object({
   "senderId": zod.number(),
   "content": zod.string(),
-  "mediaUrl": zod.string().optional()
+  "mediaUrl": zod.string().optional(),
+  "scheduledAt": zod.string().optional().describe('time_capsule: ISO timestamp to deliver this message at, instead of immediately')
 })
 
 
@@ -782,6 +789,7 @@ export const GetAiFeedResponse = zod.object({
   "sharesCount": zod.number().optional(),
   "isLiked": zod.boolean().optional(),
   "isFlagged": zod.boolean().optional(),
+  "midnightOnly": zod.boolean().optional(),
   "createdAt": zod.string()
 })),
   "reels": zod.array(zod.object({
@@ -829,7 +837,9 @@ export const GetAiFeedResponse = zod.object({
   "isFollowing": zod.boolean().optional(),
   "status": zod.enum(['active', 'suspended']).optional(),
   "createdAt": zod.string()
-}))
+})),
+  "echoScore": zod.number().optional().describe('0-100 share of the feed\'s personalization signal concentrated in a single tag (echo chamber detector)'),
+  "echoTopTag": zod.string().nullish()
 })
 
 
@@ -1090,6 +1100,7 @@ export const GetAdminAnalyticsResponse = zod.object({
   "sharesCount": zod.number().optional(),
   "isLiked": zod.boolean().optional(),
   "isFlagged": zod.boolean().optional(),
+  "midnightOnly": zod.boolean().optional(),
   "createdAt": zod.string()
 }))
 })

@@ -19,6 +19,17 @@ export interface PrivacySettings {
   searchVisibility: boolean;
 }
 
+export interface FocusShield {
+  enabled: boolean;
+  startHour: number;
+  endHour: number;
+  allowedUserIds: number[];
+}
+
+export const DEFAULT_FOCUS_SHIELD: FocusShield = {
+  enabled: false, startHour: 22, endHour: 7, allowedUserIds: [],
+};
+
 export const DEFAULT_NOTIF_PREFS: NotifPrefs = {
   likes: true, comments: true, followers: true,
   messages: true, groups: false, premium: false,
@@ -50,6 +61,8 @@ export const usersTable = pgTable("users", {
   notifPrefs: jsonb("notif_prefs").$type<NotifPrefs>(),
   privacySettings: jsonb("privacy_settings").$type<PrivacySettings>(),
   aiUsageCount: integer("ai_usage_count").notNull().default(0),
+  ghostUntil: timestamp("ghost_until"),
+  focusShield: jsonb("focus_shield").$type<FocusShield>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

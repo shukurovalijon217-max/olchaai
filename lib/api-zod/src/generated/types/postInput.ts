@@ -13,4 +13,5 @@ export interface PostInput {
   type: PostInputType;
   mediaUrl?: string;
   tags?: string[];
+  midnightOnly?: boolean;
 }

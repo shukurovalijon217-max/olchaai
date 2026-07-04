@@ -1029,7 +1029,9 @@ router.post("/groups/:id/invite-link/regenerate", async (req: Request, res: Resp
 router.post("/groups/:id/join", async (req: Request, res: Response): Promise<void> => {
   try {
     const groupId = Number(req.params.id);
-    const userId = (req as any).session?.userId || 1;
+    if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const userId = (req as any).session?.userId;
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
     const existing = await db.select().from(groupMembersTable)
       .where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, userId)));
     if (existing.length > 0) {

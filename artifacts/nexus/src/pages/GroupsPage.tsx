@@ -535,10 +535,26 @@ export default function GroupsPage() {
 
   /* ── Join group ────────────────────────────────────────────── */
   const handleJoin = (id: number) => {
+    const wasJoined = joinedIds.has(id);
     const s = new Set(joinedIds);
-    if (s.has(id)) s.delete(id); else s.add(id);
+    if (wasJoined) s.delete(id); else s.add(id);
     setJoinedIds(s);
-    join.mutate({ id }, { onSuccess: () => qc.invalidateQueries({ queryKey: getListGroupsQueryKey() }) });
+    join.mutate(
+      { id },
+      {
+        onSuccess: () => qc.invalidateQueries({ queryKey: getListGroupsQueryKey() }),
+        onError: () => {
+          // Request failed (e.g. session expired) — revert the optimistic
+          // toggle so the button doesn't lie about membership state.
+          setJoinedIds(prev => {
+            const reverted = new Set(prev);
+            if (wasJoined) reverted.add(id); else reverted.delete(id);
+            return reverted;
+          });
+          qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+        },
+      },
+    );
   };
 
   /* ── Submit ────────────────────────────────────────────────── */
@@ -1811,7 +1827,7 @@ export default function GroupsPage() {
               </div>
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={e => { e.stopPropagation(); handleJoin(selectedGroup.id); setSelectedGroup(prev => prev ? { ...prev, isMember: !prev.isMember, membersCount: prev.isMember ? prev.membersCount - 1 : prev.membersCount + 1 } : null); }}
+                onClick={e => { e.stopPropagation(); handleJoin(selectedGroup.id); }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
                   (joinedIds.has(selectedGroup.id) || selectedGroup.isMember)
                     ? "bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive"

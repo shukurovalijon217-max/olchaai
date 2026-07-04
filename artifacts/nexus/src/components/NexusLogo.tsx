@@ -1,5 +1,6 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
+import OlchaWordmark from "./OlchaWordmark";
 
 interface NexusLogoProps {
   ringSize?: number;
@@ -480,25 +481,9 @@ export default function NexusLogo({
         })}
       </div>
 
-      {/* ── OlchaAI matni ── */}
+      {/* ── OlChaAI matni — har bir harf o'z rangida ── */}
       {showText && (
-        <motion.span
-          animate={{ opacity: [0.88, 1, 0.88] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          style={{
-            fontFamily: "'Georgia', 'Times New Roman', serif",
-            letterSpacing,
-            fontWeight: 400,
-            fontSize,
-            background: "linear-gradient(180deg, #d4a96a 0%, #f5c860 26%, #ffe88a 44%, #c07830 65%, #6a3a18 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            lineHeight: 1,
-          }}
-        >
-          OlchaAI
-        </motion.span>
+        <OlchaWordmark fontSize={fontSize} letterSpacing={letterSpacing} fontWeight={400} />
       )}
     </div>
   );

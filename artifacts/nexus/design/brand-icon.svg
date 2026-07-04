@@ -1,0 +1,36 @@
+<svg width="512" height="512" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="oring" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#3b0764" />
+      <stop offset="24%" stop-color="#9333ea" />
+      <stop offset="50%" stop-color="#e9d5ff" />
+      <stop offset="76%" stop-color="#9333ea" />
+      <stop offset="100%" stop-color="#3b0764" />
+    </linearGradient>
+    <linearGradient id="edge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe9a8" />
+      <stop offset="50%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#ffe9a8" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="rgba(168,85,247,0.55)" />
+      <stop offset="60%" stop-color="rgba(147,51,234,0.18)" />
+      <stop offset="100%" stop-color="rgba(147,51,234,0)" />
+    </radialGradient>
+    <mask id="ringmask">
+      <circle cx="50" cy="50" r="46" fill="white" />
+      <circle cx="50" cy="50" r="27" fill="black" />
+    </mask>
+  </defs>
+
+  <circle cx="50" cy="50" r="48" fill="url(#glow)" />
+
+  <circle cx="50" cy="50" r="46.5" fill="none" stroke="url(#edge)" stroke-width="1.4" mask="url(#ringmask)" />
+  <g mask="url(#ringmask)">
+    <circle cx="50" cy="50" r="46" fill="url(#oring)" />
+  </g>
+  <circle cx="50" cy="50" r="27.5" fill="none" stroke="url(#edge)" stroke-width="1.2" />
+
+  <path d="M 20 32 A 44 44 0 0 1 66 15" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="4.2" stroke-linecap="round" mask="url(#ringmask)" />
+  <ellipse cx="34" cy="28" rx="6" ry="2.6" fill="rgba(255,255,255,0.55)" mask="url(#ringmask)" />
+</svg>

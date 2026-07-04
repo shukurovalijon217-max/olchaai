@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { Eye, EyeOff, AlertCircle, Search, Check, X, Globe } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
+import OlchaWordmark from "@/components/OlchaWordmark";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
@@ -670,20 +671,9 @@ export default function LoginPage() {
             initial={{ y: 16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.35, duration: 0.5 }}
+            style={{ display: "block" }}
           >
-            <span style={{
-              display: "block",
-              fontFamily: "'Georgia', 'Times New Roman', serif",
-              letterSpacing: "0.35em",
-              fontWeight: 400,
-              fontSize: "2.6rem",
-              background: "linear-gradient(180deg, #d4a96a 0%, #f0c060 28%, #a06030 62%, #6a3a18 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}>
-              OlchaAI
-            </span>
+            <OlchaWordmark fontSize="2.6rem" letterSpacing="0.35em" fontWeight={400} />
           </motion.div>
           <motion.p
             initial={{ y: 12, opacity: 0 }}

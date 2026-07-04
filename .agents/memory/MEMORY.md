@@ -23,3 +23,4 @@
 - [Rebranding a brand string across a monorepo](rebranding-brand-string.md) — filenames/identifiers and third-party name lookups (e.g. Stripe product search) need explicit handling, not just text sed.
 - [OTube collab/challenges API contracts](otube-api-contracts.md) — collaborators invite by username handle not userId; challenges need name/hashtag/category not title/description; no total-views endpoint, sum client-side.
 - [Orval generated hooks + conditional enabled](orval-enabled-querykey.md) — passing query.enabled without an explicit queryKey can throw TS2741; always pass getXxxQueryKey(params) alongside enabled.
+- [Testing Stripe Checkout Sessions](stripe-checkout-testing.md) — no payment_intent exists until the hosted page loads; curl can verify creation + unpaid-rejection + idempotency, not the paid-credit path.

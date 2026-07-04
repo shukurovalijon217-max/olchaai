@@ -603,6 +603,8 @@ function MonetizationTab() {
   const [topContent, setTopContent] = useState<any[]>([]);
   const [payouts, setPayouts] = useState<any[]>([]);
   const [payoutFilter, setPayoutFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [withdrawalFilter, setWithdrawalFilter] = useState<"pending" | "completed" | "cancelled" | "all">("pending");
   const [loading, setLoading] = useState(true);
   const [savingCfg, setSavingCfg] = useState(false);
   const [cfgSaved, setCfgSaved] = useState(false);
@@ -635,12 +637,13 @@ function MonetizationTab() {
         const r = await fetch(url, { credentials: "include" });
         return r.ok ? r.json().catch(() => null) : null;
       };
-      const [s, c, tc, po, apps] = await Promise.all([
+      const [s, c, tc, po, apps, wd] = await Promise.all([
         safe(`${API_BASE}/api/admin/monetization/stats`),
         safe(`${API_BASE}/api/admin/monetization/config`),
         safe(`${API_BASE}/api/admin/monetization/top-content?limit=30`),
         safe(`${API_BASE}/api/admin/monetization/payouts?status=${payoutFilter}&limit=50`),
         safe(`${API_BASE}/api/admin/monetization/applications?status=applied&limit=50`),
+        safe(`${API_BASE}/api/admin/wallet/withdrawals?status=${withdrawalFilter}`),
       ]);
       setStats(s);
       if (c) {
@@ -662,6 +665,7 @@ function MonetizationTab() {
       setTopContent(tc ?? []);
       setPayouts(po ?? []);
       setApplications(apps ?? []);
+      setWithdrawals(wd?.withdrawals ?? []);
     } finally { setLoading(false); }
   };
 
@@ -674,6 +678,14 @@ function MonetizationTab() {
     };
     loadPayouts();
   }, [payoutFilter]);
+  useEffect(() => {
+    if (loading) return;
+    const loadWithdrawals = async () => {
+      const r = await fetch(`${API_BASE}/api/admin/wallet/withdrawals?status=${withdrawalFilter}`, { credentials: "include" });
+      if (r.ok) { const data = await r.json(); setWithdrawals(data.withdrawals ?? []); }
+    };
+    loadWithdrawals();
+  }, [withdrawalFilter]);
 
   const saveConfig = async () => {
     setSavingCfg(true);
@@ -719,6 +731,17 @@ function MonetizationTab() {
         body: JSON.stringify({ action }),
       });
       setPayouts(prev => prev.filter(p => p.id !== id));
+    } finally { setActingId(null); }
+  };
+
+  const handleWithdrawal = async (id: number, action: "approve" | "reject") => {
+    setActingId(id);
+    try {
+      await fetch(`${API_BASE}/api/admin/wallet/withdrawals/${id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ action }),
+      });
+      setWithdrawals(prev => prev.filter(w => w.id !== id));
     } finally { setActingId(null); }
   };
 
@@ -1018,6 +1041,80 @@ function MonetizationTab() {
               </div>
             )}
           </div>
+
+          {/* Wallet withdrawal requests */}
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+              <h3 className="text-white font-bold text-sm">🏦 Hamyondan yechish so'rovlari</h3>
+              <div className="flex gap-1">
+                {(["pending", "completed", "cancelled", "all"] as const).map(f => (
+                  <button key={f} onClick={() => setWithdrawalFilter(f)}
+                    className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-all ${withdrawalFilter === f ? "bg-primary/30 text-primary" : "text-white/40 hover:text-white/60"}`}>
+                    {f === "pending" ? "Kutmoqda" : f === "completed" ? "Tasdiqlangan" : f === "cancelled" ? "Rad etilgan" : "Barchasi"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {withdrawals.length === 0 ? (
+              <div className="py-10 text-center text-white/30 text-sm">
+                {withdrawalFilter === "pending" ? "Kutayotgan so'rov yo'q ✓" : "Hech narsa yo'q"}
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {withdrawals.map(w => {
+                  let meta: { accountDetails?: string } = {};
+                  try { meta = w.metadata ? JSON.parse(w.metadata) : {}; } catch { meta = {}; }
+                  return (
+                    <div key={w.id} className="px-5 py-4 flex items-center gap-4">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-600/50 to-red-600/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white">
+                        {(w.displayName?.[0] ?? "?").toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-white text-sm font-semibold">{w.displayName ?? `User #${w.userId}`}</span>
+                          <span className="text-white/40 text-[10px]">@{w.username}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[11px] flex-wrap">
+                          <span className="text-red-400 font-bold">{uzs(Math.abs(w.amount))}</span>
+                          {w.paymentMethod && <span className="text-white/40">{w.paymentMethod}</span>}
+                          {meta.accountDetails && <span className="text-white/40 font-mono">{meta.accountDetails}</span>}
+                          <span className="text-white/30">{new Date(w.createdAt).toLocaleDateString("uz-UZ")}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {w.status === "pending" ? (
+                          <>
+                            <motion.button whileTap={{ scale: 0.9 }} disabled={actingId === w.id}
+                              onClick={() => handleWithdrawal(w.id, "approve")}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-50">
+                              <Check className="w-3.5 h-3.5" />
+                              Tasdiqlash
+                            </motion.button>
+                            <motion.button whileTap={{ scale: 0.9 }} disabled={actingId === w.id}
+                              onClick={() => handleWithdrawal(w.id, "reject")}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50">
+                              <XCircle className="w-3.5 h-3.5" />
+                              Rad etish
+                            </motion.button>
+                          </>
+                        ) : (
+                          <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
+                            w.status === "completed" ? "bg-emerald-500/15 text-emerald-400" :
+                            w.status === "cancelled" ? "bg-red-500/15 text-red-400" : "bg-white/8 text-white/40"
+                          }`} style={{ background: w.status === "completed" ? undefined : w.status === "cancelled" ? undefined : "rgba(255,255,255,0.04)" }}>
+                            {w.status === "completed" ? "✓ Tasdiqlangan" : w.status === "cancelled" ? "✗ Rad etilgan" : w.status}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* ── Creator monetization applications ────────────── */}
           <div className="rounded-2xl overflow-hidden"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>

@@ -2,7 +2,7 @@ import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
 import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable, moderationQueueTable, commentsTable } from "@workspace/db";
 import { eq, sql, desc, sum, and, inArray } from "drizzle-orm";
-import { getCommissionRate, setCommissionRate } from "../lib/commission";
+import { getCommissionRate, setCommissionRate, applyCommission } from "../lib/commission";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
 import { getStripeSync } from "../stripe/stripeClient";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
@@ -340,6 +340,91 @@ router.get("/admin/finance", async (req, res) => {
         totalWithdrawn: withdrawals[0]?.total ?? 0,
       },
     });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
+});
+
+// GET /admin/wallet/withdrawals — list withdrawal requests for manual review
+router.get("/admin/wallet/withdrawals", async (req, res) => {
+  try {
+    const status = (req.query.status as string) || "pending";
+    const whereClause = status === "all"
+      ? eq(transactionsTable.type, "withdrawal")
+      : and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, status));
+
+    const rows = await db
+      .select({
+        id: transactionsTable.id,
+        userId: transactionsTable.userId,
+        amount: transactionsTable.amount,
+        paymentMethod: transactionsTable.paymentMethod,
+        status: transactionsTable.status,
+        description: transactionsTable.description,
+        reference: transactionsTable.reference,
+        metadata: transactionsTable.metadata,
+        createdAt: transactionsTable.createdAt,
+        displayName: usersTable.displayName,
+        username: usersTable.username,
+      })
+      .from(transactionsTable)
+      .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
+      .where(whereClause)
+      .orderBy(desc(transactionsTable.createdAt))
+      .limit(100);
+
+    res.json({ withdrawals: rows });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
+});
+
+// PATCH /admin/wallet/withdrawals/:id — approve (mark as paid out manually) or reject (refund hold)
+router.patch("/admin/wallet/withdrawals/:id", async (req: any, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { action, adminNote } = req.body as { action: "approve" | "reject"; adminNote?: string };
+    if (action !== "approve" && action !== "reject") {
+      res.status(400).json({ error: "action 'approve' yoki 'reject' bo'lishi kerak" }); return;
+    }
+
+    const [tx] = await db.select().from(transactionsTable)
+      .where(and(eq(transactionsTable.id, id), eq(transactionsTable.type, "withdrawal")));
+    if (!tx) { res.status(404).json({ error: "So'rov topilmadi" }); return; }
+    if (tx.status !== "pending") { res.status(400).json({ error: "So'rov allaqachon ko'rib chiqilgan" }); return; }
+
+    if (action === "approve") {
+      const [updatedTx] = await db.update(transactionsTable)
+        .set({ status: "completed", description: `${tx.description ?? ""} — admin tomonidan tasdiqlandi${adminNote ? `: ${adminNote}` : ""}` })
+        .where(and(eq(transactionsTable.id, tx.id), eq(transactionsTable.status, "pending")))
+        .returning();
+      if (!updatedTx) { res.status(409).json({ error: "So'rov holati o'zgargan, qayta urinib ko'ring" }); return; }
+
+      const grossAmount = Math.abs(tx.amount);
+      await applyCommission(tx.userId, grossAmount, "withdrawal", tx.reference ?? `WIT-${tx.id}`);
+
+      res.json({ transaction: updatedTx }); return;
+    }
+
+    // reject → refund the held amounts back to the wallet
+    let meta: { fromPersonal?: number; fromEarnings?: number; fromAdRevenue?: number } = {};
+    try { meta = tx.metadata ? JSON.parse(tx.metadata) : {}; } catch { meta = {}; }
+    const wallet = await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, tx.userId) })
+      ?? (await db.insert(walletsTable).values({ userId: tx.userId }).returning())[0];
+
+    const [updatedWallet] = await db.update(walletsTable)
+      .set({
+        balance: wallet.balance + (meta.fromPersonal ?? 0),
+        earningsBalance: wallet.earningsBalance + (meta.fromEarnings ?? 0),
+        adRevenueBalance: wallet.adRevenueBalance + (meta.fromAdRevenue ?? 0),
+        updatedAt: new Date(),
+      })
+      .where(eq(walletsTable.id, wallet.id))
+      .returning();
+
+    const [updatedTx] = await db.update(transactionsTable)
+      .set({ status: "cancelled", description: `${tx.description ?? ""} — admin tomonidan rad etildi va mablag' qaytarildi${adminNote ? `: ${adminNote}` : ""}` })
+      .where(and(eq(transactionsTable.id, tx.id), eq(transactionsTable.status, "pending")))
+      .returning();
+    if (!updatedTx) { res.status(409).json({ error: "So'rov holati o'zgargan, qayta urinib ko'ring" }); return; }
+
+    res.json({ transaction: updatedTx, wallet: updatedWallet });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
 });
 

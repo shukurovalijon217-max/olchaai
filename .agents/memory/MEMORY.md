@@ -24,3 +24,4 @@
 - [OTube collab/challenges API contracts](otube-api-contracts.md) — collaborators invite by username handle not userId; challenges need name/hashtag/category not title/description; no total-views endpoint, sum client-side.
 - [Orval generated hooks + conditional enabled](orval-enabled-querykey.md) — passing query.enabled without an explicit queryKey can throw TS2741; always pass getXxxQueryKey(params) alongside enabled.
 - [Testing Stripe Checkout Sessions](stripe-checkout-testing.md) — no payment_intent exists until the hosted page loads; curl can verify creation + unpaid-rejection + idempotency, not the paid-credit path.
+- [OlchaAI brand visual identity spec](brand-visual-identity.md) — fixed per-letter wordmark color spec, no-black-square favicon rule, and why search/OG appearance needs separate meta-tag fixes.

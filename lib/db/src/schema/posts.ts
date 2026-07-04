@@ -24,6 +24,7 @@ export const postsTable = pgTable("posts", {
   commentsCount: integer("comments_count").notNull().default(0),
   sharesCount: integer("shares_count").notNull().default(0),
   isFlagged: boolean("is_flagged").notNull().default(false),
+  midnightOnly: boolean("midnight_only").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

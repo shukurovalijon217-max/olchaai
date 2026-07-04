@@ -1,8 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { usersTable } from "@workspace/db";
-import { eq, desc, and, inArray } from "drizzle-orm";
-import { pgTable, serial, integer, text, timestamp } from "drizzle-orm/pg-core";
+import { usersTable, chatConversationsTable, chatParticipantsTable, chatMessagesTable, type FocusShield } from "@workspace/db";
+import { eq, desc, and, inArray, or, isNull, lte } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter.js";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 
@@ -18,27 +17,19 @@ async function notifyGo(userId: number, event: string, payload: unknown) {
   } catch {}
 }
 
-const chatConversationsTable = pgTable("chat_conversations", {
-  id: serial("id").primaryKey(),
-  lastMessage: text("last_message"),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-const chatParticipantsTable = pgTable("chat_participants", {
-  id: serial("id").primaryKey(),
-  conversationId: integer("conversation_id").notNull(),
-  userId: integer("user_id").notNull(),
-});
-
-const chatMessagesTable = pgTable("chat_messages", {
-  id: serial("id").primaryKey(),
-  conversationId: integer("conversation_id").notNull(),
-  senderId: integer("sender_id").notNull(),
-  content: text("content").notNull(),
-  mediaUrl: text("media_url"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+// Mute semantics only: message is always stored & delivered on fetch, this just
+// suppresses the realtime notify/sound/push for senders outside the allowlist
+// during the recipient's configured focus-shield window.
+function isFocusShieldMuted(fs: FocusShield | null | undefined, senderId: number): boolean {
+  if (!fs?.enabled) return false;
+  if (fs.allowedUserIds?.includes(senderId)) return false;
+  const { startHour, endHour } = fs;
+  if (startHour === endHour) return false;
+  const hour = new Date().getHours();
+  return startHour < endHour
+    ? hour >= startHour && hour < endHour
+    : hour >= startHour || hour < endHour;
+}
 
 const router = Router();
 
@@ -57,6 +48,40 @@ async function isParticipant(conversationId: number, userId: number): Promise<bo
   return !!row;
 }
 
+/**
+ * time_capsule: a scheduled message only becomes "delivered" (visible in the
+ * conversation preview + triggers a realtime notify) once its scheduledAt has
+ * passed. There is no background job, so delivery is finalized lazily the
+ * next time any participant fetches the conversation list or its messages.
+ */
+async function finalizeDueScheduledMessages(conversationId: number) {
+  const now = new Date();
+  const [conv] = await db.select().from(chatConversationsTable).where(eq(chatConversationsTable.id, conversationId));
+  if (!conv) return;
+
+  const [dueMsg] = await db.select().from(chatMessagesTable)
+    .where(and(
+      eq(chatMessagesTable.conversationId, conversationId),
+      lte(chatMessagesTable.scheduledAt, now),
+    ))
+    .orderBy(desc(chatMessagesTable.scheduledAt))
+    .limit(1);
+
+  if (!dueMsg || !dueMsg.scheduledAt) return;
+  if (dueMsg.scheduledAt <= conv.updatedAt) return; // already finalized
+
+  await db.update(chatConversationsTable)
+    .set({ lastMessage: dueMsg.content, updatedAt: now })
+    .where(eq(chatConversationsTable.id, conversationId));
+
+  const parts = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.conversationId, conversationId));
+  for (const p of parts) {
+    if (p.userId !== dueMsg.senderId) {
+      await notifyGo(p.userId, "dm_message", { conversationId, message: dueMsg });
+    }
+  }
+}
+
 router.get("/conversations", async (req, res) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
@@ -64,6 +89,8 @@ router.get("/conversations", async (req, res) => {
     const myRows = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.userId, userId));
     const myConvIds = myRows.map(r => r.conversationId);
     if (myConvIds.length === 0) { res.json([]); return; }
+
+    await Promise.all(myConvIds.map(id => finalizeDueScheduledMessages(id)));
 
     const convs = await db.select().from(chatConversationsTable)
       .where(inArray(chatConversationsTable.id, myConvIds))
@@ -113,8 +140,30 @@ router.get("/conversations/:id/messages", async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!(await isParticipant(id, userId))) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
-    const msgs = await db.select().from(chatMessagesTable).where(eq(chatMessagesTable.conversationId, id)).orderBy(desc(chatMessagesTable.createdAt)).limit(50);
-    res.json(msgs.reverse());
+
+    await finalizeDueScheduledMessages(id);
+
+    const now = new Date();
+    // time_capsule: a message scheduled for the future stays hidden from
+    // everyone except its own sender (who sees it marked as pending) until
+    // scheduledAt has passed.
+    const msgs = await db.select().from(chatMessagesTable)
+      .where(and(
+        eq(chatMessagesTable.conversationId, id),
+        or(
+          isNull(chatMessagesTable.scheduledAt),
+          lte(chatMessagesTable.scheduledAt, now),
+          eq(chatMessagesTable.senderId, userId),
+        ),
+      ))
+      .orderBy(desc(chatMessagesTable.createdAt))
+      .limit(50);
+
+    const withPending = msgs.map(m => ({
+      ...m,
+      isPending: !!m.scheduledAt && m.scheduledAt > now,
+    }));
+    res.json(withPending.reverse());
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -126,21 +175,24 @@ router.post("/conversations/:id/messages", async (req: any, res) => {
   if (!senderId) return;
   try {
     const conversationId = Number(req.params["id"]);
-    const { content, mediaUrl } = req.body;
+    const { content, mediaUrl, scheduledAt } = req.body;
     if (!(await isParticipant(conversationId, senderId))) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
+
+    const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
+    const isFutureScheduled = !!scheduledDate && scheduledDate.getTime() > Date.now();
 
     // AI scan on every outgoing message
     const scan = await scanContentAsync(content ?? "");
 
-    const [msg] = await db.insert(chatMessagesTable).values({ conversationId, senderId, content, mediaUrl }).returning();
+    const [msg] = await db.insert(chatMessagesTable)
+      .values({ conversationId, senderId, content, mediaUrl, scheduledAt: scheduledDate ?? undefined })
+      .returning();
 
     // AI Autopilot decision (warnings/bans/logging)
     const decision = await applyAutopilotDecision({
       scan, authorId: senderId,
       contentType: "message", contentId: msg.id, contentText: content ?? "",
     });
-
-    await db.update(chatConversationsTable).set({ lastMessage: content, updatedAt: new Date() }).where(eq(chatConversationsTable.id, conversationId));
 
     if (decision.isBanned || scan.autoBlock) {
       res.status(422).json({
@@ -150,16 +202,31 @@ router.post("/conversations/:id/messages", async (req: any, res) => {
       }); return;
     }
 
-    // Notify other participants in realtime via the Go WS hub
-    const parts = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.conversationId, conversationId));
-    for (const p of parts) {
-      if (p.userId !== senderId) {
-        await notifyGo(p.userId, "dm_message", { conversationId, message: msg });
+    if (!isFutureScheduled) {
+      // Delivered immediately: update the conversation preview and notify.
+      await db.update(chatConversationsTable).set({ lastMessage: content, updatedAt: new Date() }).where(eq(chatConversationsTable.id, conversationId));
+
+      const parts = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.conversationId, conversationId));
+      const recipientIds = parts.map(p => p.userId).filter(id => id !== senderId);
+      const recipients = recipientIds.length
+        ? await db.select({ id: usersTable.id, focusShield: usersTable.focusShield }).from(usersTable).where(inArray(usersTable.id, recipientIds))
+        : [];
+      const focusShieldById = new Map(recipients.map(r => [r.id, r.focusShield]));
+
+      for (const p of parts) {
+        if (p.userId !== senderId) {
+          if (isFocusShieldMuted(focusShieldById.get(p.userId), senderId)) {
+            req.log.info({ recipientId: p.userId, senderId }, "focus_shield_muted_notify");
+            continue;
+          }
+          await notifyGo(p.userId, "dm_message", { conversationId, message: msg });
+        }
       }
     }
 
     res.status(201).json({
       ...msg,
+      isPending: isFutureScheduled,
       ...(decision.action === "warned" ? { warning: decision.message } : {}),
     });
   } catch (err) {

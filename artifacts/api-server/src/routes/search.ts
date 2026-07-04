@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { usersTable, postsTable, reelsTable, productsTable } from "@workspace/db";
 import { ilike, or, eq, and, ne } from "drizzle-orm";
+import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.get("/search", async (req: any, res) => {
 
     const like = `%${q}%`;
     const myId = req.session?.userId;
+    const midnightCond = await midnightVisibilityConditionForReq(req);
 
     const [users, posts, reels, products] = await Promise.all([
       (type === "all" || type === "users")
@@ -47,7 +49,7 @@ router.get("/search", async (req: any, res) => {
             likesCount: postsTable.likesCount,
             commentsCount: postsTable.commentsCount,
             createdAt: postsTable.createdAt,
-          }).from(postsTable).where(ilike(postsTable.content, like)).limit(limit)
+          }).from(postsTable).where(and(ilike(postsTable.content, like), midnightCond)).limit(limit)
         : Promise.resolve([]),
 
       (type === "all" || type === "reels")

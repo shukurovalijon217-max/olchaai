@@ -60,6 +60,8 @@ interface LocalMsg {
   status: "sending" | "sent" | "delivered" | "read";
   ts: Date;
   isEphemeral?: boolean;
+  isPending?: boolean;
+  scheduledAt?: Date;
   emoji?: string;
   pollOptions?: PollOption[];
   pollTitle?: string;
@@ -658,6 +660,12 @@ function MsgBubble({
               {msg.type==="text"&&(
                 <div className="px-4 py-2.5">
                   {msg.isEphemeral&&<span className="text-violet-300 mr-1">👻</span>}
+                  {msg.isPending&&(
+                    <div className="flex items-center gap-1 mb-1 text-[10px] font-medium text-amber-300">
+                      <Clock3 className="w-3 h-3"/>
+                      <span>{msg.scheduledAt?msg.scheduledAt.toLocaleString("uz-UZ",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}):"Rejalashtirilgan"}</span>
+                    </div>
+                  )}
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 </div>
               )}
@@ -899,6 +907,7 @@ export default function MessagesPage() {
   const { data: convs = [], isLoading } = useListConversations();
   const createConv = useCreateConversation();
 
+  const [presence, setPresence] = useState<Record<number, boolean>>({});
   const [activeId, setActiveId] = useState<number | null>(null);
   const [showList, setShowList] = useState(true);
   const [search, setSearch] = useState("");
@@ -977,6 +986,8 @@ export default function MessagesPage() {
       id:String(m.id), senderId:m.senderId, type:"text" as MsgType, content:m.content,
       reactions:[], starred:false, pinned:false, deleted:false, edited:false, forwarded:false,
       status:"read" as const, ts:new Date(m.createdAt||Date.now()),
+      isPending: m.isPending,
+      scheduledAt: m.scheduledAt ? new Date(m.scheduledAt) : undefined,
     })),
     ...localMsgs.filter(lm=>{
       // Non-text messages (video_note, voice, sticker, image, file, poll) ALWAYS kept
@@ -1008,6 +1019,31 @@ export default function MessagesPage() {
       if(tab==="unread") return matchSearch&&(c.unreadCount||0)>0;
       return matchSearch;
     });
+
+  const activeOtherId = activeConv?.participants?.find(p=>p.id!==ME_ID)?.id;
+  const presenceIds = Array.from(new Set([
+    ...convs.map(c=>c.participants?.find(p=>p.id!==ME_ID)?.id).filter((id):id is number=>!!id),
+    ...(activeOtherId?[activeOtherId]:[]),
+  ])).sort().join(",");
+
+  useEffect(()=>{
+    if(!presenceIds) return;
+    let cancelled = false;
+    const fetchPresence = () => {
+      fetch(`${API}/api/presence?ids=${presenceIds}`,{credentials:"include"})
+        .then(r=>r.ok?r.json():null)
+        .then((data:Record<string,boolean>|null)=>{
+          if(cancelled||!data) return;
+          setPresence(prev=>({...prev,...Object.fromEntries(Object.entries(data).map(([id,on])=>[Number(id),on]))}));
+        })
+        .catch(()=>{});
+    };
+    fetchPresence();
+    const interval = setInterval(fetchPresence,20000);
+    return ()=>{ cancelled=true; clearInterval(interval); };
+  },[presenceIds]);
+
+  const isOnline = (id?:number) => id!==undefined && !!presence[id];
 
   useEffect(()=>{ messagesEndRef.current?.scrollIntoView({behavior:"smooth"}); },[allMsgs.length,activeId]);
 
@@ -1073,8 +1109,10 @@ export default function MessagesPage() {
     };
     setLocalMsgs(prev=>[...prev,msg]);
     if(msg.pinned) setPinnedMsg(msg);
-    setTimeout(()=>updateMsg(msg.id,{status:"delivered"}),800);
-    setTimeout(()=>updateMsg(msg.id,{status:"read"}),2000);
+    if(!msg.isPending){
+      setTimeout(()=>updateMsg(msg.id,{status:"delivered"}),800);
+      setTimeout(()=>updateMsg(msg.id,{status:"read"}),2000);
+    }
     return msg;
   };
 
@@ -1086,11 +1124,24 @@ export default function MessagesPage() {
     if(!text.trim()||!convId) return;
     const replySender = replyTo?.senderId===ME_ID?"Siz":(activeConv?getOther(activeConv)?.displayName:undefined)||"U";
     const content = replyTo?`↩ ${replySender}: ${replyTo.content?.slice(0,50)}\n\n${text.trim()}`:text.trim();
-    addMsg({ type:"text", content, replyTo:replyTo?{id:replyTo.id,content:replyTo.content||"",sender:replyTo.senderId===ME_ID?"Siz":"U"}:undefined });
-    sendApi.mutate({ id:convId, data:{senderId:ME_ID,content} },{
+
+    const scheduledDate = scheduleMode&&scheduleTime ? new Date(scheduleTime) : null;
+    const isFutureSchedule = !!scheduledDate && scheduledDate.getTime()>Date.now();
+
+    addMsg({
+      type:"text", content,
+      replyTo:replyTo?{id:replyTo.id,content:replyTo.content||"",sender:replyTo.senderId===ME_ID?"Siz":"U"}:undefined,
+      isPending: isFutureSchedule,
+      scheduledAt: scheduledDate||undefined,
+    });
+    sendApi.mutate({
+      id:convId,
+      data:{ senderId:ME_ID, content, ...(isFutureSchedule?{scheduledAt:scheduledDate!.toISOString()}:{}) },
+    },{
       onSuccess:()=>qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)}),
     });
     setText(""); setReplyTo(null);
+    if(scheduleMode){ setScheduleMode(false); setScheduleTime(""); }
   };
 
   const handleImage = (file:File) => {
@@ -1283,7 +1334,7 @@ export default function MessagesPage() {
                   <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden">
                     {other?.avatarUrl ? <img src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="text-base font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
                   </div>
-                  <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-sidebar"/>
+                  {isOnline(other?.id)&&<div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-sidebar"/>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
@@ -1351,7 +1402,7 @@ export default function MessagesPage() {
                   ?<img src={getOther(activeConv)!.avatarUrl!} alt="" className="w-full h-full object-cover"/>
                   :<span className="text-sm font-bold text-primary">{getOther(activeConv)?.displayName?.[0]}</span>}
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-background"/>
+              {isOnline(getOther(activeConv)?.id)&&<div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-background"/>}
             </button>
             <button className="flex-1 min-w-0 text-left" onClick={()=>setShowProfilePanel(true)}>
               <p className="font-semibold text-foreground text-sm truncate">{getOther(activeConv)?.displayName}</p>
@@ -1361,7 +1412,9 @@ export default function MessagesPage() {
                     ?<span className="text-primary flex items-center gap-1"><span className="flex gap-0.5">{[0,1,2].map(i=><span key={i} className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{animationDelay:`${i*0.15}s`}}/>)}</span>yozmoqda...</span>
                     :typing
                     ?<span className="text-muted-foreground text-[11px]">Siz yozmoqdasiz...</span>
-                    :<span className="text-emerald-400">Online</span>}
+                    :isOnline(getOther(activeConv)?.id)
+                    ?<span className="text-emerald-400">{t("msg.online")}</span>
+                    :<span className="text-muted-foreground">{t("msg.offline")}</span>}
                 </motion.p>
               </AnimatePresence>
             </button>
@@ -1560,13 +1613,15 @@ export default function MessagesPage() {
                         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-3xl font-bold text-primary-foreground overflow-hidden ring-4 ring-primary/20">
                           {other?.avatarUrl ? <img src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : other?.displayName?.[0]?.toUpperCase()||"?"}
                         </div>
-                        <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-background"/>
+                        {isOnline(other?.id)&&<div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-background"/>}
                       </div>
                       <div className="text-center">
                         <p className="font-bold text-xl text-foreground">{other?.displayName||"Foydalanuvchi"}</p>
                         <p className="text-sm text-primary">@{other?.username||"username"}</p>
                         <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"/>Onlayn
+                          {isOnline(other?.id)
+                            ? <><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"/>{t("msg.online")}</>
+                            : <><span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 inline-block"/>{t("msg.offline")}</>}
                         </p>
                       </div>
 
@@ -2009,11 +2064,13 @@ export default function MessagesPage() {
                     className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${showFmtBar?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                     <Bold className="w-3.5 h-3.5"/>
                   </button>
-                  <button onClick={()=>setScheduleMode(v=>!v)}
-                    title="Vaqt belgilash"
-                    className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${scheduleMode?"text-amber-500 bg-amber-500/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
-                    <Clock3 className="w-3.5 h-3.5"/>
-                  </button>
+                  {getFeaturePref("time_capsule",false)&&(
+                    <button onClick={()=>setScheduleMode(v=>!v)}
+                      title="Vaqt belgilash"
+                      className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${scheduleMode?"text-amber-500 bg-amber-500/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                      <Clock3 className="w-3.5 h-3.5"/>
+                    </button>
+                  )}
                   <button onClick={()=>setEphemeral(v=>!v)}
                     title="Ko'rinmas xabar"
                     className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${ephemeral?"text-violet-400 bg-violet-500/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>

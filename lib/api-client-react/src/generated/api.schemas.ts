@@ -88,6 +88,7 @@ export interface Post {
   sharesCount?: number;
   isLiked?: boolean;
   isFlagged?: boolean;
+  midnightOnly?: boolean;
   createdAt: string;
 }
 
@@ -106,6 +107,7 @@ export interface PostInput {
   type: PostInputType;
   mediaUrl?: string;
   tags?: string[];
+  midnightOnly?: boolean;
 }
 
 export interface Comment {
@@ -217,12 +219,21 @@ export interface Message {
   mediaUrl?: string | null;
   isRead?: boolean;
   createdAt: string;
+  /**
+     * time_capsule: if set, the message is only delivered to other participants once this time passes
+     * @nullable
+     */
+  scheduledAt?: string | null;
+  /** true when scheduledAt is in the future (only ever shown to the sender) */
+  isPending?: boolean;
 }
 
 export interface MessageInput {
   senderId: number;
   content: string;
   mediaUrl?: string;
+  /** time_capsule: ISO timestamp to deliver this message at, instead of immediately */
+  scheduledAt?: string;
 }
 
 export type GroupSettings = { [key: string]: unknown };
@@ -361,6 +372,9 @@ export interface AiFeed {
   posts: Post[];
   reels: Reel[];
   suggestedUsers: User[];
+  /** 0-100 share of the feed's personalization signal concentrated in a single tag (echo chamber detector) */
+  echoScore?: number;
+  echoTopTag?: string | null;
 }
 
 export interface TrendingTopic {

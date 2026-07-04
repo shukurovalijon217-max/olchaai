@@ -7,6 +7,7 @@ import {
 import { desc, eq, and, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage } from "../lib/aiAccess";
+import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 
 const router = Router();
 
@@ -59,8 +60,9 @@ router.get("/ai/feed", async (req, res) => {
       }
     }
 
+    const midnightCond = await midnightVisibilityConditionForReq(req);
     const [posts, reels] = await Promise.all([
-      db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(30),
+      db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.createdAt)).limit(30),
       db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(10),
     ]);
 
@@ -126,10 +128,24 @@ router.get("/ai/feed", async (req, res) => {
       .slice(0, 5)
       .map(u => enrichUser(u as Record<string, unknown>));
 
+    /* Echo Detector: how much of the personalization signal is concentrated
+     * in a single tag — a high share means the feed is stuck in a bubble. */
+    const tagEntries = Object.entries(tagScores);
+    const totalTagScore = tagEntries.reduce((s, [, v]) => s + v, 0);
+    let echoScore = 0;
+    let echoTopTag: string | null = null;
+    if (totalTagScore > 0) {
+      const [topTag, topScore] = tagEntries.sort((a, b) => b[1] - a[1])[0];
+      echoScore = Math.round((topScore / totalTagScore) * 100);
+      echoTopTag = topTag;
+    }
+
     res.json({
       posts: enrichedPosts,
       reels: enrichedReels,
       suggestedUsers,
+      echoScore,
+      echoTopTag,
     });
   } catch (err) {
     req.log.error(err);

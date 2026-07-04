@@ -23,5 +23,6 @@ export interface Post {
   sharesCount?: number;
   isLiked?: boolean;
   isFlagged?: boolean;
+  midnightOnly?: boolean;
   createdAt: string;
 }

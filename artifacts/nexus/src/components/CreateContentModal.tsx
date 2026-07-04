@@ -19,6 +19,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { getFeaturePref } from "@/lib/sounds";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -319,6 +320,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
   /* ── Time Capsule state ── */
   const [timeCapsule, setTimeCapsule] = useState(false);
+  const [midnightOnly, setMidnightOnly] = useState(false);
   const [scheduledAt, setScheduledAt] = useState("");
 
   /* ── AI Predict state ── */
@@ -851,6 +853,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   const [storyUploadResult, setStoryUploadResult] = useState<{ serveUrl: string } | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
+  const [emotionCheck, setEmotionCheck] = useState<{ postId: number } | null>(null);
+  const [emotionBusy, setEmotionBusy] = useState(false);
 
   const { uploadFile: upReel,      isUploading: upReelBusy,      progress: upReelProg }      = useMediaUpload({ onSuccess: r => setReelUploadResult(r) });
   const { uploadFile: upReelAudio, isUploading: upReelAudioBusy, progress: upReelAudioProg } = useMediaUpload({ onSuccess: r => setReelAudioUploadResult(r) });
@@ -882,7 +886,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
           : "text";
         const metaTags = [`_fmt:${displayFormat}`, `_cmt:${commentPerm}`, `_shr:${sharePerm}`];
         const urls = doneItems.map(m => m.serveUrl!);
-        await fetch(`${API}/api/posts`, {
+        const postRes = await fetch(`${API}/api/posts`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -905,10 +909,32 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
               : undefined,
             hotTake: hotTake || undefined,
             scheduledAt: timeCapsule && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+            midnightOnly: getFeaturePref("midnight_confess", false) && midnightOnly ? true : undefined,
             tags: metaTags,
           }),
         });
         qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
+
+        const createdPost = await postRes.json().catch(() => null);
+        if (getFeaturePref("emotion_radar", true) && createdPost?.id && postContent.trim().length > 3) {
+          setEmotionBusy(true);
+          try {
+            const analysisRes = await fetch(`${API}/api/ai/analyze-content`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ contentId: createdPost.id, contentType: "post", caption: postContent }),
+            });
+            const analysis = await analysisRes.json().catch(() => null);
+            if (analysis?.sentiment === "negative") {
+              setEmotionBusy(false);
+              setSubmitting(false);
+              setEmotionCheck({ postId: createdPost.id });
+              return;
+            }
+          } catch { /* AI check optional, fall through to normal success */ }
+          setEmotionBusy(false);
+        }
       } else if (tab === "reel") {
         if (!reelUploadResult) return;
         await createReel.mutateAsync({
@@ -973,7 +999,26 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
     }
   };
 
+  const handleEmotionKeep = () => {
+    setEmotionCheck(null);
+    setDone(true);
+    setTimeout(() => handleClose(), 1500);
+  };
+  const handleEmotionDelete = async () => {
+    if (!emotionCheck) return;
+    setEmotionBusy(true);
+    try {
+      await fetch(`${API}/api/posts/${emotionCheck.postId}`, { method: "DELETE", credentials: "include" });
+      qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
+    } catch { /* ignore */ } finally {
+      setEmotionBusy(false);
+      setEmotionCheck(null);
+      handleClose();
+    }
+  };
+
   const handleClose = () => {
+    setEmotionCheck(null); setEmotionBusy(false);
     setMediaQueue([]); uploadingRef.current = false;
     setPostContent(""); setDisplayFormat("cover"); setCommentPerm("everyone"); setSharePerm("everyone");
     setMood(""); setPollEnabled(false); setPollQuestion(""); setPollOptions(["", ""]);
@@ -1159,7 +1204,37 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                 </motion.div>
               )}
 
-              {!done && (
+              {/* ─── EMOTION RADAR WARNING ─── */}
+              {emotionCheck && (
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                  className="flex flex-col items-center gap-3 py-8 px-2 text-center">
+                  <span style={{ fontSize: 40 }}>🫧</span>
+                  <p className="text-base font-bold text-white">{t("create.emotion_warn_title")}</p>
+                  <p className="text-xs text-white/60">{t("create.emotion_warn_desc")}</p>
+                  <div className="flex gap-2 w-full mt-2">
+                    <button onClick={handleEmotionDelete} disabled={emotionBusy}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-bold text-red-300 disabled:opacity-50"
+                      style={{ background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)" }}>
+                      {t("create.emotion_delete")}
+                    </button>
+                    <button onClick={handleEmotionKeep} disabled={emotionBusy}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-50"
+                      style={{ background: "rgba(124,58,237,0.9)" }}>
+                      {t("create.emotion_keep")}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {emotionBusy && !emotionCheck && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="flex flex-col items-center gap-2 py-8">
+                  <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+                  <p className="text-xs text-white/50">{t("create.emotion_checking")}</p>
+                </motion.div>
+              )}
+
+              {!done && !emotionCheck && !emotionBusy && (
                 <>
                   {/* ═══ POST TAB ═══ */}
                   {tab === "post" && (
@@ -1565,6 +1640,32 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           )}
                         </AnimatePresence>
                       </div>
+
+                      {/* ── Midnight Confession ── */}
+                      {getFeaturePref("midnight_confess", false) && (
+                        <div
+                          className="flex items-center gap-3 px-3.5 py-3 rounded-2xl cursor-pointer transition-all"
+                          style={{
+                            background: midnightOnly ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.04)",
+                            border: midnightOnly ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.06)",
+                          }}
+                          onClick={() => setMidnightOnly(p => !p)}
+                        >
+                          <span style={{ fontSize: 22 }}>🌙</span>
+                          <div className="flex-1">
+                            <p className="text-xs font-bold text-white/80">{t("featurehub.feat_midnight_confess_title")}</p>
+                            <p className="text-[10px] text-white/40 mt-0.5">{t("featurehub.midnight_compose_hint")}</p>
+                          </div>
+                          <div className="w-9 h-5 rounded-full flex items-center transition-all"
+                            style={{
+                              background: midnightOnly ? "rgba(99,102,241,0.8)" : "rgba(255,255,255,0.12)",
+                              justifyContent: midnightOnly ? "flex-end" : "flex-start",
+                              padding: "2px",
+                            }}>
+                            <div className="w-4 h-4 rounded-full bg-white" />
+                          </div>
+                        </div>
+                      )}
 
                       {/* ── AI Predict ── */}
                       <AnimatePresence>

@@ -36,6 +36,8 @@ import LibraryPage from "@/pages/LibraryPage";
 import QuestsPage from "@/pages/QuestsPage";
 import CoViewPage from "@/pages/CoViewPage";
 import AnonZonesPage from "@/pages/AnonZonesPage";
+import AnonInboxPage from "@/pages/AnonInboxPage";
+import AskAnonPage from "@/pages/AskAnonPage";
 import MultiScenePage from "@/pages/MultiScenePage";
 import MoodMapPage from "@/pages/MoodMapPage";
 import AITwinPage from "@/pages/AITwinPage";
@@ -208,6 +210,12 @@ function Router() {
       )} />
       <Route path="/anon" component={() => (
         <ProtectedRoute><Layout><AnonZonesPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/anon-inbox" component={() => (
+        <ProtectedRoute><Layout><AnonInboxPage /></Layout></ProtectedRoute>
+      )} />
+      <Route path="/ask/:userId" component={({ params }) => (
+        <AskAnonPage userId={Number(params.userId)} />
       )} />
       <Route path="/multiscene" component={() => (
         <ProtectedRoute><Layout><MultiScenePage /></Layout></ProtectedRoute>

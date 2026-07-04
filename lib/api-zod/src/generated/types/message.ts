@@ -15,4 +15,11 @@ export interface Message {
   mediaUrl?: string | null;
   isRead?: boolean;
   createdAt: string;
+  /**
+     * time_capsule: if set, the message is only delivered to other participants once this time passes
+     * @nullable
+     */
+  scheduledAt?: string | null;
+  /** true when scheduledAt is in the future (only ever shown to the sender) */
+  isPending?: boolean;
 }

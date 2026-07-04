@@ -163,7 +163,7 @@ setInterval(async () => {
 setTimeout(() => autoPayDueCosts().catch(() => {}), 10_000);
 
 /* ─── Routes ─────────────────────────────────────────────────── */
-router.use(requireAdmin);
+router.use("/admin/infra-costs", requireAdmin);
 
 /* GET /api/admin/infra-costs — list all services + payment history */
 router.get("/admin/infra-costs", async (req, res) => {

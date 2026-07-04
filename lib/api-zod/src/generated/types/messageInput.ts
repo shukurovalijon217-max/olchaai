@@ -10,4 +10,6 @@ export interface MessageInput {
   senderId: number;
   content: string;
   mediaUrl?: string;
+  /** time_capsule: ISO timestamp to deliver this message at, instead of immediately */
+  scheduledAt?: string;
 }

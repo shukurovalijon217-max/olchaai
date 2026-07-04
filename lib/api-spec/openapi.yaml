@@ -1609,6 +1609,7 @@ components:
         sharesCount: { type: integer }
         isLiked: { type: boolean }
         isFlagged: { type: boolean }
+        midnightOnly: { type: boolean }
         createdAt: { type: string }
 
     PostInput:
@@ -1620,6 +1621,7 @@ components:
         type: { type: string, enum: [photo, video, text] }
         mediaUrl: { type: string }
         tags: { type: array, items: { type: string } }
+        midnightOnly: { type: boolean }
 
     Comment:
       type: object
@@ -1743,6 +1745,12 @@ components:
         mediaUrl: { type: ["string", "null"] }
         isRead: { type: boolean }
         createdAt: { type: string }
+        scheduledAt:
+          type: ["string", "null"]
+          description: "time_capsule: if set, the message is only delivered to other participants once this time passes"
+        isPending:
+          type: boolean
+          description: "true when scheduledAt is in the future (only ever shown to the sender)"
 
     MessageInput:
       type: object
@@ -1751,6 +1759,9 @@ components:
         senderId: { type: integer }
         content: { type: string }
         mediaUrl: { type: string }
+        scheduledAt:
+          type: string
+          description: "time_capsule: ISO timestamp to deliver this message at, instead of immediately"
 
     # ── Group ─────────────────────────────────────────────────────────────────
     Group:
@@ -1905,6 +1916,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/User"
+        echoScore:
+          type: integer
+          description: "0-100 share of the feed's personalization signal concentrated in a single tag (echo chamber detector)"
+        echoTopTag:
+          type: string
+          nullable: true
 
     TrendingTopic:
       type: object

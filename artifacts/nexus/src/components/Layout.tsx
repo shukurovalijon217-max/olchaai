@@ -486,7 +486,7 @@ function MuniPanel() {
                 <p className="text-sm font-bold">{t("muni.title")}</p>
                 <div className="flex items-center gap-1">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[10px] text-emerald-400 font-medium">Online</span>
+                  <span className="text-[10px] text-emerald-400 font-medium">{t("common.online")}</span>
                 </div>
               </div>
             </div>
@@ -1033,7 +1033,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </motion.p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span className="text-[10px] text-emerald-400 font-mono">NEXUS ONLINE</span>
+                      <span className="text-[10px] text-emerald-400 font-mono">{t("common.nexus_online")}</span>
                     </div>
                   </div>
                 </div>

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Square, Send, Trash2, Loader2, Play, Pause, MicOff } from "lucide-react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { useTranslation } from "react-i18next";
 
 interface VoiceRecorderProps {
   onVoiceComment: (audioUrl: string, durationMs: number, waveformData?: string) => void;
@@ -12,6 +13,7 @@ const MAX_MS = 10_000;
 const BAR_COUNT = 20;
 
 export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRecorderProps) {
+  const { t } = useTranslation();
   const [phase, setPhase] = useState<"idle" | "recording" | "review">("idle");
   const [elapsed, setElapsed] = useState(0);
   const [bars, setBars] = useState<number[]>(Array(BAR_COUNT).fill(3));
@@ -153,8 +155,8 @@ export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRec
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-destructive/10 border border-destructive/20 text-xs text-destructive">
         <MicOff className="w-3.5 h-3.5 shrink-0" />
-        Mikrofon ruxsati yo'q
-        <button onClick={reset} className="ml-auto text-muted-foreground hover:text-foreground text-[10px] underline">Yopish</button>
+        {t("voice.mic_denied")}
+        <button onClick={reset} className="ml-auto text-muted-foreground hover:text-foreground text-[10px] underline">{t("voice.close")}</button>
       </motion.div>
     );
   }
@@ -167,7 +169,7 @@ export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRec
             exit={{ scale: 0.8, opacity: 0 }} whileTap={{ scale: 0.88 }}
             onClick={startRecording}
             className="w-9 h-9 rounded-xl bg-violet-500/12 text-violet-400 flex items-center justify-center hover:bg-violet-500/22 transition-colors shrink-0"
-            title="Ovozli izoh (10 sek)">
+            title={t("voice.record_title")}>
             <Mic className="w-4 h-4" />
           </motion.button>
         )}

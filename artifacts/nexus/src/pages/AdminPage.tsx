@@ -58,6 +58,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 function SafeGuardTab() {
+  const { t } = useTranslation();
   const [queueStatus, setQueueStatus] = useState<"pending" | "approved" | "rejected" | "all">("pending");
   const [items, setItems] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -123,24 +124,24 @@ function SafeGuardTab() {
             <ShieldAlert className="w-5 h-5 text-destructive" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">SafeGuard AI</h2>
-            <p className="text-xs text-muted-foreground">Kontent moderatsiya tizimi</p>
+            <h2 className="text-xl font-bold text-foreground">{t("admin.safeguard")}</h2>
+            <p className="text-xs text-muted-foreground">{t("admin.moderation_system")}</p>
           </div>
         </div>
         <button onClick={load} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-          <RotateCcw className="w-3.5 h-3.5" /> Yangilash
+          <RotateCcw className="w-3.5 h-3.5" /> {t("admin.refresh")}
         </button>
       </div>
 
       {stats && (
         <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "Jami", value: stats.total, color: "text-foreground" },
-            { label: "Kutmoqda", value: stats.pending, color: "text-amber-400" },
-            { label: "Tasdiqlangan", value: stats.approved, color: "text-emerald-400" },
-            { label: "Rad etilgan", value: stats.rejected, color: "text-destructive" },
-            { label: "Auto bloklangan", value: stats.autoBlocked, color: "text-red-400" },
-            { label: "Shikoyatlar", value: stats.totalReports, color: "text-violet-400" },
+            { label: t("admin.stats.total"), value: stats.total, color: "text-foreground" },
+            { label: t("admin.stats.pending"), value: stats.pending, color: "text-amber-400" },
+            { label: t("admin.stats.approved"), value: stats.approved, color: "text-emerald-400" },
+            { label: t("admin.stats.rejected"), value: stats.rejected, color: "text-destructive" },
+            { label: t("admin.stats.auto_blocked"), value: stats.autoBlocked, color: "text-red-400" },
+            { label: t("admin.stats.reports"), value: stats.totalReports, color: "text-violet-400" },
           ].map(s => (
             <div key={s.label} className="bg-card border border-border rounded-xl p-3 text-center">
               <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
@@ -152,28 +153,28 @@ function SafeGuardTab() {
 
       <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Zap className="w-4 h-4 text-primary" /> AI Skaner — Kontent sinash
+          <Zap className="w-4 h-4 text-primary" /> {t("admin.ai_scanner")}
         </h3>
         <div className="flex gap-2">
           <textarea
             value={scanText} onChange={e => setScanText(e.target.value)} rows={2}
-            placeholder="Tekshirmoqchi bo'lgan matnni kiriting..."
+            placeholder={t("admin.scan_placeholder")}
             className="flex-1 px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
           <button onClick={doScan} disabled={scanning || !scanText.trim()}
             className="px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50 flex items-center gap-1.5">
             {scanning ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Eye className="w-4 h-4" />}
-            Skanla
+            {t("admin.scan_btn")}
           </button>
         </div>
         {scanResult && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-xl bg-muted/50 space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${VERDICT_COLOR[scanResult.verdict] ?? "bg-muted text-muted-foreground"}`}>
-                {scanResult.verdict === "clean" ? "✓ Toza" : scanResult.verdict === "suspicious" ? "⚠ Shubhali" : "✗ Qoidabuzarlik"}
+                {scanResult.verdict === "clean" ? t("admin.verdicts.clean") : scanResult.verdict === "suspicious" ? t("admin.verdicts.suspicious") : t("admin.verdicts.violation")}
               </span>
-              <span className="text-xs text-muted-foreground">Xavf darajasi: <strong className="text-foreground">{Math.round(scanResult.score * 100)}%</strong></span>
-              {scanResult.autoBlock && <span className="px-2 py-0.5 rounded-full bg-destructive text-white text-xs font-bold">AUTO BLOKLANGAN</span>}
+              <span className="text-xs text-muted-foreground">{t("admin.risk_level")}: <strong className="text-foreground">{Math.round(scanResult.score * 100)}%</strong></span>
+              {scanResult.autoBlock && <span className="px-2 py-0.5 rounded-full bg-destructive text-white text-xs font-bold">{t("admin.verdicts.auto_blocked")}</span>}
             </div>
           </motion.div>
         )}
@@ -183,7 +184,7 @@ function SafeGuardTab() {
         {(["pending", "approved", "rejected", "all"] as const).map(s => (
           <button key={s} onClick={() => { setQueueStatus(s); setTimeout(load, 50); }}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${queueStatus === s ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"}`}>
-            {s === "pending" ? "Kutmoqda" : s === "approved" ? "Tasdiqlangan" : s === "rejected" ? "Rad etilgan" : "Barchasi"}
+            {s === "pending" ? t("admin.stats.pending") : s === "approved" ? t("admin.stats.approved") : s === "rejected" ? t("admin.stats.rejected") : t("admin.payouts.all")}
           </button>
         ))}
       </div>
@@ -193,7 +194,7 @@ function SafeGuardTab() {
       ) : items.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <CheckCircle2 className="w-10 h-10 mx-auto mb-3 opacity-25" />
-          <p className="text-sm">Navbat bo'sh</p>
+          <p className="text-sm">{t("admin.queue_empty")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -207,11 +208,11 @@ function SafeGuardTab() {
                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${VERDICT_COLOR[item.aiVerdict] ?? ""}`}>AI: {item.aiVerdict}</span>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLOR[item.status] ?? ""}`}>{item.status}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 break-all">{item.contentText || "(matn yo'q)"}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 break-all">{item.contentText || t("admin.no_text")}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-2xl font-bold text-foreground">{Math.round(item.aiScore * 100)}<span className="text-sm font-normal text-muted-foreground">%</span></p>
-                  <p className="text-xs text-muted-foreground">xavf</p>
+                  <p className="text-xs text-muted-foreground">{t("admin.risk")}</p>
                 </div>
               </div>
               <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -222,19 +223,19 @@ function SafeGuardTab() {
                 <div className="flex gap-2 flex-wrap">
                   <button onClick={() => resolve(item.id, "approved")} disabled={acting === item.id}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-400/15 text-emerald-400 text-xs font-semibold hover:bg-emerald-400/25 transition disabled:opacity-50">
-                    <ThumbsUp className="w-3.5 h-3.5" /> Tasdiqlash
+                    <ThumbsUp className="w-3.5 h-3.5" /> {t("admin.actions.approve")}
                   </button>
                   <button onClick={() => resolve(item.id, "rejected", "Admin tomonidan rad etildi")} disabled={acting === item.id}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-destructive/15 text-destructive text-xs font-semibold hover:bg-destructive/25 transition disabled:opacity-50">
-                    <XCircle className="w-3.5 h-3.5" /> Rad etish
+                    <XCircle className="w-3.5 h-3.5" /> {t("admin.actions.reject")}
                   </button>
                   <button onClick={() => deleteContent(item.id)} disabled={acting === item.id}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-900/30 text-red-400 text-xs font-semibold hover:bg-red-900/50 transition disabled:opacity-50">
-                    <Trash2 className="w-3.5 h-3.5" /> O'chirish
+                    <Trash2 className="w-3.5 h-3.5" /> {t("admin.actions.delete")}
                   </button>
                   <button onClick={() => rescan(item.id)} disabled={acting === item.id}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted text-muted-foreground text-xs hover:bg-muted/80 transition disabled:opacity-50 ml-auto">
-                    <RotateCcw className="w-3.5 h-3.5" /> Qayta skanla
+                    <RotateCcw className="w-3.5 h-3.5" /> {t("admin.actions.rescan")}
                   </button>
                 </div>
               )}
@@ -247,19 +248,29 @@ function SafeGuardTab() {
 }
 
 /* ─── Platform Operating Costs Section ───────────────────────── */
-const EXPENSE_CATS: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  hosting:           { label: "Hosting",            icon: Activity,     color: "text-blue-400 bg-blue-500/10" },
-  ai_api:            { label: "AI API",              icon: Cpu,          color: "text-violet-400 bg-violet-500/10" },
-  payment_processor: { label: "To'lov tizimi",       icon: DollarSign,   color: "text-emerald-400 bg-emerald-500/10" },
-  storage:           { label: "Saqlash",             icon: BadgeCheck,   color: "text-cyan-400 bg-cyan-500/10" },
-  other:             { label: "Boshqa",              icon: Wallet,       color: "text-amber-400 bg-amber-500/10" },
-};
+function useExpenseCats(): Record<string, { label: string; icon: React.ElementType; color: string }> {
+  const { t } = useTranslation();
+  return {
+    hosting:           { label: t("admin.expenses_cat.hosting"),     icon: Activity,     color: "text-blue-400 bg-blue-500/10" },
+    ai_api:            { label: t("admin.expenses_cat.ai_api"),      icon: Cpu,          color: "text-violet-400 bg-violet-500/10" },
+    payment_processor: { label: t("admin.expenses_cat.payment"),     icon: DollarSign,   color: "text-emerald-400 bg-emerald-500/10" },
+    storage:           { label: t("admin.expenses_cat.storage"),     icon: BadgeCheck,   color: "text-cyan-400 bg-cyan-500/10" },
+    other:             { label: t("admin.expenses_cat.other"),       icon: Wallet,       color: "text-amber-400 bg-amber-500/10" },
+  };
+}
 
-const PERIOD_LABEL: Record<string, string> = {
-  monthly: "/oy", annual: "/yil", one_time: "bir martalik",
-};
+function usePeriodLabel(): Record<string, string> {
+  const { t } = useTranslation();
+  return {
+    monthly: `/${t("admin.expenses.period_monthly")}`,
+    annual: `/${t("admin.expenses.period_annual")}`,
+    one_time: t("admin.expenses.period_one_time"),
+  };
+}
 
 function PlatformCostsSection() {
+  const { t } = useTranslation();
+  const PERIOD_LABEL = usePeriodLabel();
   const [summary, setSummary] = useState<any>(null);
   const [requests, setRequests] = useState<any[]>([]);
   const [loadingSummary, setLoadingSummary] = useState(true);
@@ -270,6 +281,7 @@ function PlatformCostsSection() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const EXPENSE_CATS = useExpenseCats();
 
   const loadAll = async () => {
     setLoadingSummary(true);
@@ -289,7 +301,7 @@ function PlatformCostsSection() {
   const addExpense = async () => {
     const cents = Math.round(parseFloat(form.amountCents) * 100);
     if (!form.name || !form.category || isNaN(cents) || cents <= 0) {
-      setError("Iltimos barcha maydonlarni to'ldiring"); return;
+      setError(t("admin.expenses.fill_all_fields")); return;
     }
     setSaving(true); setError(null);
     try {
@@ -300,12 +312,12 @@ function PlatformCostsSection() {
         body: JSON.stringify({ ...form, amountCents: cents }),
       });
       const d = await r.json();
-      if (!r.ok) { setError(d.error ?? "Xato"); return; }
+      if (!r.ok) { setError(d.error ?? t("common.error")); return; }
       setShowAddForm(false);
       setForm({ name: "", category: "hosting", amountCents: "", period: "monthly", description: "" });
       setSuccess("Xarajat qo'shildi ✓"); setTimeout(() => setSuccess(null), 2500);
       void loadAll();
-    } catch { setError("Tarmoq xatosi"); }
+    } catch { setError(t("common.network_error")); }
     finally { setSaving(false); }
   };
 
@@ -334,10 +346,10 @@ function PlatformCostsSection() {
         body: JSON.stringify({}),
       });
       const d = await r.json();
-      if (!r.ok) { setError(d.error ?? "Xato"); return; }
+      if (!r.ok) { setError(d.error ?? t("common.error")); return; }
       setSuccess("Chegirma so'rovi yaratildi — tasdiqlash kutilmoqda ✓"); setTimeout(() => setSuccess(null), 3000);
       void loadAll();
-    } catch { setError("Tarmoq xatosi"); }
+    } catch { setError(t("common.network_error")); }
     finally { setRequesting(false); }
   };
 
@@ -351,11 +363,11 @@ function PlatformCostsSection() {
         body: JSON.stringify({}),
       });
       const d = await r.json();
-      if (!r.ok) { setError(d.error ?? "Xato"); return; }
+      if (!r.ok) { setError(d.error ?? t("common.error")); return; }
       setSuccess(action === "approve" ? "✅ Tasdiqlandi — hamyondan ushlab qolindi!" : "❌ Rad etildi");
       setTimeout(() => setSuccess(null), 3000);
       void loadAll();
-    } catch { setError("Tarmoq xatosi"); }
+    } catch { setError(t("common.network_error")); }
     finally { setApproving(null); }
   };
 
@@ -373,16 +385,16 @@ function PlatformCostsSection() {
             <TrendingDown className="w-5 h-5 text-blue-400" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-foreground">Ish Xarajatlari Boshqaruvi</h3>
-            <p className="text-xs text-muted-foreground">Daromaddan avtomatik ushlab qolish — admin ruxsatidan keyin</p>
+            <h3 className="text-sm font-bold text-foreground">{t("admin.expenses.title")}</h3>
+            <p className="text-xs text-muted-foreground">{t("admin.expenses.sub")}</p>
           </div>
         </div>
         <div className="flex gap-2">
           <button onClick={() => void loadAll()} className="px-3 py-1.5 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
-            <RefreshCw className="w-3 h-3" /> Yangilash
+            <RefreshCw className="w-3 h-3" /> {t("admin.refresh")}
           </button>
           <button onClick={() => setShowAddForm(!showAddForm)} className="px-3 py-1.5 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-medium hover:bg-blue-500/25 transition-colors">
-            {showAddForm ? "✕ Yopish" : "+ Xarajat qo'shish"}
+            {showAddForm ? t("admin.expenses.close") : t("admin.expenses.add")}
           </button>
         </div>
       </div>
@@ -403,15 +415,15 @@ function PlatformCostsSection() {
       {!loadingSummary && summary && (
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-card border border-border rounded-xl p-3">
-            <p className="text-xs text-muted-foreground mb-1">Brutto Daromad</p>
+            <p className="text-xs text-muted-foreground mb-1">{t("admin.expenses.gross_revenue")}</p>
             <p className="text-base font-bold text-emerald-400">{fmtUsd(summary.grossRevenueCents ?? 0)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-3">
-            <p className="text-xs text-muted-foreground mb-1">Oylik Xarajat</p>
+            <p className="text-xs text-muted-foreground mb-1">{t("admin.expenses.monthly_expense")}</p>
             <p className="text-base font-bold text-destructive">{fmtUsd(summary.totalMonthlyExpenseCents ?? 0)}</p>
           </div>
           <div className={`border rounded-xl p-3 ${(summary.netProfitCents ?? 0) >= 0 ? "bg-emerald-500/8 border-emerald-500/25" : "bg-destructive/8 border-destructive/25"}`}>
-            <p className="text-xs text-muted-foreground mb-1">Sof Foyda</p>
+            <p className="text-xs text-muted-foreground mb-1">{t("admin.expenses.net_profit")}</p>
             <p className={`text-base font-bold ${(summary.netProfitCents ?? 0) >= 0 ? "text-emerald-400" : "text-destructive"}`}>
               {fmtUsd(summary.netProfitCents ?? 0)}
             </p>
@@ -425,16 +437,16 @@ function PlatformCostsSection() {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden">
             <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
-              <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Yangi Xarajat</p>
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wider">{t("admin.expenses.new_expense")}</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Nomi</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t("admin.expenses.name")}</p>
                   <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="Masalan: Replit hosting"
+                    placeholder={t("admin.expenses.name_ph")}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Kategoriya</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t("admin.expenses.category")}</p>
                   <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
                     {Object.entries(EXPENSE_CATS).map(([k, v]) => (
@@ -443,7 +455,7 @@ function PlatformCostsSection() {
                   </select>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Miqdor (USD)</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t("admin.expenses.amount_usd")}</p>
                   <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-input">
                     <span className="text-sm text-muted-foreground">$</span>
                     <input type="number" min={0} step={0.01} value={form.amountCents}
@@ -453,25 +465,25 @@ function PlatformCostsSection() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Davr</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t("admin.expenses.period")}</p>
                   <select value={form.period} onChange={e => setForm(f => ({ ...f, period: e.target.value }))}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                    <option value="monthly">Oylik</option>
-                    <option value="annual">Yillik</option>
-                    <option value="one_time">Bir martalik</option>
+                    <option value="monthly">{t("admin.expenses.period_monthly")}</option>
+                    <option value="annual">{t("admin.expenses.period_annual")}</option>
+                    <option value="one_time">{t("admin.expenses.period_one_time")}</option>
                   </select>
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Tavsif (ixtiyoriy)</p>
+                <p className="text-xs text-muted-foreground mb-1">{t("admin.expenses.desc")}</p>
                 <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="Qisqacha izoh..."
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  placeholder={t("admin.common.loading") /* placeholder or ph key */}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
               </div>
               <button onClick={addExpense} disabled={saving}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/20 border border-blue-500/30 text-blue-400 text-sm font-medium hover:bg-blue-500/30 transition-colors disabled:opacity-50">
                 {saving ? <div className="w-3.5 h-3.5 border-2 border-blue-400/40 border-t-blue-400 rounded-full animate-spin" /> : null}
-                {saving ? "Saqlanmoqda..." : "💾 Qo'shish"}
+                {saving ? t("admin.expenses.saving") : `💾 ${t("admin.expenses.save")}`}
               </button>
             </div>
           </motion.div>
@@ -481,7 +493,7 @@ function PlatformCostsSection() {
       {/* Expense list */}
       {!loadingSummary && (summary?.expenses ?? []).length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Faol Xarajatlar ({summary.expenses.length})</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("admin.expenses.active_expenses")} ({summary.expenses.length})</p>
           {(summary.expenses as any[]).map((exp) => {
             const cat = EXPENSE_CATS[exp.category] ?? EXPENSE_CATS.other!;
             const Icon = cat.icon;
@@ -516,15 +528,15 @@ function PlatformCostsSection() {
       {!loadingSummary && (summary?.totalMonthlyExpenseCents ?? 0) > 0 && (
         <div className="border border-dashed border-blue-500/30 rounded-2xl p-4 flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-foreground">Chegirma So'rovi Yaratish</p>
+            <p className="text-sm font-semibold text-foreground">{t("admin.expenses.deduction_requests")}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Oylik xarajatlar ({fmtUsd(summary.totalMonthlyExpenseCents)}) daromaddan ({fmtUsd(summary.grossRevenueCents)}) ushlab qolinadi — admin tasdiqidan so'ng
+              {t("admin.expenses.auto_deduct_sub", { expense: fmtUsd(summary.totalMonthlyExpenseCents), revenue: fmtUsd(summary.grossRevenueCents) })}
             </p>
           </div>
           <button onClick={createDeductionRequest} disabled={requesting || (summary.grossRevenueCents ?? 0) < (summary.totalMonthlyExpenseCents ?? 1)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-40 flex-shrink-0">
             {requesting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <ArrowUpRight className="w-4 h-4" />}
-            So'rov yuborish
+            {t("admin.expenses.request_deduction")}
           </button>
         </div>
       )}
@@ -534,7 +546,7 @@ function PlatformCostsSection() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-            <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Tasdiqlash Kutilmoqda ({pendingRequests.length})</p>
+            <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">{t("admin.expenses.pending_requests")} ({pendingRequests.length})</p>
           </div>
           {pendingRequests.map(req => (
             <motion.div key={req.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
@@ -553,7 +565,7 @@ function PlatformCostsSection() {
                 <div className="flex gap-2">
                   <button onClick={() => processRequest(req.id, "reject")} disabled={approving === req.id}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-destructive/15 border border-destructive/30 text-destructive text-xs font-semibold hover:bg-destructive/25 transition-colors disabled:opacity-50">
-                    <XCircle className="w-3.5 h-3.5" /> Rad etish
+                    <XCircle className="w-3.5 h-3.5" /> {t("admin.actions.reject")}
                   </button>
                   <button onClick={() => processRequest(req.id, "approve")} disabled={approving === req.id}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 transition-colors disabled:opacity-50">
@@ -561,7 +573,7 @@ function PlatformCostsSection() {
                       ? <div className="w-3.5 h-3.5 border-2 border-emerald-400/40 border-t-emerald-400 rounded-full animate-spin" />
                       : <CheckCircle2 className="w-3.5 h-3.5" />
                     }
-                    Tasdiqlash
+                    {t("admin.actions.approve")}
                   </button>
                 </div>
               </div>
@@ -573,12 +585,12 @@ function PlatformCostsSection() {
       {/* History */}
       {historyRequests.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tarix</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("admin.expenses.history")}</p>
           {historyRequests.slice(0, 5).map(req => (
             <div key={req.id} className="flex items-center gap-3 text-xs py-2 px-3 rounded-xl bg-card border border-border">
               <span className={`px-2 py-0.5 rounded-full border font-medium ${
                 req.status === "approved" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-destructive/15 text-destructive border-destructive/30"
-              }`}>{req.status === "approved" ? "✓ Tasdiqlangan" : "✕ Rad etilgan"}</span>
+              }`}>{req.status === "approved" ? t("admin.expenses.status.approved") : t("admin.expenses.status.rejected")}</span>
               <span className="text-muted-foreground">{fmtUsd(req.totalExpenseCents)}</span>
               <span className="text-muted-foreground ml-auto">{new Date(req.createdAt).toLocaleDateString("uz-UZ")}</span>
             </div>
@@ -597,6 +609,7 @@ function PlatformCostsSection() {
 
 /* ── Monetization Tab ─────────────────────────────────────────── */
 function MonetizationTab() {
+  const { t } = useTranslation();
   const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
   const [stats, setStats] = useState<any>(null);
   const [cfg, setCfg] = useState<any>(null);
@@ -748,11 +761,11 @@ function MonetizationTab() {
   const platformPct = Math.max(0, 100 - parseFloat(editCreatorPct || "70"));
 
   const TYPE_LABEL: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-    reel:  { label: "Reel",  icon: PlayCircle, color: "text-pink-400" },
-    video: { label: "Video", icon: Film,       color: "text-blue-400" },
-    music: { label: "Musiqa",icon: Music,      color: "text-emerald-400" },
-    movie: { label: "Film",  icon: Film,       color: "text-amber-400" },
-    post:  { label: "Post",  icon: FileText,   color: "text-violet-400" },
+    reel:  { label: t("admin.content_types.reel"),  icon: PlayCircle, color: "text-pink-400" },
+    video: { label: t("admin.content_types.video"), icon: Film,       color: "text-blue-400" },
+    music: { label: t("admin.content_types.music"), icon: Music,      color: "text-emerald-400" },
+    movie: { label: t("admin.content_types.movie"), icon: Film,       color: "text-amber-400" },
+    post:  { label: t("admin.content_types.post"),  icon: FileText,   color: "text-violet-400" },
   };
 
   if (loading) return (
@@ -766,10 +779,10 @@ function MonetizationTab() {
       {/* ── Stats overview ─────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Umumiy daromad", value: uzs(stats?.grossEarnings ?? 0), icon: BarChart2, color: "text-violet-400", bg: "bg-violet-500/10" },
-          { label: "Kreatorlarga to'langan", value: uzs(stats?.creatorEarnings ?? 0), icon: Users, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-          { label: "Platforma ulushi", value: uzs(stats?.platformEarnings ?? 0), icon: CircleDollarSign, color: "text-blue-400", bg: "bg-blue-500/10" },
-          { label: "Kutayotgan to'lovlar", value: `${stats?.pendingCount ?? 0} ta · ${uzs(stats?.pendingAmount ?? 0)}`, icon: Banknote, color: "text-amber-400", bg: "bg-amber-500/10" },
+          { label: t("admin.monetization.gross_earnings"), value: uzs(stats?.grossEarnings ?? 0), icon: BarChart2, color: "text-violet-400", bg: "bg-violet-500/10" },
+          { label: t("admin.monetization.creator_earnings"), value: uzs(stats?.creatorEarnings ?? 0), icon: Users, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+          { label: t("admin.monetization.platform_share"), value: uzs(stats?.platformEarnings ?? 0), icon: CircleDollarSign, color: "text-blue-400", bg: "bg-blue-500/10" },
+          { label: t("admin.monetization.pending_payouts"), value: `${stats?.pendingCount ?? 0} ta · ${uzs(stats?.pendingAmount ?? 0)}`, icon: Banknote, color: "text-amber-400", bg: "bg-amber-500/10" },
         ].map((c) => (
           <div key={c.label} className={`rounded-2xl p-4 ${c.bg} border border-white/5`}>
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-2 ${c.bg}`}>
@@ -787,33 +800,33 @@ function MonetizationTab() {
         <div className="lg:col-span-1 rounded-2xl p-5 space-y-4"
           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
           <div className="flex items-center justify-between">
-            <h3 className="text-white font-bold text-sm">⚙️ Monetizatsiya sozlamalari</h3>
+            <h3 className="text-white font-bold text-sm">⚙️ {t("admin.monetization_cfg.settings_title")}</h3>
             <button
               onClick={() => setEditEnabled(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${editEnabled ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
               {editEnabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-              {editEnabled ? "Yoqilgan" : "O'chirilgan"}
+              {editEnabled ? t("admin.toggle.enabled") : t("admin.toggle.disabled")}
             </button>
           </div>
 
           {/* RPM */}
           <div>
             <label className="text-white/50 text-[11px] font-medium block mb-1.5">
-              Har 1000 ta ko'rish uchun daromad (UZS so'm)
+              {t("admin.monetization_cfg.rpm_label")}
             </label>
             <div className="flex items-center gap-2">
               <input type="number" value={editRpm} onChange={e => setEditRpm(e.target.value)}
                 className="flex-1 px-3 py-2 rounded-xl text-white text-sm font-medium focus:outline-none"
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
               />
-              <span className="text-white/40 text-xs">so'm / 1K</span>
+              <span className="text-white/40 text-xs">{t("admin.monetization_cfg.rpm_suffix")}</span>
             </div>
           </div>
 
           {/* Creator share */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-white/50 text-[11px] font-medium">Kreator ulushi</label>
+              <label className="text-white/50 text-[11px] font-medium">{t("admin.monetization_cfg.creator_share")}</label>
               <span className="text-emerald-400 text-xs font-bold">{editCreatorPct}%</span>
             </div>
             <input type="range" min="0" max="100" value={editCreatorPct}
@@ -830,7 +843,7 @@ function MonetizationTab() {
           {/* Min views */}
           <div>
             <label className="text-white/50 text-[11px] font-medium block mb-1.5">
-              Minimal ko'rishlar soni (daromad boshlash uchun)
+              {t("admin.monetization_cfg.min_views_label")}
             </label>
             <input type="number" value={editMinViews} onChange={e => setEditMinViews(e.target.value)}
               className="w-full px-3 py-2 rounded-xl text-white text-sm font-medium focus:outline-none"
@@ -840,7 +853,7 @@ function MonetizationTab() {
 
           {/* Content type multipliers */}
           <div>
-            <label className="text-white/50 text-[11px] font-medium block mb-2">Kontent turi koeffitsientlari</label>
+            <label className="text-white/50 text-[11px] font-medium block mb-2">{t("admin.monetization_cfg.content_multipliers")}</label>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { key: "editVideoMult", set: setEditVideoMult, val: editVideoMult, label: "🎬 Video", col: "text-blue-400" },
@@ -867,7 +880,7 @@ function MonetizationTab() {
           {/* Min payout */}
           <div>
             <label className="text-white/50 text-[11px] font-medium block mb-1.5">
-              Minimal pul so'rovchi miqdori (UZS so'm)
+              {t("admin.monetization_cfg.min_payout_label")}
             </label>
             <input type="number" value={editMinPayout} onChange={e => setEditMinPayout(e.target.value)}
               className="w-full px-3 py-2 rounded-xl text-white text-sm font-medium focus:outline-none"
@@ -877,12 +890,12 @@ function MonetizationTab() {
 
           {/* ── Eligibility criteria (Partner Program) ─────────── */}
           <div className="pt-2 border-t border-white/8">
-            <p className="text-white/40 text-[11px] font-semibold uppercase tracking-wider mb-3">🏆 Kreator dasturiga kirish shartlari</p>
+            <p className="text-white/40 text-[11px] font-semibold uppercase tracking-wider mb-3">🏆 {t("admin.monetization_cfg.eligibility_criteria")}</p>
             <div className="space-y-2.5">
               {[
-                { label: "Minimal obunachilар", val: editMinFollowers, set: setEditMinFollowers, icon: "👥" },
-                { label: "Minimal umumiy ko'rishlar", val: editMinTotalViews, set: setEditMinTotalViews, icon: "👁" },
-                { label: "Minimal kontent soni", val: editMinContentCount, set: setEditMinContentCount, icon: "🎬" },
+                { label: t("admin.monetization_cfg.min_followers"), val: editMinFollowers, set: setEditMinFollowers, icon: "👥" },
+                { label: t("admin.monetization_cfg.min_total_views"), val: editMinTotalViews, set: setEditMinTotalViews, icon: "👁" },
+                { label: t("admin.monetization_cfg.min_content_count"), val: editMinContentCount, set: setEditMinContentCount, icon: "🎬" },
               ].map(f => (
                 <div key={f.label}>
                   <label className="text-white/40 text-[11px] font-medium block mb-1">{f.icon} {f.label}</label>
@@ -897,7 +910,7 @@ function MonetizationTab() {
                 <button onClick={() => setEditAutoApprove(v => !v)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${editAutoApprove ? "bg-emerald-500/20 text-emerald-400" : "bg-white/8 text-white/40"}`}>
                   {editAutoApprove ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                  {editAutoApprove ? "Yoqilgan" : "O'chirilgan"}
+                  {editAutoApprove ? t("admin.toggle.enabled") : t("admin.toggle.disabled")}
                 </button>
               </div>
             </div>
@@ -907,16 +920,16 @@ function MonetizationTab() {
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all"
             style={{ background: cfgSaved ? "rgba(16,185,129,0.3)" : "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff" }}>
             {savingCfg ? <RefreshCw className="w-4 h-4 animate-spin" /> : cfgSaved ? <Check className="w-4 h-4" /> : <Settings className="w-4 h-4" />}
-            {cfgSaved ? "Saqlandi ✓" : savingCfg ? "Saqlanmoqda…" : "Saqlash"}
+            {cfgSaved ? t("admin.monetization_cfg.saved_check") : savingCfg ? t("admin.monetization_cfg.saving") : t("admin.settings.save")}
           </motion.button>
 
           {/* Live preview */}
           <div className="rounded-xl p-3 text-xs space-y-1"
             style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
-            <p className="text-white/60 font-semibold text-[11px] mb-1.5">📊 Hisob namunasi (1M ko'rish)</p>
-            <div className="flex justify-between"><span className="text-white/40">Umumiy daromad</span><span className="text-white">{(parseFloat(editRpm || "0") * 1000).toLocaleString()} so'm</span></div>
-            <div className="flex justify-between"><span className="text-emerald-400/70">Kreator ({editCreatorPct}%)</span><span className="text-emerald-400">{(parseFloat(editRpm || "0") * 1000 * parseFloat(editCreatorPct || "0") / 100).toLocaleString()} so'm</span></div>
-            <div className="flex justify-between"><span className="text-blue-400/70">Admin ({platformPct.toFixed(0)}%)</span><span className="text-blue-400">{(parseFloat(editRpm || "0") * 1000 * platformPct / 100).toLocaleString()} so'm</span></div>
+            <p className="text-white/60 font-semibold text-[11px] mb-1.5">📊 {t("admin.monetization_cfg.sample_calc")}</p>
+            <div className="flex justify-between"><span className="text-white/40">{t("admin.monetization_cfg.gross_revenue")}</span><span className="text-white">{(parseFloat(editRpm || "0") * 1000).toLocaleString()} {t("admin.monetization_cfg.currency_suffix")}</span></div>
+            <div className="flex justify-between"><span className="text-emerald-400/70">{t("admin.monetization_cfg.creator_label")} ({editCreatorPct}%)</span><span className="text-emerald-400">{(parseFloat(editRpm || "0") * 1000 * parseFloat(editCreatorPct || "0") / 100).toLocaleString()} {t("admin.monetization_cfg.currency_suffix")}</span></div>
+            <div className="flex justify-between"><span className="text-blue-400/70">{t("admin.monetization_cfg.admin_label")} ({platformPct.toFixed(0)}%)</span><span className="text-blue-400">{(parseFloat(editRpm || "0") * 1000 * platformPct / 100).toLocaleString()} {t("admin.monetization_cfg.currency_suffix")}</span></div>
           </div>
         </div>
 
@@ -927,29 +940,29 @@ function MonetizationTab() {
           <div className="rounded-2xl overflow-hidden"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="px-5 py-3.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-              <h3 className="text-white font-bold text-sm">🏆 Top daromad olgan kontentlar</h3>
+              <h3 className="text-white font-bold text-sm">🏆 {t("admin.monetization_cfg.top_earning_content")}</h3>
             </div>
             <div className="overflow-x-auto">
               {topContent.length === 0 ? (
-                <div className="py-10 text-center text-white/30 text-sm">Hali daromad yo'q</div>
+                <div className="py-10 text-center text-white/30 text-sm">{t("admin.monetization_cfg.no_revenue_yet")}</div>
               ) : (
                 <table className="w-full">
                   <thead>
                     <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      {["Tur", "Muallif", "Ko'rishlar", "Pul. ko'rish", "Kreator", "Admin", "Holat"].map(h => (
+                      {[t("admin.content_table.th_type"), t("admin.content_table.th_author"), t("admin.content_table.th_views"), t("admin.content_table.th_monetized_views"), t("admin.monetization_cfg.creator_label"), t("admin.monetization_cfg.admin_label"), t("admin.content_table.th_status")].map(h => (
                         <th key={h} className="text-left px-4 py-2.5 text-[11px] font-semibold text-white/30">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {topContent.map((row, i) => {
-                      const t = TYPE_LABEL[row.contentType] ?? { label: row.contentType, icon: FileText, color: "text-white/50" };
+                      const typeInfo = TYPE_LABEL[row.contentType] ?? { label: row.contentType, icon: FileText, color: "text-white/50" };
                       return (
                         <tr key={row.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)" }}>
                           <td className="px-4 py-2.5">
-                            <div className={`flex items-center gap-1.5 text-xs font-bold ${t.color}`}>
-                              <t.icon className="w-3.5 h-3.5" />
-                              {t.label}
+                            <div className={`flex items-center gap-1.5 text-xs font-bold ${typeInfo.color}`}>
+                              <typeInfo.icon className="w-3.5 h-3.5" />
+                              {typeInfo.label}
                             </div>
                           </td>
                           <td className="px-4 py-2.5">
@@ -962,7 +975,7 @@ function MonetizationTab() {
                           <td className="px-4 py-2.5">
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.monetizedViews > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-white/8 text-white/30"}`}
                               style={{ background: row.monetizedViews > 0 ? undefined : "rgba(255,255,255,0.04)" }}>
-                              {row.monetizedViews > 0 ? "Aktiv" : "Kutmoqda"}
+                              {row.monetizedViews > 0 ? t("admin.content_table.active") : t("admin.payouts.status_pending")}
                             </span>
                           </td>
                         </tr>
@@ -983,7 +996,7 @@ function MonetizationTab() {
                 {(["pending", "approved", "rejected", "all"] as const).map(f => (
                   <button key={f} onClick={() => setPayoutFilter(f)}
                     className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-all ${payoutFilter === f ? "bg-primary/30 text-primary" : "text-white/40 hover:text-white/60"}`}>
-                    {f === "pending" ? "Kutmoqda" : f === "approved" ? "Tasdiqlangan" : f === "rejected" ? "Rad etilgan" : "Barchasi"}
+                    {f === "pending" ? t("admin.payouts.status_pending") : f === "approved" ? t("admin.payouts.status_approved") : f === "rejected" ? t("admin.payouts.status_rejected") : t("admin.payouts.all")}
                   </button>
                 ))}
               </div>
@@ -991,7 +1004,7 @@ function MonetizationTab() {
 
             {payouts.length === 0 ? (
               <div className="py-10 text-center text-white/30 text-sm">
-                {payoutFilter === "pending" ? "Kutayotgan so'rov yo'q ✓" : "Hech narsa yo'q"}
+                {payoutFilter === "pending" ? t("admin.payouts.no_requests") : t("admin.payouts.nothing")}
               </div>
             ) : (
               <div className="divide-y divide-white/5">
@@ -1018,13 +1031,13 @@ function MonetizationTab() {
                             onClick={() => handlePayout(p.id, "approve")}
                             className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-50">
                             <Check className="w-3.5 h-3.5" />
-                            Tasdiqlash
+                            {t("admin.moderation.actions.approve")}
                           </motion.button>
                           <motion.button whileTap={{ scale: 0.9 }} disabled={actingId === p.id}
                             onClick={() => handlePayout(p.id, "reject")}
                             className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50">
                             <XCircle className="w-3.5 h-3.5" />
-                            Rad etish
+                            {t("admin.moderation.actions.reject")}
                           </motion.button>
                         </>
                       ) : (
@@ -1032,7 +1045,7 @@ function MonetizationTab() {
                           p.status === "approved" ? "bg-emerald-500/15 text-emerald-400" :
                           p.status === "rejected" ? "bg-red-500/15 text-red-400" : "bg-white/8 text-white/40"
                         }`} style={{ background: p.status === "approved" ? undefined : p.status === "rejected" ? undefined : "rgba(255,255,255,0.04)" }}>
-                          {p.status === "approved" ? "✓ Tasdiqlangan" : p.status === "rejected" ? "✗ Rad etilgan" : p.status}
+                          {p.status === "approved" ? t("admin.payouts.approved") : p.status === "rejected" ? t("admin.payouts.rejected") : p.status}
                         </span>
                       )}
                     </div>
@@ -1051,7 +1064,7 @@ function MonetizationTab() {
                 {(["pending", "completed", "cancelled", "all"] as const).map(f => (
                   <button key={f} onClick={() => setWithdrawalFilter(f)}
                     className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-all ${withdrawalFilter === f ? "bg-primary/30 text-primary" : "text-white/40 hover:text-white/60"}`}>
-                    {f === "pending" ? "Kutmoqda" : f === "completed" ? "Tasdiqlangan" : f === "cancelled" ? "Rad etilgan" : "Barchasi"}
+                    {f === "pending" ? t("admin.withdrawals.status_pending") : f === "completed" ? t("admin.withdrawals.status_completed") : f === "cancelled" ? t("admin.withdrawals.status_cancelled") : t("admin.withdrawals.all")}
                   </button>
                 ))}
               </div>
@@ -1059,7 +1072,7 @@ function MonetizationTab() {
 
             {withdrawals.length === 0 ? (
               <div className="py-10 text-center text-white/30 text-sm">
-                {withdrawalFilter === "pending" ? "Kutayotgan so'rov yo'q ✓" : "Hech narsa yo'q"}
+                {withdrawalFilter === "pending" ? t("admin.withdrawals.no_requests") : t("admin.withdrawals.nothing")}
               </div>
             ) : (
               <div className="divide-y divide-white/5">
@@ -1090,13 +1103,13 @@ function MonetizationTab() {
                               onClick={() => handleWithdrawal(w.id, "approve")}
                               className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-50">
                               <Check className="w-3.5 h-3.5" />
-                              Tasdiqlash
+                              {t("admin.moderation.actions.approve")}
                             </motion.button>
                             <motion.button whileTap={{ scale: 0.9 }} disabled={actingId === w.id}
                               onClick={() => handleWithdrawal(w.id, "reject")}
                               className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50">
                               <XCircle className="w-3.5 h-3.5" />
-                              Rad etish
+                              {t("admin.moderation.actions.reject")}
                             </motion.button>
                           </>
                         ) : (
@@ -1104,7 +1117,7 @@ function MonetizationTab() {
                             w.status === "completed" ? "bg-emerald-500/15 text-emerald-400" :
                             w.status === "cancelled" ? "bg-red-500/15 text-red-400" : "bg-white/8 text-white/40"
                           }`} style={{ background: w.status === "completed" ? undefined : w.status === "cancelled" ? undefined : "rgba(255,255,255,0.04)" }}>
-                            {w.status === "completed" ? "✓ Tasdiqlangan" : w.status === "cancelled" ? "✗ Rad etilgan" : w.status}
+                            {w.status === "completed" ? t("admin.withdrawals.approved") : w.status === "cancelled" ? t("admin.withdrawals.rejected") : w.status}
                           </span>
                         )}
                       </div>
@@ -1119,7 +1132,7 @@ function MonetizationTab() {
           <div className="rounded-2xl overflow-hidden"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-              <h3 className="text-white font-bold text-sm">🏆 Kreator arizalari</h3>
+              <h3 className="text-white font-bold text-sm">{t("admin.creator_apps.title")}</h3>
               <div className="flex gap-1">
                 {(["applied", "active", "rejected", "all"] as const).map(f => (
                   <button key={f} onClick={() => {
@@ -1131,7 +1144,7 @@ function MonetizationTab() {
                     loadApps();
                   }}
                     className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-all ${appFilter === f ? "bg-amber-500/25 text-amber-400" : "text-white/40 hover:text-white/60"}`}>
-                    {f === "applied" ? "Kutmoqda" : f === "active" ? "Faol" : f === "rejected" ? "Rad etilgan" : "Barchasi"}
+                    {f === "applied" ? t("admin.creator_apps.status_applied") : f === "active" ? t("admin.creator_apps.status_active") : f === "rejected" ? t("admin.creator_apps.status_rejected") : t("admin.creator_apps.all")}
                   </button>
                 ))}
               </div>
@@ -1139,7 +1152,7 @@ function MonetizationTab() {
 
             {applications.length === 0 ? (
               <div className="py-10 text-center text-white/30 text-sm">
-                {appFilter === "applied" ? "Kutayotgan ariza yo'q ✓" : "Hech narsa yo'q"}
+                {appFilter === "applied" ? t("admin.creator_apps.no_apps") : t("admin.creator_apps.nothing")}
               </div>
             ) : (
               <div className="divide-y divide-white/5">
@@ -1161,8 +1174,8 @@ function MonetizationTab() {
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-[11px] text-white/40">
-                        <span>👁 {(a.totalViews ?? 0).toLocaleString()} ko'rish</span>
-                        <span>🎬 {(a.contentCount ?? 0)} kontent</span>
+                        <span>👁 {(a.totalViews ?? 0).toLocaleString()} {t("admin.creator_apps.views")}</span>
+                        <span>🎬 {(a.contentCount ?? 0)} {t("admin.creator_apps.content")}</span>
                         {a.appliedAt && <span>📅 {new Date(a.appliedAt).toLocaleDateString("uz-UZ")}</span>}
                       </div>
                     </div>
@@ -1172,13 +1185,13 @@ function MonetizationTab() {
                           onClick={() => handleApplication(a.id, "approve")}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-50">
                           <Check className="w-3.5 h-3.5" />
-                          Tasdiqlash
+                          {t("admin.actions.approve")}
                         </motion.button>
                         <motion.button whileTap={{ scale: 0.9 }} disabled={actingId === a.id}
                           onClick={() => handleApplication(a.id, "reject")}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50">
                           <XCircle className="w-3.5 h-3.5" />
-                          Rad etish
+                          {t("admin.actions.reject")}
                         </motion.button>
                       </div>
                     )}
@@ -1196,6 +1209,7 @@ function MonetizationTab() {
 
 /* ── Platform Treasury Component ─────────────────────────────── */
 function TreasurySection() {
+  const { t } = useTranslation();
   const [treasury, setTreasury] = useState<any>(null);
   const [txs, setTxs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1227,11 +1241,11 @@ function TreasurySection() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ amount, method: wdMethod, details: wdDetails, description: `Yechib olish — ${wdMethod}` }),
+        body: JSON.stringify({ amount, method: wdMethod, details: wdDetails, description: t("admin.treasury.withdraw_desc", { method: wdMethod }) }),
       });
       const d = await r.json();
       if (d.ok) {
-        setWdResult(`✅ ${(d.amount / 100).toLocaleString()} UZS yechib olindi (${d.reference})`);
+        setWdResult(`✅ ${t("admin.treasury.withdraw_success", { amount: (d.amount / 100).toLocaleString(), reference: d.reference })}`);
         setWdAmount(""); setWdDetails("");
         void load();
       } else {
@@ -1245,7 +1259,7 @@ function TreasurySection() {
 
   if (loading) return <div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" /></div>;
 
-  const t = treasury?.treasury;
+  const treasuryData = treasury?.treasury;
 
   return (
     <div className="space-y-4">
@@ -1257,21 +1271,21 @@ function TreasurySection() {
               <Landmark className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Platform Xazinasi</h3>
-              <p className="text-[11px] text-white/40">Barcha platform daromadi shu yerga tushadi</p>
+              <h3 className="text-sm font-bold text-white">{t("admin.treasury.title")}</h3>
+              <p className="text-[11px] text-white/40">{t("admin.treasury.sub")}</p>
             </div>
           </div>
           <button onClick={load} className="text-[10px] text-white/30 hover:text-emerald-400 transition-colors flex items-center gap-1">
-            <RefreshCw className="w-3 h-3" /> Yangilash
+            <RefreshCw className="w-3 h-3" /> {t("admin.refresh")}
           </button>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           {[
-            { label: "Mavjud balans", value: fmtT(t?.availableBalance ?? 0), color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
-            { label: "Jami daromad", value: fmtT(t?.totalRevenue ?? 0), color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
-            { label: "Yechib olindi", value: fmtT(t?.totalWithdrawn ?? 0), color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20" },
-            { label: "Bugun", value: fmtT(treasury?.todayRevenue ?? 0), color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+            { label: t("admin.treasury.available"), value: fmtT(treasuryData?.availableBalance ?? 0), color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+            { label: t("admin.monetization.gross_earnings"), value: fmtT(treasuryData?.totalRevenue ?? 0), color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
+            { label: t("admin.treasury.withdrawn"), value: fmtT(treasuryData?.totalWithdrawn ?? 0), color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20" },
+            { label: t("admin.treasury.today"), value: fmtT(treasury?.todayRevenue ?? 0), color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
           ].map(s => (
             <div key={s.label} className={`rounded-xl p-3 border ${s.bg}`}>
               <p className={`text-base font-bold ${s.color} truncate`}>{s.value}</p>
@@ -1283,9 +1297,9 @@ function TreasurySection() {
         {/* Revenue breakdown */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           {[
-            { label: "Premium", value: fmtT(t?.premiumRevenue ?? 0), color: "text-amber-400" },
-            { label: "Bozor", value: fmtT(t?.marketplaceRevenue ?? 0), color: "text-blue-400" },
-            { label: "Gift & Boshqa", value: fmtT((t?.giftRevenue ?? 0) + (t?.otherRevenue ?? 0)), color: "text-purple-400" },
+            { label: t("admin.treasury.premium"), value: fmtT(treasuryData?.premiumRevenue ?? 0), color: "text-amber-400" },
+            { label: t("admin.treasury.market"), value: fmtT(treasuryData?.marketplaceRevenue ?? 0), color: "text-blue-400" },
+            { label: t("admin.treasury.gift_other"), value: fmtT((treasuryData?.giftRevenue ?? 0) + (treasuryData?.otherRevenue ?? 0)), color: "text-purple-400" },
           ].map(s => (
             <div key={s.label} className="text-center rounded-xl py-2" style={{ background: "rgba(255,255,255,0.04)" }}>
               <p className={`text-sm font-bold ${s.color}`}>{s.value}</p>
@@ -1297,11 +1311,11 @@ function TreasurySection() {
         {/* Withdrawal form */}
         <div className="rounded-xl p-4 border border-white/8 bg-white/[0.025] space-y-3">
           <p className="text-xs font-semibold text-white/50 flex items-center gap-1.5">
-            <ArrowUpRight className="w-3.5 h-3.5 text-rose-400" /> Yechib olish
+            <ArrowUpRight className="w-3.5 h-3.5 text-rose-400" /> {t("admin.treasury.withdraw")}
           </p>
           <div className="flex gap-2 flex-wrap">
             <input
-              type="number" placeholder="Miqdor (UZS)" value={wdAmount}
+              type="number" placeholder={t("admin.treasury.amount_uzs")} value={wdAmount}
               onChange={e => setWdAmount(e.target.value)}
               className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-emerald-500/40"
             />
@@ -1309,18 +1323,18 @@ function TreasurySection() {
               className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
               <option value="click">Click</option>
               <option value="payme">Payme</option>
-              <option value="bank">Bank</option>
-              <option value="card">Karta</option>
+              <option value="bank">{t("admin.treasury.method_bank")}</option>
+              <option value="card">{t("admin.treasury.method_card")}</option>
             </select>
           </div>
           <input
-            type="text" placeholder="Karta / hisob raqami (ixtiyoriy)" value={wdDetails}
+            type="text" placeholder={t("admin.treasury.details_ph")} value={wdDetails}
             onChange={e => setWdDetails(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-emerald-500/40"
           />
           <button onClick={handleWithdraw} disabled={withdrawing || !wdAmount}
             className="w-full py-2.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            {withdrawing ? "Ishlanmoqda…" : "Yechib olish"}
+            {withdrawing ? t("admin.treasury.withdrawing") : t("admin.treasury.withdraw")}
           </button>
           {wdResult && <p className="text-xs text-center py-1 text-white/70">{wdResult}</p>}
         </div>
@@ -1330,7 +1344,7 @@ function TreasurySection() {
       {txs.length > 0 && (
         <div className="rounded-2xl border border-white/8 bg-white/[0.02] overflow-hidden">
           <div className="px-4 py-3 border-b border-white/6">
-            <p className="text-xs font-semibold text-white/40">Xazina tranzaksiyalari</p>
+            <p className="text-xs font-semibold text-white/40">{t("admin.treasury.txs")}</p>
           </div>
           <div className="divide-y divide-white/5 max-h-48 overflow-y-auto">
             {txs.slice(0, 15).map((tx: any) => (
@@ -1358,6 +1372,7 @@ function TreasurySection() {
    INFRA COSTS PANEL — Auto-pay infrastructure costs from treasury
    ──────────────────────────────────────────────────────────────── */
 function InfraCostsPanel() {
+  const { t } = useTranslation();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -1378,8 +1393,8 @@ function InfraCostsPanel() {
     try {
       const r = await fetch(`${API}/api/admin/infra-costs/pay-now`, { method: "POST", credentials: "include" });
       const d = await r.json();
-      if (d.paid > 0) setPaidMsg(`✅ ${d.paid} ta to'lov amalga oshirildi — $${(d.totalCents / 100).toFixed(2)}`);
-      else setPaidMsg("ℹ️ To'lanadigan hisob yo'q (navbatdagi sana hali kelmagan)");
+      if (d.paid > 0) setPaidMsg(`✅ ${t("admin.platform_costs.pay_now_success", { count: d.paid, amount: (d.totalCents / 100).toFixed(2) })}`);
+      else setPaidMsg(`ℹ️ ${t("admin.platform_costs.pay_now_none")}`);
       load();
     } finally {
       setPaying(false);
@@ -1404,16 +1419,16 @@ function InfraCostsPanel() {
             <Server className="w-4 h-4 text-blue-400" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-foreground">Infratuzilma Xarajatlari</h3>
-            <p className="text-xs text-muted-foreground">Hosting, AI API, baza — treasury-dan avto-to'lov</p>
+            <h3 className="text-sm font-bold text-foreground">{t("admin.infra.title")}</h3>
+            <p className="text-xs text-muted-foreground">{t("admin.infra.sub")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={load} disabled={loading} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors">
-            <RotateCcw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Yangilash
+            <RotateCcw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> {t("admin.refresh")}
           </button>
           <button onClick={payNow} disabled={paying} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-400/20 text-xs font-semibold hover:bg-blue-500/25 transition-colors">
-            <Zap className="w-3 h-3" /> {paying ? "To'layapti…" : "Hozir To'la"}
+            <Zap className="w-3 h-3" /> {paying ? t("admin.common.loading") : t("admin.infra.pay_now")}
           </button>
         </div>
       </div>
@@ -1426,18 +1441,18 @@ function InfraCostsPanel() {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-background/40 border border-border/50 rounded-xl p-3 text-center">
           <p className="text-lg font-bold text-foreground">{fmt(s.monthlyEstimateCents ?? 0)}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Oylik baholash</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{t("admin.platform_costs.monthly_estimate")}</p>
         </div>
         <div className="bg-background/40 border border-border/50 rounded-xl p-3 text-center">
           <p className="text-lg font-bold text-emerald-400">{fmt(s.paidLast30Days ?? 0)}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">So'nggi 30 kun to'landi</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{t("admin.platform_costs.paid_last_30_days")}</p>
         </div>
         <div className="bg-background/40 border border-border/50 rounded-xl p-3 text-center">
           <div className="flex items-center justify-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <p className="text-xs font-semibold text-emerald-400">Avto-to'lov YOQIQ</p>
+            <p className="text-xs font-semibold text-emerald-400">{t("admin.platform_costs.auto_pay_on")}</p>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1">Treasury-dan avto</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{t("admin.platform_costs.treasury_auto")}</p>
         </div>
       </div>
 
@@ -1454,7 +1469,7 @@ function InfraCostsPanel() {
       {/* Cost items */}
       <div className="space-y-2">
         {loading ? (
-          <div className="text-center py-6 text-muted-foreground text-sm">Yuklanmoqda…</div>
+          <div className="text-center py-6 text-muted-foreground text-sm">{t("admin.loading")}</div>
         ) : (data?.costs ?? []).map((cost: any) => {
           const Icon = PROVIDER_ICON[cost.provider] ?? Globe;
           const iconColor = PROVIDER_COLOR[cost.provider] ?? "text-muted-foreground";
@@ -1471,10 +1486,10 @@ function InfraCostsPanel() {
                 {cost.amount_cents > 0 ? (
                   <p className="text-sm font-bold text-foreground">{fmt(cost.amount_cents)}<span className="text-[10px] text-muted-foreground">/oy</span></p>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Foydalanishga qarab</p>
+                  <p className="text-xs text-muted-foreground">{t("admin.platform_costs.usage_based")}</p>
                 )}
                 <div className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 ${cost.auto_pay_enabled ? "bg-emerald-400/10 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
-                  {cost.auto_pay_enabled ? "avto-to'lov" : "qo'lda"}
+                  {cost.auto_pay_enabled ? t("admin.platform_costs.auto_pay") : t("admin.platform_costs.manual_pay")}
                 </div>
               </div>
             </div>
@@ -1485,7 +1500,7 @@ function InfraCostsPanel() {
       {/* Recent payments */}
       {(data?.recentPayments ?? []).length > 0 && (
         <div>
-          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-2">So'nggi to'lovlar</p>
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-2">{t("admin.platform_costs.recent_payments")}</p>
           <div className="space-y-1">
             {(data.recentPayments as any[]).slice(0, 5).map((p: any) => (
               <div key={p.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/20 text-xs">
@@ -1502,6 +1517,7 @@ function InfraCostsPanel() {
 }
 
 function FinanceTab() {
+  const { t } = useTranslation();
   const [data, setData] = useState<any>(null);
   const [commStats, setCommStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -1576,8 +1592,8 @@ function FinanceTab() {
   const savePremium = async () => {
     const monthly = Math.round(parseFloat(premMonthlyInput) * 100);
     const discount = parseInt(premDiscountInput, 10);
-    if (isNaN(monthly) || monthly < 100 || monthly > 99900) { setPremError("Oylik narx $1–$999 orasida bo'lishi kerak"); return; }
-    if (isNaN(discount) || discount < 0 || discount > 90) { setPremError("Chegirma 0–90% orasida bo'lishi kerak"); return; }
+    if (isNaN(monthly) || monthly < 100 || monthly > 99900) { setPremError(t("admin.premium_pricing.monthly_price_range")); return; }
+    if (isNaN(discount) || discount < 0 || discount > 90) { setPremError(t("admin.premium_pricing.discount_range")); return; }
     setSavingPrem(true); setPremError(null);
     try {
       const r = await fetch(`${API}/api/admin/premium-config`, {
@@ -1585,12 +1601,12 @@ function FinanceTab() {
         credentials: "include", body: JSON.stringify({ monthlyPriceCents: monthly, yearlyDiscountPercent: discount }),
       });
       const d = await r.json();
-      if (!r.ok) { setPremError(d.error ?? "Xato"); return; }
+      if (!r.ok) { setPremError(d.error ?? t("common.error")); return; }
       setPremMonthly(d.config.monthlyPriceCents);
       setPremDiscount(d.config.yearlyDiscountPercent);
       setPremStripePriceIds({ monthly: d.stripeMonthlyPriceId, yearly: d.stripeYearlyPriceId });
       setPremSaved(true); setTimeout(() => setPremSaved(false), 3000);
-    } catch { setPremError("Tarmoq xatosi"); } finally { setSavingPrem(false); }
+    } catch { setPremError(t("common.network_error")); } finally { setSavingPrem(false); }
   };
 
   const stepPremMonthly = (delta: number) => {
@@ -1626,12 +1642,12 @@ function FinanceTab() {
             <DollarSign className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">Moliyaviy boshqaruv</h2>
-            <p className="text-xs text-muted-foreground">Komissiya, hamyonlar va tranzaksiyalar</p>
+            <h2 className="text-xl font-bold text-foreground">{t("admin.finance_page.title")}</h2>
+            <p className="text-xs text-muted-foreground">{t("admin.finance_page.sub")}</p>
           </div>
         </div>
         <button onClick={loadAll} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-          <RotateCcw className="w-3.5 h-3.5" /> Yangilash
+          <RotateCcw className="w-3.5 h-3.5" /> {t("admin.refresh")}
         </button>
       </div>
 
@@ -1648,8 +1664,8 @@ function FinanceTab() {
             <Crown className="w-4 h-4 text-amber-400" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-foreground">Platforma Komissiyasi</h3>
-            <p className="text-xs text-muted-foreground">Har bir tranzaksiyadan avtomatik % olinadi</p>
+            <h3 className="text-sm font-bold text-foreground">{t("admin.commission.title")}</h3>
+            <p className="text-xs text-muted-foreground">{t("admin.commission.desc")}</p>
           </div>
         </div>
 
@@ -1693,15 +1709,14 @@ function FinanceTab() {
             } disabled:opacity-50`}>
             {savingComm ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
               : commSaved ? <CheckCircle2 className="w-4 h-4" /> : null}
-            {savingComm ? "Saqlanmoqda..." : commSaved ? "Saqlandi!" : "Saqlash"}
+            {savingComm ? t("admin.commission.saving") : commSaved ? t("admin.commission.saved") : t("admin.settings.save")}
           </button>
         </div>
 
         <div className="flex items-start gap-2 text-xs text-muted-foreground">
           <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
           <span>
-            Joriy komissiya: <strong className="text-amber-400">{commRate}%</strong>.
-            Misol: foydalanuvchi 10,000 UZS depozit qilsa, {(10000 * commRate / 100).toFixed(0)} UZS admin hamyoniga, {(10000 * (1 - commRate/100)).toFixed(0)} UZS foydalanuvchiga.
+            {t("admin.commission.current_rate_info", { rate: commRate, admin: (10000 * commRate / 100).toFixed(0), user: (10000 * (1 - commRate/100)).toFixed(0) })}
           </span>
         </div>
       </div>
@@ -1713,8 +1728,8 @@ function FinanceTab() {
             <Crown className="w-4 h-4 text-yellow-400" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-foreground">Premium Obuna Narxlari</h3>
-            <p className="text-xs text-muted-foreground">Stripe'da yangi narxlar yaratiladi, eski narxlar arxivlanadi</p>
+            <h3 className="text-sm font-bold text-foreground">{t("admin.premium_pricing.title")}</h3>
+            <p className="text-xs text-muted-foreground">{t("admin.premium_pricing.desc")}</p>
           </div>
         </div>
 
@@ -1795,15 +1810,15 @@ function FinanceTab() {
         {/* Preview */}
         <div className="bg-background/60 border border-border/60 rounded-xl px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Oylik:</span>
+            <span className="text-muted-foreground">{t("admin.premium_pricing.monthly")}:</span>
             <span className="font-bold text-foreground">${premMonthlyInput}/oy</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Yillik jami:</span>
+            <span className="text-muted-foreground">{t("admin.premium_pricing.annual_total")}:</span>
             <span className="font-bold text-foreground">${computedYearly()}/yil</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Yillik (oyiga):</span>
+            <span className="text-muted-foreground">{t("admin.premium_pricing.annual_per_month")}:</span>
             <span className="font-bold text-green-400">
               ${((parseFloat(premMonthlyInput) || 0) * (1 - (parseInt(premDiscountInput) || 0) / 100)).toFixed(2)}/oy
             </span>
@@ -1833,11 +1848,11 @@ function FinanceTab() {
             } disabled:opacity-50`}>
             {savingPrem ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
               : premSaved ? <CheckCircle2 className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
-            {savingPrem ? "Stripe'ga saqlanmoqda..." : premSaved ? "Saqlandi! Stripe yangilandi ✓" : "Narxlarni Saqlash"}
+            {savingPrem ? t("admin.wallets_overview.premium_saving") : premSaved ? t("admin.wallets_overview.premium_saved") : t("admin.wallets_overview.premium_save_btn")}
           </button>
           <p className="text-xs text-muted-foreground">
             <AlertTriangle className="w-3 h-3 inline text-yellow-400 mr-1" />
-            Saqlashda Stripe'da yangi narxlar yaratiladi
+            {t("admin.wallets_overview.premium_save_hint")}
           </p>
         </div>
       </div>
@@ -1847,14 +1862,14 @@ function FinanceTab() {
         <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-2 mb-1">
             <Wallet className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground">Admin Hamyoni (Mening daromadim)</h3>
+            <h3 className="text-sm font-bold text-foreground">{t("admin.commission.admin_wallet_title")}</h3>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: "Jami daromad", value: fmt(commStats.adminTotal ?? 0), color: "text-primary", bg: "bg-primary/10", icon: Crown },
-              { label: "Balans", value: fmt(commStats.adminBalance ?? 0), color: "text-emerald-400", bg: "bg-emerald-400/10", icon: Wallet },
-              { label: "Komissiya daromadi", value: fmt(commStats.adminEarnings ?? 0), color: "text-amber-400", bg: "bg-amber-400/10", icon: DollarSign },
-              { label: "Bu oydagi komissiya", value: fmt(commStats.monthlyCommission ?? 0), color: "text-cyan-400", bg: "bg-cyan-400/10", icon: TrendingUp },
+              { label: t("admin.commission.total"), value: fmt(commStats.adminTotal ?? 0), color: "text-primary", bg: "bg-primary/10", icon: Crown },
+              { label: t("admin.commission.balance"), value: fmt(commStats.adminBalance ?? 0), color: "text-emerald-400", bg: "bg-emerald-400/10", icon: Wallet },
+              { label: t("admin.commission.revenue"), value: fmt(commStats.adminEarnings ?? 0), color: "text-amber-400", bg: "bg-amber-400/10", icon: DollarSign },
+              { label: t("admin.commission.monthly"), value: fmt(commStats.monthlyCommission ?? 0), color: "text-cyan-400", bg: "bg-cyan-400/10", icon: TrendingUp },
             ].map((s, i) => (
               <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
                 className="rounded-xl border border-border p-3">
@@ -1869,7 +1884,7 @@ function FinanceTab() {
             ))}
           </div>
           <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground border-t border-border">
-            <span>Jami tranzaksiya: <strong className="text-foreground">{commStats.txCount}</strong></span>
+            <span>{t("admin.commission.tx_count")}: <strong className="text-foreground">{commStats.txCount}</strong></span>
           </div>
         </div>
       )}
@@ -1878,10 +1893,10 @@ function FinanceTab() {
       {data?.stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Platform balans jami", value: fmt(data.totals?.totalAll ?? 0), icon: Wallet, color: "text-primary", bg: "bg-primary/10" },
-            { label: "Jami depozit", value: fmt(data.stats.totalDeposited), icon: ArrowDownLeft, color: "text-emerald-400", bg: "bg-emerald-400/10" },
-            { label: "Jami yechilgan", value: fmt(data.stats.totalWithdrawn), icon: ArrowUpRight, color: "text-destructive", bg: "bg-destructive/10" },
-            { label: "Tranzaksiyalar", value: data.stats.totalTransactions, icon: ArrowLeftRight, color: "text-cyan-400", bg: "bg-cyan-400/10" },
+            { label: t("admin.wallets_overview.total_balance"), value: fmt(data.totals?.totalAll ?? 0), icon: Wallet, color: "text-primary", bg: "bg-primary/10" },
+            { label: t("admin.wallets_overview.total_deposited"), value: fmt(data.stats.totalDeposited), icon: ArrowDownLeft, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+            { label: t("admin.wallets_overview.total_withdrawn"), value: fmt(data.stats.totalWithdrawn), icon: ArrowUpRight, color: "text-destructive", bg: "bg-destructive/10" },
+            { label: t("admin.wallets_overview.total_transactions"), value: data.stats.totalTransactions, icon: ArrowLeftRight, color: "text-cyan-400", bg: "bg-cyan-400/10" },
           ].map((s, i) => (
             <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
               className="bg-card border border-border rounded-2xl p-4">
@@ -1901,12 +1916,12 @@ function FinanceTab() {
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         <div className="px-5 py-3 border-b border-border flex items-center gap-2">
           <Wallet className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Top Hamyonlar</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("admin.wallets_overview.top_wallets")}</h3>
         </div>
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
-              {["Foydalanuvchi", "Balans", "Daromad", "Reklama", "Jami"].map(h => (
+              {[t("admin.wallets_overview.th_user"), t("admin.wallets_overview.th_balance"), t("admin.wallets_overview.th_earnings"), t("admin.wallets_overview.th_ads"), t("admin.wallets_overview.th_total")].map(h => (
                 <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
               ))}
             </tr>
@@ -1928,7 +1943,7 @@ function FinanceTab() {
           </tbody>
         </table>
         {(data?.wallets ?? []).length === 0 && (
-          <div className="text-center py-10 text-muted-foreground text-sm">Hamyon ma'lumotlari yo'q</div>
+          <div className="text-center py-10 text-muted-foreground text-sm">{t("admin.wallets_overview.no_data")}</div>
         )}
       </div>
 
@@ -1939,7 +1954,7 @@ function FinanceTab() {
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         <div className="px-5 py-3 border-b border-border flex items-center gap-2">
           <ArrowLeftRight className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-sm font-semibold text-foreground">So'nggi Tranzaksiyalar</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("admin.wallets_overview.recent_tx")}</h3>
         </div>
         <div className="divide-y divide-border">
           {(data?.recentTransactions ?? []).map((tx: any, i: number) => {
@@ -1964,7 +1979,7 @@ function FinanceTab() {
             );
           })}
           {(data?.recentTransactions ?? []).length === 0 && (
-            <div className="text-center py-10 text-muted-foreground text-sm">Tranzaksiya yo'q</div>
+            <div className="text-center py-10 text-muted-foreground text-sm">{t("admin.wallets_overview.no_tx")}</div>
           )}
         </div>
       </div>
@@ -1973,6 +1988,7 @@ function FinanceTab() {
 }
 
 function NotifyTab() {
+  const { t } = useTranslation();
   const [message, setMessage] = useState("");
   const [type, setType] = useState("system");
   const [sending, setSending] = useState(false);
@@ -1993,17 +2009,17 @@ function NotifyTab() {
       setResult(data);
       if (data.ok) setMessage("");
     } catch {
-      setResult({ ok: false, error: "Tarmoq xatosi" });
+      setResult({ ok: false, error: t("common.network_error") });
     } finally {
       setSending(false);
     }
   };
 
   const TYPES = [
-    { id: "system", label: "Tizim xabari", icon: Globe },
-    { id: "announcement", label: "E'lon", icon: Megaphone },
-    { id: "promotion", label: "Taklif/Promo", icon: Crown },
-    { id: "alert", label: "Ogohlantirish", icon: AlertTriangle },
+    { id: "system", label: t("admin.notify.types.system"), icon: Globe },
+    { id: "announcement", label: t("admin.notify.types.announcement"), icon: Megaphone },
+    { id: "promotion", label: t("admin.notify.types.promotion"), icon: Crown },
+    { id: "alert", label: t("admin.notify.types.alert"), icon: AlertTriangle },
   ];
 
   return (
@@ -2013,15 +2029,15 @@ function NotifyTab() {
           <Bell className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-foreground">Bildirishnoma yuborish</h2>
-          <p className="text-xs text-muted-foreground">Barcha foydalanuvchilarga yuboring</p>
+          <h2 className="text-xl font-bold text-foreground">{t("admin.notify.title")}</h2>
+          <p className="text-xs text-muted-foreground">{t("admin.notify.sub")}</p>
         </div>
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         {/* Type selector */}
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Xabar turi</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t("admin.notify.type")}</p>
           <div className="grid grid-cols-2 gap-2">
             {TYPES.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setType(id)}
@@ -2036,10 +2052,10 @@ function NotifyTab() {
 
         {/* Message */}
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Xabar matni</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t("admin.notify.message")}</p>
           <textarea
             value={message} onChange={e => setMessage(e.target.value)} rows={4}
-            placeholder="Foydalanuvchilarga yuboriladigan xabarni yozing..."
+            placeholder={t("admin.notify.ph")}
             className="w-full px-4 py-3 rounded-xl border border-border bg-input text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
           <div className="flex justify-between items-center mt-1">
@@ -2051,7 +2067,7 @@ function NotifyTab() {
         <button onClick={send} disabled={sending || !message.trim()}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition disabled:opacity-50">
           {sending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
-          {sending ? "Yuborilmoqda..." : "Barcha foydalanuvchilarga yuborish"}
+          {sending ? t("admin.common.loading") : t("admin.notify.send_all")}
         </button>
 
         {/* Result */}
@@ -2070,8 +2086,7 @@ function NotifyTab() {
       <div className="bg-amber-400/5 border border-amber-400/20 rounded-2xl p-4 flex gap-3">
         <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground">
-          Broadcast xabari barcha aktiv foydalanuvchilarning bildirishnomalar bo'limiga yuboriladi. 
-          Xabarni yuborishdan oldin ikki marta tekshiring.
+          {t("admin.notify.info")}
         </p>
       </div>
     </motion.div>
@@ -2079,6 +2094,7 @@ function NotifyTab() {
 }
 
 function SettingsTab() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -2102,11 +2118,11 @@ function SettingsTab() {
 
   if (!settings) return <div className="flex justify-center py-20"><div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
-  const Toggle = ({ field, label, desc }: { field: string; label: string; desc?: string }) => (
+  const Toggle = ({ field }: { field: string }) => (
     <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
       <div>
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        {desc && <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>}
+        <p className="text-sm font-medium text-foreground">{t(`admin.settings.${field}`)}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{t(`admin.settings.${field}_desc`)}</p>
       </div>
       <button onClick={() => setSettings((s: any) => ({ ...s, [field]: !s[field] }))}
         className={`relative w-11 h-6 rounded-full transition-colors ${settings[field] ? "bg-primary" : "bg-muted"}`}>
@@ -2123,8 +2139,8 @@ function SettingsTab() {
             <Settings className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">Platform Sozlamalari</h2>
-            <p className="text-xs text-muted-foreground">Asosiy tizim sozlamalari</p>
+            <h2 className="text-xl font-bold text-foreground">{t("admin.settings.title")}</h2>
+            <p className="text-xs text-muted-foreground">{t("admin.settings.sub")}</p>
           </div>
         </div>
         <button onClick={save} disabled={saving}
@@ -2133,19 +2149,19 @@ function SettingsTab() {
           } disabled:opacity-50`}>
           {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> :
             saved ? <CheckCircle2 className="w-4 h-4" /> : null}
-          {saving ? "Saqlanmoqda..." : saved ? "Saqlandi!" : "Saqlash"}
+          {saving ? t("admin.common.loading") : saved ? t("admin.common.saved") : t("admin.common.save")}
         </button>
       </div>
 
       {/* Platform info */}
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Globe className="w-4 h-4 text-primary" /> Platforma Ma'lumotlari
+          <Globe className="w-4 h-4 text-primary" /> {t("admin.settings.info")}
         </h3>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Nomi", key: "platform" },
-            { label: "Versiya", key: "version" },
+            { label: t("admin.settings.name"), key: "platform" },
+            { label: t("admin.settings.version"), key: "version" },
           ].map(({ label, key }) => (
             <div key={key}>
               <p className="text-xs text-muted-foreground mb-1">{label}</p>
@@ -2159,25 +2175,25 @@ function SettingsTab() {
       {/* Toggles */}
       <div className="bg-card border border-border rounded-2xl p-5 space-y-1">
         <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <Lock className="w-4 h-4 text-amber-400" /> Tizim Nazorati
+          <Lock className="w-4 h-4 text-amber-400" /> {t("admin.settings.control")}
         </h3>
-        <Toggle field="maintenanceMode" label="Texnik tanaffus rejimi" desc="Yoqilsa foydalanuvchilar kirа olmaydi" />
-        <Toggle field="registrationOpen" label="Ro'yxatdan o'tish ochiq" desc="Yangi foydalanuvchilar qo'shila oladi" />
-        <Toggle field="contentModerationEnabled" label="AI Moderatsiya" desc="SafeGuard AI avtomatik tekshiradi" />
-        <Toggle field="premiumEnabled" label="Premium obuna" desc="Foydalanuvchilar premium sotib ola oladi" />
-        <Toggle field="adsEnabled" label="Reklama tizimi" desc="Ad revenue funksionalligi" />
+        <Toggle field="maintenanceMode" />
+        <Toggle field="registrationOpen" />
+        <Toggle field="contentModerationEnabled" />
+        <Toggle field="premiumEnabled" />
+        <Toggle field="adsEnabled" />
       </div>
 
       {/* Limits */}
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Zap className="w-4 h-4 text-cyan-400" /> Limitlar
+          <Zap className="w-4 h-4 text-cyan-400" /> {t("admin.settings.limits")}
         </h3>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Max post uzunligi (belgi)", key: "maxPostLength" },
-            { label: "Max fayl hajmi (MB)", key: "maxFileSize" },
-            { label: "AI moderatsiya chegarasi (%)", key: "aiModerationThreshold", scale: 100 },
+            { label: t("admin.settings.max_post"), key: "maxPostLength" },
+            { label: t("admin.settings.max_file"), key: "maxFileSize" },
+            { label: t("admin.settings.ai_threshold"), key: "aiModerationThreshold", scale: 100 },
           ].map(({ label, key, scale }) => (
             <div key={key}>
               <p className="text-xs text-muted-foreground mb-1">{label}</p>
@@ -2198,8 +2214,8 @@ function SettingsTab() {
           className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold text-destructive">Texnik tanaffus rejimi yoqilgan!</p>
-            <p className="text-xs text-muted-foreground mt-1">Hozir foydalanuvchilar platformaga kira olmayapti. Tugagach o'chirishni unutmang.</p>
+            <p className="text-sm font-bold text-destructive">{t("admin.settings.maintenance_active")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("admin.settings.maintenance_warning")}</p>
           </div>
         </motion.div>
       )}
@@ -2215,13 +2231,16 @@ const ACTION_COLOR: Record<string, string> = {
   warned:  "bg-orange-500/15 text-orange-400",
   banned:  "bg-destructive/20 text-destructive font-bold",
 };
-const ACTION_LABEL: Record<string, string> = {
-  none:    "O'tdi",
-  flagged: "Belgilandi",
-  deleted: "O'chirildi",
-  warned:  "Ogohlantirish",
-  banned:  "Bloklandi",
-};
+function getActionLabel(t: (key: string) => string, type: string): string {
+  const map: Record<string, string> = {
+    none: t("admin.mod_status.none"),
+    flagged: t("admin.mod_status.flagged"),
+    deleted: t("admin.mod_status.deleted"),
+    warned: t("admin.mod_status.warned"),
+    banned: t("admin.mod_status.banned"),
+  };
+  return map[type] ?? type;
+}
 const ENGINE_COLOR: Record<string, string> = {
   "openai+rules": "text-violet-400",
   hybrid:         "text-cyan-400",
@@ -2230,6 +2249,7 @@ const ENGINE_COLOR: Record<string, string> = {
 };
 
 function AiAutopilotTab() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<any>(null);
   const [scale, setScale] = useState<any>(null);
   const [bannedUsers, setBannedUsers] = useState<any[]>([]);
@@ -2307,14 +2327,14 @@ function AiAutopilotTab() {
             <Bot className="w-6 h-6 text-violet-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">AI Avtopilot Boshqaruvi</h2>
-            <p className="text-xs text-muted-foreground">Platformani 100% AI boshqaradi — inson ta'misiz</p>
+            <h2 className="text-xl font-bold text-foreground">{t("admin.autopilot.title")}</h2>
+            <p className="text-xs text-muted-foreground">{t("admin.autopilot.sub")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ${sseConnected ? "bg-emerald-500/15 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
             <Radio className={`w-3 h-3 ${sseConnected ? "animate-pulse" : ""}`} />
-            {sseConnected ? "Real-vaqt ulanish" : "Oflayn"}
+            {sseConnected ? t("admin.autopilot.realtime") : t("admin.autopilot.offline")}
           </div>
           <button onClick={() => void loadAll()} className="p-2 rounded-xl border border-border hover:bg-muted transition-colors">
             <RefreshCw className="w-4 h-4 text-muted-foreground" />
@@ -2325,10 +2345,10 @@ function AiAutopilotTab() {
       {/* Stats cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Bugungi hodisalar", value: stats?.todayEvents ?? 0, icon: Activity, color: "text-blue-400 bg-blue-500/10" },
-          { label: "Avtomatik bloklangan", value: stats?.autoBlocked ?? 0, icon: ShieldX, color: "text-destructive bg-destructive/10" },
-          { label: "Ogohlantirishlar", value: stats?.warned ?? 0, icon: AlertTriangle, color: "text-amber-400 bg-amber-500/10" },
-          { label: "Bloklangan foydalanuvchilar", value: stats?.bannedUsers ?? 0, icon: UserX, color: "text-rose-400 bg-rose-500/10" },
+          { label: t("admin.autopilot.today_events"), value: stats?.todayEvents ?? 0, icon: Activity, color: "text-blue-400 bg-blue-500/10" },
+          { label: t("admin.autopilot.auto_blocked"), value: stats?.autoBlocked ?? 0, icon: ShieldX, color: "text-destructive bg-destructive/10" },
+          { label: t("admin.autopilot.warnings"), value: stats?.warned ?? 0, icon: AlertTriangle, color: "text-amber-400 bg-amber-500/10" },
+          { label: t("admin.autopilot.banned_users"), value: stats?.bannedUsers ?? 0, icon: UserX, color: "text-rose-400 bg-rose-500/10" },
         ].map(c => (
           <div key={c.label} className="bg-card border border-border rounded-2xl p-4">
             <div className={`w-8 h-8 rounded-xl ${c.color} flex items-center justify-center mb-3`}>
@@ -2344,21 +2364,21 @@ function AiAutopilotTab() {
       <div className="bg-gradient-to-br from-violet-500/8 to-blue-500/8 border border-violet-500/20 rounded-2xl p-4">
         <div className="flex items-center gap-3 mb-4">
           <BrainCircuit className="w-5 h-5 text-violet-400" />
-          <span className="text-sm font-bold text-foreground">AI Dvigatel Holati</span>
-          <span className="ml-auto px-3 py-1 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 text-xs font-semibold">OpenAI + Rules Hybrid</span>
+          <span className="text-sm font-bold text-foreground">{t("admin.autopilot.engine_status")}</span>
+          <span className="ml-auto px-3 py-1 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 text-xs font-semibold">{t("admin.autopilot.engine_hybrid")}</span>
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <p className="text-lg font-bold text-violet-400">{stats?.total ?? 0}</p>
-            <p className="text-xs text-muted-foreground">Jami tekshiruv</p>
+            <p className="text-xs text-muted-foreground">{t("admin.autopilot.total_checks")}</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-bold text-destructive">{stats?.violations ?? 0}</p>
-            <p className="text-xs text-muted-foreground">Buzilish</p>
+            <p className="text-xs text-muted-foreground">{t("admin.autopilot.violations")}</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-bold text-amber-400">{stats?.suspicious ?? 0}</p>
-            <p className="text-xs text-muted-foreground">Shubhali</p>
+            <p className="text-xs text-muted-foreground">{t("admin.autopilot.suspicious")}</p>
           </div>
         </div>
       </div>
@@ -2368,34 +2388,34 @@ function AiAutopilotTab() {
         <div className="bg-gradient-to-br from-cyan-500/8 to-emerald-500/8 border border-cyan-500/20 rounded-2xl p-4">
           <div className="flex items-center gap-3 mb-4">
             <Gauge className="w-5 h-5 text-cyan-400" />
-            <span className="text-sm font-bold text-foreground">Auto-Scale AI Tizimi</span>
+            <span className="text-sm font-bold text-foreground">{t("admin.autopilot.autoscale")}</span>
             <span className={`ml-auto text-sm font-bold ${healthColor(scale.health)}`}>
-              {scale.health === "healthy" ? "✅ Sog'lom" : scale.health === "degraded" ? "⚠️ Yuklanmoqda" : "🔴 Ortiqcha yuklama"}
+              {scale.health === "healthy" ? t("admin.autopilot.health_healthy") : scale.health === "degraded" ? t("admin.autopilot.health_degraded") : t("admin.autopilot.health_overload")}
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-card border border-border rounded-xl p-3">
-              <p className="text-xs text-muted-foreground mb-1">Joriy RPS</p>
+              <p className="text-xs text-muted-foreground mb-1">{t("admin.autopilot.rps_current")}</p>
               <p className={`text-base font-bold ${scale.rps?.pressure === "ok" ? "text-emerald-400" : "text-amber-400"}`}>
                 {(scale.rps?.current ?? 0).toLocaleString()}
               </p>
-              <p className="text-xs text-muted-foreground">/ {(scale.rps?.warnAt ?? 0).toLocaleString()} chegara</p>
+              <p className="text-xs text-muted-foreground">/ {(scale.rps?.warnAt ?? 0).toLocaleString()} {t("admin.autopilot.rps_limit")}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-3">
-              <p className="text-xs text-muted-foreground mb-1">Eng yuqori RPS</p>
+              <p className="text-xs text-muted-foreground mb-1">{t("admin.autopilot.rps_peak")}</p>
               <p className="text-base font-bold text-foreground">{(scale.rps?.peak ?? 0).toLocaleString()}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-3">
-              <p className="text-xs text-muted-foreground mb-1">RAM foydalanish</p>
+              <p className="text-xs text-muted-foreground mb-1">{t("admin.autopilot.memory")}</p>
               <p className={`text-base font-bold ${scale.memory?.pressure === "ok" ? "text-emerald-400" : "text-amber-400"}`}>
                 {scale.memory?.heapUsedMB ?? 0} MB
               </p>
-              <p className="text-xs text-muted-foreground">/ {scale.memory?.warnAt ?? 0} MB chegara</p>
+              <p className="text-xs text-muted-foreground">/ {scale.memory?.warnAt ?? 0} MB {t("admin.autopilot.rps_limit")}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-3">
-              <p className="text-xs text-muted-foreground mb-1">Throttle darajasi</p>
+              <p className="text-xs text-muted-foreground mb-1">{t("admin.autopilot.throttle")}</p>
               <p className="text-base font-bold text-foreground">{scale.requests?.throttleRate ?? 0}%</p>
-              <p className="text-xs text-muted-foreground">{scale.requests?.throttled ?? 0} ta cheklangan</p>
+              <p className="text-xs text-muted-foreground">{scale.requests?.throttled ?? 0} {t("admin.autopilot.throttled_count")}</p>
             </div>
           </div>
         </div>
@@ -2403,7 +2423,7 @@ function AiAutopilotTab() {
 
       {/* Section tabs */}
       <div className="flex gap-2">
-        {([["feed", "📡 Jonli Lenta"], ["banned", `🚫 Bloklanganlar (${bannedUsers.length})`], ["warned", `⚠️ Ogohlantirilganlar (${warnedUsers.length})`]] as const).map(([s, label]) => (
+        {([[ "feed", t("admin.autopilot.tab_feed")], ["banned", `${t("admin.autopilot.tab_banned")} (${bannedUsers.length})`], ["warned", `${t("admin.autopilot.tab_warned")} (${warnedUsers.length})`]] as const).map(([s, label]) => (
           <button key={s} onClick={() => setActiveSection(s as any)}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${activeSection === s ? "bg-violet-500/15 border border-violet-500/30 text-violet-400" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
             {label}
@@ -2415,12 +2435,12 @@ function AiAutopilotTab() {
       {activeSection === "feed" && (
         <div className="space-y-1.5">
           {eventFeed.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground text-sm">Hali hodisalar yo'q</div>
+            <div className="text-center py-10 text-muted-foreground text-sm">{t("admin.autopilot.no_events")}</div>
           ) : eventFeed.map((ev: any, i: number) => (
             <motion.div key={ev.id ?? i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3 px-4 py-2.5 bg-card border border-border rounded-xl text-xs">
               <span className={`px-2 py-0.5 rounded-full border text-xs ${ACTION_COLOR[ev.action_taken ?? ev.action] ?? ACTION_COLOR.none}`}>
-                {ACTION_LABEL[ev.action_taken ?? ev.action] ?? ev.action_taken ?? ev.action}
+                {getActionLabel(t, ev.action_taken ?? ev.action)}
               </span>
               <span className="text-muted-foreground w-16 flex-shrink-0">{ev.content_type ?? ev.contentType}</span>
               <span className={`text-xs ${VERDICT_COLOR[ev.ai_verdict ?? ev.aiVerdict] ?? "text-muted-foreground"}`}>
@@ -2440,7 +2460,7 @@ function AiAutopilotTab() {
       {activeSection === "banned" && (
         <div className="space-y-2">
           {bannedUsers.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground text-sm">Bloklangan foydalanuvchilar yo'q</div>
+            <div className="text-center py-10 text-muted-foreground text-sm">{t("admin.autopilot.no_banned")}</div>
           ) : bannedUsers.map((u: any) => (
             <div key={u.id} className="flex items-center gap-3 px-4 py-3 bg-card border border-destructive/20 rounded-2xl">
               <div className="w-9 h-9 rounded-xl bg-destructive/15 flex items-center justify-center flex-shrink-0">
@@ -2448,16 +2468,16 @@ function AiAutopilotTab() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">@{u.username}</p>
-                <p className="text-xs text-muted-foreground truncate">{u.banned_reason ?? "Sabab ko'rsatilmagan"}</p>
+                <p className="text-xs text-muted-foreground truncate">{u.banned_reason ?? t("admin.autopilot.reason")}</p>
               </div>
               <div className="text-right flex-shrink-0">
                 <p className="text-xs text-muted-foreground">{u.banned_at ? new Date(u.banned_at).toLocaleDateString("uz-UZ") : "—"}</p>
-                <p className="text-xs text-destructive">{u.warning_count} ta ogohlantirish</p>
+                <p className="text-xs text-destructive">{u.warning_count} {t("admin.security.warning_count_suffix")}</p>
               </div>
               <button onClick={() => unbanUser(u.id)} disabled={actingUser === u.id}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 transition-colors disabled:opacity-50 flex-shrink-0">
                 {actingUser === u.id ? <div className="w-3 h-3 rounded-full border border-emerald-400/40 border-t-emerald-400 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
-                Tiklash
+                {t("admin.autopilot.unban")}
               </button>
             </div>
           ))}
@@ -2468,7 +2488,7 @@ function AiAutopilotTab() {
       {activeSection === "warned" && (
         <div className="space-y-2">
           {warnedUsers.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground text-sm">Ogohlantirilgan foydalanuvchilar yo'q</div>
+            <div className="text-center py-10 text-muted-foreground text-sm">{t("admin.autopilot.no_warned")}</div>
           ) : warnedUsers.map((u: any) => (
             <div key={u.id} className="flex items-center gap-3 px-4 py-3 bg-card border border-amber-500/20 rounded-2xl">
               <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
@@ -2489,7 +2509,7 @@ function AiAutopilotTab() {
               <button onClick={() => resetWarnings(u.id)} disabled={actingUser === u.id}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted border border-border text-muted-foreground text-xs font-semibold hover:text-foreground transition-colors disabled:opacity-50 flex-shrink-0">
                 {actingUser === u.id ? <div className="w-3 h-3 rounded-full border border-muted-foreground/40 border-t-muted-foreground animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
-                Tozalash
+                {t("admin.autopilot.clear")}
               </button>
             </div>
           ))}
@@ -2505,6 +2525,7 @@ function AiAutopilotTab() {
 
 /* ── NEXUS Security Shield Panel ────────────────────────────── */
 function SecurityShieldPanel() {
+  const { t } = useTranslation();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [unbanning, setUnbanning] = useState<string | null>(null);
@@ -2568,9 +2589,9 @@ function SecurityShieldPanel() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Bugun hujumlar", val: s.eventsToday ?? 0, color: "text-rose-400", icon: ShieldX },
-          { label: "Kritik (24h)", val: s.criticalLast24h ?? 0, color: "text-red-400", icon: AlertTriangle },
-          { label: "Banned IP-lar", val: s.bannedIps ?? 0, color: "text-orange-400", icon: Lock },
+          { label: t("admin.security.events_today"), val: s.eventsToday ?? 0, color: "text-rose-400", icon: ShieldX },
+          { label: t("admin.security.critical_24h"), val: s.criticalLast24h ?? 0, color: "text-red-400", icon: AlertTriangle },
+          { label: t("admin.security.banned_ips"), val: s.bannedIps ?? 0, color: "text-orange-400", icon: Lock },
         ].map(({ label, val, color, icon: Icon }) => (
           <div key={label} className="bg-muted/40 rounded-2xl p-4 border border-border">
             <Icon className={`w-5 h-5 ${color} mb-2`} />
@@ -2584,13 +2605,13 @@ function SecurityShieldPanel() {
       {(data?.topAttackers?.length ?? 0) > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-            <ShieldX className="w-4 h-4 text-rose-400" /> Top hujumchilar (7 kun)
+            <ShieldX className="w-4 h-4 text-rose-400" /> {t("admin.security.top_attackers")}
           </h4>
           <div className="space-y-1.5">
             {data.topAttackers.map((a: any) => (
               <div key={a.ip} className="flex items-center gap-3 bg-muted/40 rounded-xl px-3 py-2 border border-border">
                 <span className="font-mono text-xs text-foreground flex-1">{a.ip}</span>
-                <span className="text-xs text-muted-foreground">{a.attacks} hujum</span>
+                <span className="text-xs text-muted-foreground">{a.attacks} {t("admin.security.attack_count_suffix")}</span>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${SEV_COLOR[a.max_severity] ?? "text-muted-foreground bg-muted"}`}>{a.max_severity}</span>
               </div>
             ))}
@@ -2602,7 +2623,7 @@ function SecurityShieldPanel() {
       {(data?.attackTypes?.length ?? 0) > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-orange-400" /> Hujum turlari (7 kun)
+            <AlertTriangle className="w-4 h-4 text-orange-400" /> {t("admin.security.attack_types")}
           </h4>
           <div className="flex flex-wrap gap-2">
             {data.attackTypes.map((t: any) => (
@@ -2619,17 +2640,17 @@ function SecurityShieldPanel() {
       {(data?.activeBans?.length ?? 0) > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-            <Lock className="w-4 h-4 text-red-400" /> Aktiv ban-lar ({data.activeBans.length})
+            <Lock className="w-4 h-4 text-red-400" /> {t("admin.security.active_bans")} ({data.activeBans.length})
           </h4>
           <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
             {data.activeBans.map((b: any) => (
               <div key={b.ip} className="flex items-center gap-3 bg-red-950/20 border border-red-900/30 rounded-xl px-3 py-2">
                 <span className="font-mono text-xs flex-1 text-red-300">{b.ip}</span>
                 <span className="text-xs text-muted-foreground truncate max-w-[120px]">{b.reason?.replace(/_/g, " ")}</span>
-                <span className={`text-xs font-bold ${b.permanent ? "text-red-400" : "text-orange-400"}`}>{b.permanent ? "DOIMIY" : `${b.strikes}⚡`}</span>
+                <span className={`text-xs font-bold ${b.permanent ? "text-red-400" : "text-orange-400"}`}>{b.permanent ? t("admin.security.permanent_badge") : `${b.strikes}⚡`}</span>
                 <button onClick={() => unban(b.ip)} disabled={unbanning === b.ip}
                   className="text-xs px-2 py-1 bg-muted rounded-lg text-muted-foreground hover:text-foreground transition disabled:opacity-50 flex-shrink-0">
-                  {unbanning === b.ip ? "..." : "Olib tashlash"}
+                  {unbanning === b.ip ? "..." : t("admin.security.unban")}
                 </button>
               </div>
             ))}
@@ -2639,15 +2660,15 @@ function SecurityShieldPanel() {
 
       {/* Manual ban */}
       <div className="bg-muted/30 border border-border rounded-2xl p-4 space-y-3">
-        <h4 className="text-sm font-semibold flex items-center gap-2"><Lock className="w-4 h-4 text-rose-400" /> Qo'lda ban qo'shish</h4>
+        <h4 className="text-sm font-semibold flex items-center gap-2"><Lock className="w-4 h-4 text-rose-400" /> {t("admin.security.manual_ban")}</h4>
         <div className="flex gap-2">
-          <input value={manualIp} onChange={e => setManualIp(e.target.value)} placeholder="IP manzil (masalan: 1.2.3.4)"
+          <input value={manualIp} onChange={e => setManualIp(e.target.value)} placeholder={t("admin.security.ip_ph")}
             className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-rose-400/50" />
-          <input value={manualReason} onChange={e => setManualReason(e.target.value)} placeholder="Sabab"
+          <input value={manualReason} onChange={e => setManualReason(e.target.value)} placeholder={t("admin.security.reason_ph")}
             className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-rose-400/50" />
           <button onClick={banManual} disabled={banning || !manualIp.trim()}
             className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50">
-            {banning ? "..." : "Ban"}
+            {banning ? "..." : t("admin.actions.block")}
           </button>
         </div>
       </div>
@@ -2656,7 +2677,7 @@ function SecurityShieldPanel() {
       {(data?.recentEvents?.length ?? 0) > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-            <Eye className="w-4 h-4 text-amber-400" /> So'nggi voqealar
+            <Eye className="w-4 h-4 text-amber-400" /> {t("admin.security.recent_events")}
           </h4>
           <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
             {data.recentEvents.map((e: any) => (
@@ -2686,6 +2707,7 @@ function SecurityShieldPanel() {
 
 /* ── AI Autonomous Admin Actions Panel ───────────────────────── */
 function AiAdminActionsPanel() {
+  const { t } = useTranslation();
   const [actions, setActions] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [running, setRunning] = useState(false);
@@ -2723,10 +2745,10 @@ function AiAdminActionsPanel() {
   useEffect(() => { void load(); }, []);
 
   const ACTION_LABEL: Record<string, string> = {
-    auto_ban: "Avtobanlash",
-    remove_post: "Post o'chirish",
-    remove_story: "Story o'chirish",
-    deactivate_listing: "Ro'yxatni o'chirish",
+    auto_ban: t("admin.ai_actions.auto_ban"),
+    remove_post: t("admin.ai_actions.remove_post"),
+    remove_story: t("admin.ai_actions.remove_story"),
+    deactivate_listing: t("admin.ai_actions.deactivate_listing"),
   };
   const ACTION_COLOR: Record<string, string> = {
     auto_ban: "text-rose-400 bg-rose-500/10 border-rose-500/20",
@@ -2743,22 +2765,22 @@ function AiAdminActionsPanel() {
             <Bot className="w-4.5 h-4.5 text-violet-400" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-foreground">AI Avtonom Harakatlar</h3>
-            <p className="text-[11px] text-muted-foreground">AI modatsiya qarorlari — inson ishtirokisiz</p>
+            <h3 className="text-sm font-bold text-foreground">{t("admin.ai_actions.title")}</h3>
+            <p className="text-[11px] text-muted-foreground">{t("admin.ai_actions.sub")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {stats && (
             <div className="flex gap-2 text-[10px] flex-wrap">
-              <span className="px-2 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">{stats.autoban} ban</span>
-              <span className="px-2 py-1 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/20">{stats.removedPosts} post</span>
-              <span className="px-2 py-1 rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/20">{stats.overridden} bekor</span>
+              <span className="px-2 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">{stats.autoban} {t("admin.ai_actions.stat_ban")}</span>
+              <span className="px-2 py-1 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/20">{stats.removedPosts} {t("admin.ai_actions.stat_post")}</span>
+              <span className="px-2 py-1 rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/20">{stats.overridden} {t("admin.ai_actions.stat_reverted")}</span>
             </div>
           )}
           <button onClick={runSweep} disabled={running}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 text-xs font-semibold transition-colors disabled:opacity-50">
             {running ? <div className="w-3.5 h-3.5 rounded-full border-2 border-violet-400/30 border-t-violet-400 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-            {running ? "Ishlayapti…" : "Sweep qilish"}
+            {running ? t("admin.ai_actions.running") : t("admin.ai_actions.sweep_btn")}
           </button>
         </div>
       </div>
@@ -2766,18 +2788,18 @@ function AiAdminActionsPanel() {
       {loading ? (
         <div className="flex justify-center py-6"><div className="w-5 h-5 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" /></div>
       ) : actions.length === 0 ? (
-        <div className="text-center py-6 text-sm text-muted-foreground">Hali AI harakati yo'q</div>
+        <div className="text-center py-6 text-sm text-muted-foreground">{t("admin.ai_actions.no_actions")}</div>
       ) : (
         <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
           {actions.map((a: any) => (
             <div key={a.id} className={`flex items-start gap-3 rounded-xl border p-3 ${ACTION_COLOR[a.action_type] ?? "text-white/50 bg-white/5 border-white/10"}`}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold">{ACTION_LABEL[a.action_type] ?? a.action_type}</span>
+                  <span className="text-xs font-bold">{getActionLabel(t, a.action_type)}</span>
                   {a.target_user_id && <span className="text-[10px] text-muted-foreground">user #{a.target_user_id}</span>}
                   {a.target_post_id && <span className="text-[10px] text-muted-foreground">post #{a.target_post_id}</span>}
                   {a.overridden_by_admin && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">Bekor qilindi</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">{t("admin.ai_actions.reverted_badge")}</span>
                   )}
                 </div>
                 {a.reason && <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{a.reason}</p>}
@@ -2786,7 +2808,7 @@ function AiAdminActionsPanel() {
               {!a.overridden_by_admin && (
                 <button onClick={() => override(a.id)} disabled={overriding === a.id}
                   className="flex-shrink-0 text-[10px] px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
-                  {overriding === a.id ? "…" : "Bekor"}
+                  {overriding === a.id ? "…" : t("admin.ai_actions.revert_btn")}
                 </button>
               )}
             </div>
@@ -2799,6 +2821,7 @@ function AiAdminActionsPanel() {
 
 /* ─── NEXUS Core Self-Healing Admin Tab ──────────────────────── */
 function NexusCoreTab() {
+  const { t } = useTranslation();
   const [health, setHealth] = useState<any>(null);
   const [traffic, setTraffic] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -2862,21 +2885,21 @@ function NexusCoreTab() {
       {/* Status cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className={`border rounded-2xl p-4 ${statusColor}`}>
-          <p className="text-xs opacity-70 mb-1">Tizim holati</p>
+          <p className="text-xs opacity-70 mb-1">{t("admin.nexus_core_tab.system_status")}</p>
           <p className="text-lg font-bold">{(health?.status ?? "unknown").toUpperCase()}</p>
         </div>
         <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Uptime</p>
+          <p className="text-xs text-muted-foreground mb-1">{t("admin.nexus_core_tab.uptime")}</p>
           <p className="text-lg font-bold text-foreground">
             {Math.floor((health?.uptimeSec ?? 0) / 3600)}h {Math.floor(((health?.uptimeSec ?? 0) % 3600) / 60)}m
           </p>
         </div>
         <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Xato darajasi</p>
+          <p className="text-xs text-muted-foreground mb-1">{t("admin.nexus_core_tab.error_rate")}</p>
           <p className="text-lg font-bold text-foreground">{health?.globalErrorRate ?? 0}%</p>
         </div>
         <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Joriy RPM</p>
+          <p className="text-xs text-muted-foreground mb-1">{t("admin.nexus_core_tab.current_rpm")}</p>
           <p className="text-lg font-bold text-foreground">{traffic?.currentRpm ?? 0}</p>
         </div>
       </div>
@@ -2899,10 +2922,10 @@ function NexusCoreTab() {
             </BarChart>
           </ResponsiveContainer>
           <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
-            {traffic?.peakHour !== undefined && <span>⬆ Eng yuqori: {traffic.peakHour}:00 UTC</span>}
-            {traffic?.valleyHour !== undefined && <span>⬇ Eng past: {traffic.valleyHour}:00 UTC</span>}
+            {traffic?.peakHour !== undefined && <span>⬆ {t("admin.nexus_core_tab.peak_hour")}: {traffic.peakHour}:00 UTC</span>}
+            {traffic?.valleyHour !== undefined && <span>⬇ {t("admin.nexus_core_tab.valley_hour")}: {traffic.valleyHour}:00 UTC</span>}
             {traffic?.recommendedCacheTtlSec !== undefined && (
-              <span>💡 Tavsiya etilgan cache TTL: {traffic.recommendedCacheTtlSec}s</span>
+              <span>💡 {t("admin.nexus_core_tab.recommended_cache_ttl")}: {traffic.recommendedCacheTtlSec}s</span>
             )}
           </div>
         </div>
@@ -2923,13 +2946,13 @@ function NexusCoreTab() {
                 }`} />
                 <span className="flex-1 font-mono text-muted-foreground truncate">{ep.endpoint}</span>
                 <span className="text-muted-foreground">{ep.avgLatencyMs}ms</span>
-                <span className="text-muted-foreground">{ep.errorCount} xato</span>
+                <span className="text-muted-foreground">{ep.errorCount} {t("admin.nexus_core_tab.error_count_suffix")}</span>
                 {ep.circuitState !== "closed" && (
                   <button
                     onClick={() => resetCircuit(ep.endpoint as string)}
                     className="px-2 py-1 bg-primary/15 text-primary rounded-lg hover:bg-primary/25 transition-colors flex-shrink-0 text-xs"
                   >
-                    Tiklash
+                    {t("admin.actions.restore")}
                   </button>
                 )}
               </div>
@@ -3182,9 +3205,9 @@ export default function AdminPage() {
             <div className="w-8 h-8 rounded-lg bg-white/8 flex items-center justify-center">
               <ShieldCheck className="w-4 h-4 text-white/60" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Admin Panel</h1>
+            <h1 className="text-2xl font-bold text-white tracking-tight">{t("nav.admin")}</h1>
           </div>
-          <p className="text-sm text-white/35 ml-11">Platforma boshqaruvi va nazorat</p>
+          <p className="text-sm text-white/35 ml-11">{t("admin.dashboard_sub")}</p>
         </motion.div>
 
         {/* Panel stack */}
@@ -3193,8 +3216,8 @@ export default function AdminPage() {
 
           {/* ── DASHBOARD ─────────────────────────────── */}
           <motion.div variants={aPE}>
-            <AdminPanel color="violet" icon={BarChart3} label="Dashboard"
-              preview={dash ? `${dash.totalUsers.toLocaleString()} foydalanuvchi · ${dash.totalPosts.toLocaleString()} post` : "Platform ko'rsatkichlari"}
+            <AdminPanel color="violet" icon={BarChart3} label={t("admin.dashboard")}
+              preview={dash ? t("admin.dashboard_preview", { users: dash.totalUsers, posts: dash.totalPosts }) : t("admin.dashboard_sub")}
               isOpen={openPanel === "dashboard"} onToggle={() => toggle("dashboard")}>
               {!dash ? (
                 <div className="flex justify-center py-6">
@@ -3204,10 +3227,10 @@ export default function AdminPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { label: "Total Users",  value: dash.totalUsers.toLocaleString(),  icon: Users,    color: "text-violet-400", bg: "bg-violet-500/10" },
-                      { label: "Total Posts",  value: dash.totalPosts.toLocaleString(),  icon: FileText, color: "text-cyan-400",   bg: "bg-cyan-500/10"   },
-                      { label: "Active Now",   value: dash.activeNow.toLocaleString(),   icon: Activity, color: "text-emerald-400",bg: "bg-emerald-500/10"},
-                      { label: "New Today",    value: dash.newUsersToday.toLocaleString(), icon: Cpu,    color: "text-violet-400", bg: "bg-violet-500/10" },
+                      { label: t("admin.dashboard2.total_users"),  value: dash.totalUsers.toLocaleString(),  icon: Users,    color: "text-violet-400", bg: "bg-violet-500/10" },
+                      { label: t("admin.dashboard2.total_posts"),  value: dash.totalPosts.toLocaleString(),  icon: FileText, color: "text-cyan-400",   bg: "bg-cyan-500/10"   },
+                      { label: t("admin.dashboard2.active_now"),   value: dash.activeNow.toLocaleString(),   icon: Activity, color: "text-emerald-400",bg: "bg-emerald-500/10"},
+                      { label: t("admin.dashboard2.new_today"),    value: dash.newUsersToday.toLocaleString(), icon: Cpu,    color: "text-violet-400", bg: "bg-violet-500/10" },
                     ].map(s => (
                       <AdminSF key={s.label}>
                         <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -3219,7 +3242,7 @@ export default function AdminPage() {
                           </div>
                           <p className="text-xl font-bold text-white">{s.value}</p>
                           <p className="text-xs text-emerald-400 mt-0.5 flex items-center gap-1">
-                            <TrendingUp className="w-3 h-3" /> +{dash.dailyGrowth}% bugun
+                            <TrendingUp className="w-3 h-3" /> {t("admin.growth_today", { pct: dash.dailyGrowth })}
                           </p>
                         </div>
                       </AdminSF>
@@ -3227,10 +3250,10 @@ export default function AdminPage() {
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { label: "Reels",       value: dash.totalReels     },
-                      { label: "Stories",     value: dash.totalStories   },
-                      { label: "Jamoalar",    value: dash.totalGroups    },
-                      { label: "Flaglangan",  value: dash.flaggedContent, alert: true },
+                      { label: t("admin.dashboard2.reels"),       value: dash.totalReels     },
+                      { label: t("admin.dashboard2.stories"),     value: dash.totalStories   },
+                      { label: t("admin.dashboard2.groups"),      value: dash.totalGroups    },
+                      { label: t("admin.dashboard2.flagged"),     value: dash.flaggedContent, alert: true },
                     ].map(s => (
                       <AdminSF key={s.label}>
                         <div className={`rounded-2xl p-3 border ${"alert" in s && s.alert ? "border-red-500/25 bg-red-500/8" : "border-white/8 bg-white/[0.025]"}`}>
@@ -3243,7 +3266,7 @@ export default function AdminPage() {
                   {dash.topRegions && (
                     <AdminSF>
                       <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
-                        <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Mintaqalar</p>
+                        <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">{t("admin.regions")}</p>
                         <div className="space-y-2.5">
                           {dash.topRegions.map((r: { region: string; users: number }) => {
                             const pct = Math.round((r.users / dash.totalUsers) * 100);
@@ -3272,14 +3295,14 @@ export default function AdminPage() {
           {/* ── USERS ─────────────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="blue" icon={Users} label={t("admin.users")}
-              preview={`${users.length} foydalanuvchi ro'yxatda`}
+              preview={t("admin.users_preview", { count: users.length })}
               isOpen={openPanel === "users"} onToggle={() => toggle("users")}>
               <div className="space-y-3">
                 <div className="overflow-x-auto rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
                   <table className="w-full text-sm min-w-[700px]">
                     <thead>
                       <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                        {["Foydalanuvchi", "Status", "Verified", "Admin", "Premium", "Sana", "Amallar"].map(h => (
+                        {[t("admin.users_table.th_user"), t("admin.users_table.th_status"), t("admin.users_table.th_verified"), t("admin.users"), t("admin.users_table.th_premium"), t("admin.users_table.th_date"), t("admin.users_table.th_actions")].map(h => (
                           <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold text-white/40 uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
@@ -3300,22 +3323,22 @@ export default function AdminPage() {
                           </td>
                           <td className="px-4 py-3">
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${user.status === "suspended" ? "bg-red-500/15 text-red-400" : "bg-emerald-500/15 text-emerald-400"}`}>
-                              {user.status === "suspended" ? "Bloklangan" : "Faol"}
+                              {user.status === "suspended" ? t("admin.users_table.blocked") : t("admin.users_table.active")}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-xs">
                             <span className={user.isVerified ? "text-blue-400 font-semibold" : "text-white/30"}>
-                              {user.isVerified ? "✓ Ha" : "Yo'q"}
+                              {user.isVerified ? `✓ ${t("admin.users_table.yes")}` : t("admin.users_table.no")}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-xs">
                             <span className={user.isAdmin ? "text-amber-400 font-semibold" : "text-white/30"}>
-                              {user.isAdmin ? "✓ Ha" : "Yo'q"}
+                              {user.isAdmin ? `✓ ${t("admin.users_table.yes")}` : t("admin.users_table.no")}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-xs">
                             <span className={`flex items-center gap-1 ${user.isPremium ? "text-yellow-400 font-semibold" : "text-white/30"}`}>
-                              {user.isPremium ? <><Zap className="w-3 h-3" /> Ha</> : "Yo'q"}
+                              {user.isPremium ? <><Zap className="w-3 h-3" /> {t("admin.users_table.yes")}</> : t("admin.users_table.no")}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-[11px] text-white/40">{new Date(user.createdAt).toLocaleDateString("uz-UZ")}</td>
@@ -3326,18 +3349,18 @@ export default function AdminPage() {
                                   user.status === "suspended"
                                     ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25"
                                     : "bg-red-500/15 text-red-400 hover:bg-red-500/25"
-                                }`}><UserX className="w-3 h-3" />{user.status === "suspended" ? "Tiklash" : "Blok"}</button>
+                                }`}><UserX className="w-3 h-3" />{user.status === "suspended" ? t("admin.users_table.restore_btn") : t("admin.users_table.block_btn")}</button>
                               <button onClick={() => handleTogglePremium(user.id)}
                                 className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-white/8 text-white/50 hover:text-yellow-400 hover:bg-yellow-500/15 transition-colors">
-                                <Zap className="w-3 h-3" />{user.isPremium ? "Olib olish" : "Berish"}
+                                <Zap className="w-3 h-3" />{user.isPremium ? t("admin.users_table.take_premium_btn") : t("admin.users_table.give_premium_btn")}
                               </button>
                               <button onClick={() => handleVerify(user.id)}
                                 className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${user.isVerified ? "bg-blue-500/20 text-blue-400" : "bg-white/8 text-white/50 hover:text-blue-400 hover:bg-blue-500/15"}`}>
-                                <BadgeCheck className="w-3 h-3" />Verify
+                                <BadgeCheck className="w-3 h-3" />{t("admin.users_table.verify_btn")}
                               </button>
                               <button onClick={() => handleToggleAdmin(user.id)}
                                 className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${user.isAdmin ? "bg-amber-500/20 text-amber-400" : "bg-white/8 text-white/50 hover:text-amber-400 hover:bg-amber-500/15"}`}>
-                                <Crown className="w-3 h-3" />{user.isAdmin ? "Unadmin" : "Admin"}
+                                <Crown className="w-3 h-3" />{user.isAdmin ? t("admin.users_table.unadmin_btn") : t("admin.users_table.admin_btn")}
                               </button>
                             </div>
                           </td>
@@ -3347,7 +3370,7 @@ export default function AdminPage() {
                   </table>
                 </div>
                 {users.length === 0 && (
-                  <div className="text-center py-10 text-white/30 text-sm">Foydalanuvchilar topilmadi</div>
+                  <div className="text-center py-10 text-white/30 text-sm">{t("admin.users_table.not_found")}</div>
                 )}
               </div>
             </AdminPanel>
@@ -3356,7 +3379,7 @@ export default function AdminPage() {
           {/* ── CONTENT ───────────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="cyan" icon={FileText} label={t("admin.content")}
-              preview="Kontent moderatsiyasi"
+              preview={t("admin.content_mod")}
               isOpen={openPanel === "content"} onToggle={() => toggle("content")}>
               <div className="space-y-3">
                 {content.map((item: any) => (
@@ -3393,7 +3416,7 @@ export default function AdminPage() {
                 {content.length === 0 && (
                   <div className="text-center py-10 text-white/30 text-sm">
                     <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    Hamma kontent toza
+                    {t("admin.all_clean")}
                   </div>
                 )}
               </div>
@@ -3457,7 +3480,7 @@ export default function AdminPage() {
           {/* ── FINANCE ───────────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="amber" icon={DollarSign} label={t("admin.finance")}
-              preview="Moliyaviy boshqaruv"
+              preview={t("admin.finance_page.title")}
               isOpen={openPanel === "finance"} onToggle={() => toggle("finance")}>
               <FinanceTab />
             </AdminPanel>
@@ -3466,7 +3489,7 @@ export default function AdminPage() {
           {/* ── MONETIZATION ──────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="rose" icon={CircleDollarSign} label={t("admin.monetization")}
-              preview="Kreator daromad dasturi"
+              preview={t("settings.monetization_preview")}
               isOpen={openPanel === "monetization"} onToggle={() => toggle("monetization")}>
               <MonetizationTab />
             </AdminPanel>
@@ -3475,7 +3498,7 @@ export default function AdminPage() {
           {/* ── NOTIFICATIONS ─────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="orange" icon={Bell} label={t("nav.notifications")}
-              preview="Xabarnomalar yuborish"
+              preview={t("admin.notify.title")}
               isOpen={openPanel === "notify"} onToggle={() => toggle("notify")}>
               <NotifyTab />
             </AdminPanel>
@@ -3501,7 +3524,7 @@ export default function AdminPage() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className={`w-2 h-2 rounded-full ${aiCoreOnline ? "bg-violet-400 animate-pulse" : "bg-red-500/60"}`} />
-                          <span className="text-xs font-bold text-white/60 tracking-wide uppercase">AI Core — Avtonom Tizim</span>
+                          <span className="text-xs font-bold text-white/60 tracking-wide uppercase">{t("admin.ai_core_widgets.autonomous_system")}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           {aiCoreRefresh && (
@@ -3516,11 +3539,11 @@ export default function AdminPage() {
                       {/* 4 Agent pills */}
                       <div className="grid grid-cols-2 gap-2 mb-3">
                         {([
-                          { name: "Kiber-Qalqon",  Icon: ShieldAlert,   color: "text-rose-400"   },
-                          { name: "Moderation",     Icon: Bot,           color: "text-amber-400"  },
-                          { name: "Analytics",      Icon: Activity,      color: "text-emerald-400"},
-                          { name: "Orchestrator",   Icon: BrainCircuit,  color: "text-violet-400" },
-                        ] as const).map(a => (
+                          { name: t("admin.modules.cyber_shield"),  Icon: ShieldAlert,   color: "text-rose-400"   },
+                          { name: t("admin.modules.moderation"),    Icon: Bot,           color: "text-amber-400"  },
+                          { name: t("admin.modules.analytics"),     Icon: Activity,      color: "text-emerald-400"},
+                          { name: t("admin.modules.orchestrator"),  Icon: BrainCircuit,  color: "text-violet-400" },
+                        ]).map(a => (
                           <div key={a.name} className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }}>
                             <a.Icon className={`w-3.5 h-3.5 flex-shrink-0 ${a.color}`} />
                             <span className="text-xs text-white/65 flex-1 truncate">{a.name}</span>
@@ -3533,9 +3556,9 @@ export default function AdminPage() {
                       {aiCore && (
                         <div className="grid grid-cols-3 gap-2 mb-3">
                           {[
-                            { label: "Bloklangan IP", value: aiCore.security.blockedIps,           color: "text-rose-400"   },
-                            { label: "Tahdid (5 daq)", value: aiCore.security.recentThreats,         color: "text-amber-400"  },
-                            { label: "Bajarilgan",     value: aiCore.orchestrator.completedCount,    color: "text-violet-400" },
+                            { label: t("admin.ai_core_widgets.blocked_ips"), value: aiCore.security.blockedIps,           color: "text-rose-400"   },
+                            { label: t("admin.ai_core_widgets.recent_threats"), value: aiCore.security.recentThreats,         color: "text-amber-400"  },
+                            { label: t("admin.ai_core_widgets.completed"),     value: aiCore.orchestrator.completedCount,    color: "text-violet-400" },
                           ].map(s => (
                             <div key={s.label} className="text-center rounded-xl py-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
                               <p className={`text-base font-bold ${s.color}`}>{s.value}</p>
@@ -3589,10 +3612,10 @@ export default function AdminPage() {
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { label: "Versiya",         value: aiStatus.version,                                                                    icon: Zap,       color: "text-violet-400" },
-                      { label: "Jami tekshirilgan",value: aiStatus.totalModerated.toString(),                                                  icon: Activity,  color: "text-emerald-400" },
-                      { label: "Kutilmoqda",       value: aiStatus.pendingReview.toString(),                                                    icon: Cpu,       color: "text-cyan-400" },
-                      { label: "Oxirgi tekshiruv", value: aiStatus.lastModerationAt ? new Date(aiStatus.lastModerationAt).toLocaleTimeString("uz-UZ") : "—", icon: RefreshCw, color: "text-violet-400" },
+                      { label: t("admin.ai_core_widgets.version"),         value: aiStatus.version,                                                                    icon: Zap,       color: "text-violet-400" },
+                      { label: t("admin.ai_core_widgets.total_moderated"), value: aiStatus.totalModerated.toString(),                                                  icon: Activity,  color: "text-emerald-400" },
+                      { label: t("admin.ai_core_widgets.pending_review"),  value: aiStatus.pendingReview.toString(),                                                    icon: Cpu,       color: "text-cyan-400" },
+                      { label: t("admin.ai_core_widgets.last_check"),      value: aiStatus.lastModerationAt ? new Date(aiStatus.lastModerationAt).toLocaleTimeString("uz-UZ") : "—", icon: RefreshCw, color: "text-violet-400" },
                     ].map(m => (
                       <AdminSF key={m.label}>
                         <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -3610,7 +3633,7 @@ export default function AdminPage() {
                       <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                         <div className="flex items-center gap-2 mb-1.5">
                           <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-                          <span className="text-[11px] text-white/40">Avto-bloklangan</span>
+                          <span className="text-[11px] text-white/40">{t("admin.ai_core_widgets.auto_blocked")}</span>
                         </div>
                         <p className="text-sm font-bold text-white">{aiStatus.autoBlockedCount}</p>
                       </div>
@@ -3619,7 +3642,7 @@ export default function AdminPage() {
                       <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                         <div className="flex items-center gap-2 mb-1.5">
                           <Activity className="w-3.5 h-3.5 text-amber-400" />
-                          <span className="text-[11px] text-white/40">O'rtacha AI xavf balli</span>
+                          <span className="text-[11px] text-white/40">{t("admin.ai_core_widgets.avg_risk_score")}</span>
                         </div>
                         <p className="text-sm font-bold text-white">{aiStatus.avgAiScore.toFixed(2)}</p>
                       </div>
@@ -3628,7 +3651,7 @@ export default function AdminPage() {
                   {aiStatus.volumeHistory && aiStatus.volumeHistory.length > 0 && (
                     <AdminSF>
                       <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
-                        <p className="text-xs font-semibold text-white/40 mb-3">Moderatsiya hajmi (kunlik)</p>
+                        <p className="text-xs font-semibold text-white/40 mb-3">{t("admin.ai_core_widgets.moderation_volume")}</p>
                         <ResponsiveContainer width="100%" height={160}>
                           <LineChart data={aiStatus.volumeHistory}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -3656,7 +3679,7 @@ export default function AdminPage() {
                               .finally(() => setAiUsageLoading(false)); }}
                           className="text-[10px] text-violet-400/60 hover:text-violet-400 transition-colors flex items-center gap-1"
                         >
-                          <RefreshCw className="w-3 h-3" /> Yangilash
+                          <RefreshCw className="w-3 h-3" /> {t("admin.refresh")}
                         </button>
                       </div>
                       {aiUsageLoading ? (
@@ -3667,10 +3690,10 @@ export default function AdminPage() {
                         <div className="space-y-3">
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {[
-                              { label: "Jami foydalanuvchi",  value: aiUsageStats.totalUsers,        color: "text-white" },
-                              { label: "Premium",              value: aiUsageStats.premiumUsers,      color: "text-amber-400" },
-                              { label: "Limitga yetganlar",   value: aiUsageStats.freeUsersAtLimit,  color: "text-rose-400" },
-                              { label: "Jami AI so'rovlar",   value: aiUsageStats.totalAiCalls,      color: "text-violet-400" },
+                              { label: t("admin.dashboard2.total_users"),  value: aiUsageStats.totalUsers,        color: "text-white" },
+                              { label: t("admin.ai_core_widgets.premium"),              value: aiUsageStats.premiumUsers,      color: "text-amber-400" },
+                              { label: t("admin.ai_core_widgets.limit_reached"),   value: aiUsageStats.freeUsersAtLimit,  color: "text-rose-400" },
+                              { label: t("admin.ai_core_widgets.total_ai_calls"),   value: aiUsageStats.totalAiCalls,      color: "text-violet-400" },
                             ].map(s => (
                               <div key={s.label} className="text-center rounded-xl py-2.5 px-2" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
                                 <p className={`text-base font-bold ${s.color}`}>{s.value}</p>
@@ -3681,7 +3704,7 @@ export default function AdminPage() {
                           {/* Free tier progress */}
                           <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[11px] text-white/40">Bepul limitga yetgan foydalanuvchilar</span>
+                              <span className="text-[11px] text-white/40">{t("admin.ai_core_widgets.free_limit_users")}</span>
                               <span className="text-[11px] text-rose-400 font-semibold">
                                 {aiUsageStats.totalUsers > 0 ? Math.round((aiUsageStats.freeUsersAtLimit / Math.max(aiUsageStats.totalUsers - aiUsageStats.premiumUsers, 1)) * 100) : 0}%
                               </span>
@@ -3694,7 +3717,7 @@ export default function AdminPage() {
                           {/* Top users */}
                           {aiUsageStats.topUsers?.length > 0 && (
                             <div>
-                              <p className="text-[10px] text-white/30 mb-2 font-semibold uppercase tracking-wide">Top AI foydalanuvchilar</p>
+                              <p className="text-[10px] text-white/30 mb-2 font-semibold uppercase tracking-wide">{t("admin.ai_core_widgets.top_ai_users")}</p>
                               <div className="space-y-1.5">
                                 {aiUsageStats.topUsers.slice(0, 5).map((u: any, i: number) => (
                                   <div key={u.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
@@ -3706,18 +3729,18 @@ export default function AdminPage() {
                                     {u.isPremium && (
                                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-400">PRO</span>
                                     )}
-                                    <span className="text-xs font-bold text-violet-400 flex-shrink-0">{u.aiUsageCount} so'rov</span>
+                                    <span className="text-xs font-bold text-violet-400 flex-shrink-0">{u.aiUsageCount} {t("admin.ai_core_widgets.requests_suffix")}</span>
                                   </div>
                                 ))}
                               </div>
                             </div>
                           )}
                           <p className="text-[10px] text-white/20 text-center">
-                            Bepul limit: {aiUsageStats.freeLimit} so'rov · Premium foydalanuvchilar cheksiz foydalanadi
+                            {t("admin.ai_core_widgets.free_limit_note", { count: aiUsageStats.freeLimit })}
                           </p>
                         </div>
                       ) : (
-                        <p className="text-xs text-white/30 text-center py-3">Ma'lumot yuklanmadi</p>
+                        <p className="text-xs text-white/30 text-center py-3">{t("admin.ai_core_widgets.data_not_loaded")}</p>
                       )}
                     </div>
                   </AdminSF>
@@ -3729,17 +3752,17 @@ export default function AdminPage() {
           {/* ── AI INTEGRATIONS ───────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="indigo" icon={Zap} label={t("admin.ai_integrations")}
-              preview="OpenAI, DALL-E, Google Books va boshqalar"
+              preview={t("admin.ai_integrations_list.preview")}
               isOpen={openPanel === "ai-integrations"} onToggle={() => toggle("ai-integrations")}>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { name: "OpenAI GPT-4o",    status: "active",  icon: "🤖", desc: "AI Chat, Caption Generator, Kontent Moderatsiya", model: "gpt-4o-mini",       color: "border-emerald-500/25 bg-emerald-500/5", badge: "bg-emerald-400/15 text-emerald-400" },
-                    { name: "DALL-E 3",          status: "active",  icon: "🎨", desc: "AI Rasm Yaratish — Matndan rasm generatsiya",      model: "dall-e-3",          color: "border-violet-500/25 bg-violet-500/5",  badge: "bg-violet-400/15 text-violet-400"  },
-                    { name: "Google Books",      status: "active",  icon: "📚", desc: "Shaxsiy kutubxona — Kitob qidirish va saqlash",    model: "Google Books v1",   color: "border-blue-500/25 bg-blue-500/5",      badge: "bg-blue-400/15 text-blue-400"      },
-                    { name: "TensorFlow.js",     status: "active",  icon: "🧠", desc: "ML modellar — Kontentni tahlil qilish",            model: "tfjs v4",           color: "border-orange-500/25 bg-orange-500/5",  badge: "bg-orange-400/15 text-orange-400"  },
-                    { name: "Stripe",            status: "active",  icon: "💳", desc: "To'lovlar va obunalar tizimi",                      model: "Stripe API v3",     color: "border-indigo-500/25 bg-indigo-500/5",  badge: "bg-indigo-400/15 text-indigo-400"  },
-                    { name: "Anthropic Claude",  status: "planned", icon: "🔮", desc: "Kelajakda: Ilg'or tahlil va kontent",              model: "claude-3-opus",     color: "border-white/8 bg-white/[0.02]",        badge: "bg-amber-400/15 text-amber-400"    },
+                    { name: "OpenAI GPT-4o",    status: "active",  icon: "🤖", desc: t("admin.ai_integrations_list.openai_desc"), model: "gpt-4o-mini",       color: "border-emerald-500/25 bg-emerald-500/5", badge: "bg-emerald-400/15 text-emerald-400" },
+                    { name: "DALL-E 3",          status: "active",  icon: "🎨", desc: t("admin.ai_integrations_list.dalle_desc"),      model: "dall-e-3",          color: "border-violet-500/25 bg-violet-500/5",  badge: "bg-violet-400/15 text-violet-400"  },
+                    { name: "Google Books",      status: "active",  icon: "📚", desc: t("admin.ai_integrations_list.google_books_desc"),    model: "Google Books v1",   color: "border-blue-500/25 bg-blue-500/5",      badge: "bg-blue-400/15 text-blue-400"      },
+                    { name: "TensorFlow.js",     status: "active",  icon: "🧠", desc: t("admin.ai_integrations_list.tensorflow_desc"),            model: "tfjs v4",           color: "border-orange-500/25 bg-orange-500/5",  badge: "bg-orange-400/15 text-orange-400"  },
+                    { name: "Stripe",            status: "active",  icon: "💳", desc: t("admin.ai_integrations_list.stripe_desc"),                      model: "Stripe API v3",     color: "border-indigo-500/25 bg-indigo-500/5",  badge: "bg-indigo-400/15 text-indigo-400"  },
+                    { name: "Anthropic Claude",  status: "planned", icon: "🔮", desc: t("admin.ai_integrations_list.anthropic_desc"),              model: "claude-3-opus",     color: "border-white/8 bg-white/[0.02]",        badge: "bg-amber-400/15 text-amber-400"    },
                   ].map(item => (
                     <AdminSF key={item.name}>
                       <div className={`rounded-2xl border p-4 ${item.color}`}>
@@ -3752,14 +3775,14 @@ export default function AdminPage() {
                             </div>
                           </div>
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${item.badge}`}>
-                            {item.status === "active" ? "Faol" : "Rejada"}
+                            {item.status === "active" ? t("admin.ai_integrations_list.active") : t("admin.ai_integrations_list.planned")}
                           </span>
                         </div>
                         <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
                         {item.status === "active" && (
                           <div className="mt-2.5 flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-[10px] text-emerald-400 font-semibold">Ulangan</span>
+                            <span className="text-[10px] text-emerald-400 font-semibold">{t("admin.ai_integrations_list.connected")}</span>
                           </div>
                         )}
                       </div>
@@ -3769,16 +3792,16 @@ export default function AdminPage() {
                 <AdminSF>
                   <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
                     <p className="text-xs font-semibold text-white/40 mb-3 flex items-center gap-2">
-                      <Activity className="w-3.5 h-3.5 text-cyan-400" /> AI Test Paneli
+                      <Activity className="w-3.5 h-3.5 text-cyan-400" /> {t("admin.ai_test_panel.title")}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <a href="/ai-chat" target="_blank" rel="noreferrer"
                         className="flex items-center gap-2 px-4 py-3 rounded-xl bg-violet-500/15 text-violet-400 hover:bg-violet-500/25 transition-colors text-sm font-semibold">
-                        🤖 AI Chat ochish
+                        🤖 {t("admin.ai_test_panel.open_ai_chat")}
                       </a>
                       <a href="/kutubxona" target="_blank" rel="noreferrer"
                         className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors text-sm font-semibold">
-                        📚 Kutubxona ochish
+                        📚 {t("admin.ai_test_panel.open_library")}
                       </a>
                       <button onClick={async () => {
                         const r = await fetch(`${API}/api/openai/moderate`, {
@@ -3786,9 +3809,9 @@ export default function AdminPage() {
                           body: JSON.stringify({ content: "This is a test message for AI moderation" }),
                         });
                         const d = await r.json();
-                        alert(`AI Moderatsiya:\n${JSON.stringify(d, null, 2)}`);
+                        alert(`${t("admin.ai_test_panel.moderation_result_prefix")}\n${JSON.stringify(d, null, 2)}`);
                       }} className="flex items-center gap-2 px-4 py-3 rounded-xl bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25 transition-colors text-sm font-semibold">
-                        🛡️ Moderatsiya test
+                        🛡️ {t("admin.ai_test_panel.moderation_test")}
                       </button>
                     </div>
                   </div>
@@ -3800,7 +3823,7 @@ export default function AdminPage() {
           {/* ── SAFEGUARD ─────────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="rose" icon={ShieldAlert} label={t("admin.safeguard")}
-              preview="Kontent xavfsizligi va moderatsiya"
+              preview={t("admin.content_mod")}
               isOpen={openPanel === "safeguard"} onToggle={() => toggle("safeguard")}>
               <SafeGuardTab />
             </AdminPanel>
@@ -3808,8 +3831,8 @@ export default function AdminPage() {
 
           {/* ── NEXUS SHIELD ──────────────────────────── */}
           <motion.div variants={aPE}>
-            <AdminPanel color="rose" icon={ShieldX} label="NEXUS Xavfsizlik Qalqoni"
-              preview="Hujumlar, ban-list, real-vaqt monitoring"
+            <AdminPanel color="rose" icon={ShieldX} label={t("admin.security.title")}
+              preview={t("admin.security.recent_events")}
               isOpen={openPanel === "nexus-shield"} onToggle={() => toggle("nexus-shield" as any)}>
               <SecurityShieldPanel />
             </AdminPanel>
@@ -3818,7 +3841,7 @@ export default function AdminPage() {
           {/* ── SETTINGS ──────────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="blue" icon={Settings} label={t("nav.settings")}
-              preview="Platforma sozlamalari"
+              preview={t("admin.settings.sub")}
               isOpen={openPanel === "settings"} onToggle={() => toggle("settings")}>
               <SettingsTab />
             </AdminPanel>
@@ -3827,7 +3850,7 @@ export default function AdminPage() {
           {/* ── NEXUS CORE ────────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="emerald" icon={Activity} label={t("admin.nexus_core")}
-              preview="Tizim sog'ligi va monitoring"
+              preview={t("admin.analytics_sub")}
               isOpen={openPanel === "nexus-core"} onToggle={() => toggle("nexus-core")}>
               <NexusCoreTab />
             </AdminPanel>
@@ -3836,7 +3859,7 @@ export default function AdminPage() {
           {/* ── AI AUTOPILOT ──────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="cyan" icon={Bot} label={t("admin.ai_autopilot")}
-              preview="Avtomatik AI boshqaruv"
+              preview={t("admin.autopilot.sub")}
               isOpen={openPanel === "ai-autopilot"} onToggle={() => toggle("ai-autopilot")}>
               <AiAutopilotTab />
             </AdminPanel>

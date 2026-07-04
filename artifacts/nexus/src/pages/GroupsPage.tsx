@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 import { useListGroups, useJoinGroup, useCreateGroup, getListGroupsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -29,7 +30,7 @@ async function uploadFile(file: File): Promise<string> {
     credentials: "include",
     body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
   });
-  if (!r.ok) throw new Error("Yuklash URL olishda xato");
+  if (!r.ok) throw new Error(i18n.t("groups.upload_error"));
   const { uploadURL, objectPath } = await r.json();
   await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
   const cleanPath = String(objectPath).replace(/^\/+/, "");
@@ -38,30 +39,30 @@ async function uploadFile(file: File): Promise<string> {
 
 /* ── Constants ──────────────────────────────────────────────── */
 const CATEGORIES = [
-  { id: "education",      label: "Ta'lim",       icon: BookOpen },
-  { id: "technology",     label: "Texnologiya",   icon: Zap },
-  { id: "entertainment",  label: "Ko'ngilochar",  icon: Star },
-  { id: "sports",         label: "Sport",         icon: Flame },
-  { id: "gaming",         label: "O'yinlar",      icon: Swords },
-  { id: "art",            label: "San'at",        icon: Brush },
-  { id: "music",          label: "Musiqa",        icon: Music },
-  { id: "food",           label: "Ovqat",         icon: Utensils },
-  { id: "travel",         label: "Sayohat",       icon: Plane },
-  { id: "business",       label: "Biznes",        icon: Briefcase },
-  { id: "science",        label: "Fan",           icon: FlaskConical },
-  { id: "health",         label: "Salomatlik",    icon: Heart },
-  { id: "other",          label: "Boshqa",        icon: Globe },
+  { id: "education",      label: "groups.categories.education",       icon: BookOpen },
+  { id: "technology",     label: "groups.categories.technology",      icon: Zap },
+  { id: "entertainment",  label: "groups.categories.entertainment",   icon: Star },
+  { id: "sports",         label: "groups.categories.sports",          icon: Flame },
+  { id: "gaming",         label: "groups.categories.gaming",          icon: Swords },
+  { id: "art",            label: "groups.categories.art",             icon: Brush },
+  { id: "music",          label: "groups.categories.music",           icon: Music },
+  { id: "food",           label: "groups.categories.food",            icon: Utensils },
+  { id: "travel",         label: "groups.categories.travel",          icon: Plane },
+  { id: "business",       label: "groups.categories.business",        icon: Briefcase },
+  { id: "science",        label: "groups.categories.science",         icon: FlaskConical },
+  { id: "health",         label: "groups.categories.health",          icon: Heart },
+  { id: "other",          label: "groups.categories.other",           icon: Globe },
 ];
 
 const GROUP_TYPES = [
-  { id: "discussion",   label: "Muhokama" },
-  { id: "learning",     label: "O'rganish" },
-  { id: "news",         label: "Yangiliklar" },
-  { id: "entertainment",label: "Ko'ngilochar" },
-  { id: "project",      label: "Loyiha" },
-  { id: "community",    label: "Jamiyat" },
-  { id: "club",         label: "Klub" },
-  { id: "official",     label: "Rasmiy" },
+  { id: "discussion",   label: "groups.types.discussion" },
+  { id: "learning",     label: "groups.types.learning" },
+  { id: "news",         label: "groups.types.news" },
+  { id: "entertainment",label: "groups.types.entertainment" },
+  { id: "project",      label: "groups.types.project" },
+  { id: "community",    label: "groups.types.community" },
+  { id: "club",         label: "groups.types.club" },
+  { id: "official",     label: "groups.types.official" },
 ];
 
 const GROUP_ICONS = [
@@ -71,35 +72,35 @@ const GROUP_ICONS = [
 ];
 
 const THEME_COLORS = [
-  { hex: "#7857ff", label: "Binafsha" },
-  { hex: "#ef4444", label: "Qizil" },
-  { hex: "#f97316", label: "To'q sariq" },
-  { hex: "#eab308", label: "Sariq" },
-  { hex: "#22c55e", label: "Yashil" },
-  { hex: "#06b6d4", label: "Ko'k" },
-  { hex: "#ec4899", label: "Pushti" },
-  { hex: "#8b5cf6", label: "Siyohrang" },
+  { hex: "#7857ff", label: "groups.themes.purple" },
+  { hex: "#ef4444", label: "groups.themes.red" },
+  { hex: "#f97316", label: "groups.themes.orange" },
+  { hex: "#eab308", label: "groups.themes.yellow" },
+  { hex: "#22c55e", label: "groups.themes.green" },
+  { hex: "#06b6d4", label: "groups.themes.blue" },
+  { hex: "#ec4899", label: "groups.themes.pink" },
+  { hex: "#8b5cf6", label: "groups.themes.magenta" },
 ];
 
 const PERM_OPTIONS = [
-  { id: "all",      label: "Hamma" },
-  { id: "members",  label: "A'zolar" },
-  { id: "verified", label: "Tasdiqlangan" },
-  { id: "admins",   label: "Adminlar" },
+  { id: "all",      label: "groups.perms.all" },
+  { id: "members",  label: "groups.perms.members" },
+  { id: "verified", label: "groups.perms.verified" },
+  { id: "admins",   label: "groups.perms.admins" },
 ];
 
 const PERM_OPTIONS_SHORT = [
-  { id: "members", label: "A'zolar" },
-  { id: "admins",  label: "Adminlar" },
+  { id: "members", label: "groups.perms.members" },
+  { id: "admins",  label: "groups.perms.admins" },
 ];
 
 const STEPS = [
-  { id: 1, label: "Asosiy",     icon: Info },
-  { id: 2, label: "Tasvir",     icon: ImageIcon },
-  { id: 3, label: "Maxfiylik",  icon: Shield },
-  { id: 4, label: "Ruxsatlar",  icon: Lock },
-  { id: 5, label: "Funksiyalar",icon: Zap },
-  { id: 6, label: "Qo'shimcha", icon: Settings2 },
+  { id: 1, label: "groups.steps.basic",     icon: Info },
+  { id: 2, label: "groups.steps.image",     icon: ImageIcon },
+  { id: 3, label: "groups.steps.privacy",   icon: Shield },
+  { id: 4, label: "groups.steps.perms",     icon: Lock },
+  { id: 5, label: "groups.steps.features",  icon: Zap },
+  { id: 6, label: "groups.steps.extra",     icon: Settings2 },
 ];
 
 const COLORS_CARD = [
@@ -195,12 +196,12 @@ interface GroupPoll {
 }
 
 const REACTIONS: { type: string; emoji: string; label: string }[] = [
-  { type: "heart", emoji: "❤️", label: "Sevaman" },
-  { type: "fire",  emoji: "🔥", label: "Ajoyib" },
-  { type: "laugh", emoji: "😂", label: "Kulgili" },
-  { type: "wow",   emoji: "😮", label: "Hayratda" },
-  { type: "clap",  emoji: "👏", label: "Bravo" },
-  { type: "sad",   emoji: "😢", label: "Achinish" },
+  { type: "heart", emoji: "❤️", label: "groups.reactions.heart" },
+  { type: "fire",  emoji: "🔥", label: "groups.reactions.fire" },
+  { type: "laugh", emoji: "😂", label: "groups.reactions.laugh" },
+  { type: "wow",   emoji: "😮", label: "groups.reactions.wow" },
+  { type: "clap",  emoji: "👏", label: "groups.reactions.clap" },
+  { type: "sad",   emoji: "😢", label: "groups.reactions.sad" },
 ];
 
 function renderContent(text: string) {
@@ -214,13 +215,14 @@ function renderContent(text: string) {
 }
 
 function timeAgo(dateStr: string): string {
+  const { t } = useTranslation();
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Hozir";
-  if (mins < 60) return `${mins} daqiqa oldin`;
+  if (mins < 1) return t("groups.time.now");
+  if (mins < 60) return t("groups.time.mins", { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} soat oldin`;
-  return `${Math.floor(hours / 24)} kun oldin`;
+  if (hours < 24) return t("groups.time.hours", { count: hours });
+  return t("groups.time.days", { count: Math.floor(hours / 24) });
 }
 
 type PrivacyLevel = "public" | "private" | "secret";
@@ -825,7 +827,7 @@ export default function GroupsPage() {
         });
       }, 1000);
     } catch {
-      showToast("Mikrofon ruxsat berilmadi");
+      showToast(t("groups.toast.mic_denied"));
     }
   };
 
@@ -870,12 +872,12 @@ export default function GroupsPage() {
         setNewPostContent(prev => prev ? prev + "\n" + text : text);
         setAiPrompt("");
         setShowAiAssist(false);
-        showToast("AI matni qo'shildi ✓");
+        showToast(t("groups.toast.ai_text_added"));
       } else {
-        showToast("AI xizmati hozir mavjud emas");
+        showToast(t("groups.toast.ai_unavailable"));
       }
     } catch {
-      showToast("AI xizmatiga ulanishda xato");
+      showToast(t("groups.toast.ai_error"));
     } finally {
       setAiLoading(false);
     }
@@ -896,14 +898,14 @@ export default function GroupsPage() {
         body: JSON.stringify({ content, mediaUrl: sharePost.mediaUrl ?? null }),
       });
       if (r.ok) {
-        showToast("Post lentangizga ulashildi ✓");
+        showToast(t("groups.toast.shared_to_feed"));
         setSharePost(null);
         setShareComment("");
       } else {
-        showToast("Ulashishda xato");
+        showToast(t("groups.toast.share_error"));
       }
     } catch {
-      showToast("Ulashishda xato");
+      showToast(t("groups.toast.share_error"));
     } finally {
       setSharingPost(false);
     }
@@ -926,7 +928,7 @@ export default function GroupsPage() {
           const drawFile = new File([drawingBlob], `drawing-${Date.now()}.png`, { type: "image/png" });
           mediaUrl = await uploadFile(drawFile);
         } catch {
-          showToast("Chizma yuklanmadi");
+          showToast(t("groups.toast.drawing_upload_fail"));
           setSubmittingPost(false);
           return;
         }
@@ -935,7 +937,7 @@ export default function GroupsPage() {
         try {
           mediaUrl = await uploadFile(postImageFile!);
         } catch {
-          showToast("Rasm yuklanmadi, qayta urinib ko'ring");
+          showToast(t("groups.toast.image_upload_fail"));
           setUploadingPostImage(false);
           return;
         }
@@ -946,7 +948,7 @@ export default function GroupsPage() {
           const audioFile = new File([audioBlob!], `voice-${Date.now()}.webm`, { type: "audio/webm" });
           mediaUrl = await uploadFile(audioFile);
         } catch {
-          showToast("Audio yuklanmadi");
+          showToast(t("groups.toast.audio_upload_fail"));
           setUploadingAudio(false);
           return;
         }
@@ -973,13 +975,13 @@ export default function GroupsPage() {
         setDrawingPreview(null);
         setSelectedGroup(prev => prev ? { ...prev, postsCount: (prev.postsCount ?? 0) + 1 } : null);
         qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
-        showToast("Post yuborildi ✓");
+        showToast(t("groups.toast.post_sent"));
       } else {
         const errData = await r.json().catch(() => ({}));
-        showToast((errData as any).error ?? "Post yuborishda xato");
+        showToast((errData as any).error ?? t("groups.toast.post_send_error"));
       }
     } catch {
-      showToast("Post yuborishda xato");
+      showToast(t("groups.toast.post_send_error"));
     } finally {
       setSubmittingPost(false);
       setUploadingPostImage(false);
@@ -1135,7 +1137,7 @@ export default function GroupsPage() {
       setGroupPosts(prev => prev.map(p => p.id === postId
         ? { ...p, isBookmarked: bookmarked, bookmarksCount: bookmarked ? p.bookmarksCount + 1 : Math.max(0, p.bookmarksCount - 1) }
         : p));
-      showToast(bookmarked ? "Saqlandi ✓" : "Saqlash bekor qilindi");
+      showToast(bookmarked ? t("groups.toast.bookmark_saved") : t("groups.toast.bookmark_removed"));
     }
   }, [selectedGroup]);
 
@@ -1152,7 +1154,7 @@ export default function GroupsPage() {
         isPinned: p.id === postId ? pinned : false,
       })).sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
       setPostMenuOpenId(null);
-      showToast(pinned ? "Post pin qilindi 📌" : "Pin olib tashlandi");
+      showToast(pinned ? t("groups.toast.pinned") : t("groups.toast.unpinned"));
     }
   }, [selectedGroup]);
 
@@ -1169,7 +1171,7 @@ export default function GroupsPage() {
       if (r.ok) {
         setReportPostId(null);
         setReportReason("");
-        showToast("Shikoyat yuborildi ✓");
+        showToast(t("groups.toast.report_sent"));
       }
     } finally {
       setSubmittingReport(false);
@@ -1196,7 +1198,7 @@ export default function GroupsPage() {
         setPolls(prev => [newPoll, ...prev]);
         setPollQuestion(""); setPollOptions(["", ""]);
         setShowPollCompose(false);
-        showToast("So'rovnoma yaratildi ✓");
+        showToast(t("groups.toast.poll_created"));
       }
     } finally {
       setSubmittingPoll(false);
@@ -1226,7 +1228,7 @@ export default function GroupsPage() {
       setGroupMembers(prev => prev.filter(m => m.id !== memberId));
       setSelectedGroup(prev => prev ? { ...prev, membersCount: Math.max(0, (prev.membersCount ?? 0) - 1) } : null);
       setMemberMenuId(null);
-      showToast("A'zo chiqarib yuborildi");
+      showToast(t("groups.toast.member_removed"));
     }
   }, [selectedGroup]);
 
@@ -1240,7 +1242,7 @@ export default function GroupsPage() {
     if (r.ok) {
       setGroupMembers(prev => prev.map(m => m.id === memberId ? { ...m, role } : m));
       setMemberMenuId(null);
-      showToast(`Rol o'zgartirildi: ${role}`);
+      showToast(t("groups.toast.role_changed", { role }));
     }
   }, [selectedGroup]);
 
@@ -1282,30 +1284,30 @@ export default function GroupsPage() {
       case 1: return (
         <div className="space-y-4">
           <div>
-            <label className="label-sm">Jamoa nomi <span className="text-destructive">*</span></label>
+            <label className="label-sm">{t("groups.form.name_label")} <span className="text-destructive">*</span></label>
             <input value={form.name} onChange={e => f("name", e.target.value)} maxLength={60}
-              placeholder="Jamoa nomini kiriting..."
+              placeholder={t("groups.form.name_ph")}
               className="input-base" />
             <p className="text-[10px] text-muted-foreground mt-1">{form.name.length}/60</p>
           </div>
 
           <div>
-            <label className="label-sm">Qisqa tavsif <span className="text-destructive">*</span></label>
+            <label className="label-sm">{t("groups.form.desc_label")} <span className="text-destructive">*</span></label>
             <textarea value={form.description} onChange={e => f("description", e.target.value)}
-              rows={2} maxLength={200} placeholder="Jamoa haqida qisqacha..."
+              rows={2} maxLength={200} placeholder={t("groups.form.desc_ph")}
               className="input-base resize-none" />
             <p className="text-[10px] text-muted-foreground mt-1">{form.description.length}/200</p>
           </div>
 
           <div>
-            <label className="label-sm">Batafsil ma'lumot</label>
+            <label className="label-sm">{t("groups.form.about_label")}</label>
             <textarea value={form.about} onChange={e => f("about", e.target.value)}
-              rows={3} maxLength={1000} placeholder="Jamoa maqsadi, qoidalar, kutilmalar..."
+              rows={3} maxLength={1000} placeholder={t("groups.form.about_ph")}
               className="input-base resize-none" />
           </div>
 
           <div>
-            <label className="label-sm">Kategoriya</label>
+            <label className="label-sm">{t("groups.form.category")}</label>
             <div className="grid grid-cols-3 gap-2 mt-1">
               {CATEGORIES.map(cat => (
                 <button key={cat.id} onClick={() => f("category", cat.id)}
@@ -1315,14 +1317,14 @@ export default function GroupsPage() {
                       : "border-border text-muted-foreground hover:text-foreground hover:border-border/80"
                   }`}>
                   <cat.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">{cat.label}</span>
+                  <span className="truncate">{t(cat.label)}</span>
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="label-sm">Jamoa turi</label>
+            <label className="label-sm">{t("groups.form.type")}</label>
             <div className="grid grid-cols-2 gap-2 mt-1">
               {GROUP_TYPES.map(gt => (
                 <button key={gt.id} onClick={() => f("groupType", gt.id)}
@@ -1331,7 +1333,7 @@ export default function GroupsPage() {
                       ? "bg-primary/15 border-primary/40 text-primary"
                       : "border-border text-muted-foreground hover:text-foreground"
                   }`}>
-                  {gt.label}
+                  {t(gt.label)}
                 </button>
               ))}
             </div>
@@ -1344,7 +1346,7 @@ export default function GroupsPage() {
         <div className="space-y-5">
           {/* Cover image */}
           <div>
-            <label className="label-sm">Muqova rasmi (Obloshka)</label>
+            <label className="label-sm">{t("groups.form.cover")}</label>
             <div
               onClick={() => fileRef.current?.click()}
               className={`relative mt-1 h-36 rounded-2xl overflow-hidden border-2 border-dashed transition-all cursor-pointer group ${
@@ -1361,8 +1363,8 @@ export default function GroupsPage() {
               ) : (
                 <div className={`w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground bg-gradient-to-br ${COLORS_CARD[0]}`}>
                   <Upload className="w-8 h-8 opacity-60" />
-                  <p className="text-xs font-medium">Rasm tanlash</p>
-                  <p className="text-[10px] opacity-60">JPG, PNG, WebP · Maks 10MB</p>
+                  <p className="text-xs font-medium">{t("groups.form.cover_hint")}</p>
+                  <p className="text-[10px] opacity-60">JPG, PNG, WebP · Max 10MB</p>
                 </div>
               )}
             </div>
@@ -1371,14 +1373,14 @@ export default function GroupsPage() {
             {form.coverPreview && (
               <button onClick={() => { f("coverPreview", ""); f("coverFile", null); f("coverUrl", ""); }}
                 className="mt-1.5 flex items-center gap-1 text-xs text-destructive/70 hover:text-destructive">
-                <X className="w-3 h-3" /> Rasmni olib tashlash
+                <X className="w-3 h-3" /> {t("common.delete")}
               </button>
             )}
           </div>
 
           {/* Group emoji icon */}
           <div>
-            <label className="label-sm">Jamoa belgisi (emoji)</label>
+            <label className="label-sm">{t("groups.form.icon")}</label>
             <div className="grid grid-cols-8 gap-1.5 mt-1">
               {GROUP_ICONS.map(emoji => (
                 <button key={emoji} onClick={() => f("icon", emoji)}
@@ -1393,11 +1395,11 @@ export default function GroupsPage() {
 
           {/* Theme color */}
           <div>
-            <label className="label-sm">Mavzu rangi</label>
+            <label className="label-sm">{t("groups.form.theme")}</label>
             <div className="flex gap-2 mt-1">
               {THEME_COLORS.map(c => (
                 <button key={c.hex} onClick={() => f("themeColor", c.hex)}
-                  title={c.label}
+                  title={t(c.label)}
                   className={`w-8 h-8 rounded-full transition-all ${
                     form.themeColor === c.hex ? "ring-2 ring-offset-2 ring-offset-card scale-110" : "hover:scale-105"
                   }`}
@@ -1408,7 +1410,7 @@ export default function GroupsPage() {
 
           {/* Preview card */}
           <div>
-            <label className="label-sm">Ko'rinish namunasi</label>
+            <label className="label-sm">{t("groups.common.preview")}</label>
             <div className="mt-1 rounded-2xl overflow-hidden border border-border">
               <div className="h-20 flex items-center justify-center relative"
                 style={{ background: `linear-gradient(135deg, ${form.themeColor}40, ${form.themeColor}20)` }}>
@@ -1417,8 +1419,8 @@ export default function GroupsPage() {
                   : <span className="text-4xl z-10 relative">{form.icon}</span>}
               </div>
               <div className="p-3 bg-card">
-                <p className="font-bold text-sm text-foreground">{form.name || "Jamoa nomi"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{form.description || "Tavsif..."}</p>
+                <p className="font-bold text-sm text-foreground">{form.name || t("groups.form.name_ph")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{form.description || t("groups.form.desc_ph")}</p>
               </div>
             </div>
           </div>
@@ -1430,12 +1432,12 @@ export default function GroupsPage() {
         <div className="space-y-5">
           {/* Privacy level */}
           <div>
-            <label className="label-sm">Maxfiylik darajasi</label>
+            <label className="label-sm">{t("groups.form.privacy")}</label>
             <div className="space-y-2 mt-1">
               {([
-                { id: "public",  icon: Globe,   label: "Ochiq",   desc: "Hamma ko'ra oladi va qo'shila oladi" },
-                { id: "private", icon: Lock,    label: "Maxsus",  desc: "Ko'rinadi, lekin admin ruxsati kerak" },
-                { id: "secret",  icon: EyeOff,  label: "Yashirin", desc: "Faqat taklif orqali topiladi" },
+                { id: "public",  icon: Globe,   label: t("groups.form.privacy_public"),   desc: t("groups.form.privacy_public_desc") },
+                { id: "private", icon: Lock,    label: t("groups.form.privacy_private"),  desc: t("groups.form.privacy_private_desc") },
+                { id: "secret",  icon: EyeOff,  label: t("groups.form.privacy_secret"), desc: t("groups.form.privacy_secret_desc") },
               ] as { id: PrivacyLevel; icon: ElementType; label: string; desc: string }[]).map(p => (
                 <button key={p.id} onClick={() => f("privacy", p.id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
@@ -1454,12 +1456,12 @@ export default function GroupsPage() {
 
           {/* Join type */}
           <div>
-            <label className="label-sm">Qo'shilish usuli</label>
+            <label className="label-sm">{t("groups.form.join_type")}</label>
             <div className="space-y-2 mt-1">
               {([
-                { id: "auto",   label: "Avtomatik",      desc: "Hamma darhol qo'shila oladi" },
-                { id: "manual", label: "Qo'lda tasdiqlash", desc: "Admin har bir arizani ko'rib chiqadi" },
-                { id: "invite", label: "Faqat taklif",   desc: "Faqat taklif linki orqali" },
+                { id: "auto",   label: t("groups.form.join_auto"),      desc: t("groups.form.join_auto_desc") },
+                { id: "manual", label: t("groups.form.join_manual"), desc: t("groups.form.join_manual_desc") },
+                { id: "invite", label: t("groups.form.join_invite"),   desc: t("groups.form.join_invite_desc") },
               ] as { id: JoinType; label: string; desc: string }[]).map(jt => (
                 <button key={jt.id} onClick={() => f("joinType", jt.id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
@@ -1477,27 +1479,27 @@ export default function GroupsPage() {
 
           {/* Toggles */}
           <div className="space-y-0 rounded-2xl bg-card border border-border px-4 py-2">
-            <ToggleRow icon={AlertCircle} label="18+ yosh chegarasi" desc="Faqat 18+ yoshdagilar uchun"
+            <ToggleRow icon={AlertCircle} label={t("groups.form.age_restriction")} desc={t("groups.form.age_restriction_desc")}
               on={form.ageRestriction} onToggle={() => f("ageRestriction", !form.ageRestriction)} accent="text-rose-400" />
-            <ToggleRow icon={Eye} label="A'zolar ro'yxatini ko'rsatish" desc="Kim ko'ra olishini nazorat qiling"
+            <ToggleRow icon={Eye} label={t("groups.form.show_list")} desc={t("groups.form.show_list_desc")}
               on={form.showMemberList} onToggle={() => f("showMemberList", !form.showMemberList)} />
-            <ToggleRow icon={Globe} label="Online a'zolarni ko'rsatish" desc="Hozir faol a'zolar"
+            <ToggleRow icon={Globe} label={t("groups.form.show_online")} desc={t("groups.form.show_online_desc")}
               on={form.showOnlineMembers} onToggle={() => f("showOnlineMembers", !form.showOnlineMembers)} />
-            <ToggleRow icon={Search} label="Qidiruvda topilish" desc="Boshqalar jamoani topa oladi"
+            <ToggleRow icon={Search} label={t("groups.form.discovery")} desc={t("groups.form.discovery_desc")}
               on={form.searchDiscovery} onToggle={() => f("searchDiscovery", !form.searchDiscovery)} />
-            <ToggleRow icon={Check} label="Ariza tasdiqlash" desc="Yangi a'zolarni qo'lda tasdiqlash"
+            <ToggleRow icon={Check} label={t("groups.form.approval")} desc={t("groups.form.approval_desc")}
               on={form.requireApproval} onToggle={() => f("requireApproval", !form.requireApproval)} />
           </div>
 
           {/* Max members */}
           <div>
-            <label className="label-sm">A'zolar limiti</label>
+            <label className="label-sm">{t("groups.form.max_members")}</label>
             <div className="flex items-center gap-3 mt-1">
               <input type="number" value={form.maxMembers || ""} min={0} max={100000}
                 onChange={e => f("maxMembers", Number(e.target.value))}
-                placeholder="Cheksiz (0)"
+                placeholder={t("groups.form.max_members_hint")}
                 className="input-base flex-1" />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">0 = cheksiz</span>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">{t("groups.form.max_members_hint")}</span>
             </div>
           </div>
         </div>
@@ -1507,32 +1509,32 @@ export default function GroupsPage() {
       case 4: return (
         <div className="space-y-4">
           <div className="rounded-2xl bg-card border border-border px-4 py-2">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide py-2 border-b border-border/40">Post & Izoh</p>
-            <PermSelect label="Kim post yozadi" value={form.postPermission} options={PERM_OPTIONS}
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide py-2 border-b border-border/40">{t("groups.form.post_comment")}</p>
+            <PermSelect label={t("groups.form.post_perm")} value={form.postPermission} options={PERM_OPTIONS}
               onChange={v => f("postPermission", v as PermLevel)} />
-            <PermSelect label="Kim izoh yozadi" value={form.commentPermission} options={PERM_OPTIONS}
+            <PermSelect label={t("groups.form.comment_perm")} value={form.commentPermission} options={PERM_OPTIONS}
               onChange={v => f("commentPermission", v as PermLevel)} />
-            <PermSelect label="Kim media yuklaydi" value={form.mediaPermission} options={PERM_OPTIONS}
+            <PermSelect label={t("groups.form.media_perm")} value={form.mediaPermission} options={PERM_OPTIONS}
               onChange={v => f("mediaPermission", v as PermLevel)} />
           </div>
 
           <div className="rounded-2xl bg-card border border-border px-4 py-2">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide py-2 border-b border-border/40">Taklif & Tadbirlar</p>
-            <PermSelect label="Kim taklif qiladi" value={form.invitePermission} options={PERM_OPTIONS}
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide py-2 border-b border-border/40">{t("groups.form.invite_events")}</p>
+            <PermSelect label={t("groups.form.invite_perm")} value={form.invitePermission} options={PERM_OPTIONS}
               onChange={v => f("invitePermission", v as PermLevel)} />
-            <PermSelect label="Kim event yaratadi" value={form.eventPermission} options={PERM_OPTIONS_SHORT}
+            <PermSelect label={t("groups.form.event_perm")} value={form.eventPermission} options={PERM_OPTIONS_SHORT}
               onChange={v => f("eventPermission", v as PermShort)} />
-            <PermSelect label="Kim so'rovnoma yaratadi" value={form.pollPermission} options={PERM_OPTIONS_SHORT}
+            <PermSelect label={t("groups.form.poll_perm")} value={form.pollPermission} options={PERM_OPTIONS_SHORT}
               onChange={v => f("pollPermission", v as PermShort)} />
           </div>
 
           <div className="rounded-2xl bg-card border border-border px-4 py-2">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide py-2 border-b border-border/40">Qo'shimcha ruxsatlar</p>
-            <ToggleRow icon={Link} label="Tashqi havolalar" desc="Post va izohlarda URL ishlaydi"
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide py-2 border-b border-border/40">{t("groups.form.extra_perms")}</p>
+            <ToggleRow icon={Link} label={t("groups.form.external_links")} desc={t("groups.form.external_links_desc")}
               on={form.allowExternalLinks} onToggle={() => f("allowExternalLinks", !form.allowExternalLinks)} />
-            <ToggleRow icon={EyeOff} label="Anonim postlar" desc="A'zolar anonimlik bilan yozishi mumkin"
+            <ToggleRow icon={EyeOff} label={t("groups.form.anon_posts")} desc={t("groups.form.anon_posts_desc")}
               on={form.allowAnonymousPosts} onToggle={() => f("allowAnonymousPosts", !form.allowAnonymousPosts)} />
-            <ToggleRow icon={Repeat2} label="Boshqa guruhga ulashish" desc="Postlarni boshqa guruhlarga ulashish"
+            <ToggleRow icon={Repeat2} label={t("groups.form.cross_posting")} desc={t("groups.form.cross_posting_desc")}
               on={form.allowCrossPosting} onToggle={() => f("allowCrossPosting", !form.allowCrossPosting)} />
           </div>
         </div>
@@ -1541,33 +1543,33 @@ export default function GroupsPage() {
       /* ── STEP 5: Features ───────────────────────────────────── */
       case 5: return (
         <div className="space-y-1 rounded-2xl bg-card border border-border px-4 py-2">
-          <ToggleRow icon={BarChart3}  label="So'rovnomalar"       desc="A'zolar ovoz berishi mumkin"
+          <ToggleRow icon={BarChart3}  label={t("groups.form.feat_polls")}       desc={t("groups.form.feat_polls_desc")}
             on={form.featPolls}       onToggle={() => f("featPolls",       !form.featPolls)} />
-          <ToggleRow icon={CalendarDays} label="Tadbirlar"         desc="Guruh ichida events yaratish"
+          <ToggleRow icon={CalendarDays} label={t("groups.form.feat_events")}         desc={t("groups.form.feat_events_desc")}
             on={form.featEvents}      onToggle={() => f("featEvents",      !form.featEvents)} />
-          <ToggleRow icon={Volume2}   label="Ovozli xonalar"      desc="Real-vaqtda audio suhbatlar"
+          <ToggleRow icon={Volume2}   label={t("groups.form.feat_voice")}      desc={t("groups.form.feat_voice_desc")}
             on={form.featVoiceRooms}  onToggle={() => f("featVoiceRooms",  !form.featVoiceRooms)} accent="text-emerald-400" />
-          <ToggleRow icon={Radio}     label="Jonli efir"          desc="Guruh ichida live stream"
+          <ToggleRow icon={Radio}     label={t("groups.form.feat_live")}          desc={t("groups.form.feat_live_desc")}
             on={form.featLiveStreams}  onToggle={() => f("featLiveStreams",  !form.featLiveStreams)} accent="text-rose-400" />
-          <ToggleRow icon={ShoppingBag} label="Guruh bozorchasi"  desc="A'zolar mahsulot sotishi"
+          <ToggleRow icon={ShoppingBag} label={t("groups.form.feat_market")}  desc={t("groups.form.feat_market_desc")}
             on={form.featMarketplace} onToggle={() => f("featMarketplace", !form.featMarketplace)} accent="text-amber-400" />
-          <ToggleRow icon={Award}     label="Nishon tizimi"       desc="Faol a'zolarga nishon berish"
+          <ToggleRow icon={Award}     label={t("groups.form.feat_badges")}       desc={t("groups.form.feat_badges_desc")}
             on={form.featBadges}      onToggle={() => f("featBadges",      !form.featBadges)} accent="text-yellow-400" />
-          <ToggleRow icon={Pin}       label="Muhrlangan postlar"  desc="Muhim postlarni yuqoriga qo'yish"
+          <ToggleRow icon={Pin}       label={t("groups.form.feat_pinned")}  desc={t("groups.form.feat_pinned_desc")}
             on={form.featPinnedPosts} onToggle={() => f("featPinnedPosts", !form.featPinnedPosts)} />
-          <ToggleRow icon={FileIcon}  label="Fayl ulashish"       desc="Hujjat, PDF, arxiv ulashish"
+          <ToggleRow icon={FileIcon}  label={t("groups.form.feat_files")}       desc={t("groups.form.feat_files_desc")}
             on={form.featFileSharing} onToggle={() => f("featFileSharing", !form.featFileSharing)} />
-          <ToggleRow icon={Bot}       label="AI moderatsiya"      desc="Spam va zararli kontent filtrlanadi"
+          <ToggleRow icon={Bot}       label={t("groups.form.feat_ai")}      desc={t("groups.form.feat_ai_desc")}
             on={form.featAiModeration} onToggle={() => f("featAiModeration", !form.featAiModeration)} accent="text-violet-400" />
-          <ToggleRow icon={Mail}      label="Haftalik xulosa"     desc="A'zolarga haftalik email yuboriladi"
+          <ToggleRow icon={Mail}      label={t("groups.form.feat_digest")}     desc={t("groups.form.feat_digest_desc")}
             on={form.featWeeklyDigest} onToggle={() => f("featWeeklyDigest", !form.featWeeklyDigest)} />
-          <ToggleRow icon={Bell}      label="E'lonlar kanali"     desc="Adminlar uchun alohida e'lon kanali"
+          <ToggleRow icon={Bell}      label={t("groups.form.feat_announcements")}     desc={t("groups.form.feat_announcements_desc")}
             on={form.featAnnouncements} onToggle={() => f("featAnnouncements", !form.featAnnouncements)} />
-          <ToggleRow icon={Languages} label="Avtomatik tarjima"   desc="Xabarlar foydalanuvchi tiliga tarjima"
+          <ToggleRow icon={Languages} label={t("groups.form.feat_translate")}   desc={t("groups.form.feat_translate_desc")}
             on={form.featAutoTranslate} onToggle={() => f("featAutoTranslate", !form.featAutoTranslate)} accent="text-cyan-400" />
-          <ToggleRow icon={Code}      label="Kod parchalar"       desc="Sintaksis rangli kod bloklari"
+          <ToggleRow icon={Code}      label={t("groups.form.feat_code")}       desc={t("groups.form.feat_code_desc")}
             on={form.featCodeSnippets} onToggle={() => f("featCodeSnippets", !form.featCodeSnippets)} accent="text-green-400" />
-          <ToggleRow icon={Clock}     label="Rejalashtirilgan postlar" desc="Kelajakka post rejalash"
+          <ToggleRow icon={Clock}     label={t("groups.form.feat_scheduled")} desc={t("groups.form.feat_scheduled_desc")}
             on={form.featScheduledPosts} onToggle={() => f("featScheduledPosts", !form.featScheduledPosts)} />
         </div>
       );
@@ -1578,31 +1580,31 @@ export default function GroupsPage() {
         <div className="space-y-4">
           {/* Mission */}
           <div>
-            <label className="label-sm">Missiya bayonoti</label>
+            <label className="label-sm">{t("groups.detail.mission")}</label>
             <textarea value={form.missionStatement} onChange={e => f("missionStatement", e.target.value)}
-              rows={2} maxLength={140} placeholder="Jamoaning asosiy maqsadi 140 belgi ichida..."
+              rows={2} maxLength={140} placeholder={t("groups.form.mission_ph")}
               className="input-base resize-none" />
             <p className="text-[10px] text-muted-foreground mt-1">{form.missionStatement.length}/140</p>
           </div>
 
           {/* Welcome message */}
           <div>
-            <label className="label-sm">Yangi a'zo xush kelibsiz xabari</label>
+            <label className="label-sm">{t("groups.form.welcome_msg")}</label>
             <textarea value={form.welcomeMessage} onChange={e => f("welcomeMessage", e.target.value)}
-              rows={2} maxLength={500} placeholder="Yangi a'zolarga avtomatik yuboriladi..."
+              rows={2} maxLength={500} placeholder={t("groups.form.welcome_msg_ph")}
               className="input-base resize-none" />
           </div>
 
           {/* Rules */}
           <div>
-            <label className="label-sm">Jamoa qoidalari (max 5 ta)</label>
+            <label className="label-sm">{t("groups.form.rules")}</label>
             <div className="space-y-2 mt-1">
               {form.rules.map((rule, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
                   <input value={rule} onChange={e => {
                     const r = [...form.rules]; r[i] = e.target.value; f("rules", r);
-                  }} placeholder={`${i + 1}-qoida...`} className="input-base py-2 text-sm" />
+                  }} placeholder={t("groups.form.rules_ph")} className="input-base py-2 text-sm" />
                 </div>
               ))}
             </div>
@@ -1610,14 +1612,14 @@ export default function GroupsPage() {
 
           {/* Tags */}
           <div>
-            <label className="label-sm">Teglar / hashtag (max 5 ta)</label>
+            <label className="label-sm">{t("groups.form.tags")}</label>
             <div className="flex flex-wrap gap-2 mt-1">
               {form.tags.map((tag, i) => (
                 <div key={i} className="flex items-center gap-1 bg-muted rounded-xl px-2 py-1.5">
                   <Hash className="w-3 h-3 text-muted-foreground" />
                   <input value={tag} onChange={e => {
                     const tgs = [...form.tags]; tgs[i] = e.target.value.replace(/\s/g, ""); f("tags", tgs);
-                  }} placeholder={`teg${i + 1}`} maxLength={20}
+                  }} placeholder={t("groups.form.tags_ph")} maxLength={20}
                     className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none w-20" />
                 </div>
               ))}
@@ -1626,12 +1628,12 @@ export default function GroupsPage() {
 
           {/* Qo'shilish savollari */}
           <div>
-            <label className="label-sm">Qo'shilish savollari (ixtiyoriy)</label>
+            <label className="label-sm">{t("groups.form.join_questions")}</label>
             <div className="space-y-2 mt-1">
               {[
-                { key: "joinQuestion1" as const, ph: "1-savol: Nima uchun qo'shilmoqchisiz?" },
-                { key: "joinQuestion2" as const, ph: "2-savol: Tajribangiz qanday?" },
-                { key: "joinQuestion3" as const, ph: "3-savol: Qanday hissa qo'sha olasiz?" },
+                { key: "joinQuestion1" as const, ph: t("groups.form.join_q1") },
+                { key: "joinQuestion2" as const, ph: t("groups.form.join_q2") },
+                { key: "joinQuestion3" as const, ph: t("groups.form.join_q3") },
               ].map(({ key, ph }) => (
                 <input key={key} value={form[key]} onChange={e => f(key, e.target.value)}
                   placeholder={ph} className="input-base text-sm" />
@@ -1641,12 +1643,12 @@ export default function GroupsPage() {
 
           {/* Social links */}
           <div className="space-y-2">
-            <label className="label-sm">Aloqa va ijtimoiy tarmoqlar</label>
+            <label className="label-sm">{t("groups.form.social")}</label>
             {[
-              { key: "websiteUrl" as const,   icon: Globe,     ph: "https://sayt.uz" },
-              { key: "contactEmail" as const, icon: Mail,      ph: "admin@jamoa.uz" },
-              { key: "telegramLink" as const, icon: Send,      ph: "https://t.me/jamoa" },
-              { key: "instagramLink" as const,icon: Instagram, ph: "https://instagram.com/jamoa" },
+              { key: "websiteUrl" as const,   icon: Globe,     ph: t("groups.form.website_ph") },
+              { key: "contactEmail" as const, icon: Mail,      ph: t("groups.form.email_ph") },
+              { key: "telegramLink" as const, icon: Send,      ph: t("groups.form.tg_ph") },
+              { key: "instagramLink" as const,icon: Instagram, ph: t("groups.form.insta_ph") },
             ].map(({ key, icon: Icon, ph }) => (
               <div key={key} className="flex items-center gap-2">
                 <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -1726,7 +1728,7 @@ export default function GroupsPage() {
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div>
                       <h3 className="font-bold text-foreground">{group.name}</h3>
-                      <p className="text-xs text-muted-foreground">{group.category}</p>
+                      <p className="text-xs text-muted-foreground">{t(`groups.categories.${group.category}`)}</p>
                     </div>
                     <motion.button whileTap={{ scale: 0.95 }} onClick={e => { e.stopPropagation(); handleJoin(group.id); }}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors flex-shrink-0 ${
@@ -1792,7 +1794,7 @@ export default function GroupsPage() {
                 <button
                   onClick={handleOpenSettings}
                   className="absolute top-4 right-4 w-9 h-9 rounded-xl bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-                  title="Guruh sozlamalari"
+                  title={t("groups.detail.settings")}
                 >
                   <Settings2 className="w-5 h-5" />
                 </button>
@@ -1803,9 +1805,9 @@ export default function GroupsPage() {
                 <h2 className="text-xl font-bold text-white drop-shadow-lg">{selectedGroup.name}</h2>
                 <div className="flex items-center gap-3 mt-1 text-white/80 text-xs">
                   {selectedGroup.isPrivate
-                    ? <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> Yopiq guruh</span>
-                    : <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> Ochiq guruh</span>}
-                  {selectedGroup.category && <span>• {selectedGroup.category}</span>}
+                    ? <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> {t("groups.detail.private_group")}</span>
+                    : <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> {t("groups.detail.public_group")}</span>}
+                  {selectedGroup.category && <span>• {t(`groups.categories.${selectedGroup.category}`)}</span>}
                 </div>
               </div>
             </div>
@@ -1816,13 +1818,13 @@ export default function GroupsPage() {
                 <span className="flex items-center gap-1.5 text-muted-foreground">
                   <Users className="w-4 h-4" />
                   <span className="font-semibold text-foreground">{(selectedGroup.membersCount ?? 0).toLocaleString()}</span>
-                  <span>a'zo</span>
+                  <span>{t("groups.members")}</span>
                 </span>
                 <span className="text-muted-foreground/40">•</span>
                 <span className="flex items-center gap-1 text-muted-foreground">
                   <MessageSquare className="w-4 h-4" />
                   <span className="font-semibold text-foreground">{(selectedGroup.postsCount ?? 0).toLocaleString()}</span>
-                  <span>post</span>
+                  <span>{t("groups.posts")}</span>
                 </span>
               </div>
               <motion.button
@@ -1834,7 +1836,7 @@ export default function GroupsPage() {
                     : "bg-primary text-primary-foreground hover:opacity-90"
                 }`}
               >
-                {(joinedIds.has(selectedGroup.id) || selectedGroup.isMember) ? "Chiqish" : "Qo'shilish"}
+                {(joinedIds.has(selectedGroup.id) || selectedGroup.isMember) ? t("groups.leave") : t("groups.join")}
               </motion.button>
             </div>
 
@@ -1848,7 +1850,7 @@ export default function GroupsPage() {
                     activeDetailTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {tab === "feed" ? "Lenta" : tab === "members" ? "A'zolar" : "Haqida"}
+                  {tab === "feed" ? t("groups.detail.feed") : tab === "members" ? t("groups.detail.members_tab") : t("groups.detail.about_tab")}
                   {activeDetailTab === tab && (
                     <motion.div layoutId="detail-tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
                   )}
@@ -1865,17 +1867,17 @@ export default function GroupsPage() {
                     <textarea
                       value={newPostContent}
                       onChange={e => setNewPostContent(e.target.value)}
-                      placeholder="Guruh bilan fikringizni baham ko'ring..."
+                      placeholder={t("groups.detail.write_post")}
                       rows={3}
                       className="w-full bg-transparent text-foreground text-sm placeholder:text-muted-foreground focus:outline-none resize-none"
                     />
                     {/* Drawing preview in composer */}
                     {drawingPreview && (
                       <div className="relative mt-2 mb-1">
-                        <img src={drawingPreview} alt="Chizma" className="rounded-xl w-full max-h-48 object-contain bg-[#1a1a2e]" />
+                        <img src={drawingPreview} alt={t("groups.detail.draw")} className="rounded-xl w-full max-h-48 object-contain bg-[#1a1a2e]" />
                         <div className="absolute top-2 left-2 flex items-center gap-1 opacity-70">
                           <PenLine className="w-3 h-3 text-white" />
-                          <span className="text-[9px] text-white font-medium">Chizma</span>
+                          <span className="text-[9px] text-white font-medium">{t("groups.detail.draw")}</span>
                         </div>
                         <button
                           onClick={() => { setDrawingBlob(null); setDrawingPreview(null); }}
@@ -1919,10 +1921,10 @@ export default function GroupsPage() {
                     {isRecording && (
                       <div className="mt-2 mb-1 flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
-                        <span className="text-xs font-semibold text-red-400">Yozilmoqda... {recordingTime}s</span>
+                        <span className="text-xs font-semibold text-red-400">{t("groups.detail.voice_recording")} {recordingTime}s</span>
                         <button onClick={handleStopRecording}
                           className="ml-auto px-3 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/30 transition-colors">
-                          To'xtatish
+                          {t("groups.detail.voice_stop")}
                         </button>
                       </div>
                     )}
@@ -1940,7 +1942,7 @@ export default function GroupsPage() {
                               value={aiPrompt}
                               onChange={e => setAiPrompt(e.target.value)}
                               onKeyDown={e => { if (e.key === "Enter") handleAiAssist(); if (e.key === "Escape") setShowAiAssist(false); }}
-                              placeholder="AI nima haqida yozsin? (Enter bosing)"
+                              placeholder={t("groups.detail.ai_prompt_ph")}
                               className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
                             />
                             {aiLoading
@@ -1970,7 +1972,7 @@ export default function GroupsPage() {
                           onClick={() => postFileRef.current?.click()}
                           disabled={isRecording || !!audioBlob}
                           className={`p-1.5 rounded-lg hover:bg-muted transition-colors disabled:opacity-30 ${postImageFile ? "text-primary" : ""}`}
-                          title="Rasm qo'shish"
+                          title={t("groups.detail.image")}
                         >
                           <ImageIcon className="w-4 h-4" />
                         </button>
@@ -1978,7 +1980,7 @@ export default function GroupsPage() {
                         <button
                           disabled={!!postImageFile}
                           onClick={isRecording ? handleStopRecording : (audioBlob ? handleCancelRecording : handleStartRecording)}
-                          title={isRecording ? "Yozishni to'xtatish" : "Ovozli xabar"}
+                          title={isRecording ? t("groups.detail.voice_stop") : t("groups.detail.voice")}
                           className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${
                             isRecording ? "text-red-400 bg-red-500/10 animate-pulse" :
                             audioBlob ? "text-primary bg-primary/10" :
@@ -1991,14 +1993,14 @@ export default function GroupsPage() {
                         <button
                           onClick={() => setShowPollCompose(s => !s)}
                           className={`p-1.5 rounded-lg hover:bg-muted transition-colors ${showPollCompose ? "text-primary" : ""}`}
-                          title="So'rovnoma yaratish">
+                          title={t("groups.detail.poll")}>
                           <BarChart3 className="w-4 h-4" />
                         </button>
                         {/* AI Sparkles */}
                         <button
                           onClick={() => { setShowAiAssist(s => !s); setAiPrompt(""); }}
                           className={`p-1.5 rounded-lg hover:bg-muted transition-colors ${showAiAssist ? "text-primary" : ""}`}
-                          title="AI yordamida yozish"
+                          title={t("groups.detail.ai")}
                         >
                           <Sparkles className="w-4 h-4" />
                         </button>
@@ -2006,7 +2008,7 @@ export default function GroupsPage() {
                         <button
                           onClick={() => setShowDraw(true)}
                           className={`p-1.5 rounded-lg hover:bg-muted transition-colors ${showDraw ? "text-primary" : ""}`}
-                          title="Kanvasda chiz"
+                          title={t("groups.detail.draw")}
                         >
                           <PenLine className="w-4 h-4" />
                         </button>
@@ -2017,8 +2019,8 @@ export default function GroupsPage() {
                         className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5"
                       >
                         {submittingPost
-                          ? <><div className="w-3 h-3 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Yuborilmoqda</>
-                          : <><Send className="w-3 h-3" /> Yuborish</>
+                          ? <><div className="w-3 h-3 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> {t("common.loading")}</>
+                          : <><Send className="w-3 h-3" /> {t("groups.detail.post_btn")}</>
                         }
                       </button>
                     </div>
@@ -2032,7 +2034,7 @@ export default function GroupsPage() {
                         className="bg-card border border-primary/20 rounded-2xl p-4 space-y-3 overflow-hidden">
                         <div className="flex items-center gap-2 mb-1">
                           <BarChart3 className="w-4 h-4 text-primary" />
-                          <p className="text-sm font-bold text-foreground">So'rovnoma yaratish</p>
+                          <p className="text-sm font-bold text-foreground">{t("groups.detail.poll_create")}</p>
                           <button onClick={() => setShowPollCompose(false)} className="ml-auto text-muted-foreground hover:text-foreground">
                             <X className="w-4 h-4" />
                           </button>
@@ -2040,7 +2042,7 @@ export default function GroupsPage() {
                         <input
                           value={pollQuestion}
                           onChange={e => setPollQuestion(e.target.value)}
-                          placeholder="Savol yozing..."
+                          placeholder={t("groups.detail.poll_question")}
                           className="w-full bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/40"
                         />
                         <div className="space-y-2">
@@ -2053,7 +2055,7 @@ export default function GroupsPage() {
                                   next[idx] = e.target.value;
                                   setPollOptions(next);
                                 }}
-                                placeholder={`Variant ${idx + 1}`}
+                                placeholder={`${t("groups.detail.poll_option")} ${idx + 1}`}
                                 className="flex-1 bg-muted/60 text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/40"
                               />
                               {pollOptions.length > 2 && (
@@ -2067,7 +2069,7 @@ export default function GroupsPage() {
                           {pollOptions.length < 6 && (
                             <button onClick={() => setPollOptions(p => [...p, ""])}
                               className="text-xs text-primary font-semibold flex items-center gap-1 hover:opacity-80">
-                              <Plus className="w-3.5 h-3.5" /> Variant qo'shish
+                              <Plus className="w-3.5 h-3.5" /> {t("groups.detail.poll_add_option")}
                             </button>
                           )}
                         </div>
@@ -2077,8 +2079,8 @@ export default function GroupsPage() {
                             disabled={!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2 || submittingPoll}
                             className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5">
                             {submittingPoll
-                              ? <><div className="w-3 h-3 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Yuklanmoqda</>
-                              : "Yaratish"
+                              ? <><div className="w-3 h-3 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> {t("common.loading")}</>
+                              : t("groups.detail.poll_create")
                             }
                           </button>
                         </div>
@@ -2092,7 +2094,7 @@ export default function GroupsPage() {
                       {(["all", "media", "polls"] as const).map(f => (
                         <button key={f} onClick={() => setPostFilter(f)}
                           className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${postFilter === f ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                          {f === "all" ? "Barchasi" : f === "media" ? "📷 Media" : "📊 So'rovnomalar"}
+                          {f === "all" ? t("groups.detail.filter_all") : f === "media" ? `📷 ${t("groups.detail.filter_media")}` : `📊 ${t("groups.detail.filter_polls")}`}
                         </button>
                       ))}
                     </div>
@@ -2100,7 +2102,7 @@ export default function GroupsPage() {
                       {(["newest", "popular"] as const).map(s => (
                         <button key={s} onClick={() => setPostSort(s)}
                           className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${postSort === s ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                          {s === "newest" ? "🕒 Yangi" : "🔥 Mashhur"}
+                          {s === "newest" ? `🕒 ${t("groups.detail.sort_newest")}` : `🔥 ${t("groups.detail.sort_popular")}`}
                         </button>
                       ))}
                     </div>
@@ -2132,7 +2134,7 @@ export default function GroupsPage() {
                               );
                             })}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-2">{poll.totalVotes} ovoz</p>
+                          <p className="text-xs text-muted-foreground mt-2">{poll.totalVotes} {t("groups.detail.votes")}</p>
                         </div>
                       ))}
                     </div>
@@ -2165,8 +2167,8 @@ export default function GroupsPage() {
                       <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
                         <MessageSquare className="w-9 h-9 opacity-30" />
                       </div>
-                      <p className="font-semibold text-foreground mb-1">Hali postlar yo'q</p>
-                      <p className="text-sm">Bu guruhda birinchi bo'lib post yozing!</p>
+                      <p className="font-semibold text-foreground mb-1">{t("groups.detail.no_posts")}</p>
+                      <p className="text-sm">{t("groups.detail.no_posts_desc")}</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -2195,7 +2197,7 @@ export default function GroupsPage() {
                             {post.isPinned && (
                               <div className="flex items-center gap-1.5 px-4 pt-3 pb-0">
                                 <span className="text-xs">📌</span>
-                                <span className="text-xs font-semibold text-amber-500">Muhim post</span>
+                                <span className="text-xs font-semibold text-amber-500">{t("groups.detail.pinned")}</span>
                               </div>
                             )}
 
@@ -2227,22 +2229,22 @@ export default function GroupsPage() {
                                         <button onClick={() => handleBookmark(post.id)}
                                           className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2">
                                           <Bookmark className={`w-3.5 h-3.5 ${post.isBookmarked ? "fill-primary text-primary" : ""}`} />
-                                          {post.isBookmarked ? "Saqlangan" : "Saqlash"}
+                                          {post.isBookmarked ? t("groups.detail.bookmarked") : t("groups.detail.bookmark")}
                                         </button>
                                         {isCreatorOrAdmin && (
                                           <button onClick={() => handlePin(post.id)}
                                             className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2">
-                                            <span>{post.isPinned ? "📌 Pin olib tashlash" : "📌 Pin qilish"}</span>
+                                            <span>{post.isPinned ? `📌 ${t("groups.detail.unpin")}` : `📌 ${t("groups.detail.pin")}`}</span>
                                           </button>
                                         )}
                                         <button onClick={() => { setReportPostId(post.id); setPostMenuOpenId(null); }}
                                           className="w-full text-left px-3 py-2 text-xs hover:bg-muted text-orange-500 flex items-center gap-2">
-                                          <Flag className="w-3.5 h-3.5" /> Shikoyat
+                                          <Flag className="w-3.5 h-3.5" /> {t("groups.detail.report")}
                                         </button>
                                         {(user?.id === post.authorId || isCreatorOrAdmin) && (
                                           <button onClick={() => { handleDeletePost(post.id); setPostMenuOpenId(null); }}
                                             className="w-full text-left px-3 py-2 text-xs hover:bg-muted text-destructive flex items-center gap-2">
-                                            <Trash2 className="w-3.5 h-3.5" /> O'chirish
+                                            <Trash2 className="w-3.5 h-3.5" /> {t("groups.detail.delete_post")}
                                           </button>
                                         )}
                                       </motion.div>
@@ -2366,7 +2368,7 @@ export default function GroupsPage() {
                                           value={newCommentText[post.id] ?? ""}
                                           onChange={e => setNewCommentText(prev => ({ ...prev, [post.id]: e.target.value }))}
                                           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmitComment(post.id); } }}
-                                          placeholder="Izoh yozing..."
+                                          placeholder={t("groups.detail.comment_ph")}
                                           className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
                                         />
                                         <motion.button whileTap={{ scale: 0.9 }}
@@ -2439,19 +2441,19 @@ export default function GroupsPage() {
                       <div className="flex items-center justify-between gap-3 mb-2">
                         <div className="flex items-center gap-2">
                           <Link className="w-4 h-4 text-primary" />
-                          <span className="text-sm font-semibold text-foreground">Taklif havolasi</span>
+                          <span className="text-sm font-semibold text-foreground">{t("groups.detail.invite_link")}</span>
                         </div>
                         <button onClick={fetchInviteLink} disabled={loadingInvite}
                           className="text-xs text-primary font-semibold hover:opacity-80 transition-opacity disabled:opacity-50">
-                          {loadingInvite ? "Yuklanmoqda..." : inviteLink ? "Yangilash" : "Ko'rsatish"}
+                          {loadingInvite ? t("common.loading") : inviteLink ? t("groups.detail.refresh_short") : t("groups.detail.show_short")}
                         </button>
                       </div>
                       {inviteLink && (
                         <div className="flex items-center gap-2 bg-muted/60 rounded-xl px-3 py-2">
                           <p className="text-xs text-muted-foreground flex-1 truncate font-mono">{inviteLink}</p>
-                          <button onClick={() => { navigator.clipboard.writeText(inviteLink); showToast("Nusxa olindi ✓"); }}
+                          <button onClick={() => { navigator.clipboard.writeText(inviteLink); showToast(t("groups.toast.link_copied")); }}
                             className="text-xs text-primary font-semibold flex-shrink-0 flex items-center gap-1">
-                            <Copy className="w-3 h-3" /> Nusxa
+                            <Copy className="w-3 h-3" /> {t("groups.detail.copy_short")}
                           </button>
                         </div>
                       )}
@@ -2473,8 +2475,8 @@ export default function GroupsPage() {
                   ) : groupMembers.length === 0 ? (
                     <div className="text-center py-16 text-muted-foreground">
                       <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                      <p className="font-semibold text-foreground mb-1">A'zolar yo'q</p>
-                      <p className="text-sm">Guruhga qo'shiling va do'stlarni taklif qiling!</p>
+                      <p className="font-semibold text-foreground mb-1">{t("groups.detail.no_members_title")}</p>
+                      <p className="text-sm">{t("groups.detail.no_members_desc")}</p>
                     </div>
                   ) : (
                     <div className="space-y-1">
@@ -2497,9 +2499,9 @@ export default function GroupsPage() {
                                 <p className="font-semibold text-sm text-foreground truncate">{member.displayName}</p>
                                 {member.isVerified && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
                                 {member.isPremium && <Crown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
-                                {isCreator && <span className="text-[10px] bg-amber-400/20 text-amber-600 font-bold px-1.5 py-0.5 rounded-md">Asoschı</span>}
-                                {(member as any).role === "admin" && !isCreator && <span className="text-[10px] bg-primary/20 text-primary font-bold px-1.5 py-0.5 rounded-md">Admin</span>}
-                                {(member as any).role === "moderator" && <span className="text-[10px] bg-blue-500/20 text-blue-500 font-bold px-1.5 py-0.5 rounded-md">Mod</span>}
+                                {isCreator && <span className="text-[10px] bg-amber-400/20 text-amber-600 font-bold px-1.5 py-0.5 rounded-md">{t("groups.detail.creator_badge")}</span>}
+                                {(member as any).role === "admin" && !isCreator && <span className="text-[10px] bg-primary/20 text-primary font-bold px-1.5 py-0.5 rounded-md">{t("groups.detail.role_admin")}</span>}
+                                {(member as any).role === "moderator" && <span className="text-[10px] bg-blue-500/20 text-blue-500 font-bold px-1.5 py-0.5 rounded-md">{t("groups.detail.role_mod_short")}</span>}
                                 {(member as any).isMuted && <span className="text-[10px] bg-orange-500/20 text-orange-500 font-bold px-1.5 py-0.5 rounded-md">🔇</span>}
                               </div>
                               <p className="text-xs text-muted-foreground">@{member.username}</p>
@@ -2515,11 +2517,11 @@ export default function GroupsPage() {
                                     <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
                                       exit={{ opacity: 0, scale: 0.92 }} transition={{ duration: 0.12 }}
                                       className="absolute right-0 top-8 z-30 bg-card border border-border rounded-xl shadow-xl py-1 min-w-[160px]">
-                                      <div className="px-3 py-1.5 text-[10px] text-muted-foreground font-semibold uppercase tracking-wide border-b border-border">Rol o'zgartirish</div>
+                                      <div className="px-3 py-1.5 text-[10px] text-muted-foreground font-semibold uppercase tracking-wide border-b border-border">{t("groups.detail.change_role_header")}</div>
                                       {["member", "moderator", "admin"].map(role => (
                                         <button key={role} onClick={() => handleChangeRole(member.id, role)}
                                           className={`w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 ${(member as any).role === role ? "text-primary font-semibold" : "text-foreground"}`}>
-                                          {role === "member" ? "👤 A'zo" : role === "moderator" ? "🛡️ Moderator" : "⚡ Admin"}
+                                          {role === "member" ? `👤 ${t("groups.detail.role_member")}` : role === "moderator" ? `🛡️ ${t("groups.detail.role_moderator")}` : `⚡ ${t("groups.detail.role_admin")}`}
                                           {(member as any).role === role && <Check className="w-3 h-3 ml-auto" />}
                                         </button>
                                       ))}
@@ -2545,18 +2547,18 @@ export default function GroupsPage() {
                 <div className="space-y-5">
                   {selectedGroup.description && (
                     <div className="bg-card border border-border rounded-2xl p-4">
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Tavsif</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">{t("groups.detail.description_label")}</p>
                       <p className="text-sm text-foreground leading-relaxed">{selectedGroup.description}</p>
                     </div>
                   )}
 
                   <div className="bg-card border border-border rounded-2xl divide-y divide-border">
                     {[
-                      { icon: Globe, label: "Maxfiylik", value: selectedGroup.isPrivate ? "Yopiq guruh" : "Ochiq guruh" },
-                      { icon: Hash, label: "Kategoriya", value: selectedGroup.category || "Belgilanmagan" },
-                      { icon: Users, label: "A'zolar soni", value: (selectedGroup.membersCount ?? 0).toLocaleString() },
-                      { icon: MessageSquare, label: "Postlar soni", value: (selectedGroup.postsCount ?? 0).toLocaleString() },
-                      { icon: CalendarDays, label: "Yaratilgan", value: selectedGroup.createdAt ? new Date(selectedGroup.createdAt).toLocaleDateString("uz-UZ", { year: "numeric", month: "long", day: "numeric" }) : "—" },
+                      { icon: Globe, label: t("groups.detail.privacy_label"), value: selectedGroup.isPrivate ? t("groups.detail.private_group") : t("groups.detail.public_group") },
+                      { icon: Hash, label: t("groups.form.category"), value: selectedGroup.category || t("settings.lt_not_set") },
+                      { icon: Users, label: t("groups.detail.members_count_label"), value: (selectedGroup.membersCount ?? 0).toLocaleString() },
+                      { icon: MessageSquare, label: t("groups.detail.posts_count_label"), value: (selectedGroup.postsCount ?? 0).toLocaleString() },
+                      { icon: CalendarDays, label: t("groups.detail.created_label"), value: selectedGroup.createdAt ? new Date(selectedGroup.createdAt).toLocaleDateString("uz-UZ", { year: "numeric", month: "long", day: "numeric" }) : "—" },
                     ].map(({ icon: Icon, label, value }) => (
                       <div key={label} className="flex items-center gap-3 px-4 py-3">
                         <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -2575,16 +2577,16 @@ export default function GroupsPage() {
                           className="w-full py-3 rounded-2xl border border-destructive/30 text-destructive text-sm font-semibold hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
                         >
                           <Trash2 className="w-4 h-4" />
-                          Guruhni o'chirish
+                          {t("groups.detail.delete_group")}
                         </button>
                       ) : (
                         <div className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 space-y-3">
                           <div className="flex items-start gap-3">
                             <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
                             <div>
-                              <p className="text-sm font-bold text-foreground">Guruhni o'chirasizmi?</p>
+                              <p className="text-sm font-bold text-foreground">{t("groups.detail.delete_confirm_title")}</p>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                Bu amalni qaytarib bo'lmaydi. Barcha postlar va a'zolar ro'yxati o'chiriladi.
+                                {t("groups.detail.delete_confirm_desc")}
                               </p>
                             </div>
                           </div>
@@ -2593,13 +2595,13 @@ export default function GroupsPage() {
                               onClick={() => setDeleteGroupConfirm(false)}
                               className="flex-1 py-2 rounded-xl border border-border text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors"
                             >
-                              Bekor qilish
+                              {t("common.cancel")}
                             </button>
                             <button
                               onClick={handleDeleteGroup}
                               className="flex-1 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-bold hover:opacity-90 transition-opacity"
                             >
-                              Ha, o'chirish
+                              {t("groups.detail.delete_confirm_yes")}
                             </button>
                           </div>
                         </div>
@@ -2635,7 +2637,7 @@ export default function GroupsPage() {
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <div className="text-center">
-                <p className="text-sm font-bold text-foreground">Guruh sozlamalari</p>
+                <p className="text-sm font-bold text-foreground">{t("groups.detail.settings")}</p>
                 <p className="text-xs text-muted-foreground truncate max-w-[160px]">{selectedGroup.name}</p>
               </div>
               <button
@@ -2643,7 +2645,7 @@ export default function GroupsPage() {
                 disabled={settingsSaving || settingsCoverUploading || !settingsForm.name.trim()}
                 className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50 transition-opacity"
               >
-                {settingsSaving ? "..." : "Saqlash"}
+                {settingsSaving ? "..." : t("common.save")}
               </button>
             </div>
 
@@ -2680,8 +2682,8 @@ export default function GroupsPage() {
                     sf("icon", icons[(cur + 1) % icons.length]);
                   }}>{settingsForm.icon}</div>
                   <div>
-                    <p className="text-xs font-bold text-foreground">Ikon</p>
-                    <p className="text-xs text-muted-foreground">Bosing — o'zgartirish</p>
+                    <p className="text-xs font-bold text-foreground">{t("groups.detail.icon_label")}</p>
+                    <p className="text-xs text-muted-foreground">{t("groups.detail.icon_tap_hint")}</p>
                   </div>
                   <div className="ml-auto flex items-center gap-2">
                     {THEME_COLORS.map(tc => (
@@ -2696,30 +2698,30 @@ export default function GroupsPage() {
 
               {/* Basic info */}
               <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Asosiy ma'lumot</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{t("groups.detail.basic_info")}</p>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">Guruh nomi *</label>
+                  <label className="text-xs font-semibold text-muted-foreground">{t("groups.detail.name_label")}</label>
                   <input
                     value={settingsForm.name}
                     onChange={e => sf("name", e.target.value)}
-                    placeholder="Guruh nomi..."
+                    placeholder={t("groups.detail.name_ph")}
                     maxLength={60}
                     className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">Tavsif</label>
+                  <label className="text-xs font-semibold text-muted-foreground">{t("groups.detail.description_label")}</label>
                   <textarea
                     value={settingsForm.description}
                     onChange={e => sf("description", e.target.value)}
-                    placeholder="Guruh haqida qisqacha..."
+                    placeholder={t("groups.detail.desc_ph")}
                     rows={3}
                     maxLength={500}
                     className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors resize-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">Kategoriya</label>
+                  <label className="text-xs font-semibold text-muted-foreground">{t("groups.form.category")}</label>
                   <div className="flex flex-wrap gap-2">
                     {CATEGORIES.map(cat => (
                       <button key={cat.id} onClick={() => sf("category", cat.id === settingsForm.category ? "" : cat.id)}
@@ -2734,11 +2736,11 @@ export default function GroupsPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">Xush kelibsiz xabari</label>
+                  <label className="text-xs font-semibold text-muted-foreground">{t("groups.form.welcome_msg")}</label>
                   <textarea
                     value={settingsForm.welcomeMessage}
                     onChange={e => sf("welcomeMessage", e.target.value)}
-                    placeholder="Yangi a'zolarga xabar..."
+                    placeholder={t("groups.detail.welcome_ph")}
                     rows={2}
                     maxLength={300}
                     className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors resize-none"
@@ -2748,12 +2750,12 @@ export default function GroupsPage() {
 
               {/* Privacy */}
               <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Maxfiylik</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{t("groups.detail.privacy_label")}</p>
                 <div className="space-y-2">
                   {([
-                    { v: "public",  label: "Ochiq",    desc: "Hamma ko'radi va qo'shila oladi",          icon: Globe },
-                    { v: "private", label: "Yopiq",    desc: "Faqat taklif bilan qo'shilish mumkin",     icon: Lock },
-                    { v: "secret",  label: "Maxfiy",   desc: "Faqat a'zolarga ko'rinadi",                icon: Shield },
+                    { v: "public",  label: t("groups.form.privacy_public"),  desc: t("groups.form.privacy_public_desc"),  icon: Globe },
+                    { v: "private", label: t("groups.form.privacy_private"), desc: t("groups.form.privacy_private_desc"), icon: Lock },
+                    { v: "secret",  label: t("groups.form.privacy_secret"),  desc: t("groups.form.privacy_secret_desc"),  icon: Shield },
                   ] as const).map(opt => (
                     <button key={opt.v} onClick={() => sf("privacyLevel", opt.v)}
                       className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors text-left ${
@@ -2772,12 +2774,12 @@ export default function GroupsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">Qo'shilish turi</label>
+                  <label className="text-xs font-semibold text-muted-foreground">{t("groups.detail.join_type_label")}</label>
                   <div className="flex gap-2">
                     {([
-                      { v: "auto",   label: "Avtomatik" },
-                      { v: "manual", label: "Qo'lda" },
-                      { v: "invite", label: "Taklif" },
+                      { v: "auto",   label: t("groups.form.join_auto") },
+                      { v: "manual", label: t("groups.detail.join_manual_short") },
+                      { v: "invite", label: t("groups.detail.join_invite_short") },
                     ] as const).map(opt => (
                       <button key={opt.v} onClick={() => sf("joinType", opt.v)}
                         className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors ${
@@ -2792,12 +2794,12 @@ export default function GroupsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">Maksimal a'zolar soni (0 = cheksiz)</label>
+                  <label className="text-xs font-semibold text-muted-foreground">{t("groups.detail.max_members_label")}</label>
                   <input
                     type="number" min={0} max={100000}
                     value={settingsForm.maxMembers || ""}
                     onChange={e => sf("maxMembers", Number(e.target.value) || 0)}
-                    placeholder="0 (cheksiz)"
+                    placeholder={t("groups.detail.max_members_ph")}
                     className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors"
                   />
                 </div>
@@ -2805,7 +2807,7 @@ export default function GroupsPage() {
 
               {/* Rules */}
               <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Guruh qoidalari</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{t("groups.form.rules")}</p>
                 <div className="space-y-2">
                   {settingsForm.rules.map((rule, idx) => (
                     <div key={idx} className="flex items-center gap-2 p-2 bg-background rounded-xl border border-border">
@@ -2828,7 +2830,7 @@ export default function GroupsPage() {
                         setNewRuleText("");
                       }
                     }}
-                    placeholder="Yangi qoida qo'shing..."
+                    placeholder={t("groups.detail.rule_add_ph")}
                     maxLength={200}
                     className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors"
                   />
@@ -2843,7 +2845,7 @@ export default function GroupsPage() {
 
               {/* Tags */}
               <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Teglar</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{t("groups.detail.tags")}</p>
                 {settingsForm.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {settingsForm.tags.map((tag, idx) => (
@@ -2865,7 +2867,7 @@ export default function GroupsPage() {
                         setNewTagText("");
                       }
                     }}
-                    placeholder="#teg qo'shing..."
+                    placeholder={t("groups.detail.tag_add_ph")}
                     maxLength={30}
                     className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors"
                   />
@@ -2880,12 +2882,12 @@ export default function GroupsPage() {
 
               {/* Links */}
               <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Aloqa va havolalar</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{t("groups.detail.links_title")}</p>
                 {[
-                  { key: "websiteUrl",    label: "Veb-sayt",       ph: "https://example.com" },
-                  { key: "contactEmail",  label: "Email",          ph: "info@example.com" },
-                  { key: "telegramLink",  label: "Telegram",       ph: "https://t.me/guruh" },
-                  { key: "instagramLink", label: "Instagram",      ph: "@guruh_nomi" },
+                  { key: "websiteUrl",    label: t("groups.detail.website"),        ph: "https://example.com" },
+                  { key: "contactEmail",  label: t("groups.detail.email"),          ph: "info@example.com" },
+                  { key: "telegramLink",  label: t("groups.detail.telegram_label"), ph: "https://t.me/guruh" },
+                  { key: "instagramLink", label: t("groups.detail.instagram_label"),ph: "@guruh_nomi" },
                 ].map(({ key, label, ph }) => (
                   <div key={key} className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground">{label}</label>
@@ -2905,7 +2907,7 @@ export default function GroupsPage() {
                 disabled={settingsSaving || settingsCoverUploading || !settingsForm.name.trim()}
                 className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm disabled:opacity-50 transition-opacity"
               >
-                {settingsSaving ? "Saqlanmoqda..." : "O'zgarishlarni saqlash"}
+                {settingsSaving ? t("groups.detail.saving") : t("groups.detail.save_changes")}
               </button>
 
             </div>
@@ -2929,7 +2931,7 @@ export default function GroupsPage() {
               {/* Modal header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0 border-b border-border">
                 <div>
-                  <h2 className="font-bold text-foreground text-base">Yangi jamoa yaratish</h2>
+                  <h2 className="font-bold text-foreground text-base">{t("groups.detail.wizard_title")}</h2>
                   <p className="text-xs text-muted-foreground">{step}/{STEPS.length} • {STEPS[step - 1].label}</p>
                 </div>
                 <button onClick={closeModal}
@@ -3052,7 +3054,7 @@ export default function GroupsPage() {
               className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <Repeat2 className="w-5 h-5 text-primary" />
-                <h3 className="text-base font-bold text-foreground">OlchaAI'da ulashish</h3>
+                <h3 className="text-base font-bold text-foreground">{t("groups.detail.share_modal_title")}</h3>
                 <button onClick={() => setSharePost(null)} className="ml-auto text-muted-foreground hover:text-foreground">
                   <X className="w-4 h-4" />
                 </button>
@@ -3068,20 +3070,20 @@ export default function GroupsPage() {
               <textarea
                 value={shareComment}
                 onChange={e => setShareComment(e.target.value)}
-                placeholder="Fikringizni qo'shing (ixtiyoriy)..."
+                placeholder={t("groups.detail.share_comment_ph")}
                 rows={2}
                 className="w-full bg-muted/50 text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/40 resize-none mb-3"
               />
               <div className="flex gap-2">
                 <button onClick={() => setSharePost(null)}
                   className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-colors">
-                  Bekor qilish
+                  {t("common.cancel")}
                 </button>
                 <button onClick={handleShareToFeed} disabled={sharingPost}
                   className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5">
                   {sharingPost
-                    ? <><div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Ulashilmoqda</>
-                    : <><Send className="w-3.5 h-3.5" /> Lentaga ulashish</>
+                    ? <><div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> {t("groups.detail.sharing")}</>
+                    : <><Send className="w-3.5 h-3.5" /> {t("groups.detail.share_to_feed")}</>
                   }
                 </button>
               </div>
@@ -3101,10 +3103,16 @@ export default function GroupsPage() {
               className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <Flag className="w-5 h-5 text-orange-400" />
-                <h3 className="text-base font-bold text-foreground">Shikoyat yuborish</h3>
+                <h3 className="text-base font-bold text-foreground">{t("groups.detail.report_title")}</h3>
               </div>
               <div className="space-y-2 mb-4">
-                {["Spam", "Noto'g'ri ma'lumot", "Nafrat nutqi", "Zo'ravonlik", "Boshqa"].map(reason => (
+                {[
+                  t("groups.detail.report_reason_spam"),
+                  t("groups.detail.report_reason_wrong_info"),
+                  t("groups.detail.report_reason_hate"),
+                  t("groups.detail.report_reason_violence"),
+                  t("groups.detail.report_reason_other"),
+                ].map(reason => (
                   <button key={reason} onClick={() => setReportReason(reason)}
                     className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-all border ${
                       reportReason === reason ? "border-orange-400 bg-orange-400/10 text-orange-400 font-semibold" : "border-border text-foreground hover:bg-muted"
@@ -3116,11 +3124,11 @@ export default function GroupsPage() {
               <div className="flex gap-2">
                 <button onClick={() => setReportPostId(null)}
                   className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-colors">
-                  Bekor qilish
+                  {t("common.cancel")}
                 </button>
                 <button onClick={handleSubmitReport} disabled={!reportReason || submittingReport}
                   className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity">
-                  {submittingReport ? "Yuborilmoqda..." : "Yuborish"}
+                  {submittingReport ? t("groups.detail.sending") : t("msg.send")}
                 </button>
               </div>
             </motion.div>

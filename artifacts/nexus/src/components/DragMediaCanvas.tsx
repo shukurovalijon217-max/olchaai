@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, RotateCcw, Eye, EyeOff, Lock, Unlock, Copy, ChevronUp, ChevronDown, Plus, Type, Smile } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export interface CanvasLayer {
   id: string;
@@ -38,10 +39,10 @@ const CANVAS_H = 480;
 
 const FONTS = ["Inter","Bebas Neue","Pacifico","Roboto Mono","Dancing Script","Playfair Display","Oswald","Permanent Marker"];
 const FILTERS = [
-  {id:"none",label:"Asl"},{id:"brightness(1.2) saturate(1.3)",label:"Vivid"},
-  {id:"sepia(0.5)",label:"Sepia"},{id:"grayscale(1)",label:"B&W"},
-  {id:"hue-rotate(180deg)",label:"Invert Hue"},{id:"contrast(1.4) brightness(1.1)",label:"Punch"},
-  {id:"saturate(0.3) brightness(0.9)",label:"Matte"},{id:"brightness(1.4) contrast(0.8)",label:"Dreamy"},
+  {id:"none",labelKey:"drag_canvas.filter_none"},{id:"brightness(1.2) saturate(1.3)",labelKey:"drag_canvas.filter_vivid"},
+  {id:"sepia(0.5)",labelKey:"drag_canvas.filter_sepia"},{id:"grayscale(1)",labelKey:"drag_canvas.filter_bw"},
+  {id:"hue-rotate(180deg)",labelKey:"drag_canvas.filter_invert"},{id:"contrast(1.4) brightness(1.1)",labelKey:"drag_canvas.filter_punch"},
+  {id:"saturate(0.3) brightness(0.9)",labelKey:"drag_canvas.filter_matte"},{id:"brightness(1.4) contrast(0.8)",labelKey:"drag_canvas.filter_dreamy"},
 ];
 
 const EMOJI_LIST = ["🔥","⭐","💎","🎉","🚀","💯","❤️","😂","😍","🤩","👏","💪","🌈","✨","🎵","💸","🏆","😎","🦋","🌸","💫","🎯","⚡","🌙","🎸"];
@@ -51,6 +52,7 @@ function uid() { return Math.random().toString(36).slice(2, 9); }
 function clamp(val: number, min: number, max: number) { return Math.max(min, Math.min(max, val)); }
 
 export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, canvasH = CANVAS_H }: Props) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showTextAdd, setShowTextAdd] = useState(false);
@@ -200,7 +202,7 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
       {/* ── Layer Stack Panel ── */}
       <div className="flex flex-col gap-1 min-w-[100px]">
         <div className="flex items-center justify-between mb-1">
-          <p className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Qatlamlar</p>
+          <p className="text-[9px] font-bold text-white/40 uppercase tracking-wider">{t("drag_canvas.layers_title")}</p>
           <button onClick={() => setShowLayerPanel(p => !p)} className="text-white/30 hover:text-white/60">
             {showLayerPanel ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>}
           </button>
@@ -229,7 +231,7 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
           <button onClick={() => fileInputRef.current?.click()}
             className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-[9px] font-bold text-white/50 hover:text-white/80 transition-all"
             style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }}>
-            <Plus className="w-2.5 h-2.5 mr-0.5"/> Rasm
+            <Plus className="w-2.5 h-2.5 mr-0.5"/> {t("drag_canvas.add_photo")}
           </button>
           <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if(f) addFromFile(f); e.target.value = ""; }}/>
@@ -238,12 +240,12 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
           <button onClick={() => setShowEmojiPicker(p=>!p)}
             className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-[9px] font-bold text-white/50 hover:text-white/80 transition-all"
             style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }}>
-            <Smile className="w-2.5 h-2.5 mr-0.5"/> Emoji
+            <Smile className="w-2.5 h-2.5 mr-0.5"/> {t("drag_canvas.add_emoji")}
           </button>
           <button onClick={() => setShowTextAdd(p=>!p)}
             className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-[9px] font-bold text-white/50 hover:text-white/80 transition-all"
             style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }}>
-            <Type className="w-2.5 h-2.5 mr-0.5"/> Matn
+            <Type className="w-2.5 h-2.5 mr-0.5"/> {t("drag_canvas.add_text")}
           </button>
         </div>
 
@@ -266,14 +268,14 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
           {showTextAdd && (
             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="space-y-1 overflow-hidden">
               <input value={newText} onChange={e=>setNewText(e.target.value)}
-                placeholder="Matn kiriting…"
+                placeholder={t("drag_canvas.text_input_ph")}
                 onKeyDown={e => e.key==="Enter" && addText()}
                 className="w-full rounded-lg px-2 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
                 style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.15)" }}/>
               <button onClick={addText}
                 className="w-full py-1 rounded-lg text-[9px] font-bold text-violet-300"
                 style={{ background:"rgba(167,139,250,0.15)", border:"1px solid rgba(167,139,250,0.35)" }}>
-                Qo'sh
+                {t("drag_canvas.add_btn")}
               </button>
             </motion.div>
           )}
@@ -292,7 +294,7 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
           {layers.length === 0 && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white/20 gap-2">
               <span style={{fontSize:36}}>🖼️</span>
-              <p className="text-xs text-center px-4">Rasm yoki video qo'shing<br/><span className="text-[10px]">Sichqoncha bilan xohlagan joyga suring</span></p>
+              <p className="text-xs text-center px-4">{t("drag_canvas.empty_title")}<br/><span className="text-[10px]">{t("drag_canvas.empty_sub")}</span></p>
             </div>
           )}
 
@@ -378,23 +380,23 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
 
               <div className="flex items-center justify-between">
                 <p className="text-[10px] font-bold text-violet-300">
-                  {sel.type==="image"?"🖼 Rasm":sel.type==="video"?"🎬 Video":sel.type==="emoji"?"😊 Emoji":"T Matn"} parametrlari
+                  {sel.type==="image"?t("drag_canvas.type_image"):sel.type==="video"?t("drag_canvas.type_video"):sel.type==="emoji"?t("drag_canvas.type_emoji"):t("drag_canvas.type_text")} {t("drag_canvas.params_suffix")}
                 </p>
                 <div className="flex gap-1">
-                  <button onClick={() => reorder(sel.id, 1)} title="Tepaga" className="p-1 rounded text-white/40 hover:text-white/70"><ChevronUp className="w-3 h-3"/></button>
-                  <button onClick={() => reorder(sel.id, -1)} title="Pastga" className="p-1 rounded text-white/40 hover:text-white/70"><ChevronDown className="w-3 h-3"/></button>
-                  <button onClick={() => duplicate(sel.id)} title="Nusxa" className="p-1 rounded text-white/40 hover:text-white/70"><Copy className="w-3 h-3"/></button>
-                  <button onClick={() => update(sel.id, {locked:!sel.locked})} title="Qulflash" className={`p-1 rounded ${sel.locked?"text-amber-400":"text-white/40"} hover:text-white/70`}>
+                  <button onClick={() => reorder(sel.id, 1)} title={t("drag_canvas.action_top")} className="p-1 rounded text-white/40 hover:text-white/70"><ChevronUp className="w-3 h-3"/></button>
+                  <button onClick={() => reorder(sel.id, -1)} title={t("drag_canvas.action_bottom")} className="p-1 rounded text-white/40 hover:text-white/70"><ChevronDown className="w-3 h-3"/></button>
+                  <button onClick={() => duplicate(sel.id)} title={t("drag_canvas.action_dup")} className="p-1 rounded text-white/40 hover:text-white/70"><Copy className="w-3 h-3"/></button>
+                  <button onClick={() => update(sel.id, {locked:!sel.locked})} title={t("drag_canvas.action_lock")} className={`p-1 rounded ${sel.locked?"text-amber-400":"text-white/40"} hover:text-white/70`}>
                     {sel.locked ? <Lock className="w-3 h-3"/> : <Unlock className="w-3 h-3"/>}
                   </button>
-                  <button onClick={() => del(sel.id)} title="O'chirish" className="p-1 rounded text-red-400/70 hover:text-red-400"><Trash2 className="w-3 h-3"/></button>
-                  <button onClick={()=>update(sel.id,{rotation:0})} title="Aylantirish reset" className="p-1 rounded text-white/40 hover:text-white/70"><RotateCcw className="w-3 h-3"/></button>
+                  <button onClick={() => del(sel.id)} title={t("drag_canvas.action_delete")} className="p-1 rounded text-red-400/70 hover:text-red-400"><Trash2 className="w-3 h-3"/></button>
+                  <button onClick={()=>update(sel.id,{rotation:0})} title={t("drag_canvas.action_reset_rotation")} className="p-1 rounded text-white/40 hover:text-white/70"><RotateCcw className="w-3 h-3"/></button>
                 </div>
               </div>
 
               {/* Opacity */}
               <div className="flex items-center gap-2">
-                <span className="text-[9px] text-white/40 w-12">Shaffof.</span>
+                <span className="text-[9px] text-white/40 w-12">{t("drag_canvas.opacity_label")}</span>
                 <input type="range" min={0.05} max={1} step={0.05} value={sel.opacity} onChange={e=>update(sel.id,{opacity:Number(e.target.value)})}
                   className="flex-1" style={{accentColor:"#a78bfa"}}/>
                 <span className="text-[9px] font-bold text-violet-300 w-8 text-right">{Math.round(sel.opacity*100)}%</span>
@@ -402,7 +404,7 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
 
               {/* Rotation */}
               <div className="flex items-center gap-2">
-                <span className="text-[9px] text-white/40 w-12">Burish</span>
+                <span className="text-[9px] text-white/40 w-12">{t("drag_canvas.rotation_label")}</span>
                 <input type="range" min={-180} max={180} step={1} value={sel.rotation} onChange={e=>update(sel.id,{rotation:Number(e.target.value)})}
                   className="flex-1" style={{accentColor:"#a78bfa"}}/>
                 <span className="text-[9px] font-bold text-violet-300 w-8 text-right">{Math.round(sel.rotation)}°</span>
@@ -413,25 +415,25 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
                 <button onClick={()=>update(sel.id,{flipH:!sel.flipH})}
                   className="flex-1 py-1 rounded-lg text-[9px] font-bold transition-all"
                   style={{ background:sel.flipH?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.06)", border:sel.flipH?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.1)", color:sel.flipH?"#c4b5fd":"rgba(255,255,255,0.45)" }}>
-                  ↔ Gorizontal aks
+                  {t("drag_canvas.flip_h")}
                 </button>
                 <button onClick={()=>update(sel.id,{flipV:!sel.flipV})}
                   className="flex-1 py-1 rounded-lg text-[9px] font-bold transition-all"
                   style={{ background:sel.flipV?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.06)", border:sel.flipV?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.1)", color:sel.flipV?"#c4b5fd":"rgba(255,255,255,0.45)" }}>
-                  ↕ Vertikal aks
+                  {t("drag_canvas.flip_v")}
                 </button>
               </div>
 
               {/* Filter (image/video only) */}
               {(sel.type==="image"||sel.type==="video") && (
                 <div>
-                  <p className="text-[9px] text-white/40 mb-1">Filtr</p>
+                  <p className="text-[9px] text-white/40 mb-1">{t("drag_canvas.filter_label")}</p>
                   <div className="flex flex-wrap gap-1">
                     {FILTERS.map(f => (
                       <button key={f.id} onClick={()=>update(sel.id,{filter:f.id})}
                         className="px-2 py-0.5 rounded-lg text-[8px] font-bold transition-all"
                         style={{ background:sel.filter===f.id?"rgba(167,139,250,0.25)":"rgba(255,255,255,0.06)", border:sel.filter===f.id?"1px solid rgba(167,139,250,0.6)":"1px solid rgba(255,255,255,0.08)", color:sel.filter===f.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
-                        {f.label}
+                        {t(f.labelKey)}
                       </button>
                     ))}
                   </div>
@@ -446,7 +448,7 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
                     style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)" }}/>
                   <div className="flex gap-2">
                     <div className="flex items-center gap-1.5 flex-1">
-                      <span className="text-[9px] text-white/40">Hajm</span>
+                      <span className="text-[9px] text-white/40">{t("drag_canvas.size_label")}</span>
                       <input type="range" min={10} max={80} value={sel.fontSize??22} onChange={e=>update(sel.id,{fontSize:Number(e.target.value)})}
                         className="flex-1" style={{accentColor:"#a78bfa"}}/>
                       <span className="text-[9px] text-violet-300">{sel.fontSize}px</span>
@@ -462,7 +464,7 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
                     ))}
                   </div>
                   <div className="flex gap-2 items-center">
-                    <span className="text-[9px] text-white/40">Rang</span>
+                    <span className="text-[9px] text-white/40">{t("drag_canvas.color_label")}</span>
                     {["#ffffff","#000000","#f87171","#fbbf24","#34d399","#60a5fa","#a78bfa","#f472b6","#fb923c","#22d3ee","#84cc16","#e879f9"].map(c => (
                       <button key={c} onClick={()=>update(sel.id,{color:c})}
                         className="w-4 h-4 rounded-full border-2 transition-all"
@@ -470,7 +472,7 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
                     ))}
                   </div>
                   <div className="flex gap-2 items-center">
-                    <span className="text-[9px] text-white/40">Fon</span>
+                    <span className="text-[9px] text-white/40">{t("drag_canvas.bg_label")}</span>
                     {["transparent","rgba(0,0,0,0.7)","rgba(255,255,255,0.9)","rgba(124,58,237,0.85)","rgba(220,38,38,0.85)"].map(c => (
                       <button key={c} onClick={()=>update(sel.id,{bgColor:c})}
                         className="w-5 h-4 rounded border-2 transition-all text-[7px] flex items-center justify-center"
@@ -485,7 +487,7 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
               {/* Emoji size */}
               {sel.type==="emoji" && (
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] text-white/40 w-12">Hajm</span>
+                  <span className="text-[9px] text-white/40 w-12">{t("drag_canvas.size_label")}</span>
                   <input type="range" min={20} max={120} value={sel.fontSize??48} onChange={e=>update(sel.id,{fontSize:Number(e.target.value)})}
                     className="flex-1" style={{accentColor:"#a78bfa"}}/>
                   <span className="text-[9px] text-violet-300 w-8 text-right">{sel.fontSize}px</span>

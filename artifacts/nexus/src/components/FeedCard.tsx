@@ -22,6 +22,7 @@ import {
   UserPlus, UserCheck, Download, Loader2, Flag, Brain, ChevronLeft,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import type { Post } from "@workspace/api-client-react";
 import {
   PostType, useLikePost, useDeletePost,
@@ -234,6 +235,7 @@ interface FeedCardProps {
 export default function FeedCard({ post, index }: FeedCardProps) {
   const accent   = ACCENTS[index % ACCENTS.length];
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
 
   /* ── State ── */
@@ -996,7 +998,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.metaKey) { e.preventDefault(); handleSendComment(); } }}
-                placeholder="Izohingizni yozing..."
+                placeholder={t("feed_card.comment_ph")}
                 rows={3}
                 className="flex-1 resize-none rounded-2xl px-4 py-3 text-[13px] text-white placeholder:text-white/30 focus:outline-none"
                 style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${accent}22`, caretColor: accent }}
@@ -1029,7 +1031,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
             <div className="flex justify-center pt-3"><div className="w-9 h-1 rounded-full bg-white/15" /></div>
             <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.06]">
               <Share2 className="w-4 h-4 text-emerald-400" />
-              <span className="text-white font-bold text-[14px]">Ulashish</span>
+              <span className="text-white font-bold text-[14px]">{t("feed_card.share_title")}</span>
               <button onClick={() => setShareOpen(false)} className="ml-auto"><X className="w-4 h-4 text-white/45" /></button>
             </div>
             {/* Copy link */}
@@ -1040,14 +1042,14 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                   border: `1px solid ${linkCopied ? "rgba(52,211,153,0.4)" : "rgba(255,255,255,0.1)"}` }}>
                 {linkCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Link className="w-4 h-4 text-white/60" />}
                 <span className="text-[13px]" style={{ color: linkCopied ? "#6ee7b7" : "rgba(255,255,255,0.7)" }}>
-                  {linkCopied ? "Nusxalandi!" : "Havolani nusxalash"}
+                  {linkCopied ? t("feed_card.copied") : t("feed_card.copy_link")}
                 </span>
               </motion.button>
             </div>
             {/* Search users */}
             <div className="px-5 pb-2">
               <input value={shareQuery} onChange={e => setShareQuery(e.target.value)}
-                placeholder="Foydalanuvchi qidirish..."
+                placeholder={t("feed_card.user_search_ph")}
                 className="w-full px-4 py-2.5 rounded-2xl text-white text-[13px] placeholder:text-white/30 focus:outline-none"
                 style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }} />
             </div>
@@ -1068,7 +1070,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                     className="px-3 py-1.5 rounded-xl text-[11px] font-bold"
                     style={{ background: shareSent === u.id ? "rgba(52,211,153,0.2)" : "rgba(52,211,153,0.85)",
                       color: shareSent === u.id ? "#6ee7b7" : "#000" }}>
-                    {shareSent === u.id ? "✓" : shareSending === u.id ? "…" : "Yuborish"}
+                    {shareSent === u.id ? "✓" : shareSending === u.id ? "…" : t("feed_card.send")}
                   </motion.button>
                 </div>
               ))}
@@ -1093,7 +1095,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
             <button onClick={() => { handleCopyLink(); setMenuOpen(false); }}
               className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors">
               <Link className="w-4 h-4 text-blue-400 flex-shrink-0" />
-              <span className="text-white text-[13px] font-medium">{linkCopied ? "✓ Nusxalandi!" : "Havolani nusxalash"}</span>
+              <span className="text-white text-[13px] font-medium">{linkCopied ? `✓ ${t("feed_card.copied")}` : t("feed_card.copy_link")}</span>
             </button>
             {/* Report — only for others' posts */}
             {!isOwner && (
@@ -1101,7 +1103,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                 className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors border-t border-white/[0.06]">
                 <Flag className="w-4 h-4 flex-shrink-0" style={{ color: reported ? "#6ee7b7" : "#fbbf24" }} />
                 <span className="text-[13px] font-medium" style={{ color: reported ? "#6ee7b7" : "rgba(255,255,255,0.9)" }}>
-                  {reported ? "Shikoyat yuborildi" : "Shikoyat qilish"}
+                  {reported ? t("feed_card.report_sent") : t("feed_card.report")}
                 </span>
               </button>
             )}
@@ -1127,16 +1129,16 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                 style={{ background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)" }}>
                 <Trash2 className="w-6 h-6 text-red-400" />
               </div>
-              <p className="text-white font-black text-[17px]">Postni o'chirishni tasdiqlaysizmi?</p>
+              <p className="text-white font-black text-[17px]">{t("feed_card.delete_confirm_title")}</p>
               <p className="text-white/45 text-[13px] text-center leading-snug">
-                Bu amal qaytarib bo'lmaydi.
+                {t("feed_card.delete_confirm_desc")}
               </p>
             </div>
             <div className="flex gap-3 px-5 pb-8">
               <motion.button whileTap={{ scale: 0.96 }} onClick={() => setDeleteConfirm(false)}
                 className="flex-1 py-3.5 rounded-2xl font-bold text-[15px]"
                 style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }}>
-                Bekor qilish
+                {t("feed_card.cancel")}
               </motion.button>
               <motion.button whileTap={{ scale: 0.96 }} onClick={handleDelete} disabled={deleting}
                 className="flex-1 py-3.5 rounded-2xl font-black text-[15px] text-white flex items-center justify-center gap-2"
@@ -1145,7 +1147,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                 {deleting
                   ? <motion.div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white"
                       animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }} />
-                  : <><Trash2 className="w-4 h-4" /> O'chirish</>
+                  : <><Trash2 className="w-4 h-4" /> {t("feed_card.delete")}</>
                 }
               </motion.button>
             </div>

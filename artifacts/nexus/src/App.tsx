@@ -22,6 +22,7 @@ import PremiumPage from "@/pages/PremiumPage";
 import SettingsPage from "@/pages/SettingsPage";
 import PostDetailPage from "@/pages/PostDetailPage";
 import LoginPage from "@/pages/LoginPage";
+import AboutPage from "@/pages/AboutPage";
 import WalletPage from "@/pages/WalletPage";
 import LivePage from "@/pages/LivePage";
 import LiveExplorePage from "@/pages/LiveExplorePage";
@@ -130,6 +131,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={LoginPage} />
+      <Route path="/about" component={AboutPage} />
       <Route path="/admin" component={() => (
         <AdminRoute><Layout><AdminPage /></Layout></AdminRoute>
       )} />

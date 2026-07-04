@@ -21,7 +21,7 @@ const POSTS: Post[] = [
   {
     id: 1, authorId: 1, authorName: "Aziz Karimov", authorUsername: "azizk",
     isVerified: true,
-    content: "OlCha'ning AI-powered feed algoritmi boshqa platformalarnikidan butunlay farqli. Har bir foydalanuvchi uchun real-time personalization! 🚀",
+    content: "OlchaAI'ning AI-powered feed algoritmi boshqa platformalarnikidan butunlay farqli. Har bir foydalanuvchi uchun real-time personalization! 🚀",
     mediaType: "photo",
     mediaUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900",
     likesCount: 4200, commentsCount: 312, viewsCount: 89000,
@@ -38,7 +38,7 @@ const POSTS: Post[] = [
   },
   {
     id: 3, authorId: 3, authorName: "Timur Rashidov", authorUsername: "timur_dev",
-    content: "Ijtimoiy tarmoqlar kelajagi — AI va shaxsiylashtirishda. OlCha aynan shu yo'lda. Boshqalar hali tushunmayapti, biz esa allaqachon qurmoqdamiz.",
+    content: "Ijtimoiy tarmoqlar kelajagi — AI va shaxsiylashtirishda. OlchaAI aynan shu yo'lda. Boshqalar hali tushunmayapti, biz esa allaqachon qurmoqdamiz.",
     mediaType: "text",
     likesCount: 2340, commentsCount: 189,
     createdAt: new Date(Date.now()-14400000).toISOString(), isLiked: false,
@@ -46,7 +46,7 @@ const POSTS: Post[] = [
   {
     id: 4, authorId: 4, authorName: "Nilufar Hassan", authorUsername: "nilufar.h",
     isVerified: true,
-    content: "Tong sahari kod yozish — qahva va ilhom bilan 🌅 OlCha mobile interfeysi shunchalar yoqimli ki, ishlamay bo'lmayapti!",
+    content: "Tong sahari kod yozish — qahva va ilhom bilan 🌅 OlchaAI mobile interfeysi shunchalar yoqimli ki, ishlamay bo'lmayapti!",
     mediaType: "photo",
     mediaUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=900",
     likesCount: 8700, commentsCount: 423, viewsCount: 67000,
@@ -54,7 +54,7 @@ const POSTS: Post[] = [
   },
   {
     id: 5, authorId: 5, authorName: "Bobur Tashkentov", authorUsername: "bobur_t",
-    content: "O'zbekiston texnologiya sektori 2024-yilda 340% o'sdi. Biz global darajada raqobatlasha olamiz. OlCha — buning isboti!",
+    content: "O'zbekiston texnologiya sektori 2024-yilda 340% o'sdi. Biz global darajada raqobatlasha olamiz. OlchaAI — buning isboti!",
     mediaType: "text",
     likesCount: 6500, commentsCount: 291,
     createdAt: new Date(Date.now()-172800000).toISOString(), isLiked: false,
@@ -112,7 +112,7 @@ export default function FeedScreen() {
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={s.logoGrad}
             >
-              <Text style={s.logoText}>OlCha</Text>
+              <Text style={s.logoText}>OlchaAI</Text>
             </LinearGradient>
             <View style={[s.aiBadge, { backgroundColor: "rgba(120,87,255,0.2)", borderColor: "rgba(120,87,255,0.4)" }]}>
               <Text style={[s.aiBadgeTxt, { color: colors.primary }]}>AI</Text>

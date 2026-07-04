@@ -1,6 +1,6 @@
-# OlCha Go — Real-Time Microservice
+# OlchaAI Go — Real-Time Microservice
 
-High-performance Go service powering OlCha's real-time features.
+High-performance Go service powering OlchaAI's real-time features.
 
 ## Tech stack
 - **Language**: Go 1.25
@@ -16,13 +16,13 @@ High-performance Go service powering OlCha's real-time features.
 | GET | `/go/health` | Health check |
 | GET | `/go/stats` | WebSocket connection stats |
 | GET | `/go/trending` | Trending hashtags (DB or mock) |
-| POST | `/go/rank` | Feed ranking (OlCha ranking formula) |
+| POST | `/go/rank` | Feed ranking (OlchaAI ranking formula) |
 | POST | `/go/notify` | Push real-time event to user(s) via WS |
 | WS | `/go/ws?userId=N` | WebSocket connection for user N |
 
 ## Feed Ranking Formula
 
-OlCha Go uses a custom ranking algorithm combining:
+OlchaAI Go uses a custom ranking algorithm combining:
 - **Wilson score** (statistical lower bound on like rate)
 - **Engagement velocity** (likes×1 + comments×3 + shares×5 normalized by views)
 - **Recency decay** (exponential half-life of 12 hours)

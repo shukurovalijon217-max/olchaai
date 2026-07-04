@@ -27,7 +27,7 @@ function IframeShell() {
       {!loaded && (
         <View style={s.loading}>
           <ActivityIndicator size="large" color="#7857ff" />
-          <Text style={s.loadingTxt}>OlCha yuklanmoqda...</Text>
+          <Text style={s.loadingTxt}>OlchaAI yuklanmoqda...</Text>
         </View>
       )}
       {loaded && (
@@ -42,7 +42,7 @@ function IframeShell() {
             flex: 1,
           }}
           allow="camera; microphone; fullscreen; geolocation; autoplay"
-          title="OlCha"
+          title="OlchaAI"
         />
       )}
     </View>
@@ -79,7 +79,7 @@ function NativeShell() {
       {loading && !error && (
         <View style={s.loading}>
           <ActivityIndicator size="large" color="#7857ff" />
-          <Text style={s.loadingTxt}>OlCha yuklanmoqda...</Text>
+          <Text style={s.loadingTxt}>OlchaAI yuklanmoqda...</Text>
         </View>
       )}
       {error && (
@@ -106,7 +106,7 @@ function NativeShell() {
         pullToRefreshEnabled={false}
         bounces={false}
         allowsFullscreenVideo
-        userAgent={`OlCha/1.0 Mobile/${Platform.OS} (${Platform.Version})`}
+        userAgent={`OlchaAI/1.0 Mobile/${Platform.OS} (${Platform.Version})`}
         onLoadStart={() => { setLoading(true); setError(false); }}
         onLoadEnd={() => setLoading(false)}
         onError={() => { setLoading(false); setError(true); }}
@@ -122,7 +122,7 @@ function NativeShell() {
   );
 }
 
-export default function OlChaApp() {
+export default function OlchaAIApp() {
   if (Platform.OS === "web") return <IframeShell />;
   return <NativeShell />;
 }

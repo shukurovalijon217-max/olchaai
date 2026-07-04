@@ -1,5 +1,5 @@
 /**
- * OlCha Mobile — Production server
+ * OlchaAI Mobile — Production server
  * - /status         → healthcheck (always 200)
  * - /               → mobile app landing page (App Store / Google Play links)
  * - /manifest       → expo manifest (if static-build exists)
@@ -37,7 +37,7 @@ function buildLandingPage(req) {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>OlCha Mobile</title>
+  <title>OlchaAI Mobile</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
@@ -74,7 +74,7 @@ function buildLandingPage(req) {
   <div class="card">
     <div class="logo">🌟</div>
     <div class="badge">LIVE — Jonli</div>
-    <h1>OlCha</h1>
+    <h1>OlchaAI</h1>
     <p class="sub">AI bilan boshqariladigan ijtimoiy platforma.<br/>
       Bir signal. Bir koinot.</p>
 
@@ -172,5 +172,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, "0.0.0.0", () => {
-  console.log(`OlCha Mobile server on port ${port}`);
+  console.log(`OlchaAI Mobile server on port ${port}`);
 });

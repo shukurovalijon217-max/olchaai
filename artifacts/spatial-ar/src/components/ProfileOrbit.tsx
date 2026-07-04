@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { OlChaProfile } from "../hooks/useOlChaData";
+import type { OlchaAIProfile } from "../hooks/useOlchaAIData";
 
 const AVATAR_COLORS = [
   "linear-gradient(135deg,#ff6b6b,#ee5a24)",
@@ -11,7 +11,7 @@ const AVATAR_COLORS = [
   "linear-gradient(135deg,#ffd93d,#f9ca24)",
 ];
 
-const FALLBACK_PROFILES: OlChaProfile[] = [
+const FALLBACK_PROFILES: OlchaAIProfile[] = [
   { id: "1", username: "sardor_m",   displayName: "Sardor M." },
   { id: "2", username: "zulfiya_k",  displayName: "Zulfiya K." },
   { id: "3", username: "bobur_t",    displayName: "Bobur T." },
@@ -21,7 +21,7 @@ const FALLBACK_PROFILES: OlChaProfile[] = [
 ];
 
 interface ProfileOrbitProps {
-  profiles?: OlChaProfile[];
+  profiles?: OlchaAIProfile[];
 }
 
 export function ProfileOrbit({ profiles = FALLBACK_PROFILES }: ProfileOrbitProps) {

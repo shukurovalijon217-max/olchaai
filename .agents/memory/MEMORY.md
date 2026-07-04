@@ -20,3 +20,4 @@
 - [Toggle buttons need distinct text per state](ui-toggle-icon-only-state.md) — icon-only state changes (follow/like/save) look broken to tests and users; always vary the label text too.
 - [Express router.use(middleware) without a path leaks globally](express-router-use-no-path.md) — unscoped requireAuth/requireAdmin on a late-mounted sub-router gates ALL unmatched requests, not just its own routes.
 - [Midnight Confessions visibility semantics](midnight-confess-visibility.md) — midnight-only posts hide from everyone including the author outside the window; only admin moderation is exempt.
+- [Rebranding a brand string across a monorepo](rebranding-brand-string.md) — filenames/identifiers and third-party name lookups (e.g. Stripe product search) need explicit handling, not just text sed.

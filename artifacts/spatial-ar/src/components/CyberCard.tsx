@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import type { OlChaPost } from "../hooks/useOlChaData";
-import { timeAgo } from "../hooks/useOlChaData";
+import type { OlchaAIPost } from "../hooks/useOlchaAIData";
+import { timeAgo } from "../hooks/useOlchaAIData";
 
 const AVATAR_COLORS = [
   "linear-gradient(135deg,#ff6b6b,#ee5a24)",
@@ -32,7 +32,7 @@ function CornerBracket({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 }
 
 interface CyberCardProps {
-  post: OlChaPost;
+  post: OlchaAIPost;
   isActive: boolean;
   stackIndex: number;
 }
@@ -284,7 +284,7 @@ export function CyberCard({ post, isActive, stackIndex }: CyberCardProps) {
             <span>Ulash</span>
           </button>
 
-          {/* OlCha tag */}
+          {/* OlchaAI tag */}
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#00e5ff", boxShadow: "0 0 6px #00e5ff" }} />
             <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(0,229,255,0.5)", letterSpacing: "0.1em" }}>OLCHA</span>

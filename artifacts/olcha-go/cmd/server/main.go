@@ -1,4 +1,4 @@
-// OlCha — Go Real-Time Microservice
+// OlchaAI — Go Real-Time Microservice
 // High-performance WebSocket hub + feed ranking engine + live stream signaling
 // Serves: /go/ws (WebSocket), /go/health, /go/rank, /go/trending, /go/live/rooms
 package main
@@ -614,7 +614,7 @@ func handleRank(db *sql.DB) http.HandlerFunc {
                 w.Header().Set("Content-Type", "application/json")
                 json.NewEncoder(w).Encode(map[string]any{
                         "ranked": posts,
-                        "engine": "OlCha-Go-RankV1",
+                        "engine": "OlchaAI-Go-RankV1",
                         "ts":     time.Now().UnixMilli(),
                 })
         }
@@ -633,7 +633,7 @@ func handleTrending(db *sql.DB) http.HandlerFunc {
         return func(w http.ResponseWriter, r *http.Request) {
                 if db == nil {
                         trends := []Trend{
-                                {Tag: "#OlCha", Count: 4820, Score: 98.2, Delta: 12.4},
+                                {Tag: "#OlchaAI", Count: 4820, Score: 98.2, Delta: 12.4},
                                 {Tag: "#TechUz", Count: 3100, Score: 87.5, Delta: 8.1},
                                 {Tag: "#AI2026", Count: 2750, Score: 82.3, Delta: 5.6},
                                 {Tag: "#GoLang", Count: 1980, Score: 74.1, Delta: 22.0},
@@ -643,7 +643,7 @@ func handleTrending(db *sql.DB) http.HandlerFunc {
                                 {Tag: "#Uzbekistan", Count: 870, Score: 51.0, Delta: 1.8},
                         }
                         w.Header().Set("Content-Type", "application/json")
-                        json.NewEncoder(w).Encode(map[string]any{"trending": trends, "engine": "OlCha-Go-TrendV1"})
+                        json.NewEncoder(w).Encode(map[string]any{"trending": trends, "engine": "OlchaAI-Go-TrendV1"})
                         return
                 }
                 rows, err := db.Query(`
@@ -665,7 +665,7 @@ func handleTrending(db *sql.DB) http.HandlerFunc {
                         trends = append(trends, t)
                 }
                 w.Header().Set("Content-Type", "application/json")
-                json.NewEncoder(w).Encode(map[string]any{"trending": trends, "engine": "OlCha-Go-TrendV1"})
+                json.NewEncoder(w).Encode(map[string]any{"trending": trends, "engine": "OlchaAI-Go-TrendV1"})
         }
 }
 
@@ -681,7 +681,7 @@ func handleStats(hub *Hub) http.HandlerFunc {
                 json.NewEncoder(w).Encode(map[string]any{
                         "connections": total,
                         "uniqueUsers": users,
-                        "engine":      "OlCha-Go-WSHub",
+                        "engine":      "OlchaAI-Go-WSHub",
                         "goVersion":   "1.25",
                         "uptime":      time.Since(startTime).String(),
                 })

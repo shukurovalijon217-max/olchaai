@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAREngine } from "../hooks/useAREngine";
-import { useOlChaData } from "../hooks/useOlChaData";
+import { useOlchaAIData } from "../hooks/useOlchaAIData";
 import { PermissionGate } from "./PermissionGate";
 import { StatusHUD } from "./StatusHUD";
 import { ParticleField } from "./ParticleField";
@@ -23,7 +23,7 @@ function TopHUD() {
         background: "linear-gradient(180deg, rgba(0,8,24,0.7) 0%, transparent 100%)",
       }}
     >
-      {/* Left: OlCha brand */}
+      {/* Left: OlchaAI brand */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <motion.div
           style={{ width: 7, height: 7, borderRadius: "50%", background: "#00e5ff", boxShadow: "0 0 8px #00e5ff" }}
@@ -111,7 +111,7 @@ export function ARViewport() {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const { state, requestAR, skipToDemo } = useAREngine(videoRef, canvasRef, overlayRef);
-  const { posts, loading } = useOlChaData();
+  const { posts, loading } = useOlchaAIData();
 
   return (
     <div
@@ -215,7 +215,7 @@ export function ARViewport() {
             />
             <div style={{ textAlign: "center" }}>
               <p style={{ color: "rgba(0,229,255,0.7)", fontFamily: "monospace", fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", margin: 0 }}>
-                OlCha AR Engine
+                OlchaAI AR Engine
               </p>
               <p style={{ color: "rgba(255,255,255,0.2)", fontSize: 10, fontFamily: "monospace", margin: "6px 0 0", letterSpacing: "0.1em" }}>
                 Hologram interface yuklanmoqda…

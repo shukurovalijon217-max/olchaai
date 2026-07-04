@@ -82,7 +82,7 @@ export default function AuthScreen() {
               <Text style={a.logoIcon}>✦</Text>
             </LinearGradient>
             <LinearGradient colors={["#7857ff", "#22d3ee"]} start={{ x:0,y:0 }} end={{ x:1,y:0 }}>
-              <Text style={a.logoTxt}>OlCha</Text>
+              <Text style={a.logoTxt}>OlchaAI</Text>
             </LinearGradient>
             <Text style={[a.tagline, { color: colors.mutedForeground }]}>
               Kelajak ijtimoiy platformasi
@@ -194,7 +194,7 @@ export default function AuthScreen() {
           </AuroraBorder>
 
           <Text style={[a.terms, { color: colors.mutedForeground }]}>
-            Davom etish orqali siz OlCha foydalanish shartlari va maxfiylik siyosatiga rozilik bildirasiz.
+            Davom etish orqali siz OlchaAI foydalanish shartlari va maxfiylik siyosatiga rozilik bildirasiz.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

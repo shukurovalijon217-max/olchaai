@@ -56,7 +56,7 @@ export default function ProfileScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : 0;
 
-  const displayName = user?.displayName ?? "OlCha User";
+  const displayName = user?.displayName ?? "OlchaAI User";
   const username = user?.username ?? "olcha_user";
   const initials = displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 

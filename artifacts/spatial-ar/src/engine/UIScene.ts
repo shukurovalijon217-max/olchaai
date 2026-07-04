@@ -277,11 +277,11 @@ interface Ripple {
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
 const POSTS = [
-  { id: "post-1", user: "Sardor M.",  text: "OlCha platformasi juda zo'r! 3D hologram interfeys orqali postlarim ko'rinishi hayratlanarli 🚀", likes: 142, comments: 28, avatarColor: "#ff6b6b", tag: "2 daqiqa oldin" },
+  { id: "post-1", user: "Sardor M.",  text: "OlchaAI platformasi juda zo'r! 3D hologram interfeys orqali postlarim ko'rinishi hayratlanarli 🚀", likes: 142, comments: 28, avatarColor: "#ff6b6b", tag: "2 daqiqa oldin" },
   { id: "post-2", user: "Zulfiya K.", text: "AR kamera rejimi yoqildi! Xona ichida uchib yurgan postlarni ko'ryapman 😮‍💨✨", likes: 89, comments: 15, avatarColor: "#4ecdc4", tag: "5 daqiqa oldin" },
-  { id: "post-3", user: "Bobur T.",   text: "Yangi story joylashdim 🔥 OlCha Live orqali minglab kishilar tomosha qilmoqda!", likes: 234, comments: 47, avatarColor: "#45b7d1", tag: "12 daqiqa oldin" },
+  { id: "post-3", user: "Bobur T.",   text: "Yangi story joylashdim 🔥 OlchaAI Live orqali minglab kishilar tomosha qilmoqda!", likes: 234, comments: 47, avatarColor: "#45b7d1", tag: "12 daqiqa oldin" },
   { id: "post-4", user: "Malika R.",  text: "Live stream boshlandi! Spatial AR muhitida efirga chiqish — bu kelajak! 🌐", likes: 56, comments: 12, avatarColor: "#96ceb4", tag: "18 daqiqa oldin" },
-  { id: "post-5", user: "Jasur A.",   text: "OlCha Go real-time xizmati ishga tushdi. WebSocket orqali jonli yangilanishlar 💚", likes: 178, comments: 33, avatarColor: "#dda0dd", tag: "25 daqiqa oldin" },
+  { id: "post-5", user: "Jasur A.",   text: "OlchaAI Go real-time xizmati ishga tushdi. WebSocket orqali jonli yangilanishlar 💚", likes: 178, comments: 33, avatarColor: "#dda0dd", tag: "25 daqiqa oldin" },
 ];
 
 const MENU_ITEMS = [

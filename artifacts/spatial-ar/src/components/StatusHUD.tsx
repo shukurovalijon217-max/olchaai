@@ -66,7 +66,7 @@ export function StatusHUD({ stats, mode, permission }: Props) {
         >
           <div className="px-3 py-1.5 rounded-xl text-[11px] font-mono text-white/40"
             style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            OlCha Spatial AR Engine v1.0
+            OlchaAI Spatial AR Engine v1.0
           </div>
           <div className="flex gap-1.5 text-[10px] font-mono text-white/25">
             {["Three.js", "WebGL2", "WebRTC"].map((t) => (

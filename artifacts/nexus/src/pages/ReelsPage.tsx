@@ -733,8 +733,11 @@ function ReelSlide({
         </div>
 
         {/* ─── LEFT ACTION COLUMN ─── */}
+        {/* Anchored from the bottom (above caption/tags/audio block) instead of
+            vertically centered, so it never collides with multi-line captions
+            on shorter viewports. */}
         <div className="absolute left-3 flex flex-col items-center gap-4 pointer-events-auto"
-          style={{ top: "50%", transform: "translateY(-50%)" }}>
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 278px)" }}>
           {/* Like */}
           <div className="relative">
             <LeftOrb
@@ -775,7 +778,7 @@ function ReelSlide({
           {analysis && (
             <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }}
               className="absolute left-16 pointer-events-none"
-              style={{ top: "50%", transform: "translateY(-50%)", maxWidth: 120 }}>
+              style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 278px)", maxWidth: 120 }}>
               <div className="px-2.5 py-2 rounded-2xl text-[9px] font-semibold"
                 style={{ background: "rgba(124,58,237,0.5)", backdropFilter: "blur(14px)",
                   border: "1px solid rgba(167,139,250,0.3)", color: "#c4b5fd",

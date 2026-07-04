@@ -22,11 +22,11 @@ const fmtUSD = (tiyin: number, uzsPerUsd: number) => {
 };
 
 const PAYMENT_PROVIDERS = [
-  { id: "visa",       label: "Visa",                   logo: "💳", color: "#1a1f71", textColor: "#fff", desc: "Visa debet/kredit karta", disabled: false },
-  { id: "mastercard", label: "Mastercard",             logo: "🔴", color: "#eb001b", textColor: "#fff", desc: "Mastercard karta", disabled: false },
-  { id: "click",      label: "Click",                  logo: "🟢", color: "#00b050", textColor: "#fff", desc: "Tez orada", disabled: true },
-  { id: "payme",      label: "Payme",                  logo: "🔵", color: "#00afef", textColor: "#fff", desc: "Tez orada", disabled: true },
-  { id: "global",     label: "Global Payment Gateway", logo: "🌐", color: "#7c3aed", textColor: "#fff", desc: "Xalqaro to'lov tizimi", disabled: false },
+  { id: "visa",       label: "Visa",                   logo: "💳", color: "#1a1f71", textColor: "#fff", descKey: "wallet.visa_desc", disabled: false },
+  { id: "mastercard", label: "Mastercard",             logo: "🔴", color: "#eb001b", textColor: "#fff", descKey: "wallet.mastercard_desc", disabled: false },
+  { id: "click",      label: "Click",                  logo: "🟢", color: "#00b050", textColor: "#fff", descKey: "wallet.coming_soon", disabled: true },
+  { id: "payme",      label: "Payme",                  logo: "🔵", color: "#00afef", textColor: "#fff", descKey: "wallet.coming_soon", disabled: true },
+  { id: "global",     label: "Global Payment Gateway", logo: "🌐", color: "#7c3aed", textColor: "#fff", descKey: "wallet.global_desc", disabled: false },
 ];
 
 const TX_TYPE_META: Record<string, { label: string; icon: typeof ArrowDownCircle; color: string }> = {
@@ -94,10 +94,10 @@ function DepositModal({ onClose }: { onClose: () => void }) {
         window.location.href = data.url;
         return;
       }
-      setError(data.error ?? "Xato yuz berdi");
+      setError(data.error ?? t("wallet.generic_error"));
       setStep("error");
     },
-    onError: () => { setError("Xato yuz berdi"); setStep("error"); },
+    onError: () => { setError(t("wallet.generic_error")); setStep("error"); },
   });
 
   const handlePay = () => {
@@ -149,14 +149,14 @@ function DepositModal({ onClose }: { onClose: () => void }) {
                 <span className="text-2xl">{p.logo}</span>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-foreground">{p.label}</p>
-                  <p className="text-xs text-muted-foreground">{p.desc}</p>
+                  <p className="text-xs text-muted-foreground">{t(p.descKey)}</p>
                 </div>
                 {method === p.id && <CheckCircle2 className="w-5 h-5 text-primary" />}
               </button>
             ))}
           </div>
           <div className="p-4 rounded-xl bg-muted/30 border border-border flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Jami:</span>
+            <span className="text-sm text-muted-foreground">{t("wallet.total_label")}</span>
             <span className="text-lg font-bold text-foreground">{parseInt(amount || "0").toLocaleString()} so'm</span>
           </div>
           <div className="flex gap-3">
@@ -173,7 +173,7 @@ function DepositModal({ onClose }: { onClose: () => void }) {
         <div className="py-12 flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
           <p className="text-base font-semibold text-foreground">{t("common.loading")}</p>
-          <p className="text-sm text-muted-foreground">{PAYMENT_PROVIDERS.find(p => p.id === method)?.label} to'lov sahifasiga yo'naltirilmoqda</p>
+          <p className="text-sm text-muted-foreground">{PAYMENT_PROVIDERS.find(p => p.id === method)?.label} {t("wallet.redirecting")}</p>
         </div>
       )}
 
@@ -192,6 +192,7 @@ function DepositModal({ onClose }: { onClose: () => void }) {
 
 // ─── Withdraw Modal ───────────────────────────────────────────────────────────
 function WithdrawModal({ wallet, onClose }: { wallet: WalletData; onClose: () => void }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<string | null>(null);
@@ -228,22 +229,22 @@ function WithdrawModal({ wallet, onClose }: { wallet: WalletData; onClose: () =>
   };
 
   return (
-    <ModalShell onClose={onClose} title="Pul yechish">
+    <ModalShell onClose={onClose} title={t("wallet.withdraw_title")}>
       {step === "form" && (
         <div className="space-y-5">
           <div className="p-4 rounded-xl bg-muted/30 border border-border">
-            <p className="text-xs text-muted-foreground mb-1">Mavjud balans</p>
+            <p className="text-xs text-muted-foreground mb-1">{t("wallet.available_balance")}</p>
             <p className="text-2xl font-bold text-foreground">{fmt(totalAvail)}</p>
           </div>
           {error && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Miqdor (so'm)</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t("wallet.amount_uzs_label")}</label>
             <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
               placeholder="0" max={totalAvail / 100}
               className="w-full px-4 py-3 text-2xl font-bold rounded-xl border border-border bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">To'lov usuli</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t("wallet.payment_method_label")}</label>
             <div className="grid grid-cols-1 gap-2">
               {PAYMENT_PROVIDERS.map(p => (
                 <button key={p.id} disabled={p.disabled} onClick={() => setMethod(p.id)}
@@ -251,7 +252,7 @@ function WithdrawModal({ wallet, onClose }: { wallet: WalletData; onClose: () =>
                   <span className="text-xl">{p.logo}</span>
                   <div className="flex-1">
                     <span className="text-sm font-medium text-foreground block">{p.label}</span>
-                    {p.disabled && <span className="text-xs text-muted-foreground">Tez orada</span>}
+                    {p.disabled && <span className="text-xs text-muted-foreground">{t("wallet.coming_soon")}</span>}
                   </div>
                   {method === p.id && <CheckCircle2 className="w-4 h-4 text-primary" />}
                 </button>
@@ -259,23 +260,23 @@ function WithdrawModal({ wallet, onClose }: { wallet: WalletData; onClose: () =>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Hisob raqam / Telefon</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t("wallet.account_phone_label")}</label>
             <input value={account} onChange={e => setAccount(e.target.value)}
-              placeholder="+998901234567 yoki karta raqami"
+              placeholder={t("wallet.account_phone_ph")}
               className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
           </div>
           <button
             disabled={!amount || !method || !account || parseInt(amount) * 100 > totalAvail}
             onClick={handleSubmit}
             className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition disabled:opacity-40">
-            Yechish
+            {t("wallet.withdraw_btn")}
           </button>
         </div>
       )}
       {step === "processing" && (
         <div className="py-12 flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-          <p className="text-base font-semibold text-foreground">So'rov yuborilmoqda...</p>
+          <p className="text-base font-semibold text-foreground">{t("wallet.requesting")}</p>
         </div>
       )}
       {step === "done" && (
@@ -283,9 +284,9 @@ function WithdrawModal({ wallet, onClose }: { wallet: WalletData; onClose: () =>
           <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
             <Loader2 className="w-8 h-8 text-yellow-400" />
           </div>
-          <p className="text-xl font-bold text-foreground">So'rov qabul qilindi</p>
-          <p className="text-sm text-muted-foreground">{fmt(Math.abs(result?.transaction?.amount ?? 0))} — admin tasdiqlashini kutmoqda. Tasdiqlangach mablag' hisobingizga o'tkaziladi.</p>
-          <button onClick={onClose} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition">Yopish</button>
+          <p className="text-xl font-bold text-foreground">{t("wallet.request_accepted")}</p>
+          <p className="text-sm text-muted-foreground">{fmt(Math.abs(result?.transaction?.amount ?? 0))}{t("wallet.request_pending_desc")}</p>
+          <button onClick={onClose} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition">{t("wallet.close")}</button>
         </div>
       )}
     </ModalShell>
@@ -294,6 +295,7 @@ function WithdrawModal({ wallet, onClose }: { wallet: WalletData; onClose: () =>
 
 // ─── Add Payment Method Modal ─────────────────────────────────────────────────
 function AddMethodModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [type, setType] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -329,10 +331,10 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <ModalShell onClose={onClose} title="To'lov usuli qo'shish">
+    <ModalShell onClose={onClose} title={t("wallet.add_method_title")}>
       <div className="space-y-5">
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Karta</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("wallet.card_category")}</p>
           <div className="grid grid-cols-2 gap-2">
             {cardProviders.map(p => (
               <button key={p.id} onClick={() => { setType(p.id); setTitle(p.label); }}
@@ -344,7 +346,7 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Mobil to'lov</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("wallet.mobile_category")}</p>
           <div className="grid grid-cols-2 gap-2">
             {mobileProviders.map(p => (
               <button key={p.id} onClick={() => { setType(p.id); setTitle(p.label); }}
@@ -356,7 +358,7 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Xalqaro</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("wallet.international_category")}</p>
           {globalProviders.map(p => (
             <button key={p.id} onClick={() => { setType(p.id); setTitle(p.label); }}
               className={`w-full flex items-center gap-2 p-3 rounded-xl border transition ${type === p.id ? "border-primary bg-primary/10" : "border-border hover:bg-muted/30"}`}>
@@ -372,12 +374,12 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
             {needsCard && (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">Karta raqami</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">{t("wallet.card_number_label")}</label>
                   <div className="relative">
                     <input
                       type={showNum ? "text" : "password"}
                       value={masked} onChange={e => setMasked(e.target.value)}
-                      placeholder="**** **** **** 0000"
+                      placeholder={t("wallet.card_number_ph")}
                       className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                     <button type="button" onClick={() => setShowNum(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -387,13 +389,13 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1">Egasi</label>
-                    <input value={holder} onChange={e => setHolder(e.target.value)} placeholder="FULL NAME"
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">{t("wallet.holder_label")}</label>
+                    <input value={holder} onChange={e => setHolder(e.target.value)} placeholder={t("wallet.holder_ph")}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1">Muddati</label>
-                    <input value={expiry} onChange={e => setExpiry(e.target.value)} placeholder="MM/YY"
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">{t("wallet.expiry_label")}</label>
+                    <input value={expiry} onChange={e => setExpiry(e.target.value)} placeholder={t("wallet.expiry_ph")}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
                   </div>
                 </div>
@@ -401,8 +403,8 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
             )}
             {needsPhone && (
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">Telefon raqami</label>
-                <input value={masked} onChange={e => setMasked(e.target.value)} placeholder="+998901234567"
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t("wallet.phone_label")}</label>
+                <input value={masked} onChange={e => setMasked(e.target.value)} placeholder={t("wallet.phone_ph")}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
               </div>
             )}
@@ -411,12 +413,12 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
                 className={`relative w-10 h-5 rounded-full transition-colors ${isDefault ? "bg-primary" : "bg-muted"}`}>
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isDefault ? "translate-x-5" : ""}`} />
               </button>
-              <span className="text-sm text-foreground">Asosiy usul sifatida belgilash</span>
+              <span className="text-sm text-foreground">{t("wallet.set_default_label")}</span>
             </div>
             <button disabled={saving} onClick={handleSave}
               className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition disabled:opacity-40 flex items-center justify-center gap-2">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              Saqlash
+              {t("common.save")}
             </button>
           </div>
         )}
@@ -479,17 +481,17 @@ export default function WalletPage() {
         .then(r => r.json())
         .then((data) => {
           if (data.wallet) {
-            setDepositBanner({ kind: "success", message: `Hamyon muvaffaqiyatli to'ldirildi: +${fmt(data.transaction?.amount ?? 0)}` });
+            setDepositBanner({ kind: "success", message: `${t("wallet.topped_up")}: +${fmt(data.transaction?.amount ?? 0)}` });
             qc.invalidateQueries({ queryKey: ["wallet"] });
             qc.invalidateQueries({ queryKey: ["wallet-txs"] });
           } else {
-            setDepositBanner({ kind: "error", message: data.error ?? "To'lovni tasdiqlashda xato" });
+            setDepositBanner({ kind: "error", message: data.error ?? t("wallet.confirm_error") });
           }
         })
-        .catch(() => setDepositBanner({ kind: "error", message: "To'lovni tasdiqlashda xato" }));
+        .catch(() => setDepositBanner({ kind: "error", message: t("wallet.confirm_error") }));
       window.history.replaceState({}, "", window.location.pathname);
     } else if (canceled) {
-      setDepositBanner({ kind: "canceled", message: "To'lov bekor qilindi" });
+      setDepositBanner({ kind: "canceled", message: t("wallet.payment_canceled") });
       window.history.replaceState({}, "", window.location.pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -617,7 +619,7 @@ export default function WalletPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-foreground">{pm.title}</p>
-                      {pm.isDefault && <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">Asosiy</span>}
+                      {pm.isDefault && <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">{t("wallet.default_badge")}</span>}
                     </div>
                     {pm.maskedNumber && <p className="text-xs text-muted-foreground font-mono">{pm.maskedNumber}</p>}
                     {pm.holderName && <p className="text-xs text-muted-foreground">{pm.holderName}{pm.expiryDate ? ` · ${pm.expiryDate}` : ""}</p>}
@@ -633,11 +635,11 @@ export default function WalletPage() {
 
           {/* Supported gateways banner */}
           <div className="mt-4 p-4 rounded-xl bg-muted/20 border border-border flex flex-wrap items-center gap-3">
-            <span className="text-xs text-muted-foreground">Qo'llab-quvvatlanadi:</span>
+            <span className="text-xs text-muted-foreground">{t("wallet.supported_label")}</span>
             {PAYMENT_PROVIDERS.map(p => (
               <div key={p.id} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-card border border-border ${p.disabled ? "opacity-50" : ""}`}>
                 <span className="text-sm">{p.logo}</span>
-                <span className="text-xs font-medium text-foreground">{p.label}{p.disabled ? " · Tez orada" : ""}</span>
+                <span className="text-xs font-medium text-foreground">{p.label}{p.disabled ? ` · ${t("wallet.coming_soon")}` : ""}</span>
               </div>
             ))}
           </div>

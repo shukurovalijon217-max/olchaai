@@ -18,6 +18,7 @@ import {
   BellOff, BellRing, Zap, PenLine,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 import {
   useListConversations,
   useGetConversationMessages,
@@ -92,11 +93,11 @@ function formatDur(secs: number): string {
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 }
-function dayLabel(d: Date) {
+function dayLabel(d: Date, t: any) {
   const now = new Date(), diff = Math.floor((now.getTime()-d.getTime())/86400000);
-  if (diff === 0) return "Bugun";
-  if (diff === 1) return "Kecha";
-  return d.toLocaleDateString("uz-UZ", { day:"numeric", month:"long" });
+  if (diff === 0) return t("msg.today");
+  if (diff === 1) return t("msg.yesterday");
+  return d.toLocaleDateString(i18n.language === "uz" ? "uz-UZ" : "en-US", { day:"numeric", month:"long" });
 }
 function uid() { return Math.random().toString(36).slice(2); }
 async function uploadBlob(blob: Blob, name: string, mime: string): Promise<string> {
@@ -111,6 +112,7 @@ async function uploadBlob(blob: Blob, name: string, mime: string): Promise<strin
 
 /* ── EmojiPicker (bottom-sheet modal) ──────────────────────── */
 function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; onClose: () => void }) {
+  const { t } = useTranslation();
   const [cat, setCat] = useState("😊");
   const [search, setSearch] = useState("");
   const stickers = ["🎉","🔥","💯","❤️","😂","🚀","✨","👑","💎","🌈","🦄","🎸","🫶","💪","🌙","⭐","🍕","🏆","🎯","🎭"];
@@ -141,7 +143,7 @@ function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; onClose
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
             <input
               className="w-full pl-8 pr-3 py-2 bg-muted rounded-xl text-sm focus:outline-none text-foreground"
-              placeholder="Emoji qidirish..."
+              placeholder={t("msg.search_emoji")}
               value={search}
               onChange={e=>setSearch(e.target.value)}/>
           </div>
@@ -174,7 +176,7 @@ function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; onClose
             ))}
           </div>
           {filteredEmojis.length === 0 && (
-            <p className="text-center text-muted-foreground text-sm py-8">Topilmadi</p>
+            <p className="text-center text-muted-foreground text-sm py-8">{t("msg.no_emoji")}</p>
           )}
         </div>
       </motion.div>
@@ -189,24 +191,25 @@ function AttachMenu({
   onPhoto:()=>void; onFile:()=>void; onLocation:()=>void;
   onPoll:()=>void; onSticker:()=>void; onContact:()=>void; onGif:()=>void; onClose:()=>void;
 }) {
+  const { t } = useTranslation();
   const items = [
-    { icon: ImageIcon, label:"Rasm",       color:"bg-blue-500/15 text-blue-400",     action:onPhoto },
-    { icon: File,      label:"Fayl",       color:"bg-green-500/15 text-green-400",   action:onFile },
-    { icon: MapPin,    label:"Joylashuv", color:"bg-red-500/15 text-red-400",       action:onLocation },
-    { icon: BarChart3, label:"So'rovnoma",color:"bg-purple-500/15 text-purple-400", action:onPoll },
-    { icon: Heart,     label:"Stiker",    color:"bg-pink-500/15 text-pink-400",     action:onSticker },
-    { icon: Users,     label:"Kontakt",   color:"bg-amber-500/15 text-amber-400",   action:onContact },
+    { icon: ImageIcon, label:t("msg.themes.blue"),       color:"bg-blue-500/15 text-blue-400",     action:onPhoto, labelKey:"Rasm" },
+    { icon: File,      label:t("msg.file"),       color:"bg-green-500/15 text-green-400",   action:onFile },
+    { icon: MapPin,    label:t("orb.page_map"), color:"bg-red-500/15 text-red-400",       action:onLocation, labelKey:"Joylashuv" },
+    { icon: BarChart3, label:t("groups.poll"),color:"bg-purple-500/15 text-purple-400", action:onPoll, labelKey:"So'rovnoma" },
+    { icon: Heart,     label:t("drag_canvas.add_emoji"),    color:"bg-pink-500/15 text-pink-400",     action:onSticker, labelKey:"Stiker" },
+    { icon: Users,     label:t("msg.share_contact"),   color:"bg-amber-500/15 text-amber-400",   action:onContact, labelKey:"Kontakt" },
     { icon: Globe,     label:"GIF",       color:"bg-cyan-500/15 text-cyan-400",     action:onGif },
   ];
   return (
     <div className="bg-card border border-border rounded-2xl shadow-2xl p-3 grid grid-cols-4 gap-2 w-60">
       {items.map(it=>(
-        <button key={it.label} onClick={()=>{it.action();onClose();}}
+        <button key={it.labelKey || it.label} onClick={()=>{it.action();onClose();}}
           className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-muted transition-colors">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${it.color}`}>
             <it.icon className="w-5 h-5" />
           </div>
-          <span className="text-[10px] text-muted-foreground">{it.label}</span>
+          <span className="text-[10px] text-muted-foreground">{it.labelKey ? t(`msg.${it.labelKey.toLowerCase()}`) : it.label}</span>
         </button>
       ))}
     </div>
@@ -218,6 +221,7 @@ interface TenorGif { id: string; title: string; preview: string; original: strin
 const GIF_CATS = ["funny","cute","wow","sad","love","dance","win","cat","dog","anime"];
 
 function GifPickerModal({ onPick, onClose }: { onPick:(url:string)=>void; onClose:()=>void }) {
+  const { t } = useTranslation();
   const [q, setQ] = useState("funny");
   const [gifs, setGifs] = useState<TenorGif[]>([]);
   const [loading, setLoading] = useState(false);
@@ -241,7 +245,7 @@ function GifPickerModal({ onPick, onClose }: { onPick:(url:string)=>void; onClos
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
             <input className="w-full pl-8 pr-3 py-2 bg-muted rounded-xl text-sm focus:outline-none text-foreground"
-              placeholder="GIF qidirish..." value={q}
+              placeholder={t("msg.search_gif")} value={q}
               onChange={e=>setQ(e.target.value)}
               onKeyDown={e=>{ if(e.key==="Enter") search(q); }}/>
           </div>
@@ -265,7 +269,7 @@ function GifPickerModal({ onPick, onClose }: { onPick:(url:string)=>void; onClos
               ))}
             </div>
           ) : gifs.length===0 ? (
-            <div className="text-center py-10 text-muted-foreground text-sm">GIF topilmadi</div>
+            <div className="text-center py-10 text-muted-foreground text-sm">{t("msg.no_gif")}</div>
           ) : (
             <div className="grid grid-cols-3 gap-1.5">
               {gifs.map(gif=>(
@@ -292,6 +296,7 @@ function ContactPickerModal({ users, onPick, onClose }: {
   onPick:(u:PickableUser)=>void;
   onClose:()=>void;
 }) {
+  const { t } = useTranslation();
   const [q, setQ] = useState("");
   const filtered = users.filter(u=>
     (u.displayName||"").toLowerCase().includes(q.toLowerCase()) ||
@@ -304,7 +309,7 @@ function ContactPickerModal({ users, onPick, onClose }: {
       <motion.div initial={{y:300}} animate={{y:0}} exit={{y:300}} transition={{type:"spring",damping:30,stiffness:320}}
         className="w-full bg-card border-t border-border rounded-t-3xl shadow-2xl" style={{maxHeight:"70vh",display:"flex",flexDirection:"column"}}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
-          <span className="font-bold text-foreground">Kontakt ulashish</span>
+          <span className="font-bold text-foreground">{t("msg.share_contact")}</span>
           <button onClick={onClose} className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80">
             <X className="w-4 h-4"/>
           </button>
@@ -313,12 +318,12 @@ function ContactPickerModal({ users, onPick, onClose }: {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
             <input className="w-full pl-8 pr-3 py-2 bg-muted rounded-xl text-sm focus:outline-none text-foreground"
-              placeholder="Foydalanuvchi qidirish..." value={q} onChange={e=>setQ(e.target.value)} autoFocus/>
+              placeholder={t("msg.search_user")} value={q} onChange={e=>setQ(e.target.value)} autoFocus/>
           </div>
         </div>
         <div className="overflow-y-auto flex-1">
           {filtered.length===0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">Foydalanuvchi topilmadi</div>
+            <div className="text-center py-8 text-muted-foreground text-sm">{t("msg.no_user")}</div>
           ) : filtered.map(user=>(
             <button key={user.id} onClick={()=>{ onPick(user); onClose(); }}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
@@ -340,6 +345,7 @@ function ContactPickerModal({ users, onPick, onClose }: {
 
 /* ── Round Video Recorder ───────────────────────────────────── */
 function RoundVideoRecorder({ onSend, onClose }: { onSend:(b:Blob,dur:number)=>void; onClose:()=>void }) {
+  const { t } = useTranslation();
   const vidRef = useRef<HTMLVideoElement>(null);
   const recRef = useRef<MediaRecorder|null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -418,7 +424,7 @@ function RoundVideoRecorder({ onSend, onClose }: { onSend:(b:Blob,dur:number)=>v
         )}
         <div className="w-12 h-12"/>
       </div>
-      <p className="text-white/60 text-sm">{recording ? "Yozishni to'xtatish uchun bosing" : "Bosib yozishni boshlang"}</p>
+      <p className="text-white/60 text-sm">{recording ? t("msg.stop_rec") : t("msg.start_rec")}</p>
     </motion.div>
   );
 }
@@ -493,6 +499,7 @@ function VideoNoteBubble({ url }: { url: string }) {
 
 /* ── PollBubble ─────────────────────────────────────────────── */
 function PollBubble({ msg, isMe, onUpdate }: { msg: LocalMsg; isMe: boolean; onUpdate:(id:string,patch:Partial<LocalMsg>)=>void }) {
+  const { t } = useTranslation();
   const total = (msg.pollOptions||[]).reduce((a,o)=>a+o.votes,0);
   const vote = (optId: number) => {
     if (!msg.pollOptions) return;
@@ -503,7 +510,7 @@ function PollBubble({ msg, isMe, onUpdate }: { msg: LocalMsg; isMe: boolean; onU
   };
   return (
     <div className="px-4 py-3 min-w-[200px]">
-      <p className="font-semibold text-sm mb-3">{msg.pollTitle || "📊 So'rovnoma"}</p>
+      <p className="font-semibold text-sm mb-3">{msg.pollTitle || t("msg.poll_title")}</p>
       <div className="space-y-2">
         {(msg.pollOptions||[]).map(opt => {
           const pct = total ? Math.round(opt.votes/total*100) : 0;
@@ -520,7 +527,7 @@ function PollBubble({ msg, isMe, onUpdate }: { msg: LocalMsg; isMe: boolean; onU
           );
         })}
       </div>
-      <p className="text-[10px] opacity-50 mt-2">{total} ta ovoz</p>
+      <p className="text-[10px] opacity-50 mt-2">{total} {t("feed_card.votes_suffix")}</p>
     </div>
   );
 }
@@ -533,15 +540,16 @@ function ContextMenu({
   onReply:()=>void; onCopy:()=>void; onStar:()=>void;
   onPin:()=>void; onDelete:()=>void; onForward:()=>void; onEdit:()=>void; onSelect:()=>void; onClose:()=>void;
 }) {
+  const { t } = useTranslation();
   const items = [
-    { icon: Reply,       label: "Javob berish",                                            action: onReply,   danger: false },
-    { icon: Forward,     label: "Yo'naltirish",                                            action: onForward, danger: false },
-    { icon: Copy,        label: "Nusxa olish",                                             action: onCopy,    danger: false },
-    ...(isMe && msg.type==="text" ? [{ icon: Pencil, label: "Tahrirlash", action: onEdit, danger: false }] : []),
-    { icon: Star,        label: msg.starred ? "Yulduzdan olish" : "Yulduzga qo'shish",    action: onStar,    danger: false },
-    { icon: Pin,         label: msg.pinned  ? "Mahkamni olib tashlash" : "Mahkamlash",    action: onPin,     danger: false },
-    { icon: CheckSquare, label: "Tanlash",                                                 action: onSelect,  danger: false },
-    { icon: Trash2,      label: "O'chirish",                                               action: onDelete,  danger: true  },
+    { icon: Reply,       label: t("msg.reply"),                                            action: onReply,   danger: false },
+    { icon: Forward,     label: t("msg.forward"),                                            action: onForward, danger: false },
+    { icon: Copy,        label: t("msg.copy"),                                             action: onCopy,    danger: false },
+    ...(isMe && msg.type==="text" ? [{ icon: Pencil, label: t("msg.edit"), action: onEdit, danger: false }] : []),
+    { icon: Star,        label: msg.starred ? t("msg.unstar") : t("msg.star"),    action: onStar,    danger: false },
+    { icon: Pin,         label: msg.pinned  ? t("msg.unpin") : t("msg.pin"),    action: onPin,     danger: false },
+    { icon: CheckSquare, label: t("msg.select"),                                                 action: onSelect,  danger: false },
+    { icon: Trash2,      label: t("msg.delete"),                                               action: onDelete,  danger: true  },
   ];
   return (
     <motion.div initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.9}}
@@ -568,6 +576,7 @@ function MsgBubble({
   onForward:(id:string)=>void;
   onSelect:(id:string)=>void;
 }) {
+  const { t, i18n } = useTranslation();
   const [showCtx, setShowCtx] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -651,8 +660,8 @@ function MsgBubble({
                 className="w-full bg-transparent text-sm text-primary-foreground resize-none focus:outline-none min-h-[40px]"
                 rows={2}/>
               <div className="flex gap-2 mt-1.5">
-                <button onClick={()=>setEditing(false)} className="text-[10px] opacity-60 hover:opacity-100">Bekor</button>
-                <button onClick={saveEdit} className="text-[10px] font-semibold">Saqlash</button>
+                <button onClick={()=>setEditing(false)} className="text-[10px] opacity-60 hover:opacity-100">{t("common.cancel")}</button>
+                <button onClick={saveEdit} className="text-[10px] font-semibold">{t("msg.save")}</button>
               </div>
             </div>
           ) : (
@@ -663,7 +672,7 @@ function MsgBubble({
                   {msg.isPending&&(
                     <div className="flex items-center gap-1 mb-1 text-[10px] font-medium text-amber-300">
                       <Clock3 className="w-3 h-3"/>
-                      <span>{msg.scheduledAt?msg.scheduledAt.toLocaleString("uz-UZ",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}):"Rejalashtirilgan"}</span>
+                      <span>{msg.scheduledAt?msg.scheduledAt.toLocaleString(i18n.language === "uz" ? "uz-UZ" : "en-US",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}):t("msg.scheduled")}</span>
                     </div>
                   )}
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
@@ -677,10 +686,10 @@ function MsgBubble({
               )}
               {msg.type==="drawing"&&msg.mediaUrl&&(
                 <div className="overflow-hidden rounded-2xl relative group/draw">
-                  <img src={msg.mediaUrl} alt="Chizma" className="max-w-[240px] max-h-[200px] object-contain bg-[#1a1a2e]"/>
+                  <img src={msg.mediaUrl} alt={t("msg.drawing")} className="max-w-[240px] max-h-[200px] object-contain bg-[#1a1a2e]"/>
                   <div className="absolute top-1.5 left-2 flex items-center gap-1 opacity-60">
                     <PenLine className="w-3 h-3 text-white"/>
-                    <span className="text-[9px] text-white font-medium">Chizma</span>
+                    <span className="text-[9px] text-white font-medium">{t("msg.drawing")}</span>
                   </div>
                 </div>
               )}
@@ -707,8 +716,8 @@ function MsgBubble({
                     <File className="w-5 h-5"/>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate max-w-[120px]">{msg.fileName||"Fayl"}</p>
-                    <p className="text-[10px] opacity-60">Fayl</p>
+                    <p className="text-sm font-semibold truncate max-w-[120px]">{msg.fileName||t("msg.file")}</p>
+                    <p className="text-[10px] opacity-60">{t("msg.file")}</p>
                   </div>
                   {msg.mediaUrl&&(
                     <a href={msg.mediaUrl} download className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10">
@@ -738,7 +747,7 @@ function MsgBubble({
           {!isNoBubble&&msg.type!=="poll"&&(
             <div className={`flex items-center gap-1 px-3 pb-2 justify-end ${msg.type==="image"?"absolute bottom-1 right-1 bg-black/40 rounded-lg px-1.5":""}`}>
               {msg.starred&&<Star className="w-2.5 h-2.5 opacity-60 fill-current"/>}
-              {msg.edited&&<span className="text-[9px] opacity-50">tahrirlangan</span>}
+              {msg.edited&&<span className="text-[9px] opacity-50">{t("msg.edited")}</span>}
               <span className={`text-[10px] ${msg.type==="image"?"text-white/80":isMe?"text-primary-foreground/60":"text-muted-foreground"}`}>
                 {formatTs(msg.ts)}
               </span>
@@ -814,6 +823,7 @@ function ForwardModal({
   convs: Conversation[]; me: number;
   onForward:(convId:number)=>void; onClose:()=>void;
 }) {
+  const { t } = useTranslation();
   const [q, setQ] = useState("");
   const list = convs.filter(c => {
     const other = c.participants?.find(p=>p.id!==me);
@@ -828,11 +838,11 @@ function ForwardModal({
         className="w-full bg-card rounded-t-3xl border-t border-border p-5 max-h-[70vh] flex flex-col"
         onClick={e=>e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-foreground">Yo'naltirish</h3>
+          <h3 className="font-bold text-foreground">{t("msg.forward_title")}</h3>
           <button onClick={onClose}><X className="w-5 h-5 text-muted-foreground"/></button>
         </div>
         <input value={q} onChange={e=>setQ(e.target.value)}
-          placeholder="Qidirish..."
+          placeholder={t("msg.search_generic_ph")}
           className="w-full px-3 py-2 rounded-xl bg-muted text-sm mb-3 focus:outline-none focus:ring-1 focus:ring-primary"/>
         <div className="overflow-y-auto space-y-1">
           {list.map(c=>{
@@ -843,7 +853,7 @@ function ForwardModal({
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden flex-shrink-0">
                   {other?.avatarUrl ? <img src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
                 </div>
-                <span className="text-sm text-foreground">{other?.displayName||"Unknown"}</span>
+                <span className="text-sm text-foreground">{other?.displayName||t("msg.unknown_user")}</span>
               </button>
             );
           })}
@@ -855,6 +865,7 @@ function ForwardModal({
 
 /* ── PollCreator ────────────────────────────────────────────── */
 function PollCreator({ onSend, onClose }: { onSend:(title:string,opts:PollOption[])=>void; onClose:()=>void }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [opts, setOpts] = useState(["",""]);
   const addOpt = () => setOpts(p=>[...p,""]);
@@ -869,28 +880,28 @@ function PollCreator({ onSend, onClose }: { onSend:(title:string,opts:PollOption
         className="w-full bg-card rounded-t-3xl border-t border-border p-5 flex flex-col"
         onClick={e=>e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-foreground">So'rovnoma yaratish</h3>
+          <h3 className="font-bold text-foreground">{t("msg.poll_creator")}</h3>
           <button onClick={onClose}><X className="w-5 h-5 text-muted-foreground"/></button>
         </div>
         <input value={title} onChange={e=>setTitle(e.target.value)}
-          placeholder="Savol yozing..."
+          placeholder={t("msg.poll_question_ph")}
           className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm mb-3 focus:outline-none focus:ring-1 focus:ring-primary"/>
         <div className="space-y-2 mb-3 max-h-48 overflow-y-auto">
           {opts.map((o,i)=>(
             <div key={i} className="flex items-center gap-2">
               <input value={o} onChange={e=>setOpt(i,e.target.value)}
-                placeholder={`Variant ${i+1}`}
+                placeholder={t("msg.option_n",{n:i+1})}
                 className="flex-1 px-3 py-2 rounded-xl bg-muted text-sm focus:outline-none focus:ring-1 focus:ring-primary"/>
               {opts.length>2&&<button onClick={()=>removeOpt(i)} className="text-muted-foreground hover:text-destructive"><X className="w-4 h-4"/></button>}
             </div>
           ))}
         </div>
-        <button onClick={addOpt} className="text-sm text-primary flex items-center gap-1 mb-4"><Plus className="w-4 h-4"/>Variant qo'shish</button>
+        <button onClick={addOpt} className="text-sm text-primary flex items-center gap-1 mb-4"><Plus className="w-4 h-4"/>{t("msg.add_option")}</button>
         <button
           disabled={!title.trim()||opts.filter(o=>o.trim()).length<2}
           onClick={()=>onSend(title.trim(),opts.filter(o=>o.trim()).map((text,id)=>({id,text,votes:0,voted:false})))}
           className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-40">
-          Yuborish
+          {t("msg.send")}
         </button>
       </motion.div>
     </motion.div>
@@ -1240,32 +1251,32 @@ export default function MessagesPage() {
 
   // Chat area themes
   const BG_THEMES: Record<string,{style:React.CSSProperties;label:string;emoji:string}> = {
-    white_glass: { emoji:"🪟", label:"Oq shisha",  style:{ background:"rgba(255,255,255,0.18)", backdropFilter:"blur(28px) saturate(180%)", backgroundColor:"rgba(235,240,255,0.55)", backgroundImage:"radial-gradient(ellipse at top,rgba(200,210,255,0.4) 0%,transparent 70%)" } },
-    glass:       { emoji:"🫧", label:"Qora shisha", style:{ background:"rgba(10,8,25,0.55)",   backdropFilter:"blur(24px) saturate(160%)", backgroundImage:"radial-gradient(ellipse at top,rgba(100,60,200,0.15) 0%,transparent 70%)" } },
-    dark:        { emoji:"🌑", label:"Qora",        style:{ background:"linear-gradient(160deg,#08080f 0%,#12101e 50%,#0a0a0f 100%)" } },
-    midnight:    { emoji:"🌌", label:"Yarim tun",   style:{ background:"linear-gradient(170deg,#000510 0%,#020818 40%,#050b22 70%,#000810 100%)", backgroundImage:"radial-gradient(ellipse at 20% 20%,rgba(59,130,246,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(139,92,246,0.08) 0%,transparent 60%)" } },
-    galaxy:      { emoji:"🌠", label:"Galaktika",   style:{ background:"linear-gradient(135deg,#02000a 0%,#0d0520 35%,#15083a 65%,#020010 100%)", backgroundImage:"radial-gradient(ellipse at 30% 40%,rgba(139,92,246,0.25) 0%,transparent 55%),radial-gradient(ellipse at 75% 60%,rgba(59,130,246,0.15) 0%,transparent 50%)" } },
-    purple:      { emoji:"💜", label:"Binafsha",    style:{ background:"linear-gradient(145deg,#1a0030 0%,#2d1060 40%,#1a0840 70%,#0d0525 100%)", backgroundImage:"radial-gradient(ellipse at 60% 30%,rgba(167,139,250,0.2) 0%,transparent 60%)" } },
-    violet:      { emoji:"🔮", label:"Violet",      style:{ background:"linear-gradient(135deg,#0f0020 0%,#250050 30%,#180038 60%,#0a001a 100%)", backgroundImage:"radial-gradient(circle at 50% 0%,rgba(192,132,252,0.3) 0%,transparent 50%),radial-gradient(circle at 80% 100%,rgba(99,102,241,0.2) 0%,transparent 50%)" } },
-    aurora:      { emoji:"🌌", label:"Aurora",      style:{ background:"linear-gradient(160deg,#050d12 0%,#0a1a2e 25%,#0e1040 50%,#151a0a 75%,#0a1008 100%)", backgroundImage:"radial-gradient(ellipse at 20% 30%,rgba(34,211,238,0.18) 0%,transparent 50%),radial-gradient(ellipse at 80% 60%,rgba(139,92,246,0.15) 0%,transparent 50%),radial-gradient(ellipse at 50% 90%,rgba(52,211,153,0.12) 0%,transparent 50%)" } },
-    ocean:       { emoji:"🌊", label:"Okean",       style:{ background:"linear-gradient(170deg,#000d1a 0%,#001a35 30%,#00253d 60%,#001520 100%)", backgroundImage:"radial-gradient(ellipse at 30% 50%,rgba(6,182,212,0.2) 0%,transparent 60%),radial-gradient(ellipse at 70% 20%,rgba(59,130,246,0.12) 0%,transparent 50%)" } },
-    blue:        { emoji:"💙", label:"Ko'k",        style:{ background:"linear-gradient(145deg,#010c1f 0%,#021533 40%,#051a40 70%,#010a1a 100%)", backgroundImage:"radial-gradient(ellipse at 50% 60%,rgba(59,130,246,0.2) 0%,transparent 55%)" } },
-    teal:        { emoji:"🩵", label:"To'q yashil", style:{ background:"linear-gradient(145deg,#001415 0%,#002a2c 40%,#003030 70%,#001010 100%)", backgroundImage:"radial-gradient(ellipse at 40% 40%,rgba(20,184,166,0.25) 0%,transparent 60%)" } },
-    emerald:     { emoji:"💚", label:"Zumrad",      style:{ background:"linear-gradient(145deg,#001208 0%,#002818 40%,#003020 70%,#000f05 100%)", backgroundImage:"radial-gradient(ellipse at 35% 50%,rgba(52,211,153,0.2) 0%,transparent 60%)" } },
-    forest:      { emoji:"🌲", label:"O'rmon",      style:{ background:"linear-gradient(160deg,#030d05 0%,#081a08 30%,#0d2510 60%,#051005 100%)", backgroundImage:"radial-gradient(ellipse at 60% 40%,rgba(74,222,128,0.12) 0%,transparent 55%),radial-gradient(ellipse at 20% 80%,rgba(21,128,61,0.15) 0%,transparent 50%)" } },
-    sunset:      { emoji:"🌅", label:"Quyosh botishi",style:{ background:"linear-gradient(160deg,#150800 0%,#2d1200 25%,#3d1000 50%,#250828 75%,#150010 100%)", backgroundImage:"radial-gradient(ellipse at 60% 20%,rgba(251,146,60,0.25) 0%,transparent 55%),radial-gradient(ellipse at 30% 70%,rgba(192,38,211,0.2) 0%,transparent 55%)" } },
-    fire:        { emoji:"🔥", label:"Olov",        style:{ background:"linear-gradient(160deg,#1a0500 0%,#300a00 30%,#3d0f00 55%,#200500 80%,#100200 100%)", backgroundImage:"radial-gradient(ellipse at 50% 30%,rgba(249,115,22,0.3) 0%,transparent 55%),radial-gradient(ellipse at 30% 70%,rgba(239,68,68,0.2) 0%,transparent 50%)" } },
-    rose:        { emoji:"🌹", label:"Qizil atirgul",style:{ background:"linear-gradient(145deg,#180010 0%,#2d0020 40%,#350828 70%,#180010 100%)", backgroundImage:"radial-gradient(ellipse at 50% 40%,rgba(244,63,94,0.2) 0%,transparent 60%)" } },
-    cherry:      { emoji:"🌸", label:"Gilos",       style:{ background:"linear-gradient(145deg,#1a0018 0%,#2d0030 40%,#1e0838 70%,#0d0018 100%)", backgroundImage:"radial-gradient(ellipse at 40% 30%,rgba(236,72,153,0.22) 0%,transparent 55%),radial-gradient(ellipse at 70% 70%,rgba(139,92,246,0.18) 0%,transparent 55%)" } },
-    pastel:      { emoji:"🎀", label:"Pastel",      style:{ background:"linear-gradient(145deg,#16101e 0%,#1e1428 40%,#181028 70%,#100c1e 100%)", backgroundImage:"radial-gradient(ellipse at 30% 30%,rgba(244,114,182,0.2) 0%,transparent 55%),radial-gradient(ellipse at 70% 70%,rgba(167,139,250,0.2) 0%,transparent 55%),radial-gradient(ellipse at 60% 20%,rgba(125,211,252,0.12) 0%,transparent 45%)" } },
-    neon:        { emoji:"⚡", label:"Neon",        style:{ background:"linear-gradient(145deg,#050015 0%,#0a001f 40%,#080025 70%,#030010 100%)", backgroundImage:"radial-gradient(ellipse at 25% 35%,rgba(0,255,200,0.15) 0%,transparent 50%),radial-gradient(ellipse at 75% 65%,rgba(255,0,200,0.15) 0%,transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(100,50,255,0.1) 0%,transparent 60%)" } },
-    sand:        { emoji:"🏜️", label:"Cho'l",       style:{ background:"linear-gradient(160deg,#120d05 0%,#1e1508 30%,#261a0a 60%,#150e05 100%)", backgroundImage:"radial-gradient(ellipse at 50% 30%,rgba(217,119,6,0.2) 0%,transparent 55%),radial-gradient(ellipse at 20% 70%,rgba(180,83,9,0.12) 0%,transparent 50%)" } },
-    gray:        { emoji:"🩶", label:"Kulrang",     style:{ background:"linear-gradient(145deg,#0d0d0d 0%,#181818 40%,#1a1a1a 70%,#0d0d0d 100%)" } },
-    dots:        { emoji:"🔵", label:"Nuqtalar",    style:{ background:"radial-gradient(circle,rgba(139,92,246,0.12) 1.5px,transparent 1.5px)", backgroundSize:"22px 22px", backgroundColor:"#09070f", backgroundImage:"radial-gradient(ellipse at 50% 50%,rgba(109,40,217,0.08) 0%,transparent 70%)" } },
-    hex:         { emoji:"⬡",  label:"Olti burchak",style:{ backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(139,92,246,0.06) 27px,rgba(139,92,246,0.06) 28px),repeating-linear-gradient(60deg,transparent,transparent 27px,rgba(139,92,246,0.06) 27px,rgba(139,92,246,0.06) 28px),repeating-linear-gradient(120deg,transparent,transparent 27px,rgba(139,92,246,0.06) 27px,rgba(139,92,246,0.06) 28px)", backgroundColor:"#08060e" } },
-    grid:        { emoji:"▦",  label:"To'r",        style:{ backgroundImage:"linear-gradient(rgba(139,92,246,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.06) 1px,transparent 1px)", backgroundSize:"32px 32px", backgroundColor:"#07060d" } },
-    carbon:      { emoji:"⬛", label:"Carbon",      style:{ backgroundImage:"repeating-linear-gradient(45deg,#111111 0,#111111 1px,#0a0a0a 0,#0a0a0a 50%)", backgroundSize:"6px 6px" } },
-    linen:       { emoji:"📜", label:"Keten",       style:{ backgroundImage:"repeating-linear-gradient(0deg,rgba(255,255,255,0.015) 0px,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 4px),repeating-linear-gradient(90deg,rgba(255,255,255,0.01) 0px,rgba(255,255,255,0.01) 1px,transparent 1px,transparent 6px)", backgroundColor:"#0e0b07", background:"linear-gradient(145deg,#0e0b07,#14100a)" } },
+    white_glass: { emoji:"🪟", label:t("msg.themes.white_glass"),  style:{ background:"rgba(255,255,255,0.18)", backdropFilter:"blur(28px) saturate(180%)", backgroundColor:"rgba(235,240,255,0.55)", backgroundImage:"radial-gradient(ellipse at top,rgba(200,210,255,0.4) 0%,transparent 70%)" } },
+    glass:       { emoji:"🫧", label:t("msg.themes.glass"), style:{ background:"rgba(10,8,25,0.55)",   backdropFilter:"blur(24px) saturate(160%)", backgroundImage:"radial-gradient(ellipse at top,rgba(100,60,200,0.15) 0%,transparent 70%)" } },
+    dark:        { emoji:"🌑", label:t("msg.themes.dark"),        style:{ background:"linear-gradient(160deg,#08080f 0%,#12101e 50%,#0a0a0f 100%)" } },
+    midnight:    { emoji:"🌌", label:t("msg.themes.midnight"),   style:{ background:"linear-gradient(170deg,#000510 0%,#020818 40%,#050b22 70%,#000810 100%)", backgroundImage:"radial-gradient(ellipse at 20% 20%,rgba(59,130,246,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(139,92,246,0.08) 0%,transparent 60%)" } },
+    galaxy:      { emoji:"🌠", label:t("msg.themes.galaxy"),   style:{ background:"linear-gradient(135deg,#02000a 0%,#0d0520 35%,#15083a 65%,#020010 100%)", backgroundImage:"radial-gradient(ellipse at 30% 40%,rgba(139,92,246,0.25) 0%,transparent 55%),radial-gradient(ellipse at 75% 60%,rgba(59,130,246,0.15) 0%,transparent 50%)" } },
+    purple:      { emoji:"💜", label:t("msg.themes.purple"),    style:{ background:"linear-gradient(145deg,#1a0030 0%,#2d1060 40%,#1a0840 70%,#0d0525 100%)", backgroundImage:"radial-gradient(ellipse at 60% 30%,rgba(167,139,250,0.2) 0%,transparent 60%)" } },
+    violet:      { emoji:"🔮", label:t("msg.themes.violet"),      style:{ background:"linear-gradient(135deg,#0f0020 0%,#250050 30%,#180038 60%,#0a001a 100%)", backgroundImage:"radial-gradient(circle at 50% 0%,rgba(192,132,252,0.3) 0%,transparent 50%),radial-gradient(circle at 80% 100%,rgba(99,102,241,0.2) 0%,transparent 50%)" } },
+    aurora:      { emoji:"🌌", label:t("msg.themes.aurora"),      style:{ background:"linear-gradient(160deg,#050d12 0%,#0a1a2e 25%,#0e1040 50%,#151a0a 75%,#0a1008 100%)", backgroundImage:"radial-gradient(ellipse at 20% 30%,rgba(34,211,238,0.18) 0%,transparent 50%),radial-gradient(ellipse at 80% 60%,rgba(139,92,246,0.15) 0%,transparent 50%),radial-gradient(ellipse at 50% 90%,rgba(52,211,153,0.12) 0%,transparent 50%)" } },
+    ocean:       { emoji:"🌊", label:t("msg.themes.ocean"),       style:{ background:"linear-gradient(170deg,#000d1a 0%,#001a35 30%,#00253d 60%,#001520 100%)", backgroundImage:"radial-gradient(ellipse at 30% 50%,rgba(6,182,212,0.2) 0%,transparent 60%),radial-gradient(ellipse at 70% 20%,rgba(59,130,246,0.12) 0%,transparent 50%)" } },
+    blue:        { emoji:"💙", label:t("msg.themes.blue"),        style:{ background:"linear-gradient(145deg,#010c1f 0%,#021533 40%,#051a40 70%,#010a1a 100%)", backgroundImage:"radial-gradient(ellipse at 50% 60%,rgba(59,130,246,0.2) 0%,transparent 55%)" } },
+    teal:        { emoji:"🩵", label:t("msg.themes.teal"), style:{ background:"linear-gradient(145deg,#001415 0%,#002a2c 40%,#003030 70%,#001010 100%)", backgroundImage:"radial-gradient(ellipse at 40% 40%,rgba(20,184,166,0.25) 0%,transparent 60%)" } },
+    emerald:     { emoji:"💚", label:t("msg.themes.emerald"),      style:{ background:"linear-gradient(145deg,#001208 0%,#002818 40%,#003020 70%,#000f05 100%)", backgroundImage:"radial-gradient(ellipse at 35% 50%,rgba(52,211,153,0.2) 0%,transparent 60%)" } },
+    forest:      { emoji:"🌲", label:t("msg.themes.forest"),      style:{ background:"linear-gradient(160deg,#030d05 0%,#081a08 30%,#0d2510 60%,#051005 100%)", backgroundImage:"radial-gradient(ellipse at 60% 40%,rgba(74,222,128,0.12) 0%,transparent 55%),radial-gradient(ellipse at 20% 80%,rgba(21,128,61,0.15) 0%,transparent 50%)" } },
+    sunset:      { emoji:"🌅", label:t("msg.themes.sunset"),style:{ background:"linear-gradient(160deg,#150800 0%,#2d1200 25%,#3d1000 50%,#250828 75%,#150010 100%)", backgroundImage:"radial-gradient(ellipse at 60% 20%,rgba(251,146,60,0.25) 0%,transparent 55%),radial-gradient(ellipse at 30% 70%,rgba(192,38,211,0.2) 0%,transparent 55%)" } },
+    fire:        { emoji:"🔥", label:t("msg.themes.fire"),        style:{ background:"linear-gradient(160deg,#1a0500 0%,#300a00 30%,#3d0f00 55%,#200500 80%,#100200 100%)", backgroundImage:"radial-gradient(ellipse at 50% 30%,rgba(249,115,22,0.3) 0%,transparent 55%),radial-gradient(ellipse at 30% 70%,rgba(239,68,68,0.2) 0%,transparent 50%)" } },
+    rose:        { emoji:"🌹", label:t("msg.themes.rose"),style:{ background:"linear-gradient(145deg,#180010 0%,#2d0020 40%,#350828 70%,#180010 100%)", backgroundImage:"radial-gradient(ellipse at 50% 40%,rgba(244,63,94,0.2) 0%,transparent 60%)" } },
+    cherry:      { emoji:"🌸", label:t("msg.themes.cherry"),       style:{ background:"linear-gradient(145deg,#1a0018 0%,#2d0030 40%,#1e0838 70%,#0d0018 100%)", backgroundImage:"radial-gradient(ellipse at 40% 30%,rgba(236,72,153,0.22) 0%,transparent 55%),radial-gradient(ellipse at 70% 70%,rgba(139,92,246,0.18) 0%,transparent 55%)" } },
+    pastel:      { emoji:"🎀", label:t("msg.themes.pastel"),      style:{ background:"linear-gradient(145deg,#16101e 0%,#1e1428 40%,#181028 70%,#100c1e 100%)", backgroundImage:"radial-gradient(ellipse at 30% 30%,rgba(244,114,182,0.2) 0%,transparent 55%),radial-gradient(ellipse at 70% 70%,rgba(167,139,250,0.2) 0%,transparent 55%),radial-gradient(ellipse at 60% 20%,rgba(125,211,252,0.12) 0%,transparent 45%)" } },
+    neon:        { emoji:"⚡", label:t("msg.themes.neon"),        style:{ background:"linear-gradient(145deg,#050015 0%,#0a001f 40%,#080025 70%,#030010 100%)", backgroundImage:"radial-gradient(ellipse at 25% 35%,rgba(0,255,200,0.15) 0%,transparent 50%),radial-gradient(ellipse at 75% 65%,rgba(255,0,200,0.15) 0%,transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(100,50,255,0.1) 0%,transparent 60%)" } },
+    sand:        { emoji:"🏜️", label:t("msg.themes.sand"),       style:{ background:"linear-gradient(160deg,#120d05 0%,#1e1508 30%,#261a0a 60%,#150e05 100%)", backgroundImage:"radial-gradient(ellipse at 50% 30%,rgba(217,119,6,0.2) 0%,transparent 55%),radial-gradient(ellipse at 20% 70%,rgba(180,83,9,0.12) 0%,transparent 50%)" } },
+    gray:        { emoji:"🩶", label:t("msg.themes.gray"),     style:{ background:"linear-gradient(145deg,#0d0d0d 0%,#181818 40%,#1a1a1a 70%,#0d0d0d 100%)" } },
+    dots:        { emoji:"🔵", label:t("msg.themes.dots"),    style:{ background:"radial-gradient(circle,rgba(139,92,246,0.12) 1.5px,transparent 1.5px)", backgroundSize:"22px 22px", backgroundColor:"#09070f", backgroundImage:"radial-gradient(ellipse at 50% 50%,rgba(109,40,217,0.08) 0%,transparent 70%)" } },
+    hex:         { emoji:"⬡",  label:t("msg.themes.hex"),style:{ backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(139,92,246,0.06) 27px,rgba(139,92,246,0.06) 28px),repeating-linear-gradient(60deg,transparent,transparent 27px,rgba(139,92,246,0.06) 27px,rgba(139,92,246,0.06) 28px),repeating-linear-gradient(120deg,transparent,transparent 27px,rgba(139,92,246,0.06) 27px,rgba(139,92,246,0.06) 28px)", backgroundColor:"#08060e" } },
+    grid:        { emoji:"▦",  label:t("msg.themes.grid"),        style:{ backgroundImage:"linear-gradient(rgba(139,92,246,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.06) 1px,transparent 1px)", backgroundSize:"32px 32px", backgroundColor:"#07060d" } },
+    carbon:      { emoji:"⬛", label:t("msg.themes.carbon"),      style:{ backgroundImage:"repeating-linear-gradient(45deg,#111111 0,#111111 1px,#0a0a0a 0,#0a0a0a 50%)", backgroundSize:"6px 6px" } },
+    linen:       { emoji:"📜", label:t("msg.themes.linen"),       style:{ backgroundImage:"repeating-linear-gradient(0deg,rgba(255,255,255,0.015) 0px,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 4px),repeating-linear-gradient(90deg,rgba(255,255,255,0.01) 0px,rgba(255,255,255,0.01) 1px,transparent 1px,transparent 6px)", backgroundColor:"#0e0b07", background:"linear-gradient(145deg,#0e0b07,#14100a)" } },
   };
 
   return (
@@ -1282,14 +1293,14 @@ export default function MessagesPage() {
               {selectedMsgs.size>0&&(
                 <button onClick={()=>setSelectedMsgs(new Set())}
                   className="text-xs text-primary px-2 py-1 rounded-lg bg-primary/10">
-                  {selectedMsgs.size} ta tanlandi
+                  {selectedMsgs.size} {t("msg.selected_count")}
                 </button>
               )}
-              <button onClick={()=>setShowNewConv(true)} title="Yangi suhbat"
+              <button onClick={()=>setShowNewConv(true)} title={t("msg.new_chat")}
                 className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
                 <UserPlus className="w-4 h-4"/>
               </button>
-              <button onClick={()=>{ window.location.href="/groups"; }} title="Guruhlar"
+              <button onClick={()=>{ window.location.href="/groups"; }} title={t("msg.tabs.groups")}
                 className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
                 <Users className="w-4 h-4"/>
               </button>
@@ -1305,7 +1316,7 @@ export default function MessagesPage() {
             {(["all","unread","groups"] as const).map(tb=>(
               <button key={tb} onClick={()=>setTab(tb)}
                 className={`flex-1 py-1 rounded-lg text-xs font-semibold transition-colors ${tab===tb?"bg-primary/15 text-primary":"text-muted-foreground hover:text-foreground"}`}>
-                {tb==="all"?"Hammasi":tb==="unread"?"O'qilmagan":"Guruhlar"}
+                {tb==="all" ? t("msg.tabs.all") : tb==="unread" ? t("msg.tabs.unread") : t("msg.tabs.groups")}
               </button>
             ))}
           </div>
@@ -1342,7 +1353,7 @@ export default function MessagesPage() {
                       {isPinned&&<Pin className="w-2.5 h-2.5 text-primary flex-shrink-0"/>}
                       <p className="text-sm font-semibold text-foreground truncate">{other?.displayName||"Unknown"}</p>
                     </div>
-                    <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-1">hozir</span>
+                    <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-1">{t("msg.now")}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     {isMuted&&<BellOff className="w-3 h-3 text-muted-foreground flex-shrink-0"/>}
@@ -1369,12 +1380,12 @@ export default function MessagesPage() {
             style={{top:convCtxPos.y,left:Math.min(convCtxPos.x,window.innerWidth-200)}}
             onClick={e=>e.stopPropagation()}>
             {[
-              { icon: Pin,     label: pinnedConvIds.has(convCtxMenu)?"Pinni olish":"Pinlash",
+              { icon: Pin,     label: pinnedConvIds.has(convCtxMenu)?t("msg.unpin"):t("msg.pin"),
                 action:()=>{ setPinnedConvIds(p=>{const s=new Set(p);s.has(convCtxMenu)?s.delete(convCtxMenu):s.add(convCtxMenu);return s;}); }},
-              { icon: mutedConvs.has(convCtxMenu)?BellRing:BellOff, label:mutedConvs.has(convCtxMenu)?"Ovozni yoqish":"Ovozni o'chirish",
+              { icon: mutedConvs.has(convCtxMenu)?BellRing:BellOff, label:mutedConvs.has(convCtxMenu)?t("msg.unmute"):t("msg.mute"),
                 action:()=>{ setMutedConvs(p=>{const s=new Set(p);s.has(convCtxMenu)?s.delete(convCtxMenu):s.add(convCtxMenu);return s;}); }},
-              { icon: Archive, label:"Arxivlash", action:()=>{} },
-              { icon: Trash2,  label:"O'chirish",  action:()=>{ setShowClearConfirm(true); setActiveId(convCtxMenu); }, danger:true },
+              { icon: Archive, label:t("msg.archive"), action:()=>{} },
+              { icon: Trash2,  label:t("msg.delete"),  action:()=>{ setShowClearConfirm(true); setActiveId(convCtxMenu); }, danger:true },
             ].map((item,i)=>(
               <button key={i} onClick={()=>{item.action();setConvCtxMenu(null);}}
                 className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors text-left ${(item as {danger?:boolean}).danger?"text-destructive":"text-foreground"}`}>
@@ -1409,9 +1420,9 @@ export default function MessagesPage() {
               <AnimatePresence mode="wait">
                 <motion.p key={partnerTyping?"pt":typing?"t":"o"} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-xs">
                   {partnerTyping
-                    ?<span className="text-primary flex items-center gap-1"><span className="flex gap-0.5">{[0,1,2].map(i=><span key={i} className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{animationDelay:`${i*0.15}s`}}/>)}</span>yozmoqda...</span>
+                    ?<span className="text-primary flex items-center gap-1"><span className="flex gap-0.5">{[0,1,2].map(i=><span key={i} className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{animationDelay:`${i*0.15}s`}}/>)}</span>{t("msg.typing")}...</span>
                     :typing
-                    ?<span className="text-muted-foreground text-[11px]">Siz yozmoqdasiz...</span>
+                    ?<span className="text-muted-foreground text-[11px]">{t("msg.you_typing")}...</span>
                     :isOnline(getOther(activeConv)?.id)
                     ?<span className="text-emerald-400">{t("msg.online")}</span>
                     :<span className="text-muted-foreground">{t("msg.offline")}</span>}
@@ -1422,7 +1433,7 @@ export default function MessagesPage() {
               {showMsgSearch
                 ?<input autoFocus value={msgSearch} onChange={e=>setMsgSearch(e.target.value)}
                     onBlur={()=>{ setShowMsgSearch(false); setMsgSearch(""); }}
-                    placeholder="Xabarda qidirish..."
+                    placeholder={t("msg.search_in_chat")}
                     className="w-32 px-2 py-1 rounded-lg bg-muted text-xs text-foreground focus:outline-none border border-primary/30"/>
                 :<button onClick={()=>setShowMsgSearch(true)}
                     className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
@@ -1452,18 +1463,18 @@ export default function MessagesPage() {
                     <motion.div initial={{opacity:0,scale:0.92,y:-4}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:0.92,y:-4}}
                       className="absolute top-full right-0 mt-1 z-50 w-56 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
                       {[
-                        { icon:Users,   label:"Profilni ko'rish",     action:()=>{ setShowProfilePanel(true); setShowChatMenu(false); } },
-                        { icon:Search,  label:"Xabarda qidirish",      action:()=>{ setShowMsgSearch(true); setShowChatMenu(false); } },
-                        { icon:Palette, label:"Fon tanlash",           action:()=>{ setShowBgPicker(true); setShowChatMenu(false); } },
-                        { icon:Pin,     label:"Mahkamlangan xabarlar", action:()=>{ setShowPinnedPanel(true); setShowChatMenu(false); } },
-                        { icon:Star,    label:"Yulduzli xabarlar",     action:()=>{ setShowStarredPanel(true); setShowChatMenu(false); } },
-                        { icon:Bell,    label:convId&&mutedConvs.has(convId)?"Ovozni yoqish":"Ovozni o'chirish",
+                        { icon:Users,   label:t("msg.view_profile"),     action:()=>{ setShowProfilePanel(true); setShowChatMenu(false); } },
+                        { icon:Search,  label:t("msg.search_in_chat"),      action:()=>{ setShowMsgSearch(true); setShowChatMenu(false); } },
+                        { icon:Palette, label:t("msg.choose_bg"),           action:()=>{ setShowBgPicker(true); setShowChatMenu(false); } },
+                        { icon:Pin,     label:t("msg.pinned_msgs"), action:()=>{ setShowPinnedPanel(true); setShowChatMenu(false); } },
+                        { icon:Star,    label:t("msg.starred_msgs"),     action:()=>{ setShowStarredPanel(true); setShowChatMenu(false); } },
+                        { icon:Bell,    label:convId&&mutedConvs.has(convId)?t("msg.unmute"):t("msg.mute"),
                           action:()=>{ if(!convId) return; setMutedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); setShowChatMenu(false); } },
-                        { icon:Share2,  label:"Kontaktni ulashish",    action:()=>{ addMsg({type:"text",content:`👤 ${getOther(activeConv)?.displayName||"Kontakt"}ning kartochkasi`}); setShowChatMenu(false); } },
-                        { icon:Zap,     label:"Turbo rejim",           action:()=>{ setShowChatMenu(false); } },
-                        { icon:Flag,    label:"Shikoyat",              action:()=>{ setShowChatMenu(false); }, danger:true },
-                        { icon:Trash2,  label:"Tarixni tozalash",      action:()=>{ setShowClearConfirm(true); setShowChatMenu(false); }, danger:true },
-                        { icon:Lock,    label:convId&&blockedConvs.has(convId)?"Blokdan chiqarish":"Bloklash",
+                        { icon:Share2,  label:t("msg.share_contact"),    action:()=>{ addMsg({type:"text",content:`👤 ${getOther(activeConv)?.displayName||"Kontakt"}ning kartochkasi`}); setShowChatMenu(false); } },
+                        { icon:Zap,     label:t("msg.turbo_mode"),           action:()=>{ setShowChatMenu(false); } },
+                        { icon:Flag,    label:t("msg.report"),              action:()=>{ setShowChatMenu(false); }, danger:true },
+                        { icon:Trash2,  label:t("msg.clear_history"),      action:()=>{ setShowClearConfirm(true); setShowChatMenu(false); }, danger:true },
+                        { icon:Lock,    label:convId&&blockedConvs.has(convId)?t("msg.unblock"):t("msg.block"),
                           action:()=>{ if(!convId) return; setBlockedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); setShowChatMenu(false); }, danger:true },
                       ].map((item,i)=>(
                         <button key={i} onClick={item.action}
@@ -1485,7 +1496,7 @@ export default function MessagesPage() {
               <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}}
                 className="flex items-center gap-3 px-4 py-2 bg-primary/5 border-b border-primary/10 flex-shrink-0">
                 <button onClick={()=>setSelectedMsgs(new Set())} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4"/></button>
-                <span className="text-sm text-foreground flex-1">{selectedMsgs.size} ta tanlandi</span>
+                <span className="text-sm text-foreground flex-1">{selectedMsgs.size} {t("msg.selected_count")}</span>
                 <button onClick={()=>{ setForwardMsgId([...selectedMsgs][0]); setSelectedMsgs(new Set()); }} className="text-primary text-sm"><Forward className="w-4 h-4"/></button>
                 <button onClick={()=>{ selectedMsgs.forEach(id=>setHiddenMsgIds(p=>new Set([...p,id]))); setLocalMsgs(p=>p.filter(m=>!selectedMsgs.has(m.id))); setSelectedMsgs(new Set()); }} className="text-destructive text-sm"><Trash2 className="w-4 h-4"/></button>
               </motion.div>
@@ -1499,11 +1510,11 @@ export default function MessagesPage() {
                 className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-6">
                 <motion.div initial={{scale:0.9}} animate={{scale:1}} exit={{scale:0.9}}
                   className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm">
-                  <h3 className="font-bold text-foreground mb-1">Tarixni tozalash</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Barcha xabarlar o'chiriladi. Bu amalni qaytarib bo'lmaydi.</p>
+                  <h3 className="font-bold text-foreground mb-1">{t("msg.clear_history")}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{t("msg.clear_history_confirm")}</p>
                   <div className="flex gap-2">
-                    <button onClick={()=>setShowClearConfirm(false)} className="flex-1 py-2 rounded-xl border border-border text-sm text-muted-foreground hover:bg-muted">Bekor qilish</button>
-                    <button onClick={()=>{ setLocalMsgs([]); setShowClearConfirm(false); }} className="flex-1 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold">O'chirish</button>
+                    <button onClick={()=>setShowClearConfirm(false)} className="flex-1 py-2 rounded-xl border border-border text-sm text-muted-foreground hover:bg-muted">{t("common.cancel")}</button>
+                    <button onClick={()=>{ setLocalMsgs([]); setShowClearConfirm(false); }} className="flex-1 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold">{t("msg.delete")}</button>
                   </div>
                 </motion.div>
               </motion.div>
@@ -1524,22 +1535,22 @@ export default function MessagesPage() {
                       <Trash2 className="w-5 h-5 text-destructive"/>
                     </div>
                     <div>
-                      <h3 className="font-bold text-foreground">Xabarni o'chirish</h3>
-                      <p className="text-xs text-muted-foreground">Kim uchun o'chirishni tanlang</p>
+                      <h3 className="font-bold text-foreground">{t("msg.delete_message")}</h3>
+                      <p className="text-xs text-muted-foreground">{t("msg.delete_message_desc")}</p>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
                     {deleteTarget.isMe&&(
                       <button onClick={()=>{ setHiddenMsgIds(p=>new Set([...p,deleteTarget.id])); setLocalMsgs(p=>p.filter(m=>m.id!==deleteTarget.id)); setDeleteTarget(null); }}
                         className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90">
-                        Hamma uchun o'chirish
+                        {t("msg.delete_for_everyone")}
                       </button>
                     )}
                     <button onClick={()=>{ setHiddenMsgIds(p=>new Set([...p,deleteTarget.id])); setLocalMsgs(p=>p.filter(m=>m.id!==deleteTarget.id)); setDeleteTarget(null); }}
                       className="w-full py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-muted">
-                      Faqat men uchun o'chirish
+                      {t("msg.delete_for_me")}
                     </button>
-                    <button onClick={()=>setDeleteTarget(null)} className="w-full py-2 text-sm text-muted-foreground hover:text-foreground">Bekor qilish</button>
+                    <button onClick={()=>setDeleteTarget(null)} className="w-full py-2 text-sm text-muted-foreground hover:text-foreground">{t("msg.cancel")}</button>
                   </div>
                 </motion.div>
               </motion.div>
@@ -1603,7 +1614,7 @@ export default function MessagesPage() {
                   {/* Profile header */}
                   <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
                     <button onClick={()=>setShowProfilePanel(false)} className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center"><ChevronLeft className="w-5 h-5"/></button>
-                    <span className="font-semibold text-foreground">Profil</span>
+                    <span className="font-semibold text-foreground">{t("msg.profile")}</span>
                   </div>
 
                   <div className="flex-1 overflow-y-auto">
@@ -1616,7 +1627,7 @@ export default function MessagesPage() {
                         {isOnline(other?.id)&&<div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-background"/>}
                       </div>
                       <div className="text-center">
-                        <p className="font-bold text-xl text-foreground">{other?.displayName||"Foydalanuvchi"}</p>
+                        <p className="font-bold text-xl text-foreground">{other?.displayName||t("msg.user")}</p>
                         <p className="text-sm text-primary">@{other?.username||"username"}</p>
                         <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
                           {isOnline(other?.id)
@@ -1628,13 +1639,13 @@ export default function MessagesPage() {
                       {/* Action row */}
                       <div className="flex gap-4 mt-2">
                         {[
-                          { icon:MessageCircle, label:"Xabar",   color:"bg-primary/15 text-primary",
+                          { icon:MessageCircle, label:t("msg.message"),   color:"bg-primary/15 text-primary",
                             action:()=>setShowProfilePanel(false) },
-                          { icon:Phone,         label:"Qo'ng'iroq", color:"bg-green-500/15 text-green-400",
+                          { icon:Phone,         label:t("msg.call"), color:"bg-green-500/15 text-green-400",
                             action:()=>{ setShowProfilePanel(false); if(other?.id) startCall({id:other.id,name:other.displayName||"?",avatar:other.avatarUrl||undefined},"voice"); } },
-                          { icon:Video,         label:"Video",   color:"bg-blue-500/15 text-blue-400",
+                          { icon:Video,         label:t("msg.video"),   color:"bg-blue-500/15 text-blue-400",
                             action:()=>{ setShowProfilePanel(false); if(other?.id) startCall({id:other.id,name:other.displayName||"?",avatar:other.avatarUrl||undefined},"video"); } },
-                          { icon:Share2,        label:"Ulashish", color:"bg-purple-500/15 text-purple-400",
+                          { icon:Share2,        label:t("msg.share"), color:"bg-purple-500/15 text-purple-400",
                             action:()=>{ navigator.share?.({title:other?.displayName||"",text:`OlchaAI: @${other?.username}`}).catch(()=>{}); } },
                         ].map((btn,i)=>(
                           <button key={i} onClick={btn.action} className="flex flex-col items-center gap-1.5">
@@ -1652,7 +1663,7 @@ export default function MessagesPage() {
                       {(["info","media","files"] as const).map(tb=>(
                         <button key={tb} onClick={()=>setProfileTab(tb)}
                           className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${profileTab===tb?"border-b-2 border-primary text-primary":"text-muted-foreground"}`}>
-                          {tb==="info"?"Ma'lumot":tb==="media"?"Media":"Fayllar"}
+                          {tb==="info"?t("msg.info"):tb==="media"?t("msg.media"):t("msg.files")}
                         </button>
                       ))}
                     </div>
@@ -1662,10 +1673,10 @@ export default function MessagesPage() {
                       <div className="px-4 space-y-3 pb-6">
                         <div className="space-y-2">
                           {[
-                            {label:"Xabarlar",  value:String(displayMsgs.length)},
-                            {label:"Media fayllar", value:String(mediaInChat.length)},
-                            {label:"Ovozli xabarlar", value:String(displayMsgs.filter(m=>m.type==="voice").length)},
-                            {label:"Yulduzli xabarlar", value:String(displayMsgs.filter(m=>m.starred).length)},
+                            {label:t("msg.messages"),  value:String(displayMsgs.length)},
+                            {label:t("msg.media_files"), value:String(mediaInChat.length)},
+                            {label:t("msg.voice_msgs"), value:String(displayMsgs.filter(m=>m.type==="voice").length)},
+                            {label:t("msg.starred_msgs"), value:String(displayMsgs.filter(m=>m.starred).length)},
                           ].map(row=>(
                             <div key={row.label} className="flex items-center justify-between px-4 py-3 bg-muted/40 rounded-xl">
                               <span className="text-sm text-muted-foreground">{row.label}</span>
@@ -1676,11 +1687,11 @@ export default function MessagesPage() {
 
                         {/* Notification pref */}
                         <div className="bg-muted/40 rounded-xl overflow-hidden">
-                          <p className="text-xs text-muted-foreground px-4 pt-3 pb-1 font-medium">Bildirishnomalar</p>
+                          <p className="text-xs text-muted-foreground px-4 pt-3 pb-1 font-medium">{t("msg.notifications")}</p>
                           {(["all","mentions","none"] as const).map(lvl=>(
                             <button key={lvl} onClick={()=>convId&&setNotifPrefs(p=>({...p,[convId]:lvl}))}
                               className={`flex items-center justify-between w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors ${notif===lvl?"text-primary":"text-foreground"}`}>
-                              <span>{lvl==="all"?"Barcha bildirishnomalar":lvl==="mentions"?"Faqat mention":("Hech biri")}</span>
+                              <span>{lvl==="all"?t("msg.all_notifications"):lvl==="mentions"?t("msg.mentions_only"):t("msg.none")}</span>
                               {notif===lvl&&<Check className="w-4 h-4"/>}
                             </button>
                           ))}
@@ -1690,33 +1701,33 @@ export default function MessagesPage() {
                         <div className="flex flex-col gap-2">
                           <button onClick={()=>{ setShowProfilePanel(false); setShowMsgSearch(true); }}
                             className="flex items-center gap-3 w-full px-4 py-3 bg-muted/40 rounded-xl text-sm text-foreground hover:bg-muted transition-colors">
-                            <Search className="w-4 h-4 opacity-60"/>Xabarda qidirish
+                            <Search className="w-4 h-4 opacity-60"/>{t("msg.search_in_chat")}
                           </button>
                           <button onClick={()=>{ setShowProfilePanel(false); setShowPinnedPanel(true); }}
                             className="flex items-center gap-3 w-full px-4 py-3 bg-muted/40 rounded-xl text-sm text-foreground hover:bg-muted transition-colors">
-                            <Pin className="w-4 h-4 opacity-60"/>Mahkamlangan xabarlar
+                            <Pin className="w-4 h-4 opacity-60"/>{t("msg.pinned_msgs")}
                           </button>
                           <button onClick={()=>{ setShowProfilePanel(false); setShowStarredPanel(true); }}
                             className="flex items-center gap-3 w-full px-4 py-3 bg-muted/40 rounded-xl text-sm text-foreground hover:bg-muted transition-colors">
-                            <Star className="w-4 h-4 opacity-60"/>Yulduzli xabarlar
+                            <Star className="w-4 h-4 opacity-60"/>{t("msg.starred_msgs")}
                           </button>
                           <button onClick={()=>{ if(!convId) return; setMutedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); }}
                             className="flex items-center gap-3 w-full px-4 py-3 bg-muted/40 rounded-xl text-sm text-foreground hover:bg-muted transition-colors">
                             <Bell className="w-4 h-4 opacity-60"/>
-                            {convId&&mutedConvs.has(convId)?"Ovozni yoqish":"Ovozni o'chirish"}
+                            {convId&&mutedConvs.has(convId)?t("msg.unmute"):t("msg.mute")}
                           </button>
                           <button onClick={()=>{ if(!convId) return; setBlockedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); }}
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors">
                             <Lock className="w-4 h-4 opacity-70"/>
-                            {convId&&blockedConvs.has(convId)?"Blokdan chiqarish":"Bloklash"}
+                            {convId&&blockedConvs.has(convId)?t("msg.unblock"):t("msg.block")}
                           </button>
                           <button onClick={()=>{ setShowClearConfirm(true); setShowProfilePanel(false); }}
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors">
-                            <Trash2 className="w-4 h-4 opacity-70"/>Suhbatni tozalash
+                            <Trash2 className="w-4 h-4 opacity-70"/>{t("msg.clear_history")}
                           </button>
                           <button
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors">
-                            <Flag className="w-4 h-4 opacity-70"/>Shikoyat berish
+                            <Flag className="w-4 h-4 opacity-70"/>{t("msg.report")}
                           </button>
                         </div>
                       </div>
@@ -1728,8 +1739,8 @@ export default function MessagesPage() {
                         {mediaInChat.length===0 ? (
                           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                             <ImageIcon className="w-12 h-12 mb-2 opacity-20"/>
-                            <p className="text-sm">Media fayllar yo'q</p>
-                            <p className="text-xs opacity-60 mt-1">Rasm yoki video yuboring</p>
+                            <p className="text-sm">{t("msg.no_media")}</p>
+                            <p className="text-xs opacity-60 mt-1">{t("msg.no_media_desc")}</p>
                           </div>
                         ) : (
                           <div className="grid grid-cols-3 gap-1">
@@ -1749,7 +1760,7 @@ export default function MessagesPage() {
                         {filesInChat.length===0 ? (
                           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                             <File className="w-12 h-12 mb-2 opacity-20"/>
-                            <p className="text-sm">Fayllar yo'q</p>
+                            <p className="text-sm">{t("msg.no_files")}</p>
                           </div>
                         ) : filesInChat.map(m=>(
                           <div key={m.id} className="flex items-center gap-3 p-3 bg-muted/40 rounded-xl">
@@ -1757,7 +1768,7 @@ export default function MessagesPage() {
                               <File className="w-5 h-5 text-primary"/>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{m.fileName||"Fayl"}</p>
+                              <p className="text-sm font-medium truncate">{m.fileName||t("msg.file")}</p>
                               <p className="text-[10px] text-muted-foreground">{formatTs(m.ts)}</p>
                             </div>
                             {m.mediaUrl&&<a href={m.mediaUrl} download className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80"><Download className="w-3.5 h-3.5"/></a>}
@@ -1780,26 +1791,26 @@ export default function MessagesPage() {
                   className="absolute inset-0 z-40 bg-background flex flex-col">
                   <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
                     <button onClick={()=>setShowPinnedPanel(false)} className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center"><ChevronLeft className="w-5 h-5"/></button>
-                    <span className="font-semibold text-foreground">Mahkamlangan xabarlar</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{pinned.length} ta</span>
+                    <span className="font-semibold text-foreground">{t("msg.pinned_msgs")}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{pinned.length} {t("msg.selected_count")}</span>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {pinned.length===0 ? (
                       <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
                         <Pin className="w-10 h-10 mb-2 opacity-20"/>
-                        <p className="text-sm">Mahkamlangan xabarlar yo'q</p>
-                        <p className="text-xs opacity-60 mt-1">Xabarni uzoq bosib mahkamlang</p>
+                        <p className="text-sm">{t("msg.no_pinned")}</p>
+                        <p className="text-xs opacity-60 mt-1">{t("msg.no_pinned_desc")}</p>
                       </div>
                     ) : pinned.map(m=>(
                       <div key={m.id} className="flex items-start gap-3 p-3 bg-muted/40 rounded-xl">
                         <Pin className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0"/>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground line-clamp-2">{m.content||"📎 Media"}</p>
+                          <p className="text-sm text-foreground line-clamp-2">{m.content||t("msg.media_fallback")}</p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">{formatTs(m.ts)}</p>
                         </div>
                         <div className="flex gap-1">
-                          <button onClick={()=>{ setPinnedMsg(m); setShowPinnedPanel(false); }} className="text-xs text-primary hover:underline">Ko'rish</button>
-                          <button onClick={()=>updateMsg(m.id,{pinned:false})} className="text-xs text-muted-foreground hover:text-destructive ml-2">Olib tashlash</button>
+                          <button onClick={()=>{ setPinnedMsg(m); setShowPinnedPanel(false); }} className="text-xs text-primary hover:underline">{t("msg.view")}</button>
+                          <button onClick={()=>updateMsg(m.id,{pinned:false})} className="text-xs text-muted-foreground hover:text-destructive ml-2">{t("msg.unpin")}</button>
                         </div>
                       </div>
                     ))}
@@ -1818,25 +1829,25 @@ export default function MessagesPage() {
                   className="absolute inset-0 z-40 bg-background flex flex-col">
                   <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
                     <button onClick={()=>setShowStarredPanel(false)} className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center"><ChevronLeft className="w-5 h-5"/></button>
-                    <span className="font-semibold text-foreground">Yulduzli xabarlar</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{starred.length} ta</span>
+                    <span className="font-semibold text-foreground">{t("msg.starred_msgs")}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{starred.length} {t("msg.selected_count")}</span>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {starred.length===0 ? (
                       <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
                         <Star className="w-10 h-10 mb-2 opacity-20"/>
-                        <p className="text-sm">Yulduzli xabarlar yo'q</p>
-                        <p className="text-xs opacity-60 mt-1">Xabarni uzoq bosib yulduzga qo'shing</p>
+                        <p className="text-sm">{t("msg.no_starred")}</p>
+                        <p className="text-xs opacity-60 mt-1">{t("msg.no_starred_desc")}</p>
                       </div>
                     ) : starred.map(m=>(
                       <div key={m.id} className="flex items-start gap-3 p-3 bg-muted/40 rounded-xl">
                         <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 mt-0.5 flex-shrink-0"/>
                         <div className="flex-1 min-w-0">
                           {m.type==="image"&&m.mediaUrl&&<img src={m.mediaUrl} alt="" className="w-16 h-16 rounded-xl object-cover mb-1"/>}
-                          <p className="text-sm text-foreground line-clamp-2">{m.content||"📎 Media"}</p>
+                          <p className="text-sm text-foreground line-clamp-2">{m.content||`📎 ${t("msg.media")}`}</p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">{formatTs(m.ts)}</p>
                         </div>
-                        <button onClick={()=>updateMsg(m.id,{starred:false})} className="text-xs text-destructive hover:underline flex-shrink-0">Olib tashlash</button>
+                        <button onClick={()=>updateMsg(m.id,{starred:false})} className="text-xs text-destructive hover:underline flex-shrink-0">{t("msg.remove")}</button>
                       </div>
                     ))}
                   </div>
@@ -1852,7 +1863,7 @@ export default function MessagesPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-primary/5 border-b border-primary/10 flex-shrink-0 cursor-pointer"
                 onClick={()=>setPinnedMsg(null)}>
                 <Pin className="w-3 h-3 text-primary flex-shrink-0"/>
-                <p className="flex-1 text-xs text-foreground truncate">{pinnedMsg.content||"📎 Media"}</p>
+                <p className="flex-1 text-xs text-foreground truncate">{pinnedMsg.content||t("msg.media_fallback")}</p>
                 <button onClick={()=>setPinnedMsg(null)} className="text-muted-foreground hover:text-foreground"><X className="w-3 h-3"/></button>
               </motion.div>
             )}
@@ -1882,7 +1893,7 @@ export default function MessagesPage() {
                 <div key={msg.id}>
                   {showDate&&(
                     <div className="flex items-center justify-center my-4">
-                      <span className="text-[10px] text-muted-foreground bg-muted px-3 py-1 rounded-full">{dayLabel(msg.ts)}</span>
+                      <span className="text-[10px] text-muted-foreground bg-muted px-3 py-1 rounded-full">{dayLabel(msg.ts,t)}</span>
                     </div>
                   )}
                   <MsgBubble
@@ -1901,7 +1912,7 @@ export default function MessagesPage() {
               <div className="text-center text-muted-foreground py-12">
                 <MessageCircle className="w-10 h-10 mx-auto mb-2 opacity-20"/>
                 <p className="text-sm">{t("msg.say_hello")}</p>
-                <p className="text-xs mt-1 opacity-60">👋 Salom yuboring!</p>
+                <p className="text-xs mt-1 opacity-60">{t("msg.say_hello_desc")}</p>
               </div>
             )}
             <div ref={messagesEndRef}/>
@@ -1927,10 +1938,10 @@ export default function MessagesPage() {
                   <Mic className="w-10 h-10 text-red-400 animate-pulse"/>
                 </div>
                 <p className="text-2xl font-mono font-bold text-foreground">{formatDur(voiceElapsed)}</p>
-                <p className="text-sm text-muted-foreground">Ovozli xabar yozilmoqda...</p>
+                <p className="text-sm text-muted-foreground">{t("msg.voice_recording")}</p>
                 <div className="flex gap-4">
-                  <button onClick={cancelVoice} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted text-muted-foreground hover:text-foreground text-sm"><X className="w-4 h-4"/>Bekor</button>
-                  <button onClick={stopVoice} className="flex items-center gap-2 px-6 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold"><Send className="w-4 h-4"/>Yuborish</button>
+                  <button onClick={cancelVoice} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted text-muted-foreground hover:text-foreground text-sm"><X className="w-4 h-4"/>{t("common.cancel")}</button>
+                  <button onClick={stopVoice} className="flex items-center gap-2 px-6 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold"><Send className="w-4 h-4"/>{t("msg.send")}</button>
                 </div>
               </motion.div>
             )}
@@ -1943,8 +1954,8 @@ export default function MessagesPage() {
                 className="flex items-center gap-3 px-4 py-2 bg-primary/5 border-t border-primary/20 flex-shrink-0">
                 <Reply className="w-4 h-4 text-primary flex-shrink-0"/>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-primary font-semibold">{replyTo.senderId===ME_ID?"Siz":getOther(activeConv)?.displayName}</p>
-                  <p className="text-xs text-muted-foreground truncate">{replyTo.content||"📎 Media"}</p>
+                  <p className="text-[10px] text-primary font-semibold">{replyTo.senderId===ME_ID?t("common.you"):getOther(activeConv)?.displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{replyTo.content||`📎 ${t("msg.media")}`}</p>
                 </div>
                 <button onClick={()=>setReplyTo(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4"/></button>
               </motion.div>
@@ -2003,12 +2014,12 @@ export default function MessagesPage() {
                 <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}}
                   className="flex items-center gap-1 px-1 pb-1 overflow-x-auto">
                   {[
-                    { icon:Bold,      label:"Qalin",   before:"**", after:"**" },
-                    { icon:Italic,    label:"Kursiv",  before:"_",  after:"_" },
-                    { icon:AlignLeft, label:"Blok",    before:"> ", after:"" },
-                    { icon:Hash,      label:"Kod",     before:"`",  after:"`" },
-                    { icon:AtSign,    label:"Mention", before:"@",  after:"" },
-                    { icon:Link,      label:"Havola",  before:"[",  after:"](url)" },
+                    { icon:Bold,      label:t("msg.fmt.bold"),   before:"**", after:"**" },
+                    { icon:Italic,    label:t("msg.fmt.italic"),  before:"_",  after:"_" },
+                    { icon:AlignLeft, label:t("msg.fmt.quote"),    before:"> ", after:"" },
+                    { icon:Hash,      label:t("msg.fmt.code"),     before:"`",  after:"`" },
+                    { icon:AtSign,    label:t("msg.fmt.mention"), before:"@",  after:"" },
+                    { icon:Link,      label:t("msg.fmt.link"),      before:"[",  after:"](url)" },
                   ].map(fmt=>(
                     <button key={fmt.label}
                       onClick={()=>insertFmt(fmt.before,fmt.after)}
@@ -2032,7 +2043,7 @@ export default function MessagesPage() {
                 <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}}
                   className="flex items-center gap-2 px-1 pb-1">
                   <Clock3 className="w-3.5 h-3.5 text-primary flex-shrink-0"/>
-                  <span className="text-xs text-muted-foreground">Yuborish vaqti:</span>
+                  <span className="text-xs text-muted-foreground">{t("msg.send_at")}:</span>
                   <input type="datetime-local" value={scheduleTime} onChange={e=>setScheduleTime(e.target.value)}
                     className="flex-1 text-xs bg-muted rounded-lg px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"/>
                   <button onClick={()=>setScheduleMode(false)} className="text-muted-foreground hover:text-foreground"><X className="w-3.5 h-3.5"/></button>
@@ -2049,30 +2060,30 @@ export default function MessagesPage() {
               <div className={`flex-1 flex flex-col rounded-2xl border overflow-hidden transition-colors ${ephemeral?"border-violet-500/40 bg-violet-500/5":"border-border bg-card"}`}>
                 <textarea ref={textareaRef} value={text} onChange={e=>setText(e.target.value)}
                   onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend();} }}
-                  placeholder={ephemeral?t("msg.ghost_ph"):scheduleMode?"Rejalashtirilgan xabar...":t("msg.msg_ph")}
+                  placeholder={ephemeral?t("msg.ghost_ph"):scheduleMode?t("msg.scheduled_ph"):t("msg.msg_ph")}
                   rows={1}
                   className="flex-1 px-4 pt-2.5 pb-1 bg-transparent text-foreground text-sm placeholder:text-muted-foreground focus:outline-none resize-none max-h-28"
                   style={{fieldSizing:"content"} as React.CSSProperties}/>
                 <div className="flex items-center px-2 pb-1.5 gap-0.5 overflow-x-auto">
                   <button onClick={()=>{ setShowEmoji(v=>!v); setShowAttach(false); }}
-                    title="Emoji"
+                    title={t("msg.emoji_title")}
                     className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${showEmoji?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                     <Smile className="w-4 h-4"/>
                   </button>
                   <button onClick={()=>setShowFmtBar(v=>!v)}
-                    title="Formatlash"
+                    title={t("msg.format_title")}
                     className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${showFmtBar?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                     <Bold className="w-3.5 h-3.5"/>
                   </button>
                   {getFeaturePref("time_capsule",false)&&(
                     <button onClick={()=>setScheduleMode(v=>!v)}
-                      title="Vaqt belgilash"
+                      title={t("msg.schedule_title")}
                       className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${scheduleMode?"text-amber-500 bg-amber-500/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                       <Clock3 className="w-3.5 h-3.5"/>
                     </button>
                   )}
                   <button onClick={()=>setEphemeral(v=>!v)}
-                    title="Ko'rinmas xabar"
+                    title={t("msg.ephemeral_title")}
                     className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${ephemeral?"text-violet-400 bg-violet-500/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                     <Ghost className="w-3.5 h-3.5"/>
                   </button>
@@ -2082,18 +2093,18 @@ export default function MessagesPage() {
                       className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-sm hover:bg-muted transition-colors">{em}</button>
                   ))}
                   <div className="w-px h-4 bg-border mx-0.5 flex-shrink-0"/>
-                  <button onClick={()=>addMsg({type:"text",content:"📍 Joylashuv: Toshkent, O'zbekiston"})}
-                    title="Joylashuv"
+                  <button onClick={()=>addMsg({type:"text",content:t("msg.location_msg")})}
+                    title={t("msg.location_title")}
                     className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-sm hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                     <MapPin className="w-3.5 h-3.5"/>
                   </button>
                   <button onClick={()=>{ setText(p=>p+"@"); textareaRef.current?.focus(); }}
-                    title="Mention"
+                    title={t("msg.mention_title")}
                     className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                     <AtSign className="w-3.5 h-3.5"/>
                   </button>
                   <button onClick={()=>{ setShowDraw(true); setShowEmoji(false); setShowAttach(false); }}
-                    title="Kanvasda chiz"
+                    title={t("msg.draw_title")}
                     className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors ${showDraw?"text-primary bg-primary/10":"text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                     <PenLine className="w-3.5 h-3.5"/>
                   </button>
@@ -2165,7 +2176,7 @@ export default function MessagesPage() {
               <div className="px-4 py-3 flex-shrink-0">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
-                  <input placeholder="Kontakt qidirish..."
+                  <input placeholder={t("msg.search_contact")}
                     className="w-full pl-8 pr-3 py-2 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground focus:outline-none border border-transparent focus:border-primary/40 transition-colors"/>
                 </div>
               </div>
@@ -2193,8 +2204,8 @@ export default function MessagesPage() {
                       <Users className="w-5 h-5 text-emerald-400"/>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-foreground">Guruh yaratish</p>
-                      <p className="text-xs text-muted-foreground">Ko'p a'zoli suhbat</p>
+                      <p className="text-sm font-semibold text-foreground">{t("msg.create_group")}</p>
+                      <p className="text-xs text-muted-foreground">{t("msg.group_desc")}</p>
                     </div>
                   </button>
                 </div>

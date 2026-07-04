@@ -487,7 +487,7 @@ export default function HomePage() {
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               />
-              <span className="text-violet-400/60 text-sm">Yuklanmoqda…</span>
+              <span className="text-violet-400/60 text-sm">{t("common.loading")}</span>
             </div>
           </div>
         ) : displayPosts.length === 0 ? (

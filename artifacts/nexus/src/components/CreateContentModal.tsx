@@ -45,33 +45,33 @@ const ACCEPT = {
 };
 
 /* ─── Permission Picker ─── */
-const PERM_OPTIONS: { value: Permission; icon: React.ElementType; label: string; desc: string; color: string }[] = [
-  { value: "everyone",  icon: Globe,          label: "Hamma",         desc: "Barcha foydalanuvchilar",  color: "#34d399" },
-  { value: "followers", icon: Users,          label: "Obunachilarga", desc: "Faqat obunachilaring",     color: "#60a5fa" },
-  { value: "friends",   icon: Users,          label: "Do'stlar",      desc: "Faqat o'zaro obunalar",    color: "#f59e0b" },
-  { value: "none",      icon: Ban,            label: "O'chirilgan",   desc: "Hech kim",                 color: "#f87171" },
+const PERM_OPTIONS: { value: Permission; icon: React.ElementType; labelKey: string; color: string }[] = [
+  { value: "everyone",  icon: Globe,          labelKey: "perm_everyone",  color: "#34d399" },
+  { value: "followers", icon: Users,          labelKey: "perm_followers", color: "#60a5fa" },
+  { value: "friends",   icon: Users,          labelKey: "perm_friends",   color: "#f59e0b" },
+  { value: "none",      icon: Ban,            labelKey: "perm_none",      color: "#f87171" },
 ];
 
-const VIS_OPTIONS: { value: Visibility; emoji: string; label: string; desc: string }[] = [
-  { value: "everyone",  emoji: "🌍", label: "Hamma",          desc: "Butun dunyo ko'radi" },
-  { value: "followers", emoji: "👥", label: "Kuzatuvchilar",  desc: "Faqat obunachilaring" },
-  { value: "friends",   emoji: "🤝", label: "Do'stlar",       desc: "O'zaro obunalar" },
-  { value: "only_me",   emoji: "🔒", label: "Faqat men",      desc: "Xususiy arxiv" },
+const VIS_OPTIONS: { value: Visibility; emoji: string; labelKey: string; descKey: string }[] = [
+  { value: "everyone",  emoji: "🌍", labelKey: "vis_everyone",  descKey: "vis_everyone_desc" },
+  { value: "followers", emoji: "👥", labelKey: "vis_followers", descKey: "vis_followers_desc" },
+  { value: "friends",   emoji: "🤝", labelKey: "vis_friends",   descKey: "vis_friends_desc" },
+  { value: "only_me",   emoji: "🔒", labelKey: "vis_only_me",   descKey: "vis_only_me_desc" },
 ];
 
 const CONTENT_LABELS = [
-  { id:"entertainment", emoji:"🎭", label:"Ko'ngil ochar" },
-  { id:"education",     emoji:"📚", label:"Ta'limiy" },
-  { id:"comedy",        emoji:"😂", label:"Kulgili" },
-  { id:"dance",         emoji:"💃", label:"Raqs" },
-  { id:"music",         emoji:"🎵", label:"Musiqa" },
-  { id:"sports",        emoji:"⚽", label:"Sport" },
-  { id:"food",          emoji:"🍔", label:"Ovqat" },
-  { id:"travel",        emoji:"✈️", label:"Sayohat" },
-  { id:"fashion",       emoji:"👗", label:"Moda" },
-  { id:"tech",          emoji:"💻", label:"Texnologiya" },
-  { id:"art",           emoji:"🎨", label:"San'at" },
-  { id:"gaming",        emoji:"🎮", label:"O'yin" },
+  { id:"entertainment", emoji:"🎭", labelKey:"label_entertainment" },
+  { id:"education",     emoji:"📚", labelKey:"label_education" },
+  { id:"comedy",        emoji:"😂", labelKey:"label_comedy" },
+  { id:"dance",         emoji:"💃", labelKey:"label_dance" },
+  { id:"music",         emoji:"🎵", labelKey:"label_music" },
+  { id:"sports",        emoji:"⚽", labelKey:"label_sports" },
+  { id:"food",          emoji:"🍔", labelKey:"label_food" },
+  { id:"travel",        emoji:"✈️", labelKey:"label_travel" },
+  { id:"fashion",       emoji:"👗", labelKey:"label_fashion" },
+  { id:"tech",          emoji:"💻", labelKey:"label_tech" },
+  { id:"art",           emoji:"🎨", labelKey:"label_art" },
+  { id:"gaming",        emoji:"🎮", labelKey:"label_gaming" },
 ];
 
 function PermPicker({
@@ -82,6 +82,7 @@ function PermPicker({
   value: Permission;
   onChange: (v: Permission) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-2">
@@ -103,7 +104,7 @@ function PermPicker({
           >
             <opt.icon className="w-3.5 h-3.5" style={{ color: value === opt.value ? opt.color : "rgba(255,255,255,0.4)" }} />
             <span className="text-[10px] font-bold leading-none" style={{ color: value === opt.value ? opt.color : "rgba(255,255,255,0.4)" }}>
-              {opt.label}
+              {t(`create.${opt.labelKey}`)}
             </span>
           </button>
         ))}
@@ -113,16 +114,17 @@ function PermPicker({
 }
 
 /* ─── Display Format Picker ─── */
-const FORMAT_OPTIONS: { value: DisplayFormat; icon: React.ElementType; label: string; aspect: string }[] = [
-  { value: "cover",   icon: Maximize2,           label: "To'liq",   aspect: "9:16" },
-  { value: "square",  icon: Square,              label: "Kvadrat",  aspect: "1:1"  },
-  { value: "contain", icon: RectangleVertical,   label: "Original", aspect: "auto" },
+const FORMAT_OPTIONS: { value: DisplayFormat; icon: React.ElementType; labelKey: string; aspect: string }[] = [
+  { value: "cover",   icon: Maximize2,           labelKey: "format_cover",   aspect: "9:16" },
+  { value: "square",  icon: Square,              labelKey: "format_square",  aspect: "1:1"  },
+  { value: "contain", icon: RectangleVertical,   labelKey: "format_contain", aspect: "auto" },
 ];
 
 function FormatPicker({ value, onChange }: { value: DisplayFormat; onChange: (v: DisplayFormat) => void }) {
+  const { t } = useTranslation();
   return (
     <div>
-      <span className="text-xs font-semibold text-muted-foreground block mb-2">Ko'rinish formati</span>
+      <span className="text-xs font-semibold text-muted-foreground block mb-2">{t("create.format_picker_title")}</span>
       <div className="flex gap-2">
         {FORMAT_OPTIONS.map(opt => (
           <button
@@ -138,7 +140,7 @@ function FormatPicker({ value, onChange }: { value: DisplayFormat; onChange: (v:
           >
             <opt.icon className="w-4 h-4" style={{ color: value === opt.value ? "#a78bfa" : "rgba(255,255,255,0.4)" }} />
             <span className="text-[10px] font-bold" style={{ color: value === opt.value ? "#a78bfa" : "rgba(255,255,255,0.4)" }}>
-              {opt.label}
+              {t(`create.${opt.labelKey}`)}
             </span>
             <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.25)" }}>{opt.aspect}</span>
           </button>
@@ -189,7 +191,7 @@ function UploadZone({
           )}
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
             <Upload className="w-6 h-6 text-white" />
-            <span className="text-white text-sm ml-2">O'zgartirish</span>
+            <span className="text-white text-sm ml-2">{"O'zgartirish"}</span>
           </div>
         </div>
       )}
@@ -211,7 +213,7 @@ function UploadZone({
           </div>
           <div className="text-center">
             <p className="text-sm font-semibold text-foreground">{label}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Bosing yoki tashlang</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{"Bosing yoki tashlang"}</p>
           </div>
         </div>
       )}
@@ -488,7 +490,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   const [storyProduct,        setStoryProduct]        = useState("");
   const [storyPoll,           setStoryPoll]           = useState(false);
   const [storyPollQ,          setStoryPollQ]          = useState("");
-  const [storyPollA,          setStoryPollA]          = useState(["Ha","Yo'q"]);
+  const [storyPollA,          setStoryPollA]          = useState(["Ha", "Yo'q"]);
   const [storyQa,             setStoryQa]             = useState(false);
   const [storyQaQ,            setStoryQaQ]            = useState("");
   const [storyQuiz,           setStoryQuiz]           = useState(false);
@@ -1287,7 +1289,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             <span style={{fontSize:20}}>🎨</span>
                             <div className="text-left">
                               <p className="text-xs font-bold text-white/85">Vizual Kanvas Muharrir</p>
-                              <p className="text-[10px] text-white/35">Rasm/Video/Matn/Emoji — xohlagan joyga surib qo'ying</p>
+                              <p className="text-[10px] text-white/35">{t("create.post_drag_hint", "Rasm/Video/Matn/Emoji — xohlagan joyga surib qo'ying")}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5">
@@ -1333,9 +1335,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           </div>
                           <div className="text-center">
                             <p className="text-sm font-bold text-white/70">
-                              {mediaQueue.length === 0 ? "Rasm yoki video qo'shing" : `Yana qo'shish (${mediaQueue.length}/10)`}
+                              {mediaQueue.length === 0 ? t("create.dropzone_add") : `${t("create.dropzone_add_more")} (${mediaQueue.length}/10)`}
                             </p>
-                            <p className="text-xs text-white/35 mt-0.5">Bir nechta fayl tanlash mumkin</p>
+                            <p className="text-xs text-white/35 mt-0.5">{t("create.dropzone_multi_hint")}</p>
                           </div>
                           <input
                             id="post-multi-input"
@@ -1457,7 +1459,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       <div className="space-y-2">
                         <div className="relative">
                           <textarea
-                            placeholder={mediaQueue.length > 0 ? "Izoh qo'shing…" : "Nima haqida yozyapsiz?"}
+                            placeholder={mediaQueue.length > 0 ? t("create.caption_ph_media") : t("create.caption_ph_empty")}
                             rows={3}
                             value={postContent}
                             onChange={e => setPostContent(e.target.value)}
@@ -1467,7 +1469,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <button
                             onClick={generateAiCaption}
                             disabled={aiCaptionLoading}
-                            title="AI caption yaratish"
+                            title={t("create.ai_caption_title")}
                             className="absolute top-2.5 right-2.5 w-7 h-7 rounded-xl flex items-center justify-center transition-all"
                             style={{ background: "rgba(124,58,237,0.8)" }}
                           >
@@ -1517,7 +1519,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <p className="text-xs font-bold text-white/50">Kayfiyat (ixtiyoriy)</p>
                         <div className="flex gap-2 flex-wrap">
                           {[
-                            { emoji: "🔥", label: "Zo'r",     color: "#f97316" },
+                            { emoji: "🔥", label: t("create.story_react_best", "Zo'r"),     color: "#f97316" },
                             { emoji: "😂", label: "Kulgili",  color: "#facc15" },
                             { emoji: "😍", label: "Ajoyib",   color: "#f472b6" },
                             { emoji: "💭", label: "Fikr",     color: "#818cf8" },
@@ -1555,7 +1557,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         >
                           <div className="flex items-center gap-2">
                             <BarChart2 className="w-4 h-4 text-cyan-400" />
-                            <span className="text-xs font-bold text-white/70">So'rovnoma qo'shish</span>
+                            <span className="text-xs font-bold text-white/70">{t("create.add_poll", "So'rovnoma qo'shish")}</span>
                           </div>
                           {pollEnabled
                             ? <ChevronUp className="w-4 h-4 text-white/40" />
@@ -1572,7 +1574,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             >
                               <div className="px-3.5 pb-3.5 space-y-2 border-t border-white/5">
                                 <input
-                                  placeholder="Savol matni…"
+                                  placeholder={t("create.poll_question_ph", "Savol matni…")}
                                   value={pollQuestion}
                                   onChange={e => setPollQuestion(e.target.value)}
                                   className="w-full mt-3 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none"
@@ -1622,7 +1624,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <span style={{ fontSize: 22 }}>🔥</span>
                         <div className="flex-1">
                           <p className="text-xs font-bold text-white/80">Hot Take — "Issiq fikr"</p>
-                          <p className="text-[10px] text-white/40 mt-0.5">Jamoat 🔥/❄️ ovoz beradi. Instagramda yoki TikTokda yo'q!</p>
+                          <p className="text-[10px] text-white/40 mt-0.5">{t("create.poll_exclusive_hint", "Jamoat 🔥/❄️ ovoz beradi. Instagramda yoki TikTokda yo'q!")}</p>
                         </div>
                         <div className="w-9 h-5 rounded-full flex items-center transition-all"
                           style={{
@@ -1727,7 +1729,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                   { icon:"❤️", label:"Layk", val: prediction.likes >= 1000 ? `${(prediction.likes/1000).toFixed(1)}K` : prediction.likes },
                                   { icon:"💬", label:"Izoh", val: prediction.comments },
                                   { icon:"🔁", label:"Ulash", val: prediction.shares },
-                                  { icon:"👁", label:"Ko'rish", val: prediction.reach >= 1000 ? `${(prediction.reach/1000).toFixed(1)}K` : prediction.reach },
+                                  { icon:"👁", label:t("create.chal_stats_views"), val: prediction.reach >= 1000 ? `${(prediction.reach/1000).toFixed(1)}K` : prediction.reach },
                                 ].map(s => (
                                   <div key={s.label} className="flex flex-col items-center gap-0.5 py-2 rounded-xl"
                                     style={{ background: "rgba(255,255,255,0.06)" }}>
@@ -1759,8 +1761,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <div className="flex items-center gap-2">
                             <span className="text-base">🔐</span>
                             <div className="text-left">
-                              <p className="text-xs font-bold text-white/80">Maxfiylik & Ruxsatlar</p>
-                              <p className="text-[10px] text-white/40">{VIS_OPTIONS.find(v=>v.value===visibility)?.emoji} {VIS_OPTIONS.find(v=>v.value===visibility)?.label} · TikTok/Instagramdan ustun</p>
+                              <p className="text-xs font-bold text-white/80">{t("create.privacy_perms_title")}</p>
+                              <p className="text-[10px] text-white/40">{VIS_OPTIONS.find(v=>v.value===visibility)?.emoji} {t(`create.${VIS_OPTIONS.find(v=>v.value===visibility)?.labelKey}`)} · {t("create.privacy_perms_hint_suffix")}</p>
                             </div>
                           </div>
                           {privacyOpen ? <ChevronUp className="w-4 h-4 text-white/40"/> : <ChevronDown className="w-4 h-4 text-white/40"/>}
@@ -1771,7 +1773,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <div className="px-3.5 pb-4 space-y-4 border-t border-white/5">
                                 {/* Visibility */}
                                 <div className="mt-3">
-                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">👁 Kim ko'ra oladi</p>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">{t("create.who_can_see")}</p>
                                   <div className="grid grid-cols-2 gap-1.5">
                                     {VIS_OPTIONS.map(v => (
                                       <button key={v.value} onClick={() => setVisibility(v.value)}
@@ -1782,8 +1784,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                         }}>
                                         <span className="text-base leading-none">{v.emoji}</span>
                                         <div>
-                                          <p className="text-[11px] font-bold text-white/85">{v.label}</p>
-                                          <p className="text-[9px] text-white/35">{v.desc}</p>
+                                          <p className="text-[11px] font-bold text-white/85">{t(`create.${v.labelKey}`)}</p>
+                                          <p className="text-[9px] text-white/35">{t(`create.${v.descKey}`)}</p>
                                         </div>
                                       </button>
                                     ))}
@@ -1792,7 +1794,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                                 {/* Content label */}
                                 <div>
-                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🏷 Kontent turi</p>
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">{t("create.content_type_title")}</p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {CONTENT_LABELS.map(cl => (
                                       <button key={cl.id} onClick={() => setContentLabel(contentLabel===cl.id ? "" : cl.id)}
@@ -1802,7 +1804,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                           border: contentLabel===cl.id ? "1px solid rgba(168,85,247,0.6)" : "1px solid rgba(255,255,255,0.08)",
                                           color: contentLabel===cl.id ? "#d8b4fe" : "rgba(255,255,255,0.5)",
                                         }}>
-                                        {cl.emoji} {cl.label}
+                                        {cl.emoji} {t(`create.${cl.labelKey}`)}
                                       </button>
                                     ))}
                                   </div>
@@ -1810,8 +1812,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                                 {/* Location */}
                                 <div>
-                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📍 Joylashuv (ixtiyoriy)</p>
-                                  <input placeholder="Masalan: Toshkent, O'zbekiston"
+                                  <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">{t("create.location_title")}</p>
+                                  <input placeholder={t("create.location_ph")}
                                     value={locationTag} onChange={e => setLocationTag(e.target.value)}
                                     className="w-full rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
                                     style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }} />
@@ -1819,22 +1821,22 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                                 {/* Comment & Share pickers */}
                                 <div className="space-y-2">
-                                  <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">💬 Interaktivlik</p>
-                                  <PermPicker label="Kim izoh yoza oladi" icon={MessageCircle} value={commentPerm} onChange={setCommentPerm} />
-                                  <PermPicker label="Kim ulasha oladi" icon={Share2} value={sharePerm} onChange={setSharePerm} />
+                                  <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">{t("create.interactivity_title")}</p>
+                                  <PermPicker label={t("create.who_comment")} icon={MessageCircle} value={commentPerm} onChange={setCommentPerm} />
+                                  <PermPicker label={t("create.who_share")} icon={Share2} value={sharePerm} onChange={setSharePerm} />
                                 </div>
 
                                 {/* Toggle switches */}
                                 <div className="space-y-2">
-                                  <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">⚙️ Qo'shimcha sozlamalar</p>
+                                  <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">{t("create.extra_settings_title")}</p>
                                   {[
-                                    { label:"Duet / Kollaboratsiya",  desc:"Boshqalar duet qila oladi",    val:duetAllowed,       set:setDuetAllowed,       icon:"🎭", color:"#818cf8" },
-                                    { label:"Ko'chirib olish",        desc:"Video yuklab olish ruxsati",   val:downloadAllowed,   set:setDownloadAllowed,   icon:"⬇️", color:"#34d399" },
-                                    { label:"Like sonini yashirish",  desc:"Faqat siz ko'rasiz",          val:hideLikes,         set:setHideLikes,         icon:"❤️", color:"#f472b6" },
-                                    { label:"Ko'rishlar sonini yashirish", desc:"Maxfiy statistika",      val:hideViews,         set:setHideViews,         icon:"👁", color:"#a78bfa" },
-                                    { label:"Sezgir kontent",         desc:"Content warning ko'rsatish",  val:sensitiveContent,  set:setSensitiveContent,  icon:"⚠️", color:"#f97316" },
-                                    { label:"18+ Yosh cheklovi",      desc:"Faqat kattalar uchun",        val:ageRestricted,     set:setAgeRestricted,     icon:"🔞", color:"#ef4444" },
-                                    { label:"Brand hamkorlik",        desc:"Reklama matni qo'shiladi",    val:brandPartnership,  set:setBrandPartnership,  icon:"🤝", color:"#fbbf24" },
+                                    { label:t("create.toggle_duet"),       desc:t("create.toggle_duet_desc"),       val:duetAllowed,       set:setDuetAllowed,       icon:"🎭", color:"#818cf8" },
+                                    { label:t("create.toggle_download"),   desc:t("create.toggle_download_desc"),   val:downloadAllowed,   set:setDownloadAllowed,   icon:"⬇️", color:"#34d399" },
+                                    { label:t("create.toggle_hide_likes"), desc:t("create.toggle_hide_likes_desc"), val:hideLikes,         set:setHideLikes,         icon:"❤️", color:"#f472b6" },
+                                    { label:t("create.toggle_hide_views"), desc:t("create.toggle_hide_views_desc"), val:hideViews,         set:setHideViews,         icon:"👁", color:"#a78bfa" },
+                                    { label:t("create.toggle_sensitive"),  desc:t("create.toggle_sensitive_desc"),  val:sensitiveContent,  set:setSensitiveContent,  icon:"⚠️", color:"#f97316" },
+                                    { label:t("create.toggle_age"),        desc:t("create.toggle_age_desc"),        val:ageRestricted,     set:setAgeRestricted,     icon:"🔞", color:"#ef4444" },
+                                    { label:t("create.toggle_brand"),      desc:t("create.toggle_brand_desc"),      val:brandPartnership,  set:setBrandPartnership,  icon:"🤝", color:"#fbbf24" },
                                   ].map(t => (
                                     <div key={t.label} className="flex items-center justify-between py-1.5">
                                       <div className="flex items-center gap-2">
@@ -1912,7 +1914,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                     <UserPlus className="w-3 h-3"/> Kollab — Hamkorlik
                                   </p>
                                   <div className="flex items-center gap-2">
-                                    <input placeholder="@foydalanuvchi (do'stingizni taklif qiling)"
+                                    <input placeholder={t("create.mention_friend_ph", "@foydalanuvchi (do'stingizni taklif qiling)")}
                                       value={collabUser} onChange={e => setCollabUser(e.target.value)}
                                       className="flex-1 rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
                                       style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }} />
@@ -1956,12 +1958,12 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                   </p>
                                   <div className="grid grid-cols-2 gap-1.5">
                                     {[
-                                      { id:"entertain", emoji:"🎭", label:"Ko'ngil ochar",   desc:"Zavq berish" },
-                                      { id:"educate",   emoji:"📚", label:"O'rgatish",       desc:"Bilim ulashish" },
-                                      { id:"inspire",   emoji:"✨", label:"Ilhom berish",    desc:"Motivatsiya" },
-                                      { id:"promote",   emoji:"📢", label:"Targ'ibot",       desc:"Brend/mahsulot" },
+                                      { id:"entertain", emoji:"🎭", label:"Ko'ngil ochar",   desc:t("create.label_entertainment_desc", "Zavq berish") },
+                                      { id:"educate",   emoji:"📚", label:"O'rgatish",       desc:t("create.label_education_desc_alt", "Bilim ulashish") },
+                                      { id:"inspire",   emoji:"✨", label:"Ilhom berish",    desc:t("create.label_inspire_desc", "Motivatsiya") },
+                                      { id:"promote",   emoji:"📢", label:"Targ'ibot",       desc:t("create.label_promote_desc", "Brend/mahsulot") },
                                       { id:"challenge", emoji:"🏆", label:"Challenge",       desc:"Musobaqa" },
-                                      { id:"connect",   emoji:"🤝", label:"Ulanish",         desc:"Hamjamiyat" },
+                                      { id:"connect",   emoji:"🤝", label:"Ulanish",         desc:t("create.label_connect_desc", "Hamjamiyat") },
                                     ].map(g => (
                                       <button key={g.id} onClick={() => setCreatorGoal(creatorGoal===g.id ? "" : g.id)}
                                         className="flex items-center gap-2 px-2.5 py-2 rounded-xl text-left transition-all"
@@ -2014,7 +2016,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                   <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider flex items-center gap-1.5">
                                     <Shield className="w-3 h-3"/> Kalit so'z filtri (Anti-harassment)
                                   </p>
-                                  <input placeholder="Bloklash kerak so'zlar (vergul bilan: spam, reklama, ...)"
+                                  <input placeholder={t("create.blocked_keywords_ph", "Bloklash kerak so'zlar (vergul bilan: spam, reklama, ...)")}
                                     value={blockedKeywords} onChange={e => setBlockedKeywords(e.target.value)}
                                     className="w-full rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
                                     style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }} />
@@ -2046,7 +2048,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 {/* Creator notes */}
                                 <div>
                                   <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📝 Kreator eslatmalari (shaxsiy)</p>
-                                  <textarea placeholder="Bu post haqida o'zingizga eslatma (hech kim ko'rmaydi)…"
+                                  <textarea placeholder={t("create.creator_notes_ph", "Bu post haqida o'zingizga eslatma (hech kim ko'rmaydi)…")}
                                     rows={2} value={creatorNotes} onChange={e => setCreatorNotes(e.target.value)}
                                     className="w-full resize-none rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none"
                                     style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }} />
@@ -2227,7 +2229,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                   <div className="flex items-center justify-between mb-2">
                                     <div>
                                       <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">👥 Crowd Unlock — jamoaviy ochish</p>
-                                      <p className="text-[9px] text-white/25 mt-0.5">X kishi reaksiya bergandan so'ng ochiladi</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">{t("create.crowd_unlock_desc", "X kishi reaksiya bergandan so'ng ochiladi")}</p>
                                     </div>
                                     <button onClick={() => setCrowdUnlock(p=>!p)}
                                       className="flex items-center px-0.5 rounded-full flex-shrink-0 transition-all ml-2"
@@ -2254,7 +2256,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                           ))}
                                         </div>
                                         <p className="text-[9px] text-cyan-500/60">
-                                          Post blur ko'rinadi → {crowdThreshold} kishi reaksiya bergandan so'ng to'liq ochiladi
+                                          {t("create.crowd_unlock_hint", `Post blur ko'rinadi → ${crowdThreshold} kishi reaksiya bergandan so'ng to'liq ochiladi`, { threshold: crowdThreshold })}
                                         </p>
                                       </motion.div>
                                     )}
@@ -2266,10 +2268,10 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                   <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🧬 Remix DNA — qayta yaratish ruxsati</p>
                                   <div className="grid grid-cols-2 gap-1.5">
                                     {[
-                                      { id:"none",     e:"🚫", l:"Remix yo'q",   d:"Hich kim",       c:"#f87171" },
+                                      { id:"none",     e:"🚫", l:t("create.remix_none", "Remix yo'q"),   d:t("create.remix_none_desc", "Hich kim"),       c:"#f87171" },
                                       { id:"template", e:"📋", l:"Shablon",       d:"Faqat format",   c:"#fbbf24" },
                                       { id:"style",    e:"🎨", l:"Stil Remix",    d:"Rang/effekt",    c:"#818cf8" },
-                                      { id:"full",     e:"♻️", l:"To'liq Remix",  d:"Barcha huquqlar",c:"#34d399" },
+                                      { id:"full",     e:"♻️", l:t("create.remix_full", "To'liq Remix"),  d:t("create.remix_full_desc", "Barcha huquqlar"),c:"#34d399" },
                                     ].map(r => (
                                       <button key={r.id} onClick={() => setRemixDna(r.id as typeof remixDna)}
                                         className="flex items-center gap-2 px-2.5 py-2.5 rounded-xl text-left transition-all"
@@ -2344,7 +2346,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                     {monetizeEnabled && (
                                       <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-2 overflow-hidden">
                                         <div className="flex gap-2">
-                                          {[{id:"tip",e:"🪙",l:"Tip Jar",d:"Ixtiyoriy sovg'a"},{id:"paytosee",e:"🔒",l:"Pay-to-See",d:"To'lov kerak"}].map(m => (
+                                          {[{id:"tip",e:"🪙",l:t("create.monetize_tip_jar", "Tip Jar"),d:t("create.chal_music_opt")},{id:"paytosee",e:"🔒",l:t("create.monetize_pay_to_see", "Pay-to-See"),d:t("create.monetize_pay_to_see_desc", "To'lov kerak")}].map(m => (
                                             <button key={m.id} onClick={() => setMonetizeType(m.id as "tip"|"paytosee")}
                                               className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl transition-all"
                                               style={{ background:monetizeType===m.id?"rgba(251,191,36,0.15)":"rgba(255,255,255,0.05)", border:monetizeType===m.id?"1.5px solid rgba(251,191,36,0.6)":"1.5px solid rgba(255,255,255,0.08)" }}>
@@ -2376,7 +2378,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                   <span style={{fontSize:22}}>📊</span>
                                   <div className="flex-1">
                                     <p className="text-xs font-bold text-white/80">Live Kayfiyat Metri</p>
-                                    <p className="text-[10px] text-white/40 mt-0.5">Tomoshabinlar kayfiyati real-vaqtda ko'rsatiladi — hech kimda yo'q!</p>
+                                    <p className="text-[10px] text-white/40 mt-0.5">{t("create.sentiment_exclusive_hint", "Tomoshabinlar kayfiyati real-vaqtda ko'rsatiladi — hech kimda yo'q!")}</p>
                                   </div>
                                   <div className="flex items-center px-0.5 rounded-full flex-shrink-0 transition-all"
                                     style={{ background:sentimentMeter?"rgba(99,102,241,0.8)":"rgba(255,255,255,0.12)", justifyContent:sentimentMeter?"flex-end":"flex-start", height:22, width:40 }}>
@@ -2390,7 +2392,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                   <span style={{fontSize:22}}>🎭</span>
                                   <div className="flex-1">
                                     <p className="text-xs font-bold text-white/80">Emotion Lock</p>
-                                    <p className="text-[10px] text-white/40 mt-0.5">Tomoshabin reaksiyasiga qarab post rangi/toni o'zgaradi</p>
+                                    <p className="text-[10px] text-white/40 mt-0.5">{t("create.dynamic_color_hint", "Tomoshabin reaksiyasiga qarab post rangi/toni o'zgaradi")}</p>
                                   </div>
                                   <span className="text-[9px] font-bold px-2 py-0.5 rounded-full text-white/50"
                                     style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)" }}>
@@ -2452,8 +2454,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 <div>
                                   <div className="flex items-center justify-between mb-2">
                                     <div>
-                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">⏰ Auto Self-Destruct — o'z-o'zidan o'chadi</p>
-                                      <p className="text-[9px] text-white/25 mt-0.5">Post belgilangan vaqtdan keyin avtomatik o'chiriladi</p>
+                                      <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">{t("create.auto_destruct_title", "⏰ Auto Self-Destruct — o'z-o'zidan o'chadi")}</p>
+                                      <p className="text-[9px] text-white/25 mt-0.5">{t("create.auto_destruct_desc", "Post belgilangan vaqtdan keyin avtomatik o'chiriladi")}</p>
                                     </div>
                                     <button onClick={()=>setSelfDestruct(p=>!p)}
                                       className="flex items-center px-0.5 rounded-full flex-shrink-0 ml-2 transition-all"
@@ -2672,7 +2674,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       <div className="space-y-2">
                         {[
                           { label:"🟢 Green Screen",      desc:"Reel orqa fonini almashtirasiz",          val:reelGreenScreen,  set:setReelGreenScreen,  color:"#34d399" },
-                          { label:"📝 AI Auto-Captions", desc:"AI avtomatik subtitr qo'shadi",            val:reelAutoCaption,  set:setReelAutoCaption,  color:"#60a5fa" },
+                          { label:"📝 AI Auto-Captions", desc:t("create.reel_auto_caption_desc", "AI avtomatik subtitr qo'shadi"),            val:reelAutoCaption,  set:setReelAutoCaption,  color:"#60a5fa" },
                         ].map(t => (
                           <div key={t.label}
                             className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl cursor-pointer transition-all"
@@ -2746,7 +2748,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                   {hook}
                                 </motion.button>
                               ))}
-                              <p className="text-[9px] text-white/25 px-1">Bosib caption'ga qo'shish</p>
+                              <p className="text-[9px] text-white/25 px-1">{t("create.add_to_caption_hint", "Bosib caption'ga qo'shish")}</p>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -2760,8 +2762,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <div className="flex items-center gap-2.5">
                             <span style={{fontSize:18}}>🎬</span>
                             <div className="text-left">
-                              <p className="text-xs font-bold text-white/85">Reel Vizual Muharrir</p>
-                              <p className="text-[10px] text-white/35">Overlay, matn, emoji, stiker — xohlagan joyga</p>
+                              <p className="text-xs font-bold text-white/85">t("create.reel_studio_title")</p>
+                              <p className="text-[10px] text-white/35">t("create.reel_studio_desc")</p>
                             </div>
                           </div>
                           <span className="text-white/40 text-xs">{reelEditOpen?"▲":"▼"}</span>
@@ -2775,7 +2777,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         </AnimatePresence>
                       </div>
 
-                      {/* ── 🎵 Audio Studio ── */}
+                      {/* ── 🎵 t("create.reel_audio_studio_title") ── */}
                       <div>
                         <button onClick={()=>setReelAudioEditOpen(p=>!p)}
                           className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all"
@@ -2783,8 +2785,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <div className="flex items-center gap-2.5">
                             <span style={{fontSize:18}}>🎵</span>
                             <div className="text-left">
-                              <p className="text-xs font-bold text-white/85">Audio Studio</p>
-                              <p className="text-[10px] text-white/35">Ovoz o'zgartirish, trending audio, beat sync</p>
+                              <p className="text-xs font-bold text-white/85">t("create.reel_audio_studio_title")</p>
+                              <p className="text-[10px] text-white/35">t("create.reel_audio_studio_desc")</p>
                             </div>
                           </div>
                           <span className="text-white/40 text-xs">{reelAudioEditOpen?"▲":"▼"}</span>
@@ -2794,9 +2796,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 space-y-3 overflow-hidden">
                               {/* Voice Changer */}
                               <div>
-                                <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">🎙️ Ovoz o'zgartirish</p>
+                                <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">t("create.reel_voice_title")</p>
                                 <div className="grid grid-cols-4 gap-1.5">
-                                  {[{id:"normal",e:"🗣️",l:"Asl"},{id:"robot",e:"🤖",l:"Robot"},{id:"chipmunk",e:"🐿️",l:"Chipmunk"},{id:"deep",e:"👹",l:"Bass"},{id:"echo",e:"🌊",l:"Echo"},{id:"alien",e:"👽",l:"Alien"},{id:"helium",e:"🎈",l:"Helium"},{id:"cave",e:"🏔️",l:"G'or"}].map(v=>(
+                                  {[{id:"normal",e:"🗣️",l:t("create.reel_voice_normal")},{id:"robot",e:"🤖",l:t("create.reel_voice_robot")},{id:"chipmunk",e:"🐿️",l:t("create.reel_voice_chipmunk")},{id:"deep",e:"👹",l:t("create.reel_voice_deep")},{id:"echo",e:"🌊",l:t("create.reel_voice_echo")},{id:"alien",e:"👽",l:t("create.reel_voice_alien")},{id:"helium",e:"🎈",l:t("create.reel_voice_helium")},{id:"cave",e:"🏔️",l:t("create.reel_voice_cave")}].map(v=>(
                                     <button key={v.id} onClick={()=>setReelVoiceChanger(v.id)}
                                       className="flex flex-col items-center gap-0.5 py-2 rounded-xl text-[9px] font-bold transition-all"
                                       style={{ background:reelVoiceChanger===v.id?"rgba(251,191,36,0.2)":"rgba(255,255,255,0.05)", border:reelVoiceChanger===v.id?"1.5px solid rgba(251,191,36,0.6)":"1.5px solid rgba(255,255,255,0.07)", color:reelVoiceChanger===v.id?"#fbbf24":"rgba(255,255,255,0.4)" }}>
@@ -2882,7 +2884,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <div>
                                 <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">🎭 AR Yuz Filtrlari</p>
                                 <div className="grid grid-cols-4 gap-1.5">
-                                  {[{id:"none",e:"🚫",l:"Yo'q"},{id:"glow",e:"✨",l:"Siyoh"},{id:"blur_face",e:"🌫️",l:"Xira yuz"},{id:"sunglasses",e:"🕶️",l:"Ko'zoynak"},{id:"crown",e:"👑",l:"Toj"},{id:"cat",e:"🐱",l:"Mushuk"},{id:"dog",e:"🐶",l:"It"},{id:"heart_eyes",e:"😍",l:"Yurak"}].map(f=>(
+                                  {[{id:"none",e:"🚫",l:t("create.reel_ar_none")},{id:"glow",e:"✨",l:t("create.reel_ar_glow")},{id:"blur_face",e:"🌫️",l:t("create.reel_ar_blur")},{id:"sunglasses",e:"🕶️",l:t("create.reel_ar_sunglasses")},{id:"crown",e:"👑",l:t("create.reel_ar_crown")},{id:"cat",e:"🐱",l:t("create.reel_ar_cat")},{id:"dog",e:"🐶",l:t("create.reel_ar_dog")},{id:"heart_eyes",e:"😍",l:t("create.reel_ar_heart")}].map(f=>(
                                     <button key={f.id} onClick={()=>setReelArFilter(f.id)}
                                       className="flex flex-col items-center gap-0.5 py-2 rounded-xl text-[9px] font-bold transition-all"
                                       style={{ background:reelArFilter===f.id?"rgba(167,139,250,0.25)":"rgba(255,255,255,0.05)", border:reelArFilter===f.id?"1.5px solid rgba(167,139,250,0.6)":"1.5px solid rgba(255,255,255,0.07)", color:reelArFilter===f.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
@@ -2948,7 +2950,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <div>
                                 <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🔍 Zoom Animatsiyasi</p>
                                 <div className="flex gap-1.5">
-                                  {[{id:"none",l:"Yo'q"},{id:"in",l:"Zoom In"},{id:"out",l:"Zoom Out"},{id:"bounce",l:"Bounce"}].map(z=>(
+                                  {[{id:"none",l:t("create.reel_anim_none")},{id:"in",l:t("create.reel_anim_zoom_in", "Zoom In")},{id:"out",l:t("create.reel_anim_zoom_out", "Zoom Out")},{id:"bounce",l:t("create.reel_anim_bounce", "Bounce")}].map(z=>(
                                     <button key={z.id} onClick={()=>setReelZoomAnim(z.id)}
                                       className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
                                       style={{ background:reelZoomAnim===z.id?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.05)", border:reelZoomAnim===z.id?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelZoomAnim===z.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
@@ -2967,9 +2969,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <p className="text-xs font-bold text-white/60">📊 Interaktiv Elementlar</p>
                         {/* Transition */}
                         <div>
-                          <p className="text-[10px] text-white/35 mb-1.5">🎞️ Kliplar orasidagi o'tish</p>
+                          <p className="text-[10px] text-white/35 mb-1.5">t("create.reel_trans_title")</p>
                           <div className="flex gap-1.5 flex-wrap">
-                            {[{id:"cut",l:"Kesish"},{id:"fade",l:"🌫️ Fade"},{id:"zoom",l:"🔍 Zoom"},{id:"slide",l:"↔️ Slide"},{id:"spin",l:"🌀 Spin"},{id:"glitch",l:"⚡ Glitch"}].map(t=>(
+                            {[{id:"cut",l:t("create.reel_trans_cut")},{id:"fade",l:t("create.reel_trans_fade")},{id:"zoom",l:t("create.reel_trans_zoom")},{id:"slide",l:t("create.reel_trans_slide")},{id:"spin",l:t("create.reel_trans_spin")},{id:"glitch",l:t("create.reel_trans_glitch")}].map(t=>(
                               <button key={t.id} onClick={()=>setReelTransition(t.id)}
                                 className="px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all"
                                 style={{ background:reelTransition===t.id?"rgba(220,38,38,0.2)":"rgba(255,255,255,0.05)", border:reelTransition===t.id?"1px solid rgba(220,38,38,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelTransition===t.id?"#fca5a5":"rgba(255,255,255,0.4)" }}>
@@ -2982,7 +2984,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div>
                           <p className="text-[10px] text-white/35 mb-1.5">✍️ Matn animatsiya uslubi</p>
                           <div className="flex gap-1.5 flex-wrap">
-                            {[{id:"none",l:"Yo'q"},{id:"typewriter",l:"⌨️ Typewriter"},{id:"slide_in",l:"→ Slide"},{id:"bounce",l:"🏀 Bounce"},{id:"fade_in",l:"Fade In"},{id:"neon_blink",l:"💡 Neon"},{id:"wave",l:"〰️ Wave"},{id:"zoom_in",l:"🔍 Zoom"}].map(t=>(
+                            {[{id:"none",l:t("create.reel_anim_none")},{id:"typewriter",l:t("create.reel_anim_typewriter")},{id:"slide_in",l:t("create.reel_anim_slide")},{id:"bounce",l:t("create.reel_anim_bounce")},{id:"fade_in",l:t("create.reel_anim_fade")},{id:"neon_blink",l:t("create.reel_anim_neon")},{id:"wave",l:t("create.reel_anim_wave")},{id:"zoom_in",l:t("create.reel_anim_zoom")}].map(t=>(
                               <button key={t.id} onClick={()=>setReelTextAnim(t.id)}
                                 className="px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all"
                                 style={{ background:reelTextAnim===t.id?"rgba(96,165,250,0.2)":"rgba(255,255,255,0.05)", border:reelTextAnim===t.id?"1px solid rgba(96,165,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelTextAnim===t.id?"#93c5fd":"rgba(255,255,255,0.4)" }}>
@@ -2995,7 +2997,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div>
                           <p className="text-[10px] text-white/35 mb-1.5">⏱️ Progress Bar uslubi</p>
                           <div className="flex gap-1.5">
-                            {[{id:"none",l:"Yo'q"},{id:"top",l:"— Yuqori"},{id:"bottom",l:"— Pastki"},{id:"circle",l:"◯ Doira"}].map(p=>(
+                            {[{id:"none",l:t("create.reel_anim_none")},{id:"top",l:t("create.reel_progress_top")},{id:"bottom",l:t("create.reel_progress_bottom")},{id:"circle",l:t("create.reel_progress_circle")}].map(p=>(
                               <button key={p.id} onClick={()=>setReelProgressBar(p.id)}
                                 className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
                                 style={{ background:reelProgressBar===p.id?"rgba(52,211,153,0.2)":"rgba(255,255,255,0.05)", border:reelProgressBar===p.id?"1px solid rgba(52,211,153,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelProgressBar===p.id?"#6ee7b7":"rgba(255,255,255,0.4)" }}>
@@ -3008,7 +3010,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div>
                           <p className="text-[10px] text-white/35 mb-1.5">🎤 Lyrics/Subtitle uslubi</p>
                           <div className="flex gap-1.5">
-                            {[{id:"none",l:"Yo'q"},{id:"bottom_bar",l:"📝 Pastki"},{id:"karaoke",l:"🎤 Karaoke"},{id:"word_by_word",l:"💬 So'zma-so'z"}].map(ls=>(
+                            {[{id:"none",l:t("create.reel_anim_none")},{id:"bottom_bar",l:t("create.reel_lyrics_bottom")},{id:"karaoke",l:t("create.reel_lyrics_karaoke")},{id:"word_by_word",l:t("create.reel_lyrics_word")}].map(ls=>(
                               <button key={ls.id} onClick={()=>setReelLyricsStyle(ls.id)}
                                 className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
                                 style={{ background:reelLyricsStyle===ls.id?"rgba(251,191,36,0.2)":"rgba(255,255,255,0.05)", border:reelLyricsStyle===ls.id?"1px solid rgba(251,191,36,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelLyricsStyle===ls.id?"#fde68a":"rgba(255,255,255,0.4)" }}>
@@ -3021,7 +3023,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div>
                           <p className="text-[10px] text-white/35 mb-1.5">📺 Split Screen rejimi</p>
                           <div className="flex gap-1.5">
-                            {[{id:"none",l:"Yo'q"},{id:"vertical",l:"| Vertikal"},{id:"horizontal",l:"— Gorizontal"},{id:"grid",l:"▦ Setka"}].map(ss=>(
+                            {[{id:"none",l:t("create.reel_anim_none")},{id:"vertical",l:t("create.reel_split_vert")},{id:"horizontal",l:t("create.reel_split_horiz")},{id:"grid",l:t("create.reel_split_grid")}].map(ss=>(
                               <button key={ss.id} onClick={()=>setReelSplitScreen(ss.id)}
                                 className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
                                 style={{ background:reelSplitScreen===ss.id?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.05)", border:reelSplitScreen===ss.id?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelSplitScreen===ss.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
@@ -3054,12 +3056,12 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <AnimatePresence>
                             {reelPoll && (
                               <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-1.5 overflow-hidden">
-                                <input placeholder="Savol kiriting…" value={reelPollQ} onChange={e=>setReelPollQ(e.target.value)}
+                                <input placeholder={t("create.reel_poll_ph")} value={reelPollQ} onChange={e=>setReelPollQ(e.target.value)}
                                   className="w-full rounded-lg px-2.5 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                   style={{ background:"rgba(167,139,250,0.08)", border:"1px solid rgba(167,139,250,0.25)" }}/>
                                 <div className="grid grid-cols-2 gap-1.5">
                                   {reelPollA.map((a,i)=>(
-                                    <input key={i} placeholder={`Variant ${i+1}`} value={a} onChange={e=>{ const n=[...reelPollA]; n[i]=e.target.value; setReelPollA(n); }}
+                                    <input key={i} placeholder={`${t("create.story_quiz_var")} ${i+1}`} value={a} onChange={e=>{ const n=[...reelPollA]; n[i]=e.target.value; setReelPollA(n); }}
                                       className="rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                       style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)" }}/>
                                   ))}
@@ -3074,8 +3076,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             {l:"⏱️ Countdown oyverk",v:reelCountdown,s:setReelCountdown,c:"#f87171"},
                             {l:"🖼️ Picture-in-Pic",   v:reelPip,      s:setReelPip,      c:"#fbbf24"},
                             {l:"🏁 End Card",          v:reelEndCard,  s:setReelEndCard,  c:"#34d399"},
-                            {l:"🔞 18+ Yosh chegara", v:reelAgeGate,  s:setReelAgeGate,  c:"#f87171"},
-                            {l:"📡 Discover'ga yuborish",v:reelShareDiscover,s:setReelShareDiscover,c:"#60a5fa"},
+                            {l:t("create.reel_age_gate", "🔞 18+ Yosh chegara"), v:reelAgeGate,  s:setReelAgeGate,  c:"#f87171"},
+                            {l:t("create.reel_share_discover", "📡 Discover'ga yuborish"),v:reelShareDiscover,s:setReelShareDiscover,c:"#60a5fa"},
                             {l:"🎯 Duet rejimi",       v:reelDuetMode, s:setReelDuetMode, c:"#a78bfa"},
                             {l:"📹 React video",       v:reelReactVideo,s:setReelReactVideo,c:"#fb923c"},
                             {l:"4K 🔷 Sifat",          v:reel4k,       s:setReel4k,       c:"#22d3ee"},
@@ -3092,10 +3094,10 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         </div>
                         {/* First comment & pin */}
                         <div className="space-y-1.5">
-                          <input placeholder="📌 Pinned birinchi izoh (avtomatik)…" value={reelFirstComment} onChange={e=>setReelFirstComment(e.target.value)}
+                          <input placeholder={t("create.reel_comment_pin_ph")} value={reelFirstComment} onChange={e=>setReelFirstComment(e.target.value)}
                             className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                             style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
-                          <input placeholder="📍 Eng yuqori izohni pin qiling…" value={reelPinComment} onChange={e=>setReelPinComment(e.target.value)}
+                          <input placeholder={t("create.reel_comment_top_ph")} value={reelPinComment} onChange={e=>setReelPinComment(e.target.value)}
                             className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                             style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
                         </div>
@@ -3103,7 +3105,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div>
                           <p className="text-[10px] text-white/35 mb-1.5">💧 Suv belgisi joylashuvi</p>
                           <div className="flex gap-1.5 flex-wrap">
-                            {[{id:"none",l:"Yo'q"},{id:"tl",l:"↖ YC"},{id:"tr",l:"↗ YO"},{id:"bl",l:"↙ PC"},{id:"br",l:"↘ PO"},{id:"center",l:"✛ O'rta"}].map(w=>(
+                            {[{id:"none",l:t("create.reel_anim_none")},{id:"tl",l:t("create.reel_watermark_tl")},{id:"tr",l:t("create.reel_watermark_tr")},{id:"bl",l:t("create.reel_watermark_bl")},{id:"br",l:t("create.reel_watermark_br")},{id:"center",l:t("create.reel_watermark_center")}].map(w=>(
                               <button key={w.id} onClick={()=>setReelWatermark(w.id)}
                                 className="px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all"
                                 style={{ background:reelWatermark===w.id?"rgba(52,211,153,0.2)":"rgba(255,255,255,0.05)", border:reelWatermark===w.id?"1px solid rgba(52,211,153,0.5)":"1px solid rgba(255,255,255,0.07)", color:reelWatermark===w.id?"#6ee7b7":"rgba(255,255,255,0.4)" }}>
@@ -3117,9 +3119,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       {/* Reel permissions */}
                       <div className="rounded-2xl p-3.5 space-y-3.5"
                         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <p className="text-xs font-bold text-white/60 mb-1">Maxfiylik</p>
-                        <PermPicker label="Kim izoh yoza oladi" icon={MessageCircle} value={reelCommentPerm} onChange={setReelCommentPerm} />
-                        <PermPicker label="Kim ulasha oladi"    icon={Share2}        value={reelSharePerm}   onChange={setReelSharePerm} />
+                        <p className="text-xs font-bold text-white/60 mb-1">{t("create.privacy_label")}</p>
+                        <PermPicker label={t("create.who_comment")} icon={MessageCircle} value={reelCommentPerm} onChange={setReelCommentPerm} />
+                        <PermPicker label={t("create.who_share")}    icon={Share2}        value={reelSharePerm}   onChange={setReelSharePerm} />
                       </div>
                     </div>
                   )}
@@ -3198,8 +3200,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           {[
                             { id:"qa",        e:"❓", l:"Savol & Javob",    d:"Kuzatuvchilar javob yozadi",     c:"#818cf8" },
                             { id:"slider",    e:"😍", l:"Emoji Slider",     d:"Hissiy darajani baholaydi",      c:"#f472b6" },
-                            { id:"quiz",      e:"🧠", l:"Quiz / Test",      d:"Ko'p javobli savol",             c:"#34d399" },
-                            { id:"countdown", e:"⏱", l:"Countdown",        d:"Tadbirga qolgan vaqt hisoblagich",c:"#f97316" },
+                            { id:"quiz",      e:"🧠", l:t("create.story_sticker_quiz", "Quiz / Test"),      d:t("create.story_sticker_quiz_desc", "Ko'p javobli savol"),             c:"#34d399" },
+                            { id:"countdown", e:"⏱", l:t("create.story_sticker_countdown", "Countdown"),        d:t("create.story_sticker_countdown_desc", "Tadbirga qolgan vaqt hisoblagich"),c:"#f97316" },
                           ].map(st => (
                             <button key={st.id}
                               onClick={() => setStorySticker(storySticker===st.id ? null : st.id)}
@@ -3222,7 +3224,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <span style={{fontSize:22}}>💍</span>
                         <div className="flex-1">
                           <p className="text-xs font-bold text-white/80">Story Ring — zanjir story</p>
-                          <p className="text-[10px] text-white/40 mt-0.5">Sizning story'ingiz boshqalar story'si bilan zanjirlanadi — Instagram'da yo'q!</p>
+                          <p className="text-[10px] text-white/40 mt-0.5">{t("create.story_chain_exclusive_hint", "Sizning story'ingiz boshqalar story'si bilan zanjirlanadi — Instagram'da yo'q!")}</p>
                         </div>
                         <div className="flex items-center px-0.5 rounded-full transition-all"
                           style={{ background:storyRing?"rgba(168,85,247,0.8)":"rgba(255,255,255,0.12)", justifyContent:storyRing?"flex-end":"flex-start", height:22, width:40 }}>
@@ -3316,14 +3318,14 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">🖼️ Fon turi</p>
                                 <div className="grid grid-cols-4 gap-1.5 mb-2">
                                   {[
-                                    {id:"none",      bg:"rgba(255,255,255,0.06)", label:"Yo'q"},
+                                    {id:"none",      bg:"rgba(255,255,255,0.06)", label:t("create.reel_ar_none", "Yo'q")},
                                     {id:"solid",     bg:storyBgColor,              label:"Rang"},
                                     {id:"grad1",     bg:"linear-gradient(135deg,#7c3aed,#ec4899)", label:"🌸 Violet"},
                                     {id:"grad2",     bg:"linear-gradient(135deg,#f59e0b,#ef4444)", label:"🔥 Olov"},
-                                    {id:"grad3",     bg:"linear-gradient(135deg,#06b6d4,#6366f1)", label:"🌊 Ko'k"},
+                                    {id:"grad3",     bg:"linear-gradient(135deg,#06b6d4,#6366f1)", label:t("create.story_bg_blue", "🌊 Ko'k")},
                                     {id:"grad4",     bg:"linear-gradient(135deg,#10b981,#059669)", label:"🌿 Yashil"},
                                     {id:"grad5",     bg:"linear-gradient(135deg,#1a1a2e,#16213e)", label:"🌌 Kosmik"},
-                                    {id:"grad6",     bg:"linear-gradient(135deg,#ff6b6b,#feca57)", label:"🌅 Quyosh"},
+                                    {id:"grad6",     bg:"linear-gradient(135deg,#ff6b6b,#feca57)", label:t("create.story_bg_sun", "🌅 Quyosh")},
                                     {id:"pattern1",  bg:"repeating-linear-gradient(45deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 2px,transparent 2px,transparent 16px)", label:"▦ Grid"},
                                     {id:"pattern2",  bg:"repeating-radial-gradient(circle at 0 0, transparent 0, rgba(255,255,255,0.04) 10px)", label:"● Dots"},
                                     {id:"pattern3",  bg:"repeating-linear-gradient(0deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 20px)", label:"≡ Chiziq"},
@@ -3410,7 +3412,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <div>
                                 <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🖼 Chegara uslubi</p>
                                 <div className="flex gap-1.5 flex-wrap">
-                                  {[{id:"none",l:"Yo'q"},{id:"thin",l:"— Ingichka"},{id:"thick",l:"■ Qalin"},{id:"dashed",l:"- - Uzuq"},{id:"glow_v",l:"✨ Violet yilt."},{id:"glow_g",l:"💚 Yashil yilt."},{id:"neon_r",l:"🔴 Neon qizil"},{id:"rainbow",l:"🌈 Kamalak"}].map(b=>(
+                                  {[{id:"none",l:t("create.reel_anim_none")},{id:"thin",l:"— Ingichka"},{id:"thick",l:"■ Qalin"},{id:"dashed",l:"- - Uzuq"},{id:"glow_v",l:"✨ Violet yilt."},{id:"glow_g",l:"💚 Yashil yilt."},{id:"neon_r",l:"🔴 Neon qizil"},{id:"rainbow",l:"🌈 Kamalak"}].map(b=>(
                                     <button key={b.id} onClick={()=>setStoryBorder(b.id)}
                                       className="px-2 py-1 rounded-lg text-[8px] font-bold transition-all"
                                       style={{ background:storyBorder===b.id?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.05)", border:storyBorder===b.id?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)", color:storyBorder===b.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
@@ -3436,7 +3438,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <div>
                                 <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🎭 AR Kamera Filtri</p>
                                 <div className="grid grid-cols-4 gap-1.5">
-                                  {[{id:"none",e:"🚫",l:"Yo'q"},{id:"beauty",e:"✨",l:"Beauty"},{id:"vintage",e:"📷",l:"Vintage"},{id:"neon_glow",e:"💜",l:"Neon"},{id:"sparkles",e:"🌟",l:"Spora"},{id:"heart",e:"💗",l:"Yurak"},{id:"stars",e:"⭐",l:"Yulduz"},{id:"rainbow",e:"🌈",l:"Kamalak"}].map(f=>(
+                                  {[{id:"none",e:"🚫",l:t("create.reel_ar_none")},{id:"beauty",e:"✨",l:"Beauty"},{id:"vintage",e:"📷",l:"Vintage"},{id:"neon_glow",e:"💜",l:"Neon"},{id:"sparkles",e:"🌟",l:"Spora"},{id:"heart",e:"💗",l:t("create.reel_ar_heart", "Yurak")},{id:"stars",e:"⭐",l:"Yulduz"},{id:"rainbow",e:"🌈",l:"Kamalak"}].map(f=>(
                                     <button key={f.id} onClick={()=>setStoryArFilter(f.id)}
                                       className="flex flex-col items-center gap-0.5 py-2 rounded-xl text-[9px] font-bold transition-all"
                                       style={{ background:storyArFilter===f.id?"rgba(167,139,250,0.25)":"rgba(255,255,255,0.05)", border:storyArFilter===f.id?"1.5px solid rgba(167,139,250,0.6)":"1.5px solid rgba(255,255,255,0.07)", color:storyArFilter===f.id?"#c4b5fd":"rgba(255,255,255,0.4)" }}>
@@ -3466,7 +3468,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             <span style={{fontSize:18}}>🏷️</span>
                             <div className="text-left">
                               <p className="text-xs font-bold text-white/85">Interaktiv Stikerlar</p>
-                              <p className="text-[10px] text-white/35">So'rovnoma, savol, viktorina, sanash va yana ko'p</p>
+                              <p className="text-[10px] text-white/35">{t("create.story_stickers_desc", "So'rovnoma, savol, viktorina, sanash va yana ko'p")}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
@@ -3492,12 +3494,12 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 <AnimatePresence>
                                   {storyPoll && (
                                     <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-1.5 overflow-hidden">
-                                      <input placeholder="Savol: Qaysi rangni yaxshi ko'rasiz?" value={storyPollQ} onChange={e=>setStoryPollQ(e.target.value)}
+                                      <input placeholder={t("create.story_poll_ph", "Savol: Qaysi rangni yaxshi ko'rasiz?")} value={storyPollQ} onChange={e=>setStoryPollQ(e.target.value)}
                                         className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                         style={{ background:"rgba(52,211,153,0.07)", border:"1px solid rgba(52,211,153,0.25)" }}/>
                                       <div className="flex gap-1.5">
                                         {storyPollA.map((a,i)=>(
-                                          <input key={i} placeholder={i===0?"Ha":"Yo'q"} value={a} onChange={e=>{ const n=[...storyPollA]; n[i]=e.target.value; setStoryPollA(n); }}
+                                          <input key={i} placeholder={i===0?t("create.story_poll_ha"):t("create.story_poll_yoq")} value={a} onChange={e=>{ const n=[...storyPollA]; n[i]=e.target.value; setStoryPollA(n); }}
                                             className="flex-1 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                             style={{ background:"rgba(52,211,153,0.07)", border:"1px solid rgba(52,211,153,0.2)" }}/>
                                         ))}
@@ -3517,7 +3519,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 <AnimatePresence>
                                   {storyQa && (
                                     <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
-                                      <input placeholder="Savol yozing: Sizdan nima so'rasam?" value={storyQaQ} onChange={e=>setStoryQaQ(e.target.value)}
+                                      <input placeholder={t("create.story_qa_ph")} value={storyQaQ} onChange={e=>setStoryQaQ(e.target.value)}
                                         className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                         style={{ background:"rgba(96,165,250,0.08)", border:"1px solid rgba(96,165,250,0.25)" }}/>
                                     </motion.div>
@@ -3535,7 +3537,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 <AnimatePresence>
                                   {storyQuiz && (
                                     <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="space-y-1.5 overflow-hidden">
-                                      <input placeholder="Savol: Olcha uchun qaysi javob to'g'ri?" value={storyQuizQ} onChange={e=>setStoryQuizQ(e.target.value)}
+                                      <input placeholder={t("create.story_quiz_ph")} value={storyQuizQ} onChange={e=>setStoryQuizQ(e.target.value)}
                                         className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                         style={{ background:"rgba(167,139,250,0.08)", border:"1px solid rgba(167,139,250,0.25)" }}/>
                                       <div className="grid grid-cols-2 gap-1.5">
@@ -3544,14 +3546,14 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                             className="relative"
                                             style={{}}>
                                             <input value={o} onChange={e=>{ const n=[...storyQuizOpts]; n[i]=e.target.value; setStoryQuizOpts(n); }}
-                                              placeholder={`Variant ${i+1}`}
+                                              placeholder={`${t("create.story_quiz_var")} ${i+1}`}
                                               className="w-full rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                               style={{ background:storyQuizAns===i?"rgba(52,211,153,0.2)":"rgba(255,255,255,0.05)", border:storyQuizAns===i?"1.5px solid rgba(52,211,153,0.6)":"1px solid rgba(255,255,255,0.08)" }}/>
                                             {storyQuizAns===i && <span className="absolute right-2 top-1.5 text-[10px] text-emerald-400">✓</span>}
                                           </button>
                                         ))}
                                       </div>
-                                      <p className="text-[8px] text-white/25">To'g'ri javobni bosing (yashil — to'g'ri)</p>
+                                      <p className="text-[8px] text-white/25">t("create.story_quiz_hint")</p>
                                     </motion.div>
                                   )}
                                 </AnimatePresence>
@@ -3585,7 +3587,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 <AnimatePresence>
                                   {storyEmojiSlider && (
                                     <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
-                                      <input placeholder="Savol: Bugungi kayfiyatim…" value={storyEmojiQ} onChange={e=>setStoryEmojiQ(e.target.value)}
+                                      <input placeholder={t("create.story_emoji_ph")} value={storyEmojiQ} onChange={e=>setStoryEmojiQ(e.target.value)}
                                         className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                         style={{ background:"rgba(244,114,182,0.08)", border:"1px solid rgba(244,114,182,0.25)" }}/>
                                     </motion.div>
@@ -3594,20 +3596,20 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               </div>
                               {/* Location & Mention & Product */}
                               <div className="space-y-1.5">
-                                <input placeholder="📍 Joylashuv (shahringiz nomi)" value={storyLocationTag} onChange={e=>setStoryLocationTag(e.target.value)}
+                                <input placeholder={"📍 " + t("create.story_loc_ph")} value={storyLocationTag} onChange={e=>setStoryLocationTag(e.target.value)}
                                   className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                   style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
-                                <input placeholder="@ Do'stni tag qiling" value={storyMention} onChange={e=>setStoryMention(e.target.value)}
+                                <input placeholder={t("create.story_mention_ph")} value={storyMention} onChange={e=>setStoryMention(e.target.value)}
                                   className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                   style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
-                                <input placeholder="🛍️ Mahsulot tagi (link)" value={storyProduct} onChange={e=>setStoryProduct(e.target.value)}
+                                <input placeholder={"🛍️ " + t("create.story_prod_ph")} value={storyProduct} onChange={e=>setStoryProduct(e.target.value)}
                                   className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                   style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
                               </div>
                               {/* Music */}
                               <div>
                                 <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🎵 Musiqa Stikeri</p>
-                                <input placeholder="Qo'shiq nomi yoki artist…" value={storyMusic} onChange={e=>setStoryMusic(e.target.value)}
+                                <input placeholder={t("create.story_music_ph")} value={storyMusic} onChange={e=>setStoryMusic(e.target.value)}
                                   className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none mb-1.5"
                                   style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
                                 {storyMusic && (
@@ -3621,7 +3623,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               {/* GIF */}
                               <div>
                                 <p className="text-[10px] font-bold text-white/40 mb-1.5 uppercase tracking-wider">🎞️ GIF Stikeri</p>
-                                <input placeholder="GIF qidirish (masalan: celebrating…)" value={storyGif} onChange={e=>setStoryGif(e.target.value)}
+                                <input placeholder={t("create.story_gif_ph")} value={storyGif} onChange={e=>setStoryGif(e.target.value)}
                                   className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                   style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}/>
                                 {storyGif && (
@@ -3638,10 +3640,10 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               {/* Special stickers */}
                               <div className="grid grid-cols-2 gap-1.5">
                                 {[
-                                  {l:"🌡️ Ob-havo stikeri",  v:storyWeather,      s:setStoryWeather,     c:"#22d3ee"},
-                                  {l:"➕ Add Yours zanjiri", v:storyAddYours,    s:setStoryAddYours,   c:"#34d399"},
-                                  {l:"🔁 Auto-tarjima",     v:storyAutoTranslate,s:setStoryAutoTranslate,c:"#60a5fa"},
-                                  {l:"💾 Avtomatik arxiv",  v:true,              s:()=>{},             c:"#94a3b8"},
+                                  {l:t("create.story_weather"),  v:storyWeather,      s:setStoryWeather,     c:"#22d3ee"},
+                                  {l:t("create.story_addyours"), v:storyAddYours,    s:setStoryAddYours,   c:"#34d399"},
+                                  {l:t("create.story_autotrans"),     v:storyAutoTranslate,s:setStoryAutoTranslate,c:"#60a5fa"},
+                                  {l:t("create.story_autoarchive"),  v:true,              s:()=>{},             c:"#94a3b8"},
                                 ].map(({l,v,s,c})=>(
                                   <button key={l} onClick={()=>s((p:boolean)=>!p)}
                                     className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-[9px] font-bold transition-all"
@@ -3660,12 +3662,12 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                       {/* ── 🔒 Story Maxsus Sozlamalar ── */}
                       <div className="rounded-2xl p-3.5 space-y-2.5" style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)" }}>
-                        <p className="text-xs font-bold text-white/60">🔒 Maxsus Sozlamalar</p>
+                        <p className="text-xs font-bold text-white/60">t("create.story_special_settings")</p>
                         {/* Close Friends */}
                         <button onClick={()=>setStoryCloseFriends(p=>!p)}
                           className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all"
                           style={{ background:storyCloseFriends?"rgba(52,211,153,0.12)":"rgba(255,255,255,0.04)", border:storyCloseFriends?"1px solid rgba(52,211,153,0.5)":"1px solid rgba(255,255,255,0.07)", color:storyCloseFriends?"#34d399":"rgba(255,255,255,0.45)" }}>
-                          <span>🟢 Faqat Yaqin Do'stlar</span>
+                          <span>t("create.story_close_friends")</span>
                           <div className="flex items-center px-0.5 rounded-full" style={{ background:storyCloseFriends?"#34d399":"rgba(255,255,255,0.12)", justifyContent:storyCloseFriends?"flex-end":"flex-start", height:20, width:36 }}>
                             <div className="w-3.5 h-3.5 rounded-full bg-white"/>
                           </div>
@@ -3674,7 +3676,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <button onClick={()=>setStoryVanish(p=>!p)}
                           className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all"
                           style={{ background:storyVanish?"rgba(239,68,68,0.12)":"rgba(255,255,255,0.04)", border:storyVanish?"1px solid rgba(239,68,68,0.5)":"1px solid rgba(255,255,255,0.07)", color:storyVanish?"#f87171":"rgba(255,255,255,0.45)" }}>
-                          <span>👁️‍🗨️ Vanish — 1 marta ko'rilsa yo'qoladi</span>
+                          <span>{t("create.story_vanish")}</span>
                           <div className="flex items-center px-0.5 rounded-full" style={{ background:storyVanish?"#ef4444":"rgba(255,255,255,0.12)", justifyContent:storyVanish?"flex-end":"flex-start", height:20, width:36 }}>
                             <div className="w-3.5 h-3.5 rounded-full bg-white"/>
                           </div>
@@ -3682,7 +3684,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* Highlight */}
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs text-white/60">⭐ Story Highlight'ga qo'shish</span>
+                            <span className="text-xs text-white/60">t("create.story_highlight_title")</span>
                             <button onClick={()=>setStoryHighlight(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{ background:storyHighlight?"#fbbf24":"rgba(255,255,255,0.12)", justifyContent:storyHighlight?"flex-end":"flex-start", height:20, width:34 }}>
                               <div className="w-3.5 h-3.5 rounded-full bg-white"/>
                             </button>
@@ -3690,7 +3692,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <AnimatePresence>
                             {storyHighlight && (
                               <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
-                                <input placeholder="Highlight nomi (masalan: Sayohat 2025)" value={storyHighlightName} onChange={e=>setStoryHighlightName(e.target.value)}
+                                <input placeholder={t("create.story_highlight_ph")} value={storyHighlightName} onChange={e=>setStoryHighlightName(e.target.value)}
                                   className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                   style={{ background:"rgba(251,191,36,0.07)", border:"1px solid rgba(251,191,36,0.25)" }}/>
                               </motion.div>
@@ -3700,7 +3702,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* Schedule */}
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs text-white/60">📅 Story'ni rejalashtirish</span>
+                            <span className="text-xs text-white/60">t("create.story_schedule_title")</span>
                             <button onClick={()=>setStorySchedule(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{ background:storySchedule?"#a78bfa":"rgba(255,255,255,0.12)", justifyContent:storySchedule?"flex-end":"flex-start", height:20, width:34 }}>
                               <div className="w-3.5 h-3.5 rounded-full bg-white"/>
                             </button>
@@ -3729,7 +3731,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <button key={s} onClick={()=>setOtubeSection(s)}
                             className="flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all"
                             style={{ background:otubeSection===s?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.07)", color:otubeSection===s?"white":"rgba(255,255,255,0.45)", border:otubeSection===s?"none":"1px solid rgba(255,255,255,0.08)" }}>
-                            {s==="basic"?"📝 Asosiy":s==="video"?"🎬 Video":s==="seo"?"🔍 SEO":s==="monetize"?"💰 Daromad":"⚙️ Ilg'or"}
+                            {s==="basic"?"📝 Asosiy":s==="video"?"🎬 Video":s==="seo"?"🔍 SEO":s==="monetize"?"💰 Daromad":t("create.chal_nav_advanced")}
                           </button>
                         ))}
                       </div>
@@ -3742,11 +3744,11 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <div className="space-y-2">
                             {/* Orientation toggle row — ABOVE video, no overlap */}
                             <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] text-white/40 mr-1">Ko'rinish:</span>
+                              <span className="text-[10px] text-white/40 mr-1">t("create.otube_vis_label")</span>
                               {([
-                                {id:"9:16" as const, icon:"📱", label:"Vertikal"},
-                                {id:"16:9" as const, icon:"📺", label:"Gorizontal"},
-                                {id:"1:1"  as const, icon:"⬜", label:"Kvadrat"},
+                                {id:"9:16" as const, icon:"📱", label:t("create.otube_vis_vert")},
+                                {id:"16:9" as const, icon:"📺", label:t("create.otube_vis_horiz")},
+                                {id:"1:1"  as const, icon:"⬜", label:t("create.otube_vis_square")},
                               ]).map(o=>(
                                 <button key={o.id} onClick={()=>setOtubeOrientation(o.id)}
                                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all"
@@ -3786,7 +3788,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <button onClick={()=>{setOtubeFile(null);setOtubePreview("");setOtubeUploadResult(null);setOtubeUploadProg(0);}}
                                 className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold"
                                 style={{background:"rgba(255,59,48,0.1)",border:"1px solid rgba(255,59,48,0.3)",color:"#ff3b30"}}>
-                                <X className="w-3 h-3"/>Olib tashlash
+                                <X className="w-3 h-3"/>t("create.otube_remove")
                               </button>
                             </div>
                           </div>
@@ -3797,8 +3799,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 <Tv className="w-7 h-7 text-white"/>
                               </div>
                               <div className="text-center">
-                                <p className="text-sm font-bold text-white">OTube Klip yuklash</p>
-                                <p className="text-[11px] text-white/40 mt-0.5">MP4, MOV, AVI — max 4GB · 4K/HDR qo'llab-quvvatlanadi</p>
+                                <p className="text-sm font-bold text-white">t("create.otube_upload_title")</p>
+                                <p className="text-[11px] text-white/40 mt-0.5">t("create.otube_upload_desc")</p>
                               </div>
                               <div className="flex items-center gap-3 text-[10px] text-white/30">
                                 <span>🎬 8K Ultra</span><span>•</span><span>🎵 Dolby Audio</span><span>•</span><span>⚡ 360° Video</span>
@@ -3811,16 +3813,16 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Title */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📝 Sarlavha</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">t("create.otube_title_label")</p>
                           <input value={otubeTitle} onChange={e=>setOtubeTitle(e.target.value)} maxLength={100}
-                            placeholder="Ajoyib sarlavha yozing (100 belgi)"
+                            placeholder={t("create.otube_title_ph")}
                             className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
                             style={{background:"rgba(5,150,105,0.1)",border:"1px solid rgba(52,211,153,0.25)"}}/>
                           <div className="flex justify-between mt-1">
                             <span className="text-[10px] text-white/30">{otubeTitle.length}/100</span>
                             <button onClick={runOtubeAiTitle} disabled={otubeAiTitleLoad}
                               className="text-[10px] font-bold flex items-center gap-1" style={{color:"#34d399"}}>
-                              {otubeAiTitleLoad?<><Loader2 className="w-3 h-3 animate-spin"/>Yaratilmoqda…</>:<><Sparkles className="w-3 h-3"/>AI Sarlavha</>}
+                              {otubeAiTitleLoad?<><Loader2 className="w-3 h-3 animate-spin"/>Yaratilmoqda…</>:<><Sparkles className="w-3 h-3"/>t("create.otube_title_ai")</>}
                             </button>
                           </div>
                           {otubeAiTitle.length > 0 && (
@@ -3838,22 +3840,22 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Description */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📄 Tavsif</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">t("create.otube_desc_label")</p>
                           <textarea value={otubeDesc.length>0?otubeDesc:otubeAiDesc} onChange={e=>{setOtubeDesc(e.target.value);setOtubeAiDesc("");}} rows={4}
-                            placeholder="Video haqida batafsil tavsif yozing…"
+                            placeholder={t("create.otube_desc_ph")}
                             className="w-full rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-white/25 focus:outline-none resize-none"
                             style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)"}}/>
                           <button onClick={runOtubeAiDesc} disabled={otubeAiDescLoad}
                             className="mt-1.5 text-[10px] font-bold flex items-center gap-1" style={{color:"#34d399"}}>
-                            {otubeAiDescLoad?<><Loader2 className="w-3 h-3 animate-spin"/>Yaratilmoqda…</>:<><Sparkles className="w-3 h-3"/>AI Tavsif yaratish</>}
+                            {otubeAiDescLoad?<><Loader2 className="w-3 h-3 animate-spin"/>Yaratilmoqda…</>:<><Sparkles className="w-3 h-3"/>t("create.otube_desc_ai")</>}
                           </button>
                         </div>
 
                         {/* Category */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">🗂 Kategoriya</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">t("create.otube_cat_label")</p>
                           <div className="flex flex-wrap gap-1.5">
-                            {["🎮 O'yin","🎵 Musiqa","📚 Ta'lim","🍳 Oshpazlik","🏋️ Sport","🎭 Ko'ngil ochar","✈️ Sayohat","💼 Biznes","🎨 San'at","🔬 Fan","💄 Go'zallik","🐾 Hayvonlar","🎬 Kino","🧘 Salomatlik","📰 Yangiliklar","🎤 Podkast"].map(cat=>(
+                            {["🎮 " + t("create.label_gaming"),"🎵 " + t("create.label_music"),"📚 " + t("create.label_education"),"🍳 " + t("create.label_food"),"🏋️ " + t("create.label_sports"),"🎭 " + t("create.label_entertainment"),"✈️ " + t("create.label_travel"),"💼 " + t("create.label_tech"),"🎨 " + t("create.label_art"),"🔬 " + t("create.label_tech"),"💄 " + t("create.label_fashion"),"🐾 " + t("create.label_food"),"🎬 " + t("create.label_entertainment"),"🧘 " + t("create.label_sports"),"📰 " + t("create.label_entertainment"),"🎤 " + t("create.label_music")].map(cat=>(
                               <button key={cat} onClick={()=>setOtubeCategory(cat===otubeCategory?"":cat)}
                                 className="px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all"
                                 style={{background:otubeCategory===cat?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeCategory===cat?"white":"rgba(255,255,255,0.5)",border:otubeCategory===cat?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -3865,9 +3867,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Visibility */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">👁 Ko'rinish</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">t("create.otube_vis_main_label")</p>
                           <div className="grid grid-cols-2 gap-2">
-                            {[{v:"public",e:"🌍",l:"Hammaga ochiq"},{v:"unlisted",e:"🔗",l:"Havolali"},{v:"private",e:"🔒",l:"Faqat men"},{v:"scheduled",e:"⏰",l:"Rejalashtirish"}].map(({v,e,l})=>(
+                            {[{v:"public",e:"🌍",l:t("create.otube_vis_public")},{v:"unlisted",e:"🔗",l:t("create.otube_vis_unlisted")},{v:"private",e:"🔒",l:t("create.otube_vis_private")},{v:"scheduled",e:"⏰",l:t("create.otube_vis_scheduled")}].map(({v,e,l})=>(
                               <button key={v} onClick={()=>{setOtubeVisibility(v);if(v==="scheduled")setOtubeScheduled(true);}}
                                 className="py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 px-3 transition-all"
                                 style={{background:otubeVisibility===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.05)",color:otubeVisibility===v?"white":"rgba(255,255,255,0.55)",border:otubeVisibility===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -3884,7 +3886,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Notify Subs + Premiere */}
                         <div className="grid grid-cols-2 gap-2">
-                          {[{v:otubeNotifySubs,s:setOtubeNotifySubs,l:"🔔 Obunachilarga xabar"},{v:otubePremiere,s:setOtubePremiere,l:"🎬 Premyera rejimi"}].map(({v,s,l},i)=>(
+                          {[{v:otubeNotifySubs,s:setOtubeNotifySubs,l:t("create.otube_notify_subs")},{v:otubePremiere,s:setOtubePremiere,l:t("create.otube_premiere")}].map(({v,s,l},i)=>(
                             <button key={i} onClick={()=>s((p:boolean)=>!p)}
                               className="py-2.5 px-3 rounded-xl text-[11px] font-bold flex items-center gap-2 transition-all"
                               style={{background:v?"rgba(52,211,153,0.15)":"rgba(255,255,255,0.05)",color:v?"#34d399":"rgba(255,255,255,0.45)",border:v?"1px solid rgba(52,211,153,0.35)":"1px solid rgba(255,255,255,0.08)"}}>
@@ -3906,7 +3908,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Thumbnail */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🖼 Muqova (Thumbnail)</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.otube_thumb_label")</p>
                           <div className="grid grid-cols-3 gap-2 mb-2">
                             {["Auto-kadr 1","Auto-kadr 2","Auto-kadr 3"].map((f,i)=>(
                               <button key={i} onClick={()=>setOtubeThumbnail(`auto${i}`)}
@@ -3918,7 +3920,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           </div>
                           <label className="w-full py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-bold cursor-pointer transition-all"
                             style={{background:"rgba(52,211,153,0.1)",border:"1px dashed rgba(52,211,153,0.35)",color:"#34d399"}}>
-                            <Upload className="w-3.5 h-3.5"/>Maxsus muqova yuklash
+                            <Upload className="w-3.5 h-3.5"/>t("create.otube_thumb_custom")
                             <input type="file" accept="image/*" className="hidden"
                               onChange={e=>{const f=e.target.files?.[0];if(f){setOtubeThumbnailFile(f);setOtubeThumbnail(URL.createObjectURL(f));}e.target.value="";}}/>
                           </label>
@@ -3926,10 +3928,10 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Chapters */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📑 Bo'limlar (Chapters)</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.otube_chap_label")</p>
                           <div className="flex gap-2">
                             <input value={otubeChapTs} onChange={e=>setOtubeChapTs(e.target.value)} placeholder="0:00" className="w-16 rounded-xl px-2 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}/>
-                            <input value={otubeChapTitle} onChange={e=>setOtubeChapTitle(e.target.value)} placeholder="Bo'lim nomi…" className="flex-1 rounded-xl px-3 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}/>
+                            <input value={otubeChapTitle} onChange={e=>setOtubeChapTitle(e.target.value)} placeholder={t("create.otube_chap_ph")} className="flex-1 rounded-xl px-3 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}/>
                             <button onClick={()=>{if(otubeChapTs&&otubeChapTitle){setOtubeChapters(p=>[...p,{ts:otubeChapTs,title:otubeChapTitle}]);setOtubeChapTs("");setOtubeChapTitle("");}}}
                               className="px-3 rounded-xl text-xs font-bold" style={{background:"linear-gradient(135deg,#059669,#34d399)",color:"white"}}>
                               <Plus className="w-3.5 h-3.5"/>
@@ -3948,17 +3950,17 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Playlist */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📂 Pleylist</p>
-                          <input value={otubePlaylist} onChange={e=>setOtubePlaylist(e.target.value)} placeholder="Pleylist nomi (ixtiyoriy)"
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">t("create.otube_playlist_label")</p>
+                          <input value={otubePlaylist} onChange={e=>setOtubePlaylist(e.target.value)} placeholder={t("create.otube_playlist_ph")}
                             className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
                             style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)"}}/>
                         </div>
 
                         {/* End Card + Cards */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🃏 End Card & Kartalar</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.otube_cards_label")</p>
                           <div className="flex items-center justify-between py-2 px-3 rounded-xl mb-2" style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)"}}>
-                            <span className="text-xs text-white/70">🎬 End card qo'shish</span>
+                            <span className="text-xs text-white/70">t("create.otube_card_add")</span>
                             <button onClick={()=>setOtubeEndCard(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{background:otubeEndCard?"#34d399":"rgba(255,255,255,0.12)",justifyContent:otubeEndCard?"flex-end":"flex-start",height:20,width:34}}>
                               <div className="w-3.5 h-3.5 rounded-full bg-white"/>
                             </button>
@@ -3967,7 +3969,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             <select value={otubeCardType} onChange={e=>setOtubeCardType(e.target.value)} className="rounded-xl px-2 py-2 text-xs text-white focus:outline-none flex-shrink-0" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}>
                               {["video","channel","playlist","link","poll"].map(t=><option key={t} value={t}>{t}</option>)}
                             </select>
-                            <input value={otubeCardText} onChange={e=>setOtubeCardText(e.target.value)} placeholder="Karta matni…" className="flex-1 rounded-xl px-3 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}/>
+                            <input value={otubeCardText} onChange={e=>setOtubeCardText(e.target.value)} placeholder={t("create.otube_card_ph")} className="flex-1 rounded-xl px-3 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}/>
                             <button onClick={()=>{if(otubeCardText){setOtubeCards(p=>[...p,{type:otubeCardType,text:otubeCardText}]);setOtubeCardText("");}}}
                               className="px-3 rounded-xl text-xs font-bold" style={{background:"linear-gradient(135deg,#059669,#34d399)",color:"white"}}>
                               <Plus className="w-3.5 h-3.5"/>
@@ -3986,7 +3988,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Video Quality Toggles */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🎥 Video Sifat</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.otube_quality_label")</p>
                           <div className="grid grid-cols-3 gap-2">
                             {[{v:otubeIs4k,s:setOtubeIs4k,l:"4K Ultra"},{v:otubeIsHdr,s:setOtubeIsHdr,l:"HDR"},{v:otubeIs360,s:setOtubeIs360,l:"360°"},{v:otubeStabilize,s:setOtubeStabilize,l:"Stabilizer"},{v:otubeAutoEnhance,s:setOtubeAutoEnhance,l:"AI Enhance"},{v:otubeSynthetic,s:setOtubeSynthetic,l:"AI Kontent"}].map(({v,s,l},i)=>(
                               <button key={i} onClick={()=>s((p:boolean)=>!p)}
@@ -4000,14 +4002,14 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Subtitles */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">💬 Subtitrlar</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.otube_subs_label")</p>
                           <div className="flex gap-2">
                             <select value={otubeSubLang} onChange={e=>setOtubeSubLang(e.target.value)} className="rounded-xl px-2 py-2 text-xs text-white focus:outline-none" style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)"}}>
                               {["uz","en","ru","de","fr","zh","ar","tr","ko","ja"].map(l=><option key={l} value={l}>{l.toUpperCase()}</option>)}
                             </select>
                             <button onClick={()=>setOtubeSubtitles(p=>[...p,{lang:otubeSubLang}])}
                               className="flex-1 py-2 rounded-xl text-xs font-bold" style={{background:"rgba(52,211,153,0.1)",border:"1px dashed rgba(52,211,153,0.3)",color:"#34d399"}}>
-                              + Subtitrl qo'shish
+                              t("create.otube_subs_add")
                             </button>
                           </div>
                           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -4022,7 +4024,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* OTube Canvas */}
                         <div>
                           <button onClick={()=>setOtubeCanvasLayers(p=>p.length>0?[]:p)} className="w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2" style={{background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)",color:"#34d399"}}>
-                            <LayoutTemplate className="w-3.5 h-3.5"/>Thumbnail Muharrir (Drag & Drop)
+                            <LayoutTemplate className="w-3.5 h-3.5"/>t("create.otube_canvas_btn")
                           </button>
                           {otubeCanvasLayers.length>=0 && otubePreview && (
                             <div className="mt-2">
@@ -4066,7 +4068,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <div className="flex gap-2 mb-2">
                             <input value={otubeTagInput} onChange={e=>setOtubeTagInput(e.target.value)}
                               onKeyDown={e=>{if(e.key==="Enter"&&otubeTagInput.trim()){setOtubeTags(p=>[...p,otubeTagInput.trim()]);setOtubeTagInput("");}}}
-                              placeholder="Teg qo'shish → Enter"
+                              placeholder={t("create.otube_tags_ph", "Teg qo'shish → Enter")}
                               className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
                             <button onClick={()=>{if(otubeTagInput.trim()){setOtubeTags(p=>[...p,otubeTagInput.trim()]);setOtubeTagInput("");}}}
@@ -4123,7 +4125,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">💬 Birinchi izoh</p>
-                            <input value={otubeFirstComment} onChange={e=>setOtubeFirstComment(e.target.value)} placeholder="Video chiqqanda birinchi izoh…"
+                            <input value={otubeFirstComment} onChange={e=>setOtubeFirstComment(e.target.value)} placeholder={t("create.otube_first_comment_ph", "Video chiqqanda birinchi izoh…")}
                               className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
                           </div>
@@ -4149,7 +4151,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             <div className="space-y-2">
                               <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">Reklama turi</p>
                               <div className="grid grid-cols-2 gap-2">
-                                {[{v:"ads",l:"📺 Reklama roliği"},{v:"sponsor",l:"🤝 Homiylik"},{v:"merch",l:"🛍 Tovar do'koni"},{v:"membership",l:"⭐ A'zolik"}].map(({v,l})=>(
+                                {[{v:"ads",l:t("create.otube_monetize_ads", "📺 Reklama roliği")},{v:"sponsor",l:t("create.chal_sponsor_label")},{v:"merch",l:t("create.otube_monetize_merch", "🛍 Tovar do'koni")},{v:"membership",l:t("create.otube_monetize_membership", "⭐ A'zolik")}].map(({v,l})=>(
                                   <button key={v} onClick={()=>setOtubeMonetizeType(v)}
                                     className="py-2.5 rounded-xl text-[11px] font-bold transition-all"
                                     style={{background:otubeMonetizeType===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeMonetizeType===v?"white":"rgba(255,255,255,0.5)",border:otubeMonetizeType===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -4179,7 +4181,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Super Thanks, Members, Merchandise */}
                         <div className="space-y-2">
-                          {[{v:otubeSuperThanks,s:setOtubeSuperThanks,e:"💝",l:"Super Thanks — tomoshabinlar sovg'a yuborsin"},{v:otubeMembersOnly,s:setOtubeMembersOnly,e:"👑",l:"Faqat a'zolar uchun (Members only)"},{v:otubeMerchandise,s:setOtubeMerchandise,e:"🛍",l:"Tovar javoni ko'rsatish"}].map(({v,s,e,l})=>(
+                          {[{v:otubeSuperThanks,s:setOtubeSuperThanks,e:"💝",l:t("create.otube_super_thanks_desc", "Super Thanks — tomoshabinlar sovg'a yuborsin")},{v:otubeMembersOnly,s:setOtubeMembersOnly,e:"👑",l:t("create.otube_members_only_desc", "Faqat a'zolar uchun (Members only)")},{v:otubeMerchandise,s:setOtubeMerchandise,e:"🛍",l:t("create.otube_merchandise_desc", "Tovar javoni ko'rsatish")}].map(({v,s,e,l})=>(
                             <div key={l} className="flex items-center justify-between px-3 py-3 rounded-xl" style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)"}}>
                               <span className="text-xs text-white/70">{e} {l}</span>
                               <button onClick={()=>s((p:boolean)=>!p)} className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{background:v?"#34d399":"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start",height:20,width:34}}>
@@ -4224,9 +4226,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Toggle options */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🔒 Maxfiylik & Boshqalar</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">{t("create.otube_privacy_title")}</p>
                           <div className="space-y-1.5">
-                            {[{v:otubeAllowEmbed,s:setOtubeAllowEmbed,l:"🔗 Embed qilishga ruxsat"},{v:otubeAllowDownload,s:setOtubeAllowDownload,l:"⬇️ Yuklab olishga ruxsat"},{v:otubeHideLikes,s:setOtubeHideLikes,l:"👍 Like sonini yashirish"},{v:otubeHideViews,s:setOtubeHideViews,l:"👁 Ko'rishlar sonini yashirish"},{v:otubeAgeGate,s:setOtubeAgeGate,l:"🔞 18+ cheklov"},{v:otubeKids,s:setOtubeKids,l:"👶 Bolalar uchun kontent"},{v:otubePaidPromo,s:setOtubePaidPromo,l:"💼 Pullik reklama mavjud"},{v:otubeSynthetic,s:setOtubeSynthetic,l:"🤖 AI/Sintetik kontent"}].map(({v,s,l})=>(
+                            {[{v:otubeAllowEmbed,s:setOtubeAllowEmbed,l:t("create.otube_embed")},{v:otubeAllowDownload,s:setOtubeAllowDownload,l:t("create.otube_download")},{v:otubeHideLikes,s:setOtubeHideLikes,l:t("create.otube_hide_likes")},{v:otubeHideViews,s:setOtubeHideViews,l:t("create.otube_hide_views")},{v:otubeAgeGate,s:setOtubeAgeGate,l:t("create.otube_age_gate")},{v:otubeKids,s:setOtubeKids,l:t("create.otube_kids")},{v:otubePaidPromo,s:setOtubePaidPromo,l:t("create.otube_paid_promo")},{v:otubeSynthetic,s:setOtubeSynthetic,l:t("create.otube_synthetic")}].map(({v,s,l})=>(
                               <div key={l} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
                                 <span className="text-xs text-white/65">{l}</span>
                                 <button onClick={()=>s((p:boolean)=>!p)} className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{background:v?"#34d399":"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start",height:20,width:34}}>
@@ -4252,7 +4254,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           <button key={s} onClick={()=>setChalSection(s)}
                             className="flex-1 px-2 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all"
                             style={{background:chalSection===s?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.07)",color:chalSection===s?"white":"rgba(255,255,255,0.45)",border:chalSection===s?"none":"1px solid rgba(255,255,255,0.08)"}}>
-                            {s==="setup"?"🏆 Sozlash":s==="rules"?"📋 Qoidalar":s==="prizes"?"🎁 Mukofotlar":"⚙️ Ilg'or"}
+                            {s==="setup"?t("create.chal_nav_setup"):s==="rules"?t("create.chal_nav_rules"):s==="prizes"?t("create.chal_nav_prizes"):t("create.chal_nav_advanced")}
                           </button>
                         ))}
                       </div>
@@ -4261,8 +4263,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       <div className="rounded-2xl p-4 text-center relative overflow-hidden" style={{background:"linear-gradient(135deg,rgba(180,83,9,0.3),rgba(251,146,60,0.15))"}}>
                         <div className="absolute inset-0 opacity-10" style={{backgroundImage:"radial-gradient(circle at 20% 50%, #fb923c 0%, transparent 60%), radial-gradient(circle at 80% 50%, #f59e0b 0%, transparent 60%)"}}/>
                         <Trophy className="w-8 h-8 mx-auto mb-2" style={{color:"#fb923c"}}/>
-                        <p className="text-sm font-black text-white">Challenge yaratish</p>
-                        <p className="text-[11px] text-white/50 mt-0.5">OlchaAI platformasida viral musobaqa boshlang</p>
+                        <p className="text-sm font-black text-white">t("create.chal_banner_title")</p>
+                        <p className="text-[11px] text-white/50 mt-0.5">t("create.chal_banner_desc")</p>
                       </div>
 
                       {/* SETUP SECTION */}
@@ -4270,16 +4272,16 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Name */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">🏆 Challenge nomi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">t("create.chal_name_label")</p>
                           <input value={chalName} onChange={e=>setChalName(e.target.value)} maxLength={60}
-                            placeholder="Masalan: Ice Bucket Challenge"
+                            placeholder={t("create.chal_name_ph")}
                             className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
                             style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.3)"}}/>
                         </div>
 
                         {/* Hashtag */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider"># Xeshteg</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">t("create.chal_hash_label")</p>
                           <input value={chalHashtag} onChange={e=>setChalHashtag(e.target.value.startsWith("#")?e.target.value:"#"+e.target.value)}
                             placeholder="#ChallengeName2025"
                             className="w-full rounded-xl px-3 py-2.5 text-sm font-bold placeholder:text-white/25 focus:outline-none"
@@ -4288,18 +4290,18 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Description */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">📝 Tavsif</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">t("create.chal_desc_label")</p>
                           <textarea value={chalDesc} onChange={e=>setChalDesc(e.target.value)} rows={3}
-                            placeholder="Challenge haqida batafsil tavsif — nimani qilish kerak, nima uchun va qanday qilib…"
+                            placeholder={t("create.chal_desc_ph")}
                             className="w-full rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-white/25 focus:outline-none resize-none"
                             style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)"}}/>
                         </div>
 
                         {/* Category */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🗂 Kategoriya</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.otube_cat_label")</p>
                           <div className="flex flex-wrap gap-1.5">
-                            {["💃 Raqs","🏋️ Fitnes","🍳 Oshpaz","🎨 San'at","😂 Komediya","📚 Ta'lim","🎵 Musiqa","🌱 Ekologiya","💼 Biznes","🎮 O'yin","❤️ Mehr","🌍 Ijtimoiy"].map(cat=>(
+                            {["💃 " + t("create.label_dance"),"🏋️ " + t("create.label_sports"),"🍳 " + t("create.label_food"),"🎨 " + t("create.label_art"),"😂 " + t("create.label_comedy"),"📚 " + t("create.label_education"),"🎵 " + t("create.label_music"),"🌱 " + t("create.label_travel"),"💼 " + t("create.label_tech"),"🎮 " + t("create.label_gaming"),"❤️ " + t("create.label_art"),"🌍 " + t("create.label_travel")].map(cat=>(
                               <button key={cat} onClick={()=>setChalCategory(cat===chalCategory?"":cat)}
                                 className="px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all"
                                 style={{background:chalCategory===cat?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalCategory===cat?"white":"rgba(255,255,255,0.5)"}}>
@@ -4312,13 +4314,13 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* Dates */}
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">📅 Boshlanish</p>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">t("create.chal_start_label")</p>
                             <input type="date" value={chalStartDate} onChange={e=>setChalStartDate(e.target.value)}
                               className="w-full rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
                               style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.25)",colorScheme:"dark"}}/>
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">📅 Tugash</p>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">t("create.chal_end_label")</p>
                             <input type="date" value={chalEndDate} onChange={e=>setChalEndDate(e.target.value)}
                               className="w-full rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
                               style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.25)",colorScheme:"dark"}}/>
@@ -4327,9 +4329,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Content type */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📹 Kontent turi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">{t("create.chal_content_type_title")}</p>
                           <div className="grid grid-cols-3 gap-2">
-                            {[{v:"video",e:"🎬",l:"Video"},{v:"photo",e:"📸",l:"Foto"},{v:"any",e:"🎭",l:"Istalgan"}].map(({v,e,l})=>(
+                            {[{v:"video",e:"🎬",l:t("create.chal_type_video")},{v:"photo",e:"📸",l:t("create.chal_type_photo")},{v:"any",e:"🎭",l:t("create.chal_type_any")}].map(({v,e,l})=>(
                               <button key={v} onClick={()=>setChalContentType(v)}
                                 className="py-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all"
                                 style={{background:chalContentType===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalContentType===v?"white":"rgba(255,255,255,0.5)",border:chalContentType===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -4341,15 +4343,15 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Theme music */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">🎵 Mavzu Musiqasi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-1.5 uppercase tracking-wider">t("create.chal_music_label")</p>
                           <div className="flex gap-2">
-                            <input value={chalThemeMusic} onChange={e=>setChalThemeMusic(e.target.value)} placeholder="Qo'shiq nomi yoki havolasi…"
+                            <input value={chalThemeMusic} onChange={e=>setChalThemeMusic(e.target.value)} placeholder={t("create.chal_music_ph")}
                               className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
                             <button onClick={()=>setChalMusicRequired(p=>!p)}
                               className="px-3 rounded-xl text-[10px] font-bold flex-shrink-0 transition-all"
                               style={{background:chalMusicRequired?"rgba(251,146,60,0.2)":"rgba(255,255,255,0.06)",color:chalMusicRequired?"#fb923c":"rgba(255,255,255,0.4)",border:chalMusicRequired?"1px solid rgba(251,146,60,0.4)":"1px solid rgba(255,255,255,0.08)"}}>
-                              {chalMusicRequired?"Majburiy":"Ixtiyoriy"}
+                              {chalMusicRequired?t("create.chal_music_req"):t("create.chal_music_opt")}
                             </button>
                           </div>
                         </div>
@@ -4357,13 +4359,13 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* Announce + Demo video */}
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">📢 E'lon Videosi</p>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">t("create.chal_video_ann")</p>
                             <input value={chalAnnVideo} onChange={e=>setChalAnnVideo(e.target.value)} placeholder="Video URL…"
                               className="w-full rounded-xl px-3 py-2 text-[11px] text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)"}}/>
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">🎬 Demo Video</p>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">t("create.chal_video_demo")</p>
                             <input value={chalDemoVideo} onChange={e=>setChalDemoVideo(e.target.value)} placeholder="Video URL…"
                               className="w-full rounded-xl px-3 py-2 text-[11px] text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)"}}/>
@@ -4373,14 +4375,14 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* Messages */}
                         <div className="space-y-2">
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">👋 Xush kelibsiz xabari</p>
-                            <input value={chalWelcomeMsg} onChange={e=>setChalWelcomeMsg(e.target.value)} placeholder="Ishtirokchilarga xush kelibsiz xabari…"
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">t("create.chal_msg_welcome")</p>
+                            <input value={chalWelcomeMsg} onChange={e=>setChalWelcomeMsg(e.target.value)} placeholder={t("create.chal_msg_welcome_ph")}
                               className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(251,146,60,0.06)",border:"1px solid rgba(251,146,60,0.2)"}}/>
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">🎉 Tugatish xabari</p>
-                            <input value={chalCompleteMsg} onChange={e=>setChalCompleteMsg(e.target.value)} placeholder="Challeng yakunlanganda ko'rinadigan xabar…"
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">t("create.chal_msg_complete")</p>
+                            <input value={chalCompleteMsg} onChange={e=>setChalCompleteMsg(e.target.value)} placeholder={t("create.chal_msg_complete_ph")}
                               className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(251,146,60,0.06)",border:"1px solid rgba(251,146,60,0.2)"}}/>
                           </div>
@@ -4393,7 +4395,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Video Length */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⏱ Video Uzunligi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_rules_len")</p>
                           <div className="space-y-3">
                             <div>
                               <div className="flex justify-between mb-1">
@@ -4416,13 +4418,13 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Rules List */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📋 Qoidalar ro'yxati</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_nav_rules") ro'yxati</p>
                           <div className="space-y-2">
                             {chalRules.map((r,i)=>(
                               <div key={i} className="flex gap-2">
                                 <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1 text-[10px] font-black" style={{background:"linear-gradient(135deg,#b45309,#fb923c)",color:"white"}}>{i+1}</div>
                                 <input value={r} onChange={e=>setChalRules(p=>{const n=[...p];n[i]=e.target.value;return n;})}
-                                  placeholder={`${i+1}-qoida (masalan: Faqat original kontent)`}
+                                  placeholder={`${i+1}t("create.chal_rules_ph")`}
                                   className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                   style={{background:"rgba(251,146,60,0.07)",border:"1px solid rgba(251,146,60,0.2)"}}/>
                                 {i === chalRules.length-1 && <button onClick={()=>setChalRules(p=>[...p,""])} className="flex-shrink-0 mt-1"><Plus className="w-4 h-4" style={{color:"#fb923c"}}/></button>}
@@ -4433,10 +4435,10 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Entry requirements */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">✅ Kirish Talablari</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_req_label")</p>
                           <div className="space-y-2">
                             <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
-                              <span className="text-xs text-white/60">Min. Izuvchilar soni</span>
+                              <span className="text-xs text-white/60">t("create.chal_req_followers")</span>
                               <div className="flex items-center gap-2">
                                 <button onClick={()=>setChalMinFollowers(p=>Math.max(0,p-100))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">-</span></button>
                                 <span className="text-xs font-bold text-white w-12 text-center">{chalMinFollowers.toLocaleString()}</span>
@@ -4444,7 +4446,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               </div>
                             </div>
                             <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
-                              <span className="text-xs text-white/60">Min. Layklar soni</span>
+                              <span className="text-xs text-white/60">t("create.chal_req_likes")</span>
                               <div className="flex items-center gap-2">
                                 <button onClick={()=>setChalMinLikes(p=>Math.max(0,p-50))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">-</span></button>
                                 <span className="text-xs font-bold text-white w-12 text-center">{chalMinLikes.toLocaleString()}</span>
@@ -4452,7 +4454,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               </div>
                             </div>
                             <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
-                              <span className="text-xs text-white/60">Minimal yosh</span>
+                              <span className="text-xs text-white/60">t("create.chal_req_age")</span>
                               <div className="flex items-center gap-2">
                                 <button onClick={()=>setChalAgeMin(p=>Math.max(0,p-1))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">-</span></button>
                                 <span className="text-xs font-bold text-white w-8 text-center">{chalAgeMin||"Yo'q"}</span>
@@ -4460,7 +4462,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               </div>
                             </div>
                             <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
-                              <span className="text-xs text-white/60">Har bir foydalanuvchidan max kirish</span>
+                              <span className="text-xs text-white/60">t("create.chal_req_max_entry")</span>
                               <div className="flex items-center gap-2">
                                 <button onClick={()=>setChalMaxEntries(p=>Math.max(1,p-1))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.15)"}}><span className="text-orange-400 text-sm font-bold">-</span></button>
                                 <span className="text-xs font-bold text-white w-6 text-center">{chalMaxEntries}</span>
@@ -4472,9 +4474,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Toggles */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⚙️ Kirish imkoniyatlari</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_options_label")</p>
                           <div className="grid grid-cols-2 gap-2">
-                            {[{v:chalVerifReq,s:setChalVerifReq,l:"✅ Tasdiqlangan hisob"},{v:chalTeamAllowed,s:setChalTeamAllowed,l:"👥 Jamoaviy kirish"},{v:chalDuetReq,s:setChalDuetReq,l:"🔀 Duet talab"},{v:chalCollabReq,s:setChalCollabReq,l:"🤝 Kollab talab"},{v:chalReactionReq,s:setChalReactionReq,l:"😍 Reaksiya talab"},{v:chalCommentReq,s:setChalCommentReq,l:"💬 Izoh talab"},{v:chalReentry,s:setChalReentry,l:"🔄 Qayta ishtirok"},{v:chalLeaderboard,s:setChalLeaderboard,l:"📊 Liderlar jadvali"}].map(({v,s,l})=>(
+                            {[{v:chalVerifReq,s:setChalVerifReq,l:t("create.chal_opt_verif")},{v:chalTeamAllowed,s:setChalTeamAllowed,l:t("create.chal_opt_team")},{v:chalDuetReq,s:setChalDuetReq,l:t("create.chal_opt_duet")},{v:chalCollabReq,s:setChalCollabReq,l:t("create.chal_opt_collab")},{v:chalReactionReq,s:setChalReactionReq,l:t("create.chal_opt_reaction")},{v:chalCommentReq,s:setChalCommentReq,l:t("create.chal_opt_comment")},{v:chalReentry,s:setChalReentry,l:t("create.chal_opt_reentry")},{v:chalLeaderboard,s:setChalLeaderboard,l:t("create.chal_opt_leaderboard")}].map(({v,s,l})=>(
                               <button key={l} onClick={()=>s((p:boolean)=>!p)}
                                 className="py-2.5 px-2 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all"
                                 style={{background:v?"rgba(251,146,60,0.15)":"rgba(255,255,255,0.05)",color:v?"#fb923c":"rgba(255,255,255,0.45)",border:v?"1px solid rgba(251,146,60,0.35)":"1px solid rgba(255,255,255,0.07)"}}>
@@ -4487,21 +4489,21 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* Team size if enabled */}
                         {chalTeamAllowed && (
                           <div className="px-3 py-3 rounded-xl" style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.25)"}}>
-                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">👥 Jamoa o'lchami</p>
+                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_team_label")</p>
                             <div className="flex items-center gap-3 justify-center">
                               <button onClick={()=>setChalTeamSize(p=>Math.max(2,p-1))} className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold" style={{background:"rgba(251,146,60,0.15)",color:"#fb923c"}}>-</button>
                               <span className="text-2xl font-black text-white">{chalTeamSize}</span>
                               <button onClick={()=>setChalTeamSize(p=>Math.min(10,p+1))} className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold" style={{background:"rgba(251,146,60,0.15)",color:"#fb923c"}}>+</button>
                             </div>
-                            <p className="text-[10px] text-white/30 text-center mt-1">kishi / jamoa</p>
+                            <p className="text-[10px] text-white/30 text-center mt-1">t("create.chal_team_suffix")</p>
                           </div>
                         )}
 
                         {/* Review mode */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🔍 Ko'rib chiqish rejimi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_review_label")</p>
                           <div className="grid grid-cols-2 gap-2">
-                            {[{v:"auto",l:"🤖 Avtomatik (AI)"},{v:"manual",l:"👤 Qo'lda tekshiruv"},{v:"community",l:"👥 Jamoa ovozi"},{v:"hybrid",l:"🔀 Aralash"}].map(({v,l})=>(
+                            {[{v:"auto",l:t("create.chal_review_auto")},{v:"manual",l:t("create.chal_review_manual")},{v:"community",l:t("create.chal_review_comm")},{v:"hybrid",l:t("create.chal_review_hybrid")}].map(({v,l})=>(
                               <button key={v} onClick={()=>setChalReviewMode(v)}
                                 className="py-2.5 rounded-xl text-[11px] font-bold transition-all"
                                 style={{background:chalReviewMode===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalReviewMode===v?"white":"rgba(255,255,255,0.5)",border:chalReviewMode===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -4519,21 +4521,21 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* Prize Pool */}
                         <div className="rounded-2xl p-4 text-center" style={{background:"linear-gradient(135deg,rgba(180,83,9,0.25),rgba(251,146,60,0.12))"}}>
                           <p className="text-2xl mb-1">🏆</p>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">Jami Mukofot Fondi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_prize_pool")</p>
                           <input value={chalPrizePool} onChange={e=>setChalPrizePool(e.target.value)}
-                            placeholder="$ yoki UZS miqdori…"
+                            placeholder={t("create.chal_prize_ph")}
                             className="w-full text-center rounded-xl px-3 py-2.5 text-lg font-black focus:outline-none"
                             style={{background:"rgba(251,146,60,0.1)",border:"1px solid rgba(251,146,60,0.3)",color:"#fb923c"}}/>
                         </div>
 
                         {/* 1st 2nd 3rd */}
                         <div className="space-y-3">
-                          {[{e:"🥇",l:"1-o'rin",v:chalPrize1,s:setChalPrize1,col:"#fb923c"},{e:"🥈",l:"2-o'rin",v:chalPrize2,s:setChalPrize2,col:"#94a3b8"},{e:"🥉",l:"3-o'rin",v:chalPrize3,s:setChalPrize3,col:"#cd7c39"}].map(({e,l,v,s,col})=>(
+                          {[{e:"🥇",l:t("create.chal_prize_1"),v:chalPrize1,s:setChalPrize1,col:"#fb923c"},{e:"🥈",l:t("create.chal_prize_2"),v:chalPrize2,s:setChalPrize2,col:"#94a3b8"},{e:"🥉",l:t("create.chal_prize_3"),v:chalPrize3,s:setChalPrize3,col:"#cd7c39"}].map(({e,l,v,s,col})=>(
                             <div key={l} className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{background:"rgba(255,255,255,0.06)"}}>{e}</div>
                               <div className="flex-1">
                                 <p className="text-[10px] font-bold mb-1" style={{color:col}}>{l}</p>
-                                <input value={v} onChange={e=>s(e.target.value)} placeholder="Mukofot nomi yoki miqdori…"
+                                <input value={v} onChange={e=>s(e.target.value)} placeholder={t("create.chal_prize_ph_item")}
                                   className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                   style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${col}33`}}/>
                               </div>
@@ -4543,9 +4545,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Badge type */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🏅 G'olib nishoni</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_badge_label")</p>
                           <div className="flex flex-wrap gap-2">
-                            {["🥇 Oltin","🥈 Kumush","💎 Brilliant","⭐ Yulduz","🔥 Olov","👑 Toj","🚀 Raketa","🏆 Kubka"].map(b=>(
+                            {[t("create.chal_badge_gold", "🥇 Oltin"),t("create.chal_badge_silver", "🥈 Kumush"),t("create.chal_badge_diamond", "💎 Brilliant"),t("create.chal_badge_star", "⭐ Yulduz"),t("create.chal_badge_fire", "🔥 Olov"),t("create.chal_badge_crown", "👑 Toj"),t("create.chal_badge_rocket", "🚀 Raketa"),t("create.chal_badge_trophy", "🏆 Kubka")].map(b=>(
                               <button key={b} onClick={()=>setChalBadge(b)}
                                 className="px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
                                 style={{background:chalBadge===b?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalBadge===b?"white":"rgba(255,255,255,0.5)"}}>
@@ -4557,9 +4559,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Certificate */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">📜 Sertifikat turi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_cert_label")</p>
                           <div className="grid grid-cols-2 gap-2">
-                            {[{v:"digital",l:"💻 Digital sertifikat"},{v:"physical",l:"📮 Fizik sertifikat"},{v:"nft",l:"🎨 NFT sertifikat"},{v:"none",l:"❌ Sertifikatsiz"}].map(({v,l})=>(
+                            {[{v:"digital",l:t("create.chal_cert_digital")},{v:"physical",l:t("create.chal_cert_physical")},{v:"nft",l:t("create.chal_cert_nft")},{v:"none",l:t("create.chal_cert_none")}].map(({v,l})=>(
                               <button key={v} onClick={()=>setChalCertType(v)}
                                 className="py-2.5 rounded-xl text-[11px] font-bold transition-all"
                                 style={{background:chalCertType===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalCertType===v?"white":"rgba(255,255,255,0.5)",border:chalCertType===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -4571,9 +4573,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Entry fee */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">💳 Kirish to'lovi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_fee_label")</p>
                           <div className="grid grid-cols-3 gap-2">
-                            {[{v:"free",l:"🎁 Bepul"},{v:"paid",l:"💰 Pullik"},{v:"token",l:"🪙 Token"}].map(({v,l})=>(
+                            {[{v:"free",l:t("create.chal_fee_free")},{v:"paid",l:t("create.chal_fee_paid")},{v:"token",l:t("create.chal_fee_token")}].map(({v,l})=>(
                               <button key={v} onClick={()=>setChalEntryFee(v)}
                                 className="py-2.5 rounded-xl text-xs font-bold transition-all"
                                 style={{background:chalEntryFee===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalEntryFee===v?"white":"rgba(255,255,255,0.5)",border:chalEntryFee===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -4582,7 +4584,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             ))}
                           </div>
                           {chalEntryFee !== "free" && (
-                            <input value={chalEntryPrice} onChange={e=>setChalEntryPrice(e.target.value)} placeholder="Miqdor ($ yoki token)"
+                            <input value={chalEntryPrice} onChange={e=>setChalEntryPrice(e.target.value)} placeholder={t("create.chal_fee_ph")}
                               className="mt-2 w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.25)"}}/>
                           )}
@@ -4595,9 +4597,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Voting */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🗳 Ovoz berish turi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_vote_label")</p>
                           <div className="grid grid-cols-2 gap-2">
-                            {[{v:"community",l:"👥 Jamoa ovozi"},{v:"judges",l:"👨‍⚖️ Hakamlar"},{v:"hybrid",l:"🔀 Aralash"},{v:"ai",l:"🤖 AI baholash"}].map(({v,l})=>(
+                            {[{v:"community",l:t("create.chal_review_comm")},{v:"judges",l:t("create.chal_vote_judges")},{v:"hybrid",l:t("create.chal_review_hybrid")},{v:"ai",l:t("create.chal_vote_ai")}].map(({v,l})=>(
                               <button key={v} onClick={()=>setChalVotingType(v)}
                                 className="py-2.5 rounded-xl text-xs font-bold transition-all"
                                 style={{background:chalVotingType===v?"linear-gradient(135deg,#b45309,#fb923c)":"rgba(255,255,255,0.06)",color:chalVotingType===v?"white":"rgba(255,255,255,0.5)",border:chalVotingType===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -4610,10 +4612,10 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* Judges */}
                         {(chalVotingType==="judges"||chalVotingType==="hybrid") && (
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">👨‍⚖️ Hakamlar Paneli</p>
+                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_vote_judges") Paneli</p>
                             <div className="flex gap-2">
                               <input value={chalJudgeInput} onChange={e=>setChalJudgeInput(e.target.value)}
-                                placeholder="@hakam_nomi"
+                                placeholder={t("create.chal_judge_ph")}
                                 className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                 style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
                               <button onClick={()=>{if(chalJudgeInput.trim()){setChalJudges(p=>[...p,chalJudgeInput.trim()]);setChalJudgeInput("");}}}
@@ -4633,7 +4635,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Winner delay */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⏳ G'olib e'lonlash (soat)</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_winner_delay")</p>
                           <div className="flex items-center gap-3 justify-center px-3 py-3 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
                             <button onClick={()=>setChalWinnerDelay(p=>Math.max(0,p-1))} className="w-9 h-9 rounded-xl flex items-center justify-center text-xl font-bold" style={{background:"rgba(251,146,60,0.15)",color:"#fb923c"}}>-</button>
                             <span className="text-2xl font-black text-white w-16 text-center">{chalWinnerDelay}h</span>
@@ -4643,8 +4645,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Sponsor */}
                         <div className="space-y-2">
-                          <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">🤝 Homiy</p>
-                          <input value={chalSponsor} onChange={e=>setChalSponsor(e.target.value)} placeholder="Homiy kompaniya nomi"
+                          <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">t("create.chal_sponsor_label")</p>
+                          <input value={chalSponsor} onChange={e=>setChalSponsor(e.target.value)} placeholder={t("create.chal_sponsor_ph")}
                             className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                             style={{background:"rgba(251,146,60,0.07)",border:"1px solid rgba(251,146,60,0.2)"}}/>
                           <input value={chalSponsorUrl} onChange={e=>setChalSponsorUrl(e.target.value)} placeholder="https://homiy-sayti.com"
@@ -4654,16 +4656,16 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Notifications */}
                         <div>
-                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🔔 Bildirishnomalar</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_notif_label")</p>
                           <div className="flex items-center justify-between px-3 py-2.5 rounded-xl mb-2" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
-                            <span className="text-xs text-white/60">Eslatmalar yoqish</span>
+                            <span className="text-xs text-white/60">t("create.chal_notif_toggle")</span>
                             <button onClick={()=>setChalNotifReminder(p=>!p)} className="flex items-center px-0.5 rounded-full" style={{background:chalNotifReminder?"#fb923c":"rgba(255,255,255,0.12)",justifyContent:chalNotifReminder?"flex-end":"flex-start",height:20,width:34}}>
                               <div className="w-3.5 h-3.5 rounded-full bg-white"/>
                             </button>
                           </div>
                           {chalNotifReminder && (
                             <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{background:"rgba(251,146,60,0.06)",border:"1px solid rgba(251,146,60,0.2)"}}>
-                              <span className="text-xs text-white/60 flex-1">Tugashdan necha kun oldin?</span>
+                              <span className="text-xs text-white/60 flex-1">t("create.chal_notif_days")</span>
                               <div className="flex items-center gap-2">
                                 <button onClick={()=>setChalReminderDays(p=>Math.max(1,p-1))} className="w-6 h-6 rounded-full flex items-center justify-center" style={{background:"rgba(251,146,60,0.2)"}}><span className="text-orange-400 font-bold">-</span></button>
                                 <span className="text-xs font-bold text-white w-6 text-center">{chalReminderDays}</span>
@@ -4676,14 +4678,14 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         {/* Discord + Share template */}
                         <div className="space-y-2">
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">💬 Discord Server</p>
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">t("create.chal_discord_label")</p>
                             <input value={chalDiscord} onChange={e=>setChalDiscord(e.target.value)} placeholder="discord.gg/..."
                               className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(88,101,242,0.1)",border:"1px solid rgba(88,101,242,0.3)"}}/>
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">📤 Share shabloni</p>
-                            <input value={chalShareTemplate} onChange={e=>setChalShareTemplate(e.target.value)} placeholder="Men {chalHashtag} da ishtirok etyapman! Siz ham qo'shiling →"
+                            <p className="text-[10px] font-bold text-white/45 mb-1 uppercase tracking-wider">t("create.chal_share_label")</p>
+                            <input value={chalShareTemplate} onChange={e=>setChalShareTemplate(e.target.value)} placeholder={t("create.chal_share_ph")}
                               className="w-full rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                               style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}/>
                           </div>
@@ -4693,17 +4695,17 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div className="space-y-2">
                           <div className="flex items-center justify-between px-3 py-3 rounded-xl" style={{background:"rgba(255,255,255,0.04)"}}>
                             <div>
-                              <p className="text-xs text-white/70">⭐ Bosh sahifada ko'rsatish</p>
-                              <p className="text-[10px] text-white/30">Challenge tavsiya qilinganlar ro'yxatida</p>
+                              <p className="text-xs text-white/70">t("create.chal_featured_label")</p>
+                              <p className="text-[10px] text-white/30">t("create.chal_featured_desc")</p>
                             </div>
                             <button onClick={()=>setChalFeatured(p=>!p)} className="flex items-center px-0.5 rounded-full flex-shrink-0" style={{background:chalFeatured?"#fb923c":"rgba(255,255,255,0.12)",justifyContent:chalFeatured?"flex-end":"flex-start",height:20,width:34}}>
                               <div className="w-3.5 h-3.5 rounded-full bg-white"/>
                             </button>
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">🌍 Geografik cheklov</p>
+                            <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">t("create.chal_geo_label")</p>
                             <div className="flex flex-wrap gap-1.5">
-                              {["🇺🇿 O'zbekiston","🇷🇺 Rossiya","🇺🇸 AQSh","🇩🇪 Germaniya","🇹🇷 Turkiya","🌍 Hamma"].map(g=>(
+                              {[t("countries.uz", "🇺🇿 O'zbekiston"),t("countries.ru", "🇷🇺 Rossiya"),t("countries.us", "🇺🇸 AQSh"),t("countries.de", "🇩🇪 Germaniya"),t("countries.tr", "🇹🇷 Turkiya"),t("create.vis_everyone", "🌍 Hamma")].map(g=>(
                                 <button key={g} onClick={()=>setChalGeoRestrict(p=>p.includes(g)?p.filter(x=>x!==g):[...p,g])}
                                   className="px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all"
                                   style={{background:chalGeoRestrict.includes(g)?"rgba(251,146,60,0.2)":"rgba(255,255,255,0.06)",color:chalGeoRestrict.includes(g)?"#fb923c":"rgba(255,255,255,0.45)",border:chalGeoRestrict.includes(g)?"1px solid rgba(251,146,60,0.4)":"1px solid rgba(255,255,255,0.08)"}}>
@@ -4716,9 +4718,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
                         {/* Stats preview */}
                         <div className="rounded-2xl p-4" style={{background:"linear-gradient(135deg,rgba(180,83,9,0.2),rgba(251,146,60,0.08))"}}>
-                          <p className="text-[10px] font-bold text-white/45 mb-3 uppercase tracking-wider">📊 Challenge Prognozi</p>
+                          <p className="text-[10px] font-bold text-white/45 mb-3 uppercase tracking-wider">t("create.chal_stats_title")</p>
                           <div className="grid grid-cols-3 gap-3 text-center">
-                            {[{e:"👥",l:"Taxminiy ishtirokchilar",v:"500–2K"},{e:"👁",l:"Ko'rish",v:"50K+"},{e:"🔥",l:"Viral ehtimol",v:"78%"}].map(({e,l,v})=>(
+                            {[{e:"👥",l:t("create.chal_stats_part"),v:"500–2K"},{e:"👁",l:t("create.chal_stats_views"),v:"50K+"},{e:"🔥",l:t("create.chal_stats_viral"),v:"78%"}].map(({e,l,v})=>(
                               <div key={l}>
                                 <span className="text-xl">{e}</span>
                                 <p className="text-sm font-black mt-1" style={{color:"#fb923c"}}>{v}</p>

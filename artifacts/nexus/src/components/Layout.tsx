@@ -498,9 +498,9 @@ function MuniPanel() {
                   <p className="text-xs text-muted-foreground mb-3">{t("muni.welcome")}</p>
                   <div className="grid grid-cols-2 gap-1.5">
                     {SUGGESTS.map(k => (
-                      <button key={k} onClick={() => send(t(`jarvis.${k}`))}
+                      <button key={k} onClick={() => send(t(`muni.${k}`))}
                         className="px-3 py-2 rounded-xl text-xs font-medium bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition text-left border border-violet-500/20">
-                        {t(`jarvis.${k}`)}
+                        {t(`muni.${k}`)}
                       </button>
                     ))}
                   </div>

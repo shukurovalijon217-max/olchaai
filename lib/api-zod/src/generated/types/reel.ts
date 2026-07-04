@@ -23,4 +23,5 @@ export interface Reel {
   isLiked?: boolean;
   tags?: string[];
   createdAt: string;
+  views24h?: number;
 }

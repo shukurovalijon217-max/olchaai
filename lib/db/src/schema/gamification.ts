@@ -42,7 +42,18 @@ export const userTitlesTable = pgTable("user_titles", {
   index("user_titles_user_idx").on(t.userId),
 ]);
 
+export const userStreaksTable = pgTable("user_streaks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique().references(() => usersTable.id),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastActiveDate: text("last_active_date"),
+  xp: integer("xp").notNull().default(0),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export type UserCoins = typeof userCoinsTable.$inferSelect;
 export type DailyQuest = typeof dailyQuestsTable.$inferSelect;
 export type QuestProgress = typeof questProgressTable.$inferSelect;
 export type UserTitle = typeof userTitlesTable.$inferSelect;
+export type UserStreak = typeof userStreaksTable.$inferSelect;

@@ -424,7 +424,8 @@ export const ListReelsResponseItem = zod.object({
   "viewsCount": zod.number(),
   "isLiked": zod.boolean().optional(),
   "tags": zod.array(zod.string()).optional(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "views24h": zod.number().optional()
 })
 export const ListReelsResponse = zod.array(ListReelsResponseItem)
 
@@ -465,6 +466,456 @@ export const LikeReelParams = zod.object({
 export const LikeReelResponse = zod.object({
   "liked": zod.boolean(),
   "likesCount": zod.number()
+})
+
+
+/**
+ * @summary Real velocity/signal analytics for a reel (24h views vs total)
+ */
+export const GetReelAnalyticsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetReelAnalyticsResponse = zod.object({
+  "reelId": zod.number(),
+  "viewsCount": zod.number(),
+  "views24h": zod.number(),
+  "velocityPct": zod.number().describe('Share of total views that happened in the last 24h, 0-100'),
+  "signalScore": zod.number().describe('0-99 composite score from views, likes ratio, and 24h velocity')
+})
+
+
+/**
+ * @summary Save the current user's watch progress for a reel
+ */
+export const UpdateReelProgressParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateReelProgressBody = zod.object({
+  "positionSec": zod.number(),
+  "durationSec": zod.number()
+})
+
+export const UpdateReelProgressResponse = zod.object({
+  "reelId": zod.number(),
+  "positionSec": zod.number(),
+  "durationSec": zod.number(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Reels the current user has partially watched, with real saved progress
+ */
+export const GetContinueWatchingResponseItem = zod.object({
+  "reel": zod.object({
+  "id": zod.number(),
+  "author": zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "email": zod.string(),
+  "bio": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
+  "coverUrl": zod.string().nullish(),
+  "followersCount": zod.number().optional(),
+  "followingCount": zod.number().optional(),
+  "postsCount": zod.number().optional(),
+  "isVerified": zod.boolean().optional(),
+  "isFollowing": zod.boolean().optional(),
+  "status": zod.enum(['active', 'suspended']).optional(),
+  "createdAt": zod.string()
+}),
+  "videoUrl": zod.string(),
+  "thumbnailUrl": zod.string().nullish(),
+  "caption": zod.string(),
+  "audioTrack": zod.string().nullish(),
+  "duration": zod.number().optional(),
+  "likesCount": zod.number(),
+  "commentsCount": zod.number().optional(),
+  "viewsCount": zod.number(),
+  "isLiked": zod.boolean().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "createdAt": zod.string(),
+  "views24h": zod.number().optional()
+}),
+  "positionSec": zod.number(),
+  "durationSec": zod.number(),
+  "pct": zod.number()
+})
+export const GetContinueWatchingResponse = zod.array(GetContinueWatchingResponseItem)
+
+
+/**
+ * @summary List collaborators invited by the current user
+ */
+export const ListReelCollaboratorsResponseItem = zod.object({
+  "id": zod.number(),
+  "inviteeHandle": zod.string(),
+  "invitee": zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "email": zod.string(),
+  "bio": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
+  "coverUrl": zod.string().nullish(),
+  "followersCount": zod.number().optional(),
+  "followingCount": zod.number().optional(),
+  "postsCount": zod.number().optional(),
+  "isVerified": zod.boolean().optional(),
+  "isFollowing": zod.boolean().optional(),
+  "status": zod.enum(['active', 'suspended']).optional(),
+  "createdAt": zod.string()
+}).optional(),
+  "permission": zod.enum(['view', 'edit']),
+  "status": zod.enum(['pending', 'accepted', 'declined']),
+  "createdAt": zod.string()
+})
+export const ListReelCollaboratorsResponse = zod.array(ListReelCollaboratorsResponseItem)
+
+
+/**
+ * @summary Invite a collaborator by handle to a shared collab studio project
+ */
+export const inviteReelCollaboratorBodyPermissionDefault = `edit`;
+
+export const InviteReelCollaboratorBody = zod.object({
+  "inviteeHandle": zod.string(),
+  "permission": zod.enum(['view', 'edit']).default(inviteReelCollaboratorBodyPermissionDefault)
+})
+
+
+/**
+ * @summary Remove/cancel a collaborator invite (owner only)
+ */
+export const RemoveReelCollaboratorParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RemoveReelCollaboratorResponse = zod.object({
+  "ok": zod.boolean().optional()
+})
+
+
+/**
+ * @summary List active challenges
+ */
+export const ListChallengesQueryParams = zod.object({
+  "creatorId": zod.coerce.number().optional()
+})
+
+export const ListChallengesResponseItem = zod.object({
+  "id": zod.number(),
+  "creatorId": zod.number(),
+  "creator": zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "email": zod.string(),
+  "bio": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
+  "coverUrl": zod.string().nullish(),
+  "followersCount": zod.number().optional(),
+  "followingCount": zod.number().optional(),
+  "postsCount": zod.number().optional(),
+  "isVerified": zod.boolean().optional(),
+  "isFollowing": zod.boolean().optional(),
+  "status": zod.enum(['active', 'suspended']).optional(),
+  "createdAt": zod.string()
+}).optional(),
+  "name": zod.string(),
+  "hashtag": zod.string(),
+  "category": zod.string(),
+  "description": zod.string().nullish(),
+  "days": zod.number(),
+  "prizePool": zod.number(),
+  "judgeType": zod.string(),
+  "status": zod.enum(['active', 'ended']),
+  "settings": zod.record(zod.string(), zod.unknown()).optional(),
+  "startsAt": zod.string(),
+  "endsAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "participantsCount": zod.number(),
+  "isJoined": zod.boolean().optional()
+})
+export const ListChallengesResponse = zod.array(ListChallengesResponseItem)
+
+
+/**
+ * @summary Create a new video challenge (creator pays prize pool from wallet)
+ */
+export const createChallengeBodyDaysDefault = 7;
+export const createChallengeBodyPrizePoolDefault = 0;
+export const createChallengeBodyJudgeTypeDefault = `vote`;
+
+export const CreateChallengeBody = zod.object({
+  "name": zod.string(),
+  "hashtag": zod.string(),
+  "category": zod.string(),
+  "description": zod.string().optional(),
+  "days": zod.number().default(createChallengeBodyDaysDefault),
+  "prizePool": zod.number().default(createChallengeBodyPrizePoolDefault),
+  "judgeType": zod.enum(['vote', 'ai', 'views']).default(createChallengeBodyJudgeTypeDefault),
+  "settings": zod.record(zod.string(), zod.unknown()).optional()
+})
+
+
+/**
+ * @summary Get a single challenge with participant count
+ */
+export const GetChallengeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetChallengeResponse = zod.object({
+  "id": zod.number(),
+  "creatorId": zod.number(),
+  "creator": zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "email": zod.string(),
+  "bio": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
+  "coverUrl": zod.string().nullish(),
+  "followersCount": zod.number().optional(),
+  "followingCount": zod.number().optional(),
+  "postsCount": zod.number().optional(),
+  "isVerified": zod.boolean().optional(),
+  "isFollowing": zod.boolean().optional(),
+  "status": zod.enum(['active', 'suspended']).optional(),
+  "createdAt": zod.string()
+}).optional(),
+  "name": zod.string(),
+  "hashtag": zod.string(),
+  "category": zod.string(),
+  "description": zod.string().nullish(),
+  "days": zod.number(),
+  "prizePool": zod.number(),
+  "judgeType": zod.string(),
+  "status": zod.enum(['active', 'ended']),
+  "settings": zod.record(zod.string(), zod.unknown()).optional(),
+  "startsAt": zod.string(),
+  "endsAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "participantsCount": zod.number(),
+  "isJoined": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Join a challenge with a reel submission
+ */
+export const JoinChallengeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const JoinChallengeBody = zod.object({
+  "reelId": zod.number()
+})
+
+export const JoinChallengeResponse = zod.object({
+  "id": zod.number(),
+  "creatorId": zod.number(),
+  "creator": zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "email": zod.string(),
+  "bio": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
+  "coverUrl": zod.string().nullish(),
+  "followersCount": zod.number().optional(),
+  "followingCount": zod.number().optional(),
+  "postsCount": zod.number().optional(),
+  "isVerified": zod.boolean().optional(),
+  "isFollowing": zod.boolean().optional(),
+  "status": zod.enum(['active', 'suspended']).optional(),
+  "createdAt": zod.string()
+}).optional(),
+  "name": zod.string(),
+  "hashtag": zod.string(),
+  "category": zod.string(),
+  "description": zod.string().nullish(),
+  "days": zod.number(),
+  "prizePool": zod.number(),
+  "judgeType": zod.string(),
+  "status": zod.enum(['active', 'ended']),
+  "settings": zod.record(zod.string(), zod.unknown()).optional(),
+  "startsAt": zod.string(),
+  "endsAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "participantsCount": zod.number(),
+  "isJoined": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Get the current user's real watch streak and XP
+ */
+export const GetStreakResponse = zod.object({
+  "currentStreak": zod.number(),
+  "longestStreak": zod.number(),
+  "xp": zod.number(),
+  "lastActiveDate": zod.string().nullable(),
+  "touchedToday": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Record today's activity, updating streak count and XP
+ */
+export const TouchStreakResponse = zod.object({
+  "currentStreak": zod.number(),
+  "longestStreak": zod.number(),
+  "xp": zod.number(),
+  "lastActiveDate": zod.string().nullable(),
+  "touchedToday": zod.boolean().optional()
+})
+
+
+/**
+ * @summary AI-generated title suggestions for a video
+ */
+export const OtubeAiTitleBody = zod.object({
+  "caption": zod.string().optional(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "transcript": zod.string().optional()
+})
+
+export const OtubeAiTitleResponse = zod.object({
+  "titles": zod.array(zod.string())
+})
+
+
+/**
+ * @summary AI-generated description for a video
+ */
+export const OtubeAiDescriptionBody = zod.object({
+  "caption": zod.string().optional(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "transcript": zod.string().optional()
+})
+
+export const OtubeAiDescriptionResponse = zod.object({
+  "description": zod.string()
+})
+
+
+/**
+ * @summary AI-generated tags for a video
+ */
+export const OtubeAiTagsBody = zod.object({
+  "caption": zod.string().optional(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "transcript": zod.string().optional()
+})
+
+export const OtubeAiTagsResponse = zod.object({
+  "tags": zod.array(zod.string())
+})
+
+
+/**
+ * @summary AI-generated trending hashtags with estimated reach
+ */
+export const OtubeAiHashtagsBody = zod.object({
+  "caption": zod.string().optional(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "transcript": zod.string().optional()
+})
+
+export const OtubeAiHashtagsResponse = zod.object({
+  "hashtags": zod.array(zod.object({
+  "tag": zod.string(),
+  "reach": zod.string()
+}))
+})
+
+
+/**
+ * @summary AI-generated opening hook lines for a video script
+ */
+export const OtubeAiHooksBody = zod.object({
+  "caption": zod.string().optional(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "transcript": zod.string().optional()
+})
+
+export const OtubeAiHooksResponse = zod.object({
+  "hooks": zod.array(zod.string())
+})
+
+
+/**
+ * @summary AI director/editing tips for the uploaded video
+ */
+export const OtubeAiDirectorTipsBody = zod.object({
+  "caption": zod.string().optional(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "transcript": zod.string().optional()
+})
+
+export const OtubeAiDirectorTipsResponse = zod.object({
+  "tips": zod.array(zod.string())
+})
+
+
+/**
+ * @summary AI-estimated best posting time based on the account's real audience activity
+ */
+export const OtubeAiBestTimeBody = zod.object({
+  "caption": zod.string().optional(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "transcript": zod.string().optional()
+})
+
+export const OtubeAiBestTimeResponse = zod.object({
+  "time": zod.string(),
+  "reason": zod.string(),
+  "sampleSize": zod.number().optional()
+})
+
+
+/**
+ * @summary AI-suggested color grade filter values for a video
+ */
+export const OtubeAiColorCorrectionBody = zod.object({
+  "caption": zod.string().optional(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "transcript": zod.string().optional()
+})
+
+export const OtubeAiColorCorrectionResponse = zod.object({
+  "filters": zod.object({
+  "brightness": zod.number(),
+  "contrast": zod.number(),
+  "saturation": zod.number(),
+  "temperature": zod.number()
+}),
+  "note": zod.string()
+})
+
+
+/**
+ * @summary Transcribe a recorded voice-over into caption text (Whisper STT)
+ */
+export const OtubeAiVoiceCaptionBody = zod.object({
+  "audioBase64": zod.string()
+})
+
+export const OtubeAiVoiceCaptionResponse = zod.object({
+  "text": zod.string()
 })
 
 
@@ -820,7 +1271,8 @@ export const GetAiFeedResponse = zod.object({
   "viewsCount": zod.number(),
   "isLiked": zod.boolean().optional(),
   "tags": zod.array(zod.string()).optional(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "views24h": zod.number().optional()
 })),
   "suggestedUsers": zod.array(zod.object({
   "id": zod.number(),

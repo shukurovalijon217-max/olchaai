@@ -23,6 +23,8 @@ tags:
   - name: marketplace
   - name: gifts
   - name: creator
+  - name: challenges
+  - name: gamification
 
 paths:
   /translate:
@@ -431,6 +433,437 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LikeResult"
+
+  /reels/{id}/analytics:
+    get:
+      operationId: getReelAnalytics
+      tags: [reels]
+      summary: Real velocity/signal analytics for a reel (24h views vs total)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReelAnalytics"
+
+  /reels/{id}/progress:
+    put:
+      operationId: updateReelProgress
+      tags: [reels]
+      summary: Save the current user's watch progress for a reel
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchProgressInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchProgress"
+        "401":
+          description: Unauthorized
+
+  /reels/continue-watching:
+    get:
+      operationId: getContinueWatching
+      tags: [reels]
+      summary: Reels the current user has partially watched, with real saved progress
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContinueWatchingItem"
+        "401":
+          description: Unauthorized
+
+  /reels/collaborators:
+    get:
+      operationId: listReelCollaborators
+      tags: [reels]
+      summary: List collaborators invited by the current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReelCollaborator"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: inviteReelCollaborator
+      tags: [reels]
+      summary: Invite a collaborator by handle to a shared collab studio project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReelCollaboratorInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReelCollaborator"
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+  /reels/collaborators/{id}:
+    delete:
+      operationId: removeReelCollaborator
+      tags: [reels]
+      summary: Remove/cancel a collaborator invite (owner only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  # ── CHALLENGES ───────────────────────────────────────────────────────────
+  /challenges:
+    get:
+      operationId: listChallenges
+      tags: [challenges]
+      summary: List active challenges
+      parameters:
+        - in: query
+          name: creatorId
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Challenge"
+    post:
+      operationId: createChallenge
+      tags: [challenges]
+      summary: Create a new video challenge (creator pays prize pool from wallet)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        "401":
+          description: Unauthorized
+        "400":
+          description: Insufficient wallet balance for prize pool
+
+  /challenges/{id}:
+    get:
+      operationId: getChallenge
+      tags: [challenges]
+      summary: Get a single challenge with participant count
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        "404":
+          description: Not found
+
+  /challenges/{id}/join:
+    post:
+      operationId: joinChallenge
+      tags: [challenges]
+      summary: Join a challenge with a reel submission
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinChallengeInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        "401":
+          description: Unauthorized
+
+  # ── GAMIFICATION (streaks) ───────────────────────────────────────────────
+  /gamification/streak:
+    get:
+      operationId: getStreak
+      tags: [gamification]
+      summary: Get the current user's real watch streak and XP
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakInfo"
+        "401":
+          description: Unauthorized
+
+  /gamification/streak/touch:
+    post:
+      operationId: touchStreak
+      tags: [gamification]
+      summary: Record today's activity, updating streak count and XP
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakInfo"
+        "401":
+          description: Unauthorized
+
+  # ── OTUBE AI ─────────────────────────────────────────────────────────────
+  /otube/ai/title:
+    post:
+      operationId: otubeAiTitle
+      tags: [ai]
+      summary: AI-generated title suggestions for a video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtubeAiTextRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtubeAiTitleResult"
+        "402":
+          description: AI usage limit reached
+
+  /otube/ai/description:
+    post:
+      operationId: otubeAiDescription
+      tags: [ai]
+      summary: AI-generated description for a video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtubeAiTextRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtubeAiDescResult"
+        "402":
+          description: AI usage limit reached
+
+  /otube/ai/tags:
+    post:
+      operationId: otubeAiTags
+      tags: [ai]
+      summary: AI-generated tags for a video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtubeAiTextRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtubeAiTagsResult"
+        "402":
+          description: AI usage limit reached
+
+  /otube/ai/hashtags:
+    post:
+      operationId: otubeAiHashtags
+      tags: [ai]
+      summary: AI-generated trending hashtags with estimated reach
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtubeAiTextRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtubeAiHashtagsResult"
+        "402":
+          description: AI usage limit reached
+
+  /otube/ai/hooks:
+    post:
+      operationId: otubeAiHooks
+      tags: [ai]
+      summary: AI-generated opening hook lines for a video script
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtubeAiTextRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtubeAiHooksResult"
+        "402":
+          description: AI usage limit reached
+
+  /otube/ai/director-tips:
+    post:
+      operationId: otubeAiDirectorTips
+      tags: [ai]
+      summary: AI director/editing tips for the uploaded video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtubeAiTextRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtubeAiDirectorTipsResult"
+        "402":
+          description: AI usage limit reached
+
+  /otube/ai/best-time:
+    post:
+      operationId: otubeAiBestTime
+      tags: [ai]
+      summary: AI-estimated best posting time based on the account's real audience activity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtubeAiTextRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtubeAiBestTimeResult"
+        "401":
+          description: Unauthorized
+
+  /otube/ai/color-correction:
+    post:
+      operationId: otubeAiColorCorrection
+      tags: [ai]
+      summary: AI-suggested color grade filter values for a video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtubeAiTextRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtubeAiColorResult"
+        "402":
+          description: AI usage limit reached
+
+  /otube/ai/voice-caption:
+    post:
+      operationId: otubeAiVoiceCaption
+      tags: [ai]
+      summary: Transcribe a recorded voice-over into caption text (Whisper STT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtubeAiVoiceCaptionInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtubeAiVoiceCaptionResult"
+        "402":
+          description: AI usage limit reached
 
   # ── STORIES ──────────────────────────────────────────────────────────────
   /stories:
@@ -1667,6 +2100,7 @@ components:
         isLiked: { type: boolean }
         tags: { type: array, items: { type: string } }
         createdAt: { type: string }
+        views24h: { type: integer }
 
     ReelInput:
       type: object
@@ -1679,6 +2113,201 @@ components:
         audioTrack: { type: string }
         duration: { type: integer }
         tags: { type: array, items: { type: string } }
+
+    ReelAnalytics:
+      type: object
+      required: [reelId, viewsCount, views24h, velocityPct, signalScore]
+      properties:
+        reelId: { type: integer }
+        viewsCount: { type: integer }
+        views24h: { type: integer }
+        velocityPct: { type: number, description: "Share of total views that happened in the last 24h, 0-100" }
+        signalScore: { type: integer, description: "0-99 composite score from views, likes ratio, and 24h velocity" }
+
+    WatchProgressInput:
+      type: object
+      required: [positionSec, durationSec]
+      properties:
+        positionSec: { type: integer }
+        durationSec: { type: integer }
+
+    WatchProgress:
+      type: object
+      required: [reelId, positionSec, durationSec, updatedAt]
+      properties:
+        reelId: { type: integer }
+        positionSec: { type: integer }
+        durationSec: { type: integer }
+        updatedAt: { type: string }
+
+    ContinueWatchingItem:
+      type: object
+      required: [reel, positionSec, durationSec, pct]
+      properties:
+        reel:
+          $ref: "#/components/schemas/Reel"
+        positionSec: { type: integer }
+        durationSec: { type: integer }
+        pct: { type: integer }
+
+    ReelCollaboratorInput:
+      type: object
+      required: [inviteeHandle]
+      properties:
+        inviteeHandle: { type: string }
+        permission: { type: string, enum: [view, edit], default: edit }
+
+    ReelCollaborator:
+      type: object
+      required: [id, inviteeHandle, permission, status, createdAt]
+      properties:
+        id: { type: integer }
+        inviteeHandle: { type: string }
+        invitee:
+          $ref: "#/components/schemas/User"
+        permission: { type: string, enum: [view, edit] }
+        status: { type: string, enum: [pending, accepted, declined] }
+        createdAt: { type: string }
+
+    # ── Challenges ──────────────────────────────────────────────────────────
+    ChallengeInput:
+      type: object
+      required: [name, hashtag, category, days, prizePool, judgeType]
+      properties:
+        name: { type: string }
+        hashtag: { type: string }
+        category: { type: string }
+        description: { type: string }
+        days: { type: integer, default: 7 }
+        prizePool: { type: integer, default: 0 }
+        judgeType: { type: string, enum: [vote, ai, views], default: vote }
+        settings: { type: object, additionalProperties: true }
+
+    Challenge:
+      type: object
+      required: [id, creatorId, name, hashtag, category, days, prizePool, judgeType, status, startsAt, createdAt, participantsCount]
+      properties:
+        id: { type: integer }
+        creatorId: { type: integer }
+        creator:
+          $ref: "#/components/schemas/User"
+        name: { type: string }
+        hashtag: { type: string }
+        category: { type: string }
+        description: { type: ["string", "null"] }
+        days: { type: integer }
+        prizePool: { type: integer }
+        judgeType: { type: string }
+        status: { type: string, enum: [active, ended] }
+        settings: { type: object, additionalProperties: true }
+        startsAt: { type: string }
+        endsAt: { type: ["string", "null"] }
+        createdAt: { type: string }
+        participantsCount: { type: integer }
+        isJoined: { type: boolean }
+
+    JoinChallengeInput:
+      type: object
+      required: [reelId]
+      properties:
+        reelId: { type: integer }
+
+    # ── Gamification ────────────────────────────────────────────────────────
+    StreakInfo:
+      type: object
+      required: [currentStreak, longestStreak, xp, lastActiveDate]
+      properties:
+        currentStreak: { type: integer }
+        longestStreak: { type: integer }
+        xp: { type: integer }
+        lastActiveDate: { type: ["string", "null"] }
+        touchedToday: { type: boolean }
+
+    # ── OTube AI ────────────────────────────────────────────────────────────
+    OtubeAiTextRequest:
+      type: object
+      properties:
+        caption: { type: string }
+        category: { type: string }
+        tags: { type: array, items: { type: string } }
+        transcript: { type: string }
+
+    OtubeAiTitleResult:
+      type: object
+      required: [titles]
+      properties:
+        titles: { type: array, items: { type: string } }
+
+    OtubeAiDescResult:
+      type: object
+      required: [description]
+      properties:
+        description: { type: string }
+
+    OtubeAiTagsResult:
+      type: object
+      required: [tags]
+      properties:
+        tags: { type: array, items: { type: string } }
+
+    OtubeAiHashtagsResult:
+      type: object
+      required: [hashtags]
+      properties:
+        hashtags:
+          type: array
+          items:
+            type: object
+            required: [tag, reach]
+            properties:
+              tag: { type: string }
+              reach: { type: string }
+
+    OtubeAiHooksResult:
+      type: object
+      required: [hooks]
+      properties:
+        hooks: { type: array, items: { type: string } }
+
+    OtubeAiDirectorTipsResult:
+      type: object
+      required: [tips]
+      properties:
+        tips: { type: array, items: { type: string } }
+
+    OtubeAiBestTimeResult:
+      type: object
+      required: [time, reason]
+      properties:
+        time: { type: string }
+        reason: { type: string }
+        sampleSize: { type: integer }
+
+    OtubeAiColorResult:
+      type: object
+      required: [filters, note]
+      properties:
+        filters:
+          type: object
+          required: [brightness, contrast, saturation, temperature]
+          properties:
+            brightness: { type: number }
+            contrast: { type: number }
+            saturation: { type: number }
+            temperature: { type: number }
+        note: { type: string }
+
+    OtubeAiVoiceCaptionInput:
+      type: object
+      required: [audioBase64]
+      properties:
+        audioBase64: { type: string }
+
+    OtubeAiVoiceCaptionResult:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string }
 
     # ── Story ────────────────────────────────────────────────────────────────
     Story:

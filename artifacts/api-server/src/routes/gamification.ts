@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { userCoinsTable, dailyQuestsTable, questProgressTable, userTitlesTable } from "@workspace/db";
+import { userCoinsTable, dailyQuestsTable, questProgressTable, userTitlesTable, userStreaksTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
 const router = Router();
@@ -119,6 +119,63 @@ router.post("/gamification/quests/:key/claim", requireAuth, async (req: any, res
       .where(eq(userCoinsTable.userId, req.session.userId)).returning();
     await checkAndGrantTitle(req.session.userId, newTotal);
     res.json({ coins: updated, reward: quest.reward });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+async function getOrCreateStreak(userId: number) {
+  const existing = await db.query.userStreaksTable.findFirst({ where: eq(userStreaksTable.userId, userId) });
+  if (existing) return existing;
+  const [created] = await db.insert(userStreaksTable).values({ userId }).returning();
+  return created;
+}
+
+router.get("/gamification/streak", requireAuth, async (req: any, res) => {
+  try {
+    const streak = await getOrCreateStreak(req.session.userId);
+    res.json({
+      currentStreak: streak.currentStreak,
+      longestStreak: streak.longestStreak,
+      xp: streak.xp,
+      lastActiveDate: streak.lastActiveDate,
+      touchedToday: streak.lastActiveDate === todayDate(),
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/gamification/streak/touch", requireAuth, async (req: any, res) => {
+  try {
+    const today = todayDate();
+    const streak = await getOrCreateStreak(req.session.userId);
+
+    if (streak.lastActiveDate === today) {
+      res.json({
+        currentStreak: streak.currentStreak, longestStreak: streak.longestStreak,
+        xp: streak.xp, lastActiveDate: streak.lastActiveDate, touchedToday: true,
+      });
+      return;
+    }
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const isConsecutive = streak.lastActiveDate === yesterday;
+    const newCurrent = isConsecutive ? streak.currentStreak + 1 : 1;
+    const newLongest = Math.max(streak.longestStreak, newCurrent);
+    const xpGain = 10 + Math.min(40, newCurrent * 2);
+
+    const [updated] = await db.update(userStreaksTable)
+      .set({ currentStreak: newCurrent, longestStreak: newLongest, lastActiveDate: today, xp: streak.xp + xpGain, updatedAt: new Date() })
+      .where(eq(userStreaksTable.userId, req.session.userId))
+      .returning();
+
+    res.json({
+      currentStreak: updated.currentStreak, longestStreak: updated.longestStreak,
+      xp: updated.xp, lastActiveDate: updated.lastActiveDate, touchedToday: true,
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

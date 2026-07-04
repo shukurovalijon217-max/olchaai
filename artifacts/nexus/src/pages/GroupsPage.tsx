@@ -865,7 +865,7 @@ export default function GroupsPage() {
     }
   };
 
-  /* ── Internal OlCha share ─────────────────────────────────────── */
+  /* ── Internal OlchaAI share ─────────────────────────────────────── */
   const handleShareToFeed = async () => {
     if (!sharePost || sharingPost) return;
     setSharingPost(true);
@@ -993,7 +993,7 @@ export default function GroupsPage() {
     const text = `${post.authorDisplayName}: ${post.content}`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: selectedGroup?.name ?? "OlCha", text, url: window.location.href });
+        await navigator.share({ title: selectedGroup?.name ?? "OlchaAI", text, url: window.location.href });
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(text).catch(() => {});
@@ -2317,7 +2317,7 @@ export default function GroupsPage() {
                                   {post.commentsCount > 0 && <span>{post.commentsCount}</span>}
                                 </motion.button>
 
-                                {/* Share - OlCha internal */}
+                                {/* Share - OlchaAI internal */}
                                 <motion.button whileTap={{ scale: 0.9 }}
                                   onClick={() => { setSharePost(post); setShareComment(""); }}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
@@ -3036,7 +3036,7 @@ export default function GroupsPage() {
               className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <Repeat2 className="w-5 h-5 text-primary" />
-                <h3 className="text-base font-bold text-foreground">OlCha'da ulashish</h3>
+                <h3 className="text-base font-bold text-foreground">OlchaAI'da ulashish</h3>
                 <button onClick={() => setSharePost(null)} className="ml-auto text-muted-foreground hover:text-foreground">
                   <X className="w-4 h-4" />
                 </button>

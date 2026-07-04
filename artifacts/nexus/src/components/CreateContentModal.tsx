@@ -4155,7 +4155,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div>
                           <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⚖️ Litsenziya</p>
                           <div className="grid grid-cols-2 gap-2">
-                            {[{v:"standard",l:"Standard (OlCha)"},{v:"cc",l:"Creative Commons"},{v:"commercial",l:"Tijorat maqsadli"},{v:"educational",l:"Ta'lim maqsadli"}].map(({v,l})=>(
+                            {[{v:"standard",l:"Standard (OlchaAI)"},{v:"cc",l:"Creative Commons"},{v:"commercial",l:"Tijorat maqsadli"},{v:"educational",l:"Ta'lim maqsadli"}].map(({v,l})=>(
                               <button key={v} onClick={()=>setOtubeLicense(v)}
                                 className="py-2.5 px-3 rounded-xl text-[11px] font-bold transition-all"
                                 style={{background:otubeLicense===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeLicense===v?"white":"rgba(255,255,255,0.5)",border:otubeLicense===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -4224,7 +4224,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div className="absolute inset-0 opacity-10" style={{backgroundImage:"radial-gradient(circle at 20% 50%, #fb923c 0%, transparent 60%), radial-gradient(circle at 80% 50%, #f59e0b 0%, transparent 60%)"}}/>
                         <Trophy className="w-8 h-8 mx-auto mb-2" style={{color:"#fb923c"}}/>
                         <p className="text-sm font-black text-white">Challenge yaratish</p>
-                        <p className="text-[11px] text-white/50 mt-0.5">OlCha platformasida viral musobaqa boshlang</p>
+                        <p className="text-[11px] text-white/50 mt-0.5">OlchaAI platformasida viral musobaqa boshlang</p>
                       </div>
 
                       {/* SETUP SECTION */}

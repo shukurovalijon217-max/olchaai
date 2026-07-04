@@ -21,10 +21,13 @@ router.get("/users", async (req, res) => {
     const users = await query.limit(limit).offset(offset);
 
     const statsMap = await getUserStatsMap(users.map(u => u.id), viewerId);
-    const enriched = users.map((u) => ({
-      ...u,
-      ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
-    }));
+    const enriched = users.map((u) => {
+      const { passwordHash: _, ...safeUser } = u;
+      return {
+        ...safeUser,
+        ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
+      };
+    });
 
     res.json(enriched);
   } catch (err) {
@@ -37,7 +40,8 @@ router.post("/users", async (req, res) => {
   try {
     const { username, displayName, email, bio, avatarUrl } = req.body;
     const [user] = await db.insert(usersTable).values({ username, displayName, email, bio, avatarUrl }).returning();
-    res.status(201).json({ ...user, followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false });
+    const { passwordHash: _, ...safeUser } = user;
+    res.status(201).json({ ...safeUser, followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -69,7 +73,8 @@ router.get("/users/:id", async (req, res) => {
         ? db.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, id))).limit(1)
         : Promise.resolve([]),
     ]);
-    res.json({ ...user, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: (followCheck as { id: number }[]).length > 0 });
+    const { passwordHash: _, ...safeUser } = user;
+    res.json({ ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: (followCheck as { id: number }[]).length > 0 });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -104,7 +109,8 @@ router.patch("/users/:id", async (req, res) => {
       db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
       db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
     ]);
-    res.json({ ...user, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: false });
+    const { passwordHash: _, ...safeUser } = user;
+    res.json({ ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: false });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -140,10 +146,13 @@ router.get("/users/:id/followers", async (req, res) => {
 
     const users = await db.select().from(usersTable).where(inArray(usersTable.id, userIds));
     const statsMap = await getUserStatsMap(userIds, viewerId);
-    const enriched = users.map((u) => ({
-      ...u,
-      ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
-    }));
+    const enriched = users.map((u) => {
+      const { passwordHash: _, ...safeUser } = u;
+      return {
+        ...safeUser,
+        ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
+      };
+    });
     res.json(enriched);
   } catch (err) {
     req.log.error(err);

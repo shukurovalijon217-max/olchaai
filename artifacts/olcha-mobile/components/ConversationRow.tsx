@@ -4,18 +4,8 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
-
-export interface Conversation {
-  id: number;
-  participantName: string;
-  participantUsername?: string;
-  participantAvatar?: string;
-  lastMessage?: string;
-  lastMessageAt?: string;
-  unreadCount?: number;
-  isOnline?: boolean;
-  isPremium?: boolean;
-}
+import type { Conversation } from "@workspace/api-client-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 function timeAgo(d?: string) {
   if (!d) return "";
@@ -33,22 +23,28 @@ interface Props {
 export function ConversationRow({ conversation: c }: Props) {
   const colors = useColors();
   const router = useRouter();
-  const initials = c.participantName.slice(0,2).toUpperCase();
+  const { user } = useAuth();
+  
+  const otherParticipant = c.participants?.find(p => p.id !== user?.id);
+  const name = otherParticipant?.displayName || otherParticipant?.username || "Unknown";
+  const avatar = otherParticipant?.avatarUrl;
+  const isVerified = otherParticipant?.isVerified;
+  const initials = name.slice(0, 2).toUpperCase();
   const hasUnread = (c.unreadCount ?? 0) > 0;
 
   return (
     <Pressable
       style={[cr.row, { borderBottomColor: colors.borderSubtle ?? colors.border }]}
-      onPress={() => router.push(`/messages/${c.id}` as never)}
+      onPress={() => router.push(`/chat/${c.id}` as never)}
     >
       <View style={cr.avatarWrap}>
         <LinearGradient
-          colors={c.isPremium ? ["#f59e0b", "#ef4444"] : ["#7857ff", "#9d19ff"]}
+          colors={isVerified ? ["#f59e0b", "#ef4444"] : ["#7857ff", "#9d19ff"]}
           style={cr.ring}
         >
           <View style={[cr.avatarInner, { backgroundColor: colors.background }]}>
-            {c.participantAvatar ? (
-              <Image source={{ uri: c.participantAvatar }} style={cr.avatar} contentFit="cover" />
+            {avatar ? (
+              <Image source={{ uri: avatar }} style={cr.avatar} contentFit="cover" />
             ) : (
               <LinearGradient colors={["#1d2d40", "#243550"]} style={cr.avatar}>
                 <Text style={[cr.initials, { color: colors.primary }]}>{initials}</Text>
@@ -56,22 +52,19 @@ export function ConversationRow({ conversation: c }: Props) {
             )}
           </View>
         </LinearGradient>
-        {c.isOnline && (
-          <View style={[cr.online, { backgroundColor: colors.green, borderColor: colors.background }]} />
-        )}
       </View>
 
       <View style={cr.body}>
         <View style={cr.topRow}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <Text style={[cr.name, { color: hasUnread ? colors.text : colors.textSecondary ?? colors.mutedForeground }]}>
-              {c.participantName}
+              {name}
             </Text>
-            {c.isPremium && (
+            {isVerified && (
               <Text style={{ fontSize: 10 }}>👑</Text>
             )}
           </View>
-          <Text style={[cr.time, { color: colors.mutedForeground }]}>{timeAgo(c.lastMessageAt)}</Text>
+          <Text style={[cr.time, { color: colors.mutedForeground }]}>{timeAgo(c.updatedAt)}</Text>
         </View>
         <View style={cr.botRow}>
           <Text

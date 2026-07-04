@@ -48,6 +48,9 @@ OlCha (olchaai.com) is an AI-powered social network: a feed-based platform (post
 - **Midnight Confessions posts (`midnightOnly` on `posts`) are hidden from everyone, including the author, outside the 23:00–05:00 local window** (per-user `users.timezone`, UTC fallback) — this matches the literal feature description ("posts only visible 23:00–05:00") rather than giving the author a standing exemption. The admin moderation route intentionally ignores this filter so moderators always see everything.
 - **Focus Shield mutes notifications, it does not block message delivery** — messages from non-allowlisted senders during the configured hours are still stored and delivered, only the notify/sound signal is suppressed.
 - Cross-service routing goes through the shared reverse proxy (`localhost:80`), path-scoped per artifact (`/api`, `/go`, `/` for web). Never call service ports directly, and never add per-artifact CORS/proxy configs to reach another artifact.
+- **Mobile (`olcha-mobile`) is native-first on native devices.** The `(tabs)` screens (feed, reels, messages, profile, create) are the primary UI on iOS/Android, all wired to real API data via `@workspace/api-client-react` hooks and a Bearer-token `AuthContext`. The old full-app WebView now lives at `app/web.tsx` (a bridge screen with header/back, accepts `path`/`title` params) and is only reachable from within native screens for flows not yet natively built. On web (`Platform.OS === "web"`), `index.tsx` still renders the full IframeShell unchanged.
+- **Mobile auth and the WebView bridge use two separate session mechanisms** — native screens authenticate with a Bearer token (`AuthContext`, stored in AsyncStorage), while `app/web.tsx` loads the Nexus web app which uses cookie-based sessions. A user logged in natively is not automatically logged into pages opened via `/web` — there is no SSO bridge between them yet. Worth solving if WebView usage grows.
+- **Server responses are defense-in-depth scrubbed of `passwordHash`** via a global `res.json` override in `api-server/src/app.ts` (recursively strips any `passwordHash` key before sending). Individual routes should still destructure it out explicitly, but this guarantees it can never leak even if a route forgets.
 
 ## Product
 
@@ -64,6 +67,7 @@ OlCha is a full social feed platform (posts, reels, stories, live, marketplace, 
 - There is pre-existing schema drift: a few live DB columns on `posts` (e.g. `scheduled_at`, `hot_take`, `aura_score`, `audio_trim_start/end` as `real`) are not yet reflected in `lib/db/src/schema/posts.ts`. Not caused by recent work — worth reconciling in a future pass.
 - The Playwright-based e2e testing tool (`runTest`) has repeatedly hit "Maximum testing iterations (10) reached" in this environment, even for minimal login-only smoke tests. When this happens, fall back to full curl-based verification (auth cookie flow + direct endpoint checks) plus `pnpm run typecheck` and workflow log inspection.
 - `POST /api/posts` expects `authorId` in the request body (not derived from the session) — pass it explicitly when testing via curl.
+- `POST /api/auth/register` requires `phone` (validated, min 9 digits) in addition to `username`/`displayName`/`email`/`password` — any new client-side registration form (web or mobile) must collect and send it or the request 400s.
 - Always run `pnpm --filter @workspace/api-spec run codegen` after editing `lib/api-spec/openapi.yaml`, and rebuild the Go binary after any change under `artifacts/olcha-go`, before restarting workflows.
 
 ## Pointers

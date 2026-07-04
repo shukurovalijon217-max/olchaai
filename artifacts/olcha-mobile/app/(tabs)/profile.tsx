@@ -2,40 +2,27 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Dimensions,
-  FlatList,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { AuroraBorder } from "@/components/AuroraBorder";
+import { useGetUser, useListPosts, useListReels } from "@workspace/api-client-react";
 
 const { width: W } = Dimensions.get("window");
 const IMG = (W - 4) / 3;
 
-const MEDIA = [
-  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400",
-  "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400",
-  "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=400",
-  "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400",
-  "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400",
-  "https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=400",
-  "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400",
-  "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400",
-  "https://images.unsplash.com/photo-1495121605193-b116b5b9c5fe?w=400",
-];
-
 type PTab = "posts" | "reels" | "tagged";
-
-const DOMAIN = process.env.EXPO_PUBLIC_DOMAIN ?? "";
 
 function StatCard({ value, label, color }: { value: string; label: string; color: string }) {
   const colors = useColors();
@@ -53,31 +40,36 @@ export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, updateUser, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [pTab, setPTab] = useState<PTab>("posts");
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : 0;
 
-  const displayName = user?.displayName ?? "OlchaAI User";
-  const username = user?.username ?? "olcha_user";
-  const initials = displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const { data: profile } = useGetUser(user?.id ?? 0, {
+    query: { 
+      enabled: !!user?.id,
+      queryKey: ['getUser', user?.id]
+    }
+  });
 
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    fetch(`https://${DOMAIN}/api/users/${user.id}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((data) => {
-        if (cancelled) return;
-        updateUser({
-          postsCount: data.postsCount ?? 0,
-          followersCount: data.followersCount ?? 0,
-          followingCount: data.followingCount ?? 0,
-        });
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [user?.id]);
+  const { data: posts, isLoading: loadingPosts } = useListPosts({ userId: user?.id }, {
+    query: { 
+      enabled: !!user?.id && pTab === "posts",
+      queryKey: ['listPosts', { userId: user?.id }]
+    }
+  });
+
+  const { data: reels, isLoading: loadingReels } = useListReels({ userId: user?.id }, {
+    query: { 
+      enabled: !!user?.id && pTab === "reels",
+      queryKey: ['listReels', { userId: user?.id }]
+    }
+  });
+
+  const activeUser = profile ?? user;
+  const displayName = activeUser?.displayName ?? "OlchaAI User";
+  const username = activeUser?.username ?? "olcha_user";
+  const initials = displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <ScrollView
@@ -113,8 +105,8 @@ export default function ProfileScreen() {
           style={p.avatarRing}
         >
           <View style={[p.avatarInner, { backgroundColor: colors.background }]}>
-            {user?.avatarUrl ? (
-              <Image source={{ uri: user.avatarUrl }} style={p.avatar} contentFit="cover" />
+            {activeUser?.avatarUrl ? (
+              <Image source={{ uri: activeUser.avatarUrl }} style={p.avatar} contentFit="cover" />
             ) : (
               <LinearGradient colors={["#7857ff", "#9d19ff"]} style={p.avatar}>
                 <Text style={p.avatarInitials}>{initials}</Text>
@@ -122,10 +114,10 @@ export default function ProfileScreen() {
             )}
           </View>
         </LinearGradient>
-        {user?.isPremium && (
+        {(activeUser as any)?.isVerified && (
           <LinearGradient colors={["#f59e0b", "#ef4444"]} style={p.premBadge}>
             <Feather name="star" size={11} color="#fff" />
-            <Text style={p.premTxt}>Premium</Text>
+            <Text style={p.premTxt}>Verified</Text>
           </LinearGradient>
         )}
       </View>
@@ -133,22 +125,24 @@ export default function ProfileScreen() {
       <View style={p.info}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Text style={[p.displayName, { color: colors.text }]}>{displayName}</Text>
-          <View style={[p.verBadge, { backgroundColor: "rgba(120,87,255,0.25)" }]}>
-            <Feather name="check" size={11} color={colors.primary} />
-          </View>
+          {(activeUser as any)?.isVerified && (
+            <View style={[p.verBadge, { backgroundColor: "rgba(120,87,255,0.25)" }]}>
+              <Feather name="check" size={11} color={colors.primary} />
+            </View>
+          )}
         </View>
         <Text style={[p.username, { color: colors.mutedForeground }]}>@{username}</Text>
 
-        {user?.bio ? (
-          <Text style={[p.bio, { color: colors.textSecondary ?? colors.text }]}>{user.bio}</Text>
+        {activeUser?.bio ? (
+          <Text style={[p.bio, { color: colors.textSecondary ?? colors.text }]}>{activeUser.bio}</Text>
         ) : (
           <Text style={[p.bio, { color: colors.mutedForeground }]}>Bio qo'shish uchun profil tahrirlang ✨</Text>
         )}
 
         <View style={p.statsRow}>
-          <StatCard value={(user?.postsCount ?? 0).toString()} label="Posts" color={colors.cyan} />
-          <StatCard value={(user?.followersCount ?? 0).toString()} label="Followers" color={colors.primary} />
-          <StatCard value={(user?.followingCount ?? 0).toString()} label="Following" color={colors.rose} />
+          <StatCard value={(activeUser?.postsCount ?? 0).toString()} label="Posts" color={colors.cyan} />
+          <StatCard value={(activeUser?.followersCount ?? 0).toString()} label="Followers" color={colors.primary} />
+          <StatCard value={(activeUser?.followingCount ?? 0).toString()} label="Following" color={colors.rose} />
         </View>
 
         <View style={p.btnRow}>
@@ -165,9 +159,6 @@ export default function ProfileScreen() {
             </Pressable>
           </AuroraBorder>
 
-          <Pressable style={[p.smallBtn, { backgroundColor: "rgba(255,255,255,0.07)", borderColor: colors.border }]}>
-            <Feather name="user-plus" size={18} color={colors.text} />
-          </Pressable>
           <Pressable style={[p.smallBtn, { backgroundColor: "rgba(255,255,255,0.07)", borderColor: colors.border }]}>
             <Feather name="share" size={18} color={colors.text} />
           </Pressable>
@@ -198,11 +189,42 @@ export default function ProfileScreen() {
       </View>
 
       <View style={p.grid}>
-        {MEDIA.map((url, i) => (
-          <Pressable key={i} style={{ width: IMG, height: IMG, margin: 1 }}>
-            <Image source={{ uri: url }} style={{ width: IMG, height: IMG }} contentFit="cover" />
-          </Pressable>
-        ))}
+        {pTab === "posts" && (
+          loadingPosts ? (
+            <ActivityIndicator style={{ marginTop: 40, width: '100%' }} color={colors.primary} />
+          ) : (
+            posts?.map((post) => (
+              <Pressable key={post.id} style={{ width: IMG, height: IMG, margin: 1 }}>
+                {post.mediaUrl ? (
+                  <Image source={{ uri: post.mediaUrl }} style={{ width: IMG, height: IMG }} contentFit="cover" />
+                ) : (
+                  <View style={{ width: IMG, height: IMG, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center', padding: 10 }}>
+                    <Text style={{ color: colors.text, fontSize: 10, textAlign: 'center' }} numberOfLines={5}>{post.content}</Text>
+                  </View>
+                )}
+              </Pressable>
+            ))
+          )
+        )}
+        {pTab === "reels" && (
+          loadingReels ? (
+            <ActivityIndicator style={{ marginTop: 40, width: '100%' }} color={colors.primary} />
+          ) : (
+            reels?.map((reel) => (
+              <Pressable key={reel.id} style={{ width: IMG, height: IMG, margin: 1 }}>
+                <Image source={{ uri: reel.thumbnailUrl || reel.videoUrl }} style={{ width: IMG, height: IMG }} contentFit="cover" />
+                <View style={{ position: 'absolute', bottom: 4, right: 4 }}>
+                   <Feather name="play" size={12} color="white" />
+                </View>
+              </Pressable>
+            ))
+          )
+        )}
+        {pTab === "tagged" && (
+          <View style={{ width: '100%', padding: 40, alignItems: 'center' }}>
+            <Text style={{ color: colors.mutedForeground }}>Belgilangan postlar yo'q</Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );

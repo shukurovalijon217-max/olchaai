@@ -18,7 +18,7 @@ interface AuthContextValue {
   token: string | null;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  register: (username: string, displayName: string, password: string) => Promise<void>;
+  register: (username: string, displayName: string, password: string, phone: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (u: Partial<AuthUser>) => void;
 }
@@ -60,29 +60,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const err = await res.json().catch(() => ({}));
       throw new Error((err as { error?: string }).error ?? "Login failed");
     }
-    const data = await res.json() as AuthUser & { token?: string };
-    const authToken = data.token ?? String(data.id);
-    const { token: _t, ...userData } = data;
+    const data = await res.json() as AuthUser & { token: string };
+    if (!data.token) throw new Error("Server javobida token yo'q");
+    const { token: authToken, ...userData } = data;
     setUser(userData as AuthUser);
     setToken(authToken);
     await AsyncStorage.setItem("@olcha_token", authToken);
     await AsyncStorage.setItem("@olcha_user", JSON.stringify(userData));
   };
 
-  const register = async (username: string, displayName: string, password: string) => {
+  const register = async (username: string, displayName: string, password: string, phone: string) => {
     const email = `${username}@olchaai.com`;
     const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, displayName, email, password }),
+      body: JSON.stringify({ username, displayName, email, phone, password }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error((err as { error?: string }).error ?? "Registration failed");
     }
-    const data = await res.json() as AuthUser & { token?: string };
-    const authToken = data.token ?? String(data.id);
-    const { token: _t, ...userData } = data;
+    const data = await res.json() as AuthUser & { token: string };
+    if (!data.token) throw new Error("Server javobida token yo'q");
+    const { token: authToken, ...userData } = data;
     setUser(userData as AuthUser);
     setToken(authToken);
     await AsyncStorage.setItem("@olcha_token", authToken);

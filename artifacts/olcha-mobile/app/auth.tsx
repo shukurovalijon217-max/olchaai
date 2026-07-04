@@ -32,6 +32,7 @@ export default function AuthScreen() {
   const [mode, setMode] = useState<Mode>("login");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,11 +45,12 @@ export default function AuthScreen() {
     setError("");
     if (!username.trim() || !password.trim()) { setError("Barcha maydonlarni to'ldiring"); return; }
     if (mode === "register" && !displayName.trim()) { setError("Ism kiritilishi shart"); return; }
+    if (mode === "register" && phone.replace(/[^\d+]/g, "").length < 9) { setError("Telefon raqami noto'g'ri"); return; }
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       if (mode === "login") await login(username.trim(), password);
-      else await register(username.trim(), displayName.trim(), password);
+      else await register(username.trim(), displayName.trim(), password, phone.trim());
       router.replace("/" as never);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Xatolik yuz berdi");
@@ -132,6 +134,22 @@ export default function AuthScreen() {
                         placeholderTextColor={colors.mutedForeground}
                         value={displayName} onChangeText={setDisplayName}
                         autoCapitalize="words"
+                      />
+                    </View>
+                  </View>
+                )}
+
+                {mode === "register" && (
+                  <View style={a.field}>
+                    <Text style={[a.label, { color: colors.mutedForeground }]}>Telefon</Text>
+                    <View style={[a.input, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
+                      <Feather name="phone" size={15} color={colors.mutedForeground} />
+                      <TextInput
+                        style={[a.inputTxt, { color: colors.text }]}
+                        placeholder="+998901234567"
+                        placeholderTextColor={colors.mutedForeground}
+                        value={phone} onChangeText={setPhone}
+                        keyboardType="phone-pad"
                       />
                     </View>
                   </View>

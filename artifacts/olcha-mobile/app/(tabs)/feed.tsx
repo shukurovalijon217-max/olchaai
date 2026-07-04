@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import {
   FlatList,
   Platform,
@@ -14,61 +14,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PostCard, type Post } from "@/components/PostCard";
-import { StoryRow } from "@/components/StoryRow";
+import { StoryRow, type Story } from "@/components/StoryRow";
 import { useColors } from "@/hooks/useColors";
-
-const POSTS: Post[] = [
-  {
-    id: 1, authorId: 1, authorName: "Aziz Karimov", authorUsername: "azizk",
-    isVerified: true,
-    content: "OlchaAI'ning AI-powered feed algoritmi boshqa platformalarnikidan butunlay farqli. Har bir foydalanuvchi uchun real-time personalization! 🚀",
-    mediaType: "photo",
-    mediaUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900",
-    likesCount: 4200, commentsCount: 312, viewsCount: 89000,
-    createdAt: new Date(Date.now()-3600000).toISOString(), isLiked: false,
-  },
-  {
-    id: 2, authorId: 2, authorName: "Malika Yusupova", authorUsername: "malika_y",
-    isVerified: true,
-    content: "Samarqandning Registon maydoni quyosh botayotganda dunyadagi eng go'zal manzaralardan biri. Bu erda bo'lish har safar yangiday his tug'diradi ✨",
-    mediaType: "photo",
-    mediaUrl: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=900",
-    likesCount: 15800, commentsCount: 847, viewsCount: 234000,
-    createdAt: new Date(Date.now()-7200000).toISOString(), isLiked: true,
-  },
-  {
-    id: 3, authorId: 3, authorName: "Timur Rashidov", authorUsername: "timur_dev",
-    content: "Ijtimoiy tarmoqlar kelajagi — AI va shaxsiylashtirishda. OlchaAI aynan shu yo'lda. Boshqalar hali tushunmayapti, biz esa allaqachon qurmoqdamiz.",
-    mediaType: "text",
-    likesCount: 2340, commentsCount: 189,
-    createdAt: new Date(Date.now()-14400000).toISOString(), isLiked: false,
-  },
-  {
-    id: 4, authorId: 4, authorName: "Nilufar Hassan", authorUsername: "nilufar.h",
-    isVerified: true,
-    content: "Tong sahari kod yozish — qahva va ilhom bilan 🌅 OlchaAI mobile interfeysi shunchalar yoqimli ki, ishlamay bo'lmayapti!",
-    mediaType: "photo",
-    mediaUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=900",
-    likesCount: 8700, commentsCount: 423, viewsCount: 67000,
-    createdAt: new Date(Date.now()-86400000).toISOString(), isLiked: false,
-  },
-  {
-    id: 5, authorId: 5, authorName: "Bobur Tashkentov", authorUsername: "bobur_t",
-    content: "O'zbekiston texnologiya sektori 2024-yilda 340% o'sdi. Biz global darajada raqobatlasha olamiz. OlchaAI — buning isboti!",
-    mediaType: "text",
-    likesCount: 6500, commentsCount: 291,
-    createdAt: new Date(Date.now()-172800000).toISOString(), isLiked: false,
-  },
-  {
-    id: 6, authorId: 6, authorName: "Dilorom Art", authorUsername: "dilo_art",
-    isVerified: false,
-    content: "An'anaviy o'zbek naqshlari va zamonaviy dizayn uyg'unlashganda — sof sehrdir 🎨 Mening yangi kolleksiyamdan bir parcha.",
-    mediaType: "photo",
-    mediaUrl: "https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=900",
-    likesCount: 12400, commentsCount: 678, viewsCount: 198000,
-    createdAt: new Date(Date.now()-259200000).toISOString(), isLiked: false,
-  },
-];
+import { useListPosts, useListStories, useLikePost } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 type FeedTab = "for-you" | "following";
 
@@ -76,25 +25,64 @@ export default function FeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<FeedTab>("for-you");
-  const [posts, setPosts] = useState<Post[]>(POSTS);
+
+  const { data: postsData, isLoading: postsLoading, refetch: refetchPosts } = useListPosts({
+    type: tab === "following" ? "text" : undefined // MOCK filter for now if API doesn't support following tab explicitly
+  });
+
+  const { data: storiesData, refetch: refetchStories } = useListStories();
+  const { mutate: likePost } = useLikePost();
+
+  const posts: Post[] = useMemo(() => {
+    return (postsData || []).map(p => ({
+      id: p.id,
+      authorId: p.author?.id || 0,
+      authorName: p.author?.displayName || p.author?.username || "Unknown",
+      authorUsername: p.author?.username || "unknown",
+      authorAvatar: p.author?.avatarUrl || undefined,
+      isVerified: p.author?.isVerified,
+      content: p.content,
+      mediaUrl: p.mediaUrl || undefined,
+      mediaType: p.type as any,
+      likesCount: p.likesCount,
+      commentsCount: p.commentsCount,
+      viewsCount: 0,
+      createdAt: p.createdAt,
+      isLiked: p.isLiked,
+    }));
+  }, [postsData]);
+
+  const stories: Story[] = useMemo(() => {
+    return (storiesData || []).map(s => ({
+      id: s.id,
+      userId: s.author?.id || 0,
+      username: s.author?.username || "unknown",
+      avatarUrl: s.author?.avatarUrl || undefined,
+      viewed: s.isViewed,
+    }));
+  }, [storiesData]);
+
   const [refreshing, setRefreshing] = useState(false);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : 0;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await new Promise(r => setTimeout(r, 1400));
+    await Promise.all([refetchPosts(), refetchStories()]);
     setRefreshing(false);
-  }, []);
+  }, [refetchPosts, refetchStories]);
 
   const handleLike = useCallback((id: number) => {
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === id ? { ...p, isLiked: !p.isLiked, likesCount: p.isLiked ? p.likesCount-1 : p.likesCount+1 } : p
-      )
-    );
-  }, []);
+    // Optimistic UI update handled in PostCard via internal state, 
+    // but we also trigger the mutation and invalidate
+    likePost({ id }, {
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ["posts"] });
+      }
+    });
+  }, [likePost, queryClient]);
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
@@ -161,13 +149,7 @@ export default function FeedScreen() {
         ListHeaderComponent={
           <>
             <View style={[s.storiesBorder, { borderBottomColor: colors.borderSubtle ?? colors.border }]}>
-              <StoryRow />
-            </View>
-            <View style={[s.divider, { backgroundColor: "rgba(255,255,255,0.03)" }]}>
-              <Feather name="zap" size={12} color={colors.amber} />
-              <Text style={[s.dividerTxt, { color: colors.mutedForeground }]}>
-                AI-curated for you
-              </Text>
+              <StoryRow stories={stories} />
             </View>
           </>
         }

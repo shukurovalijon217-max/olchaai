@@ -1,12 +1,20 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable, followsTable, walletsTable, transactionsTable } from "@workspace/db";
-import { eq, sql, desc, and, inArray, not, count } from "drizzle-orm";
+import {
+  reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable, followsTable, walletsTable, transactionsTable,
+  userInteractionsTable, reelWatchProgressTable, reelCollaboratorsTable,
+} from "@workspace/db";
+import { eq, sql, desc, and, inArray, not, count, gte } from "drizzle-orm";
 import { accumulateViewEarning } from "./monetization";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 
 const router = Router();
+
+const requireAuth = (req: any, res: any, next: any) => {
+  if (!req.session?.userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+  next();
+};
 
 /* ── Batch enrich: 3 queries for ALL reels (not 3×N) ────────── */
 async function batchEnrichReels(
@@ -17,8 +25,9 @@ async function batchEnrichReels(
 
   const authorIds = [...new Set(reels.map(r => r.authorId).filter(Boolean))] as number[];
   const reelIds = reels.map(r => r.id);
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-  const [authors, likedRows, statsMap] = await Promise.all([
+  const [authors, likedRows, statsMap, views24hRows] = await Promise.all([
     authorIds.length > 0
       ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : Promise.resolve([]),
@@ -29,10 +38,22 @@ async function batchEnrichReels(
           .where(and(inArray(reelLikesTable.reelId, reelIds), eq(reelLikesTable.userId, viewerId)))
       : Promise.resolve([]),
     getUserStatsMap(authorIds, viewerId),
+    reelIds.length > 0
+      ? db.select({ reelId: userInteractionsTable.contentId, n: count() })
+          .from(userInteractionsTable)
+          .where(and(
+            eq(userInteractionsTable.contentType, "reel"),
+            eq(userInteractionsTable.interactionType, "view"),
+            inArray(userInteractionsTable.contentId, reelIds),
+            gte(userInteractionsTable.createdAt, since24h),
+          ))
+          .groupBy(userInteractionsTable.contentId)
+      : Promise.resolve([]),
   ]);
 
   const authorMap = new Map(authors.map(a => [a.id, a]));
   const likedSet = new Set((likedRows as { reelId: number }[]).map(l => l.reelId));
+  const views24hMap = new Map((views24hRows as { reelId: number; n: number }[]).map(v => [v.reelId, Number(v.n)]));
 
   return reels.map(reel => {
     const author = authorMap.get(reel.authorId as number);
@@ -44,6 +65,7 @@ async function batchEnrichReels(
       likesCount: reel.likesCount ?? 0,
       commentsCount: reel.commentsCount ?? 0,
       viewsCount: reel.viewsCount ?? 0,
+      views24h: views24hMap.get(reel.id) ?? 0,
       author: {
         id: authorId,
         username: author?.username ?? "deleted",
@@ -56,6 +78,12 @@ async function batchEnrichReels(
       isLiked: likedSet.has(reel.id),
     };
   });
+}
+
+function computeSignalScore(viewsCount: number, likesCount: number, views24h: number) {
+  const base = Math.log10(Math.max(2, viewsCount)) * 14 + (likesCount / Math.max(1, viewsCount)) * 120;
+  const velocityBoost = Math.min(30, (views24h / Math.max(1, viewsCount)) * 60);
+  return Math.min(99, Math.round(base + velocityBoost));
 }
 
 /* ── GET /reels ─────────────────────────────────────────────── */
@@ -196,6 +224,162 @@ router.post("/reels/:id/like", async (req, res) => {
 
     const [reel] = await db.select({ likesCount: reelsTable.likesCount }).from(reelsTable).where(eq(reelsTable.id, reelId));
     res.json({ liked: !isLiked, likesCount: reel?.likesCount ?? 0 });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── GET /reels/:id/analytics — real 24h velocity/signal ────── */
+router.get("/reels/:id/analytics", async (req, res) => {
+  try {
+    const reelId = Number(req.params.id);
+    const [reel] = await db.select({ viewsCount: reelsTable.viewsCount, likesCount: reelsTable.likesCount })
+      .from(reelsTable).where(eq(reelsTable.id, reelId));
+    if (!reel) { res.status(404).json({ error: "Not found" }); return; }
+
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [row] = await db.select({ n: count() })
+      .from(userInteractionsTable)
+      .where(and(
+        eq(userInteractionsTable.contentType, "reel"),
+        eq(userInteractionsTable.interactionType, "view"),
+        eq(userInteractionsTable.contentId, reelId),
+        gte(userInteractionsTable.createdAt, since24h),
+      ));
+
+    const views24h = Number(row?.n ?? 0);
+    const viewsCount = reel.viewsCount ?? 0;
+    const velocityPct = viewsCount > 0 ? Math.round((views24h / viewsCount) * 1000) / 10 : 0;
+    const signalScore = computeSignalScore(viewsCount, reel.likesCount ?? 0, views24h);
+
+    res.json({ reelId, viewsCount, views24h, velocityPct, signalScore });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── PUT /reels/:id/progress — save real watch position ──────── */
+router.put("/reels/:id/progress", requireAuth, async (req: any, res) => {
+  try {
+    const reelId = Number(req.params.id);
+    const userId = req.session.userId as number;
+    const { positionSec, durationSec } = req.body as { positionSec?: number; durationSec?: number };
+
+    const [row] = await db.insert(reelWatchProgressTable)
+      .values({ userId, reelId, positionSec: Math.max(0, positionSec ?? 0), durationSec: Math.max(0, durationSec ?? 0), updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: [reelWatchProgressTable.userId, reelWatchProgressTable.reelId],
+        set: { positionSec: Math.max(0, positionSec ?? 0), durationSec: Math.max(0, durationSec ?? 0), updatedAt: new Date() },
+      })
+      .returning();
+
+    res.json({ reelId, positionSec: row.positionSec, durationSec: row.durationSec, updatedAt: row.updatedAt.toISOString() });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── GET /reels/continue-watching — real saved progress ──────── */
+router.get("/reels/continue-watching", requireAuth, async (req: any, res) => {
+  try {
+    const userId = req.session.userId as number;
+    const rows = await db.select().from(reelWatchProgressTable)
+      .where(and(eq(reelWatchProgressTable.userId, userId), sql`${reelWatchProgressTable.positionSec} > 0`))
+      .orderBy(desc(reelWatchProgressTable.updatedAt))
+      .limit(10);
+
+    if (rows.length === 0) { res.json([]); return; }
+
+    const reelIds = rows.map(r => r.reelId);
+    const reels = await db.select().from(reelsTable).where(inArray(reelsTable.id, reelIds));
+    const enriched = await batchEnrichReels(reels, userId);
+    const reelMap = new Map(enriched.map(r => [r.id, r]));
+
+    const items = rows
+      .map(p => {
+        const reel = reelMap.get(p.reelId);
+        if (!reel) return null;
+        const pct = p.durationSec > 0 ? Math.min(99, Math.round((p.positionSec / p.durationSec) * 100)) : 0;
+        return { reel, positionSec: p.positionSec, durationSec: p.durationSec, pct };
+      })
+      .filter(Boolean);
+
+    res.json(items);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── Collab studio: invite/list/remove collaborators ─────────── */
+router.get("/reels/collaborators", requireAuth, async (req: any, res) => {
+  try {
+    const userId = req.session.userId as number;
+    const rows = await db.select().from(reelCollaboratorsTable)
+      .where(eq(reelCollaboratorsTable.ownerId, userId))
+      .orderBy(desc(reelCollaboratorsTable.createdAt));
+
+    const handles = rows.map(r => r.inviteeHandle);
+    const invitees = handles.length > 0
+      ? await db.select().from(usersTable).where(inArray(usersTable.username, handles))
+      : [];
+    const inviteeMap = new Map(invitees.map(u => [u.username, u]));
+
+    res.json(rows.map(r => {
+      const invitee = inviteeMap.get(r.inviteeHandle);
+      return {
+        ...r,
+        createdAt: r.createdAt.toISOString(),
+        invitee: invitee ? {
+          id: invitee.id, username: invitee.username, displayName: invitee.displayName,
+          avatarUrl: invitee.avatarUrl, isVerified: invitee.isVerified,
+        } : null,
+      };
+    }));
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/reels/collaborators", requireAuth, async (req: any, res) => {
+  try {
+    const userId = req.session.userId as number;
+    const { inviteeHandle, permission } = req.body as { inviteeHandle?: string; permission?: string };
+    const handle = (inviteeHandle ?? "").replace(/^@/, "").trim();
+    if (!handle) { res.status(400).json({ error: "inviteeHandle talab qilinadi" }); return; }
+
+    const [invitee] = await db.select().from(usersTable).where(eq(usersTable.username, handle));
+    if (!invitee) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
+    if (invitee.id === userId) { res.status(400).json({ error: "O'zingizni taklif qila olmaysiz" }); return; }
+
+    const [row] = await db.insert(reelCollaboratorsTable)
+      .values({ ownerId: userId, inviteeHandle: handle, permission: permission === "view" ? "view" : "edit", status: "pending" })
+      .returning();
+
+    res.status(201).json({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      invitee: { id: invitee.id, username: invitee.username, displayName: invitee.displayName, avatarUrl: invitee.avatarUrl, isVerified: invitee.isVerified },
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/reels/collaborators/:id", requireAuth, async (req: any, res) => {
+  try {
+    const userId = req.session.userId as number;
+    const id = Number(req.params.id);
+    const [row] = await db.select({ ownerId: reelCollaboratorsTable.ownerId }).from(reelCollaboratorsTable).where(eq(reelCollaboratorsTable.id, id));
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
+    if (row.ownerId !== userId) { res.status(403).json({ error: "Forbidden" }); return; }
+    await db.delete(reelCollaboratorsTable).where(eq(reelCollaboratorsTable.id, id));
+    res.json({ ok: true });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

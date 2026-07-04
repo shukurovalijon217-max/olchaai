@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, unique, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -34,7 +34,32 @@ export const reelCommentsTable = pgTable("reel_comments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const reelWatchProgressTable = pgTable("reel_watch_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => usersTable.id),
+  reelId: integer("reel_id").notNull().references(() => reelsTable.id, { onDelete: "cascade" }),
+  positionSec: integer("position_sec").notNull().default(0),
+  durationSec: integer("duration_sec").notNull().default(0),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => [
+  unique("reel_watch_progress_unique").on(t.userId, t.reelId),
+  index("reel_watch_progress_user_idx").on(t.userId),
+]);
+
+export const reelCollaboratorsTable = pgTable("reel_collaborators", {
+  id: serial("id").primaryKey(),
+  ownerId: integer("owner_id").notNull().references(() => usersTable.id),
+  inviteeHandle: text("invitee_handle").notNull(),
+  permission: text("permission").notNull().default("edit"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [
+  index("reel_collaborators_owner_idx").on(t.ownerId),
+]);
+
 export const insertReelSchema = createInsertSchema(reelsTable).omit({ id: true, createdAt: true, likesCount: true, commentsCount: true, viewsCount: true });
 export type InsertReel = z.infer<typeof insertReelSchema>;
 export type Reel = typeof reelsTable.$inferSelect;
 export type ReelComment = typeof reelCommentsTable.$inferSelect;
+export type ReelWatchProgress = typeof reelWatchProgressTable.$inferSelect;
+export type ReelCollaborator = typeof reelCollaboratorsTable.$inferSelect;

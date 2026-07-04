@@ -31,10 +31,13 @@ import type {
   AiSystemStatus,
   BuyProduct201,
   BuyProductInput,
+  Challenge,
+  ChallengeInput,
   CheckCreatorSubscription200,
   ClearAllNotifications200,
   Comment,
   CommentInput,
+  ContinueWatchingItem,
   Conversation,
   ConversationInput,
   CreatorPlan,
@@ -50,8 +53,10 @@ import type {
   Group,
   GroupInput,
   HealthStatus,
+  JoinChallengeInput,
   JoinResult,
   LikeResult,
+  ListChallengesParams,
   ListGroupsParams,
   ListLiveGifts200,
   ListMySubscribers200,
@@ -72,6 +77,17 @@ import type {
   ModerationInput,
   ModerationResult,
   Notification,
+  OtubeAiBestTimeResult,
+  OtubeAiColorResult,
+  OtubeAiDescResult,
+  OtubeAiDirectorTipsResult,
+  OtubeAiHashtagsResult,
+  OtubeAiHooksResult,
+  OtubeAiTagsResult,
+  OtubeAiTextRequest,
+  OtubeAiTitleResult,
+  OtubeAiVoiceCaptionInput,
+  OtubeAiVoiceCaptionResult,
   Post,
   PostInput,
   Product,
@@ -80,12 +96,17 @@ import type {
   ProductReview,
   ProductReviewInput,
   Reel,
+  ReelAnalytics,
+  ReelCollaborator,
+  ReelCollaboratorInput,
   ReelInput,
+  RemoveReelCollaborator200,
   SearchAllParams,
   SearchResults,
   SendLiveGift200,
   Story,
   StoryInput,
+  StreakInfo,
   SubscribeToCreator201,
   SuspendInput,
   TranslateInput,
@@ -98,7 +119,9 @@ import type {
   UserInput,
   UserStatsSummary,
   UserUpdate,
-  ViewResult
+  ViewResult,
+  WatchProgress,
+  WatchProgressInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1680,6 +1703,1540 @@ export const useLikeReel = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getLikeReelMutationOptions(options));
+    }
+
+export const getGetReelAnalyticsUrl = (id: number,) => {
+
+
+
+
+  return `/api/reels/${id}/analytics`
+}
+
+/**
+ * @summary Real velocity/signal analytics for a reel (24h views vs total)
+ */
+export const getReelAnalytics = async (id: number, options?: RequestInit): Promise<ReelAnalytics> => {
+
+  return customFetch<ReelAnalytics>(getGetReelAnalyticsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetReelAnalyticsQueryKey = (id: number,) => {
+    return [
+    `/api/reels/${id}/analytics`
+    ] as const;
+    }
+
+
+export const getGetReelAnalyticsQueryOptions = <TData = Awaited<ReturnType<typeof getReelAnalytics>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReelAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetReelAnalyticsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getReelAnalytics>>> = ({ signal }) => getReelAnalytics(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getReelAnalytics>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetReelAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof getReelAnalytics>>>
+export type GetReelAnalyticsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Real velocity/signal analytics for a reel (24h views vs total)
+ */
+
+export function useGetReelAnalytics<TData = Awaited<ReturnType<typeof getReelAnalytics>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReelAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetReelAnalyticsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateReelProgressUrl = (id: number,) => {
+
+
+
+
+  return `/api/reels/${id}/progress`
+}
+
+/**
+ * @summary Save the current user's watch progress for a reel
+ */
+export const updateReelProgress = async (id: number,
+    watchProgressInput: WatchProgressInput, options?: RequestInit): Promise<WatchProgress> => {
+
+  return customFetch<WatchProgress>(getUpdateReelProgressUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      watchProgressInput,)
+  }
+);}
+
+
+
+
+export const getUpdateReelProgressMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReelProgress>>, TError,{id: number;data: BodyType<WatchProgressInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateReelProgress>>, TError,{id: number;data: BodyType<WatchProgressInput>}, TContext> => {
+
+const mutationKey = ['updateReelProgress'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateReelProgress>>, {id: number;data: BodyType<WatchProgressInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateReelProgress(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateReelProgressMutationResult = NonNullable<Awaited<ReturnType<typeof updateReelProgress>>>
+    export type UpdateReelProgressMutationBody = BodyType<WatchProgressInput>
+    export type UpdateReelProgressMutationError = ErrorType<void>
+
+    /**
+ * @summary Save the current user's watch progress for a reel
+ */
+export const useUpdateReelProgress = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReelProgress>>, TError,{id: number;data: BodyType<WatchProgressInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateReelProgress>>,
+        TError,
+        {id: number;data: BodyType<WatchProgressInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateReelProgressMutationOptions(options));
+    }
+
+export const getGetContinueWatchingUrl = () => {
+
+
+
+
+  return `/api/reels/continue-watching`
+}
+
+/**
+ * @summary Reels the current user has partially watched, with real saved progress
+ */
+export const getContinueWatching = async ( options?: RequestInit): Promise<ContinueWatchingItem[]> => {
+
+  return customFetch<ContinueWatchingItem[]>(getGetContinueWatchingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetContinueWatchingQueryKey = () => {
+    return [
+    `/api/reels/continue-watching`
+    ] as const;
+    }
+
+
+export const getGetContinueWatchingQueryOptions = <TData = Awaited<ReturnType<typeof getContinueWatching>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getContinueWatching>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetContinueWatchingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getContinueWatching>>> = ({ signal }) => getContinueWatching({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getContinueWatching>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetContinueWatchingQueryResult = NonNullable<Awaited<ReturnType<typeof getContinueWatching>>>
+export type GetContinueWatchingQueryError = ErrorType<void>
+
+
+/**
+ * @summary Reels the current user has partially watched, with real saved progress
+ */
+
+export function useGetContinueWatching<TData = Awaited<ReturnType<typeof getContinueWatching>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getContinueWatching>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetContinueWatchingQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListReelCollaboratorsUrl = () => {
+
+
+
+
+  return `/api/reels/collaborators`
+}
+
+/**
+ * @summary List collaborators invited by the current user
+ */
+export const listReelCollaborators = async ( options?: RequestInit): Promise<ReelCollaborator[]> => {
+
+  return customFetch<ReelCollaborator[]>(getListReelCollaboratorsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListReelCollaboratorsQueryKey = () => {
+    return [
+    `/api/reels/collaborators`
+    ] as const;
+    }
+
+
+export const getListReelCollaboratorsQueryOptions = <TData = Awaited<ReturnType<typeof listReelCollaborators>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReelCollaborators>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListReelCollaboratorsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReelCollaborators>>> = ({ signal }) => listReelCollaborators({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listReelCollaborators>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListReelCollaboratorsQueryResult = NonNullable<Awaited<ReturnType<typeof listReelCollaborators>>>
+export type ListReelCollaboratorsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List collaborators invited by the current user
+ */
+
+export function useListReelCollaborators<TData = Awaited<ReturnType<typeof listReelCollaborators>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReelCollaborators>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListReelCollaboratorsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getInviteReelCollaboratorUrl = () => {
+
+
+
+
+  return `/api/reels/collaborators`
+}
+
+/**
+ * @summary Invite a collaborator by handle to a shared collab studio project
+ */
+export const inviteReelCollaborator = async (reelCollaboratorInput: ReelCollaboratorInput, options?: RequestInit): Promise<ReelCollaborator> => {
+
+  return customFetch<ReelCollaborator>(getInviteReelCollaboratorUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      reelCollaboratorInput,)
+  }
+);}
+
+
+
+
+export const getInviteReelCollaboratorMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteReelCollaborator>>, TError,{data: BodyType<ReelCollaboratorInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof inviteReelCollaborator>>, TError,{data: BodyType<ReelCollaboratorInput>}, TContext> => {
+
+const mutationKey = ['inviteReelCollaborator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteReelCollaborator>>, {data: BodyType<ReelCollaboratorInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  inviteReelCollaborator(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InviteReelCollaboratorMutationResult = NonNullable<Awaited<ReturnType<typeof inviteReelCollaborator>>>
+    export type InviteReelCollaboratorMutationBody = BodyType<ReelCollaboratorInput>
+    export type InviteReelCollaboratorMutationError = ErrorType<void>
+
+    /**
+ * @summary Invite a collaborator by handle to a shared collab studio project
+ */
+export const useInviteReelCollaborator = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteReelCollaborator>>, TError,{data: BodyType<ReelCollaboratorInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof inviteReelCollaborator>>,
+        TError,
+        {data: BodyType<ReelCollaboratorInput>},
+        TContext
+      > => {
+      return useMutation(getInviteReelCollaboratorMutationOptions(options));
+    }
+
+export const getRemoveReelCollaboratorUrl = (id: number,) => {
+
+
+
+
+  return `/api/reels/collaborators/${id}`
+}
+
+/**
+ * @summary Remove/cancel a collaborator invite (owner only)
+ */
+export const removeReelCollaborator = async (id: number, options?: RequestInit): Promise<RemoveReelCollaborator200> => {
+
+  return customFetch<RemoveReelCollaborator200>(getRemoveReelCollaboratorUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getRemoveReelCollaboratorMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeReelCollaborator>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeReelCollaborator>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['removeReelCollaborator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeReelCollaborator>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  removeReelCollaborator(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveReelCollaboratorMutationResult = NonNullable<Awaited<ReturnType<typeof removeReelCollaborator>>>
+
+    export type RemoveReelCollaboratorMutationError = ErrorType<void>
+
+    /**
+ * @summary Remove/cancel a collaborator invite (owner only)
+ */
+export const useRemoveReelCollaborator = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeReelCollaborator>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeReelCollaborator>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getRemoveReelCollaboratorMutationOptions(options));
+    }
+
+export const getListChallengesUrl = (params?: ListChallengesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/challenges?${stringifiedParams}` : `/api/challenges`
+}
+
+/**
+ * @summary List active challenges
+ */
+export const listChallenges = async (params?: ListChallengesParams, options?: RequestInit): Promise<Challenge[]> => {
+
+  return customFetch<Challenge[]>(getListChallengesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListChallengesQueryKey = (params?: ListChallengesParams,) => {
+    return [
+    `/api/challenges`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListChallengesQueryOptions = <TData = Awaited<ReturnType<typeof listChallenges>>, TError = ErrorType<unknown>>(params?: ListChallengesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listChallenges>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListChallengesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listChallenges>>> = ({ signal }) => listChallenges(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listChallenges>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListChallengesQueryResult = NonNullable<Awaited<ReturnType<typeof listChallenges>>>
+export type ListChallengesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List active challenges
+ */
+
+export function useListChallenges<TData = Awaited<ReturnType<typeof listChallenges>>, TError = ErrorType<unknown>>(
+ params?: ListChallengesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listChallenges>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListChallengesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateChallengeUrl = () => {
+
+
+
+
+  return `/api/challenges`
+}
+
+/**
+ * @summary Create a new video challenge (creator pays prize pool from wallet)
+ */
+export const createChallenge = async (challengeInput: ChallengeInput, options?: RequestInit): Promise<Challenge> => {
+
+  return customFetch<Challenge>(getCreateChallengeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      challengeInput,)
+  }
+);}
+
+
+
+
+export const getCreateChallengeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createChallenge>>, TError,{data: BodyType<ChallengeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createChallenge>>, TError,{data: BodyType<ChallengeInput>}, TContext> => {
+
+const mutationKey = ['createChallenge'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createChallenge>>, {data: BodyType<ChallengeInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createChallenge(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateChallengeMutationResult = NonNullable<Awaited<ReturnType<typeof createChallenge>>>
+    export type CreateChallengeMutationBody = BodyType<ChallengeInput>
+    export type CreateChallengeMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a new video challenge (creator pays prize pool from wallet)
+ */
+export const useCreateChallenge = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createChallenge>>, TError,{data: BodyType<ChallengeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createChallenge>>,
+        TError,
+        {data: BodyType<ChallengeInput>},
+        TContext
+      > => {
+      return useMutation(getCreateChallengeMutationOptions(options));
+    }
+
+export const getGetChallengeUrl = (id: number,) => {
+
+
+
+
+  return `/api/challenges/${id}`
+}
+
+/**
+ * @summary Get a single challenge with participant count
+ */
+export const getChallenge = async (id: number, options?: RequestInit): Promise<Challenge> => {
+
+  return customFetch<Challenge>(getGetChallengeUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetChallengeQueryKey = (id: number,) => {
+    return [
+    `/api/challenges/${id}`
+    ] as const;
+    }
+
+
+export const getGetChallengeQueryOptions = <TData = Awaited<ReturnType<typeof getChallenge>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getChallenge>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetChallengeQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChallenge>>> = ({ signal }) => getChallenge(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChallenge>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetChallengeQueryResult = NonNullable<Awaited<ReturnType<typeof getChallenge>>>
+export type GetChallengeQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a single challenge with participant count
+ */
+
+export function useGetChallenge<TData = Awaited<ReturnType<typeof getChallenge>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getChallenge>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetChallengeQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getJoinChallengeUrl = (id: number,) => {
+
+
+
+
+  return `/api/challenges/${id}/join`
+}
+
+/**
+ * @summary Join a challenge with a reel submission
+ */
+export const joinChallenge = async (id: number,
+    joinChallengeInput: JoinChallengeInput, options?: RequestInit): Promise<Challenge> => {
+
+  return customFetch<Challenge>(getJoinChallengeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      joinChallengeInput,)
+  }
+);}
+
+
+
+
+export const getJoinChallengeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinChallenge>>, TError,{id: number;data: BodyType<JoinChallengeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof joinChallenge>>, TError,{id: number;data: BodyType<JoinChallengeInput>}, TContext> => {
+
+const mutationKey = ['joinChallenge'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof joinChallenge>>, {id: number;data: BodyType<JoinChallengeInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  joinChallenge(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type JoinChallengeMutationResult = NonNullable<Awaited<ReturnType<typeof joinChallenge>>>
+    export type JoinChallengeMutationBody = BodyType<JoinChallengeInput>
+    export type JoinChallengeMutationError = ErrorType<void>
+
+    /**
+ * @summary Join a challenge with a reel submission
+ */
+export const useJoinChallenge = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinChallenge>>, TError,{id: number;data: BodyType<JoinChallengeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof joinChallenge>>,
+        TError,
+        {id: number;data: BodyType<JoinChallengeInput>},
+        TContext
+      > => {
+      return useMutation(getJoinChallengeMutationOptions(options));
+    }
+
+export const getGetStreakUrl = () => {
+
+
+
+
+  return `/api/gamification/streak`
+}
+
+/**
+ * @summary Get the current user's real watch streak and XP
+ */
+export const getStreak = async ( options?: RequestInit): Promise<StreakInfo> => {
+
+  return customFetch<StreakInfo>(getGetStreakUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStreakQueryKey = () => {
+    return [
+    `/api/gamification/streak`
+    ] as const;
+    }
+
+
+export const getGetStreakQueryOptions = <TData = Awaited<ReturnType<typeof getStreak>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStreak>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStreakQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStreak>>> = ({ signal }) => getStreak({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStreak>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStreakQueryResult = NonNullable<Awaited<ReturnType<typeof getStreak>>>
+export type GetStreakQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the current user's real watch streak and XP
+ */
+
+export function useGetStreak<TData = Awaited<ReturnType<typeof getStreak>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStreak>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStreakQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getTouchStreakUrl = () => {
+
+
+
+
+  return `/api/gamification/streak/touch`
+}
+
+/**
+ * @summary Record today's activity, updating streak count and XP
+ */
+export const touchStreak = async ( options?: RequestInit): Promise<StreakInfo> => {
+
+  return customFetch<StreakInfo>(getTouchStreakUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getTouchStreakMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof touchStreak>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof touchStreak>>, TError,void, TContext> => {
+
+const mutationKey = ['touchStreak'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof touchStreak>>, void> = () => {
+
+
+          return  touchStreak(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TouchStreakMutationResult = NonNullable<Awaited<ReturnType<typeof touchStreak>>>
+
+    export type TouchStreakMutationError = ErrorType<void>
+
+    /**
+ * @summary Record today's activity, updating streak count and XP
+ */
+export const useTouchStreak = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof touchStreak>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof touchStreak>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getTouchStreakMutationOptions(options));
+    }
+
+export const getOtubeAiTitleUrl = () => {
+
+
+
+
+  return `/api/otube/ai/title`
+}
+
+/**
+ * @summary AI-generated title suggestions for a video
+ */
+export const otubeAiTitle = async (otubeAiTextRequest: OtubeAiTextRequest, options?: RequestInit): Promise<OtubeAiTitleResult> => {
+
+  return customFetch<OtubeAiTitleResult>(getOtubeAiTitleUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      otubeAiTextRequest,)
+  }
+);}
+
+
+
+
+export const getOtubeAiTitleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiTitle>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof otubeAiTitle>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext> => {
+
+const mutationKey = ['otubeAiTitle'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof otubeAiTitle>>, {data: BodyType<OtubeAiTextRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  otubeAiTitle(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OtubeAiTitleMutationResult = NonNullable<Awaited<ReturnType<typeof otubeAiTitle>>>
+    export type OtubeAiTitleMutationBody = BodyType<OtubeAiTextRequest>
+    export type OtubeAiTitleMutationError = ErrorType<void>
+
+    /**
+ * @summary AI-generated title suggestions for a video
+ */
+export const useOtubeAiTitle = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiTitle>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof otubeAiTitle>>,
+        TError,
+        {data: BodyType<OtubeAiTextRequest>},
+        TContext
+      > => {
+      return useMutation(getOtubeAiTitleMutationOptions(options));
+    }
+
+export const getOtubeAiDescriptionUrl = () => {
+
+
+
+
+  return `/api/otube/ai/description`
+}
+
+/**
+ * @summary AI-generated description for a video
+ */
+export const otubeAiDescription = async (otubeAiTextRequest: OtubeAiTextRequest, options?: RequestInit): Promise<OtubeAiDescResult> => {
+
+  return customFetch<OtubeAiDescResult>(getOtubeAiDescriptionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      otubeAiTextRequest,)
+  }
+);}
+
+
+
+
+export const getOtubeAiDescriptionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiDescription>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof otubeAiDescription>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext> => {
+
+const mutationKey = ['otubeAiDescription'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof otubeAiDescription>>, {data: BodyType<OtubeAiTextRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  otubeAiDescription(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OtubeAiDescriptionMutationResult = NonNullable<Awaited<ReturnType<typeof otubeAiDescription>>>
+    export type OtubeAiDescriptionMutationBody = BodyType<OtubeAiTextRequest>
+    export type OtubeAiDescriptionMutationError = ErrorType<void>
+
+    /**
+ * @summary AI-generated description for a video
+ */
+export const useOtubeAiDescription = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiDescription>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof otubeAiDescription>>,
+        TError,
+        {data: BodyType<OtubeAiTextRequest>},
+        TContext
+      > => {
+      return useMutation(getOtubeAiDescriptionMutationOptions(options));
+    }
+
+export const getOtubeAiTagsUrl = () => {
+
+
+
+
+  return `/api/otube/ai/tags`
+}
+
+/**
+ * @summary AI-generated tags for a video
+ */
+export const otubeAiTags = async (otubeAiTextRequest: OtubeAiTextRequest, options?: RequestInit): Promise<OtubeAiTagsResult> => {
+
+  return customFetch<OtubeAiTagsResult>(getOtubeAiTagsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      otubeAiTextRequest,)
+  }
+);}
+
+
+
+
+export const getOtubeAiTagsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiTags>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof otubeAiTags>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext> => {
+
+const mutationKey = ['otubeAiTags'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof otubeAiTags>>, {data: BodyType<OtubeAiTextRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  otubeAiTags(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OtubeAiTagsMutationResult = NonNullable<Awaited<ReturnType<typeof otubeAiTags>>>
+    export type OtubeAiTagsMutationBody = BodyType<OtubeAiTextRequest>
+    export type OtubeAiTagsMutationError = ErrorType<void>
+
+    /**
+ * @summary AI-generated tags for a video
+ */
+export const useOtubeAiTags = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiTags>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof otubeAiTags>>,
+        TError,
+        {data: BodyType<OtubeAiTextRequest>},
+        TContext
+      > => {
+      return useMutation(getOtubeAiTagsMutationOptions(options));
+    }
+
+export const getOtubeAiHashtagsUrl = () => {
+
+
+
+
+  return `/api/otube/ai/hashtags`
+}
+
+/**
+ * @summary AI-generated trending hashtags with estimated reach
+ */
+export const otubeAiHashtags = async (otubeAiTextRequest: OtubeAiTextRequest, options?: RequestInit): Promise<OtubeAiHashtagsResult> => {
+
+  return customFetch<OtubeAiHashtagsResult>(getOtubeAiHashtagsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      otubeAiTextRequest,)
+  }
+);}
+
+
+
+
+export const getOtubeAiHashtagsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiHashtags>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof otubeAiHashtags>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext> => {
+
+const mutationKey = ['otubeAiHashtags'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof otubeAiHashtags>>, {data: BodyType<OtubeAiTextRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  otubeAiHashtags(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OtubeAiHashtagsMutationResult = NonNullable<Awaited<ReturnType<typeof otubeAiHashtags>>>
+    export type OtubeAiHashtagsMutationBody = BodyType<OtubeAiTextRequest>
+    export type OtubeAiHashtagsMutationError = ErrorType<void>
+
+    /**
+ * @summary AI-generated trending hashtags with estimated reach
+ */
+export const useOtubeAiHashtags = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiHashtags>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof otubeAiHashtags>>,
+        TError,
+        {data: BodyType<OtubeAiTextRequest>},
+        TContext
+      > => {
+      return useMutation(getOtubeAiHashtagsMutationOptions(options));
+    }
+
+export const getOtubeAiHooksUrl = () => {
+
+
+
+
+  return `/api/otube/ai/hooks`
+}
+
+/**
+ * @summary AI-generated opening hook lines for a video script
+ */
+export const otubeAiHooks = async (otubeAiTextRequest: OtubeAiTextRequest, options?: RequestInit): Promise<OtubeAiHooksResult> => {
+
+  return customFetch<OtubeAiHooksResult>(getOtubeAiHooksUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      otubeAiTextRequest,)
+  }
+);}
+
+
+
+
+export const getOtubeAiHooksMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiHooks>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof otubeAiHooks>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext> => {
+
+const mutationKey = ['otubeAiHooks'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof otubeAiHooks>>, {data: BodyType<OtubeAiTextRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  otubeAiHooks(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OtubeAiHooksMutationResult = NonNullable<Awaited<ReturnType<typeof otubeAiHooks>>>
+    export type OtubeAiHooksMutationBody = BodyType<OtubeAiTextRequest>
+    export type OtubeAiHooksMutationError = ErrorType<void>
+
+    /**
+ * @summary AI-generated opening hook lines for a video script
+ */
+export const useOtubeAiHooks = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiHooks>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof otubeAiHooks>>,
+        TError,
+        {data: BodyType<OtubeAiTextRequest>},
+        TContext
+      > => {
+      return useMutation(getOtubeAiHooksMutationOptions(options));
+    }
+
+export const getOtubeAiDirectorTipsUrl = () => {
+
+
+
+
+  return `/api/otube/ai/director-tips`
+}
+
+/**
+ * @summary AI director/editing tips for the uploaded video
+ */
+export const otubeAiDirectorTips = async (otubeAiTextRequest: OtubeAiTextRequest, options?: RequestInit): Promise<OtubeAiDirectorTipsResult> => {
+
+  return customFetch<OtubeAiDirectorTipsResult>(getOtubeAiDirectorTipsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      otubeAiTextRequest,)
+  }
+);}
+
+
+
+
+export const getOtubeAiDirectorTipsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiDirectorTips>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof otubeAiDirectorTips>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext> => {
+
+const mutationKey = ['otubeAiDirectorTips'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof otubeAiDirectorTips>>, {data: BodyType<OtubeAiTextRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  otubeAiDirectorTips(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OtubeAiDirectorTipsMutationResult = NonNullable<Awaited<ReturnType<typeof otubeAiDirectorTips>>>
+    export type OtubeAiDirectorTipsMutationBody = BodyType<OtubeAiTextRequest>
+    export type OtubeAiDirectorTipsMutationError = ErrorType<void>
+
+    /**
+ * @summary AI director/editing tips for the uploaded video
+ */
+export const useOtubeAiDirectorTips = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiDirectorTips>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof otubeAiDirectorTips>>,
+        TError,
+        {data: BodyType<OtubeAiTextRequest>},
+        TContext
+      > => {
+      return useMutation(getOtubeAiDirectorTipsMutationOptions(options));
+    }
+
+export const getOtubeAiBestTimeUrl = () => {
+
+
+
+
+  return `/api/otube/ai/best-time`
+}
+
+/**
+ * @summary AI-estimated best posting time based on the account's real audience activity
+ */
+export const otubeAiBestTime = async (otubeAiTextRequest: OtubeAiTextRequest, options?: RequestInit): Promise<OtubeAiBestTimeResult> => {
+
+  return customFetch<OtubeAiBestTimeResult>(getOtubeAiBestTimeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      otubeAiTextRequest,)
+  }
+);}
+
+
+
+
+export const getOtubeAiBestTimeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiBestTime>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof otubeAiBestTime>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext> => {
+
+const mutationKey = ['otubeAiBestTime'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof otubeAiBestTime>>, {data: BodyType<OtubeAiTextRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  otubeAiBestTime(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OtubeAiBestTimeMutationResult = NonNullable<Awaited<ReturnType<typeof otubeAiBestTime>>>
+    export type OtubeAiBestTimeMutationBody = BodyType<OtubeAiTextRequest>
+    export type OtubeAiBestTimeMutationError = ErrorType<void>
+
+    /**
+ * @summary AI-estimated best posting time based on the account's real audience activity
+ */
+export const useOtubeAiBestTime = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiBestTime>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof otubeAiBestTime>>,
+        TError,
+        {data: BodyType<OtubeAiTextRequest>},
+        TContext
+      > => {
+      return useMutation(getOtubeAiBestTimeMutationOptions(options));
+    }
+
+export const getOtubeAiColorCorrectionUrl = () => {
+
+
+
+
+  return `/api/otube/ai/color-correction`
+}
+
+/**
+ * @summary AI-suggested color grade filter values for a video
+ */
+export const otubeAiColorCorrection = async (otubeAiTextRequest: OtubeAiTextRequest, options?: RequestInit): Promise<OtubeAiColorResult> => {
+
+  return customFetch<OtubeAiColorResult>(getOtubeAiColorCorrectionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      otubeAiTextRequest,)
+  }
+);}
+
+
+
+
+export const getOtubeAiColorCorrectionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiColorCorrection>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof otubeAiColorCorrection>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext> => {
+
+const mutationKey = ['otubeAiColorCorrection'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof otubeAiColorCorrection>>, {data: BodyType<OtubeAiTextRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  otubeAiColorCorrection(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OtubeAiColorCorrectionMutationResult = NonNullable<Awaited<ReturnType<typeof otubeAiColorCorrection>>>
+    export type OtubeAiColorCorrectionMutationBody = BodyType<OtubeAiTextRequest>
+    export type OtubeAiColorCorrectionMutationError = ErrorType<void>
+
+    /**
+ * @summary AI-suggested color grade filter values for a video
+ */
+export const useOtubeAiColorCorrection = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiColorCorrection>>, TError,{data: BodyType<OtubeAiTextRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof otubeAiColorCorrection>>,
+        TError,
+        {data: BodyType<OtubeAiTextRequest>},
+        TContext
+      > => {
+      return useMutation(getOtubeAiColorCorrectionMutationOptions(options));
+    }
+
+export const getOtubeAiVoiceCaptionUrl = () => {
+
+
+
+
+  return `/api/otube/ai/voice-caption`
+}
+
+/**
+ * @summary Transcribe a recorded voice-over into caption text (Whisper STT)
+ */
+export const otubeAiVoiceCaption = async (otubeAiVoiceCaptionInput: OtubeAiVoiceCaptionInput, options?: RequestInit): Promise<OtubeAiVoiceCaptionResult> => {
+
+  return customFetch<OtubeAiVoiceCaptionResult>(getOtubeAiVoiceCaptionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      otubeAiVoiceCaptionInput,)
+  }
+);}
+
+
+
+
+export const getOtubeAiVoiceCaptionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiVoiceCaption>>, TError,{data: BodyType<OtubeAiVoiceCaptionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof otubeAiVoiceCaption>>, TError,{data: BodyType<OtubeAiVoiceCaptionInput>}, TContext> => {
+
+const mutationKey = ['otubeAiVoiceCaption'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof otubeAiVoiceCaption>>, {data: BodyType<OtubeAiVoiceCaptionInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  otubeAiVoiceCaption(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OtubeAiVoiceCaptionMutationResult = NonNullable<Awaited<ReturnType<typeof otubeAiVoiceCaption>>>
+    export type OtubeAiVoiceCaptionMutationBody = BodyType<OtubeAiVoiceCaptionInput>
+    export type OtubeAiVoiceCaptionMutationError = ErrorType<void>
+
+    /**
+ * @summary Transcribe a recorded voice-over into caption text (Whisper STT)
+ */
+export const useOtubeAiVoiceCaption = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof otubeAiVoiceCaption>>, TError,{data: BodyType<OtubeAiVoiceCaptionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof otubeAiVoiceCaption>>,
+        TError,
+        {data: BodyType<OtubeAiVoiceCaptionInput>},
+        TContext
+      > => {
+      return useMutation(getOtubeAiVoiceCaptionMutationOptions(options));
     }
 
 export const getListStoriesUrl = () => {

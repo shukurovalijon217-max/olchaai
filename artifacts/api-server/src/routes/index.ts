@@ -47,6 +47,8 @@ import infraCostsRouter from "./infraCosts";
 import anonInboxRouter from "./anonInbox";
 import ghostRouter from "./ghost";
 import focusShieldRouter from "./focusShield";
+import challengesRouter from "./challenges";
+import otubeAiRouter from "./otubeAi";
 
 const router: IRouter = Router();
 
@@ -98,5 +100,7 @@ router.use(infraCostsRouter);
 router.use(anonInboxRouter);
 router.use(ghostRouter);
 router.use(focusShieldRouter);
+router.use(challengesRouter);
+router.use(otubeAiRouter);
 
 export default router;

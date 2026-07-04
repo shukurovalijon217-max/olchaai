@@ -28,3 +28,4 @@ export * from "./platformCosts";
 export * from "./monetization";
 export * from "./chat";
 export * from "./anonInbox";
+export * from "./challenges";

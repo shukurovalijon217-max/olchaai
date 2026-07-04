@@ -144,6 +144,7 @@ export interface Reel {
   isLiked?: boolean;
   tags?: string[];
   createdAt: string;
+  views24h?: number;
 }
 
 export interface ReelInput {
@@ -154,6 +155,203 @@ export interface ReelInput {
   audioTrack?: string;
   duration?: number;
   tags?: string[];
+}
+
+export interface ReelAnalytics {
+  reelId: number;
+  viewsCount: number;
+  views24h: number;
+  /** Share of total views that happened in the last 24h, 0-100 */
+  velocityPct: number;
+  /** 0-99 composite score from views, likes ratio, and 24h velocity */
+  signalScore: number;
+}
+
+export interface WatchProgressInput {
+  positionSec: number;
+  durationSec: number;
+}
+
+export interface WatchProgress {
+  reelId: number;
+  positionSec: number;
+  durationSec: number;
+  updatedAt: string;
+}
+
+export interface ContinueWatchingItem {
+  reel: Reel;
+  positionSec: number;
+  durationSec: number;
+  pct: number;
+}
+
+export type ReelCollaboratorInputPermission = typeof ReelCollaboratorInputPermission[keyof typeof ReelCollaboratorInputPermission];
+
+
+export const ReelCollaboratorInputPermission = {
+  view: 'view',
+  edit: 'edit',
+} as const;
+
+export interface ReelCollaboratorInput {
+  inviteeHandle: string;
+  permission?: ReelCollaboratorInputPermission;
+}
+
+export type ReelCollaboratorPermission = typeof ReelCollaboratorPermission[keyof typeof ReelCollaboratorPermission];
+
+
+export const ReelCollaboratorPermission = {
+  view: 'view',
+  edit: 'edit',
+} as const;
+
+export type ReelCollaboratorStatus = typeof ReelCollaboratorStatus[keyof typeof ReelCollaboratorStatus];
+
+
+export const ReelCollaboratorStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  declined: 'declined',
+} as const;
+
+export interface ReelCollaborator {
+  id: number;
+  inviteeHandle: string;
+  invitee?: User;
+  permission: ReelCollaboratorPermission;
+  status: ReelCollaboratorStatus;
+  createdAt: string;
+}
+
+export type ChallengeInputJudgeType = typeof ChallengeInputJudgeType[keyof typeof ChallengeInputJudgeType];
+
+
+export const ChallengeInputJudgeType = {
+  vote: 'vote',
+  ai: 'ai',
+  views: 'views',
+} as const;
+
+export type ChallengeInputSettings = { [key: string]: unknown };
+
+export interface ChallengeInput {
+  name: string;
+  hashtag: string;
+  category: string;
+  description?: string;
+  days: number;
+  prizePool: number;
+  judgeType: ChallengeInputJudgeType;
+  settings?: ChallengeInputSettings;
+}
+
+export type ChallengeStatus = typeof ChallengeStatus[keyof typeof ChallengeStatus];
+
+
+export const ChallengeStatus = {
+  active: 'active',
+  ended: 'ended',
+} as const;
+
+export type ChallengeSettings = { [key: string]: unknown };
+
+export interface Challenge {
+  id: number;
+  creatorId: number;
+  creator?: User;
+  name: string;
+  hashtag: string;
+  category: string;
+  /** @nullable */
+  description?: string | null;
+  days: number;
+  prizePool: number;
+  judgeType: string;
+  status: ChallengeStatus;
+  settings?: ChallengeSettings;
+  startsAt: string;
+  /** @nullable */
+  endsAt?: string | null;
+  createdAt: string;
+  participantsCount: number;
+  isJoined?: boolean;
+}
+
+export interface JoinChallengeInput {
+  reelId: number;
+}
+
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+  xp: number;
+  /** @nullable */
+  lastActiveDate: string | null;
+  touchedToday?: boolean;
+}
+
+export interface OtubeAiTextRequest {
+  caption?: string;
+  category?: string;
+  tags?: string[];
+  transcript?: string;
+}
+
+export interface OtubeAiTitleResult {
+  titles: string[];
+}
+
+export interface OtubeAiDescResult {
+  description: string;
+}
+
+export interface OtubeAiTagsResult {
+  tags: string[];
+}
+
+export type OtubeAiHashtagsResultHashtagsItem = {
+  tag: string;
+  reach: string;
+};
+
+export interface OtubeAiHashtagsResult {
+  hashtags: OtubeAiHashtagsResultHashtagsItem[];
+}
+
+export interface OtubeAiHooksResult {
+  hooks: string[];
+}
+
+export interface OtubeAiDirectorTipsResult {
+  tips: string[];
+}
+
+export interface OtubeAiBestTimeResult {
+  time: string;
+  reason: string;
+  sampleSize?: number;
+}
+
+export type OtubeAiColorResultFilters = {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  temperature: number;
+};
+
+export interface OtubeAiColorResult {
+  filters: OtubeAiColorResultFilters;
+  note: string;
+}
+
+export interface OtubeAiVoiceCaptionInput {
+  audioBase64: string;
+}
+
+export interface OtubeAiVoiceCaptionResult {
+  text: string;
 }
 
 export type StoryMediaType = typeof StoryMediaType[keyof typeof StoryMediaType];
@@ -748,6 +946,14 @@ userId?: number;
 
 export type DeleteReel200 = {
   ok?: boolean;
+};
+
+export type RemoveReelCollaborator200 = {
+  ok?: boolean;
+};
+
+export type ListChallengesParams = {
+creatorId?: number;
 };
 
 export type ListGroupsParams = {

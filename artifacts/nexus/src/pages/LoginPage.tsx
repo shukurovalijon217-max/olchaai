@@ -992,6 +992,17 @@ export default function LoginPage() {
               {tab === "login" ? t("auth.register") : t("auth.login")}
             </button>
           </p>
+
+          <p className="text-center text-[11px] mt-3">
+            <button
+              type="button"
+              onClick={() => setLocation("/about")}
+              style={{ color: "#6a4020" }}
+              className="hover:underline"
+            >
+              {t("about.title")}
+            </button>
+          </p>
         </motion.div>
       </div>
 

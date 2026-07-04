@@ -13,27 +13,11 @@ import {
   View,
 } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { useLikeReel, Reel } from "@workspace/api-client-react";
+import { useRouter } from "expo-router";
 
 const { width: W, height: H } = Dimensions.get("window");
 const BAR_COUNT = 12;
-
-export interface Reel {
-  id: number;
-  authorId: number;
-  authorName: string;
-  authorUsername: string;
-  authorAvatar?: string;
-  isVerified?: boolean;
-  videoUrl?: string;
-  thumbnailUrl?: string;
-  caption?: string;
-  audioTrack?: string;
-  likesCount: number;
-  commentsCount: number;
-  viewsCount?: number;
-  isLiked?: boolean;
-  tags?: string[];
-}
 
 interface Props {
   reel: Reel;
@@ -125,10 +109,11 @@ const tw = StyleSheet.create({ txt: { fontSize: 14, lineHeight: 20 } });
 
 export function ReelCard({ reel, isActive, tabBarHeight = 58 }: Props) {
   const colors = useColors();
+  const router = useRouter();
+  const { mutate: likeReel } = useLikeReel();
   const [liked, setLiked] = useState(reel.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(reel.likesCount);
   const [bookmarked, setBookmarked] = useState(false);
-  const [showComments, setShowComments] = useState(false);
 
   // Double-tap like ripple
   const rippleScale = useRef(new Animated.Value(0)).current;
@@ -149,6 +134,7 @@ export function ReelCard({ reel, isActive, tabBarHeight = 58 }: Props) {
     if (!liked) {
       setLiked(true);
       setLikeCount(v => v + 1);
+      likeReel({ id: reel.id });
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     rippleScale.setValue(0);
@@ -172,12 +158,22 @@ export function ReelCard({ reel, isActive, tabBarHeight = 58 }: Props) {
 
   const handleLike = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLiked(v => !v);
-    setLikeCount(v => liked ? v-1 : v+1);
-    if (!liked) triggerLike();
+    const newLiked = !liked;
+    setLiked(newLiked);
+    setLikeCount(v => newLiked ? v + 1 : v - 1);
+    likeReel({ id: reel.id });
+    if (newLiked) triggerLike();
   };
 
-  const initials = reel.authorName.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  const handleComments = () => {
+    router.push({
+      pathname: "/web",
+      params: { path: `/reel/${reel.id}`, title: "Izohlar" }
+    } as any);
+  };
+
+  const author = reel.author;
+  const initials = (author?.displayName || author?.username || "U").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
 
   return (
     <TouchableWithoutFeedback onPress={handleDoubleTap}>
@@ -220,8 +216,8 @@ export function ReelCard({ reel, isActive, tabBarHeight = 58 }: Props) {
           <View style={rs.authorWrap}>
             <LinearGradient colors={["#7857ff", "#22d3ee"]} style={rs.authorRing}>
               <View style={[rs.authorInner, { backgroundColor: colors.background }]}>
-                {reel.authorAvatar ? (
-                  <Image source={{ uri: reel.authorAvatar }} style={rs.authorImg} contentFit="cover" />
+                {author?.avatarUrl ? (
+                  <Image source={{ uri: author.avatarUrl }} style={rs.authorImg} contentFit="cover" />
                 ) : (
                   <LinearGradient colors={["#7857ff", "#9d19ff"]} style={rs.authorImg}>
                     <Text style={rs.authorInitials}>{initials}</Text>
@@ -239,9 +235,9 @@ export function ReelCard({ reel, isActive, tabBarHeight = 58 }: Props) {
             <Text style={rs.sideTxt}>{fmtNum(likeCount)}</Text>
           </Pressable>
 
-          <Pressable style={rs.sideBtn} onPress={() => setShowComments(v=>!v)}>
+          <Pressable style={rs.sideBtn} onPress={handleComments}>
             <Feather name="message-circle" size={26} color="#fff" />
-            <Text style={rs.sideTxt}>{fmtNum(reel.commentsCount)}</Text>
+            <Text style={rs.sideTxt}>{fmtNum(reel.commentsCount || 0)}</Text>
           </Pressable>
 
           <Pressable style={rs.sideBtn}>
@@ -262,8 +258,8 @@ export function ReelCard({ reel, isActive, tabBarHeight = 58 }: Props) {
         <View style={[rs.bottom, { paddingBottom: tabBarHeight + 16 }]}>
           {/* Author row */}
           <View style={rs.authorRow}>
-            <Text style={rs.authorName}>@{reel.authorUsername}</Text>
-            {reel.isVerified && (
+            <Text style={rs.authorName}>@{author?.username}</Text>
+            {author?.isVerified && (
               <View style={[rs.verBadge, { backgroundColor: "rgba(120,87,255,0.3)" }]}>
                 <Feather name="check" size={10} color="#7857ff" />
               </View>
@@ -292,7 +288,7 @@ export function ReelCard({ reel, isActive, tabBarHeight = 58 }: Props) {
           {/* Audio + waveform */}
           <View style={rs.audioRow}>
             <Feather name="music" size={12} color="rgba(255,255,255,0.7)" />
-            <Text style={rs.audioTxt}>{reel.audioTrack ?? "Original Audio"}</Text>
+            <Text style={rs.audioTxt}>Original Audio</Text>
             <Waveform playing={isActive} />
           </View>
 

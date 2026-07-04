@@ -29,4 +29,13 @@ description: Key architecture pointers for Go, Express, Nexus, and Expo artifact
 - `earningsBalance` — creator earnings
 - No generated hook for wallet — use manual fetch or add to OpenAPI spec
 
+**Mobile app architecture (Expo, `olcha-mobile`):**
+- Native devices: `(tabs)` screens (feed, reels, messages, profile, create) are the primary UI, wired to real API data via `@workspace/api-client-react` hooks + Bearer-token `AuthContext` (token in AsyncStorage).
+- The old full-app WebView is demoted to `app/web.tsx`, a bridge screen (header+back, `path`/`title` params) reachable from native screens for flows not yet built natively.
+- Web platform (`Platform.OS === "web"`) still renders the full IframeShell in `index.tsx`, unchanged.
+- Native Bearer-token auth and the WebView's cookie-session auth are separate — no SSO bridge yet, so a user logged in natively is not logged into pages opened via `/web`.
+- `POST /api/auth/register` requires `phone` server-side; any registration form (web or mobile) must collect and send it.
+
+**Security:** `api-server/src/app.ts` has a global `res.json` override that recursively strips any `passwordHash` key from every `/api` response, as defense-in-depth on top of routes destructuring it out manually.
+
 **Why:** These pointers save rebuild steps and prevent common mistakes across sessions.

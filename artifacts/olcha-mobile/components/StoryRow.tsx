@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
@@ -13,15 +13,6 @@ export interface Story {
   viewed?: boolean;
 }
 
-const DEMO: Story[] = [
-  { id: 1, userId: 10, username: "aziz_k", viewed: false },
-  { id: 2, userId: 11, username: "malika", viewed: false },
-  { id: 3, userId: 12, username: "timur", viewed: false },
-  { id: 4, userId: 13, username: "nilu", viewed: true },
-  { id: 5, userId: 14, username: "bobur", viewed: true },
-  { id: 6, userId: 15, username: "dilo", viewed: true },
-];
-
 interface Props {
   stories?: Story[];
   onAddStory?: () => void;
@@ -31,6 +22,11 @@ interface Props {
 function StoryItem({ story, onView }: { story: Story; onView?: (id: number) => void }) {
   const colors = useColors();
   const [viewed, setViewed] = useState(story.viewed ?? false);
+
+  useEffect(() => {
+    setViewed(story.viewed ?? false);
+  }, [story.viewed]);
+
   const initials = story.username.slice(0, 2).toUpperCase();
 
   const handlePress = () => {
@@ -79,7 +75,7 @@ function StoryItem({ story, onView }: { story: Story; onView?: (id: number) => v
   );
 }
 
-export function StoryRow({ stories = DEMO, onAddStory, onView }: Props) {
+export function StoryRow({ stories = [], onAddStory, onView }: Props) {
   const colors = useColors();
 
   return (

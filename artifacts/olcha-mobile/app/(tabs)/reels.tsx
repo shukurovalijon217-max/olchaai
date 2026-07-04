@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState, useMemo } from "react";
 import {
   Dimensions,
   FlatList,
@@ -11,59 +11,14 @@ import {
   Text,
   View,
   ViewToken,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ReelCard, type Reel } from "@/components/ReelCard";
+import { ReelCard } from "@/components/ReelCard";
 import { useColors } from "@/hooks/useColors";
+import { useListReels, Reel } from "@workspace/api-client-react";
 
 const { width: W, height: H } = Dimensions.get("window");
-
-const MOCK: Reel[] = [
-  {
-    id: 1, authorId: 1, authorName: "Aziz Karimov", authorUsername: "azizk",
-    isVerified: true,
-    thumbnailUrl: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800",
-    caption: "OlchaAI'da reel qilish — eng oson va eng go'zal tajriba. Sizda ham bormi?",
-    audioTrack: "Dua Lipa — Levitating",
-    likesCount: 142000, commentsCount: 3420, viewsCount: 2800000,
-    isLiked: false, tags: ["olcha", "tech", "uzbekistan"],
-  },
-  {
-    id: 2, authorId: 2, authorName: "Malika Yusupova", authorUsername: "malika_y",
-    isVerified: true,
-    thumbnailUrl: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800",
-    caption: "Registon quyosh botayotganda — dunyo manzaralari sirasida top 10 da! 🌅 Samarqand forever 💜",
-    audioTrack: "Original Sound · malika_y",
-    likesCount: 389000, commentsCount: 12470, viewsCount: 8900000,
-    isLiked: true, tags: ["samarkand", "travel", "uzbekistan"],
-  },
-  {
-    id: 3, authorId: 3, authorName: "Timur Dev", authorUsername: "timur_dev",
-    thumbnailUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
-    caption: "2am coding session + coffee + dark theme = perfection ☕ Ship it!",
-    audioTrack: "Lo-fi Hip Hop Beats",
-    likesCount: 56700, commentsCount: 1280, viewsCount: 1200000,
-    isLiked: false, tags: ["coding", "devlife", "startup"],
-  },
-  {
-    id: 4, authorId: 4, authorName: "Dilnoza Art", authorUsername: "dilnoza_art",
-    isVerified: false,
-    thumbnailUrl: "https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=800",
-    caption: "O'zbek naqshlari + zamonaviy dizayn = yangi estetika. Bu kolleksiya 3 oy mehnat!",
-    audioTrack: "Traditional Uzbek Beat Remix",
-    likesCount: 221000, commentsCount: 4560, viewsCount: 4500000,
-    isLiked: false, tags: ["art", "design", "uzbek"],
-  },
-  {
-    id: 5, authorId: 5, authorName: "Kamol Umarov", authorUsername: "kamol_u",
-    isVerified: true,
-    thumbnailUrl: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800",
-    caption: "Morning routine that changed my life. Wake up 5am, gym, meditate, code. Results? Judge yourself 💪",
-    audioTrack: "Rocky Theme — Survivor",
-    likesCount: 891000, commentsCount: 23400, viewsCount: 18000000,
-    isLiked: false, tags: ["motivation", "fitness", "mindset"],
-  },
-];
 
 type FilterTab = "all" | "trending" | "following";
 
@@ -75,6 +30,9 @@ export default function ReelsScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const tabBarH = Platform.OS === "web" ? 84 : 58;
 
+  const { data, isLoading, refetch } = useListReels();
+  const reels = (data as Reel[]) || [];
+
   const onViewable = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0 && viewableItems[0].index != null) {
       setActiveIdx(viewableItems[0].index);
@@ -82,6 +40,14 @@ export default function ReelsScreen() {
   }, []);
 
   const viewConfig = useRef({ itemVisiblePercentThreshold: 60 });
+
+  if (isLoading && !reels.length) {
+    return (
+      <View style={[rs.container, { backgroundColor: "#000", justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color="#7857ff" />
+      </View>
+    );
+  }
 
   return (
     <View style={[rs.container, { backgroundColor: "#000" }]}>
@@ -116,7 +82,7 @@ export default function ReelsScreen() {
       </View>
 
       <FlatList
-        data={MOCK}
+        data={reels}
         keyExtractor={r => r.id.toString()}
         renderItem={({ item, index }) => (
           <ReelCard reel={item} isActive={index === activeIdx} tabBarHeight={tabBarH} />
@@ -128,10 +94,13 @@ export default function ReelsScreen() {
         onViewableItemsChanged={onViewable}
         viewabilityConfig={viewConfig.current}
         getItemLayout={(_, idx) => ({ length: H, offset: H * idx, index: idx })}
+        onRefresh={refetch}
+        refreshing={isLoading}
       />
     </View>
   );
 }
+
 
 const rs = StyleSheet.create({
   container: { flex: 1 },

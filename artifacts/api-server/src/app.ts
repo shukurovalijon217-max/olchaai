@@ -198,6 +198,25 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+/* ── Security: strip any accidental passwordHash leakage from responses ──
+   Defense in depth — routes should already omit passwordHash, but this
+   guarantees it never reaches a client even if a future route forgets. */
+function stripPasswordHash(value: unknown, depth = 0): unknown {
+  if (depth > 6 || value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map((v) => stripPasswordHash(v, depth + 1));
+  const out: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+    if (key === "passwordHash") continue;
+    out[key] = stripPasswordHash(val, depth + 1);
+  }
+  return out;
+}
+app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+  const originalJson = res.json.bind(res);
+  res.json = ((body?: unknown) => originalJson(stripPasswordHash(body))) as typeof res.json;
+  next();
+});
+
 app.use("/api", router);
 
 export default app;

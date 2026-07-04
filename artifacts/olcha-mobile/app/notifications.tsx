@@ -8,33 +8,36 @@ import {
   StyleSheet,
   Text,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import {
+  useListNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from "@workspace/api-client-react";
+import type { Notification } from "@workspace/api-client-react";
 
-interface Notif {
-  id: number;
-  type: "like" | "comment" | "follow" | "mention";
-  actorName: string;
-  text: string;
-  timeAgo: string;
-  read: boolean;
-}
-
-const MOCK_NOTIFS: Notif[] = [
-  { id: 1, type: "like", actorName: "Aziz K", text: "liked your post", timeAgo: "2m", read: false },
-  { id: 2, type: "follow", actorName: "Malika Y", text: "started following you", timeAgo: "15m", read: false },
-  { id: 3, type: "comment", actorName: "Timur R", text: 'commented: "Amazing work!"', timeAgo: "1h", read: false },
-  { id: 4, type: "mention", actorName: "Nilufar H", text: "mentioned you in a post", timeAgo: "3h", read: true },
-  { id: 5, type: "like", actorName: "Bobur T", text: "liked your reel", timeAgo: "5h", read: true },
-  { id: 6, type: "follow", actorName: "Dilorom S", text: "started following you", timeAgo: "1d", read: true },
-];
-
-const ICON_MAP: Record<Notif["type"], { name: "heart" | "message-circle" | "user-plus" | "at-sign"; color: string }> = {
+const ICON_MAP: Record<string, { name: "heart" | "message-circle" | "user-plus" | "at-sign"; color: string }> = {
   like: { name: "heart", color: "#ff2d9b" },
   comment: { name: "message-circle", color: "#7c5cfc" },
   follow: { name: "user-plus", color: "#00e5ff" },
   mention: { name: "at-sign", color: "#ffc400" },
+};
+
+const getTimeAgo = (dateStr: string) => {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return `${diffInSeconds}s`;
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d`;
 };
 
 export default function NotificationsScreen() {
@@ -42,6 +45,39 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const { data: notifications = [], isLoading, refetch } = useListNotifications();
+  const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllRead.mutateAsync();
+      refetch();
+    } catch (error) {
+      console.error("Failed to mark all as read", error);
+    }
+  };
+
+  const handleNotificationPress = async (n: Notification) => {
+    if (!n.isRead) {
+      try {
+        await markRead.mutateAsync({ id: n.id });
+        refetch();
+      } catch (error) {
+        console.error("Failed to mark as read", error);
+      }
+    }
+
+    if (n.targetId && n.targetType === "post") {
+      // Assuming a post detail screen exists at /post/[id]
+      // router.push({ pathname: "/post/[id]", params: { id: n.targetId } });
+      // But the instructions say: "do NOT invent navigation for target types that have no real screen"
+      // Let's check if there is a post detail screen. 
+      // Looking at the file list, artifacts/olcha-mobile/app/ does not seem to have a post detail screen.
+      // It has feed, index, messages, profile, reels.
+    }
+  };
 
   return (
     <>
@@ -52,46 +88,65 @@ export default function NotificationsScreen() {
             <Feather name="arrow-left" size={22} color={colors.text} />
           </Pressable>
           <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
-          <Pressable>
-            <Feather name="check-circle" size={20} color={colors.mutedForeground} />
+          <Pressable onPress={handleMarkAllRead}>
+            <Feather name="check-circle" size={20} color={colors.primary} />
           </Pressable>
         </View>
 
-        <FlatList
-          data={MOCK_NOTIFS}
-          keyExtractor={(n) => n.id.toString()}
-          renderItem={({ item: n }) => {
-            const icon = ICON_MAP[n.type];
-            const initials = n.actorName.slice(0, 2).toUpperCase();
-            return (
-              <Pressable
-                style={[
-                  styles.row,
-                  { borderBottomColor: colors.border },
-                  !n.read && { backgroundColor: colors.primary + "0d" },
-                ]}
-              >
-                <View style={[styles.actorAvatar, { backgroundColor: colors.primary + "33" }]}>
-                  <Text style={[styles.actorInitials, { color: colors.primary }]}>{initials}</Text>
-                </View>
-                <View style={[styles.iconBadge, { backgroundColor: icon.color }]}>
-                  <Feather name={icon.name} size={11} color="#fff" />
-                </View>
-                <View style={styles.content}>
-                  <Text style={[styles.notifText, { color: colors.text }]}>
-                    <Text style={{ fontWeight: "700" }}>{n.actorName}</Text> {n.text}
-                  </Text>
-                  <Text style={[styles.timeText, { color: colors.mutedForeground }]}>{n.timeAgo}</Text>
-                </View>
-                {!n.read && (
-                  <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
-                )}
-              </Pressable>
-            );
-          }}
-          contentContainerStyle={{ paddingBottom: 40 }}
-          showsVerticalScrollIndicator={false}
-        />
+        {isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={notifications}
+            keyExtractor={(n) => n.id.toString()}
+            renderItem={({ item: n }) => {
+              const icon = ICON_MAP[n.type] || { name: "bell", color: colors.mutedForeground };
+              const actorName = n.actorName || "Someone";
+              const initials = actorName.slice(0, 2).toUpperCase();
+              return (
+                <Pressable
+                  onPress={() => handleNotificationPress(n)}
+                  style={[
+                    styles.row,
+                    { borderBottomColor: colors.border },
+                    !n.isRead && { backgroundColor: colors.primary + "0d" },
+                  ]}
+                >
+                  <View style={[styles.actorAvatar, { backgroundColor: colors.primary + "33" }]}>
+                    {n.actorAvatar ? (
+                      <Text style={[styles.actorInitials, { color: colors.primary }]}>{initials}</Text>
+                    ) : (
+                      <Text style={[styles.actorInitials, { color: colors.primary }]}>{initials}</Text>
+                    )}
+                  </View>
+                  <View style={[styles.iconBadge, { backgroundColor: icon.color }]}>
+                    <Feather name={icon.name as any} size={11} color="#fff" />
+                  </View>
+                  <View style={styles.content}>
+                    <Text style={[styles.notifText, { color: colors.text }]}>
+                      <Text style={{ fontWeight: "700" }}>{actorName}</Text> {n.message}
+                    </Text>
+                    <Text style={[styles.timeText, { color: colors.mutedForeground }]}>
+                      {getTimeAgo(n.createdAt)}
+                    </Text>
+                  </View>
+                  {!n.isRead && (
+                    <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
+                  )}
+                </Pressable>
+              );
+            }}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.center}>
+                <Text style={{ color: colors.mutedForeground }}>No notifications yet</Text>
+              </View>
+            }
+          />
+        )}
       </View>
     </>
   );
@@ -99,6 +154,7 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },
   header: {
     flexDirection: "row",
     alignItems: "center",

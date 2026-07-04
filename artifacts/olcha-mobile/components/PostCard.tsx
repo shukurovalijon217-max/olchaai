@@ -1,8 +1,9 @@
+import { Post as ApiPost } from "@workspace/api-client-react";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Animated,
   Dimensions,
@@ -131,13 +132,20 @@ export function PostCard({ post, onLike }: Props) {
 
   const [liked, setLiked] = useState(post.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(post.likesCount);
+
+  useEffect(() => {
+    setLiked(post.isLiked ?? false);
+    setLikeCount(post.likesCount);
+  }, [post.isLiked, post.likesCount]);
+
   const [bookmarked, setBookmarked] = useState(false);
   const heartScale = useRef(new Animated.Value(1)).current;
 
   const handleLike = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLiked(v => !v);
-    setLikeCount(v => liked ? v-1 : v+1);
+    const newLiked = !liked;
+    setLiked(newLiked);
+    setLikeCount(v => newLiked ? v + 1 : v - 1);
     onLike?.(post.id);
     Animated.sequence([
       Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true, speed: 40 }),

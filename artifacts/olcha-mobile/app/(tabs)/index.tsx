@@ -22,17 +22,18 @@ interface CreateOption {
   gradient: [string, string];
   badge?: string;
   route: string;
+  params?: any;
 }
 
 const OPTIONS: CreateOption[] = [
   { icon: "edit-3", label: "Post", sub: "Fikr va rasmlarni ulashing", gradient: ["#7857ff", "#9d19ff"], badge: "Popular", route: "/create/post" },
   { icon: "book-open", label: "Story", sub: "24 soatlik lahza", gradient: ["#22d3ee", "#7857ff"], route: "/create/story" },
   { icon: "film", label: "Reel", sub: "Qisqa video", gradient: ["#ec4899", "#f97316"], badge: "Trending", route: "/create/reel" },
-  { icon: "play-circle", label: "OTube", sub: "Uzun formatli video", gradient: ["#f59e0b", "#ef4444"], route: "/create/otube" },
-  { icon: "zap", label: "Challenge", sub: "Trend boshlang", gradient: ["#10b981", "#22d3ee"], badge: "New", route: "/create/challenge" },
-  { icon: "shopping-bag", label: "Bozor", sub: "Mahsulot soting", gradient: ["#f97316", "#f59e0b"], route: "/create/shop" },
-  { icon: "radio", label: "Live", sub: "Jonli efir", gradient: ["#ef4444", "#ec4899"], route: "/create/live" },
-  { icon: "mic", label: "Spaces", sub: "Audio suhbat", gradient: ["#6366f1", "#7857ff"], route: "/create/spaces" },
+  { icon: "play-circle", label: "OTube", sub: "Uzun formatli video", gradient: ["#f59e0b", "#ef4444"], route: "/web", params: { path: "/otube", title: "OTube" } },
+  { icon: "zap", label: "Challenge", sub: "Trend boshlang", gradient: ["#10b981", "#22d3ee"], badge: "New", route: "/web", params: { path: "/quests", title: "Challenges" } },
+  { icon: "shopping-bag", label: "Bozor", sub: "Mahsulot soting", gradient: ["#f97316", "#f59e0b"], route: "/web", params: { path: "/bozor/sotish", title: "Bozor" } },
+  { icon: "radio", label: "Live", sub: "Jonli efir", gradient: ["#ef4444", "#ec4899"], route: "/web", params: { path: "/live-explore", title: "Live" } },
+  { icon: "mic", label: "Spaces", sub: "Audio suhbat", gradient: ["#6366f1", "#7857ff"], route: "/web", params: { path: "/spaces", title: "Spaces" } },
 ];
 
 const BADGE_COLORS: Record<string, [string, string]> = {
@@ -48,9 +49,13 @@ export default function CreateScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : 0;
 
-  const handleOption = (opt: CreateOption) => {
+  const handleOption = (opt: any) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push(opt.route as never);
+    if (opt.route === "/web") {
+      router.push({ pathname: "/web", params: opt.params } as any);
+    } else {
+      router.push(opt.route as any);
+    }
   };
 
   return (

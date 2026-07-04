@@ -21,3 +21,5 @@
 - [Express router.use(middleware) without a path leaks globally](express-router-use-no-path.md) — unscoped requireAuth/requireAdmin on a late-mounted sub-router gates ALL unmatched requests, not just its own routes.
 - [Midnight Confessions visibility semantics](midnight-confess-visibility.md) — midnight-only posts hide from everyone including the author outside the window; only admin moderation is exempt.
 - [Rebranding a brand string across a monorepo](rebranding-brand-string.md) — filenames/identifiers and third-party name lookups (e.g. Stripe product search) need explicit handling, not just text sed.
+- [OTube collab/challenges API contracts](otube-api-contracts.md) — collaborators invite by username handle not userId; challenges need name/hashtag/category not title/description; no total-views endpoint, sum client-side.
+- [Orval generated hooks + conditional enabled](orval-enabled-querykey.md) — passing query.enabled without an explicit queryKey can throw TS2741; always pass getXxxQueryKey(params) alongside enabled.

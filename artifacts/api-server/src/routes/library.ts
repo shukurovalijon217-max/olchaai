@@ -242,7 +242,7 @@ router.get("/library/translate", async (req, res) => {
 
   try {
     const langpair = from === "auto" ? `${from}|${to}` : `${from}|${to}`;
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${langpair}&de=olcha@olcha.uz`;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${langpair}&de=olcha@olchaai.com`;
     const resp = await fetch(url, { headers: { "User-Agent": "OlCha/1.0" } });
     if (!resp.ok) { res.status(502).json({ error: "Translation service unavailable" }); return; }
     const data = await resp.json() as {

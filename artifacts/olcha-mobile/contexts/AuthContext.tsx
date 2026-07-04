@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (username: string, displayName: string, password: string) => {
-    const email = `${username}@olcha.uz`;
+    const email = `${username}@olchaai.com`;
     const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

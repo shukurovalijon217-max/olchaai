@@ -9,4 +9,4 @@ data:
   GO_SERVICE_URL: "http://olcha-go:8082"
   TENSORFLOW_BACKEND: "cpu"
   LOG_LEVEL: "info"
-  CORS_ORIGIN: "https://olcha.uz"
+  CORS_ORIGIN: "https://olchaai.com"

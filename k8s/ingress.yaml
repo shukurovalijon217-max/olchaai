@@ -18,12 +18,12 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - olcha.uz
-        - www.olcha.uz
-        - api.olcha.uz
+        - olchaai.com
+        - www.olchaai.com
+        - api.olchaai.com
       secretName: olcha-tls
   rules:
-    - host: olcha.uz
+    - host: olchaai.com
       http:
         paths:
           - path: /api

@@ -16,3 +16,5 @@
 - [olcha-mobile WebView typecheck workaround](mobile-webview-typecheck.md) — keep the @ts-ignore above <WebView> in index.tsx or workspace typecheck breaks; version mismatch causes "never" overload errors.
 - [WebView continuous-animation freeze pattern](webview-animation-perf.md) — unconditional Framer Motion `repeat: Infinity` animations per feed card cause mobile WebView freeze; gate by useInView.
 - [Global floating chrome overlay interception](floating-chrome-overlay-interception.md) — fixed-position AI orb/dock tabs in shared Layout can swallow taps on full-screen overlays even with lower z-index; gate chrome behind a shared context flag, not z-index alone.
+- [React Query invalidate key must match active params](react-query-invalidate-key-match.md) — getXQueryKey() invalidation silently no-ops if called with different params than the live hook used.
+- [Toggle buttons need distinct text per state](ui-toggle-icon-only-state.md) — icon-only state changes (follow/like/save) look broken to tests and users; always vary the label text too.

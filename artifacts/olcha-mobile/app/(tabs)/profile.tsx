@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -35,6 +35,8 @@ const MEDIA = [
 
 type PTab = "posts" | "reels" | "tagged";
 
+const DOMAIN = process.env.EXPO_PUBLIC_DOMAIN ?? "";
+
 function StatCard({ value, label, color }: { value: string; label: string; color: string }) {
   const colors = useColors();
   return (
@@ -51,7 +53,7 @@ export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const [pTab, setPTab] = useState<PTab>("posts");
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : 0;
@@ -59,6 +61,23 @@ export default function ProfileScreen() {
   const displayName = user?.displayName ?? "OlchaAI User";
   const username = user?.username ?? "olcha_user";
   const initials = displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    fetch(`https://${DOMAIN}/api/users/${user.id}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((data) => {
+        if (cancelled) return;
+        updateUser({
+          postsCount: data.postsCount ?? 0,
+          followersCount: data.followersCount ?? 0,
+          followingCount: data.followingCount ?? 0,
+        });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   return (
     <ScrollView
@@ -127,9 +146,9 @@ export default function ProfileScreen() {
         )}
 
         <View style={p.statsRow}>
-          <StatCard value="42" label="Posts" color={colors.cyan} />
-          <StatCard value={user?.followersCount?.toString() ?? "1.2K"} label="Followers" color={colors.primary} />
-          <StatCard value={user?.followingCount?.toString() ?? "340"} label="Following" color={colors.rose} />
+          <StatCard value={(user?.postsCount ?? 0).toString()} label="Posts" color={colors.cyan} />
+          <StatCard value={(user?.followersCount ?? 0).toString()} label="Followers" color={colors.primary} />
+          <StatCard value={(user?.followingCount ?? 0).toString()} label="Following" color={colors.rose} />
         </View>
 
         <View style={p.btnRow}>

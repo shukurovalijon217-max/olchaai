@@ -11,22 +11,15 @@ const AVATAR_COLORS = [
   "linear-gradient(135deg,#ffd93d,#f9ca24)",
 ];
 
-const FALLBACK_PROFILES: OlchaAIProfile[] = [
-  { id: "1", username: "sardor_m",   displayName: "Sardor M." },
-  { id: "2", username: "zulfiya_k",  displayName: "Zulfiya K." },
-  { id: "3", username: "bobur_t",    displayName: "Bobur T." },
-  { id: "4", username: "malika_r",   displayName: "Malika R." },
-  { id: "5", username: "jasur_a",    displayName: "Jasur A." },
-  { id: "6", username: "kamola_u",   displayName: "Kamola U." },
-];
-
 interface ProfileOrbitProps {
   profiles?: OlchaAIProfile[];
 }
 
-export function ProfileOrbit({ profiles = FALLBACK_PROFILES }: ProfileOrbitProps) {
+export function ProfileOrbit({ profiles = [] }: ProfileOrbitProps) {
   const [tooltip, setTooltip] = useState<string | null>(null);
   const shown = profiles.slice(0, 6);
+
+  if (shown.length === 0) return null;
 
   return (
     <div
@@ -49,7 +42,7 @@ export function ProfileOrbit({ profiles = FALLBACK_PROFILES }: ProfileOrbitProps
           transition={{ duration: 1.2, repeat: Infinity }}
         />
         <span style={{ fontSize: 9, fontFamily: "monospace", color: "rgba(0,229,255,0.7)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-          Online
+          Foydalanuvchilar
         </span>
       </div>
 

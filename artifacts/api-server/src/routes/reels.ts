@@ -4,6 +4,7 @@ import { reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQu
 import { eq, sql, desc, and, inArray, not, count } from "drizzle-orm";
 import { accumulateViewEarning } from "./monetization";
 import { scanContentAsync } from "../moderation/aiFilter";
+import { getUserStats, getUserStatsMap } from "../lib/userStats";
 
 const router = Router();
 
@@ -17,7 +18,7 @@ async function batchEnrichReels(
   const authorIds = [...new Set(reels.map(r => r.authorId).filter(Boolean))] as number[];
   const reelIds = reels.map(r => r.id);
 
-  const [authors, likedRows, followRows, followerCounts] = await Promise.all([
+  const [authors, likedRows, statsMap] = await Promise.all([
     authorIds.length > 0
       ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : Promise.resolve([]),
@@ -27,29 +28,17 @@ async function batchEnrichReels(
           .from(reelLikesTable)
           .where(and(inArray(reelLikesTable.reelId, reelIds), eq(reelLikesTable.userId, viewerId)))
       : Promise.resolve([]),
-    viewerId && authorIds.length > 0
-      ? db
-          .select({ followingId: followsTable.followingId })
-          .from(followsTable)
-          .where(and(eq(followsTable.followerId, viewerId), inArray(followsTable.followingId, authorIds)))
-      : Promise.resolve([]),
-    authorIds.length > 0
-      ? db
-          .select({ userId: followsTable.followingId, cnt: count(followsTable.followerId) })
-          .from(followsTable)
-          .where(inArray(followsTable.followingId, authorIds))
-          .groupBy(followsTable.followingId)
-      : Promise.resolve([]),
+    getUserStatsMap(authorIds, viewerId),
   ]);
 
   const authorMap = new Map(authors.map(a => [a.id, a]));
   const likedSet = new Set((likedRows as { reelId: number }[]).map(l => l.reelId));
-  const followingSet = new Set((followRows as { followingId: number }[]).map(f => f.followingId));
-  const followerMap = new Map((followerCounts as { userId: number; cnt: number }[]).map(r => [r.userId, r.cnt]));
 
   return reels.map(reel => {
     const author = authorMap.get(reel.authorId as number);
     const authorId = author?.id ?? (reel.authorId as number);
+    const stats = statsMap.get(authorId) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
+
     return {
       ...reel,
       likesCount: reel.likesCount ?? 0,
@@ -61,10 +50,7 @@ async function batchEnrichReels(
         displayName: author?.displayName ?? "Deleted User",
         avatarUrl: author?.avatarUrl ?? null,
         isVerified: author?.isVerified ?? false,
-        followersCount: followerMap.get(authorId) ?? 0,
-        followingCount: 0,
-        postsCount: 0,
-        isFollowing: followingSet.has(authorId),
+        ...stats,
       },
       tags: reel.tags || [],
       isLiked: likedSet.has(reel.id),
@@ -253,20 +239,23 @@ router.get("/reels/:id/comments", async (req, res) => {
     if (comments.length === 0) { res.json([]); return; }
 
     const authorIds = [...new Set(comments.map(c => c.authorId).filter(Boolean))] as number[];
+    const viewerId = (req.session as any)?.userId as number | undefined;
     const authors = authorIds.length > 0
       ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : [];
     const authorMap = new Map(authors.map(a => [a.id, a]));
+    const statsMap = await getUserStatsMap(authorIds, viewerId);
 
     res.json(comments.map(c => {
       const author = authorMap.get(c.authorId as number);
+      const stats = statsMap.get(c.authorId as number) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
       return {
         ...c,
         author: {
           id: author?.id ?? c.authorId, username: author?.username ?? "deleted",
           displayName: author?.displayName ?? "Deleted User", avatarUrl: author?.avatarUrl ?? null,
           isVerified: author?.isVerified ?? false,
-          followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false,
+          ...stats,
         },
       };
     }));
@@ -289,13 +278,14 @@ router.post("/reels/:id/comments", async (req, res) => {
     await db.update(reelsTable).set({ commentsCount: sql`${reelsTable.commentsCount} + 1` }).where(eq(reelsTable.id, reelId));
 
     const [author] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    const stats = await getUserStats(userId, userId);
     res.status(201).json({
       ...comment,
       author: {
         id: author?.id ?? userId, username: author?.username ?? "deleted",
         displayName: author?.displayName ?? "Deleted User", avatarUrl: author?.avatarUrl ?? null,
         isVerified: author?.isVerified ?? false,
-        followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false,
+        ...stats,
       },
     });
 

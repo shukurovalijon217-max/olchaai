@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { usersTable, followsTable, postsTable } from "@workspace/db";
-import { eq, ilike, sql, and, desc } from "drizzle-orm";
+import { eq, ilike, sql, and, desc, inArray } from "drizzle-orm";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
+import { getUserStats, getUserStatsMap } from "../lib/userStats";
 
 const router = Router();
 
@@ -11,6 +12,7 @@ router.get("/users", async (req, res) => {
     const search = req.query.search as string | undefined;
     const limit = Math.min(Number(req.query.limit) || 20, 100);
     const offset = Number(req.query.offset) || 0;
+    const viewerId = (req.session as any)?.userId as number | undefined;
 
     let query = db.select().from(usersTable);
     if (search) {
@@ -18,10 +20,10 @@ router.get("/users", async (req, res) => {
     }
     const users = await query.limit(limit).offset(offset);
 
-    const enriched = await Promise.all(users.map(async (u) => {
-      const [followers] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, u.id));
-      const [following] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, u.id));
-      return { ...u, followersCount: followers.count, followingCount: following.count, postsCount: 0, isFollowing: false };
+    const statsMap = await getUserStatsMap(users.map(u => u.id), viewerId);
+    const enriched = users.map((u) => ({
+      ...u,
+      ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
     }));
 
     res.json(enriched);
@@ -131,12 +133,18 @@ router.post("/users/:id/follow", async (req, res) => {
 router.get("/users/:id/followers", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const viewerId = (req.session as any)?.userId as number | undefined;
     const follows = await db.select().from(followsTable).where(eq(followsTable.followingId, id));
-    const users = await Promise.all(follows.map(async (f) => {
-      const [u] = await db.select().from(usersTable).where(eq(usersTable.id, f.followerId));
-      return u ? { ...u, followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false } : null;
+    const userIds = follows.map(f => f.followerId);
+    if (userIds.length === 0) { res.json([]); return; }
+
+    const users = await db.select().from(usersTable).where(inArray(usersTable.id, userIds));
+    const statsMap = await getUserStatsMap(userIds, viewerId);
+    const enriched = users.map((u) => ({
+      ...u,
+      ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
     }));
-    res.json(users.filter(Boolean));
+    res.json(enriched);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

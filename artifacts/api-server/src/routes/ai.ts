@@ -8,11 +8,12 @@ import { desc, eq, and, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage } from "../lib/aiAccess";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
+import { getUserStatsMap } from "../lib/userStats";
 
 const router = Router();
 
-function enrichUser(u: Record<string, unknown>) {
-  return { ...u, followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
+function enrichUser(u: Record<string, unknown>, stats: any) {
+  return { ...u, ...(stats || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }) };
 }
 
 router.get("/ai/feed", async (req, res) => {
@@ -76,6 +77,7 @@ router.get("/ai/feed", async (req, res) => {
       ? await db.select().from(usersTable).where(inArray(usersTable.id, allAuthorIds))
       : [];
     const authorMap = new Map(authors.map(a => [a.id, a]));
+    const statsMap = await getUserStatsMap(allAuthorIds, userId);
 
     /* Batch fetch liked status if logged in */
     const viewerId = userId;
@@ -102,7 +104,7 @@ router.get("/ai/feed", async (req, res) => {
         ...p,
         likesCount: p.likesCount ?? 0,
         commentsCount: p.commentsCount ?? 0,
-        author: enrichUser(author as Record<string, unknown>),
+        author: enrichUser(author as Record<string, unknown>, statsMap.get(p.authorId as number)),
         tags,
         isLiked: likedPostIds.has(p.id),
         _score: personalScore + popularScore + freshnessBoost,
@@ -116,7 +118,7 @@ router.get("/ai/feed", async (req, res) => {
         ...r,
         likesCount: r.likesCount ?? 0,
         commentsCount: r.commentsCount ?? 0,
-        author: enrichUser(author as Record<string, unknown>),
+        author: enrichUser(author as Record<string, unknown>, statsMap.get(r.authorId as number)),
         tags: r.tags ?? [],
         isLiked: false,
       };
@@ -126,7 +128,7 @@ router.get("/ai/feed", async (req, res) => {
     const suggestedUsers = authors
       .filter(u => u.id !== userId)
       .slice(0, 5)
-      .map(u => enrichUser(u as Record<string, unknown>));
+      .map(u => enrichUser(u as Record<string, unknown>, statsMap.get(u.id)));
 
     /* Echo Detector: how much of the personalization signal is concentrated
      * in a single tag — a high share means the feed is stuck in a bubble. */
@@ -278,32 +280,41 @@ Tags: 3-6 relevant hashtags without #.`,
 
 router.get("/ai/trending-topics", async (req, res) => {
   try {
-    const rows = await db.select({ tags: postsTable.tags }).from(postsTable).limit(1000);
-    const tagCounts: Record<string, number> = {};
+    const rows = await db.select({ tags: postsTable.tags, createdAt: postsTable.createdAt }).from(postsTable).limit(2000);
+    const now = Date.now();
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const recentCounts: Record<string, number> = {};
+    const priorCounts: Record<string, number> = {};
     for (const row of rows) {
-      if (Array.isArray(row.tags)) {
-        for (const tag of row.tags) {
-          if (tag) tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
-        }
+      if (!Array.isArray(row.tags)) continue;
+      const ageMs = now - new Date(row.createdAt).getTime();
+      for (const tag of row.tags) {
+        if (!tag) continue;
+        if (ageMs <= DAY_MS) recentCounts[tag] = (recentCounts[tag] ?? 0) + 1;
+        else if (ageMs <= 2 * DAY_MS) priorCounts[tag] = (priorCounts[tag] ?? 0) + 1;
       }
     }
-    const fromDb = Object.entries(tagCounts)
+    const totalCounts: Record<string, number> = {};
+    for (const row of rows) {
+      if (!Array.isArray(row.tags)) continue;
+      for (const tag of row.tags) {
+        if (tag) totalCounts[tag] = (totalCounts[tag] ?? 0) + 1;
+      }
+    }
+
+    const fromDb = Object.entries(totalCounts)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 8)
-      .map(([tag, postCount]) => ({ tag, postCount, growth: Math.round((Math.random() * 25 + 2) * 10) / 10, category: "Trending" }));
+      .map(([tag, postCount]) => {
+        const recent = recentCounts[tag] ?? 0;
+        const prior = priorCounts[tag] ?? 0;
+        const growth = prior > 0
+          ? Math.round(((recent - prior) / prior) * 1000) / 10
+          : recent > 0 ? 100 : 0;
+        return { tag, postCount, growth, category: "Trending" };
+      });
 
-    if (fromDb.length > 0) { res.json(fromDb); return; }
-
-    res.json([
-      { tag: "OlCha", postCount: 124, growth: 23.5, category: "Platform" },
-      { tag: "AI", postCount: 98, growth: 18.7, category: "Technology" },
-      { tag: "Texnologiya", postCount: 76, growth: 12.0, category: "Technology" },
-      { tag: "Musiqa", postCount: 64, growth: 8.1, category: "Entertainment" },
-      { tag: "Sport", postCount: 52, growth: 15.2, category: "Health" },
-      { tag: "Sayohat", postCount: 43, growth: 6.3, category: "Lifestyle" },
-      { tag: "Ovqat", postCount: 38, growth: 9.8, category: "Lifestyle" },
-      { tag: "San'at", postCount: 31, growth: 4.2, category: "Art" },
-    ]);
+    res.json(fromDb);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -312,9 +323,11 @@ router.get("/ai/trending-topics", async (req, res) => {
 
 router.get("/ai/suggestions", async (req, res) => {
   try {
+    const viewerId = (req.session as any)?.userId as number | undefined;
     const users = await db.select().from(usersTable).limit(6);
+    const statsMap = await getUserStatsMap(users.map(u => u.id), viewerId);
     res.json({
-      users: users.map(u => enrichUser(u as Record<string, unknown>)),
+      users: users.map(u => enrichUser(u as Record<string, unknown>, statsMap.get(u.id))),
       groups: [],
       topics: ["AI", "Fitness", "Photography", "Travel", "Gaming"],
     });

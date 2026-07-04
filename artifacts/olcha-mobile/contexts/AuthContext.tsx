@@ -10,6 +10,7 @@ export interface AuthUser {
   isPremium?: boolean;
   followersCount?: number;
   followingCount?: number;
+  postsCount?: number;
 }
 
 interface AuthContextValue {

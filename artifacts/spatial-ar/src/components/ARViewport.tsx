@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAREngine } from "../hooks/useAREngine";
-import { useOlchaAIData } from "../hooks/useOlchaAIData";
+import { useOlchaAIData, useOlchaAIProfiles } from "../hooks/useOlchaAIData";
 import { PermissionGate } from "./PermissionGate";
 import { StatusHUD } from "./StatusHUD";
 import { ParticleField } from "./ParticleField";
@@ -112,6 +112,7 @@ export function ARViewport() {
 
   const { state, requestAR, skipToDemo } = useAREngine(videoRef, canvasRef, overlayRef);
   const { posts, loading } = useOlchaAIData();
+  const profiles = useOlchaAIProfiles();
 
   return (
     <div
@@ -166,7 +167,7 @@ export function ARViewport() {
         <HoloMenu />
 
         {/* Profile bubbles - right side */}
-        <ProfileOrbit />
+        <ProfileOrbit profiles={profiles} />
       </div>
 
       {/* ── Layer 6: Glitch + scanlines overlay ── */}

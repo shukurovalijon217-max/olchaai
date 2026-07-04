@@ -6,8 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AiSystemStatusMetricsHistoryItem = {
+export type AiSystemStatusVolumeHistoryItem = {
   date: string;
-  accuracy: number;
-  responseTime: number;
+  count: number;
 };

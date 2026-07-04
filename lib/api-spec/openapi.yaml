@@ -1969,17 +1969,17 @@ components:
     # ── Admin ─────────────────────────────────────────────────────────────────
     AdminDashboard:
       type: object
-      required: [totalUsers, totalPosts, totalReels, totalStories, totalGroups, activeNow, flaggedContent, aiAccuracy, dailyGrowth]
+      required: [totalUsers, totalPosts, totalReels, totalStories, totalGroups, activeNow, flaggedContent, newUsersToday, dailyGrowth]
       properties:
         totalUsers: { type: integer }
         totalPosts: { type: integer }
         totalReels: { type: integer }
         totalStories: { type: integer }
         totalGroups: { type: integer }
-        activeNow: { type: integer }
-        flaggedContent: { type: integer }
-        aiAccuracy: { type: number }
-        dailyGrowth: { type: number }
+        activeNow: { type: integer, description: "Users with a live session (real-time, from session store)" }
+        flaggedContent: { type: integer, description: "Pending items in the moderation queue" }
+        newUsersToday: { type: integer }
+        dailyGrowth: { type: number, description: "New users today as a percentage of total users" }
         topRegions:
           type: array
           items:
@@ -2059,31 +2059,23 @@ components:
 
     AiSystemStatus:
       type: object
-      required: [version, accuracy, modelsRunning, lastImproved, recommendations, selfImprovementEnabled]
+      required: [version, modelsRunning, totalModerated, pendingReview, autoBlockedCount, avgAiScore, lastModerationAt]
       properties:
         version: { type: string }
-        accuracy: { type: number }
-        modelsRunning: { type: integer }
-        lastImproved: { type: string }
-        selfImprovementEnabled: { type: boolean }
-        recommendations:
+        modelsRunning: { type: integer, description: "Number of active AI subsystems (moderation, feed ranking, sentiment, chat, twin)" }
+        totalModerated: { type: integer, description: "Total items ever processed by the moderation queue" }
+        pendingReview: { type: integer, description: "Moderation queue items awaiting a human decision" }
+        autoBlockedCount: { type: integer, description: "Items auto-blocked by AI without human review" }
+        avgAiScore: { type: number, description: "Average AI moderation risk score across all processed items" }
+        lastModerationAt: { type: ["string", "null"], description: "Timestamp of the most recent moderation event" }
+        volumeHistory:
           type: array
           items:
             type: object
-            required: [module, suggestion, impact]
-            properties:
-              module: { type: string }
-              suggestion: { type: string }
-              impact: { type: string, enum: [low, medium, high] }
-        metricsHistory:
-          type: array
-          items:
-            type: object
-            required: [date, accuracy, responseTime]
+            required: [date, count]
             properties:
               date: { type: string }
-              accuracy: { type: number }
-              responseTime: { type: integer }
+              count: { type: integer }
 
     LiveStreamInput:
       type: object

@@ -42,6 +42,7 @@ export function CyberCard({ post, isActive, stackIndex }: CyberCardProps) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.likesCount);
   const [shimmer, setShimmer] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const avatarColor = AVATAR_COLORS[Number(post.author.id) % AVATAR_COLORS.length];
@@ -57,9 +58,45 @@ export function CyberCard({ post, isActive, stackIndex }: CyberCardProps) {
 
   const handleMouseLeave = () => setTilt({ x: 0, y: 0 });
 
-  const handleLike = () => {
-    if (liked) { setLiked(false); setLikes((n) => n - 1); }
+  const postUrl = `${window.location.origin}/post/${post.id}`;
+
+  const handleLike = async () => {
+    const wasLiked = liked;
+    if (wasLiked) { setLiked(false); setLikes((n) => n - 1); }
     else { setLiked(true); setLikes((n) => n + 1); setShimmer(true); setTimeout(() => setShimmer(false), 800); }
+
+    try {
+      const res = await fetch(`/api/posts/${post.id}/like`, { method: "POST", credentials: "include" });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json();
+      setLiked(!!data.liked);
+      setLikes(typeof data.likesCount === "number" ? data.likesCount : likes);
+    } catch {
+      setLiked(wasLiked);
+      setLikes((n) => (wasLiked ? n : n - 1));
+    }
+  };
+
+  const handleComment = () => {
+    window.open(postUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "OlchaAI", text: post.content, url: postUrl });
+        return;
+      } catch {
+        /* user cancelled or share failed, fall back to copy */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(postUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable, nothing more we can do */
+    }
   };
 
   return (
@@ -273,15 +310,15 @@ export function CyberCard({ post, isActive, stackIndex }: CyberCardProps) {
           </motion.button>
 
           {/* Comment */}
-          <button style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: "4px 12px", color: "rgba(0,229,255,0.55)", fontSize: 13 }}>
+          <button onClick={handleComment} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: "4px 12px", color: "rgba(0,229,255,0.55)", fontSize: 13 }}>
             <span style={{ fontSize: 15 }}>◎</span>
             <span>{post.commentsCount}</span>
           </button>
 
           {/* Share */}
-          <button style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: "4px 12px", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
+          <button onClick={handleShare} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: "4px 12px", color: shareCopied ? "#00e5ff" : "rgba(255,255,255,0.3)", fontSize: 13 }}>
             <span style={{ fontSize: 14 }}>↗</span>
-            <span>Ulash</span>
+            <span>{shareCopied ? "Nusxalandi" : "Ulash"}</span>
           </button>
 
           {/* OlchaAI tag */}

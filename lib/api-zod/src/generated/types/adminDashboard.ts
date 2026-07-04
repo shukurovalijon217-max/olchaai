@@ -13,9 +13,12 @@ export interface AdminDashboard {
   totalReels: number;
   totalStories: number;
   totalGroups: number;
+  /** Users with a live session (real-time, from session store) */
   activeNow: number;
+  /** Pending items in the moderation queue */
   flaggedContent: number;
-  aiAccuracy: number;
+  newUsersToday: number;
+  /** New users today as a percentage of total users */
   dailyGrowth: number;
   topRegions?: AdminDashboardTopRegionsItem[];
 }

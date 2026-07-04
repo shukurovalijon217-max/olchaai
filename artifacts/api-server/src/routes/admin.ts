@@ -1,6 +1,6 @@
 import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
-import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable } from "@workspace/db";
+import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable, moderationQueueTable, commentsTable } from "@workspace/db";
 import { eq, sql, desc, sum, and, inArray } from "drizzle-orm";
 import { getCommissionRate, setCommissionRate } from "../lib/commission";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
@@ -26,23 +26,29 @@ router.get("/admin/dashboard", async (req, res) => {
     const [reels] = await db.select({ count: sql<number>`count(*)::int` }).from(reelsTable);
     const [stories] = await db.select({ count: sql<number>`count(*)::int` }).from(storiesTable);
     const [groups] = await db.select({ count: sql<number>`count(*)::int` }).from(groupsTable);
+    const [flagged] = await db.select({ count: sql<number>`count(*)::int` }).from(moderationQueueTable).where(eq(moderationQueueTable.status, "pending"));
+    const [newToday] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable).where(sql`${usersTable.createdAt} >= current_date`);
+    const regions = await db.select({ region: usersTable.country, count: sql<number>`count(*)::int` })
+      .from(usersTable).groupBy(usersTable.country).orderBy(desc(sql`count(*)`)).limit(5);
+
+    const activeRes = await db.execute(sql`SELECT count(*)::int as count FROM user_sessions WHERE expire > now()`);
+    const rows = (r: any) => r?.rows ?? [];
+    const activeNow = rows(activeRes)[0]?.count ?? 0;
+
+    const totalUsers = users.count;
+    const dailyGrowth = totalUsers > 0 ? Math.round((newToday.count / totalUsers) * 1000) / 10 : 0;
 
     res.json({
-      totalUsers: users.count,
+      totalUsers,
       totalPosts: posts.count,
       totalReels: reels.count,
       totalStories: stories.count,
       totalGroups: groups.count,
-      activeNow: Math.floor(users.count * 0.12),
-      flaggedContent: 3,
-      aiAccuracy: 97.4,
-      dailyGrowth: 2.3,
-      topRegions: [
-        { region: "Asia", users: Math.floor(users.count * 0.38) },
-        { region: "Europe", users: Math.floor(users.count * 0.28) },
-        { region: "North America", users: Math.floor(users.count * 0.22) },
-        { region: "Other", users: Math.floor(users.count * 0.12) },
-      ],
+      activeNow,
+      flaggedContent: flagged?.count ?? 0,
+      newUsersToday: newToday?.count ?? 0,
+      dailyGrowth,
+      topRegions: regions.map(r => ({ region: r.region || "Noma'lum", users: r.count })),
     });
   } catch (err) {
     req.log.error(err);
@@ -119,13 +125,35 @@ router.get("/admin/analytics", async (req, res) => {
   try {
     const period = req.query.period as string || "7d";
     const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    const rows = (r: any) => r?.rows ?? [];
+
+    const [userRes, postRes, reelRes, storyRes] = await Promise.all([
+      db.execute(sql`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM users WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
+      db.execute(sql`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM posts WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
+      db.execute(sql`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM reels WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
+      db.execute(sql`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM stories WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
+    ]);
+    const toMap = (r: any) => new Map(rows(r).map((row: any) => [row.date, row.count]));
+    const userMap = toMap(userRes), postMap = toMap(postRes), reelMap = toMap(reelRes), storyMap = toMap(storyRes);
+
     const userGrowth = [];
     const contentGrowth = [];
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];
-      userGrowth.push({ date, count: Math.floor(50 + Math.random() * 120) });
-      contentGrowth.push({ date, posts: Math.floor(200 + Math.random() * 400), reels: Math.floor(80 + Math.random() * 150), stories: Math.floor(300 + Math.random() * 500) });
+      userGrowth.push({ date, count: userMap.get(date) ?? 0 });
+      contentGrowth.push({ date, posts: postMap.get(date) ?? 0, reels: reelMap.get(date) ?? 0, stories: storyMap.get(date) ?? 0 });
     }
+
+    const [postStats] = await db.select({
+      totalPosts: sql<number>`count(*)::int`,
+      totalLikes: sql<number>`coalesce(sum(${postsTable.likesCount}),0)::int`,
+    }).from(postsTable).where(sql`${postsTable.createdAt} >= now() - make_interval(days => ${days})`);
+    const [commentStats] = await db.select({ totalComments: sql<number>`count(*)::int` })
+      .from(commentsTable).where(sql`${commentsTable.createdAt} >= now() - make_interval(days => ${days})`);
+    const engagementRate = postStats.totalPosts > 0
+      ? Math.round(((postStats.totalLikes + commentStats.totalComments) / postStats.totalPosts) * 10) / 10
+      : 0;
+
     const topPosts = await db.select().from(postsTable).orderBy(desc(postsTable.likesCount)).limit(5);
     const authorIds = [...new Set(topPosts.map(p => p.authorId).filter(Boolean))] as number[];
     const statsMap = await getUserStatsMap(authorIds);
@@ -137,7 +165,7 @@ router.get("/admin/analytics", async (req, res) => {
       const stats = statsMap.get(p.authorId as number) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
       return { ...p, author: { ...(author || {}), ...stats }, tags: p.tags || [], isLiked: false };
     });
-    res.json({ period, userGrowth, contentGrowth, engagementRate: 6.8, topContent: enrichedTop });
+    res.json({ period, userGrowth, contentGrowth, engagementRate, topContent: enrichedTop });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -146,23 +174,37 @@ router.get("/admin/analytics", async (req, res) => {
 
 router.get("/admin/ai-system", async (req, res) => {
   try {
-    const metricsHistory = [];
+    const rows = (r: any) => r?.rows ?? [];
+    const [modStats] = await db.select({
+      total: sql<number>`count(*)::int`,
+      pending: sql<number>`count(*) filter (where ${moderationQueueTable.status} = 'pending')::int`,
+      autoBlocked: sql<number>`count(*) filter (where ${moderationQueueTable.autoBlocked} = true)::int`,
+      avgScore: sql<number>`coalesce(avg(${moderationQueueTable.aiScore}), 0)::float`,
+    }).from(moderationQueueTable);
+
+    const [lastMod] = await db.select({ createdAt: moderationQueueTable.createdAt })
+      .from(moderationQueueTable).orderBy(desc(moderationQueueTable.createdAt)).limit(1);
+
+    const volRes = await db.execute(sql`
+      SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count
+      FROM moderation_queue WHERE created_at >= now() - interval '7 days' GROUP BY date
+    `);
+    const volMap = new Map(rows(volRes).map((row: any) => [row.date, row.count]));
+    const volumeHistory = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];
-      metricsHistory.push({ date, accuracy: 95 + Math.random() * 3, responseTime: 80 + Math.floor(Math.random() * 40) });
+      volumeHistory.push({ date, count: volMap.get(date) ?? 0 });
     }
+
     res.json({
-      version: "NEXUS-AI v4.2.1",
-      accuracy: 97.4,
-      modelsRunning: 12,
-      lastImproved: new Date(Date.now() - 3600000).toISOString(),
-      selfImprovementEnabled: true,
-      recommendations: [
-        { module: "Content Ranking", suggestion: "Increase weight of recency factor by 8%", impact: "high" },
-        { module: "User Suggestions", suggestion: "Add mutual friends signal to recommendation graph", impact: "medium" },
-        { module: "Moderation", suggestion: "Retrain hate speech classifier on new dataset", impact: "high" },
-      ],
-      metricsHistory,
+      version: "NEXUS-AI v1.0.0",
+      modelsRunning: 5,
+      totalModerated: modStats?.total ?? 0,
+      pendingReview: modStats?.pending ?? 0,
+      autoBlockedCount: modStats?.autoBlocked ?? 0,
+      avgAiScore: Math.round((modStats?.avgScore ?? 0) * 100) / 100,
+      lastModerationAt: lastMod?.createdAt ? lastMod.createdAt.toISOString() : null,
+      volumeHistory,
     });
   } catch (err) {
     req.log.error(err);

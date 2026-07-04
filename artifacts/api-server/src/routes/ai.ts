@@ -391,4 +391,47 @@ router.post("/ai/group-assist", async (req, res) => {
   }
 });
 
+/* ── AI video title/tag/caption suggestion (OTube upload) ───── */
+router.post("/ai/video-suggest", async (req, res) => {
+  const userId = (req.session as any)?.userId as number | undefined;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const { fileName } = req.body;
+
+    const access = await checkAIAccess(userId);
+    if (!access.allowed) {
+      res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: access.limit, remaining: 0 });
+      return;
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Siz OlchaAI NEXUS video platformasi uchun video sarlavhasi, teglar va tavsif yozishga yordam berasiz. Fayl nomi asosida jozibali, qisqa sarlavha (60 belgigacha), 4-6 ta tegdan iborat ro'yxat va 1-2 jumlalik tavsif tuzing. Faqat JSON qaytaring: {"title": string, "tags": string[], "caption": string}. Boshqa hech narsa yozmang.`,
+        },
+        { role: "user", content: `Video fayl nomi: ${fileName || "video"}` },
+      ],
+      max_tokens: 220,
+      temperature: 0.8,
+      response_format: { type: "json_object" },
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
+    let parsed: { title?: string; tags?: string[]; caption?: string } = {};
+    try { parsed = JSON.parse(raw); } catch { parsed = {}; }
+
+    await incrementAIUsage(userId);
+    res.json({
+      title: parsed.title || "",
+      tags: Array.isArray(parsed.tags) ? parsed.tags.slice(0, 8) : [],
+      caption: parsed.caption || "",
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "AI xizmati hozir mavjud emas" });
+  }
+});
+
 export default router;

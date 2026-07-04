@@ -35,7 +35,7 @@ import {
   Heart, MessageCircle, Share2, Music, BadgeCheck, Plus, Sparkles,
   Brain, X, Loader2, Volume2, VolumeX, Send, Check, Eye, Zap,
 } from "lucide-react";
-import { useListReels, useLikeReel, getListReelsQueryKey } from "@workspace/api-client-react";
+import { useListReels, useLikeReel, useFollowUser, getListReelsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import CreateContentModal from "@/components/CreateContentModal";
@@ -49,7 +49,7 @@ interface FeedItem {
   id: number; videoUrl?: string | null; thumbnailUrl?: string | null;
   caption?: string | null; audioTrack?: string | null; duration?: number | null;
   likesCount?: number; commentsCount?: number; viewsCount?: number; tags?: string[];
-  author?: { id: number; username?: string; displayName?: string; avatarUrl?: string | null; isVerified?: boolean };
+  author?: { id: number; username?: string; displayName?: string; avatarUrl?: string | null; isVerified?: boolean; isFollowing?: boolean };
   isLiked?: boolean; _aiSuggested?: boolean; _aiReason?: string;
 }
 interface ReelComment {
@@ -487,13 +487,14 @@ function LeftOrb({
 function ReelSlide({
   reel, isActive, muted, accent, user,
   onLike, isLiked, onAnalyze, analyzingId, analysis,
-  onComment, onShare, onMute,
+  onComment, onShare, onMute, onFollow, isFollowing,
 }: {
   reel: FeedItem; isActive: boolean; muted: boolean; accent: string;
   user: { id: number; displayName?: string; avatarUrl?: string | null } | null;
   onLike: () => void; isLiked: boolean;
   onAnalyze: () => void; analyzingId: number | null; analysis?: Analysis;
   onComment: () => void; onShare: () => void; onMute: () => void;
+  onFollow: () => void; isFollowing: boolean;
 }) {
   const [, navigate] = useLocation();
   const videoRef     = useRef<HTMLVideoElement>(null);
@@ -863,15 +864,22 @@ function ReelSlide({
             </div>
 
             {/* Follow btn */}
-            <motion.button whileTap={{ scale: 0.88 }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[12px] font-black flex-shrink-0"
-              style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(14px)",
-                WebkitBackdropFilter: "blur(14px)",
-                border: `1px solid ${neonColor}55`,
-                color: "#fff",
-                boxShadow: `0 0 12px ${neonColor}33, inset 0 1px 0 rgba(255,255,255,0.18)` }}>
-              <Plus className="w-3.5 h-3.5" /> Obuna
-            </motion.button>
+            {reel.author?.id && user?.id !== reel.author.id && (
+              <motion.button whileTap={{ scale: 0.88 }}
+                onClick={e => { e.stopPropagation(); onFollow(); }}
+                onPointerDown={e => e.stopPropagation()} onPointerUp={e => e.stopPropagation()}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[12px] font-black flex-shrink-0"
+                style={{ background: isFollowing ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.12)", backdropFilter: "blur(14px)",
+                  WebkitBackdropFilter: "blur(14px)",
+                  border: `1px solid ${neonColor}55`,
+                  color: "#fff",
+                  opacity: isFollowing ? 0.75 : 1,
+                  boxShadow: `0 0 12px ${neonColor}33, inset 0 1px 0 rgba(255,255,255,0.18)` }}>
+                {isFollowing
+                  ? <><Check className="w-3.5 h-3.5" /> Obunadasiz</>
+                  : <><Plus className="w-3.5 h-3.5" /> Obuna</>}
+              </motion.button>
+            )}
           </div>
         </div>
 
@@ -971,7 +979,9 @@ export default function ReelsPage() {
   const [analyzingId, setAnalyzingId] = useState<number | null>(null);
   const [injecting, setInjecting] = useState(false);
 
-  const likeReel = useLikeReel();
+  const likeReel  = useLikeReel();
+  const followMut = useFollowUser();
+  const [followOverrides, setFollowOverrides] = useState<Map<number, boolean>>(new Map());
   const qc       = useQueryClient();
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -1069,6 +1079,22 @@ export default function ReelsPage() {
       },
     });
   }, [likedIds, likeReel, qc]);
+
+  /* Follow */
+  const handleFollow = useCallback((authorId: number, serverFollowing?: boolean) => {
+    const current = followOverrides.has(authorId) ? followOverrides.get(authorId)! : !!serverFollowing;
+    const next = !current;
+    setFollowOverrides(prev => new Map(prev).set(authorId, next));
+    followMut.mutate({ id: authorId }, {
+      onSuccess: (data) => {
+        setFollowOverrides(prev => new Map(prev).set(authorId, data.following));
+        qc.invalidateQueries({ queryKey: getListReelsQueryKey({ limit: 20 } as any) });
+      },
+      onError: () => {
+        setFollowOverrides(prev => new Map(prev).set(authorId, current));
+      },
+    });
+  }, [followOverrides, followMut, qc]);
 
   /* AI analysis */
   const handleAnalyze = useCallback(async (reelId: number, caption?: string, thumbUrl?: string) => {
@@ -1171,6 +1197,8 @@ export default function ReelsPage() {
                   user={user}
                   onLike={() => handleLike(reel.id)}
                   isLiked={likedIds.has(reel.id)}
+                  onFollow={() => reel.author?.id && handleFollow(reel.author.id, reel.author.isFollowing)}
+                  isFollowing={!!reel.author?.id && (followOverrides.has(reel.author.id) ? followOverrides.get(reel.author.id)! : !!reel.author.isFollowing)}
                   onAnalyze={() => handleAnalyze(reel.id, reel.caption ?? undefined, reel.thumbnailUrl ?? undefined)}
                   analyzingId={analyzingId}
                   analysis={analysisMap[reel.id]}

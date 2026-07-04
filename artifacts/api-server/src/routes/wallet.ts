@@ -313,33 +313,6 @@ router.delete("/wallet/payment-methods/:id", requireAuth, async (req: any, res) 
   }
 });
 
-// POST /api/wallet/simulate-ad-revenue
-router.post("/wallet/simulate-ad-revenue", requireAuth, async (req: any, res) => {
-  try {
-    const amount = Math.floor(Math.random() * 50000) + 10000;
-    const wallet = await getOrCreateWallet(req.session.userId);
-    const [updated] = await db
-      .update(walletsTable)
-      .set({ adRevenueBalance: wallet.adRevenueBalance + amount, updatedAt: new Date() })
-      .where(eq(walletsTable.id, wallet.id))
-      .returning();
-    await db.insert(transactionsTable).values({
-      userId: req.session.userId,
-      walletId: wallet.id,
-      type: "ad_revenue",
-      amount,
-      status: "completed",
-      paymentMethod: "internal",
-      description: "Reklama daromadi",
-      reference: `ADR-${Date.now()}`,
-    });
-    res.json({ wallet: updated, credited: amount });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Xato" });
-  }
-});
-
 // POST /api/wallet/tip
 const tipSchema = z.object({
   toUserId: z.number().int().positive(),
@@ -386,33 +359,6 @@ router.post("/wallet/tip", requireAuth, async (req: any, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Tip yuborishda xato" });
-  }
-});
-
-// POST /api/wallet/simulate-earnings
-router.post("/wallet/simulate-earnings", requireAuth, async (req: any, res) => {
-  try {
-    const amount = Math.floor(Math.random() * 100000) + 20000;
-    const wallet = await getOrCreateWallet(req.session.userId);
-    const [updated] = await db
-      .update(walletsTable)
-      .set({ earningsBalance: wallet.earningsBalance + amount, updatedAt: new Date() })
-      .where(eq(walletsTable.id, wallet.id))
-      .returning();
-    await db.insert(transactionsTable).values({
-      userId: req.session.userId,
-      walletId: wallet.id,
-      type: "content_revenue",
-      amount,
-      status: "completed",
-      paymentMethod: "internal",
-      description: "Kontent daromadi",
-      reference: `CNT-${Date.now()}`,
-    });
-    res.json({ wallet: updated, credited: amount });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Xato" });
   }
 });
 

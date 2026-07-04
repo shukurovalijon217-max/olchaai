@@ -421,9 +421,12 @@ export interface AdminDashboard {
   totalReels: number;
   totalStories: number;
   totalGroups: number;
+  /** Users with a live session (real-time, from session store) */
   activeNow: number;
+  /** Pending items in the moderation queue */
   flaggedContent: number;
-  aiAccuracy: number;
+  newUsersToday: number;
+  /** New users today as a percentage of total users */
   dailyGrowth: number;
   topRegions?: AdminDashboardTopRegionsItem[];
 }
@@ -502,35 +505,29 @@ export interface AdminAnalytics {
   topContent: Post[];
 }
 
-export type AiSystemStatusRecommendationsItemImpact = typeof AiSystemStatusRecommendationsItemImpact[keyof typeof AiSystemStatusRecommendationsItemImpact];
-
-
-export const AiSystemStatusRecommendationsItemImpact = {
-  low: 'low',
-  medium: 'medium',
-  high: 'high',
-} as const;
-
-export type AiSystemStatusRecommendationsItem = {
-  module: string;
-  suggestion: string;
-  impact: AiSystemStatusRecommendationsItemImpact;
-};
-
-export type AiSystemStatusMetricsHistoryItem = {
+export type AiSystemStatusVolumeHistoryItem = {
   date: string;
-  accuracy: number;
-  responseTime: number;
+  count: number;
 };
 
 export interface AiSystemStatus {
   version: string;
-  accuracy: number;
+  /** Number of active AI subsystems (moderation, feed ranking, sentiment, chat, twin) */
   modelsRunning: number;
-  lastImproved: string;
-  selfImprovementEnabled: boolean;
-  recommendations: AiSystemStatusRecommendationsItem[];
-  metricsHistory?: AiSystemStatusMetricsHistoryItem[];
+  /** Total items ever processed by the moderation queue */
+  totalModerated: number;
+  /** Moderation queue items awaiting a human decision */
+  pendingReview: number;
+  /** Items auto-blocked by AI without human review */
+  autoBlockedCount: number;
+  /** Average AI moderation risk score across all processed items */
+  avgAiScore: number;
+  /**
+     * Timestamp of the most recent moderation event
+     * @nullable
+     */
+  lastModerationAt: string | null;
+  volumeHistory?: AiSystemStatusVolumeHistoryItem[];
 }
 
 export interface LiveStreamInput {

@@ -465,14 +465,6 @@ export default function WalletPage() {
   const transactions = txData?.transactions ?? [];
   const paymentMethods = pmData?.paymentMethods ?? [];
 
-  const simulateAd = useMutation({
-    mutationFn: () => fetch(`${API}/api/wallet/simulate-ad-revenue`, { method: "POST", credentials: "include" }).then(r => r.json()),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["wallet"] }); qc.invalidateQueries({ queryKey: ["wallet-txs"] }); },
-  });
-  const simulateEarnings = useMutation({
-    mutationFn: () => fetch(`${API}/api/wallet/simulate-earnings`, { method: "POST", credentials: "include" }).then(r => r.json()),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["wallet"] }); qc.invalidateQueries({ queryKey: ["wallet-txs"] }); },
-  });
   const deletePM = useMutation({
     mutationFn: (id: number) => fetch(`${API}/api/wallet/payment-methods/${id}`, { method: "DELETE", credentials: "include" }).then(r => r.json()),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet-pms"] }),
@@ -553,7 +545,6 @@ export default function WalletPage() {
             border="border-emerald-500/20"
             iconBg="bg-emerald-500/20"
             iconColor="text-emerald-400"
-            action={{ label: t("wallet.simulate"), onClick: () => simulateEarnings.mutate(), loading: simulateEarnings.isPending }}
           />
           <BalanceCard
             title={t("wallet.ad_revenue")}
@@ -563,7 +554,6 @@ export default function WalletPage() {
             border="border-orange-500/20"
             iconBg="bg-orange-500/20"
             iconColor="text-orange-400"
-            action={{ label: t("wallet.simulate"), onClick: () => simulateAd.mutate(), loading: simulateAd.isPending }}
           />
         </div>
 

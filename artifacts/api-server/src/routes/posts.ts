@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { postsTable, postLikesTable, commentsTable, commentLikesTable, usersTable, moderationQueueTable } from "@workspace/db";
+import { postsTable, postLikesTable, commentsTable, commentLikesTable, usersTable, moderationQueueTable, followsTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { scanContentAsync } from "../moderation/aiFilter";
@@ -140,22 +140,71 @@ router.get("/music/proxy", async (req: any, res) => {
   }
 });
 
-/* ── POST /posts/ai-predict — predict engagement ───────────── */
+/* ── POST /posts/ai-predict — predict engagement from real historical averages ───── */
 router.post("/posts/ai-predict", async (req: any, res) => {
   try {
-    const { mood, mediaType, hasPoll, hotTake, followerCount = 500 } = req.body as { mood?: string; mediaType?: string; hasPoll?: boolean; hotTake?: boolean; followerCount?: number };
-    const base = followerCount;
-    const videoMult = mediaType === "video" ? 3.2 : mediaType === "photo" ? 1.8 : 1.0;
-    const moodMult = mood ? 1.4 : 1.0;
-    const pollMult = hasPoll ? 1.6 : 1.0;
-    const hotMult = hotTake ? 2.1 : 1.0;
-    const rand = (lo: number, hi: number) => Math.round(lo + Math.random() * (hi - lo));
-    const likes = Math.round(base * videoMult * moodMult * pollMult * hotMult * (0.15 + Math.random() * 0.25));
-    const comments = Math.round(likes * (0.08 + Math.random() * 0.12));
-    const shares = Math.round(likes * (0.05 + Math.random() * 0.08));
-    const reach = Math.round(likes * rand(4, 12));
-    const score = Math.min(99, Math.round(50 + (videoMult - 1) * 15 + (moodMult - 1) * 12 + (pollMult - 1) * 18 + (hotMult - 1) * 22 + Math.random() * 10));
-    res.json({ likes, comments, shares, reach, score });
+    const { mood, mediaType, hasPoll, hotTake } = req.body as { mood?: string; mediaType?: string; hasPoll?: boolean; hotTake?: boolean };
+    const userId: number | undefined = req.session?.userId;
+
+    const rows = (r: any) => r?.rows ?? [];
+    const [statsRes, followerRes, userAvgRes] = await Promise.all([
+      db.execute(sql`
+        SELECT
+          coalesce(avg(likes_count), 0)::float as avg_likes,
+          coalesce(avg(comments_count), 0)::float as avg_comments,
+          coalesce(avg(shares_count), 0)::float as avg_shares,
+          coalesce(avg(likes_count) filter (where type = ${mediaType ?? "text"}), null)::float as avg_likes_type,
+          coalesce(avg(likes_count) filter (where mood is not null), null)::float as avg_likes_mood,
+          coalesce(avg(likes_count) filter (where poll_question is not null), null)::float as avg_likes_poll,
+          coalesce(avg(likes_count) filter (where hot_take = true), null)::float as avg_likes_hot
+        FROM posts
+      `),
+      userId
+        ? db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, userId))
+        : Promise.resolve([{ count: 0 }]),
+      userId
+        ? db.select({ avgLikes: sql<number>`coalesce(avg(${postsTable.likesCount}), 0)::float`, total: sql<number>`count(*)::int` })
+            .from(postsTable).where(eq(postsTable.authorId, userId))
+        : Promise.resolve([{ avgLikes: 0, total: 0 }]),
+    ]);
+
+    const stats = rows(statsRes)[0] ?? {};
+    const overallAvgLikes: number = Number(stats.avg_likes) || 0;
+    const overallAvgComments: number = Number(stats.avg_comments) || 0;
+    const overallAvgShares: number = Number(stats.avg_shares) || 0;
+
+    const segmentAvgs: number[] = [];
+    if (stats.avg_likes_type != null) segmentAvgs.push(Number(stats.avg_likes_type));
+    if (mood && stats.avg_likes_mood != null) segmentAvgs.push(Number(stats.avg_likes_mood));
+    if (hasPoll && stats.avg_likes_poll != null) segmentAvgs.push(Number(stats.avg_likes_poll));
+    if (hotTake && stats.avg_likes_hot != null) segmentAvgs.push(Number(stats.avg_likes_hot));
+
+    const baselineLikes = segmentAvgs.length > 0
+      ? segmentAvgs.reduce((a, b) => a + b, 0) / segmentAvgs.length
+      : overallAvgLikes;
+
+    const [{ avgLikes: userAvgLikes, total: userPostCount }] = userAvgRes as { avgLikes: number; total: number }[];
+    let personalizationFactor = 1;
+    if (userPostCount >= 3 && overallAvgLikes > 0) {
+      personalizationFactor = Math.min(2.5, Math.max(0.4, userAvgLikes / overallAvgLikes));
+    }
+
+    const predictedLikes = Math.max(0, Math.round(baselineLikes * personalizationFactor));
+    const commentRatio = overallAvgLikes > 0 ? overallAvgComments / overallAvgLikes : 0.1;
+    const shareRatio = overallAvgLikes > 0 ? overallAvgShares / overallAvgLikes : 0.05;
+    const predictedComments = Math.max(0, Math.round(predictedLikes * commentRatio));
+    const predictedShares = Math.max(0, Math.round(predictedLikes * shareRatio));
+
+    const [{ count: followerCount }] = followerRes as { count: number }[];
+    const reach = followerCount;
+
+    const totalEngagement = predictedLikes + predictedComments * 2 + predictedShares * 3;
+    const baselineEngagement = overallAvgLikes + overallAvgComments * 2 + overallAvgShares * 3;
+    const score = baselineEngagement > 0
+      ? Math.min(99, Math.max(1, Math.round((totalEngagement / baselineEngagement) * 50)))
+      : 50;
+
+    res.json({ likes: predictedLikes, comments: predictedComments, shares: predictedShares, reach, score });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ likes: 0, comments: 0, shares: 0, reach: 0, score: 50 });

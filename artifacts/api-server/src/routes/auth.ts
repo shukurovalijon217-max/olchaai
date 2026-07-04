@@ -6,7 +6,7 @@ import { usersTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@work
 import type { NotifPrefs, PrivacySettings } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
-import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput } from "../lib/security";
+import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput, signMobileToken } from "../lib/security";
 
 const getResend = () => {
   const key = process.env.RESEND_API_KEY;
@@ -162,7 +162,7 @@ router.post("/auth/register", async (req, res) => {
 
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;
-    res.status(201).json({ ...safeUser, token: String(user.id) });
+    res.status(201).json({ ...safeUser, token: signMobileToken(user.id) });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Server xatosi" });
@@ -211,7 +211,7 @@ router.post("/auth/login", async (req, res) => {
     clearLoginAttempts(ip, identifier);
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;
-    res.json({ ...safeUser, token: String(user.id) });
+    res.json({ ...safeUser, token: signMobileToken(user.id) });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Server xatosi" });

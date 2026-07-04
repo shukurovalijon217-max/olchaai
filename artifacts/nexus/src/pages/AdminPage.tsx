@@ -3110,7 +3110,7 @@ export default function AdminPage() {
                       { label: "Total Users",  value: dash.totalUsers.toLocaleString(),  icon: Users,    color: "text-violet-400", bg: "bg-violet-500/10" },
                       { label: "Total Posts",  value: dash.totalPosts.toLocaleString(),  icon: FileText, color: "text-cyan-400",   bg: "bg-cyan-500/10"   },
                       { label: "Active Now",   value: dash.activeNow.toLocaleString(),   icon: Activity, color: "text-emerald-400",bg: "bg-emerald-500/10"},
-                      { label: "AI Accuracy",  value: `${dash.aiAccuracy}%`,            icon: Cpu,      color: "text-violet-400", bg: "bg-violet-500/10" },
+                      { label: "New Today",    value: dash.newUsersToday.toLocaleString(), icon: Cpu,    color: "text-violet-400", bg: "bg-violet-500/10" },
                     ].map(s => (
                       <AdminSF key={s.label}>
                         <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -3387,7 +3387,7 @@ export default function AdminPage() {
           {/* ── AI SYSTEM ─────────────────────────────── */}
           <motion.div variants={aPE}>
             <AdminPanel color="violet" icon={Cpu} label={t("admin.ai")}
-              preview={aiStatus ? `v${aiStatus.version} · ${aiStatus.accuracy}% aniqlik` : "AI tizim holati"}
+              preview={aiStatus ? `v${aiStatus.version} · ${aiStatus.pendingReview} kutilmoqda` : "AI tizim holati"}
               isOpen={openPanel === "ai"} onToggle={() => toggle("ai")}>
               {!aiStatus ? (
                 <div className="flex justify-center py-6">
@@ -3492,10 +3492,10 @@ export default function AdminPage() {
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { label: "Versiya",    value: aiStatus.version,                                         icon: Zap,       color: "text-violet-400" },
-                      { label: "Aniqlik",    value: `${aiStatus.accuracy}%`,                                  icon: Activity,  color: "text-emerald-400" },
-                      { label: "Modellar",   value: aiStatus.modelsRunning.toString(),                        icon: Cpu,       color: "text-cyan-400" },
-                      { label: "Yangilanish",value: new Date(aiStatus.lastImproved).toLocaleTimeString("uz-UZ"), icon: RefreshCw, color: "text-violet-400" },
+                      { label: "Versiya",         value: aiStatus.version,                                                                    icon: Zap,       color: "text-violet-400" },
+                      { label: "Jami tekshirilgan",value: aiStatus.totalModerated.toString(),                                                  icon: Activity,  color: "text-emerald-400" },
+                      { label: "Kutilmoqda",       value: aiStatus.pendingReview.toString(),                                                    icon: Cpu,       color: "text-cyan-400" },
+                      { label: "Oxirgi tekshiruv", value: aiStatus.lastModerationAt ? new Date(aiStatus.lastModerationAt).toLocaleTimeString("uz-UZ") : "—", icon: RefreshCw, color: "text-violet-400" },
                     ].map(m => (
                       <AdminSF key={m.label}>
                         <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -3508,46 +3508,42 @@ export default function AdminPage() {
                       </AdminSF>
                     ))}
                   </div>
-                  {aiStatus.metricsHistory && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <AdminSF>
+                      <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                          <span className="text-[11px] text-white/40">Avto-bloklangan</span>
+                        </div>
+                        <p className="text-sm font-bold text-white">{aiStatus.autoBlockedCount}</p>
+                      </div>
+                    </AdminSF>
+                    <AdminSF>
+                      <div className="rounded-2xl p-3.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Activity className="w-3.5 h-3.5 text-amber-400" />
+                          <span className="text-[11px] text-white/40">O'rtacha AI xavf balli</span>
+                        </div>
+                        <p className="text-sm font-bold text-white">{aiStatus.avgAiScore.toFixed(2)}</p>
+                      </div>
+                    </AdminSF>
+                  </div>
+                  {aiStatus.volumeHistory && aiStatus.volumeHistory.length > 0 && (
                     <AdminSF>
                       <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
-                        <p className="text-xs font-semibold text-white/40 mb-3">Aniqlik tarixi</p>
+                        <p className="text-xs font-semibold text-white/40 mb-3">Moderatsiya hajmi (kunlik)</p>
                         <ResponsiveContainer width="100%" height={160}>
-                          <LineChart data={aiStatus.metricsHistory}>
+                          <LineChart data={aiStatus.volumeHistory}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                             <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} />
-                            <YAxis domain={[94, 100]} tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} />
+                            <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} />
                             <Tooltip contentStyle={{ background: "rgba(8,8,16,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff" }} />
-                            <Line type="monotone" dataKey="accuracy" stroke="rgba(139,92,246,1)" strokeWidth={2.5} dot={{ fill: "rgba(139,92,246,1)", r: 3 }} />
+                            <Line type="monotone" dataKey="count" stroke="rgba(139,92,246,1)" strokeWidth={2.5} dot={{ fill: "rgba(139,92,246,1)", r: 3 }} />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
                     </AdminSF>
                   )}
-                  <AdminSF>
-                    <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">
-                      <p className="text-xs font-semibold text-white/40 mb-3 flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5 text-violet-400" /> AI Tavsiyalar
-                      </p>
-                      <div className="space-y-2">
-                        {aiStatus.recommendations?.map((rec: any, i: number) => (
-                          <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }}>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 mt-0.5 ${
-                              rec.impact === "high"   ? "bg-red-500/20 text-red-400" :
-                              rec.impact === "medium" ? "bg-amber-500/20 text-amber-400" : "bg-white/10 text-white/50"
-                            }`}>{rec.impact}</span>
-                            <div>
-                              <p className="text-sm font-semibold text-white">{rec.module}</p>
-                              <p className="text-xs text-white/40">{rec.suggestion}</p>
-                            </div>
-                            <button className="ml-auto flex-shrink-0 px-2.5 py-1 rounded-lg bg-violet-500/15 text-violet-400 text-xs font-semibold hover:bg-violet-500/25 transition-colors">
-                              Qo'llash
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </AdminSF>
 
                   {/* ── AI Premium Usage Stats ── */}
                   <AdminSF>

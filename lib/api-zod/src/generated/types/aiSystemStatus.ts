@@ -5,15 +5,24 @@
  * NEXUS Super Social Platform API
  * OpenAPI spec version: 0.1.0
  */
-import type { AiSystemStatusMetricsHistoryItem } from './aiSystemStatusMetricsHistoryItem';
-import type { AiSystemStatusRecommendationsItem } from './aiSystemStatusRecommendationsItem';
+import type { AiSystemStatusVolumeHistoryItem } from './aiSystemStatusVolumeHistoryItem';
 
 export interface AiSystemStatus {
   version: string;
-  accuracy: number;
+  /** Number of active AI subsystems (moderation, feed ranking, sentiment, chat, twin) */
   modelsRunning: number;
-  lastImproved: string;
-  selfImprovementEnabled: boolean;
-  recommendations: AiSystemStatusRecommendationsItem[];
-  metricsHistory?: AiSystemStatusMetricsHistoryItem[];
+  /** Total items ever processed by the moderation queue */
+  totalModerated: number;
+  /** Moderation queue items awaiting a human decision */
+  pendingReview: number;
+  /** Items auto-blocked by AI without human review */
+  autoBlockedCount: number;
+  /** Average AI moderation risk score across all processed items */
+  avgAiScore: number;
+  /**
+     * Timestamp of the most recent moderation event
+     * @nullable
+     */
+  lastModerationAt: string | null;
+  volumeHistory?: AiSystemStatusVolumeHistoryItem[];
 }

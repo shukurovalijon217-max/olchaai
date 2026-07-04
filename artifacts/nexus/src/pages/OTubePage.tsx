@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl, useListNotifications, markAllNotificationsRead, useDeleteReel } from "@workspace/api-client-react";
+import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl, useListNotifications, markAllNotificationsRead, useDeleteReel, useStartLive } from "@workspace/api-client-react";
 import type { Reel, UploadUrlRequest, Notification } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -173,29 +173,35 @@ function OTubeMark({ size = 32 }: { size?: number }) {
 /* ─────────────────────────────────────────────────────── */
 /* Seek flash                                              */
 /* ─────────────────────────────────────────────────────── */
-/* ── Danmaku overlay — floating reactions (Bilibili-style) ── */
-const DANK_MSGS = [
-  "🔥 wow","mazali!","juda zo'r","🚀🚀🚀","birinchi marta ko'rdim",
-  "❤️ ajoyib","zo'r kanal","OlchaAI > YouTube","💯 perfect","davom eting",
-  "salom hammaga 👋","yutub kerak emas","🎉 zo'r","signal kuchli!","❤️‍🔥",
-];
+/* ── Danmaku overlay — floating reactions, fed by real reel comments ── */
 const DANK_COLS = ["#00e5ff","#ff6b00","#a855f7","#00ff88","#ff2d55","#ffd700","white"];
-function DanmakuOverlay({ active }: { active:boolean }) {
+function DanmakuOverlay({ active, reelId }: { active:boolean; reelId:number }) {
+  const { data: comments = [] } = useQuery<ApiComment[]>({
+    queryKey: ["reel-comments", reelId],
+    queryFn: async () => {
+      const r = await fetch(`/api/reels/${reelId}/comments`);
+      if (!r.ok) throw new Error("Izohlarni olishda xatolik");
+      return r.json() as Promise<ApiComment[]>;
+    },
+    enabled: active,
+    staleTime: 30_000,
+  });
   const [items, setItems] = useState<{id:number;msg:string;top:number;col:string;dur:number}[]>([]);
   const ctr = useRef(0);
   useEffect(()=>{
-    if (!active) { setItems([]); return; }
+    if (!active || comments.length===0) { setItems([]); return; }
     const iv = setInterval(()=>{
       const id = ctr.current++;
+      const c = comments[Math.floor(Math.random()*comments.length)];
       setItems(prev=>[...prev.slice(-14),{
-        id, msg: DANK_MSGS[Math.floor(Math.random()*DANK_MSGS.length)],
+        id, msg: `${c.author.displayName||c.author.username}: ${c.content}`,
         top: 8+Math.random()*62,
         col: DANK_COLS[Math.floor(Math.random()*DANK_COLS.length)],
-        dur: 4+Math.random()*3,
+        dur: 5+Math.random()*3,
       }]);
-    }, 700);
+    }, 1400);
     return ()=>clearInterval(iv);
-  },[active]);
+  },[active, comments]);
   if (!active) return null;
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -801,7 +807,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
         />
         <SeekFlash side="left"  visible={seekLeft}/>
         <SeekFlash side="right" visible={seekRight}/>
-        <DanmakuOverlay active={danmaku}/>
+        <DanmakuOverlay active={danmaku} reelId={video.id}/>
 
         {/* ── RIGHT SIDE ACTION PANEL — auto-hide on idle ── */}
         <div style={{
@@ -1892,48 +1898,46 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
   );
 }
 
-/* Watch Party quick-join button */
+/* Watch Party quick-join button — creates a real co-view room */
 function WatchPartyBtn({ videoId }: { videoId: number }) {
   const { t } = useTranslation();
-  const [joined, setJoined] = useState(false);
-  const [partyCount, setPartyCount] = useState(()=>3+Math.floor(videoId%12));
+  const [, navigate] = useLocation();
+  const [creating, setCreating] = useState(false);
+
+  const handleJoin = async () => {
+    if (creating) return;
+    setCreating(true);
+    try {
+      const r = await fetch("/api/coview/rooms", {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: "reel", contentId: videoId }),
+      });
+      if (r.ok) {
+        const room = await r.json();
+        navigate(`/coview/${room.inviteCode}`);
+      }
+    } catch { /* silent */ }
+    finally { setCreating(false); }
+  };
+
   return (
     <motion.button whileTap={{scale:0.88}}
-      onClick={()=>{setJoined(j=>!j);setPartyCount(c=>joined?c-1:c+1);}}
+      onClick={handleJoin} disabled={creating}
       className="flex items-center gap-1.5 px-3 py-1.5 flex-1"
       style={{borderRadius:99,
-        background:joined?`rgba(168,85,247,0.2)`:"rgba(255,255,255,0.06)",
-        boxShadow:joined?`0 0 0 1px rgba(168,85,247,0.5), 0 0 16px rgba(168,85,247,0.2)`:"0 0 0 1px rgba(255,255,255,0.08)"}}>
-      <Users style={{width:11,height:11,color:joined?"#a855f7":"rgba(255,255,255,0.45)"}}/>
-      <span style={{fontSize:10,fontWeight:600,color:joined?"#a855f7":"rgba(255,255,255,0.5)"}}>
-        {joined?`👥 ${t("otube.watch_joined")}`:t("otube.watch_join")}
+        background:"rgba(255,255,255,0.06)",
+        boxShadow:"0 0 0 1px rgba(255,255,255,0.08)"}}>
+      <Users style={{width:11,height:11,color:"rgba(255,255,255,0.45)"}}/>
+      <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)"}}>
+        {creating?"…":t("otube.watch_join")}
       </span>
-      {joined ? (
-        <motion.span
-          animate={{opacity:[0.3,1,0.3]}} transition={{duration:1.1,repeat:Infinity}}
-          style={{fontSize:11,color:"rgba(168,85,247,0.7)",marginLeft:"auto",letterSpacing:"0.12em"}}>
-          ···
-        </motion.span>
-      ) : (
-        <span style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontFamily:"monospace",marginLeft:"auto"}}>
-          {partyCount}
-        </span>
-      )}
     </motion.button>
   );
 }
 
-/* Live pulse — animated live viewer count */
+/* Live pulse — real view count */
 function LivePulse({ count }: { count: number }) {
   const { t } = useTranslation();
-  const base = Math.max(10, count);
-  const [live, setLive] = useState(base);
-  useEffect(()=>{
-    const t = setInterval(()=>{
-      setLive(base + Math.floor((Math.random()-0.4)*8));
-    }, 2800);
-    return ()=>clearInterval(t);
-  },[base]);
   return (
     <div className="flex items-center gap-1.5 px-3 py-1.5"
       style={{borderRadius:99,background:"rgba(255,59,48,0.1)",
@@ -1942,7 +1946,7 @@ function LivePulse({ count }: { count: number }) {
         style={{width:5,height:5,borderRadius:"50%",background:"#ff3b30",
           boxShadow:"0 0 6px #ff3b30"}}/>
       <span style={{fontSize:9.5,fontWeight:600,color:"rgba(255,100,80,0.9)",fontFamily:"monospace"}}>
-        {live.toLocaleString()} {t("otube.live_count")}
+        {Math.max(0, count).toLocaleString()} {t("otube.live_count")}
       </span>
     </div>
   );
@@ -2442,11 +2446,7 @@ function ModalSheet({ children, onClose, title, accent = T.cyan, rightSlot }:
 /* ─────────────────────────────────────────────────────── */
 /* Upload Modal — real file upload + createReel v2        */
 /* ─────────────────────────────────────────────────────── */
-const AI_TITLE_SUGGESTIONS = [
-  "OlchaAI'dagi eng zo'r moment 🔥","Buni ko'rmasangiz bo'lmaydi!","Signal kuchli | OlchaAI",
-  "Viral bo'ladigan video 🚀","OlchaAI NEXUS × Exclusive","Siz kutmagan narsa...",
-];
-const AI_TAG_SUGGESTIONS = ["olcha","viral","nexus","trending","signal","broadcast","exclusive","top"];
+const COMMON_TAGS = ["olcha","viral","nexus","trending","signal","broadcast","exclusive","top"];
 
 function UploadModal({ onClose }: { onClose: ()=>void }) {
   const { t } = useTranslation();
@@ -2482,14 +2482,22 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
   const handleFile = (f: File) => { setFile(f); setTitle(f.name.replace(/\.[^.]+$/,"").slice(0,60)); setStep(1); };
   const handleThumb = (f: File) => { setThumbFile(f); setThumbSrc(URL.createObjectURL(f)); };
   const addTag = (t: string) => { const v=t.trim().replace(/^#/,""); if(v&&!tagList.includes(v)) setTagList(p=>[...p,v]); setTagInput(""); };
-  const aiSuggest = () => {
+  const aiSuggest = async () => {
+    if (aiLoading) return;
     setAiLoading(true);
-    setTimeout(()=>{
-      setTitle(AI_TITLE_SUGGESTIONS[Math.floor(Math.random()*AI_TITLE_SUGGESTIONS.length)]);
-      setTagList(AI_TAG_SUGGESTIONS.slice(0,4+Math.floor(Math.random()*3)));
-      setCaption("OlchaAI platformasida exclusive kontent. Signal kuchli — NEXUS BROADCAST. #OlchaAI #Viral");
-      setAiLoading(false);
-    }, 1400);
+    try {
+      const r = await fetch("/api/ai/video-suggest", {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file?.name || title }),
+      });
+      if (r.ok) {
+        const data = await r.json();
+        if (data.title) setTitle(data.title);
+        if (Array.isArray(data.tags) && data.tags.length) setTagList(data.tags);
+        if (data.caption) setCaption(data.caption);
+      }
+    } catch { /* AI suggestion failed, leave fields as-is */ }
+    finally { setAiLoading(false); }
   };
 
   const handleSubmit = async () => {
@@ -2680,7 +2688,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
               </div>
               {/* Suggested tags */}
               <div className="flex gap-1.5 flex-wrap mt-2">
-                {AI_TAG_SUGGESTIONS.filter(t=>!tagList.includes(t)).slice(0,5).map(t=>(
+                {COMMON_TAGS.filter(t=>!tagList.includes(t)).slice(0,5).map(t=>(
                   <button key={t} onClick={()=>addTag(t)}
                     style={{padding:"2px 8px",borderRadius:99,fontSize:9,
                       background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",
@@ -2827,144 +2835,6 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
       </div>
       <input ref={fileRef} type="file" accept="video/*" className="hidden"
         onChange={e=>e.target.files?.[0]&&handleFile(e.target.files[0])}/>
-    </ModalSheet>
-  );
-}
-
-/* ─────────────────────────────────────────────────────── */
-/* Live Setup Modal v2                                     */
-/* ─────────────────────────────────────────────────────── */
-const LIVE_AUTO_MSGS = [
-  {u:"Sardor",m:"salom hammaga 👋",c:"#00e5ff"},
-  {u:"Nilufar",m:"zo'r efir! 🔥",c:"#ff6b00"},
-  {u:"Jasur",m:"OlchaAI > YouTube 💯",c:"#a855f7"},
-  {u:"Malika",m:"❤️ ajoyib!",c:"#ff2d55"},
-  {u:"Bobur",m:"birinchi marta ko'rdim",c:"#00ff88"},
-  {u:"Kamola",m:"🚀🚀🚀 signal!",c:"#ffd700"},
-  {u:"Ulugbek",m:"stream sifati a'lo 🎯",c:"#00ffee"},
-  {u:"Zulfiya",m:"obuna bo'ldim ✨",c:"#ff6b00"},
-];
-const LIVE_GIFTS = ["💎","🚀","🔥","❤️‍🔥","⚡","🌊","👑","💰"];
-
-
-/* ─────────────────────────────────────────────────────── */
-/* Live Setup Modal                                        */
-/* ─────────────────────────────────────────────────────── */
-function LiveSetupModal({ onClose }: { onClose: ()=>void }) {
-  const { t } = useTranslation();
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("gaming");
-  const [quality, setQuality] = useState("1080p");
-  const [live, setLive] = useState(false);
-  const [viewerCount, setViewerCount] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const CATS = ["gaming","music","sport","news","education","travel","cook"];
-  const QUALS = ["720p","1080p","4K"];
-  useEffect(()=>{
-    if (!live) return;
-    setViewerCount(Math.floor(Math.random()*120)+8);
-    const iv = setInterval(()=>{
-      setElapsed(s=>s+1);
-      setViewerCount(c=>Math.max(5,c+Math.floor((Math.random()-0.38)*8)));
-    },1000);
-    return ()=>clearInterval(iv);
-  },[live]);
-  const fmtTime = (s:number) => `${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
-  return (
-    <ModalSheet onClose={onClose} title={t("otube.live_modal_title")} accent="#ff2d55">
-      <div className="px-5 pb-8 flex flex-col gap-4">
-        {/* Camera preview */}
-        <div style={{borderRadius:14,background:"#020008",aspectRatio:"16/9",position:"relative",overflow:"hidden",
-          border:"1px solid rgba(255,45,85,0.2)"}}>
-          {live && (
-            <>
-              <motion.div animate={{opacity:[0.3,0.7,0.3]}} transition={{duration:2,repeat:Infinity}}
-                style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 50%, rgba(255,45,85,0.12) 0%, transparent 70%)"}}/>
-              <div style={{position:"absolute",top:10,left:10,display:"flex",alignItems:"center",gap:6}}>
-                <motion.div animate={{opacity:[1,0,1]}} transition={{duration:1,repeat:Infinity}}
-                  style={{width:8,height:8,borderRadius:"50%",background:"#ff2d55",boxShadow:"0 0 8px #ff2d55"}}/>
-                <span style={{fontSize:10,fontWeight:900,color:"white",letterSpacing:"0.1em"}}>LIVE</span>
-              </div>
-              <div style={{position:"absolute",top:10,right:10,display:"flex",alignItems:"center",gap:4}}>
-                <Eye style={{width:10,height:10,color:"rgba(255,255,255,0.7)"}}/>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.9)",fontWeight:700}}>{viewerCount}</span>
-              </div>
-              <div style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",
-                fontSize:10,color:"rgba(255,255,255,0.55)",fontFamily:"monospace"}}>{fmtTime(elapsed)}</div>
-            </>
-          )}
-          {!live && (
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-              height:"100%",gap:8}}>
-              <Camera style={{width:28,height:28,color:"rgba(255,255,255,0.2)"}}/>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.2)"}}>{t("otube.camera_ready")}</span>
-            </div>
-          )}
-        </div>
-
-        {!live && (
-          <>
-            <div>
-              <span style={{fontSize:10,color:"#ff2d55",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.title_label")}</span>
-              <input value={title} onChange={e=>setTitle(e.target.value)} placeholder={t("otube.live_title_ph")}
-                style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,
-                  background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-                  color:"white",fontSize:13,outline:"none"}}/>
-            </div>
-            <div>
-              <span style={{fontSize:10,color:"#ff2d55",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.live_cat_label")}</span>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {CATS.map(c=>(
-                  <button key={c} onClick={()=>setCategory(c)}
-                    style={{padding:"5px 12px",borderRadius:99,fontSize:10,fontWeight:700,
-                      background:category===c?"rgba(255,45,85,0.25)":"rgba(255,255,255,0.05)",
-                      border:`1px solid ${category===c?"rgba(255,45,85,0.6)":"rgba(255,255,255,0.08)"}`,
-                      color:category===c?"#ff2d55":"rgba(255,255,255,0.5)"}}>
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <span style={{fontSize:10,color:"#ff2d55",fontWeight:700,letterSpacing:"0.1em"}}>{t("otube.live_qual_label")}</span>
-              <div className="flex gap-2 mt-2">
-                {QUALS.map(q=>(
-                  <button key={q} onClick={()=>setQuality(q)}
-                    style={{flex:1,padding:"8px",borderRadius:10,fontSize:11,fontWeight:700,
-                      background:quality===q?"rgba(255,45,85,0.2)":"rgba(255,255,255,0.04)",
-                      border:`1px solid ${quality===q?"rgba(255,45,85,0.5)":"rgba(255,255,255,0.08)"}`,
-                      color:quality===q?"#ff2d55":"rgba(255,255,255,0.45)"}}>
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {live && (
-          <div style={{display:"flex",gap:10}}>
-            <div style={{flex:1,padding:"10px",borderRadius:10,background:"rgba(255,45,85,0.08)",
-              border:"1px solid rgba(255,45,85,0.2)",textAlign:"center"}}>
-              <div style={{fontSize:18,fontWeight:900,color:"#ff2d55"}}>{viewerCount}</div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>{t("otube.live_viewers")}</div>
-            </div>
-            <div style={{flex:1,padding:"10px",borderRadius:10,background:"rgba(0,229,255,0.08)",
-              border:"1px solid rgba(0,229,255,0.2)",textAlign:"center"}}>
-              <div style={{fontSize:18,fontWeight:900,color:T.cyan,fontFamily:"monospace"}}>{fmtTime(elapsed)}</div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>{t("otube.live_duration")}</div>
-            </div>
-          </div>
-        )}
-
-        <motion.button whileTap={{scale:0.96}} onClick={()=>setLive(l=>!l)}
-          style={{padding:"13px",borderRadius:12,letterSpacing:"0.04em",fontSize:13,fontWeight:800,
-            background:live?"rgba(255,45,85,0.15)":"linear-gradient(135deg,#ff2d55,#ff6b00)",
-            border:live?"1px solid rgba(255,45,85,0.4)":"none",
-            color:live?"#ff2d55":"white"}}>
-          {live?t("otube.end_live"):t("otube.start_live")}
-        </motion.button>
-      </div>
     </ModalSheet>
   );
 }
@@ -3644,7 +3514,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const qc = useQueryClient();
   const [file, setFile]         = useState<File|null>(null);
   const [videoSrc, setVideoSrc] = useState("");
-  const [activeTab, setActiveTab] = useState<"trim"|"filters"|"text"|"stickers"|"music"|"speed"|"grading"|"ai"|"transitions"|"audio"|"subtitle"|"thumbnail"|"export"|"ar"|"chapters"|"collab">("trim");
+  const [activeTab, setActiveTab] = useState<"trim"|"filters"|"text"|"stickers"|"music"|"speed"|"grading"|"transitions"|"audio"|"subtitle"|"thumbnail"|"export"|"ar"|"chapters"|"collab">("trim");
   const [filter, setFilter]     = useState("normal");
   const [speed, setSpeed]       = useState(1);
   const [caption, setCaption]   = useState("");
@@ -3660,8 +3530,6 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const [published, setPublished]   = useState(false);
   const [exportQ, setExportQ]     = useState<"720p"|"1080p"|"4K">("1080p");
   const [transition, setTransition] = useState("cut");
-  const [aiRunning, setAiRunning] = useState<string|null>(null);
-  const [aiDone, setAiDone]       = useState<string[]>([]);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast]     = useState(100);
   const [saturation, setSaturation] = useState(100);
@@ -3795,15 +3663,6 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
     {id:"morph",  name:"Morph",     emoji:"🧬"},
   ];
 
-  const AI_ACTIONS = [
-    {id:"autocut",  label:t("otube.ai_autocut"),   icon:"✂️", desc:t("otube.ai_autocut_desc")},
-    {id:"captions", label:t("otube.ai_captions"),  icon:"📝", desc:t("otube.ai_captions_desc")},
-    {id:"scene",    label:t("otube.ai_scene"),      icon:"🎬", desc:t("otube.ai_scene_desc")},
-    {id:"beat",     label:t("otube.ai_beat"),       icon:"🎵", desc:t("otube.ai_beat_desc")},
-    {id:"enhance",  label:t("otube.ai_enhance"),    icon:"✨", desc:t("otube.ai_enhance_desc")},
-    {id:"crop",     label:t("otube.ai_crop"),       icon:"🎯", desc:t("otube.ai_crop_desc")},
-  ];
-
   const TEXT_FONTS = [
     {id:"bold",    name:"Bold",      css:"bold"},
     {id:"italic",  name:"Italic",    css:"italic"},
@@ -3822,11 +3681,6 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const gradingCss = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) hue-rotate(${temperature}deg)`;
   const filterCss  = FILTERS.find(f=>f.id===filter)?.css||"none";
   const appliedCss = filterCss==="none" ? gradingCss : `${filterCss} ${gradingCss}`;
-
-  const runAi = (id:string) => {
-    setAiRunning(id);
-    setTimeout(()=>{ setAiRunning(null); setAiDone(p=>[...p,id]); }, 1800+Math.random()*1200);
-  };
 
   const handlePublish = async () => {
     if (!file||!user) return;
@@ -3856,7 +3710,6 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
     { id:"transitions", Icon:Layers,             label:t("otube.tab_transitions") },
     { id:"music",       Icon:Music,              label:t("otube.tab_music_lbl")   },
     { id:"speed",       Icon:FastForward,        label:t("otube.tab_speed")       },
-    { id:"ai",          Icon:Sparkles,           label:t("otube.tab_ai")          },
     { id:"audio",       Icon:Mic2,               label:"Audio"                    },
     { id:"subtitle",    Icon:AlignCenter,        label:"Subtitle"                 },
     { id:"thumbnail",   Icon:ImagePlus,          label:"Thumb"                    },
@@ -4008,17 +3861,6 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
           <div style={{position:"absolute",left:`${trimStart}%`,width:3,height:"100%",background:"white",opacity:0.9}}/>
           <div style={{position:"absolute",left:`${trimEnd}%`,width:3,height:"100%",background:"white",opacity:0.9,transform:"translateX(-3px)"}}/>
         </div>
-        {/* AI processing badge */}
-        {aiRunning && (
-          <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",
-            display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:99,
-            background:"rgba(168,85,247,0.7)",backdropFilter:"blur(8px)"}}>
-            <motion.div animate={{rotate:360}} transition={{duration:0.8,repeat:Infinity,ease:"linear"}}>
-              <Sparkles style={{width:10,height:10,color:"white"}}/>
-            </motion.div>
-            <span style={{fontSize:9,fontWeight:700,color:"white"}}>AI ishlayapti…</span>
-          </div>
-        )}
       </div>
       <input ref={fileRef} type="file" accept="video/*" className="hidden"
         onChange={e=>e.target.files?.[0]&&handleFile(e.target.files[0])}/>
@@ -4591,70 +4433,6 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
                 onChange={e=>setSpeed(Number(e.target.value)/100)}
                 style={{width:"100%",accentColor:T.violet}}/>
             </div>
-          </div>
-        )}
-
-        {/* ── AI EDIT ── */}
-        {activeTab==="ai" && (
-          <div className="flex flex-col gap-3">
-            <div style={{padding:"10px 12px",borderRadius:12,
-              background:"linear-gradient(135deg,rgba(168,85,247,0.08),rgba(119,0,255,0.05))",
-              border:"1px solid rgba(168,85,247,0.2)"}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                <Sparkles style={{width:12,height:12,color:T.violet}}/>
-                <span style={{fontSize:10,color:T.violet,fontWeight:700,letterSpacing:"0.08em"}}>{t("otube.ai_editor_title")}</span>
-              </div>
-              <p style={{fontSize:10,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>
-                {t("otube.ai_editor_desc")}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              {AI_ACTIONS.map(a=>(
-                <motion.button key={a.id} whileTap={{scale:0.97}}
-                  onClick={()=>!aiDone.includes(a.id)&&!aiRunning&&runAi(a.id)}
-                  disabled={!!aiRunning}
-                  style={{display:"flex",alignItems:"center",gap:12,padding:"12px",borderRadius:12,
-                    background:aiDone.includes(a.id)
-                      ?"rgba(0,255,136,0.07)"
-                      :aiRunning===a.id
-                      ?"rgba(168,85,247,0.12)"
-                      :"rgba(255,255,255,0.04)",
-                    border:`1px solid ${
-                      aiDone.includes(a.id)?"rgba(0,255,136,0.3)":
-                      aiRunning===a.id?"rgba(168,85,247,0.4)":"rgba(255,255,255,0.07)"}`,
-                    textAlign:"left",transition:"all 0.2s"}}>
-                  <div style={{width:36,height:36,borderRadius:10,fontSize:18,
-                    background:aiDone.includes(a.id)?"rgba(0,255,136,0.1)":"rgba(255,255,255,0.06)",
-                    display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    {aiRunning===a.id ? (
-                      <motion.div animate={{rotate:360}} transition={{duration:0.7,repeat:Infinity,ease:"linear"}}>
-                        <Sparkles style={{width:14,height:14,color:T.violet}}/>
-                      </motion.div>
-                    ) : aiDone.includes(a.id) ? "✅" : a.icon}
-                  </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:12,fontWeight:700,
-                      color:aiDone.includes(a.id)?"#00ff88":aiRunning===a.id?T.violet:"rgba(255,255,255,0.8)"}}>
-                      {a.label}
-                    </div>
-                    <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:1}}>{a.desc}</div>
-                  </div>
-                  {aiRunning===a.id && (
-                    <div style={{fontSize:9,color:T.violet,fontWeight:700}}>AI…</div>
-                  )}
-                  {aiDone.includes(a.id) && (
-                    <span style={{fontSize:9,color:"#00ff88",fontWeight:700}}>{t("otube.ai_ready")}</span>
-                  )}
-                </motion.button>
-              ))}
-            </div>
-            {aiDone.length>0 && (
-              <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(0,255,136,0.06)",
-                border:"1px solid rgba(0,255,136,0.2)",display:"flex",alignItems:"center",gap:8}}>
-                <Check style={{width:12,height:12,color:"#00ff88"}}/>
-                <span style={{fontSize:10,color:"#00ff88",fontWeight:700}}>{t("otube.ai_applied",{count:aiDone.length})}</span>
-              </div>
-            )}
           </div>
         )}
 
@@ -5367,12 +5145,31 @@ const FAB_BOT = "calc(env(safe-area-inset-bottom, 0px) + 56px)";
 
 function FloatingFAB() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
   const [open,  setOpen]  = useState(false);
-  const [modal, setModal] = useState<"upload"|"live"|"short"|"challenge"|"cipcat"|null>(null);
+  const [modal, setModal] = useState<"upload"|"short"|"challenge"|"cipcat"|null>(null);
+  const [goingLive, setGoingLive] = useState(false);
   const { edged, dock } = useDockedState("right");
+  const startLive = useStartLive();
+
+  const handleGoLive = async () => {
+    if (!user || goingLive) return;
+    setGoingLive(true);
+    try {
+      const title = `${user.displayName || user.username} jonli efiri`;
+      const stream = await startLive.mutateAsync({ data: { title } });
+      navigate(`/live/${stream.id}`);
+    } catch {
+      /* start-live failed, stay put */
+    } finally {
+      setGoingLive(false);
+    }
+  };
 
   const openModal = (id: "upload"|"live"|"short"|"challenge"|"cipcat") => {
     setOpen(false);
+    if (id === "live") { void handleGoLive(); return; }
     setTimeout(() => setModal(id), 150);
   };
 
@@ -5392,7 +5189,6 @@ function FloatingFAB() {
   if (edged) return (
     <AnimatePresence>
       {modal==="upload"    && <UploadModal     onClose={()=>setModal(null)}/>}
-      {modal==="live"      && <LiveSetupModal  onClose={()=>setModal(null)}/>}
       {modal==="short"     && <ShortModal      onClose={()=>setModal(null)}/>}
       {modal==="challenge" && <ChallengeModal  onClose={()=>setModal(null)}/>}
       {modal==="cipcat"    && <CipCatModal     onClose={()=>setModal(null)}/>}
@@ -5487,7 +5283,6 @@ function FloatingFAB() {
       {/* Modals */}
       <AnimatePresence>
         {modal==="upload"    && <UploadModal     onClose={()=>setModal(null)}/>}
-        {modal==="live"      && <LiveSetupModal  onClose={()=>setModal(null)}/>}
         {modal==="short"     && <ShortModal      onClose={()=>setModal(null)}/>}
         {modal==="challenge" && <ChallengeModal  onClose={()=>setModal(null)}/>}
         {modal==="cipcat"    && <CipCatModal     onClose={()=>setModal(null)}/>}

@@ -931,10 +931,10 @@ export const GetAdminDashboardResponse = zod.object({
   "totalReels": zod.number(),
   "totalStories": zod.number(),
   "totalGroups": zod.number(),
-  "activeNow": zod.number(),
-  "flaggedContent": zod.number(),
-  "aiAccuracy": zod.number(),
-  "dailyGrowth": zod.number(),
+  "activeNow": zod.number().describe('Users with a live session (real-time, from session store)'),
+  "flaggedContent": zod.number().describe('Pending items in the moderation queue'),
+  "newUsersToday": zod.number(),
+  "dailyGrowth": zod.number().describe('New users today as a percentage of total users'),
   "topRegions": zod.array(zod.object({
   "region": zod.string(),
   "users": zod.number()
@@ -1111,19 +1111,15 @@ export const GetAdminAnalyticsResponse = zod.object({
  */
 export const GetAiSystemStatusResponse = zod.object({
   "version": zod.string(),
-  "accuracy": zod.number(),
-  "modelsRunning": zod.number(),
-  "lastImproved": zod.string(),
-  "selfImprovementEnabled": zod.boolean(),
-  "recommendations": zod.array(zod.object({
-  "module": zod.string(),
-  "suggestion": zod.string(),
-  "impact": zod.enum(['low', 'medium', 'high'])
-})),
-  "metricsHistory": zod.array(zod.object({
+  "modelsRunning": zod.number().describe('Number of active AI subsystems (moderation, feed ranking, sentiment, chat, twin)'),
+  "totalModerated": zod.number().describe('Total items ever processed by the moderation queue'),
+  "pendingReview": zod.number().describe('Moderation queue items awaiting a human decision'),
+  "autoBlockedCount": zod.number().describe('Items auto-blocked by AI without human review'),
+  "avgAiScore": zod.number().describe('Average AI moderation risk score across all processed items'),
+  "lastModerationAt": zod.string().nullable().describe('Timestamp of the most recent moderation event'),
+  "volumeHistory": zod.array(zod.object({
   "date": zod.string(),
-  "accuracy": zod.number(),
-  "responseTime": zod.number()
+  "count": zod.number()
 })).optional()
 })
 

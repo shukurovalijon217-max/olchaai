@@ -823,7 +823,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mood, mediaType, hasPoll: pollEnabled, hotTake, followerCount: 800 }),
+        body: JSON.stringify({ mood, mediaType, hasPoll: pollEnabled, hotTake }),
       });
       const data = await res.json();
       setPrediction(data);

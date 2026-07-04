@@ -7,6 +7,7 @@ import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
+import { getUserStats, getUserStatsMap } from "../lib/userStats";
 
 const router = Router();
 
@@ -20,7 +21,7 @@ async function batchEnrichPosts(
   const authorIds = [...new Set(posts.map(p => p.authorId).filter(Boolean))] as number[];
   const postIds = posts.map(p => p.id);
 
-  const [authors, likedRows] = await Promise.all([
+  const [authors, likedRows, statsMap] = await Promise.all([
     authorIds.length > 0
       ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : Promise.resolve([]),
@@ -30,6 +31,7 @@ async function batchEnrichPosts(
           .from(postLikesTable)
           .where(and(inArray(postLikesTable.postId, postIds), eq(postLikesTable.userId, viewerId)))
       : Promise.resolve([]),
+    getUserStatsMap(authorIds, viewerId),
   ]);
 
   const authorMap = new Map(authors.map(a => [a.id, a]));
@@ -37,6 +39,7 @@ async function batchEnrichPosts(
 
   return posts.map(post => {
     const author = authorMap.get(post.authorId as number);
+    const stats = statsMap.get(post.authorId as number) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
     return {
       ...post,
       likesCount: post.likesCount ?? 0,
@@ -48,10 +51,7 @@ async function batchEnrichPosts(
         displayName: author?.displayName ?? "Deleted User",
         avatarUrl: author?.avatarUrl ?? null,
         isVerified: author?.isVerified ?? false,
-        followersCount: 0,
-        followingCount: 0,
-        postsCount: 0,
-        isFollowing: false,
+        ...stats,
       },
       tags: post.tags || [],
       isLiked: likedSet.has(post.id),
@@ -468,20 +468,23 @@ router.get("/posts/:id/comments", async (req, res) => {
     if (comments.length === 0) { res.json([]); return; }
 
     const authorIds = [...new Set(comments.map(c => c.authorId).filter(Boolean))] as number[];
+    const viewerId = (req.session as any)?.userId as number | undefined;
     const authors = authorIds.length > 0
       ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : [];
     const authorMap = new Map(authors.map(a => [a.id, a]));
+    const statsMap = await getUserStatsMap(authorIds, viewerId);
 
     res.json(comments.map(c => {
       const author = authorMap.get(c.authorId as number);
+      const stats = statsMap.get(c.authorId as number) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
       return {
         ...c,
         author: {
           id: author?.id ?? c.authorId, username: author?.username ?? "deleted",
           displayName: author?.displayName ?? "Deleted User", avatarUrl: author?.avatarUrl ?? null,
           isVerified: author?.isVerified ?? false,
-          followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false,
+          ...stats,
         },
       };
     }));
@@ -501,13 +504,14 @@ router.post("/posts/:id/comments", async (req, res) => {
     await db.update(postsTable).set({ commentsCount: sql`${postsTable.commentsCount} + 1` }).where(eq(postsTable.id, postId));
 
     const [author] = await db.select().from(usersTable).where(eq(usersTable.id, comment.authorId as number));
+    const stats = await getUserStats(comment.authorId as number, authorId);
     res.status(201).json({
       ...comment,
       author: {
         id: author?.id ?? authorId, username: author?.username ?? "deleted",
         displayName: author?.displayName ?? "Deleted User", avatarUrl: author?.avatarUrl ?? null,
         isVerified: author?.isVerified ?? false,
-        followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false,
+        ...stats,
       },
     });
 

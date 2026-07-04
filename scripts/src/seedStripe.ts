@@ -3,11 +3,11 @@ import { getUncachableStripeClient } from "./stripeClient";
 async function seedStripe() {
   const stripe = await getUncachableStripeClient();
 
-  console.log("Creating OlCha Premium products...");
+  console.log("Creating OlchaAI Premium products...");
 
-  const existing = await stripe.products.search({ query: "name:'OlCha Premium' AND active:'true'" });
+  const existing = await stripe.products.search({ query: "name:'OlchaAI Premium' AND active:'true'" });
   if (existing.data.length > 0) {
-    console.log("OlCha Premium already exists:", existing.data[0].id);
+    console.log("OlchaAI Premium already exists:", existing.data[0].id);
     const prices = await stripe.prices.list({ product: existing.data[0].id, active: true });
     for (const p of prices.data) {
       console.log(`  Price: ${p.id}  ${p.unit_amount! / 100} ${p.currency}/${p.recurring?.interval ?? "one_time"}`);
@@ -16,7 +16,7 @@ async function seedStripe() {
   }
 
   const product = await stripe.products.create({
-    name: "OlCha Premium",
+    name: "OlchaAI Premium",
     description: "OlCha platformasining premium xususiyatlari: reklama yo'q, eksklyuziv badge, kengaytirilgan tahlil va boshqalar.",
     metadata: { app: "olcha" },
   });
@@ -38,7 +38,7 @@ async function seedStripe() {
   });
   console.log("Yearly price:", yearly.id, "($79.99/year)");
 
-  console.log("\n✓ OlCha Premium products created!");
+  console.log("\n✓ OlchaAI Premium products created!");
 }
 
 seedStripe().catch((err) => {

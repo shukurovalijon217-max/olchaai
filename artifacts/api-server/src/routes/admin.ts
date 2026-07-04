@@ -1,10 +1,11 @@
 import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
 import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable } from "@workspace/db";
-import { eq, sql, desc, sum, and } from "drizzle-orm";
+import { eq, sql, desc, sum, and, inArray } from "drizzle-orm";
 import { getCommissionRate, setCommissionRate } from "../lib/commission";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
 import { getStripeSync } from "../stripe/stripeClient";
+import { getUserStats, getUserStatsMap } from "../lib/userStats";
 
 const router = Router();
 
@@ -60,7 +61,8 @@ router.get("/admin/users", async (req, res) => {
     } else {
       users = await db.select().from(usersTable).limit(limit).offset(offset);
     }
-    res.json(users.map(u => ({ ...u, postsCount: 0, followersCount: 0, lastSeen: u.createdAt.toISOString() })));
+    const statsMap = await getUserStatsMap(users.map(u => u.id));
+    res.json(users.map(u => ({ ...u, ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }), lastSeen: u.createdAt.toISOString() })));
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -73,7 +75,8 @@ router.post("/admin/users/:id/suspend", async (req, res) => {
     const { suspend } = req.body;
     const [user] = await db.update(usersTable).set({ status: suspend ? "suspended" : "active" }).where(eq(usersTable.id, id)).returning();
     if (!user) { res.status(404).json({ error: "Not found" }); return; }
-    res.json({ ...user, postsCount: 0, followersCount: 0, lastSeen: user.createdAt.toISOString() });
+    const stats = await getUserStats(id);
+    res.json({ ...user, ...stats, lastSeen: user.createdAt.toISOString() });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -124,10 +127,16 @@ router.get("/admin/analytics", async (req, res) => {
       contentGrowth.push({ date, posts: Math.floor(200 + Math.random() * 400), reels: Math.floor(80 + Math.random() * 150), stories: Math.floor(300 + Math.random() * 500) });
     }
     const topPosts = await db.select().from(postsTable).orderBy(desc(postsTable.likesCount)).limit(5);
-    const enrichedTop = await Promise.all(topPosts.map(async (p) => {
-      const [author] = await db.select().from(usersTable).where(eq(usersTable.id, p.authorId));
-      return { ...p, author: { ...(author || {}), followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }, tags: p.tags || [], isLiked: false };
-    }));
+    const authorIds = [...new Set(topPosts.map(p => p.authorId).filter(Boolean))] as number[];
+    const statsMap = await getUserStatsMap(authorIds);
+    const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
+    const authorMap = new Map(authors.map(a => [a.id, a]));
+
+    const enrichedTop = topPosts.map((p) => {
+      const author = authorMap.get(p.authorId as number);
+      const stats = statsMap.get(p.authorId as number) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
+      return { ...p, author: { ...(author || {}), ...stats }, tags: p.tags || [], isLiked: false };
+    });
     res.json({ period, userGrowth, contentGrowth, engagementRate: 6.8, topContent: enrichedTop });
   } catch (err) {
     req.log.error(err);
@@ -204,8 +213,8 @@ router.patch("/admin/users/:id/toggle-premium", async (req, res) => {
     const [existing] = await db.select({ isPremium: usersTable.isPremium }).from(usersTable).where(eq(usersTable.id, id));
     if (!existing) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
     const [user] = await db.update(usersTable).set({ isPremium: !existing.isPremium }).where(eq(usersTable.id, id)).returning();
-    const [counts] = await db.select({ postsCount: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id));
-    res.json({ ...user, postsCount: counts?.postsCount ?? 0, followersCount: 0, lastSeen: user.createdAt.toISOString() });
+    const stats = await getUserStats(id);
+    res.json({ ...user, ...stats, lastSeen: user.createdAt.toISOString() });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
 });
 
@@ -216,7 +225,8 @@ router.patch("/admin/users/:id/verify", async (req, res) => {
     const [existing] = await db.select({ isVerified: usersTable.isVerified }).from(usersTable).where(eq(usersTable.id, id));
     if (!existing) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
     const [user] = await db.update(usersTable).set({ isVerified: !existing.isVerified }).where(eq(usersTable.id, id)).returning();
-    res.json({ ...user, postsCount: 0, followersCount: 0, lastSeen: user.createdAt.toISOString() });
+    const stats = await getUserStats(id);
+    res.json({ ...user, ...stats, lastSeen: user.createdAt.toISOString() });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
 });
 
@@ -228,7 +238,8 @@ router.patch("/admin/users/:id/toggle-admin", async (req: any, res) => {
     const [existing] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, id));
     if (!existing) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
     const [user] = await db.update(usersTable).set({ isAdmin: !existing.isAdmin }).where(eq(usersTable.id, id)).returning();
-    res.json({ ...user, postsCount: 0, followersCount: 0, lastSeen: user.createdAt.toISOString() });
+    const stats = await getUserStats(id);
+    res.json({ ...user, ...stats, lastSeen: user.createdAt.toISOString() });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
 });
 
@@ -453,7 +464,7 @@ router.put("/admin/premium-config", async (req: any, res) => {
     const stripe = await getUncachableStripeClient();
     let productId = current.stripeProductId;
     if (!productId) {
-      const existing = await stripe.products.search({ query: "name:'OlCha Premium' AND active:'true'" });
+      const existing = await stripe.products.search({ query: "name:'OlchaAI Premium' AND active:'true'" });
       productId = existing.data[0]?.id ?? null;
     }
     if (!productId) {
@@ -514,7 +525,7 @@ router.put("/admin/premium-config", async (req: any, res) => {
 router.post("/admin/stripe/seed", async (req, res) => {
   try {
     const stripe = await getUncachableStripeClient();
-    const existing = await stripe.products.search({ query: "name:'OlCha Premium' AND active:'true'" });
+    const existing = await stripe.products.search({ query: "name:'OlchaAI Premium' AND active:'true'" });
     if (existing.data.length > 0) {
       const prices = await stripe.prices.list({ product: existing.data[0].id, active: true });
       const stripeSync = await getStripeSync();
@@ -523,7 +534,7 @@ router.post("/admin/stripe/seed", async (req, res) => {
       return;
     }
     const product = await stripe.products.create({
-      name: "OlCha Premium",
+      name: "OlchaAI Premium",
       description: "Reklama yo'q, eksklyuziv badge, kengaytirilgan tahlil va boshqa premium xususiyatlar.",
       metadata: { app: "olcha" },
     });
@@ -535,7 +546,7 @@ router.post("/admin/stripe/seed", async (req, res) => {
     });
     const stripeSync = await getStripeSync();
     await stripeSync.syncBackfill();
-    res.json({ message: "OlCha Premium yaratildi va sinxronlashtirildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
+    res.json({ message: "OlchaAI Premium yaratildi va sinxronlashtirildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Stripe mahsulot yaratishda xato" });

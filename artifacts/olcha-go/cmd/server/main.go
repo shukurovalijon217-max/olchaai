@@ -632,18 +632,8 @@ type Trend struct {
 func handleTrending(db *sql.DB) http.HandlerFunc {
         return func(w http.ResponseWriter, r *http.Request) {
                 if db == nil {
-                        trends := []Trend{
-                                {Tag: "#OlchaAI", Count: 4820, Score: 98.2, Delta: 12.4},
-                                {Tag: "#TechUz", Count: 3100, Score: 87.5, Delta: 8.1},
-                                {Tag: "#AI2026", Count: 2750, Score: 82.3, Delta: 5.6},
-                                {Tag: "#GoLang", Count: 1980, Score: 74.1, Delta: 22.0},
-                                {Tag: "#TensorFlow", Count: 1620, Score: 69.8, Delta: 15.3},
-                                {Tag: "#Kubernetes", Count: 1340, Score: 63.4, Delta: 9.7},
-                                {Tag: "#Toshkent", Count: 980, Score: 55.2, Delta: 3.2},
-                                {Tag: "#Uzbekistan", Count: 870, Score: 51.0, Delta: 1.8},
-                        }
                         w.Header().Set("Content-Type", "application/json")
-                        json.NewEncoder(w).Encode(map[string]any{"trending": trends, "engine": "OlchaAI-Go-TrendV1"})
+                        json.NewEncoder(w).Encode(map[string]any{"trending": []Trend{}, "engine": "OlchaAI-Go-TrendV1"})
                         return
                 }
                 rows, err := db.Query(`

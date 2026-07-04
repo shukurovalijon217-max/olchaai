@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import {
-  Crown, Check, X, Zap, Shield, Star, Loader2,
+  Crown, Check, X, Zap, Shield, Loader2,
   Sparkles, Rocket, BadgeCheck, TrendingUp, Eye,
   MessageSquare, BarChart3, Headphones, ChevronDown,
   ArrowRight, Play, Image, Megaphone, Bot, Lock
@@ -73,10 +73,6 @@ function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase(), minimumFractionDigits: 0 }).format(amount / 100);
 }
 
-function StarRating({ n }: { n: number }) {
-  return <div className="flex gap-0.5">{Array.from({ length: n }).map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}</div>;
-}
-
 function FeatureCheck({ value }: { value: string | boolean }) {
   if (value === false) return <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />;
   if (value === true) return <Check className="w-4 h-4 text-green-400 mx-auto" />;
@@ -120,12 +116,6 @@ export default function PremiumPage() {
     { icon: Headphones,    label: t("premium.feat_support"),   free: t("premium.support_general"),  premium: t("premium.support_priority") },
     { icon: Shield,        label: t("premium.feat_security"),  free: t("premium.security_standard"),premium: t("premium.security_enhanced") },
     { icon: Lock,          label: t("premium.feat_exclusive"), free: false,                         premium: true },
-  ];
-
-  const TESTIMONIALS = [
-    { name: t("premium.t1_name"), handle: "@dildora_art", avatar: "D", text: t("premium.t1_text"), stars: 5 },
-    { name: t("premium.t2_name"), handle: "@jasur_tech",  avatar: "J", text: t("premium.t2_text"), stars: 5 },
-    { name: t("premium.t3_name"), handle: "@nilufar_blog",avatar: "N", text: t("premium.t3_text"), stars: 5 },
   ];
 
   const FAQS = [
@@ -387,45 +377,6 @@ export default function PremiumPage() {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Testimonials */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-black text-foreground text-center mb-2">{t("premium.testimonials_title")}</h2>
-          <p className="text-muted-foreground text-center text-sm mb-8">{t("premium.testimonials_sub")}</p>
-          <div className="grid md:grid-cols-3 gap-4">
-            {TESTIMONIALS.map((testimonial, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i }}
-                className="p-5 rounded-2xl border border-border bg-card">
-                <StarRating n={testimonial.stars} />
-                <p className="text-sm text-muted-foreground my-3 leading-relaxed">"{testimonial.text}"</p>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/40 to-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
-                    {testimonial.avatar}
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground">{testimonial.name}</p>
-                    <p className="text-xs text-muted-foreground">{testimonial.handle}</p>
-                  </div>
-                  <BadgeCheck className="w-4 h-4 text-yellow-400 ml-auto" />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="mb-16 grid grid-cols-3 gap-4">
-          {[
-            { value: "500K+", label: t("premium.active_users") },
-            { value: "98%",   label: t("premium.satisfaction") },
-            { value: "3x",    label: t("premium.more_views") },
-          ].map((s, i) => (
-            <div key={i} className="p-5 rounded-2xl border border-border bg-card text-center">
-              <p className="text-3xl font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent mb-1">{s.value}</p>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-            </div>
-          ))}
         </div>
 
         {/* FAQ */}

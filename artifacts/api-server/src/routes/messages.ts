@@ -4,6 +4,7 @@ import { usersTable, chatConversationsTable, chatParticipantsTable, chatMessages
 import { eq, desc, and, inArray, or, isNull, lte } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter.js";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
+import { getUserStatsMap } from "../lib/userStats";
 
 const GO_SERVICE = process.env.GO_SERVICE_URL ?? "http://localhost:8099";
 
@@ -96,14 +97,18 @@ router.get("/conversations", async (req, res) => {
       .where(inArray(chatConversationsTable.id, myConvIds))
       .orderBy(desc(chatConversationsTable.updatedAt))
       .limit(50);
-    const enriched = await Promise.all(convs.map(async (c) => {
-      const parts = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.conversationId, c.id));
-      const participants = await Promise.all(parts.map(async (p) => {
-        const [u] = await db.select().from(usersTable).where(eq(usersTable.id, p.userId));
-        return u ? { ...u, followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false } : null;
-      }));
-      return { ...c, participants: participants.filter(Boolean) };
-    }));
+
+    const allParticipantRows = await db.select().from(chatParticipantsTable).where(inArray(chatParticipantsTable.conversationId, myConvIds));
+    const allParticipantIds = [...new Set(allParticipantRows.map(r => r.userId))];
+    const statsMap = await getUserStatsMap(allParticipantIds, userId);
+    const users = await db.select().from(usersTable).where(inArray(usersTable.id, allParticipantIds));
+    const userMap = new Map(users.map(u => [u.id, { ...u, ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }) }]));
+
+    const enriched = convs.map((c) => {
+      const parts = allParticipantRows.filter(r => r.conversationId === c.id);
+      const participants = parts.map(p => userMap.get(p.userId)).filter(Boolean);
+      return { ...c, participants };
+    });
     res.json(enriched);
   } catch (err) {
     req.log.error(err);
@@ -123,9 +128,10 @@ router.post("/conversations", async (req, res) => {
     await Promise.all(ids.map(pid =>
       db.insert(chatParticipantsTable).values({ conversationId: conv.id, userId: pid })
     ));
+    const statsMap = await getUserStatsMap(ids, userId);
     const participants = await Promise.all(ids.map(async (pid: number) => {
       const [u] = await db.select().from(usersTable).where(eq(usersTable.id, pid));
-      return u ? { ...u, followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false } : null;
+      return u ? { ...u, ...(statsMap.get(pid) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }) } : null;
     }));
     res.status(201).json({ ...conv, participants: participants.filter(Boolean) });
   } catch (err) {

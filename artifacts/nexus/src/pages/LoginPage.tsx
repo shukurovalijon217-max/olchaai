@@ -682,7 +682,7 @@ export default function LoginPage() {
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
             }}>
-              OlCha
+              OlchaAI
             </span>
           </motion.div>
           <motion.p

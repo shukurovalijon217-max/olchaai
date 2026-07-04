@@ -147,21 +147,41 @@ function PollWidget({ post, accent }: { post: Post & any; accent: string }) {
   const getPct = (i: number) => totalVotes === 0 ? 0 : Math.round((votes[i] / totalVotes) * 100);
 
   useEffect(() => {
-    setVotes(options.map(() => Math.floor(Math.random() * 40 + 2)));
+    let cancelled = false;
+    fetch(`${API_BASE}/api/posts/${post.id}/votes`, { credentials: "include" })
+      .then(r => r.json())
+      .then((data: { votes?: { optionIndex: number; count: number }[]; userVote?: number | null }) => {
+        if (cancelled) return;
+        const counts = new Array(options.length).fill(0);
+        (data.votes || []).forEach(v => { if (v.optionIndex < counts.length) counts[v.optionIndex] = v.count; });
+        setVotes(counts);
+        setUserVote(data.userVote ?? null);
+      })
+      .catch(() => setVotes(new Array(options.length).fill(0)));
+    return () => { cancelled = true; };
   }, [post.id]);
 
   const vote = async (i: number) => {
     if (userVote !== null || loading || !user) return;
     setLoading(true);
+    const prevVotes = votes;
     setUserVote(i);
     setVotes(v => v.map((c, idx) => idx === i ? c + 1 : c));
     try {
-      await fetch(`${API_BASE}/api/posts/${post.id}/vote`, {
+      const res = await fetch(`${API_BASE}/api/posts/${post.id}/vote`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ option: i }),
+        body: JSON.stringify({ userId: user.id, optionIndex: i }),
       });
-    } catch { /* ignore */ } finally { setLoading(false); }
+      if (!res.ok) throw new Error("vote failed");
+      const data: { votes?: { optionIndex: number; count: number }[] } = await res.json();
+      const counts = new Array(options.length).fill(0);
+      (data.votes || []).forEach(v => { if (v.optionIndex < counts.length) counts[v.optionIndex] = v.count; });
+      setVotes(counts);
+    } catch {
+      setUserVote(null);
+      setVotes(prevVotes);
+    } finally { setLoading(false); }
   };
 
   if (!options.length) return null;

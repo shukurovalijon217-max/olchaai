@@ -3,7 +3,8 @@ import { getUncachableStripeClient } from './stripeClient';
 
 export interface PriceData {
   currency: string;
-  product: string;
+  product?: string;
+  product_data?: { name: string; description?: string };
   unit_amount: number;
   recurring: { interval: string } | null;
 }
@@ -19,6 +20,7 @@ export class StripeService {
     price: string | PriceData,
     successUrl: string,
     cancelUrl: string,
+    opts?: { metadata?: Record<string, string> },
   ) {
     const stripe = await getUncachableStripeClient();
 
@@ -28,7 +30,8 @@ export class StripeService {
       : {
           price_data: {
             currency: price.currency.toLowerCase(),
-            product: price.product,
+            ...(price.product ? { product: price.product } : {}),
+            ...(price.product_data ? { product_data: price.product_data } : {}),
             unit_amount: price.unit_amount,
             ...(price.recurring ? { recurring: { interval: price.recurring.interval as any } } : {}),
           },
@@ -42,6 +45,7 @@ export class StripeService {
       mode: isRecurring ? 'subscription' : 'payment',
       success_url: successUrl,
       cancel_url: cancelUrl,
+      ...(opts?.metadata ? { metadata: opts.metadata } : {}),
     });
   }
 

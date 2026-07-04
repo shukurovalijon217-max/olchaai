@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -22,11 +22,11 @@ const fmtUSD = (tiyin: number, uzsPerUsd: number) => {
 };
 
 const PAYMENT_PROVIDERS = [
-  { id: "visa",       label: "Visa",                   logo: "💳", color: "#1a1f71", textColor: "#fff", desc: "Visa debet/kredit karta" },
-  { id: "mastercard", label: "Mastercard",             logo: "🔴", color: "#eb001b", textColor: "#fff", desc: "Mastercard karta" },
-  { id: "click",      label: "Click",                  logo: "🟢", color: "#00b050", textColor: "#fff", desc: "O'zbek to'lov tizimi" },
-  { id: "payme",      label: "Payme",                  logo: "🔵", color: "#00afef", textColor: "#fff", desc: "Payme mobil to'lov" },
-  { id: "global",     label: "Global Payment Gateway", logo: "🌐", color: "#7c3aed", textColor: "#fff", desc: "Xalqaro to'lov tizimi" },
+  { id: "visa",       label: "Visa",                   logo: "💳", color: "#1a1f71", textColor: "#fff", desc: "Visa debet/kredit karta", disabled: false },
+  { id: "mastercard", label: "Mastercard",             logo: "🔴", color: "#eb001b", textColor: "#fff", desc: "Mastercard karta", disabled: false },
+  { id: "click",      label: "Click",                  logo: "🟢", color: "#00b050", textColor: "#fff", desc: "Tez orada", disabled: true },
+  { id: "payme",      label: "Payme",                  logo: "🔵", color: "#00afef", textColor: "#fff", desc: "Tez orada", disabled: true },
+  { id: "global",     label: "Global Payment Gateway", logo: "🌐", color: "#7c3aed", textColor: "#fff", desc: "Xalqaro to'lov tizimi", disabled: false },
 ];
 
 const TX_TYPE_META: Record<string, { label: string; icon: typeof ArrowDownCircle; color: string }> = {
@@ -72,11 +72,10 @@ function usePaymentMethods() {
 // ─── Deposit Modal ────────────────────────────────────────────────────────────
 function DepositModal({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
-  const qc = useQueryClient();
-  const [step, setStep] = useState<"amount" | "method" | "processing" | "done">("amount");
+  const [step, setStep] = useState<"amount" | "method" | "processing" | "error">("amount");
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<string | null>(null);
-  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const presets = [10000, 50000, 100000, 500000]; // tiyin: 100, 500, 1000, 5000 UZS
 
@@ -91,18 +90,18 @@ function DepositModal({ onClose }: { onClose: () => void }) {
       return res.json();
     },
     onSuccess: (data) => {
-      if (data.wallet) {
-        setResult(data);
-        setStep("done");
-        qc.invalidateQueries({ queryKey: ["wallet"] });
-        qc.invalidateQueries({ queryKey: ["wallet-txs"] });
+      if (data.url) {
+        window.location.href = data.url;
+        return;
       }
+      setError(data.error ?? "Xato yuz berdi");
+      setStep("error");
     },
+    onError: () => { setError("Xato yuz berdi"); setStep("error"); },
   });
 
-  const handlePay = async () => {
+  const handlePay = () => {
     setStep("processing");
-    await new Promise(r => setTimeout(r, 1500)); // simulate gateway
     mut.mutate();
   };
 
@@ -145,8 +144,8 @@ function DepositModal({ onClose }: { onClose: () => void }) {
           <p className="text-sm text-muted-foreground">{t("wallet.payment_methods")}</p>
           <div className="space-y-2">
             {PAYMENT_PROVIDERS.map(p => (
-              <button key={p.id} onClick={() => setMethod(p.id)}
-                className={`w-full flex items-center gap-3 p-4 rounded-xl border transition text-left ${method === p.id ? "border-primary bg-primary/10" : "border-border hover:border-border/80 hover:bg-muted/30"}`}>
+              <button key={p.id} disabled={p.disabled} onClick={() => setMethod(p.id)}
+                className={`w-full flex items-center gap-3 p-4 rounded-xl border transition text-left ${p.disabled ? "opacity-40 cursor-not-allowed" : ""} ${method === p.id ? "border-primary bg-primary/10" : "border-border hover:border-border/80 hover:bg-muted/30"}`}>
                 <span className="text-2xl">{p.logo}</span>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-foreground">{p.label}</p>
@@ -174,24 +173,17 @@ function DepositModal({ onClose }: { onClose: () => void }) {
         <div className="py-12 flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
           <p className="text-base font-semibold text-foreground">{t("common.loading")}</p>
-          <p className="text-sm text-muted-foreground">{PAYMENT_PROVIDERS.find(p => p.id === method)?.label} ulanmoqda</p>
+          <p className="text-sm text-muted-foreground">{PAYMENT_PROVIDERS.find(p => p.id === method)?.label} to'lov sahifasiga yo'naltirilmoqda</p>
         </div>
       )}
 
-      {step === "done" && result && (
+      {step === "error" && (
         <div className="py-8 flex flex-col items-center gap-4 text-center">
-          <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
-            <CheckCircle2 className="w-8 h-8 text-green-400" />
+          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+            <XCircle className="w-8 h-8 text-red-400" />
           </div>
-          <div>
-            <p className="text-xl font-bold text-foreground">{t("common.success")}!</p>
-            <p className="text-sm text-muted-foreground mt-1">+{fmt(result.transaction?.amount ?? 0)}</p>
-          </div>
-          <div className="w-full p-4 rounded-xl bg-muted/30 border border-border text-left text-xs space-y-1">
-            <p><span className="text-muted-foreground">Ref: </span><span className="font-mono text-foreground">{result.transaction?.reference}</span></p>
-            <p><span className="text-muted-foreground">{t("wallet.total_balance")}: </span><span className="font-semibold text-foreground">{fmt(result.wallet?.balance ?? 0)}</span></p>
-          </div>
-          <button onClick={onClose} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition">{t("common.close")}</button>
+          <p className="text-base font-semibold text-foreground">{error}</p>
+          <button onClick={() => setStep("method")} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition">← {t("common.back")}</button>
         </div>
       )}
     </ModalShell>
@@ -229,10 +221,9 @@ function WithdrawModal({ wallet, onClose }: { wallet: WalletData; onClose: () =>
     },
   });
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     setError(null);
     setStep("processing");
-    await new Promise(r => setTimeout(r, 1200));
     mut.mutate();
   };
 
@@ -255,10 +246,13 @@ function WithdrawModal({ wallet, onClose }: { wallet: WalletData; onClose: () =>
             <label className="block text-sm font-medium text-foreground mb-2">To'lov usuli</label>
             <div className="grid grid-cols-1 gap-2">
               {PAYMENT_PROVIDERS.map(p => (
-                <button key={p.id} onClick={() => setMethod(p.id)}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition text-left ${method === p.id ? "border-primary bg-primary/10" : "border-border hover:bg-muted/30"}`}>
+                <button key={p.id} disabled={p.disabled} onClick={() => setMethod(p.id)}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition text-left ${p.disabled ? "opacity-40 cursor-not-allowed" : ""} ${method === p.id ? "border-primary bg-primary/10" : "border-border hover:bg-muted/30"}`}>
                   <span className="text-xl">{p.logo}</span>
-                  <span className="text-sm font-medium text-foreground flex-1">{p.label}</span>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-foreground block">{p.label}</span>
+                    {p.disabled && <span className="text-xs text-muted-foreground">Tez orada</span>}
+                  </div>
                   {method === p.id && <CheckCircle2 className="w-4 h-4 text-primary" />}
                 </button>
               ))}
@@ -281,16 +275,16 @@ function WithdrawModal({ wallet, onClose }: { wallet: WalletData; onClose: () =>
       {step === "processing" && (
         <div className="py-12 flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-          <p className="text-base font-semibold text-foreground">Pul o'tkazilmoqda...</p>
+          <p className="text-base font-semibold text-foreground">So'rov yuborilmoqda...</p>
         </div>
       )}
       {step === "done" && (
         <div className="py-8 flex flex-col items-center gap-4 text-center">
-          <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
-            <CheckCircle2 className="w-8 h-8 text-green-400" />
+          <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-yellow-400" />
           </div>
-          <p className="text-xl font-bold text-foreground">Muvaffaqiyatli yechildi!</p>
-          <p className="text-sm text-muted-foreground">{fmt(Math.abs(result?.transaction?.amount ?? 0))} pul o'tkazildi</p>
+          <p className="text-xl font-bold text-foreground">So'rov qabul qilindi</p>
+          <p className="text-sm text-muted-foreground">{fmt(Math.abs(result?.transaction?.amount ?? 0))} — admin tasdiqlashini kutmoqda. Tasdiqlangach mablag' hisobingizga o'tkaziladi.</p>
           <button onClick={onClose} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition">Yopish</button>
         </div>
       )}
@@ -459,6 +453,7 @@ export default function WalletPage() {
 
   const [modal, setModal] = useState<"deposit" | "withdraw" | "add-method" | null>(null);
   const [hideBalance, setHideBalance] = useState(false);
+  const [depositBanner, setDepositBanner] = useState<{ kind: "success" | "error" | "canceled"; message: string } | null>(null);
 
   const wallet = walletData?.wallet;
   const uzsPerUsd = walletData?.rates?.uzsPerUsd ?? 12800;
@@ -469,6 +464,36 @@ export default function WalletPage() {
     mutationFn: (id: number) => fetch(`${API}/api/wallet/payment-methods/${id}`, { method: "DELETE", credentials: "include" }).then(r => r.json()),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet-pms"] }),
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("deposit_session");
+    const canceled = params.get("deposit_canceled");
+    if (sessionId) {
+      fetch(`${API}/api/wallet/deposit/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sessionId }),
+      })
+        .then(r => r.json())
+        .then((data) => {
+          if (data.wallet) {
+            setDepositBanner({ kind: "success", message: `Hamyon muvaffaqiyatli to'ldirildi: +${fmt(data.transaction?.amount ?? 0)}` });
+            qc.invalidateQueries({ queryKey: ["wallet"] });
+            qc.invalidateQueries({ queryKey: ["wallet-txs"] });
+          } else {
+            setDepositBanner({ kind: "error", message: data.error ?? "To'lovni tasdiqlashda xato" });
+          }
+        })
+        .catch(() => setDepositBanner({ kind: "error", message: "To'lovni tasdiqlashda xato" }));
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (canceled) {
+      setDepositBanner({ kind: "canceled", message: "To'lov bekor qilindi" });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (wLoading) {
     return (
@@ -504,6 +529,17 @@ export default function WalletPage() {
             {hideBalance ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
           </button>
         </div>
+
+        {depositBanner && (
+          <div className={`mb-6 p-4 rounded-xl border flex items-start justify-between gap-3 ${
+            depositBanner.kind === "success" ? "bg-green-500/10 border-green-500/30 text-green-400"
+            : depositBanner.kind === "canceled" ? "bg-muted/30 border-border text-muted-foreground"
+            : "bg-red-500/10 border-red-500/30 text-red-400"
+          }`}>
+            <p className="text-sm font-medium">{depositBanner.message}</p>
+            <button onClick={() => setDepositBanner(null)} className="opacity-70 hover:opacity-100 transition"><X className="w-4 h-4" /></button>
+          </div>
+        )}
 
         {/* Total balance hero */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/80 to-violet-700 p-6 mb-6 shadow-xl">
@@ -599,9 +635,9 @@ export default function WalletPage() {
           <div className="mt-4 p-4 rounded-xl bg-muted/20 border border-border flex flex-wrap items-center gap-3">
             <span className="text-xs text-muted-foreground">Qo'llab-quvvatlanadi:</span>
             {PAYMENT_PROVIDERS.map(p => (
-              <div key={p.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-card border border-border">
+              <div key={p.id} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-card border border-border ${p.disabled ? "opacity-50" : ""}`}>
                 <span className="text-sm">{p.logo}</span>
-                <span className="text-xs font-medium text-foreground">{p.label}</span>
+                <span className="text-xs font-medium text-foreground">{p.label}{p.disabled ? " · Tez orada" : ""}</span>
               </div>
             ))}
           </div>

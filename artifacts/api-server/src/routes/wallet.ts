@@ -6,7 +6,12 @@ import {
 import { eq, desc, and } from "drizzle-orm";
 import { z } from "zod";
 import { applyCommission, getCommissionRate } from "../lib/commission";
-import { USD_TO_MAJOR } from "../lib/currency";
+import { USD_TO_MAJOR, tiyinToUSD } from "../lib/currency";
+import { stripeService } from "../stripe/stripeService";
+import { storage } from "../stripe/storage";
+import { getUncachableStripeClient } from "../stripe/stripeClient";
+
+const REAL_PAYMENT_METHODS = new Set(["visa", "mastercard", "global"]);
 
 const router = Router();
 
@@ -68,6 +73,8 @@ const depositSchema = z.object({
   description: z.string().optional(),
 });
 
+// POST /api/wallet/deposit — creates a real Stripe Checkout session; wallet is
+// only credited after payment is confirmed via /wallet/deposit/confirm.
 router.post("/wallet/deposit", requireAuth, async (req: any, res) => {
   try {
     const parsed = depositSchema.safeParse(req.body);
@@ -75,38 +82,110 @@ router.post("/wallet/deposit", requireAuth, async (req: any, res) => {
       res.status(400).json({ error: "Noto'g'ri ma'lumot", details: parsed.error.issues }); return;
     }
     const { amount, paymentMethod, description } = parsed.data;
+    if (!REAL_PAYMENT_METHODS.has(paymentMethod)) {
+      res.status(400).json({ error: "Bu to'lov usuli hali ulanmagan (Tez orada)" }); return;
+    }
+
     const wallet = await getOrCreateWallet(req.session.userId);
+    const user = await storage.getUser(req.session.userId);
+    if (!user) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
+
+    let customerId = (user as any).stripeCustomerId as string | undefined;
+    if (!customerId) {
+      const customer = await stripeService.createCustomer(user.email, String(user.id));
+      await storage.updateUserStripeInfo(user.id, { stripeCustomerId: customer.id });
+      customerId = customer.id;
+    }
+
+    const domain = process.env.REPLIT_DOMAINS?.split(',')[0] ?? req.get('host');
+    const baseUrl = `https://${domain}`;
+    const usdCents = Math.max(50, Math.round(tiyinToUSD(amount) * 100));
+
+    const session = await stripeService.createCheckoutSession(
+      customerId,
+      {
+        currency: "usd",
+        product_data: { name: "OlCha hamyon to'ldirish" },
+        unit_amount: usdCents,
+        recurring: null,
+      },
+      `${baseUrl}/wallet?deposit_session={CHECKOUT_SESSION_ID}`,
+      `${baseUrl}/wallet?deposit_canceled=true`,
+      { metadata: { userId: String(req.session.userId), amountTiyin: String(amount), paymentMethod } },
+    );
+
+    const [tx] = await db.insert(transactionsTable).values({
+      userId: req.session.userId,
+      walletId: wallet.id,
+      type: "deposit",
+      amount,
+      paymentMethod,
+      status: "pending",
+      description: description ?? `${paymentMethod.toUpperCase()} orqali to'ldirish (to'lov kutilmoqda)`,
+      reference: session.id,
+    }).returning();
+
+    res.json({ url: session.url, transactionId: tx.id });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "To'lov sessiyasini yaratishda xato" });
+  }
+});
+
+// POST /api/wallet/deposit/confirm — verifies a Stripe Checkout session actually
+// paid before crediting the wallet. Idempotent: safe to call more than once.
+router.post("/wallet/deposit/confirm", requireAuth, async (req: any, res) => {
+  try {
+    const { sessionId } = req.body as { sessionId?: string };
+    if (!sessionId) { res.status(400).json({ error: "sessionId talab qilinadi" }); return; }
+
+    const [tx] = await db.select().from(transactionsTable)
+      .where(and(eq(transactionsTable.reference, sessionId), eq(transactionsTable.userId, req.session.userId)));
+    if (!tx) { res.status(404).json({ error: "Tranzaksiya topilmadi" }); return; }
+
+    if (tx.status !== "pending") {
+      const wallet = await getOrCreateWallet(req.session.userId);
+      res.json({ wallet, transaction: tx, alreadyConfirmed: true }); return;
+    }
+
+    const stripe = await getUncachableStripeClient();
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== "paid" || String(session.metadata?.userId) !== String(req.session.userId)) {
+      res.status(400).json({ error: "To'lov hali tasdiqlanmadi" }); return;
+    }
+
     const commissionRate = await getCommissionRate();
-    const commission = Math.floor(amount * commissionRate / 100);
-    const netAmount = amount - commission;
+    const commission = Math.floor(tx.amount * commissionRate / 100);
+    const netAmount = tx.amount - commission;
 
-    await new Promise(r => setTimeout(r, 300));
+    // Atomically flip pending -> completed first so concurrent confirms can't double-credit.
+    const [updatedTx] = await db.update(transactionsTable)
+      .set({
+        status: "completed",
+        amount: netAmount,
+        description: `${tx.paymentMethod?.toUpperCase()} orqali to'ldirish (komissiya ${commissionRate}% = ${(commission / 100).toFixed(0)} UZS)`,
+      })
+      .where(and(eq(transactionsTable.id, tx.id), eq(transactionsTable.status, "pending")))
+      .returning();
 
+    if (!updatedTx) {
+      const wallet = await getOrCreateWallet(req.session.userId);
+      res.json({ wallet, transaction: tx, alreadyConfirmed: true }); return;
+    }
+
+    const wallet = await getOrCreateWallet(req.session.userId);
     const [updatedWallet] = await db
       .update(walletsTable)
       .set({ balance: wallet.balance + netAmount, updatedAt: new Date() })
       .where(eq(walletsTable.id, wallet.id))
       .returning();
 
-    const ref = `DEP-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const [tx] = await db.insert(transactionsTable).values({
-      userId: req.session.userId,
-      walletId: wallet.id,
-      type: "deposit",
-      amount: netAmount,
-      paymentMethod,
-      status: "completed",
-      description: description ?? `${paymentMethod.toUpperCase()} orqali to'ldirish (komissiya ${commissionRate}% = ${(commission / 100).toFixed(0)} UZS)`,
-      reference: ref,
-    }).returning();
+    await applyCommission(req.session.userId, tx.amount, "deposit", sessionId);
 
-    // Credit commission to admin wallet (non-fatal)
-    await applyCommission(req.session.userId, amount, "deposit", ref);
-
-    res.json({ wallet: updatedWallet, transaction: tx, commission, commissionRate });
+    res.json({ wallet: updatedWallet, transaction: updatedTx, commission, commissionRate });
   } catch (err) {
     req.log.error(err);
-    res.status(500).json({ error: "To'ldirish amalga oshirilmadi" });
+    res.status(500).json({ error: "To'lovni tasdiqlashda xato" });
   }
 });
 
@@ -118,13 +197,21 @@ const withdrawSchema = z.object({
   description: z.string().optional(),
 });
 
+// POST /api/wallet/withdraw — holds funds immediately and creates a "pending"
+// withdrawal request. There is no automated payout rail (Click/Payme/bank),
+// so an admin must review it (GET/PATCH /api/admin/wallet/withdrawals) and
+// send the money manually before marking it completed — this endpoint never
+// pretends a transfer happened on its own.
 router.post("/wallet/withdraw", requireAuth, async (req: any, res) => {
   try {
     const parsed = withdrawSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Noto'g'ri ma'lumot", details: parsed.error.issues }); return;
     }
-    const { amount, paymentMethod, description } = parsed.data;
+    const { amount, paymentMethod, accountDetails, description } = parsed.data;
+    if (!REAL_PAYMENT_METHODS.has(paymentMethod)) {
+      res.status(400).json({ error: "Bu to'lov usuli hali ulanmagan (Tez orada)" }); return;
+    }
     const wallet = await getOrCreateWallet(req.session.userId);
     const commissionRate = await getCommissionRate();
     const commission = Math.floor(amount * commissionRate / 100);
@@ -144,11 +231,13 @@ router.post("/wallet/withdraw", requireAuth, async (req: any, res) => {
 
     const fromPersonal = Math.min(remaining, newBalance);
     newBalance -= fromPersonal; remaining -= fromPersonal;
+    let fromEarnings = 0;
     if (remaining > 0) {
-      const fromEarnings = Math.min(remaining, newEarnings);
+      fromEarnings = Math.min(remaining, newEarnings);
       newEarnings -= fromEarnings; remaining -= fromEarnings;
     }
-    if (remaining > 0) newAdRevenue -= remaining;
+    let fromAdRevenue = 0;
+    if (remaining > 0) { fromAdRevenue = remaining; newAdRevenue -= remaining; }
 
     const [updatedWallet] = await db
       .update(walletsTable)
@@ -163,17 +252,16 @@ router.post("/wallet/withdraw", requireAuth, async (req: any, res) => {
       type: "withdrawal",
       amount: -amount,
       paymentMethod,
-      status: "completed",
-      description: description ?? `${paymentMethod.toUpperCase()} orqali yechish (komissiya ${commissionRate}%)`,
+      status: "pending",
+      description: description ?? `${paymentMethod.toUpperCase()} orqali yechish so'rovi (${accountDetails}) — admin tasdiqlashini kutmoqda (komissiya ${commissionRate}%)`,
       reference: ref,
+      metadata: JSON.stringify({ fromPersonal, fromEarnings, fromAdRevenue, commission, accountDetails }),
     }).returning();
 
-    await applyCommission(req.session.userId, amount, "withdrawal", ref);
-
-    res.json({ wallet: updatedWallet, transaction: tx, commission, commissionRate });
+    res.json({ wallet: updatedWallet, transaction: tx, commission, commissionRate, status: "pending" });
   } catch (err) {
     req.log.error(err);
-    res.status(500).json({ error: "Yechish amalga oshirilmadi" });
+    res.status(500).json({ error: "Yechish so'rovini yaratishda xato" });
   }
 });
 

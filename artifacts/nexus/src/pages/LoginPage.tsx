@@ -679,9 +679,31 @@ export default function LoginPage() {
             initial={{ y: 12, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
-            style={{ color: "#6b5040", maxWidth: 320, lineHeight: 1.6, fontSize: "0.95rem" }}
+            style={{ maxWidth: 320, lineHeight: 1.6, fontSize: "0.95rem" }}
           >
-            {t("auth.tagline")}
+            <motion.span
+              animate={{
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                opacity: [1, 0.86, 1, 0.92, 1],
+              }}
+              transition={{
+                backgroundPosition: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+                opacity: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
+              }}
+              style={{
+                fontWeight: 600,
+                backgroundImage:
+                  "linear-gradient(90deg, #00fff0 0%, #00ffa2 20%, #ff00e5 45%, #d000ff 65%, #00fff0 85%, #ff00e5 100%)",
+                backgroundSize: "300% 300%",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                filter:
+                  "drop-shadow(0 0 6px rgba(0,255,240,0.6)) drop-shadow(0 0 14px rgba(255,0,229,0.4))",
+              }}
+            >
+              {t("auth.tagline")}
+            </motion.span>
           </motion.p>
         </div>
       </div>

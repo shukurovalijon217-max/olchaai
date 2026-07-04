@@ -16,6 +16,13 @@ import { resilienceMiddleware } from "./middlewares/resilience";
 
 const app: Express = express();
 
+/* ── Trust the reverse proxy in front of us (Replit/Cloud Run) ──────
+   Required for secure/sameSite="none" session cookies in production:
+   without this, req.secure stays false behind the proxy's TLS
+   termination, so express-session silently refuses to set the
+   session cookie at all — breaking every login-gated feature. ─── */
+app.set("trust proxy", 1);
+
 /* ── Gzip/Brotli compression — faster responses globally ────────── */
 app.use(compression({
   level: 6,

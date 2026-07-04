@@ -14,11 +14,27 @@ const SEED_USERNAMES = [
   "demo_user",
 ];
 
-// SEED_USERNAMES is a static, hardcoded constant (not user input), so it is safe
-// to embed directly as a SQL array literal. This whole script is also
-// multi-statement (temp tables + many DELETEs), which node-postgres can only run
-// via the simple query protocol — i.e. without a `params` argument at all.
+// These 8 demo groups were seeded in the same batch as the accounts above but
+// have no creator_id (NULL), so they can't be caught via target_users — they
+// must be matched by name instead.
+const SEED_GROUP_NAMES = [
+  "Travel Nomads",
+  "AI & Machine Learning",
+  "Electronic Music Collective",
+  "Uzbekistan Creators",
+  "Fitness & Performance",
+  "Global Photography",
+  "Tech Entrepreneurs",
+  "Fashion Forward",
+];
+
+// SEED_USERNAMES/SEED_GROUP_NAMES are static, hardcoded constants (not user
+// input), so it is safe to embed them directly as SQL array literals. This
+// whole script is also multi-statement (temp tables + many DELETEs), which
+// node-postgres can only run via the simple query protocol — i.e. without a
+// `params` argument at all.
 const SEED_USERNAMES_SQL_LITERAL = `ARRAY[${SEED_USERNAMES.map((u) => `'${u}'`).join(",")}]::text[]`;
+const SEED_GROUP_NAMES_SQL_LITERAL = `ARRAY[${SEED_GROUP_NAMES.map((g) => `'${g.replace(/'/g, "''")}'`).join(",")}]::text[]`;
 
 const CLEANUP_SQL = `
   CREATE TEMP TABLE target_users AS
@@ -29,6 +45,11 @@ const CLEANUP_SQL = `
 
   CREATE TEMP TABLE target_reels AS
     SELECT id FROM reels WHERE author_id IN (SELECT id FROM target_users);
+
+  CREATE TEMP TABLE target_groups AS
+    SELECT id FROM groups
+    WHERE creator_id IN (SELECT id FROM target_users)
+       OR name = ANY(${SEED_GROUP_NAMES_SQL_LITERAL});
 
   DELETE FROM comment_likes WHERE user_id IN (SELECT id FROM target_users)
     OR comment_id IN (
@@ -55,7 +76,8 @@ const CLEANUP_SQL = `
   DELETE FROM notifications WHERE user_id IN (SELECT id FROM target_users);
   DELETE FROM follows WHERE follower_id IN (SELECT id FROM target_users)
     OR following_id IN (SELECT id FROM target_users);
-  DELETE FROM group_members WHERE user_id IN (SELECT id FROM target_users);
+  DELETE FROM group_members WHERE user_id IN (SELECT id FROM target_users)
+    OR group_id IN (SELECT id FROM target_groups);
   DELETE FROM challenge_participants WHERE user_id IN (SELECT id FROM target_users);
   DELETE FROM challenges WHERE creator_id IN (SELECT id FROM target_users);
   DELETE FROM co_view_members WHERE user_id IN (SELECT id FROM target_users);
@@ -89,7 +111,10 @@ const CLEANUP_SQL = `
   DELETE FROM user_streaks WHERE user_id IN (SELECT id FROM target_users);
   DELETE FROM user_titles WHERE user_id IN (SELECT id FROM target_users);
   DELETE FROM wallets WHERE user_id IN (SELECT id FROM target_users);
-  DELETE FROM groups WHERE creator_id IN (SELECT id FROM target_users);
+  UPDATE groups SET pinned_post_id = NULL WHERE pinned_post_id IN (
+    SELECT id FROM group_posts WHERE group_id IN (SELECT id FROM target_groups)
+  );
+  DELETE FROM groups WHERE id IN (SELECT id FROM target_groups);
 
   DELETE FROM reels WHERE id IN (SELECT id FROM target_reels);
   DELETE FROM posts WHERE id IN (SELECT id FROM target_posts);
@@ -104,25 +129,37 @@ export async function cleanupSeedData(): Promise<void> {
 
   const client = await pool.connect();
   try {
-    const { rows: existing } = await client.query(
+    const { rows: existingUsers } = await client.query(
       "SELECT id, username FROM users WHERE username = ANY($1::text[])",
       [SEED_USERNAMES],
     );
-    if (existing.length === 0) {
-      logger.info("Seed data cleanup: no seed/demo accounts found, nothing to do");
+    const { rows: existingGroups } = await client.query(
+      "SELECT id, name FROM groups WHERE name = ANY($1::text[])",
+      [SEED_GROUP_NAMES],
+    );
+    if (existingUsers.length === 0 && existingGroups.length === 0) {
+      logger.info("Seed data cleanup: no seed/demo accounts or groups found, nothing to do");
       return;
     }
 
     logger.info(
-      { count: existing.length, usernames: existing.map((r) => r.username) },
-      "Seed data cleanup: removing seed/demo accounts and their content",
+      {
+        userCount: existingUsers.length,
+        usernames: existingUsers.map((r) => r.username),
+        groupCount: existingGroups.length,
+        groupNames: existingGroups.map((r) => r.name),
+      },
+      "Seed data cleanup: removing seed/demo accounts, groups, and their content",
     );
 
     await client.query("BEGIN");
     await client.query(CLEANUP_SQL);
     await client.query("COMMIT");
 
-    logger.info({ count: existing.length }, "Seed data cleanup: done");
+    logger.info(
+      { userCount: existingUsers.length, groupCount: existingGroups.length },
+      "Seed data cleanup: done",
+    );
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     logger.error({ err }, "Seed data cleanup failed (non-fatal)");

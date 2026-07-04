@@ -20,6 +20,7 @@ if (cluster.isPrimary) {
   const { runMigrations } = await import("stripe-replit-sync");
   const { getStripeSync } = await import("./stripe/stripeClient.js");
   const { initTFEngine } = await import("./moderation/tfEngine.js");
+  const { cleanupSeedData } = await import("./lib/cleanupSeedData.js");
 
   const rawPort = process.env["PORT"];
   if (!rawPort) throw new Error("PORT environment variable is required but was not provided.");
@@ -84,5 +85,9 @@ if (cluster.isPrimary) {
     initTFEngine()
       .then(() => logger.info("TensorFlow.js engine ready"))
       .catch((err) => logger.warn({ err }, "TF engine unavailable — using rule-based only"));
+
+    // One-time, idempotent removal of leftover seed/demo accounts and their
+    // content (safe to run on every boot — no-ops once already cleaned).
+    cleanupSeedData().catch((err) => logger.warn({ err }, "Seed data cleanup errored (non-fatal)"));
   }
 }

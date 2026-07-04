@@ -1,6 +1,6 @@
 /**
  * /api/media/* — C++ pHash media fingerprinting routes.
- * Uses the compiled OlCha-C++-MediaHasher binary for perceptual image hashing.
+ * Uses the compiled OlchaAI-C++-MediaHasher binary for perceptual image hashing.
  */
 import { Router, Request, Response } from "express";
 import { hashImagePixels, hammingDistance, hashSimilarity } from "../lib/mediaHasher.js";
@@ -49,7 +49,7 @@ router.post("/compare", (req: Request, res: Response) => {
     similarity,
     duplicate: hamming <= 6,      // ≤6 bits diff → likely duplicate
     similar: hamming <= 15,       // ≤15 bits → visually similar
-    engine: "OlCha-C++-MediaHasher-v1",
+    engine: "OlchaAI-C++-MediaHasher-v1",
   });
 });
 

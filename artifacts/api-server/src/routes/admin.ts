@@ -308,7 +308,7 @@ router.post("/admin/notify/broadcast", async (req, res) => {
       userId,
       type,
       message,
-      actorName: "OlCha Admin",
+      actorName: "OlchaAI Admin",
       targetId: null,
       isRead: false,
     }));
@@ -403,7 +403,7 @@ router.get("/admin/settings", async (req, res) => {
     maxFileSize: 100,
     premiumEnabled: true,
     adsEnabled: true,
-    platform: "OlCha",
+    platform: "OlchaAI",
     version: "1.0.0",
   });
 });

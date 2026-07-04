@@ -23,7 +23,7 @@ const MOCK: Reel[] = [
     id: 1, authorId: 1, authorName: "Aziz Karimov", authorUsername: "azizk",
     isVerified: true,
     thumbnailUrl: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800",
-    caption: "OlCha'da reel qilish — eng oson va eng go'zal tajriba. Sizda ham bormi?",
+    caption: "OlchaAI'da reel qilish — eng oson va eng go'zal tajriba. Sizda ham bormi?",
     audioTrack: "Dua Lipa — Levitating",
     likesCount: 142000, commentsCount: 3420, viewsCount: 2800000,
     isLiked: false, tags: ["olcha", "tech", "uzbekistan"],

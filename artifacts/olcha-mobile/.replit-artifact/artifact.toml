@@ -1,6 +1,6 @@
 kind = "mobile"
 previewPath = "/olcha-mobile/"
-title = "OlCha Mobile"
+title = "OlchaAI Mobile"
 version = "1.0.0"
 id = "artifacts/olcha-mobile"
 router = "expo-domain"

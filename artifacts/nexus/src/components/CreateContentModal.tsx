@@ -15,6 +15,9 @@ import DragMediaCanvas, { type CanvasLayer } from "@/components/DragMediaCanvas"
 import {
   useCreatePost, useCreateReel, useCreateStory,
   getListPostsQueryKey, getListReelsQueryKey, getListStoriesQueryKey,
+  useOtubeAiTitle, useOtubeAiDescription, useOtubeAiTags, useOtubeAiHashtags,
+  useOtubeAiHooks, useOtubeAiDirectorTips, useOtubeAiBestTime, useOtubeAiVoiceCaption,
+  useTranslateText,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -638,131 +641,166 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   const [chalSection,         setChalSection]         = useState<"setup"|"rules"|"prizes"|"advanced">("setup");
   const [chalMyTag,           setChalMyTag]           = useState("");
 
-  /* OTube AI helpers */
+  /* OTube AI helpers — real OpenAI-backed endpoints (otubeAi.ts) */
+  const otubeAiTitleMut = useOtubeAiTitle();
+  const otubeAiDescMut = useOtubeAiDescription();
+  const otubeAiTagsMut = useOtubeAiTags();
+  const bestTimeMut = useOtubeAiBestTime();
+  const aiDirectorMut = useOtubeAiDirectorTips();
+  const translateMut = useTranslateText();
+  const hashtagStormMut = useOtubeAiHashtags();
+  const reelHooksMut = useOtubeAiHooks();
+  const voiceCaptionMut = useOtubeAiVoiceCaption();
+
   const runOtubeAiTitle = async () => {
     if (!otubeTitle.trim() && !otubeDesc.trim()) return;
     setOtubeAiTitleLoad(true);
-    await new Promise(r => setTimeout(r, 1300));
-    const pool = [
-      `🔥 "${otubeTitle || "Kontent"}" — Sizni Hayratda Qoldiradigan 5 Sir`,
-      `⚡ Bu Videoni Ko'rmasdan Oldin Bilishingiz Kerak Bo'lgan Narsa`,
-      `💡 ${otubeTitle || "Mavzu"} Haqida Hech Kim Aytmagan Haqiqat`,
-      `🚀 ${new Date().getFullYear()}da Muvaffaqiyatga Erishish — ${otubeTitle || "To'liq Qo'llanma"}`,
-      `😱 Ishonmaysiz, Lekin Bu Rost: ${otubeTitle || "Ajoyib Kashfiyot"}`,
-    ];
-    setOtubeAiTitle(pool.slice(0,3));
-    setOtubeAiTitleLoad(false);
-    const score = Math.min(95, 40 + (otubeTitle.length > 5 ? 20 : 0) + (otubeTags.length > 3 ? 15 : 0) + (otubeDesc.length > 50 ? 20 : 0));
-    setOtubeSeoScore(score);
+    try {
+      const res = await otubeAiTitleMut.mutateAsync({
+        data: {
+          caption: [otubeTitle, otubeDesc].filter(Boolean).join(" — "),
+          category: otubeCategory || undefined,
+          tags: otubeTags.length ? otubeTags : undefined,
+        },
+      });
+      setOtubeAiTitle(res.titles.slice(0, 3));
+      const score = Math.min(95, 40 + (otubeTitle.length > 5 ? 20 : 0) + (otubeTags.length > 3 ? 15 : 0) + (otubeDesc.length > 50 ? 20 : 0));
+      setOtubeSeoScore(score);
+    } catch {
+      setOtubeAiTitle([]);
+    } finally {
+      setOtubeAiTitleLoad(false);
+    }
   };
   const runOtubeAiDesc = async () => {
     setOtubeAiDescLoad(true);
-    await new Promise(r => setTimeout(r, 1500));
-    setOtubeAiDesc(`👋 Salom! Bugungi videoda ${otubeTitle || "ajoyib mavzu"} haqida gaplashamiz.\n\n📌 Videoda neler bor:\n• Asosiy nuqta 1\n• Asosiy nuqta 2\n• Muhim maslahat va sirlar\n\n🔔 Kanalga obuna bo'ling va qo'ng'iroq belgisini bosing!\n\n📱 Ijtimoiy tarmoqlarda bizni toping:\nInstagram: @olcha_official\nTelegram: t.me/olcha\n\n#olcha #${otubeCategory || "kontent"} #uzbek`);
-    setOtubeAiDescLoad(false);
+    try {
+      const res = await otubeAiDescMut.mutateAsync({
+        data: { caption: otubeTitle || undefined, category: otubeCategory || undefined, tags: otubeTags.length ? otubeTags : undefined },
+      });
+      setOtubeAiDesc(res.description);
+    } catch {
+      setOtubeAiDesc("");
+    } finally {
+      setOtubeAiDescLoad(false);
+    }
   };
   const runOtubeAiTags = async () => {
     setOtubeAiTagsLoad(true);
-    await new Promise(r => setTimeout(r, 1200));
-    const pool = ["olcha","uzbek","video","kontent","yangi","2025","viral","trending","qiziq","foydali","maslahat","hayot","biznes","texnologiya","muvaffaqiyat","motivatsiya","kreativ","original","exclusive","top"];
-    setOtubeAiTags(pool.sort(()=>Math.random()-0.5).slice(0,12));
-    setOtubeAiTagsLoad(false);
+    try {
+      const res = await otubeAiTagsMut.mutateAsync({
+        data: { caption: [otubeTitle, otubeDesc].filter(Boolean).join(" — "), category: otubeCategory || undefined },
+      });
+      setOtubeAiTags(res.tags);
+    } catch {
+      setOtubeAiTags([]);
+    } finally {
+      setOtubeAiTagsLoad(false);
+    }
   };
 
   const fetchBestTime = async () => {
     setBestTimeLoading(true); setBestTimeOpen(true);
-    await new Promise(r => setTimeout(r, 1200));
-    const times = [
-      { time:"07:00–09:00", reason:"Ertalab kuzatuvchilar eng aktiv" },
-      { time:"12:00–13:00", reason:"Tushlik vaqtida trafik yuqori" },
-      { time:"19:00–21:00", reason:"Kechki cho'qqi vaqt — 3x ko'proq ko'rish" },
-      { time:"22:00–23:00", reason:"Kech kechki vaqt — yoshlar aktiv" },
-    ];
-    setBestTime(times[Math.floor(Math.random() * times.length)]);
-    setBestTimeLoading(false);
+    try {
+      const res = await bestTimeMut.mutateAsync({ data: {} });
+      setBestTime({ time: res.time, reason: res.reason });
+    } catch {
+      setBestTime(null);
+    } finally {
+      setBestTimeLoading(false);
+    }
   };
 
-  /* ── AI Director ── */
+  /* ── AI Director — real director-tips endpoint ── */
   const runAiDirector = async () => {
     setAiDirectorLoading(true); setAiDirectorOpen(true);
-    await new Promise(r => setTimeout(r, 1500));
-    const pool = [
-      "📐 Rule of Thirds: asosiy ob'ektni kadrning 1/3 chizig'iga qo'ying — professional effekt",
-      "💡 Chap tomondan tabiiy yorug'lik ishlating — yuz soyasi yumshoqroq va chiroyliroq ko'rinadi",
-      "🎨 Dominant rang 60% + ikkinchi rang 30% + aksent 10% — dizayn muvonaztligi qoidasi",
-      "⚡ Dastlabki 3 soniyada harakatni ko'rsating — scrolldan to'xtatib qoladi, retention 60% oshadi",
-      "📱 9:16 vertikal format — mobil tomoshabinlar 78% ko'proq tomosha qiladi",
-      "👁 To'g'ridan-to'g'ri kameraga qarang — ishonch va shaxsiy aloqa yaratadi",
-      "🔥 Slow-motion yoki jump-cut montaj qo'llang — engagement tadqiqotlarda 2.4x oshgan",
-      "🎵 Kontent kayfiyatiga mos musiqa tanlang — emotsional bog'liqlikni 3x kuchaytiradi",
-      "✂️ 7–15 soniya optimal reel uzunligi — completion rate eng yuqori shu oraliqda",
-      "🌅 Oltin soat (sunrise/sunset) yorug'ligi — natural estetika va renk issiqroq",
-    ];
-    setAiDirectorTips(pool.sort(() => Math.random() - 0.5).slice(0, 3));
-    setAiDirectorLoading(false);
+    try {
+      const res = await aiDirectorMut.mutateAsync({
+        data: { caption: postContent || otubeTitle || undefined, category: otubeCategory || undefined },
+      });
+      setAiDirectorTips(res.tips);
+    } catch {
+      setAiDirectorTips([]);
+    } finally {
+      setAiDirectorLoading(false);
+    }
   };
 
-  /* ── Multi-Language Blast ── */
+  /* ── Multi-Language Blast — real /api/translate per language ── */
   const runTranslate = async () => {
     if (!selectedLangs.length || !postContent.trim()) return;
     setTranslating(true);
-    await new Promise(r => setTimeout(r, 1200));
-    const labels: Record<string,string> = { en:"EN 🇬🇧", ru:"RU 🇷🇺", ko:"KO 🇰🇷", zh:"ZH 🇨🇳", ar:"AR 🇸🇦", tr:"TR 🇹🇷", de:"DE 🇩🇪", fr:"FR 🇫🇷" };
-    const result: Record<string,string> = {};
-    selectedLangs.forEach(l => { result[l] = `[${labels[l] ?? l.toUpperCase()}] ${postContent}`; });
-    setTranslations(result);
-    setTranslating(false);
+    try {
+      const entries = await Promise.all(selectedLangs.map(async (lang) => {
+        const res = await translateMut.mutateAsync({ data: { text: postContent, targetLang: lang } });
+        return [lang, res.translation] as const;
+      }));
+      setTranslations(Object.fromEntries(entries));
+    } catch {
+      setTranslations({});
+    } finally {
+      setTranslating(false);
+    }
   };
 
-  /* ── Hashtag Storm ── */
+  /* ── Hashtag Storm — real hashtags endpoint ── */
   const runHashtagStorm = async () => {
     setHashtagStormLoading(true); setHashtagStormOpen(true);
-    await new Promise(r => setTimeout(r, 1400));
-    const pool: {tag:string;reach:string}[] = [
-      {tag:"#viral",reach:"12.4M"},{tag:"#trending",reach:"8.1M"},{tag:"#nexus",reach:"450K"},
-      {tag:"#olcha",reach:"220K"},{tag:"#content",reach:"5.2M"},{tag:"#creator",reach:"3.8M"},
-      {tag:"#reels",reach:"11.6M"},{tag:"#fyp",reach:"18.4M"},{tag:"#explore",reach:"6.1M"},
-      {tag:"#daily",reach:"4.8M"},{tag:"#lifestyle",reach:"3.5M"},{tag:"#growth",reach:"2.2M"},
-      {tag:"#motivation",reach:"5.3M"},{tag:"#success",reach:"4.9M"},{tag:"#fun",reach:"9.7M"},
-      {tag:"#original",reach:"1.4M"},{tag:"#exclusive",reach:"820K"},{tag:"#new",reach:"14.9M"},
-      {tag:"#art",reach:"7.4M"},{tag:"#community",reach:"2.9M"},
-    ];
-    setHashtagSuggestions(pool.sort(() => Math.random() - 0.5).slice(0, 16));
-    setHashtagStormLoading(false);
+    try {
+      const res = await hashtagStormMut.mutateAsync({ data: { caption: postContent || undefined } });
+      setHashtagSuggestions(res.hashtags);
+    } catch {
+      setHashtagSuggestions([]);
+    } finally {
+      setHashtagStormLoading(false);
+    }
   };
 
-  /* ── Reel AI Hook Generator ── */
+  /* ── Reel AI Hook Generator — real hooks endpoint ── */
   const runReelHooks = async () => {
     setReelHookLoading(true); setReelHookOpen(true);
-    await new Promise(r => setTimeout(r, 1300));
-    const pool = [
-      "\"Hech kim sizga aytmagan sir bor...\"",
-      "\"Buni ko'rgandan keyin hayotingiz o'zgaradi\"",
-      "\"3 soniyada diqqatingizni tortadigan narsani ko'rsataman\"",
-      "\"Nima? Bu mumkin emas deb o'ylardim, lekin...\"",
-      "\"Hammangiz bu xatoni qilyapsiz — tomosha qiling\"",
-      "\"Bu faqat 10 soniya oladi, lekin natijasi 10 yilga yetadi\"",
-      "\"Kim bu narsani bilardi? Men bilmagan ekanman!\"",
-      "\"Stop scrolling — buning oxirida hammasi tushuntiriladi\"",
-    ];
-    setReelHooks(pool.sort(() => Math.random() - 0.5).slice(0, 3));
-    setReelHookLoading(false);
+    try {
+      const res = await reelHooksMut.mutateAsync({ data: { caption: reelCaption || undefined } });
+      setReelHooks(res.hooks);
+    } catch {
+      setReelHooks([]);
+    } finally {
+      setReelHookLoading(false);
+    }
   };
 
-  /* ── Voice Caption (mock) ── */
+  /* ── Voice Caption — real mic recording (MediaRecorder) + Whisper transcription ── */
   const runVoiceCaption = async () => {
-    setVoiceCapRecording(true);
-    await new Promise(r => setTimeout(r, 2000));
-    setVoiceCapRecording(false);
-    setVoiceCapTranscribing(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setVoiceCapTranscribing(false);
-    const samples = [
-      "Bu post haqida ko'p narsalar aytmoqchi edim, eng muhimi — izchillik!",
-      "Har kuni yangi narsa o'rganing. Bugun ham bir kashfiyot qildim.",
-      "Siz ham bu holatda bo'lgansiz deyman — mana mening yechimim.",
-    ];
-    setPostContent(samples[Math.floor(Math.random() * samples.length)]);
+    let stream: MediaStream | null = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const chunks: Blob[] = [];
+      const recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      const stopped = new Promise<void>(resolve => { recorder.onstop = () => resolve(); });
+      setVoiceCapRecording(true);
+      recorder.start();
+      await new Promise(r => setTimeout(r, 4000));
+      recorder.stop();
+      await stopped;
+      setVoiceCapRecording(false);
+      setVoiceCapTranscribing(true);
+      const blob = new Blob(chunks, { type: "audio/webm" });
+      const audioBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result).split(",")[1] ?? "");
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      const res = await voiceCaptionMut.mutateAsync({ data: { audioBase64 } });
+      if (res.text) setPostContent(prev => prev ? `${prev} ${res.text}` : res.text);
+    } catch {
+      /* mic permission denied or transcription failed — leave content untouched */
+    } finally {
+      stream?.getTracks().forEach(t => t.stop());
+      setVoiceCapRecording(false);
+      setVoiceCapTranscribing(false);
+    }
   };
 
   const addFiles = (files: FileList) => {

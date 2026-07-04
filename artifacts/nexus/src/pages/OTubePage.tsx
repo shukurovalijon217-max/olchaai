@@ -10,8 +10,8 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useListReels, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl, useListNotifications, markAllNotificationsRead, useDeleteReel, useStartLive } from "@workspace/api-client-react";
-import type { Reel, UploadUrlRequest, Notification } from "@workspace/api-client-react";
+import { useListReels, getListReelsQueryKey, useLikeReel, useFollowUser, useCreateReel, useRequestUploadUrl, useListNotifications, markAllNotificationsRead, useDeleteReel, useStartLive, useGetContinueWatching, useUpdateReelProgress, useGetStreak, useTouchStreak, useCreateChallenge, useListReelCollaborators, useInviteReelCollaborator, useRemoveReelCollaborator, useOtubeAiColorCorrection } from "@workspace/api-client-react";
+import type { Reel, UploadUrlRequest, Notification, ContinueWatchingItem, StreakInfo, Challenge, ChallengeInput, ReelCollaborator } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { usePip } from "@/context/PipContext";
@@ -451,6 +451,8 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const tapTimer   = useRef<ReturnType<typeof setTimeout>|null>(null);
   const longHold   = useRef<ReturnType<typeof setTimeout>|null>(null);
   const viewTracked = useRef(false);
+  const progressRef = useRef({ time: 0, dur: 0 });
+  const lastReportRef = useRef(0);
 
   const [playing,   setPlaying]   = useState(false);
   const [muted,     setMuted]     = useState(settings.muteDefault);
@@ -478,8 +480,6 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const [showDesc,  setShowDesc]  = useState(false);
   const [donating,  setDonating]  = useState(false);
   const [danmaku,   setDanmaku]   = useState(false);
-  const [aiDub,     setAiDub]     = useState(false);
-  const [dubLang,   setDubLang]   = useState<"uz"|"ru"|"en">("uz");
   const [donateAmt, setDonateAmt] = useState("2000");
   const [walletBal, setWalletBal] = useState<number|null>(null);
   const [giftLoading, setGiftLoading] = useState(false);
@@ -614,6 +614,15 @@ function NexusPlayer({ video, onClose, settings, onPip }:
     return () => { if (ctrlTimer.current) clearTimeout(ctrlTimer.current); };
   }, [resetCtrl]);
 
+  /* Real watch-progress persistence — throttled during playback, flushed on pause/unmount */
+  const updateProgressMut = useUpdateReelProgress();
+  const reportProgress = useCallback(() => {
+    const { time, dur } = progressRef.current;
+    if (dur > 0 && time > 0) {
+      updateProgressMut.mutate({ id: video.id, data: { positionSec: Math.floor(time), durationSec: Math.floor(dur) } });
+    }
+  }, [video.id]);
+
   const togglePlay = useCallback(() => {
     const v = videoRef.current; if (!v) return;
     if (v.paused) {
@@ -624,9 +633,13 @@ function NexusPlayer({ video, onClose, settings, onPip }:
           fetch(`/api/reels/${video.id}/view`, { method:"POST" }).catch(()=>{});
         }
       }).catch(()=>{});
-    } else { v.pause(); setPlaying(false); }
+    } else { v.pause(); setPlaying(false); reportProgress(); }
     resetCtrl();
-  }, [resetCtrl, video.id]);
+  }, [resetCtrl, video.id, reportProgress]);
+
+  useEffect(() => {
+    return () => { reportProgress(); };
+  }, [reportProgress]);
 
   const seek = useCallback((d:number) => {
     const v = videoRef.current; if (!v) return;
@@ -800,10 +813,14 @@ function NexusPlayer({ video, onClose, settings, onPip }:
           style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
           onTimeUpdate={()=>{
             const v=videoRef.current;
-            if(v&&isFinite(v.duration)&&v.duration>0){setCurTime(v.currentTime);setProgress(v.currentTime/v.duration);}
+            if(v&&isFinite(v.duration)&&v.duration>0){
+              setCurTime(v.currentTime);setProgress(v.currentTime/v.duration);
+              progressRef.current={time:v.currentTime,dur:v.duration};
+              if(v.currentTime-lastReportRef.current>=5){lastReportRef.current=v.currentTime;reportProgress();}
+            }
           }}
           onLoadedMetadata={()=>setDuration(videoRef.current?.duration??0)}
-          onEnded={()=>setPlaying(false)}
+          onEnded={()=>{setPlaying(false);reportProgress();}}
         />
         <SeekFlash side="left"  visible={seekLeft}/>
         <SeekFlash side="right" visible={seekRight}/>
@@ -860,9 +877,9 @@ function NexusPlayer({ video, onClose, settings, onPip }:
               act:()=>setDanmaku(d=>!d),
             },
             {
-              icon:<Brain style={{width:15,height:15,color:"white"}}/>,
-              label:"AI Dub", col:"rgba(255,255,255,0.9)", active:aiDub,
-              act:()=>{setAiDub(d=>!d);setShowMore(false);},
+              icon:<Brain style={{width:15,height:15,color:"rgba(255,255,255,0.35)"}}/>,
+              label:"AI Dub · Tez orada", col:"rgba(255,255,255,0.35)", active:false,
+              act:()=>setShowMore(false),
             },
             {
               icon:<Upload style={{width:15,height:15,color:"white",transform:"rotate(180deg)"}}/>,
@@ -980,7 +997,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                   {icon:<ThumbsDown style={{width:18,height:18,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Yoqmadi",col:T.orange,on:disliked,act:()=>{setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}},
                   {icon:<Sparkles style={{width:18,height:18,color:danmaku?"#ffd700":"rgba(255,255,255,0.5)"}}/>,label:"Reaktsiya",col:"#ffd700",on:danmaku,act:()=>{setDanmaku(d=>!d);setShowMore(false);}},
                   {icon:<Gauge style={{width:18,height:18,color:showSpeed?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Tezlik",col:T.orange,on:showSpeed,act:()=>{setShowSpeed(s=>!s);setShowMore(false);}},
-                  {icon:<Brain style={{width:18,height:18,color:aiDub?"#00ff88":"rgba(255,255,255,0.5)"}}/>,label:"AI Dub",col:"#00ff88",on:aiDub,act:()=>{setAiDub(d=>!d);setShowMore(false);}},
+                  {icon:<Brain style={{width:18,height:18,color:"rgba(255,255,255,0.3)"}}/>,label:"AI Dub · Tez orada",col:"rgba(255,255,255,0.3)",on:false,act:()=>setShowMore(false)},
                   {icon:<Star style={{width:18,height:18,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Sovg'a",col:T.orange,on:donating,act:()=>{setDonating(d=>!d);setShowMore(false);}},
                   {icon:<Upload style={{width:18,height:18,color:"rgba(255,255,255,0.5)",transform:"rotate(180deg)"}}/>,label:"Yuklab",col:"rgba(200,200,200,0.7)",on:false,act:()=>{if(!video.videoUrl)return;const a=document.createElement("a");a.href=video.videoUrl;a.download=`${video.caption||"video"}.mp4`;document.body.appendChild(a);a.click();document.body.removeChild(a);setShowMore(false);}},
                   {icon:<PictureInPicture2 style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>,label:"Mini",col:T.cyan,on:false,act:()=>{void handlePip();setShowMore(false);}},
@@ -998,19 +1015,6 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                   </motion.button>
                 ))}
               </div>
-              {aiDub && (
-                <div style={{display:"flex",gap:8,marginTop:10}}>
-                  {(["uz","ru","en"] as const).map(l=>(
-                    <motion.button key={l} whileTap={{scale:0.9}} onClick={()=>setDubLang(l)}
-                      style={{flex:1,padding:"8px 0",borderRadius:10,fontSize:12,fontWeight:700,
-                        background:dubLang===l?"rgba(0,255,136,0.18)":"rgba(255,255,255,0.05)",
-                        color:dubLang===l?"#00ff88":"rgba(255,255,255,0.35)",
-                        border:`1px solid ${dubLang===l?"rgba(0,255,136,0.4)":"rgba(255,255,255,0.07)"}`}}>
-                      {l.toUpperCase()}
-                    </motion.button>
-                  ))}
-                </div>
-              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1379,12 +1383,24 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
   { open:boolean;onClose:()=>void;settings:PlayerSettings;onSettings:(s:PlayerSettings)=>void;
     monetize:MonetizationSettings;onMonetize:(m:MonetizationSettings)=>void; }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [tab, setTab] = useState<"player"|"monetize">("player");
   const sP = <K extends keyof PlayerSettings>(k:K,v:PlayerSettings[K])=>onSettings({...settings,[k]:v});
   const sM = <K extends keyof MonetizationSettings>(k:K,v:MonetizationSettings[K])=>onMonetize({...monetize,[k]:v});
-  const views=12480;
-  const rev = monetize.creatorMode
-    ?(views*(monetize.adsEnabled?0.0018:0)+(monetize.membershipEnabled?18500:0)).toFixed(0):"0";
+  const [walletEarnings, setWalletEarnings] = useState<number|null>(null);
+  useEffect(()=>{
+    if(!open||tab!=="monetize")return;
+    fetch("/api/wallet",{credentials:"include"})
+      .then(r=>r.json())
+      .then(d=>setWalletEarnings((d.wallet?.earningsBalance??0)+(d.wallet?.adRevenueBalance??0)))
+      .catch(()=>setWalletEarnings(null));
+  },[open,tab]);
+  const rev = monetize.creatorMode ? String(walletEarnings ?? 0) : "0";
+  const { data: myReelsForRevenue=[] } = useListReels(
+    { userId: user?.id, limit: 100 },
+    { query: { enabled: open && tab==="monetize" && !!user?.id, queryKey: getListReelsQueryKey({ userId: user?.id, limit: 100 }) } },
+  );
+  const views = myReelsForRevenue.reduce((sum,r)=>sum+(r.viewsCount??0),0);
 
   return (
     <AnimatePresence>
@@ -1960,7 +1976,8 @@ function TrendRow({ video, onPlay, idx }:
   { video:Reel; onPlay:()=>void; idx:number }) {
   const AURORA = [T.aurora, "#ff4500", "#ff2d55", T.pulse, "#a855f7", T.gold];
   const col = AURORA[idx % AURORA.length];
-  const vel = 8+((idx*13+7)%41);
+  const views24h = video.views24h ?? 0;
+  const vel = video.viewsCount > 0 ? Math.round((views24h / video.viewsCount) * 1000) / 10 : 0;
   const isHot = vel > 30;
   return (
     <motion.div
@@ -2027,7 +2044,7 @@ function TrendRow({ video, onPlay, idx }:
             <div className="flex items-center gap-0.5 px-1.5 py-0.5"
               style={{borderRadius:99,background:`${col}18`,boxShadow:`0 0 0 1px ${col}44`}}>
               <ArrowUp style={{width:7,height:7,color:col}}/>
-              <span style={{fontSize:7.5,fontWeight:800,color:col,fontFamily:"monospace"}}>{vel}%</span>
+              <span style={{fontSize:7.5,fontWeight:800,color:col,fontFamily:"monospace"}}>{Math.round(vel)}%</span>
             </div>
           </div>
         </div>
@@ -2168,9 +2185,11 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
         {/* Signal Score — single chip only */}
         <div className="absolute top-2.5 right-2.5">
           {(()=>{
+            const views24h = video.views24h ?? 0;
             const score = Math.min(99, Math.round(
               Math.log10(Math.max(2, video.viewsCount)) * 14 +
-              (video.likesCount / Math.max(1, video.viewsCount)) * 120
+              (video.likesCount / Math.max(1, video.viewsCount)) * 120 +
+              Math.min(30, (views24h / Math.max(1, video.viewsCount)) * 60)
             ));
             const col = score > 75 ? "#ff2d55" : score > 50 ? T.orange : T.cyan;
             return (
@@ -2225,11 +2244,19 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
 /* Social Gravity Ticker — live online count               */
 /* ─────────────────────────────────────────────────────── */
 function SocialTicker() {
-  const [count, setCount] = useState(247);
+  const [count, setCount] = useState<number|null>(null);
   useEffect(()=>{
-    const t = setInterval(()=>setCount(c=>Math.max(180,c+Math.floor((Math.random()-0.38)*18))),3200);
-    return ()=>clearInterval(t);
+    let cancelled = false;
+    const poll = () => {
+      fetch("/go/stats").then(r=>r.json()).then(d=>{
+        if(!cancelled) setCount(d.uniqueUsers ?? d.connections ?? 0);
+      }).catch(()=>{});
+    };
+    poll();
+    const t = setInterval(poll, 5000);
+    return ()=>{ cancelled = true; clearInterval(t); };
   },[]);
+  if (count === null) return null;
   return (
     <motion.div
       className="flex items-center gap-1.5 px-2.5 py-1.5"
@@ -2255,15 +2282,24 @@ function SocialTicker() {
 /* Streak Banner — haftalik watch streak + XP              */
 /* ─────────────────────────────────────────────────────── */
 function StreakBanner() {
-  const [xp, setXp] = useState(1240);
+  const qc = useQueryClient();
+  const { data: streak } = useGetStreak();
+  const touchMut = useTouchStreak();
+  const touchedRef = useRef(false);
+  useEffect(()=>{
+    if(touchedRef.current)return;
+    touchedRef.current = true;
+    touchMut.mutate(undefined, { onSuccess: ()=>qc.invalidateQueries({ queryKey: ["/api/gamification/streak"] }) });
+  },[]);
   const [visible, setVisible] = useState(true);
   useEffect(()=>{
-    const xpT = setInterval(()=>setXp(x=>x+(Math.random()>0.7?10:0)),4000);
     const hideT = setTimeout(()=>setVisible(false), 3500);
-    return ()=>{ clearInterval(xpT); clearTimeout(hideT); };
+    return ()=>clearTimeout(hideT);
   },[]);
-  const dots = [true,true,true,true,true,true,false];
-  if (!visible) return null;
+  const xp = streak?.xp ?? 0;
+  const currentStreak = streak?.currentStreak ?? 0;
+  const dots = Array.from({length:7},(_,i)=>i<Math.min(currentStreak,7));
+  if (!visible || !streak || currentStreak===0) return null;
   return (
     <motion.div
       initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}}
@@ -2281,7 +2317,7 @@ function StreakBanner() {
       {/* Streak info */}
       <div className="flex-1 min-w-0">
         <div style={{fontSize:12,fontWeight:900,color:"white",marginBottom:4}}>
-          7 kunlik streak
+          {currentStreak} kunlik streak
         </div>
         {/* 7 dot indicators */}
         <div className="flex gap-1.5">
@@ -2319,10 +2355,9 @@ function StreakBanner() {
 /* ─────────────────────────────────────────────────────── */
 /* Continue Watching row — videos with progress bars       */
 /* ─────────────────────────────────────────────────────── */
-function ContinueRow({ videos, onPlay }: { videos:Reel[]; onPlay:(v:Reel)=>void }) {
+function ContinueRow({ items, onPlay }: { items:ContinueWatchingItem[]; onPlay:(v:Reel)=>void }) {
   const { t } = useTranslation();
-  if (!videos.length) return null;
-  const items = videos.slice(0,5);
+  if (!items.length) return null;
   return (
     <section className="mb-6">
       <div className="flex items-center gap-2 mb-3">
@@ -2340,12 +2375,9 @@ function ContinueRow({ videos, onPlay }: { videos:Reel[]; onPlay:(v:Reel)=>void 
         </span>
       </div>
       <div className="flex gap-3 overflow-x-auto -mx-3 px-3 pb-2" style={{scrollbarWidth:"none"}}>
-        {items.map((v,i)=>{
-          const pct = 15 + ((v.id * 17 + i * 31) % 72); // 15–87% deterministic
-          const mins = 2 + (v.id % 18);
-          const secs = (v.id * 7) % 60;
-          const durStr = `${mins}:${String(secs).padStart(2,"0")}`;
-          const watchedStr = fmtTime((pct/100) * (mins*60+secs));
+        {items.map(({reel:v,positionSec,durationSec,pct},i)=>{
+          const durStr = fmtTime(durationSec);
+          const watchedStr = fmtTime(positionSec);
           return (
             <motion.div key={v.id}
               initial={{opacity:0,x:18}} animate={{opacity:1,x:0}}
@@ -2990,7 +3022,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
   const [commentReq,   setCommentReq]   = useState(false);
   const [duetAllowed,  setDuetAllowed]  = useState(true);
   const [hashtagReq,   setHashtagReq]   = useState(true);
-  const [judgeType,    setJudgeType]    = useState<"vote"|"jury"|"mixed">("mixed");
+  const [judgeType,    setJudgeType]    = useState<"vote"|"ai"|"views">("vote");
   const [prize1,       setPrize1]       = useState("");
   const [prize2,       setPrize2]       = useState("");
   const [prize3,       setPrize3]       = useState("");
@@ -3016,7 +3048,14 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
   const [boostEnabled, setBoostEnabled] = useState(false);
   const [accessCode,   setAccessCode]   = useState("");
   const [privateChallenge, setPrivateChallenge] = useState(false);
-  const [done,         setDone]         = useState(false);
+  const qc = useQueryClient();
+  const createChallengeMut = useCreateChallenge({
+    mutation: {
+      onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/challenges"] }); },
+    },
+  });
+  const createdChallenge = createChallengeMut.data ?? null;
+  const done = !!createdChallenge;
 
   const DAYS_OPT = [3,7,14,30,60,90];
   const CATS = [{v:"dance",e:"💃",l:"Raqs"},{v:"music",e:"🎵",l:"Musiqa"},{v:"comedy",e:"😂",l:"Kulgili"},{v:"sport",e:"⚽",l:"Sport"},{v:"food",e:"🍜",l:"Taom"},{v:"art",e:"🎨",l:"San'at"},{v:"gaming",e:"🎮",l:"Gaming"},{v:"beauty",e:"💄",l:"Go'zallik"},{v:"education",e:"📚",l:"Ta'lim"},{v:"travel",e:"✈️",l:"Sayohat"},{v:"fitness",e:"💪",l:"Fitnes"},{v:"diy",e:"🛠",l:"DIY"}];
@@ -3257,7 +3296,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
           <div>
             <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>⚖️ HUKAMLAR TIZIMI</span>
             <div className="flex gap-2 mt-2">
-              {([["vote","🗳 Ovoz","Ommaviy ovoz"],["jury","👨‍⚖️ Hakamlar","Mutaxassis"],[  "mixed","🎯 Aralash","Ikkalasi"]] as const).map(([v,e,l])=>(
+              {([["vote","🗳 Ovoz","Ommaviy ovoz"],["ai","🤖 AI","AI baholaydi"],["views","👁 Ko'rish","Ko'p ko'rilgan g'olib"]] as const).map(([v,e,l])=>(
                 <button key={v} onClick={()=>setJudgeType(v)}
                   style={{flex:1,padding:"10px 4px",borderRadius:10,fontSize:9,fontWeight:700,
                     background:judgeType===v?"rgba(0,255,136,0.15)":"rgba(255,255,255,0.04)",
@@ -3480,25 +3519,52 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
         </>}
 
         {/* ── Done banner ── */}
-        {done && (
+        {done && createdChallenge && (
           <div style={{padding:"14px",borderRadius:12,background:"rgba(0,255,136,0.08)",border:"1px solid rgba(0,255,136,0.35)",display:"flex",alignItems:"center",gap:10}}>
             <Trophy style={{width:20,height:20,color:G}}/>
             <div>
-              <div style={{fontSize:13,color:G,fontWeight:800}}>#{name} yaratildi!</div>
-              <div style={{fontSize:10,color:"rgba(0,255,136,0.6)"}}>{days} kunlik · {CATS.find(c=>c.v===category)?.l} · {judgeType==="vote"?"Ommaviy ovoz":judgeType==="jury"?"Hakamlar":"Aralash"}</div>
+              <div style={{fontSize:13,color:G,fontWeight:800}}>#{createdChallenge.hashtag} yaratildi!</div>
+              <div style={{fontSize:10,color:"rgba(0,255,136,0.6)"}}>{createdChallenge.days} kunlik · {CATS.find(c=>c.v===createdChallenge.category)?.l} · {createdChallenge.judgeType==="vote"?"Ommaviy ovoz":createdChallenge.judgeType==="ai"?"AI baholaydi":"Ko'rishlar bo'yicha"}</div>
             </div>
+          </div>
+        )}
+
+        {createChallengeMut.isError && (
+          <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(255,45,85,0.1)",border:"1px solid rgba(255,45,85,0.3)",color:"#ff2d55",fontSize:11}}>
+            Xatolik yuz berdi, qayta urinib ko'ring.
           </div>
         )}
 
         {/* CTA */}
         <motion.button whileTap={{scale:0.96}}
-          onClick={()=>{if(name.trim())setDone(true);}}
-          disabled={!name.trim()}
+          onClick={()=>{
+            if(!name.trim()||createChallengeMut.isPending||done)return;
+            createChallengeMut.mutate({data:{
+              name: name.trim(),
+              hashtag: name.trim(),
+              category,
+              description: desc || undefined,
+              days,
+              prizePool: Number(prizePool)||0,
+              judgeType,
+              settings: {
+                rules: rules.filter(r=>r.trim()),
+                minLen, maxLen, maxEntries, ageMin, followersMin,
+                teamAllowed, reactionReq, commentReq, duetAllowed, hashtagReq,
+                prizes: { 1: { badge: badge1, amount: prize1 }, 2: { badge: badge2, amount: prize2 }, 3: { badge: badge3, amount: prize3 } },
+                certEnabled, leaderboard, themeMusic, demoUrl, shareTemplate, discordLink,
+                votingOpen, publicResult, geoRestrict, geoCountry, sponsorName, winnerDelay,
+                autoExtend, notifyAll, notifyWinner, boostEnabled, accessCode, privateChallenge,
+                startDate, endDate, coverEmoji, coverBg, tags,
+              },
+            }});
+          }}
+          disabled={!name.trim()||createChallengeMut.isPending||done}
           style={{padding:"14px",borderRadius:14,letterSpacing:"0.04em",fontSize:13,fontWeight:900,
             background:!name.trim()?"rgba(255,255,255,0.06)":"linear-gradient(135deg,#00ff88,#00cc44)",
             color:!name.trim()?"rgba(255,255,255,0.25)":"#000",
             boxShadow:name.trim()?`0 4px 20px rgba(0,255,136,0.4)`:"none"}}>
-          {done?"✅ "+t("otube.ch_done"):"🚀 "+t("otube.ch_start")}
+          {createChallengeMut.isPending?"⏳ Yaratilmoqda...":done?"✅ "+t("otube.ch_done"):"🚀 "+t("otube.ch_start")}
         </motion.button>
       </div>
     </ModalSheet>
@@ -3614,6 +3680,41 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       onSuccess: () => { qc.invalidateQueries({queryKey:["/api/reels"]}); setPublished(true); setPublishing(false); },
       onError:   () => setPublishing(false),
     }
+  });
+
+  /* Real AI color-correction — applied when Avto Rang Korreksiya is toggled on */
+  const [colorAiNote, setColorAiNote] = useState("");
+  const colorAiMut = useOtubeAiColorCorrection({
+    mutation: {
+      onSuccess: (res) => {
+        setBrightness(Math.round(res.filters.brightness*100));
+        setContrast(Math.round(res.filters.contrast*100));
+        setSaturation(Math.round(res.filters.saturation*100));
+        setTemperature(Math.round(res.filters.temperature));
+        setColorAiNote(res.note);
+      },
+    },
+  });
+  const applyAutoColor = useCallback(()=>{
+    setAutoColor(p=>{
+      const next=!p;
+      if (next) colorAiMut.mutate({ data: { caption } });
+      else setColorAiNote("");
+      return next;
+    });
+  },[caption]);
+
+  /* Real collab invites — persisted via /api/reels/collaborators (owner-scoped) */
+  const [collabError, setCollabError] = useState("");
+  const { data: collabList=[] } = useListReelCollaborators();
+  const inviteCollabMut = useInviteReelCollaborator({
+    mutation: {
+      onSuccess: () => { qc.invalidateQueries({queryKey:["/api/reels/collaborators"]}); setCollabEmail(""); setCollabError(""); },
+      onError:   () => setCollabError("Foydalanuvchi topilmadi yoki allaqachon taklif qilingan"),
+    },
+  });
+  const removeCollabMut = useRemoveReelCollaborator({
+    mutation: { onSuccess: () => qc.invalidateQueries({queryKey:["/api/reels/collaborators"]}) },
   });
 
   const FILTERS = [
@@ -4105,12 +4206,20 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
                   style={{width:"100%",accentColor:col}}/>
               </div>
             ))}
-            {/* Auto-color toggle */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderRadius:10,background:"rgba(0,255,238,0.05)",border:"1px solid rgba(0,255,238,0.15)"}}>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>🤖 Avto Rang Korreksiya (AI)</span>
-              <button onClick={()=>setAutoColor(p=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:autoColor?T.aurora:"rgba(255,255,255,0.12)",justifyContent:autoColor?"flex-end":"flex-start"}}>
-                <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
-              </button>
+            {/* Auto-color toggle — real AI suggestion via /api/otube/ai/color-correction */}
+            <div style={{display:"flex",flexDirection:"column",gap:6,padding:"10px 12px",borderRadius:10,background:"rgba(0,255,238,0.05)",border:"1px solid rgba(0,255,238,0.15)"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>
+                  🤖 Avto Rang Korreksiya (AI){colorAiMut.isPending?" · yuklanmoqda…":""}
+                </span>
+                <button onClick={applyAutoColor} disabled={colorAiMut.isPending}
+                  style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:autoColor?T.aurora:"rgba(255,255,255,0.12)",justifyContent:autoColor?"flex-end":"flex-start",opacity:colorAiMut.isPending?0.6:1}}>
+                  <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
+                </button>
+              </div>
+              {autoColor && colorAiNote && (
+                <span style={{fontSize:9.5,color:T.aurora,lineHeight:1.4}}>✨ {colorAiNote}</span>
+              )}
             </div>
             {/* Preview swatch */}
             <div style={{height:40,borderRadius:12,overflow:"hidden",
@@ -5039,28 +5148,33 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
             <div>
               <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>✉️ TAKLIF YUBORISH</div>
               <div style={{display:"flex",gap:8}}>
-                <input value={collabEmail} onChange={e=>setCollabEmail(e.target.value)} placeholder="@foydalanuvchi yoki email…"
+                <input value={collabEmail} onChange={e=>setCollabEmail(e.target.value)} placeholder="@foydalanuvchi"
+                  onKeyDown={e=>{if(e.key==="Enter"&&collabEmail.trim())inviteCollabMut.mutate({data:{inviteeHandle:collabEmail.trim()}});}}
                   style={{flex:1,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",
                     border:"1px solid rgba(0,229,255,0.2)",color:"white",fontSize:11,outline:"none"}}/>
-                <button onClick={()=>{if(collabEmail.trim()){setCollaborators(p=>[...p,collabEmail.trim()]);setCollabEmail("");}}}
-                  style={{padding:"10px 16px",borderRadius:10,background:T.gCyan,color:"#000",fontSize:12,fontWeight:900}}>
-                  Taklif
+                <button disabled={!collabEmail.trim()||inviteCollabMut.isPending}
+                  onClick={()=>{if(collabEmail.trim())inviteCollabMut.mutate({data:{inviteeHandle:collabEmail.trim()}});}}
+                  style={{padding:"10px 16px",borderRadius:10,background:T.gCyan,color:"#000",fontSize:12,fontWeight:900,opacity:(!collabEmail.trim()||inviteCollabMut.isPending)?0.5:1}}>
+                  {inviteCollabMut.isPending?"…":"Taklif"}
                 </button>
               </div>
+              {collabError && <div style={{marginTop:6,fontSize:10,color:"#ff5577"}}>{collabError}</div>}
             </div>
             {/* Active collaborators */}
             <div>
               <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>👤 HAMMUHARRILAR</div>
-              {collaborators.length===0 ? (
+              {collabList.length===0 ? (
                 <div style={{padding:"20px",textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:11}}>Hali hammuharrir yo'q</div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  {collaborators.map((c,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:"rgba(0,229,255,0.06)",border:"1px solid rgba(0,229,255,0.15)"}}>
-                      <div style={{width:32,height:32,borderRadius:99,background:`linear-gradient(135deg,${T.cyan},${T.violet})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"white"}}>{c[0]?.toUpperCase()}</div>
-                      <span style={{flex:1,fontSize:11,color:"rgba(255,255,255,0.7)"}}>{c}</span>
-                      <span style={{fontSize:9,padding:"2px 8px",borderRadius:99,background:"rgba(0,255,136,0.12)",color:"#00ff88",fontWeight:700}}>Kutilmoqda</span>
-                      <button onClick={()=>setCollaborators(p=>p.filter((_,j)=>j!==i))} style={{color:"#ff2d55",fontSize:16}}>×</button>
+                  {collabList.map((c)=>(
+                    <div key={c.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:"rgba(0,229,255,0.06)",border:"1px solid rgba(0,229,255,0.15)"}}>
+                      <div style={{width:32,height:32,borderRadius:99,background:`linear-gradient(135deg,${T.cyan},${T.violet})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"white"}}>{(c.invitee?.displayName??c.inviteeHandle)[0]?.toUpperCase()}</div>
+                      <span style={{flex:1,fontSize:11,color:"rgba(255,255,255,0.7)"}}>{c.invitee?.displayName??`@${c.inviteeHandle}`}</span>
+                      <span style={{fontSize:9,padding:"2px 8px",borderRadius:99,background:c.status==="accepted"?"rgba(0,255,136,0.12)":"rgba(255,196,0,0.12)",color:c.status==="accepted"?"#00ff88":"#ffc400",fontWeight:700}}>
+                        {c.status==="accepted"?"Qabul qilingan":c.status==="declined"?"Rad etilgan":"Kutilmoqda"}
+                      </span>
+                      <button onClick={()=>removeCollabMut.mutate({id:c.id})} disabled={removeCollabMut.isPending} style={{color:"#ff2d55",fontSize:16}}>×</button>
                     </div>
                   ))}
                 </div>
@@ -5080,16 +5194,11 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
                 ))}
               </div>
             </div>
-            {/* Version history */}
+            {/* Version history — not yet implemented, honestly labeled */}
             <div>
-              <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>📋 VERSIYA TARIXI</div>
-              <div className="flex flex-col gap-1.5">
-                {[{t:"Hozirgina",l:"Autosave — 2 daqiqa oldin"},{t:"12:34",l:"Hammuharrir: text qo'shdi"},{t:"12:30",l:"Siz: filter o'zgartirdi"},{t:"12:25",l:"Siz: video yukladi"}].map(({t,l},i)=>(
-                  <div key={i} style={{display:"flex",gap:8,padding:"8px 12px",borderRadius:8,background:"rgba(255,255,255,0.03)"}}>
-                    <span style={{fontSize:9,color:T.violet,fontWeight:700,minWidth:36}}>{t}</span>
-                    <span style={{fontSize:10,color:"rgba(255,255,255,0.45)"}}>{l}</span>
-                  </div>
-                ))}
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>📋 VERSIYA TARIXI · TEZ ORADA</div>
+              <div style={{padding:"16px",borderRadius:10,background:"rgba(255,255,255,0.03)",border:"1px dashed rgba(255,255,255,0.1)",textAlign:"center"}}>
+                <span style={{fontSize:10.5,color:"rgba(255,255,255,0.35)"}}>Tahrirlash tarixini saqlash va qayta tiklash tez orada qo'shiladi</span>
               </div>
             </div>
           </div>
@@ -5822,6 +5931,7 @@ export default function OTubePage() {
   const tab        = activeSig.tab;
 
   const { data:raw=[], isLoading } = useListReels();
+  const { data:continueWatching=[] } = useGetContinueWatching();
 
   const reels = useMemo(()=>{
     if (!query.trim()) return raw;
@@ -6092,7 +6202,7 @@ export default function OTubePage() {
               {!query && (
                 <>
                   {/* Continue Watching */}
-                  <ContinueRow videos={reels.slice(2,7)} onPlay={v=>setSelected(v)}/>
+                  <ContinueRow items={continueWatching} onPlay={v=>setSelected(v)}/>
 
                   {/* ── PULSE STREAM — trending, cinema horizontal ── */}
                   {trending.length>0 && (

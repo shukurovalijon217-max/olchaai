@@ -38,4 +38,6 @@ description: Key architecture pointers for Go, Express, Nexus, and Expo artifact
 
 **Security:** `api-server/src/app.ts` has a global `res.json` override that recursively strips any `passwordHash` key from every `/api` response, as defense-in-depth on top of routes destructuring it out manually.
 
+**Production has its own separate live database, distinct from dev.** `executeSql` with `environment: "production"` is read-only (SELECT only) against a replica — there is no writable connection string exposed to the agent for prod. To fix bad prod *data* (not schema), write an idempotent cleanup routine in server startup code (guarded so it only matches known-bad rows and no-ops once clean) and ship it via Publish; it then runs once against prod's own DB when the deployed server boots. Verify the same routine is a safe no-op in dev first.
+
 **Why:** These pointers save rebuild steps and prevent common mistakes across sessions.

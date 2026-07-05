@@ -14,6 +14,7 @@ import { useListReels, getListReelsQueryKey, useLikeReel, useFollowUser, useCrea
 import type { Reel, UploadUrlRequest, Notification, ContinueWatchingItem, StreakInfo, Challenge, ChallengeInput, ReelCollaborator } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "@/hooks/use-toast";
 import { usePip } from "@/context/PipContext";
 import { useDockedState } from "@/hooks/useDockedState";
 import {
@@ -485,6 +486,18 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const [giftLoading, setGiftLoading] = useState(false);
   const [giftResult, setGiftResult] = useState<"ok"|"err"|"low"|null>(null);
 
+  /* Tizimga kirmagan foydalanuvchi uchun: amalni bajarish o'rniga login sahifasiga yo'naltirish */
+  const requireLogin = useCallback(() => {
+    if (user) return true;
+    toast({
+      title: "Tizimga kiring",
+      description: "Bu amalni bajarish uchun avval tizimga kiring.",
+      variant: "destructive",
+    });
+    navPlayer("/login");
+    return false;
+  }, [user, navPlayer]);
+
   /* Real like mutation */
   const likeMut = useLikeReel({
     mutation: {
@@ -777,7 +790,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
             </p>
           </div>
           <motion.button whileTap={{scale:0.9}}
-            onClick={(e)=>{e.stopPropagation();followMut.mutate({id:video.author.id});}}
+            onClick={(e)=>{e.stopPropagation();if(requireLogin())followMut.mutate({id:video.author.id});}}
             disabled={followMut.isPending}
             style={{padding:"7px 13px",borderRadius:99,flexShrink:0,
               background:"rgba(255,255,255,0.07)",
@@ -843,12 +856,12 @@ function NexusPlayer({ video, onClose, settings, onPip }:
             {
               icon:<ThumbsUp style={{width:15,height:15,fill:liked?"white":"none",color:"white"}}/>,
               label:fmt(likesCount), col:"rgba(255,255,255,0.9)", active:liked,
-              act:()=>likeMut.mutate({id:video.id}),
+              act:()=>{if(requireLogin())likeMut.mutate({id:video.id});},
             },
             {
               icon:<ThumbsDown style={{width:15,height:15,fill:disliked?"white":"none",color:"white"}}/>,
               label:"Ko'rmadim", col:"rgba(255,255,255,0.9)", active:disliked,
-              act:()=>{setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});},
+              act:()=>{if(!requireLogin())return;setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});},
             },
             {
               icon:<Share2 style={{width:15,height:15,color:"white"}}/>,
@@ -864,12 +877,12 @@ function NexusPlayer({ video, onClose, settings, onPip }:
             {
               icon:<MessageCircle style={{width:15,height:15,color:"white"}}/>,
               label:fmt(video.commentsCount??0), col:"rgba(255,255,255,0.9)", active:showCom,
-              act:()=>setShowCom(c=>!c),
+              act:()=>{if(requireLogin())setShowCom(c=>!c);},
             },
             {
               icon:<Star style={{width:15,height:15,color:"white"}}/>,
               label:"Yordam", col:"rgba(255,255,255,0.9)", active:donating,
-              act:()=>{setDonating(d=>!d);setShowMore(false);},
+              act:()=>{if(!requireLogin())return;setDonating(d=>!d);setShowMore(false);},
             },
             {
               icon:<Sparkles style={{width:15,height:15,color:"white"}}/>,
@@ -993,12 +1006,12 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                 background:"rgba(255,255,255,0.15)",margin:"0 auto 14px"}}/>
               <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
                 {[
-                  {icon:<ThumbsUp style={{width:18,height:18,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:liked?"Yoqdim":"Yoqtirish",col:T.cyan,on:liked,act:()=>likeMut.mutate({id:video.id})},
-                  {icon:<ThumbsDown style={{width:18,height:18,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Yoqmadi",col:T.orange,on:disliked,act:()=>{setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}},
+                  {icon:<ThumbsUp style={{width:18,height:18,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:liked?"Yoqdim":"Yoqtirish",col:T.cyan,on:liked,act:()=>{if(requireLogin())likeMut.mutate({id:video.id});}},
+                  {icon:<ThumbsDown style={{width:18,height:18,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Yoqmadi",col:T.orange,on:disliked,act:()=>{if(!requireLogin())return;setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}},
                   {icon:<Sparkles style={{width:18,height:18,color:danmaku?"#ffd700":"rgba(255,255,255,0.5)"}}/>,label:"Reaktsiya",col:"#ffd700",on:danmaku,act:()=>{setDanmaku(d=>!d);setShowMore(false);}},
                   {icon:<Gauge style={{width:18,height:18,color:showSpeed?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Tezlik",col:T.orange,on:showSpeed,act:()=>{setShowSpeed(s=>!s);setShowMore(false);}},
                   {icon:<Brain style={{width:18,height:18,color:"rgba(255,255,255,0.3)"}}/>,label:"AI Dub · Tez orada",col:"rgba(255,255,255,0.3)",on:false,act:()=>setShowMore(false)},
-                  {icon:<Star style={{width:18,height:18,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Sovg'a",col:T.orange,on:donating,act:()=>{setDonating(d=>!d);setShowMore(false);}},
+                  {icon:<Star style={{width:18,height:18,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Sovg'a",col:T.orange,on:donating,act:()=>{if(!requireLogin())return;setDonating(d=>!d);setShowMore(false);}},
                   {icon:<Upload style={{width:18,height:18,color:"rgba(255,255,255,0.5)",transform:"rotate(180deg)"}}/>,label:"Yuklab",col:"rgba(200,200,200,0.7)",on:false,act:()=>{if(!video.videoUrl)return;const a=document.createElement("a");a.href=video.videoUrl;a.download=`${video.caption||"video"}.mp4`;document.body.appendChild(a);a.click();document.body.removeChild(a);setShowMore(false);}},
                   {icon:<PictureInPicture2 style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>,label:"Mini",col:T.cyan,on:false,act:()=>{void handlePip();setShowMore(false);}},
                   ...(isOwner?[{icon:<Trash2 style={{width:18,height:18,color:"#ff3b30"}}/>,label:"O'chirish",col:"#ff3b30",on:false,act:()=>{setConfirmDelete(true);setShowMore(false);}}]:[]),
@@ -1611,6 +1624,17 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
   const [subbed, setSubbed] = useState(() => getFollowState(author.id, author.isFollowing));
   const [, navigate] = useLocation();
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const requireLogin = useCallback(() => {
+    if (user) return true;
+    toast({
+      title: "Tizimga kiring",
+      description: "Bu amalni bajarish uchun avval tizimga kiring.",
+      variant: "destructive",
+    });
+    navigate("/login");
+    return false;
+  }, [user, navigate]);
   const followMut = useFollowUser({
     mutation: {
       onMutate: () => {
@@ -1664,7 +1688,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
         </p>
       </div>
       <motion.button whileTap={{scale:0.9}}
-        onClick={()=>followMut.mutate({ id: author.id })}
+        onClick={()=>{if(requireLogin())followMut.mutate({ id: author.id });}}
         disabled={followMut.isPending}
         style={{padding:"7px 16px",borderRadius:99,
           background: subbed?"rgba(255,255,255,0.08)":`${col}22`,

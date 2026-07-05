@@ -563,7 +563,7 @@ const INIT_CALLS = [
   { id:2, name:"Nilufar Y.", time:"11:05", dur:null,   type:"missed"   as const },
   { id:3, name:"Bobur R.",   time:"22:17", dur:"1:45", type:"outgoing" as const },
   { id:4, name:"Malika K.",  time:"19:00", dur:null,   type:"missed"   as const },
-  { id:5, name:"Sanjar U.",  time:"Kecha", dur:"8:02", type:"incoming" as const },
+  { id:5, name:"Sanjar U.",  time:"yesterday", dur:"8:02", type:"incoming" as const },
 ];
 function CallPanelContent({ onClose }:{ onClose:()=>void }) {
   const { t } = useTranslation();
@@ -599,7 +599,7 @@ function CallPanelContent({ onClose }:{ onClose:()=>void }) {
                     <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       {typeIcon(c.type)}
-                      <span className="text-xs text-muted-foreground">{c.time}</span>
+                      <span className="text-xs text-muted-foreground">{c.time === "yesterday" ? t("msg.yesterday") : c.time}</span>
                       {c.dur&&<span className="text-xs text-muted-foreground">· {c.dur}</span>}
                     </div>
                   </div>

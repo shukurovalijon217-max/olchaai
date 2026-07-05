@@ -182,7 +182,7 @@ export default function NotificationsPage() {
               className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 font-semibold px-2.5 py-1.5 rounded-xl bg-red-400/10 hover:bg-red-400/15 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              Tozalash
+              {t("notif.clear")}
             </button>
           </div>
         )}
@@ -191,7 +191,7 @@ export default function NotificationsPage() {
       {/* Swipe hint */}
       {notifs.length > 0 && !isLoading && (
         <p className="text-xs text-muted-foreground mb-3 opacity-60">
-          ← Chapga suring yoki × tugmasini bosib o'chirish
+          {t("notif.swipe_hint")}
         </p>
       )}
 
@@ -212,7 +212,7 @@ export default function NotificationsPage() {
         <div className="text-center py-20 text-muted-foreground">
           <Bell className="w-12 h-12 mx-auto mb-4 opacity-20" />
           <p className="font-medium">{t("notif.all_caught")}</p>
-          <p className="text-xs mt-1 opacity-60">Hozircha yangi xabarnoma yo'q</p>
+          <p className="text-xs mt-1 opacity-60">{t("notif.empty")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -264,24 +264,24 @@ export default function NotificationsPage() {
                 <Trash2 className="w-6 h-6 text-red-400" />
               </div>
               <h3 className="text-base font-bold text-foreground text-center mb-1">
-                Barcha xabarnomalarni o'chirish
+                {t("notif.confirm_clear_title")}
               </h3>
               <p className="text-sm text-muted-foreground text-center mb-5">
-                {notifs.length} ta xabarnoma butunlay o'chiriladi. Bu amalni qaytarib bo'lmaydi.
+                {t("notif.confirm_clear_desc", { count: notifs.length })}
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowConfirmClear(false)}
                   className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
                 >
-                  Bekor qilish
+                  {t("common.cancel")}
                 </button>
                 <button
                   onClick={handleClearAll}
                   disabled={clearAll.isPending}
                   className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
                 >
-                  {clearAll.isPending ? "..." : "O'chirish"}
+                  {clearAll.isPending ? "..." : t("notif.delete")}
                 </button>
               </div>
             </motion.div>

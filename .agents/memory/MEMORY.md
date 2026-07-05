@@ -31,3 +31,4 @@
 - [i18n t() variable shadowing](i18n-variable-shadowing.md) — a local `const t = LOOKUP[x]` in a nested scope silently shadows the i18n `t()` translator; rename the local var, don't skip wiring.
 - [Date-serialization scrubber bug](date-serialization-scrubber-bug.md) — a global recursive res.json sanitizer (e.g. passwordHash stripper) turns raw Date fields into `{}` unless it special-cases `instanceof Date`; causes "Invalid Date" everywhere.
 - [WebRTC calls need TURN, not just STUN](webrtc-turn-required.md) — STUN-only ICE config fails to connect calls across most mobile-carrier/symmetric NATs; add a TURN relay and a ring-timeout so unanswered calls don't hang forever.
+- [Raw i18n key leaks & translation fallback](raw-i18n-key-leak-and-translation-fallback.md) — array `label` fields holding i18n keys need t() at every render site; ensureTranslation() must not cache a failed batch as if it succeeded.

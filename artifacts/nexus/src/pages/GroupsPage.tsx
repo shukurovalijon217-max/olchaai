@@ -342,6 +342,7 @@ function ToggleRow({
 function PermSelect({
   label, value, options, onChange,
 }: { label: string; value: string; options: { id: string; label: string }[]; onChange: (v: string) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between gap-3 py-2 border-b border-border/40 last:border-0">
       <span className="text-sm text-muted-foreground">{label}</span>
@@ -351,7 +352,7 @@ function PermSelect({
             className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all ${
               value === opt.id ? "bg-primary/15 text-primary border border-primary/30" : "bg-muted text-muted-foreground hover:text-foreground"
             }`}>
-            {opt.label}
+            {t(opt.label)}
           </button>
         ))}
       </div>
@@ -2305,7 +2306,7 @@ export default function GroupsPage() {
                                         {REACTIONS.map(r => (
                                           <motion.button key={r.type} whileHover={{ scale: 1.3 }} whileTap={{ scale: 0.9 }}
                                             onClick={() => handleReact(post.id, r.type)}
-                                            title={r.label}
+                                            title={t(r.label)}
                                             className={`text-xl p-1 rounded-lg transition-colors ${post.myReaction === r.type ? "bg-primary/15" : "hover:bg-muted"}`}>
                                             {r.emoji}
                                           </motion.button>
@@ -2690,7 +2691,7 @@ export default function GroupsPage() {
                       <button key={tc.hex} onClick={() => sf("themeColor", tc.hex)}
                         className={`w-6 h-6 rounded-full transition-transform ${settingsForm.themeColor === tc.hex ? "scale-125 ring-2 ring-offset-1 ring-offset-card" : "hover:scale-110"}`}
                         style={{ backgroundColor: tc.hex, ...(settingsForm.themeColor === tc.hex ? { ringColor: tc.hex } : {}) }}
-                        title={tc.label} />
+                        title={t(tc.label)} />
                     ))}
                   </div>
                 </div>
@@ -2730,7 +2731,7 @@ export default function GroupsPage() {
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
                         }`}>
-                        <cat.icon className="w-3 h-3" />{cat.label}
+                        <cat.icon className="w-3 h-3" />{t(cat.label)}
                       </button>
                     ))}
                   </div>
@@ -2932,7 +2933,7 @@ export default function GroupsPage() {
               <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0 border-b border-border">
                 <div>
                   <h2 className="font-bold text-foreground text-base">{t("groups.detail.wizard_title")}</h2>
-                  <p className="text-xs text-muted-foreground">{step}/{STEPS.length} • {STEPS[step - 1].label}</p>
+                  <p className="text-xs text-muted-foreground">{step}/{STEPS.length} • {t(STEPS[step - 1].label)}</p>
                 </div>
                 <button onClick={closeModal}
                   className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground">
@@ -2952,7 +2953,7 @@ export default function GroupsPage() {
                           : "bg-muted text-muted-foreground"
                     }`}>
                     {s.id < step ? <Check className="w-3 h-3" /> : <s.icon className="w-3 h-3" />}
-                    {s.label}
+                    {t(s.label)}
                   </button>
                 ))}
               </div>

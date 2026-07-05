@@ -29,3 +29,5 @@
 - [Trust proxy required for secure session cookies](trust-proxy-session-cookies.md) — missing app.set("trust proxy",1) silently breaks ALL login-gated features in prod only, dev unaffected.
 - [Silent userId fallback breaks toggle actions](silent-userid-fallback.md) — a route defaulting session userId to a hardcoded value (not 401ing) silently acts on the wrong user; feels like "the button does nothing".
 - [i18n t() variable shadowing](i18n-variable-shadowing.md) — a local `const t = LOOKUP[x]` in a nested scope silently shadows the i18n `t()` translator; rename the local var, don't skip wiring.
+- [Date-serialization scrubber bug](date-serialization-scrubber-bug.md) — a global recursive res.json sanitizer (e.g. passwordHash stripper) turns raw Date fields into `{}` unless it special-cases `instanceof Date`; causes "Invalid Date" everywhere.
+- [WebRTC calls need TURN, not just STUN](webrtc-turn-required.md) — STUN-only ICE config fails to connect calls across most mobile-carrier/symmetric NATs; add a TURN relay and a ring-timeout so unanswered calls don't hang forever.

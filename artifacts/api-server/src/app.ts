@@ -210,6 +210,7 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
    guarantees it never reaches a client even if a future route forgets. */
 function stripPasswordHash(value: unknown, depth = 0): unknown {
   if (depth > 6 || value === null || typeof value !== "object") return value;
+  if (value instanceof Date) return value;
   if (Array.isArray(value)) return value.map((v) => stripPasswordHash(v, depth + 1));
   const out: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(value as Record<string, unknown>)) {

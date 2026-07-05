@@ -4,8 +4,19 @@ import { useAuth } from "@/context/AuthContext";
 import { useRealtime } from "@/context/RealtimeContext";
 import { playCallRingtone, getFeaturePref } from "@/lib/sounds";
 import CallUI, { type CallPhase } from "@/components/CallUI";
+import { toast } from "@/hooks/use-toast";
 
-const STUN = [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }];
+const STUN = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  // TURN relay fallback — without this, calls fail to connect across most
+  // mobile-carrier/symmetric NATs since direct P2P (STUN-only) can't traverse them.
+  { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+];
+
+const RING_TIMEOUT_MS = 45000;
 
 interface CallPeer {
   id: number;
@@ -42,6 +53,11 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const stopRingtoneRef = useRef<(() => void) | null>(null);
   const stateRef = useRef<CallState | null>(null);
   stateRef.current = state;
+  const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearRingTimeout = useCallback(() => {
+    if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
+  }, []);
 
   const stopRingtone = useCallback(() => {
     stopRingtoneRef.current?.();
@@ -50,6 +66,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
 
   const cleanup = useCallback(() => {
     stopRingtone();
+    clearRingTimeout();
     pcRef.current?.close();
     pcRef.current = null;
     localStreamRef.current?.getTracks().forEach(t => t.stop());
@@ -60,7 +77,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
     setMuted(false);
     setCameraOn(true);
     setState(null);
-  }, [stopRingtone]);
+  }, [stopRingtone, clearRingTimeout]);
 
   const sendCallMsg = useCallback((type: string, toId: number, payload?: unknown) => {
     send({ type, toId, payload: payload ?? {} });
@@ -112,7 +129,15 @@ export function CallProvider({ children }: { children: ReactNode }) {
       fromAvatar: user.avatarUrl ?? undefined,
     });
     if (getFeaturePref("sound_notif", true)) stopRingtoneRef.current = playCallRingtone();
-  }, [user, sendCallMsg]);
+    clearRingTimeout();
+    ringTimeoutRef.current = setTimeout(() => {
+      if (stateRef.current?.phase === "ringing_out") {
+        sendCallMsg("call_hangup", peer.id, { reason: "no_answer" });
+        cleanup();
+        toast({ title: "Javob berilmadi", description: `${peer.name} qo'ng'iroqqa javob bermadi.` });
+      }
+    }, RING_TIMEOUT_MS);
+  }, [user, sendCallMsg, clearRingTimeout, cleanup]);
 
   const acceptCall = useCallback(async () => {
     const s = stateRef.current;
@@ -177,6 +202,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         const s = stateRef.current;
         if (!s || s.peer.id !== msg.fromId || s.phase !== "ringing_out") return;
         stopRingtone();
+        clearRingTimeout();
         setState({ ...s, phase: "connecting" });
         try {
           const stream = await getMedia(s.type);
@@ -239,7 +265,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
       }),
     ];
     return () => unsubs.forEach(u => u());
-  }, [subscribe, sendCallMsg, ensurePeer, drainIce, getMedia, cleanup, stopRingtone]);
+  }, [subscribe, sendCallMsg, ensurePeer, drainIce, getMedia, cleanup, stopRingtone, clearRingTimeout]);
 
   return (
     <CallContext.Provider value={{ startCall, hasActiveCall: !!state }}>

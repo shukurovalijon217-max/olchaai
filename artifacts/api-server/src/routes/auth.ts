@@ -28,6 +28,7 @@ const router = Router();
 declare module "express-session" {
   interface SessionData {
     userId: number;
+    isAdmin?: boolean;
   }
 }
 
@@ -210,6 +211,7 @@ router.post("/auth/login", async (req, res) => {
     }
     clearLoginAttempts(ip, identifier);
     req.session.userId = user.id;
+    req.session.isAdmin = user.isAdmin ?? false;
     const { passwordHash: _, ...safeUser } = user;
     res.json({ ...safeUser, token: signMobileToken(user.id) });
   } catch (err) {

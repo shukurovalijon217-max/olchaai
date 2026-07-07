@@ -6,7 +6,7 @@ import { usersTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@work
 import type { NotifPrefs, PrivacySettings } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
-import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput, signMobileToken } from "../lib/security";
+import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput, signMobileToken, checkEndpointRateLimit } from "../lib/security";
 
 const getResend = () => {
   const key = process.env.RESEND_API_KEY;
@@ -126,6 +126,10 @@ router.post("/auth/verify-otp", async (req, res) => {
 /* ── Register ───────────────────────────────────────────────── */
 router.post("/auth/register", async (req, res) => {
   try {
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
+    if (!checkEndpointRateLimit(ip, "register", 3, 60_000)) {
+      res.status(429).json({ error: "Juda ko'p urinish. 1 daqiqadan so'ng qayta urining." }); return;
+    }
     const { username, displayName, email, phone, password } = req.body as {
       username?: string; displayName?: string; email?: string; phone?: string; password?: string;
     };

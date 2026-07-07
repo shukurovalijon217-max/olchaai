@@ -14,6 +14,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { imgOptUrl } from "../lib/utils";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   Heart, MessageCircle, Share2, Trash2,
@@ -608,7 +609,8 @@ export default function FeedCard({ post, index }: FeedCardProps) {
           <video ref={videoRef} src={post.mediaUrl} muted={muted} loop playsInline
             className="w-full h-full object-cover" />
         ) : isPhoto && post.mediaUrl ? (
-          <img src={post.mediaUrl} alt={post.content}
+          <img src={imgOptUrl(post.mediaUrl, 900)} alt={post.content}
+            loading="lazy" decoding="async"
             className={`w-full h-full ${photoFit} cursor-pointer`}
             onClick={showSubscribeBriefly} />
         ) : (

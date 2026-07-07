@@ -1,9 +1,12 @@
 /**
- * /api/media/* — C++ pHash media fingerprinting routes.
- * Uses the compiled OlchaAI-C++-MediaHasher binary for perceptual image hashing.
+ * /api/media/* — C++ pHash media fingerprinting + WebP image optimizer routes.
  */
 import { Router, Request, Response } from "express";
 import { hashImagePixels, hammingDistance, hashSimilarity } from "../lib/mediaHasher.js";
+import sharp from "sharp";
+import https from "https";
+import http from "http";
+import { cacheGet, cacheSet } from "../lib/cache";
 
 const router = Router();
 
@@ -51,6 +54,75 @@ router.post("/compare", (req: Request, res: Response) => {
     similar: hamming <= 15,       // ≤15 bits → visually similar
     engine: "OlchaAI-C++-MediaHasher-v1",
   });
+});
+
+/**
+ * GET /api/media/img?url=<encoded>&w=800&q=80
+ * Fetches a remote image, converts to WebP, caches 1h in-memory.
+ * Used by the frontend to serve feed/profile images as WebP.
+ */
+const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com)$/i;
+
+function fetchRemote(url: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const mod = url.startsWith("https") ? https : http;
+    mod.get(url, { timeout: 8000 }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on("data", (c: Buffer) => chunks.push(c));
+      res.on("end", () => resolve(Buffer.concat(chunks)));
+      res.on("error", reject);
+    }).on("error", reject);
+  });
+}
+
+router.get("/img", async (req: Request, res: Response) => {
+  const rawUrl = req.query["url"] as string | undefined;
+  const width  = Math.min(Math.max(Number(req.query["w"]) || 800, 40), 1920);
+  const quality = Math.min(Math.max(Number(req.query["q"]) || 80, 20), 100);
+
+  if (!rawUrl) { res.status(400).json({ error: "url required" }); return; }
+
+  let decoded: string;
+  try { decoded = decodeURIComponent(rawUrl); } catch {
+    res.status(400).json({ error: "invalid url encoding" }); return;
+  }
+
+  // Safety: only proxy images from our own storage / known CDN hosts
+  let hostname: string;
+  try { hostname = new URL(decoded).hostname; } catch {
+    res.status(400).json({ error: "invalid url" }); return;
+  }
+  if (!ALLOWED_HOSTS.test(hostname)) {
+    res.status(403).json({ error: "host not allowed" }); return;
+  }
+
+  const cacheKey = `webp:${width}:${quality}:${decoded}`;
+  const cached = cacheGet<Buffer>(cacheKey);
+  if (cached) {
+    res.setHeader("Content-Type", "image/webp");
+    res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    res.setHeader("X-Cache", "HIT");
+    res.end(cached);
+    return;
+  }
+
+  try {
+    const raw = await fetchRemote(decoded);
+    const webp = await sharp(raw)
+      .resize({ width, withoutEnlargement: true })
+      .webp({ quality, effort: 4 })
+      .toBuffer();
+
+    cacheSet(cacheKey, webp, 60 * 60 * 1000); // 1h
+
+    res.setHeader("Content-Type", "image/webp");
+    res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    res.setHeader("X-Cache", "MISS");
+    res.end(webp);
+  } catch (err) {
+    // On failure, redirect to the original image — graceful fallback
+    res.redirect(302, decoded);
+  }
 });
 
 export default router;

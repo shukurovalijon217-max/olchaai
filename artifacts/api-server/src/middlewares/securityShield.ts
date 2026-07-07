@@ -440,3 +440,66 @@ export async function unbanIp(ip: string) {
     return false;
   }
 }
+
+/* ─── Adaptive AI Shield — orqa fonda o'zi ishlaydi ────────────── */
+async function runAdaptiveSweep() {
+  try {
+    // So'nggi 1 soat ichida 3+ ta hujum qilgan va hali ban bo'lmagan IPlarni top
+    const hotIps = await db.execute(sql`
+      SELECT ip, COUNT(*) as event_count, MAX(severity) as max_severity,
+             array_agg(DISTINCT event_type) as attack_types
+      FROM security_events
+      WHERE created_at > NOW() - INTERVAL '1 hour'
+        AND ip NOT IN (SELECT ip FROM banned_ips WHERE permanent = true OR expires_at > NOW())
+      GROUP BY ip
+      HAVING COUNT(*) >= 3
+      ORDER BY event_count DESC
+      LIMIT 50
+    `);
+
+    const rows = (hotIps as any).rows ?? [];
+
+    for (const row of rows) {
+      const count = Number(row.event_count);
+      const sev = row.max_severity as string;
+
+      // Critical hujum → darhol permanent ban
+      if (sev === "critical" || count >= 10) {
+        await banIp(row.ip, `AI adaptive: ${count} attacks (${sev})`, "permanent", count);
+        logger.warn({ ip: row.ip, count, sev }, "Adaptive AI Shield: permanent ban applied");
+      }
+      // Ko'p urinish → 24 soat ban
+      else if (count >= 6 || sev === "high") {
+        await banIp(row.ip, `AI adaptive: ${count} attacks (${sev})`, 24 * 60 * 60_000, count);
+        logger.warn({ ip: row.ip, count, sev }, "Adaptive AI Shield: 24h ban applied");
+      }
+      // Shubhali → 1 soat ban
+      else {
+        await banIp(row.ip, `AI adaptive: ${count} suspicious events`, 60 * 60_000, 1);
+        logger.info({ ip: row.ip, count }, "Adaptive AI Shield: 1h ban applied");
+      }
+    }
+
+    // Muddati o'tgan banlarni tozalash
+    await db.execute(sql`
+      DELETE FROM banned_ips
+      WHERE permanent = false AND expires_at < NOW()
+    `);
+
+    // 30 kundan eski eventlarni arxivlash
+    await db.execute(sql`
+      DELETE FROM security_events
+      WHERE created_at < NOW() - INTERVAL '30 days'
+    `);
+
+    if (rows.length > 0) {
+      logger.info({ banned: rows.length }, "Adaptive AI Shield sweep complete");
+    }
+  } catch (err) {
+    logger.error({ err }, "Adaptive AI Shield sweep error");
+  }
+}
+
+// Serverda ishga tushganda 30 soniya o'tib birinchi sweep, keyin har soatda
+setTimeout(() => runAdaptiveSweep().catch(() => {}), 30_000);
+setInterval(() => runAdaptiveSweep().catch(() => {}), 60 * 60_000);

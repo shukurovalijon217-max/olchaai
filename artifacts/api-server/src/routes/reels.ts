@@ -8,6 +8,7 @@ import { eq, sql, desc, and, inArray, not, count, gte } from "drizzle-orm";
 import { accumulateViewEarning } from "./monetization";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
+import { cacheGet, cacheSet } from "../lib/cache";
 
 const router = Router();
 
@@ -390,6 +391,13 @@ router.delete("/reels/collaborators/:id", requireAuth, async (req: any, res) => 
 router.post("/reels/:id/view", async (req, res) => {
   try {
     const reelId = Number(req.params.id);
+
+    /* Deduplicate: same user (or IP) can only add 1 view per reel per hour */
+    const userId  = (req.session as any)?.userId as number | undefined;
+    const viewKey = `rview:${reelId}:${userId ?? req.ip}`;
+    const already = await cacheGet(viewKey);
+    if (already) { res.json({ ok: true, deduplicated: true }); return; }
+    await cacheSet(viewKey, "1", 3600); /* 1 hour TTL */
 
     /* Increment view count */
     await db.update(reelsTable)

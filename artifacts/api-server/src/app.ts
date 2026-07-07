@@ -152,15 +152,35 @@ app.use(session({
 }));
 
 /* ── Cache-Control headers for Cloudflare CDN ───────────────────
-   Placed AFTER session middleware so our header wins over the
-   express-session default no-store.
-   GET public endpoints: edge-cacheable 15s + stale-while-revalidate.
-   Sensitive + mutations: always no-store.                         */
+   Tiered strategy:
+   - Private/sensitive (auth, wallet, admin): no-store
+   - User-specific feed/profile: private, short TTL
+   - Public feeds, posts, search: Cloudflare edge cache 30s + SWR 60s
+   - Static media proxy: long cache 1h + SWR 1h
+   Mutations (POST/PUT/PATCH/DELETE): always no-store.             */
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.method === "GET") {
     const p = req.path;
-    if (p.startsWith("/api/admin") || p.startsWith("/api/auth") || p.startsWith("/api/wallet")) {
+    if (
+      p.startsWith("/api/admin") ||
+      p.startsWith("/api/auth") ||
+      p.startsWith("/api/wallet") ||
+      p.startsWith("/api/messages") ||
+      p.startsWith("/api/notifications")
+    ) {
       res.setHeader("Cache-Control", "private, no-store");
+    } else if (p.startsWith("/api/media/img")) {
+      res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=3600, immutable");
+    } else if (
+      p.startsWith("/api/posts") ||
+      p.startsWith("/api/search") ||
+      p.startsWith("/api/marketplace") ||
+      p.startsWith("/api/otube") ||
+      p.startsWith("/api/reels")
+    ) {
+      res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=60");
+    } else if (p.startsWith("/api/users")) {
+      res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
     } else {
       res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=30");
     }

@@ -10,6 +10,7 @@ import { USD_TO_MAJOR, tiyinToUSD } from "../lib/currency";
 import { stripeService } from "../stripe/stripeService";
 import { storage } from "../stripe/storage";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
+import { checkEndpointRateLimit } from "../lib/security";
 
 const REAL_PAYMENT_METHODS = new Set(["visa", "mastercard", "global"]);
 
@@ -77,6 +78,10 @@ const depositSchema = z.object({
 // only credited after payment is confirmed via /wallet/deposit/confirm.
 router.post("/wallet/deposit", requireAuth, async (req: any, res) => {
   try {
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
+    if (!checkEndpointRateLimit(ip, "wallet_deposit", 10, 60_000)) {
+      res.status(429).json({ error: "Juda ko'p urinish. 1 daqiqadan so'ng qayta urining." }); return;
+    }
     const parsed = depositSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Noto'g'ri ma'lumot", details: parsed.error.issues }); return;
@@ -204,6 +209,10 @@ const withdrawSchema = z.object({
 // pretends a transfer happened on its own.
 router.post("/wallet/withdraw", requireAuth, async (req: any, res) => {
   try {
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
+    if (!checkEndpointRateLimit(ip, "wallet_withdraw", 5, 60_000)) {
+      res.status(429).json({ error: "Juda ko'p urinish. 1 daqiqadan so'ng qayta urining." }); return;
+    }
     const parsed = withdrawSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Noto'g'ri ma'lumot", details: parsed.error.issues }); return;

@@ -115,6 +115,37 @@ setInterval(() => {
 }, 5 * 60_000);
 
 /**
+ * Per-endpoint strict rate limiter — for sensitive routes (register, wallet, etc.)
+ * Much tighter than the global 300/min limit.
+ */
+const endpointHits = new Map<string, { count: number; resetAt: number }>();
+
+export function checkEndpointRateLimit(
+  ip: string,
+  endpoint: string,
+  maxPerWindow: number,
+  windowMs: number,
+): boolean {
+  const key = `${endpoint}::${ip}`;
+  const now = Date.now();
+  const rec = endpointHits.get(key);
+  if (!rec || rec.resetAt <= now) {
+    endpointHits.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  rec.count++;
+  return rec.count <= maxPerWindow;
+}
+
+// Clean up expired endpoint rate limit entries
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, rec] of endpointHits.entries()) {
+    if (rec.resetAt <= now) endpointHits.delete(key);
+  }
+}, 5 * 60_000);
+
+/**
  * Validate input strings — strips null bytes, checks max length.
  * Returns sanitized string or null if invalid.
  */

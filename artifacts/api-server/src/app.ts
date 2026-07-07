@@ -40,6 +40,7 @@ app.use(helmet({
   hsts: { maxAge: 31536000, includeSubDomains: true },
 }));
 
+
 /* ── Request logger ─────────────────────────────────────────────── */
 app.use(
   pinoHttp({
@@ -149,6 +150,25 @@ app.use(session({
     sameSite: isProd ? "none" : "lax",
   },
 }));
+
+/* ── Cache-Control headers for Cloudflare CDN ───────────────────
+   Placed AFTER session middleware so our header wins over the
+   express-session default no-store.
+   GET public endpoints: edge-cacheable 15s + stale-while-revalidate.
+   Sensitive + mutations: always no-store.                         */
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method === "GET") {
+    const p = req.path;
+    if (p.startsWith("/api/admin") || p.startsWith("/api/auth") || p.startsWith("/api/wallet")) {
+      res.setHeader("Cache-Control", "private, no-store");
+    } else {
+      res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=30");
+    }
+  } else {
+    res.setHeader("Cache-Control", "no-store");
+  }
+  next();
+});
 
 /* ── NEXUS Security Shield — Pentagon-grade auto-defense ─────── */
 app.use(securityShield);

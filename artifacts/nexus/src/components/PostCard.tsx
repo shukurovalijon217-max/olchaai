@@ -322,7 +322,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
           <Link href={`/profile/${post.author.id}`}>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center flex-shrink-0 cursor-pointer overflow-hidden">
               {post.author.avatarUrl
-                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 : <span className="text-sm font-bold text-primary">{post.author.displayName?.[0]?.toUpperCase()}</span>
               }
             </div>

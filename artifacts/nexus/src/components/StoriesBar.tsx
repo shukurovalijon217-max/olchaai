@@ -41,7 +41,7 @@ export default function StoriesBar({ onCreateStory }: Props) {
             <div className={story.isViewed ? "story-ring-viewed" : "story-ring"}>
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 overflow-hidden bg-card">
                 {story.author.avatarUrl ? (
-                  <img src={story.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={story.author.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="text-sm font-bold text-primary">{story.author.displayName?.[0]}</span>

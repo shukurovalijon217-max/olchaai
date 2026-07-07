@@ -1,76 +1,45 @@
-/**
- * In-Memory Cache Layer
- * Reduces DB load by 70-80% on hot paths (feed, posts, profiles)
- * Uses node-cache with TTL. Thread-safe for single-process, Cluster-safe via short TTL.
- */
-import NodeCache from "node-cache";
+type CacheEntry<T> = { data: T; expiresAt: number };
+const store = new Map<string, CacheEntry<unknown>>();
 
-// Feed cache: 30 seconds TTL (fresh enough, massive DB savings)
-const feedCache = new NodeCache({ stdTTL: 30, checkperiod: 10, useClones: false });
-
-// Posts cache: 15 seconds TTL
-const postsCache = new NodeCache({ stdTTL: 15, checkperiod: 10, useClones: false });
-
-// Profile cache: 60 seconds TTL (user profiles change rarely)
-const profileCache = new NodeCache({ stdTTL: 60, checkperiod: 30, useClones: false });
-
-// Stats cache: 5 minutes TTL (admin stats don't need real-time)
-const statsCache = new NodeCache({ stdTTL: 300, checkperiod: 60, useClones: false });
-
-export type CacheStore = "feed" | "posts" | "profile" | "stats";
-
-const STORES: Record<CacheStore, NodeCache> = {
-  feed: feedCache,
-  posts: postsCache,
-  profile: profileCache,
-  stats: statsCache,
-};
-
-export function cacheGet<T>(store: CacheStore, key: string): T | undefined {
-  return STORES[store].get<T>(key);
+export function cacheGet<T>(key: string): T | null {
+  const entry = store.get(key) as CacheEntry<T> | undefined;
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) { store.delete(key); return null; }
+  return entry.data;
 }
 
-export function cacheSet<T>(store: CacheStore, key: string, value: T, ttl?: number): void {
-  if (ttl !== undefined) {
-    STORES[store].set(key, value, ttl);
-  } else {
-    STORES[store].set(key, value);
+export function cacheSet<T>(key: string, data: T, ttlMs: number): void {
+  store.set(key, { data, expiresAt: Date.now() + ttlMs });
+}
+
+export function cacheDel(key: string): void {
+  store.delete(key);
+}
+
+export function cacheDelPattern(pattern: string): void {
+  for (const key of store.keys()) {
+    if (key.startsWith(pattern)) store.delete(key);
   }
 }
 
-export function cacheDel(store: CacheStore, key: string): void {
-  STORES[store].del(key);
-}
-
-export function cacheDelPattern(store: CacheStore, prefix: string): void {
-  const keys = STORES[store].keys().filter(k => k.startsWith(prefix));
-  STORES[store].del(keys);
-}
-
-export function cacheFlush(store: CacheStore): void {
-  STORES[store].flushAll();
-}
-
-/** Cache-aside helper: get or fetch+store */
 export async function cacheAside<T>(
-  store: CacheStore,
+  namespace: string,
   key: string,
-  fetcher: () => Promise<T>,
-  ttl?: number,
+  fn: () => Promise<T>,
+  ttlSec = 30,
 ): Promise<T> {
-  const hit = cacheGet<T>(store, key);
-  if (hit !== undefined) return hit;
-  const value = await fetcher();
-  cacheSet(store, key, value, ttl);
-  return value;
+  if (ttlSec <= 0) return fn();
+  const full = `${namespace}:${key}`;
+  const cached = cacheGet<T>(full);
+  if (cached !== null) return cached;
+  const data = await fn();
+  cacheSet(full, data, ttlSec * 1000);
+  return data;
 }
 
-/** Cache stats for monitoring */
-export function getCacheStats() {
-  return {
-    feed: feedCache.getStats(),
-    posts: postsCache.getStats(),
-    profile: profileCache.getStats(),
-    stats: statsCache.getStats(),
-  };
-}
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of store.entries()) {
+    if (now > (entry as CacheEntry<unknown>).expiresAt) store.delete(key);
+  }
+}, 60_000);

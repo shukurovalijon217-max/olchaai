@@ -436,6 +436,93 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
 }
 
 /* ─────────────────────────────────────────────────────── */
+/* VersionHistoryPanel — real version history               */
+/* ─────────────────────────────────────────────────────── */
+function VersionHistoryPanel({ reelId, currentCaption }: { reelId: number | null; currentCaption: string }) {
+  const [versions, setVersions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [note, setNote] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  const load = async () => {
+    if (!reelId) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/reels/${reelId}/versions`, { credentials: "include" });
+      if (r.ok) setVersions(await r.json());
+    } catch { /* ignore */ } finally { setLoading(false); }
+  };
+
+  useEffect(() => { void load(); }, [reelId]);
+
+  const saveVersion = async () => {
+    setSaving(true);
+    try {
+      const r = await fetch(`/api/reels/${reelId}/versions`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: note.trim() || undefined }),
+      });
+      if (r.ok) { setSaved(true); setTimeout(() => setSaved(false), 1500); setNote(""); void load(); }
+    } catch { /* ignore */ } finally { setSaving(false); }
+  };
+
+  return (
+    <div>
+      <div style={{fontSize:9,color:"rgba(255,255,255,0.45)",fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>
+        📋 VERSIYA TARIXI
+      </div>
+      {!reelId && (
+        <div style={{padding:"12px",borderRadius:8,background:"rgba(255,255,255,0.03)",
+          border:"1px dashed rgba(255,255,255,0.08)",textAlign:"center",marginBottom:8}}>
+          <span style={{fontSize:10.5,color:"rgba(255,255,255,0.3)"}}>Video saqlangandan keyin versiya tarixi yoqiladi</span>
+        </div>
+      )}
+      {/* Save snapshot */}
+      <div style={{display:"flex",gap:6,marginBottom:10,opacity:reelId?1:0.35,pointerEvents:reelId?undefined:"none"}}>
+        <input value={note} onChange={e=>setNote(e.target.value)}
+          placeholder="Izoh (ixtiyoriy)"
+          style={{flex:1,background:"rgba(255,255,255,0.06)",color:"white",fontSize:11,padding:"7px 10px",
+            borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",outline:"none"}}/>
+        <button onClick={()=>void saveVersion()} disabled={saving}
+          style={{padding:"7px 12px",borderRadius:8,background:saved?"#22c55e":T.cyan,
+            color:"#000",fontSize:11,fontWeight:700,opacity:saving?0.5:1}}>
+          {saved?"✓":saving?"...":"Saqlash"}
+        </button>
+      </div>
+      {/* Version list */}
+      {!reelId ? null : loading ? (
+        <div style={{textAlign:"center",padding:10,color:"rgba(255,255,255,0.3)",fontSize:11}}>Yuklanmoqda...</div>
+      ) : versions.length === 0 ? (
+        <div style={{padding:"12px",borderRadius:8,background:"rgba(255,255,255,0.03)",
+          border:"1px dashed rgba(255,255,255,0.08)",textAlign:"center"}}>
+          <span style={{fontSize:10.5,color:"rgba(255,255,255,0.3)"}}>Hali versiya saqlanmagan</span>
+        </div>
+      ) : (
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {versions.slice(0, 8).map((v: any) => (
+            <div key={v.id} style={{padding:"8px 10px",borderRadius:8,
+              background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>
+                  {v.displayName || v.username}
+                </span>
+                <span style={{fontSize:9,color:"rgba(255,255,255,0.25)"}}>
+                  {new Date(v.created_at).toLocaleDateString()}
+                </span>
+              </div>
+              {v.caption && <p style={{fontSize:11,color:"rgba(255,255,255,0.7)",lineHeight:1.4,marginBottom:v.note?4:0}} className="line-clamp-2">{v.caption}</p>}
+              {v.note && <p style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontStyle:"italic"}}>"{v.note}"</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
 /* NexusPlayer — BROADCAST STYLE                           */
 /* ─────────────────────────────────────────────────────── */
 function NexusPlayer({ video, onClose, settings, onPip }:
@@ -485,6 +572,11 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const [walletBal, setWalletBal] = useState<number|null>(null);
   const [giftLoading, setGiftLoading] = useState(false);
   const [giftResult, setGiftResult] = useState<"ok"|"err"|"low"|null>(null);
+  const [showDub, setShowDub] = useState(false);
+  const [dubLang, setDubLang] = useState("uz");
+  const [dubbing, setDubbing] = useState(false);
+  const [dubResult, setDubResult] = useState<{translated:string;audioB64:string;lang:string}|null>(null);
+  const dubAudioRef = useRef<HTMLAudioElement|null>(null);
 
   /* Tizimga kirmagan foydalanuvchi uchun: amalni bajarish o'rniga login sahifasiga yo'naltirish */
   const requireLogin = useCallback(() => {
@@ -890,9 +982,9 @@ function NexusPlayer({ video, onClose, settings, onPip }:
               act:()=>setDanmaku(d=>!d),
             },
             {
-              icon:<Brain style={{width:15,height:15,color:"rgba(255,255,255,0.35)"}}/>,
-              label:"AI Dub · Tez orada", col:"rgba(255,255,255,0.35)", active:false,
-              act:()=>setShowMore(false),
+              icon:<Brain style={{width:15,height:15,color:showDub?T.cyan:"rgba(255,255,255,0.9)"}}/>,
+              label:"AI Dub", col:T.cyan, active:showDub,
+              act:()=>{if(requireLogin()){setShowDub(s=>!s);setShowMore(false);}},
             },
             {
               icon:<Upload style={{width:15,height:15,color:"white",transform:"rotate(180deg)"}}/>,
@@ -1010,7 +1102,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                   {icon:<ThumbsDown style={{width:18,height:18,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Yoqmadi",col:T.orange,on:disliked,act:()=>{if(!requireLogin())return;setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}},
                   {icon:<Sparkles style={{width:18,height:18,color:danmaku?"#ffd700":"rgba(255,255,255,0.5)"}}/>,label:"Reaktsiya",col:"#ffd700",on:danmaku,act:()=>{setDanmaku(d=>!d);setShowMore(false);}},
                   {icon:<Gauge style={{width:18,height:18,color:showSpeed?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Tezlik",col:T.orange,on:showSpeed,act:()=>{setShowSpeed(s=>!s);setShowMore(false);}},
-                  {icon:<Brain style={{width:18,height:18,color:"rgba(255,255,255,0.3)"}}/>,label:"AI Dub · Tez orada",col:"rgba(255,255,255,0.3)",on:false,act:()=>setShowMore(false)},
+                  {icon:<Brain style={{width:18,height:18,color:showDub?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:"AI Dub",col:T.cyan,on:showDub,act:()=>{if(requireLogin()){setShowDub(s=>!s);setShowMore(false);}}},
                   {icon:<Star style={{width:18,height:18,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Sovg'a",col:T.orange,on:donating,act:()=>{if(!requireLogin())return;setDonating(d=>!d);setShowMore(false);}},
                   {icon:<Upload style={{width:18,height:18,color:"rgba(255,255,255,0.5)",transform:"rotate(180deg)"}}/>,label:"Yuklab",col:"rgba(200,200,200,0.7)",on:false,act:()=>{if(!video.videoUrl)return;const a=document.createElement("a");a.href=video.videoUrl;a.download=`${video.caption||"video"}.mp4`;document.body.appendChild(a);a.click();document.body.removeChild(a);setShowMore(false);}},
                   {icon:<PictureInPicture2 style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>,label:"Mini",col:T.cyan,on:false,act:()=>{void handlePip();setShowMore(false);}},
@@ -1028,6 +1120,70 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                   </motion.button>
                 ))}
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ══ AI DUB PANEL ══ */}
+        <AnimatePresence>
+          {showDub && (
+            <motion.div
+              initial={{opacity:0,y:60}} animate={{opacity:1,y:0}} exit={{opacity:0,y:60}}
+              style={{position:"absolute",bottom:0,left:0,right:0,zIndex:120,
+                background:"linear-gradient(180deg,rgba(0,0,0,0.0),rgba(0,0,0,0.97))",
+                borderRadius:"18px 18px 0 0",padding:"16px 16px 32px",maxHeight:"70%",overflowY:"auto"}}>
+              <div style={{width:36,height:3,borderRadius:3,background:"rgba(255,255,255,0.15)",margin:"0 auto 14px"}}/>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <Brain style={{width:16,height:16,color:T.cyan}}/>
+                  <span style={{fontSize:13,fontWeight:700,color:"white"}}>AI Dublyaj</span>
+                </div>
+                <button onClick={()=>setShowDub(false)} style={{color:"rgba(255,255,255,0.4)",fontSize:18,lineHeight:1}}>✕</button>
+              </div>
+              {/* Language selector */}
+              <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:8}}>Tilni tanlang:</p>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
+                {[{code:"uz",name:"O'zbek"},{code:"ru",name:"Русский"},{code:"en",name:"English"},{code:"tr",name:"Türkçe"},{code:"zh",name:"中文"},{code:"es",name:"Español"}].map(({code,name})=>(
+                  <button key={code} onClick={()=>{setDubLang(code);setDubResult(null);}}
+                    style={{padding:"6px 12px",borderRadius:20,fontSize:11,fontWeight:600,
+                      background:dubLang===code?T.cyan:"rgba(255,255,255,0.08)",
+                      color:dubLang===code?"#000":"rgba(255,255,255,0.7)",
+                      border:`1px solid ${dubLang===code?T.cyan:"rgba(255,255,255,0.1)"}`}}>
+                    {name}
+                  </button>
+                ))}
+              </div>
+              {/* Generate button */}
+              <button
+                disabled={dubbing}
+                onClick={async()=>{
+                  if(!video.caption)return;
+                  setDubbing(true);setDubResult(null);
+                  try{
+                    const r=await fetch("/api/otube/ai/dub",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({caption:(video.caption||"").slice(0,500),targetLang:dubLang})});
+                    if(r.ok){const d=await r.json();setDubResult(d);}
+                  }catch{/* ignore */}finally{setDubbing(false);}
+                }}
+                style={{width:"100%",padding:"12px",borderRadius:12,background:dubbing?"rgba(255,255,255,0.1)":T.cyan,
+                  color:dubbing?"rgba(255,255,255,0.4)":"#000",fontWeight:700,fontSize:13,marginBottom:12}}>
+                {dubbing?"Yaratilmoqda...":"🎙 Dublyaj qilish"}
+              </button>
+              {/* Result */}
+              {dubResult&&(
+                <div style={{background:"rgba(255,255,255,0.05)",borderRadius:12,padding:12,border:"1px solid rgba(255,255,255,0.08)"}}>
+                  <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:6}}>Tarjima:</p>
+                  <p style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:10,lineHeight:1.5}}>{dubResult.translated}</p>
+                  <button onClick={()=>{
+                    const audio=new Audio(`data:audio/mp3;base64,${dubResult.audioB64}`);
+                    dubAudioRef.current=audio;
+                    audio.play().catch(()=>{});
+                  }}
+                    style={{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:10,
+                      background:"rgba(255,255,255,0.08)",color:"white",fontSize:12,fontWeight:600}}>
+                    <span>▶</span> Ovozni ijro etish
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -5218,13 +5374,8 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
                 ))}
               </div>
             </div>
-            {/* Version history — not yet implemented, honestly labeled */}
-            <div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>📋 VERSIYA TARIXI · TEZ ORADA</div>
-              <div style={{padding:"16px",borderRadius:10,background:"rgba(255,255,255,0.03)",border:"1px dashed rgba(255,255,255,0.1)",textAlign:"center"}}>
-                <span style={{fontSize:10.5,color:"rgba(255,255,255,0.35)"}}>Tahrirlash tarixini saqlash va qayta tiklash tez orada qo'shiladi</span>
-              </div>
-            </div>
+            {/* Version history — real implementation */}
+            <VersionHistoryPanel reelId={null} currentCaption={caption} />
           </div>
         )}
 

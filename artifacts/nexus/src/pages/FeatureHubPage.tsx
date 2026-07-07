@@ -37,8 +37,8 @@ const FEATURES: Feature[] = [
   { id: "energy_broadcast", icon: Zap, emoji: "⚡", tag: "eksklyuziv", color: "from-yellow-400 to-amber-600", defaultOn: false, unique: true },
   { id: "emotion_radar", icon: Brain, emoji: "🧠", tag: "beta", color: "from-emerald-500 to-green-700", defaultOn: false, unique: true },
   { id: "midnight_confess", icon: Moon, emoji: "🌙", tag: "eksklyuziv", color: "from-indigo-600 to-violet-900", defaultOn: false, unique: true },
-  { id: "grow_together", icon: Users, emoji: "🌱", tag: "tez_kunda", color: "from-lime-500 to-emerald-600", defaultOn: false, unique: true },
-  { id: "social_aura", icon: Sparkles, emoji: "✨", tag: "tez_kunda", color: "from-fuchsia-500 to-pink-700", defaultOn: false, unique: true },
+  { id: "grow_together", icon: Users, emoji: "🌱", tag: "yangi", color: "from-lime-500 to-emerald-600", defaultOn: false, unique: true },
+  { id: "social_aura", icon: Sparkles, emoji: "✨", tag: "beta", color: "from-fuchsia-500 to-pink-700", defaultOn: false, unique: true },
   { id: "echo_detector", icon: Radio, emoji: "📡", tag: "beta", color: "from-blue-500 to-cyan-600", defaultOn: true, unique: true },
   { id: "focus_shield", icon: Shield, emoji: "🛡️", tag: "yangi", color: "from-teal-500 to-cyan-700", defaultOn: false, unique: true },
 ];
@@ -343,6 +343,189 @@ function FocusShieldWidget({ config, saving, onSaveHours, onAddAllowed, onRemove
   );
 }
 
+/* ── Grow Together Widget (live feature) ── */
+function GrowTogetherWidget({ enabled }: { enabled: boolean }) {
+  const { t } = useTranslation();
+  const [goalText, setGoalText] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [matches, setMatches] = useState<any[]>([]);
+  const [connections, setConnections] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [connected, setConnected] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    if (!enabled) return;
+    fetch(`${API}/api/grow-together/goal`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.goal_text) setGoalText(data.goal_text); })
+      .catch(() => {});
+    fetch(`${API}/api/grow-together/connections`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : [])
+      .then(setConnections)
+      .catch(() => {});
+  }, [enabled]);
+
+  const saveGoal = async () => {
+    if (!goalText.trim()) return;
+    setSaving(true);
+    try {
+      const r = await fetch(`${API}/api/grow-together/goal`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goalText }),
+      });
+      if (r.ok) { setSaved(true); setTimeout(() => setSaved(false), 1500); void loadMatches(); }
+    } catch { /* ignore */ }
+    finally { setSaving(false); }
+  };
+
+  const loadMatches = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/grow-together/matches`, { credentials: "include" });
+      if (r.ok) setMatches(await r.json());
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  };
+
+  const connect = async (partnerId: number) => {
+    try {
+      await fetch(`${API}/api/grow-together/connect/${partnerId}`, { method: "POST", credentials: "include" });
+      setConnected(prev => new Set([...prev, partnerId]));
+    } catch { /* ignore */ }
+  };
+
+  if (!enabled) return null;
+
+  return (
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+      className="rounded-2xl border border-white/10 bg-white/5 p-4 mb-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lg">🌱</span>
+        <span className="text-white font-semibold text-sm">{t("featurehub.feat_grow_together_title")}</span>
+      </div>
+      <label className="text-white/40 text-[10px] block mb-1">{t("featurehub.grow_together_goal_label")}</label>
+      <div className="flex gap-2 mb-3">
+        <input value={goalText} onChange={e => setGoalText(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") void saveGoal(); }}
+          placeholder={t("featurehub.grow_together_goal_ph")}
+          className="flex-1 bg-white/8 text-white text-xs rounded-lg px-3 py-2 border border-white/10 placeholder:text-white/30 outline-none focus:border-white/20"/>
+        <button onClick={() => void saveGoal()} disabled={saving || !goalText.trim()}
+          className="px-3 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors">
+          {saved ? "✓" : saving ? t("featurehub.grow_together_saving") : t("featurehub.grow_together_save")}
+        </button>
+      </div>
+      {connections.length > 0 && (
+        <div className="mb-3">
+          <p className="text-white/50 text-[10px] font-semibold mb-1.5">{t("featurehub.grow_together_connected_title")}</p>
+          <div className="space-y-1.5">
+            {connections.slice(0, 3).map((c: any) => (
+              <div key={c.id} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
+                <span className="text-white text-xs flex-1 truncate">{c.displayName || c.username}</span>
+                <span className="text-white/30 text-[10px] truncate max-w-[100px]">{c.goal_text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <button onClick={() => void loadMatches()} disabled={loading || !goalText.trim()}
+        className="w-full py-2 rounded-xl bg-white/8 text-white/60 text-xs font-semibold hover:bg-white/12 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
+        <UserPlus className="w-3.5 h-3.5"/>
+        {loading ? "..." : t("featurehub.grow_together_find")}
+      </button>
+      {matches.length > 0 && (
+        <div className="mt-2 space-y-1.5">
+          {matches.slice(0, 5).map((m: any) => (
+            <div key={m.user_id} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
+              <span className="text-white text-xs flex-1 truncate">{m.displayName || m.username}</span>
+              <span className="text-white/30 text-[10px] truncate max-w-[80px]">{m.goal_text}</span>
+              <button onClick={() => void connect(m.user_id)} disabled={connected.has(m.user_id)}
+                className="text-[10px] px-2 py-1 rounded-lg bg-primary/80 text-white font-semibold disabled:opacity-40">
+                {connected.has(m.user_id) ? "✓" : t("featurehub.grow_together_connect")}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {matches.length === 0 && goalText && !loading && (
+        <p className="text-white/25 text-[10px] text-center mt-2">{t("featurehub.grow_together_no_matches")}</p>
+      )}
+    </motion.div>
+  );
+}
+
+/* ── Social Aura Widget (live feature) ── */
+interface AuraData { score: number; color: string; label: string; gradient: string; stats: Record<string, number> }
+
+function SocialAuraWidget({ enabled }: { enabled: boolean }) {
+  const { t } = useTranslation();
+  const [aura, setAura] = useState<AuraData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/users/aura`, { credentials: "include" });
+      if (r.ok) setAura(await r.json());
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { if (enabled) void load(); }, [enabled]);
+
+  if (!enabled) return null;
+
+  return (
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+      className="rounded-2xl border border-white/10 bg-white/5 p-4 mb-4">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">✨</span>
+          <span className="text-white font-semibold text-sm">{t("featurehub.social_aura_your")}</span>
+        </div>
+        <button onClick={() => void load()} disabled={loading}
+          className="text-[10px] text-white/40 hover:text-white/70 transition-colors disabled:opacity-30">
+          {loading ? t("featurehub.social_aura_refreshing") : t("featurehub.social_aura_refresh")}
+        </button>
+      </div>
+      {aura ? (
+        <>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+              style={{ background: aura.gradient, boxShadow: `0 0 24px ${aura.color}66` }}>
+              {aura.score}
+            </div>
+            <div>
+              <p className="text-white font-semibold text-sm">{aura.label}</p>
+              <p className="text-white/40 text-[10px]">{t("featurehub.social_aura_score")}: {aura.score}/100</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              { key: "posts30", label: t("featurehub.social_aura_posts"), val: aura.stats.posts30 },
+              { key: "likesReceived", label: t("featurehub.social_aura_likes"), val: aura.stats.likesReceived },
+              { key: "commentsMade", label: t("featurehub.social_aura_comments"), val: aura.stats.commentsMade },
+              { key: "newFollowers", label: t("featurehub.social_aura_followers"), val: aura.stats.newFollowers },
+            ].map(s => (
+              <div key={s.key} className="bg-white/5 rounded-lg px-2.5 py-2">
+                <p className="text-white font-semibold text-sm">{s.val ?? 0}</p>
+                <p className="text-white/35 text-[9px]">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="text-center py-4">
+          <div className="w-12 h-12 rounded-full mx-auto mb-2 animate-pulse"
+            style={{ background: "linear-gradient(135deg,#9d00ff,#4400aa)" }}/>
+          <p className="text-white/30 text-xs">{loading ? t("featurehub.social_aura_refreshing") : "..."}</p>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 /* ── Energy Broadcast Widget (live feature) ── */
 function EnergyWidget({ enabled }: { enabled: boolean }) {
   const { t } = useTranslation();
@@ -617,6 +800,12 @@ export default function FeatureHubPage() {
           onAddAllowed={u => void updateFocusShield({ allowedUserIds: [...focusShield.allowedUserIds, u.id] })}
           onRemoveAllowed={id => void updateFocusShield({ allowedUserIds: focusShield.allowedUserIds.filter(x => x !== id) })}
         />
+
+        {/* Grow Together widget if enabled */}
+        <GrowTogetherWidget enabled={isOn("grow_together", false)} />
+
+        {/* Social Aura widget if enabled */}
+        <SocialAuraWidget enabled={isOn("social_aura", false)} />
 
         {/* Filter tabs */}
         <div className="flex gap-2 mb-4">

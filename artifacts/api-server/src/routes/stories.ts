@@ -4,24 +4,26 @@ import { storiesTable, storyViewsTable, usersTable, moderationQueueTable } from 
 import { eq, sql, gt, and, inArray } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
+import { cacheAside, cacheDelPattern } from "../lib/cache";
 
 const router = Router();
 
 router.get("/stories", async (req, res) => {
   try {
-    const now = new Date();
     const viewerId = (req.session as any)?.userId as number | undefined;
-    const stories = await db.select().from(storiesTable).where(gt(storiesTable.expiresAt, now));
-    const authorIds = [...new Set(stories.map(s => s.authorId))];
-    const statsMap = await getUserStatsMap(authorIds, viewerId);
-    const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
-    const authorMap = new Map(authors.map(a => [a.id, a]));
-
-    const enriched = stories.map((s) => {
-      const author = authorMap.get(s.authorId);
-      const stats = statsMap.get(s.authorId) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
-      return { ...s, author: { ...(author || {}), ...stats }, isViewed: false };
-    });
+    const enriched = await cacheAside("stories", `list:${viewerId ?? 0}`, async () => {
+      const now = new Date();
+      const stories = await db.select().from(storiesTable).where(gt(storiesTable.expiresAt, now));
+      const authorIds = [...new Set(stories.map(s => s.authorId))];
+      const statsMap = await getUserStatsMap(authorIds, viewerId);
+      const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
+      const authorMap = new Map(authors.map(a => [a.id, a]));
+      return stories.map((s) => {
+        const author = authorMap.get(s.authorId);
+        const stats = statsMap.get(s.authorId) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
+        return { ...s, author: { ...(author || {}), ...stats }, isViewed: false };
+      });
+    }, 30);
     res.json(enriched);
   } catch (err) {
     req.log.error(err);
@@ -55,6 +57,7 @@ router.post("/stories", async (req, res) => {
       }).catch(() => {});
     }
 
+    cacheDelPattern("stories:list:");
     const [author] = await db.select().from(usersTable).where(eq(usersTable.id, story.authorId));
     const stats = await getUserStats(story.authorId, authorId);
     res.status(201).json({ ...story, author: { ...(author || {}), ...stats }, isViewed: false });

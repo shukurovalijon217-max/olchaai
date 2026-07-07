@@ -2,11 +2,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, MoreHorizontal, ChevronDown, X,
-  PenLine, BookOpen, Film, MonitorPlay, Trophy, Zap, Radio,
+  PenLine, BookOpen, Film, MonitorPlay, Trophy, Zap, Radio, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import { useListPosts, useGetAiFeed } from "@workspace/api-client-react";
+import { useListPosts, useGetAiFeed, useListStories } from "@workspace/api-client-react";
 import FeedCard from "@/components/FeedCard";
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
@@ -352,13 +352,15 @@ export default function HomePage() {
   const [, navigate] = useLocation();
   const { data: feed } = useGetAiFeed();
   const { data: posts = [], isLoading } = useListPosts();
+  const { data: stories = [] } = useListStories();
 
-  const [sheetOpen,  setSheetOpen]  = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createTab,  setCreateTab]  = useState<TabType>("post");
-  const [sparkling,  setSparkling]  = useState(false);
-  const [tunnelOpen, setTunnelOpen] = useState(false);
+  const [sheetOpen,    setSheetOpen]    = useState(false);
+  const [createOpen,   setCreateOpen]   = useState(false);
+  const [createTab,    setCreateTab]    = useState<TabType>("post");
+  const [sparkling,    setSparkling]    = useState(false);
+  const [tunnelOpen,   setTunnelOpen]   = useState(false);
   const [echoDismissed, setEchoDismissed] = useState(false);
+  const [storyIdx,     setStoryIdx]     = useState<number | null>(null);
 
   const feedRef = useRef<HTMLDivElement>(null);
   const displayPosts = feed?.posts?.length ? feed.posts : posts;
@@ -413,8 +415,165 @@ export default function HomePage() {
     [navigate]
   );
 
+  const activeStory = storyIdx !== null ? stories[storyIdx] : null;
+
   return (
     <div className="relative">
+
+      {/* ── INSTAGRAM-STYLE STORIES STRIP ── */}
+      {stories.length > 0 && (
+        <div
+          className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-3 py-2 overflow-x-auto"
+          style={{
+            background: "linear-gradient(to bottom, rgba(6,6,15,0.95) 0%, rgba(6,6,15,0) 100%)",
+            scrollbarWidth: "none",
+          }}
+        >
+          {/* "Story qo'shish" doirasi */}
+          <motion.div
+            whileTap={{ scale: 0.9 }}
+            onClick={() => { setCreateTab("story"); setCreateOpen(true); }}
+            className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer"
+          >
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center"
+              style={{
+                background: "rgba(255,255,255,0.07)",
+                border: "2px dashed rgba(139,92,246,0.6)",
+              }}
+            >
+              <span className="text-2xl text-violet-400 leading-none">+</span>
+            </div>
+            <span className="text-[10px] text-white/40 w-14 text-center truncate">Qo'shish</span>
+          </motion.div>
+
+          {stories.map((story: any, i: number) => (
+            <motion.div
+              key={story.id}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setStoryIdx(i)}
+              className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer"
+            >
+              <div
+                className="w-14 h-14 rounded-full p-[2px]"
+                style={{
+                  background: story.isViewed
+                    ? "rgba(255,255,255,0.15)"
+                    : "linear-gradient(135deg, #a855f7, #ec4899, #f59e0b)",
+                }}
+              >
+                <div className="w-full h-full rounded-full overflow-hidden bg-[#0d0d1a] flex items-center justify-center">
+                  {story.author?.avatarUrl ? (
+                    <img src={story.author.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <span className="text-lg font-bold text-white/70">
+                      {(story.author?.displayName || story.author?.username || "?")[0].toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <span className="text-[10px] text-white/50 w-14 text-center truncate">
+                {story.author?.username || ""}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* ── STORY VIEWER MODAL ── */}
+      <AnimatePresence>
+        {activeStory && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.97)" }}
+          >
+            {/* Progress bar */}
+            <div className="absolute top-0 left-0 right-0 flex gap-1 p-3 z-10">
+              {stories.map((_: any, i: number) => (
+                <div key={i} className="h-[2px] flex-1 rounded-full overflow-hidden bg-white/20">
+                  {i < (storyIdx ?? 0) && <div className="h-full w-full bg-white" />}
+                  {i === storyIdx && (
+                    <motion.div
+                      className="h-full bg-white"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 5, ease: "linear" }}
+                      onAnimationComplete={() => {
+                        if (storyIdx !== null && storyIdx < stories.length - 1) setStoryIdx(storyIdx + 1);
+                        else setStoryIdx(null);
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Author info */}
+            <div className="absolute top-8 left-0 right-0 flex items-center gap-3 px-4 z-10 pt-3">
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                {activeStory.author?.avatarUrl ? (
+                  <img src={activeStory.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-bold text-white">
+                    {(activeStory.author?.displayName || activeStory.author?.username || "?")[0].toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">{activeStory.author?.displayName || activeStory.author?.username}</p>
+                <p className="text-white/40 text-xs">@{activeStory.author?.username}</p>
+              </div>
+              <button onClick={() => setStoryIdx(null)} className="ml-auto">
+                <X className="w-6 h-6 text-white/70" />
+              </button>
+            </div>
+
+            {/* Story content */}
+            <div className="w-full h-full flex items-center justify-center">
+              {activeStory.mediaUrl ? (
+                <img src={activeStory.mediaUrl} alt="" className="w-full h-full object-contain" />
+              ) : (
+                <div
+                  className="w-full h-full flex items-center justify-center px-10"
+                  style={{ background: "linear-gradient(135deg, #1a0533 0%, #0d1a33 100%)" }}
+                >
+                  <p className="text-white text-2xl font-bold text-center leading-snug">
+                    {activeStory.caption || ""}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Prev / Next tap zones */}
+            <button
+              className="absolute left-0 top-0 w-1/3 h-full z-20"
+              onClick={() => { if (storyIdx !== null && storyIdx > 0) setStoryIdx(storyIdx - 1); }}
+            />
+            <button
+              className="absolute right-0 top-0 w-1/3 h-full z-20"
+              onClick={() => {
+                if (storyIdx !== null && storyIdx < stories.length - 1) setStoryIdx(storyIdx + 1);
+                else setStoryIdx(null);
+              }}
+            />
+
+            {/* Arrows (desktop) */}
+            {storyIdx !== null && storyIdx > 0 && (
+              <motion.div whileTap={{ scale: 0.9 }} className="absolute left-3 top-1/2 -translate-y-1/2 z-30 pointer-events-none">
+                <ChevronLeft className="w-8 h-8 text-white/50" />
+              </motion.div>
+            )}
+            {storyIdx !== null && storyIdx < stories.length - 1 && (
+              <motion.div whileTap={{ scale: 0.9 }} className="absolute right-3 top-1/2 -translate-y-1/2 z-30 pointer-events-none">
+                <ChevronRight className="w-8 h-8 text-white/50" />
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── TOP OVERLAY STACK: energy broadcast bar + echo detector banner ── */}
       <div className="absolute top-3 left-3 right-3 z-40 flex flex-col gap-2">

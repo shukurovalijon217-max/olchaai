@@ -144,7 +144,9 @@ router.get("/reels/similar", async (req, res) => {
 router.post("/reels", async (req, res) => {
   try {
     const viewerId = (req.session as any)?.userId as number | undefined;
-    const { authorId, videoUrl, thumbnailUrl, caption, audioTrack, duration, tags } = req.body;
+    const { videoUrl, thumbnailUrl, caption, audioTrack, duration, tags } = req.body;
+    const authorId = viewerId ?? Number(req.body.authorId);
+    if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
     const [reel] = await db
       .insert(reelsTable)

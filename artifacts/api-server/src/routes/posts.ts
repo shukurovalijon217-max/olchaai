@@ -344,8 +344,10 @@ router.get("/posts/:id/votes", async (req: any, res) => {
 /* ── POST /posts — instant response, AI scan in background ─── */
 router.post("/posts", async (req: any, res) => {
   try {
-    const { authorId, content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, audioTrimStart, audioTrimEnd, pollQuestion, pollOptions, mood, filterName, tags, midnightOnly } = req.body;
+    const { content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, audioTrimStart, audioTrimEnd, pollQuestion, pollOptions, mood, filterName, tags, midnightOnly } = req.body;
     const sessionUserId: number | undefined = req.session?.userId;
+    const authorId = sessionUserId ?? Number(req.body.authorId);
+    if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
     const [post] = await db
       .insert(postsTable)
@@ -547,7 +549,9 @@ router.get("/posts/:id/comments", async (req, res) => {
 router.post("/posts/:id/comments", async (req, res) => {
   try {
     const postId = Number(req.params.id);
-    const { authorId, content } = req.body;
+    const { content } = req.body;
+    const authorId = (req.session as any)?.userId ?? Number(req.body.authorId);
+    if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
     const [comment] = await db.insert(commentsTable).values({ postId, authorId, content }).returning();
     await db.update(postsTable).set({ commentsCount: sql`${postsTable.commentsCount} + 1` }).where(eq(postsTable.id, postId));

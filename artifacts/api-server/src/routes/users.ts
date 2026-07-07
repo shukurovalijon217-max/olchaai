@@ -4,6 +4,7 @@ import { usersTable, followsTable, postsTable } from "@workspace/db";
 import { eq, ilike, sql, and, desc, inArray } from "drizzle-orm";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
+import { cacheAside, cacheDelPattern } from "../lib/cache";
 
 const router = Router();
 
@@ -63,18 +64,23 @@ router.get("/users/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     const viewerId = (req.session as any)?.userId as number | undefined;
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
-    if (!user) { res.status(404).json({ error: "Not found" }); return; }
-    const [[followers], [following], [postsCount], followCheck] = await Promise.all([
-      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
-      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
-      db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
-      viewerId && viewerId !== id
-        ? db.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, id))).limit(1)
-        : Promise.resolve([]),
-    ]);
-    const { passwordHash: _, ...safeUser } = user;
-    res.json({ ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: (followCheck as { id: number }[]).length > 0 });
+    const cacheKey = `profile:${id}:viewer:${viewerId ?? 0}`;
+    const result = await cacheAside("users", cacheKey, async () => {
+      const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+      if (!user) return null;
+      const [[followers], [following], [postsCount], followCheck] = await Promise.all([
+        db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
+        db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
+        db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
+        viewerId && viewerId !== id
+          ? db.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, id))).limit(1)
+          : Promise.resolve([]),
+      ]);
+      const { passwordHash: _, ...safeUser } = user;
+      return { ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: (followCheck as { id: number }[]).length > 0 };
+    }, 30);
+    if (!result) { res.status(404).json({ error: "Not found" }); return; }
+    res.json(result);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

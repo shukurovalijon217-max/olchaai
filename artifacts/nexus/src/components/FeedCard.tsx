@@ -516,7 +516,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
 
       {/* ═══ LAYER 0: Blurred background for photo ═══ */}
       {isPhoto && post.mediaUrl && (
-        <img src={post.mediaUrl} alt="" aria-hidden
+        <img src={post.mediaUrl} alt="" aria-hidden loading="lazy" decoding="async"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{ filter: "blur(32px) saturate(1.4) brightness(0.28)", transform: "scale(1.18)", zIndex: 0 }}
         />
@@ -565,7 +565,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
               >
                 {isVideoUrl(allMedia[slideIdx])
                   ? <video src={allMedia[slideIdx]} muted loop playsInline autoPlay className="w-full h-full object-cover" />
-                  : <img src={allMedia[slideIdx]} alt={post.content} className={`w-full h-full ${photoFit}`} />
+                  : <img src={allMedia[slideIdx]} alt={post.content} className={`w-full h-full ${photoFit}`} loading="lazy" decoding="async" />
                 }
                 <div className="absolute inset-0 -z-10">
                   <img src={allMedia[slideIdx]} alt="" aria-hidden className="w-full h-full object-cover"
@@ -728,7 +728,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
             <div className="absolute inset-[2.5px] rounded-full overflow-hidden z-10 flex items-center justify-center"
               style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
               {post.author?.avatarUrl
-                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
               }
             </div>

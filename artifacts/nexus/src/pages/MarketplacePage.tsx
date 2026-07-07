@@ -49,7 +49,7 @@ function ProductCard({
       <button onClick={onClick} className="w-full text-left">
         <div className="relative aspect-square bg-amber-900/15 overflow-hidden">
           {product.thumbnailUrl ? (
-            <img src={product.thumbnailUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            <img src={product.thumbnailUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-4xl">🛍️</div>
           )}
@@ -91,7 +91,7 @@ function ProductCard({
           {product.seller && (
             <div className="flex items-center gap-1 mt-1.5">
               <div className="w-4 h-4 rounded-full bg-amber-700/50 overflow-hidden flex-shrink-0">
-                {product.seller.avatarUrl && <img src={product.seller.avatarUrl} className="w-full h-full object-cover" />}
+                {product.seller.avatarUrl && <img src={product.seller.avatarUrl} className="w-full h-full object-cover" loading="lazy" decoding="async" />}
               </div>
               <span className="text-xs text-muted-foreground truncate">{product.seller.displayName}</span>
             </div>
@@ -119,7 +119,7 @@ function HCard({ product, onClick, t, favs, onFav }: { product: any; onClick: ()
       <button onClick={onClick} className="w-full text-left">
         <div className="relative w-full h-36 bg-amber-900/15 overflow-hidden">
           {product.thumbnailUrl
-            ? <img src={product.thumbnailUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            ? <img src={product.thumbnailUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
             : <div className="w-full h-full flex items-center justify-center text-3xl">🛍️</div>}
           {discount && <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">-{discount}%</span>}
         </div>

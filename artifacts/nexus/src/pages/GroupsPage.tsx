@@ -1356,7 +1356,7 @@ export default function GroupsPage() {
             >
               {form.coverPreview ? (
                 <>
-                  <img src={form.coverPreview} alt="" className="w-full h-full object-cover" />
+                  <img src={form.coverPreview} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                     <Upload className="w-6 h-6 text-white" />
                   </div>
@@ -1416,7 +1416,7 @@ export default function GroupsPage() {
               <div className="h-20 flex items-center justify-center relative"
                 style={{ background: `linear-gradient(135deg, ${form.themeColor}40, ${form.themeColor}20)` }}>
                 {form.coverPreview
-                  ? <img src={form.coverPreview} alt="" className="w-full h-full object-cover absolute inset-0" />
+                  ? <img src={form.coverPreview} alt="" className="w-full h-full object-cover absolute inset-0" loading="lazy" decoding="async" />
                   : <span className="text-4xl z-10 relative">{form.icon}</span>}
               </div>
               <div className="p-3 bg-card">
@@ -1716,7 +1716,7 @@ export default function GroupsPage() {
                 className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/20 transition-colors cursor-pointer">
                 <div className={`h-24 bg-gradient-to-br ${COLORS_CARD[i % COLORS_CARD.length]} flex items-center justify-center relative overflow-hidden`}>
                   {group.coverUrl
-                    ? <img src={group.coverUrl} alt="" className="w-full h-full object-cover" />
+                    ? <img src={group.coverUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                     : <span className="text-4xl font-black text-white/20">{group.name[0]}</span>}
                   {group.isPrivate && (
                     <div className="absolute top-2 right-2 bg-black/50 rounded-lg px-2 py-1 flex items-center gap-1">
@@ -1891,7 +1891,7 @@ export default function GroupsPage() {
                     {/* Image preview in composer */}
                     {postImagePreview && (
                       <div className="relative mt-2 mb-1">
-                        <img src={postImagePreview} alt="" className="rounded-xl w-full max-h-48 object-cover" />
+                        <img src={postImagePreview} alt="" className="rounded-xl w-full max-h-48 object-cover" loading="lazy" decoding="async" />
                         <button
                           onClick={() => { setPostImageFile(null); setPostImagePreview(""); }}
                           className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80"
@@ -2208,7 +2208,7 @@ export default function GroupsPage() {
                                 <div className="flex items-center gap-2.5">
                                   <div className="w-9 h-9 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground font-bold text-sm">
                                     {post.authorAvatarUrl
-                                      ? <img src={post.authorAvatarUrl} alt="" className="w-full h-full object-cover" />
+                                      ? <img src={post.authorAvatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                                       : post.authorDisplayName[0]?.toUpperCase()}
                                   </div>
                                   <div>
@@ -2395,7 +2395,7 @@ export default function GroupsPage() {
                                           <div key={comment.id} className="flex items-start gap-2 group">
                                             <div className="w-7 h-7 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-xs font-bold text-muted-foreground">
                                               {comment.authorAvatarUrl
-                                                ? <img src={comment.authorAvatarUrl} alt="" className="w-full h-full object-cover" />
+                                                ? <img src={comment.authorAvatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                                                 : comment.authorDisplayName[0]?.toUpperCase()}
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -2492,7 +2492,7 @@ export default function GroupsPage() {
                             className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/50 transition-colors">
                             <div className="w-11 h-11 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground">
                               {member.avatarUrl
-                                ? <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                ? <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                                 : <span className="font-bold text-base">{member.displayName[0]?.toUpperCase()}</span>}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -3065,7 +3065,7 @@ export default function GroupsPage() {
                 <p className="text-xs font-semibold text-muted-foreground mb-1">{sharePost.authorDisplayName}</p>
                 <p className="text-sm text-foreground line-clamp-3">{sharePost.content}</p>
                 {sharePost.mediaUrl && (
-                  <img src={sharePost.mediaUrl} alt="" className="mt-2 rounded-lg w-full max-h-24 object-cover" />
+                  <img src={sharePost.mediaUrl} alt="" className="mt-2 rounded-lg w-full max-h-24 object-cover" loading="lazy" decoding="async" />
                 )}
               </div>
               <textarea

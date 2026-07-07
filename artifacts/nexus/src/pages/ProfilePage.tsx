@@ -175,7 +175,7 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
             {isUploading ? (
               <div className="w-full h-full flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
             ) : avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img src={avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
             ) : (
               <div className="w-full h-full flex items-center justify-center"
                 style={{ background: "radial-gradient(circle at 35% 35%, rgba(124,58,237,0.32), rgba(59,130,246,0.22), rgba(16,185,129,0.12))" }}>
@@ -533,7 +533,7 @@ function SettingsSheet({ open, onClose, user, isOwner, onAvatarClick, onCoverCli
       <div className="px-4 pt-1 pb-3 flex items-center gap-3 border-b border-white/6">
         <div className="w-10 h-10 rounded-2xl overflow-hidden bg-muted border border-white/10 shrink-0">
           {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500/25 to-blue-500/20">
               <span className="text-base font-black text-primary">{user.displayName[0]}</span>
@@ -1035,7 +1035,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     className="w-full rounded-2xl overflow-hidden relative cursor-pointer group/hero"
                     style={{ height: 200, boxShadow: "0 4px 28px rgba(124,58,237,0.18)" }}>
                     {topPost.mediaUrl && topPost.type !== "video"
-                      ? <img src={topPost.mediaUrl} alt="" className="w-full h-full object-cover" />
+                      ? <img src={topPost.mediaUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                       : topPost.mediaUrl && topPost.type === "video"
                       ? <div className="w-full h-full relative bg-black">
                           <video src={topPost.mediaUrl} className="w-full h-full object-cover" muted preload="none" />
@@ -1088,7 +1088,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                       className="aspect-square rounded-xl overflow-hidden bg-card cursor-pointer relative group/post"
                       style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.25)" }}>
                       {post.mediaUrl && post.type !== "video"
-                        ? <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+                        ? <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                         : post.mediaUrl && post.type === "video"
                         ? <div className="w-full h-full relative bg-black">
                             <video src={post.mediaUrl} className="w-full h-full object-cover" muted preload="none" />
@@ -1140,7 +1140,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                       className="aspect-[9/16] rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/reel"
                       style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
                       {reel.thumbnailUrl ? (
-                        <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                       ) : reel.videoUrl ? (
                         <video src={reel.videoUrl} className="w-full h-full object-cover" muted preload="none"
                           onMouseEnter={e => (e.target as HTMLVideoElement).play().catch(() => {})}

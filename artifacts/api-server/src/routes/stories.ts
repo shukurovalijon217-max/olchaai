@@ -67,13 +67,22 @@ router.post("/stories", async (req, res) => {
 router.post("/stories/:id/view", async (req, res) => {
   try {
     const storyId = Number(req.params.id);
-    const userId = 1;
-    const existing = await db.select().from(storyViewsTable).where(and(eq(storyViewsTable.storyId, storyId), eq(storyViewsTable.userId, userId)));
+    const userId  = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+
+    /* Dedup: insert only if not already viewed by this user */
+    const existing = await db.select({ id: storyViewsTable.id })
+      .from(storyViewsTable)
+      .where(and(eq(storyViewsTable.storyId, storyId), eq(storyViewsTable.userId, userId)))
+      .limit(1);
     if (existing.length === 0) {
       await db.insert(storyViewsTable).values({ storyId, userId });
-      await db.update(storiesTable).set({ viewsCount: sql`${storiesTable.viewsCount} + 1` }).where(eq(storiesTable.id, storyId));
+      await db.update(storiesTable)
+        .set({ viewsCount: sql`${storiesTable.viewsCount} + 1` })
+        .where(eq(storiesTable.id, storyId));
     }
-    const [story] = await db.select().from(storiesTable).where(eq(storiesTable.id, storyId));
+    const [story] = await db.select({ viewsCount: storiesTable.viewsCount })
+      .from(storiesTable).where(eq(storiesTable.id, storyId)).limit(1);
     res.json({ viewed: true, viewsCount: story?.viewsCount || 0 });
   } catch (err) {
     req.log.error(err);

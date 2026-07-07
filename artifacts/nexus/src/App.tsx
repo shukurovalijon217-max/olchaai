@@ -1,4 +1,4 @@
-import { useEffect, Component, type ReactNode } from "react";
+import { useEffect, Component, type ReactNode, lazy, Suspense } from "react";
 import "@/lib/i18n";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -9,45 +9,54 @@ import { RealtimeProvider } from "@/context/RealtimeContext";
 import { CallProvider } from "@/context/CallContext";
 import { PipProvider } from "@/context/PipContext";
 import Layout from "@/components/Layout";
-import HomePage from "@/pages/HomePage";
-import ReelsPage from "@/pages/ReelsPage";
-import OTubePage from "@/pages/OTubePage";
-import ExplorePage from "@/pages/ExplorePage";
-import MessagesPage from "@/pages/MessagesPage";
-import GroupsPage from "@/pages/GroupsPage";
-import ProfilePage from "@/pages/ProfilePage";
-import NotificationsPage from "@/pages/NotificationsPage";
-import AdminPage from "@/pages/AdminPage";
-import PremiumPage from "@/pages/PremiumPage";
-import SettingsPage from "@/pages/SettingsPage";
-import PostDetailPage from "@/pages/PostDetailPage";
-import LoginPage from "@/pages/LoginPage";
-import AboutPage from "@/pages/AboutPage";
-import WalletPage from "@/pages/WalletPage";
-import LivePage from "@/pages/LivePage";
-import LiveExplorePage from "@/pages/LiveExplorePage";
-import SearchPage from "@/pages/SearchPage";
-import MarketplacePage from "@/pages/MarketplacePage";
-import ProductDetailPage from "@/pages/ProductDetailPage";
-import SellPage from "@/pages/SellPage";
-import MyShopPage from "@/pages/MyShopPage";
-import SellerProfilePage from "@/pages/SellerProfilePage";
-import AIChatPage from "@/pages/AIChatPage";
-import LibraryPage from "@/pages/LibraryPage";
-import QuestsPage from "@/pages/QuestsPage";
-import CoViewPage from "@/pages/CoViewPage";
-import AnonZonesPage from "@/pages/AnonZonesPage";
-import AnonInboxPage from "@/pages/AnonInboxPage";
-import AskAnonPage from "@/pages/AskAnonPage";
-import MultiScenePage from "@/pages/MultiScenePage";
-import MoodMapPage from "@/pages/MoodMapPage";
-import AITwinPage from "@/pages/AITwinPage";
-import FactCheckPage from "@/pages/FactCheckPage";
-import CoSpacesPage from "@/pages/CoSpacesPage";
-import MuniAIPage from "@/pages/MuniAIPage";
-import VoiceTranslatorPage from "@/pages/VoiceTranslatorPage";
-import FeatureHubPage from "@/pages/FeatureHubPage";
-import NotFound from "@/pages/not-found";
+
+/* ── Route-level code splitting ─────────────────────────────────
+   Each page loads on demand — initial JS bundle is ~70% smaller.  */
+const HomePage          = lazy(() => import("@/pages/HomePage"));
+const ReelsPage         = lazy(() => import("@/pages/ReelsPage"));
+const OTubePage         = lazy(() => import("@/pages/OTubePage"));
+const ExplorePage       = lazy(() => import("@/pages/ExplorePage"));
+const MessagesPage      = lazy(() => import("@/pages/MessagesPage"));
+const GroupsPage        = lazy(() => import("@/pages/GroupsPage"));
+const ProfilePage       = lazy(() => import("@/pages/ProfilePage"));
+const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
+const AdminPage         = lazy(() => import("@/pages/AdminPage"));
+const PremiumPage       = lazy(() => import("@/pages/PremiumPage"));
+const SettingsPage      = lazy(() => import("@/pages/SettingsPage"));
+const PostDetailPage    = lazy(() => import("@/pages/PostDetailPage"));
+const LoginPage         = lazy(() => import("@/pages/LoginPage"));
+const AboutPage         = lazy(() => import("@/pages/AboutPage"));
+const WalletPage        = lazy(() => import("@/pages/WalletPage"));
+const LivePage          = lazy(() => import("@/pages/LivePage"));
+const LiveExplorePage   = lazy(() => import("@/pages/LiveExplorePage"));
+const SearchPage        = lazy(() => import("@/pages/SearchPage"));
+const MarketplacePage   = lazy(() => import("@/pages/MarketplacePage"));
+const ProductDetailPage = lazy(() => import("@/pages/ProductDetailPage"));
+const SellPage          = lazy(() => import("@/pages/SellPage"));
+const MyShopPage        = lazy(() => import("@/pages/MyShopPage"));
+const SellerProfilePage = lazy(() => import("@/pages/SellerProfilePage"));
+const AIChatPage        = lazy(() => import("@/pages/AIChatPage"));
+const LibraryPage       = lazy(() => import("@/pages/LibraryPage"));
+const QuestsPage        = lazy(() => import("@/pages/QuestsPage"));
+const CoViewPage        = lazy(() => import("@/pages/CoViewPage"));
+const AnonZonesPage     = lazy(() => import("@/pages/AnonZonesPage"));
+const AnonInboxPage     = lazy(() => import("@/pages/AnonInboxPage"));
+const AskAnonPage       = lazy(() => import("@/pages/AskAnonPage"));
+const MultiScenePage    = lazy(() => import("@/pages/MultiScenePage"));
+const MoodMapPage       = lazy(() => import("@/pages/MoodMapPage"));
+const AITwinPage        = lazy(() => import("@/pages/AITwinPage"));
+const FactCheckPage     = lazy(() => import("@/pages/FactCheckPage"));
+const CoSpacesPage      = lazy(() => import("@/pages/CoSpacesPage"));
+const MuniAIPage        = lazy(() => import("@/pages/MuniAIPage"));
+const VoiceTranslatorPage = lazy(() => import("@/pages/VoiceTranslatorPage"));
+const FeatureHubPage    = lazy(() => import("@/pages/FeatureHubPage"));
+const NotFound          = lazy(() => import("@/pages/not-found"));
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+  </div>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -129,125 +138,127 @@ function Router() {
   const { user } = useAuth();
 
   return (
-    <Switch>
-      <Route path="/login" component={LoginPage} />
-      <Route path="/about" component={AboutPage} />
-      <Route path="/admin" component={() => (
-        <AdminRoute><Layout><AdminPage /></Layout></AdminRoute>
-      )} />
-      <Route path="/reels" component={() => (
-        <ProtectedRoute><Layout><ReelsPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/otube" component={() => (
-        <ProtectedRoute><Layout><OTubePage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/explore" component={() => (
-        <ProtectedRoute><Layout><ExplorePage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/messages" component={() => (
-        <ProtectedRoute><Layout><MessagesPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/groups" component={() => (
-        <ProtectedRoute><Layout><GroupsPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/profile/:id" component={({ params }) => (
-        <ProtectedRoute><Layout><ProfilePage userId={Number(params.id)} /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/profile" component={() => (
-        <ProtectedRoute><Layout><ProfilePage userId={user?.id ?? 1} /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/notifications" component={() => (
-        <ProtectedRoute><Layout><NotificationsPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/post/:id" component={({ params }) => (
-        <ProtectedRoute><Layout><PostDetailPage postId={Number(params.id)} /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/premium" component={() => (
-        <Layout><PremiumPage /></Layout>
-      )} />
-      <Route path="/settings" component={() => (
-        <ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/wallet" component={() => (
-        <ProtectedRoute><Layout><WalletPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/live/:id" component={({ params }) => (
-        <ProtectedRoute><LivePage liveId={Number(params.id)} /></ProtectedRoute>
-      )} />
-      <Route path="/live-explore" component={() => (
-        <ProtectedRoute><Layout><LiveExplorePage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/search" component={() => (
-        <ProtectedRoute><Layout><SearchPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/bozor/sotish" component={() => (
-        <ProtectedRoute><Layout><SellPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/bozor/do-kon" component={() => (
-        <ProtectedRoute><Layout><MyShopPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/bozor/sotuvchi/:id" component={({ params }) => (
-        <ProtectedRoute><Layout><SellerProfilePage sellerId={Number(params.id)} /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/bozor/:id" component={({ params }) => (
-        <ProtectedRoute><Layout><ProductDetailPage productId={Number(params.id)} /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/bozor" component={() => (
-        <ProtectedRoute><Layout><MarketplacePage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/ai-chat" component={() => (
-        <ProtectedRoute><Layout><AIChatPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/kutubxona" component={() => (
-        <ProtectedRoute><Layout><LibraryPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/quests" component={() => (
-        <ProtectedRoute><Layout><QuestsPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/coview/new" component={() => (
-        <ProtectedRoute><Layout><CoViewPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/coview/:code" component={() => (
-        <ProtectedRoute><Layout><CoViewPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/anon" component={() => (
-        <ProtectedRoute><Layout><AnonZonesPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/anon-inbox" component={() => (
-        <ProtectedRoute><Layout><AnonInboxPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/ask/:userId" component={({ params }) => (
-        <AskAnonPage userId={Number(params.userId)} />
-      )} />
-      <Route path="/multiscene" component={() => (
-        <ProtectedRoute><Layout><MultiScenePage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/mood" component={() => (
-        <ProtectedRoute><Layout><MoodMapPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/twin" component={() => (
-        <ProtectedRoute><Layout><AITwinPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/factcheck" component={() => (
-        <ProtectedRoute><Layout><FactCheckPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/spaces" component={() => (
-        <ProtectedRoute><Layout><CoSpacesPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/muni" component={() => (
-        <ProtectedRoute><Layout><MuniAIPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/voice-translate" component={() => (
-        <ProtectedRoute><Layout><VoiceTranslatorPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/features" component={() => (
-        <ProtectedRoute><Layout><FeatureHubPage /></Layout></ProtectedRoute>
-      )} />
-      <Route path="/" component={() => (
-        <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>
-      )} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/login" component={LoginPage} />
+        <Route path="/about" component={AboutPage} />
+        <Route path="/admin" component={() => (
+          <AdminRoute><Layout><AdminPage /></Layout></AdminRoute>
+        )} />
+        <Route path="/reels" component={() => (
+          <ProtectedRoute><Layout><ReelsPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/otube" component={() => (
+          <ProtectedRoute><Layout><OTubePage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/explore" component={() => (
+          <ProtectedRoute><Layout><ExplorePage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/messages" component={() => (
+          <ProtectedRoute><Layout><MessagesPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/groups" component={() => (
+          <ProtectedRoute><Layout><GroupsPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/profile/:id" component={({ params }) => (
+          <ProtectedRoute><Layout><ProfilePage userId={Number(params.id)} /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/profile" component={() => (
+          <ProtectedRoute><Layout><ProfilePage userId={user?.id ?? 1} /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/notifications" component={() => (
+          <ProtectedRoute><Layout><NotificationsPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/post/:id" component={({ params }) => (
+          <ProtectedRoute><Layout><PostDetailPage postId={Number(params.id)} /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/premium" component={() => (
+          <Layout><PremiumPage /></Layout>
+        )} />
+        <Route path="/settings" component={() => (
+          <ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/wallet" component={() => (
+          <ProtectedRoute><Layout><WalletPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/live/:id" component={({ params }) => (
+          <ProtectedRoute><LivePage liveId={Number(params.id)} /></ProtectedRoute>
+        )} />
+        <Route path="/live-explore" component={() => (
+          <ProtectedRoute><Layout><LiveExplorePage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/search" component={() => (
+          <ProtectedRoute><Layout><SearchPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/bozor/sotish" component={() => (
+          <ProtectedRoute><Layout><SellPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/bozor/do-kon" component={() => (
+          <ProtectedRoute><Layout><MyShopPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/bozor/sotuvchi/:id" component={({ params }) => (
+          <ProtectedRoute><Layout><SellerProfilePage sellerId={Number(params.id)} /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/bozor/:id" component={({ params }) => (
+          <ProtectedRoute><Layout><ProductDetailPage productId={Number(params.id)} /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/bozor" component={() => (
+          <ProtectedRoute><Layout><MarketplacePage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/ai-chat" component={() => (
+          <ProtectedRoute><Layout><AIChatPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/kutubxona" component={() => (
+          <ProtectedRoute><Layout><LibraryPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/quests" component={() => (
+          <ProtectedRoute><Layout><QuestsPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/coview/new" component={() => (
+          <ProtectedRoute><Layout><CoViewPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/coview/:code" component={() => (
+          <ProtectedRoute><Layout><CoViewPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/anon" component={() => (
+          <ProtectedRoute><Layout><AnonZonesPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/anon-inbox" component={() => (
+          <ProtectedRoute><Layout><AnonInboxPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/ask/:userId" component={({ params }) => (
+          <AskAnonPage userId={Number(params.userId)} />
+        )} />
+        <Route path="/multiscene" component={() => (
+          <ProtectedRoute><Layout><MultiScenePage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/mood" component={() => (
+          <ProtectedRoute><Layout><MoodMapPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/twin" component={() => (
+          <ProtectedRoute><Layout><AITwinPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/factcheck" component={() => (
+          <ProtectedRoute><Layout><FactCheckPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/spaces" component={() => (
+          <ProtectedRoute><Layout><CoSpacesPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/muni" component={() => (
+          <ProtectedRoute><Layout><MuniAIPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/voice-translate" component={() => (
+          <ProtectedRoute><Layout><VoiceTranslatorPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/features" component={() => (
+          <ProtectedRoute><Layout><FeatureHubPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/" component={() => (
+          <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>
+        )} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 

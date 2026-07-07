@@ -2,18 +2,20 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { notificationsTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { cacheAside, cacheDelPattern } from "../lib/cache";
 
 const router = Router();
 
 router.get("/notifications", async (req, res) => {
   try {
     const unread = req.query.unread === "true";
-    let notifs;
-    if (unread) {
-      notifs = await db.select().from(notificationsTable).where(eq(notificationsTable.isRead, false)).orderBy(desc(notificationsTable.createdAt)).limit(50);
-    } else {
-      notifs = await db.select().from(notificationsTable).orderBy(desc(notificationsTable.createdAt)).limit(50);
-    }
+    const userId = (req.session as any)?.userId ?? 0;
+    const notifs = await cacheAside("notifs", `${userId}:${unread}`, async () => {
+      if (unread) {
+        return db.select().from(notificationsTable).where(eq(notificationsTable.isRead, false)).orderBy(desc(notificationsTable.createdAt)).limit(50);
+      }
+      return db.select().from(notificationsTable).orderBy(desc(notificationsTable.createdAt)).limit(50);
+    }, 10);
     res.json(notifs);
   } catch (err) {
     req.log.error(err);
@@ -24,6 +26,7 @@ router.get("/notifications", async (req, res) => {
 router.post("/notifications/read-all", async (req, res) => {
   try {
     const result = await db.update(notificationsTable).set({ isRead: true }).where(eq(notificationsTable.isRead, false)).returning();
+    cacheDelPattern("notifs:");
     res.json({ updated: result.length });
   } catch (err) {
     req.log.error(err);

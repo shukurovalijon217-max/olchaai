@@ -551,4 +551,41 @@ router.post("/reels/:id/gift", async (req, res) => {
   }
 });
 
+router.get("/reels/:id/versions", requireAuth, async (req: any, res) => {
+  const reelId = Number(req.params.id);
+  try {
+    const result = await db.execute(
+      sql`SELECT rv.*, u.username, u.display_name AS "displayName", u.avatar_url AS "avatarUrl"
+          FROM reel_versions rv
+          JOIN users u ON u.id = rv.editor_id
+          WHERE rv.reel_id = ${reelId}
+          ORDER BY rv.created_at DESC
+          LIMIT 50`
+    );
+    res.json((result as any).rows ?? []);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Xato" });
+  }
+});
+
+router.post("/reels/:id/versions", requireAuth, async (req: any, res) => {
+  const reelId = Number(req.params.id);
+  const { note } = req.body as { note?: string };
+  try {
+    const reel = await db.query.reelsTable.findFirst({ where: eq(reelsTable.id, reelId) });
+    if (!reel) { res.status(404).json({ error: "Video topilmadi" }); return; }
+
+    const result = await db.execute(
+      sql`INSERT INTO reel_versions (reel_id, editor_id, caption, tags, note)
+          VALUES (${reelId}, ${req.session.userId}, ${reel.caption ?? null}, ${reel.tags ?? null}, ${note ?? null})
+          RETURNING *`
+    );
+    res.json((result as any).rows?.[0]);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Xato" });
+  }
+});
+
 export default router;

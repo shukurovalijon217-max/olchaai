@@ -250,4 +250,39 @@ router.post("/otube/ai/voice-caption", requireAuth, async (req: any, res) => {
   }
 });
 
+router.post("/otube/ai/dub", requireAuth, async (req: any, res) => {
+  try {
+    if (!await gateAI(req.session.userId, res)) return;
+    const { caption, targetLang = "uz" } = req.body as { caption?: string; targetLang?: string };
+    if (!caption?.trim()) { res.status(400).json({ error: "Caption kerak" }); return; }
+
+    const LANG_NAMES: Record<string, string> = {
+      uz: "Uzbek (O'zbek)", ru: "Russian (Rus)", en: "English", tr: "Turkish (Türkçe)",
+      zh: "Chinese (中文)", es: "Spanish (Español)", fr: "French (Français)", de: "German (Deutsch)",
+    };
+    const langName = LANG_NAMES[targetLang] ?? targetLang;
+
+    const translated = await askJson(
+      `You are a professional translator. Translate the given text to ${langName}. Return ONLY the translated text, no quotes, no explanation.`,
+      caption.trim(),
+      400,
+    );
+
+    const ttsResp = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "nova",
+      input: translated.slice(0, 4096),
+    });
+
+    const buffer = Buffer.from(await ttsResp.arrayBuffer());
+    const audioB64 = buffer.toString("base64");
+
+    await incrementAIUsage(req.session.userId);
+    res.json({ translated, audioB64, lang: targetLang });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "AI dublyaj xato" });
+  }
+});
+
 export default router;

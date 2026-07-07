@@ -49,12 +49,15 @@ import ghostRouter from "./ghost";
 import focusShieldRouter from "./focusShield";
 import challengesRouter from "./challenges";
 import otubeAiRouter from "./otubeAi";
+import growTogetherRouter from "./growTogether";
+import socialAuraRouter from "./socialAura";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(storageRouter);
 router.use(authRouter);
+router.use(socialAuraRouter);
 router.use(usersRouter);
 router.use(postsRouter);
 router.use(reelsRouter);
@@ -102,5 +105,6 @@ router.use(ghostRouter);
 router.use(focusShieldRouter);
 router.use(challengesRouter);
 router.use(otubeAiRouter);
+router.use(growTogetherRouter);
 
 export default router;

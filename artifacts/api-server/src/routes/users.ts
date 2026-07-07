@@ -5,6 +5,7 @@ import { eq, ilike, sql, and, desc, inArray } from "drizzle-orm";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheAside, cacheDelPattern } from "../lib/cache";
+import { notifyFollow } from "../lib/emailNotify";
 
 const router = Router();
 
@@ -129,13 +130,33 @@ router.post("/users/:id/follow", async (req, res) => {
     const followerId = (req.session as any)?.userId as number | undefined;
     if (!followerId) { res.status(401).json({ error: "Unauthorized" }); return; }
     const existing = await db.select().from(followsTable).where(and(eq(followsTable.followerId, followerId), eq(followsTable.followingId, followingId)));
-    if (existing.length > 0) {
+    const isFollowing = existing.length > 0;
+    if (isFollowing) {
       await db.delete(followsTable).where(and(eq(followsTable.followerId, followerId), eq(followsTable.followingId, followingId)));
     } else {
       await db.insert(followsTable).values({ followerId, followingId });
     }
     const [followers] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, followingId));
-    res.json({ following: existing.length === 0, followersCount: followers.count });
+    res.json({ following: !isFollowing, followersCount: followers.count });
+
+    // Email: yangi follower bo'lganda xabar
+    if (!isFollowing) {
+      void (async () => {
+        try {
+          const [followedUser, followerUser] = await Promise.all([
+            db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, followingId)).limit(1),
+            db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, followerId)).limit(1),
+          ]);
+          if (followedUser[0]?.email) {
+            await notifyFollow({
+              toEmail: followedUser[0].email,
+              toName: followedUser[0].displayName ?? "Foydalanuvchi",
+              followerName: followerUser[0]?.displayName ?? "Kimdir",
+            });
+          }
+        } catch { /* non-fatal */ }
+      })();
+    }
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

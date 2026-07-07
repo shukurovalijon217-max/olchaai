@@ -8,6 +8,7 @@ import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
+import { notifyComment, notifyLike } from "../lib/emailNotify";
 
 const router = Router();
 
@@ -468,8 +469,28 @@ router.post("/posts/:id/like", async (req, res) => {
       await db.update(postsTable).set({ likesCount: sql`${postsTable.likesCount} + 1` }).where(eq(postsTable.id, postId));
     }
 
-    const [post] = await db.select({ likesCount: postsTable.likesCount }).from(postsTable).where(eq(postsTable.id, postId));
+    const [post] = await db.select({ likesCount: postsTable.likesCount, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
     res.json({ liked: !isLiked, likesCount: post?.likesCount ?? 0 });
+
+    // Email: like bo'lganda post egasiga xabar (o'ziga xabar ketmasin)
+    if (!isLiked && post?.authorId && post.authorId !== userId) {
+      void (async () => {
+        try {
+          const [postAuthor, liker] = await Promise.all([
+            db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, post.authorId!)).limit(1),
+            db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
+          ]);
+          if (postAuthor[0]?.email) {
+            await notifyLike({
+              toEmail: postAuthor[0].email,
+              toName: postAuthor[0].displayName ?? "Foydalanuvchi",
+              likerName: liker[0]?.displayName ?? "Kimdir",
+              postPreview: post.content ?? "",
+            });
+          }
+        } catch { /* non-fatal */ }
+      })();
+    }
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -567,6 +588,25 @@ router.post("/posts/:id/comments", async (req, res) => {
         ...stats,
       },
     });
+
+    /* Email bildirishnoma — post egasiga */
+    void (async () => {
+      try {
+        const [postRow] = await db.select({ authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
+        if (postRow?.authorId && postRow.authorId !== authorId) {
+          const [postAuthor] = await db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, postRow.authorId)).limit(1);
+          if (postAuthor?.email) {
+            await notifyComment({
+              toEmail: postAuthor.email,
+              toName: postAuthor.displayName ?? "Foydalanuvchi",
+              commenterName: author?.displayName ?? "Kimdir",
+              postPreview: postRow.content ?? "",
+              commentText: content ?? "",
+            });
+          }
+        }
+      } catch { /* non-fatal */ }
+    })();
 
     /* AI scan comment in background */
     void (async () => {

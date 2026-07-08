@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, MoreHorizontal, ChevronDown, X,
@@ -360,7 +360,48 @@ export default function HomePage() {
   const [sparkling,    setSparkling]    = useState(false);
   const [tunnelOpen,   setTunnelOpen]   = useState(false);
   const [echoDismissed, setEchoDismissed] = useState(false);
-  const [storyIdx,     setStoryIdx]     = useState<number | null>(null);
+
+  /* Stories: group by author so one circle = one person */
+  const storyGroups = useMemo(() => {
+    const map = new Map<number, any[]>();
+    for (const s of stories) {
+      const aid = (s.author as any)?.id;
+      if (!aid) continue;
+      if (!map.has(aid)) map.set(aid, []);
+      map.get(aid)!.push(s);
+    }
+    return Array.from(map.values());
+  }, [stories]);
+
+  const [viewerGroupIdx, setViewerGroupIdx] = useState<number | null>(null);
+  const [viewerStoryIdx, setViewerStoryIdx] = useState(0);
+
+  const openGroup = useCallback((gi: number) => {
+    setViewerGroupIdx(gi);
+    setViewerStoryIdx(0);
+  }, []);
+
+  const closeViewer = useCallback(() => {
+    setViewerGroupIdx(null);
+    setViewerStoryIdx(0);
+  }, []);
+
+  const goNextInGroup = useCallback(() => {
+    if (viewerGroupIdx === null) return;
+    const group = storyGroups[viewerGroupIdx];
+    if (viewerStoryIdx < group.length - 1) {
+      setViewerStoryIdx(i => i + 1);
+    } else {
+      closeViewer();
+    }
+  }, [viewerGroupIdx, viewerStoryIdx, storyGroups, closeViewer]);
+
+  const goPrevInGroup = useCallback(() => {
+    if (viewerGroupIdx === null) return;
+    if (viewerStoryIdx > 0) {
+      setViewerStoryIdx(i => i - 1);
+    }
+  }, [viewerGroupIdx, viewerStoryIdx]);
 
   const feedRef = useRef<HTMLDivElement>(null);
   const displayPosts = feed?.posts?.length ? feed.posts : posts;
@@ -415,174 +456,196 @@ export default function HomePage() {
     [navigate]
   );
 
-  const activeStory = storyIdx !== null ? stories[storyIdx] : null;
+  const activeGroup = viewerGroupIdx !== null ? storyGroups[viewerGroupIdx] : null;
+  const activeStory = activeGroup ? activeGroup[viewerStoryIdx] ?? null : null;
 
   return (
     <div className="relative">
 
-      {/* ── INSTAGRAM-STYLE STORIES STRIP ── */}
-      {stories.length > 0 && (
+      {/* ── STORIES STRIP ── */}
+      {storyGroups.length > 0 && (
         <div
-          className="fixed top-0 left-0 right-0 z-50 flex items-center gap-4 px-4 py-3 overflow-x-auto"
-          style={{
-            background: "linear-gradient(to bottom, rgba(6,6,15,0.95) 0%, rgba(6,6,15,0) 100%)",
-            scrollbarWidth: "none",
-          }}
+          className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-3 py-2 overflow-x-auto"
+          style={{ background: "linear-gradient(to bottom,rgba(4,4,16,0.98) 0%,rgba(4,4,16,0) 100%)", scrollbarWidth: "none" }}
         >
-          {/* "Story qo'shish" doirasi */}
+          {/* "Story qo'shish" */}
           <motion.div
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.92 }}
             onClick={() => { setCreateTab("story"); setCreateOpen(true); }}
-            className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer"
+            className="flex flex-col items-center gap-[5px] flex-shrink-0 cursor-pointer"
           >
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center"
-              style={{
-                background: "rgba(255,255,255,0.07)",
-                border: "2px dashed rgba(139,92,246,0.6)",
-              }}
-            >
-              <span className="text-2xl text-violet-400 leading-none">+</span>
+            <div className="relative w-[62px] h-[62px]">
+              <div className="w-full h-full rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.06)", border: "2px dashed rgba(139,92,246,0.55)" }}>
+                <span className="text-[26px] text-violet-400 leading-none select-none">+</span>
+              </div>
             </div>
-            <span className="text-[10px] text-white/40 w-14 text-center truncate">Qo'shish</span>
+            <span className="text-[10px] text-white/35 w-[62px] text-center truncate leading-none">Qo'shish</span>
           </motion.div>
 
-          {stories.map((story: any, i: number) => (
-            <motion.div
-              key={story.id}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setStoryIdx(i)}
-              className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer"
-            >
-              <div
-                className="w-14 h-14 rounded-full p-[2px]"
-                style={{
-                  background: story.isViewed
-                    ? "rgba(255,255,255,0.15)"
-                    : "linear-gradient(135deg, #a855f7, #ec4899, #f59e0b)",
-                }}
+          {storyGroups.map((group, gi) => {
+            const rep = group[0];
+            const allViewed = group.every((s: any) => s.isViewed);
+            const name = rep.author?.displayName || rep.author?.username || "?";
+            const initial = name[0].toUpperCase();
+            return (
+              <motion.div
+                key={(rep.author as any)?.id ?? gi}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => openGroup(gi)}
+                className="flex flex-col items-center gap-[5px] flex-shrink-0 cursor-pointer"
               >
-                <div className="w-full h-full rounded-full overflow-hidden bg-[#0d0d1a] flex items-center justify-center">
-                  {story.author?.avatarUrl ? (
-                    <img src={story.author.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <span className="text-lg font-bold text-white/70">
-                      {(story.author?.displayName || story.author?.username || "?")[0].toUpperCase()}
-                    </span>
+                <div className="relative w-[62px] h-[62px]">
+                  {/* gradient ring */}
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: allViewed
+                        ? "rgba(255,255,255,0.18)"
+                        : "conic-gradient(#a855f7,#ec4899,#f59e0b,#a855f7)",
+                      padding: "2.5px",
+                    }}
+                  >
+                    <div className="w-full h-full rounded-full" style={{ background: "#080815" }} />
+                  </div>
+                  {/* avatar */}
+                  <div className="absolute inset-[3px] rounded-full overflow-hidden bg-[#0e0e1f] flex items-center justify-center">
+                    {rep.author?.avatarUrl ? (
+                      <img
+                        src={rep.author.avatarUrl} alt={name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                      />
+                    ) : (
+                      <span className="text-xl font-bold text-white/80">{initial}</span>
+                    )}
+                  </div>
+                  {/* story count badge */}
+                  {group.length > 1 && (
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                      style={{ background: "#7c3aed" }}>
+                      {group.length}
+                    </div>
                   )}
                 </div>
-              </div>
-              <span className="text-[10px] text-white/50 w-14 text-center truncate">
-                {story.author?.username || ""}
-              </span>
-            </motion.div>
-          ))}
+                <span className="text-[10px] text-white/50 w-[62px] text-center truncate leading-none">
+                  {rep.author?.username || ""}
+                </span>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
-      {/* ── STORY VIEWER MODAL ── */}
+      {/* ── STORY VIEWER ── */}
       <AnimatePresence>
-        {activeStory && (
+        {activeStory && activeGroup && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            key={`${viewerGroupIdx}-${viewerStoryIdx}`}
+            initial={{ opacity: 0, scale: 1.04 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center"
-            style={{ background: "rgba(0,0,0,0.97)" }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-[200] flex flex-col"
+            style={{ background: "#000" }}
           >
-            {/* Progress bar */}
-            <div className="absolute top-0 left-0 right-0 flex gap-[3px] px-3 pt-10 pb-2 z-10">
-              {stories.map((_: any, i: number) => (
-                <div key={i} className="h-[3px] flex-1 rounded-full overflow-hidden bg-white/25">
-                  {i < (storyIdx ?? 0) && <div className="h-full w-full bg-white" />}
-                  {i === storyIdx && (
-                    <motion.div
-                      className="h-full bg-white"
-                      initial={{ width: "0%" }}
-                      animate={{ width: "100%" }}
-                      transition={{ duration: 5, ease: "linear" }}
-                      onAnimationComplete={() => {
-                        if (storyIdx !== null && storyIdx < stories.length - 1) setStoryIdx(storyIdx + 1);
-                        else setStoryIdx(null);
-                      }}
-                    />
-                  )}
+            {/* Story media */}
+            <div className="absolute inset-0">
+              {activeStory.mediaUrl ? (
+                <>
+                  <img
+                    key={activeStory.id}
+                    src={activeStory.mediaUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const el = e.currentTarget as HTMLImageElement;
+                      el.style.display = "none";
+                      const fb = el.nextElementSibling as HTMLElement | null;
+                      if (fb) fb.style.display = "flex";
+                    }}
+                  />
+                  {/* fallback if image broken */}
+                  <div className="w-full h-full items-center justify-center px-10 hidden"
+                    style={{ background: "linear-gradient(160deg,#1a0533,#0d1a33)" }}>
+                    <p className="text-white text-xl font-bold text-center">{activeStory.caption || "✨"}</p>
+                  </div>
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center px-10"
+                  style={{ background: "linear-gradient(160deg,#180430 0%,#0a1830 50%,#120320 100%)" }}>
+                  <p className="text-white text-2xl font-bold text-center leading-snug drop-shadow-lg">
+                    {activeStory.caption || "✨"}
+                  </p>
+                </div>
+              )}
+              {/* vignette overlay */}
+              <div className="absolute inset-0 pointer-events-none"
+                style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 22%, transparent 70%, rgba(0,0,0,0.65) 100%)" }} />
+            </div>
+
+            {/* Progress bars */}
+            <div className="relative z-10 flex gap-[4px] px-3 pt-12 pb-1">
+              {activeGroup.map((_: any, i: number) => (
+                <div key={i} className="h-[3px] flex-1 rounded-full overflow-hidden bg-white/30">
+                  {i < viewerStoryIdx
+                    ? <div className="h-full w-full bg-white" />
+                    : i === viewerStoryIdx
+                      ? <motion.div
+                          className="h-full bg-white"
+                          initial={{ width: "0%" }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 5, ease: "linear" }}
+                          onAnimationComplete={goNextInGroup}
+                        />
+                      : null
+                  }
                 </div>
               ))}
             </div>
 
-            {/* Author info */}
-            <div className="absolute top-8 left-0 right-0 flex items-center gap-3 px-4 z-10 pt-3">
-              <div className="w-9 h-9 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+            {/* Author header */}
+            <div className="relative z-10 flex items-center gap-3 px-4 pt-2 pb-3">
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-white/10 flex items-center justify-center flex-shrink-0"
+                style={{ border: "1.5px solid rgba(255,255,255,0.25)" }}>
                 {activeStory.author?.avatarUrl ? (
-                  <img src={activeStory.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={activeStory.author.avatarUrl} alt="" className="w-full h-full object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 ) : (
                   <span className="text-sm font-bold text-white">
                     {(activeStory.author?.displayName || activeStory.author?.username || "?")[0].toUpperCase()}
                   </span>
                 )}
               </div>
-              <div>
-                <p className="text-white text-sm font-semibold">{activeStory.author?.displayName || activeStory.author?.username}</p>
-                <p className="text-white/40 text-xs">@{activeStory.author?.username}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-[13px] font-semibold leading-tight truncate">
+                  {activeStory.author?.displayName || activeStory.author?.username}
+                </p>
+                <p className="text-white/45 text-[11px] leading-tight">
+                  @{activeStory.author?.username}
+                  {activeGroup.length > 1 && (
+                    <span className="ml-2 text-white/30">{viewerStoryIdx + 1}/{activeGroup.length}</span>
+                  )}
+                </p>
               </div>
-              <button onClick={() => setStoryIdx(null)} className="ml-auto">
-                <X className="w-6 h-6 text-white/70" />
+              <button onClick={closeViewer} className="p-1.5 rounded-full" style={{ background: "rgba(0,0,0,0.4)" }}>
+                <X className="w-5 h-5 text-white/80" />
               </button>
             </div>
 
-            {/* Story content */}
-            <div className="w-full h-full flex items-center justify-center">
-              {activeStory.mediaUrl ? (
-                <img
-                  src={activeStory.mediaUrl}
-                  alt=""
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    const el = e.currentTarget;
-                    el.style.display = "none";
-                    const fallback = el.nextElementSibling as HTMLElement | null;
-                    if (fallback) fallback.style.display = "flex";
-                  }}
-                />
-              ) : null}
-              <div
-                className="w-full h-full items-center justify-center px-10"
-                style={{
-                  display: activeStory.mediaUrl ? "none" : "flex",
-                  background: "linear-gradient(135deg, #1a0533 0%, #0d1a33 100%)"
-                }}
-              >
-                <p className="text-white text-2xl font-bold text-center leading-snug">
-                  {activeStory.caption || "✨"}
+            {/* Caption overlay (bottom) */}
+            {activeStory.caption && activeStory.mediaUrl && (
+              <div className="relative z-10 mt-auto px-5 pb-10">
+                <p className="text-white text-base font-semibold leading-snug drop-shadow-lg">
+                  {activeStory.caption}
                 </p>
               </div>
-            </div>
-
-            {/* Prev / Next tap zones */}
-            <button
-              className="absolute left-0 top-0 w-1/3 h-full z-20"
-              onClick={() => { if (storyIdx !== null && storyIdx > 0) setStoryIdx(storyIdx - 1); }}
-            />
-            <button
-              className="absolute right-0 top-0 w-1/3 h-full z-20"
-              onClick={() => {
-                if (storyIdx !== null && storyIdx < stories.length - 1) setStoryIdx(storyIdx + 1);
-                else setStoryIdx(null);
-              }}
-            />
-
-            {/* Arrows (desktop) */}
-            {storyIdx !== null && storyIdx > 0 && (
-              <motion.div whileTap={{ scale: 0.9 }} className="absolute left-3 top-1/2 -translate-y-1/2 z-30 pointer-events-none">
-                <ChevronLeft className="w-8 h-8 text-white/50" />
-              </motion.div>
             )}
-            {storyIdx !== null && storyIdx < stories.length - 1 && (
-              <motion.div whileTap={{ scale: 0.9 }} className="absolute right-3 top-1/2 -translate-y-1/2 z-30 pointer-events-none">
-                <ChevronRight className="w-8 h-8 text-white/50" />
-              </motion.div>
-            )}
+
+            {/* Tap zones: left = prev, right = next */}
+            <button className="absolute left-0 top-0 w-1/3 h-full z-20" onClick={goPrevInGroup} />
+            <button className="absolute right-0 top-0 w-1/3 h-full z-20" onClick={goNextInGroup} />
           </motion.div>
         )}
       </AnimatePresence>

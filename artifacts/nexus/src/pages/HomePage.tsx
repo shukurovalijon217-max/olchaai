@@ -568,165 +568,151 @@ export default function HomePage() {
               <span className="text-violet-400/60 text-sm">{t("common.loading")}</span>
             </div>
           </div>
+        ) : displayPosts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f" }}>
+            <motion.div
+              animate={{ opacity: [0.3, 0.7, 0.3] }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+            >
+              <Flame className="w-16 h-16 text-violet-500/40" />
+            </motion.div>
+            <p className="text-white/40 text-sm">{t("home.no_posts")}</p>
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setSheetOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+              {t("home.create_post")}
+            </motion.button>
+          </div>
         ) : (
-          <>
-            {/* ── STORIES SECTION (inside feed, scrolls with content) ── */}
-            {storyGroups.length > 0 && (
-              <div
-                className="w-full px-3 pt-[72px] pb-3"
-                style={{ background: "transparent" }}
-              >
-                <div
-                  className="rounded-3xl overflow-hidden"
-                  style={{
-                    background: "rgba(8,6,24,0.72)",
-                    border: "1px solid rgba(120,80,255,0.18)",
-                    backdropFilter: "blur(20px)",
-                  }}
-                >
-                  {/* Section label */}
-                  <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-                    <motion.div
-                      animate={{ opacity: [1, 0.4, 1] }}
-                      transition={{ duration: 1.8, repeat: Infinity }}
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: "#a78bfa" }}
-                    />
-                    <span className="text-[10px] tracking-[0.18em] font-bold uppercase"
-                      style={{ color: "rgba(167,139,250,0.6)" }}>
-                      Stories
-                    </span>
-                  </div>
-
-                  {/* Scroll row */}
-                  <div
-                    className="flex items-end gap-4 px-4 pb-4 pt-2 overflow-x-auto"
-                    style={{ scrollbarWidth: "none" }}
-                  >
-                    {storyGroups.map((group, gi) => {
-                      const rep = group[0];
-                      const authorId = (rep.author as any)?.id ?? gi;
-                      const name = rep.author?.displayName || rep.author?.username || "?";
-                      const initial = name[0].toUpperCase();
-                      const even = gi % 2 === 0;
-
-                      return (
-                        <motion.div
-                          key={authorId}
-                          className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer"
-                          style={{ marginTop: even ? 0 : 12 }}
-                          whileTap={{ scale: 0.88 }}
-                          onClick={(e) => handleStoryTap(e, gi)}
-                        >
-                          {/* Story count badge */}
-                          {group.length > 1 && (
-                            <div
-                              className="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              style={{
-                                background: "rgba(139,92,246,0.25)",
-                                border: "1px solid rgba(139,92,246,0.4)",
-                                color: "#c4b5fd",
-                                letterSpacing: "0.08em",
-                              }}
-                            >
-                              {group.length}
-                            </div>
-                          )}
-
-                          {/* Avatar with neon glow ring */}
-                          <div className="relative w-[68px] h-[68px]">
-                            {/* Outer neon glow ring */}
-                            <motion.div
-                              className="absolute inset-0 rounded-full"
-                              animate={{ boxShadow: [
-                                "0 0 0 2px rgba(139,92,246,0.7), 0 0 18px rgba(139,92,246,0.35)",
-                                "0 0 0 2px rgba(236,72,153,0.7), 0 0 22px rgba(236,72,153,0.4)",
-                                "0 0 0 2px rgba(139,92,246,0.7), 0 0 18px rgba(139,92,246,0.35)",
-                              ]}}
-                              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-                            />
-                            {/* Avatar image — double-tap → hologram */}
-                            <div
-                              className="absolute inset-[3px] rounded-full overflow-hidden flex items-center justify-center"
-                              style={{ background: "#0e0818" }}
-                              onClick={(e) => handleAvatarDoubleTap(e, {
-                                userId: authorId,
-                                username: rep.author?.username ?? "?",
-                                displayName: rep.author?.displayName,
-                                avatarUrl: rep.author?.avatarUrl ?? undefined,
-                              })}
-                            >
-                              {rep.author?.avatarUrl ? (
-                                <img
-                                  src={rep.author.avatarUrl}
-                                  alt={name}
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                                />
-                              ) : (
-                                <span className="text-xl font-black"
-                                  style={{ color: "#c4b5fd" }}>
-                                  {initial}
-                                </span>
-                              )}
-                            </div>
-                            {/* Shimmer corner */}
-                            <div
-                              className="absolute bottom-0 right-0 w-4 h-4 rounded-full flex items-center justify-center"
-                              style={{
-                                background: "linear-gradient(135deg,#7c3aed,#ec4899)",
-                                boxShadow: "0 0 8px rgba(124,58,237,0.9)",
-                                border: "1.5px solid #0e0818",
-                              }}
-                            >
-                              <span className="text-[7px] font-black text-white">▶</span>
-                            </div>
-                          </div>
-
-                          {/* Username */}
-                          <span
-                            className="text-[10px] font-semibold w-[68px] text-center truncate leading-none"
-                            style={{ color: "rgba(196,181,253,0.7)" }}
-                          >
-                            {rep.author?.username || ""}
-                          </span>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── POSTS ── */}
-            {displayPosts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f" }}>
-                <motion.div
-                  animate={{ opacity: [0.3, 0.7, 0.3] }}
-                  transition={{ duration: 2.5, repeat: Infinity }}
-                >
-                  <Flame className="w-16 h-16 text-violet-500/40" />
-                </motion.div>
-                <p className="text-white/40 text-sm">{t("home.no_posts")}</p>
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => setSheetOpen(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                  {t("home.create_post")}
-                </motion.button>
-              </div>
-            ) : (
-              displayPosts.map((post, i) => (
-                <FeedCard key={post.id} post={post} index={i} />
-              ))
-            )}
-          </>
+          displayPosts.map((post, i) => (
+            <FeedCard key={post.id} post={post} index={i} />
+          ))
         )}
       </div>
+
+      {/* ── STORIES STRIP (fixed bottom, above FAB) ── */}
+      <AnimatePresence>
+        {storyGroups.length > 0 && !createOpen && !sheetOpen && viewerGroupIdx === null && !holoUser && (
+          <motion.div
+            initial={{ y: 120, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 120, opacity: 0 }}
+            transition={{ type: "spring", damping: 22, stiffness: 260 }}
+            className="fixed z-[55] left-0 right-0"
+            style={{ bottom: 68 }}
+          >
+            {/* Glass pill container */}
+            <div
+              className="mx-3 rounded-2xl px-3 py-2"
+              style={{
+                background: "rgba(6,4,20,0.78)",
+                border: "1px solid rgba(120,80,255,0.22)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+              }}
+            >
+              {/* Pulse dot + label */}
+              <div className="flex items-center gap-1.5 mb-2">
+                <motion.div
+                  animate={{ opacity: [1, 0.3, 1], scale: [1, 1.3, 1] }}
+                  transition={{ duration: 1.6, repeat: Infinity }}
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: "#a78bfa" }}
+                />
+                <span className="text-[9px] tracking-[0.2em] font-bold uppercase"
+                  style={{ color: "rgba(167,139,250,0.55)" }}>
+                  Stories
+                </span>
+              </div>
+
+              {/* Horizontal scroll circles */}
+              <div
+                className="flex items-center gap-3 overflow-x-auto pb-0.5"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {storyGroups.map((group, gi) => {
+                  const rep = group[0];
+                  const authorId = (rep.author as any)?.id ?? gi;
+                  const name = rep.author?.displayName || rep.author?.username || "?";
+                  const initial = name[0].toUpperCase();
+
+                  return (
+                    <motion.div
+                      key={authorId}
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer select-none"
+                      whileTap={{ scale: 0.85 }}
+                      onClick={(e) => handleStoryTap(e, gi)}
+                    >
+                      {/* Circle with animated neon border */}
+                      <div className="relative w-14 h-14">
+                        <motion.div
+                          className="absolute inset-0 rounded-full"
+                          animate={{
+                            boxShadow: [
+                              "0 0 0 2px rgba(139,92,246,0.8), 0 0 14px rgba(139,92,246,0.4)",
+                              "0 0 0 2px rgba(236,72,153,0.8), 0 0 18px rgba(236,72,153,0.45)",
+                              "0 0 0 2px rgba(99,102,241,0.8), 0 0 14px rgba(99,102,241,0.4)",
+                              "0 0 0 2px rgba(139,92,246,0.8), 0 0 14px rgba(139,92,246,0.4)",
+                            ],
+                          }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                        {/* Avatar — double-tap → hologram */}
+                        <div
+                          className="absolute inset-[3px] rounded-full overflow-hidden flex items-center justify-center"
+                          style={{ background: "#0e0818" }}
+                          onClick={(e) => handleAvatarDoubleTap(e, {
+                            userId: authorId,
+                            username: rep.author?.username ?? "?",
+                            displayName: rep.author?.displayName,
+                            avatarUrl: rep.author?.avatarUrl ?? undefined,
+                          })}
+                        >
+                          {rep.author?.avatarUrl ? (
+                            <img
+                              src={rep.author.avatarUrl}
+                              alt={name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                            />
+                          ) : (
+                            <span className="text-lg font-black" style={{ color: "#c4b5fd" }}>
+                              {initial}
+                            </span>
+                          )}
+                        </div>
+                        {/* Count badge */}
+                        {group.length > 1 && (
+                          <div
+                            className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black text-white z-10"
+                            style={{
+                              background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+                              boxShadow: "0 0 6px rgba(124,58,237,0.8)",
+                            }}
+                          >
+                            {group.length}
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        className="text-[9px] font-medium w-14 text-center truncate leading-none"
+                        style={{ color: "rgba(196,181,253,0.6)" }}
+                      >
+                        {rep.author?.username || ""}
+                      </span>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── STORY VIEWER (portal expand) ── */}
       <AnimatePresence>

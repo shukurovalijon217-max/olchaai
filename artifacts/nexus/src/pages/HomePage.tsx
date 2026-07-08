@@ -11,6 +11,7 @@ import FeedCard from "@/components/FeedCard";
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
 import { getFeaturePref } from "@/lib/sounds";
+import { usePip } from "@/context/PipContext";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -360,6 +361,7 @@ export default function HomePage() {
   const { data: feed } = useGetAiFeed();
   const { data: posts = [], isLoading } = useListPosts();
   const { data: storiesRaw = [] } = useListStories();
+  const { dockExpanded } = usePip();
 
   const [sheetOpen,    setSheetOpen]    = useState(false);
   const [createOpen,   setCreateOpen]   = useState(false);
@@ -902,7 +904,7 @@ export default function HomePage() {
 
       {/* ── FAB — Glass "···" button ── */}
       <AnimatePresence>
-        {!createOpen && !sheetOpen && displayPosts.length > 0 && (
+        {!createOpen && !sheetOpen && !dockExpanded && displayPosts.length > 0 && (
           <div
             className="fixed z-[60]"
             style={{ bottom: 20, left: "50%", transform: "translateX(-50%)" }}

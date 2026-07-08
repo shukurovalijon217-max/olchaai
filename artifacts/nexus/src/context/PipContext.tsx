@@ -20,6 +20,11 @@ interface PipCtx {
      and stop swallowing taps meant for the player's own controls. */
   playerOpen: boolean;
   setPlayerOpen: (open: boolean) => void;
+  /* True while the bottom-right "Ko'proq" nav dock (Layout.tsx) is expanded
+     leftward, so other bottom-center floating chrome (e.g. HomePage's "···"
+     content-creation FAB) can hide itself and avoid overlapping it. */
+  dockExpanded: boolean;
+  setDockExpanded: (open: boolean) => void;
 }
 
 const PipContext = createContext<PipCtx>({
@@ -30,6 +35,8 @@ const PipContext = createContext<PipCtx>({
   setExpandHandler: () => {},
   playerOpen: false,
   setPlayerOpen: () => {},
+  dockExpanded: false,
+  setDockExpanded: () => {},
 });
 
 export function usePip() { return useContext(PipContext); }
@@ -259,9 +266,10 @@ function GlobalMiniPlayer({ pip, onClose, onExpand }: {
 /* PipProvider                                             */
 /* ─────────────────────────────────────────────────────── */
 export function PipProvider({ children }: { children: ReactNode }) {
-  const [pip,         setPip]         = useState<PipState | null>(null);
-  const [expandFn,    setExpandFn]    = useState<(() => void) | null>(null);
-  const [playerOpen,  setPlayerOpen]  = useState(false);
+  const [pip,          setPip]          = useState<PipState | null>(null);
+  const [expandFn,     setExpandFn]     = useState<(() => void) | null>(null);
+  const [playerOpen,   setPlayerOpen]   = useState(false);
+  const [dockExpanded, setDockExpanded] = useState(false);
 
   const openPip = useCallback((video: Reel, startTime: number) => {
     setPip({ video, startTime });
@@ -274,7 +282,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <PipContext.Provider value={{ pip, openPip, closePip, expandPip: expandFn, setExpandHandler, playerOpen, setPlayerOpen }}>
+    <PipContext.Provider value={{ pip, openPip, closePip, expandPip: expandFn, setExpandHandler, playerOpen, setPlayerOpen, dockExpanded, setDockExpanded }}>
       {children}
       <AnimatePresence>
         {pip && (

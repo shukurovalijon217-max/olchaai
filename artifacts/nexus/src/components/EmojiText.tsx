@@ -1,5 +1,5 @@
 /**
- * EmojiText — OlchaAI 9D Emoji renderer.
+ * EmojiText — GilosAI 9D Emoji renderer.
  * Parses text and wraps every emoji sequence in an animated .olcha-emoji span.
  * Handles: standard emoji, ZWJ sequences, skin-tones, country flags.
  */

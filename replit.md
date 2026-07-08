@@ -1,6 +1,6 @@
-# OlchaAI — AI-powered super social platform
+# GilosAI — AI-powered super social platform
 
-OlchaAI (olchaai.com) is an AI-powered social network: a feed-based platform (posts, reels, stories, marketplace, live, messaging) layered with a set of unique "Funksiyalar Hub" (Feature Hub) AI/privacy features not found on other social networks.
+GilosAI (gilosai.com) is an AI-powered social network: a feed-based platform (posts, reels, stories, marketplace, live, messaging) layered with a set of unique "Funksiyalar Hub" (Feature Hub) AI/privacy features not found on other social networks.
 
 ## Run & Operate
 
@@ -43,8 +43,8 @@ OlchaAI (olchaai.com) is an AI-powered social network: a feed-based platform (po
 
 ## Architecture decisions
 
-- **Brand wordmark "OlChaAI" has a fixed per-letter color spec, centralized in `artifacts/nexus/src/components/OlchaWordmark.tsx`:** O = purple, l = red-gold, C = purple, h = red, a = silver-gold shimmer, "AI" = neon shimmer. `NexusLogo.tsx` and `LoginPage.tsx` both render this shared component so the styling never drifts between usages. The favicon/apple-touch-icon (`artifacts/nexus/public/favicon*.png`, `apple-touch-icon.png`) is a separate simplified purple "O" ring mark on a transparent background (source SVG in `artifacts/nexus/design/brand-icon.svg`) — intentionally not a literal render of the full 7-letter wordmark, since favicons are too small to show full text legibly. Do not reintroduce a solid black square background behind the favicon.
-- **`<title>`/`og:title`/`twitter:title` across `artifacts/nexus/index.html` and `artifacts/spatial-ar/index.html` must say "OlchaAI", never the truncated "OlCha"** — this literal string is what Google and social previews surface, independent of any in-app logo styling.
+- **Brand wordmark "OlChaAI" has a fixed per-letter color spec, centralized in `artifacts/nexus/src/components/GilosWordmark.tsx`:** O = purple, l = red-gold, C = purple, h = red, a = silver-gold shimmer, "AI" = neon shimmer. `NexusLogo.tsx` and `LoginPage.tsx` both render this shared component so the styling never drifts between usages. The favicon/apple-touch-icon (`artifacts/nexus/public/favicon*.png`, `apple-touch-icon.png`) is a separate simplified purple "O" ring mark on a transparent background (source SVG in `artifacts/nexus/design/brand-icon.svg`) — intentionally not a literal render of the full 7-letter wordmark, since favicons are too small to show full text legibly. Do not reintroduce a solid black square background behind the favicon.
+- **`<title>`/`og:title`/`twitter:title` across `artifacts/nexus/index.html` and `artifacts/spatial-ar/index.html` must say "GilosAI", never the truncated "OlCha"** — this literal string is what Google and social previews surface, independent of any in-app logo styling.
 
 - **Funksiyalar Hub (Feature Hub) features are real, schema-backed features, not client-only toggles.** Each of the 12 features either reuses an existing table/column or adds one, with server-side enforcement (visibility filtering, muting, scheduled delivery, etc.) gated by a per-user preference toggle. `grow_together` and `social_aura` are an intentional, architect-approved exception and remain locked "coming soon."
 - **i18n fallback strategy:** i18next `fallbackLng: "en"` means any auto-translated language bundle missing a key silently falls back to English for that key — new keys don't require bumping the translation cache version unless doing a broad content overhaul.
@@ -61,7 +61,7 @@ OlchaAI (olchaai.com) is an AI-powered social network: a feed-based platform (po
 
 ## Product
 
-OlchaAI is a full social feed platform (posts, reels, stories, live, marketplace, groups, messaging, notifications) plus a "Funksiyalar Hub" of 12 distinctive features: Sound Notifications, Time Capsule (delayed message delivery), Anonymous Question Box, Mirror Mode (view your own profile as a stranger), Ghost Mode (temporary invisible presence), Energy Broadcast (24h energy-level status), Emotion Radar (pre-post sentiment check), Echo Chamber Detector (feed diversity warning), Focus Shield (scoped notification muting), Midnight Confessions (posts only visible 23:00–05:00), and two locked "coming soon" features (Grow Together, Social Aura).
+GilosAI is a full social feed platform (posts, reels, stories, live, marketplace, groups, messaging, notifications) plus a "Funksiyalar Hub" of 12 distinctive features: Sound Notifications, Time Capsule (delayed message delivery), Anonymous Question Box, Mirror Mode (view your own profile as a stranger), Ghost Mode (temporary invisible presence), Energy Broadcast (24h energy-level status), Emotion Radar (pre-post sentiment check), Echo Chamber Detector (feed diversity warning), Focus Shield (scoped notification muting), Midnight Confessions (posts only visible 23:00–05:00), and two locked "coming soon" features (Grow Together, Social Aura).
 
 ## User preferences
 

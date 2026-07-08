@@ -49,7 +49,7 @@ export default function AIChatPage() {
   const QUICK_ACTIONS = [
     { icon: Wand2, label: t("ai.quick_caption"), prompt: "Instagram uchun jozibali caption yoz: " },
     { icon: FileText, label: t("ai.quick_edit"), prompt: "Quyidagi matnni yaxshila: " },
-    { icon: Sparkles, label: t("ai.quick_idea"), prompt: "OlchaAI uchun kontent g'oyalar ber" },
+    { icon: Sparkles, label: t("ai.quick_idea"), prompt: "GilosAI uchun kontent g'oyalar ber" },
     { icon: Image, label: t("ai.quick_prompt"), prompt: "DALL-E uchun ajoyib rasm prompt yoz: " },
   ];
 
@@ -267,7 +267,7 @@ export default function AIChatPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ topic: captionTopic, tone: "qiziqarli", platform: "OlchaAI" }),
+        body: JSON.stringify({ topic: captionTopic, tone: "qiziqarli", platform: "GilosAI" }),
       });
       if (r.status === 402) {
         const data = await r.json();
@@ -318,7 +318,7 @@ export default function AIChatPage() {
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-foreground">OlchaAI</h1>
+              <h1 className="text-base font-bold text-foreground">GilosAI</h1>
               <p className="text-[11px] text-muted-foreground">{t("ai.subtitle")}</p>
             </div>
           </div>
@@ -523,7 +523,7 @@ export default function AIChatPage() {
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-violet-400 font-semibold flex items-center gap-1">
-                      <Bot className="w-3.5 h-3.5" /> OlchaAI:
+                      <Bot className="w-3.5 h-3.5" /> GilosAI:
                     </p>
                     {voiceAudio && (
                       <button
@@ -544,7 +544,7 @@ export default function AIChatPage() {
                 {[
                   t("ai.tab_chat"),
                   "GPT-4o + Whisper",
-                  "OlchaAI",
+                  "GilosAI",
                   "DALL-E 3",
                 ].map(tip => (
                   <div key={tip} className="bg-muted/50 rounded-xl px-3 py-2 text-xs text-muted-foreground text-center">
@@ -651,7 +651,7 @@ export default function AIChatPage() {
         used={aiUsage?.used ?? 5}
         limit={aiUsage?.limit ?? 5}
         onClose={() => setShowPaywall(false)}
-        featureName="OlchaAI"
+        featureName="GilosAI"
       />
     </div>
   );

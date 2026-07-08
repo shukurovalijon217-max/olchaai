@@ -1,6 +1,6 @@
 {
-  "name": "OlchaAI",
-  "short_name": "OlchaAI",
+  "name": "GilosAI",
+  "short_name": "GilosAI",
   "description": "AI-powered super social platform",
   "start_url": "/",
   "display": "standalone",

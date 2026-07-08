@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-interface OlchaWordmarkProps {
+interface GilosWordmarkProps {
   fontSize?: string;
   letterSpacing?: string;
   fontWeight?: number;
@@ -79,12 +79,12 @@ function scaledLength(size: string, factor: number): string {
   return `${(parseFloat(num) * factor).toFixed(3)}${unit || "px"}`;
 }
 
-export default function OlchaWordmark({
+export default function GilosWordmark({
   fontSize = "1.1rem",
   letterSpacing = "0.22em",
   fontWeight = 400,
   className,
-}: OlchaWordmarkProps) {
+}: GilosWordmarkProps) {
   const glowSize = scaledLength(fontSize, 0.14);
 
   return (

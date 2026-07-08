@@ -1748,7 +1748,7 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                   <div className="mt-3 p-3.5"
                     style={{borderRadius:12,background:"rgba(255,255,255,0.04)"}}>
                     <p style={{fontSize:10,color:"rgba(255,255,255,0.38)",lineHeight:1.7}}>
-                      Min: 100 000 so'm. OlchaAI Pay orqali har oyning 15-sanasida chiqariladi.
+                      Min: 100 000 so'm. GilosAI Pay orqali har oyning 15-sanasida chiqariladi.
                     </p>
                   </div>
                 </>
@@ -3279,7 +3279,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
               background:"rgba(255,255,255,0.05)",border:"1px solid rgba(0,255,136,0.2)",borderRadius:10}}>
               <span style={{padding:"10px 10px",color:G,fontSize:16,fontWeight:900}}>#</span>
               <input value={name} onChange={e=>setName(e.target.value.replace(/\s+/g,""))}
-                placeholder="MyChallengeOlcha" maxLength={40}
+                placeholder="MyChallengeGilos" maxLength={40}
                 style={{flex:1,padding:"10px 8px 10px 0",background:"transparent",color:"white",fontSize:13,outline:"none",border:"none"}}/>
               <span style={{padding:"10px 10px",fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:700}}>{name.length}/40</span>
             </div>
@@ -3564,13 +3564,13 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
             </div>
             <div>
               <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>🎬 DEMO VIDEO URL</span>
-              <input value={demoUrl} onChange={e=>setDemoUrl(e.target.value)} placeholder="OlchaAI yoki YouTube havolasi…"
+              <input value={demoUrl} onChange={e=>setDemoUrl(e.target.value)} placeholder="GilosAI yoki YouTube havolasi…"
                 style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none"}}/>
             </div>
             <div>
               <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>📢 ULASHISH SHABLONI</span>
               <textarea value={shareTemplate} onChange={e=>setShareTemplate(e.target.value)} rows={2} maxLength={200}
-                placeholder="Men #{name} challengeda! @OlchaAI orqali qo'shiling…"
+                placeholder="Men #{name} challengeda! @GilosAI orqali qo'shiling…"
                 style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none",resize:"none"}}/>
             </div>
           </div>
@@ -3683,7 +3683,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
               {[
                 {v:privateChallenge,s:setPrivateChallenge,l:"🔒 Maxfiy Challenge (faqat taklif bilan)"},
                 {v:autoExtend,s:setAutoExtend,l:"⏰ Avtomatik muddat uzaytirish"},
-                {v:boostEnabled,s:setBoostEnabled,l:"🚀 OlchaAI Boost — kengaytirilgan ko'rish"},
+                {v:boostEnabled,s:setBoostEnabled,l:"🚀 GilosAI Boost — kengaytirilgan ko'rish"},
                 {v:notifyAll,s:setNotifyAll,l:"🔔 Barcha ishtirokchilarga xabar"},
                 {v:notifyWinner,s:setNotifyWinner,l:"🏆 G'olibga maxsus bildirishnoma"},
               ].map(({v,s,l})=>(
@@ -3922,7 +3922,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
     { id:"lofi",     name:"Lo-Fi Beats",      emoji:"🎹", bpm:75  },
     { id:"trap",     name:"Future Trap",      emoji:"🎤", bpm:144 },
     { id:"ambient",  name:"Space Ambient",    emoji:"🌌", bpm:60  },
-    { id:"hiphop",   name:"OlchaAI Hip-Hop",    emoji:"🎧", bpm:92  },
+    { id:"hiphop",   name:"GilosAI Hip-Hop",    emoji:"🎧", bpm:92  },
     { id:"none",     name:"Musiqasiz",        emoji:"🔇", bpm:0   },
   ];
 
@@ -3974,7 +3974,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       createMut.mutate({data:{
         authorId:user.id,
         videoUrl:`/api/storage${objectPath}`,
-        caption:caption||"OTube Studio · OlchaAI",
+        caption:caption||"OTube Studio · GilosAI",
         audioTrack:music&&music!=="none"?music:undefined,
         tags:["otube-studio","olcha","studio"],
         duration:0,
@@ -5142,7 +5142,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
             <div>
               <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>⚙️ MAXSUS PARAMETRLAR</div>
               <div className="flex flex-col gap-2">
-                {[{v:stabilize,s:setStabilize,l:"📷 Video Stabilizator"},{v:autoColor,s:setAutoColor,l:"🎨 Avto Rang Korreksiya"},{v:colorLimiter,s:setColorLimiter,l:"🎯 Broadcast Color Limiter"},{v:watermark,s:setWatermark,l:"💧 OlchaAI Suv Belgisi"}].map(({v,s,l})=>(
+                {[{v:stabilize,s:setStabilize,l:"📷 Video Stabilizator"},{v:autoColor,s:setAutoColor,l:"🎨 Avto Rang Korreksiya"},{v:colorLimiter,s:setColorLimiter,l:"🎯 Broadcast Color Limiter"},{v:watermark,s:setWatermark,l:"💧 GilosAI Suv Belgisi"}].map(({v,s,l})=>(
                   <div key={l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
                     <span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>{l}</span>
                     <button onClick={()=>s((p:boolean)=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:v?T.cyan:"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start"}}>

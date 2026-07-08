@@ -1,8 +1,8 @@
 import { Resend } from "resend";
 import { logger } from "./logger";
 
-const FROM = "OlchaAI <noreply@olcha.com>";
-const FROM_FALLBACK = "OlchaAI <onboarding@resend.dev>";
+const FROM = "GilosAI <noreply@olcha.com>";
+const FROM_FALLBACK = "GilosAI <onboarding@resend.dev>";
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY;
@@ -31,7 +31,7 @@ function base(content: string): string {
       </div>
       <div style="padding:24px">${content}</div>
       <div style="padding:12px 24px;background:#ffffff08;font-size:11px;color:#888">
-        OlchaAI — <a href="https://olchaai.com" style="color:#a78bfa">olchaai.com</a>
+        GilosAI — <a href="https://gilosai.com" style="color:#a78bfa">gilosai.com</a>
         &nbsp;·&nbsp; Bildirishnomalarni o'chirish uchun sozlamalarga kiring.
       </div>
     </div>`;
@@ -56,7 +56,7 @@ export async function notifyComment(opts: {
     <div style="background:#ffffff08;padding:12px 16px;border-radius:8px;color:#e2e8f0;font-size:14px;margin-bottom:20px">
       💬 ${commentText.slice(0, 200)}${commentText.length > 200 ? "…" : ""}
     </div>
-    <a href="https://olchaai.com" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">
+    <a href="https://gilosai.com" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">
       Ko'rish →
     </a>`);
   await send(toEmail, `${commenterName} sizning postingizga komment yozdi`, html);
@@ -77,7 +77,7 @@ export async function notifyLike(opts: {
     <div style="background:#ffffff0d;border-left:3px solid #db2777;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:20px;color:#ddd;font-size:13px">
       <i>"${postPreview.slice(0, 120)}${postPreview.length > 120 ? "…" : ""}"</i>
     </div>
-    <a href="https://olchaai.com" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">
+    <a href="https://gilosai.com" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">
       Ko'rish →
     </a>`);
   await send(toEmail, `${likerName} sizning postingizni yoqtirdi ❤️`, html);
@@ -94,7 +94,7 @@ export async function notifyFollow(opts: {
     <p style="margin:0 0 20px;color:#ccc">
       <b style="color:#34d399">${followerName}</b> sizga obuna bo'ldi 🎉
     </p>
-    <a href="https://olchaai.com" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">
+    <a href="https://gilosai.com" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">
       Profilni ko'rish →
     </a>`);
   await send(toEmail, `${followerName} sizga obuna bo'ldi 🎉`, html);

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { OlchaEmojiPicker } from "./OlchaEmojiPicker";
+import { GilosEmojiPicker } from "./GilosEmojiPicker";
 import { EmojiText } from "./EmojiText";
 import {
   useListConversations,
@@ -528,7 +528,7 @@ function SmsPanelContent({ convId, meId, convName, onBack, onClose }:
       <AnimatePresence>
         {showEmoji && (
           <div ref={emojiRef} style={{ position:"absolute", bottom:58, right:4, zIndex:999 }}>
-            <OlchaEmojiPicker onEmojiSelect={handleEmojiSelect} />
+            <GilosEmojiPicker onEmojiSelect={handleEmojiSelect} />
           </div>
         )}
       </AnimatePresence>
@@ -804,7 +804,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
               <AnimatePresence>
                 {showEmoji && (
                   <div ref={emojiRef} style={{ position:"absolute", bottom:52, right:4, zIndex:999 }}>
-                    <OlchaEmojiPicker onEmojiSelect={handleEmojiSelectComment} />
+                    <GilosEmojiPicker onEmojiSelect={handleEmojiSelectComment} />
                   </div>
                 )}
               </AnimatePresence>
@@ -927,7 +927,7 @@ function PostPanelContent({ targetUser, targetUserId, onClose }:
               <AnimatePresence>
                 {showEmoji && (
                   <div ref={emojiRef} style={{ position:"absolute", bottom:52, left:4, zIndex:999 }}>
-                    <OlchaEmojiPicker onEmojiSelect={handleEmojiSelectPost} />
+                    <GilosEmojiPicker onEmojiSelect={handleEmojiSelectPost} />
                   </div>
                 )}
               </AnimatePresence>

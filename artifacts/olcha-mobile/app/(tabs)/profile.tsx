@@ -67,7 +67,7 @@ export default function ProfileScreen() {
   });
 
   const activeUser = profile ?? user;
-  const displayName = activeUser?.displayName ?? "OlchaAI User";
+  const displayName = activeUser?.displayName ?? "GilosAI User";
   const username = activeUser?.username ?? "olcha_user";
   const initials = displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 

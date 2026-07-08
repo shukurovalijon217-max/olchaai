@@ -1,6 +1,6 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
-import OlchaWordmark from "./OlchaWordmark";
+import GilosWordmark from "./GilosWordmark";
 
 interface NexusLogoProps {
   ringSize?: number;
@@ -481,9 +481,9 @@ export default function NexusLogo({
         })}
       </div>
 
-      {/* ── OlChaAI matni — har bir harf o'z rangida ── */}
+      {/* ── GilosAI matni — har bir harf o'z rangida ── */}
       {showText && (
-        <OlchaWordmark fontSize={fontSize} letterSpacing={letterSpacing} fontWeight={400} />
+        <GilosWordmark fontSize={fontSize} letterSpacing={letterSpacing} fontWeight={400} />
       )}
     </div>
   );

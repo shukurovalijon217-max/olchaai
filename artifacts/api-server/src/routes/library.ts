@@ -114,7 +114,7 @@ router.get("/library/search", async (req, res) => {
   try {
     const limit = Math.min(Number(maxResults), 40);
     const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(q as string)}&limit=${limit}&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,language,isbn,first_sentence`;
-    const response = await fetch(url, { headers: { "User-Agent": "OlchaAI/1.0 (social platform)" } });
+    const response = await fetch(url, { headers: { "User-Agent": "GilosAI/1.0 (social platform)" } });
     const data = await response.json() as { docs?: unknown[]; numFound?: number };
     res.json({
       items: (data.docs ?? []).map(d => mapOpenLibDoc(d as Record<string, unknown>)),
@@ -132,7 +132,7 @@ router.get("/library/search/popular", async (req, res) => {
   const subject = subjects[Math.floor(Math.random() * subjects.length)];
   try {
     const url = `https://openlibrary.org/subjects/${subject}.json?limit=12`;
-    const response = await fetch(url, { headers: { "User-Agent": "OlchaAI/1.0 (social platform)" } });
+    const response = await fetch(url, { headers: { "User-Agent": "GilosAI/1.0 (social platform)" } });
     const data = await response.json() as { works?: unknown[] };
     const items = (data.works ?? []).map((w: unknown) => {
       const work = w as Record<string, unknown>;
@@ -187,7 +187,7 @@ Faqat JSON qaytargin, boshqa matn yo'q.`,
       }),
       fetch(
         `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=6&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,language,isbn,first_sentence`,
-        { headers: { "User-Agent": "OlchaAI/1.0" } }
+        { headers: { "User-Agent": "GilosAI/1.0" } }
       ).then(r => r.json() as Promise<{ docs?: unknown[]; numFound?: number }>),
     ]);
 
@@ -211,7 +211,7 @@ Faqat JSON qaytargin, boshqa matn yo'q.`,
     if (books.length === 0 && aiData.webQuery && String(aiData.webQuery) !== q) {
       try {
         const fbUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(String(aiData.webQuery))}&limit=6&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,language,isbn,first_sentence`;
-        const fbResp = await fetch(fbUrl, { headers: { "User-Agent": "OlchaAI/1.0" } });
+        const fbResp = await fetch(fbUrl, { headers: { "User-Agent": "GilosAI/1.0" } });
         const fbData = await fbResp.json() as { docs?: unknown[] };
         books = (fbData.docs ?? []).map(d => mapOpenLibDoc(d as Record<string, unknown>));
       } catch { /* ignore */ }
@@ -242,8 +242,8 @@ router.get("/library/translate", async (req, res) => {
 
   try {
     const langpair = from === "auto" ? `${from}|${to}` : `${from}|${to}`;
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${langpair}&de=olcha@olchaai.com`;
-    const resp = await fetch(url, { headers: { "User-Agent": "OlchaAI/1.0" } });
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${langpair}&de=olcha@gilosai.com`;
+    const resp = await fetch(url, { headers: { "User-Agent": "GilosAI/1.0" } });
     if (!resp.ok) { res.status(502).json({ error: "Translation service unavailable" }); return; }
     const data = await resp.json() as {
       responseData?: { translatedText?: string; detectedLanguage?: string; match?: number };

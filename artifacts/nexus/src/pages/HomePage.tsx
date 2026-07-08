@@ -153,7 +153,7 @@ function CreateSheet({
   onSelect: (tab: TabType) => void;
 }) {
   const { t } = useTranslation();
-  const KEY_PREFIX: Record<string, string> = { challenge: "chal" };
+  const KEY_PREFIX: Record<string, string> = { challenge: "chal" }; // i18n fix
   const CONTENT_TYPES = CONTENT_TYPE_CONFIG.map(ct => {
     const k = KEY_PREFIX[ct.id] ?? ct.id;
     return { ...ct, label: t(`create.${k}_label`), desc: t(`create.${k}_desc`) };

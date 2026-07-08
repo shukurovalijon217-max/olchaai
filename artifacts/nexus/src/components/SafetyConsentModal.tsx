@@ -514,7 +514,7 @@ export default function SafetyConsentModal({ open, lang, onAgree, onCancel }: Pr
                 >
                   <Bot className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#60a5fa" }} />
                   <p className="text-[10px]" style={{ color: "rgba(147,197,253,0.8)" }}>
-                    GilosAI SafeGuard AI — 24/7
+                    SafeGuard AI — 24/7
                   </p>
                   <div className="ml-auto flex gap-1">
                     {[0, 1, 2].map(i => (

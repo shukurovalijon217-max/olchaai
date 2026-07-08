@@ -4,7 +4,11 @@ import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-nativ
 import { useAuth } from "@/contexts/AuthContext";
 
 const DOMAIN = process.env.EXPO_PUBLIC_DOMAIN ?? "";
-const NEXUS_URL = DOMAIN ? `https://${DOMAIN}/` : "http://localhost:18245/";
+const NEXUS_URL = DOMAIN
+  ? `https://${DOMAIN}/`
+  : typeof window !== "undefined"
+  ? window.location.origin + "/"
+  : "http://localhost:18245/";
 
 function IframeShell() {
   const [loaded, setLoaded] = useState(false);

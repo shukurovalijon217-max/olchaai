@@ -153,11 +153,11 @@ function CreateSheet({
   onSelect: (tab: TabType) => void;
 }) {
   const { t } = useTranslation();
-  const CONTENT_TYPES = CONTENT_TYPE_CONFIG.map(ct => ({
-    ...ct,
-    label: t(`create.${ct.id}_label`),
-    desc:  t(`create.${ct.id}_desc`),
-  }));
+  const KEY_PREFIX: Record<string, string> = { challenge: "chal" };
+  const CONTENT_TYPES = CONTENT_TYPE_CONFIG.map(ct => {
+    const k = KEY_PREFIX[ct.id] ?? ct.id;
+    return { ...ct, label: t(`create.${k}_label`), desc: t(`create.${k}_desc`) };
+  });
 
   return (
     <AnimatePresence>

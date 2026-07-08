@@ -19,7 +19,7 @@ if (Number.isNaN(port) || port <= 0) throw new Error(`Invalid PORT: "${rawPort}"
 
 // ── Boot sequence ──────────────────────────────────────────────────────
 logger.info("╔══════════════════════════════════════════╗");
-logger.info("║       OlchaAI — AI Core Service            ║");
+logger.info("║       GilosAI — AI Core Service            ║");
 logger.info("║  Fully Autonomous • Pentagon-Grade Sec   ║");
 logger.info("╚══════════════════════════════════════════╝");
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CyberCard } from "./CyberCard";
-import type { OlchaAIPost } from "../hooks/useOlchaAIData";
+import type { GilosAIPost } from "../hooks/useGilosAIData";
 
 const CARD_W = 380;
 const CARD_H = 520;
@@ -15,7 +15,7 @@ const STACK = [
   { scale: 0.92, y: 32, opacity: 0.42 },
 ];
 
-interface HoloFeedProps { posts: OlchaAIPost[]; loading: boolean; }
+interface HoloFeedProps { posts: GilosAIPost[]; loading: boolean; }
 
 function LoadingSkeleton() {
   return (
@@ -35,7 +35,7 @@ function LoadingSkeleton() {
           POSTLAR YUKLANMOQDA…
         </p>
         <p style={{ color: "rgba(255,255,255,0.2)", fontSize: 10, fontFamily: "monospace", textAlign: "center", marginTop: 4, marginBottom: 0 }}>
-          OlchaAI · AR Feed
+          GilosAI · AR Feed
         </p>
       </div>
     </div>

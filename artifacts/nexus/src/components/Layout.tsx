@@ -562,11 +562,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { t } = useTranslation();
-  const { playerOpen } = usePip();
+  const { playerOpen, setDockExpanded } = usePip();
   const isImmersive = location === "/" || location === "/reels" || location === "/otube";
   const [isOpen, setIsOpen] = useState(loadOpen);
   const [moreOpen, setMoreOpen] = useState(false);
   const [navExpanded, setNavExpanded] = useState(false);
+  useEffect(() => {
+    setDockExpanded(navExpanded);
+    return () => setDockExpanded(false);
+  }, [navExpanded, setDockExpanded]);
   const [isMd, setIsMd] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
   useEffect(() => {
     const handler = () => setIsMd(window.innerWidth >= 768);

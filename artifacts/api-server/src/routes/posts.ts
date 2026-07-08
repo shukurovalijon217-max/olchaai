@@ -73,15 +73,17 @@ router.get("/posts", async (req, res) => {
     const cacheKey = !viewerId && offset < 60 ? `list:${type ?? "all"}:${limit}:${offset}` : null;
 
     const midnightCond = await midnightVisibilityConditionForReq(req);
+    // Hide posts whose auto-destruct time has passed
+    const notExpired = sql`(${postsTable.destructAt} IS NULL OR ${postsTable.destructAt} > NOW())`;
 
     const enriched = await cacheAside("posts", cacheKey ?? `__skip__${Date.now()}`, async () => {
       let posts;
       if (userId) {
-        posts = await db.select().from(postsTable).where(and(eq(postsTable.authorId, userId), midnightCond)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+        posts = await db.select().from(postsTable).where(and(eq(postsTable.authorId, userId), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
       } else if (type && type !== "all") {
-        posts = await db.select().from(postsTable).where(and(eq(postsTable.type, type), midnightCond)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+        posts = await db.select().from(postsTable).where(and(eq(postsTable.type, type), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
       } else {
-        posts = await db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+        posts = await db.select().from(postsTable).where(and(midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
       }
       return batchEnrichPosts(posts, viewerId);
     }, cacheKey ? 15 : 0);
@@ -345,14 +347,29 @@ router.get("/posts/:id/votes", async (req: any, res) => {
 /* ── POST /posts — instant response, AI scan in background ─── */
 router.post("/posts", async (req: any, res) => {
   try {
-    const { content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, audioTrimStart, audioTrimEnd, pollQuestion, pollOptions, mood, filterName, tags, midnightOnly } = req.body;
+    const { content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, audioTrimStart, audioTrimEnd, pollQuestion, pollOptions, mood, filterName, tags, midnightOnly,
+      destructAt, geoLat, geoLng, geoRadiusKm, emotionLock, lockedEmotion, liveMoodEnabled, seriesName, seriesOrder, collabCanvasEnabled, collabCanvasId } = req.body;
     const sessionUserId: number | undefined = req.session?.userId;
     const authorId = sessionUserId ?? Number(req.body.authorId);
     if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
     const [post] = await db
       .insert(postsTable)
-      .values({ authorId, content, type: type || "text", mediaUrl, mediaUrls, overlays: overlays ?? null, audioName: audioName ?? null, audioUrl: audioUrl ?? null, audioTrimStart: audioTrimStart != null ? String(audioTrimStart) : null, audioTrimEnd: audioTrimEnd != null ? String(audioTrimEnd) : null, pollQuestion: pollQuestion ?? null, pollOptions: pollOptions ?? null, mood: mood ?? null, filterName: filterName ?? null, tags, isFlagged: false, midnightOnly: !!midnightOnly })
+      .values({
+        authorId, content, type: type || "text", mediaUrl, mediaUrls,
+        overlays: overlays ?? null, audioName: audioName ?? null, audioUrl: audioUrl ?? null,
+        audioTrimStart: audioTrimStart != null ? String(audioTrimStart) : null,
+        audioTrimEnd: audioTrimEnd != null ? String(audioTrimEnd) : null,
+        pollQuestion: pollQuestion ?? null, pollOptions: pollOptions ?? null,
+        mood: mood ?? null, filterName: filterName ?? null, tags, isFlagged: false, midnightOnly: !!midnightOnly,
+        // 6 new real features
+        destructAt: destructAt ? new Date(destructAt) : null,
+        geoLat: geoLat ?? null, geoLng: geoLng ?? null, geoRadiusKm: geoRadiusKm ?? 0,
+        emotionLock: !!emotionLock, lockedEmotion: lockedEmotion ?? null,
+        liveMoodEnabled: !!liveMoodEnabled,
+        seriesName: seriesName ?? null, seriesOrder: seriesOrder ?? 1,
+        collabCanvasEnabled: !!collabCanvasEnabled, collabCanvasId: collabCanvasId ?? null,
+      })
       .returning();
 
     const [enriched] = await batchEnrichPosts([post], sessionUserId);
@@ -395,6 +412,22 @@ router.post("/posts", async (req: any, res) => {
 });
 
 /* ── GET /posts/trending ────────────────────────────────────── */
+/* ── GET /posts/series/:name ─────────────────────────────────── */
+router.get("/posts/series/:name", async (req: any, res) => {
+  try {
+    const seriesName = decodeURIComponent(req.params.name);
+    const viewerId = req.session?.userId as number | undefined;
+    const posts = await db.select().from(postsTable)
+      .where(and(eq(postsTable.seriesName, seriesName), sql`(${postsTable.destructAt} IS NULL OR ${postsTable.destructAt} > NOW())`))
+      .orderBy(postsTable.seriesOrder);
+    const enriched = await batchEnrichPosts(posts, viewerId);
+    res.json(enriched);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/posts/trending", async (req, res) => {
   try {
     const viewerId = (req.session as any)?.userId as number | undefined;

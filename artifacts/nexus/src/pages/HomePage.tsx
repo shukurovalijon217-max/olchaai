@@ -423,7 +423,7 @@ export default function HomePage() {
       {/* ── INSTAGRAM-STYLE STORIES STRIP ── */}
       {stories.length > 0 && (
         <div
-          className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-3 py-2 overflow-x-auto"
+          className="fixed top-0 left-0 right-0 z-50 flex items-center gap-4 px-4 py-3 overflow-x-auto"
           style={{
             background: "linear-gradient(to bottom, rgba(6,6,15,0.95) 0%, rgba(6,6,15,0) 100%)",
             scrollbarWidth: "none",
@@ -491,9 +491,9 @@ export default function HomePage() {
             style={{ background: "rgba(0,0,0,0.97)" }}
           >
             {/* Progress bar */}
-            <div className="absolute top-0 left-0 right-0 flex gap-1 p-3 z-10">
+            <div className="absolute top-0 left-0 right-0 flex gap-[3px] px-3 pt-10 pb-2 z-10">
               {stories.map((_: any, i: number) => (
-                <div key={i} className="h-[2px] flex-1 rounded-full overflow-hidden bg-white/20">
+                <div key={i} className="h-[3px] flex-1 rounded-full overflow-hidden bg-white/25">
                   {i < (storyIdx ?? 0) && <div className="h-full w-full bg-white" />}
                   {i === storyIdx && (
                     <motion.div
@@ -534,17 +534,29 @@ export default function HomePage() {
             {/* Story content */}
             <div className="w-full h-full flex items-center justify-center">
               {activeStory.mediaUrl ? (
-                <img src={activeStory.mediaUrl} alt="" className="w-full h-full object-contain" />
-              ) : (
-                <div
-                  className="w-full h-full flex items-center justify-center px-10"
-                  style={{ background: "linear-gradient(135deg, #1a0533 0%, #0d1a33 100%)" }}
-                >
-                  <p className="text-white text-2xl font-bold text-center leading-snug">
-                    {activeStory.caption || ""}
-                  </p>
-                </div>
-              )}
+                <img
+                  src={activeStory.mediaUrl}
+                  alt=""
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    const el = e.currentTarget;
+                    el.style.display = "none";
+                    const fallback = el.nextElementSibling as HTMLElement | null;
+                    if (fallback) fallback.style.display = "flex";
+                  }}
+                />
+              ) : null}
+              <div
+                className="w-full h-full items-center justify-center px-10"
+                style={{
+                  display: activeStory.mediaUrl ? "none" : "flex",
+                  background: "linear-gradient(135deg, #1a0533 0%, #0d1a33 100%)"
+                }}
+              >
+                <p className="text-white text-2xl font-bold text-center leading-snug">
+                  {activeStory.caption || "✨"}
+                </p>
+              </div>
             </div>
 
             {/* Prev / Next tap zones */}

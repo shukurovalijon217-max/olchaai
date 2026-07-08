@@ -321,7 +321,7 @@ function getPageTitle(location: string, t: (k: string) => string): string {
   if (location.startsWith("/bozor/sotuvchi")) return t("nav.marketplace");
   if (location.startsWith("/bozor/")) return t("nav.marketplace");
   if (location.startsWith("/live/")) return t("nav.live");
-  return "OlchaAI";
+  return "GilosAI";
 }
 
 const adminNavItems = [

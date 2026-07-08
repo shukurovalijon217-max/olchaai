@@ -19,7 +19,7 @@ function IframeShell() {
       {!loaded && (
         <View style={s.loading}>
           <ActivityIndicator size="large" color="#7857ff" />
-          <Text style={s.loadingTxt}>OlchaAI yuklanmoqda...</Text>
+          <Text style={s.loadingTxt}>GilosAI yuklanmoqda...</Text>
         </View>
       )}
       {loaded && (
@@ -34,7 +34,7 @@ function IframeShell() {
             flex: 1,
           }}
           allow="camera; microphone; fullscreen; geolocation; autoplay"
-          title="OlchaAI"
+          title="GilosAI"
         />
       )}
     </View>
@@ -48,7 +48,7 @@ function NativeGate() {
     return (
       <View style={s.loading}>
         <ActivityIndicator size="large" color="#7857ff" />
-        <Text style={s.loadingTxt}>OlchaAI yuklanmoqda...</Text>
+        <Text style={s.loadingTxt}>GilosAI yuklanmoqda...</Text>
       </View>
     );
   }
@@ -57,7 +57,7 @@ function NativeGate() {
   return <Redirect href="/auth" />;
 }
 
-export default function OlchaAIApp() {
+export default function GilosAIApp() {
   if (Platform.OS === "web") return <IframeShell />;
   return <NativeGate />;
 }

@@ -3275,7 +3275,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       <div>
                         <p className="text-xs font-bold text-white/45 mb-2">{t("create.swipe_link_title")}</p>
                         <div className="flex gap-2 items-center">
-                          <input placeholder="https://olchaai.com/..." value={storyLink} onChange={e=>setStoryLink(e.target.value)}
+                          <input placeholder="https://gilosai.com/..." value={storyLink} onChange={e=>setStoryLink(e.target.value)}
                             className="flex-1 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
                             style={{ background:"rgba(52,211,153,0.07)", border:"1px solid rgba(52,211,153,0.25)" }}/>
                           {storyLink && <span className="text-emerald-400 text-lg">✓</span>}
@@ -4220,7 +4220,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div>
                           <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⚖️ Litsenziya</p>
                           <div className="grid grid-cols-2 gap-2">
-                            {[{v:"standard",l:"Standard (OlchaAI)"},{v:"cc",l:"Creative Commons"},{v:"commercial",l:"Tijorat maqsadli"},{v:"educational",l:"Ta'lim maqsadli"}].map(({v,l})=>(
+                            {[{v:"standard",l:"Standard (GilosAI)"},{v:"cc",l:"Creative Commons"},{v:"commercial",l:"Tijorat maqsadli"},{v:"educational",l:"Ta'lim maqsadli"}].map(({v,l})=>(
                               <button key={v} onClick={()=>setOtubeLicense(v)}
                                 className="py-2.5 px-3 rounded-xl text-[11px] font-bold transition-all"
                                 style={{background:otubeLicense===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeLicense===v?"white":"rgba(255,255,255,0.5)",border:otubeLicense===v?"none":"1px solid rgba(255,255,255,0.08)"}}>

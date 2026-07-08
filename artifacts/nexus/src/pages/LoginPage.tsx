@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { Eye, EyeOff, AlertCircle, Search, Check, X, Globe } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
-import OlchaWordmark from "@/components/OlchaWordmark";
+import GilosWordmark from "@/components/GilosWordmark";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
@@ -419,7 +419,7 @@ function LangSwitcher() {
   const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
   const handleSelect = (code: LangCode) => {
-    localStorage.setItem("olcha_lang", code);
+    localStorage.setItem("gilos_lang", code);
     i18nInst.changeLanguage(code);
     applyRTL(code);
     setOpen(false);
@@ -673,7 +673,7 @@ export default function LoginPage() {
             transition={{ delay: 0.35, duration: 0.5 }}
             style={{ display: "block" }}
           >
-            <OlchaWordmark fontSize="2.6rem" letterSpacing="0.35em" fontWeight={400} />
+            <GilosWordmark fontSize="2.6rem" letterSpacing="0.35em" fontWeight={400} />
           </motion.div>
           <motion.p
             initial={{ y: 12, opacity: 0 }}
@@ -850,7 +850,7 @@ export default function LoginPage() {
                     required
                     className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
                     style={{ background: "rgba(30,12,4,0.9)", border: "1px solid #2a1408", color: "#c8a060" }}
-                    placeholder="siz@olchaai.com"
+                    placeholder="siz@gilosai.com"
                     autoComplete="email"
                   />
                 )}

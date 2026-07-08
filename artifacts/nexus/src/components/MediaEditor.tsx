@@ -656,7 +656,7 @@ const BEAUTY_OPTIONS: { id: string; emoji: string; label: string; min: number; m
 ];
 
 export const TRENDING_CHALLENGES = [
-  "#OlchaAIChallenge 🔥", "#DanceOff 💃", "#GlowUp ✨", "#SilhouetteChallenge 🌟",
+  "#GilosAIChallenge 🔥", "#DanceOff 💃", "#GlowUp ✨", "#SilhouetteChallenge 🌟",
   "#TrendingNow 📈", "#ViralDance 🎵", "#FoodChallenge 🍔", "#FitnessChallenge 💪",
   "#BeautyHacks 💄", "#LifeHacks 🛠", "#PetChallenge 🐾", "#ArtChallenge 🎨",
   "#Transition 🔄", "#LipSync 🎤", "#CommentChallenge 💬", "#OutfitOfTheDay 👗",
@@ -1365,7 +1365,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
       <AnimatePresence>
         {panel === "text" && (() => {
           const previewItem: TextOverlay = {
-            id:"__preview__", text: draftText || "OlchaAI Studio", x:50, y:50,
+            id:"__preview__", text: draftText || "GilosAI Studio", x:50, y:50,
             fontSize: Math.min(draftSize, 36), color: draftColor, animation:"none",
             fontStyle: draftFStyle, bgStyle: draftBg, fontFamily: draftFont,
             shadowPreset: draftShadow, gradient: draftGradient, align: draftAlign,

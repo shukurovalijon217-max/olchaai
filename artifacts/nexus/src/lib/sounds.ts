@@ -1,4 +1,4 @@
-/* ── OlchaAI Notification Sound System (Web Audio API — no files needed) ── */
+/* ── GilosAI Notification Sound System (Web Audio API — no files needed) ── */
 
 /* ── Feature preferences (shared utility) ── */
 const PREFS_KEY = "olcha_feature_prefs";

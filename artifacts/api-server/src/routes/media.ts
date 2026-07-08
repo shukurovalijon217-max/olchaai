@@ -52,7 +52,7 @@ router.post("/compare", (req: Request, res: Response) => {
     similarity,
     duplicate: hamming <= 6,      // ≤6 bits diff → likely duplicate
     similar: hamming <= 15,       // ≤15 bits → visually similar
-    engine: "OlchaAI-C++-MediaHasher-v1",
+    engine: "GilosAI-C++-MediaHasher-v1",
   });
 });
 
@@ -61,7 +61,7 @@ router.post("/compare", (req: Request, res: Response) => {
  * Fetches a remote image, converts to WebP, caches 1h in-memory.
  * Used by the frontend to serve feed/profile images as WebP.
  */
-const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com)$/i;
+const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.gilosai\.com|replit\.com|replit\.app|storage\.googleapis\.com)$/i;
 
 function fetchRemote(url: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {

@@ -100,7 +100,7 @@ export default function FeedScreen() {
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={s.logoGrad}
             >
-              <Text style={s.logoText}>OlchaAI</Text>
+              <Text style={s.logoText}>GilosAI</Text>
             </LinearGradient>
             <View style={[s.aiBadge, { backgroundColor: "rgba(120,87,255,0.2)", borderColor: "rgba(120,87,255,0.4)" }]}>
               <Text style={[s.aiBadgeTxt, { color: colors.primary }]}>AI</Text>

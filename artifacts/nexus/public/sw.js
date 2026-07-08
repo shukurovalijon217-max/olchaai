@@ -1,4 +1,4 @@
-/* OlchaAI Service Worker — global edge cache + offline shell */
+/* GilosAI Service Worker — global edge cache + offline shell */
 const CACHE_VERSION = "olcha-v1";
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;

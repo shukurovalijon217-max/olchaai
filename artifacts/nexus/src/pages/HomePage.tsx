@@ -377,6 +377,13 @@ export default function HomePage() {
   const [holoUser,       setHoloUser]       = useState<HoloUser | null>(null);
   const lastTapRef = useRef<Record<number, number>>({});
 
+  /* ── Story timer (pause-on-hold) ── */
+  const STORY_DURATION = 5;
+  const [storyPaused,  setStoryPaused]  = useState(false);
+  const [storyElapsed, setStoryElapsed] = useState(0);
+  const storyTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const goNextRef     = useRef<() => void>(() => {});
+
   /* Group stories by author (one circle per author) */
   const storyGroups = useMemo(() => {
     const map = new Map<number, any[]>();
@@ -430,6 +437,36 @@ export default function HomePage() {
       }
     }
   }, [activeGroup, viewerStoryIdx, viewerGroupIdx, storyGroups.length, closeViewer]);
+
+  /* Keep goNextRef current so interval callbacks never go stale */
+  useEffect(() => { goNextRef.current = goNextInGroup; }, [goNextInGroup]);
+
+  /* Reset timer whenever the active story changes */
+  useEffect(() => {
+    setStoryElapsed(0);
+    setStoryPaused(false);
+  }, [viewerStoryIdx, viewerGroupIdx]);
+
+  /* Tick 20× per second while viewer is open and not paused */
+  useEffect(() => {
+    if (!activeStory || storyPaused) {
+      if (storyTimerRef.current) { clearInterval(storyTimerRef.current); storyTimerRef.current = null; }
+      return;
+    }
+    storyTimerRef.current = setInterval(() => {
+      setStoryElapsed(prev => {
+        const next = prev + 0.05;
+        if (next >= STORY_DURATION) {
+          clearInterval(storyTimerRef.current!);
+          storyTimerRef.current = null;
+          goNextRef.current();
+          return STORY_DURATION;
+        }
+        return next;
+      });
+    }, 50);
+    return () => { if (storyTimerRef.current) { clearInterval(storyTimerRef.current); storyTimerRef.current = null; } };
+  }, [activeStory, storyPaused]);
 
   const goPrevInGroup = useCallback(() => {
     if (viewerStoryIdx > 0) {
@@ -631,7 +668,11 @@ export default function HomePage() {
             exit={{ clipPath: "circle(0px at 50% 50%)", opacity: 0 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 z-[200] flex flex-col"
-            style={{ background: "#000", willChange: "clip-path" }}
+            style={{ background: "#000", willChange: "clip-path", touchAction: "none" }}
+            onPointerDown={(e) => { if ((e.target as HTMLElement).closest("button")) return; setStoryPaused(true); }}
+            onPointerUp={() => setStoryPaused(false)}
+            onPointerLeave={() => setStoryPaused(false)}
+            onPointerCancel={() => setStoryPaused(false)}
           >
             {/* Media crossfade */}
             <AnimatePresence mode="wait">
@@ -653,12 +694,12 @@ export default function HomePage() {
                         const el = e.currentTarget as HTMLImageElement;
                         el.style.display = "none";
                         const fb = el.nextElementSibling as HTMLElement | null;
-                        if (fb) fb.style.display = "flex";
+                        if (fb) { fb.style.display = "flex"; }
                       }}
                     />
                     <div
-                      className="w-full h-full items-center justify-center px-10 hidden"
-                      style={{ background: "linear-gradient(160deg,#1a0533,#0d1a33)" }}
+                      className="w-full h-full items-center justify-center px-10"
+                      style={{ display: "none", background: "linear-gradient(160deg,#2a0845,#0d1a44)" }}
                     >
                       <p className="text-white text-xl font-bold text-center">{activeStory.caption || "✨"}</p>
                     </div>
@@ -666,7 +707,7 @@ export default function HomePage() {
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center px-10"
-                    style={{ background: "linear-gradient(160deg,#180430 0%,#0a1830 50%,#120320 100%)" }}
+                    style={{ background: "linear-gradient(160deg,#2e0a55 0%,#0f1f50 50%,#1a0535 100%)" }}
                   >
                     <p className="text-white text-2xl font-bold text-center leading-snug drop-shadow-lg">
                       {activeStory.caption || "✨"}
@@ -675,12 +716,34 @@ export default function HomePage() {
                 )}
                 <div
                   className="absolute inset-0 pointer-events-none"
-                  style={{ background: "linear-gradient(to bottom,rgba(0,0,0,0.55) 0%,transparent 22%,transparent 68%,rgba(0,0,0,0.65) 100%)" }}
+                  style={{ background: "linear-gradient(to bottom,rgba(0,0,0,0.6) 0%,transparent 25%,transparent 65%,rgba(0,0,0,0.7) 100%)" }}
                 />
               </motion.div>
             </AnimatePresence>
 
-            {/* Neon progress bars */}
+            {/* Pause indicator */}
+            <AnimatePresence>
+              {storyPaused && (
+                <motion.div
+                  key="pause-badge"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
+                >
+                  <div
+                    className="flex gap-2 px-4 py-2 rounded-full"
+                    style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }}
+                  >
+                    <div className="w-[4px] h-5 rounded-full bg-white/80" />
+                    <div className="w-[4px] h-5 rounded-full bg-white/80" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Progress bars — timer-driven, pauseable */}
             <div className="relative z-10 flex gap-1 px-3 pt-12 pb-1">
               {activeGroup.map((_: any, i: number) => (
                 <div
@@ -691,14 +754,12 @@ export default function HomePage() {
                   {i < viewerStoryIdx ? (
                     <div className="h-full w-full" style={{ background: "linear-gradient(to right,#a78bfa,#ec4899)" }} />
                   ) : i === viewerStoryIdx ? (
-                    <motion.div
-                      key={`prog-${viewerGroupIdx}-${i}`}
+                    <div
                       className="h-full"
-                      style={{ background: "linear-gradient(to right,#a78bfa,#ec4899)" }}
-                      initial={{ width: "0%" }}
-                      animate={{ width: "100%" }}
-                      transition={{ duration: 5, ease: "linear" }}
-                      onAnimationComplete={goNextInGroup}
+                      style={{
+                        width: `${Math.min(100, (storyElapsed / STORY_DURATION) * 100)}%`,
+                        background: "linear-gradient(to right,#a78bfa,#ec4899)",
+                      }}
                     />
                   ) : null}
                 </div>
@@ -707,7 +768,6 @@ export default function HomePage() {
 
             {/* Author header */}
             <div className="relative z-10 flex items-center gap-3 px-4 pt-2 pb-2">
-              {/* Avatar — double-tap → hologram */}
               <div
                 className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
                 style={{
@@ -715,12 +775,6 @@ export default function HomePage() {
                   boxShadow: "0 0 12px rgba(139,92,246,0.5)",
                   background: "rgba(255,255,255,0.08)",
                 }}
-                onClick={(e) => handleAvatarDoubleTap(e, {
-                  userId: (activeStory.author as any)?.id ?? 0,
-                  username: activeStory.author?.username ?? "?",
-                  displayName: activeStory.author?.displayName,
-                  avatarUrl: activeStory.author?.avatarUrl ?? undefined,
-                })}
               >
                 {activeStory.author?.avatarUrl ? (
                   <img
@@ -746,13 +800,6 @@ export default function HomePage() {
                   )}
                 </p>
               </div>
-              {/* Hint label */}
-              <div
-                className="flex items-center gap-1 px-2 py-1 rounded-full mr-2"
-                style={{ background: "rgba(139,92,246,0.2)", border: "1px solid rgba(139,92,246,0.3)" }}
-              >
-                <span className="text-[9px] text-violet-300 tracking-wider">2× = hologram</span>
-              </div>
               <button
                 onClick={closeViewer}
                 className="p-1.5 rounded-full"
@@ -771,7 +818,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Tap zones */}
+            {/* Tap zones for prev/next */}
             <button className="absolute left-0 top-0 w-1/3 h-full z-20" onClick={goPrevInGroup} />
             <button className="absolute right-0 top-0 w-1/3 h-full z-20" onClick={goNextInGroup} />
           </motion.div>

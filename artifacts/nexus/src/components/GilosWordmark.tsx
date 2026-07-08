@@ -16,9 +16,9 @@ interface LetterStyle {
 }
 
 /**
- * Per-letter brand color spec — "GilosAI" neon wordmark:
- *  G = cherry-red neon    i = magenta neon    l = amber-orange neon
- *  o = purple neon        s = cyan neon       AI = cyan+pink neon shimmer
+ * Per-letter brand color spec — "GILOS" neon wordmark:
+ *  G = cherry-red neon    I = magenta neon    L = amber-orange neon
+ *  O = purple neon        S = cyan neon
  */
 const LETTERS: LetterStyle[] = [
   {
@@ -29,46 +29,32 @@ const LETTERS: LetterStyle[] = [
     delay: 0,
   },
   {
-    ch: "i",
+    ch: "I",
     gradient: "linear-gradient(135deg, #880e4f 0%, #e91e8c 26%, #fce4ec 50%, #e91e8c 74%, #880e4f 100%)",
     glow: "rgba(233,30,140,0.75)",
     dur: 2.7,
     delay: 0.18,
   },
   {
-    ch: "l",
+    ch: "L",
     gradient: "linear-gradient(135deg, #7a1f00 0%, #ff5722 26%, #ffd180 50%, #ff5722 74%, #7a1f00 100%)",
     glow: "rgba(255,87,34,0.70)",
     dur: 3.2,
     delay: 0.36,
   },
   {
-    ch: "o",
+    ch: "O",
     gradient: "linear-gradient(135deg, #3b0764 0%, #9333ea 28%, #eddcff 50%, #9333ea 72%, #3b0764 100%)",
     glow: "rgba(168,85,247,0.75)",
     dur: 2.9,
     delay: 0.54,
   },
   {
-    ch: "s",
+    ch: "S",
     gradient: "linear-gradient(135deg, #006064 0%, #00e5ff 28%, #e0f7fa 50%, #00e5ff 72%, #006064 100%)",
     glow: "rgba(0,229,255,0.75)",
     dur: 2.5,
     delay: 0.72,
-  },
-  {
-    ch: "A",
-    gradient: "linear-gradient(135deg, #00fff0 0%, #00ffa2 26%, #ff00e5 52%, #00fff0 78%, #ff00e5 100%)",
-    glow: "rgba(0,255,240,0.80)",
-    dur: 2.3,
-    delay: 0.90,
-  },
-  {
-    ch: "I",
-    gradient: "linear-gradient(135deg, #ff00e5 0%, #00fff0 28%, #d000ff 54%, #00ffa2 80%, #ff00e5 100%)",
-    glow: "rgba(255,0,229,0.80)",
-    dur: 2.3,
-    delay: 1.08,
   },
 ];
 
@@ -91,7 +77,7 @@ export default function GilosWordmark({
     <span
       className={className}
       role="img"
-      aria-label="GilosAI"
+      aria-label="GILOS"
       style={{ position: "relative", display: "inline-flex", alignItems: "baseline" }}
     >
       <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "baseline" }}>

@@ -1,12 +1,12 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Flame, MoreHorizontal, ChevronDown, X,
-  PenLine, BookOpen, Film, MonitorPlay, Trophy, Zap, Radio,
+  Flame, MoreHorizontal, ChevronDown, X, Radio,
+  PenLine, BookOpen, Film, MonitorPlay, Trophy, Zap,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import { useListPosts, useGetAiFeed } from "@workspace/api-client-react";
+import { useListPosts, useGetAiFeed, useListStories } from "@workspace/api-client-react";
 import FeedCard from "@/components/FeedCard";
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
@@ -347,11 +347,19 @@ function CreateSheet({
   );
 }
 
+interface HoloUser {
+  userId: number;
+  username: string;
+  displayName?: string;
+  avatarUrl?: string;
+}
+
 export default function HomePage() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { data: feed } = useGetAiFeed();
   const { data: posts = [], isLoading } = useListPosts();
+  const { data: storiesRaw = [] } = useListStories();
 
   const [sheetOpen,    setSheetOpen]    = useState(false);
   const [createOpen,   setCreateOpen]   = useState(false);
@@ -359,6 +367,76 @@ export default function HomePage() {
   const [sparkling,    setSparkling]    = useState(false);
   const [tunnelOpen,   setTunnelOpen]   = useState(false);
   const [echoDismissed, setEchoDismissed] = useState(false);
+
+  /* ── Stories state ── */
+  const [viewerGroupIdx, setViewerGroupIdx] = useState<number | null>(null);
+  const [viewerStoryIdx, setViewerStoryIdx] = useState(0);
+  const [portalOrigin,   setPortalOrigin]   = useState<{ x: number; y: number } | null>(null);
+  const [holoUser,       setHoloUser]       = useState<HoloUser | null>(null);
+  const lastTapRef = useRef<Record<number, number>>({});
+
+  /* Group stories by author (one circle per author) */
+  const storyGroups = useMemo(() => {
+    const map = new Map<number, any[]>();
+    for (const s of storiesRaw as any[]) {
+      const uid = (s.author as any)?.id ?? -1;
+      if (!map.has(uid)) map.set(uid, []);
+      map.get(uid)!.push(s);
+    }
+    return Array.from(map.values());
+  }, [storiesRaw]);
+
+  const activeGroup = viewerGroupIdx !== null ? storyGroups[viewerGroupIdx] : null;
+  const activeStory = activeGroup ? (activeGroup[viewerStoryIdx] ?? null) : null;
+
+  const closeViewer = useCallback(() => {
+    setViewerGroupIdx(null);
+    setViewerStoryIdx(0);
+    setPortalOrigin(null);
+  }, []);
+
+  const goNextInGroup = useCallback(() => {
+    if (!activeGroup) return;
+    if (viewerStoryIdx < activeGroup.length - 1) {
+      setViewerStoryIdx(i => i + 1);
+    } else {
+      // advance to next group or close
+      if (viewerGroupIdx !== null && viewerGroupIdx < storyGroups.length - 1) {
+        setViewerGroupIdx(i => (i ?? 0) + 1);
+        setViewerStoryIdx(0);
+      } else {
+        closeViewer();
+      }
+    }
+  }, [activeGroup, viewerStoryIdx, viewerGroupIdx, storyGroups.length, closeViewer]);
+
+  const goPrevInGroup = useCallback(() => {
+    if (viewerStoryIdx > 0) {
+      setViewerStoryIdx(i => i - 1);
+    } else if (viewerGroupIdx !== null && viewerGroupIdx > 0) {
+      setViewerGroupIdx(i => (i ?? 1) - 1);
+      setViewerStoryIdx(0);
+    }
+  }, [viewerStoryIdx, viewerGroupIdx]);
+
+  /* Single-tap story circle → portal viewer */
+  const handleStoryTap = useCallback((e: React.MouseEvent, gi: number) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setPortalOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    setViewerGroupIdx(gi);
+    setViewerStoryIdx(0);
+  }, []);
+
+  /* Double-tap avatar inside the strip → hologram */
+  const handleAvatarDoubleTap = useCallback((e: React.MouseEvent, user: HoloUser) => {
+    e.stopPropagation();
+    const now = Date.now();
+    const last = lastTapRef.current[user.userId] ?? 0;
+    if (now - last < 340) {
+      setHoloUser(user);
+    }
+    lastTapRef.current[user.userId] = now;
+  }, []);
 
   const feedRef = useRef<HTMLDivElement>(null);
   const displayPosts = feed?.posts?.length ? feed.posts : posts;
@@ -490,31 +568,451 @@ export default function HomePage() {
               <span className="text-violet-400/60 text-sm">{t("common.loading")}</span>
             </div>
           </div>
-        ) : displayPosts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f" }}>
-            <motion.div
-              animate={{ opacity: [0.3, 0.7, 0.3] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-            >
-              <Flame className="w-16 h-16 text-violet-500/40" />
-            </motion.div>
-            <p className="text-white/40 text-sm">{t("home.no_posts")}</p>
-            <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setSheetOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-              {t("home.create_post")}
-            </motion.button>
-          </div>
         ) : (
-          displayPosts.map((post, i) => (
-            <FeedCard key={post.id} post={post} index={i} />
-          ))
+          <>
+            {/* ── STORIES SECTION (inside feed, scrolls with content) ── */}
+            {storyGroups.length > 0 && (
+              <div
+                className="w-full px-3 pt-[72px] pb-3"
+                style={{ background: "transparent" }}
+              >
+                <div
+                  className="rounded-3xl overflow-hidden"
+                  style={{
+                    background: "rgba(8,6,24,0.72)",
+                    border: "1px solid rgba(120,80,255,0.18)",
+                    backdropFilter: "blur(20px)",
+                  }}
+                >
+                  {/* Section label */}
+                  <div className="flex items-center gap-2 px-4 pt-3 pb-1">
+                    <motion.div
+                      animate={{ opacity: [1, 0.4, 1] }}
+                      transition={{ duration: 1.8, repeat: Infinity }}
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: "#a78bfa" }}
+                    />
+                    <span className="text-[10px] tracking-[0.18em] font-bold uppercase"
+                      style={{ color: "rgba(167,139,250,0.6)" }}>
+                      Stories
+                    </span>
+                  </div>
+
+                  {/* Scroll row */}
+                  <div
+                    className="flex items-end gap-4 px-4 pb-4 pt-2 overflow-x-auto"
+                    style={{ scrollbarWidth: "none" }}
+                  >
+                    {storyGroups.map((group, gi) => {
+                      const rep = group[0];
+                      const authorId = (rep.author as any)?.id ?? gi;
+                      const name = rep.author?.displayName || rep.author?.username || "?";
+                      const initial = name[0].toUpperCase();
+                      const even = gi % 2 === 0;
+
+                      return (
+                        <motion.div
+                          key={authorId}
+                          className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer"
+                          style={{ marginTop: even ? 0 : 12 }}
+                          whileTap={{ scale: 0.88 }}
+                          onClick={(e) => handleStoryTap(e, gi)}
+                        >
+                          {/* Story count badge */}
+                          {group.length > 1 && (
+                            <div
+                              className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              style={{
+                                background: "rgba(139,92,246,0.25)",
+                                border: "1px solid rgba(139,92,246,0.4)",
+                                color: "#c4b5fd",
+                                letterSpacing: "0.08em",
+                              }}
+                            >
+                              {group.length}
+                            </div>
+                          )}
+
+                          {/* Avatar with neon glow ring */}
+                          <div className="relative w-[68px] h-[68px]">
+                            {/* Outer neon glow ring */}
+                            <motion.div
+                              className="absolute inset-0 rounded-full"
+                              animate={{ boxShadow: [
+                                "0 0 0 2px rgba(139,92,246,0.7), 0 0 18px rgba(139,92,246,0.35)",
+                                "0 0 0 2px rgba(236,72,153,0.7), 0 0 22px rgba(236,72,153,0.4)",
+                                "0 0 0 2px rgba(139,92,246,0.7), 0 0 18px rgba(139,92,246,0.35)",
+                              ]}}
+                              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                            />
+                            {/* Avatar image — double-tap → hologram */}
+                            <div
+                              className="absolute inset-[3px] rounded-full overflow-hidden flex items-center justify-center"
+                              style={{ background: "#0e0818" }}
+                              onClick={(e) => handleAvatarDoubleTap(e, {
+                                userId: authorId,
+                                username: rep.author?.username ?? "?",
+                                displayName: rep.author?.displayName,
+                                avatarUrl: rep.author?.avatarUrl ?? undefined,
+                              })}
+                            >
+                              {rep.author?.avatarUrl ? (
+                                <img
+                                  src={rep.author.avatarUrl}
+                                  alt={name}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                                />
+                              ) : (
+                                <span className="text-xl font-black"
+                                  style={{ color: "#c4b5fd" }}>
+                                  {initial}
+                                </span>
+                              )}
+                            </div>
+                            {/* Shimmer corner */}
+                            <div
+                              className="absolute bottom-0 right-0 w-4 h-4 rounded-full flex items-center justify-center"
+                              style={{
+                                background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+                                boxShadow: "0 0 8px rgba(124,58,237,0.9)",
+                                border: "1.5px solid #0e0818",
+                              }}
+                            >
+                              <span className="text-[7px] font-black text-white">▶</span>
+                            </div>
+                          </div>
+
+                          {/* Username */}
+                          <span
+                            className="text-[10px] font-semibold w-[68px] text-center truncate leading-none"
+                            style={{ color: "rgba(196,181,253,0.7)" }}
+                          >
+                            {rep.author?.username || ""}
+                          </span>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── POSTS ── */}
+            {displayPosts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f" }}>
+                <motion.div
+                  animate={{ opacity: [0.3, 0.7, 0.3] }}
+                  transition={{ duration: 2.5, repeat: Infinity }}
+                >
+                  <Flame className="w-16 h-16 text-violet-500/40" />
+                </motion.div>
+                <p className="text-white/40 text-sm">{t("home.no_posts")}</p>
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setSheetOpen(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                  {t("home.create_post")}
+                </motion.button>
+              </div>
+            ) : (
+              displayPosts.map((post, i) => (
+                <FeedCard key={post.id} post={post} index={i} />
+              ))
+            )}
+          </>
         )}
       </div>
+
+      {/* ── STORY VIEWER (portal expand) ── */}
+      <AnimatePresence>
+        {activeStory && activeGroup && viewerGroupIdx !== null && (
+          <motion.div
+            key={`viewer-${viewerGroupIdx}`}
+            initial={{
+              clipPath: portalOrigin
+                ? `circle(34px at ${portalOrigin.x}px ${portalOrigin.y}px)`
+                : "circle(0px at 50% 50%)",
+              opacity: 0,
+            }}
+            animate={{ clipPath: "circle(150% at 50% 50%)", opacity: 1 }}
+            exit={{ clipPath: "circle(0px at 50% 50%)", opacity: 0 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-[200] flex flex-col"
+            style={{ background: "#000", willChange: "clip-path" }}
+          >
+            {/* Media crossfade */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${viewerGroupIdx}-${viewerStoryIdx}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0"
+              >
+                {activeStory.mediaUrl ? (
+                  <>
+                    <img
+                      src={activeStory.mediaUrl}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const el = e.currentTarget as HTMLImageElement;
+                        el.style.display = "none";
+                        const fb = el.nextElementSibling as HTMLElement | null;
+                        if (fb) fb.style.display = "flex";
+                      }}
+                    />
+                    <div
+                      className="w-full h-full items-center justify-center px-10 hidden"
+                      style={{ background: "linear-gradient(160deg,#1a0533,#0d1a33)" }}
+                    >
+                      <p className="text-white text-xl font-bold text-center">{activeStory.caption || "✨"}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center px-10"
+                    style={{ background: "linear-gradient(160deg,#180430 0%,#0a1830 50%,#120320 100%)" }}
+                  >
+                    <p className="text-white text-2xl font-bold text-center leading-snug drop-shadow-lg">
+                      {activeStory.caption || "✨"}
+                    </p>
+                  </div>
+                )}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: "linear-gradient(to bottom,rgba(0,0,0,0.55) 0%,transparent 22%,transparent 68%,rgba(0,0,0,0.65) 100%)" }}
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Neon progress bars */}
+            <div className="relative z-10 flex gap-1 px-3 pt-12 pb-1">
+              {activeGroup.map((_: any, i: number) => (
+                <div
+                  key={i}
+                  className="h-[2.5px] flex-1 rounded-full overflow-hidden"
+                  style={{ background: "rgba(255,255,255,0.2)" }}
+                >
+                  {i < viewerStoryIdx ? (
+                    <div className="h-full w-full" style={{ background: "linear-gradient(to right,#a78bfa,#ec4899)" }} />
+                  ) : i === viewerStoryIdx ? (
+                    <motion.div
+                      key={`prog-${viewerGroupIdx}-${i}`}
+                      className="h-full"
+                      style={{ background: "linear-gradient(to right,#a78bfa,#ec4899)" }}
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 5, ease: "linear" }}
+                      onAnimationComplete={goNextInGroup}
+                    />
+                  ) : null}
+                </div>
+              ))}
+            </div>
+
+            {/* Author header */}
+            <div className="relative z-10 flex items-center gap-3 px-4 pt-2 pb-2">
+              {/* Avatar — double-tap → hologram */}
+              <div
+                className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
+                style={{
+                  border: "2px solid rgba(167,139,250,0.6)",
+                  boxShadow: "0 0 12px rgba(139,92,246,0.5)",
+                  background: "rgba(255,255,255,0.08)",
+                }}
+                onClick={(e) => handleAvatarDoubleTap(e, {
+                  userId: (activeStory.author as any)?.id ?? 0,
+                  username: activeStory.author?.username ?? "?",
+                  displayName: activeStory.author?.displayName,
+                  avatarUrl: activeStory.author?.avatarUrl ?? undefined,
+                })}
+              >
+                {activeStory.author?.avatarUrl ? (
+                  <img
+                    src={activeStory.author.avatarUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-violet-300">
+                    {(activeStory.author?.displayName || activeStory.author?.username || "?")[0].toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-[13px] font-bold leading-tight truncate">
+                  {activeStory.author?.displayName || activeStory.author?.username}
+                </p>
+                <p className="text-white/40 text-[11px] leading-tight">
+                  @{activeStory.author?.username}
+                  {activeGroup.length > 1 && (
+                    <span className="ml-2 text-white/25">{viewerStoryIdx + 1}/{activeGroup.length}</span>
+                  )}
+                </p>
+              </div>
+              {/* Hint label */}
+              <div
+                className="flex items-center gap-1 px-2 py-1 rounded-full mr-2"
+                style={{ background: "rgba(139,92,246,0.2)", border: "1px solid rgba(139,92,246,0.3)" }}
+              >
+                <span className="text-[9px] text-violet-300 tracking-wider">2× = hologram</span>
+              </div>
+              <button
+                onClick={closeViewer}
+                className="p-1.5 rounded-full"
+                style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                <X className="w-5 h-5 text-white/70" />
+              </button>
+            </div>
+
+            {/* Caption */}
+            {activeStory.caption && activeStory.mediaUrl && (
+              <div className="relative z-10 mt-auto px-5 pb-14">
+                <p className="text-white text-base font-semibold leading-snug drop-shadow-lg">
+                  {activeStory.caption}
+                </p>
+              </div>
+            )}
+
+            {/* Tap zones */}
+            <button className="absolute left-0 top-0 w-1/3 h-full z-20" onClick={goPrevInGroup} />
+            <button className="absolute right-0 top-0 w-1/3 h-full z-20" onClick={goNextInGroup} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── HOLOGRAPHIC PROFILE VIEWER (double-tap avatar) ── */}
+      <AnimatePresence>
+        {holoUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="fixed inset-0 z-[300] flex items-center justify-center"
+            style={{ background: "rgba(0,4,20,0.97)" }}
+            onClick={() => setHoloUser(null)}
+          >
+            {/* Scan line */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <motion.div
+                animate={{ y: ["-100%", "200%"] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }}
+                className="absolute left-0 right-0 h-[2px]"
+                style={{ background: "linear-gradient(to right,transparent,rgba(139,92,246,0.45),transparent)" }}
+              />
+              <div
+                className="absolute inset-0"
+                style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(120,80,255,0.025) 3px,rgba(120,80,255,0.025) 4px)" }}
+              />
+            </div>
+            {/* Grid */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: "linear-gradient(rgba(120,80,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(120,80,255,0.05) 1px,transparent 1px)",
+                backgroundSize: "40px 40px",
+              }}
+            />
+            {/* Card */}
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.5, opacity: 0, y: 40 }}
+              transition={{ type: "spring", damping: 18, stiffness: 280 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative flex flex-col items-center gap-5 px-8 py-10 rounded-3xl"
+              style={{
+                background: "rgba(6,4,24,0.92)",
+                border: "1px solid rgba(139,92,246,0.3)",
+                boxShadow: "0 0 60px rgba(100,60,255,0.2),0 0 120px rgba(80,40,200,0.12),inset 0 0 40px rgba(100,60,255,0.04)",
+                backdropFilter: "blur(24px)",
+                minWidth: 260,
+              }}
+            >
+              {/* Corner decorators */}
+              {(["top-2 left-2 border-t border-l","top-2 right-2 border-t border-r","bottom-2 left-2 border-b border-l","bottom-2 right-2 border-b border-r"] as const).map((cls) => (
+                <div key={cls} className={`absolute ${cls} w-4 h-4`} style={{ borderColor: "rgba(139,92,246,0.5)" }} />
+              ))}
+              {/* Orbiting rings + avatar */}
+              <div className="relative w-40 h-40 flex items-center justify-center">
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 rounded-full"
+                  style={{ border: "1px solid rgba(139,92,246,0.4)" }} />
+                <motion.div animate={{ rotate: -360 }} transition={{ duration: 3.2, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-4 rounded-full"
+                  style={{ border: "1px solid rgba(236,72,153,0.3)" }} />
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-8 rounded-full"
+                  style={{ border: "1px solid rgba(99,102,241,0.25)" }} />
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 rounded-full">
+                  <div className="absolute -top-1 left-1/2 w-2 h-2 rounded-full -translate-x-1/2"
+                    style={{ background: "#a78bfa", boxShadow: "0 0 8px #a78bfa" }} />
+                </motion.div>
+                <div
+                  className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center z-10"
+                  style={{
+                    border: "2px solid rgba(139,92,246,0.6)",
+                    boxShadow: "0 0 24px rgba(139,92,246,0.5),0 0 60px rgba(99,102,241,0.2)",
+                    background: "#0e0818",
+                  }}
+                >
+                  {holoUser.avatarUrl ? (
+                    <img src={holoUser.avatarUrl} alt="" className="w-full h-full object-cover"
+                      style={{ filter: "saturate(1.3) brightness(1.1)" }} />
+                  ) : (
+                    <span className="text-3xl font-black text-violet-300">
+                      {(holoUser.displayName || holoUser.username || "?")[0].toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {/* Name */}
+              <div className="text-center">
+                <motion.p
+                  animate={{ opacity: [1, 0.65, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-xl font-black tracking-widest uppercase"
+                  style={{ color: "#c4b5fd", textShadow: "0 0 18px rgba(139,92,246,0.7)" }}
+                >
+                  {holoUser.displayName || holoUser.username}
+                </motion.p>
+                <p className="text-[11px] tracking-widest mt-1" style={{ color: "rgba(167,139,250,0.5)" }}>
+                  @{holoUser.username}
+                </p>
+              </div>
+              {/* Holo label */}
+              <div
+                className="flex items-center gap-2 px-4 py-1.5 rounded-full"
+                style={{ border: "1px solid rgba(139,92,246,0.25)", background: "rgba(139,92,246,0.07)" }}
+              >
+                <motion.div
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: "#a78bfa" }}
+                />
+                <span className="text-[10px] tracking-[0.2em] font-bold" style={{ color: "rgba(167,139,250,0.8)" }}>
+                  HOLOGRAM ACTIVE
+                </span>
+              </div>
+              <p className="text-[10px] tracking-wider" style={{ color: "rgba(139,92,246,0.3)" }}>
+                [ Yopish uchun tashqariga bosing ]
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── FAB — Glass "···" button ── */}
       <AnimatePresence>

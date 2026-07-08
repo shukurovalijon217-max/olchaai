@@ -568,151 +568,172 @@ export default function HomePage() {
               <span className="text-violet-400/60 text-sm">{t("common.loading")}</span>
             </div>
           </div>
-        ) : displayPosts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f" }}>
-            <motion.div
-              animate={{ opacity: [0.3, 0.7, 0.3] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-            >
-              <Flame className="w-16 h-16 text-violet-500/40" />
-            </motion.div>
-            <p className="text-white/40 text-sm">{t("home.no_posts")}</p>
-            <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setSheetOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-              {t("home.create_post")}
-            </motion.button>
-          </div>
         ) : (
-          displayPosts.map((post, i) => (
-            <FeedCard key={post.id} post={post} index={i} />
-          ))
-        )}
-      </div>
-
-      {/* ── STORIES STRIP (fixed bottom, above FAB) ── */}
-      <AnimatePresence>
-        {storyGroups.length > 0 && !createOpen && !sheetOpen && viewerGroupIdx === null && !holoUser && (
-          <motion.div
-            initial={{ y: 120, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 120, opacity: 0 }}
-            transition={{ type: "spring", damping: 22, stiffness: 260 }}
-            className="fixed z-[55] left-0 right-0"
-            style={{ bottom: 68 }}
-          >
-            {/* Glass pill container */}
-            <div
-              className="mx-3 rounded-2xl px-3 py-2"
-              style={{
-                background: "rgba(6,4,20,0.78)",
-                border: "1px solid rgba(120,80,255,0.22)",
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
-              }}
-            >
-              {/* Pulse dot + label */}
-              <div className="flex items-center gap-1.5 mb-2">
-                <motion.div
-                  animate={{ opacity: [1, 0.3, 1], scale: [1, 1.3, 1] }}
-                  transition={{ duration: 1.6, repeat: Infinity }}
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ background: "#a78bfa" }}
-                />
-                <span className="text-[9px] tracking-[0.2em] font-bold uppercase"
-                  style={{ color: "rgba(167,139,250,0.55)" }}>
-                  Stories
-                </span>
-              </div>
-
-              {/* Horizontal scroll circles */}
+          <>
+            {/* ── STORIES SLIDE — first snap screen ── */}
+            {storyGroups.length > 0 && (
               <div
-                className="flex items-center gap-3 overflow-x-auto pb-0.5"
-                style={{ scrollbarWidth: "none" }}
+                style={{
+                  height: "100dvh",
+                  scrollSnapAlign: "start",
+                  display: "flex",
+                  flexDirection: "column",
+                  background: "#06060f",
+                  position: "relative",
+                }}
               >
-                {storyGroups.map((group, gi) => {
-                  const rep = group[0];
-                  const authorId = (rep.author as any)?.id ?? gi;
-                  const name = rep.author?.displayName || rep.author?.username || "?";
-                  const initial = name[0].toUpperCase();
+                {/* bg glow blobs */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full opacity-10"
+                    style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 70%)", filter: "blur(40px)" }} />
+                  <div className="absolute bottom-1/3 right-1/4 w-48 h-48 rounded-full opacity-8"
+                    style={{ background: "radial-gradient(circle, #ec4899 0%, transparent 70%)", filter: "blur(40px)" }} />
+                </div>
 
-                  return (
+                {/* Header */}
+                <div className="relative z-10 flex items-center justify-between px-5 pt-16 pb-6">
+                  <div className="flex items-center gap-2">
                     <motion.div
-                      key={authorId}
-                      className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer select-none"
-                      whileTap={{ scale: 0.85 }}
-                      onClick={(e) => handleStoryTap(e, gi)}
-                    >
-                      {/* Circle with animated neon border */}
-                      <div className="relative w-14 h-14">
-                        <motion.div
-                          className="absolute inset-0 rounded-full"
-                          animate={{
-                            boxShadow: [
-                              "0 0 0 2px rgba(139,92,246,0.8), 0 0 14px rgba(139,92,246,0.4)",
-                              "0 0 0 2px rgba(236,72,153,0.8), 0 0 18px rgba(236,72,153,0.45)",
-                              "0 0 0 2px rgba(99,102,241,0.8), 0 0 14px rgba(99,102,241,0.4)",
-                              "0 0 0 2px rgba(139,92,246,0.8), 0 0 14px rgba(139,92,246,0.4)",
-                            ],
-                          }}
-                          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                        />
-                        {/* Avatar — double-tap → hologram */}
-                        <div
-                          className="absolute inset-[3px] rounded-full overflow-hidden flex items-center justify-center"
-                          style={{ background: "#0e0818" }}
-                          onClick={(e) => handleAvatarDoubleTap(e, {
-                            userId: authorId,
-                            username: rep.author?.username ?? "?",
-                            displayName: rep.author?.displayName,
-                            avatarUrl: rep.author?.avatarUrl ?? undefined,
-                          })}
-                        >
-                          {rep.author?.avatarUrl ? (
-                            <img
-                              src={rep.author.avatarUrl}
-                              alt={name}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                            />
-                          ) : (
-                            <span className="text-lg font-black" style={{ color: "#c4b5fd" }}>
-                              {initial}
-                            </span>
+                      animate={{ opacity: [1, 0.3, 1], scale: [1, 1.4, 1] }}
+                      transition={{ duration: 1.6, repeat: Infinity }}
+                      className="w-2 h-2 rounded-full"
+                      style={{ background: "#a78bfa" }}
+                    />
+                    <span className="text-white font-bold text-lg tracking-wide">Stories</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                      style={{ background: "rgba(139,92,246,0.2)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.3)" }}>
+                      {storyGroups.length}
+                    </span>
+                  </div>
+                  <p className="text-[10px] tracking-wider" style={{ color: "rgba(167,139,250,0.45)" }}>
+                    2× bosing → hologram
+                  </p>
+                </div>
+
+                {/* Story circles grid */}
+                <div
+                  className="relative z-10 flex-1 flex flex-wrap content-start gap-x-5 gap-y-7 px-6 pt-2 overflow-y-auto"
+                  style={{ scrollbarWidth: "none" }}
+                >
+                  {storyGroups.map((group, gi) => {
+                    const rep = group[0];
+                    const authorId = (rep.author as any)?.id ?? gi;
+                    const name = rep.author?.displayName || rep.author?.username || "?";
+                    const initial = name[0].toUpperCase();
+
+                    return (
+                      <motion.div
+                        key={authorId}
+                        className="flex flex-col items-center gap-2 cursor-pointer select-none"
+                        style={{ width: 76 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: gi * 0.06 }}
+                        whileTap={{ scale: 0.86 }}
+                        onClick={(e) => handleStoryTap(e, gi)}
+                      >
+                        <div className="relative w-[72px] h-[72px]">
+                          {/* Animated neon glow ring */}
+                          <motion.div
+                            className="absolute inset-0 rounded-full"
+                            animate={{
+                              boxShadow: [
+                                "0 0 0 2.5px rgba(139,92,246,0.9), 0 0 20px rgba(139,92,246,0.4)",
+                                "0 0 0 2.5px rgba(236,72,153,0.9), 0 0 24px rgba(236,72,153,0.45)",
+                                "0 0 0 2.5px rgba(99,102,241,0.9), 0 0 20px rgba(99,102,241,0.4)",
+                                "0 0 0 2.5px rgba(139,92,246,0.9), 0 0 20px rgba(139,92,246,0.4)",
+                              ],
+                            }}
+                            transition={{ duration: 3 + gi * 0.4, repeat: Infinity, ease: "easeInOut" }}
+                          />
+                          {/* Avatar — double-tap → hologram */}
+                          <div
+                            className="absolute inset-[3.5px] rounded-full overflow-hidden flex items-center justify-center"
+                            style={{ background: "#0e0818" }}
+                            onClick={(e) => handleAvatarDoubleTap(e, {
+                              userId: authorId,
+                              username: rep.author?.username ?? "?",
+                              displayName: rep.author?.displayName,
+                              avatarUrl: rep.author?.avatarUrl ?? undefined,
+                            })}
+                          >
+                            {rep.author?.avatarUrl ? (
+                              <img
+                                src={rep.author.avatarUrl}
+                                alt={name}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                              />
+                            ) : (
+                              <span className="text-2xl font-black" style={{ color: "#c4b5fd" }}>
+                                {initial}
+                              </span>
+                            )}
+                          </div>
+                          {/* Story count badge */}
+                          {group.length > 1 && (
+                            <div
+                              className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black text-white z-10"
+                              style={{
+                                background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+                                boxShadow: "0 0 8px rgba(124,58,237,0.9)",
+                                border: "2px solid #06060f",
+                              }}
+                            >
+                              {group.length}
+                            </div>
                           )}
                         </div>
-                        {/* Count badge */}
-                        {group.length > 1 && (
-                          <div
-                            className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black text-white z-10"
-                            style={{
-                              background: "linear-gradient(135deg,#7c3aed,#ec4899)",
-                              boxShadow: "0 0 6px rgba(124,58,237,0.8)",
-                            }}
-                          >
-                            {group.length}
-                          </div>
-                        )}
-                      </div>
-                      <span
-                        className="text-[9px] font-medium w-14 text-center truncate leading-none"
-                        style={{ color: "rgba(196,181,253,0.6)" }}
-                      >
-                        {rep.author?.username || ""}
-                      </span>
-                    </motion.div>
-                  );
-                })}
+                        <span className="text-[11px] font-semibold text-center truncate w-full leading-none"
+                          style={{ color: "rgba(196,181,253,0.7)" }}>
+                          {rep.author?.username || ""}
+                        </span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Swipe hint */}
+                <div className="relative z-10 flex flex-col items-center gap-1 pb-8">
+                  <motion.div
+                    animate={{ y: [0, 5, 0] }}
+                    transition={{ duration: 1.4, repeat: Infinity }}
+                    className="flex flex-col items-center gap-1"
+                  >
+                    <div className="w-8 h-[1px]" style={{ background: "linear-gradient(to right,transparent,rgba(167,139,250,0.4),transparent)" }} />
+                    <span className="text-[10px] tracking-wider" style={{ color: "rgba(167,139,250,0.35)" }}>
+                      pastga suring → lenta
+                    </span>
+                  </motion.div>
+                </div>
               </div>
-            </div>
-          </motion.div>
+            )}
+
+            {/* ── POSTS ── */}
+            {displayPosts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f", scrollSnapAlign: "start" }}>
+                <motion.div animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 2.5, repeat: Infinity }}>
+                  <Flame className="w-16 h-16 text-violet-500/40" />
+                </motion.div>
+                <p className="text-white/40 text-sm">{t("home.no_posts")}</p>
+                <motion.button
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                  onClick={() => setSheetOpen(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                  {t("home.create_post")}
+                </motion.button>
+              </div>
+            ) : (
+              displayPosts.map((post, i) => (
+                <FeedCard key={post.id} post={post} index={i} />
+              ))
+            )}
+          </>
         )}
-      </AnimatePresence>
+      </div>
 
       {/* ── STORY VIEWER (portal expand) ── */}
       <AnimatePresence>

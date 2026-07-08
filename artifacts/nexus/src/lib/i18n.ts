@@ -1,6 +1,5 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 
 export type LangCode =
   | "uz" | "en" | "ru" | "zh" | "ar" | "es" | "fr" | "hi" | "pt" | "de"
@@ -2986,7 +2985,7 @@ for (const [lang, data] of Object.entries(t)) {
 
 // Pre-load cached translation for the stored language so there's no flash on reload
 try {
-  const storedLang = localStorage.getItem("gilos_lang");
+  const storedLang = localStorage.getItem("gilos_lang_user");
   if (storedLang && storedLang !== "uz" && storedLang !== "en") {
     const raw = localStorage.getItem(`gilos_trans_${TRANS_CACHE_VER}_${storedLang}`);
     if (raw) {
@@ -2995,24 +2994,18 @@ try {
   }
 } catch { /* ignore */ }
 
-// Agar foydalanuvchi til tanlamagan bo'lsa — uz ga o'rnat
-try {
-  if (!localStorage.getItem("gilos_lang")) {
-    localStorage.setItem("gilos_lang", "uz");
-  }
-} catch { /* ignore */ }
+// Foydalanuvchi o'zi tanlagan til (faqat Settings orqali o'rnatiladi)
+// Agar saqlanmagan bo'lsa — doim uz
+const _savedLang = (() => {
+  try { return localStorage.getItem("gilos_lang_user") || "uz"; } catch { return "uz"; }
+})();
 
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
+    lng: _savedLang,
     fallbackLng: "uz",
-    detection: {
-      order: ["localStorage", "navigator"],
-      caches: ["localStorage"],
-      lookupLocalStorage: "gilos_lang",
-    },
     interpolation: { escapeValue: false },
     nonExplicitSupportedLngs: true,
   });

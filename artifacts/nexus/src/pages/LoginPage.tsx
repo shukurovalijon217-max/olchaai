@@ -419,7 +419,7 @@ function LangSwitcher() {
   const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
   const handleSelect = (code: LangCode) => {
-    localStorage.setItem("gilos_lang", code);
+    localStorage.setItem("gilos_lang_user", code);
     i18nInst.changeLanguage(code);
     applyRTL(code);
     setOpen(false);

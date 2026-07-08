@@ -1,14 +1,7 @@
-import { Redirect } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
-import { useAuth } from "@/contexts/AuthContext";
 
-const DOMAIN = process.env.EXPO_PUBLIC_DOMAIN ?? "";
-const NEXUS_URL = DOMAIN
-  ? `https://${DOMAIN}/`
-  : typeof window !== "undefined"
-  ? window.location.origin + "/"
-  : "http://localhost:18245/";
+const WEB_URL = "https://olchaai.com/";
 
 function IframeShell() {
   const [loaded, setLoaded] = useState(false);
@@ -29,7 +22,7 @@ function IframeShell() {
       {loaded && (
         // @ts-ignore — iframe is valid HTML on web
         <iframe
-          src={NEXUS_URL}
+          src={WEB_URL}
           style={{
             width: "100%",
             height: "100%",
@@ -45,25 +38,39 @@ function IframeShell() {
   );
 }
 
-function NativeGate() {
-  const { token, isLoading } = useAuth();
+function NativeWebView() {
+  // @ts-ignore — dynamic import for native only
+  const WebView = require("react-native-webview").WebView;
+  const [loading, setLoading] = useState(true);
 
-  if (isLoading) {
-    return (
-      <View style={s.loading}>
-        <ActivityIndicator size="large" color="#7857ff" />
-        <Text style={s.loadingTxt}>GilosAI yuklanmoqda...</Text>
-      </View>
-    );
-  }
-
-  if (token) return <Redirect href="/(tabs)/feed" />;
-  return <Redirect href="/auth" />;
+  return (
+    <View style={{ flex: 1, backgroundColor: "#060d1a" }}>
+      {loading && (
+        <View style={s.loading}>
+          <ActivityIndicator size="large" color="#7857ff" />
+          <Text style={s.loadingTxt}>GilosAI yuklanmoqda...</Text>
+        </View>
+      )}
+      <WebView
+        source={{ uri: WEB_URL }}
+        style={{ flex: 1, opacity: loading ? 0 : 1 }}
+        onLoadEnd={() => setLoading(false)}
+        allowsInlineMediaPlayback
+        mediaPlaybackRequiresUserAction={false}
+        javaScriptEnabled
+        domStorageEnabled
+        sharedCookiesEnabled
+        thirdPartyCookiesEnabled
+        allowsFullscreenVideo
+        geolocationEnabled
+      />
+    </View>
+  );
 }
 
 export default function GilosAIApp() {
   if (Platform.OS === "web") return <IframeShell />;
-  return <NativeGate />;
+  return <NativeWebView />;
 }
 
 const s = StyleSheet.create({
@@ -73,6 +80,11 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 14,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   loadingTxt: { color: "#7a8fa8", fontSize: 14 },
 });

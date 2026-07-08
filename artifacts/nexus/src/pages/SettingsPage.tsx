@@ -627,7 +627,7 @@ function LanguageContent() {
 
   const handleChange = async (code: LangCode) => {
     if (translating) return;
-    localStorage.setItem("gilos_lang", code);
+    localStorage.setItem("gilos_lang_user", code);
     if (code !== "uz" && code !== "en" && !i18nInst.hasResourceBundle(code, "translation")) {
       setTranslating(code);
       try { await ensureTranslation(code); } catch { /* fallback to en */ }

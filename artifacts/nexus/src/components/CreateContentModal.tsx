@@ -935,7 +935,6 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
         const type = firstFile
           ? firstFile.type.startsWith("video") ? "video" : "photo"
           : "text";
-        const metaTags = [`_fmt:${displayFormat}`, `_cmt:${commentPerm}`, `_shr:${sharePerm}`];
         const urls = doneItems.map(m => m.serveUrl!);
         const postRes = await fetch(`${API}/api/posts`, {
           method: "POST",
@@ -961,7 +960,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
             hotTake: hotTake || undefined,
             scheduledAt: timeCapsule && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
             midnightOnly: getFeaturePref("midnight_confess", false) && midnightOnly ? true : undefined,
-            tags: metaTags,
+            tags: [],
             // ── 6 haqiqiy funksiyalar ──
             destructAt: selfDestruct ? (() => {
               const map: Record<string, number> = { "1h": 1, "6h": 6, "24h": 24, "48h": 48, "72h": 72, "7d": 168, "30d": 720 };

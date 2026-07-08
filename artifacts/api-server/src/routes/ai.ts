@@ -289,7 +289,7 @@ router.get("/ai/trending-topics", async (req, res) => {
       if (!Array.isArray(row.tags)) continue;
       const ageMs = now - new Date(row.createdAt).getTime();
       for (const tag of row.tags) {
-        if (!tag) continue;
+        if (!tag || tag.startsWith("_")) continue;
         if (ageMs <= DAY_MS) recentCounts[tag] = (recentCounts[tag] ?? 0) + 1;
         else if (ageMs <= 2 * DAY_MS) priorCounts[tag] = (priorCounts[tag] ?? 0) + 1;
       }
@@ -298,7 +298,7 @@ router.get("/ai/trending-topics", async (req, res) => {
     for (const row of rows) {
       if (!Array.isArray(row.tags)) continue;
       for (const tag of row.tags) {
-        if (tag) totalCounts[tag] = (totalCounts[tag] ?? 0) + 1;
+        if (tag && !tag.startsWith("_")) totalCounts[tag] = (totalCounts[tag] ?? 0) + 1;
       }
     }
 

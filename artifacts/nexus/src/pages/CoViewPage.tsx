@@ -16,10 +16,16 @@ interface Member {
   id: number; username: string; displayName: string;
   avatarUrl?: string | null; isVerified?: boolean;
 }
+interface ContentInfo {
+  videoUrl?: string | null;
+  thumbnailUrl?: string | null;
+  caption?: string | null;
+  title?: string | null;
+}
 interface Room {
   id: number; hostId: number; contentType: string; contentId: number;
   status: string; inviteCode: string; memberCount: number;
-  members: Member[];
+  members: Member[]; content?: ContentInfo | null;
 }
 interface ChatMsg { fromId: number; text: string; ts: number; displayName?: string; }
 
@@ -55,6 +61,7 @@ export default function CoViewPage() {
 
   const wsRef = useRef<WebSocket | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const isHost = room?.hostId === user?.id;
 
   const connect = (roomCode: string) => {
@@ -73,8 +80,17 @@ export default function CoViewPage() {
           setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
         }
         if (msg.type === "coview_sync") {
-          setSyncTime(msg.payload?.time ?? 0);
-          setIsPlaying(msg.payload?.playing ?? false);
+          const t = msg.payload?.time ?? 0;
+          const playing = msg.payload?.playing ?? false;
+          setSyncTime(t);
+          setIsPlaying(playing);
+          if (videoRef.current) {
+            if (Math.abs(videoRef.current.currentTime - t) > 1.5) {
+              videoRef.current.currentTime = t;
+            }
+            if (playing) { videoRef.current.play().catch(() => {}); }
+            else { videoRef.current.pause(); }
+          }
         }
       } catch { /* ignore */ }
     };
@@ -137,11 +153,16 @@ export default function CoViewPage() {
 
   const sendSync = (playing: boolean, time?: number) => {
     if (!isHost || !wsRef.current || wsRef.current.readyState !== 1) return;
+    const currentTime = time ?? (videoRef.current?.currentTime ?? syncTime);
     wsRef.current.send(JSON.stringify({
       type: "coview_sync", roomId: code,
-      payload: { playing, time: time ?? syncTime },
+      payload: { playing, time: currentTime },
     }));
     setIsPlaying(playing);
+    if (videoRef.current) {
+      if (playing) { videoRef.current.play().catch(() => {}); }
+      else { videoRef.current.pause(); }
+    }
   };
 
   const copyLink = () => {
@@ -228,24 +249,49 @@ export default function CoViewPage() {
 
       {/* Content area */}
       <div className="rounded-2xl border border-border/40 bg-card overflow-hidden mb-4">
-        <div className="aspect-video bg-gradient-to-br from-violet-950 to-slate-900 flex flex-col items-center justify-center relative">
-          <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 3, repeat: Infinity }}
-            className="w-16 h-16 rounded-2xl bg-violet-500/20 flex items-center justify-center mb-3">
-            <Tv2 className="w-8 h-8 text-violet-400" />
-          </motion.div>
-          <p className="text-white/60 text-sm font-medium mb-1">{t("coview.content_label")}</p>
-          <p className="text-white/40 text-xs font-mono">{room.contentType} #{room.contentId}</p>
+        <div className="relative bg-black">
+          {room.content?.videoUrl ? (
+            <video
+              ref={videoRef}
+              src={room.content.videoUrl}
+              poster={room.content.thumbnailUrl ?? undefined}
+              className="w-full aspect-video object-contain"
+              playsInline
+              controls={false}
+              onTimeUpdate={() => {
+                if (videoRef.current) setSyncTime(Math.floor(videoRef.current.currentTime));
+              }}
+            />
+          ) : (
+            <div className="aspect-video bg-gradient-to-br from-violet-950 to-slate-900 flex flex-col items-center justify-center">
+              <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 3, repeat: Infinity }}
+                className="w-16 h-16 rounded-2xl bg-violet-500/20 flex items-center justify-center mb-3">
+                <Tv2 className="w-8 h-8 text-violet-400" />
+              </motion.div>
+              <p className="text-white/60 text-sm font-medium mb-1">{t("coview.content_label")}</p>
+              <p className="text-white/40 text-xs font-mono">{room.contentType} #{room.contentId}</p>
+            </div>
+          )}
 
           {/* Sync indicator */}
-          <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/50 rounded-full px-2.5 py-1">
+          <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/60 rounded-full px-2.5 py-1">
             <Wifi className={`w-3 h-3 ${wsConnected ? "text-emerald-400" : "text-red-400"}`} />
             <span className="text-[10px] text-white/70">{room.memberCount} {t("coview.viewers")}</span>
           </div>
 
           {/* Time display */}
-          <div className="absolute bottom-3 left-3 text-white/50 text-xs font-mono">
+          <div className="absolute bottom-3 left-3 text-white/70 text-xs font-mono bg-black/50 px-2 py-0.5 rounded-full">
             {Math.floor(syncTime / 60)}:{String(syncTime % 60).padStart(2, "0")}
           </div>
+
+          {/* Caption / title */}
+          {(room.content?.caption || room.content?.title) && (
+            <div className="absolute bottom-3 right-3 max-w-[60%] text-right">
+              <p className="text-white/60 text-[11px] truncate bg-black/50 px-2 py-0.5 rounded-full">
+                {room.content.caption ?? room.content.title}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Playback controls (host only) */}

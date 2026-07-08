@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { coViewRoomsTable, coViewMembersTable, usersTable } from "@workspace/db";
+import { coViewRoomsTable, coViewMembersTable, usersTable, reelsTable, postsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -42,7 +42,27 @@ router.get("/coview/rooms/:code", requireAuth, async (req: any, res) => {
     }).from(coViewMembersTable)
       .innerJoin(usersTable, eq(coViewMembersTable.userId, usersTable.id))
       .where(eq(coViewMembersTable.roomId, room.id));
-    res.json({ ...room, members });
+
+    // Kontent ma'lumotlarini olib kelish (video URL uchun)
+    let content: { videoUrl?: string | null; thumbnailUrl?: string | null; caption?: string | null; title?: string | null } | null = null;
+    try {
+      if (room.contentType === "reel") {
+        const [reel] = await db.select({
+          videoUrl: reelsTable.videoUrl,
+          thumbnailUrl: reelsTable.thumbnailUrl,
+          caption: reelsTable.caption,
+        }).from(reelsTable).where(eq(reelsTable.id, room.contentId)).limit(1);
+        content = reel ?? null;
+      } else if (room.contentType === "post") {
+        const [post] = await db.select({
+          thumbnailUrl: postsTable.mediaUrl,
+          title: postsTable.content,
+        }).from(postsTable).where(eq(postsTable.id, room.contentId)).limit(1);
+        content = post ?? null;
+      }
+    } catch { /* non-fatal */ }
+
+    res.json({ ...room, members, content });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

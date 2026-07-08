@@ -4449,7 +4449,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <div key={i} className="flex gap-2">
                                 <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1 text-[10px] font-black" style={{background:"linear-gradient(135deg,#b45309,#fb923c)",color:"white"}}>{i+1}</div>
                                 <input value={r} onChange={e=>setChalRules(p=>{const n=[...p];n[i]=e.target.value;return n;})}
-                                  placeholder={`${i+1}t("create.chal_rules_ph")`}
+                                  placeholder={`${i+1}. ${t("create.chal_rules_ph")}`}
                                   className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none"
                                   style={{background:"rgba(251,146,60,0.07)",border:"1px solid rgba(251,146,60,0.2)"}}/>
                                 {i === chalRules.length-1 && <button onClick={()=>setChalRules(p=>[...p,""])} className="flex-shrink-0 mt-1"><Plus className="w-4 h-4" style={{color:"#fb923c"}}/></button>}

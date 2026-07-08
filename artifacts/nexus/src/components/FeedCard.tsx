@@ -499,6 +499,15 @@ export default function FeedCard({ post, index }: FeedCardProps) {
   let moodLabel = (post as any).mood as string | undefined;
   const tags: string[] = (post.tags ?? []).filter(t => !t.startsWith("_") && !t.includes(":"));
   const hasPoll = !!(post as any).pollQuestion;
+  const p = post as any;
+  const destructAt: string | null = p.destructAt ?? null;
+  const seriesName: string | null = p.seriesName ?? null;
+  const seriesOrder: number = p.seriesOrder ?? 1;
+  const liveMoodEnabled: boolean = !!p.liveMoodEnabled;
+  const liveMoodScore: number = p.liveMoodScore ?? 50;
+  const geoRadiusKm: number = p.geoRadiusKm ?? 0;
+  const collabCanvasEnabled: boolean = !!p.collabCanvasEnabled;
+  const collabCanvasId: string | null = p.collabCanvasId ?? null;
 
   if (deleted) return null;
 
@@ -961,6 +970,65 @@ export default function FeedCard({ post, index }: FeedCardProps) {
 
         {/* Poll */}
         {hasPoll && <PollWidget post={post as any} accent={accent} />}
+
+        {/* ── Series badge ── */}
+        {seriesName && (
+          <div className="flex items-center gap-1.5 mt-1.5 mb-1">
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg"
+              style={{ background: "rgba(245,158,11,0.18)", border: "1px solid rgba(245,158,11,0.4)", color: "#fbbf24" }}>
+              📺 {seriesName} — Epizod {seriesOrder}
+            </span>
+          </div>
+        )}
+
+        {/* ── Auto Destruct timer ── */}
+        {destructAt && (() => {
+          const msLeft = new Date(destructAt).getTime() - Date.now();
+          if (msLeft <= 0) return null;
+          const hLeft = Math.floor(msLeft / 3600000);
+          const mLeft = Math.floor((msLeft % 3600000) / 60000);
+          return (
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-[11px] px-2 py-0.5 rounded-lg font-semibold"
+                style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.4)", color: "#f87171" }}>
+                💣 {hLeft > 0 ? `${hLeft}s ` : ""}{mLeft}d da o'chadi
+              </span>
+            </div>
+          );
+        })()}
+
+        {/* ── Live Mood meter ── */}
+        {liveMoodEnabled && (
+          <div className="mt-2 mb-1">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] text-white/50">📊 Kayfiyat metri</span>
+              <span className="text-[10px] font-bold text-indigo-400">{liveMoodScore}%</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${liveMoodScore}%`, background: "linear-gradient(90deg,#6366f1,#a78bfa)" }} />
+            </div>
+          </div>
+        )}
+
+        {/* ── Geo-Bloom badge ── */}
+        {geoRadiusKm > 0 && (
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[11px] px-2 py-0.5 rounded-lg"
+              style={{ background: "rgba(34,211,238,0.12)", border: "1px solid rgba(34,211,238,0.35)", color: "#22d3ee" }}>
+              🌍 {geoRadiusKm} km radius
+            </span>
+          </div>
+        )}
+
+        {/* ── Collab Canvas badge ── */}
+        {collabCanvasEnabled && collabCanvasId && (
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[11px] px-2 py-0.5 rounded-lg"
+              style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "#a78bfa" }}>
+              🎨 Birgalikda yaratilgan
+            </span>
+          </div>
+        )}
       </motion.div>
 
       {/* ═══ LAYER 19: BOTTOM GRADIENT + WAVEFORM (no dark bar) ═══ */}

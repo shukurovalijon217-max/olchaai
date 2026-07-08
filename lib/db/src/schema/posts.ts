@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, integer, timestamp, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -25,6 +25,24 @@ export const postsTable = pgTable("posts", {
   sharesCount: integer("shares_count").notNull().default(0),
   isFlagged: boolean("is_flagged").notNull().default(false),
   midnightOnly: boolean("midnight_only").notNull().default(false),
+  // Auto Self-Destruct
+  destructAt: timestamp("destruct_at"),
+  // Geo-Bloom
+  geoLat: real("geo_lat"),
+  geoLng: real("geo_lng"),
+  geoRadiusKm: integer("geo_radius_km").default(0),
+  // Emotion Lock
+  emotionLock: boolean("emotion_lock").default(false),
+  lockedEmotion: text("locked_emotion"),
+  // Live Kayfiyat Metri
+  liveMoodEnabled: boolean("live_mood_enabled").default(false),
+  liveMoodScore: integer("live_mood_score").default(50),
+  // Kontent Seriyasi
+  seriesName: text("series_name"),
+  seriesOrder: integer("series_order").default(1),
+  // Collab Canvas
+  collabCanvasEnabled: boolean("collab_canvas_enabled").default(false),
+  collabCanvasId: text("collab_canvas_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

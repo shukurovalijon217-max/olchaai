@@ -407,6 +407,17 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   /* ── Geo-Bloom state ── */
   const [geoBloomEnabled,      setGeoBloomEnabled]      = useState(false);
   const [geoBloomRadius,       setGeoBloomRadius]       = useState(50);
+  const toggleGeoBloom = () => {
+    setGeoBloomEnabled(p => {
+      if (!p && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          (window as any).__userGeoLat = pos.coords.latitude;
+          (window as any).__userGeoLng = pos.coords.longitude;
+        });
+      }
+      return !p;
+    });
+  };
   /* ── Voice Caption state ── */
   const [voiceCapRecording,    setVoiceCapRecording]    = useState(false);
   const [voiceCapTranscribing, setVoiceCapTranscribing] = useState(false);
@@ -951,6 +962,20 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
             scheduledAt: timeCapsule && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
             midnightOnly: getFeaturePref("midnight_confess", false) && midnightOnly ? true : undefined,
             tags: metaTags,
+            // ── 6 haqiqiy funksiyalar ──
+            destructAt: selfDestruct ? (() => {
+              const map: Record<string, number> = { "1h": 1, "6h": 6, "24h": 24, "48h": 48, "72h": 72, "7d": 168, "30d": 720 };
+              const h = map[selfDestructTime] ?? 24;
+              return new Date(Date.now() + h * 3600 * 1000).toISOString();
+            })() : undefined,
+            geoLat: geoBloomEnabled ? (window as any).__userGeoLat ?? undefined : undefined,
+            geoLng: geoBloomEnabled ? (window as any).__userGeoLng ?? undefined : undefined,
+            geoRadiusKm: geoBloomEnabled ? geoBloomRadius : undefined,
+            liveMoodEnabled: sentimentMeter || undefined,
+            seriesName: seriesEnabled && seriesTitle.trim() ? seriesTitle.trim() : undefined,
+            seriesOrder: seriesEnabled ? seriesEpisode : undefined,
+            collabCanvasEnabled: collabCanvas || undefined,
+            collabCanvasId: collabCanvas ? (Math.random().toString(36).slice(2) + Date.now().toString(36)) : undefined,
           }),
         });
         qc.invalidateQueries({ queryKey: getListPostsQueryKey() });

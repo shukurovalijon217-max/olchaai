@@ -153,7 +153,7 @@ function unflattenObj(flat: Record<string, string>): Record<string, unknown> {
   }, {} as Record<string, unknown>);
 }
 
-const TRANS_CACHE_VER = "v4";
+const TRANS_CACHE_VER = "v5";
 const BATCH_SIZE = 100;
 
 // ── resources ──────────────────────────────────────────────────────────────

@@ -55,14 +55,30 @@ function NativeWebView() {
         source={{ uri: WEB_URL }}
         style={{ flex: 1, opacity: loading ? 0 : 1 }}
         onLoadEnd={() => setLoading(false)}
+        // Media
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={false}
+        allowsFullscreenVideo
+        // JS & Storage
         javaScriptEnabled
         domStorageEnabled
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
-        allowsFullscreenVideo
+        // Geolocation
         geolocationEnabled
+        // Android performance
+        androidHardwareAccelerationDisabled={false}
+        renderToHardwareTextureAndroid
+        overScrollMode="never"
+        cacheEnabled
+        cacheMode="LOAD_CACHE_ELSE_NETWORK"
+        setSupportMultipleWindows={false}
+        startInLoadingState={false}
+        // Scroll
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        decelerationRate="normal"
       />
     </View>
   );

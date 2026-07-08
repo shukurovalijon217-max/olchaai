@@ -6,7 +6,7 @@ import NexusLogo from "@/components/NexusLogo";
 import GilosWordmark from "@/components/GilosWordmark";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
-import { LANGUAGES, type LangCode, applyRTL } from "@/lib/i18n";
+import { LANGUAGES, type LangCode, applyRTL, ensureTranslation } from "@/lib/i18n";
 import SafetyConsentModal from "@/components/SafetyConsentModal";
 
 /* ─── Popular languages shown first ──────────────────────────── */
@@ -418,12 +418,13 @@ function LangSwitcher() {
   };
   const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
-  const handleSelect = (code: LangCode) => {
+  const handleSelect = async (code: LangCode) => {
     localStorage.setItem("gilos_lang_user", code);
-    i18nInst.changeLanguage(code);
     applyRTL(code);
     setOpen(false);
     setSearch("");
+    await ensureTranslation(code);
+    i18nInst.changeLanguage(code);
   };
 
   const filtered = LANGUAGES.filter(l => {

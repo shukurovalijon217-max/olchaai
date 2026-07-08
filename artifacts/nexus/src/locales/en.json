@@ -2793,17 +2793,17 @@
     "otube_dub_close": "Close"
   },
   "about": {
-    "title": "Haqida",
-    "meta_title": "Loyiha va asoschisi haqida",
-    "intro": "Gilos — sun'iy intellekt bilan boyitilgan ijtimoiy tarmoq.",
-    "founder_label": "Asoschisi",
+    "title": "About",
+    "meta_title": "About the project and founder",
+    "intro": "GilosAI — an AI-powered social network.",
+    "founder_label": "Founder",
     "founder_name": "Alijon Shukurov Axmadovich",
-    "founder_role": "Asoschisi va bosh direktor",
-    "location_label": "Joylashuv",
-    "location_value": "Toshkent, O'zbekiston",
-    "mission_title": "Missiyamiz",
-    "mission_text": "Foydalanuvchilarga o'z shaxsiy hayoti va ma'lumotlarini nazorat qilish imkonini beruvchi, sun'iy intellekt bilan kuchaytirilgan ijtimoiy platforma yaratish.",
-    "contact_hint": "Savol yoki takliflaringiz bo'lsa, ilova ichidagi qo'llab-quvvatlash orqali murojaat qiling.",
-    "back": "Bosh sahifaga qaytish"
+    "founder_role": "Founder & CEO",
+    "location_label": "Location",
+    "location_value": "Tashkent, Uzbekistan",
+    "mission_title": "Our Mission",
+    "mission_text": "Building an AI-powered social platform that gives users full control over their personal data and digital life.",
+    "contact_hint": "For questions or suggestions, please reach out via the in-app support.",
+    "back": "Back to Home"
   }
 }

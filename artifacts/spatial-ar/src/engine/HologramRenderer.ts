@@ -110,7 +110,7 @@ export class HologramRenderer {
     this.buildFloatingPanels(primary);
     this.buildWireframes(primary);
     this.buildParticles(primary);
-    this.buildOlchaAILogo(primary);
+    this.buildGilosAILogo(primary);
   }
 
   private buildAxes() {
@@ -233,7 +233,7 @@ export class HologramRenderer {
     this.scene.add(this.particles);
   }
 
-  private buildOlchaAILogo(color: THREE.Color) {
+  private buildGilosAILogo(color: THREE.Color) {
     const group = new THREE.Group();
     const ringGeo = new THREE.TorusGeometry(1.2, 0.04, 8, 64);
     const ringMat = hologramMaterial(color, 0.7, 0.4, 0.01);

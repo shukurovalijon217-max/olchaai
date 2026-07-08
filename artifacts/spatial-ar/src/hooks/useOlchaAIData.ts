@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export interface OlchaAIPost {
+export interface GilosAIPost {
   id: number;
   content: string;
   createdAt: string;
@@ -15,7 +15,7 @@ export interface OlchaAIPost {
   };
 }
 
-export interface OlchaAIProfile {
+export interface GilosAIProfile {
   id: string;
   username: string;
   displayName: string;
@@ -30,8 +30,8 @@ export function timeAgo(iso: string): string {
   return `${Math.round(diff / 86400)}d`;
 }
 
-export function useOlchaAIData() {
-  const [posts, setPosts] = useState<OlchaAIPost[]>([]);
+export function useGilosAIData() {
+  const [posts, setPosts] = useState<GilosAIPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function useOlchaAIData() {
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((data) => {
         if (cancelled) return;
-        const arr: OlchaAIPost[] = Array.isArray(data) ? data : (data.posts ?? []);
+        const arr: GilosAIPost[] = Array.isArray(data) ? data : (data.posts ?? []);
         setPosts(arr);
       })
       .catch(() => { if (!cancelled) setPosts([]); })
@@ -51,8 +51,8 @@ export function useOlchaAIData() {
   return { posts, loading };
 }
 
-export function useOlchaAIProfiles() {
-  const [profiles, setProfiles] = useState<OlchaAIProfile[]>([]);
+export function useGilosAIProfiles() {
+  const [profiles, setProfiles] = useState<GilosAIProfile[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,7 +61,7 @@ export function useOlchaAIProfiles() {
       .then((data) => {
         if (cancelled) return;
         const arr = Array.isArray(data) ? data : (data.users ?? []);
-        const mapped: OlchaAIProfile[] = arr.map((u: any) => ({
+        const mapped: GilosAIProfile[] = arr.map((u: any) => ({
           id: String(u.id),
           username: u.username,
           displayName: u.displayName ?? u.username,

@@ -1,4 +1,4 @@
-// OlchaAI — Go Real-Time Microservice
+// GilosAI — Go Real-Time Microservice
 // High-performance WebSocket hub + feed ranking engine + live stream signaling
 // Serves: /go/ws (WebSocket), /go/health, /go/rank, /go/trending, /go/live/rooms
 package main
@@ -614,7 +614,7 @@ func handleRank(db *sql.DB) http.HandlerFunc {
                 w.Header().Set("Content-Type", "application/json")
                 json.NewEncoder(w).Encode(map[string]any{
                         "ranked": posts,
-                        "engine": "OlchaAI-Go-RankV1",
+                        "engine": "GilosAI-Go-RankV1",
                         "ts":     time.Now().UnixMilli(),
                 })
         }
@@ -633,7 +633,7 @@ func handleTrending(db *sql.DB) http.HandlerFunc {
         return func(w http.ResponseWriter, r *http.Request) {
                 if db == nil {
                         w.Header().Set("Content-Type", "application/json")
-                        json.NewEncoder(w).Encode(map[string]any{"trending": []Trend{}, "engine": "OlchaAI-Go-TrendV1"})
+                        json.NewEncoder(w).Encode(map[string]any{"trending": []Trend{}, "engine": "GilosAI-Go-TrendV1"})
                         return
                 }
                 rows, err := db.Query(`
@@ -655,7 +655,7 @@ func handleTrending(db *sql.DB) http.HandlerFunc {
                         trends = append(trends, t)
                 }
                 w.Header().Set("Content-Type", "application/json")
-                json.NewEncoder(w).Encode(map[string]any{"trending": trends, "engine": "OlchaAI-Go-TrendV1"})
+                json.NewEncoder(w).Encode(map[string]any{"trending": trends, "engine": "GilosAI-Go-TrendV1"})
         }
 }
 
@@ -671,7 +671,7 @@ func handleStats(hub *Hub) http.HandlerFunc {
                 json.NewEncoder(w).Encode(map[string]any{
                         "connections": total,
                         "uniqueUsers": users,
-                        "engine":      "OlchaAI-Go-WSHub",
+                        "engine":      "GilosAI-Go-WSHub",
                         "goVersion":   "1.25",
                         "uptime":      time.Since(startTime).String(),
                 })

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { OlchaAIProfile } from "../hooks/useOlchaAIData";
+import type { GilosAIProfile } from "../hooks/useGilosAIData";
 
 const AVATAR_COLORS = [
   "linear-gradient(135deg,#ff6b6b,#ee5a24)",
@@ -12,7 +12,7 @@ const AVATAR_COLORS = [
 ];
 
 interface ProfileOrbitProps {
-  profiles?: OlchaAIProfile[];
+  profiles?: GilosAIProfile[];
 }
 
 export function ProfileOrbit({ profiles = [] }: ProfileOrbitProps) {

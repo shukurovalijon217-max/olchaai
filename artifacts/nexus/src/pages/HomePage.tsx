@@ -582,12 +582,32 @@ export default function HomePage() {
                   position: "relative",
                 }}
               >
-                {/* bg glow blobs */}
+                {/* bg glow blobs — animated, fill the frame so no dead space */}
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full opacity-10"
-                    style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 70%)", filter: "blur(40px)" }} />
-                  <div className="absolute bottom-1/3 right-1/4 w-48 h-48 rounded-full opacity-8"
-                    style={{ background: "radial-gradient(circle, #ec4899 0%, transparent 70%)", filter: "blur(40px)" }} />
+                  <motion.div
+                    className="absolute top-[18%] left-1/2 w-80 h-80 rounded-full"
+                    style={{ background: "radial-gradient(circle, #7c3aed 0%, transparent 70%)", filter: "blur(50px)", marginLeft: -160 }}
+                    animate={{ opacity: [0.12, 0.22, 0.12], scale: [1, 1.15, 1] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="absolute bottom-[22%] left-[20%] w-64 h-64 rounded-full"
+                    style={{ background: "radial-gradient(circle, #ec4899 0%, transparent 70%)", filter: "blur(45px)" }}
+                    animate={{ opacity: [0.08, 0.18, 0.08], scale: [1, 1.2, 1] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                  />
+                  <motion.div
+                    className="absolute bottom-[30%] right-[15%] w-56 h-56 rounded-full"
+                    style={{ background: "radial-gradient(circle, #6366f1 0%, transparent 70%)", filter: "blur(45px)" }}
+                    animate={{ opacity: [0.1, 0.2, 0.1], scale: [1, 1.1, 1] }}
+                    transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  />
+                  {/* faint grid texture so the empty area reads as intentional, not broken */}
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: "radial-gradient(rgba(167,139,250,0.08) 1px, transparent 1px)",
+                    backgroundSize: "28px 28px",
+                    maskImage: "radial-gradient(ellipse 70% 60% at 50% 45%, black 0%, transparent 75%)",
+                  }} />
                 </div>
 
                 {/* Header */}
@@ -610,9 +630,9 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                {/* Story circles grid */}
+                {/* Story circles grid — centers in the available space so few stories don't leave dead space */}
                 <div
-                  className="relative z-10 flex-1 flex flex-wrap content-start gap-x-5 gap-y-7 px-6 pt-2 overflow-y-auto"
+                  className="relative z-10 flex-1 flex flex-wrap content-center items-center justify-center gap-x-5 gap-y-7 px-6 overflow-y-auto"
                   style={{ scrollbarWidth: "none" }}
                 >
                   {storyGroups.map((group, gi) => {

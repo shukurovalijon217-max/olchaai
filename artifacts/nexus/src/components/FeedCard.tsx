@@ -231,9 +231,11 @@ function PollWidget({ post, accent }: { post: Post & any; accent: string }) {
 interface FeedCardProps {
   post: Post & { commentPermission?: string; sharePermission?: string; displayFormat?: string };
   index: number;
+  hasStory?: boolean;
+  onOpenStory?: (rect: DOMRect) => void;
 }
 
-export default function FeedCard({ post, index }: FeedCardProps) {
+export default function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps) {
   const accent   = ACCENTS[index % ACCENTS.length];
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -277,6 +279,48 @@ export default function FeedCard({ post, index }: FeedCardProps) {
     setOverlayVisible(true);
     if (overlayHideTimer.current) clearTimeout(overlayHideTimer.current);
     overlayHideTimer.current = setTimeout(() => setOverlayVisible(false), 3200);
+  }, []);
+
+  /* Avatar double-tap → live story bubble → tap again → fullscreen story */
+  const [liveStoryMode, setLiveStoryMode] = useState(false);
+  const lastAvatarTap = useRef(0);
+  const avatarTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liveModeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleAvatarClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+
+    if (liveStoryMode) {
+      if (liveModeTimer.current) clearTimeout(liveModeTimer.current);
+      setLiveStoryMode(false);
+      if (hasStory && onOpenStory) onOpenStory(rect);
+      return;
+    }
+
+    const now = Date.now();
+    const isDoubleTap = now - lastAvatarTap.current < 320;
+    lastAvatarTap.current = now;
+
+    if (avatarTapTimer.current) { clearTimeout(avatarTapTimer.current); avatarTapTimer.current = null; }
+
+    if (isDoubleTap && hasStory) {
+      setLiveStoryMode(true);
+      if (liveModeTimer.current) clearTimeout(liveModeTimer.current);
+      liveModeTimer.current = setTimeout(() => setLiveStoryMode(false), 4500);
+      return;
+    }
+
+    avatarTapTimer.current = setTimeout(() => {
+      post.author?.id && navigate(`/profile/${post.author.id}`);
+    }, isDoubleTap ? 0 : 260);
+  }, [liveStoryMode, hasStory, onOpenStory, post.author?.id, navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarTapTimer.current) clearTimeout(avatarTapTimer.current);
+      if (liveModeTimer.current) clearTimeout(liveModeTimer.current);
+    };
   }, []);
 
   /* Album carousel */
@@ -732,7 +776,7 @@ export default function FeedCard({ post, index }: FeedCardProps) {
           <div
             className="relative cursor-pointer"
             style={{ width: 40, height: 40 }}
-            onClick={(e) => { e.stopPropagation(); post.author?.id && navigate(`/profile/${post.author.id}`); }}
+            onClick={handleAvatarClick}
           >
             <div className="absolute inset-[-2px] rounded-full pointer-events-none"
               style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
@@ -743,6 +787,42 @@ export default function FeedCard({ post, index }: FeedCardProps) {
                 : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
               }
             </div>
+
+            {/* ── Live story bubble — appears on avatar double-tap, tap again → fullscreen story ── */}
+            <AnimatePresence>
+              {liveStoryMode && (
+                <motion.div
+                  key="live-story-ring"
+                  initial={{ opacity: 0, scale: 0.55 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.55 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="absolute inset-[-6px] rounded-full"
+                  style={{ zIndex: 25 }}
+                >
+                  <motion.div
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    animate={{
+                      boxShadow: [
+                        "0 0 0 3px rgba(236,72,153,0.95), 0 0 22px rgba(236,72,153,0.65)",
+                        "0 0 0 3px rgba(139,92,246,0.95), 0 0 26px rgba(139,92,246,0.65)",
+                        "0 0 0 3px rgba(236,72,153,0.95), 0 0 22px rgba(236,72,153,0.65)",
+                      ],
+                    }}
+                    transition={{ duration: 1.1, repeat: Infinity }}
+                  />
+                  <motion.div
+                    className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-[3px] rounded-full pointer-events-none"
+                    style={{ background: "linear-gradient(135deg,#ec4899,#7c3aed)", boxShadow: "0 0 10px rgba(236,72,153,0.85)" }}
+                    animate={{ scale: [1, 1.18, 1] }}
+                    transition={{ duration: 0.85, repeat: Infinity }}
+                  >
+                    <span className="w-1 h-1 rounded-full bg-white" />
+                    <span className="text-[6.5px] font-black text-white tracking-wider">LIVE</span>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

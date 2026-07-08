@@ -389,6 +389,25 @@ export default function HomePage() {
   const activeGroup = viewerGroupIdx !== null ? storyGroups[viewerGroupIdx] : null;
   const activeStory = activeGroup ? (activeGroup[viewerStoryIdx] ?? null) : null;
 
+  /* Map authorId -> storyGroups index, so feed post avatars can open that author's story */
+  const authorStoryIndex = useMemo(() => {
+    const map = new Map<number, number>();
+    storyGroups.forEach((g, idx) => {
+      const uid = (g[0]?.author as any)?.id;
+      if (uid != null) map.set(uid, idx);
+    });
+    return map;
+  }, [storyGroups]);
+
+  /* Called from a FeedCard post avatar (double-tap → live bubble → tap) */
+  const openStoryForAuthor = useCallback((authorId: number, rect: DOMRect) => {
+    const idx = authorStoryIndex.get(authorId);
+    if (idx === undefined) return;
+    setPortalOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    setViewerGroupIdx(idx);
+    setViewerStoryIdx(0);
+  }, [authorStoryIndex]);
+
   const closeViewer = useCallback(() => {
     setViewerGroupIdx(null);
     setViewerStoryIdx(0);
@@ -748,7 +767,15 @@ export default function HomePage() {
               </div>
             ) : (
               displayPosts.map((post, i) => (
-                <FeedCard key={post.id} post={post} index={i} />
+                <FeedCard
+                  key={post.id}
+                  post={post}
+                  index={i}
+                  hasStory={post.author?.id != null && authorStoryIndex.has(post.author.id)}
+                  onOpenStory={(rect) => {
+                    if (post.author?.id != null) openStoryForAuthor(post.author.id, rect);
+                  }}
+                />
               ))
             )}
           </>

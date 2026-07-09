@@ -9,6 +9,8 @@ import { accumulateViewEarning } from "./monetization";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheGet, cacheSet } from "../lib/cache";
+import { transcodeReelToHLS, parseGcsPath } from "../lib/hlsTranscode";
+import { objectStorageClient } from "../lib/objectStorage";
 
 const router = Router();
 
@@ -155,6 +157,9 @@ router.post("/reels", async (req, res) => {
 
     const [enriched] = await batchEnrichReels([reel], viewerId);
     res.status(201).json(enriched);
+
+    /* HLS transcoding in background — never blocks response */
+    void transcodeReelToHLS(reel.id, videoUrl).catch(() => {});
 
     /* AI scan in background — never blocks response */
     void (async () => {
@@ -595,6 +600,36 @@ router.post("/reels/:id/versions", requireAuth, async (req: any, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Xato" });
+  }
+});
+
+/* ── GET /reels/hls/:reelId/:filename — serve HLS segments ───── */
+router.get("/reels/hls/:reelId/:filename", async (req, res) => {
+  const { reelId, filename } = req.params;
+  // Validate to prevent path traversal
+  if (!/^(playlist\.m3u8|seg_\d+\.ts)$/.test(filename)) {
+    res.status(400).json({ error: "Invalid filename" }); return;
+  }
+  const privateDir = process.env.PRIVATE_OBJECT_DIR ?? "";
+  if (!privateDir) { res.status(503).json({ error: "Storage not configured" }); return; }
+  try {
+    const { bucketName, objectName: bucketPrefix } = parseGcsPath(privateDir);
+    const objectName = `${bucketPrefix}/hls/${reelId}/${filename}`;
+    const file = objectStorageClient.bucket(bucketName).file(objectName);
+    const contentType = filename.endsWith(".m3u8")
+      ? "application/vnd.apple.mpegurl"
+      : "video/MP2T";
+    res.set({
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=86400",
+      "Access-Control-Allow-Origin": "*",
+    });
+    file.createReadStream()
+      .on("error", () => { if (!res.headersSent) res.status(404).end(); })
+      .pipe(res);
+  } catch (err) {
+    req.log.error({ err }, "HLS segment serve error");
+    if (!res.headersSent) res.status(500).end();
   }
 });
 

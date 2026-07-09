@@ -28,6 +28,7 @@
 import {
   useState, useEffect, useRef, useCallback,
 } from "react";
+import Hls from "hls.js";
 import {
   motion, AnimatePresence, useMotionValue, useTransform,
 } from "framer-motion";
@@ -46,7 +47,7 @@ const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface FeedItem {
-  id: number; videoUrl?: string | null; thumbnailUrl?: string | null;
+  id: number; videoUrl?: string | null; thumbnailUrl?: string | null; hlsUrl?: string | null;
   caption?: string | null; audioTrack?: string | null; duration?: number | null;
   likesCount?: number; commentsCount?: number; viewsCount?: number; tags?: string[];
   author?: { id: number; username?: string; displayName?: string; avatarUrl?: string | null; isVerified?: boolean; isFollowing?: boolean };
@@ -333,22 +334,64 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
 }
 
 /* ─── Video element ──────────────────────────────────────────── */
-function ReelVideoEl({ videoUrl, thumbnailUrl, isActive, muted, videoRef, onPlayState }: {
-  videoUrl?: string | null; thumbnailUrl?: string | null; isActive: boolean; muted: boolean;
+function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef, onPlayState }: {
+  videoUrl?: string | null; hlsUrl?: string | null; thumbnailUrl?: string | null;
+  isActive: boolean; muted: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>; onPlayState: (p: boolean) => void;
 }) {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(false);
+  const hlsRef = useRef<Hls | null>(null);
+
+  /* Attach HLS.js or native HLS source to the video element */
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    // Destroy previous HLS instance if any
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
+
+    const src = hlsUrl ?? videoUrl;
+    if (!src) return;
+
+    const isHls = src.includes(".m3u8");
+
+    if (isHls && Hls.isSupported()) {
+      const hls = new Hls({
+        startLevel: -1,            // auto quality
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+      });
+      hlsRef.current = hls;
+      hls.loadSource(src);
+      hls.attachMedia(v);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        v.muted = muted;
+      });
+    } else {
+      // Safari native HLS or direct video
+      v.src = src;
+    }
+
+    return () => {
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hlsUrl, videoUrl]);
 
   useEffect(() => {
     const v = videoRef.current; if (!v) return;
-    if (isActive) { v.currentTime = 0; setError(false); setLoading(v.readyState < 3); v.play().catch(() => onPlayState(true)); }
-    else { v.pause(); v.currentTime = 0; }
+    if (isActive) {
+      v.currentTime = 0; setError(false); setLoading(v.readyState < 3);
+      v.play().catch(() => onPlayState(true));
+    } else { v.pause(); v.currentTime = 0; }
   }, [isActive, videoRef, onPlayState]);
 
   useEffect(() => { if (videoRef.current) videoRef.current.muted = muted; }, [muted, videoRef]);
 
-  if (!videoUrl) return (
+  if (!videoUrl && !hlsUrl) return (
     <div className="absolute inset-0">
       {thumbnailUrl ? <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
         : <div className="w-full h-full" style={{ background: "linear-gradient(135deg,#1e0533,#030314)" }} />}
@@ -362,7 +405,7 @@ function ReelVideoEl({ videoUrl, thumbnailUrl, isActive, muted, videoRef, onPlay
           style={{ filter: "blur(24px) brightness(0.28)", pointerEvents: "none" }} />
       )}
       <video ref={videoRef as React.RefObject<HTMLVideoElement>}
-        src={videoUrl} poster={thumbnailUrl ?? undefined}
+        poster={thumbnailUrl ?? undefined}
         className="absolute inset-0 w-full h-full object-contain z-[2]"
         loop playsInline muted={muted} preload="auto"
         onLoadedData={() => setLoading(false)} onCanPlay={() => setLoading(false)}
@@ -618,7 +661,7 @@ function ReelSlide({
         background: "radial-gradient(ellipse at 50% 35%, rgba(124,58,237,0.07) 0%, rgba(0,0,0,0.4) 100%)" }} />
 
       {/* Video */}
-      <ReelVideoEl videoUrl={reel.videoUrl} thumbnailUrl={reel.thumbnailUrl}
+      <ReelVideoEl videoUrl={reel.videoUrl} hlsUrl={reel.hlsUrl} thumbnailUrl={reel.thumbnailUrl}
         isActive={isActive} muted={muted} videoRef={videoRef} onPlayState={setPaused} />
 
       {/* Gradient overlays */}

@@ -1073,6 +1073,7 @@
     "follow": "Kuzatish",
     "posts": "ta post",
     "no_stories": "Hali story yo'q",
+    "stories": "Storylar",
     "echo_title": "Echo Detector 📡",
     "echo_desc": "Lentangizning {{score}}% qismi \"{{tag}}\" mavzusiga qaratilgan — pufakchadan chiqib, boshqa mavzularni ham ko'ring!",
     "echo_explore": "Boshqasini ko'rish",

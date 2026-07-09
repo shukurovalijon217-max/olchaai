@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { useListPosts, useGetAiFeed, useListStories } from "@workspace/api-client-react";
 import FeedCard from "@/components/FeedCard";
+import StoriesBar from "@/components/StoriesBar";
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
 import { getFeaturePref } from "@/lib/sounds";
@@ -374,6 +375,7 @@ export default function HomePage() {
   const [viewerGroupIdx, setViewerGroupIdx] = useState<number | null>(null);
   const [viewerStoryIdx, setViewerStoryIdx] = useState(0);
   const [portalOrigin,   setPortalOrigin]   = useState<{ x: number; y: number } | null>(null);
+  const [storyImgLoaded, setStoryImgLoaded] = useState(false);
   const [holoUser,       setHoloUser]       = useState<HoloUser | null>(null);
   const lastTapRef = useRef<Record<number, number>>({});
 
@@ -441,11 +443,28 @@ export default function HomePage() {
   /* Keep goNextRef current so interval callbacks never go stale */
   useEffect(() => { goNextRef.current = goNextInGroup; }, [goNextInGroup]);
 
-  /* Reset timer whenever the active story changes */
+  /* Reset timer + img-loaded flag whenever the active story changes */
   useEffect(() => {
     setStoryElapsed(0);
     setStoryPaused(false);
+    setStoryImgLoaded(false);
   }, [viewerStoryIdx, viewerGroupIdx]);
+
+  /* Preload current + next story images so viewer opens instantly */
+  useEffect(() => {
+    if (!activeStory) return;
+    if (activeStory.mediaUrl) {
+      const img = new window.Image();
+      img.src = activeStory.mediaUrl;
+    }
+    if (activeGroup && viewerStoryIdx + 1 < activeGroup.length) {
+      const next = activeGroup[viewerStoryIdx + 1] as any;
+      if (next?.mediaUrl) {
+        const pre = new window.Image();
+        pre.src = next.mediaUrl;
+      }
+    }
+  }, [activeStory, activeGroup, viewerStoryIdx]);
 
   /* Tick 20× per second while viewer is open and not paused */
   useEffect(() => {
@@ -620,6 +639,72 @@ export default function HomePage() {
           </div>
         ) : (
           <>
+            {/* ── STORIES SLIDE — first snap item ── */}
+            {storyGroups.length > 0 && (
+              <div
+                style={{
+                  height: "100dvh",
+                  scrollSnapAlign: "start",
+                  background: "#06060f",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  padding: "0 16px",
+                  gap: 16,
+                }}
+              >
+                <p className="text-white/50 text-xs font-semibold uppercase tracking-widest px-1">
+                  {t("home.stories")}
+                </p>
+                <div className="flex gap-5 overflow-x-auto" style={{ scrollbarWidth: "none", paddingBottom: 4 }}>
+                  {storyGroups.map((group, gi) => {
+                    const first = group[0] as any;
+                    const authorId: number | undefined = first?.author?.id;
+                    return (
+                      <motion.button
+                        key={gi}
+                        whileTap={{ scale: 0.92 }}
+                        className="flex flex-col items-center gap-2 flex-shrink-0"
+                        onClick={(e) => {
+                          if (authorId == null) return;
+                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                          openStoryForAuthor(authorId, rect);
+                        }}
+                      >
+                        <div
+                          className="rounded-full p-[2.5px]"
+                          style={{
+                            background: "linear-gradient(135deg,#a78bfa,#ec4899,#f97316)",
+                          }}
+                        >
+                          <div
+                            className="w-[62px] h-[62px] rounded-full overflow-hidden flex items-center justify-center"
+                            style={{ background: "#0d0d1a", border: "2px solid #0d0d1a" }}
+                          >
+                            {first?.author?.avatarUrl ? (
+                              <img
+                                src={first.author.avatarUrl}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                loading="eager"
+                              />
+                            ) : (
+                              <span className="text-lg font-black text-violet-300">
+                                {(first?.author?.displayName || first?.author?.username || "?")[0].toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-white/60 font-medium w-[70px] text-center truncate">
+                          {first?.author?.username ?? ""}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* ── POSTS ── */}
             {displayPosts.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f", scrollSnapAlign: "start" }}>
@@ -653,22 +738,17 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* ── STORY VIEWER (portal expand) ── */}
+      {/* ── STORY VIEWER ── */}
       <AnimatePresence>
         {activeStory && activeGroup && viewerGroupIdx !== null && (
           <motion.div
             key={`viewer-${viewerGroupIdx}`}
-            initial={{
-              clipPath: portalOrigin
-                ? `circle(34px at ${portalOrigin.x}px ${portalOrigin.y}px)`
-                : "circle(0px at 50% 50%)",
-              opacity: 0,
-            }}
-            animate={{ clipPath: "circle(150% at 50% 50%)", opacity: 1 }}
-            exit={{ clipPath: "circle(0px at 50% 50%)", opacity: 0 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className="fixed inset-0 z-[200] flex flex-col"
-            style={{ background: "#000", willChange: "clip-path", touchAction: "none" }}
+            style={{ background: "#000", touchAction: "none" }}
             onPointerDown={(e) => { if ((e.target as HTMLElement).closest("button")) return; setStoryPaused(true); }}
             onPointerUp={() => setStoryPaused(false)}
             onPointerLeave={() => setStoryPaused(false)}
@@ -681,16 +761,27 @@ export default function HomePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.18 }}
                 className="absolute inset-0"
               >
                 {activeStory.mediaUrl ? (
                   <>
+                    {/* Loading placeholder shown until image is ready */}
+                    {!storyImgLoaded && (
+                      <div
+                        className="absolute inset-0 z-10"
+                        style={{ background: "linear-gradient(160deg,#1a0830 0%,#0a1020 100%)" }}
+                      />
+                    )}
                     <img
                       src={activeStory.mediaUrl}
                       alt=""
                       className="w-full h-full object-cover"
+                      fetchPriority="high"
+                      decoding="async"
+                      onLoad={() => setStoryImgLoaded(true)}
                       onError={(e) => {
+                        setStoryImgLoaded(true);
                         const el = e.currentTarget as HTMLImageElement;
                         el.style.display = "none";
                         const fb = el.nextElementSibling as HTMLElement | null;

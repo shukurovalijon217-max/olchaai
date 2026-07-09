@@ -385,7 +385,10 @@ export async function securityShield(req: Request, res: Response, next: NextFunc
   }
 
   // ── 8. Deep-scan request body ────────────────────────────────
-  if (req.body && typeof req.body === "object") {
+  // Skip body scanning for trusted first-party endpoints whose payloads
+  // legitimately contain {{variable}} i18next placeholders (false-positive SSTI).
+  const BODY_SCAN_SKIP_PATHS = new Set(["/api/translate-ui-batch", "/api/translate"]);
+  if (req.body && typeof req.body === "object" && !BODY_SCAN_SKIP_PATHS.has(path)) {
     const bodyAttack = deepScan(req.body);
     if (bodyAttack) {
       const bSev = bodyAttack.severity === "low" ? "medium" : bodyAttack.severity;

@@ -236,26 +236,27 @@ export async function ensureTranslation(langCode: string): Promise<void> {
   }
 
   let anyBatchFailed = false;
-  const results = await Promise.all(
-    batches.map(async (batch) => {
-      try {
-        const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-        const resp = await fetch(`${base}/api/translate-ui-batch`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ targetLang: langCode, strings: batch }),
-        });
-        if (!resp.ok) { anyBatchFailed = true; return batch; }
-        const json = await resp.json() as { translated?: Record<string, string> };
-        if (!json.translated) { anyBatchFailed = true; return batch; }
-        return json.translated;
-      } catch {
-        anyBatchFailed = true;
-        return batch;
-      }
-    })
-  );
+  const results: Record<string, string>[] = [];
+  // Send batches sequentially (not all at once) to avoid flooding the server
+  // with 10+ parallel OpenAI calls — which triggered false-positive SSTI bans.
+  for (const batch of batches) {
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const resp = await fetch(`${base}/api/translate-ui-batch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ targetLang: langCode, strings: batch }),
+      });
+      if (!resp.ok) { anyBatchFailed = true; results.push(batch); continue; }
+      const json = await resp.json() as { translated?: Record<string, string> };
+      if (!json.translated) { anyBatchFailed = true; results.push(batch); continue; }
+      results.push(json.translated);
+    } catch {
+      anyBatchFailed = true;
+      results.push(batch);
+    }
+  }
 
   const merged: Record<string, string> = {};
   for (const r of results) Object.assign(merged, r);

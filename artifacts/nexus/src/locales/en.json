@@ -1061,6 +1061,7 @@
     "follow": "Follow",
     "posts": "posts",
     "no_stories": "No stories yet",
+    "stories": "Stories",
     "echo_title": "Echo Detector 📡",
     "echo_desc": "{{score}}% of your feed is focused on \"{{tag}}\" — pop the bubble and explore other topics!",
     "echo_explore": "Explore more",

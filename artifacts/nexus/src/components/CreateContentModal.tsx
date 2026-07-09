@@ -238,7 +238,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   }, [open, defaultTab]);
 
   /* post state — multi-file queue */
-  type MediaItem = { id: string; file: File; preview: string; status: "idle"|"uploading"|"done"|"error"; progress: number; serveUrl?: string };
+  type MediaItem = { id: string; file: File; preview: string; status: "idle"|"uploading"|"optimizing"|"done"|"error"; progress: number; serveUrl?: string };
   const [mediaQueue,    setMediaQueue]    = useState<MediaItem[]>([]);
   const [postContent,   setPostContent]  = useState("");
   const [displayFormat, setDisplayFormat] = useState<DisplayFormat>("cover");
@@ -287,6 +287,24 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
         });
 
         const serveUrl = `${API}/api/storage${objectPath}`;
+
+        /* Step 3 — for videos, ask the server to transcode/compress in place
+           before marking the item done. Best-effort: any failure here just
+           falls back to the original upload, it never blocks publishing. */
+        if (pending.file.type.startsWith("video")) {
+          setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "optimizing", progress: 100 } : m));
+          try {
+            await fetch(`${API}/api/media/optimize-video`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ objectPath }),
+            });
+          } catch {
+            /* ignore — original video is still usable */
+          }
+        }
+
         setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "done", progress: 100, serveUrl } : m));
       } catch {
         setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "error" } : m));
@@ -1108,7 +1126,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
     onClose();
   };
 
-  const queueUploading = mediaQueue.some(m => m.status === "uploading" || m.status === "idle");
+  const queueUploading = mediaQueue.some(m => m.status === "uploading" || m.status === "idle" || m.status === "optimizing");
   const queueAllDone   = mediaQueue.length === 0 || mediaQueue.every(m => m.status === "done");
 
   const canSubmit = !submitting && !upReelBusy && !upStoryBusy && !upReelAudioBusy && !upOtubeBusy && (
@@ -1408,12 +1426,12 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 )}
 
                                 {/* Progress overlay */}
-                                {(item.status === "uploading" || item.status === "idle") && (
+                                {(item.status === "uploading" || item.status === "idle" || item.status === "optimizing") && (
                                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-1"
                                     style={{ background: "rgba(0,0,0,0.62)" }}>
                                     <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
                                     <span className="text-[10px] font-bold text-white/80">
-                                      {item.status === "uploading" ? `${item.progress}%` : "…"}
+                                      {item.status === "uploading" ? `${item.progress}%` : item.status === "optimizing" ? t("create.optimizing") : "…"}
                                     </span>
                                     {item.status === "uploading" && (
                                       <div className="w-14 h-0.5 rounded-full overflow-hidden"
@@ -1442,7 +1460,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 )}
 
                                 {/* Remove button (shown when not uploading) */}
-                                {item.status !== "uploading" && (
+                                {item.status !== "uploading" && item.status !== "optimizing" && (
                                   <button
                                     onClick={() => removeMedia(item.id)}
                                     className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"

@@ -25,6 +25,11 @@ interface PipCtx {
      content-creation FAB) can hide itself and avoid overlapping it. */
   dockExpanded: boolean;
   setDockExpanded: (open: boolean) => void;
+  /* True while any feed card's comment-writing panel is open, so global
+     floating chrome (bottom content-creation FAB, right-side action orbs)
+     can hide itself and avoid overlapping the keyboard/comment box. */
+  commentPanelOpen: boolean;
+  setCommentPanelOpen: (open: boolean) => void;
 }
 
 const PipContext = createContext<PipCtx>({
@@ -37,6 +42,8 @@ const PipContext = createContext<PipCtx>({
   setPlayerOpen: () => {},
   dockExpanded: false,
   setDockExpanded: () => {},
+  commentPanelOpen: false,
+  setCommentPanelOpen: () => {},
 });
 
 export function usePip() { return useContext(PipContext); }
@@ -270,6 +277,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
   const [expandFn,     setExpandFn]     = useState<(() => void) | null>(null);
   const [playerOpen,   setPlayerOpen]   = useState(false);
   const [dockExpanded, setDockExpanded] = useState(false);
+  const [commentPanelOpen, setCommentPanelOpen] = useState(false);
 
   const openPip = useCallback((video: Reel, startTime: number) => {
     setPip({ video, startTime });
@@ -282,7 +290,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <PipContext.Provider value={{ pip, openPip, closePip, expandPip: expandFn, setExpandHandler, playerOpen, setPlayerOpen, dockExpanded, setDockExpanded }}>
+    <PipContext.Provider value={{ pip, openPip, closePip, expandPip: expandFn, setExpandHandler, playerOpen, setPlayerOpen, dockExpanded, setDockExpanded, commentPanelOpen, setCommentPanelOpen }}>
       {children}
       <AnimatePresence>
         {pip && (

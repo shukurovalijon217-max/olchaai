@@ -20,7 +20,7 @@ import {
   Heart, MessageCircle, Share2, Trash2,
   VolumeX, Volume2, BadgeCheck, Check, Send, X,
   Music, Sparkles, MoreHorizontal, Link,
-  UserPlus, UserCheck, Download, Loader2, Flag, Brain, ChevronLeft,
+  UserPlus, UserCheck, Download, Loader2, Flag, Brain, ChevronLeft, ImageOff,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -31,6 +31,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { usePip } from "@/context/PipContext";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -251,10 +252,17 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const [showSubscribe, setShowSubscribe] = useState(false);
   const subscribeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [mediaError, setMediaError] = useState(false);
+  const { setCommentPanelOpen } = usePip();
   const [commentOpen,    setCommentOpen]    = useState(false);
   const [commentText,    setCommentText]    = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [commentSent,    setCommentSent]    = useState(false);
+
+  useEffect(() => {
+    setCommentPanelOpen(commentOpen);
+    return () => { if (commentOpen) setCommentPanelOpen(false); };
+  }, [commentOpen, setCommentPanelOpen]);
 
   const [shareOpen,    setShareOpen]    = useState(false);
   const [shareQuery,   setShareQuery]   = useState("");
@@ -569,10 +577,11 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
     >
 
       {/* ═══ LAYER 0: Blurred background for photo ═══ */}
-      {isPhoto && post.mediaUrl && (
+      {isPhoto && post.mediaUrl && !mediaError && (
         <img src={post.mediaUrl} alt="" aria-hidden loading="lazy" decoding="async"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{ filter: "blur(32px) saturate(1.4) brightness(0.28)", transform: "scale(1.18)", zIndex: 0 }}
+          onError={e => { e.currentTarget.style.display = "none"; }}
         />
       )}
 
@@ -661,11 +670,20 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         ) : isVideo && post.mediaUrl ? (
           <video ref={videoRef} src={post.mediaUrl} muted={muted} loop playsInline
             className="w-full h-full object-cover" />
-        ) : isPhoto && post.mediaUrl ? (
+        ) : isPhoto && post.mediaUrl && !mediaError ? (
           <img src={imgOptUrl(post.mediaUrl, 900)} alt={post.content}
             loading="lazy" decoding="async"
             className={`w-full h-full ${photoFit} cursor-pointer`}
-            onClick={showSubscribeBriefly} />
+            onClick={showSubscribeBriefly}
+            onError={() => setMediaError(true)} />
+        ) : isPhoto && (!post.mediaUrl || mediaError) ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2"
+            style={{ background: "linear-gradient(145deg, rgba(20,16,40,0.9), rgba(8,6,20,0.95))" }}>
+            <ImageOff className="w-9 h-9" style={{ color: "rgba(255,255,255,0.28)" }} />
+            <span className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.32)" }}>
+              {t("feed_card.media_unavailable")}
+            </span>
+          </div>
         ) : (
           /* TEXT POST */
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
@@ -923,9 +941,9 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
       {/* ═══ LAYER 20: RIGHT ORB COLUMN — tap to show ═══ */}
       <motion.div
-        className="absolute right-3 flex flex-col items-center gap-3"
-        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 70px)", pointerEvents: overlayVisible ? "auto" : "none" }}
-        animate={{ opacity: overlayVisible ? 1 : 0, x: overlayVisible ? 0 : 10 }}
+        className="absolute right-3 flex flex-col items-center gap-2 scale-90 origin-top-right"
+        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 48px)", pointerEvents: (overlayVisible && !commentOpen) ? "auto" : "none" }}
+        animate={{ opacity: (overlayVisible && !commentOpen) ? 1 : 0, x: (overlayVisible && !commentOpen) ? 0 : 10 }}
         transition={{ duration: 0.22, ease: "easeOut" }}
         onPointerDown={e => { e.stopPropagation(); showOverlayBriefly(); }}
       >
@@ -1127,8 +1145,9 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 340 }}
             className="absolute bottom-0 left-0 right-0 rounded-t-[28px] overflow-hidden"
-            style={{ zIndex: 40, background: "rgba(4,3,16,0.94)", backdropFilter: "blur(36px)",
-              border: `1px solid ${accent}1a`, borderBottom: "none", boxShadow: `0 -8px 40px rgba(0,0,0,0.6)` }}
+            style={{ zIndex: 40, background: "rgba(10,8,26,0.32)", backdropFilter: "blur(40px) saturate(1.7)",
+              WebkitBackdropFilter: "blur(40px) saturate(1.7)",
+              border: `1px solid ${accent}1a`, borderBottom: "none", boxShadow: `0 -8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)` }}
             onPointerDown={e => e.stopPropagation()}
           >
             {/* Handle */}
@@ -1150,8 +1169,17 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.metaKey) { e.preventDefault(); handleSendComment(); } }}
                 placeholder={t("feed_card.comment_ph")}
                 rows={3}
-                className="flex-1 resize-none rounded-2xl px-4 py-3 text-[13px] text-white placeholder:text-white/30 focus:outline-none"
-                style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${accent}22`, caretColor: accent }}
+                className="flex-1 resize-none rounded-2xl px-4 py-3 text-[17px] leading-snug text-white placeholder:text-white/30 focus:outline-none"
+                style={{
+                  fontFamily: "'Caveat', cursive",
+                  fontWeight: 600,
+                  background: "rgba(255,255,255,0.045)",
+                  backdropFilter: "blur(18px) saturate(1.6)",
+                  WebkitBackdropFilter: "blur(18px) saturate(1.6)",
+                  border: `1px solid ${accent}30`,
+                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.08), 0 0 18px ${accent}10`,
+                  caretColor: accent,
+                }}
               />
               <motion.button whileTap={{ scale: 0.85 }} onClick={handleSendComment}
                 disabled={!commentText.trim() || sendingComment}

@@ -209,6 +209,20 @@ export class ObjectStorageService {
     await objectFile.delete();
   }
 
+  /**
+   * Overwrite an existing object entity's bytes in place (same path).
+   * Used by the video optimizer to replace an uploaded file with a
+   * compressed transcode without changing its objectPath/URL.
+   */
+  async overwriteObjectEntity(
+    objectPath: string,
+    buffer: Buffer,
+    contentType: string,
+  ): Promise<void> {
+    const objectFile = await this.getObjectEntityFile(objectPath);
+    await objectFile.save(buffer, { contentType, resumable: false });
+  }
+
   async trySetObjectEntityAclPolicy(
     rawPath: string,
     aclPolicy: ObjectAclPolicy

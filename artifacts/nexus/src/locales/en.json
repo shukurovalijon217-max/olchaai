@@ -2237,6 +2237,7 @@
     "caption_default": "OTube Featured"
   },
   "create": {
+    "optimizing": "Compressing…",
     "sheet_title": "What do you want to create?",
     "sheet_sub": "Choose content type",
     "post_label": "Post",

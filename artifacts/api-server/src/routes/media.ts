@@ -6,9 +6,15 @@ import { hashImagePixels, hammingDistance, hashSimilarity } from "../lib/mediaHa
 import sharp from "sharp";
 import https from "https";
 import http from "http";
+import { spawn } from "child_process";
+import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
 import { cacheGet, cacheSet } from "../lib/cache";
+import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 
 const router = Router();
+const objectStorageService = new ObjectStorageService();
 
 /**
  * POST /api/media/hash
@@ -122,6 +128,85 @@ router.get("/img", async (req: Request, res: Response) => {
   } catch (err) {
     // On failure, redirect to the original image — graceful fallback
     res.redirect(302, decoded);
+  }
+});
+
+/**
+ * POST /api/media/optimize-video
+ * Body: { objectPath: string }
+ *
+ * Downloads an already-uploaded video from object storage, transcodes it
+ * with ffmpeg to a web-friendly H.264/AAC mp4 (max 720p, CRF 26, faststart),
+ * and overwrites the same objectPath in place so the post's mediaUrl is
+ * unchanged. Falls back to leaving the original file untouched on any error
+ * (never blocks publishing on a compression failure).
+ */
+router.post("/optimize-video", async (req: Request, res: Response) => {
+  if (!req.session?.userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const { objectPath } = req.body as { objectPath?: string };
+  if (!objectPath || !objectPath.startsWith("/objects/")) {
+    res.status(400).json({ error: "Invalid objectPath" });
+    return;
+  }
+
+  let workDir: string | undefined;
+  try {
+    const file = await objectStorageService.getObjectEntityFile(objectPath);
+    const [originalBuffer] = await file.download();
+    const originalSize = originalBuffer.length;
+
+    workDir = await mkdtemp(join(tmpdir(), "vidopt-"));
+    const inputPath = join(workDir, "in");
+    const outputPath = join(workDir, "out.mp4");
+    await writeFile(inputPath, originalBuffer);
+
+    await new Promise<void>((resolve, reject) => {
+      const ff = spawn("ffmpeg", [
+        "-y", "-i", inputPath,
+        "-vf", "scale='min(1280,iw)':-2",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "26",
+        "-c:a", "aac", "-b:a", "128k",
+        "-movflags", "+faststart",
+        outputPath,
+      ]);
+      let stderr = "";
+      ff.stderr.on("data", (d) => { stderr += d.toString(); });
+      ff.on("error", reject);
+      ff.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`ffmpeg exited with code ${code}: ${stderr.slice(-500)}`));
+      });
+    });
+
+    const compressed = await readFile(outputPath);
+
+    // Only replace if compression actually shrank the file meaningfully.
+    if (compressed.length > 0 && compressed.length < originalSize * 0.95) {
+      await objectStorageService.overwriteObjectEntity(objectPath, compressed, "video/mp4");
+      res.json({
+        objectPath,
+        optimized: true,
+        originalSize,
+        newSize: compressed.length,
+        savedPct: Math.round((1 - compressed.length / originalSize) * 100),
+      });
+    } else {
+      res.json({ objectPath, optimized: false, originalSize, newSize: originalSize, savedPct: 0 });
+    }
+  } catch (err) {
+    if (err instanceof ObjectNotFoundError) {
+      res.status(404).json({ error: "Object not found" });
+      return;
+    }
+    req.log.error({ err }, "Video optimization failed");
+    // Graceful fallback: publishing should not fail just because compression did.
+    res.json({ objectPath, optimized: false, error: "optimize_failed" });
+  } finally {
+    if (workDir) await rm(workDir, { recursive: true, force: true }).catch(() => {});
   }
 });
 

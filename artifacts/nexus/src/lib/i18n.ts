@@ -154,7 +154,6 @@ function unflattenObj(flat: Record<string, string>): Record<string, unknown> {
 }
 
 const TRANS_CACHE_VER = "v5";
-const BATCH_SIZE = 100;
 
 // ── resources ──────────────────────────────────────────────────────────────
 const resources: Record<string, { translation: TranslationShape }> = {
@@ -224,42 +223,32 @@ export async function ensureTranslation(langCode: string): Promise<void> {
 
   // Flatten the English base translation
   const flat = flattenObj(enTranslations as unknown as Record<string, unknown>);
-  const keys = Object.keys(flat);
 
-  // Split into parallel batches of BATCH_SIZE
-  const batches: Record<string, string>[] = [];
-  for (let i = 0; i < keys.length; i += BATCH_SIZE) {
-    const slice = keys.slice(i, i + BATCH_SIZE);
-    batches.push(
-      slice.reduce<Record<string, string>>((acc, k) => { acc[k] = flat[k]; return acc; }, {})
-    );
-  }
-
+  // One HTTP call — server handles batching and caches per language.
+  // After the first user fetches a language, all others get it instantly from server cache.
+  let merged: Record<string, string> = flat;
   let anyBatchFailed = false;
-  const results: Record<string, string>[] = [];
-  // Send batches sequentially (not all at once) to avoid flooding the server
-  // with 10+ parallel OpenAI calls — which triggered false-positive SSTI bans.
-  for (const batch of batches) {
-    try {
-      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-      const resp = await fetch(`${base}/api/translate-ui-batch`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ targetLang: langCode, strings: batch }),
-      });
-      if (!resp.ok) { anyBatchFailed = true; results.push(batch); continue; }
-      const json = await resp.json() as { translated?: Record<string, string> };
-      if (!json.translated) { anyBatchFailed = true; results.push(batch); continue; }
-      results.push(json.translated);
-    } catch {
+  try {
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    const resp = await fetch(`${base}/api/translate-bundle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ targetLang: langCode, strings: flat, bundleVersion: TRANS_CACHE_VER }),
+    });
+    if (!resp.ok) {
       anyBatchFailed = true;
-      results.push(batch);
+    } else {
+      const json = await resp.json() as { translated?: Record<string, string> };
+      if (json.translated) {
+        merged = json.translated;
+      } else {
+        anyBatchFailed = true;
+      }
     }
+  } catch {
+    anyBatchFailed = true;
   }
-
-  const merged: Record<string, string> = {};
-  for (const r of results) Object.assign(merged, r);
 
   const nested = unflattenObj(merged);
   // Only persist to localStorage if every batch translated successfully —

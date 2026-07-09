@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2, Wand2, Mic, Scissors, Palette, Camera, Download } from "lucide-react";
+import { X, Type, Music, Check, Trash2, ChevronLeft, ChevronRight, Smile, Sparkles, Search, Zap, Volume2, Wand2, Mic, Scissors, Palette, Camera, Download, GripVertical } from "lucide-react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 
 export type TextOverlay = {
@@ -851,6 +851,8 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [beautyVals, setBeautyVals]     = useState<Record<string,number>>({
     smoothing:0, brightness:0, slim:0, eyes:0, teeth:0, blush:0
   });
+  const [stripOffsetY, setStripOffsetY]   = useState(0);
+  const stripDragRef = useRef<{ startY: number; startOffset: number } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   /* ── Internet music search state ── */
@@ -1236,14 +1238,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
         )}
 
         {/* Top bar */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-10 pb-3"
+        <div className="absolute top-0 left-0 right-0 grid grid-cols-3 items-center px-4 pt-10 pb-3"
           style={{ background:"linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)" }}>
           <button onClick={onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center"
+            className="w-9 h-9 rounded-full flex items-center justify-center justify-self-start"
             style={{ background:"rgba(0,0,0,0.4)" }}>
             <X className="w-5 h-5 text-white" />
           </button>
-          <span className="text-white font-bold text-sm opacity-75">Redaktor</span>
+          <div />
           <button
             onClick={() => {
               const resolvedAudioUrl = audioServerUrl
@@ -1253,15 +1255,47 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                 audioName ? audioTrimEnd   : undefined);
             }}
             disabled={audioUploading}
-            className="px-4 py-1.5 rounded-full text-sm font-bold text-white"
-            style={{ background: audioUploading ? "rgba(124,58,237,0.4)" : "linear-gradient(135deg,#7c3aed,#4f46e5)", opacity: audioUploading ? 0.7 : 1 }}>
+            className="justify-self-end px-3.5 py-1 rounded-full text-xs font-bold text-white"
+            style={{
+              background: "rgba(255,255,255,0.10)",
+              backdropFilter: "blur(14px) saturate(1.6)",
+              WebkitBackdropFilter: "blur(14px) saturate(1.6)",
+              border: "1px solid rgba(255,255,255,0.25)",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.25)",
+              opacity: audioUploading ? 0.6 : 1,
+            }}>
             {audioUploading ? "Yuklanmoqda…" : "Tayyor"}
           </button>
         </div>
 
-        {/* Right tool strip — scrollable so all 9+ buttons fit on any screen */}
-        <div className="absolute right-2 top-2 bottom-2 flex flex-col gap-1.5 overflow-y-auto py-1"
-          style={{ scrollbarWidth:"none", maxHeight:"calc(100% - 16px)" }}>
+        {/* Right tool strip — scrollable so all 9+ buttons fit on any screen; drag handle lets it slide up/down */}
+        <div className="absolute right-2 top-2 bottom-2 flex flex-col items-center gap-1.5 overflow-y-auto py-1"
+          style={{
+            scrollbarWidth:"none",
+            maxHeight:"calc(100% - 16px)",
+            transform: `translateY(${stripOffsetY}px)`,
+            transition: stripDragRef.current ? "none" : "transform 0.2s ease",
+          }}>
+          <div
+            className="w-8 h-6 rounded-full flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+            style={{ background:"rgba(0,0,0,0.45)", backdropFilter:"blur(8px)", border:"1px solid rgba(255,255,255,0.15)", marginBottom: 2 }}
+            onPointerDown={e => {
+              e.stopPropagation();
+              (e.target as HTMLElement).setPointerCapture(e.pointerId);
+              stripDragRef.current = { startY: e.clientY, startOffset: stripOffsetY };
+            }}
+            onPointerMove={e => {
+              if (!stripDragRef.current) return;
+              e.stopPropagation();
+              const delta = e.clientY - stripDragRef.current.startY;
+              const next = stripDragRef.current.startOffset + delta;
+              const clamped = Math.max(-160, Math.min(160, next));
+              setStripOffsetY(clamped);
+            }}
+            onPointerUp={e => { e.stopPropagation(); stripDragRef.current = null; }}
+            onPointerCancel={() => { stripDragRef.current = null; }}>
+            <GripVertical style={{ width:14, height:14, color:"rgba(255,255,255,0.7)" }} />
+          </div>
           {[
             { id:"text",    Icon:Type,     label:"Matn"   },
             { id:"sticker", Icon:Smile,    label:"Stiker" },

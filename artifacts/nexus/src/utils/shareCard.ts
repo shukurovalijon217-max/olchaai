@@ -54,7 +54,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Blob> {
 
   ctx.font = "13px -apple-system,system-ui,sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.42)";
-  ctx.fillText("@" + data.authorName.toLowerCase().replace(/\s+/g, "_") + " • gilosai.com", 28, 78);
+  ctx.fillText("@" + data.authorName.toLowerCase().replace(/\s+/g, "_") + " • olchaai.com", 28, 78);
 
   ctx.fillStyle = "rgba(255,255,255,0.07)";
   ctx.fillRect(28, 92, W - 56, 1);
@@ -92,7 +92,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Blob> {
 
   ctx.font = "10px -apple-system,system-ui,sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.28)";
-  ctx.fillText("gilosai.com", W - 28, H - 14);
+  ctx.fillText("olchaai.com", W - 28, H - 14);
 
   return new Promise(res => canvas.toBlob(b => res(b!), "image/png"));
 }

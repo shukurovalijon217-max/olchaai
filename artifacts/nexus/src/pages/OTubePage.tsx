@@ -6,6 +6,7 @@
 import React, {
   useState, useRef, useEffect, useCallback, useMemo,
 } from "react";
+import Hls from "hls.js";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useLocation } from "wouter";
@@ -533,6 +534,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const { user }       = useAuth();
   const { setPlayerOpen } = usePip();
   const videoRef   = useRef<HTMLVideoElement>(null);
+  const hlsRef     = useRef<Hls|null>(null);
   const contRef    = useRef<HTMLDivElement>(null);
   const ctrlTimer  = useRef<ReturnType<typeof setTimeout>|null>(null);
   const lastTap    = useRef(0);
@@ -655,6 +657,26 @@ function NexusPlayer({ video, onClose, settings, onPip }:
       return next;
     });
   }, [video.id]);
+
+  /* ── HLS source attachment ─────────────────────────────────── */
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
+    const src = (video as any).hlsUrl ?? video.videoUrl;
+    if (!src) return;
+    if (src.includes(".m3u8") && Hls.isSupported()) {
+      const hls = new Hls({ startLevel: -1, maxBufferLength: 30 });
+      hlsRef.current = hls;
+      hls.loadSource(src);
+      hls.attachMedia(v);
+    } else {
+      v.src = src ?? "";
+    }
+    return () => { hlsRef.current?.destroy(); hlsRef.current = null; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(video as any).hlsUrl, video.videoUrl]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -912,7 +934,6 @@ function NexusPlayer({ video, onClose, settings, onPip }:
         onMouseDown={startHold} onMouseUp={endHold}>
         <video
           ref={videoRef}
-          src={video.videoUrl??undefined}
           poster={video.thumbnailUrl??undefined}
           muted={muted} playsInline loop={settings.loop}
           style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}

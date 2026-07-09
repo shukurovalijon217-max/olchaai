@@ -1,5 +1,5 @@
 /* GilosAI Service Worker — global edge cache + offline shell */
-const CACHE_VERSION = "olcha-v1";
+const CACHE_VERSION = "gilos-v3";
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
@@ -26,7 +26,7 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((k) => k.startsWith("olcha-") && k !== STATIC_CACHE && k !== API_CACHE)
+          .filter((k) => (k.startsWith("olcha-") || k.startsWith("gilos-")) && k !== STATIC_CACHE && k !== API_CACHE)
           .map((k) => caches.delete(k))
       )
     )

@@ -1534,6 +1534,7 @@
   },
   "feed_card": {
     "votes_suffix": "votes",
+    "media_unavailable": "Media unavailable",
     "comment_ph": "Write your comment...",
     "copied": "Copied!",
     "copy_link": "Copy link",

@@ -1546,6 +1546,7 @@
   },
   "feed_card": {
     "votes_suffix": "ovoz",
+    "media_unavailable": "Media yuklanmadi",
     "comment_ph": "Izohingizni yozing...",
     "copied": "Nusxalandi!",
     "copy_link": "Havolani nusxalash",

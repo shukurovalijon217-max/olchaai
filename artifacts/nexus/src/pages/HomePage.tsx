@@ -43,7 +43,7 @@ function FolloweesEnergyBar() {
   if (entries.length === 0) return null;
 
   return (
-    <div className="absolute top-3 left-3 right-3 z-30 flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+    <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
       <span className="text-white/40 text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-1">
         <Zap className="w-3 h-3 text-amber-400" /> {t("home.energy_bar_title")}
       </span>

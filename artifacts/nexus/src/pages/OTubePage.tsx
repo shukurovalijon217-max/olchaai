@@ -540,6 +540,8 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const lastTap    = useRef(0);
   const tapTimer   = useRef<ReturnType<typeof setTimeout>|null>(null);
   const longHold   = useRef<ReturnType<typeof setTimeout>|null>(null);
+  const holdInterval = useRef<ReturnType<typeof setInterval>|null>(null);
+  const holdRateRef = useRef(1);
   const viewTracked = useRef(false);
   const progressRef = useRef({ time: 0, dur: 0 });
   const lastReportRef = useRef(0);
@@ -562,7 +564,6 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const [subbed,    setSubbed]    = useState(() => getFollowState(video.author.id, video.author.isFollowing));
   const [seekLeft,  setSeekLeft]  = useState(false);
   const [seekRight, setSeekRight] = useState(false);
-  const [fastFwd,   setFastFwd]   = useState(false);
   const [speed,     setSpeed]     = useState(1);
   const [showSpeed, setShowSpeed] = useState(false);
   const [showCom,   setShowCom]   = useState(false);
@@ -789,14 +790,27 @@ function NexusPlayer({ video, onClose, settings, onPip }:
     tapTimer.current=setTimeout(()=>{togglePlay();lastTap.current=0;},330);
   }, [seek,togglePlay,showSpeed,showCom]);
 
-  const startHold = useCallback(()=>{
-    longHold.current=setTimeout(()=>{
-      const v=videoRef.current;if(v)v.playbackRate=2;setFastFwd(true);
-    },500);
-  },[]);
-  const endHold = useCallback(()=>{
+  const startHold = useCallback((e:React.SyntheticEvent<HTMLDivElement>)=>{
+    const rect=e.currentTarget.getBoundingClientRect();
+    const native=e.nativeEvent as MouseEvent&TouchEvent;
+    const clientX=native.touches&&native.touches.length?native.touches[0].clientX:native.clientX;
+    const side=clientX-rect.left<rect.width/2?"left":"right";
+    holdRateRef.current=videoRef.current?.playbackRate??speed;
     if(longHold.current)clearTimeout(longHold.current);
-    const v=videoRef.current;if(v)v.playbackRate=speed;setFastFwd(false);
+    longHold.current=setTimeout(()=>{
+      if(holdInterval.current)clearInterval(holdInterval.current);
+      holdInterval.current=setInterval(()=>{
+        const v=videoRef.current;if(!v)return;
+        const delta=side==="left"?0.25:-0.25;
+        holdRateRef.current=Math.max(0.25,Math.min(4,holdRateRef.current+delta));
+        v.playbackRate=holdRateRef.current;
+      },220);
+    },350);
+  },[speed]);
+  const endHold = useCallback(()=>{
+    if(longHold.current){clearTimeout(longHold.current);longHold.current=null;}
+    if(holdInterval.current){clearInterval(holdInterval.current);holdInterval.current=null;}
+    const v=videoRef.current;if(v)v.playbackRate=speed;
   },[speed]);
 
   const scrub = useCallback((val:number)=>{
@@ -1063,19 +1077,6 @@ function NexusPlayer({ video, onClose, settings, onPip }:
             <ArrowLeft style={{width:17,height:17,color:"rgba(255,255,255,0.85)"}}/>
           </motion.button>
         )}
-
-        {/* Fast forward badge */}
-        <AnimatePresence>
-          {fastFwd && (
-            <motion.div initial={{opacity:0,scale:0.75}} animate={{opacity:1,scale:1}} exit={{opacity:0}}
-              style={{position:"absolute",top:"50%",left:"50%",
-                transform:"translate(-50%,-50%)",pointerEvents:"none",
-                borderRadius:99,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(10px)",
-                padding:"8px 22px",border:`1px solid ${T.orange}55`}}>
-              <span style={{fontSize:17,fontWeight:900,color:T.orange,letterSpacing:"0.1em"}}>2× TEZLIK</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Center play/pause */}
         <AnimatePresence>

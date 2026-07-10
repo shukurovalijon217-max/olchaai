@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShieldCheck, Lock, Database, Share2, UserCog, Mail } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Lock, Database, Share2, UserCog, Mail, Cookie, Clock, Globe2, Baby, AlertTriangle, FileEdit } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import NexusLogo from "@/components/NexusLogo";
 
@@ -59,7 +59,13 @@ export default function PrivacyPolicyPage() {
         <Section icon={<Database className="w-5 h-5" />} title={t("privacy_policy.collect_title")} text={t("privacy_policy.collect_text")} />
         <Section icon={<Lock className="w-5 h-5" />} title={t("privacy_policy.store_title")} text={t("privacy_policy.store_text")} />
         <Section icon={<Share2 className="w-5 h-5" />} title={t("privacy_policy.share_title")} text={t("privacy_policy.share_text")} />
+        <Section icon={<Globe2 className="w-5 h-5" />} title={t("privacy_policy.transfer_title")} text={t("privacy_policy.transfer_text")} />
+        <Section icon={<Clock className="w-5 h-5" />} title={t("privacy_policy.retention_title")} text={t("privacy_policy.retention_text")} />
+        <Section icon={<Cookie className="w-5 h-5" />} title={t("privacy_policy.cookies_title")} text={t("privacy_policy.cookies_text")} />
         <Section icon={<UserCog className="w-5 h-5" />} title={t("privacy_policy.rights_title")} text={t("privacy_policy.rights_text")} />
+        <Section icon={<Baby className="w-5 h-5" />} title={t("privacy_policy.children_title")} text={t("privacy_policy.children_text")} />
+        <Section icon={<AlertTriangle className="w-5 h-5" />} title={t("privacy_policy.breach_title")} text={t("privacy_policy.breach_text")} />
+        <Section icon={<FileEdit className="w-5 h-5" />} title={t("privacy_policy.changes_title")} text={t("privacy_policy.changes_text")} />
         <Section icon={<Mail className="w-5 h-5" />} title={t("privacy_policy.contact_title")} text={t("privacy_policy.contact_text")} />
 
         <p className="text-xs leading-relaxed mb-6" style={{ color: "#8a6040" }}>

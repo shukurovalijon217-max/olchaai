@@ -567,6 +567,16 @@ function PrivacyContent() {
         </div>
       </SF>
       <SF>
+        <Link href="/privacy"
+          className="flex items-center justify-between p-4 rounded-xl border border-white/8 bg-white/3 hover:bg-white/6 transition">
+          <div className="flex items-center gap-3">
+            <Shield className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm font-semibold text-white">{t("privacy_policy.title")}</span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-white/30" />
+        </Link>
+      </SF>
+      <SF>
         <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5">
           <p className="text-sm font-semibold text-red-400 mb-1">{t("settings.danger_zone")}</p>
           <p className="text-xs text-white/35 mb-3">{t("settings.danger_irreversible")}</p>

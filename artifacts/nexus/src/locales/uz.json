@@ -2821,5 +2821,20 @@
     "mission_text": "Foydalanuvchilarga o'z shaxsiy hayoti va ma'lumotlarini nazorat qilish imkonini beruvchi, sun'iy intellekt bilan kuchaytirilgan ijtimoiy platforma yaratish.",
     "contact_hint": "Savol yoki takliflaringiz bo'lsa, ilova ichidagi qo'llab-quvvatlash orqali murojaat qiling.",
     "back": "Bosh sahifaga qaytish"
+  },
+  "privacy_policy": {
+    "title": "Maxfiylik siyosati",
+    "intro": "GilosAI sizning shaxsiy ma'lumotlaringiz xavfsizligini jiddiy qabul qiladi. Ushbu hujjat qanday ma'lumot yig'ilishini, saqlanishini va himoyalanishini tushuntiradi — GDPR va O'zbekiston Respublikasining \"Shaxsga doir ma'lumotlar to'g'risida\"gi qonuniga mos ravishda.",
+    "collect_title": "Qanday ma'lumot yig'amiz",
+    "collect_text": "Ro'yxatdan o'tishda email, telefon raqami, foydalanuvchi nomi va parol (shifrlangan holda) so'raladi. Profilingizga qo'shgan rasm, video, post va xabarlar ham platforma xizmatini ko'rsatish uchun saqlanadi.",
+    "store_title": "Ma'lumotlar qanday saqlanadi",
+    "store_text": "Barcha parollar qaytarib bo'lmaydigan tarzda shifrlanadi (hash) va hech qachon ochiq matnda saqlanmaydi yoki ko'rsatilmaydi. Ma'lumotlar shifrlangan bazalarda, xavfsizlik choralari bilan himoyalangan serverlarda saqlanadi.",
+    "share_title": "Uchinchi shaxslarga berilishi",
+    "share_text": "Shaxsiy ma'lumotlaringiz reklama yoki boshqa maqsadlarda uchinchi shaxslarga sotilmaydi yoki uzatilmaydi. To'lov amallarini xavfsiz amalga oshirish uchun faqat ishonchli to'lov provayderi (Stripe) bilan zarur ma'lumot almashiladi.",
+    "rights_title": "Sizning huquqlaringiz",
+    "rights_text": "Istalgan vaqtda sozlamalar bo'limidan o'z ma'lumotlaringizni ko'rish, tahrirlash, yuklab olish yoki hisobingizni butunlay o'chirishingiz mumkin — bularning barchasi ilova ichida real vaqt rejimida ishlaydi.",
+    "contact_title": "Bog'lanish",
+    "contact_text": "Maxfiylik bilan bog'liq savol yoki so'rovlaringiz bo'lsa, ilova ichidagi qo'llab-quvvatlash xizmati orqali murojaat qiling.",
+    "last_updated": "Oxirgi yangilanish: 2026-yil."
   }
 }

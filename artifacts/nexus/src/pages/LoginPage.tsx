@@ -994,7 +994,7 @@ export default function LoginPage() {
             </button>
           </p>
 
-          <p className="text-center text-[11px] mt-3">
+          <p className="text-center text-[11px] mt-3 flex items-center justify-center gap-2">
             <button
               type="button"
               onClick={() => setLocation("/about")}
@@ -1002,6 +1002,15 @@ export default function LoginPage() {
               className="hover:underline"
             >
               {t("about.title")}
+            </button>
+            <span style={{ color: "#3a2010" }}>·</span>
+            <button
+              type="button"
+              onClick={() => setLocation("/privacy")}
+              style={{ color: "#6a4020" }}
+              className="hover:underline"
+            >
+              {t("privacy_policy.title")}
             </button>
           </p>
         </motion.div>

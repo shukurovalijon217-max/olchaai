@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, MoreHorizontal, ChevronDown, X, Radio,
-  PenLine, BookOpen, Film, MonitorPlay, Trophy, Zap,
+  PenLine, BookOpen, Film, MonitorPlay, Trophy,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
@@ -17,57 +17,6 @@ import { usePip } from "@/context/PipContext";
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
-
-interface FolloweeEnergy {
-  userId: number;
-  username: string;
-  displayName?: string | null;
-  avatar?: string | null;
-  energyLevel: number;
-}
-
-/* ── energy_broadcast: shows followees' current energy level ── */
-function FolloweesEnergyBar() {
-  const { t } = useTranslation();
-  const [entries, setEntries] = useState<FolloweeEnergy[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API}/api/mood/following/energy`, { credentials: "include" })
-      .then(r => (r.ok ? r.json() : []))
-      .then((data: FolloweeEnergy[]) => { if (!cancelled) setEntries(Array.isArray(data) ? data : []); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
-
-  if (entries.length === 0) return null;
-
-  return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-      <span className="text-white/40 text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-1">
-        <Zap className="w-3 h-3 text-amber-400" /> {t("home.energy_bar_title")}
-      </span>
-      {entries.slice(0, 12).map(e => {
-        const pct = Math.min(100, Math.max(0, e.energyLevel * 10));
-        const ringColor = pct >= 70 ? "#22c55e" : pct >= 40 ? "#f59e0b" : "#ef4444";
-        return (
-          <div key={e.userId} className="flex flex-col items-center shrink-0" style={{ width: 40 }}>
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
-              style={{ border: `2px solid ${ringColor}`, background: "#1a1a2e" }}
-              title={`${e.displayName || e.username}: ${pct}%`}
-            >
-              {e.avatar
-                ? <img src={e.avatar} alt={e.username} className="w-full h-full object-cover" />
-                : <span className="text-[10px] text-white/70">{(e.displayName || e.username)?.[0]?.toUpperCase()}</span>}
-            </div>
-            <span className="text-[9px] text-white/50 mt-0.5 truncate w-full text-center">{pct}%</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 /* ─── FAB sparkle constants (rainbow burst) ─── */
 const SPARKLE_ANGLES = [0,30,60,90,120,150,180,210,240,270,300,330,15,75,135,195,255,315];
@@ -563,9 +512,8 @@ export default function HomePage() {
   return (
     <div className="relative">
 
-      {/* ── TOP OVERLAY STACK: energy broadcast bar + echo detector banner ── */}
+      {/* ── TOP OVERLAY STACK: echo detector banner ── */}
       <div className="absolute top-3 left-3 right-3 z-40 flex flex-col gap-2">
-        <FolloweesEnergyBar />
 
       {/* ── ECHO DETECTOR BANNER ── */}
       <AnimatePresence>

@@ -636,28 +636,6 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                 </div>
               </motion.div>
             </AnimatePresence>
-            {slideIdx > 0 && (
-              <button className="absolute left-2 top-0 bottom-0 w-10 z-10 flex items-center justify-start"
-                onClick={() => goSlide(-1)}>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)" }}>
-                  <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </div>
-              </button>
-            )}
-            {slideIdx < allMedia.length - 1 && (
-              <button className="absolute right-2 top-0 bottom-0 w-10 z-10 flex items-center justify-end"
-                onClick={() => goSlide(1)}>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)" }}>
-                  <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-            )}
             {/* Dot indicators */}
             <div className="absolute bottom-24 left-0 right-0 flex justify-center gap-1.5 z-10">
               {allMedia.map((_, i) => (

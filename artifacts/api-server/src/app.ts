@@ -170,7 +170,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     ) {
       res.setHeader("Cache-Control", "private, no-store");
     } else if (p.startsWith("/api/media/img")) {
-      res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=3600, immutable");
+      // Each URL is content-addressed by (source url + width + quality), so once
+      // generated it never changes — safe to cache at Cloudflare's edge for 30 days
+      // instead of re-fetching from origin on every browser/CDN cache miss.
+      res.setHeader("Cache-Control", "public, max-age=2592000, s-maxage=2592000, immutable");
     } else if (
       p.startsWith("/api/posts") ||
       p.startsWith("/api/search") ||

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { getNetworkTier } from "@/lib/utils";
 
 /* ─── useInView ──────────────────────────────────────────────────
    IntersectionObserver hook — fires once when element enters
@@ -117,6 +118,9 @@ export function FastVideo({ src, poster, className = "", style }: FastVideoProps
   const { ref, inView } = useInView("150px");
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(true);
+  // On slow/data-saver connections, skip pre-buffering entirely — only
+  // fetch video data once the user explicitly taps play.
+  const preload = getNetworkTier() === "slow" ? "none" : "metadata";
 
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`} style={style}>
@@ -132,7 +136,7 @@ export function FastVideo({ src, poster, className = "", style }: FastVideoProps
         <video
           src={src}
           poster={poster ?? undefined}
-          preload="metadata"
+          preload={preload}
           controls
           muted
           playsInline

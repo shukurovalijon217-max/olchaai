@@ -33,3 +33,4 @@
 - [WebRTC calls need TURN, not just STUN](webrtc-turn-required.md) — STUN-only ICE config fails to connect calls across most mobile-carrier/symmetric NATs; add a TURN relay and a ring-timeout so unanswered calls don't hang forever.
 - [Raw i18n key leaks & translation fallback](raw-i18n-key-leak-and-translation-fallback.md) — array `label` fields holding i18n keys need t() at every render site; ensureTranslation() must not cache a failed batch as if it succeeded.
 - [Stories UX: clarify location before building](stories-location-ambiguity.md) — "stories" can mean a dedicated stories screen OR a live-bubble on feed-post avatars; these are different features, confirm which before building.
+- [Privacy Policy page pattern](privacy-policy-page.md) — /privacy route (PrivacyPolicyPage.tsx) linked from login footer + Settings privacy tab; real GDPR/O'zbek-law-referencing content, not a stub.

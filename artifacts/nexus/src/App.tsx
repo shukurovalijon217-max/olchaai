@@ -26,6 +26,7 @@ const SettingsPage      = lazy(() => import("@/pages/SettingsPage"));
 const PostDetailPage    = lazy(() => import("@/pages/PostDetailPage"));
 const LoginPage         = lazy(() => import("@/pages/LoginPage"));
 const AboutPage         = lazy(() => import("@/pages/AboutPage"));
+const PrivacyPolicyPage = lazy(() => import("@/pages/PrivacyPolicyPage"));
 const WalletPage        = lazy(() => import("@/pages/WalletPage"));
 const LivePage          = lazy(() => import("@/pages/LivePage"));
 const LiveExplorePage   = lazy(() => import("@/pages/LiveExplorePage"));
@@ -142,6 +143,7 @@ function Router() {
       <Switch>
         <Route path="/login" component={LoginPage} />
         <Route path="/about" component={AboutPage} />
+        <Route path="/privacy" component={PrivacyPolicyPage} />
         <Route path="/admin" component={() => (
           <AdminRoute><Layout><AdminPage /></Layout></AdminRoute>
         )} />

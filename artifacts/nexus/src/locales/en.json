@@ -2808,5 +2808,20 @@
     "mission_text": "Building an AI-powered social platform that gives users full control over their personal data and digital life.",
     "contact_hint": "For questions or suggestions, please reach out via the in-app support.",
     "back": "Back to Home"
+  },
+  "privacy_policy": {
+    "title": "Privacy Policy",
+    "intro": "GilosAI takes the security of your personal data seriously. This document explains what data we collect, how it is stored, and how it is protected — in line with GDPR and Uzbekistan's Law on Personal Data.",
+    "collect_title": "What we collect",
+    "collect_text": "During registration we ask for your email, phone number, username, and password (stored encrypted). Photos, videos, posts, and messages you add to your profile are also stored to provide the platform's service.",
+    "store_title": "How your data is stored",
+    "store_text": "All passwords are irreversibly encrypted (hashed) and are never stored or displayed in plain text. Data is kept in encrypted databases on servers protected by security safeguards.",
+    "share_title": "Sharing with third parties",
+    "share_text": "Your personal data is never sold or shared with third parties for advertising or other purposes. Only the minimum data required is exchanged with our trusted payment provider (Stripe) to process payments securely.",
+    "rights_title": "Your rights",
+    "rights_text": "At any time, from the settings section, you can view, edit, download your data, or delete your account entirely — all of this works in real time within the app.",
+    "contact_title": "Contact",
+    "contact_text": "If you have any privacy-related questions or requests, please reach out via the in-app support.",
+    "last_updated": "Last updated: 2026."
   }
 }

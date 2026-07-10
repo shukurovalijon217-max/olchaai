@@ -14,6 +14,22 @@ const LANG_NAMES: Record<string, string> = {
   fi: "Finnish", no: "Norwegian", he: "Hebrew", cs: "Czech",
   hu: "Hungarian", ro: "Romanian", el: "Greek", th: "Thai",
   vi: "Vietnamese", id: "Indonesian", ms: "Malay", bn: "Bengali",
+  tk: "Turkmen", mn: "Mongolian", sw: "Swahili", tl: "Filipino",
+  af: "Afrikaans", am: "Amharic", be: "Belarusian", bg: "Bulgarian",
+  bs: "Bosnian", ca: "Catalan", cy: "Welsh", et: "Estonian",
+  eu: "Basque", ga: "Irish", gl: "Galician", gu: "Gujarati",
+  ha: "Hausa", hr: "Croatian", hy: "Armenian", ig: "Igbo",
+  is: "Icelandic", jv: "Javanese", ka: "Georgian", km: "Khmer",
+  kn: "Kannada", ku: "Kurdish", lb: "Luxembourgish", lo: "Lao",
+  lt: "Lithuanian", lv: "Latvian", mg: "Malagasy", mi: "Māori",
+  mk: "Macedonian", ml: "Malayalam", mr: "Marathi", mt: "Maltese",
+  my: "Burmese", ne: "Nepali", ny: "Chichewa", pa: "Punjabi",
+  ps: "Pashto", rw: "Kinyarwanda", si: "Sinhala", sk: "Slovak",
+  sl: "Slovenian", sm: "Samoan", sn: "Shona", so: "Somali",
+  sq: "Albanian", sr: "Serbian", st: "Sesotho", su: "Sundanese",
+  ta: "Tamil", te: "Telugu", ur: "Urdu", xh: "Xhosa",
+  yo: "Yoruba", zu: "Zulu", eo: "Esperanto", fy: "Frisian",
+  yi: "Yiddish", sd: "Sindhi", or: "Odia", as: "Assamese",
 };
 
 // 7 days — translations almost never change for the same bundle

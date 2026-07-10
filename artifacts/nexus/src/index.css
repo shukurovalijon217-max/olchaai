@@ -505,6 +505,21 @@ em-emoji-picker {
 .txt-anim-neon   { animation: txt-neon   1.8s ease-in-out infinite; }
 .txt-anim-slide  { animation: txt-slide  3.5s ease-in-out infinite; }
 
+/* ── Chat message neon text (yozishmalar) ── */
+@keyframes msg-neon-flicker {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.88; }
+}
+.msg-neon-text {
+  color: #f5fbff;
+  text-shadow:
+    0 0 4px rgba(139,92,246,0.9),
+    0 0 10px rgba(139,92,246,0.7),
+    0 0 18px rgba(59,130,246,0.55),
+    0 0 28px rgba(236,72,153,0.35);
+  animation: msg-neon-flicker 2.6s ease-in-out infinite;
+}
+
 /* ── Music (transparent overlay) ── */
 @keyframes music-note-bounce {
   0%, 100% { transform: translateY(0px);  opacity: 1; }

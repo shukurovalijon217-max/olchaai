@@ -675,13 +675,13 @@ function MsgBubble({
                       <span>{msg.scheduledAt?msg.scheduledAt.toLocaleString(i18n.language === "uz" ? "uz-UZ" : "en-US",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}):t("msg.scheduled")}</span>
                     </div>
                   )}
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap msg-neon-text">{msg.content}</p>
                 </div>
               )}
               {msg.type==="image"&&msg.mediaUrl&&(
                 <div className="overflow-hidden rounded-2xl">
                   <img src={msg.mediaUrl} alt="" className="max-w-[220px] max-h-[220px] object-cover"/>
-                  {msg.content&&<p className="px-3 py-2 text-sm">{msg.content}</p>}
+                  {msg.content&&<p className="px-3 py-2 text-sm msg-neon-text">{msg.content}</p>}
                 </div>
               )}
               {msg.type==="drawing"&&msg.mediaUrl&&(

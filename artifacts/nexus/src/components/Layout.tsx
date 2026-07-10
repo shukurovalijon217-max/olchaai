@@ -562,7 +562,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { t } = useTranslation();
-  const { playerOpen, setDockExpanded } = usePip();
+  const { playerOpen, setDockExpanded, commentPanelOpen } = usePip();
   const isImmersive = location === "/" || location === "/reels" || location === "/otube";
   const [isOpen, setIsOpen] = useState(loadOpen);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -804,6 +804,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ══ GLASS PILL MOBILE NAV ════════════════════════════════ */}
+      {!commentPanelOpen && (
       <div
         className="md:hidden fixed bottom-0 right-0 z-50 flex items-end justify-end"
         style={{ padding: "0 16px calc(env(safe-area-inset-bottom, 0px) + 14px) 0" }}
@@ -912,6 +913,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </motion.button>
         </motion.div>
       </div>
+      )}
 
       {/* Tap-outside to collapse nav */}
       <AnimatePresence>
@@ -1217,14 +1219,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* ── FLOATING USER AVATAR BUBBLE ── */}
-      {!isImmersive && !playerOpen && <FloatingAvatar />}
+      {!isImmersive && !playerOpen && !commentPanelOpen && <FloatingAvatar />}
 
       {/* ── MUNI FLOATING AI ── */}
-      {location !== "/reels" && !playerOpen && <MuniPanel />}
+      {location !== "/reels" && !playerOpen && !commentPanelOpen && <MuniPanel />}
 
-      {/* ── DOCK EDGE TABS — hidden while a full-screen player is open ── */}
-      {!playerOpen && <DockEdgeTab side="right" />}
-      {!playerOpen && <DockEdgeTab side="left" />}
+      {/* ── DOCK EDGE TABS — hidden while a full-screen player or comment panel is open ── */}
+      {!playerOpen && !commentPanelOpen && <DockEdgeTab side="right" />}
+      {!playerOpen && !commentPanelOpen && <DockEdgeTab side="left" />}
 
       {/* ══ FLOATING BACK BUTTON — tap to show, mobile only ════ */}
       <AnimatePresence>

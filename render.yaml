@@ -1,25 +1,5 @@
 ## OlchaAI — Render.com Blueprint
 ## Docs: https://render.com/docs/blueprint-spec
-##
-## Deploy steps:
-## 1. Push this repo to GitHub
-## 2. Go to render.com → New → Blueprint → connect your GitHub repo
-## 3. Render will detect this file and create all services automatically
-## 4. After first deploy, set the secret env vars listed below in each service's
-##    Environment tab (Render does NOT read these from render.yaml for security)
-##
-## Required secrets to set manually in Render dashboard:
-##   API Server & AI Core:
-##     SESSION_SECRET        — random 64-char string  (e.g. openssl rand -hex 32)
-##     OPENAI_API_KEY        — your OpenAI key
-##     STRIPE_SECRET_KEY     — your Stripe secret key
-##     RESEND_API_KEY        — your Resend email key
-##   Nexus (set at build time — triggers a redeploy after first API deploy):
-##     VITE_API_BASE_URL     — https://olchaai-api.onrender.com
-##
-## ALLOWED_ORIGINS on the API:
-##     Add ALLOWED_ORIGINS=https://olchaai-nexus.onrender.com
-##     so the API accepts cross-origin requests from the frontend.
 
 databases:
   - name: olchaai-db
@@ -36,8 +16,6 @@ services:
     region: oregon
     rootDir: .
     buildCommand: >-
-      corepack enable &&
-      corepack prepare pnpm@10.26.1 --activate &&
       pnpm install --frozen-lockfile &&
       pnpm run typecheck:libs &&
       pnpm --filter @workspace/api-server run build
@@ -71,8 +49,6 @@ services:
     region: oregon
     rootDir: .
     buildCommand: >-
-      corepack enable &&
-      corepack prepare pnpm@10.26.1 --activate &&
       pnpm install --frozen-lockfile &&
       pnpm run typecheck:libs &&
       pnpm --filter @workspace/ai-core run build
@@ -116,8 +92,6 @@ services:
     region: oregon
     rootDir: .
     buildCommand: >-
-      corepack enable &&
-      corepack prepare pnpm@10.26.1 --activate &&
       pnpm install --frozen-lockfile &&
       pnpm run typecheck:libs &&
       BASE_PATH=/ pnpm --filter @workspace/nexus run build

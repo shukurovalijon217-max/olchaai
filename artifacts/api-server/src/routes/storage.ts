@@ -34,7 +34,10 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
     const { name, size, contentType } = parsed.data;
 
     if (isCloudinaryEnabled()) {
-      const { uploadURL, objectPath } = generateUploadSession();
+      const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
+      const host = req.headers.host || "";
+      const baseUrl = `${proto}://${host}`;
+      const { uploadURL, objectPath } = generateUploadSession(baseUrl);
       res.json(
         RequestUploadUrlResponse.parse({
           uploadURL,

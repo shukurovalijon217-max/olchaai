@@ -445,7 +445,7 @@ router.post("/admin/notify/broadcast", async (req, res) => {
       userId,
       type,
       message,
-      actorName: "GilosAI Admin",
+      actorName: "OlchaAI Admin",
       targetId: null,
       isRead: false,
     }));
@@ -540,7 +540,7 @@ router.get("/admin/settings", async (req, res) => {
     maxFileSize: 100,
     premiumEnabled: true,
     adsEnabled: true,
-    platform: "GilosAI",
+    platform: "OlchaAI",
     version: "1.0.0",
   });
 });
@@ -590,7 +590,7 @@ router.put("/admin/premium-config", async (req: any, res) => {
     const stripe = await getUncachableStripeClient();
     let productId = current.stripeProductId;
     if (!productId) {
-      const existing = await stripe.products.search({ query: "name:'GilosAI Premium' AND active:'true'" });
+      const existing = await stripe.products.search({ query: "name:'OlchaAI Premium' AND active:'true'" });
       productId = existing.data[0]?.id ?? null;
     }
     if (!productId) {
@@ -648,14 +648,14 @@ router.put("/admin/premium-config", async (req: any, res) => {
 router.post("/admin/stripe/seed", async (req, res) => {
   try {
     const stripe = await getUncachableStripeClient();
-    const existing = await stripe.products.search({ query: "name:'GilosAI Premium' AND active:'true'" });
+    const existing = await stripe.products.search({ query: "name:'OlchaAI Premium' AND active:'true'" });
     if (existing.data.length > 0) {
       const prices = await stripe.prices.list({ product: existing.data[0].id, active: true });
       res.json({ message: "Mahsulot allaqachon mavjud", productId: existing.data[0].id, prices: prices.data });
       return;
     }
     const product = await stripe.products.create({
-      name: "GilosAI Premium",
+      name: "OlchaAI Premium",
       description: "Reklama yo'q, eksklyuziv badge, kengaytirilgan tahlil va boshqa premium xususiyatlar.",
       metadata: { app: "olcha" },
     });
@@ -665,7 +665,7 @@ router.post("/admin/stripe/seed", async (req, res) => {
     const yearly = await stripe.prices.create({
       product: product.id, unit_amount: 7999, currency: "usd", recurring: { interval: "year" },
     });
-    res.json({ message: "GilosAI Premium yaratildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
+    res.json({ message: "OlchaAI Premium yaratildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Stripe mahsulot yaratishda xato" });

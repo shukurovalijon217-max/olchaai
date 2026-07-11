@@ -502,7 +502,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
     if (!user || shareSending) return;
     setShareSending(toUser.id);
     const postUrl = `${window.location.origin}/post/${post.id}`;
-    const content = `📤 *${post.author?.displayName ?? "GilosAI"}* tomonidan post:\n${postUrl}`;
+    const content = `📤 *${post.author?.displayName ?? "OlchaAI"}* tomonidan post:\n${postUrl}`;
     try {
       const convRes = await fetch(`${API_BASE}/api/conversations`, {
         method: "POST", credentials: "include",
@@ -893,7 +893,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                   <div className="flex items-center gap-1">
                     <span className="text-white font-black text-[13px] truncate"
                       style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
-                      {post.author?.displayName ?? "GilosAI"}
+                      {post.author?.displayName ?? "OlchaAI"}
                     </span>
                     {(post.author as any)?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: accent }} />}
                   </div>

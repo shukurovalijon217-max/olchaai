@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    document.title = `${t("privacy_policy.title")} — GilosAI`;
+    document.title = `${t("privacy_policy.title")} — OlchaAI`;
   }, [t]);
 
   return (

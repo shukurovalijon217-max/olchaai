@@ -1,8 +1,8 @@
 import { Resend } from "resend";
 import { logger } from "./logger";
 
-const FROM = "GilosAI <noreply@olcha.com>";
-const FROM_FALLBACK = "GilosAI <onboarding@resend.dev>";
+const FROM = "OlchaAI <noreply@olcha.com>";
+const FROM_FALLBACK = "OlchaAI <onboarding@resend.dev>";
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY;
@@ -31,7 +31,7 @@ function base(content: string): string {
       </div>
       <div style="padding:24px">${content}</div>
       <div style="padding:12px 24px;background:#ffffff08;font-size:11px;color:#888">
-        GilosAI — <a href="https://olchaai.com" style="color:#a78bfa">olchaai.com</a>
+        OlchaAI — <a href="https://olchaai.com" style="color:#a78bfa">olchaai.com</a>
         &nbsp;·&nbsp; Bildirishnomalarni o'chirish uchun sozlamalarga kiring.
       </div>
     </div>`;

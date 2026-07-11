@@ -93,7 +93,7 @@ async function callOpenAI(prompt: string): Promise<string> {
       {
         role: "system",
         content:
-          "You are the central AI orchestrator for GilosAI, a social platform. " +
+          "You are the central AI orchestrator for OlchaAI, a social platform. " +
           "Give concise, actionable decisions (1-3 sentences). No markdown.",
       },
       { role: "user", content: prompt },

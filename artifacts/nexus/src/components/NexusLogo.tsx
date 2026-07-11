@@ -481,7 +481,7 @@ export default function NexusLogo({
         })}
       </div>
 
-      {/* ── GilosAI matni — har bir harf o'z rangida ── */}
+      {/* ── OlchaAI matni — har bir harf o'z rangida ── */}
       {showText && (
         <GilosWordmark fontSize={fontSize} letterSpacing={letterSpacing} fontWeight={400} />
       )}

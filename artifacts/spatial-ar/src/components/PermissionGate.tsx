@@ -60,7 +60,7 @@ export function PermissionGate({ permission, isMobile, onGrant, onSkip }: Props)
             Spatial AR Engine
           </h2>
           <p className="text-xs font-mono text-cyan-400/60 uppercase tracking-widest mb-3">
-            GilosAI · Hologram Interface
+            OlchaAI · Hologram Interface
           </p>
           <p className="text-sm text-white/50 leading-relaxed">
             {isMobile

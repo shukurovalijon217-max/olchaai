@@ -419,7 +419,7 @@ function LangSwitcher() {
   const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
   const handleSelect = async (code: LangCode) => {
-    localStorage.setItem("gilos_lang_user", code);
+    localStorage.setItem("olcha_lang_user", code);
     applyRTL(code);
     setOpen(false);
     setSearch("");

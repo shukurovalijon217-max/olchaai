@@ -1,5 +1,5 @@
 /**
- * /api/go/* — Proxy routes to the GilosAI Go real-time microservice.
+ * /api/go/* — Proxy routes to the OlchaAI Go real-time microservice.
  * Exposes Go service capabilities (feed ranking, trending, WS stats) via the main API.
  */
 import { Router, Request, Response } from "express";

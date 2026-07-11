@@ -53,7 +53,7 @@ export default function WebScreen() {
           <Feather name="arrow-left" size={20} color="#eef2f8" />
         </Pressable>
         <Text style={s.headerTxt} numberOfLines={1}>
-          {params.title ?? "GilosAI"}
+          {params.title ?? "OlchaAI"}
         </Text>
         <View style={{ width: 32 }} />
       </View>
@@ -88,7 +88,7 @@ export default function WebScreen() {
         pullToRefreshEnabled={false}
         bounces={false}
         allowsFullscreenVideo
-        userAgent={`GilosAI/1.0 Mobile/${Platform.OS} (${Platform.Version})`}
+        userAgent={`OlchaAI/1.0 Mobile/${Platform.OS} (${Platform.Version})`}
         onLoadStart={() => { setLoading(true); setError(false); }}
         onLoadEnd={() => setLoading(false)}
         onError={() => { setLoading(false); setError(true); }}

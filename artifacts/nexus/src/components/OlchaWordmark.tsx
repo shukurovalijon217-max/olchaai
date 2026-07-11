@@ -16,7 +16,7 @@ interface LetterStyle {
 }
 
 /**
- * Per-letter brand color spec — "GilosAI" neon wordmark:
+ * Per-letter brand color spec — "OlchaAI" neon wordmark:
  *  G = cherry-red neon    i = magenta neon    l = amber-orange neon
  *  o = purple neon        s = cyan neon       AI = cyan+pink neon shimmer
  */
@@ -91,7 +91,7 @@ export default function OlchaWordmark({
     <span
       className={className}
       role="img"
-      aria-label="GilosAI"
+      aria-label="OlchaAI"
       style={{ position: "relative", display: "inline-flex", alignItems: "baseline" }}
     >
       <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "baseline" }}>

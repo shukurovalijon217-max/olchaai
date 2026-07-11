@@ -163,9 +163,9 @@ const resources: Record<string, { translation: TranslationShape }> = {
 
 // Pre-load cached translation for the stored language so there's no flash on reload
 try {
-  const storedLang = localStorage.getItem("gilos_lang_user");
+  const storedLang = localStorage.getItem("olcha_lang_user");
   if (storedLang && storedLang !== "uz" && storedLang !== "en") {
-    const raw = localStorage.getItem(`gilos_trans_${TRANS_CACHE_VER}_${storedLang}`);
+    const raw = localStorage.getItem(`olcha_trans_${TRANS_CACHE_VER}_${storedLang}`);
     if (raw) {
       resources[storedLang] = { translation: JSON.parse(raw) as TranslationShape };
     }
@@ -175,7 +175,7 @@ try {
 // Foydalanuvchi o'zi tanlagan til (faqat Settings orqali o'rnatiladi)
 // Agar saqlanmagan bo'lsa — doim uz
 const _savedLang = (() => {
-  try { return localStorage.getItem("gilos_lang_user") || "uz"; } catch { return "uz"; }
+  try { return localStorage.getItem("olcha_lang_user") || "uz"; } catch { return "uz"; }
 })();
 
 i18n
@@ -211,7 +211,7 @@ export async function ensureTranslation(langCode: string): Promise<void> {
   if (langCode === "uz" || langCode === "en") return;
   if (i18n.hasResourceBundle(langCode, "translation")) return;
 
-  const cacheKey = `gilos_trans_${TRANS_CACHE_VER}_${langCode}`;
+  const cacheKey = `olcha_trans_${TRANS_CACHE_VER}_${langCode}`;
   const cached = localStorage.getItem(cacheKey);
   if (cached) {
     try {

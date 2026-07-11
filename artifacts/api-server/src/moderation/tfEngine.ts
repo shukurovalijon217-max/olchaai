@@ -1,5 +1,5 @@
 /**
- * GilosAI SafeGuard — TensorFlow.js Neural Toxicity Engine
+ * OlchaAI SafeGuard — TensorFlow.js Neural Toxicity Engine
  *
  * Custom text-classification network built with TF.js:
  *   Tokenize → Bag-of-Words → Dense(64, relu) → Dense(7, sigmoid)

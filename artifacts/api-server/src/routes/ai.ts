@@ -409,7 +409,7 @@ router.post("/ai/video-suggest", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: `Siz GilosAI NEXUS video platformasi uchun video sarlavhasi, teglar va tavsif yozishga yordam berasiz. Fayl nomi asosida jozibali, qisqa sarlavha (60 belgigacha), 4-6 ta tegdan iborat ro'yxat va 1-2 jumlalik tavsif tuzing. Faqat JSON qaytaring: {"title": string, "tags": string[], "caption": string}. Boshqa hech narsa yozmang.`,
+          content: `Siz OlchaAI NEXUS video platformasi uchun video sarlavhasi, teglar va tavsif yozishga yordam berasiz. Fayl nomi asosida jozibali, qisqa sarlavha (60 belgigacha), 4-6 ta tegdan iborat ro'yxat va 1-2 jumlalik tavsif tuzing. Faqat JSON qaytaring: {"title": string, "tags": string[], "caption": string}. Boshqa hech narsa yozmang.`,
         },
         { role: "user", content: `Video fayl nomi: ${fileName || "video"}` },
       ],

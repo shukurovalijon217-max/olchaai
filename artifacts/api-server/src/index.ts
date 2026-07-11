@@ -2,7 +2,11 @@ import cluster from "node:cluster";
 import os from "node:os";
 import { logger } from "./lib/logger";
 
-const WORKERS = Math.max(1, Math.min(os.cpus().length, 4));
+const WORKERS = Math.max(1, Math.min(
+  parseInt(process.env["WEB_CONCURRENCY"] ?? "1", 10) || 1,
+  os.cpus().length,
+  4
+));
 
 if (cluster.isPrimary) {
   logger.info({ workers: WORKERS, cpus: os.cpus().length }, "Primary starting workers");

@@ -410,9 +410,9 @@ function MuniPanel() {
           whileTap={{ scale: 0.88 }}
           className="fixed z-[80] md:hidden"
           style={{
-            bottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)",
-            ...(isLeftSide ? { left: 16 } : { right: 16 }),
-            width: 44, height: 44, borderRadius: "50%",
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 14px)",
+            left: 16,
+            width: 36, height: 36, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >
@@ -807,7 +807,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {!commentPanelOpen && (
       <div
         className="md:hidden fixed bottom-0 right-0 z-50 flex items-end justify-end"
-        style={{ padding: "0 16px calc(env(safe-area-inset-bottom, 0px) + 14px) 0" }}
+        style={{ padding: "0 16px calc(env(safe-area-inset-bottom, 0px) + 7px) 0" }}
       >
         {/* Glass pill — grows leftward as items expand */}
         <motion.div
@@ -868,7 +868,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             onClick={() => { if (!navExpanded) setNavExpanded(true); else setMoreOpen(true); }}
             whileTap={{ scale: 0.78 }}
             className="relative flex items-center justify-center select-none flex-shrink-0"
-            style={{ width: 44, height: 44 }}
+            style={{ width: 36, height: 36 }}
           >
             {/* Ring 1 — CW */}
             <motion.div

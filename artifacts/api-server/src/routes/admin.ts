@@ -4,7 +4,6 @@ import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsT
 import { eq, sql, desc, sum, and, inArray } from "drizzle-orm";
 import { getCommissionRate, setCommissionRate, applyCommission } from "../lib/commission";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
-import { getStripeSync } from "../stripe/stripeClient";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 
 const router = Router();
@@ -633,9 +632,6 @@ router.put("/admin/premium-config", async (req: any, res) => {
       },
     }).returning();
 
-    // Sync Stripe data to local DB
-    try { const s = await getStripeSync(); await s.syncBackfill(); } catch { /* non-fatal */ }
-
     res.json({
       ok: true,
       config: updatedRows[0],
@@ -655,9 +651,7 @@ router.post("/admin/stripe/seed", async (req, res) => {
     const existing = await stripe.products.search({ query: "name:'GilosAI Premium' AND active:'true'" });
     if (existing.data.length > 0) {
       const prices = await stripe.prices.list({ product: existing.data[0].id, active: true });
-      const stripeSync = await getStripeSync();
-      await stripeSync.syncBackfill();
-      res.json({ message: "Mahsulot allaqachon mavjud, sinxronlashtirildi", productId: existing.data[0].id, prices: prices.data });
+      res.json({ message: "Mahsulot allaqachon mavjud", productId: existing.data[0].id, prices: prices.data });
       return;
     }
     const product = await stripe.products.create({
@@ -671,9 +665,7 @@ router.post("/admin/stripe/seed", async (req, res) => {
     const yearly = await stripe.prices.create({
       product: product.id, unit_amount: 7999, currency: "usd", recurring: { interval: "year" },
     });
-    const stripeSync = await getStripeSync();
-    await stripeSync.syncBackfill();
-    res.json({ message: "GilosAI Premium yaratildi va sinxronlashtirildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
+    res.json({ message: "GilosAI Premium yaratildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Stripe mahsulot yaratishda xato" });

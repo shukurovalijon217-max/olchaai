@@ -18,6 +18,7 @@ services:
     buildCommand: >-
       pnpm install --frozen-lockfile &&
       pnpm run typecheck:libs &&
+      pnpm --filter @workspace/db run push-force &&
       pnpm --filter @workspace/api-server run build
     startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
     healthCheckPath: /api/healthz

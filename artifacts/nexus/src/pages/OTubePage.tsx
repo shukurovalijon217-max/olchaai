@@ -2164,7 +2164,7 @@ function LivePulse({ count }: { count: number }) {
         style={{width:5,height:5,borderRadius:"50%",background:"#ff3b30",
           boxShadow:"0 0 6px #ff3b30"}}/>
       <span style={{fontSize:9.5,fontWeight:600,color:"rgba(255,100,80,0.9)",fontFamily:"monospace"}}>
-        {t("otube.live_count")}
+        {Math.max(0, count).toLocaleString()} {t("otube.live_count")}
       </span>
     </div>
   );
@@ -2235,7 +2235,13 @@ function TrendRow({ video, onPlay, idx }:
           <p style={{fontSize:11,fontWeight:800,color:"white",lineHeight:1.3,
             marginBottom:6,textShadow:"0 1px 12px rgba(0,0,0,0.9)"}}
             className="line-clamp-2">{video.caption||"Video"}</p>
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.4)"}}/>
+              <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>
+                {fmt(video.viewsCount)}
+              </span>
+            </div>
             {/* Velocity signal */}
             <div className="flex items-center gap-0.5 px-1.5 py-0.5"
               style={{borderRadius:99,background:`${col}18`,boxShadow:`0 0 0 1px ${col}44`}}>

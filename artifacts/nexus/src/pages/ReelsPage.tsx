@@ -729,8 +729,13 @@ function ReelSlide({
         {/* ─── TOP BAR: progress ring + views + mute ─── */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pointer-events-auto"
           style={{ paddingTop: "calc(env(safe-area-inset-top, 44px) + 10px)" }}>
-          {/* Left: spacer */}
-          <div className="w-8" />
+          {/* Left: views */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
+            style={{ background: "rgba(0,0,0,0.42)", backdropFilter: "blur(18px)",
+              border: "1px solid rgba(255,255,255,0.09)" }}>
+            <Eye className="w-3 h-3" style={{ color: "rgba(255,255,255,0.45)" }} />
+            <span className="text-[10px] font-bold text-white/50">{fmt(reel.viewsCount ?? 0)}</span>
+          </div>
 
           {/* Center: circular progress */}
           <div className="relative">
@@ -1262,23 +1267,8 @@ export default function ReelsPage() {
                   </motion.button>
                 );
               })}
-              {feed.length > 0 && (
-                <span className="text-[8px] font-black text-white/18 mt-1"
-                  style={{ writingMode: "vertical-lr", letterSpacing: "0.08em" }}>
-                  {current + 1}/{feed.length}
-                </span>
-              )}
             </div>
 
-            {/* Mobile page counter */}
-            {feed.length > 1 && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 md:hidden pointer-events-none">
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full"
-                  style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)" }}>
-                  <span className="text-[9px] font-black text-white/45 tabular-nums">{current + 1} / {feed.length}</span>
-                </div>
-              </div>
-            )}
           </motion.div>
 
           {/* AI inject chip */}

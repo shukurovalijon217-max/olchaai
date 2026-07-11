@@ -2,11 +2,13 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, MoreHorizontal, ChevronDown, X, Radio,
-  PenLine, BookOpen, Film, MonitorPlay, Trophy,
+  PenLine, BookOpen, Film, MonitorPlay, Trophy, Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import { useListPosts, useGetAiFeed, useListStories } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useListPosts, useGetAiFeed, useListStories, getListStoriesQueryKey } from "@workspace/api-client-react";
+import { useAuth } from "@/context/AuthContext";
 import FeedCard from "@/components/FeedCard";
 import StoriesBar from "@/components/StoriesBar";
 import CreateContentModal from "@/components/CreateContentModal";
@@ -308,6 +310,8 @@ interface HoloUser {
 export default function HomePage() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const { data: feed } = useGetAiFeed();
   const { data: posts = [], isLoading } = useListPosts();
   const { data: storiesRaw = [] } = useListStories();
@@ -373,6 +377,17 @@ export default function HomePage() {
     setViewerStoryIdx(0);
     setPortalOrigin(null);
   }, []);
+
+  const deleteActiveStory = useCallback(async () => {
+    if (!activeStory) return;
+    try {
+      await fetch(`${API}/api/stories/${(activeStory as any).id}`, {
+        method: "DELETE", credentials: "include",
+      });
+      await qc.invalidateQueries({ queryKey: getListStoriesQueryKey() });
+      closeViewer();
+    } catch { /* silent */ }
+  }, [activeStory, qc, closeViewer]);
 
   const goNextInGroup = useCallback(() => {
     if (!activeGroup) return;
@@ -702,6 +717,17 @@ export default function HomePage() {
             >
               <X className="w-5 h-5 text-white/60" />
             </button>
+
+            {/* Delete button — only visible to story owner */}
+            {user && (activeStory as any)?.authorId === user.id && (
+              <button
+                onClick={deleteActiveStory}
+                className="absolute top-10 right-16 z-30 p-2 rounded-full"
+                style={{ background: "rgba(180,0,0,0.32)", backdropFilter: "blur(8px)" }}
+              >
+                <Trash2 className="w-5 h-5 text-red-400" />
+              </button>
+            )}
 
             {/* Caption — ultra-minimal, bottom float */}
             {activeStory.caption && (

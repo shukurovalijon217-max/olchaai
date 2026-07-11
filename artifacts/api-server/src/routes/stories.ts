@@ -69,6 +69,26 @@ router.post("/stories", async (req, res) => {
   }
 });
 
+router.delete("/stories/:id", async (req, res) => {
+  try {
+    const storyId = Number(req.params.id);
+    const userId  = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Login kerak" }); return; }
+
+    const [story] = await db.select({ id: storiesTable.id, authorId: storiesTable.authorId })
+      .from(storiesTable).where(eq(storiesTable.id, storyId)).limit(1);
+    if (!story) { res.status(404).json({ error: "Story topilmadi" }); return; }
+    if (story.authorId !== userId) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
+
+    await db.delete(storiesTable).where(eq(storiesTable.id, storyId));
+    cacheDelPattern("stories:list:");
+    res.json({ deleted: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.post("/stories/:id/view", async (req, res) => {
   try {
     const storyId = Number(req.params.id);

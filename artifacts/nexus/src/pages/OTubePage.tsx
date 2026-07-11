@@ -2164,7 +2164,7 @@ function LivePulse({ count }: { count: number }) {
         style={{width:5,height:5,borderRadius:"50%",background:"#ff3b30",
           boxShadow:"0 0 6px #ff3b30"}}/>
       <span style={{fontSize:9.5,fontWeight:600,color:"rgba(255,100,80,0.9)",fontFamily:"monospace"}}>
-        {Math.max(0, count).toLocaleString()} {t("otube.live_count")}
+        {t("otube.live_count")}
       </span>
     </div>
   );
@@ -2235,13 +2235,7 @@ function TrendRow({ video, onPlay, idx }:
           <p style={{fontSize:11,fontWeight:800,color:"white",lineHeight:1.3,
             marginBottom:6,textShadow:"0 1px 12px rgba(0,0,0,0.9)"}}
             className="line-clamp-2">{video.caption||"Video"}</p>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <Eye style={{width:8,height:8,color:"rgba(255,255,255,0.4)"}}/>
-              <span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"monospace"}}>
-                {fmt(video.viewsCount)}
-              </span>
-            </div>
+          <div className="flex items-center justify-end">
             {/* Velocity signal */}
             <div className="flex items-center gap-0.5 px-1.5 py-0.5"
               style={{borderRadius:99,background:`${col}18`,boxShadow:`0 0 0 1px ${col}44`}}>
@@ -2254,15 +2248,15 @@ function TrendRow({ video, onPlay, idx }:
         {/* Color accent bottom edge */}
         <div className="absolute bottom-0 inset-x-0 h-[1px]"
           style={{background:`linear-gradient(90deg,transparent,${col}88,transparent)`}}/>
-        {/* Dummy old block closer — see below */}
+        {/* Duration — bare text, no badge */}
         {(()=>{
           const _dur = `${1+(video.id%12)}:${String((video.id*13)%60).padStart(2,"0")}`;
           return (
-            <div className="absolute bottom-[44px] right-3 px-1.5 py-0.5"
-              style={{borderRadius:4,background:"rgba(0,0,0,0.72)",backdropFilter:"blur(4px)"}}>
-              <span style={{fontSize:7.5,fontWeight:700,color:"rgba(255,255,255,0.55)",fontFamily:"monospace"}}>
-                {_dur}</span>
-            </div>
+            <span className="absolute bottom-[44px] right-3"
+              style={{fontSize:7.5,fontWeight:700,color:"rgba(255,255,255,0.55)",fontFamily:"monospace",
+                textShadow:"0 1px 4px rgba(0,0,0,0.9)"}}>
+              {_dur}
+            </span>
           );
         })()}
       </div>
@@ -2376,13 +2370,12 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
           )}
         </div>
 
-        {/* Duration badge */}
-        <div className="absolute bottom-9 right-2 px-1.5 py-0.5"
-          style={{borderRadius:5,background:"rgba(0,0,0,0.78)",backdropFilter:"blur(4px)"}}>
-          <span style={{fontSize:8,fontWeight:700,color:"white",fontFamily:"monospace"}}>
-            {2+(video.id%18)}:{String((video.id*7)%60).padStart(2,"0")}
-          </span>
-        </div>
+        {/* Duration — bare text, no badge */}
+        <span className="absolute bottom-9 right-2"
+          style={{fontSize:8,fontWeight:700,color:"rgba(255,255,255,0.7)",fontFamily:"monospace",
+            textShadow:"0 1px 4px rgba(0,0,0,0.9)"}}>
+          {2+(video.id%18)}:{String((video.id*7)%60).padStart(2,"0")}
+        </span>
 
         {/* Signal Score — single chip only */}
         <div className="absolute top-2.5 right-2.5">

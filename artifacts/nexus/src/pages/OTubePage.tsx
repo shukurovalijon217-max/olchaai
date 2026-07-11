@@ -6099,13 +6099,15 @@ export default function OTubePage() {
   const [showSettings,setShowSettings] = useState(false);
   const [settings,setSettings]   = useState<PlayerSettings>(DEF_S);
   const [monetize,setMonetize]   = useState<MonetizationSettings>(DEF_M);
-  const [notifDot,setNotifDot]   = useState(true);
+  const [notifDot,setNotifDot]   = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const activeSig  = SIGNALS.find(s=>s.id===signal)!;
   const tab        = activeSig.tab;
 
   const { data:raw=[], isLoading } = useListReels();
+  const { data:notifList=[] } = useListNotifications();
+  useEffect(()=>{ setNotifDot(notifList.some((n:Notification)=>!n.isRead)); },[notifList]);
   const { data:continueWatching=[] } = useGetContinueWatching();
 
   const reels = useMemo(()=>{

@@ -88,8 +88,9 @@ router.put("/storage/uploads/cloud/:uuid", async (req: Request, res: Response) =
     await streamToCloudinary(uuid, req, contentType);
     res.status(200).json({ ok: true });
   } catch (error) {
-    req.log.error({ err: error }, "Cloudinary upload failed");
-    res.status(500).json({ error: "Upload failed" });
+    const msg = error instanceof Error ? error.message : String(error);
+    req.log.error({ err: error, msg }, "Cloudinary upload failed");
+    res.status(500).json({ error: "Upload failed", detail: msg });
   }
 });
 

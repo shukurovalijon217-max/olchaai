@@ -804,7 +804,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ══ GLASS PILL MOBILE NAV ════════════════════════════════ */}
-      {!commentPanelOpen && (
+      {!commentPanelOpen && location !== "/otube" && (
       <div
         className="md:hidden fixed bottom-0 right-0 z-50 flex items-end justify-end"
         style={{ padding: "0 16px calc(env(safe-area-inset-bottom, 0px) + 7px) 0" }}

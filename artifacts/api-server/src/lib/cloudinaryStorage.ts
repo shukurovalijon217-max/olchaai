@@ -20,11 +20,11 @@ function configure() {
   });
 }
 
-export function generateUploadSession(): { uuid: string; uploadURL: string; objectPath: string } {
+export function generateUploadSession(baseUrl: string): { uuid: string; uploadURL: string; objectPath: string } {
   const uuid = randomUUID();
   return {
     uuid,
-    uploadURL: `/api/storage/uploads/cloud/${uuid}`,
+    uploadURL: `${baseUrl}/api/storage/uploads/cloud/${uuid}`,
     objectPath: `/cloud/${uuid}`,
   };
 }

@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 export interface UploadResult {
   objectPath: string;

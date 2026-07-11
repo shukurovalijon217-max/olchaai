@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 const WS_URL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/go/ws`;
 
 interface Member {

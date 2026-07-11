@@ -47,6 +47,6 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
     w = Math.round(width * 0.8);
     q = Math.min(quality, 65);
   }
-  const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+  const base = (import.meta.env.VITE_API_BASE_URL ?? "");
   return `${base}/api/media/img?url=${encodeURIComponent(url)}&w=${w}&q=${q}`;
 }

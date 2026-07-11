@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useGetLive, useEndLive, useSendLiveGift } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 const STUN = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },

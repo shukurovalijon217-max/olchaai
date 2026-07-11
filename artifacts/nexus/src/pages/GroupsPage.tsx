@@ -20,7 +20,7 @@ import { useListGroups, useJoinGroup, useCreateGroup, getListGroupsQueryKey } fr
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 /* ── Upload cover image ─────────────────────────────────────── */
 async function uploadFile(file: File): Promise<string> {

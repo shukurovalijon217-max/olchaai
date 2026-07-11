@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Bot, Send, Settings, ChevronLeft, Power, Brain, Sparkles, MessageCircle, User, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 interface TwinConfig {
   id: number; userId: number; isEnabled: boolean;

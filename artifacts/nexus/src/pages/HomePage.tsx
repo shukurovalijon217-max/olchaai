@@ -16,7 +16,7 @@ import TunnelFeed from "@/components/TunnelFeed";
 import { getFeaturePref } from "@/lib/sounds";
 import { usePip } from "@/context/PipContext";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 

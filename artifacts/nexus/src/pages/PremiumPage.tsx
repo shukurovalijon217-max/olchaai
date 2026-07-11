@@ -24,7 +24,7 @@ interface Product {
   prices: Price[];
 }
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 // ── Currency detection from browser locale ─────────────────────────────────
 const LANG_TO_CURRENCY: Record<string, string> = {

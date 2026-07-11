@@ -43,7 +43,7 @@ import CreateContentModal from "@/components/CreateContentModal";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface FeedItem {

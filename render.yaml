@@ -54,7 +54,7 @@ services:
       pnpm run typecheck:libs &&
       pnpm --filter @workspace/ai-core run build
     startCommand: node --enable-source-maps artifacts/ai-core/dist/index.mjs
-    healthCheckPath: /health
+    healthCheckPath: /ai-core/health
     envVars:
       - key: NODE_ENV
         value: production

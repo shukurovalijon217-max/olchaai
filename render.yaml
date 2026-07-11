@@ -40,7 +40,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: ALLOWED_ORIGINS
-        value: https://olchaai.com,https://www.olchaai.com,https://gilosai.com,https://www.gilosai.com
+        value: https://olchaai.com,https://www.olchaai.com
       - key: FRONTEND_URL
         value: https://olchaai.com
       - key: CLOUDINARY_CLOUD_NAME

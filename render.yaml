@@ -40,7 +40,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: ALLOWED_ORIGINS
-        sync: false
+        value: https://olchaai.com,https://www.olchaai.com
 
   # ── 2. AI Core Service ───────────────────────────────────────────────────
   - type: web

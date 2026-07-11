@@ -5446,8 +5446,8 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 /* ─────────────────────────────────────────────────────── */
 /* Floating FAB — circular, swipe-to-edge collapsible     */
 /* ─────────────────────────────────────────────────────── */
-const ORB     = 44;  /* Unified orb size — matches FloatingAvatar */
-const FAB_BOT = "calc(env(safe-area-inset-bottom, 0px) + 56px)";
+const ORB     = 36;  /* Unified orb size — matches 36×36 bottom chrome */
+const FAB_BOT = "calc(env(safe-area-inset-bottom, 0px) + 14px)";
 
 function FloatingFAB() {
   const { t } = useTranslation();

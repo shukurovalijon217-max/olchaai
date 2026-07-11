@@ -693,7 +693,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const { data: user, isLoading } = useGetUser(userId, { query: { queryKey: getGetUserQueryKey(userId) } });
   const { data: posts = [] } = useListPosts({ userId });
   const { data: reels = [] } = useListReels({ userId });
-  const [following, setFollowing] = useState(false);
+  const [following, setFollowing] = useState<boolean | null>(null);
   const follow = useFollowUser();
   const updateUser = useUpdateUser();
   const startLive = useStartLive();
@@ -739,9 +739,28 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
     }),
   });
 
+  // Sync following state from server data when it loads / changes
+  useEffect(() => {
+    if (user) setFollowing(user.isFollowing ?? false);
+  }, [user?.isFollowing]);
+
   const handleFollow = () => {
-    setFollowing(!following);
-    follow.mutate({ id: userId }, { onSuccess: () => qc.invalidateQueries({ queryKey: getGetUserQueryKey(userId) }) });
+    const next = !(following ?? false);
+    setFollowing(next);
+    follow.mutate(
+      { id: userId },
+      {
+        onSuccess: (data: any) => {
+          // Use server's authoritative value
+          if (typeof data?.following === "boolean") setFollowing(data.following);
+          qc.invalidateQueries({ queryKey: getGetUserQueryKey(userId) });
+        },
+        onError: () => {
+          // Revert optimistic update on failure
+          setFollowing(!next);
+        },
+      }
+    );
   };
   const handleGoLive = async () => {
     if (!liveTitle.trim()) return;

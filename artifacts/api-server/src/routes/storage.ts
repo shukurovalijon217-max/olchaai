@@ -9,7 +9,7 @@ import { ObjectPermission } from "../lib/objectAcl";
 import {
   isCloudinaryEnabled,
   generateUploadSession,
-  uploadBufferToCloudinary,
+  streamToCloudinary,
   getCloudinaryUrl,
 } from "../lib/cloudinaryStorage";
 
@@ -76,15 +76,7 @@ router.put("/storage/uploads/cloud/:uuid", async (req: Request, res: Response) =
   const contentType = (req.headers["content-type"] as string) || "application/octet-stream";
 
   try {
-    const chunks: Buffer[] = [];
-    await new Promise<void>((resolve, reject) => {
-      req.on("data", (chunk: Buffer) => chunks.push(chunk));
-      req.on("end", resolve);
-      req.on("error", reject);
-    });
-
-    const buffer = Buffer.concat(chunks);
-    await uploadBufferToCloudinary(uuid, buffer, contentType);
+    await streamToCloudinary(uuid, req, contentType);
     res.status(200).json({ ok: true });
   } catch (error) {
     req.log.error({ err: error }, "Cloudinary upload failed");

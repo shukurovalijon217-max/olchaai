@@ -29,6 +29,12 @@ export function generateUploadSession(baseUrl: string): { uuid: string; uploadUR
   };
 }
 
+function getResourceType(contentType: string): "image" | "video" | "raw" {
+  if (contentType.startsWith("video/") || contentType.startsWith("audio/")) return "video";
+  if (contentType.startsWith("image/")) return "image";
+  return "raw";
+}
+
 export async function uploadBufferToCloudinary(
   uuid: string,
   buffer: Buffer,
@@ -36,23 +42,47 @@ export async function uploadBufferToCloudinary(
 ): Promise<string> {
   configure();
 
-  const resourceType: "image" | "video" | "raw" = contentType.startsWith("video/")
-    ? "video"
-    : contentType.startsWith("audio/")
-    ? "video"
-    : contentType.startsWith("image/")
-    ? "image"
-    : "raw";
-
   const cloudinaryUrl = await new Promise<string>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { public_id: uuid, resource_type: resourceType, overwrite: true },
+      { public_id: uuid, resource_type: getResourceType(contentType), overwrite: true },
       (error, result) => {
         if (error) return reject(error);
         resolve(result!.secure_url);
       }
     );
     stream.end(buffer);
+  });
+
+  await db.execute(
+    sql`INSERT INTO upload_sessions (uuid, cloudinary_url) VALUES (${uuid}, ${cloudinaryUrl})
+        ON CONFLICT (uuid) DO UPDATE SET cloudinary_url = EXCLUDED.cloudinary_url`
+  );
+
+  return cloudinaryUrl;
+}
+
+export async function streamToCloudinary(
+  uuid: string,
+  readableStream: NodeJS.ReadableStream,
+  contentType: string
+): Promise<string> {
+  configure();
+
+  const cloudinaryUrl = await new Promise<string>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        public_id: uuid,
+        resource_type: getResourceType(contentType),
+        overwrite: true,
+        chunk_size: 6_000_000,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result!.secure_url);
+      }
+    );
+    readableStream.pipe(uploadStream);
+    readableStream.on("error", reject);
   });
 
   await db.execute(

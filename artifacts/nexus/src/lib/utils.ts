@@ -31,6 +31,20 @@ export function getNetworkTier(): NetworkTier {
  * @param width Resize width in px (default 800)
  * @param quality WebP quality 20-100 (default 80)
  */
+/**
+ * Resolves a URL that may be a relative `/api/...` path stored in the DB.
+ * In production, VITE_API_BASE_URL is set to https://olchaai-api.onrender.com
+ * so relative paths are prefixed with it. Already-absolute URLs pass through.
+ */
+export function resolveApiUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
+    return url;
+  }
+  const base = (import.meta.env.VITE_API_BASE_URL ?? "");
+  return `${base}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
 export function imgOptUrl(url: string | null | undefined, width = 800, quality = 80): string {
   if (!url) return "";
   // Skip non-image or local resources
@@ -48,5 +62,5 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
     q = Math.min(quality, 65);
   }
   const base = (import.meta.env.VITE_API_BASE_URL ?? "");
-  return `${base}/api/media/img?url=${encodeURIComponent(url)}&w=${w}&q=${q}`;
+  return `${base}/api/media/img?url=${encodeURIComponent(resolveApiUrl(url))}&w=${w}&q=${q}`;
 }

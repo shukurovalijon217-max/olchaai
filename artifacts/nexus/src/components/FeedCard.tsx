@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import type { Post } from "@workspace/api-client-react";
 import {
   PostType, useLikePost, useDeletePost,
-  getListPostsQueryKey, getGetAiFeedQueryKey,
+  getListPostsQueryKey, getGetAiFeedQueryKey, useFollowUser,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -248,9 +248,11 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const [shares,   setShares]   = useState(post.sharesCount ?? 0);
   const [muted,    setMuted]    = useState(true);
   const [copied,   setCopied]   = useState(false);
-  const [subscribed,    setSubscribed]    = useState(false);
+  const [subscribed,    setSubscribed]    = useState<boolean>(post.author?.isFollowing ?? false);
   const [showSubscribe, setShowSubscribe] = useState(false);
   const subscribeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const followMut = useFollowUser();
+  const queryClient = useQueryClient();
 
   const [mediaError, setMediaError] = useState(false);
   const { setCommentPanelOpen } = usePip();
@@ -830,7 +832,24 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
           >
             <motion.button
               whileTap={{ scale: 0.88 }}
-              onClick={(e) => { e.stopPropagation(); setSubscribed(s => !s); }}
+              disabled={followMut.isPending}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!post.author?.id) return;
+                const next = !subscribed;
+                setSubscribed(next);
+                followMut.mutate(
+                  { id: post.author.id },
+                  {
+                    onSuccess: (data: any) => {
+                      if (typeof data?.following === "boolean") setSubscribed(data.following);
+                      queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
+                      queryClient.invalidateQueries({ queryKey: getGetAiFeedQueryKey() });
+                    },
+                    onError: () => setSubscribed(!next),
+                  }
+                );
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[11px] font-black"
               style={{
                 background: subscribed ? `${accent}22` : "rgba(0,0,0,0.45)",
@@ -839,6 +858,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                 border: subscribed ? `1px solid ${accent}66` : "1px solid rgba(255,255,255,0.22)",
                 color: subscribed ? accent : "rgba(255,255,255,0.92)",
                 boxShadow: "0 2px 12px rgba(0,0,0,0.35)",
+                opacity: followMut.isPending ? 0.6 : 1,
               }}
             >
               {subscribed ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}

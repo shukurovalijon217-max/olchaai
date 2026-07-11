@@ -853,7 +853,7 @@ export default function HomePage() {
         {!createOpen && !sheetOpen && !dockExpanded && !commentPanelOpen && displayPosts.length > 0 && (
           <div
             className="fixed z-[60]"
-            style={{ bottom: 20, left: "50%", transform: "translateX(-50%)" }}
+            style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 14px)", left: "50%", transform: "translateX(-50%)" }}
           >
             {/* Rainbow sparkle burst */}
             <AnimatePresence>

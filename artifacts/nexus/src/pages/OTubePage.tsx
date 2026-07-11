@@ -2221,14 +2221,6 @@ function TrendRow({ video, onPlay, idx }:
           </motion.div>
         )}
 
-        {/* Rank — floating number with color glow */}
-        <div className="absolute top-3 left-3">
-          <span style={{fontSize:28,fontWeight:900,color:col,lineHeight:1,
-            textShadow:`0 0 20px ${col}, 0 0 40px ${col}66`,fontFamily:"monospace",
-            opacity:0.9}}>
-            {idx+1}
-          </span>
-        </div>
 
         {/* Bottom: title + momentum */}
         <div className="absolute bottom-0 inset-x-0 p-3">
@@ -5813,19 +5805,6 @@ function CoverflowRow({ videos, onPlay }: { videos: Reel[]; onPlay:(v:Reel)=>voi
                   </div>
                 )}
 
-                {/* Card index badge */}
-                <div className="absolute top-2.5 left-2.5">
-                  <div style={{
-                    padding:"2px 7px",borderRadius:99,
-                    background:"rgba(0,0,0,0.68)",
-                    backdropFilter:"blur(8px)",
-                    border:`1px solid ${isCenter?accent+"55":"rgba(255,255,255,0.1)"}`,
-                    fontSize:8,fontWeight:800,color:isCenter?accent:"rgba(255,255,255,0.4)",
-                    fontFamily:"monospace",letterSpacing:"0.06em",
-                  }}>
-                    {String(idx+1).padStart(2,"0")}
-                  </div>
-                </div>
 
                 {/* Bottom info */}
                 <div className="absolute bottom-0 inset-x-0 p-3">

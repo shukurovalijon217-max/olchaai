@@ -83,3 +83,10 @@ externalPort = 4200
 [[ports]]
 localPort = 23681
 externalPort = 5000
+
+[userenv]
+
+[userenv.shared]
+CLOUDINARY_CLOUD_NAME = "lskuslne"
+CLOUDINARY_API_KEY = "784642968216699"
+CLOUDINARY_API_SECRET = "K4C2yoyFQrn-1eAJZSssJp89O1w"

@@ -17,8 +17,6 @@ if (cluster.isPrimary) {
   });
 } else {
   const { default: app } = await import("./app.js");
-  const { runMigrations } = await import("stripe-replit-sync");
-  const { getStripeSync } = await import("./stripe/stripeClient.js");
   const { initTFEngine } = await import("./moderation/tfEngine.js");
   const { cleanupSeedData } = await import("./lib/cleanupSeedData.js");
 
@@ -36,50 +34,9 @@ if (cluster.isPrimary) {
     });
   });
 
-  // ── Background: Stripe + TF (non-blocking, won't affect uptime) ──
+  // ── Background: TF engine (non-blocking, won't affect uptime) ──
   if (cluster.worker?.id === 1) {
-    // Stripe setup — runs async, server already accepting requests
-    (async () => {
-      const databaseUrl = process.env.DATABASE_URL;
-      if (!databaseUrl) {
-        logger.warn("DATABASE_URL not set — skipping Stripe init");
-        return;
-      }
-
-      const retry = async <T>(fn: () => Promise<T>, attempts = 3, delayMs = 2000): Promise<T> => {
-        for (let i = 0; i < attempts; i++) {
-          try { return await fn(); }
-          catch (err) {
-            if (i === attempts - 1) throw err;
-            logger.warn({ attempt: i + 1, err }, "Retrying Stripe init step...");
-            await new Promise(r => setTimeout(r, delayMs));
-          }
-        }
-        throw new Error("unreachable");
-      };
-
-      try {
-        logger.info("Initializing Stripe schema...");
-        await retry(() => runMigrations({ databaseUrl }));
-        logger.info("Stripe schema ready");
-
-        const stripeSync = await getStripeSync();
-        const domain = process.env.REPLIT_DOMAINS?.split(",")[0];
-        if (domain) {
-          await retry(() =>
-            stripeSync.findOrCreateManagedWebhook(`https://${domain}/api/stripe/webhook`)
-          );
-          logger.info("Stripe webhook configured");
-        }
-
-        stripeSync.syncBackfill()
-          .then(() => logger.info("Stripe data synced"))
-          .catch((err) => logger.warn({ err }, "Stripe backfill error (non-fatal)"));
-
-      } catch (err) {
-        logger.warn({ err }, "Stripe init failed (non-fatal) — payments may be unavailable");
-      }
-    })();
+    logger.info("Stripe ready (direct API mode — no DB schema required)");
 
     // TF engine — async, memory-intensive, runs only on worker 1
     initTFEngine()

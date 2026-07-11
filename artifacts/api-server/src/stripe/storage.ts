@@ -1,62 +1,85 @@
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { getUncachableStripeClient } from "./stripeClient";
 
 export class Storage {
-  async listProductsWithPrices(active = true, limit = 20, offset = 0) {
+  async listProductsWithPrices() {
     try {
-      const result = await db.execute(
-        sql`
-          WITH paginated_products AS (
-            SELECT id, name, description, metadata, active
-            FROM stripe.products
-            WHERE active = ${active}
-            ORDER BY id
-            LIMIT ${limit} OFFSET ${offset}
-          )
-          SELECT 
-            p.id as product_id,
-            p.name as product_name,
-            p.description as product_description,
-            p.active as product_active,
-            p.metadata as product_metadata,
-            pr.id as price_id,
-            pr.unit_amount,
-            pr.currency,
-            pr.recurring,
-            pr.active as price_active
-          FROM paginated_products p
-          LEFT JOIN stripe.prices pr ON pr.product = p.id AND pr.active = true
-          ORDER BY p.id, pr.unit_amount
-        `
-      );
-      return result.rows;
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      if (msg.includes('does not exist')) return [];
-      throw err;
+      const stripe = await getUncachableStripeClient();
+      const products = await stripe.products.list({ active: true, limit: 20 });
+      const rows: any[] = [];
+      for (const product of products.data) {
+        const prices = await stripe.prices.list({ product: product.id, active: true, limit: 10 });
+        if (prices.data.length === 0) {
+          rows.push({
+            product_id: product.id,
+            product_name: product.name,
+            product_description: product.description ?? null,
+            product_active: product.active,
+            product_metadata: product.metadata,
+            price_id: null,
+            unit_amount: null,
+            currency: null,
+            recurring: null,
+            price_active: null,
+          });
+        } else {
+          for (const price of prices.data) {
+            rows.push({
+              product_id: product.id,
+              product_name: product.name,
+              product_description: product.description ?? null,
+              product_active: product.active,
+              product_metadata: product.metadata,
+              price_id: price.id,
+              unit_amount: price.unit_amount,
+              currency: price.currency,
+              recurring: price.recurring,
+              price_active: price.active,
+            });
+          }
+        }
+      }
+      return rows;
+    } catch {
+      return [];
     }
   }
 
   async getProduct(productId: string) {
-    const result = await db.execute(
-      sql`SELECT * FROM stripe.products WHERE id = ${productId}`
-    );
-    return result.rows[0] || null;
+    try {
+      const stripe = await getUncachableStripeClient();
+      return await stripe.products.retrieve(productId);
+    } catch {
+      return null;
+    }
   }
 
   async getSubscription(subscriptionId: string) {
-    const result = await db.execute(
-      sql`SELECT * FROM stripe.subscriptions WHERE id = ${subscriptionId}`
-    );
-    return result.rows[0] || null;
+    try {
+      const stripe = await getUncachableStripeClient();
+      return await stripe.subscriptions.retrieve(subscriptionId);
+    } catch {
+      return null;
+    }
   }
 
   async getPrice(priceId: string) {
-    const result = await db.execute(
-      sql`SELECT id, product, unit_amount, currency, recurring, active FROM stripe.prices WHERE id = ${priceId}`
-    );
-    return result.rows[0] as { id: string; product: string; unit_amount: number; currency: string; recurring: any; active: boolean } | undefined;
+    try {
+      const stripe = await getUncachableStripeClient();
+      const price = await stripe.prices.retrieve(priceId);
+      return {
+        id: price.id,
+        product: typeof price.product === "string" ? price.product : (price.product as any).id,
+        unit_amount: price.unit_amount ?? 0,
+        currency: price.currency,
+        recurring: price.recurring,
+        active: price.active,
+      };
+    } catch {
+      return undefined;
+    }
   }
 
   async getUser(id: number) {

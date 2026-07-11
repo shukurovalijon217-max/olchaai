@@ -1,5 +1,4 @@
 import Stripe from 'stripe';
-import { StripeSync } from 'stripe-replit-sync';
 
 async function getStripeCredentials(): Promise<{ secretKey: string; webhookSecret?: string }> {
   if (process.env.STRIPE_SECRET_KEY) {
@@ -54,18 +53,4 @@ async function getStripeCredentials(): Promise<{ secretKey: string; webhookSecre
 export async function getUncachableStripeClient(): Promise<Stripe> {
   const { secretKey } = await getStripeCredentials();
   return new Stripe(secretKey);
-}
-
-export async function getStripeSync(): Promise<StripeSync> {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is required');
-  }
-
-  const { secretKey, webhookSecret } = await getStripeCredentials();
-  return new StripeSync({
-    poolConfig: { connectionString: databaseUrl },
-    stripeSecretKey: secretKey,
-    stripeWebhookSecret: webhookSecret ?? '',
-  });
 }

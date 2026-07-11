@@ -621,7 +621,7 @@ function ReelSlide({
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = e.currentTarget as TapDiv;
-    el._holdTimer = setTimeout(() => setHoldMode(e.clientX < window.innerWidth / 2 ? "slow" : "fast"), 220);
+    el._holdTimer = setTimeout(() => setHoldMode(e.clientX < window.innerWidth / 2 ? "fast" : "slow"), 220);
   }, []);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -720,25 +720,6 @@ function ReelSlide({
         )}
       </AnimatePresence>
 
-      {/* Hold mode indicator */}
-      <AnimatePresence>
-        {holdMode && (
-          <motion.div key={holdMode} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-            <div className="flex flex-col items-center gap-2 px-8 py-4 rounded-3xl"
-              style={{ background: "rgba(0,0,0,0.62)", backdropFilter: "blur(30px)",
-                border: `1px solid ${neonColor}25`, boxShadow: `0 0 40px ${neonColor}14` }}>
-              <span className="font-black text-white" style={{ fontSize: 38, letterSpacing: "-0.02em" }}>
-                {holdMode === "fast" ? "2.5×" : "0.35×"}
-              </span>
-              <span className="text-[10px] font-bold tracking-widest" style={{ color: `${neonColor}aa` }}>
-                {holdMode === "fast" ? "▶▶ TEZKOR" : "◀◀ SEKIN"}
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ═══ UI LAYER (auto-hiding) ═══ */}
       <motion.div className="absolute inset-0 pointer-events-none"

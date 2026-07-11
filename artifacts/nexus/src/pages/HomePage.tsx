@@ -694,98 +694,24 @@ export default function HomePage() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Pause indicator */}
-            <AnimatePresence>
-              {storyPaused && (
-                <motion.div
-                  key="pause-badge"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
-                >
-                  <div
-                    className="flex gap-2 px-4 py-2 rounded-full"
-                    style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }}
-                  >
-                    <div className="w-[4px] h-5 rounded-full bg-white/80" />
-                    <div className="w-[4px] h-5 rounded-full bg-white/80" />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Close button — minimal, top-right */}
+            <button
+              onClick={closeViewer}
+              className="absolute top-10 right-4 z-30 p-2 rounded-full"
+              style={{ background: "rgba(0,0,0,0.28)", backdropFilter: "blur(8px)" }}
+            >
+              <X className="w-5 h-5 text-white/60" />
+            </button>
 
-            {/* Progress bars — timer-driven, pauseable */}
-            <div className="relative z-10 flex gap-1 px-3 pt-12 pb-1">
-              {activeGroup.map((_: any, i: number) => (
-                <div
-                  key={i}
-                  className="h-[2.5px] flex-1 rounded-full overflow-hidden"
-                  style={{ background: "rgba(255,255,255,0.2)" }}
-                >
-                  {i < viewerStoryIdx ? (
-                    <div className="h-full w-full" style={{ background: "linear-gradient(to right,#a78bfa,#ec4899)" }} />
-                  ) : i === viewerStoryIdx ? (
-                    <div
-                      className="h-full"
-                      style={{
-                        width: `${Math.min(100, (storyElapsed / STORY_DURATION) * 100)}%`,
-                        background: "linear-gradient(to right,#a78bfa,#ec4899)",
-                      }}
-                    />
-                  ) : null}
-                </div>
-              ))}
-            </div>
-
-            {/* Author header */}
-            <div className="relative z-10 flex items-center gap-3 px-4 pt-2 pb-2">
-              <div
-                className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
-                style={{
-                  border: "2px solid rgba(167,139,250,0.6)",
-                  boxShadow: "0 0 12px rgba(139,92,246,0.5)",
-                  background: "rgba(255,255,255,0.08)",
-                }}
+            {/* Caption — ultra-minimal, bottom float */}
+            {activeStory.caption && (
+              <div className="absolute bottom-0 left-0 right-0 z-10 px-6 pb-12 pt-16"
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)" }}
               >
-                {activeStory.author?.avatarUrl ? (
-                  <img
-                    src={activeStory.author.avatarUrl}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                  />
-                ) : (
-                  <span className="text-sm font-bold text-violet-300">
-                    {(activeStory.author?.displayName || activeStory.author?.username || "?")[0].toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-[13px] font-bold leading-tight truncate">
-                  {activeStory.author?.displayName || activeStory.author?.username}
-                </p>
-                <p className="text-white/40 text-[11px] leading-tight">
-                  @{activeStory.author?.username}
-                  {activeGroup.length > 1 && (
-                    <span className="ml-2 text-white/25">{viewerStoryIdx + 1}/{activeGroup.length}</span>
-                  )}
-                </p>
-              </div>
-              <button
-                onClick={closeViewer}
-                className="p-1.5 rounded-full"
-                style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}
-              >
-                <X className="w-5 h-5 text-white/70" />
-              </button>
-            </div>
-
-            {/* Caption */}
-            {activeStory.caption && activeStory.mediaUrl && (
-              <div className="relative z-10 mt-auto px-5 pb-14">
-                <p className="text-white text-base font-semibold leading-snug drop-shadow-lg">
+                <p
+                  className="text-white/90 text-[15px] font-light leading-relaxed tracking-wide"
+                  style={{ textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}
+                >
                   {activeStory.caption}
                 </p>
               </div>

@@ -102,8 +102,11 @@ router.post("/wallet/deposit", requireAuth, async (req: any, res) => {
       customerId = customer.id;
     }
 
-    const domain = process.env.REPLIT_DOMAINS?.split(',')[0] ?? req.get('host');
-    const baseUrl = `https://${domain}`;
+    const baseUrl =
+      process.env.FRONTEND_URL?.replace(/\/$/, "") ||
+      (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0].trim()}` : null) ||
+      (req.headers.origin && /^https?:\/\/([\w-]+\.)*(olchaai\.com|gilosai\.com|replit\.app|repl\.co)/.test(req.headers.origin as string) ? req.headers.origin as string : null) ||
+      `https://${req.get("host")}`;
     const usdCents = Math.max(50, Math.round(tiyinToUSD(amount) * 100));
 
     const session = await stripeService.createCheckoutSession(

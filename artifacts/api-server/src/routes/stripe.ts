@@ -84,8 +84,11 @@ router.post("/stripe/checkout", requireAuth, async (req: any, res) => {
       customerId = customer.id;
     }
 
-    const domain = process.env.REPLIT_DOMAINS?.split(',')[0] ?? req.get('host');
-    const baseUrl = `https://${domain}`;
+    const baseUrl =
+      process.env.FRONTEND_URL?.replace(/\/$/, "") ||
+      (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0].trim()}` : null) ||
+      (req.headers.origin && /^https?:\/\/([\w-]+\.)*(olchaai\.com|gilosai\.com|replit\.app|repl\.co)/.test(req.headers.origin as string) ? req.headers.origin as string : null) ||
+      `https://${req.get("host")}`;
 
     // Fetch price from DB
     const priceRow = await storage.getPrice(priceId);
@@ -135,8 +138,12 @@ router.post("/stripe/portal", requireAuth, async (req: any, res) => {
     const customerId = (user as any)?.stripeCustomerId;
     if (!customerId) { res.status(400).json({ error: "Stripe mijoz topilmadi" }); return; }
 
-    const domain = process.env.REPLIT_DOMAINS?.split(',')[0] ?? req.get('host');
-    const portal = await stripeService.createPortalSession(customerId, `https://${domain}/premium`);
+    const baseUrl =
+      process.env.FRONTEND_URL?.replace(/\/$/, "") ||
+      (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0].trim()}` : null) ||
+      (req.headers.origin && /^https?:\/\/([\w-]+\.)*(olchaai\.com|gilosai\.com|replit\.app|repl\.co)/.test(req.headers.origin as string) ? req.headers.origin as string : null) ||
+      `https://${req.get("host")}`;
+    const portal = await stripeService.createPortalSession(customerId, `${baseUrl}/premium`);
     res.json({ url: portal.url });
   } catch (err) {
     req.log.error(err);

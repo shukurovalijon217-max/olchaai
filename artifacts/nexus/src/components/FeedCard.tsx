@@ -14,7 +14,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { imgOptUrl } from "../lib/utils";
+import { imgOptUrl, resolveApiUrl } from "../lib/utils";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   Heart, MessageCircle, Share2, Trash2,
@@ -780,7 +780,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
             <div className="absolute inset-[2.5px] rounded-full overflow-hidden z-10 flex items-center justify-center"
               style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
               {post.author?.avatarUrl
-                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                ? <img src={resolveApiUrl(post.author.avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
               }
             </div>
@@ -1233,7 +1233,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                 <div key={u.id} className="flex items-center gap-3 py-2">
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
                     style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
-                    {u.avatarUrl ? <img src={u.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    {u.avatarUrl ? <img src={resolveApiUrl(u.avatarUrl)} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">{initials(u.displayName)}</div>}
                   </div>
                   <div className="flex-1 min-w-0">

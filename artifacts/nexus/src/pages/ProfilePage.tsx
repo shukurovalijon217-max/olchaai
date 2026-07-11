@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
+import { resolveApiUrl } from "@/lib/utils";
 import ProfileOrb from "@/components/ProfileOrb";
 
 interface ProfilePageProps { userId: number; }
@@ -175,7 +176,7 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
             {isUploading ? (
               <div className="w-full h-full flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
             ) : avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+              <img src={resolveApiUrl(avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
             ) : (
               <div className="w-full h-full flex items-center justify-center"
                 style={{ background: "radial-gradient(circle at 35% 35%, rgba(124,58,237,0.32), rgba(59,130,246,0.22), rgba(16,185,129,0.12))" }}>
@@ -533,7 +534,7 @@ function SettingsSheet({ open, onClose, user, isOwner, onAvatarClick, onCoverCli
       <div className="px-4 pt-1 pb-3 flex items-center gap-3 border-b border-white/6">
         <div className="w-10 h-10 rounded-2xl overflow-hidden bg-muted border border-white/10 shrink-0">
           {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+            <img src={resolveApiUrl(user.avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500/25 to-blue-500/20">
               <span className="text-base font-black text-primary">{user.displayName[0]}</span>
@@ -844,7 +845,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       <div className="h-40 overflow-hidden relative group/cover rounded-b-3xl z-10">
         <AnimatePresence mode="wait">
           {user.coverUrl ? (
-            <motion.img key="ci" src={user.coverUrl} alt=""
+            <motion.img key="ci" src={resolveApiUrl(user.coverUrl)} alt=""
               initial={{ scale: 1.06, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.55 }}
               className="absolute inset-0 w-full h-full object-cover" />
           ) : (

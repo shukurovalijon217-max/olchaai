@@ -42,6 +42,7 @@ import { useAuth } from "@/context/AuthContext";
 import CreateContentModal from "@/components/CreateContentModal";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
+import { resolveApiUrl } from "@/lib/utils";
 
 const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
@@ -309,7 +310,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
           <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden"
             style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
             {user?.avatarUrl
-              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ? <img src={resolveApiUrl(user.avatarUrl)} alt="" className="w-full h-full object-cover" />
               : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
                   {initials(user?.displayName)}
                 </div>}
@@ -866,7 +867,7 @@ function ReelSlide({
               <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
                 style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
                 {reel.author?.avatarUrl
-                  ? <img src={reel.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ? <img src={resolveApiUrl(reel.author.avatarUrl)} alt="" className="w-full h-full object-cover" />
                   : <span className="text-[10px] font-black text-white select-none">{initials(reel.author?.displayName)}</span>}
               </div>
             </div>
@@ -961,7 +962,7 @@ function ReelSlide({
                   <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0"
                     style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
                     {u.avatarUrl
-                      ? <img src={u.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      ? <img src={resolveApiUrl(u.avatarUrl)} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
                           {(u.displayName ?? "?").slice(0, 2).toUpperCase()}
                         </div>}

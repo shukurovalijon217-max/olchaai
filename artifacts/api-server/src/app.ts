@@ -73,6 +73,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
           /^https:\/\/[\w-]+\.repl\.co$/.test(origin) ||
           /^https:\/\/[\w-]+(\.onrender\.com)$/.test(origin) ||
           /^https?:\/\/(www\.)?olchaai\.com$/.test(origin) ||
+          /^https?:\/\/(www\.)?gilosai\.com$/.test(origin) ||
           ALLOWED_ORIGINS.has(origin)) {
         return cb(null, true);
       }

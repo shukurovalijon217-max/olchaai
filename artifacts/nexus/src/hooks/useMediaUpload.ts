@@ -37,7 +37,14 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
         }),
       });
 
-      if (!urlRes.ok) throw new Error("Yuklash URLi olinmadi");
+      if (!urlRes.ok) {
+        let errMsg = "Yuklash sozlanmagan";
+        try {
+          const body = await urlRes.json();
+          errMsg = body.error ?? errMsg;
+        } catch {}
+        throw new Error(errMsg);
+      }
       const { uploadURL, objectPath } = await urlRes.json();
       setProgress(30);
 
@@ -46,7 +53,14 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
         headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
-      if (!putRes.ok) throw new Error("Fayl yuklanmadi");
+      if (!putRes.ok) {
+        let errMsg = "Fayl yuklanmadi";
+        try {
+          const body = await putRes.json();
+          errMsg = body.error ?? errMsg;
+        } catch {}
+        throw new Error(errMsg);
+      }
       setProgress(100);
 
       const result: UploadResult = {

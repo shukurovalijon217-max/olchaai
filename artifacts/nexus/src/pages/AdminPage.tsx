@@ -3109,6 +3109,8 @@ interface AiCoreStatus {
 }
 interface AiCoreEvent { ts: number; type: string; ip: string; detail: string }
 
+const AI_CORE_BASE = (import.meta.env.VITE_AI_CORE_URL ?? "").replace(/\/$/, "") || "/ai-core";
+
 function useAiCore() {
   const [status, setStatus]   = useState<AiCoreStatus | null>(null);
   const [events, setEvents]   = useState<AiCoreEvent[]>([]);
@@ -3119,8 +3121,8 @@ function useAiCore() {
     async function poll() {
       try {
         const [s, e] = await Promise.all([
-          fetch("/ai-core/status").then(r => { if (!r.ok) throw new Error(); return r.json() as Promise<AiCoreStatus>; }),
-          fetch("/ai-core/security/events?limit=5").then(r => r.json() as Promise<{ events: AiCoreEvent[] }>),
+          fetch(`${AI_CORE_BASE}/status`).then(r => { if (!r.ok) throw new Error(); return r.json() as Promise<AiCoreStatus>; }),
+          fetch(`${AI_CORE_BASE}/security/events?limit=5`).then(r => r.json() as Promise<{ events: AiCoreEvent[] }>),
         ]);
         setStatus(s); setEvents(e.events ?? []); setOnline(true); setLast(new Date());
       } catch { setOnline(false); }

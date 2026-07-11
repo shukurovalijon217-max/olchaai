@@ -729,13 +729,8 @@ function ReelSlide({
         {/* ─── TOP BAR: progress ring + views + mute ─── */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pointer-events-auto"
           style={{ paddingTop: "calc(env(safe-area-inset-top, 44px) + 10px)" }}>
-          {/* Left: views */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
-            style={{ background: "rgba(0,0,0,0.42)", backdropFilter: "blur(18px)",
-              border: "1px solid rgba(255,255,255,0.09)" }}>
-            <Eye className="w-3 h-3" style={{ color: "rgba(255,255,255,0.45)" }} />
-            <span className="text-[10px] font-bold text-white/50">{fmt(reel.viewsCount ?? 0)}</span>
-          </div>
+          {/* Left: spacer */}
+          <div className="w-8" />
 
           {/* Center: circular progress */}
           <div className="relative">

@@ -252,7 +252,6 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const [showSubscribe, setShowSubscribe] = useState(false);
   const subscribeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const followMut = useFollowUser();
-  const queryClient = useQueryClient();
 
   const [mediaError, setMediaError] = useState(false);
   const { setCommentPanelOpen } = usePip();

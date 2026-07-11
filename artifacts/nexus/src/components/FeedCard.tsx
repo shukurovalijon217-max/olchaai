@@ -33,7 +33,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { usePip } from "@/context/PipContext";
 
-const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 /* ─── Accent palette (per post index) ───────────────────────── */
 const ACCENTS = [

@@ -229,7 +229,7 @@ export async function ensureTranslation(langCode: string): Promise<void> {
   let merged: Record<string, string> = flat;
   let anyBatchFailed = false;
   try {
-    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    const base = (import.meta.env.VITE_API_BASE_URL ?? "");
     const resp = await fetch(`${base}/api/translate-bundle`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

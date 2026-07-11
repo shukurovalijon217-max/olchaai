@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useCreateProduct, useRequestUploadUrl } from "@workspace/api-client-react";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 export default function SellPage() {
   const { t } = useTranslation();

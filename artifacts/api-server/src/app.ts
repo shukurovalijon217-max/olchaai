@@ -56,9 +56,10 @@ app.use(
   }),
 );
 
-/* ── CORS — only allow Replit preview domains + configured domains ─ */
+/* ── CORS — allow Replit, Render.com, and configured custom origins ─ */
 const ALLOWED_ORIGINS = new Set([
   ...(process.env["REPLIT_DOMAINS"] ?? "").split(",").map(d => `https://${d.trim()}`).filter(Boolean),
+  ...(process.env["ALLOWED_ORIGINS"] ?? "").split(",").map(o => o.trim()).filter(Boolean),
   "http://localhost:3000",
   "http://localhost:5173",
   "http://localhost:80",
@@ -70,6 +71,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       if (!origin) return cb(null, true);
       if (/^https:\/\/[\w-]+\.replit\.app$/.test(origin) ||
           /^https:\/\/[\w-]+\.repl\.co$/.test(origin) ||
+          /^https:\/\/[\w-]+(\.onrender\.com)$/.test(origin) ||
           ALLOWED_ORIGINS.has(origin)) {
         return cb(null, true);
       }

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Heart, Zap, Brain, Coffee, Music, Star, Moon, Sun, RefreshCw, Globe, Flame } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 interface MoodEntry {
   id: number; mood: string; energyLevel: number; note: string | null;

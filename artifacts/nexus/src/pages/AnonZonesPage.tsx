@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 interface Zone { id: number; slug: string; topic: string; description?: string; emoji: string; postCount: number; }
 interface AnonPost { id: number; zoneId: number; content: string; likes: number; createdAt: string; }

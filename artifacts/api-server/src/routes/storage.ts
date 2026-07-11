@@ -48,6 +48,15 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       return;
     }
 
+    const isReplit = !!(process.env["REPLIT_CLUSTER"] || process.env["REPLIT_DEPLOYMENT"] || process.env["REPLIT_DB_URL"] || process.env["DEFAULT_OBJECT_STORAGE_BUCKET_ID"]);
+    if (!isReplit) {
+      req.log.warn("Upload attempted without Cloudinary configured on Render");
+      res.status(503).json({
+        error: "Fayl yuklash sozlanmagan. Render Environment da CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET o'rnating.",
+      });
+      return;
+    }
+
     const uploadURL = await objectStorageService.getObjectEntityUploadURL();
     const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
 

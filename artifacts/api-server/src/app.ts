@@ -130,7 +130,12 @@ app.post(
   }
 );
 
-app.use(express.json({ limit: "2mb" }));
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/storage/uploads/cloud/") && req.method === "PUT") {
+    return next();
+  }
+  express.json({ limit: "50mb" })(req, res, next);
+});
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
 const isProd = process.env["NODE_ENV"] === "production";

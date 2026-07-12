@@ -153,7 +153,7 @@ function unflattenObj(flat: Record<string, string>): Record<string, unknown> {
   }, {} as Record<string, unknown>);
 }
 
-const TRANS_CACHE_VER = "v5";
+const TRANS_CACHE_VER = "v6";
 
 // ── resources ──────────────────────────────────────────────────────────────
 const resources: Record<string, { translation: TranslationShape }> = {

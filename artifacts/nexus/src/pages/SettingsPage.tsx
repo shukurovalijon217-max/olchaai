@@ -647,6 +647,13 @@ function LanguageContent() {
     applyRTL(code);
     setApplied(true);
     setTimeout(() => setApplied(false), 3000);
+    // Persist language preference to server so it follows the user across devices
+    fetch(`${API}/api/auth/preferences`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ notifPrefs: { language: code } }),
+    }).catch(() => { /* non-critical — localStorage is the fallback */ });
   };
 
   return (

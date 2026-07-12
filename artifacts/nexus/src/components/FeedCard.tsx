@@ -250,6 +250,11 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const [copied,   setCopied]   = useState(false);
   const [subscribed,    setSubscribed]    = useState<boolean>(post.author?.isFollowing ?? false);
   const [showSubscribe, setShowSubscribe] = useState(false);
+
+  // Sync follow state when server data refreshes
+  useEffect(() => {
+    setSubscribed(post.author?.isFollowing ?? false);
+  }, [post.author?.isFollowing]);
   const subscribeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const followMut = useFollowUser();
 

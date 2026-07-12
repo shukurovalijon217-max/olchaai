@@ -67,7 +67,7 @@ router.post("/compare", (req: Request, res: Response) => {
  * Fetches a remote image, converts to WebP, caches 1h in-memory.
  * Used by the frontend to serve feed/profile images as WebP.
  */
-const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com)$/i;
+const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com)$/i;
 
 function fetchRemote(url: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {

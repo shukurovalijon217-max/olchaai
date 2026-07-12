@@ -335,7 +335,8 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   /* Album carousel */
   const allMedia: string[] = (() => {
     const urls: string[] = (post as any).mediaUrls ?? [];
-    return urls.length > 1 ? urls : post.mediaUrl ? [post.mediaUrl] : [];
+    const raw = urls.length > 1 ? urls : post.mediaUrl ? [post.mediaUrl] : [];
+    return raw.map(u => resolveApiUrl(u));
   })();
   const isAlbum = allMedia.length > 1;
   const [slideIdx, setSlideIdx] = useState(0);
@@ -398,7 +399,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
     const trimStart = (post as any).audioTrimStart != null ? Number((post as any).audioTrimStart) : undefined;
     const trimEnd   = (post as any).audioTrimEnd   != null ? Number((post as any).audioTrimEnd)   : undefined;
     if (!audioRef.current) {
-      const a = new Audio(audioUrl);
+      const a = new Audio(resolveApiUrl(audioUrl));
       a.loop = false; a.volume = 0.65;
       if (trimStart != null) a.currentTime = trimStart;
       a.addEventListener("timeupdate", () => {
@@ -579,7 +580,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
       {/* ═══ LAYER 0: Blurred background for photo ═══ */}
       {isPhoto && post.mediaUrl && !mediaError && (
-        <img src={post.mediaUrl} alt="" aria-hidden loading="lazy" decoding="async"
+        <img src={resolveApiUrl(post.mediaUrl)} alt="" aria-hidden loading="lazy" decoding="async"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{ filter: "blur(32px) saturate(1.4) brightness(0.28)", transform: "scale(1.18)", zIndex: 0 }}
           onError={e => { e.currentTarget.style.display = "none"; }}
@@ -647,7 +648,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
             </div>
           </div>
         ) : isVideo && post.mediaUrl ? (
-          <video ref={videoRef} src={post.mediaUrl} muted={muted} loop playsInline
+          <video ref={videoRef} src={resolveApiUrl(post.mediaUrl)} muted={muted} loop playsInline
             className="w-full h-full object-cover" />
         ) : isPhoto && post.mediaUrl && !mediaError ? (
           <img src={imgOptUrl(post.mediaUrl, 900)} alt={post.content}
@@ -1023,7 +1024,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
       >
         {/* Song name (download on tap) */}
         {audioName && audioUrl && (
-          <a href={audioUrl} download={audioName}
+          <a href={resolveApiUrl(audioUrl)} download={audioName}
             className="inline-flex items-center gap-1.5 mb-2 cursor-pointer"
             onClick={e => e.stopPropagation()}
             style={{ textDecoration: "none" }}>

@@ -61,6 +61,14 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
     w = Math.round(width * 0.8);
     q = Math.min(quality, 65);
   }
+
+  // Cloudinary URLs: use native transformation parameters directly (no proxy needed)
+  // Pattern: https://res.cloudinary.com/{cloud}/{type}/upload/{public_id}
+  const cloudinaryMatch = url.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/[^/]+\/upload\/)(.+)$/);
+  if (cloudinaryMatch) {
+    return `${cloudinaryMatch[1]}w_${w},q_${q},f_auto/${cloudinaryMatch[2]}`;
+  }
+
   const base = (import.meta.env.VITE_API_BASE_URL ?? "");
   return `${base}/api/media/img?url=${encodeURIComponent(resolveApiUrl(url))}&w=${w}&q=${q}`;
 }

@@ -7,6 +7,7 @@ import connectPgSimple from "connect-pg-simple";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { pool as dbPool } from "@workspace/db";
 import { WebhookHandlers } from "./stripe/webhookHandlers";
 import { creditTreasury } from "./routes/treasury";
 import { systemMonitor, normalisePath } from "./lib/systemMonitor";
@@ -143,7 +144,7 @@ const PgSession = connectPgSimple(session);
 
 app.use(session({
   store: new PgSession({
-    conString: process.env["DATABASE_URL"],
+    pool: dbPool,           // share the main pg.Pool — avoids stale connections on Render free tier
     tableName: "user_sessions",
     createTableIfMissing: true,
     pruneSessionInterval: 60 * 60, // prune expired sessions every hour
@@ -151,6 +152,7 @@ app.use(session({
   secret: process.env["SESSION_SECRET"] ?? "olcha-secret-2024",
   resave: false,
   saveUninitialized: false,
+  rolling: true,            // extend session TTL on every request so active users stay logged in
   cookie: {
     httpOnly: true,
     secure: isProd,
@@ -174,7 +176,18 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       p.startsWith("/api/auth") ||
       p.startsWith("/api/wallet") ||
       p.startsWith("/api/messages") ||
-      p.startsWith("/api/notifications")
+      p.startsWith("/api/notifications") ||
+      p.startsWith("/api/creator") ||
+      p.startsWith("/api/groups") ||
+      p.startsWith("/api/follows") ||
+      p.startsWith("/api/live") ||
+      p.startsWith("/api/stories") ||
+      p.startsWith("/api/focus") ||
+      p.startsWith("/api/ghost") ||
+      p.startsWith("/api/energy") ||
+      p.startsWith("/api/emotion") ||
+      p.startsWith("/api/anon") ||
+      p.startsWith("/api/plans")
     ) {
       res.setHeader("Cache-Control", "private, no-store");
     } else if (p.startsWith("/api/media/img")) {

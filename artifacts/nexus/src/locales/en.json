@@ -1595,6 +1595,8 @@
   "feed_card": {
     "votes_suffix": "votes",
     "media_unavailable": "Media unavailable",
+    "comments_title": "Comments",
+    "no_comments": "No comments yet. Be the first!",
     "comment_ph": "Write your comment...",
     "copied": "Copied!",
     "copy_link": "Copy link",

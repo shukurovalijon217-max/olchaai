@@ -1607,6 +1607,8 @@
   "feed_card": {
     "votes_suffix": "ovoz",
     "media_unavailable": "Media yuklanmadi",
+    "comments_title": "Izohlar",
+    "no_comments": "Hali izoh yo'q. Birinchi bo'ling!",
     "comment_ph": "Izohingizni yozing...",
     "copied": "Nusxalandi!",
     "copy_link": "Havolani nusxalash",

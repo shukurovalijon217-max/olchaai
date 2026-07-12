@@ -259,11 +259,24 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const [commentText,    setCommentText]    = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [commentSent,    setCommentSent]    = useState(false);
+  const [commentsList,   setCommentsList]   = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   useEffect(() => {
     setCommentPanelOpen(commentOpen);
     return () => { if (commentOpen) setCommentPanelOpen(false); };
   }, [commentOpen, setCommentPanelOpen]);
+
+  /* Fetch comments when panel opens */
+  useEffect(() => {
+    if (!commentOpen) return;
+    setCommentsLoading(true);
+    fetch(`${API_BASE}/api/posts/${post.id}/comments`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setCommentsList(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setCommentsLoading(false));
+  }, [commentOpen, post.id]);
 
   const [shareOpen,    setShareOpen]    = useState(false);
   const [shareQuery,   setShareQuery]   = useState("");
@@ -487,15 +500,20 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const handleSendComment = async () => {
     if (!commentText.trim() || !user || sendingComment) return;
     setSendingComment(true);
+    const content = commentText.trim();
     try {
-      await fetch(`${API_BASE}/api/posts/${post.id}/comments`, {
+      const res = await fetch(`${API_BASE}/api/posts/${post.id}/comments`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: commentText.trim(), authorId: user.id }),
+        body: JSON.stringify({ content, authorId: user.id }),
       });
+      if (res.ok) {
+        const newComment = await res.json();
+        setCommentsList(prev => [newComment, ...prev]);
+      }
       setCommentText("");
       setCommentSent(true);
-      setTimeout(() => { setCommentSent(false); setCommentOpen(false); }, 1400);
+      setTimeout(() => setCommentSent(false), 1800);
     } catch { /* ignore */ } finally { setSendingComment(false); }
   };
 
@@ -1154,20 +1172,58 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
             </div>
             <div className="flex items-center gap-3 px-5 py-3 border-b" style={{ borderColor: `${accent}15` }}>
               <MessageCircle className="w-4 h-4" style={{ color: accent }} />
-              <span className="text-white font-bold text-[14px]">Izoh qoldirish</span>
+              <span className="text-white font-bold text-[14px]">
+                {t("feed_card.comments_title") || "Izohlar"}
+                {commentsList.length > 0 && (
+                  <span className="ml-1.5 text-white/40 text-[12px] font-normal">({commentsList.length})</span>
+                )}
+              </span>
               <button onClick={() => setCommentOpen(false)} className="ml-auto">
                 <X className="w-4 h-4 text-white/45" />
               </button>
             </div>
-            <div className="flex items-end gap-3 px-5 py-4">
+
+            {/* Comments list */}
+            <div className="max-h-48 overflow-y-auto px-5 py-2 space-y-3">
+              {commentsLoading ? (
+                <div className="flex justify-center py-3">
+                  <Loader2 className="w-4 h-4 text-white/30 animate-spin" />
+                </div>
+              ) : commentsList.length === 0 ? (
+                <p className="text-center text-white/25 text-[12px] py-2">
+                  {t("feed_card.no_comments") || "Hozircha izoh yo'q"}
+                </p>
+              ) : commentsList.map((c: any) => (
+                <div key={c.id} className="flex gap-2.5 items-start">
+                  {c.author?.avatarUrl ? (
+                    <img src={resolveApiUrl(c.author.avatarUrl)} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center text-[11px] font-bold text-white"
+                      style={{ background: accent + "55" }}>
+                      {(c.author?.displayName ?? "?")[0]}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-white/80 text-[12px] font-semibold truncate">{c.author?.displayName ?? "Foydalanuvchi"}</span>
+                      <span className="text-white/25 text-[10px] flex-shrink-0">@{c.author?.username}</span>
+                    </div>
+                    <p className="text-white/90 text-[13px] leading-snug mt-0.5 break-words">{c.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="flex items-end gap-3 px-5 py-3 border-t" style={{ borderColor: `${accent}15` }}>
               <textarea
                 ref={commentRef}
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.metaKey) { e.preventDefault(); handleSendComment(); } }}
                 placeholder={t("feed_card.comment_ph")}
-                rows={3}
-                className="flex-1 resize-none rounded-2xl px-4 py-3 text-[17px] leading-snug text-white placeholder:text-white/30 focus:outline-none"
+                rows={2}
+                className="flex-1 resize-none rounded-2xl px-4 py-3 text-[15px] leading-snug text-white placeholder:text-white/30 focus:outline-none"
                 style={{
                   fontFamily: "'Caveat', cursive",
                   fontWeight: 600,

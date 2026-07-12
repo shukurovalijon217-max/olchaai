@@ -360,7 +360,17 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  // Default to credentials:"include" for cookie-based auth (web).
+  // Token-based auth (mobile) sets _authTokenGetter instead and manages its own credentials.
+  const defaultCredentials: RequestCredentials | undefined =
+    _authTokenGetter ? undefined : "include";
+
+  const response = await fetch(input, {
+    credentials: defaultCredentials,
+    ...init,
+    method,
+    headers,
+  });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

@@ -11,6 +11,7 @@ import {
   generateUploadSession,
   streamToCloudinary,
   getCloudinaryUrl,
+  pingCloudinary,
 } from "../lib/cloudinaryStorage";
 
 const router: IRouter = Router();
@@ -71,6 +72,27 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
     req.log.error({ err: error }, "Error generating upload URL");
     res.status(500).json({ error: "Failed to generate upload URL" });
   }
+});
+
+/**
+ * GET /storage/cloudinary-check
+ * Diagnostics: verify Cloudinary credentials are valid.
+ */
+router.get("/storage/cloudinary-check", async (req: Request, res: Response) => {
+  if (!isCloudinaryEnabled()) {
+    res.json({
+      ok: false,
+      reason: "env vars not set",
+      vars: {
+        CLOUDINARY_CLOUD_NAME: !!process.env.CLOUDINARY_CLOUD_NAME,
+        CLOUDINARY_API_KEY: !!process.env.CLOUDINARY_API_KEY,
+        CLOUDINARY_API_SECRET: !!process.env.CLOUDINARY_API_SECRET,
+      },
+    });
+    return;
+  }
+  const result = await pingCloudinary();
+  res.json(result);
 });
 
 /**

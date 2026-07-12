@@ -58,13 +58,24 @@ async function batchEnrichReels(
   const likedSet = new Set((likedRows as { reelId: number }[]).map(l => l.reelId));
   const views24hMap = new Map((views24hRows as { reelId: number; n: number }[]).map(v => [v.reelId, Number(v.n)]));
 
+  // Normalize hlsUrl: existing DB records may have relative paths like "/api/reels/hls/..."
+  // In production, frontend and API run on different hosts, so we need full URLs.
+  const apiBase = (process.env.API_BASE_URL ?? "").replace(/\/$/, "");
+
   return reels.map(reel => {
     const author = authorMap.get(reel.authorId as number);
     const authorId = author?.id ?? (reel.authorId as number);
     const stats = statsMap.get(authorId) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
 
+    // Fix relative hlsUrl for production (e.g. "/api/reels/hls/5/playlist.m3u8" → full URL)
+    const rawHlsUrl = (reel as any).hlsUrl as string | null | undefined;
+    const hlsUrl = rawHlsUrl
+      ? (rawHlsUrl.startsWith("/") && apiBase ? `${apiBase}${rawHlsUrl}` : rawHlsUrl)
+      : undefined;
+
     return {
       ...reel,
+      ...(hlsUrl !== undefined ? { hlsUrl } : {}),
       likesCount: reel.likesCount ?? 0,
       commentsCount: reel.commentsCount ?? 0,
       viewsCount: reel.viewsCount ?? 0,

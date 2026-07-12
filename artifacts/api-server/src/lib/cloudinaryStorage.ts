@@ -93,9 +93,22 @@ export async function streamToCloudinary(
   readableStream: NodeJS.ReadableStream,
   contentType: string,
 ): Promise<string> {
-  const buffer = await streamToBuffer(readableStream);
-  const cloudinaryUrl = await uploadBuffer(uuid, buffer, contentType);
-  await saveToDb(uuid, cloudinaryUrl, getResourceType(contentType));
+  // Pipe directly to Cloudinary without buffering the entire file in RAM.
+  // This avoids OOM and request-timeout on Render free tier for large videos.
+  configure();
+  const resourceType = getResourceType(contentType);
+  const cloudinaryUrl = await new Promise<string>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { public_id: uuid, resource_type: resourceType, overwrite: true },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result!.secure_url);
+      },
+    );
+    readableStream.on("error", reject);
+    readableStream.pipe(uploadStream);
+  });
+  await saveToDb(uuid, cloudinaryUrl, resourceType);
   return cloudinaryUrl;
 }
 
@@ -140,6 +153,9 @@ export async function getCloudinaryUrl(uuid: string): Promise<string | null> {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   if (!cloudName) return null;
 
-  // Try image first (most common), video as fallback handled by client redirect
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${uuid}`;
+  // DB lookup failed — can't know the resource type, so return null.
+  // The caller (GET /storage/cloud/:uuid) will 404 gracefully.
+  // Returning a wrong resource_type URL (e.g. image/upload for a video) would cause
+  // Cloudinary to serve the wrong format or error.
+  return null;
 }

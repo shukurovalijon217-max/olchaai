@@ -125,4 +125,4 @@ services:
       - key: VITE_API_BASE_URL
         value: https://olchaai-api.onrender.com
       - key: VITE_AI_CORE_URL
-        value: https://olchaai-ai-core.onrender.com
+        value: https://olchaai-ai-core.onrender.com/ai-core

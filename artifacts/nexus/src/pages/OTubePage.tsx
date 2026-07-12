@@ -1946,6 +1946,12 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
           : video.videoUrl
           ? <video src={video.videoUrl} autoPlay muted playsInline loop
               className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+          : (video as any).audioTrack
+          ? <div className="w-full h-full flex flex-col items-center justify-center gap-2"
+              style={{background:"linear-gradient(135deg,#1a0040,#000510)"}}>
+              <Music2 className="w-14 h-14" style={{color:"rgba(168,85,247,0.5)"}}/>
+              <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",maxWidth:120,textAlign:"center",lineHeight:1.4}} className="line-clamp-2">{(video as any).audioTrack}</span>
+            </div>
           : <div className="w-full h-full flex items-center justify-center"
               style={{background:"linear-gradient(135deg,#0d0028,#000510)"}}>
               <Film className="w-14 h-14 text-white/8"/>
@@ -2198,6 +2204,11 @@ function TrendRow({ video, onPlay, idx }:
           : video.videoUrl
           ? <video src={video.videoUrl} autoPlay muted playsInline loop
               className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+          : (video as any).audioTrack
+          ? <div className="w-full h-full flex flex-col items-center justify-center gap-2"
+              style={{background:`linear-gradient(175deg,#1a004028,#000010)`}}>
+              <Music2 style={{width:28,height:28,color:"rgba(168,85,247,0.5)"}}/>
+            </div>
           : <div className="w-full h-full"
               style={{background:`linear-gradient(175deg,${col}28,#000010)`}}/>}
 
@@ -2338,6 +2349,11 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
           ? <video src={video.videoUrl} autoPlay muted playsInline loop
               className="w-full h-full object-cover"
               style={{pointerEvents:"none"}}/>
+          : (video as any).audioTrack
+          ? <div className="w-full h-full flex items-center justify-center"
+              style={{background:`linear-gradient(135deg,#1a004028,#000)`}}>
+              <Music2 style={{width:wide?32:20,height:wide?32:20,color:"rgba(168,85,247,0.45)"}}/>
+            </div>
           : <div className="w-full h-full flex items-center justify-center"
               style={{background:`linear-gradient(135deg,${accent}18,#000)`}}>
               <Film style={{width:wide?32:20,height:wide?32:20,color:"rgba(255,255,255,0.08)"}}/>
@@ -2584,6 +2600,11 @@ function ContinueRow({ items, onPlay }: { items:ContinueWatchingItem[]; onPlay:(
                   ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                   : v.videoUrl
                   ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+                  : (v as any).audioTrack
+                  ? <div className="w-full h-full flex items-center justify-center"
+                      style={{background:`linear-gradient(135deg,#1a004028,#000)`}}>
+                      <Music2 style={{width:16,height:16,color:"rgba(168,85,247,0.5)"}}/>
+                    </div>
                   : <div className="w-full h-full"
                       style={{background:`linear-gradient(135deg,${T.cyan}14,#000)`}}/>}
                 <div className="absolute inset-0 pointer-events-none"
@@ -2739,10 +2760,12 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
         xhr.onerror=()=>rej(new Error("Network error")); xhr.send(file);
       });
       setProgress(95); setPhase("creating");
+      const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
       createMut.mutate({data:{
-        authorId:user.id, videoUrl:`/api/storage${objectPath}`,
+        authorId:user.id, videoUrl:`${apiBase}/api/storage${objectPath}`,
         caption:caption||title, tags:tagList, duration:0,
-        thumbnailUrl: thumbSrc||undefined,
+        // thumbSrc is a local blob URL — only pass thumbnailUrl if it's a real remote URL
+        thumbnailUrl: (thumbSrc && !thumbSrc.startsWith("blob:")) ? thumbSrc : undefined,
       }});
       setProgress(100);
     } catch(e:unknown) { setErrMsg(e instanceof Error?e.message:"Xato yuz berdi"); setPhase("error"); }
@@ -3984,9 +4007,10 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
       const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file});
       if (!res.ok) throw new Error("Upload failed");
+      const apiBase2 = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
       createMut.mutate({data:{
         authorId:user.id,
-        videoUrl:`/api/storage${objectPath}`,
+        videoUrl:`${apiBase2}/api/storage${objectPath}`,
         caption:caption||"OTube Studio · OlchaAI",
         audioTrack:music&&music!=="none"?music:undefined,
         tags:["otube-studio","olcha","studio"],

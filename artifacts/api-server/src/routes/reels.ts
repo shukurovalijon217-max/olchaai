@@ -67,15 +67,20 @@ async function batchEnrichReels(
     const authorId = author?.id ?? (reel.authorId as number);
     const stats = statsMap.get(authorId) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false };
 
-    // Fix relative hlsUrl for production (e.g. "/api/reels/hls/5/playlist.m3u8" → full URL)
-    const rawHlsUrl = (reel as any).hlsUrl as string | null | undefined;
-    const hlsUrl = rawHlsUrl
-      ? (rawHlsUrl.startsWith("/") && apiBase ? `${apiBase}${rawHlsUrl}` : rawHlsUrl)
-      : undefined;
+    // Fix relative URLs for production — frontend and API run on different hosts.
+    // Existing DB records may have paths like "/api/reels/hls/…" or "/api/storage/cloud/…"
+    const fixUrl = (u: string | null | undefined) =>
+      u && u.startsWith("/") && apiBase ? `${apiBase}${u}` : (u ?? undefined);
+
+    const hlsUrl      = fixUrl((reel as any).hlsUrl);
+    const videoUrl    = fixUrl(reel.videoUrl);
+    const thumbnailUrl = fixUrl(reel.thumbnailUrl ?? undefined);
 
     return {
       ...reel,
-      ...(hlsUrl !== undefined ? { hlsUrl } : {}),
+      ...(hlsUrl      !== undefined ? { hlsUrl }      : {}),
+      ...(videoUrl    !== undefined ? { videoUrl }    : {}),
+      ...(thumbnailUrl !== undefined ? { thumbnailUrl } : {}),
       likesCount: reel.likesCount ?? 0,
       commentsCount: reel.commentsCount ?? 0,
       viewsCount: reel.viewsCount ?? 0,

@@ -8,6 +8,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
+
 const STEP_Z = 520;
 const NEAR_CLIP = 420;
 const FAR_SLOTS = 6;
@@ -485,7 +487,7 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
   useEffect(() => {
     if (activeIndex >= posts.length - 3 && hasMore && !loadingMore) {
       setLoadingMore(true);
-      fetch(`/api/posts?page=${page}&limit=8`)
+      fetch(`${API_BASE}/api/posts?page=${page}&limit=8`)
         .then((r) => r.json())
         .then((newPosts: Post[]) => {
           if (!newPosts || newPosts.length === 0) {

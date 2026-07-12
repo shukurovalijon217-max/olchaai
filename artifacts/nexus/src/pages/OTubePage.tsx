@@ -35,6 +35,11 @@ import {
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────── */
+/* API base URL — must be absolute in production           */
+/* ─────────────────────────────────────────────────────── */
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
+
+/* ─────────────────────────────────────────────────────── */
 /* Design tokens — NEXUS AURORA BROADCAST                  */
 /* ─────────────────────────────────────────────────────── */
 const T = {
@@ -181,7 +186,7 @@ function DanmakuOverlay({ active, reelId }: { active:boolean; reelId:number }) {
   const { data: comments = [] } = useQuery<ApiComment[]>({
     queryKey: ["reel-comments", reelId],
     queryFn: async () => {
-      const r = await fetch(`/api/reels/${reelId}/comments`);
+      const r = await fetch(`${API_BASE}/api/reels/${reelId}/comments`);
       if (!r.ok) throw new Error("Izohlarni olishda xatolik");
       return r.json() as Promise<ApiComment[]>;
     },
@@ -306,7 +311,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
   const { data: comments = [], isLoading } = useQuery<ApiComment[]>({
     queryKey: ["reel-comments", reelId],
     queryFn: async () => {
-      const r = await fetch(`/api/reels/${reelId}/comments`);
+      const r = await fetch(`${API_BASE}/api/reels/${reelId}/comments`);
       if (!r.ok) throw new Error("Izohlarni olishda xatolik");
       return r.json() as Promise<ApiComment[]>;
     },
@@ -315,7 +320,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
 
   const postMut = useMutation({
     mutationFn: async (content: string) => {
-      const r = await fetch(`/api/reels/${reelId}/comments`, {
+      const r = await fetch(`${API_BASE}/api/reels/${reelId}/comments`, {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ content }),
       });
@@ -450,7 +455,7 @@ function VersionHistoryPanel({ reelId, currentCaption }: { reelId: number | null
     if (!reelId) return;
     setLoading(true);
     try {
-      const r = await fetch(`/api/reels/${reelId}/versions`, { credentials: "include" });
+      const r = await fetch(`${API_BASE}/api/reels/${reelId}/versions`, { credentials: "include" });
       if (r.ok) setVersions(await r.json());
     } catch { /* ignore */ } finally { setLoading(false); }
   };
@@ -460,7 +465,7 @@ function VersionHistoryPanel({ reelId, currentCaption }: { reelId: number | null
   const saveVersion = async () => {
     setSaving(true);
     try {
-      const r = await fetch(`/api/reels/${reelId}/versions`, {
+      const r = await fetch(`${API_BASE}/api/reels/${reelId}/versions`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ note: note.trim() || undefined }),
@@ -758,7 +763,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
         setPlaying(true);
         if (!viewTracked.current) {
           viewTracked.current = true;
-          fetch(`/api/reels/${video.id}/view`, { method:"POST" }).catch(()=>{});
+          fetch(`${API_BASE}/api/reels/${video.id}/view`, { method:"POST" }).catch(()=>{});
         }
       }).catch(()=>{});
     } else { v.pause(); setPlaying(false); reportProgress(); }
@@ -1182,7 +1187,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                   if(!video.caption)return;
                   setDubbing(true);setDubResult(null);
                   try{
-                    const r=await fetch("/api/otube/ai/dub",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({caption:(video.caption||"").slice(0,500),targetLang:dubLang})});
+                    const r=await fetch(`${API_BASE}/api/otube/ai/dub`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({caption:(video.caption||"").slice(0,500),targetLang:dubLang})});
                     if(r.ok){const d=await r.json();setDubResult(d);}
                   }catch{/* ignore */}finally{setDubbing(false);}
                 }}
@@ -1218,7 +1223,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
               transition={{type:"spring",damping:28,stiffness:320}}
               onClick={e=>e.stopPropagation()}
               onAnimationStart={()=>{
-                fetch("/api/wallet",{credentials:"include"})
+                fetch(`${API_BASE}/api/wallet`,{credentials:"include"})
                   .then(r=>r.json()).then(d=>setWalletBal(d.wallet?.balance??null)).catch(()=>{});
               }}
               style={{position:"absolute",bottom:0,inset:"auto 0 0 0",zIndex:50,
@@ -1273,7 +1278,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
                   onClick={async()=>{
                     setGiftLoading(true);setGiftResult(null);
                     try{
-                      const r=await fetch(`/api/reels/${video.id}/gift`,{
+                      const r=await fetch(`${API_BASE}/api/reels/${video.id}/gift`,{
                         method:"POST",credentials:"include",
                         headers:{"Content-Type":"application/json"},
                         body:JSON.stringify({amount:Number(donateAmt)}),
@@ -1581,7 +1586,7 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
   const [walletEarnings, setWalletEarnings] = useState<number|null>(null);
   useEffect(()=>{
     if(!open||tab!=="monetize")return;
-    fetch("/api/wallet",{credentials:"include"})
+    fetch(`${API_BASE}/api/wallet`,{credentials:"include"})
       .then(r=>r.json())
       .then(d=>setWalletEarnings((d.wallet?.earningsBalance??0)+(d.wallet?.adRevenueBalance??0)))
       .catch(()=>setWalletEarnings(null));
@@ -1896,7 +1901,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
 
   const quickComment = useMutation({
     mutationFn: async (content: string) => {
-      const r = await fetch(`/api/reels/${video.id}/comments`, {
+      const r = await fetch(`${API_BASE}/api/reels/${video.id}/comments`, {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ content }),
       });
@@ -2132,7 +2137,7 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
     if (creating) return;
     setCreating(true);
     try {
-      const r = await fetch("/api/coview/rooms", {
+      const r = await fetch(`${API_BASE}/api/coview/rooms`, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contentType: "reel", contentId: videoId }),
       });
@@ -2457,7 +2462,7 @@ function SocialTicker() {
   useEffect(()=>{
     let cancelled = false;
     const poll = () => {
-      fetch("/go/stats").then(r=>r.json()).then(d=>{
+      fetch(`${API_BASE}/go/stats`).then(r=>r.json()).then(d=>{
         if(!cancelled) setCount(d.uniqueUsers ?? d.connections ?? 0);
       }).catch(()=>{});
     };
@@ -2732,7 +2737,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
     if (aiLoading) return;
     setAiLoading(true);
     try {
-      const r = await fetch("/api/ai/video-suggest", {
+      const r = await fetch(`${API_BASE}/api/ai/video-suggest`, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileName: file?.name || title }),
       });
@@ -2760,9 +2765,8 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
         xhr.onerror=()=>rej(new Error("Network error")); xhr.send(file);
       });
       setProgress(95); setPhase("creating");
-      const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
       createMut.mutate({data:{
-        authorId:user.id, videoUrl:`${apiBase}/api/storage${objectPath}`,
+        authorId:user.id, videoUrl:`${API_BASE}/api/storage${objectPath}`,
         caption:caption||title, tags:tagList, duration:0,
         // thumbSrc is a local blob URL — only pass thumbnailUrl if it's a real remote URL
         thumbnailUrl: (thumbSrc && !thumbSrc.startsWith("blob:")) ? thumbSrc : undefined,
@@ -4007,10 +4011,9 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
       const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file});
       if (!res.ok) throw new Error("Upload failed");
-      const apiBase2 = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
       createMut.mutate({data:{
         authorId:user.id,
-        videoUrl:`${apiBase2}/api/storage${objectPath}`,
+        videoUrl:`${API_BASE}/api/storage${objectPath}`,
         caption:caption||"OTube Studio · OlchaAI",
         audioTrack:music&&music!=="none"?music:undefined,
         tags:["otube-studio","olcha","studio"],

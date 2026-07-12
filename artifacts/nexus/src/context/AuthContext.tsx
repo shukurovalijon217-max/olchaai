@@ -57,7 +57,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await fetch(`${API}/api/auth/me`, { credentials: "include" });
       if (res.ok) {
-        setUser(await res.json());
+        const userData = await res.json();
+        setUser(userData);
+        // Apply saved language preference from server (overrides localStorage if different)
+        const savedLang = userData?.notifPrefs?.language as string | undefined;
+        if (savedLang) {
+          localStorage.setItem("olcha_lang_user", savedLang);
+          const { default: i18nInst } = await import("@/lib/i18n");
+          i18nInst.changeLanguage(savedLang);
+        }
       } else {
         setUser(null);
       }

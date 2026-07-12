@@ -9,6 +9,7 @@ export interface NotifPrefs {
   messages: boolean;
   groups: boolean;
   premium: boolean;
+  language?: string;
 }
 
 export interface PrivacySettings {

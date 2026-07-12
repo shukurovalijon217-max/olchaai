@@ -1018,6 +1018,15 @@ export default function ReelsPage() {
     if (initialReels.length > 0 && feed.length === 0) setFeed(initialReels as FeedItem[]);
   }, [initialReels, feed.length]);
 
+  // Initialize liked state from server's isLiked flag when reels first load
+  useEffect(() => {
+    if (initialReels.length > 0) {
+      setLikedIds(new Set(
+        (initialReels as FeedItem[]).filter(r => r.isLiked).map(r => r.id)
+      ));
+    }
+  }, [initialReels]);
+
   /* Track views + AI injection */
   useEffect(() => {
     const reel = feed[current]; if (!reel) return;

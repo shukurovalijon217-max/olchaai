@@ -107,8 +107,8 @@ router.put("/storage/uploads/cloud/:uuid", async (req: Request, res: Response) =
   const contentType = (req.headers["content-type"] as string) || "application/octet-stream";
 
   try {
-    await streamToCloudinary(uuid, req, contentType);
-    res.status(200).json({ ok: true });
+    const cloudinaryUrl = await streamToCloudinary(uuid, req, contentType);
+    res.status(200).json({ ok: true, url: cloudinaryUrl });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     req.log.error({ err: error, msg }, "Cloudinary upload failed");

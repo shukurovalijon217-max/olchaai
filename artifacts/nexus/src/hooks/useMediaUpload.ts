@@ -63,9 +63,17 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
       }
       setProgress(100);
 
+      let serveUrl = `${API}/api/storage${objectPath}`;
+      try {
+        const putBody = await putRes.clone().json();
+        if (putBody?.url && typeof putBody.url === "string") {
+          serveUrl = putBody.url;
+        }
+      } catch {}
+
       const result: UploadResult = {
         objectPath,
-        serveUrl: `${API}/api/storage${objectPath}`,
+        serveUrl,
         fileName: file.name,
         contentType: file.type,
       };

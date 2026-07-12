@@ -99,6 +99,28 @@ export async function streamToCloudinary(
   return cloudinaryUrl;
 }
 
+/** Ping Cloudinary API to verify credentials. Returns ok + info or error message. */
+export async function pingCloudinary(): Promise<{ ok: boolean; cloudName?: string; reason?: string }> {
+  if (!isCloudinaryEnabled()) {
+    return {
+      ok: false,
+      reason: "env vars not set",
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    };
+  }
+  configure();
+  try {
+    await cloudinary.api.ping();
+    return { ok: true, cloudName: process.env.CLOUDINARY_CLOUD_NAME };
+  } catch (err) {
+    return {
+      ok: false,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      reason: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 /**
  * Look up the Cloudinary URL for a UUID.
  * Falls back to constructing the URL directly from Cloudinary's CDN

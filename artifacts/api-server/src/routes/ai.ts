@@ -241,7 +241,7 @@ router.post("/ai/analyze-content", async (req, res) => {
       : `Analyze this content: "${textContent}"`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       max_completion_tokens: 400,
       messages: [
         {
@@ -275,7 +275,7 @@ Tags: 3-6 relevant hashtags without #.`,
         category: analysisData.category ?? "Entertainment",
         summary: analysisData.summary ?? "",
         sentiment: analysisData.sentiment ?? "neutral",
-        aiMetadata: JSON.stringify({ model: "gpt-4o-mini" }),
+        aiMetadata: JSON.stringify({ model: "llama-3.3-70b-versatile" }),
       })
       .onConflictDoNothing()
       .returning();
@@ -380,7 +380,7 @@ router.post("/ai/group-assist", async (req, res) => {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
@@ -415,7 +415,7 @@ router.post("/ai/video-suggest", async (req, res) => {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",

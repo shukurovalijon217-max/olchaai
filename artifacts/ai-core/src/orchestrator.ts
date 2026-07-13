@@ -86,7 +86,7 @@ function enqueue(task: OrchestratorTask): void {
 async function callOpenAI(prompt: string): Promise<string> {
   if (!openai) return "OpenAI unavailable — operating in degraded mode.";
   const resp = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "llama-3.3-70b-versatile",
     max_tokens: 300,
     temperature: 0.2,
     messages: [
@@ -238,7 +238,7 @@ export function startOrchestrator(): void {
   agentLog(AGENT, "Central AI Orchestrator started", {
     openaiAvailable: !!openai,
     heartbeatMs: HEARTBEAT_MS,
-    model: "gpt-4o-mini",
+    model: "llama-3.3-70b-versatile",
   });
   void heartbeat();
   setInterval(() => void heartbeat(), HEARTBEAT_MS);

@@ -49,7 +49,7 @@ function parseJson<T>(raw: string, fallback: T): T {
 
 async function askJson(system: string, user: string, maxTokens = 300) {
   const r = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "llama-3.3-70b-versatile",
     max_completion_tokens: maxTokens,
     messages: [{ role: "system", content: system }, { role: "user", content: user }],
   });

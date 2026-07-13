@@ -165,7 +165,7 @@ router.get("/library/ai-search", async (req, res) => {
     // Run OpenAI analysis and Open Library search in parallel
     const [aiResult, olResult] = await Promise.allSettled([
       openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "llama-3.3-70b-versatile",
         messages: [
           {
             role: "system",

@@ -30,6 +30,9 @@ app.use(compression({
   threshold: 1024, // compress responses > 1KB
   filter: (req, res) => {
     if (req.headers["x-no-compression"]) return false;
+    // Never compress SSE streams — compression breaks chunked streaming
+    if (res.getHeader("Content-Type") === "text/event-stream") return false;
+    if (req.headers.accept?.includes("text/event-stream")) return false;
     return compression.filter(req, res);
   },
 }));

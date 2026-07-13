@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { aiConversations as conversations, aiMessages as messages } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 
 const router = Router();
@@ -156,7 +156,7 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
     res.flushHeaders();
 
     const stream = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       max_completion_tokens: 800,
       messages: [
         { role: "system", content: "Siz OlchaAI platformasining AI yordamchisisiz. Foydalanuvchi qaysi tilda yozsa, o'sha tilda javob bering. Qisqa, aniq va foydali javoblar bering." },
@@ -200,7 +200,7 @@ router.post("/openai/generate-caption", async (req, res) => {
     }
 
     const response = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       max_completion_tokens: 500,
       messages: [
         {
@@ -252,7 +252,7 @@ router.post("/openai/moderate", async (req, res) => {
   if (!content) { res.status(400).json({ error: "content required" }); return; }
   try {
     const response = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       max_completion_tokens: 200,
       messages: [
         {
@@ -302,7 +302,7 @@ router.post("/openai/voice-chat", async (req, res) => {
     }
 
     const chatResponse = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       max_completion_tokens: 350,
       messages: [
         {

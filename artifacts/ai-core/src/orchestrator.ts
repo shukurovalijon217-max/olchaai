@@ -14,6 +14,7 @@ import { agentLog, agentWarn, agentError } from "./logger.js";
 import { getStats as secStats } from "./security.js";
 import { getModerationStats } from "./moderation.js";
 import { getLatestSnapshot } from "./analytics.js";
+const AI_CHAT_MODEL = process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
 
 const AGENT = "Orchestrator";
 const HEARTBEAT_MS = 30_000;
@@ -86,7 +87,7 @@ function enqueue(task: OrchestratorTask): void {
 async function callOpenAI(prompt: string): Promise<string> {
   if (!openai) return "OpenAI unavailable — operating in degraded mode.";
   const resp = await openai.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: AI_CHAT_MODEL,
     max_tokens: 300,
     temperature: 0.2,
     messages: [
@@ -238,7 +239,7 @@ export function startOrchestrator(): void {
   agentLog(AGENT, "Central AI Orchestrator started", {
     openaiAvailable: !!openai,
     heartbeatMs: HEARTBEAT_MS,
-    model: "llama-3.3-70b-versatile",
+    model: AI_CHAT_MODEL,
   });
   void heartbeat();
   setInterval(() => void heartbeat(), HEARTBEAT_MS);

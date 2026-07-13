@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { aiTwinConfigTable, aiTwinChatsTable, aiTwinMessagesTable, usersTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 
 const router = Router();
@@ -97,7 +97,7 @@ Siz ushbu shaxsning fikrlash tarzi, uslubi va bilimlariga asosan javob berasiz.
 Xuddi o'sha odam kabi muloyim, samimiy va qisqa javob bering.`;
 
     const completion = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         ...history.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),

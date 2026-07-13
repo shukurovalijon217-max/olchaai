@@ -5,7 +5,7 @@ import {
   userInteractionsTable, contentAnalysisTable,
 } from "@workspace/db";
 import { desc, eq, and, inArray } from "drizzle-orm";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage } from "../lib/aiAccess";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStatsMap } from "../lib/userStats";
@@ -241,7 +241,7 @@ router.post("/ai/analyze-content", async (req, res) => {
       : `Analyze this content: "${textContent}"`;
 
     const response = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       max_completion_tokens: 400,
       messages: [
         {
@@ -275,7 +275,7 @@ Tags: 3-6 relevant hashtags without #.`,
         category: analysisData.category ?? "Entertainment",
         summary: analysisData.summary ?? "",
         sentiment: analysisData.sentiment ?? "neutral",
-        aiMetadata: JSON.stringify({ model: "llama-3.3-70b-versatile" }),
+        aiMetadata: JSON.stringify({ model: AI_CHAT_MODEL }),
       })
       .onConflictDoNothing()
       .returning();
@@ -380,7 +380,7 @@ router.post("/ai/group-assist", async (req, res) => {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       messages: [
         {
           role: "system",
@@ -415,7 +415,7 @@ router.post("/ai/video-suggest", async (req, res) => {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       messages: [
         {
           role: "system",

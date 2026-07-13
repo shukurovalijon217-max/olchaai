@@ -5,7 +5,7 @@
   and voice-over caption transcription (Whisper STT).
 */
 import { Router } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 import { db, userInteractionsTable, reelsTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
@@ -49,7 +49,7 @@ function parseJson<T>(raw: string, fallback: T): T {
 
 async function askJson(system: string, user: string, maxTokens = 300) {
   const r = await openai.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: AI_CHAT_MODEL,
     max_completion_tokens: maxTokens,
     messages: [{ role: "system", content: system }, { role: "user", content: user }],
   });

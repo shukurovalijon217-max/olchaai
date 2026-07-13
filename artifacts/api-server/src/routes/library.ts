@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { userBooksTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
 
@@ -165,7 +165,7 @@ router.get("/library/ai-search", async (req, res) => {
     // Run OpenAI analysis and Open Library search in parallel
     const [aiResult, olResult] = await Promise.allSettled([
       openai.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+        model: AI_CHAT_MODEL,
         messages: [
           {
             role: "system",

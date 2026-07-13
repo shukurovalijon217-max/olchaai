@@ -1055,10 +1055,10 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     className="w-full rounded-2xl overflow-hidden relative cursor-pointer group/hero"
                     style={{ height: 200, boxShadow: "0 4px 28px rgba(124,58,237,0.18)" }}>
                     {topPost.mediaUrl && topPost.type !== "video"
-                      ? <img src={topPost.mediaUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                      ? <img src={resolveApiUrl(topPost.mediaUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                       : topPost.mediaUrl && topPost.type === "video"
                       ? <div className="w-full h-full relative bg-black">
-                          <video src={topPost.mediaUrl} className="w-full h-full object-cover" muted preload="none" />
+                          <video src={resolveApiUrl(topPost.mediaUrl)} className="w-full h-full object-cover" muted preload="none" />
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="w-10 h-10 rounded-full bg-black/50 border border-white/28 flex items-center justify-center">
                               <Play className="w-4 h-4 text-white fill-white ml-0.5" />
@@ -1108,10 +1108,10 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                       className="aspect-square rounded-xl overflow-hidden bg-card cursor-pointer relative group/post"
                       style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.25)" }}>
                       {post.mediaUrl && post.type !== "video"
-                        ? <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                        ? <img src={resolveApiUrl(post.mediaUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                         : post.mediaUrl && post.type === "video"
                         ? <div className="w-full h-full relative bg-black">
-                            <video src={post.mediaUrl} className="w-full h-full object-cover" muted preload="none" />
+                            <video src={resolveApiUrl(post.mediaUrl)} className="w-full h-full object-cover" muted preload="none" />
                           </div>
                         : <div className="w-full h-full flex items-center justify-center p-2"
                             style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.16), rgba(59,130,246,0.1))" }}>

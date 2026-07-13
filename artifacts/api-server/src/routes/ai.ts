@@ -12,6 +12,16 @@ import { getUserStatsMap } from "../lib/userStats";
 
 const router = Router();
 
+/* ── OpenAI config health check (public, no auth) ── */
+router.get("/ai/config-status", (_req, res) => {
+  const hasKey = !!process.env.OPENAI_API_KEY;
+  res.json({
+    openai: hasKey ? "configured" : "missing",
+    status: hasKey ? "ok" : "error",
+    message: hasKey ? "AI services ready" : "OPENAI_API_KEY environment variable is not set",
+  });
+});
+
 function enrichUser(u: Record<string, unknown>, stats: any) {
   return { ...u, ...(stats || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }) };
 }

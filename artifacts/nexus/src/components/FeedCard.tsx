@@ -20,7 +20,7 @@ import {
   Heart, MessageCircle, Share2, Trash2,
   VolumeX, Volume2, BadgeCheck, Check, Send, X,
   Music, Sparkles, MoreHorizontal, Link,
-  UserPlus, UserCheck, Download, Loader2, Flag, Brain, ChevronLeft, ImageOff,
+  UserPlus, UserCheck, Download, Loader2, Flag, Brain, ImageOff,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -930,33 +930,6 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
           )}
         </AnimatePresence>
 
-        {/* ── Back arrow — appears on tap, overlays the avatar ── */}
-        <AnimatePresence>
-          {overlayVisible && (
-            <motion.button
-              key="back-btn"
-              initial={{ opacity: 0, scale: 0.75 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.75 }}
-              transition={{ duration: 0.18 }}
-              whileTap={{ scale: 0.82 }}
-              onClick={(e) => { e.stopPropagation(); window.history.back(); }}
-              className="absolute left-3 flex items-center justify-center"
-              style={{
-                top: "calc(env(safe-area-inset-top, 0px) + 10px)",
-                width: 40, height: 40, borderRadius: "50%",
-                background: "rgba(0,0,0,0.62)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.16)",
-                zIndex: 21,
-              }}
-              onPointerDown={e => e.stopPropagation()}
-            >
-              <ChevronLeft className="w-5 h-5 text-white" />
-            </motion.button>
-          )}
-        </AnimatePresence>
 
       </div>
 

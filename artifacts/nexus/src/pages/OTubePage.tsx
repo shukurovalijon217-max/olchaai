@@ -2003,10 +2003,6 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
                 <img src={video.author.avatarUrl} alt=""
                   style={{width:24,height:24,borderRadius:"50%",objectFit:"cover",
                     position:"absolute",top:4,left:4,zIndex:2}}/>
-                <div style={{position:"absolute",bottom:-2,right:-2,zIndex:3,
-                  width:12,height:12,borderRadius:"50%",background:T.cyan,
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                  fontSize:6,fontWeight:900,color:"#000",boxShadow:`0 0 6px ${T.cyan}88`}}>7</div>
               </div>
             )}
             <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",flex:1}} className="truncate">

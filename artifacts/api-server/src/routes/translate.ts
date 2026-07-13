@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { cacheGet, cacheSet } from "../lib/cache";
 
 const router = Router();
@@ -42,7 +42,7 @@ async function translateBatch(
   langName: string,
 ): Promise<Record<string, string>> {
   const completion = await openai.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: AI_CHAT_MODEL,
     messages: [
       {
         role: "system",
@@ -154,7 +154,7 @@ router.post("/translate", async (req, res) => {
     const langName = LANG_NAMES[targetLang] ?? targetLang;
 
     const completion = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       messages: [
         {
           role: "system",

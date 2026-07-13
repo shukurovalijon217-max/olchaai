@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { postsTable, postLikesTable, commentsTable, commentLikesTable, usersTable, moderationQueueTable, followsTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray } from "drizzle-orm";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
@@ -270,7 +270,7 @@ router.post("/posts/ai-caption", async (req: any, res) => {
     const mediaLabel = mediaType === "video" ? "video post" : mediaType === "photo" ? "rasm/foto post" : "matn post";
     const descPart = description ? `Post haqida: "${description}".` : "";
     const completion = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       messages: [
         {
           role: "system",

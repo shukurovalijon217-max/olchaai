@@ -5,7 +5,7 @@
   Streaming SSE responses — identical pattern to openai-chat.ts
 */
 import { Router } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 
 const router = Router();
@@ -80,7 +80,7 @@ router.post("/muni/chat", async (req, res) => {
     }));
 
     const stream = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       stream: true,
       max_completion_tokens: 600,
       messages: [

@@ -8,7 +8,7 @@
   the translation prompt AND the TTS voice selection.
 */
 import { Router } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 
 const router = Router();
@@ -81,7 +81,7 @@ router.post("/voice/translate", async (req, res) => {
 
     /* ── Step 2: Voice-style analysis ───────────────────────── */
     const profileRes = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       max_completion_tokens: 120,
       messages: [{
         role: "system",
@@ -123,7 +123,7 @@ router.post("/voice/translate", async (req, res) => {
     const targetLangName = langNames[targetLang] ?? targetLang;
 
     const translationRes = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: AI_CHAT_MODEL,
       max_completion_tokens: 500,
       messages: [{
         role: "system",
@@ -203,7 +203,7 @@ router.post("/voice/translate-text", async (req, res) => {
 
     const [translationRes, ] = await Promise.all([
       openai.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+        model: AI_CHAT_MODEL,
         max_completion_tokens: 400,
         messages: [
           { role: "system", content: `Translate to ${targetLangName}. Return only the translation, nothing else.` },

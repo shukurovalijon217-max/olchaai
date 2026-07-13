@@ -161,6 +161,7 @@ app.use(session({
     secure: isProd,
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     sameSite: isProd ? "none" : "lax",
+    domain: isProd ? ".olchaai.com" : undefined,
   },
 }));
 

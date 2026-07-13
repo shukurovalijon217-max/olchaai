@@ -144,9 +144,9 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
       .orderBy(messages.createdAt)
       .limit(200);
 
-    /* Cap context sent to OpenAI to the most recent 30 messages to keep
+    /* Cap context sent to OpenAI to the most recent 6 messages to keep
        latency and token usage bounded on long-running conversations. */
-    const recentHistory = history.slice(-30);
+    const recentHistory = history.slice(-6);
     const chatMessages = recentHistory.map(m => ({ role: m.role as "user" | "assistant" | "system", content: m.content }));
 
     res.setHeader("Content-Type", "text/event-stream");
@@ -157,7 +157,7 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
 
     const stream = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      max_completion_tokens: 8192,
+      max_completion_tokens: 800,
       messages: [
         { role: "system", content: "Siz OlchaAI platformasining AI yordamchisisiz. Foydalanuvchi qaysi tilda yozsa, o'sha tilda javob bering. Qisqa, aniq va foydali javoblar bering." },
         ...chatMessages,

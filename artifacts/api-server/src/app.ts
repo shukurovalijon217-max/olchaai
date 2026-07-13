@@ -142,7 +142,7 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
-const isProd = process.env["NODE_ENV"] === "production";
+const isProd = process.env["NODE_ENV"] === "production" || !!process.env["RENDER"];
 const PgSession = connectPgSimple(session);
 
 app.use(session({

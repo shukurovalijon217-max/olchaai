@@ -829,8 +829,9 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   },[]);
 
   const handleShare = useCallback(async()=>{
-    try{if(navigator.share)await navigator.share({title:video.caption||"OTube",url:window.location.href});
-    else await navigator.clipboard.writeText(window.location.href);}catch{}
+    const videoUrl = `${window.location.origin}/otube?v=${video.id}`;
+    try{if(navigator.share)await navigator.share({title:video.caption||"OTube video",url:videoUrl});
+    else await navigator.clipboard.writeText(videoUrl);}catch{}
     setShared(true);setTimeout(()=>setShared(false),2000);
   },[video.caption]);
 
@@ -6132,6 +6133,15 @@ export default function OTubePage() {
   const { data:notifList=[] } = useListNotifications();
   useEffect(()=>{ setNotifDot(notifList.some((n:Notification)=>!n.isRead)); },[notifList]);
   const { data:continueWatching=[] } = useGetContinueWatching();
+
+  // ?v= param: shared link → auto-open that video once reels load
+  useEffect(()=>{
+    if (isLoading || raw.length === 0) return;
+    const vId = new URLSearchParams(window.location.search).get("v");
+    if (!vId) return;
+    const match = raw.find(r => String(r.id) === vId);
+    if (match) { setSelected(match); window.history.replaceState(null,"","/otube"); }
+  },[isLoading, raw]);
 
   const reels = useMemo(()=>{
     if (!query.trim()) return raw;

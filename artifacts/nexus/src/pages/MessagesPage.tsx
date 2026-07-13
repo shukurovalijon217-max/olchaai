@@ -1,6 +1,7 @@
 import {
   useState, useRef, useEffect, useCallback, ElementType,
 } from "react";
+import { useLocation } from "wouter";
 import { playMessageSound, getFeaturePref } from "@/lib/sounds";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
@@ -912,6 +913,7 @@ function PollCreator({ onSend, onClose }: { onSend:(title:string,opts:PollOption
 export default function MessagesPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const ME_ID = user?.id || 1;
 
   const qc = useQueryClient();
@@ -1300,7 +1302,7 @@ export default function MessagesPage() {
                 className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
                 <UserPlus className="w-4 h-4"/>
               </button>
-              <button onClick={()=>{ window.location.href="/groups"; }} title={t("msg.tabs.groups")}
+              <button onClick={()=>navigate("/groups")} title={t("msg.tabs.groups")}
                 className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors">
                 <Users className="w-4 h-4"/>
               </button>

@@ -1,7 +1,7 @@
 import { db, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 
-export const AI_FREE_LIMIT = 5;
+export const AI_FREE_LIMIT = 100;
 
 export interface AIAccessResult {
   allowed: boolean;

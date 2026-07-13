@@ -19,6 +19,26 @@ app.use(pinoHttp({ logger }));
 app.use(express.json({ limit: "64kb" }));
 app.disable("x-powered-by");
 
+// ── CORS — allow olchaai.com and Render/Replit origins ────────────────
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin ?? "";
+  const allowed =
+    /^https:\/\/(www\.)?olchaai\.com$/.test(origin) ||
+    /^https:\/\/[\w-]+\.replit\.app$/.test(origin) ||
+    /^https:\/\/[\w-]+\.repl\.co$/.test(origin) ||
+    /^https:\/\/[\w-]+\.onrender\.com$/.test(origin) ||
+    /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+    origin === "";
+  if (allowed) {
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With");
+  }
+  if (req.method === "OPTIONS") { res.status(204).end(); return; }
+  next();
+});
+
 // ── Security middleware ────────────────────────────────────────────────
 app.use((req: Request, res: Response, next: NextFunction) => {
   const ip = (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim()

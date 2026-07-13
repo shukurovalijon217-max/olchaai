@@ -243,9 +243,10 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const [, navigate] = useLocation();
 
   /* ── State ── */
-  const [liked,    setLiked]    = useState(post.isLiked ?? false);
-  const [likes,    setLikes]    = useState(post.likesCount ?? 0);
-  const [shares,   setShares]   = useState(post.sharesCount ?? 0);
+  const [liked,         setLiked]         = useState(post.isLiked ?? false);
+  const [likes,         setLikes]         = useState(post.likesCount ?? 0);
+  const [shares,        setShares]        = useState(post.sharesCount ?? 0);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount ?? 0);
   const [muted,    setMuted]    = useState(true);
   const [copied,   setCopied]   = useState(false);
   const [subscribed,    setSubscribed]    = useState<boolean>(post.author?.isFollowing ?? false);
@@ -256,7 +257,18 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
     setSubscribed(post.author?.isFollowing ?? false);
   }, [post.author?.isFollowing]);
   const subscribeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const followMut = useFollowUser();
+  const followMut = useFollowUser({
+    mutation: {
+      onSuccess: (data: any) => {
+        if (typeof data?.following === "boolean") {
+          setSubscribed(data.following);
+        }
+      },
+      onError: () => {
+        setSubscribed(post.author?.isFollowing ?? false);
+      },
+    },
+  });
 
   const [mediaError, setMediaError] = useState(false);
   const { setCommentPanelOpen } = usePip();
@@ -373,7 +385,20 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
   /* ── Query client + mutations ── */
   const queryClient = useQueryClient();
-  const likePost    = useLikePost();
+  const likePost = useLikePost({
+    mutation: {
+      onSuccess: (data: any) => {
+        if (typeof data?.liked === "boolean") setLiked(data.liked);
+        if (typeof data?.likesCount === "number") setLikes(data.likesCount);
+        queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetAiFeedQueryKey() });
+      },
+      onError: () => {
+        setLiked(post.isLiked ?? false);
+        setLikes(post.likesCount ?? 0);
+      },
+    },
+  });
   const deletePost  = useDeletePost({
     mutation: {
       onSuccess: () => {
@@ -515,6 +540,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
       if (res.ok) {
         const newComment = await res.json();
         setCommentsList(prev => [newComment, ...prev]);
+        setCommentsCount(c => c + 1);
       }
       setCommentText("");
       setCommentSent(true);
@@ -967,7 +993,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         {/* Comment */}
         <Orb
           icon={<MessageCircle className="w-[17px] h-[17px]" style={{ color: commentOpen ? "#22d3ee" : "rgba(255,255,255,0.75)" }} />}
-          count={post.commentsCount ?? 0} active={commentOpen} activeColor="#22d3ee" inView={isInView}
+          count={commentsCount} active={commentOpen} activeColor="#22d3ee" inView={isInView}
           onClick={() => { setCommentOpen(o => !o); setShareOpen(false); setMenuOpen(false); }}
         />
 

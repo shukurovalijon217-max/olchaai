@@ -1157,25 +1157,34 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                   transition={{ delay: i * 0.03, type: "spring", stiffness: 280, damping: 22 }}>
                   <Link href="/reels">
                     <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
-                      className="aspect-[9/16] rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/reel"
+                      className="aspect-[3/4] rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/reel"
                       style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
-                      {reel.thumbnailUrl ? (
+                      {/* Video always visible — autoplay muted loop shows live content */}
+                      {reel.videoUrl ? (
+                        <video
+                          src={reel.videoUrl}
+                          className="w-full h-full object-cover"
+                          muted
+                          autoPlay
+                          loop
+                          playsInline
+                          preload="metadata"
+                        />
+                      ) : reel.thumbnailUrl ? (
                         <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                      ) : reel.videoUrl ? (
-                        <video src={reel.videoUrl} className="w-full h-full object-cover" muted preload="none"
-                          onMouseEnter={e => (e.target as HTMLVideoElement).play().catch(() => {})}
-                          onMouseLeave={e => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }} />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"
                           style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.18), rgba(59,130,246,0.12))" }}>
                           <Play className="w-7 h-7 text-primary/35" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/reel:opacity-100 transition-opacity flex items-center justify-center">
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/reel:opacity-100 transition-opacity flex items-center justify-center">
                         <div className="w-9 h-9 rounded-full bg-white/20 border border-white/28 flex items-center justify-center backdrop-blur-sm">
                           <Play className="w-4 h-4 text-white fill-white ml-0.5" />
                         </div>
                       </div>
+                      {/* Stats bar */}
                       <div className="absolute bottom-0 left-0 right-0 px-1.5 py-1 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between">
                         <div className="flex items-center gap-0.5 text-white">
                           <Play className="w-2 h-2 fill-white opacity-75" />

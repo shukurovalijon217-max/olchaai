@@ -1157,7 +1157,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                   transition={{ delay: i * 0.03, type: "spring", stiffness: 280, damping: 22 }}>
                   <Link href="/reels">
                     <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
-                      className="aspect-[9/16] rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/reel"
+                      className="aspect-[3/4] rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/reel"
                       style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
                       {/* Video always visible — autoplay muted loop shows live content */}
                       {reel.videoUrl ? (

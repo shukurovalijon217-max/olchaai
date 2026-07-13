@@ -186,7 +186,7 @@ function DanmakuOverlay({ active, reelId }: { active:boolean; reelId:number }) {
   const { data: comments = [] } = useQuery<ApiComment[]>({
     queryKey: ["reel-comments", reelId],
     queryFn: async () => {
-      const r = await fetch(`${API_BASE}/api/reels/${reelId}/comments`);
+      const r = await fetch(`${API_BASE}/api/reels/${reelId}/comments`, { credentials:"include" });
       if (!r.ok) throw new Error("Izohlarni olishda xatolik");
       return r.json() as Promise<ApiComment[]>;
     },
@@ -311,7 +311,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
   const { data: comments = [], isLoading } = useQuery<ApiComment[]>({
     queryKey: ["reel-comments", reelId],
     queryFn: async () => {
-      const r = await fetch(`${API_BASE}/api/reels/${reelId}/comments`);
+      const r = await fetch(`${API_BASE}/api/reels/${reelId}/comments`, { credentials:"include" });
       if (!r.ok) throw new Error("Izohlarni olishda xatolik");
       return r.json() as Promise<ApiComment[]>;
     },
@@ -321,7 +321,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
   const postMut = useMutation({
     mutationFn: async (content: string) => {
       const r = await fetch(`${API_BASE}/api/reels/${reelId}/comments`, {
-        method:"POST", headers:{"Content-Type":"application/json"},
+        method:"POST", credentials:"include", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ content }),
       });
       if (!r.ok) throw new Error("Izoh qo'shishda xatolik");
@@ -740,7 +740,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const resetCtrl = useCallback(() => {
     setShowCtrl(true);
     if (ctrlTimer.current) clearTimeout(ctrlTimer.current);
-    ctrlTimer.current = setTimeout(()=>setShowCtrl(false), 3200);
+    ctrlTimer.current = setTimeout(()=>setShowCtrl(false), 6000);
   }, []);
   useEffect(() => {
     resetCtrl();
@@ -1902,7 +1902,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
   const quickComment = useMutation({
     mutationFn: async (content: string) => {
       const r = await fetch(`${API_BASE}/api/reels/${video.id}/comments`, {
-        method:"POST", headers:{"Content-Type":"application/json"},
+        method:"POST", credentials:"include", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ content }),
       });
       if (!r.ok) throw new Error("Izoh qo'shishda xatolik");

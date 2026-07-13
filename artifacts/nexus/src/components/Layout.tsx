@@ -365,7 +365,20 @@ function MuniPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text.trim(), mode: "wisdom", history }),
       });
-      if (!res.ok || !res.body) { setLoading(false); return; }
+      if (!res.ok || !res.body) {
+        const errMsg = res.status === 401 ? "Iltimos, qayta kiring" :
+          res.status === 402 ? "AI limit tugadi. Premium oling yoki ertaga urinib ko'ring." :
+          "Server xatosi. Qayta urinib ko'ring.";
+        setMsgs(prev => {
+          const copy = [...prev];
+          if (copy.length > 0 && copy[copy.length - 1].role === "assistant") {
+            copy[copy.length - 1] = { role: "assistant", content: errMsg };
+          }
+          return copy;
+        });
+        setLoading(false);
+        return;
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();

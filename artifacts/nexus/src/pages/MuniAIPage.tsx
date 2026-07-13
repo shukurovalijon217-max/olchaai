@@ -131,7 +131,14 @@ export default function MuniAIPage() {
         return;
       }
 
-      if (!resp.ok || !resp.body) { setStreaming(false); return; }
+      if (!resp.ok || !resp.body) {
+        const errText = resp.status === 401 ? "Iltimos, qayta kiring" :
+          resp.status === 402 ? "AI limit tugadi. Premium oling yoki keyinroq urinib ko'ring." :
+          "Server xatosi. Qayta urinib ko'ring.";
+        setMessages(prev => prev.map(m => m.id === assistantMsg.id ? { ...m, content: errText } : m));
+        setStreaming(false);
+        return;
+      }
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();

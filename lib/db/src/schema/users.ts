@@ -1,4 +1,5 @@
-import { pgTable, text, serial, boolean, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, integer, timestamp, jsonb, date } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -62,6 +63,7 @@ export const usersTable = pgTable("users", {
   notifPrefs: jsonb("notif_prefs").$type<NotifPrefs>(),
   privacySettings: jsonb("privacy_settings").$type<PrivacySettings>(),
   aiUsageCount: integer("ai_usage_count").notNull().default(0),
+  aiUsageResetAt: date("ai_usage_reset_at").notNull().default(sql`CURRENT_DATE`),
   ghostUntil: timestamp("ghost_until"),
   focusShield: jsonb("focus_shield").$type<FocusShield>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),

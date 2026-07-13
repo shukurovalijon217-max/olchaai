@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchMe = async () => {
+  const fetchMe = async (retries = 2) => {
     try {
       const res = await fetch(`${API}/api/auth/me`, { credentials: "include" });
       if (res.ok) {
@@ -66,11 +66,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { default: i18nInst } = await import("@/lib/i18n");
           i18nInst.changeLanguage(savedLang);
         }
-      } else {
+      } else if (res.status === 401) {
+        // Real session expiry — log out
         setUser(null);
       }
+      // Other status codes (500, 503, etc.): keep current user state
     } catch {
-      setUser(null);
+      // Network error (internet disconnect, timeout, etc.)
+      // Retry before giving up — don't log the user out on a transient error
+      if (retries > 0) {
+        await new Promise(r => setTimeout(r, 1500));
+        return fetchMe(retries - 1);
+      }
+      // After all retries exhausted, keep existing user state (don't logout)
+      // Only clear user on initial load (when user is still null from useState)
+      setUser(prev => prev);
     } finally {
       setLoading(false);
     }

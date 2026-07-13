@@ -417,7 +417,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const hasAudio = !!(post as any).audioUrl;
   const audioName = (post as any).audioName as string | undefined;
   const audioUrl  = (post as any).audioUrl  as string | undefined;
-  const displayFormat = (post as any).displayFormat ?? "contain";
+  const displayFormat = (post as any).displayFormat ?? "cover";
   const photoFit  = displayFormat === "contain" ? "object-contain" : "object-cover";
 
   /* ── Effects ── */

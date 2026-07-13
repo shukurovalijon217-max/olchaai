@@ -42,7 +42,7 @@ async function translateBatch(
   langName: string,
 ): Promise<Record<string, string>> {
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "llama-3.3-70b-versatile",
     messages: [
       {
         role: "system",
@@ -154,7 +154,7 @@ router.post("/translate", async (req, res) => {
     const langName = LANG_NAMES[targetLang] ?? targetLang;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",

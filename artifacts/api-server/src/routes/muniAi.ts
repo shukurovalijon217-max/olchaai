@@ -80,7 +80,7 @@ router.post("/muni/chat", async (req, res) => {
     }));
 
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       stream: true,
       max_completion_tokens: 600,
       messages: [

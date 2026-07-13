@@ -97,7 +97,7 @@ Siz ushbu shaxsning fikrlash tarzi, uslubi va bilimlariga asosan javob berasiz.
 Xuddi o'sha odam kabi muloyim, samimiy va qisqa javob bering.`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: systemPrompt },
         ...history.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),

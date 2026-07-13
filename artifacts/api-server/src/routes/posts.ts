@@ -270,7 +270,7 @@ router.post("/posts/ai-caption", async (req: any, res) => {
     const mediaLabel = mediaType === "video" ? "video post" : mediaType === "photo" ? "rasm/foto post" : "matn post";
     const descPart = description ? `Post haqida: "${description}".` : "";
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",

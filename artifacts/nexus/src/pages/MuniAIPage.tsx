@@ -72,10 +72,27 @@ function MuniMessage({ msg, streaming }: { msg: Msg; streaming: boolean }) {
   );
 }
 
+const STORAGE_KEY = (mode: Mode) => `muni_chat_v1_${mode}`;
+const MAX_STORED = 60;
+
+function loadHistory(mode: Mode): Msg[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(mode));
+    if (!raw) return [];
+    return JSON.parse(raw) as Msg[];
+  } catch { return []; }
+}
+
+function saveHistory(mode: Mode, msgs: Msg[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY(mode), JSON.stringify(msgs.slice(-MAX_STORED)));
+  } catch { /* storage full */ }
+}
+
 export default function MuniAIPage() {
   const { t, i18n } = useTranslation();
   const [mode, setMode] = useState<Mode>("wisdom");
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<Msg[]>(() => loadHistory("wisdom"));
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [quote, setQuote] = useState<Quote>(FALLBACK_QUOTES[0]!);
@@ -84,6 +101,23 @@ export default function MuniAIPage() {
   const nextId = useRef(1);
   const bottomRef = useRef<HTMLDivElement>(null);
   const esRef = useRef<EventSource | null>(null);
+
+  /* Mode o'zgarganda — o'sha rejimning tarixini yuklash */
+  useEffect(() => {
+    esRef.current?.close();
+    setStreaming(false);
+    const saved = loadHistory(mode);
+    setMessages(saved);
+    if (saved.length > 0) {
+      nextId.current = Math.max(...saved.map(m => m.id)) + 1;
+    }
+  }, [mode]);
+
+  /* Xabarlar o'zgarganda localStorage'ga saqlash */
+  useEffect(() => {
+    if (streaming) return; // faqat yakunlangandan keyin saqlash
+    if (messages.length > 0) saveHistory(mode, messages);
+  }, [messages, streaming, mode]);
 
   /* Load random quote on mount */
   useEffect(() => {
@@ -101,7 +135,8 @@ export default function MuniAIPage() {
     esRef.current?.close();
     setMessages([]);
     setStreaming(false);
-  }, []);
+    try { localStorage.removeItem(STORAGE_KEY(mode)); } catch { /* ignore */ }
+  }, [mode]);
 
   const send = useCallback(async () => {
     const text = input.trim();
@@ -162,7 +197,7 @@ export default function MuniAIPage() {
             if (json.done) {
               setStreaming(false);
               const usage = (json as any).usage;
-              if (usage) setAiUsage({ ...usage, limit: 5 });
+              if (usage) setAiUsage({ ...usage, limit: usage.limit ?? 100 });
             }
           } catch { /* skip malformed */ }
         }

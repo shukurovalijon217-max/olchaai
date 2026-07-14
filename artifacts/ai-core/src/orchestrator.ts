@@ -14,7 +14,9 @@ import { agentLog, agentWarn, agentError } from "./logger.js";
 import { getStats as secStats } from "./security.js";
 import { getModerationStats } from "./moderation.js";
 import { getLatestSnapshot } from "./analytics.js";
-const AI_CHAT_MODEL = process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
+const GROQ_KEY = process.env.GROQ_API_KEY;
+const AI_CHAT_MODEL = GROQ_KEY ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
+const AI_PROVIDER   = GROQ_KEY ? "Groq" : "OpenAI";
 
 const AGENT = "Orchestrator";
 const HEARTBEAT_MS = 30_000;
@@ -22,7 +24,14 @@ const MAX_LOG_ENTRIES = 200;
 
 let openai: OpenAI | null = null;
 try {
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (GROQ_KEY) {
+    openai = new OpenAI({
+      apiKey: GROQ_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
+  } else {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
 } catch {
   /* degraded mode */
 }
@@ -85,7 +94,7 @@ function enqueue(task: OrchestratorTask): void {
 }
 
 async function callOpenAI(prompt: string): Promise<string> {
-  if (!openai) return "OpenAI unavailable — operating in degraded mode.";
+  if (!openai) return `${AI_PROVIDER} unavailable — operating in degraded mode.`;
   const resp = await openai.chat.completions.create({
     model: AI_CHAT_MODEL,
     max_tokens: 300,

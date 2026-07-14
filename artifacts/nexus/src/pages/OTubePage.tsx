@@ -1974,12 +1974,11 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
             <Play style={{width:22,height:22,fill:"white",color:"white",marginLeft:3}}/>
           </motion.div>
         </div>
-        {/* Live dot */}
-        <div className="absolute top-3 left-3 flex items-center gap-2 px-2.5 py-1.5"
+        {/* View count top-left chip — real data only */}
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1"
           style={{borderRadius:99,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(12px)"}}>
-          <div style={{width:6,height:6,borderRadius:"50%",background:"#ff3b30",
-            boxShadow:"0 0 8px #ff3b30"}}/>
-          <span style={{fontSize:9.5,fontWeight:700,color:"rgba(255,255,255,0.85)",letterSpacing:"0.06em"}}>LIVE</span>
+          <Eye style={{width:9,height:9,color:"rgba(255,255,255,0.7)"}}/>
+          <span style={{fontSize:9,fontWeight:600,color:"rgba(255,255,255,0.8)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
         </div>
 
         {/* Info panel — inside thumbnail so Watch Party row never overlaps */}
@@ -2161,18 +2160,16 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
   );
 }
 
-/* Live pulse — real view count */
+/* View count chip — real data */
 function LivePulse({ count }: { count: number }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5"
-      style={{borderRadius:99,background:"rgba(255,59,48,0.1)",
-        boxShadow:"0 0 0 1px rgba(255,59,48,0.25)"}}>
-      <motion.div animate={{opacity:[1,0.2,1]}} transition={{duration:1.2,repeat:Infinity}}
-        style={{width:5,height:5,borderRadius:"50%",background:"#ff3b30",
-          boxShadow:"0 0 6px #ff3b30"}}/>
-      <span style={{fontSize:9.5,fontWeight:600,color:"rgba(255,100,80,0.9)",fontFamily:"monospace"}}>
-        {Math.max(0, count).toLocaleString()} {t("otube.live_count")}
+    <div className="flex items-center gap-1.5 px-3 py-1.5 flex-1 justify-end"
+      style={{borderRadius:99,background:"rgba(255,255,255,0.05)",
+        boxShadow:"0 0 0 1px rgba(255,255,255,0.08)"}}>
+      <Eye style={{width:10,height:10,color:"rgba(255,255,255,0.4)"}}/>
+      <span style={{fontSize:9.5,fontWeight:600,color:"rgba(255,255,255,0.55)",fontFamily:"monospace"}}>
+        {Math.max(0, count).toLocaleString()} {t("otube.views")}
       </span>
     </div>
   );
@@ -2260,16 +2257,13 @@ function TrendRow({ video, onPlay, idx }:
         <div className="absolute bottom-0 inset-x-0 h-[1px]"
           style={{background:`linear-gradient(90deg,transparent,${col}88,transparent)`}}/>
         {/* Duration — bare text, no badge */}
-        {(()=>{
-          const _dur = `${1+(video.id%12)}:${String((video.id*13)%60).padStart(2,"0")}`;
-          return (
-            <span className="absolute bottom-[44px] right-3"
-              style={{fontSize:7.5,fontWeight:700,color:"rgba(255,255,255,0.55)",fontFamily:"monospace",
-                textShadow:"0 1px 4px rgba(0,0,0,0.9)"}}>
-              {_dur}
-            </span>
-          );
-        })()}
+        {video.duration && video.duration > 0 && (
+          <span className="absolute bottom-[44px] right-3"
+            style={{fontSize:7.5,fontWeight:700,color:"rgba(255,255,255,0.55)",fontFamily:"monospace",
+              textShadow:"0 1px 4px rgba(0,0,0,0.9)"}}>
+            {Math.floor(video.duration/60)}:{String(video.duration%60).padStart(2,"0")}
+          </span>
+        )}
       </div>
     </motion.div>
   );
@@ -2386,12 +2380,14 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
           )}
         </div>
 
-        {/* Duration — bare text, no badge */}
-        <span className="absolute bottom-9 right-2"
-          style={{fontSize:8,fontWeight:700,color:"rgba(255,255,255,0.7)",fontFamily:"monospace",
-            textShadow:"0 1px 4px rgba(0,0,0,0.9)"}}>
-          {2+(video.id%18)}:{String((video.id*7)%60).padStart(2,"0")}
-        </span>
+        {/* Duration — real data only */}
+        {video.duration && video.duration > 0 && (
+          <span className="absolute bottom-9 right-2"
+            style={{fontSize:8,fontWeight:700,color:"rgba(255,255,255,0.7)",fontFamily:"monospace",
+              textShadow:"0 1px 4px rgba(0,0,0,0.9)"}}>
+            {Math.floor(video.duration/60)}:{String(video.duration%60).padStart(2,"0")}
+          </span>
+        )}
 
         {/* Signal Score — single chip only */}
         <div className="absolute top-2.5 right-2.5">

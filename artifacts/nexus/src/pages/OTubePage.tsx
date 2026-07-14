@@ -535,8 +535,9 @@ function VersionHistoryPanel({ reelId, currentCaption }: { reelId: number | null
 /* ─────────────────────────────────────────────────────── */
 /* NexusPlayer — BROADCAST STYLE                           */
 /* ─────────────────────────────────────────────────────── */
-function NexusPlayer({ video, onClose, settings, onPip }:
-  { video:Reel; onClose:()=>void; settings:PlayerSettings; onPip?:(time:number)=>void }) {
+function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext, hasPrev }:
+  { video:Reel; onClose:()=>void; settings:PlayerSettings; onPip?:(time:number)=>void;
+    onNext?:()=>void; onPrev?:()=>void; hasNext?:boolean; hasPrev?:boolean }) {
   const { t } = useTranslation();
   const qc             = useQueryClient();
   const [, navPlayer]  = useLocation();
@@ -554,6 +555,9 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const viewTracked = useRef(false);
   const progressRef = useRef({ time: 0, dur: 0 });
   const lastReportRef = useRef(0);
+  const swipeTY = useRef(0);
+  const swipeTX = useRef(0);
+  const swipeActive = useRef(false);
 
   const [playing,   setPlaying]   = useState(false);
   const [muted,     setMuted]     = useState(settings.muteDefault);
@@ -589,6 +593,7 @@ function NexusPlayer({ video, onClose, settings, onPip }:
   const [dubbing, setDubbing] = useState(false);
   const [dubResult, setDubResult] = useState<{translated:string;audioB64:string;lang:string}|null>(null);
   const dubAudioRef = useRef<HTMLAudioElement|null>(null);
+  const [swipeHint, setSwipeHint] = useState<"up"|"down"|null>(null);
 
   /* Tizimga kirmagan foydalanuvchi uchun: amalni bajarish o'rniga login sahifasiga yo'naltirish */
   const requireLogin = useCallback(() => {
@@ -954,7 +959,30 @@ function NexusPlayer({ video, onClose, settings, onPip }:
       <div
         style={{flex:1,position:"relative",overflow:"hidden",background:"#000",cursor:"pointer"}}
         onClick={handleTap}
-        onTouchStart={startHold} onTouchEnd={endHold}
+        onTouchStart={(e)=>{
+          swipeTY.current=e.touches[0].clientY;
+          swipeTX.current=e.touches[0].clientX;
+          swipeActive.current=true;
+          startHold(e);
+        }}
+        onTouchEnd={(e)=>{
+          endHold();
+          if(!swipeActive.current)return;
+          swipeActive.current=false;
+          const dy=swipeTY.current-e.changedTouches[0].clientY;
+          const dx=swipeTX.current-e.changedTouches[0].clientX;
+          if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>80){
+            if(dy>0&&hasNext&&onNext){
+              setSwipeHint("up");
+              setTimeout(()=>setSwipeHint(null),400);
+              setTimeout(()=>onNext(),160);
+            } else if(dy<0&&hasPrev&&onPrev){
+              setSwipeHint("down");
+              setTimeout(()=>setSwipeHint(null),400);
+              setTimeout(()=>onPrev(),160);
+            }
+          }
+        }}
         onMouseDown={startHold} onMouseUp={endHold}>
         <video
           ref={videoRef}

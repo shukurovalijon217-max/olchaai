@@ -21,16 +21,20 @@ export function isR2Enabled(): boolean {
   );
 }
 
+let _r2Client: S3Client | null = null;
 function getR2Client(): S3Client {
-  const accountId = process.env.R2_ACCOUNT_ID!;
-  return new S3Client({
+  if (_r2Client) return _r2Client;
+  const accountId = process.env.R2_ACCOUNT_ID!.trim();
+  _r2Client = new S3Client({
     region: "auto",
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!.trim(),
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!.trim(),
     },
+    forcePathStyle: false,
   });
+  return _r2Client;
 }
 
 function getBucketName(): string {

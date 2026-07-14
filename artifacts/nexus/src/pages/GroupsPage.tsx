@@ -19,6 +19,7 @@ import i18n from "@/lib/i18n";
 import { useListGroups, useJoinGroup, useCreateGroup, getListGroupsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
@@ -1091,7 +1092,11 @@ export default function GroupsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: text }),
       });
-      if (r.ok) {
+      if (r.status === 401) {
+        toast({ title: "Xato", description: "Izoh yozish uchun tizimga kiring", variant: "destructive" });
+      } else if (!r.ok) {
+        toast({ title: "Xato", description: "Izoh qo'shishda xatolik yuz berdi", variant: "destructive" });
+      } else {
         const newComment = await r.json();
         setCommentsByPost(prev => ({ ...prev, [postId]: [newComment, ...(prev[postId] ?? [])] }));
         setNewCommentText(prev => ({ ...prev, [postId]: "" }));

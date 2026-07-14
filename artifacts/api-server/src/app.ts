@@ -294,4 +294,11 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
 
 app.use("/api", router);
 
+/* ── Frontend crash reporter (no auth required — fire-and-forget) ── */
+app.post("/api/client-error", (req: Request, res: Response) => {
+  const { message, stack, componentStack, url } = req.body ?? {};
+  req.log.error({ message, stack, componentStack, url }, "[client-error] Frontend crash");
+  res.status(204).end();
+});
+
 export default app;

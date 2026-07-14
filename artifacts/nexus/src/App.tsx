@@ -71,12 +71,26 @@ class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNod
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
+  componentDidCatch(error: Error, info: { componentStack: string }) {
+    console.error("[ErrorBoundary] React crash:", error.message, "\n", error.stack, "\nComponent stack:", info.componentStack);
+    try {
+      const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+      fetch(`${API}/api/client-error`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message: error.message, stack: error.stack?.slice(0, 600), componentStack: info.componentStack?.slice(0, 400), url: location.href }),
+      }).catch(() => {});
+    } catch { /* ignore */ }
+  }
   render() {
     if (this.state.hasError) {
+      const msg = this.state.error?.message ?? "";
       return this.props.fallback ?? (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4 px-6">
           <div className="text-destructive text-4xl">⚠</div>
-          <p className="text-muted-foreground text-sm">Sahifada xato yuz berdi. Qayta yuklang.</p>
+          <p className="text-muted-foreground text-sm text-center">Sahifada xato yuz berdi. Qayta yuklang.</p>
+          {msg && <p className="text-[11px] text-red-400/70 text-center max-w-xs break-words font-mono">{msg}</p>}
           <button
             className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm"
             onClick={() => this.setState({ hasError: false, error: null })}

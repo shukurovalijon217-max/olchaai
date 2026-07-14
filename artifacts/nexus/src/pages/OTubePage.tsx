@@ -324,6 +324,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
         method:"POST", credentials:"include", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ content }),
       });
+      if (r.status === 401) throw new Error("Izoh yozish uchun tizimga kiring");
       if (!r.ok) throw new Error("Izoh qo'shishda xatolik");
       return r.json() as Promise<ApiComment>;
     },
@@ -331,6 +332,9 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
       qc.setQueryData<ApiComment[]>(["reel-comments", reelId], old =>
         old ? [newComment, ...old] : [newComment]
       );
+    },
+    onError: (err: Error) => {
+      toast({ title: "Xato", description: err.message, variant: "destructive" });
     },
   });
 
@@ -1906,12 +1910,16 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
         method:"POST", credentials:"include", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ content }),
       });
+      if (r.status === 401) throw new Error("Izoh yozish uchun tizimga kiring");
       if (!r.ok) throw new Error("Izoh qo'shishda xatolik");
       return r.json() as Promise<ApiComment>;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reel-comments", video.id] });
       setQuickTxt("");
+    },
+    onError: (err: Error) => {
+      toast({ title: "Xato", description: err.message, variant: "destructive" });
     },
   });
   const onMouseMove = useCallback((e:React.MouseEvent<HTMLDivElement>)=>{

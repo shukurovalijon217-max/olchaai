@@ -39,6 +39,7 @@ import {
 import { useListReels, useLikeReel, useFollowUser, getListReelsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "@/hooks/use-toast";
 import CreateContentModal from "@/components/CreateContentModal";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
@@ -240,14 +241,22 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: text.trim(), authorId: user.id }),
       });
-      if (res.ok) {
-        const c = await res.json();
-        setComments(prev => [c, ...prev]);
-        setCount(n => n + 1);
-        setText("");
-        setTimeout(() => listRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 80);
+      if (res.status === 401) {
+        toast({ title: "Xato", description: "Izoh yozish uchun tizimga kiring", variant: "destructive" });
+        return;
       }
-    } catch { /* ignore */ } finally { setSending(false); }
+      if (!res.ok) {
+        toast({ title: "Xato", description: "Izoh qo'shishda xatolik yuz berdi", variant: "destructive" });
+        return;
+      }
+      const c = await res.json();
+      setComments(prev => [c, ...prev]);
+      setCount(n => n + 1);
+      setText("");
+      setTimeout(() => listRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 80);
+    } catch {
+      toast({ title: "Xato", description: "Tarmoq xatosi, qayta urinib ko'ring", variant: "destructive" });
+    } finally { setSending(false); }
   };
 
   const rtf = (d: string) => {

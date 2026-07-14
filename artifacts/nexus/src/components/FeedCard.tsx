@@ -32,6 +32,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { usePip } from "@/context/PipContext";
+import { toast } from "@/hooks/use-toast";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "");
 
@@ -537,15 +538,23 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content, authorId: user.id }),
       });
-      if (res.ok) {
-        const newComment = await res.json();
-        setCommentsList(prev => [newComment, ...prev]);
-        setCommentsCount(c => c + 1);
+      if (res.status === 401) {
+        toast({ title: "Xato", description: "Izoh yozish uchun tizimga kiring", variant: "destructive" });
+        return;
       }
+      if (!res.ok) {
+        toast({ title: "Xato", description: "Izoh qo'shishda xatolik yuz berdi", variant: "destructive" });
+        return;
+      }
+      const newComment = await res.json();
+      setCommentsList(prev => [newComment, ...prev]);
+      setCommentsCount(c => c + 1);
       setCommentText("");
       setCommentSent(true);
       setTimeout(() => setCommentSent(false), 1800);
-    } catch { /* ignore */ } finally { setSendingComment(false); }
+    } catch {
+      toast({ title: "Xato", description: "Tarmoq xatosi, qayta urinib ko'ring", variant: "destructive" });
+    } finally { setSendingComment(false); }
   };
 
   const handleSendToUser = async (toUser: any) => {

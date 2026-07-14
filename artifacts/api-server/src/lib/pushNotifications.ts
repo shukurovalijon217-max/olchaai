@@ -1,6 +1,28 @@
 import { db, pushTokensTable, notificationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
+/* ── Firebase Admin — lazy init with modular API ── */
+let messagingInstance: import("firebase-admin/messaging").Messaging | null = null;
+
+async function getMessaging() {
+  if (messagingInstance) return messagingInstance;
+  try {
+    const raw = process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
+    if (!raw) return null;
+    const { initializeApp, getApps, cert } = await import("firebase-admin/app");
+    const { getMessaging: _getMsg } = await import("firebase-admin/messaging");
+    const serviceAccount = JSON.parse(raw);
+    const app = getApps().length === 0
+      ? initializeApp({ credential: cert(serviceAccount) })
+      : getApps()[0]!;
+    messagingInstance = _getMsg(app);
+    return messagingInstance;
+  } catch (e) {
+    console.error("[push] Firebase init failed:", e);
+    return null;
+  }
+}
+
 export interface PushPayload {
   userId: number;
   title: string;
@@ -13,11 +35,11 @@ export interface PushPayload {
   targetType?: string;
 }
 
-/** Save notification to DB and send Expo push notification */
+/** Save notification to DB and send push via Firebase FCM */
 export async function sendNotification(payload: PushPayload): Promise<void> {
   const { userId, title, body, data, type, actorName, actorAvatar, targetId, targetType } = payload;
 
-  // 1. Save to notifications table
+  // 1. Save to notifications table (always)
   try {
     await db.insert(notificationsTable).values({
       userId,
@@ -28,7 +50,7 @@ export async function sendNotification(payload: PushPayload): Promise<void> {
       targetId: targetId ?? null,
       targetType: targetType ?? null,
     });
-  } catch { /* ignore duplicate */ }
+  } catch { /* ignore */ }
 
   // 2. Get user's push tokens
   let tokens: { token: string }[] = [];
@@ -41,25 +63,39 @@ export async function sendNotification(payload: PushPayload): Promise<void> {
 
   if (tokens.length === 0) return;
 
-  // 3. Send via Expo Push API
-  const messages = tokens.map(({ token }) => ({
-    to: token,
-    title,
-    body,
-    data: data ?? {},
-    sound: "default",
-    badge: 1,
-  }));
+  // 3. Send via Firebase FCM
+  const messaging = await getMessaging();
+  if (!messaging) return;
 
+  const tokenList = tokens.map(t => t.token);
   try {
-    await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Accept-Encoding": "gzip, deflate",
+    const response = await messaging.sendEachForMulticast({
+      tokens: tokenList,
+      notification: { title, body },
+      data: { ...data, type: type ?? "general" },
+      android: {
+        priority: "high",
+        notification: { sound: "default", channelId: "olcha_default" },
       },
-      body: JSON.stringify(messages),
+      apns: {
+        payload: { aps: { sound: "default", badge: 1 } },
+      },
     });
-  } catch { /* non-critical — notification saved to DB */ }
+
+    // Remove invalid/expired tokens
+    const toRemove: string[] = [];
+    response.responses.forEach((resp: { success: boolean; error?: { code?: string } }, idx: number) => {
+      if (!resp.success) {
+        const code = resp.error?.code ?? "";
+        if (code.includes("invalid-registration-token") || code.includes("registration-token-not-registered")) {
+          toRemove.push(tokenList[idx]!);
+        }
+      }
+    });
+    for (const bad of toRemove) {
+      await db.delete(pushTokensTable).where(eq(pushTokensTable.token, bad)).catch(() => {});
+    }
+  } catch (e) {
+    console.error("[push] FCM send failed:", e);
+  }
 }

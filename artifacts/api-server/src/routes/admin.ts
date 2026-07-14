@@ -238,7 +238,7 @@ router.get("/admin/ai-usage", async (req, res) => {
       premiumUsers: premiumUsers?.count ?? 0,
       freeUsersAtLimit: freeAtLimit?.count ?? 0,
       totalAiCalls: totalAiCalls?.total ?? 0,
-      freeLimit: 5,
+      freeLimit: 100,
       topUsers,
     });
   } catch (err) {

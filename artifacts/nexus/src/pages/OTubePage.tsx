@@ -22,7 +22,7 @@ import {
   Play, Pause, Volume2, VolumeX, ArrowLeft, Search, X,
   Eye, Heart, Share2, Check, Film, Music2, Gamepad2,
   Zap, Sparkles, TrendingUp, Globe, Settings, Bell,
-  RotateCcw, ChevronRight, ChevronDown, RefreshCw,
+  RotateCcw, ChevronRight, ChevronDown, ChevronUp, RefreshCw,
   MessageCircle, Bookmark, Plus, DollarSign, Star,
   Users, Clock, ThumbsUp, ThumbsDown, Gauge, Upload,
   Maximize2, Minimize2, BadgeDollarSign, Radio, Tv,
@@ -1003,6 +1003,48 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
         <SeekFlash side="left"  visible={seekLeft}/>
         <SeekFlash side="right" visible={seekRight}/>
         <DanmakuOverlay active={danmaku} reelId={video.id}/>
+
+        {/* ── SWIPE HINT OVERLAY ── */}
+        <AnimatePresence>
+          {swipeHint && (
+            <motion.div
+              initial={{opacity:0,y:swipeHint==="up"?20:-20}}
+              animate={{opacity:1,y:0}}
+              exit={{opacity:0,y:swipeHint==="up"?-20:20}}
+              transition={{duration:0.2}}
+              style={{
+                position:"absolute",inset:0,display:"flex",
+                flexDirection:"column",alignItems:"center",justifyContent:"center",
+                pointerEvents:"none",zIndex:50,
+                background:"rgba(0,0,0,0.38)",backdropFilter:"blur(4px)",
+              }}>
+              <span style={{fontSize:36,lineHeight:1}}>{swipeHint==="up"?"⬆":"⬇"}</span>
+              <span style={{fontSize:14,fontWeight:700,color:"white",marginTop:8,letterSpacing:"0.04em"}}>
+                {swipeHint==="up"?"Keyingi video":"Oldingi video"}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── NEXT VIDEO INDICATOR (bottom edge) ── */}
+        {hasNext && (
+          <div style={{
+            position:"absolute",bottom:0,left:0,right:0,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            paddingBottom:10,pointerEvents:"none",zIndex:30,
+          }}>
+            <div style={{
+              display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+              opacity:0.45,
+            }}>
+              <motion.div
+                animate={{y:[0,-4,0]}} transition={{duration:1.4,repeat:Infinity,ease:"easeInOut"}}>
+                <ChevronUp style={{width:18,height:18,color:"white"}}/>
+              </motion.div>
+              <span style={{fontSize:9,fontWeight:600,color:"white",letterSpacing:"0.06em"}}>KEYINGI</span>
+            </div>
+          </div>
+        )}
 
         {/* ── RIGHT SIDE ACTION PANEL — auto-hide on idle ── */}
         <div style={{
@@ -6149,7 +6191,7 @@ export default function OTubePage() {
   const [signal, setSignal] = useState<SignalId>("all");
   const [query,setQuery]    = useState("");
   const [showSearch,setShowSearch] = useState(false);
-  const [selected,setSelected]     = useState<Reel|null>(null);
+  const [selectedIdx,setSelectedIdx] = useState<number|null>(null);
   const [showNotifPanel,setShowNotifPanel] = useState(false);
   const { openPip, setExpandHandler } = usePip();
   const [showSettings,setShowSettings] = useState(false);
@@ -6171,8 +6213,8 @@ export default function OTubePage() {
     if (isLoading || raw.length === 0) return;
     const vId = new URLSearchParams(window.location.search).get("v");
     if (!vId) return;
-    const match = raw.find(r => String(r.id) === vId);
-    if (match) { setSelected(match); window.history.replaceState(null,"","/otube"); }
+    const idx = raw.findIndex(r => String(r.id) === vId);
+    if (idx >= 0) { setSelectedIdx(idx); window.history.replaceState(null,"","/otube"); }
   },[isLoading, raw]);
 
   const reels = useMemo(()=>{
@@ -6180,6 +6222,13 @@ export default function OTubePage() {
     const q = query.toLowerCase();
     return raw.filter(r=>r.caption.toLowerCase().includes(q)||r.author.displayName.toLowerCase().includes(q));
   },[raw,query]);
+
+  /* derived: the currently playing video + helper to open by object */
+  const selected = selectedIdx !== null ? (reels[selectedIdx] ?? null) : null;
+  const openVideo = useCallback((v: Reel) => {
+    const idx = reels.findIndex(r => r.id === v.id);
+    setSelectedIdx(idx >= 0 ? idx : 0);
+  }, [reels]);
 
   const tx=useRef(0);const ty=useRef(0);
   const onTS=useCallback((e:React.TouchEvent)=>{tx.current=e.touches[0].clientX;ty.current=e.touches[0].clientY;},[]);
@@ -6414,13 +6463,13 @@ export default function OTubePage() {
               {/* ── PRIME SIGNAL — cinematic hero ── */}
               {featured && !query && (
                 <div className="-mx-3 mb-0">
-                  <HeroCard video={featured} onPlay={()=>setSelected(featured)}/>
+                  <HeroCard video={featured} onPlay={()=>featured&&openVideo(featured)}/>
                 </div>
               )}
 
               {/* ── COVERFLOW 3D — center card protrudes forward ── */}
               {!query && reels.length > 2 && (
-                <CoverflowRow videos={reels.slice(0, 10)} onPlay={v=>setSelected(v)}/>
+                <CoverflowRow videos={reels.slice(0, 10)} onPlay={v=>openVideo(v)}/>
               )}
 
               {/* Search results */}
@@ -6437,14 +6486,14 @@ export default function OTubePage() {
                     </span>
                   </div>
                   {/* Asymmetric search grid */}
-                  <BroadcastMatrix reels={reels} onPlay={v=>setSelected(v)}/>
+                  <BroadcastMatrix reels={reels} onPlay={v=>openVideo(v)}/>
                 </section>
               )}
 
               {!query && (
                 <>
                   {/* Continue Watching */}
-                  <ContinueRow items={continueWatching} onPlay={v=>setSelected(v)}/>
+                  <ContinueRow items={continueWatching} onPlay={v=>openVideo(v)}/>
 
                   {/* ── PULSE STREAM — trending, cinema horizontal ── */}
                   {trending.length>0 && (
@@ -6465,7 +6514,7 @@ export default function OTubePage() {
                       </div>
                       <div className="flex gap-3 overflow-x-auto -mx-3 px-3 pb-2"
                         style={{scrollbarWidth:"none"}}>
-                        {trending.map((v,i)=><TrendRow key={v.id} video={v} onPlay={()=>setSelected(v)} idx={i}/>)}
+                        {trending.map((v,i)=><TrendRow key={v.id} video={v} onPlay={()=>openVideo(v)} idx={i}/>)}
                       </div>
                     </section>
                   )}
@@ -6481,7 +6530,7 @@ export default function OTubePage() {
                         <div style={{flex:1,height:1,
                           background:`linear-gradient(90deg,${T.nova}55,transparent)`}}/>
                       </div>
-                      <BroadcastMatrix reels={grid} onPlay={v=>setSelected(v)}/>
+                      <BroadcastMatrix reels={grid} onPlay={v=>openVideo(v)}/>
                     </section>
                   )}
                 </>
@@ -6505,10 +6554,10 @@ export default function OTubePage() {
                 </span>
               </div>
               <div className="flex gap-2.5 overflow-x-auto pb-1" style={{scrollbarWidth:"none"}}>
-                {shorts.map(v=><ShortsCard key={v.id} video={v} onPlay={()=>setSelected(v)}/>)}
+                {shorts.map(v=><ShortsCard key={v.id} video={v} onPlay={()=>openVideo(v)}/>)}
               </div>
               <div className="h-4"/>
-              <BroadcastMatrix reels={raw} onPlay={v=>setSelected(v)}/>
+              <BroadcastMatrix reels={raw} onPlay={v=>openVideo(v)}/>
             </section>
           ) : (
             /* CHANNELS tab */
@@ -6531,7 +6580,7 @@ export default function OTubePage() {
               </div>
               {raw.slice(0,4).map(v=>(
                 <motion.div key={v.id}
-                  whileTap={{scale:0.97}} onClick={()=>setSelected(v)}
+                  whileTap={{scale:0.97}} onClick={()=>openVideo(v)}
                   className="flex gap-3 cursor-pointer mb-2.5"
                   style={{padding:"10px 12px",borderRadius:14,
                     background:"rgba(255,255,255,0.04)",
@@ -6576,12 +6625,16 @@ export default function OTubePage() {
         <AnimatePresence>
           {selected && (
             <NexusPlayer key={selected.id}
-              video={selected} onClose={()=>{ setSelected(null); setExpandHandler(null); }} settings={settings}
+              video={selected} onClose={()=>{ setSelectedIdx(null); setExpandHandler(null); }} settings={settings}
+              hasNext={selectedIdx !== null && selectedIdx < reels.length - 1}
+              hasPrev={selectedIdx !== null && selectedIdx > 0}
+              onNext={()=>setSelectedIdx(i => i !== null ? Math.min(reels.length-1, i+1) : null)}
+              onPrev={()=>setSelectedIdx(i => i !== null ? Math.max(0, i-1) : null)}
               onPip={(time)=>{
                 const vid = selected;
                 openPip(vid, time);
-                setExpandHandler(()=>()=>{ setSelected(vid); });
-                setSelected(null);
+                setExpandHandler(()=>()=>{ openVideo(vid); });
+                setSelectedIdx(null);
               }}/>
           )}
         </AnimatePresence>,

@@ -558,6 +558,8 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
   const swipeTY = useRef(0);
   const swipeTX = useRef(0);
   const swipeActive = useRef(false);
+  const [dragY, setDragY] = useState(0);
+  const isDragging = useRef(false);
 
   const [playing,   setPlaying]   = useState(false);
   const [muted,     setMuted]     = useState(settings.muteDefault);
@@ -1004,7 +1006,21 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           swipeTY.current=e.touches[0].clientY;
           swipeTX.current=e.touches[0].clientX;
           swipeActive.current=true;
+          isDragging.current=false;
           startHold(e);
+        }}
+        onTouchMove={(e)=>{
+          if(!swipeActive.current)return;
+          const dy=e.touches[0].clientY-swipeTY.current;
+          const dx=e.touches[0].clientX-swipeTX.current;
+          if(!isDragging.current){
+            if(Math.abs(dy)<Math.abs(dx))return;
+            isDragging.current=true;
+          }
+          e.stopPropagation();
+          /* rubber-band: slow down at edges */
+          const clamped=dy*(Math.abs(dy)>120?0.25:0.6);
+          setDragY(clamped);
         }}
         onTouchEnd={(e)=>{
           endHold();
@@ -1012,24 +1028,30 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           swipeActive.current=false;
           const dy=swipeTY.current-e.changedTouches[0].clientY;
           const dx=swipeTX.current-e.changedTouches[0].clientX;
-          if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>80){
+          if(isDragging.current&&Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>70){
             if(dy>0&&hasNext&&onNext){
-              setSwipeHint("up");
-              setTimeout(()=>setSwipeHint(null),400);
-              setTimeout(()=>onNext(),160);
+              setDragY(-window.innerHeight*0.3);
+              setTimeout(()=>{setDragY(0);onNext();},200);
             } else if(dy<0&&hasPrev&&onPrev){
-              setSwipeHint("down");
-              setTimeout(()=>setSwipeHint(null),400);
-              setTimeout(()=>onPrev(),160);
+              setDragY(window.innerHeight*0.3);
+              setTimeout(()=>{setDragY(0);onPrev();},200);
+            } else {
+              setDragY(0);
             }
+          } else {
+            setDragY(0);
           }
+          isDragging.current=false;
         }}
         onMouseDown={startHold} onMouseUp={endHold}>
         <video
           ref={videoRef}
           poster={video.thumbnailUrl??undefined}
           muted={muted} playsInline loop={settings.loop}
-          style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
+          style={{width:"100%",height:"100%",objectFit:"cover",display:"block",
+            transform:`translateY(${dragY}px)`,
+            transition:dragY===0?"transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)":"none",
+          }}
           onTimeUpdate={()=>{
             const v=videoRef.current;
             if(v&&isFinite(v.duration)&&v.duration>0){
@@ -1067,42 +1089,18 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           )}
         </AnimatePresence>
 
-        {/* ── PREV VIDEO INDICATOR (top edge, desktop clickable) ── */}
-        {hasPrev && (
-          <div
-            onClick={(e)=>{e.stopPropagation();if(onPrev){setSwipeHint("down");setTimeout(()=>setSwipeHint(null),400);setTimeout(()=>onPrev(),160);}}}
-            style={{
-              position:"absolute",top:56,left:0,right:0,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              paddingTop:4,zIndex:30,cursor:"pointer",
-            }}>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,opacity:0.45}}>
-              <span style={{fontSize:9,fontWeight:600,color:"white",letterSpacing:"0.06em"}}>OLDINGI</span>
-              <motion.div animate={{y:[0,4,0]}} transition={{duration:1.4,repeat:Infinity,ease:"easeInOut"}}>
-                <ChevronUp style={{width:18,height:18,color:"white",transform:"rotate(180deg)"}}/>
-              </motion.div>
-            </div>
-          </div>
-        )}
-
-        {/* ── NEXT VIDEO INDICATOR (bottom edge, desktop clickable) ── */}
+        {/* ── NEXT VIDEO INDICATOR (bottom edge, hint only) ── */}
         {hasNext && (
-          <div
-            onClick={(e)=>{e.stopPropagation();if(onNext){setSwipeHint("up");setTimeout(()=>setSwipeHint(null),400);setTimeout(()=>onNext(),160);}}}
-            style={{
-              position:"absolute",bottom:0,left:0,right:0,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              paddingBottom:10,zIndex:30,cursor:"pointer",
-            }}>
-            <div style={{
-              display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-              opacity:0.45,
-            }}>
-              <motion.div
-                animate={{y:[0,-4,0]}} transition={{duration:1.4,repeat:Infinity,ease:"easeInOut"}}>
-                <ChevronUp style={{width:18,height:18,color:"white"}}/>
+          <div style={{
+            position:"absolute",bottom:0,left:0,right:0,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            paddingBottom:10,pointerEvents:"none",zIndex:30,
+          }}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,opacity:0.4}}>
+              <motion.div animate={{y:[0,-5,0]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>
+                <ChevronUp style={{width:20,height:20,color:"white"}}/>
               </motion.div>
-              <span style={{fontSize:9,fontWeight:600,color:"white",letterSpacing:"0.06em"}}>KEYINGI</span>
+              <span style={{fontSize:9,fontWeight:600,color:"white",letterSpacing:"0.06em"}}>YUQORIGA SURING</span>
             </div>
           </div>
         )}

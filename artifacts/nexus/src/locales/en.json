@@ -889,7 +889,7 @@
     "payment_canceled": "Payment canceled"
   },
   "ai": {
-    "subtitle": "Powered by GPT-4o",
+    "subtitle": "Powered by Groq AI",
     "tab_chat": "Chat",
     "tab_voice": "Voice",
     "tab_image": "Image",

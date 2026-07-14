@@ -456,7 +456,7 @@ export default function AIChatPage() {
           <div className="flex-1 flex flex-col items-center justify-start gap-6 py-8 max-w-lg mx-auto w-full">
             <div className="text-center">
               <h2 className="text-xl font-bold text-foreground mb-1">{t("ai.voice_title")}</h2>
-              <p className="text-sm text-muted-foreground">Whisper STT + GPT-4o + TTS</p>
+              <p className="text-sm text-muted-foreground">Whisper STT + Groq AI + TTS</p>
             </div>
 
             {/* Mic button */}
@@ -543,7 +543,7 @@ export default function AIChatPage() {
               <div className="w-full grid grid-cols-2 gap-2 mt-2">
                 {[
                   t("ai.tab_chat"),
-                  "GPT-4o + Whisper",
+                  "Groq AI + Whisper",
                   "OlchaAI",
                   "DALL-E 3",
                 ].map(tip => (
@@ -648,8 +648,8 @@ export default function AIChatPage() {
 
       <AIPaywall
         show={showPaywall}
-        used={aiUsage?.used ?? 5}
-        limit={aiUsage?.limit ?? 5}
+        used={aiUsage?.used ?? 0}
+        limit={aiUsage?.limit ?? 100}
         onClose={() => setShowPaywall(false)}
         featureName="OlchaAI"
       />

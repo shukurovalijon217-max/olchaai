@@ -891,7 +891,7 @@
     "payment_canceled": "To'lov bekor qilindi"
   },
   "ai": {
-    "subtitle": "GPT-4o bilan ishlaydi",
+    "subtitle": "Groq AI bilan ishlaydi",
     "tab_chat": "Suhbat",
     "tab_voice": "Ovoz",
     "tab_image": "Rasm",

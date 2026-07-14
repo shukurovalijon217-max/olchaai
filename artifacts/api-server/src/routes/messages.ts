@@ -5,6 +5,7 @@ import { eq, desc, and, inArray, or, isNull, lte } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter.js";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { getUserStatsMap } from "../lib/userStats";
+import { sendNotification } from "../lib/pushNotifications";
 
 const GO_SERVICE = process.env.GO_SERVICE_URL ?? "http://localhost:8099";
 
@@ -219,6 +220,10 @@ router.post("/conversations/:id/messages", async (req: any, res) => {
         : [];
       const focusShieldById = new Map(recipients.map(r => [r.id, r.focusShield]));
 
+      // Get sender info for push notification body
+      const [sender] = await db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, senderId)).limit(1);
+      const senderName = sender?.displayName ?? "Kimdir";
+
       for (const p of parts) {
         if (p.userId !== senderId) {
           if (isFocusShieldMuted(focusShieldById.get(p.userId), senderId)) {
@@ -226,6 +231,18 @@ router.post("/conversations/:id/messages", async (req: any, res) => {
             continue;
           }
           await notifyGo(p.userId, "dm_message", { conversationId, message: msg });
+          // Push notification (fire-and-forget)
+          sendNotification({
+            userId: p.userId,
+            title: `💬 ${senderName}`,
+            body: content ? content.slice(0, 100) : (mediaUrl ? "📎 Fayl yubordi" : "Yangi xabar"),
+            type: "message",
+            actorName: senderName,
+            actorAvatar: sender?.avatarUrl ?? undefined,
+            targetId: conversationId,
+            targetType: "conversation",
+            data: { conversationId: String(conversationId), type: "message" },
+          }).catch(() => {});
         }
       }
     }

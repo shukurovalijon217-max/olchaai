@@ -13,7 +13,8 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +27,12 @@ const queryClient = new QueryClient({
     queries: { retry: 1, staleTime: 15_000 },
   },
 });
+
+function PushRegistrar() {
+  const { token } = useAuth();
+  usePushNotifications(token);
+  return null;
+}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -44,6 +51,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <PushRegistrar />
           <SafeAreaProvider>
             <StatusBar style="light" />
             <Stack screenOptions={{ headerShown: false, animation: "default" }}>

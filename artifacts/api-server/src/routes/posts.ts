@@ -9,6 +9,7 @@ import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { notifyComment, notifyLike } from "../lib/emailNotify";
+import { sendNotification } from "../lib/pushNotifications";
 
 const router = Router();
 
@@ -505,19 +506,32 @@ router.post("/posts/:id/like", async (req, res) => {
     const [post] = await db.select({ likesCount: postsTable.likesCount, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
     res.json({ liked: !isLiked, likesCount: post?.likesCount ?? 0 });
 
-    // Email: like bo'lganda post egasiga xabar (o'ziga xabar ketmasin)
+    // Push + Email: like bo'lganda post egasiga xabar (o'ziga xabar ketmasin)
     if (!isLiked && post?.authorId && post.authorId !== userId) {
       void (async () => {
         try {
           const [postAuthor, liker] = await Promise.all([
             db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, post.authorId!)).limit(1),
-            db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
+            db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
           ]);
+          const likerName = liker[0]?.displayName ?? "Kimdir";
+          // Push notification
+          await sendNotification({
+            userId: post.authorId!,
+            title: "❤️ Yangi like",
+            body: `${likerName} postingizni yoqtirdi`,
+            type: "like",
+            actorName: likerName,
+            actorAvatar: liker[0]?.avatarUrl ?? undefined,
+            targetId: postId,
+            targetType: "post",
+            data: { postId: String(postId), type: "like" },
+          });
           if (postAuthor[0]?.email) {
             await notifyLike({
               toEmail: postAuthor[0].email,
               toName: postAuthor[0].displayName ?? "Foydalanuvchi",
-              likerName: liker[0]?.displayName ?? "Kimdir",
+              likerName,
               postPreview: post.content ?? "",
             });
           }
@@ -622,17 +636,30 @@ router.post("/posts/:id/comments", async (req, res) => {
       },
     });
 
-    /* Email bildirishnoma — post egasiga */
+    /* Push + Email bildirishnoma — post egasiga */
     void (async () => {
       try {
         const [postRow] = await db.select({ authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
         if (postRow?.authorId && postRow.authorId !== authorId) {
+          const commenterName = author?.displayName ?? "Kimdir";
+          // Push notification
+          await sendNotification({
+            userId: postRow.authorId,
+            title: "💬 Yangi izoh",
+            body: `${commenterName}: ${(content ?? "").slice(0, 80)}`,
+            type: "comment",
+            actorName: commenterName,
+            actorAvatar: author?.avatarUrl ?? undefined,
+            targetId: postId,
+            targetType: "post",
+            data: { postId: String(postId), type: "comment" },
+          });
           const [postAuthor] = await db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, postRow.authorId)).limit(1);
           if (postAuthor?.email) {
             await notifyComment({
               toEmail: postAuthor.email,
               toName: postAuthor.displayName ?? "Foydalanuvchi",
-              commenterName: author?.displayName ?? "Kimdir",
+              commenterName,
               postPreview: postRow.content ?? "",
               commentText: content ?? "",
             });

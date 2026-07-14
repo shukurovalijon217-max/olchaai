@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { notificationsTable } from "@workspace/db";
+import { notificationsTable, pushTokensTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { cacheAside, cacheDelPattern } from "../lib/cache";
 
@@ -41,6 +41,41 @@ router.delete("/notifications/clear", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── Push token registration ── */
+router.post("/push-token", async (req, res) => {
+  try {
+    const userId = (req.session as any)?.userId;
+    if (!userId) { res.status(401).json({ error: "Login talab qilinadi" }); return; }
+    const { token, platform = "expo" } = req.body ?? {};
+    if (!token || typeof token !== "string") { res.status(400).json({ error: "token required" }); return; }
+    await db
+      .insert(pushTokensTable)
+      .values({ userId, token, platform })
+      .onConflictDoUpdate({ target: [pushTokensTable.userId, pushTokensTable.token], set: { updatedAt: new Date(), platform } });
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
+router.delete("/push-token", async (req, res) => {
+  try {
+    const userId = (req.session as any)?.userId;
+    if (!userId) { res.status(401).json({ error: "Login talab qilinadi" }); return; }
+    const { token } = req.body ?? {};
+    if (token) {
+      await db.delete(pushTokensTable).where(eq(pushTokensTable.token, token));
+    } else {
+      await db.delete(pushTokensTable).where(eq(pushTokensTable.userId, userId));
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
   }
 });
 

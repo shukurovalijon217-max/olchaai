@@ -722,6 +722,47 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
     return () => document.removeEventListener("fullscreenchange", h);
   }, []);
 
+  /* ── Keyboard + Mouse Wheel navigation (desktop) ── */
+  useEffect(() => {
+    const wheelCooldown = { active: false };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        e.preventDefault();
+        if (e.key === "ArrowUp" && hasNext && onNext) {
+          setSwipeHint("up");
+          setTimeout(() => setSwipeHint(null), 400);
+          setTimeout(() => onNext(), 160);
+        } else if (e.key === "ArrowDown" && hasPrev && onPrev) {
+          setSwipeHint("down");
+          setTimeout(() => setSwipeHint(null), 400);
+          setTimeout(() => onPrev(), 160);
+        }
+      }
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (wheelCooldown.active) return;
+      if (Math.abs(e.deltaY) < 40) return;
+      wheelCooldown.active = true;
+      setTimeout(() => { wheelCooldown.active = false; }, 800);
+      if (e.deltaY > 0 && hasNext && onNext) {
+        setSwipeHint("up");
+        setTimeout(() => setSwipeHint(null), 400);
+        setTimeout(() => onNext(), 160);
+      } else if (e.deltaY < 0 && hasPrev && onPrev) {
+        setSwipeHint("down");
+        setTimeout(() => setSwipeHint(null), 400);
+        setTimeout(() => onPrev(), 160);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("wheel", onWheel, { passive: true });
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [hasNext, hasPrev, onNext, onPrev]);
+
   /* Tell the global chrome (Muni assistant orb, dock edge tabs, avatar bubble)
      to hide while this full-screen player is mounted, so they stop swallowing
      taps meant for the player's own top-bar / action-panel buttons. */
@@ -1026,13 +1067,33 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           )}
         </AnimatePresence>
 
-        {/* ── NEXT VIDEO INDICATOR (bottom edge) ── */}
+        {/* ── PREV VIDEO INDICATOR (top edge, desktop clickable) ── */}
+        {hasPrev && (
+          <div
+            onClick={(e)=>{e.stopPropagation();if(onPrev){setSwipeHint("down");setTimeout(()=>setSwipeHint(null),400);setTimeout(()=>onPrev(),160);}}}
+            style={{
+              position:"absolute",top:56,left:0,right:0,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              paddingTop:4,zIndex:30,cursor:"pointer",
+            }}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,opacity:0.45}}>
+              <span style={{fontSize:9,fontWeight:600,color:"white",letterSpacing:"0.06em"}}>OLDINGI</span>
+              <motion.div animate={{y:[0,4,0]}} transition={{duration:1.4,repeat:Infinity,ease:"easeInOut"}}>
+                <ChevronUp style={{width:18,height:18,color:"white",transform:"rotate(180deg)"}}/>
+              </motion.div>
+            </div>
+          </div>
+        )}
+
+        {/* ── NEXT VIDEO INDICATOR (bottom edge, desktop clickable) ── */}
         {hasNext && (
-          <div style={{
-            position:"absolute",bottom:0,left:0,right:0,
-            display:"flex",alignItems:"center",justifyContent:"center",
-            paddingBottom:10,pointerEvents:"none",zIndex:30,
-          }}>
+          <div
+            onClick={(e)=>{e.stopPropagation();if(onNext){setSwipeHint("up");setTimeout(()=>setSwipeHint(null),400);setTimeout(()=>onNext(),160);}}}
+            style={{
+              position:"absolute",bottom:0,left:0,right:0,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              paddingBottom:10,zIndex:30,cursor:"pointer",
+            }}>
             <div style={{
               display:"flex",flexDirection:"column",alignItems:"center",gap:2,
               opacity:0.45,

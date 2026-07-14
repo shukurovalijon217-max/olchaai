@@ -13,6 +13,10 @@ import {
   getCloudinaryUrl,
   pingCloudinary,
 } from "../lib/cloudinaryStorage";
+import {
+  isR2Enabled,
+  r2GetPresignedUploadUrl,
+} from "../lib/r2Storage";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -34,6 +38,21 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
   try {
     const { name, size, contentType } = parsed.data;
 
+    // Priority 1: Cloudflare R2 (production CDN)
+    // objectPath is the public CDN URL so the frontend can store it as mediaUrl directly.
+    if (isR2Enabled()) {
+      const { uploadURL, objectPath } = await r2GetPresignedUploadUrl(contentType);
+      res.json(
+        RequestUploadUrlResponse.parse({
+          uploadURL,
+          objectPath,
+          metadata: { name, size, contentType },
+        }),
+      );
+      return;
+    }
+
+    // Priority 2: Cloudinary proxy upload
     if (isCloudinaryEnabled()) {
       const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
       const host = req.headers.host || "";
@@ -49,11 +68,12 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       return;
     }
 
+    // Priority 3: Replit Object Storage (dev fallback)
     const isReplit = !!(process.env["REPLIT_CLUSTER"] || process.env["REPLIT_DEPLOYMENT"] || process.env["REPLIT_DB_URL"] || process.env["DEFAULT_OBJECT_STORAGE_BUCKET_ID"]);
     if (!isReplit) {
-      req.log.warn("Upload attempted without Cloudinary configured on Render");
+      req.log.warn("Upload attempted without R2/Cloudinary configured");
       res.status(503).json({
-        error: "Fayl yuklash sozlanmagan. Render Environment da CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET o'rnating.",
+        error: "Fayl yuklash sozlanmagan. R2_ACCESS_KEY_ID yoki CLOUDINARY_CLOUD_NAME env varlarini o'rnating.",
       });
       return;
     }

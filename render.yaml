@@ -32,6 +32,7 @@ services:
     numInstances: 2          # 2 instance — load balancing Render tomonidan avtomatik
     rootDir: .
     buildCommand: >-
+      corepack enable &&
       pnpm install --frozen-lockfile &&
       pnpm run typecheck:libs &&
       psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS upload_sessions (uuid TEXT PRIMARY KEY, cloudinary_url TEXT, created_at TIMESTAMPTZ DEFAULT NOW())" &&
@@ -101,6 +102,7 @@ services:
     region: oregon
     rootDir: .
     buildCommand: >-
+      corepack enable &&
       pnpm install --frozen-lockfile &&
       pnpm run typecheck:libs &&
       pnpm --filter @workspace/ai-core run build
@@ -150,6 +152,7 @@ services:
     region: oregon
     rootDir: .
     buildCommand: >-
+      corepack enable &&
       pnpm install --frozen-lockfile &&
       pnpm run typecheck:libs &&
       BASE_PATH=/ pnpm --filter @workspace/nexus run build

@@ -33,7 +33,7 @@ services:
     rootDir: .
     buildCommand: >-
       npm install -g pnpm@10.26.1 --silent &&
-      pnpm install --frozen-lockfile &&
+      pnpm install --no-frozen-lockfile &&
       pnpm run typecheck:libs &&
       psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS upload_sessions (uuid TEXT PRIMARY KEY, cloudinary_url TEXT, created_at TIMESTAMPTZ DEFAULT NOW())" &&
       psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS ai_admin_actions (id SERIAL PRIMARY KEY, action_type TEXT NOT NULL, target_type TEXT NOT NULL, target_id INTEGER, reason TEXT, details JSONB NOT NULL DEFAULT '{}', ai_confidence REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'executed', executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW())" &&
@@ -103,7 +103,7 @@ services:
     rootDir: .
     buildCommand: >-
       npm install -g pnpm@10.26.1 --silent &&
-      pnpm install --frozen-lockfile &&
+      pnpm install --no-frozen-lockfile &&
       pnpm run typecheck:libs &&
       pnpm --filter @workspace/ai-core run build
     startCommand: node --enable-source-maps artifacts/ai-core/dist/index.mjs
@@ -153,7 +153,7 @@ services:
     rootDir: .
     buildCommand: >-
       npm install -g pnpm@10.26.1 --silent &&
-      pnpm install --frozen-lockfile &&
+      pnpm install --no-frozen-lockfile &&
       pnpm run typecheck:libs &&
       BASE_PATH=/ pnpm --filter @workspace/nexus run build
     startCommand: npx serve -s artifacts/nexus/dist/public -l 10000

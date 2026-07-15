@@ -559,6 +559,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
   const swipeTX = useRef(0);
   const swipeActive = useRef(false);
   const [dragY, setDragY] = useState(0);
+  const [isSnapping, setIsSnapping] = useState(false);
   const isDragging = useRef(false);
 
   const [playing,   setPlaying]   = useState(false);
@@ -1028,17 +1029,40 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           swipeActive.current=false;
           const dy=swipeTY.current-e.changedTouches[0].clientY;
           const dx=swipeTX.current-e.changedTouches[0].clientX;
-          if(isDragging.current&&Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>70){
+          if(isDragging.current&&Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>55){
+            const vh=window.innerHeight;
             if(dy>0&&hasNext&&onNext){
-              setDragY(-window.innerHeight*0.3);
-              setTimeout(()=>{setDragY(0);onNext();},200);
+              /* yuqoriga suring: joriy video tepaga chiqadi, keyingi pastdan kiradi */
+              setIsSnapping(true);
+              setDragY(-vh*1.05);
+              setTimeout(()=>{
+                setIsSnapping(false);
+                setDragY(vh*0.35);
+                onNext();
+                requestAnimationFrame(()=>requestAnimationFrame(()=>{
+                  setIsSnapping(true);
+                  setDragY(0);
+                }));
+              },230);
             } else if(dy<0&&hasPrev&&onPrev){
-              setDragY(window.innerHeight*0.3);
-              setTimeout(()=>{setDragY(0);onPrev();},200);
+              /* pastga suring: joriy video pastga chiqadi, oldingi tepadan kiradi */
+              setIsSnapping(true);
+              setDragY(vh*1.05);
+              setTimeout(()=>{
+                setIsSnapping(false);
+                setDragY(-vh*0.35);
+                onPrev();
+                requestAnimationFrame(()=>requestAnimationFrame(()=>{
+                  setIsSnapping(true);
+                  setDragY(0);
+                }));
+              },230);
             } else {
+              setIsSnapping(true);
               setDragY(0);
             }
           } else {
+            setIsSnapping(true);
             setDragY(0);
           }
           isDragging.current=false;
@@ -1050,7 +1074,8 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           muted={muted} playsInline loop={settings.loop}
           style={{width:"100%",height:"100%",objectFit:"cover",display:"block",
             transform:`translateY(${dragY}px)`,
-            transition:dragY===0?"transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)":"none",
+            transition:isSnapping?"transform 0.24s cubic-bezier(0.4,0,0.2,1)":"none",
+            willChange:"transform",
           }}
           onTimeUpdate={()=>{
             const v=videoRef.current;

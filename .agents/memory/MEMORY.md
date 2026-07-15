@@ -34,3 +34,4 @@
 - [Raw i18n key leaks & translation fallback](raw-i18n-key-leak-and-translation-fallback.md) — array `label` fields holding i18n keys need t() at every render site; ensureTranslation() must not cache a failed batch as if it succeeded.
 - [Stories UX: clarify location before building](stories-location-ambiguity.md) — "stories" can mean a dedicated stories screen OR a live-bubble on feed-post avatars; these are different features, confirm which before building.
 - [Privacy Policy page pattern](privacy-policy-page.md) — /privacy route (PrivacyPolicyPage.tsx) linked from login footer + Settings privacy tab; real GDPR/O'zbek-law-referencing content, not a stub.
+- [Render deploy pnpm lockfile fix](render-pnpm-lockfile.md) — Render default pnpm v8 can't read lockfileVersion 9.0; fix: run `pnpm install --no-frozen-lockfile` locally, push updated pnpm-lock.yaml + render.yaml with `npx --yes pnpm@10.26.1 install --no-frozen-lockfile`.

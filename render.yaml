@@ -150,3 +150,5 @@ services:
         value: https://olchaai-api.onrender.com
       - key: VITE_AI_CORE_URL
         value: https://olchaai-ai-core.onrender.com/ai-core
+      - key: VITE_WS_URL
+        value: wss://olchaai-go.onrender.com/go/ws

@@ -12,6 +12,8 @@ interface RealtimeContextValue {
 const RealtimeContext = createContext<RealtimeContextValue | null>(null);
 
 function buildWsUrl(userId: number) {
+  const base = import.meta.env.VITE_WS_URL;
+  if (base) return `${base}?userId=${userId}`;
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
   return `${proto}://${window.location.host}/go/ws?userId=${userId}`;
 }

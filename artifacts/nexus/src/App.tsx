@@ -1,5 +1,20 @@
 import { useEffect, Component, type ReactNode, lazy, Suspense } from "react";
 import "@/lib/i18n";
+
+// Keep-alive: prevents Render free/starter instances from spinning down
+const WS_BASE = import.meta.env.VITE_WS_URL?.replace(/^wss?:/, "https:").replace("/go/ws", "") ?? "";
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+function useKeepAlive() {
+  useEffect(() => {
+    const ping = () => {
+      if (WS_BASE) fetch(`${WS_BASE}/go/health`, { mode: "no-cors" }).catch(() => {});
+      if (API_BASE) fetch(`${API_BASE}/api/healthz`, { mode: "no-cors" }).catch(() => {});
+    };
+    ping();
+    const id = setInterval(ping, 4 * 60 * 1000); // every 4 min
+    return () => clearInterval(id);
+  }, []);
+}
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -279,6 +294,7 @@ function Router() {
 }
 
 export default function App() {
+  useKeepAlive();
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

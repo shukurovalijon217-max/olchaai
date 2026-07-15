@@ -2265,10 +2265,12 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const [creating, setCreating] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   const handleJoin = async () => {
     if (creating) return;
     setCreating(true);
+    setErr(null);
     try {
       const r = await fetch(`${API_BASE}/api/coview/rooms`, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
@@ -2277,23 +2279,40 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
       if (r.ok) {
         const room = await r.json();
         navigate(`/coview/${room.inviteCode}`);
+      } else if (r.status === 401) {
+        setErr("Kirish talab qilinadi");
+        setTimeout(() => setErr(null), 3000);
+      } else {
+        setErr("Xatolik yuz berdi");
+        setTimeout(() => setErr(null), 3000);
       }
-    } catch { /* silent */ }
+    } catch {
+      setErr("Tarmoq xatosi");
+      setTimeout(() => setErr(null), 3000);
+    }
     finally { setCreating(false); }
   };
 
   return (
-    <motion.button whileTap={{scale:0.88}}
-      onClick={handleJoin} disabled={creating}
-      className="flex items-center gap-1.5 px-3 py-1.5 flex-1"
-      style={{borderRadius:99,
-        background:"rgba(255,255,255,0.06)",
-        boxShadow:"0 0 0 1px rgba(255,255,255,0.08)"}}>
-      <Users style={{width:11,height:11,color:"rgba(255,255,255,0.45)"}}/>
-      <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)"}}>
-        {creating?"…":t("otube.watch_join")}
-      </span>
-    </motion.button>
+    <div className="flex flex-col flex-1 gap-1">
+      {err && (
+        <div style={{fontSize:9,color:"#f87171",textAlign:"center",padding:"2px 6px",
+          background:"rgba(239,68,68,0.12)",borderRadius:6}}>
+          {err}
+        </div>
+      )}
+      <motion.button whileTap={{scale:0.88}}
+        onClick={handleJoin} disabled={creating}
+        className="flex items-center gap-1.5 px-3 py-1.5 w-full"
+        style={{borderRadius:99,
+          background: err ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.06)",
+          boxShadow:`0 0 0 1px ${err ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.08)"}`}}>
+        <Users style={{width:11,height:11,color:"rgba(255,255,255,0.45)"}}/>
+        <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)"}}>
+          {creating?"…":t("otube.watch_join")}
+        </span>
+      </motion.button>
+    </div>
   );
 }
 

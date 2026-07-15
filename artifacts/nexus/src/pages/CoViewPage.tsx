@@ -10,7 +10,8 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 const API = (import.meta.env.VITE_API_BASE_URL ?? "");
-const WS_URL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/go/ws`;
+const WS_URL = import.meta.env.VITE_WS_URL
+  ?? `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/go/ws`;
 
 const T = {
   bg: "#0d0d14",

@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { Readable } from "stream";
+import { createHmac, timingSafeEqual } from "crypto";
 import {
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
@@ -18,6 +19,46 @@ import {
   r2GetPresignedUploadUrl,
   r2UploadStream,
 } from "../lib/r2Storage";
+
+/* ── Short-lived upload token ────────────────────────────────────────
+   Avoids cross-origin session-cookie issues: the POST /request-url
+   endpoint generates a signed token, embeds it in the uploadURL as
+   ?ut=<token>, and the PUT /r2-proxy endpoint verifies it instead of
+   checking req.session.  Token is HMAC-SHA256 over a timestamp, valid
+   for 15 minutes.
+   ─────────────────────────────────────────────────────────────────── */
+function uploadTokenSecret(): string {
+  return process.env["SESSION_SECRET"] || "olcha-upload-secret-2024";
+}
+
+function generateUploadToken(): string {
+  const ts = Math.floor(Date.now() / 1000);
+  const mac = createHmac("sha256", uploadTokenSecret())
+    .update(`r2upload:${ts}`)
+    .digest("hex")
+    .slice(0, 24);
+  return `${ts}.${mac}`;
+}
+
+function verifyUploadToken(token: string | undefined): boolean {
+  if (!token) return false;
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+  const [tsStr, mac] = parts;
+  const ts = parseInt(tsStr, 10);
+  if (isNaN(ts)) return false;
+  const now = Math.floor(Date.now() / 1000);
+  if (now - ts > 900) return false; // 15-minute expiry
+  const expected = createHmac("sha256", uploadTokenSecret())
+    .update(`r2upload:${ts}`)
+    .digest("hex")
+    .slice(0, 24);
+  try {
+    return timingSafeEqual(Buffer.from(mac), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -41,13 +82,16 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
 
     // Priority 1: Cloudflare R2 (production CDN)
     // Server-side proxy: browser → our API → R2 (avoids R2 CORS restriction on direct PUT).
+    // A short-lived HMAC token is embedded in the URL so the PUT endpoint can verify
+    // the request came through this flow — no cross-origin session cookie needed.
     if (isR2Enabled()) {
       const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
       const host = req.headers.host || "";
       const baseUrl = `${proto}://${host}`;
+      const token = generateUploadToken();
       res.json(
         RequestUploadUrlResponse.parse({
-          uploadURL: `${baseUrl}/api/storage/uploads/r2-proxy`,
+          uploadURL: `${baseUrl}/api/storage/uploads/r2-proxy?ut=${token}`,
           objectPath: "r2-proxy",
           metadata: { name, size, contentType },
         }),
@@ -124,10 +168,13 @@ router.get("/storage/cloudinary-check", async (req: Request, res: Response) => {
  * R2 server-side proxy upload.
  * Client PUTs raw file body here; server streams it directly to R2.
  * This avoids browser CORS restrictions on direct R2 presigned PUTs.
+ * Authenticated via short-lived HMAC token in ?ut= query param (no
+ * cross-origin session cookie required).
  */
 router.put("/storage/uploads/r2-proxy", async (req: Request, res: Response) => {
-  if (!req.session?.userId) {
-    res.status(401).json({ error: "Unauthorized" });
+  const token = req.query["ut"] as string | undefined;
+  if (!verifyUploadToken(token)) {
+    res.status(401).json({ error: "Invalid or expired upload token" });
     return;
   }
   if (!isR2Enabled()) {

@@ -12,6 +12,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "wouter";
 
 /* ────────────────────────────────────────────────────────────
    Reusable horizontal scroll strip — touch/swipe only
@@ -84,6 +85,7 @@ function SectionHead({
 export default function ExplorePage() {
   const { t } = useTranslation();
   const { user: me } = useAuth();
+  const [, setLocation] = useLocation();
   const qc = useQueryClient();
   const [query, setQuery] = useState("");
   const [followedIds, setFollowedIds] = useState<Set<number>>(new Set());
@@ -245,8 +247,9 @@ export default function ExplorePage() {
                   transition={{ delay: i * 0.05 }}
                   style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}
                 >
-                  {/* Avatar with gradient ring */}
-                  <div style={{ position: "relative" }}>
+                  {/* Avatar — tap to profile */}
+                  <div style={{ position: "relative", cursor: "pointer" }}
+                    onClick={() => setLocation(`/profile/${u.username}`)}>
                     <div style={{
                       width: 62, height: 62, borderRadius: "50%", padding: 2,
                       background: isFollowed
@@ -279,9 +282,10 @@ export default function ExplorePage() {
                     )}
                   </div>
 
-                  {/* Name */}
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "var(--foreground)", textAlign: "center",
-                    width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {/* Name — tap to profile */}
+                  <p onClick={() => setLocation(`/profile/${u.username}`)}
+                    style={{ fontSize: 11, fontWeight: 700, color: "var(--foreground)", textAlign: "center",
+                      width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", cursor: "pointer" }}>
                     {u.displayName ?? u.username}
                   </p>
                   <p style={{ fontSize: 10, color: "var(--muted-foreground)", marginTop: -4, textAlign: "center",
@@ -294,7 +298,7 @@ export default function ExplorePage() {
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       disabled={followMut.isPending}
-                      onClick={() => followMut.mutate({ id: u.id })}
+                      onClick={(e) => { e.stopPropagation(); followMut.mutate({ id: u.id }); }}
                       style={{
                         width: "100%", padding: "5px 0", borderRadius: 20, fontSize: 10, fontWeight: 700,
                         border: isFollowed ? "1.5px solid rgba(139,92,246,0.4)" : "none",
@@ -393,13 +397,12 @@ export default function ExplorePage() {
         </section>
       )}
 
-      {/* ── Instagram-style Rekomendatsiyalar ── */}
+      {/* ── Tavsiya etiladi ── */}
       {suggestedUsers.length > 0 && !query && (
         <section>
           <SectionHead
             icon={<Flame style={{ width: 14, height: 14, color: "#f97316" }} />}
             title="Tavsiya etiladi"
-            sub="Instagram uslubida"
           />
           <HScroll gap={10}>
             {suggestedUsers.slice(0, 10).map((u, i) => {
@@ -415,17 +418,19 @@ export default function ExplorePage() {
                     flexShrink: 0, width: 150,
                     border: "1.5px solid var(--border)", background: "var(--card)",
                     cursor: "pointer", borderRadius: 20,
-                    /* NO overflow:hidden — lets avatar peek out of cover */
                   }}
                 >
-                  {/* Cover — only top corners rounded */}
-                  <div style={{
-                    height: 72,
-                    background: `linear-gradient(135deg,hsl(${(i * 47 + 200) % 360},60%,25%),hsl(${(i * 47 + 260) % 360},70%,15%))`,
-                    borderRadius: "18px 18px 0 0",
-                    position: "relative",
-                  }}>
-                    {/* Avatar — centred on cover bottom edge */}
+                  {/* Cover — tap to profile */}
+                  <div
+                    onClick={() => setLocation(`/profile/${u.username}`)}
+                    style={{
+                      height: 72,
+                      background: `linear-gradient(135deg,hsl(${(i * 47 + 200) % 360},60%,25%),hsl(${(i * 47 + 260) % 360},70%,15%))`,
+                      borderRadius: "18px 18px 0 0",
+                      position: "relative",
+                    }}
+                  >
+                    {/* Avatar */}
                     <div style={{
                       position: "absolute", bottom: -22, left: "50%", transform: "translateX(-50%)",
                       width: 46, height: 46, borderRadius: "50%",
@@ -446,7 +451,11 @@ export default function ExplorePage() {
                   </div>
 
                   <div style={{ padding: "28px 10px 12px", textAlign: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginBottom: 2 }}>
+                    {/* Name — tap to profile */}
+                    <div
+                      onClick={() => setLocation(`/profile/${u.username}`)}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginBottom: 2, cursor: "pointer" }}
+                    >
                       <p style={{ fontSize: 12, fontWeight: 800, color: "var(--foreground)",
                         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>
                         {u.displayName ?? u.username}
@@ -460,7 +469,7 @@ export default function ExplorePage() {
                       <motion.button
                         whileTap={{ scale: 0.92 }}
                         disabled={followMut.isPending}
-                        onClick={() => followMut.mutate({ id: u.id })}
+                        onClick={(e) => { e.stopPropagation(); followMut.mutate({ id: u.id }); }}
                         style={{
                           width: "100%", padding: "6px 0", borderRadius: 20, fontSize: 11, fontWeight: 700,
                           border: isFollowed ? "1.5px solid rgba(139,92,246,0.4)" : "none",

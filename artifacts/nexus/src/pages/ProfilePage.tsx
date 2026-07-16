@@ -822,6 +822,82 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   }
   if (!user) return <div className="text-center py-20 text-muted-foreground">User not found</div>;
 
+  /* ── Qulfli profil (private account, viewer is not following) ── */
+  const isLocked = (user as any).isPrivate === true && !user.isFollowing && !isOwner;
+  if (isLocked) {
+    return (
+      <div className="max-w-2xl mx-auto pb-10">
+        {/* Cover */}
+        <div className="h-44 overflow-hidden relative rounded-b-3xl">
+          {user.coverUrl ? (
+            isVideoUrl(user.coverUrl) ? (
+              <video src={resolveApiUrl(user.coverUrl)} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <img src={resolveApiUrl(user.coverUrl)} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            )
+          ) : (
+            <div className="absolute inset-0 bg-[#07050f]">
+              <motion.div animate={{ x: [0,45,-10,0], y: [0,-25,10,0] }} transition={{ duration:14, repeat:Infinity, ease:"easeInOut" }}
+                className="absolute -top-20 -left-20 w-80 h-80 rounded-full"
+                style={{ background:"radial-gradient(circle, rgba(124,58,237,0.6) 0%, transparent 68%)", filter:"blur(26px)" }} />
+              <motion.div animate={{ x: [0,-30,14,0], y: [0,18,-14,0] }} transition={{ duration:11, repeat:Infinity, ease:"easeInOut", delay:2.5 }}
+                className="absolute -bottom-12 -right-12 w-72 h-72 rounded-full"
+                style={{ background:"radial-gradient(circle, rgba(59,130,246,0.55) 0%, transparent 68%)", filter:"blur(22px)" }} />
+            </div>
+          )}
+          {/* Blur overlay to hint at hidden content */}
+          <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
+        </div>
+
+        {/* Avatar */}
+        <div className="px-4 -mt-12 relative z-10">
+          <Avatar3D avatarUrl={user.avatarUrl} displayName={user.displayName}
+            isVerified={(user as any).isVerified} isUploading={false} isOwner={false}
+            onUploadClick={() => {}} size={96} />
+        </div>
+
+        {/* Name + lock badge */}
+        <div className="px-4 mt-3 text-center flex flex-col items-center gap-3">
+          <div>
+            <div className="flex items-center justify-center gap-2">
+              <p className="text-xl font-black text-foreground">{user.displayName}</p>
+              {(user as any).isVerified && <BadgeCheck className="w-5 h-5 text-violet-400" />}
+            </div>
+            <p className="text-sm text-muted-foreground">@{user.username}</p>
+          </div>
+
+          {/* Lock indicator */}
+          <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
+            className="flex flex-col items-center gap-2 py-6 px-8 rounded-3xl border border-white/10 bg-white/4 w-full max-w-xs">
+            <motion.div animate={{ scale:[1,1.12,1] }} transition={{ duration:2.5, repeat:Infinity }}
+              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600/30 to-blue-600/20 border border-violet-500/30 flex items-center justify-center shadow-lg shadow-violet-500/20">
+              <Lock className="w-6 h-6 text-violet-400" />
+            </motion.div>
+            <p className="font-bold text-foreground text-sm">Yopiq profil</p>
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              Bu foydalanuvchi profilini yopiq qilib qo'ygan.<br/>
+              Postlarini ko'rish uchun kuzating.
+            </p>
+            <p className="text-xs text-muted-foreground/60">
+              {(user.followersCount ?? 0).toLocaleString()} ta obunachi
+            </p>
+          </motion.div>
+
+          {/* Follow button */}
+          <motion.button whileTap={{ scale:0.95 }} whileHover={{ scale:1.02 }}
+            disabled={follow.isPending}
+            onClick={handleFollow}
+            className="flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm text-white shadow-lg shadow-violet-500/30"
+            style={{ background:"linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
+            {follow.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+            Kuzatish
+          </motion.button>
+        </div>
+      </div>
+    );
+  }
+
   const myPosts = posts.filter(p => p.author.id === userId);
 
   /* Analytics calculations */

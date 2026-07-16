@@ -77,12 +77,35 @@ router.get("/users/:id", async (req, res) => {
           ? db.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, id))).limit(1)
           : Promise.resolve([]),
       ]);
+      const isOwner = viewerId === id;
+      const viewerIsFollowing = (followCheck as { id: number }[]).length > 0;
+      const isPrivate = (user.privacySettings as any)?.privateProfile === true;
+
+      /* Private profile — only show avatar/cover/name to non-followers */
+      if (isPrivate && !isOwner && !viewerIsFollowing) {
+        return {
+          id: user.id,
+          displayName: user.displayName,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+          coverUrl: user.coverUrl,
+          isVerified: user.isVerified ?? false,
+          bio: null,
+          followersCount: followers.count,
+          followingCount: null,
+          postsCount: null,
+          isFollowing: false,
+          isPrivate: true,
+        };
+      }
+
       return {
         ...publicUser(user, viewerId),
         followersCount: followers.count,
         followingCount: following.count,
         postsCount: postsCount.count,
-        isFollowing: (followCheck as { id: number }[]).length > 0
+        isFollowing: viewerIsFollowing,
+        isPrivate: isOwner ? isPrivate : false,
       };
     }, 30);
     if (!result) { res.status(404).json({ error: "Not found" }); return; }
@@ -97,6 +120,18 @@ router.get("/users/:id", async (req, res) => {
 router.get("/users/:id/posts", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const viewerId = (req.session as any)?.userId as number | undefined;
+
+    /* Privacy gate — private profiles block post access for non-followers */
+    if (viewerId !== id) {
+      const [owner] = await db.select({ privacySettings: usersTable.privacySettings }).from(usersTable).where(eq(usersTable.id, id));
+      if ((owner?.privacySettings as any)?.privateProfile === true) {
+        const follow = await db.select({ id: followsTable.followerId })
+          .from(followsTable).where(and(eq(followsTable.followerId, viewerId!), eq(followsTable.followingId, id))).limit(1);
+        if (!viewerId || follow.length === 0) { res.json([]); return; }
+      }
+    }
+
     const limit = Math.min(Number(req.query.limit) || 30, 100);
     const offset = Number(req.query.offset) || 0;
     const midnightCond = await midnightVisibilityConditionForReq(req);

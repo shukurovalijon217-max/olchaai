@@ -102,4 +102,30 @@ router.post("/notifications/:id/read", async (req, res) => {
   }
 });
 
+/* ── Web Push VAPID public key ── */
+router.get("/notifications/vapid-key", (_req, res) => {
+  const key = process.env["VAPID_PUBLIC_KEY"];
+  if (!key) { res.status(503).json({ error: "Push not configured" }); return; }
+  res.json({ publicKey: key });
+});
+
+/* ── Web Push subscription (browser) ── */
+router.post("/notifications/push-subscribe", async (req: any, res) => {
+  try {
+    const userId = req.session?.userId;
+    if (!userId) { res.status(401).json({ error: "Login talab qilinadi" }); return; }
+    const sub = req.body?.subscription;
+    if (!sub?.endpoint) { res.status(400).json({ error: "subscription required" }); return; }
+    const token = JSON.stringify(sub);
+    await db
+      .insert(pushTokensTable)
+      .values({ userId, token, platform: "web" })
+      .onConflictDoUpdate({ target: [pushTokensTable.userId, pushTokensTable.token], set: { updatedAt: new Date(), platform: "web" } });
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
 export default router;

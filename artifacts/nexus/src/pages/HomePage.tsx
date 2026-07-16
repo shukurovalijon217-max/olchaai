@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Flame, MoreHorizontal, ChevronDown, X, Radio,
+  Flame, MoreHorizontal, X, Radio,
   PenLine, BookOpen, Film, MonitorPlay, Trophy, Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -481,11 +481,6 @@ export default function HomePage() {
     (feed?.echoScore ?? 0) >= ECHO_THRESHOLD &&
     !!feed?.echoTopTag;
 
-  const scrollDown = () => {
-    if (!feedRef.current) return;
-    const h = feedRef.current.clientHeight;
-    feedRef.current.scrollBy({ top: h, behavior: "smooth" });
-  };
 
   /* FAB tap: burst sparkle then open sheet */
   const handleFabClick = useCallback(() => {
@@ -1014,33 +1009,6 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* ── Scroll hint ── */}
-      <AnimatePresence>
-        {!isLoading && displayPosts.length > 1 && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ delay: 1.5 }}
-            onClick={scrollDown}
-            className="fixed z-40 flex flex-col items-center gap-1 pointer-events-auto"
-            style={{ bottom: 88, right: 20 }}
-          >
-            <motion.div
-              animate={{ y: [0, 5, 0] }}
-              transition={{ duration: 1.4, repeat: Infinity }}
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                backdropFilter: "blur(12px)",
-              }}
-            >
-              <ChevronDown className="w-4 h-4 text-white/55" />
-            </motion.div>
-          </motion.button>
-        )}
-      </AnimatePresence>
 
       {/* ── Create Sheet (bottom drawer) ── */}
       <CreateSheet

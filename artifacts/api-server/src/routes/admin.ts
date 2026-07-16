@@ -672,4 +672,18 @@ router.post("/admin/stripe/seed", async (req, res) => {
   }
 });
 
+/* ── Clean all notifications (admin only) ── */
+router.delete("/admin/notifications/clear-all", async (req, res) => {
+  try {
+    const { type } = req.query;
+    const result = type
+      ? await db.delete(notificationsTable).where(eq(notificationsTable.type, String(type))).returning()
+      : await db.delete(notificationsTable).returning();
+    res.json({ deleted: result.length });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
 export default router;

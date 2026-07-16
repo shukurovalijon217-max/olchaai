@@ -34,7 +34,7 @@ router.get("/stories", async (req, res) => {
 router.post("/stories", async (req, res) => {
   try {
     const { mediaUrl, mediaType, caption } = req.body;
-    const authorId = (req.session as any)?.userId ?? Number(req.body.authorId);
+    const authorId = (req.session as any)?.userId as number | undefined;
     if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
     // AI scan caption before saving

@@ -33,8 +33,11 @@ async function uploadFile(file: File): Promise<string> {
   });
   if (!r.ok) throw new Error(i18n.t("groups.upload_error"));
   const { uploadURL, objectPath } = await r.json();
-  await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-  const cleanPath = String(objectPath).replace(/^\/+/, "");
+  const putR = await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type }, credentials: "include" });
+  let finalPath = objectPath as string;
+  try { const b = await putR.json(); if (b?.objectPath) finalPath = b.objectPath; } catch {}
+  if (finalPath.startsWith("http")) return finalPath;
+  const cleanPath = String(finalPath).replace(/^\/+/, "");
   return `${API}/api/storage/objects/${cleanPath}`;
 }
 

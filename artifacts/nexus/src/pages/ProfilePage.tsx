@@ -1096,7 +1096,14 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               </motion.div>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mb-1.5">@{user.username}</p>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <p className="text-xs text-muted-foreground">@{user.username}</p>
+            {(user as any).isPrivate && isOwner && (
+              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-[10px] font-bold text-violet-400">
+                <Lock className="w-2.5 h-2.5" /> Yopiq
+              </span>
+            )}
+          </div>
           {user.bio && <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2">{user.bio}</p>}
         </motion.div>
 

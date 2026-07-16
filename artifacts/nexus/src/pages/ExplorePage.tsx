@@ -1,6 +1,9 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Search, TrendingUp, BadgeCheck, Users, Check, UserPlus } from "lucide-react";
+import { useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Search, TrendingUp, BadgeCheck, Users, Check, UserPlus,
+  ChevronLeft, ChevronRight, Flame, Layers,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   useListPosts, useGetTrendingTopics, useGetAiSuggestions,
@@ -10,6 +13,131 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 
+/* ────────────────────────────────────────────────────────────
+   Reusable horizontal scroll strip with arrow buttons
+   ──────────────────────────────────────────────────────────── */
+function HScroll({
+  children,
+  gap = 10,
+  px = 16,
+}: {
+  children: React.ReactNode;
+  gap?: number;
+  px?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(true);
+
+  const scroll = (dir: "l" | "r") => {
+    if (!ref.current) return;
+    const by = ref.current.clientWidth * 0.75;
+    ref.current.scrollBy({ left: dir === "r" ? by : -by, behavior: "smooth" });
+  };
+
+  const onScroll = () => {
+    if (!ref.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = ref.current;
+    setCanLeft(scrollLeft > 4);
+    setCanRight(scrollLeft < scrollWidth - clientWidth - 4);
+  };
+
+  return (
+    <div style={{ position: "relative" }}>
+      <div
+        ref={ref}
+        onScroll={onScroll}
+        style={{
+          display: "flex",
+          gap,
+          overflowX: "auto",
+          paddingLeft: px,
+          paddingRight: px,
+          paddingBottom: 4,
+          scrollbarWidth: "none",
+        }}
+      >
+        <style>{`.hscroll::-webkit-scrollbar{display:none}`}</style>
+        {children}
+      </div>
+
+      <AnimatePresence>
+        {canLeft && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => scroll("l")}
+            style={{
+              position: "absolute", left: 4, top: "50%", transform: "translateY(-50%)",
+              width: 28, height: 28, borderRadius: "50%",
+              background: "rgba(15,15,25,0.85)", backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5,
+            }}
+          >
+            <ChevronLeft style={{ width: 14, height: 14, color: "rgba(255,255,255,0.8)" }} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {canRight && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => scroll("r")}
+            style={{
+              position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
+              width: 28, height: 28, borderRadius: "50%",
+              background: "rgba(15,15,25,0.85)", backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5,
+            }}
+          >
+            <ChevronRight style={{ width: 14, height: 14, color: "rgba(255,255,255,0.8)" }} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   Section header
+   ──────────────────────────────────────────────────────────── */
+function SectionHead({
+  icon,
+  title,
+  sub,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  sub?: string;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", marginBottom: 12 }}>
+      <div style={{
+        width: 30, height: 30, borderRadius: 10,
+        background: "rgba(139,92,246,0.12)",
+        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+      }}>
+        {icon}
+      </div>
+      <div>
+        <div style={{ fontWeight: 800, fontSize: 14, color: "var(--foreground)", letterSpacing: "-0.01em" }}>
+          {title}
+        </div>
+        {sub && <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 1 }}>{sub}</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   Main page
+   ════════════════════════════════════════════════════════════ */
 export default function ExplorePage() {
   const { t } = useTranslation();
   const { user: me } = useAuth();
@@ -18,19 +146,19 @@ export default function ExplorePage() {
   const [followedIds, setFollowedIds] = useState<Set<number>>(new Set());
   const [joinedIds, setJoinedIds] = useState<Set<number>>(new Set());
 
-  const { data: posts = [] } = useListPosts();
-  const { data: topics = [] } = useGetTrendingTopics();
-  const { data: suggestions } = useGetAiSuggestions();
-  const { data: groups = [] } = useListGroups();
-  const { data: users = [] } = useListUsers({ search: query || undefined });
+  const { data: posts = [] }      = useListPosts();
+  const { data: topics = [] }     = useGetTrendingTopics();
+  const { data: suggestions }     = useGetAiSuggestions();
+  const { data: groups = [] }     = useListGroups();
+  const { data: searchUsers = [] } = useListUsers({ search: query || undefined });
 
   const followMut = useFollowUser({
     mutation: {
       onSuccess: (data, vars) => {
         setFollowedIds(prev => {
-          const next = new Set(prev);
-          if (data.following) next.add(vars.id); else next.delete(vars.id);
-          return next;
+          const n = new Set(prev);
+          data.following ? n.add(vars.id) : n.delete(vars.id);
+          return n;
         });
       },
     },
@@ -38,232 +166,437 @@ export default function ExplorePage() {
 
   const joinMut = useJoinGroup({
     mutation: {
-      onSuccess: (_data, vars) => {
+      onSuccess: (_d, vars) => {
         setJoinedIds(prev => { const n = new Set(prev); n.add(vars.id); return n; });
         qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
       },
     },
   });
 
-  const photoPosts = posts.filter(p => p.type === "photo" || p.mediaUrl);
+  const photoPosts    = posts.filter(p => p.mediaUrl);
   const suggestedUsers = suggestions?.users ?? [];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-7">
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder={t("explore.search_ph")}
-          className="w-full pl-10 pr-4 py-3 rounded-2xl bg-card border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
-        />
+    <div style={{ maxWidth: 860, margin: "0 auto", paddingBottom: 80, display: "flex", flexDirection: "column", gap: 28 }}>
+
+      {/* ── Search ── */}
+      <div style={{ padding: "20px 16px 0" }}>
+        <div style={{ position: "relative" }}>
+          <Search style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 15, height: 15, color: "var(--muted-foreground)" }} />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder={t("explore.search_ph")}
+            style={{
+              width: "100%", paddingLeft: 40, paddingRight: 16, paddingTop: 12, paddingBottom: 12,
+              borderRadius: 18, background: "var(--card)", border: "1.5px solid var(--border)",
+              color: "var(--foreground)", fontSize: 14, outline: "none", boxSizing: "border-box",
+              transition: "border-color 0.2s",
+            }}
+            onFocus={e => (e.target.style.borderColor = "rgba(139,92,246,0.5)")}
+            onBlur={e => (e.target.style.borderColor = "var(--border)")}
+          />
+        </div>
       </div>
 
-      {/* Trending Topics */}
-      <section>
-        <h2 className="font-bold text-foreground mb-4 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-primary" />
-          {t("explore.trending")}
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {topics.map((topic, i) => (
-            <motion.div
-              key={topic.tag}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              whileHover={{ scale: 1.02 }}
-              className="bg-card border border-border rounded-2xl p-4 cursor-pointer hover:border-primary/30 transition-colors"
-            >
-              <p className="text-xs text-muted-foreground mb-1">{topic.category}</p>
-              <p className="font-bold text-foreground">#{topic.tag}</p>
-              <p className="text-xs text-muted-foreground mt-1">{topic.postCount.toLocaleString()} {t("home.posts")}</p>
-              <span className="text-xs font-bold text-emerald-400 mt-1 block">+{topic.growth.toFixed(1)}%</span>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Photo Grid */}
-      {photoPosts.length > 0 && (
+      {/* ── Trend topics ── */}
+      {topics.length > 0 && (
         <section>
-          <h2 className="font-bold text-foreground mb-4">{t("explore.explore_posts")}</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {photoPosts.slice(0, 9).map((post, i) => (
+          <SectionHead
+            icon={<TrendingUp style={{ width: 14, height: 14, color: "#8b5cf6" }} />}
+            title={t("explore.trending")}
+          />
+          <HScroll gap={8}>
+            {topics.map((topic, i) => (
               <motion.div
-                key={post.id}
-                initial={{ opacity: 0, scale: 0.95 }}
+                key={topic.tag}
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.04 }}
-                whileHover={{ scale: 1.02 }}
-                className="aspect-square rounded-xl overflow-hidden bg-card border border-border cursor-pointer"
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  flexShrink: 0, width: 130, borderRadius: 18, padding: "14px 14px",
+                  background: "var(--card)", border: "1.5px solid var(--border)", cursor: "pointer",
+                  transition: "border-color 0.2s",
+                }}
+              >
+                <p style={{ fontSize: 10, color: "var(--muted-foreground)", marginBottom: 4 }}>{topic.category}</p>
+                <p style={{ fontWeight: 800, fontSize: 13, color: "var(--foreground)" }}>#{topic.tag}</p>
+                <p style={{ fontSize: 10, color: "var(--muted-foreground)", marginTop: 4 }}>
+                  {topic.postCount.toLocaleString()} post
+                </p>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#34d399", marginTop: 4, display: "block" }}>
+                  +{topic.growth.toFixed(1)}%
+                </span>
+              </motion.div>
+            ))}
+          </HScroll>
+        </section>
+      )}
+
+      {/* ── Postlarni kashf qilish (carousel) ── */}
+      {photoPosts.length > 0 && (
+        <section>
+          <SectionHead
+            icon={<Layers style={{ width: 14, height: 14, color: "#8b5cf6" }} />}
+            title={t("explore.explore_posts")}
+            sub="Yangi postlar"
+          />
+          <HScroll gap={8}>
+            {photoPosts.slice(0, 20).map((post, i) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.03 }}
+                whileTap={{ scale: 0.96 }}
+                style={{
+                  flexShrink: 0, width: 110, height: 110, borderRadius: 16,
+                  overflow: "hidden", cursor: "pointer", position: "relative",
+                  border: "1px solid var(--border)", background: "var(--card)",
+                }}
               >
                 {post.mediaUrl ? (
-                  <img loading="lazy" decoding="async" src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    src={post.mediaUrl}
+                    alt=""
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center p-3">
-                    <p className="text-xs text-foreground line-clamp-4 text-center">{post.content}</p>
+                  <div style={{
+                    width: "100%", height: "100%",
+                    background: "linear-gradient(135deg,rgba(139,92,246,0.25),rgba(59,130,246,0.2))",
+                    display: "flex", alignItems: "center", justifyContent: "center", padding: 8,
+                  }}>
+                    <p style={{ fontSize: 10, color: "var(--foreground)", textAlign: "center", lineHeight: 1.4,
+                      overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical" }}>
+                      {post.content}
+                    </p>
                   </div>
                 )}
               </motion.div>
             ))}
-          </div>
+          </HScroll>
         </section>
       )}
 
-      {/* Suggested Users */}
-      {suggestedUsers.length > 0 && (
+      {/* ── Kuzatish uchun odamlar (story-circle carousel) ── */}
+      {suggestedUsers.length > 0 && !query && (
         <section>
-          <h2 className="font-bold text-foreground mb-4 flex items-center gap-2">
-            <Users className="w-4 h-4 text-primary" />
-            {t("explore.people_to_follow")}
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {suggestedUsers.map((user, i) => {
-              const isFollowed = followedIds.has(user.id) || user.isFollowing;
-              const isMe = me?.id === user.id;
+          <SectionHead
+            icon={<Users style={{ width: 14, height: 14, color: "#8b5cf6" }} />}
+            title={t("explore.people_to_follow")}
+            sub="Siz uchun tavsiya"
+          />
+          <HScroll gap={12}>
+            {suggestedUsers.map((u, i) => {
+              const isFollowed = followedIds.has(u.id) || u.isFollowing;
+              const isMe = me?.id === u.id;
               return (
                 <motion.div
-                  key={user.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  key={u.id}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className="bg-card border border-border rounded-2xl p-4 text-center hover:border-primary/20 transition-colors"
+                  transition={{ delay: i * 0.05 }}
+                  style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}
                 >
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 mx-auto mb-3 flex items-center justify-center overflow-hidden">
-                    {user.avatarUrl ? (
-                      <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-lg font-bold text-primary">{user.displayName?.[0]}</span>
+                  {/* Avatar with gradient ring */}
+                  <div style={{ position: "relative" }}>
+                    <div style={{
+                      width: 62, height: 62, borderRadius: "50%", padding: 2,
+                      background: isFollowed
+                        ? "rgba(139,92,246,0.2)"
+                        : "linear-gradient(135deg,#8b5cf6,#3b82f6,#ec4899)",
+                    }}>
+                      <div style={{
+                        width: "100%", height: "100%", borderRadius: "50%",
+                        overflow: "hidden", background: "var(--card)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {u.avatarUrl ? (
+                          <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <span style={{ fontSize: 22, fontWeight: 800, color: "#8b5cf6" }}>
+                            {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {u.isVerified && (
+                      <div style={{
+                        position: "absolute", bottom: 0, right: 0,
+                        width: 18, height: 18, borderRadius: "50%",
+                        background: "var(--card)", display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <BadgeCheck style={{ width: 14, height: 14, color: "#8b5cf6" }} />
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center justify-center gap-1 mb-0.5">
-                    <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>
-                    {user.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">@{user.username}</p>
+
+                  {/* Name */}
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "var(--foreground)", textAlign: "center",
+                    width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {u.displayName ?? u.username}
+                  </p>
+                  <p style={{ fontSize: 10, color: "var(--muted-foreground)", marginTop: -4, textAlign: "center",
+                    width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    @{u.username}
+                  </p>
+
+                  {/* Follow button */}
                   {!isMe && (
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
                       disabled={followMut.isPending}
-                      onClick={() => followMut.mutate({ id: user.id })}
-                      className={`w-full py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
-                        isFollowed
-                          ? "bg-primary/10 text-primary border border-primary/30"
-                          : "bg-primary/15 text-primary hover:bg-primary/25"
-                      }`}
+                      onClick={() => followMut.mutate({ id: u.id })}
+                      style={{
+                        width: "100%", padding: "5px 0", borderRadius: 20, fontSize: 10, fontWeight: 700,
+                        border: isFollowed ? "1.5px solid rgba(139,92,246,0.4)" : "none",
+                        background: isFollowed ? "transparent" : "linear-gradient(135deg,#8b5cf6,#6d28d9)",
+                        color: isFollowed ? "#8b5cf6" : "white",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 3,
+                        transition: "all 0.2s",
+                      }}
                     >
                       {isFollowed ? (
-                        <><Check className="w-3 h-3" /> {t("profile.following_btn")}</>
+                        <><Check style={{ width: 9, height: 9 }} /> Kuzatilmoqda</>
                       ) : (
-                        <><UserPlus className="w-3 h-3" /> {t("explore.follow")}</>
+                        <><UserPlus style={{ width: 9, height: 9 }} /> Kuzatish</>
                       )}
-                    </button>
+                    </motion.button>
                   )}
                 </motion.div>
               );
             })}
-          </div>
+          </HScroll>
         </section>
       )}
 
-      {/* Search results - users */}
-      {query && users.length > 0 && (
+      {/* ── Search results ── */}
+      {query && searchUsers.length > 0 && (
         <section>
-          <h2 className="font-bold text-foreground mb-4 flex items-center gap-2">
-            <Users className="w-4 h-4 text-primary" />
-            {t("explore.people_to_follow")}
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {users.map((user, i) => {
-              const isFollowed = followedIds.has(user.id) || user.isFollowing;
-              const isMe = me?.id === user.id;
+          <SectionHead
+            icon={<Users style={{ width: 14, height: 14, color: "#8b5cf6" }} />}
+            title="Natijalar"
+            sub={`"${query}" bo'yicha`}
+          />
+          <HScroll gap={12}>
+            {searchUsers.map((u, i) => {
+              const isFollowed = followedIds.has(u.id) || u.isFollowing;
+              const isMe = me?.id === u.id;
               return (
                 <motion.div
-                  key={user.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  key={u.id}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className="bg-card border border-border rounded-2xl p-4 text-center hover:border-primary/20 transition-colors"
+                  transition={{ delay: i * 0.04 }}
+                  style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}
                 >
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 mx-auto mb-3 flex items-center justify-center overflow-hidden">
-                    {user.avatarUrl ? (
-                      <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-lg font-bold text-primary">{user.displayName?.[0]}</span>
+                  <div style={{ position: "relative" }}>
+                    <div style={{
+                      width: 62, height: 62, borderRadius: "50%", padding: 2,
+                      background: isFollowed ? "rgba(139,92,246,0.2)" : "linear-gradient(135deg,#8b5cf6,#3b82f6,#ec4899)",
+                    }}>
+                      <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden",
+                        background: "var(--card)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {u.avatarUrl ? (
+                          <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <span style={{ fontSize: 22, fontWeight: 800, color: "#8b5cf6" }}>
+                            {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {u.isVerified && (
+                      <div style={{ position: "absolute", bottom: 0, right: 0, width: 18, height: 18,
+                        borderRadius: "50%", background: "var(--card)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <BadgeCheck style={{ width: 14, height: 14, color: "#8b5cf6" }} />
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center justify-center gap-1 mb-0.5">
-                    <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>
-                    {user.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">@{user.username}</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "var(--foreground)", textAlign: "center",
+                    width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {u.displayName ?? u.username}
+                  </p>
+                  <p style={{ fontSize: 10, color: "var(--muted-foreground)", marginTop: -4, textAlign: "center",
+                    width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    @{u.username}
+                  </p>
                   {!isMe && (
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
                       disabled={followMut.isPending}
-                      onClick={() => followMut.mutate({ id: user.id })}
-                      className={`w-full py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
-                        isFollowed
-                          ? "bg-primary/10 text-primary border border-primary/30"
-                          : "bg-primary/15 text-primary hover:bg-primary/25"
-                      }`}
+                      onClick={() => followMut.mutate({ id: u.id })}
+                      style={{
+                        width: "100%", padding: "5px 0", borderRadius: 20, fontSize: 10, fontWeight: 700,
+                        border: isFollowed ? "1.5px solid rgba(139,92,246,0.4)" : "none",
+                        background: isFollowed ? "transparent" : "linear-gradient(135deg,#8b5cf6,#6d28d9)",
+                        color: isFollowed ? "#8b5cf6" : "white",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 3,
+                      }}
                     >
-                      {isFollowed ? (
-                        <><Check className="w-3 h-3" /> {t("profile.following_btn")}</>
-                      ) : (
-                        <><UserPlus className="w-3 h-3" /> {t("explore.follow")}</>
-                      )}
-                    </button>
+                      {isFollowed ? <><Check style={{ width: 9, height: 9 }} /> Kuzatilmoqda</> : <><UserPlus style={{ width: 9, height: 9 }} /> Kuzatish</>}
+                    </motion.button>
                   )}
                 </motion.div>
               );
             })}
-          </div>
+          </HScroll>
         </section>
       )}
 
-      {/* Groups */}
+      {/* ── Instagram-style Rekomendatsiyalar ── */}
+      {suggestedUsers.length > 0 && !query && (
+        <section>
+          <SectionHead
+            icon={<Flame style={{ width: 14, height: 14, color: "#f97316" }} />}
+            title="Tavsiya etiladi"
+            sub="Instagram uslubida"
+          />
+          <HScroll gap={10}>
+            {suggestedUsers.slice(0, 10).map((u, i) => {
+              const isFollowed = followedIds.has(u.id) || u.isFollowing;
+              const isMe = me?.id === u.id;
+              return (
+                <motion.div
+                  key={`rec-${u.id}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  style={{
+                    flexShrink: 0, width: 150, borderRadius: 20, overflow: "hidden",
+                    border: "1.5px solid var(--border)", background: "var(--card)", cursor: "pointer",
+                  }}
+                >
+                  {/* Cover image or gradient */}
+                  <div style={{ height: 72, background: `linear-gradient(135deg,hsl(${(i * 47 + 200) % 360},60%,25%),hsl(${(i * 47 + 260) % 360},70%,15%))`, position: "relative" }}>
+                    <div style={{
+                      position: "absolute", bottom: -20, left: "50%", transform: "translateX(-50%)",
+                      width: 42, height: 42, borderRadius: "50%", border: "3px solid var(--card)",
+                      overflow: "hidden", background: "var(--card)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {u.avatarUrl ? (
+                        <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <span style={{ fontSize: 16, fontWeight: 800, color: "#8b5cf6" }}>
+                          {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: "24px 10px 12px", textAlign: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginBottom: 2 }}>
+                      <p style={{ fontSize: 12, fontWeight: 800, color: "var(--foreground)",
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>
+                        {u.displayName ?? u.username}
+                      </p>
+                      {u.isVerified && <BadgeCheck style={{ width: 12, height: 12, color: "#8b5cf6", flexShrink: 0 }} />}
+                    </div>
+                    <p style={{ fontSize: 10, color: "var(--muted-foreground)", marginBottom: 10 }}>
+                      @{u.username}
+                    </p>
+                    {!isMe && (
+                      <motion.button
+                        whileTap={{ scale: 0.92 }}
+                        disabled={followMut.isPending}
+                        onClick={() => followMut.mutate({ id: u.id })}
+                        style={{
+                          width: "100%", padding: "6px 0", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                          border: isFollowed ? "1.5px solid rgba(139,92,246,0.4)" : "none",
+                          background: isFollowed ? "transparent" : "linear-gradient(135deg,#8b5cf6,#6d28d9)",
+                          color: isFollowed ? "#8b5cf6" : "white", cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 4, transition: "all 0.2s",
+                        }}
+                      >
+                        {isFollowed ? <><Check style={{ width: 10, height: 10 }} /> Kuzatilmoqda</> : <><UserPlus style={{ width: 10, height: 10 }} /> Kuzatish</>}
+                      </motion.button>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </HScroll>
+        </section>
+      )}
+
+      {/* ── Guruhlar (carousel) ── */}
       {groups.length > 0 && (
         <section>
-          <h2 className="font-bold text-foreground mb-4">{t("explore.popular_communities")}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {groups.slice(0, 4).map((group, i) => {
+          <SectionHead
+            icon={<Users style={{ width: 14, height: 14, color: "#22d3ee" }} />}
+            title={t("explore.popular_communities")}
+            sub="Mashhur jamoalar"
+          />
+          <HScroll gap={10}>
+            {groups.map((group, i) => {
               const isJoined = joinedIds.has(group.id) || group.isMember;
               return (
                 <motion.div
                   key={group.id}
-                  initial={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4 hover:border-primary/20 transition-colors cursor-pointer"
+                  transition={{ delay: i * 0.04 }}
+                  style={{
+                    flexShrink: 0, width: 160, borderRadius: 20, overflow: "hidden",
+                    border: "1.5px solid var(--border)", background: "var(--card)",
+                  }}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/30 to-accent/30 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                    {group.avatarUrl ? (
-                      <img loading="lazy" decoding="async" src={group.avatarUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-lg font-bold text-primary">{group.name[0]}</span>
-                    )}
+                  {/* Cover */}
+                  <div style={{
+                    height: 68,
+                    background: `linear-gradient(135deg,hsl(${(i * 53 + 180) % 360},55%,22%),hsl(${(i * 53 + 230) % 360},65%,12%))`,
+                    position: "relative", display: "flex", alignItems: "flex-end", padding: "0 12px 8px",
+                  }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: 12, overflow: "hidden",
+                      background: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.2)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {group.avatarUrl ? (
+                        <img loading="lazy" decoding="async" src={group.avatarUrl} alt=""
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <span style={{ fontSize: 18, fontWeight: 800, color: "white" }}>{group.name[0]}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground text-sm truncate">{group.name}</p>
-                    <p className="text-xs text-muted-foreground">{group.membersCount.toLocaleString()} {t("groups.members")} · {group.category}</p>
+
+                  <div style={{ padding: "10px 12px 12px" }}>
+                    <p style={{ fontWeight: 800, fontSize: 12, color: "var(--foreground)",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>
+                      {group.name}
+                    </p>
+                    <p style={{ fontSize: 10, color: "var(--muted-foreground)", marginBottom: 10 }}>
+                      {group.membersCount.toLocaleString()} a'zo · {group.category}
+                    </p>
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      disabled={isJoined || joinMut.isPending}
+                      onClick={() => !isJoined && joinMut.mutate({ id: group.id })}
+                      style={{
+                        width: "100%", padding: "6px 0", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                        border: isJoined ? "1.5px solid rgba(34,211,238,0.4)" : "none",
+                        background: isJoined ? "transparent" : "linear-gradient(135deg,#0891b2,#0e7490)",
+                        color: isJoined ? "#22d3ee" : "white",
+                        cursor: isJoined ? "default" : "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 4, transition: "all 0.2s",
+                      }}
+                    >
+                      {isJoined ? <><Check style={{ width: 10, height: 10 }} /> A'zo</> : "Qo'shilish"}
+                    </motion.button>
                   </div>
-                  <button
-                    disabled={isJoined || joinMut.isPending}
-                    onClick={() => !isJoined && joinMut.mutate({ id: group.id })}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors flex-shrink-0 flex items-center gap-1 ${
-                      isJoined
-                        ? "bg-primary/10 text-primary border border-primary/30 cursor-default"
-                        : "bg-primary/15 text-primary hover:bg-primary/25"
-                    }`}
-                  >
-                    {isJoined ? <><Check className="w-3 h-3" /> {t("groups.leave")}</> : t("explore.join")}
-                  </button>
                 </motion.div>
               );
             })}
-          </div>
+          </HScroll>
         </section>
       )}
     </div>

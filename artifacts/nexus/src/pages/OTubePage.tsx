@@ -2933,14 +2933,16 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
       const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
       const xhr = new XMLHttpRequest();
       xhr.upload.onprogress = (e) => { if(e.lengthComputable) setProgress(Math.round(e.loaded/e.total*88)); };
+      let xhrObjectPath = objectPath;
       await new Promise<void>((res,rej)=>{
-        xhr.open("PUT",uploadURL); xhr.setRequestHeader("Content-Type",file.type);
-        xhr.onload=()=>xhr.status<300?res():rej(new Error("Upload failed"));
+        xhr.open("PUT",uploadURL); xhr.withCredentials=true; xhr.setRequestHeader("Content-Type",file.type);
+        xhr.onload=()=>{ if(xhr.status<300){ try{ const b=JSON.parse(xhr.responseText); if(b?.objectPath) xhrObjectPath=b.objectPath; }catch{} res(); } else rej(new Error("Upload failed")); };
         xhr.onerror=()=>rej(new Error("Network error")); xhr.send(file);
       });
+      const videoUrl = xhrObjectPath.startsWith("http") ? xhrObjectPath : `${API_BASE}/api/storage${xhrObjectPath}`;
       setProgress(95); setPhase("creating");
       createMut.mutate({data:{
-        authorId:user.id, videoUrl:`${API_BASE}/api/storage${objectPath}`,
+        authorId:user.id, videoUrl,
         caption:caption||title, tags:tagList, duration:0,
         // thumbSrc is a local blob URL — only pass thumbnailUrl if it's a real remote URL
         thumbnailUrl: (thumbSrc && !thumbSrc.startsWith("blob:")) ? thumbSrc : undefined,
@@ -4183,11 +4185,14 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
     try {
       const req: UploadUrlRequest = {name:file.name,size:file.size,contentType:file.type};
       const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
-      const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file});
+      const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},credentials:"include",body:file});
       if (!res.ok) throw new Error("Upload failed");
+      let studioObjectPath = objectPath;
+      try { const b=await res.json(); if(b?.objectPath) studioObjectPath=b.objectPath; } catch {}
+      const studioVideoUrl = studioObjectPath.startsWith("http") ? studioObjectPath : `${API_BASE}/api/storage${studioObjectPath}`;
       createMut.mutate({data:{
         authorId:user.id,
-        videoUrl:`${API_BASE}/api/storage${objectPath}`,
+        videoUrl:studioVideoUrl,
         caption:caption||"OTube Studio · OlchaAI",
         audioTrack:music&&music!=="none"?music:undefined,
         tags:["otube-studio","olcha","studio"],

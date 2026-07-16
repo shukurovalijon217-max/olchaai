@@ -271,9 +271,11 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
         setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, progress: 30 } : m));
 
         /* Step 2 — PUT file with XHR for progress */
+        let finalObjectPath = objectPath;
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open("PUT", uploadURL);
+          xhr.withCredentials = true;
           xhr.setRequestHeader("Content-Type", pending.file.type || "application/octet-stream");
           xhr.upload.onprogress = e => {
             if (e.lengthComputable)
@@ -281,12 +283,24 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                 ? { ...m, progress: 30 + Math.round((e.loaded / e.total) * 65) }
                 : m));
           };
-          xhr.onload = () => xhr.status < 300 ? resolve() : reject(new Error(`PUT xatosi ${xhr.status}`));
+          xhr.onload = () => {
+            if (xhr.status < 300) {
+              try {
+                const body = JSON.parse(xhr.responseText);
+                if (body?.objectPath) finalObjectPath = body.objectPath;
+              } catch {}
+              resolve();
+            } else {
+              reject(new Error(`PUT xatosi ${xhr.status}`));
+            }
+          };
           xhr.onerror = () => reject(new Error("Tarmoq xatosi"));
           xhr.send(pending.file);
         });
 
-        const serveUrl = `${API}/api/storage${objectPath}`;
+        const serveUrl = finalObjectPath.startsWith("http")
+          ? finalObjectPath
+          : `${API}/api/storage${finalObjectPath}`;
 
         /* Step 3 — for videos, ask the server to transcode/compress in place
            before marking the item done. Best-effort: any failure here just

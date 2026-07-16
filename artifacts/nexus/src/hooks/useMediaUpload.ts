@@ -51,6 +51,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
       const putRes = await fetch(uploadURL, {
         method: "PUT",
         headers: { "Content-Type": file.type || "application/octet-stream" },
+        credentials: "include",
         body: file,
       });
       if (!putRes.ok) {

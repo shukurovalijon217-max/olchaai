@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { usersTable, followsTable, postsTable } from "@workspace/db";
+import { usersTable, followsTable, postsTable, notificationsTable } from "@workspace/db";
 import { eq, ilike, sql, and, desc, inArray } from "drizzle-orm";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
@@ -161,14 +161,27 @@ router.post("/users/:id/follow", async (req, res) => {
       void (async () => {
         try {
           const [followedUser, followerUser] = await Promise.all([
-            db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, followingId)).limit(1),
-            db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, followerId)).limit(1),
+            db.select({ email: usersTable.email, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, followingId)).limit(1),
+            db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl, username: usersTable.username }).from(usersTable).where(eq(usersTable.id, followerId)).limit(1),
           ]);
-          if (followedUser[0]?.email) {
+          const follower = followerUser[0];
+          const followed = followedUser[0];
+          /* In-app notification → kuzatilgan odamning bildirishnomalarida ko'rinadi */
+          await db.insert(notificationsTable).values({
+            userId: followingId,
+            type: "follow",
+            message: `${follower?.displayName ?? "Kimdir"} sizni kuzata boshladi`,
+            actorName: follower?.displayName ?? null,
+            actorAvatar: follower?.avatarUrl ?? null,
+            targetId: followerId,
+            targetType: "user",
+          });
+          /* Email notification */
+          if (followed?.email) {
             await notifyFollow({
-              toEmail: followedUser[0].email,
-              toName: followedUser[0].displayName ?? "Foydalanuvchi",
-              followerName: followerUser[0]?.displayName ?? "Kimdir",
+              toEmail: followed.email,
+              toName: followed.displayName ?? "Foydalanuvchi",
+              followerName: follower?.displayName ?? "Kimdir",
             });
           }
         } catch { /* non-fatal */ }

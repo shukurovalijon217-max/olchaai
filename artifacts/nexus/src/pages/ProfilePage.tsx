@@ -86,6 +86,12 @@ function BottomSheet({ open, onClose, children, maxH = "70vh" }: {
   );
 }
 
+/* ─── Helper: is the URL a video file? ─────────────────────────── */
+function isVideoUrl(url?: string | null): boolean {
+  if (!url) return false;
+  return /\.(mp4|mov|webm|ogg|avi|mkv)(\?|$)/i.test(url);
+}
+
 /* ─── 3D Avatar ────────────────────────────────────────────────── */
 function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, onUploadClick, size = 96 }: {
   avatarUrl?: string | null; displayName: string; isVerified?: boolean;
@@ -176,7 +182,12 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
             {isUploading ? (
               <div className="w-full h-full flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
             ) : avatarUrl ? (
-              <img src={resolveApiUrl(avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+              isVideoUrl(avatarUrl) ? (
+                <video src={resolveApiUrl(avatarUrl)} autoPlay muted loop playsInline
+                  className="w-full h-full object-cover" />
+              ) : (
+                <img src={resolveApiUrl(avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+              )
             ) : (
               <div className="w-full h-full flex items-center justify-center"
                 style={{ background: "radial-gradient(circle at 35% 35%, rgba(124,58,237,0.32), rgba(59,130,246,0.22), rgba(16,185,129,0.12))" }}>
@@ -185,7 +196,7 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
               </div>
             )}
             {isOwner && (
-              <div className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover/av:opacity-100 transition-opacity rounded-[20px]">
+              <div className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover/av:opacity-100 active:opacity-100 transition-opacity rounded-[20px]">
                 <Camera className="w-5 h-5 text-white" />
               </div>
             )}
@@ -845,9 +856,14 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       <div className="h-40 overflow-hidden relative group/cover rounded-b-3xl z-10">
         <AnimatePresence mode="wait">
           {user.coverUrl ? (
+            isVideoUrl(user.coverUrl) ? (
+              <video key="cv" src={resolveApiUrl(user.coverUrl)} autoPlay muted loop playsInline
+                className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
             <motion.img key="ci" src={resolveApiUrl(user.coverUrl)} alt=""
               initial={{ scale: 1.06, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.55 }}
               className="absolute inset-0 w-full h-full object-cover" />
+            )
           ) : (
             <motion.div key="cd" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[#07050f] overflow-hidden">
               {/* Aurora blobs */}
@@ -889,7 +905,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
         {isOwner && (
           <>
-            <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
+            <input ref={coverInputRef} type="file" accept="image/*,video/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) upCover(f); e.target.value = ""; }} />
             <AnimatePresence>
               {coverUploading && (
@@ -902,11 +918,12 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             </AnimatePresence>
             {!coverUploading && (
               <div onClick={() => coverInputRef.current?.click()}
-                className="absolute inset-0 opacity-0 group-hover/cover:opacity-100 transition-all cursor-pointer flex items-end justify-end p-3 z-10"
+                className="absolute inset-0 opacity-0 group-hover/cover:opacity-100 active:opacity-100 transition-all cursor-pointer flex items-end justify-end p-3 z-10"
                 style={{ background: "rgba(0,0,0,0.25)" }}>
                 <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.93 }}
-                  className="w-9 h-9 rounded-xl bg-black/40 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-xl">
+                  className="flex items-center gap-1.5 px-3 h-9 rounded-xl bg-black/50 border border-white/20 backdrop-blur-md shadow-xl">
                   <Camera className="w-4 h-4 text-white" />
+                  <span className="text-white text-[11px] font-semibold">Rasm / Video</span>
                 </motion.div>
               </div>
             )}
@@ -919,7 +936,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         {/* Avatar row */}
         <div className="flex items-end justify-between" style={{ marginTop: -44 }}>
           <div className="relative z-10">
-            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
+            <input ref={avatarInputRef} type="file" accept="image/*,video/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
             <Avatar3D avatarUrl={user.avatarUrl} displayName={user.displayName} isVerified={user.isVerified}
               isUploading={avatarUploading} isOwner={isOwner} onUploadClick={() => avatarInputRef.current?.click()} size={96} />

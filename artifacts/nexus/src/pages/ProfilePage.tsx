@@ -1,4 +1,5 @@
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
+import PostViewer from "@/components/PostViewer";
 import {
   BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon,
   Camera, Loader2, Radio, Bell, BellOff, Star, Check, X, Sparkles,
@@ -942,6 +943,11 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
   const myPosts = posts.filter(p => p.author.id === userId);
 
+  /* ── PostViewer state ── */
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIdx, setViewerIdx] = useState(0);
+  const openViewer = (idx: number) => { setViewerIdx(idx); setViewerOpen(true); };
+
   /* Analytics calculations */
   const totalLikes = myPosts.reduce((s, p) => s + (p.likesCount ?? 0), 0) + reels.reduce((s, r) => s + (r.likesCount ?? 0), 0);
   const totalComments = myPosts.reduce((s, p) => s + (p.commentsCount ?? 0), 0);
@@ -1192,8 +1198,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             {/* ─── Hero featured post ─── */}
             {topPost && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 24 }}>
-                <Link href={`/post/${topPost.id}`}>
-                  <motion.div whileTap={{ scale: 0.98 }}
+                  <motion.div whileTap={{ scale: 0.98 }} onClick={() => openViewer(0)}
                     className="w-full rounded-2xl overflow-hidden relative cursor-pointer group/hero"
                     style={{ height: 200, boxShadow: "0 4px 28px rgba(124,58,237,0.18)" }}>
                     {topPost.mediaUrl && topPost.type !== "video"
@@ -1236,17 +1241,18 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                       </div>
                     )}
                   </motion.div>
-                </Link>
               </motion.div>
             )}
             {/* ─── 3-col grid ─── */}
             <div className="grid grid-cols-3 gap-1.5">
-              {myPosts.filter(p => p.id !== topPost?.id).map((post, i) => (
-                <motion.div key={post.id}
-                  initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.04 + 0.08, type: "spring", stiffness: 280, damping: 24 }}>
-                  <Link href={`/post/${post.id}`}>
+              {myPosts.filter(p => p.id !== topPost?.id).map((post, i) => {
+                const gridIdx = topPost ? i + 1 : i;
+                return (
+                  <motion.div key={post.id}
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.04 + 0.08, type: "spring", stiffness: 280, damping: 24 }}>
                     <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
+                      onClick={() => openViewer(gridIdx)}
                       className="aspect-square rounded-xl overflow-hidden bg-card cursor-pointer relative group/post"
                       style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.25)" }}>
                       {post.mediaUrl && post.type !== "video"
@@ -1274,9 +1280,9 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                         </div>
                       )}
                     </motion.div>
-                  </Link>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -1438,6 +1444,17 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         targetUserId={userId}
         isOwner={isOwner}
       />
+
+      {/* ── Post Viewer ── */}
+      <AnimatePresence>
+        {viewerOpen && (
+          <PostViewer
+            posts={myPosts}
+            startIndex={viewerIdx}
+            onClose={() => setViewerOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

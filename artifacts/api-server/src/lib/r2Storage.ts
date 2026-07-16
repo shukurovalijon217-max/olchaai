@@ -11,6 +11,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
+import type { Readable } from "stream";
 
 export function isR2Enabled(): boolean {
   return !!(
@@ -31,6 +32,10 @@ function getR2Client(): S3Client {
       secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!.trim(),
     },
     forcePathStyle: false,
+    // AWS SDK v3 ≥3.750 adds automatic CRC32 checksums which break stream uploads
+    // and presigned PUTs from the browser. Disable them for R2 compatibility.
+    requestChecksumCalculation: "WHEN_REQUIRED" as any,
+    responseChecksumValidation: "WHEN_REQUIRED" as any,
   });
 }
 
@@ -81,6 +86,33 @@ export function r2ObjectPathToPublicUrl(objectPath: string): string | null {
   if (!objectPath.startsWith("r2://")) return null;
   const key = objectPath.slice("r2://".length);
   return getPublicUrl(key);
+}
+
+/**
+ * Upload a Node.js Readable stream directly to R2 (server-side, no CORS needed).
+ * Returns the public CDN URL and objectPath (same value).
+ */
+export async function r2UploadStream(
+  stream: Readable,
+  contentType: string,
+  contentLength?: number,
+): Promise<{ objectPath: string; publicUrl: string }> {
+  const client = getR2Client();
+  const ext = contentTypeToExt(contentType);
+  const key = `uploads/${randomUUID()}${ext}`;
+
+  await client.send(
+    new PutObjectCommand({
+      Bucket: getBucketName(),
+      Key: key,
+      ContentType: contentType,
+      Body: stream,
+      ...(contentLength ? { ContentLength: contentLength } : {}),
+    }),
+  );
+
+  const publicUrl = getPublicUrl(key);
+  return { objectPath: publicUrl, publicUrl };
 }
 
 /**

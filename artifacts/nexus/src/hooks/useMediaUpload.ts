@@ -63,16 +63,21 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
       }
       setProgress(100);
 
-      let serveUrl = `${API}/api/storage${objectPath}`;
+      let finalObjectPath = objectPath;
+      let serveUrl = objectPath.startsWith("http") ? objectPath : `${API}/api/storage${objectPath}`;
       try {
         const putBody = await putRes.clone().json();
         if (putBody?.url && typeof putBody.url === "string") {
           serveUrl = putBody.url;
         }
+        if (putBody?.objectPath && typeof putBody.objectPath === "string") {
+          finalObjectPath = putBody.objectPath;
+          serveUrl = putBody.url ?? putBody.objectPath;
+        }
       } catch {}
 
       const result: UploadResult = {
-        objectPath,
+        objectPath: finalObjectPath,
         serveUrl,
         fileName: file.name,
         contentType: file.type,

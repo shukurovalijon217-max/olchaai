@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, ImagePlus, Video, Music, FileText, Upload, Loader2,
-  CheckCircle2, Play, Film, Camera,
+  CheckCircle2, Play, Film, Camera, Type,
   Maximize2, Square, RectangleVertical,
   MessageCircle, Share2, Users, Globe, Ban, Plus, Trash2,
   Sparkles, BarChart2, ChevronDown, ChevronUp,
@@ -1504,6 +1504,36 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             )}
                           </motion.div>
                         </AnimatePresence>
+                      )}
+
+                      {/* ─── Edit overlays / music button ─── */}
+                      {mediaQueue.some(m => m.file.type.startsWith("image")) && (
+                        <button
+                          onClick={() => {
+                            const arr = mediaQueue.filter(m => m.file.type.startsWith("image")).map(m => m.file);
+                            const prevs = mediaQueue.filter(m => m.file.type.startsWith("image")).map(m => m.preview);
+                            setEditorFiles(arr);
+                            setEditorPreviews(prevs);
+                            setEditorOpen(true);
+                          }}
+                          className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-2xl transition-all"
+                          style={{
+                            background: (postOverlays.length > 0 || postAudioName)
+                              ? "linear-gradient(135deg,rgba(124,58,237,0.25),rgba(6,182,212,0.15))"
+                              : "rgba(255,255,255,0.04)",
+                            border: (postOverlays.length > 0 || postAudioName)
+                              ? "1px solid rgba(124,58,237,0.45)"
+                              : "1px dashed rgba(255,255,255,0.12)",
+                          }}
+                        >
+                          <Type className="w-3.5 h-3.5 text-violet-400" />
+                          <span className="text-xs font-bold text-white/70">
+                            {postOverlays.length > 0 || postAudioName
+                              ? `✏️ ${postOverlays.length > 0 ? `${postOverlays.length} matn` : ""}${postOverlays.length > 0 && postAudioName ? " · " : ""}${postAudioName ? `🎵 ${postAudioName}` : ""}`
+                              : t("create.add_text_music", "Matn & Musiqa qo'shish")}
+                          </span>
+                          <Music className="w-3.5 h-3.5 text-cyan-400" />
+                        </button>
                       )}
 
                       {/* Display format (shown when has images) */}

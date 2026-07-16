@@ -1125,7 +1125,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     <motion.div
       initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
       className="fixed inset-0 flex flex-col"
-      style={{ zIndex:200, background:"#000", touchAction:"none" }}
+      style={{ zIndex:99999, background:"#000", touchAction:"none" }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onClick={() => { setSelectedId(null); setPanel("none"); }}

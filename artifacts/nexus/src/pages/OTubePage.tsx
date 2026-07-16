@@ -6514,12 +6514,6 @@ export default function OTubePage() {
                       letterSpacing:"0.04em",transition:"all 0.25s"}}>
                       {t(`otube.signal_${id}`)}
                     </span>
-                    {/* SHORTS badge */}
-                    {id==="shorts" && !active && (
-                      <motion.div animate={{scale:[1,1.08,1]}} transition={{duration:2.5,repeat:Infinity}}
-                        style={{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",
-                          background:T.pulse,boxShadow:`0 0 6px ${T.pulse}`}}/>
-                    )}
                   </motion.button>
                 );
               })}

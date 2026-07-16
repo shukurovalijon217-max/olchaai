@@ -699,6 +699,118 @@ function TabBtn({ active, icon: Icon, label, onClick }: { active: boolean; icon:
   );
 }
 
+/* ─── Locked Profile View ─────────────────────────────────────── */
+function LockedProfileView({ user, onFollow, followPending }: {
+  user: any; onFollow: () => void; followPending: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="max-w-2xl mx-auto pb-10 select-none">
+
+      {/* ── Cover — aniq, hira yo'q ── */}
+      <div className="h-48 overflow-hidden relative rounded-b-3xl">
+        {user.coverUrl ? (
+          isVideoUrl(user.coverUrl)
+            ? <video src={resolveApiUrl(user.coverUrl)} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
+            : <img src={resolveApiUrl(user.coverUrl)} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 bg-[#07050f]">
+            <motion.div animate={{ x:[0,45,-10,0], y:[0,-25,10,0] }} transition={{ duration:14, repeat:Infinity, ease:"easeInOut" }}
+              className="absolute -top-20 -left-20 w-80 h-80 rounded-full"
+              style={{ background:"radial-gradient(circle,rgba(124,58,237,0.7) 0%,transparent 68%)", filter:"blur(26px)" }} />
+            <motion.div animate={{ x:[0,-30,14,0], y:[0,18,-14,0] }} transition={{ duration:11, repeat:Infinity, ease:"easeInOut", delay:2.5 }}
+              className="absolute -bottom-12 -right-12 w-72 h-72 rounded-full"
+              style={{ background:"radial-gradient(circle,rgba(59,130,246,0.6) 0%,transparent 68%)", filter:"blur(22px)" }} />
+            <motion.div animate={{ x:[0,18,-18,0], y:[0,12,-10,0] }} transition={{ duration:9, repeat:Infinity, ease:"easeInOut", delay:1 }}
+              className="absolute top-1/4 left-1/3 w-44 h-44 rounded-full"
+              style={{ background:"radial-gradient(circle,rgba(52,211,153,0.35) 0%,transparent 68%)", filter:"blur(18px)" }} />
+          </div>
+        )}
+        {/* faqat pastki gradient */}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+      </div>
+
+      {/* ── Avatar — aniq ── */}
+      <div className="px-4 -mt-12 relative z-10">
+        <Avatar3D avatarUrl={user.avatarUrl} displayName={user.displayName}
+          isVerified={user.isVerified} isUploading={false} isOwner={false}
+          onUploadClick={() => {}} size={96} />
+      </div>
+
+      {/* ── Ism + username ── */}
+      <div className="px-4 mt-3 mb-8">
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-lg font-black text-foreground">{user.displayName}</h1>
+          {user.isVerified && <BadgeCheck className="w-4.5 h-4.5 text-violet-400" />}
+        </div>
+        <p className="text-xs text-muted-foreground">@{user.username}</p>
+      </div>
+
+      {/* ── Markaziy Lock Kapsule ── */}
+      <div className="flex justify-center mt-6">
+        <motion.div
+          layout
+          onClick={() => { if (!open) setOpen(true); }}
+          animate={open
+            ? { width: 200, background: "linear-gradient(135deg,#7c3aed,#4f46e5,#2563eb)" }
+            : { width: 52,  background: "linear-gradient(135deg,#3b0764,#1e1b4b)" }
+          }
+          transition={{ type:"spring", stiffness:380, damping:32 }}
+          className="relative overflow-hidden cursor-pointer"
+          style={{
+            height: 52, borderRadius: 999,
+            border: "1.5px solid rgba(139,92,246,0.55)",
+            boxShadow: open
+              ? "0 0 32px rgba(124,58,237,0.55), 0 0 8px rgba(99,102,241,0.4)"
+              : "0 0 18px rgba(124,58,237,0.35), inset 0 0 12px rgba(139,92,246,0.15)",
+            display:"flex", alignItems:"center", justifyContent: open ? "space-between" : "center",
+            padding: open ? "0 8px 0 16px" : "0",
+          }}
+        >
+          {/* Shimmer */}
+          <motion.div animate={{ x:["-120%","220%"] }} transition={{ duration:2.2, repeat:Infinity, ease:"linear", repeatDelay:1 }}
+            className="absolute inset-0 pointer-events-none"
+            style={{ background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)", skewX:-15 }} />
+
+          {/* Lock icon — har doim ko'rinadi */}
+          <motion.div layout animate={open ? { rotate:[0,-12,12,0] } : { rotate:0 }}
+            transition={open ? { duration:0.4, delay:0.1 } : {}}>
+            <Lock className="w-5 h-5 text-violet-300 flex-shrink-0" />
+          </motion.div>
+
+          {/* Kuzatish matni va tugma — faqat ochilganda */}
+          <AnimatePresence>
+            {open && (
+              <motion.div initial={{ opacity:0, x:12 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0 }}
+                transition={{ delay:0.1 }}
+                className="flex items-center gap-2 ml-2">
+                <span className="text-white text-sm font-bold whitespace-nowrap">Kuzatish</span>
+                <motion.button
+                  whileTap={{ scale:0.88 }}
+                  disabled={followPending}
+                  onClick={(e) => { e.stopPropagation(); onFollow(); }}
+                  className="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center flex-shrink-0"
+                >
+                  {followPending
+                    ? <Loader2 className="w-4 h-4 text-white animate-spin" />
+                    : <UserPlus className="w-4 h-4 text-white" />}
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+
+      {/* Obunachi soni */}
+      <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.3 }}
+        className="text-center text-xs text-muted-foreground/50 mt-4">
+        {(user.followersCount ?? 0).toLocaleString()} ta obunachi
+      </motion.p>
+    </div>
+  );
+}
+
 /* ─── Main Page ───────────────────────────────────────────────── */
 export default function ProfilePage({ userId }: ProfilePageProps) {
   const { t } = useTranslation();
@@ -823,79 +935,9 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   if (!user) return <div className="text-center py-20 text-muted-foreground">User not found</div>;
 
   /* ── Qulfli profil (private account, viewer is not following) ── */
-  const isLocked = (user as any).isPrivate === true && !user.isFollowing && !isOwner;
+  const isLocked = (user as any).isPrivate === true && !(following ?? user.isFollowing) && !isOwner;
   if (isLocked) {
-    return (
-      <div className="max-w-2xl mx-auto pb-10">
-        {/* Cover */}
-        <div className="h-44 overflow-hidden relative rounded-b-3xl">
-          {user.coverUrl ? (
-            isVideoUrl(user.coverUrl) ? (
-              <video src={resolveApiUrl(user.coverUrl)} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
-            ) : (
-              <img src={resolveApiUrl(user.coverUrl)} alt="" className="absolute inset-0 w-full h-full object-cover" />
-            )
-          ) : (
-            <div className="absolute inset-0 bg-[#07050f]">
-              <motion.div animate={{ x: [0,45,-10,0], y: [0,-25,10,0] }} transition={{ duration:14, repeat:Infinity, ease:"easeInOut" }}
-                className="absolute -top-20 -left-20 w-80 h-80 rounded-full"
-                style={{ background:"radial-gradient(circle, rgba(124,58,237,0.6) 0%, transparent 68%)", filter:"blur(26px)" }} />
-              <motion.div animate={{ x: [0,-30,14,0], y: [0,18,-14,0] }} transition={{ duration:11, repeat:Infinity, ease:"easeInOut", delay:2.5 }}
-                className="absolute -bottom-12 -right-12 w-72 h-72 rounded-full"
-                style={{ background:"radial-gradient(circle, rgba(59,130,246,0.55) 0%, transparent 68%)", filter:"blur(22px)" }} />
-            </div>
-          )}
-          {/* Blur overlay to hint at hidden content */}
-          <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
-        </div>
-
-        {/* Avatar */}
-        <div className="px-4 -mt-12 relative z-10">
-          <Avatar3D avatarUrl={user.avatarUrl} displayName={user.displayName}
-            isVerified={(user as any).isVerified} isUploading={false} isOwner={false}
-            onUploadClick={() => {}} size={96} />
-        </div>
-
-        {/* Name + lock badge */}
-        <div className="px-4 mt-3 text-center flex flex-col items-center gap-3">
-          <div>
-            <div className="flex items-center justify-center gap-2">
-              <p className="text-xl font-black text-foreground">{user.displayName}</p>
-              {(user as any).isVerified && <BadgeCheck className="w-5 h-5 text-violet-400" />}
-            </div>
-            <p className="text-sm text-muted-foreground">@{user.username}</p>
-          </div>
-
-          {/* Lock indicator */}
-          <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-            className="flex flex-col items-center gap-2 py-6 px-8 rounded-3xl border border-white/10 bg-white/4 w-full max-w-xs">
-            <motion.div animate={{ scale:[1,1.12,1] }} transition={{ duration:2.5, repeat:Infinity }}
-              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600/30 to-blue-600/20 border border-violet-500/30 flex items-center justify-center shadow-lg shadow-violet-500/20">
-              <Lock className="w-6 h-6 text-violet-400" />
-            </motion.div>
-            <p className="font-bold text-foreground text-sm">Yopiq profil</p>
-            <p className="text-xs text-muted-foreground text-center leading-relaxed">
-              Bu foydalanuvchi profilini yopiq qilib qo'ygan.<br/>
-              Postlarini ko'rish uchun kuzating.
-            </p>
-            <p className="text-xs text-muted-foreground/60">
-              {(user.followersCount ?? 0).toLocaleString()} ta obunachi
-            </p>
-          </motion.div>
-
-          {/* Follow button */}
-          <motion.button whileTap={{ scale:0.95 }} whileHover={{ scale:1.02 }}
-            disabled={follow.isPending}
-            onClick={handleFollow}
-            className="flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm text-white shadow-lg shadow-violet-500/30"
-            style={{ background:"linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
-            {follow.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-            Kuzatish
-          </motion.button>
-        </div>
-      </div>
-    );
+    return <LockedProfileView user={user} onFollow={handleFollow} followPending={follow.isPending} />;
   }
 
   const myPosts = posts.filter(p => p.author.id === userId);

@@ -16,6 +16,7 @@ import {
 import {
   isR2Enabled,
   r2GetPresignedUploadUrl,
+  r2UploadStream,
 } from "../lib/r2Storage";
 
 const router: IRouter = Router();
@@ -39,13 +40,15 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
     const { name, size, contentType } = parsed.data;
 
     // Priority 1: Cloudflare R2 (production CDN)
-    // objectPath is the public CDN URL so the frontend can store it as mediaUrl directly.
+    // Server-side proxy: browser → our API → R2 (avoids R2 CORS restriction on direct PUT).
     if (isR2Enabled()) {
-      const { uploadURL, objectPath } = await r2GetPresignedUploadUrl(contentType);
+      const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
+      const host = req.headers.host || "";
+      const baseUrl = `${proto}://${host}`;
       res.json(
         RequestUploadUrlResponse.parse({
-          uploadURL,
-          objectPath,
+          uploadURL: `${baseUrl}/api/storage/uploads/r2-proxy`,
+          objectPath: "r2-proxy",
           metadata: { name, size, contentType },
         }),
       );
@@ -113,6 +116,38 @@ router.get("/storage/cloudinary-check", async (req: Request, res: Response) => {
   }
   const result = await pingCloudinary();
   res.json(result);
+});
+
+/**
+ * PUT /storage/uploads/r2-proxy
+ *
+ * R2 server-side proxy upload.
+ * Client PUTs raw file body here; server streams it directly to R2.
+ * This avoids browser CORS restrictions on direct R2 presigned PUTs.
+ */
+router.put("/storage/uploads/r2-proxy", async (req: Request, res: Response) => {
+  if (!req.session?.userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!isR2Enabled()) {
+    res.status(503).json({ error: "R2 not configured" });
+    return;
+  }
+
+  const contentType = (req.headers["content-type"] as string) || "application/octet-stream";
+  const contentLength = req.headers["content-length"]
+    ? parseInt(req.headers["content-length"] as string, 10)
+    : undefined;
+
+  try {
+    const { objectPath, publicUrl } = await r2UploadStream(req, contentType, contentLength);
+    res.status(200).json({ ok: true, url: publicUrl, objectPath });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    req.log.error({ err: error, msg }, "R2 proxy upload failed");
+    res.status(500).json({ error: "Upload failed", detail: msg });
+  }
 });
 
 /**

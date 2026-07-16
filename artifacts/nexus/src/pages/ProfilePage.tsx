@@ -845,6 +845,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const [creatingPlan, setCreatingPlan] = useState(false);
   const [subscribingPlanId, setSubscribingPlanId] = useState<number | null>(null);
   const [subError, setSubError] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIdx, setViewerIdx] = useState(0);
 
   const { data: plans = [] } = useListCreatorPlans(userId, { query: { queryKey: getListCreatorPlansQueryKey(userId) } });
   const { data: subCheck, refetch: refetchSub } = useCheckCreatorSubscription(userId, { query: { queryKey: getCheckCreatorSubscriptionQueryKey(userId), enabled: !isOwner && !!me } });
@@ -943,9 +945,6 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
   const myPosts = posts.filter(p => p.author.id === userId);
 
-  /* ── PostViewer state ── */
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerIdx, setViewerIdx] = useState(0);
   const openViewer = (idx: number) => { setViewerIdx(idx); setViewerOpen(true); };
 
   /* Analytics calculations */

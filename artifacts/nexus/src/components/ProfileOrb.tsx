@@ -1215,7 +1215,7 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner }: Profil
         {/* Avatar */}
         <div style={{ position:"absolute", inset:3, borderRadius:"50%", overflow:"hidden", border:"2px solid rgba(236,72,153,0.4)", boxShadow:"inset 0 2px 14px rgba(0,0,0,0.55), 0 0 22px rgba(236,72,153,0.42)" }}>
           {targetUser.avatarUrl
-            ? <img src={targetUser.avatarUrl} alt={targetUser.displayName} draggable={false} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+            ? <img loading="lazy" decoding="async" src={targetUser.avatarUrl} alt={targetUser.displayName} draggable={false} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
             : <div style={{ width:"100%", height:"100%", background:"linear-gradient(135deg,#7c3aed 0%,#ec4899 55%,#be185d 100%)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:ORB*0.26, fontWeight:800, color:"#fff", textShadow:"0 1px 8px rgba(0,0,0,0.5)" }}>{initials}</div>
           }
         </div>

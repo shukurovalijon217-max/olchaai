@@ -1883,7 +1883,7 @@ export default function GroupsPage() {
                     {/* Drawing preview in composer */}
                     {drawingPreview && (
                       <div className="relative mt-2 mb-1">
-                        <img src={drawingPreview} alt={t("groups.detail.draw")} className="rounded-xl w-full max-h-48 object-contain bg-[#1a1a2e]" />
+                        <img loading="lazy" decoding="async" src={drawingPreview} alt={t("groups.detail.draw")} className="rounded-xl w-full max-h-48 object-contain bg-[#1a1a2e]" />
                         <div className="absolute top-2 left-2 flex items-center gap-1 opacity-70">
                           <PenLine className="w-3 h-3 text-white" />
                           <span className="text-[9px] text-white font-medium">{t("groups.detail.draw")}</span>

@@ -191,7 +191,7 @@ export default function FactCheckPage() {
                   className="flex items-center gap-3 p-3 rounded-xl bg-white/3 border border-white/8 hover:bg-white/5 transition-colors">
                   <span className="text-xl w-8 text-center flex-shrink-0">{medal}</span>
                   <div className="relative flex-shrink-0">
-                    {entry.avatar ? <img src={entry.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /> :
+                    {entry.avatar ? <img loading="lazy" decoding="async" src={entry.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /> :
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold">
                         {entry.displayName?.[0]}
                       </div>}

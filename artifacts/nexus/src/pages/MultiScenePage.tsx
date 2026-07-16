@@ -73,7 +73,7 @@ function ScenarioCard({ sc, onClick }: { sc: Scenario; onClick: () => void }) {
     >
       <div className="aspect-video bg-gradient-to-br from-violet-900/50 to-purple-900/30 flex items-center justify-center relative">
         {sc.thumbnail ? (
-          <img src={sc.thumbnail} alt="" className="w-full h-full object-cover absolute inset-0" />
+          <img loading="lazy" decoding="async" src={sc.thumbnail} alt="" className="w-full h-full object-cover absolute inset-0" />
         ) : (
           <GitBranch className="w-12 h-12 text-violet-400/50" />
         )}

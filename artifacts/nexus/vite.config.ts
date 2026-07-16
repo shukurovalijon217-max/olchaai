@@ -55,6 +55,9 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    target: "es2020",
+    minify: "esbuild",
+    cssMinify: true,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -64,10 +67,16 @@ export default defineConfig({
           "vendor-icons":    ["lucide-react"],
           "vendor-i18n":     ["i18next", "react-i18next"],
           "vendor-router":   ["wouter"],
+          "vendor-ui":       ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-tooltip"],
         },
+      },
+      treeshake: {
+        preset: "recommended",
+        moduleSideEffects: false,
       },
     },
     chunkSizeWarningLimit: 800,
+    reportCompressedSize: false,
   },
   server: {
     port,

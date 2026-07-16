@@ -107,7 +107,7 @@ export default function LiveExplorePage() {
             >
               <div className="aspect-video bg-gradient-to-br from-red-500/20 to-primary/20 relative flex items-center justify-center">
                 {live.thumbnailUrl
-                  ? <img src={live.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                  ? <img loading="lazy" decoding="async" src={live.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center">
                       <Radio className="w-10 h-10 text-red-400/60" />
                     </div>
@@ -132,7 +132,7 @@ export default function LiveExplorePage() {
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <div className="w-5 h-5 rounded-full bg-primary/20 overflow-hidden flex-shrink-0">
                       {live.host.avatarUrl
-                        ? <img src={live.host.avatarUrl} alt="" className="w-full h-full object-cover" />
+                        ? <img loading="lazy" decoding="async" src={live.host.avatarUrl} alt="" className="w-full h-full object-cover" />
                         : <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-primary">{live.host?.displayName?.[0]}</div>
                       }
                     </div>

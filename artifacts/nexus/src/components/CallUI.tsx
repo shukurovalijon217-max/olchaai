@@ -83,7 +83,7 @@ export default function CallUI({
           {isVideo && cameraOn && localStream
             ? <video ref={pipVidRef} autoPlay muted playsInline className="absolute inset-0 w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
             : avatar
-              ? <img src={avatar} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              ? <img loading="lazy" decoding="async" src={avatar} alt="" className="absolute inset-0 w-full h-full object-cover" />
               : <div className="absolute inset-0 flex items-center justify-center" style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}>
                   <span className="text-white text-4xl font-bold">{name[0]?.toUpperCase()}</span>
                 </div>}
@@ -172,7 +172,7 @@ export default function CallUI({
             <div className="w-28 h-28 rounded-full overflow-hidden shadow-2xl"
               style={{ boxShadow: !isConnected ? "0 0 0 4px rgba(139,92,246,0.3),0 0 40px rgba(139,92,246,0.2)" : "0 8px 32px rgba(0,0,0,0.4)" }}>
               {avatar
-                ? <img src={avatar} alt="" className="w-full h-full object-cover" />
+                ? <img loading="lazy" decoding="async" src={avatar} alt="" className="w-full h-full object-cover" />
                 : <div className="w-full h-full bg-gradient-to-br from-primary to-violet-700 flex items-center justify-center text-4xl font-bold text-white">
                     {name[0]?.toUpperCase()}
                   </div>}

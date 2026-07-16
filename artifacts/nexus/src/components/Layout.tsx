@@ -734,7 +734,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     >
                       {user.avatarUrl ? (
                         <div className="relative">
-                          <img src={user.avatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-violet-500/40" />
+                          <img loading="lazy" decoding="async" src={user.avatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-violet-500/40" />
                           <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-sidebar" />
                         </div>
                       ) : (
@@ -1174,7 +1174,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-2.5">
                           {user.avatarUrl ? (
                             <div className="relative">
-                              <img src={user.avatarUrl} className="w-9 h-9 rounded-full object-cover ring-2 ring-violet-500/40" />
+                              <img loading="lazy" decoding="async" src={user.avatarUrl} className="w-9 h-9 rounded-full object-cover ring-2 ring-violet-500/40" />
                               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0a0818]" />
                             </div>
                           ) : (

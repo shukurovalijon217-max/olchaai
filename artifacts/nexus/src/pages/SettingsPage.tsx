@@ -217,7 +217,7 @@ function ProfileContent() {
                 <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
               </div>
             ) : avatarUrl ? (
-              <img src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-white/20" />
+              <img loading="lazy" decoding="async" src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-white/20" />
             ) : (
               <div className="w-16 h-16 rounded-full bg-violet-500/30 flex items-center justify-center text-xl font-bold text-violet-300 ring-2 ring-violet-500/30">
                 {(displayName || user?.displayName || "?")[0]?.toUpperCase()}

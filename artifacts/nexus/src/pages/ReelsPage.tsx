@@ -298,7 +298,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
                   style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
                   {c.author.avatarUrl
-                    ? <img src={c.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    ? <img loading="lazy" decoding="async" src={c.author.avatarUrl} alt="" className="w-full h-full object-cover" />
                     : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
                         {initials(c.author.displayName)}
                       </div>}
@@ -319,7 +319,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
           <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden"
             style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
             {user?.avatarUrl
-              ? <img src={resolveApiUrl(user.avatarUrl)} alt="" className="w-full h-full object-cover" />
+              ? <img loading="lazy" decoding="async" src={resolveApiUrl(user.avatarUrl)} alt="" className="w-full h-full object-cover" />
               : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
                   {initials(user?.displayName)}
                 </div>}
@@ -403,7 +403,7 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
 
   if (!videoUrl && !hlsUrl) return (
     <div className="absolute inset-0">
-      {thumbnailUrl ? <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
+      {thumbnailUrl ? <img loading="lazy" decoding="async" src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
         : <div className="w-full h-full" style={{ background: "linear-gradient(135deg,#1e0533,#030314)" }} />}
     </div>
   );
@@ -411,7 +411,7 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
   return (
     <div className="absolute inset-0">
       {thumbnailUrl && (
-        <img src={thumbnailUrl} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110"
+        <img loading="lazy" decoding="async" src={thumbnailUrl} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110"
           style={{ filter: "blur(24px) brightness(0.28)", pointerEvents: "none" }} />
       )}
       <video ref={videoRef as React.RefObject<HTMLVideoElement>}
@@ -663,7 +663,7 @@ function ReelSlide({
 
       {/* Ambient blur bg */}
       {reel.thumbnailUrl && (
-        <img src={reel.thumbnailUrl} alt="" aria-hidden
+        <img loading="lazy" decoding="async" src={reel.thumbnailUrl} alt="" aria-hidden
           className="absolute inset-[-8%] w-[116%] h-[116%] object-cover pointer-events-none"
           style={{ filter: "blur(60px) saturate(2.2) brightness(0.14)", zIndex: 0 }} />
       )}
@@ -876,7 +876,7 @@ function ReelSlide({
               <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
                 style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
                 {reel.author?.avatarUrl
-                  ? <img src={resolveApiUrl(reel.author.avatarUrl)} alt="" className="w-full h-full object-cover" />
+                  ? <img loading="lazy" decoding="async" src={resolveApiUrl(reel.author.avatarUrl)} alt="" className="w-full h-full object-cover" />
                   : <span className="text-[10px] font-black text-white select-none">{initials(reel.author?.displayName)}</span>}
               </div>
             </div>
@@ -971,7 +971,7 @@ function ReelSlide({
                   <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0"
                     style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
                     {u.avatarUrl
-                      ? <img src={resolveApiUrl(u.avatarUrl)} alt="" className="w-full h-full object-cover" />
+                      ? <img loading="lazy" decoding="async" src={resolveApiUrl(u.avatarUrl)} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
                           {(u.displayName ?? "?").slice(0, 2).toUpperCase()}
                         </div>}
@@ -1281,7 +1281,7 @@ export default function ReelsPage() {
                       boxShadow: isAct ? "0 0 14px rgba(167,139,250,0.45)" : "none",
                       opacity: Math.max(0.15, 1 - dist * 0.22), transition: "all 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}>
                     {r.thumbnailUrl
-                      ? <img src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                      ? <img loading="lazy" decoding="async" src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full" style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }} />}
                   </motion.button>
                 );

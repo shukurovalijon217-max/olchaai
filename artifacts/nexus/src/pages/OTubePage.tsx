@@ -378,7 +378,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
             overflow:"hidden",
             display:"flex",alignItems:"center",justifyContent:"center"}}>
             {user.avatarUrl
-              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
+              ? <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
               : <span style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>
                   {(user.displayName||user.username||"S")[0].toUpperCase()}
                 </span>}
@@ -424,7 +424,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
               overflow:"hidden",
               display:"flex",alignItems:"center",justifyContent:"center"}}>
               {c.author.avatarUrl
-                ? <img src={c.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
+                ? <img loading="lazy" decoding="async" src={c.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
                 : <span style={{fontSize:10,fontWeight:900,color:"white"}}>
                     {(c.author.displayName||c.author.username||"?")[0].toUpperCase()}
                   </span>}
@@ -2017,7 +2017,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
           boxShadow:`0 0 0 2px ${col}44, 0 0 20px ${col}22`,
           display:"flex",alignItems:"center",justifyContent:"center"}}>
         {author.avatarUrl
-          ? <img src={author.avatarUrl} alt="" className="w-full h-full object-cover"/>
+          ? <img loading="lazy" decoding="async" src={author.avatarUrl} alt="" className="w-full h-full object-cover"/>
           : <span style={{fontSize:17,fontWeight:900,color:"white"}}>{(author.displayName||author.username||"?")[0]}</span>}
       </div>
       {/* Name — clickable → profile */}
@@ -2110,7 +2110,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
       {/* Thumbnail — info panel lives INSIDE so it doesn't overlap Watch Party row */}
       <div style={{aspectRatio:expanded?"4/3":"16/9",position:"relative",transition:"all 0.4s cubic-bezier(.4,0,.2,1)",overflow:"hidden"}}>
         {video.thumbnailUrl
-          ? <img src={video.thumbnailUrl} alt={video.caption} className="w-full h-full object-cover"/>
+          ? <img loading="lazy" decoding="async" src={video.thumbnailUrl} alt={video.caption} className="w-full h-full object-cover"/>
           : video.videoUrl
           ? <video src={video.videoUrl} autoPlay muted playsInline loop
               className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
@@ -2162,7 +2162,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
                     animate={{strokeDashoffset:`${2*Math.PI*13.5*0.27}`}}
                     transition={{duration:2,ease:"easeOut",delay:0.5}}/>
                 </svg>
-                <img src={video.author.avatarUrl} alt=""
+                <img loading="lazy" decoding="async" src={video.author.avatarUrl} alt=""
                   style={{width:24,height:24,borderRadius:"50%",objectFit:"cover",
                     position:"absolute",top:4,left:4,zIndex:2}}/>
               </div>
@@ -2202,7 +2202,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
             background:"linear-gradient(135deg,rgba(0,229,255,0.2),rgba(157,0,255,0.2))",
             display:"flex",alignItems:"center",justifyContent:"center"}}>
             {user.avatarUrl
-              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
+              ? <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
               : <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>
                   {(user.displayName||user.username||"S")[0].toUpperCase()}
                 </span>}
@@ -2379,7 +2379,7 @@ function TrendRow({ video, onPlay, idx }:
       {/* Thumbnail — fills entire card, no border visible */}
       <div style={{aspectRatio:"3/4",position:"relative",overflow:"hidden"}}>
         {video.thumbnailUrl
-          ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
+          ? <img loading="lazy" decoding="async" src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
               style={{transform:"scale(1.04)"}}/>
           : video.videoUrl
           ? <video src={video.videoUrl} autoPlay muted playsInline loop
@@ -2520,7 +2520,7 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
       {/* Full-bleed image — NO bottom info box */}
       <div style={{aspectRatio:ar,position:"relative",overflow:"hidden",borderRadius:16}}>
         {video.thumbnailUrl
-          ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
+          ? <img loading="lazy" decoding="async" src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
               style={{transition:"transform 0.4s"}}/>
           : video.videoUrl
           ? <video src={video.videoUrl} autoPlay muted playsInline loop
@@ -2776,7 +2776,7 @@ function ContinueRow({ items, onPlay }: { items:ContinueWatchingItem[]; onPlay:(
               whileTap={{scale:0.93}} onClick={()=>onPlay(v)}>
               <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
                 {v.thumbnailUrl
-                  ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                  ? <img loading="lazy" decoding="async" src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                   : v.videoUrl
                   ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                   : (v as any).audioTrack
@@ -3050,7 +3050,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
                     background:thumbSrc?"#000":"rgba(0,229,255,0.04)",
                     display:"flex",alignItems:"center",justifyContent:"center"}}>
                   {thumbSrc
-                    ? <img src={thumbSrc} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    ? <img loading="lazy" decoding="async" src={thumbSrc} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                     : <ImagePlus style={{width:20,height:20,color:`${T.cyan}66`}}/>}
                 </motion.div>
                 <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",gap:4}}>
@@ -5821,7 +5821,7 @@ function MoodRow({ title, emoji, col, videos, onPlay }:
             whileTap={{scale:0.93}} onClick={()=>onPlay(v)}>
             <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
               {v.thumbnailUrl
-                ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                ? <img loading="lazy" decoding="async" src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                 : v.videoUrl
                 ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                 : <div className="w-full h-full"
@@ -5852,7 +5852,7 @@ function ShortsCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
       style={{width:112,aspectRatio:"9/16",borderRadius:14,
         boxShadow:`0 4px 20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)`}}>
       {video.thumbnailUrl
-        ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+        ? <img loading="lazy" decoding="async" src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
         : video.videoUrl
         ? <video src={video.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
         : <div className="w-full h-full" style={{background:"linear-gradient(180deg,#1a0028,#000510)"}}/>}
@@ -5970,7 +5970,7 @@ function CoverflowRow({ videos, onPlay }: { videos: Reel[]; onPlay:(v:Reel)=>voi
               >
                 {/* Thumbnail / video */}
                 {v.thumbnailUrl
-                  ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                  ? <img loading="lazy" decoding="async" src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                   : v.videoUrl
                   ? <video src={v.videoUrl} autoPlay muted playsInline loop
                       className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
@@ -6259,7 +6259,7 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
                   background:"rgba(255,255,255,0.07)", overflow:"hidden",
                   display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>
                   {n.actorAvatar
-                    ? <img src={n.actorAvatar} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+                    ? <img loading="lazy" decoding="async" src={n.actorAvatar} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
                     : <span>{typeIcon(n.type)}</span>}
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
@@ -6690,7 +6690,7 @@ export default function OTubePage() {
                   <div style={{width:80,aspectRatio:"16/9",flexShrink:0,borderRadius:8,
                     position:"relative",overflow:"hidden"}}>
                     {v.thumbnailUrl
-                      ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                      ? <img loading="lazy" decoding="async" src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                       : v.videoUrl
                       ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                       : <div className="w-full h-full" style={{background:"#0a0218"}}/>}

@@ -8,7 +8,7 @@ type TabId = "all" | "users" | "posts" | "reels" | "products";
 
 function Avatar({ url, name, size = 40 }: { url?: string | null; name?: string; size?: number }) {
   return url ? (
-    <img src={url} alt={name} style={{ width: size, height: size }} className="rounded-full object-cover flex-shrink-0" />
+    <img loading="lazy" decoding="async" src={url} alt={name} style={{ width: size, height: size }} className="rounded-full object-cover flex-shrink-0" />
   ) : (
     <div style={{ width: size, height: size }} className="rounded-full bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center flex-shrink-0">
       <span className="text-amber-100 font-bold text-sm">{(name ?? "?")[0].toUpperCase()}</span>
@@ -165,7 +165,7 @@ export default function SearchPage() {
                       className="w-full flex items-center gap-3 p-3 rounded-xl bg-amber-950/20 hover:bg-amber-950/40 transition-colors text-left"
                     >
                       {p.mediaUrl ? (
-                        <img src={p.mediaUrl} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+                        <img loading="lazy" decoding="async" src={p.mediaUrl} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
                       ) : (
                         <div className="w-14 h-14 rounded-lg bg-amber-900/30 flex items-center justify-center flex-shrink-0">
                           <FileText className="w-5 h-5 text-amber-600" />
@@ -198,7 +198,7 @@ export default function SearchPage() {
                       className="relative aspect-[9/16] rounded-xl overflow-hidden bg-amber-950/30 group"
                     >
                       {r.thumbnailUrl ? (
-                        <img src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Play className="w-8 h-8 text-amber-600" />
@@ -230,7 +230,7 @@ export default function SearchPage() {
                     >
                       <div className="aspect-square bg-amber-900/20">
                         {p.thumbnailUrl ? (
-                          <img src={p.thumbnailUrl} alt={p.title} className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={p.thumbnailUrl} alt={p.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <ShoppingBag className="w-8 h-8 text-amber-600/50" />

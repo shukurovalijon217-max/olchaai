@@ -101,7 +101,7 @@ export default function ExplorePage() {
                 className="aspect-square rounded-xl overflow-hidden bg-card border border-border cursor-pointer"
               >
                 {post.mediaUrl ? (
-                  <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center p-3">
                     <p className="text-xs text-foreground line-clamp-4 text-center">{post.content}</p>
@@ -134,7 +134,7 @@ export default function ExplorePage() {
                 >
                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 mx-auto mb-3 flex items-center justify-center overflow-hidden">
                     {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-lg font-bold text-primary">{user.displayName?.[0]}</span>
                     )}
@@ -189,7 +189,7 @@ export default function ExplorePage() {
                 >
                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 mx-auto mb-3 flex items-center justify-center overflow-hidden">
                     {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-lg font-bold text-primary">{user.displayName?.[0]}</span>
                     )}
@@ -240,7 +240,7 @@ export default function ExplorePage() {
                 >
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/30 to-accent/30 flex-shrink-0 flex items-center justify-center overflow-hidden">
                     {group.avatarUrl ? (
-                      <img src={group.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={group.avatarUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-lg font-bold text-primary">{group.name[0]}</span>
                     )}

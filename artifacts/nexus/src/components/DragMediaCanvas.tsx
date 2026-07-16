@@ -323,7 +323,7 @@ export default function DragMediaCanvas({ layers, onChange, canvasW = CANVAS_W, 
 
                 {/* Layer content */}
                 {layer.type === "image" && (
-                  <img src={layer.src} alt="" draggable={false}
+                  <img loading="lazy" decoding="async" src={layer.src} alt="" draggable={false}
                     style={{ width:"100%", height:"100%", objectFit:"cover", borderRadius:6, filter:layer.filter==="none"?"":layer.filter, pointerEvents:"none" }}/>
                 )}
                 {layer.type === "video" && (

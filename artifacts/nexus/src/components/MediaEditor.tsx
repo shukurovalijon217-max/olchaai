@@ -1140,7 +1140,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
           <video ref={videoRef} src={previews[slide]} className="w-full h-full object-cover" muted loop playsInline autoPlay
             style={{ filter: combinedCss !== "none" ? combinedCss : undefined, transition:"filter 0.25s ease" }} />
         ) : (
-          <img src={previews[slide]} alt="" className="w-full h-full object-cover"
+          <img loading="lazy" decoding="async" src={previews[slide]} alt="" className="w-full h-full object-cover"
             style={{ filter: combinedCss !== "none" ? combinedCss : undefined, transition:"filter 0.25s ease" }} />
         )}
 
@@ -1996,7 +1996,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                         <video src={previews[0]} className="w-full h-full object-cover"
                           style={{ filter: f.css === "none" ? undefined : f.css }} muted playsInline />
                       ) : (
-                        <img src={previews[0]} alt={f.label} className="w-full h-full object-cover"
+                        <img loading="lazy" decoding="async" src={previews[0]} alt={f.label} className="w-full h-full object-cover"
                           style={{ filter: f.css === "none" ? undefined : f.css }} />
                       )
                     )}
@@ -2180,7 +2180,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                             borderLeft: isSelected ? "2.5px solid #06b6d4" : "2.5px solid transparent",
                           }}>
                           {song.artwork
-                            ? <img src={song.artwork} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" style={{ border:"1px solid rgba(255,255,255,0.1)" }} />
+                            ? <img loading="lazy" decoding="async" src={song.artwork} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" style={{ border:"1px solid rgba(255,255,255,0.1)" }} />
                             : <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background:"rgba(6,182,212,0.2)" }}><Music className="w-4 h-4 text-cyan-300" /></div>}
                           <div className="flex flex-col items-start flex-1 min-w-0">
                             <span className="text-[13px] font-semibold text-white truncate w-full text-left leading-tight">{song.title}</span>
@@ -2744,7 +2744,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                           <video src={previews[0]} className="w-full h-full object-cover" muted playsInline
                             style={{ filter: f.css === "none" ? undefined : f.css }} />
                         ) : (
-                          <img src={previews[0]} alt="" className="w-full h-full object-cover"
+                          <img loading="lazy" decoding="async" src={previews[0]} alt="" className="w-full h-full object-cover"
                             style={{ filter: f.css === "none" ? undefined : f.css }} />
                         )
                       ) : (

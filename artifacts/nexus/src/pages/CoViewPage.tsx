@@ -45,7 +45,7 @@ interface ChatMsg { fromId: number; text: string; ts: number; displayName?: stri
 
 function Avatar({ m, size = 28 }: { m: Member; size?: number }) {
   return m.avatarUrl ? (
-    <img src={m.avatarUrl} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: `2px solid ${T.border}` }} />
+    <img loading="lazy" decoding="async" src={m.avatarUrl} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: `2px solid ${T.border}` }} />
   ) : (
     <div style={{
       width: size, height: size, borderRadius: "50%",

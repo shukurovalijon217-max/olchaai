@@ -153,7 +153,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center flex-shrink-0 overflow-hidden border border-border/60">
             {user?.avatarUrl
-              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ? <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
               : <span className="text-xs font-bold text-primary">{user?.displayName?.[0]?.toUpperCase() ?? "?"}</span>
             }
           </div>
@@ -215,7 +215,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
                   className="flex gap-3 items-center px-1">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500/25 to-blue-500/25 flex-shrink-0 flex items-center justify-center overflow-hidden border border-violet-500/20">
                     {vc.author?.avatarUrl
-                      ? <img src={vc.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      ? <img loading="lazy" decoding="async" src={vc.author.avatarUrl} alt="" className="w-full h-full object-cover" />
                       : <span className="text-xs font-bold text-violet-400">{vc.author?.displayName?.[0]?.toUpperCase() ?? "?"}</span>
                     }
                   </div>
@@ -271,7 +271,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex-shrink-0 flex items-center justify-center overflow-hidden border border-border/50">
                 {comment.author.avatarUrl
-                  ? <img src={comment.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ? <img loading="lazy" decoding="async" src={comment.author.avatarUrl} alt="" className="w-full h-full object-cover" />
                   : <span className="text-xs font-bold text-primary">{comment.author.displayName?.[0]?.toUpperCase()}</span>
                 }
               </div>

@@ -821,7 +821,7 @@ export default function LibraryPage() {
                       whileHover={{ y: -2 }} className="text-left group">
                       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted mb-2 border border-border">
                         {book.thumbnailUrl ? (
-                          <img src={book.thumbnailUrl} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <img loading="lazy" decoding="async" src={book.thumbnailUrl} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <BookOpen className="w-8 h-8 text-muted-foreground opacity-40" />
@@ -1168,7 +1168,7 @@ export default function LibraryPage() {
                     <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="group">
                       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted mb-2 border border-border">
                         {item.thumbnailUrl ? (
-                          <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <img loading="lazy" decoding="async" src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ background: "linear-gradient(135deg,#1a1035 0%,#0d1a2e 100%)" }}>
                             <span className="text-4xl font-black" style={{ color: "rgba(120,87,255,0.4)" }}>{item.title?.[0]?.toUpperCase()}</span>
@@ -1400,7 +1400,7 @@ export default function LibraryPage() {
                 <div className="flex items-start gap-4">
                   <div className="w-20 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden bg-muted">
                     {selected.thumbnailUrl ? (
-                      <img src={selected.thumbnailUrl} alt={selected.title} className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={selected.thumbnailUrl} alt={selected.title} className="w-full h-full object-cover" />
                     ) : <div className="w-full h-full flex items-center justify-center"><BookOpen className="w-6 h-6 text-muted-foreground opacity-40" /></div>}
                   </div>
                   <div className="flex-1 min-w-0">

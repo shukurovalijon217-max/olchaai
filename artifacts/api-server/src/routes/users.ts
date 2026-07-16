@@ -9,6 +9,19 @@ import { notifyFollow } from "../lib/emailNotify";
 
 const router = Router();
 
+/**
+ * Strip private fields from a user object.
+ * If viewerId === user.id, return all public fields.
+ * Otherwise, hide email/phone/privacySettings/notifPrefs/timezone/focusShield.
+ */
+function publicUser(user: Record<string, any>, viewerId?: number) {
+  const { passwordHash: _pw, ...u } = user;
+  if (viewerId && viewerId === u.id) return u;
+  const { email: _e, phone: _p, privacySettings: _ps, notifPrefs: _np, focusShield: _fs, timezone: _tz, ...pub } = u;
+  return pub;
+}
+
+/* ── Search / list users (public profiles only) ── */
 router.get("/users", async (req, res) => {
   try {
     const search = req.query.search as string | undefined;
@@ -23,13 +36,10 @@ router.get("/users", async (req, res) => {
     const users = await query.limit(limit).offset(offset);
 
     const statsMap = await getUserStatsMap(users.map(u => u.id), viewerId);
-    const enriched = users.map((u) => {
-      const { passwordHash: _, ...safeUser } = u;
-      return {
-        ...safeUser,
-        ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
-      };
-    });
+    const enriched = users.map((u) => ({
+      ...publicUser(u, viewerId),
+      ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
+    }));
 
     res.json(enriched);
   } catch (err) {
@@ -38,18 +48,7 @@ router.get("/users", async (req, res) => {
   }
 });
 
-router.post("/users", async (req, res) => {
-  try {
-    const { username, displayName, email, bio, avatarUrl } = req.body;
-    const [user] = await db.insert(usersTable).values({ username, displayName, email, bio, avatarUrl }).returning();
-    const { passwordHash: _, ...safeUser } = user;
-    res.status(201).json({ ...safeUser, followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
+/* ── Platform stats summary (no user data) ── */
 router.get("/users/stats/summary", async (req, res) => {
   try {
     const [total] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable);
@@ -61,6 +60,7 @@ router.get("/users/stats/summary", async (req, res) => {
   }
 });
 
+/* ── Get single user profile ── */
 router.get("/users/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -77,8 +77,13 @@ router.get("/users/:id", async (req, res) => {
           ? db.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, id))).limit(1)
           : Promise.resolve([]),
       ]);
-      const { passwordHash: _, ...safeUser } = user;
-      return { ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: (followCheck as { id: number }[]).length > 0 };
+      return {
+        ...publicUser(user, viewerId),
+        followersCount: followers.count,
+        followingCount: following.count,
+        postsCount: postsCount.count,
+        isFollowing: (followCheck as { id: number }[]).length > 0
+      };
     }, 30);
     if (!result) { res.status(404).json({ error: "Not found" }); return; }
     res.json(result);
@@ -88,6 +93,7 @@ router.get("/users/:id", async (req, res) => {
   }
 });
 
+/* ── Get user's posts ── */
 router.get("/users/:id/posts", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -105,12 +111,22 @@ router.get("/users/:id/posts", async (req, res) => {
   }
 });
 
+/* ── Update own profile (ownership enforced) ── */
 router.patch("/users/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const sessionUserId = (req.session as any)?.userId as number | undefined;
+
+    // Must be logged in and can only edit your OWN profile
+    if (!sessionUserId) { res.status(401).json({ error: "Login talab qilinadi" }); return; }
+    if (sessionUserId !== id) { res.status(403).json({ error: "Faqat o'z profilingizni o'zgartirishingiz mumkin" }); return; }
+
     const { displayName, bio, avatarUrl, coverUrl } = req.body;
     const [user] = await db.update(usersTable).set({ displayName, bio, avatarUrl, coverUrl }).where(eq(usersTable.id, id)).returning();
     if (!user) { res.status(404).json({ error: "Not found" }); return; }
+
+    cacheDelPattern("users:");
+
     const [[followers], [following], [postsCount]] = await Promise.all([
       db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
       db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
@@ -124,11 +140,13 @@ router.patch("/users/:id", async (req, res) => {
   }
 });
 
+/* ── Follow / unfollow a user ── */
 router.post("/users/:id/follow", async (req, res) => {
   try {
     const followingId = Number(req.params.id);
     const followerId = (req.session as any)?.userId as number | undefined;
     if (!followerId) { res.status(401).json({ error: "Unauthorized" }); return; }
+    if (followerId === followingId) { res.status(400).json({ error: "O'zingizni follow qila olmaysiz" }); return; }
     const existing = await db.select().from(followsTable).where(and(eq(followsTable.followerId, followerId), eq(followsTable.followingId, followingId)));
     const isFollowing = existing.length > 0;
     if (isFollowing) {
@@ -139,7 +157,6 @@ router.post("/users/:id/follow", async (req, res) => {
     const [followers] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, followingId));
     res.json({ following: !isFollowing, followersCount: followers.count });
 
-    // Email: yangi follower bo'lganda xabar
     if (!isFollowing) {
       void (async () => {
         try {
@@ -163,6 +180,7 @@ router.post("/users/:id/follow", async (req, res) => {
   }
 });
 
+/* ── Get followers list ── */
 router.get("/users/:id/followers", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -173,13 +191,10 @@ router.get("/users/:id/followers", async (req, res) => {
 
     const users = await db.select().from(usersTable).where(inArray(usersTable.id, userIds));
     const statsMap = await getUserStatsMap(userIds, viewerId);
-    const enriched = users.map((u) => {
-      const { passwordHash: _, ...safeUser } = u;
-      return {
-        ...safeUser,
-        ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
-      };
-    });
+    const enriched = users.map((u) => ({
+      ...publicUser(u, viewerId),
+      ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
+    }));
     res.json(enriched);
   } catch (err) {
     req.log.error(err);

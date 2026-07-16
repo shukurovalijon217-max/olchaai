@@ -1011,7 +1011,7 @@ function MonetizationTab() {
                 {payouts.map(p => (
                   <div key={p.id} className="px-5 py-4 flex items-center gap-4">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600/50 to-pink-600/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
-                      {p.user?.avatarUrl ? <img src={p.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (p.user?.displayName?.[0] ?? "?")}
+                      {p.user?.avatarUrl ? <img loading="lazy" decoding="async" src={p.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (p.user?.displayName?.[0] ?? "?")}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
@@ -1159,7 +1159,7 @@ function MonetizationTab() {
                 {applications.map(a => (
                   <div key={a.id} className="px-5 py-4 flex items-center gap-4">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-600/50 to-orange-600/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
-                      {a.user?.avatarUrl ? <img src={a.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (a.user?.displayName?.[0] ?? "?")}
+                      {a.user?.avatarUrl ? <img loading="lazy" decoding="async" src={a.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (a.user?.displayName?.[0] ?? "?")}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
@@ -3315,7 +3315,7 @@ export default function AdminPage() {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <div className="w-7 h-7 rounded-full bg-white/10 overflow-hidden flex-shrink-0">
-                                {user.avatarUrl && <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />}
+                                {user.avatarUrl && <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover" />}
                               </div>
                               <div>
                                 <p className="font-semibold text-white text-xs">{user.displayName || user.username}</p>

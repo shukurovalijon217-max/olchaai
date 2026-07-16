@@ -43,7 +43,7 @@ function MoodBubble({ entry, index }: { entry: MoodEntry; index: number }) {
         style={{ background: `radial-gradient(circle, ${mood.color}44, ${mood.color}22)`, border: `2px solid ${mood.color}55`, boxShadow: `0 0 ${entry.energyLevel * 3}px ${mood.color}44` }}>
         <span className="text-lg">{mood.emoji}</span>
         {entry.avatar ? (
-          <img src={entry.avatar} alt="" className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-black object-cover" />
+          <img loading="lazy" decoding="async" src={entry.avatar} alt="" className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-black object-cover" />
         ) : (
           <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-black bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-[8px] text-white font-bold">
             {entry.displayName?.[0]?.toUpperCase()}
@@ -238,7 +238,7 @@ export default function MoodMapPage() {
                   <motion.div key={e.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                     className={`flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r ${mood.bg} border border-white/10`}>
                     <div className="relative flex-shrink-0">
-                      {e.avatar ? <img src={e.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /> :
+                      {e.avatar ? <img loading="lazy" decoding="async" src={e.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /> :
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-white font-bold">
                           {e.displayName?.[0]?.toUpperCase()}
                         </div>}

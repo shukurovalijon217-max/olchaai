@@ -828,7 +828,7 @@ export default function HomePage() {
                   }}
                 >
                   {holoUser.avatarUrl ? (
-                    <img src={holoUser.avatarUrl} alt="" className="w-full h-full object-cover"
+                    <img loading="lazy" decoding="async" src={holoUser.avatarUrl} alt="" className="w-full h-full object-cover"
                       style={{ filter: "saturate(1.3) brightness(1.1)" }} />
                   ) : (
                     <span className="text-3xl font-black text-violet-300">

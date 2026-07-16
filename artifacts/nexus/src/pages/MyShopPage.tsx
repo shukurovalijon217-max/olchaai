@@ -134,7 +134,7 @@ export default function MyShopPage() {
                   <button onClick={() => navigate(`/bozor/${p.id}`)} className="w-full">
                     <div className="relative aspect-square bg-amber-900/15">
                       {p.thumbnailUrl ? (
-                        <img src={p.thumbnailUrl} alt={p.title} className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={p.thumbnailUrl} alt={p.title} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <ShoppingBag className="w-8 h-8 text-amber-700/30" />
@@ -183,7 +183,7 @@ export default function MyShopPage() {
                 <div key={o.id} className="p-3 rounded-xl bg-amber-950/20 border border-amber-900/20">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg bg-amber-900/20 overflow-hidden flex-shrink-0">
-                      {o.product?.thumbnailUrl && <img src={o.product.thumbnailUrl} className="w-full h-full object-cover" />}
+                      {o.product?.thumbnailUrl && <img loading="lazy" decoding="async" src={o.product.thumbnailUrl} className="w-full h-full object-cover" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{o.product?.title ?? "Mahsulot"}</p>
@@ -242,7 +242,7 @@ export default function MyShopPage() {
                 <div key={o.id} className="p-3 rounded-xl bg-amber-950/20 border border-amber-900/20">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg bg-amber-900/20 overflow-hidden flex-shrink-0">
-                      {o.product?.thumbnailUrl && <img src={o.product.thumbnailUrl} className="w-full h-full object-cover" />}
+                      {o.product?.thumbnailUrl && <img loading="lazy" decoding="async" src={o.product.thumbnailUrl} className="w-full h-full object-cover" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{o.product?.title ?? "Mahsulot"}</p>

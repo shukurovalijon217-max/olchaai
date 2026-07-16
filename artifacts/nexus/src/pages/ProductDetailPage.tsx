@@ -103,7 +103,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
       <div className="relative bg-amber-950/20 overflow-hidden" style={{ height: 320 }}>
         {images.length > 0 ? (
           <>
-            <img src={images[imageIdx]} alt={product.title} className="w-full h-full object-contain" />
+            <img loading="lazy" decoding="async" src={images[imageIdx]} alt={product.title} className="w-full h-full object-contain" />
             {images.length > 1 && (
               <>
                 <button onClick={() => setImageIdx(i => (i - 1 + images.length) % images.length)}
@@ -139,7 +139,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
           {images.map((url: string, i: number) => (
             <button key={i} onClick={() => setImageIdx(i)}
               className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${i === imageIdx ? "border-amber-500" : "border-transparent"}`}>
-              <img src={url} alt="" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -182,7 +182,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
               className="flex-1 flex items-center gap-3 p-3 rounded-xl bg-amber-950/20 hover:bg-amber-950/35 border border-amber-900/30 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-amber-700/40 overflow-hidden flex-shrink-0">
-                {(product as any).seller.avatarUrl && <img src={(product as any).seller.avatarUrl} className="w-full h-full object-cover" />}
+                {(product as any).seller.avatarUrl && <img loading="lazy" decoding="async" src={(product as any).seller.avatarUrl} className="w-full h-full object-cover" />}
               </div>
               <div className="flex-1 text-left">
                 <div className="flex items-center gap-1 font-semibold text-sm">
@@ -244,7 +244,7 @@ export default function ProductDetailPage({ productId }: { productId: number }) 
                 <div key={r.id} className="p-3 rounded-xl bg-amber-950/20 border border-amber-900/20">
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-7 h-7 rounded-full bg-amber-700/40 overflow-hidden">
-                      {r.reviewer?.avatarUrl && <img src={r.reviewer.avatarUrl} className="w-full h-full object-cover" />}
+                      {r.reviewer?.avatarUrl && <img loading="lazy" decoding="async" src={r.reviewer.avatarUrl} className="w-full h-full object-cover" />}
                     </div>
                     <span className="text-sm font-medium">{r.reviewer?.displayName ?? "Foydalanuvchi"}</span>
                     <div className="flex gap-0.5 ml-auto">

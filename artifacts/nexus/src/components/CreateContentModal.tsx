@@ -187,7 +187,7 @@ function UploadZone({
           ) : file?.type?.startsWith("video") ? (
             <video src={preview} className="w-full h-full object-cover" muted playsInline controls />
           ) : (
-            <img src={preview} alt="" className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={preview} alt="" className="w-full h-full object-cover" />
           )}
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
             <Upload className="w-6 h-6 text-white" />
@@ -1429,7 +1429,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 {item.file.type.startsWith("video") ? (
                                   <video src={item.preview} className="w-full h-full object-cover" muted />
                                 ) : (
-                                  <img src={item.preview} alt="" className="w-full h-full object-cover" />
+                                  <img loading="lazy" decoding="async" src={item.preview} alt="" className="w-full h-full object-cover" />
                                 )}
 
                                 {/* Video badge */}
@@ -3251,7 +3251,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <p className="text-xs text-white/40">{upStoryProg}%</p>
                             </div>
                           ) : storyFile.type.startsWith("image") ? (
-                            <img src={storyPreview} alt="" className="w-full max-h-72 object-cover" />
+                            <img loading="lazy" decoding="async" src={storyPreview} alt="" className="w-full max-h-72 object-cover" />
                           ) : (
                             <video src={storyPreview} className="w-full max-h-72 object-cover" controls muted />
                           )}

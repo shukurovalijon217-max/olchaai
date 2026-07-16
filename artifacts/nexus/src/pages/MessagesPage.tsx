@@ -329,7 +329,7 @@ function ContactPickerModal({ users, onPick, onClose }: {
             <button key={user.id} onClick={()=>{ onPick(user); onClose(); }}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex-shrink-0 overflow-hidden flex items-center justify-center text-primary font-bold text-sm">
-                {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/> : (user.displayName?.[0]||"?").toUpperCase()}
+                {user.avatarUrl ? <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover"/> : (user.displayName?.[0]||"?").toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>
@@ -681,13 +681,13 @@ function MsgBubble({
               )}
               {msg.type==="image"&&msg.mediaUrl&&(
                 <div className="overflow-hidden rounded-2xl">
-                  <img src={msg.mediaUrl} alt="" className="max-w-[220px] max-h-[220px] object-cover"/>
+                  <img loading="lazy" decoding="async" src={msg.mediaUrl} alt="" className="max-w-[220px] max-h-[220px] object-cover"/>
                   {msg.content&&<p className="px-3 py-2 text-sm msg-neon-text">{msg.content}</p>}
                 </div>
               )}
               {msg.type==="drawing"&&msg.mediaUrl&&(
                 <div className="overflow-hidden rounded-2xl relative group/draw">
-                  <img src={msg.mediaUrl} alt={t("msg.drawing")} className="max-w-[240px] max-h-[200px] object-contain bg-[#1a1a2e]"/>
+                  <img loading="lazy" decoding="async" src={msg.mediaUrl} alt={t("msg.drawing")} className="max-w-[240px] max-h-[200px] object-contain bg-[#1a1a2e]"/>
                   <div className="absolute top-1.5 left-2 flex items-center gap-1 opacity-60">
                     <PenLine className="w-3 h-3 text-white"/>
                     <span className="text-[9px] text-white font-medium">{t("msg.drawing")}</span>
@@ -852,7 +852,7 @@ function ForwardModal({
               <button key={c.id} onClick={()=>onForward(c.id)}
                 className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-muted text-left transition-colors">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {other?.avatarUrl ? <img src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
+                  {other?.avatarUrl ? <img loading="lazy" decoding="async" src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
                 </div>
                 <span className="text-sm text-foreground">{other?.displayName||t("msg.unknown_user")}</span>
               </button>
@@ -1345,7 +1345,7 @@ export default function MessagesPage() {
                 className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isActive?"bg-primary/10 border border-primary/20":"hover:bg-muted"}`}>
                 <div className="relative flex-shrink-0">
                   <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden">
-                    {other?.avatarUrl ? <img src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="text-base font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
+                    {other?.avatarUrl ? <img loading="lazy" decoding="async" src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="text-base font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
                   </div>
                   {isOnline(other?.id)&&<div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-sidebar"/>}
                 </div>
@@ -1412,7 +1412,7 @@ export default function MessagesPage() {
             <button className="relative flex-shrink-0" onClick={()=>setShowProfilePanel(true)}>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden">
                 {getOther(activeConv)?.avatarUrl
-                  ?<img src={getOther(activeConv)!.avatarUrl!} alt="" className="w-full h-full object-cover"/>
+                  ?<img loading="lazy" decoding="async" src={getOther(activeConv)!.avatarUrl!} alt="" className="w-full h-full object-cover"/>
                   :<span className="text-sm font-bold text-primary">{getOther(activeConv)?.displayName?.[0]}</span>}
               </div>
               {isOnline(getOther(activeConv)?.id)&&<div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-background"/>}
@@ -1624,7 +1624,7 @@ export default function MessagesPage() {
                     <div className="px-6 py-8 flex flex-col items-center gap-3 bg-gradient-to-b from-primary/5 to-transparent">
                       <div className="relative">
                         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-3xl font-bold text-primary-foreground overflow-hidden ring-4 ring-primary/20">
-                          {other?.avatarUrl ? <img src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : other?.displayName?.[0]?.toUpperCase()||"?"}
+                          {other?.avatarUrl ? <img loading="lazy" decoding="async" src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : other?.displayName?.[0]?.toUpperCase()||"?"}
                         </div>
                         {isOnline(other?.id)&&<div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-background"/>}
                       </div>
@@ -1748,7 +1748,7 @@ export default function MessagesPage() {
                           <div className="grid grid-cols-3 gap-1">
                             {mediaInChat.map(m=>(
                               <div key={m.id} className="aspect-square rounded-xl overflow-hidden bg-muted">
-                                <img src={m.mediaUrl} alt="" className="w-full h-full object-cover"/>
+                                <img loading="lazy" decoding="async" src={m.mediaUrl} alt="" className="w-full h-full object-cover"/>
                               </div>
                             ))}
                           </div>
@@ -1845,7 +1845,7 @@ export default function MessagesPage() {
                       <div key={m.id} className="flex items-start gap-3 p-3 bg-muted/40 rounded-xl">
                         <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 mt-0.5 flex-shrink-0"/>
                         <div className="flex-1 min-w-0">
-                          {m.type==="image"&&m.mediaUrl&&<img src={m.mediaUrl} alt="" className="w-16 h-16 rounded-xl object-cover mb-1"/>}
+                          {m.type==="image"&&m.mediaUrl&&<img loading="lazy" decoding="async" src={m.mediaUrl} alt="" className="w-16 h-16 rounded-xl object-cover mb-1"/>}
                           <p className="text-sm text-foreground line-clamp-2">{m.content||`📎 ${t("msg.media")}`}</p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">{formatTs(m.ts)}</p>
                         </div>
@@ -2191,7 +2191,7 @@ export default function MessagesPage() {
                       onClick={()=>{ setActiveId(conv.id); setShowList(false); setShowNewConv(false); }}
                       className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-muted transition-colors text-left">
                       <div className="w-10 h-10 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center flex-shrink-0">
-                        {o?.avatarUrl ? <img src={o.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary text-sm">{o?.displayName?.[0]||"?"}</span>}
+                        {o?.avatarUrl ? <img loading="lazy" decoding="async" src={o.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary text-sm">{o?.displayName?.[0]||"?"}</span>}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{o?.displayName||"Unknown"}</p>

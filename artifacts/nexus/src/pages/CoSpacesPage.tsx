@@ -168,7 +168,7 @@ function SpaceDetail({ space: initialSpace, onBack }: { space: Space; onBack: ()
             <div className="flex flex-wrap gap-2">
               {members.slice(0, 12).map(m => (
                 <div key={m.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10">
-                  {m.avatar ? <img src={m.avatar} alt="" className="w-5 h-5 rounded-full object-cover" /> :
+                  {m.avatar ? <img loading="lazy" decoding="async" src={m.avatar} alt="" className="w-5 h-5 rounded-full object-cover" /> :
                     <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: cat.color }}>
                       {m.displayName?.[0]}
                     </div>}

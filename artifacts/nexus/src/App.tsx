@@ -75,7 +75,15 @@ const PageLoader = () => (
 );
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 60_000,        // 1 daqiqa: qayta fetch qilmasdan cache ishlatadi
+      gcTime: 5 * 60_000,       // 5 daqiqa: xotirada saqlaydi
+      refetchOnReconnect: true,  // Internet qayta ulanganida yangilaydi
+    },
+  },
 });
 
 class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNode }, { hasError: boolean; error: Error | null }> {

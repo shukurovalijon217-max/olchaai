@@ -20,7 +20,7 @@ function MiniProductCard({ product, onClick }: { product: any; onClick: () => vo
     <button onClick={onClick} className="group rounded-xl overflow-hidden bg-amber-950/20 hover:bg-amber-950/35 border border-amber-900/20 hover:border-amber-700/40 text-left transition-all">
       <div className="relative aspect-square bg-amber-900/15 overflow-hidden">
         {product.thumbnailUrl ? (
-          <img src={product.thumbnailUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <img loading="lazy" decoding="async" src={product.thumbnailUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <ShoppingBag className="w-8 h-8 text-amber-700/40" />
@@ -105,7 +105,7 @@ export default function SellerProfilePage({ sellerId }: { sellerId: number }) {
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-amber-700/40 overflow-hidden border-2 border-amber-600/50 shadow-lg shadow-amber-900/30">
               {seller.avatarUrl ? (
-                <img src={seller.avatarUrl} alt={seller.displayName} className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={seller.avatarUrl} alt={seller.displayName} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-2xl">🏪</div>
               )}

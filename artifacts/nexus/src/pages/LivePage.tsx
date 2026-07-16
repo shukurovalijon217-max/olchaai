@@ -300,7 +300,7 @@ export default function LivePage({ liveId }: LivePageProps) {
           <div className="absolute top-14 left-4 flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary/40 overflow-hidden border border-white/20">
               {stream.host.avatarUrl
-                ? <img src={stream.host.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ? <img loading="lazy" decoding="async" src={stream.host.avatarUrl} alt="" className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">{stream.host?.displayName?.[0]}</div>
               }
             </div>

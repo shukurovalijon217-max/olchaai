@@ -738,7 +738,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                   : <img src={allMedia[slideIdx]} alt={post.content} className={`w-full h-full ${photoFit}`} loading="lazy" decoding="async" />
                 }
                 <div className="absolute inset-0 -z-10">
-                  <img src={allMedia[slideIdx]} alt="" aria-hidden className="w-full h-full object-cover"
+                  <img loading="lazy" decoding="async" src={allMedia[slideIdx]} alt="" aria-hidden className="w-full h-full object-cover"
                     style={{ filter: "blur(28px) saturate(1.4) brightness(0.28)", transform: "scale(1.18)" }} />
                 </div>
               </motion.div>
@@ -1248,7 +1248,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
               ) : commentsList.map((c: any) => (
                 <div key={c.id} className="flex gap-2.5 items-start">
                   {c.author?.avatarUrl ? (
-                    <img src={resolveApiUrl(c.author.avatarUrl)} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                    <img loading="lazy" decoding="async" src={resolveApiUrl(c.author.avatarUrl)} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5" />
                   ) : (
                     <div className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center text-[11px] font-bold text-white"
                       style={{ background: accent + "55" }}>
@@ -1342,7 +1342,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                 <div key={u.id} className="flex items-center gap-3 py-2">
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
                     style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
-                    {u.avatarUrl ? <img src={resolveApiUrl(u.avatarUrl)} alt="" className="w-full h-full object-cover" />
+                    {u.avatarUrl ? <img loading="lazy" decoding="async" src={resolveApiUrl(u.avatarUrl)} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">{initials(u.displayName)}</div>}
                   </div>
                   <div className="flex-1 min-w-0">

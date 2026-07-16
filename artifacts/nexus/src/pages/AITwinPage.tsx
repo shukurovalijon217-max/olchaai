@@ -62,7 +62,7 @@ function TwinChatView({ twinUser, onBack }: { twinUser: TwinUser; onBack: () => 
           <ChevronLeft className="w-4 h-4 text-white" />
         </motion.button>
         <div className="relative flex-shrink-0">
-          {twinUser.avatar ? <img src={twinUser.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /> :
+          {twinUser.avatar ? <img loading="lazy" decoding="async" src={twinUser.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /> :
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white font-bold">
               {twinUser.displayName?.[0]?.toUpperCase()}
             </div>}
@@ -284,7 +284,7 @@ export default function AITwinPage() {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                   className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30">
                   <div className="flex items-center gap-3 mb-3">
-                    {twinUser.avatar ? <img src={twinUser.avatar} alt="" className="w-12 h-12 rounded-full object-cover" /> :
+                    {twinUser.avatar ? <img loading="lazy" decoding="async" src={twinUser.avatar} alt="" className="w-12 h-12 rounded-full object-cover" /> :
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-lg font-bold">
                         {twinUser.displayName?.[0]}
                       </div>}

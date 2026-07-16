@@ -1,15 +1,29 @@
 /* GilosAI Service Worker — global edge cache + offline shell */
-const CACHE_VERSION = "gilos-v3";
+const CACHE_VERSION = "gilos-v4";
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
+const IMG_CACHE     = `${CACHE_VERSION}-img`;
 
-/* App shell: cached forever after first load */
+/* App shell: cached on first load */
 const SHELL_ASSETS = [
   "/",
   "/manifest.json",
   "/favicon.ico",
   "/favicon.png",
   "/apple-touch-icon.png",
+];
+
+/* API routes using stale-while-revalidate (serve cache instantly, update in bg) */
+const SWR_API_ROUTES = [
+  "/api/posts",
+  "/api/reels",
+  "/api/stories",
+  "/api/users",
+  "/api/notifications",
+  "/api/search",
+  "/api/live",
+  "/api/groups",
+  "/api/marketplace",
 ];
 
 /* ── Install: pre-cache app shell ─────────────────────────────── */
@@ -26,7 +40,10 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((k) => (k.startsWith("olcha-") || k.startsWith("gilos-")) && k !== STATIC_CACHE && k !== API_CACHE)
+          .filter((k) =>
+            (k.startsWith("olcha-") || k.startsWith("gilos-")) &&
+            k !== STATIC_CACHE && k !== API_CACHE && k !== IMG_CACHE
+          )
           .map((k) => caches.delete(k))
       )
     )
@@ -39,40 +56,50 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  /* Skip non-GET, cross-origin except googleapis fonts, and WebSocket */
   if (request.method !== "GET") return;
-  if (url.origin !== self.location.origin &&
-      !url.hostname.includes("fonts.googleapis.com") &&
-      !url.hostname.includes("fonts.gstatic.com")) return;
+  if (
+    url.origin !== self.location.origin &&
+    !url.hostname.includes("fonts.googleapis.com") &&
+    !url.hostname.includes("fonts.gstatic.com")
+  ) return;
 
-  /* API calls: network-first, short stale fallback (30s) */
-  if (url.pathname.startsWith("/api/")) {
-    event.respondWith(networkFirst(request, API_CACHE, 30));
-    return;
-  }
-
-  /* JS/CSS/fonts: cache-first (Vite hashes filenames → safe) */
-  if (/\.(js|css|woff2?|ttf|otf)(\?.*)?$/.test(url.pathname) ||
-      url.hostname.includes("fonts.gstatic.com")) {
+  /* JS/CSS/fonts (Vite hash filenames → immutable cache) */
+  if (
+    /\.(js|css|woff2?|ttf|otf)(\?.*)?$/.test(url.pathname) ||
+    url.hostname.includes("fonts.gstatic.com")
+  ) {
     event.respondWith(cacheFirst(request, STATIC_CACHE));
     return;
   }
 
-  /* Images: cache-first, 7-day TTL */
+  /* Images: cache-first, long TTL — images rarely change */
   if (/\.(png|jpg|jpeg|webp|gif|svg|ico)(\?.*)?$/.test(url.pathname)) {
-    event.respondWith(cacheFirst(request, STATIC_CACHE));
+    event.respondWith(cacheFirstWithTTL(request, IMG_CACHE, 7 * 24 * 3600));
     return;
   }
 
-  /* HTML navigation: network-first, fallback to cached shell "/" */
+  /* Public feed/list API: stale-while-revalidate (sekin internetda darhol javob) */
+  if (
+    url.pathname.startsWith("/api/") &&
+    SWR_API_ROUTES.some((r) => url.pathname.startsWith(r))
+  ) {
+    event.respondWith(staleWhileRevalidate(request, API_CACHE));
+    return;
+  }
+
+  /* Other API: network-first, 2-minute offline fallback */
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(networkFirst(request, API_CACHE, 120));
+    return;
+  }
+
+  /* HTML navigation: network-first, fallback to cached shell */
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request).catch(() => caches.match("/"))
     );
     return;
   }
-
-  /* Everything else: network */
 });
 
 /* ── Push: show notification when server sends one ───────────── */
@@ -103,6 +130,9 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
+/* ────────────────────── Cache helpers ──────────────────────── */
+
+/** Cache-first: serve from cache; fetch and cache if missing */
 async function cacheFirst(request, cacheName) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -114,6 +144,60 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
+/** Cache-first with TTL check (seconds) */
+async function cacheFirstWithTTL(request, cacheName, maxAgeSeconds) {
+  const cached = await caches.match(request);
+  if (cached) {
+    const date = cached.headers.get("date");
+    if (!date || (Date.now() - new Date(date).getTime()) / 1000 < maxAgeSeconds) {
+      return cached;
+    }
+  }
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    if (cached) return cached;
+    return new Response("", { status: 503 });
+  }
+}
+
+/**
+ * Stale-while-revalidate:
+ * - Slow/no internet → returns cached response INSTANTLY
+ * - Then updates cache in background when network available
+ * - This is the key strategy for slow connections!
+ */
+async function staleWhileRevalidate(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+
+  const fetchPromise = fetch(request).then((response) => {
+    if (response.ok) cache.put(request, response.clone());
+    return response;
+  }).catch(() => null);
+
+  // If we have cache, return it immediately and update in background
+  if (cached) {
+    event.waitUntil(fetchPromise);
+    return cached;
+  }
+
+  // No cache yet: wait for network
+  const response = await fetchPromise;
+  if (response) return response;
+
+  return new Response(JSON.stringify({ error: "offline" }), {
+    status: 503,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+/** Network-first with stale fallback */
 async function networkFirst(request, cacheName, maxAgeSeconds) {
   try {
     const response = await fetch(request);
@@ -129,6 +213,8 @@ async function networkFirst(request, cacheName, maxAgeSeconds) {
       if (date) {
         const age = (Date.now() - new Date(date).getTime()) / 1000;
         if (age < maxAgeSeconds) return cached;
+      } else {
+        return cached; // No date header, return anyway for offline
       }
     }
     return new Response(JSON.stringify({ error: "offline" }), {

@@ -144,7 +144,7 @@ export default function SellPage() {
           <div className="grid grid-cols-3 gap-2">
             {mediaUrls.map((url, i) => (
               <div key={url} className="relative aspect-square rounded-xl overflow-hidden bg-amber-950/30">
-                <img src={url} alt="" className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-full object-cover" />
                 {i === 0 && <span className="absolute top-1 left-1 bg-amber-700 text-white text-xs px-1.5 py-0.5 rounded">{t("sell.main")}</span>}
                 <button
                   onClick={() => setMediaUrls(prev => prev.filter((_, j) => j !== i))}

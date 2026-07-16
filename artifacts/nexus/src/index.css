@@ -544,3 +544,20 @@ em-emoji-picker {
   0%, 100% { box-shadow: 0 0 8px rgba(124,58,237,0.4); }
   50%       { box-shadow: 0 0 18px rgba(168,85,247,0.7); }
 }
+
+/* ── Music ticker marquee ── */
+@keyframes song-marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.song-marquee-inner {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: song-marquee 9s linear infinite;
+}
+.song-marquee-wrap {
+  overflow: hidden;
+  max-width: 180px;
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 88%, transparent 100%);
+}

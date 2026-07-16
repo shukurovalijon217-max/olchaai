@@ -420,13 +420,37 @@ router.delete("/reels/collaborators/:id", requireAuth, async (req: any, res) => 
 router.post("/reels/:id/view", async (req, res) => {
   try {
     const reelId = Number(req.params.id);
+    const userId = (req.session as any)?.userId as number | undefined;
 
-    /* Deduplicate: same user (or IP) can only add 1 view per reel per hour */
-    const userId  = (req.session as any)?.userId as number | undefined;
-    const viewKey = `rview:${reelId}:${userId ?? req.ip}`;
-    const already = await cacheGet(viewKey);
-    if (already) { res.json({ ok: true, deduplicated: true }); return; }
-    await cacheSet(viewKey, "1", 3600); /* 1 hour TTL */
+    /* Deduplicate — permanent per logged-in user (DB check), 24h per IP for anon */
+    if (userId) {
+      const existing = await db.select({ id: userInteractionsTable.id })
+        .from(userInteractionsTable)
+        .where(and(
+          eq(userInteractionsTable.userId, userId),
+          eq(userInteractionsTable.contentType, "reel"),
+          eq(userInteractionsTable.contentId, reelId),
+          eq(userInteractionsTable.interactionType, "view"),
+        ))
+        .limit(1);
+      if (existing.length > 0) { res.json({ ok: true, deduplicated: true }); return; }
+    } else {
+      const anonKey = `rview:${reelId}:${req.ip}`;
+      const already = await cacheGet(anonKey);
+      if (already) { res.json({ ok: true, deduplicated: true }); return; }
+      await cacheSet(anonKey, "1", 86400); /* 24h TTL for anonymous */
+    }
+
+    /* Record the view interaction (also used for AI feed signals) */
+    if (userId) {
+      await db.insert(userInteractionsTable).values({
+        userId,
+        contentType: "reel",
+        contentId: reelId,
+        interactionType: "view",
+        durationMs: null,
+      });
+    }
 
     /* Increment view count */
     await db.update(reelsTable)

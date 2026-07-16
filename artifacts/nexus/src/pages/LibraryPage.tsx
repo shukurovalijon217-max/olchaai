@@ -99,7 +99,8 @@ function MicButton3D({ isListening, onClick }: { isListening: boolean; onClick: 
   const glareY = useTransform(my, [-0.5, 0.5], ["5%", "95%"]);
   const shadowColor = useMotionTemplate`${useTransform(mx, [-0.5,0.5], [-10,10])}px ${useTransform(my, [-0.5,0.5], [-10,10])}px 28px ${isListening ? "rgba(239,68,68,0.55)" : "rgba(0,0,0,0.45)"}`;
   const onMove = (e: React.MouseEvent) => {
-    const r = wrapRef.current!.getBoundingClientRect();
+    if (!wrapRef.current) return;
+    const r = wrapRef.current.getBoundingClientRect();
     mx.set((e.clientX - r.left) / r.width - 0.5);
     my.set((e.clientY - r.top) / r.height - 0.5);
   };
@@ -159,7 +160,8 @@ function SpeakButton3D({ text, lang, isActive, onClick, label = "O'qish" }: {
   const glareY = useTransform(my, [-0.5, 0.5], ["5%", "95%"]);
   const shadowColor = useMotionTemplate`${useTransform(mx, [-0.5,0.5], [-10,10])}px ${useTransform(my, [-0.5,0.5], [-10,10])}px 28px ${isActive ? "rgba(139,92,246,0.55)" : "rgba(0,0,0,0.45)"}`;
   const onMove = (e: React.MouseEvent) => {
-    const r = wrapRef.current!.getBoundingClientRect();
+    if (!wrapRef.current) return;
+    const r = wrapRef.current.getBoundingClientRect();
     mx.set((e.clientX - r.left) / r.width - 0.5);
     my.set((e.clientY - r.top) / r.height - 0.5);
   };
@@ -216,7 +218,8 @@ function TranslateButton3D({ loading, disabled, onClick }: {
   const glareY = useTransform(my, [-0.5, 0.5], ["-10%", "110%"]);
   const shimX = useMotionValue(-150);
   const onMove = (e: React.MouseEvent) => {
-    const r = wrapRef.current!.getBoundingClientRect();
+    if (!wrapRef.current) return;
+    const r = wrapRef.current.getBoundingClientRect();
     mx.set((e.clientX - r.left) / r.width - 0.5);
     my.set((e.clientY - r.top) / r.height - 0.5);
   };

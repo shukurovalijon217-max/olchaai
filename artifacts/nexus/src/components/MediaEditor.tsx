@@ -963,14 +963,15 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     trimDragRef.current = { type, startX: e.clientX, startVal: type==="start" ? audioTrimStart : audioTrimEnd };
   };
   const onTrimMove = (e: React.PointerEvent) => {
-    if (!trimDragRef.current || !trimTrackRef.current) return;
+    const trimDrag = trimDragRef.current;
+    if (!trimDrag || !trimTrackRef.current) return;
     const rect = trimTrackRef.current.getBoundingClientRect();
-    const frac = (e.clientX - trimDragRef.current.startX) / rect.width;
+    const frac = (e.clientX - trimDrag.startX) / rect.width;
     const delta = frac * (audioDuration || 60);
-    if (trimDragRef.current.type === "start") {
-      setAudioTrimStart(prev => Math.max(0, Math.min(audioTrimEnd - 1, trimDragRef.current!.startVal + delta)));
+    if (trimDrag.type === "start") {
+      setAudioTrimStart(prev => Math.max(0, Math.min(audioTrimEnd - 1, trimDrag.startVal + delta)));
     } else {
-      setAudioTrimEnd(prev => Math.max(audioTrimStart + 1, Math.min(audioDuration || 60, trimDragRef.current!.startVal + delta)));
+      setAudioTrimEnd(prev => Math.max(audioTrimStart + 1, Math.min(audioDuration || 60, trimDrag.startVal + delta)));
     }
   };
   const onTrimUp = () => { trimDragRef.current = null; };
@@ -1054,19 +1055,21 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     setSelectedId(id);
   };
   const onPointerMove = useCallback((e: React.PointerEvent) => {
-    /* resize takes priority */
-    if (resizeRef.current) {
-      const dy = resizeRef.current.startY - e.clientY;
-      const newSize = Math.max(12, Math.min(110, resizeRef.current.startSize + dy * 0.55));
-      setItems(p => p.map(i => i.id === resizeRef.current!.id ? { ...i, fontSize: newSize } : i));
+    /* resize takes priority — capture ref before async setter */
+    const resize = resizeRef.current;
+    if (resize) {
+      const dy = resize.startY - e.clientY;
+      const newSize = Math.max(12, Math.min(110, resize.startSize + dy * 0.55));
+      setItems(p => p.map(i => i.id === resize.id ? { ...i, fontSize: newSize } : i));
       return;
     }
-    if (!dragRef.current || !containerRef.current) return;
+    const drag = dragRef.current;
+    if (!drag || !containerRef.current) return;
     const r = containerRef.current.getBoundingClientRect();
-    const dx = ((e.clientX - dragRef.current.sx) / r.width) * 100;
-    const dy = ((e.clientY - dragRef.current.sy) / r.height) * 100;
-    setItems(p => p.map(i => i.id === dragRef.current!.id
-      ? { ...i, x: Math.max(4,Math.min(96,dragRef.current!.ox+dx)), y: Math.max(4,Math.min(96,dragRef.current!.oy+dy)) }
+    const dx = ((e.clientX - drag.sx) / r.width) * 100;
+    const dy = ((e.clientY - drag.sy) / r.height) * 100;
+    setItems(p => p.map(i => i.id === drag.id
+      ? { ...i, x: Math.max(4, Math.min(96, drag.ox + dx)), y: Math.max(4, Math.min(96, drag.oy + dy)) }
       : i));
   }, []);
   const onPointerUp = () => { dragRef.current = null; resizeRef.current = null; };

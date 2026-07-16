@@ -20,7 +20,7 @@ import {
   Heart, MessageCircle, Share2, Trash2,
   VolumeX, Volume2, BadgeCheck, Check, Send, X,
   Music, Sparkles, MoreHorizontal, Link,
-  UserPlus, UserCheck, Download, Loader2, Flag, Brain, ImageOff,
+  UserPlus, UserCheck, Loader2, Flag, Brain, ImageOff,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -53,6 +53,53 @@ const initials = (name?: string) =>
 
 const isVideoUrl = (url: string) =>
   /\.(mp4|webm|mov|avi|m4v)(\?|$)/i.test(url);
+
+/* ─── SONG TICKER (marquee + long-press download) ─────────────── */
+function SongTicker({ name, url, accent }: { name: string; url: string; accent: string }) {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pressing, setPressing] = useState(false);
+
+  const startPress = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    setPressing(true);
+    timerRef.current = setTimeout(() => {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      setPressing(false);
+    }, 600);
+  };
+  const endPress = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setPressing(false);
+  };
+
+  const label = `♪  ${name}   `;
+  return (
+    <div
+      className="inline-flex items-center gap-1.5 mb-2 select-none cursor-pointer"
+      onPointerDown={startPress}
+      onPointerUp={endPress}
+      onPointerLeave={endPress}
+      onPointerCancel={endPress}
+    >
+      <span className="music-note-bounce flex-shrink-0" style={{ fontSize: 14, color: accent, textShadow: `0 0 10px ${accent}` }}>♪</span>
+      <div className="song-marquee-wrap">
+        <span
+          className="song-marquee-inner text-[12px] font-bold text-white"
+          style={{
+            textShadow: "0 1px 6px rgba(0,0,0,0.9)",
+            opacity: pressing ? 0.65 : 1,
+            transition: "opacity 0.15s",
+          }}
+        >
+          {label}{label}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 /* ─── WAVEFORM STRIP ─────────────────────────────────────────── */
 function Waveform({ active, color }: { active: boolean; color: string }) {
@@ -1053,17 +1100,9 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         initial={{ opacity: 0, y: 10 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         transition={{ delay: 0.28, duration: 0.45 }}
       >
-        {/* Song name (download on tap) */}
+        {/* Song name — marquee + long press to download */}
         {audioName && audioUrl && (
-          <a href={resolveApiUrl(audioUrl)} download={audioName}
-            className="inline-flex items-center gap-1.5 mb-2 cursor-pointer"
-            onClick={e => e.stopPropagation()}
-            style={{ textDecoration: "none" }}>
-            <span className="music-note-bounce text-white select-none" style={{ fontSize: 14, textShadow: `0 0 12px ${accent}` }}>♪</span>
-            <span className="text-[12px] font-bold text-white truncate max-w-[160px]"
-              style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>{audioName}</span>
-            <Download className="w-3 h-3 flex-shrink-0" style={{ color: accent }} />
-          </a>
+          <SongTicker name={audioName} url={resolveApiUrl(audioUrl)} accent={accent} />
         )}
 
         {/* Caption */}

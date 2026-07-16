@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, X, ChevronDown, Zap, BadgeCheck, Loader2, ArrowDown } from "lucide-react";
+import { Heart, MessageCircle, X, Zap, BadgeCheck, Loader2, ArrowDown } from "lucide-react";
 import { useLikePost, getListPostsQueryKey } from "@workspace/api-client-react";
 import type { Post } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -810,55 +810,6 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
           )}
         </div>
 
-        {/* Nav arrows */}
-        <div style={{ display: "flex", gap: 10 }}>
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            onClick={prevPost}
-            disabled={activeIndex === 0}
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: "50%",
-              background: activeIndex === 0 ? "rgba(255,255,255,0.04)" : "rgba(139,92,246,0.18)",
-              border: `1px solid ${activeIndex === 0 ? "rgba(255,255,255,0.1)" : "rgba(139,92,246,0.5)"}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: activeIndex === 0 ? "default" : "pointer",
-              opacity: activeIndex === 0 ? 0.35 : 1,
-            }}
-          >
-            <ChevronDown
-              style={{
-                width: 18,
-                height: 18,
-                color: "#a78bfa",
-                transform: "rotate(180deg)",
-              }}
-            />
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            onClick={nextPost}
-            disabled={activeIndex >= posts.length - 1}
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: "50%",
-              background: "rgba(139,92,246,0.18)",
-              border: "1px solid rgba(139,92,246,0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              boxShadow: "0 0 14px rgba(139,92,246,0.35)",
-            }}
-          >
-            <ChevronDown style={{ width: 18, height: 18, color: "#a78bfa" }} />
-          </motion.button>
-        </div>
       </div>
 
       {/* ── ENTRY HINT ── */}

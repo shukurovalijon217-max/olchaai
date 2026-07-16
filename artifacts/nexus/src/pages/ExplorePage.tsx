@@ -249,7 +249,7 @@ export default function ExplorePage() {
                 >
                   {/* Avatar — tap to profile */}
                   <div style={{ position: "relative", cursor: "pointer" }}
-                    onClick={() => setLocation(`/profile/${u.username}`)}>
+                    onClick={() => setLocation(`/profile/${u.id}`)}>
                     <div style={{
                       width: 62, height: 62, borderRadius: "50%", padding: 2,
                       background: isFollowed
@@ -283,7 +283,7 @@ export default function ExplorePage() {
                   </div>
 
                   {/* Name — tap to profile */}
-                  <p onClick={() => setLocation(`/profile/${u.username}`)}
+                  <p onClick={() => setLocation(`/profile/${u.id}`)}
                     style={{ fontSize: 11, fontWeight: 700, color: "var(--foreground)", textAlign: "center",
                       width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", cursor: "pointer" }}>
                     {u.displayName ?? u.username}
@@ -422,10 +422,12 @@ export default function ExplorePage() {
                 >
                   {/* Cover — tap to profile */}
                   <div
-                    onClick={() => setLocation(`/profile/${u.username}`)}
+                    onClick={() => setLocation(`/profile/${u.id}`)}
                     style={{
                       height: 72,
-                      background: `linear-gradient(135deg,hsl(${(i * 47 + 200) % 360},60%,25%),hsl(${(i * 47 + 260) % 360},70%,15%))`,
+                      background: (u as any).coverUrl
+                        ? `url(${(u as any).coverUrl}) center/cover no-repeat`
+                        : `linear-gradient(135deg,hsl(${(i * 47 + 200) % 360},60%,25%),hsl(${(i * 47 + 260) % 360},70%,15%))`,
                       borderRadius: "18px 18px 0 0",
                       position: "relative",
                     }}
@@ -453,7 +455,7 @@ export default function ExplorePage() {
                   <div style={{ padding: "28px 10px 12px", textAlign: "center" }}>
                     {/* Name — tap to profile */}
                     <div
-                      onClick={() => setLocation(`/profile/${u.username}`)}
+                      onClick={() => setLocation(`/profile/${u.id}`)}
                       style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginBottom: 2, cursor: "pointer" }}
                     >
                       <p style={{ fontSize: 12, fontWeight: 800, color: "var(--foreground)",

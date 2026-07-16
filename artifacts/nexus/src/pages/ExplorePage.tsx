@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Search, TrendingUp, BadgeCheck, Users, Check, UserPlus,
-  ChevronLeft, ChevronRight, Flame, Layers,
+  Flame, Layers,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 
 /* ────────────────────────────────────────────────────────────
-   Reusable horizontal scroll strip with arrow buttons
+   Reusable horizontal scroll strip — touch/swipe only
    ──────────────────────────────────────────────────────────── */
 function HScroll({
   children,
@@ -26,80 +26,23 @@ function HScroll({
   px?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(true);
-
-  const scroll = (dir: "l" | "r") => {
-    if (!ref.current) return;
-    const by = ref.current.clientWidth * 0.75;
-    ref.current.scrollBy({ left: dir === "r" ? by : -by, behavior: "smooth" });
-  };
-
-  const onScroll = () => {
-    if (!ref.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = ref.current;
-    setCanLeft(scrollLeft > 4);
-    setCanRight(scrollLeft < scrollWidth - clientWidth - 4);
-  };
 
   return (
-    <div style={{ position: "relative" }}>
-      <div
-        ref={ref}
-        onScroll={onScroll}
-        style={{
-          display: "flex",
-          gap,
-          overflowX: "auto",
-          paddingLeft: px,
-          paddingRight: px,
-          paddingBottom: 4,
-          scrollbarWidth: "none",
-        }}
-      >
-        <style>{`.hscroll::-webkit-scrollbar{display:none}`}</style>
-        {children}
-      </div>
-
-      <AnimatePresence>
-        {canLeft && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={() => scroll("l")}
-            style={{
-              position: "absolute", left: 4, top: "50%", transform: "translateY(-50%)",
-              width: 28, height: 28, borderRadius: "50%",
-              background: "rgba(15,15,25,0.85)", backdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5,
-            }}
-          >
-            <ChevronLeft style={{ width: 14, height: 14, color: "rgba(255,255,255,0.8)" }} />
-          </motion.button>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {canRight && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={() => scroll("r")}
-            style={{
-              position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
-              width: 28, height: 28, borderRadius: "50%",
-              background: "rgba(15,15,25,0.85)", backdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5,
-            }}
-          >
-            <ChevronRight style={{ width: 14, height: 14, color: "rgba(255,255,255,0.8)" }} />
-          </motion.button>
-        )}
-      </AnimatePresence>
+    <div
+      ref={ref}
+      style={{
+        display: "flex",
+        gap,
+        overflowX: "auto",
+        paddingLeft: px,
+        paddingRight: px,
+        paddingBottom: 4,
+        scrollbarWidth: "none",
+        WebkitOverflowScrolling: "touch",
+      } as React.CSSProperties}
+    >
+      <style>{`div::-webkit-scrollbar{display:none}`}</style>
+      {children}
     </div>
   );
 }
@@ -469,30 +412,40 @@ export default function ExplorePage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.05 }}
                   style={{
-                    flexShrink: 0, width: 150, borderRadius: 20, overflow: "hidden",
-                    border: "1.5px solid var(--border)", background: "var(--card)", cursor: "pointer",
+                    flexShrink: 0, width: 150,
+                    border: "1.5px solid var(--border)", background: "var(--card)",
+                    cursor: "pointer", borderRadius: 20,
+                    /* NO overflow:hidden — lets avatar peek out of cover */
                   }}
                 >
-                  {/* Cover image or gradient */}
-                  <div style={{ height: 72, background: `linear-gradient(135deg,hsl(${(i * 47 + 200) % 360},60%,25%),hsl(${(i * 47 + 260) % 360},70%,15%))`, position: "relative" }}>
+                  {/* Cover — only top corners rounded */}
+                  <div style={{
+                    height: 72,
+                    background: `linear-gradient(135deg,hsl(${(i * 47 + 200) % 360},60%,25%),hsl(${(i * 47 + 260) % 360},70%,15%))`,
+                    borderRadius: "18px 18px 0 0",
+                    position: "relative",
+                  }}>
+                    {/* Avatar — centred on cover bottom edge */}
                     <div style={{
-                      position: "absolute", bottom: -20, left: "50%", transform: "translateX(-50%)",
-                      width: 42, height: 42, borderRadius: "50%", border: "3px solid var(--card)",
-                      overflow: "hidden", background: "var(--card)",
+                      position: "absolute", bottom: -22, left: "50%", transform: "translateX(-50%)",
+                      width: 46, height: 46, borderRadius: "50%",
+                      border: "3px solid var(--card)",
+                      background: "var(--card)",
                       display: "flex", alignItems: "center", justifyContent: "center",
+                      overflow: "hidden", zIndex: 2,
                     }}>
                       {u.avatarUrl ? (
                         <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       ) : (
-                        <span style={{ fontSize: 16, fontWeight: 800, color: "#8b5cf6" }}>
+                        <span style={{ fontSize: 17, fontWeight: 800, color: "#8b5cf6" }}>
                           {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div style={{ padding: "24px 10px 12px", textAlign: "center" }}>
+                  <div style={{ padding: "28px 10px 12px", textAlign: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginBottom: 2 }}>
                       <p style={{ fontSize: 12, fontWeight: 800, color: "var(--foreground)",
                         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>

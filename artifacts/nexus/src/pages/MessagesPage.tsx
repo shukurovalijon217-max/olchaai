@@ -1405,10 +1405,6 @@ export default function MessagesPage() {
           {/* Header */}
           <div className="flex items-center gap-3 px-4 border-b border-border flex-shrink-0"
             style={{paddingTop:"calc(env(safe-area-inset-top,0px) + 12px)",paddingBottom:12}}>
-            <button onClick={()=>setShowList(true)}
-              className="md:hidden w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground flex-shrink-0">
-              <ChevronLeft className="w-5 h-5"/>
-            </button>
             <button className="relative flex-shrink-0" onClick={()=>setShowProfilePanel(true)}>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden">
                 {getOther(activeConv)?.avatarUrl

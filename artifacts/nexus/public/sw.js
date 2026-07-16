@@ -75,6 +75,34 @@ self.addEventListener("fetch", (event) => {
   /* Everything else: network */
 });
 
+/* ── Push: show notification when server sends one ───────────── */
+self.addEventListener("push", (event) => {
+  let payload = { title: "OlchaAI", body: "Yangi xabar", icon: "/favicon.png", url: "/" };
+  try { if (event.data) payload = { ...payload, ...JSON.parse(event.data.text()) }; } catch {}
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: payload.icon || "/favicon.png",
+      badge: "/favicon.png",
+      data: { url: payload.url || "/" },
+      vibrate: [100, 50, 100],
+    })
+  );
+});
+
+/* ── Notification click: open/focus the relevant page ────────── */
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const match = clients.find((c) => c.url.includes(self.location.origin));
+      if (match) { match.focus(); match.postMessage({ type: "PUSH_NAVIGATE", url }); }
+      else self.clients.openWindow(url);
+    })
+  );
+});
+
 async function cacheFirst(request, cacheName) {
   const cached = await caches.match(request);
   if (cached) return cached;

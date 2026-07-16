@@ -90,6 +90,9 @@ externalPort = 5000
 CLOUDINARY_CLOUD_NAME = "lskuslne"
 CLOUDINARY_API_KEY = "784642968216699"
 CLOUDINARY_API_SECRET = "K4C2yoyFQrn-1eAJZSssJp89O1w"
+VAPID_PUBLIC_KEY = "-MPcmT49nDjBoiNwUVFPefxS0gY6expFf56zwySk-TaB8xamWuJuGsZHUfm9ZMskuYarwwej9FHdCtU6rHpQdA"
+VAPID_PRIVATE_KEY = "r9PxT6yR4rwuZnikOFVWwmN_Fs1e5qHdorsPvCSqBh4"
+VAPID_SUBJECT = "mailto:admin@olchaai.com"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-132f6f09-be31-4b72-b16d-3a5f5a26d812"

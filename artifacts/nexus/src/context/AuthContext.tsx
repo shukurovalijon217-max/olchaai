@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export interface NotifPrefs {
   likes: boolean;
@@ -48,6 +49,11 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+
+function PushInitializer({ userId }: { userId: number | null }) {
+  usePushNotifications(!!userId);
+  return null;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -131,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, refetch: fetchMe }}>
+      <PushInitializer userId={user?.id ?? null} />
       {children}
     </AuthContext.Provider>
   );

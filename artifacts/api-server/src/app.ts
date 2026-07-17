@@ -135,7 +135,10 @@ app.post(
 );
 
 app.use((req, res, next) => {
-  if (req.path.startsWith("/api/storage/uploads/cloud/") && req.method === "PUT") {
+  if (req.method === "PUT" && (
+    req.path.startsWith("/api/storage/uploads/cloud/") ||
+    req.path.startsWith("/api/storage/uploads/r2-proxy")
+  )) {
     return next();
   }
   express.json({ limit: "50mb" })(req, res, next);

@@ -54,6 +54,36 @@ import socialAuraRouter from "./socialAura";
 
 const router: IRouter = Router();
 
+/* ── GET /ice-config — WebRTC ICE server config (STUN + TURN) ── */
+router.get("/ice-config", (_req, res) => {
+  type IceServer = { urls: string; username?: string; credential?: string };
+  const servers: IceServer[] = [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun.cloudflare.com:3478" },
+  ];
+  const turnUrl  = process.env["TURN_SERVER_URL"];
+  const turnUser = process.env["TURN_USERNAME"];
+  const turnCred = process.env["TURN_CREDENTIAL"];
+  if (turnUrl && turnUser && turnCred) {
+    servers.push({ urls: turnUrl, username: turnUser, credential: turnCred });
+    servers.push({ urls: turnUrl.replace(/:80$/, ":443").replace(/:3478$/, ":443"), username: turnUser, credential: turnCred });
+    servers.push({ urls: `${turnUrl.replace(/^turn:/, "turn:")}?transport=tcp`.replace(/:443\?transport=tcp$/, ":443?transport=tcp"), username: turnUser, credential: turnCred });
+  } else {
+    // Fallback: multiple public TURN servers (higher reliability than single provider)
+    const fallbacks = [
+      { urls: "turn:openrelay.metered.ca:80",              username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443",             username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:relay.metered.ca:80",                  username: "e6c9f0f8fbdc2e6b1b8f0c2b", credential: "XKtB/VzKyvLAHq/v" },
+      { urls: "turn:relay.metered.ca:443",                 username: "e6c9f0f8fbdc2e6b1b8f0c2b", credential: "XKtB/VzKyvLAHq/v" },
+    ];
+    servers.push(...fallbacks);
+  }
+  res.set("Cache-Control", "public, max-age=300");
+  res.json({ iceServers: servers });
+});
+
 router.use(healthRouter);
 router.use(storageRouter);
 router.use(authRouter);

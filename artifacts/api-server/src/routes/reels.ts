@@ -60,7 +60,7 @@ async function batchEnrichReels(
 
   // Normalize hlsUrl: existing DB records may have relative paths like "/api/reels/hls/..."
   // In production, frontend and API run on different hosts, so we need full URLs.
-  const apiBase = (process.env.API_BASE_URL ?? "").replace(/\/$/, "");
+  const apiBase = (process.env.API_BASE_URL ?? process.env.RENDER_EXTERNAL_URL ?? "").replace(/\/$/, "");
 
   return reels.map(reel => {
     const author = authorMap.get(reel.authorId as number);

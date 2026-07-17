@@ -10,13 +10,29 @@ import { useGetLive, useEndLive, useSendLiveGift } from "@workspace/api-client-r
 import { useLocation } from "wouter";
 
 const API = (import.meta.env.VITE_API_BASE_URL ?? "");
-const STUN = [
+const STUN_FALLBACK: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
   { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
 ];
+
+let _iceCache: RTCIceServer[] | null = null;
+async function fetchIceServers(): Promise<RTCIceServer[]> {
+  if (_iceCache) return _iceCache;
+  try {
+    const r = await fetch("/api/ice-config", { signal: AbortSignal.timeout(3000) });
+    if (r.ok) {
+      const data = await r.json() as { iceServers: RTCIceServer[] };
+      if (Array.isArray(data.iceServers) && data.iceServers.length > 0) {
+        _iceCache = data.iceServers;
+        return _iceCache;
+      }
+    }
+  } catch { /* fallback */ }
+  return STUN_FALLBACK;
+}
 
 function buildWsUrl(userId: number) {
   const base = import.meta.env.VITE_WS_URL;
@@ -59,6 +75,8 @@ export default function LivePage({ liveId }: LivePageProps) {
   const localStreamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef<Map<number, RTCPeerConnection>>(new Map());
   const icQueueRef = useRef<Map<number, RTCIceCandidateInit[]>>(new Map());
+  const iceServersRef = useRef<RTCIceServer[]>(STUN_FALLBACK);
+  useEffect(() => { fetchIceServers().then(s => { iceServersRef.current = s; }).catch(() => {}); }, []);
 
   const [camOn, setCamOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
@@ -99,7 +117,7 @@ export default function LivePage({ liveId }: LivePageProps) {
   };
 
   const createPeer = useCallback((peerId: number): RTCPeerConnection => {
-    const pc = new RTCPeerConnection({ iceServers: STUN });
+    const pc = new RTCPeerConnection({ iceServers: iceServersRef.current });
     peersRef.current.set(peerId, pc);
     pc.onicecandidate = ({ candidate }) => {
       if (!candidate || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;

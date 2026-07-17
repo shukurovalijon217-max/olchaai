@@ -95,7 +95,7 @@ export async function transcodeReelToHLS(reelId: number, videoUrl: string): Prom
 
     // HLS served via /api/reels/hls/:reelId/playlist.m3u8
     // Use full URL so it works in production where frontend and API are on different hosts
-    const apiBase = (process.env.API_BASE_URL ?? "").replace(/\/$/, "");
+    const apiBase = (process.env.API_BASE_URL ?? process.env.RENDER_EXTERNAL_URL ?? "").replace(/\/$/, "");
     const hlsUrl = `${apiBase}/api/reels/hls/${reelId}/playlist.m3u8`;
     await db
       .update(reelsTable)

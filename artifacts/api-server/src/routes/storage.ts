@@ -80,16 +80,23 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
   try {
     const { name, size, contentType } = parsed.data;
 
-    // Priority 1: Cloudflare R2 (production CDN)
-    // Direct presigned PUT: browser uploads straight to R2 — no Render proxy hop.
-    // This avoids Cloudflare's 100-second proxy timeout on large video uploads.
-    // Requires R2 bucket CORS to allow PUT from the app's origin (see docs).
+    // Priority 1: Cloudflare R2 — server-side proxy upload via /r2-proxy.
+    // The browser PUTs to this API server (which has full CORS + credentials support),
+    // and the server streams the body directly to R2.
+    // This avoids the browser CORS limitation where R2 presigned PUTs cannot return
+    // Access-Control-Allow-Credentials: true, which breaks XHR withCredentials mode.
     if (isR2Enabled()) {
-      const { uploadURL, publicUrl } = await r2GetPresignedUploadUrl(contentType);
+      const token = generateUploadToken();
+      // Derive the external API base URL (Render sets RENDER_EXTERNAL_URL automatically).
+      const apiBase =
+        (process.env.API_EXTERNAL_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/+$/, "") ||
+        `${(req.headers["x-forwarded-proto"] as string) || req.protocol}://${req.headers.host}`;
+      const uploadURL = `${apiBase}/api/storage/uploads/r2-proxy?ut=${token}`;
       res.json(
         RequestUploadUrlResponse.parse({
           uploadURL,
-          objectPath: publicUrl,   // public CDN URL — frontend stores as mediaUrl directly
+          // objectPath is a placeholder; the real public URL comes from the r2-proxy response body.
+          objectPath: "/api/storage/uploads/pending",
           metadata: { name, size, contentType },
         }),
       );

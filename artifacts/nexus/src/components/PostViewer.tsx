@@ -430,23 +430,8 @@ export default function PostViewer({
         className="absolute left-0 right-0 flex items-center justify-between px-4"
         style={{ zIndex: 20, top: safeTop }}
       >
-        {/* Left: back + avatar + name */}
+        {/* Left: avatar + name (tap avatar to close) */}
         <div className="flex items-center gap-2">
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={onClose}
-            className="flex items-center justify-center flex-shrink-0"
-            style={{
-              width: 34, height: 34, borderRadius: "50%",
-              background: "rgba(0,0,0,0.35)",
-              border: "1.5px solid rgba(255,255,255,0.18)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-            }}
-          >
-            <ChevronLeft size={16} className="text-white" />
-          </motion.button>
-
           {post.author && (
             <>
               {/* Avatar */}

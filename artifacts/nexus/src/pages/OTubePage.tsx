@@ -2641,8 +2641,8 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
               <span style={{fontSize:9,color:"rgba(255,255,255,0.4)"}} className="truncate">
                 {video.author.displayName}
               </span>
-              {/* Verified badge */}
-              {(video.viewsCount > 300 || video.author.id % 3 === 0) && (
+              {/* Verified badge — only real verified accounts */}
+              {video.author.isVerified && (
                 <ShieldCheck style={{width:8,height:8,color:"#ffd700",flexShrink:0}}/>
               )}
             </div>
@@ -3870,17 +3870,11 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
                 <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
               </button>
             </div>
-            {/* Estimated stats */}
+            {/* Stats shown after challenge is live */}
             <div style={{padding:"14px",borderRadius:12,background:"rgba(0,255,136,0.04)",border:"1px solid rgba(0,255,136,0.12)"}}>
-              <div style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.08em",marginBottom:10}}>📊 PROGNOZ</div>
-              <div className="flex gap-4">
-                {[{l:"Ishtirokchi",v:"1.2K–5K",e:"👥"},{l:"Ko'rishlar",v:"50K+",e:"👁"},{l:"Viral Ball",v:"87%",e:"🚀"}].map(({l,v,e})=>(
-                  <div key={l} style={{flex:1,textAlign:"center"}}>
-                    <div style={{fontSize:18}}>{e}</div>
-                    <div style={{fontSize:12,fontWeight:800,color:G}}>{v}</div>
-                    <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{l}</div>
-                  </div>
-                ))}
+              <div style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.08em",marginBottom:6}}>📊 STATISTIKA</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",textAlign:"center",padding:"8px 0"}}>
+                Challenge yaratilgandan keyin ko'rsatkichlar shu yerda chiqadi
               </div>
             </div>
           </div>

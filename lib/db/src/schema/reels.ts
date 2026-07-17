@@ -17,6 +17,7 @@ export const reelsTable = pgTable("reels", {
   tags: text("tags").array(),
   hlsUrl: text("hls_url"),
   hlsStatus: text("hls_status").default("pending"),
+  type: text("type").notNull().default("reel"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

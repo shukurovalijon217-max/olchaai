@@ -128,6 +128,17 @@ export interface LikeResult {
   likesCount: number;
 }
 
+/**
+ * Content type
+ */
+export type ReelType = typeof ReelType[keyof typeof ReelType];
+
+
+export const ReelType = {
+  reel: 'reel',
+  short: 'short',
+} as const;
+
 export interface Reel {
   id: number;
   author: User;
@@ -145,7 +156,17 @@ export interface Reel {
   tags?: string[];
   createdAt: string;
   views24h?: number;
+  /** Content type */
+  type?: ReelType;
 }
+
+export type ReelInputType = typeof ReelInputType[keyof typeof ReelInputType];
+
+
+export const ReelInputType = {
+  reel: 'reel',
+  short: 'short',
+} as const;
 
 export interface ReelInput {
   authorId: number;
@@ -155,6 +176,7 @@ export interface ReelInput {
   audioTrack?: string;
   duration?: number;
   tags?: string[];
+  type?: ReelInputType;
 }
 
 export interface ReelAnalytics {
@@ -942,7 +964,26 @@ export type ListReelsParams = {
 limit?: number;
 offset?: number;
 userId?: number;
+sort?: ListReelsSort;
+type?: ListReelsType;
 };
+
+export type ListReelsSort = typeof ListReelsSort[keyof typeof ListReelsSort];
+
+
+export const ListReelsSort = {
+  top: 'top',
+  trending: 'trending',
+  latest: 'latest',
+} as const;
+
+export type ListReelsType = typeof ListReelsType[keyof typeof ListReelsType];
+
+
+export const ListReelsType = {
+  reel: 'reel',
+  short: 'short',
+} as const;
 
 export type DeleteReel200 = {
   ok?: boolean;

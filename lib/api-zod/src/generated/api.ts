@@ -389,11 +389,14 @@ export const GetTrendingPostsResponse = zod.array(GetTrendingPostsResponseItem)
  */
 export const listReelsQueryLimitDefault = 10;
 export const listReelsQueryOffsetDefault = 0;
+export const listReelsQuerySortDefault = `top`;
 
 export const ListReelsQueryParams = zod.object({
   "limit": zod.coerce.number().default(listReelsQueryLimitDefault),
   "offset": zod.coerce.number().default(listReelsQueryOffsetDefault),
-  "userId": zod.coerce.number().optional()
+  "userId": zod.coerce.number().optional(),
+  "sort": zod.enum(['top', 'trending', 'latest']).default(listReelsQuerySortDefault),
+  "type": zod.enum(['reel', 'short']).optional()
 })
 
 export const ListReelsResponseItem = zod.object({
@@ -425,7 +428,8 @@ export const ListReelsResponseItem = zod.object({
   "isLiked": zod.boolean().optional(),
   "tags": zod.array(zod.string()).optional(),
   "createdAt": zod.string(),
-  "views24h": zod.number().optional()
+  "views24h": zod.number().optional(),
+  "type": zod.enum(['reel', 'short']).optional().describe('Content type')
 })
 export const ListReelsResponse = zod.array(ListReelsResponseItem)
 
@@ -440,7 +444,8 @@ export const CreateReelBody = zod.object({
   "caption": zod.string(),
   "audioTrack": zod.string().optional(),
   "duration": zod.number().optional(),
-  "tags": zod.array(zod.string()).optional()
+  "tags": zod.array(zod.string()).optional(),
+  "type": zod.enum(['reel', 'short']).optional()
 })
 
 
@@ -538,7 +543,8 @@ export const GetContinueWatchingResponseItem = zod.object({
   "isLiked": zod.boolean().optional(),
   "tags": zod.array(zod.string()).optional(),
   "createdAt": zod.string(),
-  "views24h": zod.number().optional()
+  "views24h": zod.number().optional(),
+  "type": zod.enum(['reel', 'short']).optional().describe('Content type')
 }),
   "positionSec": zod.number(),
   "durationSec": zod.number(),
@@ -1272,7 +1278,8 @@ export const GetAiFeedResponse = zod.object({
   "isLiked": zod.boolean().optional(),
   "tags": zod.array(zod.string()).optional(),
   "createdAt": zod.string(),
-  "views24h": zod.number().optional()
+  "views24h": zod.number().optional(),
+  "type": zod.enum(['reel', 'short']).optional().describe('Content type')
 })),
   "suggestedUsers": zod.array(zod.object({
   "id": zod.number(),

@@ -5,6 +5,7 @@
  * NEXUS Super Social Platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { ReelInputType } from './reelInputType';
 
 export interface ReelInput {
   authorId: number;
@@ -14,4 +15,5 @@ export interface ReelInput {
   audioTrack?: string;
   duration?: number;
   tags?: string[];
+  type?: ReelInputType;
 }

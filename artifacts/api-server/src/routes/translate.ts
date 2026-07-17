@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
-import { cacheGet, cacheSet } from "../lib/cache";
+import { db } from "@workspace/db";
+import { sql } from "drizzle-orm";
 
 const router = Router();
 
@@ -32,11 +33,10 @@ const LANG_NAMES: Record<string, string> = {
   yi: "Yiddish", sd: "Sindhi", or: "Odia", as: "Assamese",
 };
 
-// 7 days — translations almost never change for the same bundle
-const BUNDLE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const BATCH_SIZE = 100;
+// 200 keys per batch — large enough to reduce round-trips, small enough to stay within token limits
+const BATCH_SIZE = 200;
 
-/** Translate a flat key→value dict via OpenAI (single batch ≤ BATCH_SIZE keys) */
+/** Translate a flat key→value dict via OpenAI (single batch) */
 async function translateBatch(
   strings: Record<string, string>,
   langName: string,
@@ -59,7 +59,7 @@ Rules:
     ],
     response_format: { type: "json_object" },
     temperature: 0.1,
-    max_tokens: 4000,
+    max_tokens: 8000,
   });
 
   const raw = completion.choices[0]?.message?.content ?? "{}";
@@ -70,11 +70,38 @@ Rules:
   }
 }
 
+/** Read a cached translation bundle from DB */
+async function dbCacheGet(cacheKey: string): Promise<Record<string, string> | null> {
+  try {
+    const res = await db.execute(
+      sql`SELECT translated FROM translation_cache WHERE cache_key = ${cacheKey} LIMIT 1`
+    );
+    const rows = (res as any).rows ?? res;
+    if (rows && rows[0]?.translated) {
+      return typeof rows[0].translated === "string"
+        ? JSON.parse(rows[0].translated)
+        : rows[0].translated;
+    }
+  } catch { /* table may not exist yet */ }
+  return null;
+}
+
+/** Save a translation bundle to DB */
+async function dbCacheSet(cacheKey: string, translated: Record<string, string>): Promise<void> {
+  try {
+    await db.execute(sql`
+      INSERT INTO translation_cache (cache_key, translated, cached_at)
+      VALUES (${cacheKey}, ${JSON.stringify(translated)}, NOW())
+      ON CONFLICT (cache_key) DO UPDATE
+        SET translated = EXCLUDED.translated, cached_at = NOW()
+    `);
+  } catch { /* ignore — cache is best-effort */ }
+}
+
 /**
  * POST /api/translate-bundle
- * Translates a full UI bundle in one call, caches server-side per language.
- * After the first user triggers a language, all subsequent users get it instantly
- * from cache — zero OpenAI calls.
+ * Translates a full UI bundle using parallel OpenAI batches, cached in DB.
+ * After the first user triggers a language, all subsequent users get it from DB cache — zero OpenAI calls.
  *
  * Body: { targetLang: string, strings: Record<string,string>, bundleVersion?: string }
  * Returns: { translated: Record<string,string>, fromCache: boolean }
@@ -95,26 +122,33 @@ router.post("/translate-bundle", async (req, res) => {
     if (keys.length === 0) return res.json({ translated: strings, fromCache: false });
 
     const cacheKey = `trans_bundle:${targetLang}:${bundleVersion}`;
-    const cached = cacheGet<Record<string, string>>(cacheKey);
-    if (cached) {
-      return res.json({ translated: cached, fromCache: true });
+
+    // 1. Check DB cache first (survives server restarts)
+    const dbCached = await dbCacheGet(cacheKey);
+    if (dbCached) {
+      return res.json({ translated: dbCached, fromCache: true });
     }
 
     const langName = LANG_NAMES[targetLang] ?? targetLang;
 
-    // Split into batches and process sequentially (avoids OpenAI rate limits)
-    const merged: Record<string, string> = {};
+    // 2. Split into batches and run ALL in PARALLEL (key fix: was sequential → now parallel)
+    const batches: Record<string, string>[] = [];
     for (let i = 0; i < keys.length; i += BATCH_SIZE) {
       const slice = keys.slice(i, i + BATCH_SIZE);
       const batch = slice.reduce<Record<string, string>>(
         (acc, k) => { acc[k] = strings[k]; return acc; },
         {},
       );
-      const result = await translateBatch(batch, langName);
-      Object.assign(merged, result);
+      batches.push(batch);
     }
 
-    cacheSet(cacheKey, merged, BUNDLE_TTL_MS);
+    const results = await Promise.all(batches.map(b => translateBatch(b, langName)));
+    const merged: Record<string, string> = {};
+    for (const r of results) Object.assign(merged, r);
+
+    // 3. Persist to DB (best-effort, async — don't await to keep response fast)
+    dbCacheSet(cacheKey, merged).catch(() => {});
+
     return res.json({ translated: merged, fromCache: false });
   } catch (err) {
     req.log.error({ err }, "translate-bundle error");

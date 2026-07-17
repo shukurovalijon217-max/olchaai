@@ -50,7 +50,7 @@ import { useAuth } from "@/context/AuthContext";
    TYPES
 ══════════════════════════════════════════════════════════════ */
 interface OrbUser { displayName: string; username: string; avatarUrl?: string | null }
-interface ProfileOrbProps { targetUser: OrbUser; targetUserId: number; isOwner?: boolean }
+interface ProfileOrbProps { targetUser: OrbUser; targetUserId: number; isOwner?: boolean; hidden?: boolean }
 
 type OrbMode =
   | "idle"
@@ -1020,7 +1020,8 @@ function loadPos() {
 /* ══════════════════════════════════════════════════════════════
    MAIN: ProfileOrb
 ══════════════════════════════════════════════════════════════ */
-export default function ProfileOrb({ targetUser, targetUserId, isOwner }: ProfileOrbProps) {
+export default function ProfileOrb({ targetUser, targetUserId, isOwner, hidden }: ProfileOrbProps) {
+  if (hidden) return null;
   const { t } = useTranslation();
   const { user:me } = useAuth();
   const meId = me?.id ?? 0;

@@ -39,6 +39,14 @@ const MIGRATIONS = [
     translated JSONB NOT NULL,
     cached_at TIMESTAMPTZ DEFAULT NOW()
   )`,
+  /* ── Performance indexes ───────────────────────────────────── */
+  `CREATE INDEX IF NOT EXISTS idx_transactions_wallet  ON transactions (wallet_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_transactions_user    ON transactions (user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_comment_likes_cmt    ON comment_likes (comment_id, user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_story_views_story    ON story_views (story_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_group_posts_group    ON group_posts (group_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_reels_author_type    ON reels (author_id, type, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_posts_type_created   ON posts (type, created_at DESC)`,
 ];
 
 export async function autoMigrate(): Promise<void> {

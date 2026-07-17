@@ -56,5 +56,9 @@ if (cluster.isPrimary) {
     // One-time, idempotent removal of leftover seed/demo accounts and their
     // content (safe to run on every boot — no-ops once already cleaned).
     cleanupSeedData().catch((err) => logger.warn({ err }, "Seed data cleanup errored (non-fatal)"));
+
+    // Pre-warm top language translation cache so all users get instant translations
+    const { warmOnStartup } = await import("./lib/warmTranslations.js");
+    warmOnStartup("v6").catch((err) => logger.warn({ err }, "warmTranslations startup failed (non-fatal)"));
   }
 }

@@ -59,7 +59,7 @@ router.post("/auth/send-otp", async (req, res) => {
 
     const emailHtml = `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0502;color:#c8a060;border-radius:16px">
-          <div style="font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:8px">OlchaAI</div>
+          <div style="font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:8px">GilosAI</div>
           <div style="font-size:14px;color:#7a4820;margin-bottom:32px">AI-powered ijtimoiy koinot</div>
           <div style="font-size:14px;color:#a07040;margin-bottom:16px">Ro'yxatdan o'tish tasdiqlash kodi:</div>
           <div style="font-size:48px;font-weight:900;letter-spacing:12px;color:#e8b060;background:rgba(50,20,5,0.8);border-radius:12px;padding:20px 24px;text-align:center;margin-bottom:24px">${otp}</div>
@@ -67,17 +67,17 @@ router.post("/auth/send-otp", async (req, res) => {
         </div>
       `;
 
-    const emailPayload = { to: email, subject: `${otp} — OlchaAI tasdiqlash kodi`, html: emailHtml };
+    const emailPayload = { to: email, subject: `${otp} — GilosAI tasdiqlash kodi`, html: emailHtml };
 
     // Try verified domain first, fall back to Resend shared domain
-    let { error: sendError } = await getResend().emails.send({ from: "OlchaAI <noreply@olchaai.com>", ...emailPayload });
+    let { error: sendError } = await getResend().emails.send({ from: "GilosAI <noreply@olchaai.com>", ...emailPayload });
 
     if (sendError) {
       const msg = (sendError as { message?: string }).message ?? "";
       const isDomainNotVerified = msg.includes("verify a domain") || msg.includes("testing emails") || msg.includes("not verified");
       if (isDomainNotVerified) {
         req.log.warn("olchaai.com domain not verified yet, falling back to onboarding@resend.dev");
-        const fallback = await getResend().emails.send({ from: "OlchaAI <onboarding@resend.dev>", ...emailPayload });
+        const fallback = await getResend().emails.send({ from: "GilosAI <onboarding@resend.dev>", ...emailPayload });
         sendError = fallback.error ?? null;
       }
     }

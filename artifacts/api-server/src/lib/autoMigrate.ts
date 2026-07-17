@@ -16,6 +16,12 @@ const MIGRATIONS = [
   `ALTER TABLE creator_monetization ADD COLUMN IF NOT EXISTS super_thanks_enabled BOOLEAN NOT NULL DEFAULT TRUE`,
   `ALTER TABLE creator_monetization ADD COLUMN IF NOT EXISTS membership_enabled BOOLEAN NOT NULL DEFAULT FALSE`,
   `ALTER TABLE creator_monetization ADD COLUMN IF NOT EXISTS donation_min INTEGER NOT NULL DEFAULT 2000`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS country TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS notif_prefs JSONB`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS privacy_settings JSONB`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS cover_url TEXT`,
   `CREATE TABLE IF NOT EXISTS upload_sessions (
     uuid TEXT PRIMARY KEY,
     cloudinary_url TEXT,

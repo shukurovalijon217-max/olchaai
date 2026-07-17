@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Users, FileText, Play, ShoppingBag, X, TrendingUp } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useSearchAll } from "@workspace/api-client-react";
+import { useSearchAll, getSearchAllQueryKey } from "@workspace/api-client-react";
 
 type TabId = "all" | "users" | "posts" | "reels" | "products";
 
@@ -40,10 +40,12 @@ export default function SearchPage() {
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   const enabled = debouncedQ.length >= 1;
-  const { data, isLoading } = useSearchAll(
-    { q: debouncedQ || " ", type: activeTab === "all" ? undefined : activeTab },
+  const searchParams = { q: debouncedQ || "_", type: activeTab === "all" ? undefined : activeTab };
+  const { data, isLoading, isFetching } = useSearchAll(
+    searchParams,
+    { query: { enabled, queryKey: getSearchAllQueryKey(searchParams) } },
   );
-  const showLoading = enabled && isLoading;
+  const showLoading = enabled && (isLoading || isFetching);
 
   const users = data?.users ?? [];
   const posts = data?.posts ?? [];

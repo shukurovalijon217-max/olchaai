@@ -2,6 +2,7 @@ import { Router } from "express";
 import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
+import { warmTopLanguages } from "../lib/warmTranslations";
 
 const router = Router();
 
@@ -148,6 +149,17 @@ router.post("/translate-bundle", async (req, res) => {
 
     // 3. Persist to DB (best-effort, async — don't await to keep response fast)
     dbCacheSet(cacheKey, merged).catch(() => {});
+
+    // 4. Save base strings once (so startup warm can use them after server restart)
+    const baseKey = `trans_bundle:base:${bundleVersion}`;
+    dbCacheGet(baseKey).then(existing => {
+      if (!existing) {
+        dbCacheSet(baseKey, strings).catch(() => {});
+      }
+    }).catch(() => {});
+
+    // 5. Kick off background pre-warm for other popular languages (fire-and-forget)
+    warmTopLanguages(strings, bundleVersion).catch(() => {});
 
     return res.json({ translated: merged, fromCache: false });
   } catch (err) {

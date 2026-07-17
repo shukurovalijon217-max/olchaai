@@ -147,6 +147,8 @@ function TunnelPostCard({ post, isActive, colorIdx }: TunnelPostCardProps) {
               <img
                 src={post.author.avatarUrl}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
@@ -220,6 +222,8 @@ function TunnelPostCard({ post, isActive, colorIdx }: TunnelPostCardProps) {
             <img
               src={post.mediaUrl}
               alt=""
+              loading="lazy"
+              decoding="async"
               style={{
                 width: "100%",
                 height: "auto",

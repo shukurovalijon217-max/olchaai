@@ -229,6 +229,17 @@ router.post("/users/:id/follow", async (req, res) => {
 });
 
 /* ── Get followers list ── */
+router.get("/users/:id/followers/count", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id));
+    res.json({ count: row?.count ?? 0 });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/users/:id/followers", async (req, res) => {
   try {
     const id = Number(req.params.id);

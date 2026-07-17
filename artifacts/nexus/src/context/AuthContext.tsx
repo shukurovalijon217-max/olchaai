@@ -8,6 +8,7 @@ export interface NotifPrefs {
   messages: boolean;
   groups: boolean;
   premium: boolean;
+  emailNotifs?: boolean;
 }
 
 export interface PrivacySettings {

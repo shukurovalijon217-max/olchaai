@@ -20,7 +20,7 @@ type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | 
 /* ─── Default preferences ─────────────────────────────────── */
 const DEFAULT_NOTIF: NotifPrefs = {
   likes: true, comments: true, followers: true,
-  messages: true, groups: false, premium: false,
+  messages: true, groups: false, premium: false, emailNotifs: true,
 };
 const DEFAULT_PRIVACY: PrivacySettings = {
   privateProfile: false, activityStatus: true,
@@ -390,6 +390,7 @@ function NotificationsContent() {
           <ToggleRow color="amber" label={t("settings.notif_messages")} description={t("settings.notif_messages_desc")} on={prefs.messages} onChange={v => update("messages", v)} />
           <ToggleRow color="amber" label={t("settings.notif_groups")} description={t("settings.notif_groups_desc")} on={prefs.groups} onChange={v => update("groups", v)} />
           <ToggleRow color="amber" label={t("settings.notif_premium")} description={t("settings.notif_premium_desc")} on={prefs.premium} onChange={v => update("premium", v)} />
+          <ToggleRow color="violet" label={t("settings.notif_email")} description={t("settings.notif_email_desc")} on={prefs.emailNotifs ?? true} onChange={v => update("emailNotifs", v)} />
         </div>
       </SF>
     </div>

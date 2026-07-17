@@ -42,6 +42,7 @@ services:
       psql "$DATABASE_URL" -c "DROP TABLE IF EXISTS infra_payments CASCADE; CREATE TABLE infra_payments (id SERIAL PRIMARY KEY, cost_id INTEGER NOT NULL, provider TEXT NOT NULL, service_name TEXT NOT NULL, amount_cents INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'paid', paid_from TEXT NOT NULL DEFAULT 'treasury', notes TEXT, paid_at TIMESTAMPTZ DEFAULT NOW());" &&
       psql "$DATABASE_URL" -c "DROP TABLE IF EXISTS email_verifications CASCADE; CREATE TABLE email_verifications (id SERIAL PRIMARY KEY, email TEXT NOT NULL, otp TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL, verified BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT NOW());" &&
       psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS user_sessions (sid VARCHAR NOT NULL COLLATE \"default\", sess JSON NOT NULL, expire TIMESTAMP(6) NOT NULL, CONSTRAINT session_pkey PRIMARY KEY (sid) NOT DEFERRABLE INITIALLY IMMEDIATE); CREATE INDEX IF NOT EXISTS IDX_session_expire ON user_sessions (expire);" &&
+      psql "$DATABASE_URL" -c "ALTER TABLE reels ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'reel';" &&
       pnpm --filter @workspace/api-server run build
     startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
     healthCheckPath: /api/healthz

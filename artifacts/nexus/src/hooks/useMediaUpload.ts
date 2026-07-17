@@ -51,7 +51,9 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
       const putRes = await fetch(uploadURL, {
         method: "PUT",
         headers: { "Content-Type": file.type || "application/octet-stream" },
-        credentials: "include",
+        // No credentials — upload URL is authenticated via presigned token (R2) or HMAC proxy token.
+        // Sending credentials to a cross-origin R2 URL causes a CORS error.
+        credentials: "omit",
         body: file,
       });
       if (!putRes.ok) {

@@ -3979,6 +3979,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const [stickers, setStickers]   = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished]   = useState(false);
+  const [publishErr, setPublishErr] = useState("");
   const [exportQ, setExportQ]     = useState<"720p"|"1080p"|"4K">("1080p");
   const [transition, setTransition] = useState("cut");
   const [brightness, setBrightness] = useState(100);
@@ -4062,8 +4063,8 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const uploadUrlMut = useRequestUploadUrl();
   const createMut    = useCreateReel({
     mutation: {
-      onSuccess: () => { qc.invalidateQueries({queryKey:["/api/reels"]}); setPublished(true); setPublishing(false); },
-      onError:   () => setPublishing(false),
+      onSuccess: () => { qc.invalidateQueries({queryKey:["/api/reels"]}); setPublished(true); setPublishing(false); setPublishErr(""); },
+      onError:   (e) => { setPublishing(false); setPublishErr(e instanceof Error ? e.message : "Video saqlashda xato"); },
     }
   });
 
@@ -4170,12 +4171,12 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 
   const handlePublish = async () => {
     if (!file||!user) return;
-    setPublishing(true);
+    setPublishing(true); setPublishErr("");
     try {
       const req: UploadUrlRequest = {name:file.name,size:file.size,contentType:file.type};
       const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
-      const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},credentials:"include",body:file});
-      if (!res.ok) throw new Error("Upload failed");
+      const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file});
+      if (!res.ok) throw new Error(`Yuklash xatosi: ${res.status}`);
       let studioObjectPath = objectPath;
       try { const b=await res.json(); if(b?.objectPath) studioObjectPath=b.objectPath; } catch {}
       const studioVideoUrl = studioObjectPath.startsWith("http") ? studioObjectPath : `${API_BASE}/api/storage${studioObjectPath}`;
@@ -4187,7 +4188,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
         tags:["otube-studio","olcha","studio"],
         duration:0,
       }});
-    } catch { setPublishing(false); }
+    } catch(e) { setPublishing(false); setPublishErr(e instanceof Error ? e.message : "Xato yuz berdi"); }
   };
 
   const TABS = [
@@ -5600,7 +5601,12 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
           </>
         ) : (
           <>
-            {file && (
+            {publishErr && (
+              <div style={{flex:1,fontSize:10,color:"#ff6b6b",fontWeight:600,wordBreak:"break-word"}}>
+                ⚠️ {publishErr}
+              </div>
+            )}
+            {!publishErr && file && (
               <div style={{flex:1,fontSize:9,color:"rgba(255,255,255,0.3)"}}>
                 {file.name.slice(0,22)}… · {(file.size/1024/1024).toFixed(1)}MB · {exportQ}
               </div>

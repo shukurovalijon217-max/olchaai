@@ -2,7 +2,7 @@ import { Router } from "express";
 import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
-import { warmTopLanguages } from "../lib/warmTranslations";
+import { warmAllLanguages } from "../lib/warmTranslations";
 
 const router = Router();
 
@@ -158,8 +158,8 @@ router.post("/translate-bundle", async (req, res) => {
       }
     }).catch(() => {});
 
-    // 5. Kick off background pre-warm for other popular languages (fire-and-forget)
-    warmTopLanguages(strings, bundleVersion).catch(() => {});
+    // 5. Kick off background pre-warm for ALL languages (fire-and-forget)
+    warmAllLanguages(strings, bundleVersion).catch(() => {});
 
     return res.json({ translated: merged, fromCache: false });
   } catch (err) {

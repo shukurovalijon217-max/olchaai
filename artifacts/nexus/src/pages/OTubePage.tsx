@@ -1564,42 +1564,33 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                 <ChevronRight style={{width:10,height:10}}/>
               </button>
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px 8px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:14,padding:"6px 14px 8px"}}>
               <motion.button whileTap={{scale:0.82}} onClick={(e)=>{e.stopPropagation();togglePlay();}}
-                style={{width:42,height:42,flexShrink:0,borderRadius:"50%",
-                  background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.2)",
-                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                style={{display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 {playing
-                  ?<Pause style={{width:16,height:16,fill:"white",color:"white"}}/>
-                  :<Play  style={{width:16,height:16,fill:"white",color:"white",marginLeft:2}}/>}
+                  ?<Pause style={{width:18,height:18,fill:"white",color:"white"}}/>
+                  :<Play  style={{width:18,height:18,fill:"white",color:"white",marginLeft:2}}/>}
               </motion.button>
               <motion.button whileTap={{scale:0.85}}
                 onClick={(e)=>{e.stopPropagation();const v=videoRef.current;if(v){v.currentTime=0;setProgress(0);setCurTime(0);}}}
-                style={{width:32,height:32,flexShrink:0,borderRadius:"50%",
-                  background:"rgba(255,255,255,0.08)",
-                  display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <RotateCcw style={{width:13,height:13,color:"rgba(255,255,255,0.6)"}}/>
+                style={{display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <RotateCcw style={{width:15,height:15,color:"rgba(255,255,255,0.6)"}}/>
               </motion.button>
               <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)",
                 fontFamily:"monospace",flex:1}}>
                 {fmtTime(curTime)}/{fmtTime(duration)}
               </span>
               <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();setMuted(m=>!m);}}
-                style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
-                  background:muted?"rgba(255,255,255,0.08)":"rgba(0,229,255,0.12)",
-                  border:`1px solid ${muted?"rgba(255,255,255,0.1)":"rgba(0,229,255,0.3)"}`,
-                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                style={{display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 {muted
-                  ?<VolumeX style={{width:13,height:13,color:"rgba(255,255,255,0.5)"}}/>
-                  :<Volume2 style={{width:13,height:13,color:"#00e5ff"}}/>}
+                  ?<VolumeX style={{width:15,height:15,color:"rgba(255,255,255,0.5)"}}/>
+                  :<Volume2 style={{width:15,height:15,color:"#00e5ff"}}/>}
               </motion.button>
               <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();toggleFull();}}
-                style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
-                  background:"rgba(255,255,255,0.08)",
-                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                style={{display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 {isFull
-                  ?<Minimize2 style={{width:13,height:13,color:"rgba(255,255,255,0.6)"}}/>
-                  :<Maximize2 style={{width:13,height:13,color:"rgba(255,255,255,0.6)"}}/>}
+                  ?<Minimize2 style={{width:15,height:15,color:"rgba(255,255,255,0.6)"}}/>
+                  :<Maximize2 style={{width:15,height:15,color:"rgba(255,255,255,0.6)"}}/>}
               </motion.button>
             </div>
           </div>

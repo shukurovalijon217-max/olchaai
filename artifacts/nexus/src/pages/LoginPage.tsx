@@ -622,10 +622,14 @@ export default function LoginPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email }),
       });
-      const data = await r.json();
-      if (!r.ok) { setOtpError(data.error || "Xato"); return; }
+      let data: { ok?: boolean; error?: string } = {};
+      try { data = await r.json(); } catch { /* non-JSON body */ }
+      if (!r.ok) { setOtpError(data.error || `Server xatosi (${r.status})`); return; }
       setOtpSent(true); setOtpCode("");
-    } catch { setOtpError("Ulanishda xato"); }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
+      setOtpError(msg.includes("fetch") ? "Server bilan ulanib bo'lmadi" : "Ulanishda xato");
+    }
     finally { setOtpLoading(false); }
   };
 
@@ -637,10 +641,14 @@ export default function LoginPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email, otp: otpCode.trim() }),
       });
-      const data = await r.json();
-      if (!r.ok) { setOtpError(data.error || "Kod noto'g'ri"); return; }
+      let data: { ok?: boolean; verified?: boolean; error?: string } = {};
+      try { data = await r.json(); } catch { /* non-JSON body */ }
+      if (!r.ok) { setOtpError(data.error || `Server xatosi (${r.status})`); return; }
       setOtpVerified(true); setOtpError("");
-    } catch { setOtpError("Ulanishda xato"); }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
+      setOtpError(msg.includes("fetch") ? "Server bilan ulanib bo'lmadi" : "Ulanishda xato");
+    }
     finally { setOtpLoading(false); }
   };
 

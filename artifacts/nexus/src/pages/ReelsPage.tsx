@@ -509,21 +509,7 @@ function LeftOrb({
   return (
     <motion.button whileTap={{ scale: 0.68 }} onClick={onClick}
       className="flex flex-col items-center gap-1">
-      <div className="w-[44px] h-[44px] rounded-full flex items-center justify-center relative"
-        style={{
-          background: active ? `${activeColor}28` : "rgba(4,3,14,0.60)",
-          border: `1.5px solid ${active ? activeColor + "55" : "rgba(255,255,255,0.13)"}`,
-          backdropFilter: "blur(24px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.8)",
-          boxShadow: active
-            ? `0 0 22px ${activeColor}44, inset 0 1px 0 rgba(255,255,255,0.14)`
-            : "0 2px 16px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.07)",
-        }}>
-        {active && (
-          <motion.div className="absolute inset-0 rounded-full pointer-events-none"
-            animate={{ opacity: [0.2, 0.55, 0.2] }} transition={{ duration: 2.2, repeat: Infinity }}
-            style={{ background: `radial-gradient(circle, ${activeColor}30 0%, transparent 70%)` }} />
-        )}
+      <div className="flex items-center justify-center relative" style={{ width: 44, height: 44 }}>
         {icon}
       </div>
       {count !== undefined && count > 0 && (
@@ -758,11 +744,11 @@ function ReelSlide({
           {/* Right: mute + add */}
           <div className="flex items-center gap-2">
             <motion.button whileTap={{ scale: 0.8 }} onClick={onMute}
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(0,0,0,0.42)", backdropFilter: "blur(18px)",
-                border: `1px solid ${muted ? "rgba(255,255,255,0.09)" : neonColor + "38"}`,
-                boxShadow: muted ? "none" : `0 0 12px ${neonColor}30` }}>
-              {muted ? <VolumeX className="w-3.5 h-3.5 text-white/40" /> : <Volume2 className="w-3.5 h-3.5 text-white/85" />}
+              className="flex items-center justify-center p-1">
+              {muted
+                ? <VolumeX className="w-5 h-5" style={{ color: "rgba(255,255,255,0.5)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.9))" }} />
+                : <Volume2 className="w-5 h-5" style={{ color: "rgba(255,255,255,0.9)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.9))" }} />
+              }
             </motion.button>
           </div>
         </div>

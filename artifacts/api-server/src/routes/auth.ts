@@ -145,6 +145,14 @@ router.post("/auth/register", async (req, res) => {
     if (normalizedPhone.length < 9) {
       res.status(400).json({ error: "Telefon raqami noto'g'ri" }); return;
     }
+
+    // ── REQUIRE verified email OTP before registration ──────────
+    const [emailVerified] = await db.select().from(emailVerifications)
+      .where(and(eq(emailVerifications.email, email), eq(emailVerifications.verified, true)));
+    if (!emailVerified) {
+      res.status(400).json({ error: "Email tasdiqlash kodi kiritilmagan yoki noto'g'ri. Avval emailingizni tasdiqlang." }); return;
+    }
+
     const [existing, existingUsername, existingPhone] = await Promise.all([
       db.select().from(usersTable).where(eq(usersTable.email, email)),
       db.select().from(usersTable).where(eq(usersTable.username, username)),
@@ -164,6 +172,9 @@ router.post("/auth/register", async (req, res) => {
     const [user] = await db.insert(usersTable).values({
       username, displayName, email, phone: normalizedPhone, passwordHash, isAdmin,
     }).returning();
+
+    // Clean up used verification record
+    await db.delete(emailVerifications).where(eq(emailVerifications.id, emailVerified.id)).catch(() => {});
 
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;

@@ -607,9 +607,47 @@ export default function LoginPage() {
   });
   const [dialCode, setDialCode] = useState("+998");
 
+  // ── Email OTP verification state ──────────────────────────────
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+
+  const sendOtp = async () => {
+    if (!form.email || !form.email.includes("@")) { setOtpError("To'g'ri email kiriting"); return; }
+    setOtpLoading(true); setOtpError("");
+    try {
+      const r = await fetch("/api/auth/send-otp", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setOtpError(data.error || "Xato"); return; }
+      setOtpSent(true); setOtpCode("");
+    } catch { setOtpError("Ulanishda xato"); }
+    finally { setOtpLoading(false); }
+  };
+
+  const verifyOtpCode = async () => {
+    if (!otpCode.trim()) { setOtpError("Kodni kiriting"); return; }
+    setOtpLoading(true); setOtpError("");
+    try {
+      const r = await fetch("/api/auth/verify-otp", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, otp: otpCode.trim() }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setOtpError(data.error || "Kod noto'g'ri"); return; }
+      setOtpVerified(true); setOtpError("");
+    } catch { setOtpError("Ulanishda xato"); }
+    finally { setOtpLoading(false); }
+  };
+
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [k]: e.target.value }));
     setError("");
+    if (k === "email") { setOtpSent(false); setOtpVerified(false); setOtpCode(""); setOtpError(""); }
   };
 
   const doRegister = async () => {
@@ -641,6 +679,7 @@ export default function LoginPage() {
     } else {
       if (!form.username.trim()) { setError(t("auth.username_req")); return; }
       if (!form.displayName.trim()) { setError(t("auth.name_req")); return; }
+      if (!otpVerified) { setError("Emailingizni tasdiqlang: kod yuboring va kodni kiriting"); return; }
       setShowConsent(true);
     }
   };
@@ -823,7 +862,7 @@ export default function LoginPage() {
                   {t("auth.email")}
                 </label>
 
-                {/* Email input (signup only) */}
+                {/* Email input + OTP verification (signup only) */}
                 {tab === "signup" ? (
                   <div className="space-y-2">
                     <div className="flex gap-2">
@@ -832,16 +871,87 @@ export default function LoginPage() {
                         value={form.email}
                         onChange={set("email")}
                         required
+                        disabled={otpVerified}
                         className="flex-1 px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
                         style={{
-                          background: "rgba(30,12,4,0.9)",
-                          border: "1px solid #2a1408",
+                          background: otpVerified ? "rgba(10,40,15,0.9)" : "rgba(30,12,4,0.9)",
+                          border: otpVerified ? "1px solid #1a6030" : "1px solid #2a1408",
                           color: "#c8a060",
                         }}
                         placeholder="siz@email.com"
                         autoComplete="email"
                       />
+                      {!otpVerified && (
+                        <button
+                          type="button"
+                          onClick={sendOtp}
+                          disabled={otpLoading || !form.email.includes("@")}
+                          className="px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
+                          style={{
+                            background: "rgba(40,15,0,0.9)",
+                            border: "1px solid #3a1808",
+                            color: otpLoading ? "#5a3820" : "#c07030",
+                            cursor: otpLoading ? "not-allowed" : "pointer",
+                          }}
+                        >
+                          {otpLoading && !otpSent ? "..." : otpSent ? "Qayta" : "Kod yuborish"}
+                        </button>
+                      )}
+                      {otpVerified && (
+                        <div className="flex items-center px-3 rounded-xl" style={{ background: "rgba(10,50,20,0.9)", border: "1px solid #1a6030" }}>
+                          <Check className="w-4 h-4" style={{ color: "#30e060" }} />
+                        </div>
+                      )}
                     </div>
+
+                    {/* OTP code input */}
+                    {otpSent && !otpVerified && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="flex gap-2"
+                      >
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          value={otpCode}
+                          onChange={e => { setOtpCode(e.target.value.replace(/\D/g, "")); setOtpError(""); }}
+                          className="flex-1 px-4 py-2.5 rounded-xl text-sm focus:outline-none tracking-widest text-center"
+                          style={{ background: "rgba(30,12,4,0.9)", border: "1px solid #3a2010", color: "#e8c080", letterSpacing: "0.4em", fontSize: "1.1rem" }}
+                          placeholder="• • • • • •"
+                        />
+                        <button
+                          type="button"
+                          onClick={verifyOtpCode}
+                          disabled={otpLoading || otpCode.length < 6}
+                          className="px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
+                          style={{
+                            background: otpCode.length >= 6 ? "linear-gradient(135deg,#0a4020,#0f6030)" : "rgba(20,20,20,0.5)",
+                            border: "1px solid #1a5030",
+                            color: otpCode.length >= 6 ? "#50e090" : "#2a4030",
+                            cursor: otpCode.length >= 6 ? "pointer" : "not-allowed",
+                          }}
+                        >
+                          {otpLoading ? "..." : "Tasdiqlash"}
+                        </button>
+                      </motion.div>
+                    )}
+
+                    {/* OTP status messages */}
+                    {otpSent && !otpVerified && !otpError && (
+                      <p className="text-[10px]" style={{ color: "#6a8060" }}>
+                        6 xonali kod {form.email} ga yuborildi (10 daqiqa amal qiladi)
+                      </p>
+                    )}
+                    {otpVerified && (
+                      <p className="text-[10px]" style={{ color: "#30a050" }}>
+                        ✓ Email tasdiqlandi
+                      </p>
+                    )}
+                    {otpError && (
+                      <p className="text-[10px]" style={{ color: "#e05030" }}>{otpError}</p>
+                    )}
                   </div>
                 ) : (
                   <input

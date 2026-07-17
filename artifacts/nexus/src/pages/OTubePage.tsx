@@ -957,8 +957,9 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           flexShrink:0,display:"flex",alignItems:"center",gap:8,
           paddingTop:"calc(env(safe-area-inset-top,0px) + 8px)",
           paddingBottom:8,paddingLeft:12,paddingRight:10,
-          background:"rgba(2,0,8,0.97)",backdropFilter:"blur(20px)",
-          borderBottom:"1px solid rgba(255,255,255,0.05)",
+          background:"rgba(0,0,0,0.18)",backdropFilter:"blur(22px)",
+          WebkitBackdropFilter:"blur(22px)",
+          borderBottom:"1px solid rgba(255,255,255,0.06)",
         }}>
           <motion.button whileTap={{scale:0.82}} onClick={onClose}
             style={{width:36,height:36,flexShrink:0,borderRadius:"50%",
@@ -979,14 +980,14 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           <motion.button whileTap={{scale:0.9}}
             onClick={(e)=>{e.stopPropagation();if(requireLogin())followMut.mutate({id:video.author.id});}}
             disabled={followMut.isPending}
-            style={{padding:"7px 13px",borderRadius:99,flexShrink:0,
-              background:"rgba(255,255,255,0.07)",
-              backdropFilter:"blur(10px)",
-              border:`1px solid ${subbed?"rgba(255,255,255,0.1)":"rgba(255,107,0,0.55)"}`,
-              boxShadow:subbed?"none":"0 0 14px rgba(255,107,0,0.22)",
+            style={{padding:"5px 10px",borderRadius:99,flexShrink:0,
+              background:"rgba(255,255,255,0.10)",
+              backdropFilter:"blur(16px)",
+              WebkitBackdropFilter:"blur(16px)",
+              border:`1px solid ${subbed?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.22)"}`,
               opacity:followMut.isPending?0.6:1,
-              fontSize:11,fontWeight:700,color:subbed?"rgba(255,255,255,0.45)":"#ff9a52"}}>
-            {subbed?"✓ Obuna":"···Obuna"}
+              fontSize:10,fontWeight:600,color:subbed?"rgba(255,255,255,0.40)":"rgba(255,255,255,0.9)"}}>
+            {subbed?"✓ Obuna":"+ Obuna"}
           </motion.button>
           <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();toggleFull();}}
             style={{width:32,height:32,flexShrink:0,borderRadius:"50%",
@@ -1211,15 +1212,8 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             <motion.button key={i} whileTap={{scale:0.82}}
               onClick={(e)=>{e.stopPropagation();b.act();}}
               style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-                padding:"4px 0",width:"100%"}}>
-              <div style={{
-                width:34,height:34,borderRadius:"50%",
-                background:b.bg??(b.active?"rgba(60,60,80,0.9)":"rgba(30,30,40,0.75)"),
-                backdropFilter:"blur(16px)",
-                border:`1px solid ${b.active?"rgba(255,255,255,0.25)":"rgba(255,255,255,0.12)"}`,
-                display:"flex",alignItems:"center",justifyContent:"center",
-                boxShadow:"0 2px 8px rgba(0,0,0,0.55)",
-              }}>
+                padding:"6px 0",width:"100%"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:34,height:34}}>
                 {b.icon}
               </div>
               <span style={{fontSize:8,fontWeight:600,color:b.col,
@@ -1250,11 +1244,13 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               exit={{opacity:0,scale:1.4}} transition={{duration:0.14}}
               style={{position:"absolute",top:"50%",left:"50%",
                 transform:"translate(-50%,-50%)",pointerEvents:"none",
-                width:72,height:72,borderRadius:"50%",
-                background:"rgba(0,0,0,0.52)",backdropFilter:"blur(14px)",
-                border:"1.5px solid rgba(255,255,255,0.18)",
+                width:68,height:68,borderRadius:"50%",
+                background:"rgba(255,255,255,0.12)",backdropFilter:"blur(20px)",
+                WebkitBackdropFilter:"blur(20px)",
+                border:"1.5px solid rgba(255,255,255,0.30)",
+                boxShadow:"0 4px 24px rgba(0,0,0,0.25)",
                 display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <Play style={{width:28,height:28,fill:"white",color:"white",marginLeft:4}}/>
+              <Play style={{width:26,height:26,fill:"rgba(255,255,255,0.95)",color:"rgba(255,255,255,0.95)",marginLeft:4}}/>
             </motion.div>
           )}
         </AnimatePresence>

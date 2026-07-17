@@ -282,12 +282,7 @@ function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }
               className="w-1.5 h-1.5 rounded-full bg-white" />
             <span className="text-white text-[10px] font-black tracking-[0.15em]">LIVE</span>
           </div>
-          {/* viewer count mock */}
-          <div className="absolute top-2.5 right-3 flex items-center gap-1 px-2 py-1 rounded-full"
-            style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(6px)" }}>
-            <Users className="w-3 h-3 text-white/60" />
-            <span className="text-white/70 text-[10px] font-semibold">0</span>
-          </div>
+          {/* viewer count shown after going live (LivePage handles real-time via Go WS) */}
         </div>
 
         <input value={liveTitle} onChange={e => setLiveTitle(e.target.value)}

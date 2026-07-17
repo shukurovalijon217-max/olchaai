@@ -2924,7 +2924,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
       xhr.upload.onprogress = (e) => { if(e.lengthComputable) setProgress(Math.round(e.loaded/e.total*88)); };
       let xhrObjectPath = objectPath;
       await new Promise<void>((res,rej)=>{
-        xhr.open("PUT",uploadURL); xhr.withCredentials=true; xhr.setRequestHeader("Content-Type",file.type);
+        xhr.open("PUT",uploadURL); xhr.setRequestHeader("Content-Type",file.type);
         xhr.onload=()=>{ if(xhr.status<300){ try{ const b=JSON.parse(xhr.responseText); if(b?.objectPath) xhrObjectPath=b.objectPath; }catch{} res(); } else rej(new Error("Upload failed")); };
         xhr.onerror=()=>rej(new Error("Network error")); xhr.send(file);
       });

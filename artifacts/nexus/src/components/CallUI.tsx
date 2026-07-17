@@ -116,8 +116,15 @@ export default function CallUI({
 
       <audio ref={remoteAudioRef} autoPlay />
 
-      {isVideo && isConnected && (
-        <video ref={remoteVidRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
+      {/* Remote video: always mounted when isVideo so srcObject assignment in the effect
+          lands on a real DOM node. Visibility is controlled by opacity. */}
+      {isVideo && (
+        <video
+          ref={remoteVidRef}
+          autoPlay playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: isConnected ? 1 : 0, pointerEvents: isConnected ? "auto" : "none" }}
+        />
       )}
       {isVideo && (
         <video

@@ -1,5 +1,5 @@
 /* GilosAI Service Worker — global edge cache + offline shell */
-const CACHE_VERSION = "gilos-v4";
+const CACHE_VERSION = "gilos-v5";
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 const IMG_CACHE     = `${CACHE_VERSION}-img`;

@@ -1442,6 +1442,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         targetUser={{ displayName: user.displayName, username: user.username, avatarUrl: user.avatarUrl }}
         targetUserId={userId}
         isOwner={isOwner}
+        hidden={viewerOpen}
       />
 
       {/* ── Post Viewer ── */}

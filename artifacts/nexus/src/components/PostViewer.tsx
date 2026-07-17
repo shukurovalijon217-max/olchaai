@@ -44,48 +44,108 @@ function SongTicker({ name, accent }: { name: string; accent: string }) {
   );
 }
 
-/* ── Right-side action button ── */
-function ActionBtn({
-  icon: Icon, label, active, color, count, onClick,
+/* ── Actions Orb (top-right, same size as avatar, expands downward) ── */
+function ActionsOrb({
+  post, liked, likes, onLike, onComment,
 }: {
-  icon: React.ElementType; label: string; active?: boolean; color?: string;
-  count?: number; onClick: (e: React.MouseEvent) => void;
+  post: Post; liked: boolean; likes: number;
+  onLike: () => void; onComment: () => void;
 }) {
-  const c = active ? (color ?? "#f43f5e") : "rgba(255,255,255,0.9)";
+  const [open, setOpen] = useState(false);
+
+  const actions = [
+    {
+      icon: Heart, label: `${likes}`, active: liked, color: liked ? "#f43f5e" : "rgba(255,255,255,0.9)",
+      action: () => onLike(),
+    },
+    {
+      icon: MessageCircle, label: "Izoh", active: false, color: "rgba(255,255,255,0.9)",
+      action: () => { setOpen(false); onComment(); },
+    },
+    {
+      icon: Share2, label: "Ulash", active: false, color: "rgba(255,255,255,0.9)",
+      action: () => {
+        if (navigator.share) navigator.share({ url: `${window.location.origin}/post/${post.id}` }).catch(() => {});
+        else navigator.clipboard?.writeText(`${window.location.origin}/post/${post.id}`);
+      },
+    },
+    {
+      icon: Download, label: "Yuklab", active: false, color: "rgba(255,255,255,0.9)",
+      action: () => {
+        if (post.mediaUrl) {
+          const a = document.createElement("a");
+          a.href = resolveApiUrl(post.mediaUrl); a.download = `post-${post.id}`; a.click();
+        }
+      },
+    },
+    { icon: Flag, label: "Shikoyat", active: false, color: "#fb923c", action: () => {} },
+  ];
+
   return (
-    <motion.button
-      whileTap={{ scale: 0.82 }}
-      onClick={onClick}
-      className="flex flex-col items-center gap-0.5"
-      style={{ userSelect: "none" }}
-    >
-      <div
-        className="flex items-center justify-center"
+    <div className="flex flex-col items-center" style={{ userSelect: "none" }}>
+      {/* Main orb — 34px, same as avatar */}
+      <motion.button
+        whileTap={{ scale: 0.85 }}
+        onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
+        className="flex items-center justify-center flex-shrink-0"
         style={{
-          width: 38, height: 38, borderRadius: "50%",
-          background: active ? "rgba(244,63,94,0.18)" : "rgba(0,0,0,0.30)",
-          border: `1.5px solid ${active ? "rgba(244,63,94,0.55)" : "rgba(255,255,255,0.22)"}`,
+          width: 34, height: 34, borderRadius: "50%",
+          background: open ? "rgba(124,58,237,0.35)" : "rgba(0,0,0,0.35)",
+          border: `1.5px solid ${open ? "rgba(139,92,246,0.6)" : "rgba(255,255,255,0.18)"}`,
           backdropFilter: "blur(14px)",
           WebkitBackdropFilter: "blur(14px)",
-          boxShadow: active ? "0 0 14px rgba(244,63,94,0.35)" : "none",
-          transition: "all 0.2s",
+          boxShadow: open ? "0 0 16px rgba(124,58,237,0.4)" : "none",
+          transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
         }}
       >
-        <Icon
-          size={16}
-          style={{ color: c, fill: active && Icon === Heart ? c : "none" }}
-        />
-      </div>
-      {count !== undefined ? (
-        <span className="text-[10px] font-bold leading-none" style={{ color: "rgba(255,255,255,0.8)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-          {count > 999 ? `${(count / 1000).toFixed(1)}k` : count}
-        </span>
-      ) : (
-        <span className="text-[9px] font-semibold leading-none" style={{ color: "rgba(255,255,255,0.55)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-          {label}
-        </span>
-      )}
-    </motion.button>
+        <motion.div animate={{ rotate: open ? 45 : 0 }} transition={{ type: "spring", stiffness: 320, damping: 22 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="2" fill="white" opacity="0.9" />
+            <circle cx="12" cy="5" r="2" fill="white" opacity="0.9" />
+            <circle cx="12" cy="19" r="2" fill="white" opacity="0.9" />
+          </svg>
+        </motion.div>
+      </motion.button>
+
+      {/* Expanded actions — bare icons (no circles), expand downward */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ overflow: "hidden" }}
+            className="flex flex-col items-center mt-3 gap-4"
+          >
+            {actions.map(({ icon: Icon, label, active, color, action }, i) => (
+              <motion.button
+                key={label + i}
+                initial={{ opacity: 0, y: -8, scale: 0.7 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.7 }}
+                transition={{ delay: i * 0.045, type: "spring", stiffness: 380, damping: 26 }}
+                onClick={e => { e.stopPropagation(); action(); }}
+                className="flex flex-col items-center gap-0.5"
+                style={{ userSelect: "none" }}
+              >
+                <Icon
+                  size={20}
+                  style={{
+                    color,
+                    fill: active && Icon === Heart ? color : "none",
+                    filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.9))",
+                  }}
+                />
+                <span className="text-[9px] font-bold leading-none"
+                  style={{ color: "rgba(255,255,255,0.7)", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>
+                  {label}
+                </span>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -487,54 +547,17 @@ export default function PostViewer({
         )}
       </div>
 
-      {/* ── RIGHT SIDE ACTIONS (vertical strip) ── */}
+      {/* ── RIGHT SIDE: Actions Orb (top-right, same size as avatar) ── */}
       <div
-        className="absolute flex flex-col items-center gap-4"
-        style={{
-          zIndex: 20,
-          right: 14,
-          bottom: `calc(${safeBottom} + 80px)`,
-        }}
+        className="absolute flex flex-col items-start"
+        style={{ zIndex: 20, right: 16, top: safeTop }}
       >
-        <ActionBtn
-          icon={Heart}
-          label=""
-          active={liked}
-          color="#f43f5e"
-          count={likes}
-          onClick={e => { e.stopPropagation(); handleLike(); }}
-        />
-        <ActionBtn
-          icon={MessageCircle}
-          label="Izoh"
-          count={(post as any).commentsCount ?? 0}
-          onClick={e => { e.stopPropagation(); setCommentOpen(o => !o); }}
-        />
-        <ActionBtn
-          icon={Share2}
-          label="Ulash"
-          onClick={e => {
-            e.stopPropagation();
-            if (navigator.share) navigator.share({ url: `${window.location.origin}/post/${post.id}` }).catch(() => {});
-            else navigator.clipboard?.writeText(`${window.location.origin}/post/${post.id}`);
-          }}
-        />
-        <ActionBtn
-          icon={Download}
-          label="Yuklab"
-          onClick={e => {
-            e.stopPropagation();
-            if (post.mediaUrl) {
-              const a = document.createElement("a");
-              a.href = resolveApiUrl(post.mediaUrl); a.download = `post-${post.id}`; a.click();
-            }
-          }}
-        />
-        <ActionBtn
-          icon={Flag}
-          label="Shikoyat"
-          color="#fb923c"
-          onClick={e => { e.stopPropagation(); }}
+        <ActionsOrb
+          post={post}
+          liked={liked}
+          likes={likes}
+          onLike={handleLike}
+          onComment={() => setCommentOpen(o => !o)}
         />
       </div>
 

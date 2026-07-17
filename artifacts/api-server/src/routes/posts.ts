@@ -578,6 +578,8 @@ router.post("/posts/:id/comments/:commentId/like", async (req, res) => {
 router.get("/posts/:id/comments", async (req, res) => {
   try {
     const postId = Number(req.params.id);
+    // Validate postId to prevent NaN/0 queries that could leak data
+    if (!postId || isNaN(postId)) { res.json([]); return; }
     const comments = await db
       .select()
       .from(commentsTable)
@@ -617,9 +619,12 @@ router.get("/posts/:id/comments", async (req, res) => {
 router.post("/posts/:id/comments", async (req, res) => {
   try {
     const postId = Number(req.params.id);
+    if (!postId || isNaN(postId)) { res.status(400).json({ error: "Noto'g'ri post ID" }); return; }
     const { content } = req.body;
-    const authorId = (req.session as any)?.userId ?? Number(req.body.authorId);
-    if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
+    // SECURITY: use ONLY session userId — never accept authorId from request body
+    // (body-based authorId allows impersonation of any user)
+    const authorId = (req.session as any)?.userId as number | undefined;
+    if (!authorId) { res.status(401).json({ error: "Izoh yozish uchun tizimga kiring" }); return; }
 
     const [comment] = await db.insert(commentsTable).values({ postId, authorId, content }).returning();
     await db.update(postsTable).set({ commentsCount: sql`${postsTable.commentsCount} + 1` }).where(eq(postsTable.id, postId));

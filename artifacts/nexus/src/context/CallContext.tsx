@@ -6,15 +6,29 @@ import { playCallRingtone, getFeaturePref } from "@/lib/sounds";
 import CallUI, { type CallPhase } from "@/components/CallUI";
 import { toast } from "@/hooks/use-toast";
 
-const STUN = [
+const STUN_FALLBACK: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
-  // TURN relay fallback — without this, calls fail to connect across most
-  // mobile-carrier/symmetric NATs since direct P2P (STUN-only) can't traverse them.
   { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
 ];
+
+let iceServersCache: RTCIceServer[] | null = null;
+async function getIceServers(): Promise<RTCIceServer[]> {
+  if (iceServersCache) return iceServersCache;
+  try {
+    const r = await fetch("/api/ice-config", { signal: AbortSignal.timeout(3000) });
+    if (r.ok) {
+      const data = await r.json() as { iceServers: RTCIceServer[] };
+      if (Array.isArray(data.iceServers) && data.iceServers.length > 0) {
+        iceServersCache = data.iceServers;
+        return iceServersCache;
+      }
+    }
+  } catch { /* fallback */ }
+  return STUN_FALLBACK;
+}
 
 const RING_TIMEOUT_MS = 45000;
 
@@ -83,8 +97,9 @@ export function CallProvider({ children }: { children: ReactNode }) {
     send({ type, toId, payload: payload ?? {} });
   }, [send]);
 
-  const ensurePeer = useCallback((toId: number) => {
-    const pc = new RTCPeerConnection({ iceServers: STUN });
+  const ensurePeer = useCallback(async (toId: number) => {
+    const iceServers = await getIceServers();
+    const pc = new RTCPeerConnection({ iceServers });
     pc.onicecandidate = ({ candidate }) => {
       if (!candidate) return;
       sendCallMsg("call_ice", toId, candidate.toJSON());
@@ -213,7 +228,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
           // Reuse the stream already opened in startCall (for video); open now for voice.
           const stream = localStreamRef.current ?? await getMedia(s.type);
           if (!localStreamRef.current) { localStreamRef.current = stream; setLocalStream(stream); }
-          const pc = ensurePeer(s.peer.id);
+          const pc = await ensurePeer(s.peer.id);
           stream.getTracks().forEach(t => pc.addTrack(t, stream));
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
@@ -228,7 +243,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         const s = stateRef.current;
         if (!s || s.peer.id !== msg.fromId) return;
         try {
-          const pc = ensurePeer(s.peer.id);
+          const pc = await ensurePeer(s.peer.id);
           localStreamRef.current?.getTracks().forEach(t => pc.addTrack(t, localStreamRef.current!));
           await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
           await drainIce(pc);

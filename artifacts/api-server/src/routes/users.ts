@@ -6,6 +6,7 @@ import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheAside, cacheDelPattern } from "../lib/cache";
 import { notifyFollow } from "../lib/emailNotify";
+import { sendNotification } from "../lib/pushNotifications";
 
 const router = Router();
 
@@ -201,15 +202,17 @@ router.post("/users/:id/follow", async (req, res) => {
           ]);
           const follower = followerUser[0];
           const followed = followedUser[0];
-          /* In-app notification → kuzatilgan odamning bildirishnomalarida ko'rinadi */
-          await db.insert(notificationsTable).values({
+          /* In-app notification + FCM/web push → kuzatilgan odamning bildirishnomalarida ko'rinadi */
+          void sendNotification({
             userId: followingId,
             type: "follow",
-            message: `${follower?.displayName ?? "Kimdir"} sizni kuzata boshladi`,
-            actorName: follower?.displayName ?? null,
-            actorAvatar: follower?.avatarUrl ?? null,
+            body: `${follower?.displayName ?? "Kimdir"} sizni kuzata boshladi`,
+            title: "Yangi kuzatuvchi",
+            actorName: follower?.displayName ?? undefined,
+            actorAvatar: follower?.avatarUrl ?? undefined,
             targetId: followerId,
             targetType: "user",
+            url: `/profile/${follower?.username ?? followerId}`,
           });
           /* Email notification */
           if (followed?.email) {

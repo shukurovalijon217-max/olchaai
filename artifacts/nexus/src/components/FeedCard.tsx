@@ -137,26 +137,7 @@ function Orb({
       onClick={onClick}
       className="flex flex-col items-center gap-[3px]"
     >
-      <div
-        className="w-[42px] h-[42px] rounded-full flex items-center justify-center relative overflow-hidden"
-        style={{
-          background: active ? `${activeColor}28` : "rgba(6,4,16,0.58)",
-          border: `1.5px solid ${active ? activeColor + "55" : "rgba(255,255,255,0.12)"}`,
-          backdropFilter: "blur(24px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.8)",
-          boxShadow: active
-            ? `0 0 20px ${activeColor}44, inset 0 1px 0 rgba(255,255,255,0.14)`
-            : "0 2px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
-        }}
-      >
-        {active && inView && (
-          <motion.div
-            className="absolute inset-0 rounded-full pointer-events-none"
-            animate={{ opacity: [0.2, 0.5, 0.2] }}
-            transition={{ duration: 2.2, repeat: Infinity }}
-            style={{ background: `radial-gradient(circle, ${activeColor}30 0%, transparent 70%)` }}
-          />
-        )}
+      <div className="flex items-center justify-center relative" style={{ width: 42, height: 42 }}>
         {icon}
       </div>
       {count !== undefined && count > 0 && (

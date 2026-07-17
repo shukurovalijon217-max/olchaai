@@ -27,7 +27,7 @@ function base(content: string): string {
   return `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0f0f1a;color:#fff;border-radius:12px;overflow:hidden">
       <div style="background:linear-gradient(135deg,#7c3aed,#db2777);padding:20px 24px">
-        <span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">GILOS</span>
+        <span style="font-size:22px;font-weight:900;letter-spacing:3px"><span style="color:#ff1744">G</span><span style="color:#e91e8c">I</span><span style="color:#ff5722">L</span><span style="color:#9333ea">O</span><span style="color:#00e5ff">S</span></span>
       </div>
       <div style="padding:24px">${content}</div>
       <div style="padding:12px 24px;background:#ffffff08;font-size:11px;color:#888">

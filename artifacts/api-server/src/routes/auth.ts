@@ -59,7 +59,9 @@ router.post("/auth/send-otp", async (req, res) => {
 
     const emailHtml = `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0502;color:#c8a060;border-radius:16px">
-          <div style="font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:8px">GILOS</div>
+          <div style="font-size:32px;font-weight:900;letter-spacing:4px;margin-bottom:8px">
+            <span style="color:#ff1744;text-shadow:0 0 12px rgba(255,23,68,0.9)">G</span><span style="color:#e91e8c;text-shadow:0 0 12px rgba(233,30,140,0.9)">I</span><span style="color:#ff5722;text-shadow:0 0 12px rgba(255,87,34,0.9)">L</span><span style="color:#9333ea;text-shadow:0 0 12px rgba(168,85,247,0.9)">O</span><span style="color:#00e5ff;text-shadow:0 0 12px rgba(0,229,255,0.9)">S</span>
+          </div>
           <div style="font-size:14px;color:#7a4820;margin-bottom:32px">AI-powered ijtimoiy koinot</div>
           <div style="font-size:14px;color:#a07040;margin-bottom:16px">Ro'yxatdan o'tish tasdiqlash kodi:</div>
           <div style="font-size:48px;font-weight:900;letter-spacing:12px;color:#e8b060;background:rgba(50,20,5,0.8);border-radius:12px;padding:20px 24px;text-align:center;margin-bottom:24px">${otp}</div>

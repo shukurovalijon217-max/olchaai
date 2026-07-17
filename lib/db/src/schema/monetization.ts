@@ -38,6 +38,11 @@ export const creatorMonetizationTable = pgTable("creator_monetization", {
   reviewedAt: timestamp("reviewed_at"),
   reviewedBy: integer("reviewed_by").references(() => usersTable.id),
   rejectionReason: text("rejection_reason"),
+  /* Per-creator feature toggles */
+  adsEnabled: boolean("ads_enabled").notNull().default(true),
+  superThanksEnabled: boolean("super_thanks_enabled").notNull().default(true),
+  membershipEnabled: boolean("membership_enabled").notNull().default(false),
+  donationMin: integer("donation_min").notNull().default(2000),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

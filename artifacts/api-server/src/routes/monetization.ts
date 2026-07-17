@@ -569,12 +569,61 @@ router.get("/creator/monetization", requireAuth, async (req, res) => {
       contentBreakdown,
       payouts: myPayouts,
       monetizationStatus: cm?.status ?? "none",
+      settings: {
+        adsEnabled:        cm?.adsEnabled        ?? true,
+        superThanksEnabled:cm?.superThanksEnabled ?? true,
+        membershipEnabled: cm?.membershipEnabled  ?? false,
+        donationMin:       cm?.donationMin        ?? 2000,
+      },
       config: {
         enabled: cfg?.enabled ?? true,
         revenuePerMille: cfg?.revenuePerMille ?? 50000,
         creatorSharePercent: cfg?.creatorSharePercent ?? 70,
         minViewsThreshold: cfg?.minViewsThreshold ?? 1000,
         minPayoutAmount: cfg?.minPayoutAmount ?? 5000000,
+      },
+    });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
+});
+
+/* ── PATCH /api/creator/monetization/settings ───────────────── */
+router.patch("/creator/monetization/settings", requireAuth, async (req, res) => {
+  try {
+    const userId = (req.session as any).userId as number;
+    const { adsEnabled, superThanksEnabled, membershipEnabled, donationMin } = req.body;
+
+    const patch: Record<string, unknown> = {};
+    if (typeof adsEnabled         === "boolean") patch["adsEnabled"]         = adsEnabled;
+    if (typeof superThanksEnabled === "boolean") patch["superThanksEnabled"] = superThanksEnabled;
+    if (typeof membershipEnabled  === "boolean") patch["membershipEnabled"]  = membershipEnabled;
+    if (typeof donationMin        === "number")  patch["donationMin"]        = donationMin;
+
+    if (Object.keys(patch).length === 0) {
+      res.status(400).json({ error: "Yangilash uchun kamida bitta maydon kerak" }); return;
+    }
+
+    const [existing] = await db.select({ id: creatorMonetizationTable.id })
+      .from(creatorMonetizationTable).where(eq(creatorMonetizationTable.userId, userId)).limit(1);
+
+    let row;
+    if (existing) {
+      [row] = await db.update(creatorMonetizationTable)
+        .set(patch as any)
+        .where(eq(creatorMonetizationTable.userId, userId))
+        .returning();
+    } else {
+      [row] = await db.insert(creatorMonetizationTable)
+        .values({ userId, ...patch } as any)
+        .returning();
+    }
+
+    res.json({
+      ok: true,
+      settings: {
+        adsEnabled:        row.adsEnabled,
+        superThanksEnabled:row.superThanksEnabled,
+        membershipEnabled: row.membershipEnabled,
+        donationMin:       row.donationMin,
       },
     });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }

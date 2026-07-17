@@ -23,6 +23,12 @@ if (cluster.isPrimary) {
   const { default: app } = await import("./app.js");
   const { initTFEngine } = await import("./moderation/tfEngine.js");
   const { cleanupSeedData } = await import("./lib/cleanupSeedData.js");
+  const { autoMigrate } = await import("./lib/autoMigrate.js");
+
+  // Run DB migrations before accepting traffic — safe to run on every boot
+  if (cluster.worker?.id === 1) {
+    await autoMigrate().catch((err) => logger.warn({ err }, "autoMigrate failed (non-fatal)"));
+  }
 
   const rawPort = process.env["PORT"];
   if (!rawPort) throw new Error("PORT environment variable is required but was not provided.");

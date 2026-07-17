@@ -1,26 +1,89 @@
 /**
  * HLS Transcoding Service
  * Converts uploaded videos to HLS format (adaptive streaming) using FFmpeg.
- * HLS segments are stored in GCS and served via /api/reels/hls/:reelId/:filename.
+ *
+ * Storage strategy (in priority order):
+ *   1. Cloudflare R2  — when R2_* env vars are set (production on Render)
+ *   2. Replit GCS sidecar — when PRIVATE_OBJECT_DIR is set (dev on Replit)
+ *
+ * HLS segments are served directly from R2 public URL in production.
+ * In dev (Replit) they're served via /api/reels/hls/:reelId/:filename.
  */
 import { exec } from "child_process";
 import { promisify } from "util";
 import { readdir, readFile, rm, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
-import { objectStorageClient } from "./objectStorage";
 import { db } from "@workspace/db";
 import { reelsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const execAsync = promisify(exec);
+
+/* ── R2 helpers ──────────────────────────────────────────────── */
+function isR2Enabled(): boolean {
+  return !!(
+    process.env.R2_ACCESS_KEY_ID &&
+    process.env.R2_SECRET_ACCESS_KEY &&
+    process.env.R2_ACCOUNT_ID &&
+    process.env.R2_BUCKET_NAME
+  );
+}
+
+function getR2Client(): S3Client {
+  return new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID!.trim()}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!.trim(),
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!.trim(),
+    },
+    forcePathStyle: false,
+    requestChecksumCalculation: "WHEN_REQUIRED" as any,
+    responseChecksumValidation: "WHEN_REQUIRED" as any,
+  });
+}
+
+function r2PublicUrl(key: string): string {
+  const base = (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+  return `${base}/${key}`;
+}
+
+async function uploadHlsToR2(reelId: number, tmpDir: string): Promise<string> {
+  const client = getR2Client();
+  const bucket = process.env.R2_BUCKET_NAME!;
+  const prefix = `hls/${reelId}`;
+
+  const files = await readdir(tmpDir);
+  await Promise.all(
+    files.map(async (filename) => {
+      const data = await readFile(join(tmpDir, filename));
+      const contentType = filename.endsWith(".m3u8")
+        ? "application/vnd.apple.mpegurl"
+        : "video/MP2T";
+      await client.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: `${prefix}/${filename}`,
+        Body: data,
+        ContentType: contentType,
+        CacheControl: "public, max-age=31536000", // segments are immutable
+      }));
+    }),
+  );
+
+  // Return the public URL of the playlist
+  return r2PublicUrl(`${prefix}/playlist.m3u8`);
+}
+
+/* ── Replit GCS sidecar helpers (dev only) ───────────────────── */
 const SIDECAR = "http://127.0.0.1:1106";
 
 export function parseGcsPath(path: string): { bucketName: string; objectName: string } {
   if (!path.startsWith("/")) path = `/${path}`;
   const parts = path.split("/");
-  return { bucketName: parts[1], objectName: parts.slice(2).join("/") };
+  return { bucketName: parts[1]!, objectName: parts.slice(2).join("/") };
 }
 
 async function signGetUrl(bucketName: string, objectName: string): Promise<string> {
@@ -39,13 +102,37 @@ async function signGetUrl(bucketName: string, objectName: string): Promise<strin
   return ((await resp.json()) as { signed_url: string }).signed_url;
 }
 
-/** Resolve /objects/... path or raw GCS URL to a signed downloadable URL */
+async function uploadHlsToGcs(reelId: number, tmpDir: string): Promise<string> {
+  const { objectStorageClient } = await import("./objectStorage");
+  const privateDir = process.env.PRIVATE_OBJECT_DIR ?? "";
+  const { bucketName, objectName: bucketPrefix } = parseGcsPath(privateDir);
+  const bucket = objectStorageClient.bucket(bucketName);
+  const hlsPrefix = `${bucketPrefix}/hls/${reelId}`;
+
+  const files = await readdir(tmpDir);
+  await Promise.all(
+    files.map(async (filename) => {
+      const data = await readFile(join(tmpDir, filename));
+      const contentType = filename.endsWith(".m3u8")
+        ? "application/vnd.apple.mpegurl"
+        : "video/MP2T";
+      await bucket.file(`${hlsPrefix}/${filename}`).save(data, { contentType });
+    }),
+  );
+
+  const apiBase = (process.env.API_BASE_URL ?? process.env.RENDER_EXTERNAL_URL ?? "").replace(/\/$/, "");
+  return `${apiBase}/api/reels/hls/${reelId}/playlist.m3u8`;
+}
+
+/** Resolve /objects/... path or raw URL to a downloadable URL */
 async function resolveDownloadUrl(videoUrl: string): Promise<string> {
+  // R2 public URLs and any https:// URL are already directly downloadable
   if (videoUrl.startsWith("https://") || videoUrl.startsWith("http://")) {
     return videoUrl;
   }
+  // Replit /objects/... path — sign via GCS sidecar
   const privateDir = process.env.PRIVATE_OBJECT_DIR ?? "";
-  if (!privateDir) throw new Error("PRIVATE_OBJECT_DIR not set");
+  if (!privateDir) throw new Error("Cannot resolve video URL: PRIVATE_OBJECT_DIR not set and URL is not http(s)");
   const entityId = videoUrl.replace(/^\/objects\//, "");
   const fullPath = `${privateDir.replace(/\/$/, "")}/${entityId}`;
   const { bucketName, objectName } = parseGcsPath(fullPath);
@@ -55,13 +142,13 @@ async function resolveDownloadUrl(videoUrl: string): Promise<string> {
 export async function transcodeReelToHLS(reelId: number, videoUrl: string): Promise<void> {
   const tmpDir = `/tmp/hls-${reelId}-${randomUUID()}`;
   try {
-    logger.info({ reelId }, "HLS transcode: starting");
+    logger.info({ reelId, storage: isR2Enabled() ? "r2" : "gcs" }, "HLS transcode: starting");
 
     const downloadUrl = await resolveDownloadUrl(videoUrl);
     await mkdir(tmpDir, { recursive: true });
 
     const playlistPath = join(tmpDir, "playlist.m3u8");
-    const segPattern = join(tmpDir, "seg_%03d.ts");
+    const segPattern   = join(tmpDir, "seg_%03d.ts");
 
     // Single-quality HLS: max 720p, fast preset, optimized for mobile
     const cmd = `ffmpeg -y -i ${JSON.stringify(downloadUrl)} \
@@ -76,27 +163,14 @@ export async function transcodeReelToHLS(reelId: number, videoUrl: string): Prom
 
     await execAsync(cmd, { timeout: 8 * 60_000, maxBuffer: 50 * 1024 * 1024 });
 
-    // Upload segments to GCS under PRIVATE_OBJECT_DIR/hls/{reelId}/
-    const privateDir = process.env.PRIVATE_OBJECT_DIR ?? "";
-    const { bucketName, objectName: bucketPrefix } = parseGcsPath(privateDir);
-    const bucket = objectStorageClient.bucket(bucketName);
-    const hlsPrefix = `${bucketPrefix}/hls/${reelId}`;
+    // Upload to the available storage backend
+    let hlsUrl: string;
+    if (isR2Enabled()) {
+      hlsUrl = await uploadHlsToR2(reelId, tmpDir);
+    } else {
+      hlsUrl = await uploadHlsToGcs(reelId, tmpDir);
+    }
 
-    const files = await readdir(tmpDir);
-    await Promise.all(
-      files.map(async (filename) => {
-        const data = await readFile(join(tmpDir, filename));
-        const contentType = filename.endsWith(".m3u8")
-          ? "application/vnd.apple.mpegurl"
-          : "video/MP2T";
-        await bucket.file(`${hlsPrefix}/${filename}`).save(data, { contentType });
-      }),
-    );
-
-    // HLS served via /api/reels/hls/:reelId/playlist.m3u8
-    // Use full URL so it works in production where frontend and API are on different hosts
-    const apiBase = (process.env.API_BASE_URL ?? process.env.RENDER_EXTERNAL_URL ?? "").replace(/\/$/, "");
-    const hlsUrl = `${apiBase}/api/reels/hls/${reelId}/playlist.m3u8`;
     await db
       .update(reelsTable)
       .set({ hlsUrl, hlsStatus: "done" } as Record<string, unknown>)

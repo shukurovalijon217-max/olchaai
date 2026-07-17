@@ -1728,14 +1728,57 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
   const { user } = useAuth();
   const [tab, setTab] = useState<"player"|"monetize">("player");
   const sP = <K extends keyof PlayerSettings>(k:K,v:PlayerSettings[K])=>onSettings({...settings,[k]:v});
-  const sM = <K extends keyof MonetizationSettings>(k:K,v:MonetizationSettings[K])=>onMonetize({...monetize,[k]:v});
+  const [saving, setSaving] = useState(false);
+  const [saveOk, setSaveOk] = useState(false);
   const [walletEarnings, setWalletEarnings] = useState<number|null>(null);
+  const [followersCount, setFollowersCount] = useState<number>(0);
+
+  /* Save monetization setting immediately to server */
+  const sM = <K extends keyof MonetizationSettings>(k: K, v: MonetizationSettings[K]) => {
+    const next = { ...monetize, [k]: v };
+    onMonetize(next);
+    setSaving(true); setSaveOk(false);
+    const body: Record<string, unknown> = {};
+    if (k === "adsEnabled")        body["adsEnabled"]         = v;
+    if (k === "superThanks")       body["superThanksEnabled"] = v;
+    if (k === "membershipEnabled") body["membershipEnabled"]  = v;
+    if (k === "donation")          body["donationMin"]        = Number(v);
+    if (k === "creatorMode") { setSaving(false); return; } // local only
+    fetch(`${API_BASE}/api/creator/monetization/settings`, {
+      method: "PATCH", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).then(r => r.ok ? (setSaveOk(true), setTimeout(()=>setSaveOk(false),2000)) : null)
+      .catch(()=>{}).finally(()=>setSaving(false));
+  };
+
+  /* Load settings + wallet + followers when monetize tab opens */
   useEffect(()=>{
     if(!open||tab!=="monetize")return;
+    fetch(`${API_BASE}/api/creator/monetization`,{credentials:"include"})
+      .then(r=>r.json())
+      .then(d=>{
+        setWalletEarnings((d.earningsBalance??0));
+        if(d.settings){
+          onMonetize({
+            ...monetize,
+            adsEnabled: d.settings.adsEnabled ?? true,
+            superThanks: d.settings.superThanksEnabled ?? true,
+            membershipEnabled: d.settings.membershipEnabled ?? false,
+            donation: String(d.settings.donationMin ?? 2000) as MonetizationSettings["donation"],
+          });
+        }
+      })
+      .catch(()=>{});
     fetch(`${API_BASE}/api/wallet`,{credentials:"include"})
       .then(r=>r.json())
       .then(d=>setWalletEarnings((d.wallet?.earningsBalance??0)+(d.wallet?.adRevenueBalance??0)))
-      .catch(()=>setWalletEarnings(null));
+      .catch(()=>{});
+    if(user?.id){
+      fetch(`${API_BASE}/api/users/${user.id}/followers/count`,{credentials:"include"})
+        .then(r=>r.json()).then(d=>setFollowersCount(d.count??0)).catch(()=>{});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[open,tab]);
   const rev = monetize.creatorMode ? String(walletEarnings ?? 0) : "0";
   const { data: myReelsForRevenue=[] } = useListReels(
@@ -1850,7 +1893,7 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                       {[
                         {l:t("otube.views_label"),v:fmt(views),i:"👁"},
                         {l:t("otube.income_label"),v:`${Number(rev).toLocaleString()} so'm`,i:"💰"},
-                        {l:t("otube.subscribers_label"),v:"1.2K",i:"👥"},
+                        {l:t("otube.subscribers_label"),v:followersCount>=1000?`${(followersCount/1000).toFixed(1)}K`:String(followersCount),i:"👥"},
                       ].map(s=>(
                         <div key={s.l} className="p-2.5 text-center"
                           style={{borderRadius:12,background:"rgba(0,0,0,0.3)"}}>
@@ -1861,6 +1904,14 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                       ))}
                     </div>
                   </div>
+
+                  {/* Save status */}
+                  {(saving||saveOk) && (
+                    <div style={{fontSize:10,color:saveOk?"#00ff88":"rgba(255,255,255,0.4)",
+                      textAlign:"right",marginBottom:4,transition:"color 0.3s"}}>
+                      {saveOk ? "✓ Saqlandi" : "Saqlanmoqda…"}
+                    </div>
+                  )}
 
                   <SecHead>{t("otube.creator_tab")}</SecHead>
                   <TRow icon="🎥" label={t("otube.creator_tab")} sub={t("otube.creator_sub")}

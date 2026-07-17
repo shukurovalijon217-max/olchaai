@@ -12,6 +12,10 @@ const MIGRATIONS = [
   `ALTER TABLE posts ADD COLUMN IF NOT EXISTS aura_score REAL`,
   `ALTER TABLE posts ADD COLUMN IF NOT EXISTS audio_trim_start REAL`,
   `ALTER TABLE posts ADD COLUMN IF NOT EXISTS audio_trim_end REAL`,
+  `ALTER TABLE creator_monetization ADD COLUMN IF NOT EXISTS ads_enabled BOOLEAN NOT NULL DEFAULT TRUE`,
+  `ALTER TABLE creator_monetization ADD COLUMN IF NOT EXISTS super_thanks_enabled BOOLEAN NOT NULL DEFAULT TRUE`,
+  `ALTER TABLE creator_monetization ADD COLUMN IF NOT EXISTS membership_enabled BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE creator_monetization ADD COLUMN IF NOT EXISTS donation_min INTEGER NOT NULL DEFAULT 2000`,
   `CREATE TABLE IF NOT EXISTS upload_sessions (
     uuid TEXT PRIMARY KEY,
     cloudinary_url TEXT,

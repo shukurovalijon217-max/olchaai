@@ -91,6 +91,8 @@ services:
         sync: false
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
+      - key: INTERNAL_SERVICE_SECRET
+        sync: false
 
   # ── 2. AI Core Service ───────────────────────────────────────────────────
   #  starter plan yetadi: AI Core asosan OpenAI'ga so'rov yuboradi (I/O bound)

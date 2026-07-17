@@ -34,6 +34,11 @@ const MIGRATIONS = [
     CONSTRAINT session_pkey PRIMARY KEY (sid) NOT DEFERRABLE INITIALLY IMMEDIATE
   )`,
   `CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON user_sessions (expire)`,
+  `CREATE TABLE IF NOT EXISTS translation_cache (
+    cache_key TEXT PRIMARY KEY,
+    translated JSONB NOT NULL,
+    cached_at TIMESTAMPTZ DEFAULT NOW()
+  )`,
 ];
 
 export async function autoMigrate(): Promise<void> {

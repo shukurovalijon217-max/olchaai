@@ -528,23 +528,8 @@ export default function PostViewer({
           )}
         </div>
 
-        {/* Right: mute button for video */}
-        {currentMedia && isVideoUrl(currentMedia) && (
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={e => { e.stopPropagation(); setMuted(m => !m); }}
-            className="flex items-center justify-center flex-shrink-0"
-            style={{
-              width: 34, height: 34, borderRadius: "50%",
-              background: "rgba(0,0,0,0.35)",
-              border: "1.5px solid rgba(255,255,255,0.18)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-            }}
-          >
-            {muted ? <VolumeX size={15} className="text-white/80" /> : <Volume2 size={15} className="text-white" />}
-          </motion.button>
-        )}
+        {/* spacer */}
+        <div />
       </div>
 
       {/* ── RIGHT SIDE: Actions Orb (top-right, same size as avatar) ── */}
@@ -573,19 +558,6 @@ export default function PostViewer({
         {audioName && audioUrl && (
           <div className="flex items-center gap-2">
             <SongTicker name={audioName} accent={accent} />
-            <motion.button
-              whileTap={{ scale: 0.85 }}
-              onClick={e => { e.stopPropagation(); setMuted(m => !m); }}
-              className="flex items-center justify-center flex-shrink-0"
-              style={{
-                width: 26, height: 26, borderRadius: "50%",
-                background: "rgba(0,0,0,0.35)",
-                border: "1px solid rgba(255,255,255,0.18)",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              {muted ? <VolumeX size={12} className="text-white/70" /> : <Volume2 size={12} className="text-white" />}
-            </motion.button>
           </div>
         )}
 
@@ -633,6 +605,28 @@ export default function PostViewer({
           </motion.div>
         )}
       </div>
+
+      {/* ── BOTTOM-RIGHT: Bare volume icon ── */}
+      {(audioUrl || (currentMedia && isVideoUrl(currentMedia))) && (
+        <motion.button
+          whileTap={{ scale: 0.82 }}
+          onClick={e => { e.stopPropagation(); setMuted(m => !m); }}
+          className="absolute flex items-center justify-center"
+          style={{
+            zIndex: 20,
+            right: 18,
+            bottom: safeBottom,
+            background: "none",
+            border: "none",
+            padding: 4,
+          }}
+        >
+          {muted
+            ? <VolumeX size={20} style={{ color: "rgba(255,255,255,0.75)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.9))" }} />
+            : <Volume2 size={20} style={{ color: "rgba(255,255,255,0.95)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.9))" }} />
+          }
+        </motion.button>
+      )}
 
       {/* ── COMMENT PANEL (slides from right) ── */}
       <AnimatePresence>

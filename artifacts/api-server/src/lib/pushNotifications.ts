@@ -1,7 +1,8 @@
 import { db, pushTokensTable, notificationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { logger } from "./logger";
 
-/* ── Firebase Admin — lazy init (for Expo/native FCM tokens) ── */
+/* ── Firebase Admin — lazy init (for raw FCM tokens only) ── */
 let messagingInstance: import("firebase-admin/messaging").Messaging | null = null;
 async function getMessaging() {
   if (messagingInstance) return messagingInstance;
@@ -19,7 +20,7 @@ async function getMessaging() {
   } catch { return null; }
 }
 
-/* ── web-push (VAPID) — for browser Web Push subscriptions ─── */
+/* ── web-push (VAPID) — for browser Web Push subscriptions ── */
 let webPushReady = false;
 async function getWebPush() {
   const wp = (await import("web-push")).default;
@@ -35,6 +36,73 @@ async function getWebPush() {
   return webPushReady ? wp : null;
 }
 
+/* ── Expo Push API — for ExponentPushToken[...] tokens (Expo managed) ── */
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+const EXPO_CHUNK_SIZE = 100; // Expo recommends max 100 per request
+
+interface ExpoPushMessage {
+  to: string;
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+  sound?: "default" | null;
+  badge?: number;
+  channelId?: string;
+  priority?: "default" | "normal" | "high";
+}
+
+async function sendExpoNotifications(
+  tokens: string[],
+  title: string,
+  body: string,
+  data?: Record<string, string>,
+  type?: string,
+): Promise<string[]> {
+  const toRemove: string[] = [];
+  // Send in chunks of 100
+  for (let i = 0; i < tokens.length; i += EXPO_CHUNK_SIZE) {
+    const chunk = tokens.slice(i, i + EXPO_CHUNK_SIZE);
+    const messages: ExpoPushMessage[] = chunk.map(token => ({
+      to: token,
+      title,
+      body,
+      sound: "default",
+      badge: 1,
+      channelId: "olcha_default",
+      priority: "high",
+      data: { ...data, type: type ?? "general" },
+    }));
+    try {
+      const resp = await fetch(EXPO_PUSH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Accept-Encoding": "gzip, deflate",
+        },
+        body: JSON.stringify(messages),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (resp.ok) {
+        const result = await resp.json() as { data: Array<{ status: string; message?: string }> };
+        if (Array.isArray(result.data)) {
+          result.data.forEach((ticket, idx) => {
+            if (ticket.status === "error") {
+              const msg = ticket.message ?? "";
+              if (msg.includes("InvalidCredentials") || msg.includes("DeviceNotRegistered")) {
+                toRemove.push(chunk[idx]!);
+              }
+            }
+          });
+        }
+      }
+    } catch (err) {
+      logger.warn({ err }, "Expo push: batch send failed");
+    }
+  }
+  return toRemove;
+}
+
 export interface PushPayload {
   userId: number;
   title: string;
@@ -48,7 +116,7 @@ export interface PushPayload {
   url?: string;
 }
 
-/** Save notification to DB and send push (Web Push + FCM) */
+/** Save notification to DB and send push (Expo Push + Web Push + FCM) */
 export async function sendNotification(payload: PushPayload): Promise<void> {
   const { userId, title, body, data, type, actorName, actorAvatar, targetId, targetType, url } = payload;
 
@@ -76,38 +144,29 @@ export async function sendNotification(payload: PushPayload): Promise<void> {
 
   if (tokens.length === 0) return;
 
-  const webTokens = tokens.filter(t => t.platform === "web");
-  const fcmTokens = tokens.filter(t => t.platform === "fcm" || t.platform === "expo");
+  // Split by type:
+  // - "expo" platform + ExponentPushToken[...] format → Expo Push API
+  // - "fcm" platform with raw FCM token → Firebase Admin SDK
+  // - "web" platform → VAPID web push
+  const webTokens  = tokens.filter(t => t.platform === "web");
+  const expoTokens = tokens.filter(t =>
+    t.platform === "expo" && t.token.startsWith("ExponentPushToken[")
+  );
+  const fcmTokens  = tokens.filter(t =>
+    t.platform === "fcm" ||
+    (t.platform === "expo" && !t.token.startsWith("ExponentPushToken["))
+  );
 
-  /* 3a. Web Push (VAPID) for browser subscribers */
-  if (webTokens.length > 0) {
-    const wp = await getWebPush();
-    if (wp) {
-      const notifPayload = JSON.stringify({
-        title,
-        body,
-        icon: "/favicon.png",
-        badge: "/favicon.png",
-        url: url ?? "/",
-        data: { type: type ?? "general", ...data },
-      });
-      const toRemove: string[] = [];
-      await Promise.all(webTokens.map(async ({ token }) => {
-        try {
-          const sub = JSON.parse(token);
-          await wp.sendNotification(sub, notifPayload);
-        } catch (err: any) {
-          const code = err?.statusCode ?? 0;
-          if (code === 404 || code === 410) toRemove.push(token);
-        }
-      }));
-      for (const bad of toRemove) {
-        await db.delete(pushTokensTable).where(eq(pushTokensTable.token, bad)).catch(() => {});
-      }
+  /* 3a. Expo Push API (most mobile tokens) */
+  if (expoTokens.length > 0) {
+    const tokenList = expoTokens.map(t => t.token);
+    const toRemove = await sendExpoNotifications(tokenList, title, body, data, type);
+    for (const bad of toRemove) {
+      await db.delete(pushTokensTable).where(eq(pushTokensTable.token, bad)).catch(() => {});
     }
   }
 
-  /* 3b. Firebase FCM for native/Expo tokens */
+  /* 3b. Firebase FCM for raw FCM tokens */
   if (fcmTokens.length > 0) {
     const messaging = await getMessaging();
     if (messaging) {
@@ -132,7 +191,37 @@ export async function sendNotification(payload: PushPayload): Promise<void> {
         for (const bad of toRemove) {
           await db.delete(pushTokensTable).where(eq(pushTokensTable.token, bad)).catch(() => {});
         }
-      } catch { /* ignore */ }
+      } catch (err) {
+        logger.warn({ err }, "FCM: sendEachForMulticast failed");
+      }
+    }
+  }
+
+  /* 3c. Web Push (VAPID) for browser subscribers */
+  if (webTokens.length > 0) {
+    const wp = await getWebPush();
+    if (wp) {
+      const notifPayload = JSON.stringify({
+        title,
+        body,
+        icon: "/favicon.png",
+        badge: "/favicon.png",
+        url: url ?? "/",
+        data: { type: type ?? "general", ...data },
+      });
+      const toRemove: string[] = [];
+      await Promise.all(webTokens.map(async ({ token }) => {
+        try {
+          const sub = JSON.parse(token);
+          await wp.sendNotification(sub, notifPayload);
+        } catch (err: any) {
+          const code = err?.statusCode ?? 0;
+          if (code === 404 || code === 410) toRemove.push(token);
+        }
+      }));
+      for (const bad of toRemove) {
+        await db.delete(pushTokensTable).where(eq(pushTokensTable.token, bad)).catch(() => {});
+      }
     }
   }
 }

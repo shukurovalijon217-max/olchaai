@@ -888,13 +888,14 @@ export default function LoginPage() {
                           disabled={otpLoading || !form.email.includes("@")}
                           className="px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
                           style={{
-                            background: "rgba(40,15,0,0.9)",
-                            border: "1px solid #3a1808",
-                            color: otpLoading ? "#5a3820" : "#c07030",
-                            cursor: otpLoading ? "not-allowed" : "pointer",
+                            background: (!form.email.includes("@") || otpLoading) ? "rgba(20,10,0,0.6)" : "rgba(60,20,0,0.95)",
+                            border: (!form.email.includes("@") || otpLoading) ? "1px solid #1a0c00" : "1px solid #8a3010",
+                            color: (!form.email.includes("@") || otpLoading) ? "#3a2010" : "#e08040",
+                            cursor: (!form.email.includes("@") || otpLoading) ? "not-allowed" : "pointer",
+                            opacity: (!form.email.includes("@")) ? 0.45 : 1,
                           }}
                         >
-                          {otpLoading && !otpSent ? "..." : otpSent ? "Qayta" : "Kod yuborish"}
+                          {otpLoading && !otpSent ? "..." : otpSent ? "Qayta yuborish" : "Kod yuborish"}
                         </button>
                       )}
                       {otpVerified && (

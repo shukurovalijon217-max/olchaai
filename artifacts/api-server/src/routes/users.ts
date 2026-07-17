@@ -197,7 +197,7 @@ router.post("/users/:id/follow", async (req, res) => {
       void (async () => {
         try {
           const [followedUser, followerUser] = await Promise.all([
-            db.select({ email: usersTable.email, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, followingId)).limit(1),
+            db.select({ email: usersTable.email, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl, notifPrefs: usersTable.notifPrefs }).from(usersTable).where(eq(usersTable.id, followingId)).limit(1),
             db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl, username: usersTable.username }).from(usersTable).where(eq(usersTable.id, followerId)).limit(1),
           ]);
           const follower = followerUser[0];
@@ -214,8 +214,9 @@ router.post("/users/:id/follow", async (req, res) => {
             targetType: "user",
             url: `/profile/${follower?.username ?? followerId}`,
           });
-          /* Email notification */
-          if (followed?.email) {
+          /* Email notification — faqat emailNotifs yoqilgan bo'lsa */
+          const followEmailOk = followed?.notifPrefs == null || ((followed.notifPrefs as { emailNotifs?: boolean }).emailNotifs ?? true);
+          if (followed?.email && followEmailOk) {
             await notifyFollow({
               toEmail: followed.email,
               toName: followed.displayName ?? "Foydalanuvchi",

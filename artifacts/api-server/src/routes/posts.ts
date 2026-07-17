@@ -511,7 +511,7 @@ router.post("/posts/:id/like", async (req, res) => {
       void (async () => {
         try {
           const [postAuthor, liker] = await Promise.all([
-            db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, post.authorId!)).limit(1),
+            db.select({ email: usersTable.email, displayName: usersTable.displayName, notifPrefs: usersTable.notifPrefs }).from(usersTable).where(eq(usersTable.id, post.authorId!)).limit(1),
             db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
           ]);
           const likerName = liker[0]?.displayName ?? "Kimdir";
@@ -527,7 +527,9 @@ router.post("/posts/:id/like", async (req, res) => {
             targetType: "post",
             data: { postId: String(postId), type: "like" },
           });
-          if (postAuthor[0]?.email) {
+          const authorPrefs = postAuthor[0]?.notifPrefs;
+          const emailOk = authorPrefs == null || (authorPrefs.emailNotifs ?? true);
+          if (postAuthor[0]?.email && emailOk) {
             await notifyLike({
               toEmail: postAuthor[0].email,
               toName: postAuthor[0].displayName ?? "Foydalanuvchi",
@@ -659,8 +661,10 @@ router.post("/posts/:id/comments", async (req, res) => {
             targetType: "post",
             data: { postId: String(postId), type: "comment" },
           });
-          const [postAuthor] = await db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, postRow.authorId)).limit(1);
-          if (postAuthor?.email) {
+          const [postAuthor] = await db.select({ email: usersTable.email, displayName: usersTable.displayName, notifPrefs: usersTable.notifPrefs }).from(usersTable).where(eq(usersTable.id, postRow.authorId)).limit(1);
+          const cmtAuthorPrefs = postAuthor?.notifPrefs;
+          const cmtEmailOk = cmtAuthorPrefs == null || (cmtAuthorPrefs.emailNotifs ?? true);
+          if (postAuthor?.email && cmtEmailOk) {
             await notifyComment({
               toEmail: postAuthor.email,
               toName: postAuthor.displayName ?? "Foydalanuvchi",

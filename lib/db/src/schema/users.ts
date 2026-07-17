@@ -10,6 +10,7 @@ export interface NotifPrefs {
   messages: boolean;
   groups: boolean;
   premium: boolean;
+  emailNotifs: boolean;
   language?: string;
 }
 
@@ -34,7 +35,7 @@ export const DEFAULT_FOCUS_SHIELD: FocusShield = {
 
 export const DEFAULT_NOTIF_PREFS: NotifPrefs = {
   likes: true, comments: true, followers: true,
-  messages: true, groups: false, premium: false,
+  messages: true, groups: false, premium: false, emailNotifs: true,
 };
 
 export const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {

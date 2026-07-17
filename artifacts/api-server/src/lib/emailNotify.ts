@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import { logger } from "./logger";
 
-const FROM = "OlchaAI <noreply@olcha.com>";
+const FROM = "OlchaAI <noreply@olchaai.com>";
 const FROM_FALLBACK = "OlchaAI <onboarding@resend.dev>";
 
 function getResend(): Resend | null {

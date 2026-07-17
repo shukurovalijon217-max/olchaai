@@ -123,6 +123,11 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const startCall = useCallback((peer: CallPeer, type: "voice" | "video") => {
     if (!user?.id || stateRef.current) return;
     setState({ phase: "ringing_out", type, peer });
+    // For video calls: open camera immediately so the caller sees themselves while waiting.
+    // Fire-and-forget — if the user denies the camera we continue without a preview.
+    if (type === "video") {
+      getMedia("video").catch(() => {});
+    }
     sendCallMsg("call_invite", peer.id, {
       type,
       fromName: user.displayName ?? user.username,
@@ -137,7 +142,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         toast({ title: "Javob berilmadi", description: `${peer.name} qo'ng'iroqqa javob bermadi.` });
       }
     }, RING_TIMEOUT_MS);
-  }, [user, sendCallMsg, clearRingTimeout, cleanup]);
+  }, [user, getMedia, sendCallMsg, clearRingTimeout, cleanup]);
 
   const acceptCall = useCallback(async () => {
     const s = stateRef.current;
@@ -205,7 +210,9 @@ export function CallProvider({ children }: { children: ReactNode }) {
         clearRingTimeout();
         setState({ ...s, phase: "connecting" });
         try {
-          const stream = await getMedia(s.type);
+          // Reuse the stream already opened in startCall (for video); open now for voice.
+          const stream = localStreamRef.current ?? await getMedia(s.type);
+          if (!localStreamRef.current) { localStreamRef.current = stream; setLocalStream(stream); }
           const pc = ensurePeer(s.peer.id);
           stream.getTracks().forEach(t => pc.addTrack(t, stream));
           const offer = await pc.createOffer();

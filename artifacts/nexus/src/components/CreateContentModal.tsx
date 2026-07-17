@@ -275,7 +275,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open("PUT", uploadURL);
-          xhr.withCredentials = true;
+          // Do NOT set withCredentials — upload URL is authenticated via presigned token,
+          // not session cookie. withCredentials on a cross-origin R2 URL causes CORS errors.
           xhr.setRequestHeader("Content-Type", pending.file.type || "application/octet-stream");
           xhr.upload.onprogress = e => {
             if (e.lengthComputable)

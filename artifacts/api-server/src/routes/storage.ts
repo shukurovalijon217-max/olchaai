@@ -81,18 +81,15 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
     const { name, size, contentType } = parsed.data;
 
     // Priority 1: Cloudflare R2 (production CDN)
-    // Server-side proxy: browser → our API → R2 (avoids R2 CORS restriction on direct PUT).
-    // A short-lived HMAC token is embedded in the URL so the PUT endpoint can verify
-    // the request came through this flow — no cross-origin session cookie needed.
+    // Direct presigned PUT: browser uploads straight to R2 — no Render proxy hop.
+    // This avoids Cloudflare's 100-second proxy timeout on large video uploads.
+    // Requires R2 bucket CORS to allow PUT from the app's origin (see docs).
     if (isR2Enabled()) {
-      const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
-      const host = req.headers.host || "";
-      const baseUrl = `${proto}://${host}`;
-      const token = generateUploadToken();
+      const { uploadURL, publicUrl } = await r2GetPresignedUploadUrl(contentType);
       res.json(
         RequestUploadUrlResponse.parse({
-          uploadURL: `${baseUrl}/api/storage/uploads/r2-proxy?ut=${token}`,
-          objectPath: "r2-proxy",
+          uploadURL,
+          objectPath: publicUrl,   // public CDN URL — frontend stores as mediaUrl directly
           metadata: { name, size, contentType },
         }),
       );

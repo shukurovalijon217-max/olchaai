@@ -40,12 +40,12 @@ router.post("/auth/send-otp", async (req, res) => {
       res.status(400).json({ error: "Email manzil noto'g'ri" }); return;
     }
 
-    // Rate limit: max 3 OTP per email per hour
+    // Rate limit: max 10 OTP per email per hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const recent = await db.select().from(emailVerifications)
       .where(and(eq(emailVerifications.email, email), gt(emailVerifications.createdAt, oneHourAgo)));
-    if (recent.length >= 3) {
-      res.status(429).json({ error: "1 soat ichida ko'pi bilan 3 ta kod yuboriladi. Keyinroq urinib ko'ring." }); return;
+    if (recent.length >= 10) {
+      res.status(429).json({ error: "Juda ko'p urinish. Bir ozdan so'ng qayta urinib ko'ring." }); return;
     }
 
     // Delete old unverified codes for this email

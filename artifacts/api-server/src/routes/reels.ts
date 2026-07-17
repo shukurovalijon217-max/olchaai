@@ -112,14 +112,38 @@ router.get("/reels", async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 10, 50);
     const offset = Number(req.query.offset) || 0;
     const userId = req.query.userId ? Number(req.query.userId) : null;
+    const sort = String(req.query.sort || "top"); // "top" | "trending" | "latest"
+    const typeFilter = req.query.type ? String(req.query.type) : null; // "reel" | "short"
 
-    const cacheKey = `${limit}:${offset}:${userId ?? "all"}:${viewerId ?? 0}`;
+    const cacheKey = `${limit}:${offset}:${userId ?? "all"}:${viewerId ?? 0}:${sort}:${typeFilter ?? "all"}`;
     const result = await cacheAside("reels:list", cacheKey, async () => {
-      const rows = await (userId
-        ? db.select().from(reelsTable).where(eq(reelsTable.authorId, userId)).orderBy(desc(reelsTable.createdAt)).limit(limit).offset(offset)
-        : db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(limit).offset(offset));
+      let q = db.select().from(reelsTable).$dynamic();
+
+      const conditions = [];
+      if (userId) conditions.push(eq(reelsTable.authorId, userId));
+      if (typeFilter) conditions.push(eq(reelsTable.type, typeFilter));
+      if (conditions.length > 0) q = q.where(and(...conditions));
+
+      if (sort === "trending") {
+        /* Order by 24h velocity — uses user_interactions (contentType=reel, interactionType=view) */
+        q = q.orderBy(
+          desc(sql`(
+            SELECT COUNT(*) FROM user_interactions
+            WHERE content_type = 'reel'
+              AND interaction_type = 'view'
+              AND content_id = ${reelsTable.id}
+              AND created_at > NOW() - INTERVAL '24 hours'
+          )`),
+        );
+      } else if (sort === "latest") {
+        q = q.orderBy(desc(reelsTable.createdAt));
+      } else {
+        q = q.orderBy(desc(reelsTable.viewsCount));
+      }
+
+      const rows = await q.limit(limit).offset(offset);
       return batchEnrichReels(rows, viewerId);
-    }, 20); /* 20s TTL — fresh enough, reduces DB load by ~90% on hot feed */
+    }, 20);
 
     res.json(result);
   } catch (err) {
@@ -166,13 +190,15 @@ router.get("/reels/similar", async (req, res) => {
 router.post("/reels", async (req, res) => {
   try {
     const viewerId = (req.session as any)?.userId as number | undefined;
-    const { videoUrl, thumbnailUrl, caption, audioTrack, duration, tags } = req.body;
+    const { videoUrl, thumbnailUrl, caption, audioTrack, duration, tags, type } = req.body;
     const authorId = viewerId ?? Number(req.body.authorId);
     if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
+    const reelType = type === "short" ? "short" : "reel";
+
     const [reel] = await db
       .insert(reelsTable)
-      .values({ authorId, videoUrl, thumbnailUrl, caption, audioTrack, duration, tags })
+      .values({ authorId, videoUrl, thumbnailUrl, caption, audioTrack, duration, tags, type: reelType })
       .returning();
 
     const [enriched] = await batchEnrichReels([reel], viewerId);

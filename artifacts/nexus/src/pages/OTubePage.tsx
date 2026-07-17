@@ -2113,14 +2113,16 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
             </div>}
         <div className="absolute inset-0 pointer-events-none"
           style={{background:"linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.1) 50%,transparent 100%)"}}/>
-        {/* Play button — round */}
+        {/* Play button — glass iOS style */}
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div whileTap={{scale:0.88}}
             style={{width:64,height:64,borderRadius:"50%",
-              background:"rgba(0,0,0,0.45)",backdropFilter:"blur(12px)",
-              boxShadow:`0 0 0 1.5px rgba(255,255,255,0.25), 0 0 40px rgba(0,229,255,0.25)`,
+              background:"rgba(255,255,255,0.12)",backdropFilter:"blur(20px)",
+              WebkitBackdropFilter:"blur(20px)",
+              border:"1.5px solid rgba(255,255,255,0.30)",
+              boxShadow:"0 4px 24px rgba(0,0,0,0.25)",
               display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <Play style={{width:22,height:22,fill:"white",color:"white",marginLeft:3}}/>
+            <Play style={{width:22,height:22,fill:"rgba(255,255,255,0.95)",color:"rgba(255,255,255,0.95)",marginLeft:3}}/>
           </motion.div>
         </div>
         {/* View count top-left chip — real data only */}
@@ -6298,7 +6300,17 @@ export default function OTubePage() {
   const activeSig  = SIGNALS.find(s=>s.id===signal)!;
   const tab        = activeSig.tab;
 
-  const { data:raw=[], isLoading } = useListReels();
+  const { data:raw=[], isLoading } = useListReels({ limit: 50 });
+  /* Real trending — ordered by 24h view velocity on the server */
+  const { data:trendingRaw=[] } = useListReels(
+    { sort: "trending" as const, limit: 50 },
+    { query: { enabled: signal === "fire", queryKey: getListReelsQueryKey({ sort: "trending" as const, limit: 50 }) } },
+  );
+  /* Real shorts — filtered by type=short on the server */
+  const { data:shortsRaw=[] } = useListReels(
+    { type: "short" as const, limit: 50 },
+    { query: { enabled: tab === "shorts", queryKey: getListReelsQueryKey({ type: "short" as const, limit: 50 }) } },
+  );
   const { data:notifList=[] } = useListNotifications();
   useEffect(()=>{ setNotifDot(notifList.some((n:Notification)=>!n.isRead)); },[notifList]);
   const { data:continueWatching=[] } = useGetContinueWatching();
@@ -6313,10 +6325,11 @@ export default function OTubePage() {
   },[isLoading, raw]);
 
   const reels = useMemo(()=>{
-    if (!query.trim()) return raw;
+    const base = signal === "fire" ? trendingRaw : raw;
+    if (!query.trim()) return base;
     const q = query.toLowerCase();
-    return raw.filter(r=>r.caption.toLowerCase().includes(q)||r.author.displayName.toLowerCase().includes(q));
-  },[raw,query]);
+    return base.filter(r=>r.caption.toLowerCase().includes(q)||r.author.displayName.toLowerCase().includes(q));
+  },[raw, trendingRaw, signal, query]);
 
   /* derived: the currently playing video + helper to open by object */
   const selected = selectedIdx !== null ? (reels[selectedIdx] ?? null) : null;
@@ -6337,7 +6350,7 @@ export default function OTubePage() {
 
   const featured = reels[0]??null;
   const trending = reels.slice(1,9);
-  const shorts   = reels.slice(0,6);
+  const shorts   = shortsRaw.length > 0 ? shortsRaw : reels.slice(0,6);
   const grid     = reels.slice(1);
   const newest   = [...reels].reverse().slice(0,4);
 

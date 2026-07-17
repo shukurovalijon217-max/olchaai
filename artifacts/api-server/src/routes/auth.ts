@@ -70,13 +70,13 @@ router.post("/auth/send-otp", async (req, res) => {
     const emailPayload = { to: email, subject: `${otp} — OlchaAI tasdiqlash kodi`, html: emailHtml };
 
     // Try verified domain first, fall back to Resend shared domain
-    let { error: sendError } = await getResend().emails.send({ from: "OlchaAI <noreply@olcha.com>", ...emailPayload });
+    let { error: sendError } = await getResend().emails.send({ from: "OlchaAI <noreply@olchaai.com>", ...emailPayload });
 
     if (sendError) {
       const msg = (sendError as { message?: string }).message ?? "";
       const isDomainNotVerified = msg.includes("verify a domain") || msg.includes("testing emails") || msg.includes("not verified");
       if (isDomainNotVerified) {
-        req.log.warn("olcha.com domain not verified yet, falling back to onboarding@resend.dev");
+        req.log.warn("olchaai.com domain not verified yet, falling back to onboarding@resend.dev");
         const fallback = await getResend().emails.send({ from: "OlchaAI <onboarding@resend.dev>", ...emailPayload });
         sendError = fallback.error ?? null;
       }

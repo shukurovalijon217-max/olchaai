@@ -54,34 +54,55 @@ import socialAuraRouter from "./socialAura";
 
 const router: IRouter = Router();
 
-/* ── GET /ice-config — WebRTC ICE server config (STUN + TURN) ── */
-router.get("/ice-config", (_req, res) => {
-  type IceServer = { urls: string; username?: string; credential?: string };
-  const servers: IceServer[] = [
+/* ── GET /ice-config — WebRTC ICE server config (STUN + TURN via Metered) ── */
+type IceServer = { urls: string; username?: string; credential?: string };
+let iceCache: { servers: IceServer[]; expiresAt: number } | null = null;
+
+async function fetchMeteredIceServers(): Promise<IceServer[]> {
+  const apiKey = process.env["METERED_API_KEY"];
+  if (!apiKey) return [];
+  const url = `https://gilos.metered.live/api/v1/turn/credentials?apiKey=${encodeURIComponent(apiKey)}`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!r.ok) return [];
+    const data = await r.json() as IceServer[];
+    if (!Array.isArray(data) || data.length === 0) return [];
+    return data;
+  } catch {
+    clearTimeout(timer);
+    return [];
+  }
+}
+
+router.get("/ice-config", async (_req, res) => {
+  const STUN: IceServer[] = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
   ];
-  const turnUrl  = process.env["TURN_SERVER_URL"];
-  const turnUser = process.env["TURN_USERNAME"];
-  const turnCred = process.env["TURN_CREDENTIAL"];
-  if (turnUrl && turnUser && turnCred) {
-    servers.push({ urls: turnUrl, username: turnUser, credential: turnCred });
-    servers.push({ urls: turnUrl.replace(/:80$/, ":443").replace(/:3478$/, ":443"), username: turnUser, credential: turnCred });
-    servers.push({ urls: `${turnUrl.replace(/^turn:/, "turn:")}?transport=tcp`.replace(/:443\?transport=tcp$/, ":443?transport=tcp"), username: turnUser, credential: turnCred });
-  } else {
-    // Fallback: multiple public TURN servers (higher reliability than single provider)
-    const fallbacks = [
-      { urls: "turn:openrelay.metered.ca:80",              username: "openrelayproject", credential: "openrelayproject" },
-      { urls: "turn:openrelay.metered.ca:443",             username: "openrelayproject", credential: "openrelayproject" },
-      { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
-      { urls: "turn:relay.metered.ca:80",                  username: "e6c9f0f8fbdc2e6b1b8f0c2b", credential: "XKtB/VzKyvLAHq/v" },
-      { urls: "turn:relay.metered.ca:443",                 username: "e6c9f0f8fbdc2e6b1b8f0c2b", credential: "XKtB/VzKyvLAHq/v" },
-    ];
-    servers.push(...fallbacks);
+
+  // Return cached if still valid (credentials last 24h, refresh every 12h)
+  if (iceCache && Date.now() < iceCache.expiresAt) {
+    res.set("Cache-Control", "public, max-age=300");
+    res.json({ iceServers: iceCache.servers });
+    return;
   }
-  res.set("Cache-Control", "public, max-age=300");
-  res.json({ iceServers: servers });
+
+  const metered = await fetchMeteredIceServers();
+  if (metered.length > 0) {
+    const servers = [...STUN, ...metered];
+    iceCache = { servers, expiresAt: Date.now() + 12 * 60 * 60 * 1000 };
+    res.set("Cache-Control", "public, max-age=300");
+    res.json({ iceServers: servers });
+    return;
+  }
+
+  // Fallback: STUN only (no leaked static credentials)
+  res.set("Cache-Control", "public, max-age=60");
+  res.json({ iceServers: STUN });
 });
 
 router.use(healthRouter);

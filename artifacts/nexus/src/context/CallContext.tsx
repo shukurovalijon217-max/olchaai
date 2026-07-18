@@ -5,6 +5,7 @@ import { useRealtime } from "@/context/RealtimeContext";
 import { playCallRingtone, getFeaturePref } from "@/lib/sounds";
 import CallUI, { type CallPhase } from "@/components/CallUI";
 import { toast } from "@/hooks/use-toast";
+import { resolveApiUrl } from "@/lib/utils";
 
 const STUN_FALLBACK: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
@@ -18,7 +19,7 @@ let iceServersCache: RTCIceServer[] | null = null;
 async function getIceServers(): Promise<RTCIceServer[]> {
   if (iceServersCache) return iceServersCache;
   try {
-    const r = await fetch("/api/ice-config", { signal: AbortSignal.timeout(3000) });
+    const r = await fetch(resolveApiUrl("/api/ice-config"), { signal: AbortSignal.timeout(3000) });
     if (r.ok) {
       const data = await r.json() as { iceServers: RTCIceServer[] };
       if (Array.isArray(data.iceServers) && data.iceServers.length > 0) {

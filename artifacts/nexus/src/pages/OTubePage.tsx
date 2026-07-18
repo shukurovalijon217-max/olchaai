@@ -974,7 +974,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             </p>
             <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.35)",
               overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {video.author.displayName||video.author.username} · {fmt(video.viewsCount)} ko'rish
+              {video.author.displayName||video.author.username} · {fmt(video.viewsCount)} {t("otube.views_short")}
             </p>
           </div>
           <motion.button whileTap={{scale:0.9}}
@@ -987,7 +987,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               border:`1px solid ${subbed?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.22)"}`,
               opacity:followMut.isPending?0.6:1,
               fontSize:10,fontWeight:600,color:subbed?"rgba(255,255,255,0.40)":"rgba(255,255,255,0.9)"}}>
-            {subbed?"✓ Obuna":"+ Obuna"}
+            {subbed?t("otube.subscribed"):t("otube.subscribe")}
           </motion.button>
           <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();toggleFull();}}
             style={{width:32,height:32,flexShrink:0,borderRadius:"50%",
@@ -1109,7 +1109,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               }}>
               <span style={{fontSize:36,lineHeight:1}}>{swipeHint==="up"?"⬆":"⬇"}</span>
               <span style={{fontSize:14,fontWeight:700,color:"white",marginTop:8,letterSpacing:"0.04em"}}>
-                {swipeHint==="up"?"Keyingi video":"Oldingi video"}
+                {swipeHint==="up"?t("otube.next_video"):t("otube.prev_video")}
               </span>
             </motion.div>
           )}
@@ -1126,13 +1126,18 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               <motion.div animate={{y:[0,-5,0]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>
                 <ChevronUp style={{width:20,height:20,color:"white"}}/>
               </motion.div>
-              <span style={{fontSize:9,fontWeight:600,color:"white",letterSpacing:"0.06em"}}>YUQORIGA SURING</span>
+              <span style={{fontSize:9,fontWeight:600,color:"white",letterSpacing:"0.06em"}}>{t("otube.swipe_up")}</span>
             </div>
           </div>
         )}
 
         {/* ── RIGHT SIDE ACTION PANEL — auto-hide on idle ── */}
-        <div style={{
+        <div
+          onTouchStart={(e)=>e.stopPropagation()}
+          onTouchMove={(e)=>e.stopPropagation()}
+          onTouchEnd={(e)=>e.stopPropagation()}
+          onClick={(e)=>e.stopPropagation()}
+          style={{
           position:"absolute", right:0, top:0, bottom:168,
           width:50,
           display:"flex", flexDirection:"column", alignItems:"center",
@@ -1152,17 +1157,17 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             },
             {
               icon:<ThumbsDown style={{width:15,height:15,fill:disliked?"white":"none",color:"white"}}/>,
-              label:"Ko'rmadim", col:"rgba(255,255,255,0.9)", active:disliked,
+              label:t("otube.dislike"), col:"rgba(255,255,255,0.9)", active:disliked,
               act:()=>{if(!requireLogin())return;setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});},
             },
             {
               icon:<Share2 style={{width:15,height:15,color:"white"}}/>,
-              label:"Ulashish", col:"rgba(255,255,255,0.9)", active:shared,
+              label:t("otube.share_btn"), col:"rgba(255,255,255,0.9)", active:shared,
               act:()=>void handleShare(),
             },
             {
               icon:<Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"white"}}/>,
-              label:"Saqlash", col:saved?T.violet:"rgba(255,255,255,0.9)", active:saved,
+              label:t("otube.save_btn"), col:saved?T.violet:"rgba(255,255,255,0.9)", active:saved,
               bg:saved?"rgba(120,0,255,0.85)":"rgba(30,30,40,0.75)",
               act:()=>toggleSave(),
             },
@@ -1173,12 +1178,12 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             },
             {
               icon:<Star style={{width:15,height:15,color:"white"}}/>,
-              label:"Yordam", col:"rgba(255,255,255,0.9)", active:donating,
+              label:t("otube.donate_btn"), col:"rgba(255,255,255,0.9)", active:donating,
               act:()=>{if(!requireLogin())return;setDonating(d=>!d);setShowMore(false);},
             },
             {
               icon:<Sparkles style={{width:15,height:15,color:"white"}}/>,
-              label:"Reakciya", col:"rgba(255,255,255,0.9)", active:danmaku,
+              label:t("otube.reaction"), col:"rgba(255,255,255,0.9)", active:danmaku,
               act:()=>setDanmaku(d=>!d),
             },
             {
@@ -1188,7 +1193,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             },
             {
               icon:<Upload style={{width:15,height:15,color:"white",transform:"rotate(180deg)"}}/>,
-              label:"Yuklab", col:"rgba(255,255,255,0.9)", active:false,
+              label:t("otube.download_btn"), col:"rgba(255,255,255,0.9)", active:false,
               act:()=>{
                 if(!video.videoUrl)return;
                 const a=document.createElement("a");a.href=video.videoUrl;
@@ -1198,12 +1203,12 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             },
             {
               icon:<PictureInPicture2 style={{width:15,height:15,color:"white"}}/>,
-              label:"Mini", col:"rgba(255,255,255,0.9)", active:false,
+              label:t("otube.mini_btn"), col:"rgba(255,255,255,0.9)", active:false,
               act:()=>void handlePip(),
             },
             ...(isOwner ? [{
               icon:<Trash2 style={{width:15,height:15,color:"#ff4444"}}/>,
-              label:"O'chirish", col:"#ff6666", active:false,
+              label:t("otube.delete_btn"), col:"#ff6666", active:false,
               bg:"rgba(255,30,30,0.18)",
               act:()=>setConfirmDelete(true),
             }] : []),
@@ -1280,15 +1285,15 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                 background:"rgba(255,255,255,0.15)",margin:"0 auto 14px"}}/>
               <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
                 {[
-                  {icon:<ThumbsUp style={{width:18,height:18,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:liked?"Yoqdim":"Yoqtirish",col:T.cyan,on:liked,act:()=>{if(requireLogin())likeMut.mutate({id:video.id});}},
-                  {icon:<ThumbsDown style={{width:18,height:18,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Yoqmadi",col:T.orange,on:disliked,act:()=>{if(!requireLogin())return;setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}},
-                  {icon:<Sparkles style={{width:18,height:18,color:danmaku?"#ffd700":"rgba(255,255,255,0.5)"}}/>,label:"Reaktsiya",col:"#ffd700",on:danmaku,act:()=>{setDanmaku(d=>!d);setShowMore(false);}},
-                  {icon:<Gauge style={{width:18,height:18,color:showSpeed?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Tezlik",col:T.orange,on:showSpeed,act:()=>{setShowSpeed(s=>!s);setShowMore(false);}},
+                  {icon:<ThumbsUp style={{width:18,height:18,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:liked?t("otube.liked"):t("otube.like_btn"),col:T.cyan,on:liked,act:()=>{if(requireLogin())likeMut.mutate({id:video.id});}},
+                  {icon:<ThumbsDown style={{width:18,height:18,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.5)"}}/>,label:t("otube.dislike_menu"),col:T.orange,on:disliked,act:()=>{if(!requireLogin())return;setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}},
+                  {icon:<Sparkles style={{width:18,height:18,color:danmaku?"#ffd700":"rgba(255,255,255,0.5)"}}/>,label:t("otube.reaction_menu"),col:"#ffd700",on:danmaku,act:()=>{setDanmaku(d=>!d);setShowMore(false);}},
+                  {icon:<Gauge style={{width:18,height:18,color:showSpeed?T.orange:"rgba(255,255,255,0.5)"}}/>,label:t("otube.speed_btn"),col:T.orange,on:showSpeed,act:()=>{setShowSpeed(s=>!s);setShowMore(false);}},
                   {icon:<Brain style={{width:18,height:18,color:showDub?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:"AI Dub",col:T.cyan,on:showDub,act:()=>{if(requireLogin()){setShowDub(s=>!s);setShowMore(false);}}},
-                  {icon:<Star style={{width:18,height:18,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Sovg'a",col:T.orange,on:donating,act:()=>{if(!requireLogin())return;setDonating(d=>!d);setShowMore(false);}},
-                  {icon:<Upload style={{width:18,height:18,color:"rgba(255,255,255,0.5)",transform:"rotate(180deg)"}}/>,label:"Yuklab",col:"rgba(200,200,200,0.7)",on:false,act:()=>{if(!video.videoUrl)return;const a=document.createElement("a");a.href=video.videoUrl;a.download=`${video.caption||"video"}.mp4`;document.body.appendChild(a);a.click();document.body.removeChild(a);setShowMore(false);}},
-                  {icon:<PictureInPicture2 style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>,label:"Mini",col:T.cyan,on:false,act:()=>{void handlePip();setShowMore(false);}},
-                  ...(isOwner?[{icon:<Trash2 style={{width:18,height:18,color:"#ff3b30"}}/>,label:"O'chirish",col:"#ff3b30",on:false,act:()=>{setConfirmDelete(true);setShowMore(false);}}]:[]),
+                  {icon:<Star style={{width:18,height:18,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.5)"}}/>,label:t("otube.gift_btn"),col:T.orange,on:donating,act:()=>{if(!requireLogin())return;setDonating(d=>!d);setShowMore(false);}},
+                  {icon:<Upload style={{width:18,height:18,color:"rgba(255,255,255,0.5)",transform:"rotate(180deg)"}}/>,label:t("otube.download_btn"),col:"rgba(200,200,200,0.7)",on:false,act:()=>{if(!video.videoUrl)return;const a=document.createElement("a");a.href=video.videoUrl;a.download=`${video.caption||"video"}.mp4`;document.body.appendChild(a);a.click();document.body.removeChild(a);setShowMore(false);}},
+                  {icon:<PictureInPicture2 style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>,label:t("otube.mini_btn"),col:T.cyan,on:false,act:()=>{void handlePip();setShowMore(false);}},
+                  ...(isOwner?[{icon:<Trash2 style={{width:18,height:18,color:"#ff3b30"}}/>,label:t("otube.delete_btn"),col:"#ff3b30",on:false,act:()=>{setConfirmDelete(true);setShowMore(false);}}]:[]),
                 ].map((b,i)=>(
                   <motion.button key={i} whileTap={{scale:0.82}} onClick={()=>b.act()}
                     style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5,
@@ -1318,12 +1323,12 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <Brain style={{width:16,height:16,color:T.cyan}}/>
-                  <span style={{fontSize:13,fontWeight:700,color:"white"}}>AI Dublyaj</span>
+                  <span style={{fontSize:13,fontWeight:700,color:"white"}}>{t("otube.dub_title")}</span>
                 </div>
                 <button onClick={()=>setShowDub(false)} style={{color:"rgba(255,255,255,0.4)",fontSize:18,lineHeight:1}}>✕</button>
               </div>
               {/* Language selector */}
-              <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:8}}>Tilni tanlang:</p>
+              <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:8}}>{t("otube.choose_lang")}</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
                 {[{code:"uz",name:"O'zbek"},{code:"ru",name:"Русский"},{code:"en",name:"English"},{code:"tr",name:"Türkçe"},{code:"zh",name:"中文"},{code:"es",name:"Español"}].map(({code,name})=>(
                   <button key={code} onClick={()=>{setDubLang(code);setDubResult(null);}}
@@ -1348,12 +1353,12 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                 }}
                 style={{width:"100%",padding:"12px",borderRadius:12,background:dubbing?"rgba(255,255,255,0.1)":T.cyan,
                   color:dubbing?"rgba(255,255,255,0.4)":"#000",fontWeight:700,fontSize:13,marginBottom:12}}>
-                {dubbing?"Yaratilmoqda...":"🎙 Dublyaj qilish"}
+                {dubbing?t("otube.creating"):t("otube.dub_action")}
               </button>
               {/* Result */}
               {dubResult&&(
                 <div style={{background:"rgba(255,255,255,0.05)",borderRadius:12,padding:12,border:"1px solid rgba(255,255,255,0.08)"}}>
-                  <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:6}}>Tarjima:</p>
+                  <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:6}}>{t("otube.translation_label")}</p>
                   <p style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:10,lineHeight:1.5}}>{dubResult.translated}</p>
                   <button onClick={()=>{
                     const audio=new Audio(`data:audio/mp3;base64,${dubResult.audioB64}`);
@@ -1398,7 +1403,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               )}
               {giftResult==="ok" && (
                 <p style={{fontSize:12,color:"#00ff88",textAlign:"center",marginBottom:10,fontWeight:700}}>
-                  ✓ Sovg'a yuborildi!
+                  {t("otube.gift_sent")}
                 </p>
               )}
               {giftResult==="low" && (
@@ -1492,7 +1497,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                     style={{flex:1,padding:"11px 0",borderRadius:14,
                       background:deleteMut.isPending?"rgba(255,59,48,0.4)":"#ff3b30",
                       fontSize:13,fontWeight:700,color:"white"}}>
-                    {deleteMut.isPending?"O'chirilmoqda…":"O'chirish"}
+                    {deleteMut.isPending?t("otube.deleting"):t("otube.delete_btn")}
                   </button>
                 </div>
               </motion.div>
@@ -1539,14 +1544,14 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               <button onClick={(e)=>{e.stopPropagation();setShowDesc(d=>!d);}}
                 style={{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",
                   padding:"3px 0",cursor:"pointer"}}>
-                <span style={{fontSize:10.5,fontWeight:700,color:"rgba(255,255,255,0.55)"}}>Tavsif</span>
+                <span style={{fontSize:10.5,fontWeight:700,color:"rgba(255,255,255,0.55)"}}>{t("otube.description")}</span>
                 <ChevronDown style={{width:11,height:11,color:"rgba(255,255,255,0.4)",
                   transform:showDesc?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.2s"}}/>
               </button>
               <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.45)",lineHeight:1.4,
                 overflow:"hidden",textOverflow:"ellipsis",
                 display:"-webkit-box",WebkitLineClamp:showDesc?10:1,WebkitBoxOrient:"vertical" as const}}>
-                {video.caption||"Video"} · @{video.author.username} · {fmt(video.viewsCount)} ko'rish · {fmt(likesCount)} like
+                {video.caption||"Video"} · @{video.author.username} · {fmt(video.viewsCount)} {t("otube.views_short")} · {fmt(likesCount)} like
               </p>
             </div>
 
@@ -1560,7 +1565,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                   padding:"3px 9px",borderRadius:6,background:"rgba(255,255,255,0.1)",
                   border:`1px solid ${speed!==1?"rgba(255,107,0,0.4)":"rgba(255,255,255,0.15)"}`,
                   display:"flex",alignItems:"center",gap:3}}>
-                {speed}× TEZLIK
+                {speed}× {t("otube.speed_label")}
                 <ChevronRight style={{width:10,height:10}}/>
               </button>
             </div>
@@ -1621,7 +1626,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                 {video.caption||"OTube Video"}
               </p>
               <p style={{margin:0,fontSize:9.5,color:"rgba(255,255,255,0.35)"}}>
-                {fmt(video.viewsCount)} ko'rish
+                {fmt(video.viewsCount)} {t("otube.views_short")}
               </p>
             </div>
           </div>
@@ -1999,6 +2004,7 @@ function ChBadge({ n: _n, color=T.cyan }: { n:string; color?:string }) {
 /* Channel row — real follow (redesigned)                  */
 /* ─────────────────────────────────────────────────────── */
 function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
+  const { t } = useTranslation();
   const COLORS = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55"];
   const col = COLORS[idx % COLORS.length];
   const [subbed, setSubbed] = useState(() => getFollowState(author.id, author.isFollowing));
@@ -2076,7 +2082,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
           boxShadow: subbed?"none":`0 0 14px ${col}33`,
           opacity: followMut.isPending ? 0.6 : 1}}>
         <span style={{fontSize:10,fontWeight:700,color:subbed?"rgba(255,255,255,0.4)":col}}>
-          {subbed?"✓ Obuna":"··· Obuna"}
+          {subbed?t("otube.subscribed"):t("otube.subscribe")}
         </span>
       </motion.button>
     </motion.div>

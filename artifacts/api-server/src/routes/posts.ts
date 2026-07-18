@@ -4,6 +4,7 @@ import { postsTable, postLikesTable, commentsTable, commentLikesTable, usersTabl
 import { eq, sql, desc, and, inArray } from "drizzle-orm";
 import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { scanContentAsync } from "../moderation/aiFilter";
+import { enrichWithCDN } from "../lib/bunny";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
@@ -52,7 +53,7 @@ async function batchEnrichPosts(
         id: author?.id ?? post.authorId,
         username: author?.username ?? "deleted",
         displayName: author?.displayName ?? "Deleted User",
-        avatarUrl: author?.avatarUrl ?? null,
+        avatarUrl: enrichWithCDN({ avatarUrl: author?.avatarUrl ?? null }).avatarUrl,
         isVerified: author?.isVerified ?? false,
         ...stats,
       },

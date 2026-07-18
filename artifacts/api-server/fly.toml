@@ -52,7 +52,7 @@ primary_region = "fra"   # Frankfurt — closest to Uzbekistan (~70ms)
 # jnb = Johannesburg,  Africa (~180ms Tashkent)
 
 [[regions]]
-  regions = ["fra", "sin", "iad", "gru", "syd", "jnb"]
+  regions = ["fra", "sin", "iad", "gru", "syd", "jnb", "bom", "nrt", "lhr", "ams"]
 
 # ── Health check ─────────────────────────────────────────────────────
 [[http_service.checks]]

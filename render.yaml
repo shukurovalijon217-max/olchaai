@@ -169,7 +169,7 @@ services:
       npx --yes pnpm@10.26.1 install --no-frozen-lockfile &&
       pnpm run typecheck:libs &&
       BASE_PATH=/ pnpm --filter @workspace/nexus run build
-    startCommand: npx serve -s artifacts/nexus/dist/public -l 10000
+    startCommand: node artifacts/nexus/server.cjs
     envVars:
       - key: NODE_ENV
         value: production

@@ -7,6 +7,7 @@ import {
   User, ShieldCheck, LogOut, Crown, Settings, Wallet, Radio,
   Search, ShoppingBag, Bot, BookOpen, ChevronRight, ChevronLeft,
   MoreHorizontal, X, Zap, Trophy, Ghost, Send, GitBranch, Globe, Brain, Sparkles, Star, Languages,
+  TrendingUp,
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import FloatingAvatar from "@/components/FloatingAvatar";
@@ -302,6 +303,7 @@ const navItems = [
   { href: "/muni", icon: Star, key: "nav.muni" },
   { href: "/voice-translate", icon: Languages, key: "nav.voice_translate" },
   { href: "/features", icon: Zap, key: "nav.features" },
+  { href: "/kreator", icon: TrendingUp, key: "nav.kreator" },
 ];
 
 const bottomNavItems = [

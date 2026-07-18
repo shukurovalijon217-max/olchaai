@@ -67,7 +67,11 @@ router.post("/compare", (req: Request, res: Response) => {
  * Fetches a remote image, converts to WebP, caches 1h in-memory.
  * Used by the frontend to serve feed/profile images as WebP.
  */
-const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com)$/i;
+const _bunnyCdnHost = (process.env.BUNNY_CDN_HOSTNAME ?? "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+const ALLOWED_HOSTS = new RegExp(
+  `\\.(googleusercontent\\.com|googleapis\\.com|gcs\\.olchaai\\.com|replit\\.com|replit\\.app|storage\\.googleapis\\.com|cloudinary\\.com|onrender\\.com|olchaai\\.com${_bunnyCdnHost ? `|${_bunnyCdnHost.replace(/\./g, "\\.")}` : ""})$`,
+  "i",
+);
 
 function fetchRemote(url: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {

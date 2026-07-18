@@ -3,6 +3,7 @@ import { db, readDb } from "@workspace/db";
 import { usersTable, followsTable, postsTable, notificationsTable } from "@workspace/db";
 import { eq, ilike, sql, and, desc, inArray } from "drizzle-orm";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
+import { enrichWithCDN } from "../lib/bunny";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheAside, cacheDelPattern } from "../lib/cache";
 import { notifyFollow } from "../lib/emailNotify";
@@ -84,12 +85,13 @@ router.get("/users/:id", async (req, res) => {
 
       /* Private profile — only show avatar/cover/name to non-followers */
       if (isPrivate && !isOwner && !viewerIsFollowing) {
+        const cdnUser = enrichWithCDN({ avatarUrl: user.avatarUrl, coverUrl: user.coverUrl });
         return {
           id: user.id,
           displayName: user.displayName,
           username: user.username,
-          avatarUrl: user.avatarUrl,
-          coverUrl: user.coverUrl,
+          avatarUrl: cdnUser.avatarUrl,
+          coverUrl: cdnUser.coverUrl,
           isVerified: user.isVerified ?? false,
           bio: null,
           followersCount: followers.count,

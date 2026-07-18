@@ -147,6 +147,96 @@ router.get("/users/:id/posts", async (req, res) => {
   }
 });
 
+/* ── Mirror view — exactly what an unauthenticated stranger sees ── */
+router.get("/users/:id/mirror-view", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const sessionUserId = (req.session as any)?.userId as number | undefined;
+    if (!sessionUserId || sessionUserId !== id) {
+      res.status(403).json({ error: "Faqat o'z profilingizning ko'zgu ko'rinishini so'rash mumkin" });
+      return;
+    }
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+    if (!user) { res.status(404).json({ error: "Not found" }); return; }
+
+    const privacy = (user.privacySettings as unknown as Record<string, unknown>) ?? {};
+    const isPrivate = privacy.privateProfile === true;
+    const isGhost = !!user.ghostUntil && user.ghostUntil > new Date();
+
+    const [[followers], [following], [postsCount]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
+      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
+      db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
+    ]);
+
+    const hiddenFields: { field: string; reason: string }[] = [];
+    const visibleFields: string[] = ["displayName", "username", "avatarUrl"];
+    if (user.coverUrl) visibleFields.push("coverUrl");
+    if (user.isVerified) visibleFields.push("isVerified");
+
+    if (isPrivate || privacy.hideBio) {
+      hiddenFields.push({ field: "bio", reason: isPrivate ? "Yopiq profil" : "Maxfiylik sozlamasi" });
+    } else if (user.bio) {
+      visibleFields.push("bio");
+    }
+
+    if (privacy.hideFollowers) {
+      hiddenFields.push({ field: "followersCount", reason: "Maxfiylik sozlamasi" });
+    } else {
+      visibleFields.push("followersCount");
+    }
+
+    if (isPrivate || privacy.hideFollowing) {
+      hiddenFields.push({ field: "followingCount", reason: isPrivate ? "Yopiq profil" : "Maxfiylik sozlamasi" });
+    } else {
+      visibleFields.push("followingCount");
+    }
+
+    if (isPrivate) {
+      hiddenFields.push({ field: "posts", reason: "Yopiq profil — faqat kuzatuvchilar ko'radi" });
+    } else {
+      visibleFields.push("posts");
+    }
+
+    if (isGhost || privacy.activityStatus === false) {
+      hiddenFields.push({ field: "onlineStatus", reason: isGhost ? "Ghost rejimi faol" : "Faollik holati yashirilgan" });
+    } else {
+      visibleFields.push("onlineStatus");
+    }
+
+    hiddenFields.push(
+      { field: "email", reason: "Shaxsiy ma'lumot — hech qachon ko'rinmaydi" },
+      { field: "phone", reason: "Shaxsiy ma'lumot — hech qachon ko'rinmaydi" },
+    );
+
+    res.json({
+      profile: {
+        id: user.id,
+        displayName: user.displayName,
+        username: user.username,
+        avatarUrl: user.avatarUrl ?? null,
+        coverUrl: user.coverUrl ?? null,
+        isVerified: user.isVerified ?? false,
+        bio: (isPrivate || privacy.hideBio) ? null : (user.bio ?? null),
+        followersCount: privacy.hideFollowers ? null : followers.count,
+        followingCount: (isPrivate || privacy.hideFollowing) ? null : following.count,
+        postsCount: isPrivate ? 0 : postsCount.count,
+        isPrivate,
+      },
+      mirrorMeta: {
+        isPrivate,
+        isGhost,
+        ghostUntil: isGhost ? user.ghostUntil : null,
+        hiddenFields,
+        visibleFields,
+      },
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
 /* ── Update own profile (ownership enforced) ── */
 router.patch("/users/:id", async (req, res) => {
   try {

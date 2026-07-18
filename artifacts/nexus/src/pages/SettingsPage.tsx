@@ -972,13 +972,16 @@ export default function SettingsPage() {
   const currentCode = i18nRef.language.split("-")[0] as LangCode;
   const currentLang = LANGUAGES.find(l => l.code === currentCode);
 
-  const [search] = useLocation();
-  const tabParam = new URLSearchParams(search.split("?")[1] ?? "").get("tab") as Tab | null;
-  const [openPanel, setOpenPanel] = useState<Tab | null>(tabParam ?? null);
-  const toggle = (id: Tab) => setOpenPanel(prev => prev === id ? null : id);
+  const tabParam = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+  const [openPanels, setOpenPanels] = useState<Set<Tab>>(() => tabParam ? new Set([tabParam]) : new Set());
+  const toggle = (id: Tab) => setOpenPanels(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
 
   useEffect(() => {
-    if (tabParam) setOpenPanel(tabParam);
+    if (tabParam) setOpenPanels(prev => new Set([...prev, tabParam]));
   }, [tabParam]);
 
   const PANELS: { id: Tab; icon: typeof User; label: string; color: string; preview?: React.ReactNode }[] = [
@@ -1023,7 +1026,7 @@ export default function SettingsPage() {
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}>
           {PANELS.map(({ id, icon, label, color, preview }) => (
             <motion.div key={id} variants={{ hidden: { opacity: 0, y: 20, scale: 0.97 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 380, damping: 28 } } }}>
-              <Panel color={color} icon={icon} label={label} preview={preview} isOpen={openPanel === id} onToggle={() => toggle(id)}>
+              <Panel color={color} icon={icon} label={label} preview={preview} isOpen={openPanels.has(id)} onToggle={() => toggle(id)}>
                 {CONTENT[id]}
               </Panel>
             </motion.div>

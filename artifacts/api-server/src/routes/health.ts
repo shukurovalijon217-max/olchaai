@@ -30,8 +30,10 @@ router.get(["/", "/healthz"], async (_req, res) => {
   const latencyMs = Date.now() - start;
   const status = dbOk ? "ok" : "degraded";
 
+  // Always return 200 so Fly.io / Render health checks don't restart the machine
+  // when the DB is temporarily unreachable. Callers can inspect the body for real status.
   res
-    .status(dbOk ? 200 : 503)
+    .status(200)
     .set("Cache-Control", "no-store")
     .json({
       status,

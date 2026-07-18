@@ -60,4 +60,4 @@ primary_region = "fra"   # Frankfurt — closest to Uzbekistan (~70ms)
   interval      = "30s"
   method        = "GET"
   timeout       = "5s"
-  path          = "/api/health"
+  path          = "/api/healthz"

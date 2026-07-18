@@ -10,6 +10,7 @@ import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { notifyComment, notifyLike } from "../lib/emailNotify";
 import { sendNotification } from "../lib/pushNotifications";
+import { indexPost, deletePostIndex } from "../lib/meili";
 
 const router = Router();
 
@@ -375,6 +376,14 @@ router.post("/posts", async (req: any, res) => {
 
     const [enriched] = await batchEnrichPosts([post], sessionUserId);
     res.status(201).json(enriched);
+
+    /* Meilisearch index — fire-and-forget */
+    void (async () => {
+      try {
+        const [author] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, authorId));
+        indexPost({ id: post.id, content: post.content ?? "", authorId, authorName: author?.displayName ?? "", mediaUrl: post.mediaUrl ?? undefined, likesCount: 0, commentsCount: 0, createdAt: Date.now() });
+      } catch { /* non-fatal */ }
+    })();
 
     /* AI scan & autopilot — fire-and-forget, never blocks response */
     void (async () => {

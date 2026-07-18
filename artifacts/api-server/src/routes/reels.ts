@@ -11,6 +11,8 @@ import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheGet, cacheSet, cacheAside, cacheDelPattern } from "../lib/cache";
 import { transcodeReelToHLS, parseGcsPath } from "../lib/hlsTranscode";
 import { objectStorageClient } from "../lib/objectStorage";
+import { sendNotification } from "../lib/pushNotifications";
+import { indexReel } from "../lib/meili";
 
 const router = Router();
 
@@ -202,8 +204,16 @@ router.post("/reels", async (req, res) => {
       .returning();
 
     const [enriched] = await batchEnrichReels([reel], viewerId);
-    cacheDelPattern("reels:list"); /* invalidate feed cache on new reel */
+    cacheDelPattern("reels:list");
     res.status(201).json(enriched);
+
+    /* Meilisearch index — fire-and-forget */
+    void (async () => {
+      try {
+        const [author] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, authorId));
+        indexReel({ id: reel.id, caption: reel.caption ?? "", authorId, authorName: author?.displayName ?? undefined, thumbnailUrl: reel.thumbnailUrl ?? undefined, viewsCount: 0, likesCount: 0 });
+      } catch { /* non-fatal */ }
+    })();
 
     /* HLS transcoding in background — never blocks response */
     void transcodeReelToHLS(reel.id, videoUrl).catch(() => {});
@@ -278,8 +288,28 @@ router.post("/reels/:id/like", async (req, res) => {
       await db.update(reelsTable).set({ likesCount: sql`${reelsTable.likesCount} + 1` }).where(eq(reelsTable.id, reelId));
     }
 
-    const [reel] = await db.select({ likesCount: reelsTable.likesCount }).from(reelsTable).where(eq(reelsTable.id, reelId));
+    const [reel] = await db.select({ likesCount: reelsTable.likesCount, authorId: reelsTable.authorId, caption: reelsTable.caption }).from(reelsTable).where(eq(reelsTable.id, reelId));
     res.json({ liked: !isLiked, likesCount: reel?.likesCount ?? 0 });
+
+    /* Push notification to reel author — fire-and-forget */
+    if (!isLiked && reel?.authorId && reel.authorId !== userId) {
+      void (async () => {
+        try {
+          const [liker] = await db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, userId));
+          await sendNotification({
+            userId: reel.authorId!,
+            title: "❤️ Reel like",
+            body: `${liker?.displayName ?? "Kimdir"} reelingizni yoqtirdi`,
+            type: "like",
+            actorName: liker?.displayName ?? undefined,
+            actorAvatar: liker?.avatarUrl ?? undefined,
+            targetId: reelId,
+            targetType: "reel",
+            data: { reelId: String(reelId), type: "reel_like" },
+          });
+        } catch { /* non-fatal */ }
+      })();
+    }
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

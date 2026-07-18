@@ -7,6 +7,7 @@ import type { NotifPrefs, PrivacySettings } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
 import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput, signMobileToken, checkEndpointRateLimit } from "../lib/security";
+import { indexUser } from "../lib/meili";
 
 const getResend = () => {
   const key = process.env.RESEND_API_KEY;
@@ -181,6 +182,9 @@ router.post("/auth/register", async (req, res) => {
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;
     res.status(201).json({ ...safeUser, token: signMobileToken(user.id) });
+
+    /* Meilisearch index — fire-and-forget */
+    indexUser({ id: user.id, username: user.username, displayName: user.displayName ?? user.username, bio: user.bio ?? undefined, avatarUrl: user.avatarUrl ?? undefined, isVerified: false, followersCount: 0 });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Server xatosi" });

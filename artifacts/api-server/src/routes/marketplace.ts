@@ -5,6 +5,7 @@ import {
   walletsTable, transactionsTable, usersTable,
 } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql, ne } from "drizzle-orm";
+import { indexProduct, deleteProductIndex } from "../lib/meili";
 
 const router = Router();
 
@@ -82,6 +83,14 @@ router.post("/marketplace/products", requireAuth, async (req: any, res) => {
       tags: tags ? JSON.stringify(tags) : null,
     }).returning();
     res.status(201).json({ ...product, mediaUrls: mediaUrls ?? [], tags: tags ?? [] });
+
+    /* Meilisearch index — fire-and-forget */
+    void (async () => {
+      try {
+        const [seller] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, req.session.userId));
+        indexProduct({ id: product.id, title: product.title, description: product.description ?? undefined, price: product.price, category: product.category, condition: product.condition ?? "new", location: product.location ?? undefined, thumbnailUrl: product.thumbnailUrl ?? undefined, sellerId: req.session.userId, sellerName: seller?.displayName ?? undefined, rating: 0, status: "active" });
+      } catch { /* non-fatal */ }
+    })();
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Mahsulot qo'shishda xato" }); }
 });
 

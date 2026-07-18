@@ -14,6 +14,7 @@ import { systemMonitor, normalisePath } from "./lib/systemMonitor";
 import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 import { securityShield } from "./middlewares/securityShield";
 import { resilienceMiddleware } from "./middlewares/resilience";
+import { setupMeiliIndexes } from "./lib/meili";
 
 const app: Express = express();
 
@@ -303,5 +304,8 @@ app.post("/api/client-error", (req: Request, res: Response) => {
   req.log.error({ message, stack, componentStack, url }, "[client-error] Frontend crash");
   res.status(204).end();
 });
+
+/* ── Meilisearch index setup (non-blocking, runs once on startup) ── */
+void setupMeiliIndexes();
 
 export default app;

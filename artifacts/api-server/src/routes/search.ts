@@ -4,6 +4,7 @@ import { usersTable, postsTable, reelsTable, productsTable } from "@workspace/db
 import { ilike, or, eq, and, ne } from "drizzle-orm";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { cacheAside } from "../lib/cache";
+import { meiliSearch, isMeiliAvailable } from "../lib/meili";
 
 const router = Router();
 
@@ -20,11 +21,22 @@ router.get("/search", async (req: any, res) => {
       res.json({ users: [], posts: [], reels: [], products: [], query: q }); return;
     }
 
-    const like = `%${q}%`;
     const myId = req.session?.userId;
-
     const cacheKey = `${q}:${type}:${limit}:${myId ?? 0}`;
+
     const result = await cacheAside("search", cacheKey, async () => {
+      /* ── 1. Try Meilisearch first (fast, typo-tolerant) ── */
+      if (isMeiliAvailable()) {
+        const meili = await meiliSearch(q, type, limit);
+        if (meili) {
+          // Filter out self from users
+          const users = myId ? meili.users.filter(u => u.id !== myId) : meili.users;
+          return { users, posts: meili.posts, reels: meili.reels, products: meili.products, query: q, source: "meilisearch" };
+        }
+      }
+
+      /* ── 2. Fallback: PostgreSQL ILIKE ── */
+      const like = `%${q}%`;
       const midnightCond = await midnightVisibilityConditionForReq(req);
       const [users, posts, reels, products] = await Promise.all([
         (type === "all" || type === "users")
@@ -87,7 +99,7 @@ router.get("/search", async (req: any, res) => {
             ).limit(limit)
           : Promise.resolve([]),
       ]);
-      return { users, posts, reels, products, query: q };
+      return { users, posts, reels, products, query: q, source: "db" };
     }, 30);
 
     res.json(result);

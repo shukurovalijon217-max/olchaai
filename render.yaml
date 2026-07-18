@@ -100,6 +100,12 @@ services:
         value: turn.olchaai.com
       - key: COTURN_SECRET
         sync: false
+      - key: MEILI_HOST
+        sync: false
+      - key: MEILI_MASTER_KEY
+        sync: false
+      - key: READ_REPLICA_DATABASE_URL
+        sync: false
 
   # ── 2. AI Core Service ───────────────────────────────────────────────────
   #  starter plan yetadi: AI Core asosan OpenAI'ga so'rov yuboradi (I/O bound)

@@ -972,8 +972,14 @@ export default function SettingsPage() {
   const currentCode = i18nRef.language.split("-")[0] as LangCode;
   const currentLang = LANGUAGES.find(l => l.code === currentCode);
 
-  const [openPanel, setOpenPanel] = useState<Tab | null>("profile");
+  const [search] = useLocation();
+  const tabParam = new URLSearchParams(search.split("?")[1] ?? "").get("tab") as Tab | null;
+  const [openPanel, setOpenPanel] = useState<Tab | null>(tabParam ?? null);
   const toggle = (id: Tab) => setOpenPanel(prev => prev === id ? null : id);
+
+  useEffect(() => {
+    if (tabParam) setOpenPanel(tabParam);
+  }, [tabParam]);
 
   const PANELS: { id: Tab; icon: typeof User; label: string; color: string; preview?: React.ReactNode }[] = [
     { id: "profile",       icon: User,              color: "violet", label: t("settings.profile"),              preview: user?.displayName ? `${user.displayName} · @${user.username}` : undefined },

@@ -1,19 +1,28 @@
-import { Meilisearch } from "meilisearch";
 import { logger } from "./logger";
 
-let client: Meilisearch | null = null;
+const MEILI_HOST = () => process.env["MEILI_HOST"] ?? "";
+const MEILI_KEY  = () => process.env["MEILI_MASTER_KEY"] ?? "";
 
-function getClient(): Meilisearch | null {
-  if (client) return client;
-  const host = process.env["MEILI_HOST"];
-  const apiKey = process.env["MEILI_MASTER_KEY"];
-  if (!host) return null;
-  try {
-    client = new Meilisearch({ host, apiKey: apiKey ?? "" });
-    return client;
-  } catch {
-    return null;
-  }
+function isAvailable(): boolean {
+  return !!process.env["MEILI_HOST"];
+}
+
+async function meiliReq(
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<unknown> {
+  const host = MEILI_HOST();
+  const res = await fetch(`${host}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(MEILI_KEY() ? { Authorization: `Bearer ${MEILI_KEY()}` } : {}),
+    },
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
+  if (!res.ok) throw new Error(`Meili ${method} ${path} → ${res.status}`);
+  return res.json();
 }
 
 export type MeiliPost = {
@@ -62,30 +71,27 @@ export type MeiliReel = {
   likesCount: number;
 };
 
-/* ── Setup indexes with proper filterable/searchable attributes ── */
+/* ── Index setup ── */
 export async function setupMeiliIndexes(): Promise<void> {
-  const c = getClient();
-  if (!c) return;
+  if (!isAvailable()) return;
   try {
     await Promise.all([
-      c.index("posts").updateSettings({
+      meiliReq("PATCH", "/indexes/posts/settings", {
         searchableAttributes: ["content", "authorName"],
         filterableAttributes: ["authorId", "createdAt"],
         sortableAttributes: ["createdAt", "likesCount"],
-        rankingRules: ["words", "typo", "proximity", "attribute", "sort", "exactness", "likesCount:desc"],
       }),
-      c.index("users").updateSettings({
+      meiliReq("PATCH", "/indexes/users/settings", {
         searchableAttributes: ["username", "displayName", "bio"],
         filterableAttributes: ["isVerified"],
         sortableAttributes: ["followersCount"],
-        rankingRules: ["words", "typo", "proximity", "attribute", "sort", "exactness", "followersCount:desc"],
       }),
-      c.index("products").updateSettings({
+      meiliReq("PATCH", "/indexes/products/settings", {
         searchableAttributes: ["title", "description", "category", "location", "sellerName"],
         filterableAttributes: ["category", "condition", "status", "price"],
-        sortableAttributes: ["price", "rating", "createdAt"],
+        sortableAttributes: ["price", "rating"],
       }),
-      c.index("reels").updateSettings({
+      meiliReq("PATCH", "/indexes/reels/settings", {
         searchableAttributes: ["caption", "authorName"],
         filterableAttributes: ["authorId"],
         sortableAttributes: ["viewsCount", "likesCount"],
@@ -97,41 +103,35 @@ export async function setupMeiliIndexes(): Promise<void> {
   }
 }
 
-/* ── Upsert helpers (fire-and-forget, never throw) ── */
+/* ── Upsert helpers (fire-and-forget) ── */
 export function indexPost(doc: MeiliPost): void {
-  const c = getClient();
-  if (!c) return;
-  c.index("posts").addDocuments([doc], { primaryKey: "id" }).catch(() => {});
+  if (!isAvailable()) return;
+  meiliReq("POST", "/indexes/posts/documents?primaryKey=id", [doc]).catch(() => {});
 }
 
 export function deletePostIndex(id: number): void {
-  const c = getClient();
-  if (!c) return;
-  c.index("posts").deleteDocument(id).catch(() => {});
+  if (!isAvailable()) return;
+  meiliReq("DELETE", `/indexes/posts/documents/${id}`).catch(() => {});
 }
 
 export function indexUser(doc: MeiliUser): void {
-  const c = getClient();
-  if (!c) return;
-  c.index("users").addDocuments([doc], { primaryKey: "id" }).catch(() => {});
+  if (!isAvailable()) return;
+  meiliReq("POST", "/indexes/users/documents?primaryKey=id", [doc]).catch(() => {});
 }
 
 export function indexProduct(doc: MeiliProduct): void {
-  const c = getClient();
-  if (!c) return;
-  c.index("products").addDocuments([doc], { primaryKey: "id" }).catch(() => {});
+  if (!isAvailable()) return;
+  meiliReq("POST", "/indexes/products/documents?primaryKey=id", [doc]).catch(() => {});
 }
 
 export function deleteProductIndex(id: number): void {
-  const c = getClient();
-  if (!c) return;
-  c.index("products").deleteDocument(id).catch(() => {});
+  if (!isAvailable()) return;
+  meiliReq("DELETE", `/indexes/products/documents/${id}`).catch(() => {});
 }
 
 export function indexReel(doc: MeiliReel): void {
-  const c = getClient();
-  if (!c) return;
-  c.index("reels").addDocuments([doc], { primaryKey: "id" }).catch(() => {});
+  if (!isAvailable()) return;
+  meiliReq("POST", "/indexes/reels/documents?primaryKey=id", [doc]).catch(() => {});
 }
 
 /* ── Search ── */
@@ -144,29 +144,31 @@ export interface MeiliSearchResult {
   source: "meilisearch";
 }
 
+async function searchIndex<T>(index: string, q: string, limit: number, filter?: string): Promise<T[]> {
+  try {
+    const body: Record<string, unknown> = { q, limit };
+    if (filter) body["filter"] = filter;
+    const res = await meiliReq("POST", `/indexes/${index}/search`, body) as { hits: T[] };
+    return res.hits ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function meiliSearch(
   q: string,
   type: string,
   limit: number,
 ): Promise<MeiliSearchResult | null> {
-  const c = getClient();
-  if (!c) return null;
+  if (!isAvailable()) return null;
   try {
-    const opts = { limit, attributesToHighlight: [], showMatchesPosition: false };
-    const [usersRes, postsRes, reelsRes, productsRes] = await Promise.all([
-      (type === "all" || type === "users")  ? c.index("users").search<MeiliUser>(q, opts)    : null,
-      (type === "all" || type === "posts")  ? c.index("posts").search<MeiliPost>(q, opts)    : null,
-      (type === "all" || type === "reels")  ? c.index("reels").search<MeiliReel>(q, opts)    : null,
-      (type === "all" || type === "products") ? c.index("products").search<MeiliProduct>(q, { ...opts, filter: "status = active" }) : null,
+    const [users, posts, reels, products] = await Promise.all([
+      (type === "all" || type === "users")    ? searchIndex<MeiliUser>("users", q, limit) : [],
+      (type === "all" || type === "posts")    ? searchIndex<MeiliPost>("posts", q, limit) : [],
+      (type === "all" || type === "reels")    ? searchIndex<MeiliReel>("reels", q, limit) : [],
+      (type === "all" || type === "products") ? searchIndex<MeiliProduct>("products", q, limit, "status = 'active'") : [],
     ]);
-    return {
-      users:    usersRes?.hits    ?? [],
-      posts:    postsRes?.hits    ?? [],
-      reels:    reelsRes?.hits    ?? [],
-      products: productsRes?.hits ?? [],
-      query: q,
-      source: "meilisearch",
-    };
+    return { users, posts, reels, products, query: q, source: "meilisearch" };
   } catch (err) {
     logger.warn({ err }, "Meilisearch search failed, falling back to DB");
     return null;
@@ -174,5 +176,5 @@ export async function meiliSearch(
 }
 
 export function isMeiliAvailable(): boolean {
-  return !!process.env["MEILI_HOST"];
+  return isAvailable();
 }

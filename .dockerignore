@@ -1,0 +1,33 @@
+# Build outputs
+**/dist
+**/.tsbuildinfo
+**/node_modules
+
+# Dev/test artifacts
+**/*.test.ts
+**/*.spec.ts
+**/.local
+**/.agents
+
+# Logs & temp
+**/*.log
+**/tmp
+
+# Git
+.git
+.gitignore
+
+# Mobile app — not needed for API build
+artifacts/olcha-mobile
+artifacts/nexus
+artifacts/spatial-ar
+artifacts/ai-core
+artifacts/olcha-go
+artifacts/mockup-sandbox
+
+# Lib packages not used by api-server
+lib/api-client-react
+lib/api-spec
+lib/integrations
+lib/integrations-openai-ai-react
+lib/object-storage-web

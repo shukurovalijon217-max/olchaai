@@ -4,7 +4,7 @@ import { Brain, Sparkles, TrendingUp, Send, RotateCcw, Star, Crown } from "lucid
 import { useTranslation } from "react-i18next";
 import AIPaywall from "@/components/AIPaywall";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 type Mode = "wisdom" | "trader";
 

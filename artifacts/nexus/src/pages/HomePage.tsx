@@ -16,7 +16,7 @@ import TunnelFeed from "@/components/TunnelFeed";
 import { getFeaturePref } from "@/lib/sounds";
 import { usePip } from "@/context/PipContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 

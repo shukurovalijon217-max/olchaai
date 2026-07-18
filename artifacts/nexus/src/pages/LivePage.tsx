@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useGetLive, useEndLive, useSendLiveGift } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 const STUN_FALLBACK: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },

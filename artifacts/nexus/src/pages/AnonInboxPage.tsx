@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 interface AnonQuestion {
   id: number;

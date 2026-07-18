@@ -37,7 +37,7 @@ import {
 /* ─────────────────────────────────────────────────────── */
 /* API base URL — must be absolute in production           */
 /* ─────────────────────────────────────────────────────── */
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com").replace(/\/+$/, "");
 
 /* ─────────────────────────────────────────────────────── */
 /* Design tokens — NEXUS AURORA BROADCAST                  */

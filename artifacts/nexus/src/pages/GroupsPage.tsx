@@ -21,7 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 /* ── Upload cover image ─────────────────────────────────────── */
 async function uploadFile(file: File): Promise<string> {

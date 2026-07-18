@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com").replace(/\/+$/, "");
 
 const STEP_Z = 520;
 const NEAR_CLIP = 420;

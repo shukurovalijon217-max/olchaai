@@ -34,7 +34,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePip } from "@/context/PipContext";
 import { toast } from "@/hooks/use-toast";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 /* ─── Accent palette (per post index) ───────────────────────── */
 const ACCENTS = [

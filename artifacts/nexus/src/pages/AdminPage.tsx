@@ -43,7 +43,7 @@ const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "ai-autopilot", key: "admin.ai_autopilot", icon: Bot },
 ];
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 const VERDICT_COLOR: Record<string, string> = {
   clean: "bg-emerald-400/15 text-emerald-400",
@@ -610,7 +610,7 @@ function PlatformCostsSection() {
 /* ── Monetization Tab ─────────────────────────────────────────── */
 function MonetizationTab() {
   const { t } = useTranslation();
-  const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "");
+  const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
   const [stats, setStats] = useState<any>(null);
   const [cfg, setCfg] = useState<any>(null);
   const [topContent, setTopContent] = useState<any[]>([]);

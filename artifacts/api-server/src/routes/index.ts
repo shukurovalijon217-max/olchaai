@@ -100,9 +100,14 @@ router.get("/ice-config", async (_req, res) => {
     return;
   }
 
-  // Fallback: STUN only (no leaked static credentials)
+  // Fallback: public openrelay TURN (free, no credentials needed)
+  const fallbackTurn: IceServer[] = [
+    { urls: "turn:openrelay.metered.ca:80",               username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "turn:openrelay.metered.ca:443",              username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+  ];
   res.set("Cache-Control", "public, max-age=60");
-  res.json({ iceServers: STUN });
+  res.json({ iceServers: [...STUN, ...fallbackTurn] });
 });
 
 router.use(healthRouter);

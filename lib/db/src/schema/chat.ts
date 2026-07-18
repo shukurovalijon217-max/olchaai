@@ -30,6 +30,7 @@ export const chatMessagesTable = pgTable("chat_messages", {
     .notNull()
     .references(() => usersTable.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
+  type: text("type").default("text"),
   mediaUrl: text("media_url"),
   scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

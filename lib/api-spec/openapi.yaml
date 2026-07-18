@@ -2379,6 +2379,7 @@ components:
         conversationId: { type: integer }
         senderId: { type: integer }
         content: { type: string }
+        type: { type: ["string", "null"] }
         mediaUrl: { type: ["string", "null"] }
         isRead: { type: boolean }
         createdAt: { type: string }
@@ -2395,6 +2396,7 @@ components:
       properties:
         senderId: { type: integer }
         content: { type: string }
+        type: { type: string }
         mediaUrl: { type: string }
         scheduledAt:
           type: string

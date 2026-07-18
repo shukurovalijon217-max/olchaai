@@ -47,6 +47,7 @@ interface CallState {
 interface CallContextValue {
   startCall: (peer: CallPeer, type: "voice" | "video") => void;
   hasActiveCall: boolean;
+  flipCamera: () => Promise<void>;
 }
 
 const CallContext = createContext<CallContextValue | null>(null);
@@ -60,6 +61,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [muted, setMuted] = useState(false);
   const [cameraOn, setCameraOn] = useState(true);
+  const facingModeRef = useRef<"user" | "environment">("user");
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -128,11 +130,37 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const getMedia = useCallback(async (type: "voice" | "video") => {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
-      video: type === "video" ? { facingMode: "user" } : false,
+      video: type === "video" ? { facingMode: facingModeRef.current } : false,
     });
     localStreamRef.current = stream;
     setLocalStream(stream);
     return stream;
+  }, []);
+
+  const flipCamera = useCallback(async () => {
+    if (!stateRef.current || stateRef.current.type !== "video") return;
+    facingModeRef.current = facingModeRef.current === "user" ? "environment" : "user";
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: facingModeRef.current },
+      });
+      const newVideoTrack = newStream.getVideoTracks()[0];
+      if (!newVideoTrack) return;
+      const oldStream = localStreamRef.current;
+      if (oldStream) {
+        oldStream.getVideoTracks().forEach(t => t.stop());
+        oldStream.removeTrack(oldStream.getVideoTracks()[0]);
+        oldStream.addTrack(newVideoTrack);
+      }
+      if (pcRef.current) {
+        const sender = pcRef.current.getSenders().find(s => s.track?.kind === "video");
+        if (sender) await sender.replaceTrack(newVideoTrack);
+      }
+      setLocalStream(oldStream ? new MediaStream([...oldStream.getAudioTracks(), newVideoTrack]) : newStream);
+    } catch {
+      facingModeRef.current = facingModeRef.current === "user" ? "environment" : "user";
+    }
   }, []);
 
   const startCall = useCallback((peer: CallPeer, type: "voice" | "video") => {
@@ -290,7 +318,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
   }, [subscribe, sendCallMsg, ensurePeer, drainIce, getMedia, cleanup, stopRingtone, clearRingTimeout]);
 
   return (
-    <CallContext.Provider value={{ startCall, hasActiveCall: !!state }}>
+    <CallContext.Provider value={{ startCall, hasActiveCall: !!state, flipCamera }}>
       {children}
       <AnimatePresence>
         {state && (
@@ -305,6 +333,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
             onToggleMute={toggleMute}
             cameraOn={cameraOn}
             onToggleCamera={toggleCamera}
+            onFlipCamera={flipCamera}
             onEnd={endCall}
             onAccept={state.phase === "ringing_in" ? acceptCall : undefined}
             onDecline={state.phase === "ringing_in" ? declineCall : undefined}

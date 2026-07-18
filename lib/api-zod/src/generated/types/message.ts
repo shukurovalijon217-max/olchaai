@@ -12,6 +12,8 @@ export interface Message {
   senderId: number;
   content: string;
   /** @nullable */
+  type?: string | null;
+  /** @nullable */
   mediaUrl?: string | null;
   isRead?: boolean;
   createdAt: string;

@@ -182,7 +182,7 @@ router.post("/conversations/:id/messages", async (req: any, res) => {
   if (!senderId) return;
   try {
     const conversationId = Number(req.params["id"]);
-    const { content, mediaUrl, scheduledAt } = req.body;
+    const { content, mediaUrl, scheduledAt, type: msgType } = req.body;
     if (!(await isParticipant(conversationId, senderId))) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
 
     const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
@@ -192,7 +192,7 @@ router.post("/conversations/:id/messages", async (req: any, res) => {
     const scan = await scanContentAsync(content ?? "");
 
     const [msg] = await db.insert(chatMessagesTable)
-      .values({ conversationId, senderId, content, mediaUrl, scheduledAt: scheduledDate ?? undefined })
+      .values({ conversationId, senderId, content, type: msgType ?? "text", mediaUrl, scheduledAt: scheduledDate ?? undefined })
       .returning();
 
     // AI Autopilot decision (warnings/bans/logging)

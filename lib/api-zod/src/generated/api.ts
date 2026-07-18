@@ -1029,6 +1029,7 @@ export const GetConversationMessagesResponseItem = zod.object({
   "conversationId": zod.number(),
   "senderId": zod.number(),
   "content": zod.string(),
+  "type": zod.string().nullish(),
   "mediaUrl": zod.string().nullish(),
   "isRead": zod.boolean().optional(),
   "createdAt": zod.string(),
@@ -1048,6 +1049,7 @@ export const SendMessageParams = zod.object({
 export const SendMessageBody = zod.object({
   "senderId": zod.number(),
   "content": zod.string(),
+  "type": zod.string().optional(),
   "mediaUrl": zod.string().optional(),
   "scheduledAt": zod.string().optional().describe('time_capsule: ISO timestamp to deliver this message at, instead of immediately')
 })

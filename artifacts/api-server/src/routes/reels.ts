@@ -5,6 +5,7 @@ import {
   userInteractionsTable, reelWatchProgressTable, reelCollaboratorsTable,
 } from "@workspace/db";
 import { eq, sql, desc, and, inArray, not, count, gte } from "drizzle-orm";
+import { rewriteVideoToBunnyCDN } from "../lib/bunny";
 import { accumulateViewEarning } from "./monetization";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
@@ -74,8 +75,8 @@ async function batchEnrichReels(
     const fixUrl = (u: string | null | undefined) =>
       u && u.startsWith("/") && apiBase ? `${apiBase}${u}` : (u ?? undefined);
 
-    const hlsUrl      = fixUrl((reel as any).hlsUrl);
-    const videoUrl    = fixUrl(reel.videoUrl);
+    const hlsUrl      = rewriteVideoToBunnyCDN(fixUrl((reel as any).hlsUrl));
+    const videoUrl    = rewriteVideoToBunnyCDN(fixUrl(reel.videoUrl));
     const thumbnailUrl = fixUrl(reel.thumbnailUrl ?? undefined);
 
     return {

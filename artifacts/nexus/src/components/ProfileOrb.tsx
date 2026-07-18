@@ -789,7 +789,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                         <div className="flex-1">
                           <div className="inline-block px-3 py-2 rounded-2xl rounded-tl-sm bg-white/8 border border-white/10">
                             <p className="text-[10px] font-semibold text-violet-400 mb-0.5">
-                              {c.author?.id===me?.id?t("orb.mine"):`@${c.author?.username??"?"}`}
+                              {c.author?.id===me?.id?t("orb.mine"):c.author?.username?.includes('@')?c.author?.displayName??t("orb.user"):`@${c.author?.username??"?"}`}
                             </p>
                             <EmojiText text={c.content} className="text-sm text-foreground leading-relaxed" />
                           </div>

@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import type { Post } from "@workspace/api-client-react";
 import {
   PostType, useLikePost, useDeletePost,
-  getListPostsQueryKey, getGetAiFeedQueryKey, useFollowUser,
+  getListPostsQueryKey, getGetAiFeedQueryKey, getListReelsQueryKey, useFollowUser,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -292,6 +292,9 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         if (typeof data?.following === "boolean") {
           setSubscribed(data.following);
         }
+        queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetAiFeedQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListReelsQueryKey() });
       },
       onError: () => {
         setSubscribed(post.author?.isFollowing ?? false);
@@ -931,6 +934,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                       if (typeof data?.following === "boolean") setSubscribed(data.following);
                       queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
                       queryClient.invalidateQueries({ queryKey: getGetAiFeedQueryKey() });
+                      queryClient.invalidateQueries({ queryKey: getListReelsQueryKey() });
                     },
                     onError: () => setSubscribed(!next),
                   }
@@ -985,7 +989,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                     {(post.author as any)?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: accent }} />}
                   </div>
                   <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.42)" }}>
-                    @{post.author?.username ?? "user"}
+                    {post.author?.username && !post.author.username.includes('@') ? `@${post.author.username}` : ""}
                   </span>
                 </div>
               </div>
@@ -1239,7 +1243,9 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-white/80 text-[12px] font-semibold truncate">{c.author?.displayName ?? "Foydalanuvchi"}</span>
-                      <span className="text-white/25 text-[10px] flex-shrink-0">@{c.author?.username}</span>
+                      {c.author?.username && !c.author.username.includes('@') && (
+                        <span className="text-white/25 text-[10px] flex-shrink-0">@{c.author.username}</span>
+                      )}
                     </div>
                     <p className="text-white/90 text-[13px] leading-snug mt-0.5 break-words">{c.content}</p>
                   </div>

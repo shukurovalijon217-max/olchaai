@@ -45,6 +45,7 @@ services:
       psql "$DATABASE_URL" -c "ALTER TABLE reels ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'reel';" &&
       psql "$DATABASE_URL" -c "ALTER TABLE reels ADD COLUMN IF NOT EXISTS hls_url TEXT; ALTER TABLE reels ADD COLUMN IF NOT EXISTS hls_status TEXT DEFAULT 'pending'; ALTER TABLE reels ADD COLUMN IF NOT EXISTS audio_track TEXT;" &&
       psql "$DATABASE_URL" -c "ALTER TABLE posts ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ; ALTER TABLE posts ADD COLUMN IF NOT EXISTS hot_take BOOLEAN DEFAULT FALSE; ALTER TABLE posts ADD COLUMN IF NOT EXISTS aura_score REAL; ALTER TABLE posts ADD COLUMN IF NOT EXISTS audio_trim_start REAL; ALTER TABLE posts ADD COLUMN IF NOT EXISTS audio_trim_end REAL;" &&
+      psql "$DATABASE_URL" -c "ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'text'; ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS media_url TEXT;" &&
       pnpm --filter @workspace/api-server run build
     startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
     healthCheckPath: /api/healthz
@@ -94,6 +95,10 @@ services:
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
       - key: INTERNAL_SERVICE_SECRET
+        sync: false
+      - key: COTURN_DOMAIN
+        value: turn.olchaai.com
+      - key: COTURN_SECRET
         sync: false
 
   # ── 2. AI Core Service ───────────────────────────────────────────────────

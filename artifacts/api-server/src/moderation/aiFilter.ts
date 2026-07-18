@@ -9,7 +9,7 @@ export interface AiScanResult {
   verdict: "clean" | "suspicious" | "violation";
   autoBlock: boolean;
   topCategory: string | null;
-  engine?: "rules" | "tensorflow" | "hybrid" | "openai" | "openai+rules";
+  engine?: "rules" | "tensorflow" | "hybrid" | "openai" | "openai+rules" | "ai-core";
 }
 
 /* ─── Rule patterns (english + uzbek + russian) ─────────────────── */
@@ -189,12 +189,27 @@ export function scanContent(text: string): AiScanResult {
   return { ...rulesScan(text), engine: "rules" };
 }
 
-/** Full async scan: OpenAI Moderation → TF.js → rules (fallback chain) */
+/** Full async scan: AI Core (primary) → OpenAI direct → TF.js → rules (fallback chain) */
 export async function scanContentAsync(text: string): Promise<AiScanResult> {
   if (!text || text.trim().length === 0) {
     return { score: 0, categories: {}, verdict: "clean", autoBlock: false, topCategory: null, engine: "rules" };
   }
 
+  // ── PRIMARY: call the dedicated AI Core service ──────────────────
+  try {
+    const { moderateContent, aiCoreResultToScanResult } = await import("../lib/aiCoreClient.js");
+    const coreResult = await moderateContent(
+      `scan-${Date.now()}`,
+      text,
+      undefined,
+      "post",
+    );
+    if (coreResult) {
+      return aiCoreResultToScanResult(coreResult) as AiScanResult;
+    }
+  } catch { /* AI Core unreachable — fall through to local chain */ }
+
+  // ── FALLBACK: local chain (OpenAI direct + rules) ────────────────
   // Run rules and OpenAI in parallel for speed
   const [rulesResult, openaiResult] = await Promise.all([
     Promise.resolve(rulesScan(text)),

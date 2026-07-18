@@ -1,0 +1,63 @@
+# OlchaAI API — Fly.io multi-region deployment
+# 6 continents: Europe, Asia, N.America, S.America, Australia, Africa
+#
+# Deploy:  cd artifacts/api-server && fly deploy
+# Scale:   fly scale count 1 --region fra,sin,iad,gru,syd,jnb
+# Logs:    fly logs
+
+app = "olchaai-api"
+primary_region = "fra"   # Frankfurt — closest to Uzbekistan (~70ms)
+
+[build]
+  dockerfile = "Dockerfile"
+  # Build context is the monorepo root (two levels up)
+  build_target = "runtime"
+
+[build.args]
+  NODE_ENV = "production"
+
+[env]
+  NODE_ENV    = "production"
+  PORT        = "8080"
+  # FLY_REGION is auto-injected by Fly.io — useful for logging/tracing
+  # All secrets are set via: fly secrets set KEY=value
+
+[http_service]
+  internal_port = 8080
+  force_https   = true
+  auto_stop_machines  = false   # keep warm — no cold starts
+  auto_start_machines = true
+  min_machines_running = 1
+
+  # Fly's global anycast routes users to the nearest region automatically
+  [http_service.concurrency]
+    type       = "requests"
+    hard_limit = 250
+    soft_limit = 200
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+# ── Regions ──────────────────────────────────────────────────────────
+# To activate all 6 regions after first deploy:
+#   fly scale count 1 --region fra,sin,iad,gru,syd,jnb
+#
+# fra = Frankfurt,     EU     (~70ms  Tashkent)
+# sin = Singapore,     Asia   (~90ms  Tashkent)
+# iad = Virginia,      N.Am   (~200ms Tashkent)
+# gru = São Paulo,     S.Am   (~280ms Tashkent)
+# syd = Sydney,        Oceania(~230ms Tashkent)
+# jnb = Johannesburg,  Africa (~180ms Tashkent)
+
+[[regions]]
+  regions = ["fra", "sin", "iad", "gru", "syd", "jnb"]
+
+# ── Health check ─────────────────────────────────────────────────────
+[[http_service.checks]]
+  grace_period  = "10s"
+  interval      = "30s"
+  method        = "GET"
+  timeout       = "5s"
+  path          = "/api/health"

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
+import { db, readDb } from "@workspace/db";
 import { usersTable, postsTable, reelsTable, productsTable } from "@workspace/db";
 import { ilike, or, eq, and, ne, inArray } from "drizzle-orm";
 import { sql } from "drizzle-orm";
@@ -66,7 +66,7 @@ router.get("/search", async (req: any, res) => {
       const midnightCond = await midnightVisibilityConditionForReq(req);
       const [users, posts, reels, products] = await Promise.all([
         (type === "all" || type === "users")
-          ? db.select({
+          ? readDb.select({
               id: usersTable.id, username: usersTable.username,
               displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl,
               isVerified: usersTable.isVerified, bio: usersTable.bio,
@@ -79,7 +79,7 @@ router.get("/search", async (req: any, res) => {
           : Promise.resolve([]),
 
         (type === "all" || type === "posts")
-          ? db.select({
+          ? readDb.select({
               id: postsTable.id, content: postsTable.content, mediaUrl: postsTable.mediaUrl,
               authorId: postsTable.authorId, likesCount: postsTable.likesCount,
               commentsCount: postsTable.commentsCount, createdAt: postsTable.createdAt,
@@ -87,7 +87,7 @@ router.get("/search", async (req: any, res) => {
           : Promise.resolve([]),
 
         (type === "all" || type === "reels")
-          ? db.select({
+          ? readDb.select({
               id: reelsTable.id, caption: reelsTable.caption, thumbnailUrl: reelsTable.thumbnailUrl,
               videoUrl: reelsTable.videoUrl, authorId: reelsTable.authorId,
               viewsCount: reelsTable.viewsCount, likesCount: reelsTable.likesCount,
@@ -95,7 +95,7 @@ router.get("/search", async (req: any, res) => {
           : Promise.resolve([]),
 
         (type === "all" || type === "products")
-          ? db.select({
+          ? readDb.select({
               id: productsTable.id, title: productsTable.title, price: productsTable.price,
               thumbnailUrl: productsTable.thumbnailUrl, category: productsTable.category,
               condition: productsTable.condition, location: productsTable.location,
@@ -135,7 +135,7 @@ router.get("/search/semantic", async (req: any, res) => {
     }
 
     /* 2. Load all post embeddings (JSONB array) */
-    const rows = await db.execute(sql`
+    const rows = await readDb.execute(sql`
       SELECT pe.post_id, pe.embedding,
              p.content, p.media_url, p.author_id, p.likes_count, p.comments_count, p.created_at
       FROM post_embeddings pe
@@ -166,7 +166,7 @@ router.get("/search/semantic", async (req: any, res) => {
     /* 5. Fetch author info for top posts */
     const authorIds = [...new Set(top.map(t => Number(t.post.author_id)).filter(Boolean))];
     const authors = authorIds.length
-      ? await db.select({ id: usersTable.id, username: usersTable.username, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified })
+      ? await readDb.select({ id: usersTable.id, username: usersTable.username, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified })
           .from(usersTable).where(inArray(usersTable.id, authorIds))
       : [];
     const authorMap = Object.fromEntries(authors.map(a => [a.id, a]));

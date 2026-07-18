@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
+import { db, readDb } from "@workspace/db";
 import { usersTable, followsTable, postsTable, notificationsTable } from "@workspace/db";
 import { eq, ilike, sql, and, desc, inArray } from "drizzle-orm";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
@@ -30,7 +30,7 @@ router.get("/users", async (req, res) => {
     const offset = Number(req.query.offset) || 0;
     const viewerId = (req.session as any)?.userId as number | undefined;
 
-    let query = db.select().from(usersTable);
+    let query = readDb.select().from(usersTable);
     if (search) {
       query = query.where(ilike(usersTable.username, `%${search}%`)) as typeof query;
     }
@@ -52,8 +52,8 @@ router.get("/users", async (req, res) => {
 /* ── Platform stats summary (no user data) ── */
 router.get("/users/stats/summary", async (req, res) => {
   try {
-    const [total] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable);
-    const [verified] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable).where(eq(usersTable.isVerified, true));
+    const [total] = await readDb.select({ count: sql<number>`count(*)::int` }).from(usersTable);
+    const [verified] = await readDb.select({ count: sql<number>`count(*)::int` }).from(usersTable).where(eq(usersTable.isVerified, true));
     res.json({ totalUsers: total.count, newToday: Math.floor(total.count * 0.02), activeToday: Math.floor(total.count * 0.35), verifiedCount: verified.count });
   } catch (err) {
     req.log.error(err);
@@ -68,14 +68,14 @@ router.get("/users/:id", async (req, res) => {
     const viewerId = (req.session as any)?.userId as number | undefined;
     const cacheKey = `profile:${id}:viewer:${viewerId ?? 0}`;
     const result = await cacheAside("users", cacheKey, async () => {
-      const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+      const [user] = await readDb.select().from(usersTable).where(eq(usersTable.id, id));
       if (!user) return null;
       const [[followers], [following], [postsCount], followCheck] = await Promise.all([
-        db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
-        db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
-        db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
+        readDb.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
+        readDb.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
+        readDb.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
         viewerId && viewerId !== id
-          ? db.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, id))).limit(1)
+          ? readDb.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, id))).limit(1)
           : Promise.resolve([]),
       ]);
       const isOwner = viewerId === id;

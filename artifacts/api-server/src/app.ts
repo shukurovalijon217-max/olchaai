@@ -15,6 +15,7 @@ import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 import { securityShield } from "./middlewares/securityShield";
 import { resilienceMiddleware } from "./middlewares/resilience";
 import { setupMeiliIndexes } from "./lib/meili";
+import { userRateLimit } from "./middlewares/userRateLimit";
 
 const app: Express = express();
 
@@ -223,6 +224,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 /* ── NEXUS Security Shield — Pentagon-grade auto-defense ─────── */
 app.use(securityShield);
+app.use("/api", userRateLimit);
 
 /* ── Mobile Bearer token auth: HMAC-signed token ──────────────── */
 app.use("/api", (req: Request, res: Response, next: NextFunction) => {

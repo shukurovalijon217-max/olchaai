@@ -1,6 +1,7 @@
 import { createHmac } from "crypto";
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
+import e2eRouter from "./e2e";
 import storageRouter from "./storage";
 import authRouter from "./auth";
 import usersRouter from "./users";
@@ -183,5 +184,6 @@ router.use(focusShieldRouter);
 router.use(challengesRouter);
 router.use(otubeAiRouter);
 router.use(growTogetherRouter);
+router.use(e2eRouter);
 
 export default router;

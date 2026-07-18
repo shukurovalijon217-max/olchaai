@@ -68,6 +68,12 @@ export const usersTable = pgTable("users", {
   ghostUntil: timestamp("ghost_until"),
   focusShield: jsonb("focus_shield").$type<FocusShield>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  e2ePublicKey: text("e2e_public_key"),
+  warningCount: integer("warning_count").notNull().default(0),
+  isBanned: boolean("is_banned").notNull().default(false),
+  bannedAt: timestamp("banned_at"),
+  bannedReason: text("banned_reason"),
+  auraColor: text("aura_color"),
 });
 
 export const followsTable = pgTable("follows", {

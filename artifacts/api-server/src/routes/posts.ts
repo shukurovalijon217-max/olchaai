@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
+import { db, readDb } from "@workspace/db";
 import { postsTable, postLikesTable, commentsTable, commentLikesTable, usersTable, moderationQueueTable, followsTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray } from "drizzle-orm";
 import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
@@ -26,10 +26,10 @@ async function batchEnrichPosts(
 
   const [authors, likedRows, statsMap] = await Promise.all([
     authorIds.length > 0
-      ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
+      ? readDb.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : Promise.resolve([]),
     viewerId && postIds.length > 0
-      ? db
+      ? readDb
           .select({ postId: postLikesTable.postId })
           .from(postLikesTable)
           .where(and(inArray(postLikesTable.postId, postIds), eq(postLikesTable.userId, viewerId)))

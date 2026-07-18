@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
+import { db, readDb } from "@workspace/db";
 import {
   reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable, followsTable, walletsTable, transactionsTable,
   userInteractionsTable, reelWatchProgressTable, reelCollaboratorsTable,
@@ -34,17 +34,17 @@ async function batchEnrichReels(
 
   const [authors, likedRows, statsMap, views24hRows] = await Promise.all([
     authorIds.length > 0
-      ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
+      ? readDb.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : Promise.resolve([]),
     viewerId && reelIds.length > 0
-      ? db
+      ? readDb
           .select({ reelId: reelLikesTable.reelId })
           .from(reelLikesTable)
           .where(and(inArray(reelLikesTable.reelId, reelIds), eq(reelLikesTable.userId, viewerId)))
       : Promise.resolve([]),
     getUserStatsMap(authorIds, viewerId),
     reelIds.length > 0
-      ? db.select({ reelId: userInteractionsTable.contentId, n: count() })
+      ? readDb.select({ reelId: userInteractionsTable.contentId, n: count() })
           .from(userInteractionsTable)
           .where(and(
             eq(userInteractionsTable.contentType, "reel"),

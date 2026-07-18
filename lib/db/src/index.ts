@@ -11,8 +11,10 @@ if (!process.env.DATABASE_URL) {
 }
 
 const dbUrl = process.env.DATABASE_URL!;
-const needsSsl = dbUrl.includes("render.com") || dbUrl.includes("neon.tech") ||
-  (process.env.NODE_ENV === "production" && !dbUrl.includes("localhost") && !dbUrl.includes("127.0.0.1"));
+// Only force SSL for Neon (requires it). Render internal connections (.internal)
+// do NOT support SSL — never force SSL on them even in production.
+const needsSsl = dbUrl.includes("neon.tech") ||
+  (dbUrl.includes("sslmode=require") && !dbUrl.includes(".internal"));
 
 export const pool = new Pool({
   connectionString: dbUrl,

@@ -1108,6 +1108,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       dir: "left" as const,
                     },
                     {
+                      label: t("nav.sect_hub"),
+                      color: "#a855f7",
+                      shadow: "rgba(168,85,247,0.6)",
+                      hrefs: ["/features"],
+                      dir: "left" as const,
+                    },
+                    {
                       label: t("nav.sect_settings"),
                       color: "#94a3b8",
                       shadow: "rgba(148,163,184,0.5)",

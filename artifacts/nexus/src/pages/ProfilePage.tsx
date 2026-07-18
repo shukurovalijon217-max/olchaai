@@ -25,6 +25,172 @@ import ProfileOrb from "@/components/ProfileOrb";
 
 interface ProfilePageProps { userId: number; }
 
+/* ─── MirrorPanel ─────────────────────────────────────────────── */
+interface MirrorField { field: string; reason: string; }
+interface MirrorData {
+  profile: {
+    displayName: string; username: string; avatarUrl: string | null;
+    coverUrl: string | null; isVerified: boolean; bio: string | null;
+    followersCount: number | null; followingCount: number | null; postsCount: number;
+    isPrivate: boolean;
+  };
+  mirrorMeta: {
+    isPrivate: boolean; isGhost: boolean; ghostUntil: string | null;
+    hiddenFields: MirrorField[]; visibleFields: string[];
+  };
+}
+
+const FIELD_KEY: Record<string, string> = {
+  displayName: "profile.mirror_field_displayName",
+  username: "profile.mirror_field_username",
+  avatarUrl: "profile.mirror_field_avatarUrl",
+  coverUrl: "profile.mirror_field_coverUrl",
+  isVerified: "profile.mirror_field_isVerified",
+  bio: "profile.mirror_field_bio",
+  followersCount: "profile.mirror_field_followersCount",
+  followingCount: "profile.mirror_field_followingCount",
+  onlineStatus: "profile.mirror_field_onlineStatus",
+  posts: "profile.mirror_field_posts",
+  email: "profile.mirror_field_email",
+  phone: "profile.mirror_field_phone",
+};
+
+function MirrorPanel({ userId }: { userId: number }) {
+  const { t } = useTranslation();
+  const [data, setData] = useState<MirrorData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/users/${userId}/mirror-view`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then((d: MirrorData | null) => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="mx-4 my-2 rounded-2xl border border-cyan-500/20 bg-[#080614] px-4 py-5 flex items-center justify-center gap-2">
+        <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+        <span className="text-cyan-400/70 text-xs">{t("profile.mirror_loading")}</span>
+      </div>
+    );
+  }
+  if (!data) return null;
+
+  const { mirrorMeta, profile } = data;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 28 }}
+      className="mx-4 my-2 rounded-2xl border border-cyan-500/25 overflow-hidden"
+      style={{ background: "linear-gradient(135deg, rgba(6,182,212,0.06), rgba(8,6,20,0.98))" }}
+    >
+      {/* Warnings */}
+      {mirrorMeta.isPrivate && (
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-cyan-500/15 bg-amber-500/10">
+          <Lock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+          <p className="text-amber-300 text-[11px] font-semibold">{t("profile.mirror_private_warning")}</p>
+        </div>
+      )}
+      {mirrorMeta.isGhost && (
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-cyan-500/15 bg-slate-500/10">
+          <Eye className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+          <p className="text-slate-300 text-[11px] font-semibold">{t("profile.mirror_ghost_warning")}</p>
+        </div>
+      )}
+
+      {/* Stranger's profile preview */}
+      <div className="px-4 py-4">
+        <div className="flex items-center gap-3 mb-4">
+          {profile.avatarUrl ? (
+            <img src={resolveApiUrl(profile.avatarUrl)} className="w-12 h-12 rounded-full object-cover ring-2 ring-cyan-500/30" />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-black text-lg">
+              {profile.displayName?.[0]?.toUpperCase() ?? "?"}
+            </div>
+          )}
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-white font-bold text-sm">{profile.displayName}</span>
+              {profile.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400" />}
+            </div>
+            <span className="text-white/40 text-[11px]">@{profile.username}</span>
+            {profile.bio && <p className="text-white/60 text-[11px] mt-0.5 line-clamp-1">{profile.bio}</p>}
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="flex gap-4 mb-4">
+          {[
+            { label: t("profile.mirror_field_followersCount"), val: profile.followersCount },
+            { label: t("profile.mirror_field_followingCount"), val: profile.followingCount },
+            { label: t("profile.mirror_field_posts"), val: profile.postsCount },
+          ].map(({ label, val }) => (
+            <div key={label} className="text-center">
+              {val !== null ? (
+                <span className="text-white font-bold text-sm">{val}</span>
+              ) : (
+                <Lock className="w-3.5 h-3.5 text-white/30 mx-auto" />
+              )}
+              <p className="text-white/40 text-[10px] mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Visible / Hidden breakdown */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Visible */}
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+            <p className="text-emerald-400 text-[10px] font-black tracking-wider uppercase mb-2">
+              ✅ {t("profile.mirror_stranger_sees")}
+            </p>
+            <div className="space-y-1">
+              {mirrorMeta.visibleFields.map(f => (
+                <div key={f} className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                  <span className="text-white/70 text-[11px]">{t(FIELD_KEY[f] ?? `profile.mirror_field_${f}`)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Hidden */}
+          <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3">
+            <p className="text-rose-400 text-[10px] font-black tracking-wider uppercase mb-2">
+              🔒 {t("profile.mirror_hidden_from")}
+            </p>
+            <div className="space-y-1">
+              {mirrorMeta.hiddenFields.map(f => (
+                <div key={f.field} className="group relative flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400 flex-shrink-0" />
+                  <span className="text-white/50 text-[11px] line-through decoration-rose-400/50">
+                    {t(FIELD_KEY[f.field] ?? `profile.mirror_field_${f.field}`)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Tip */}
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <p className="text-white/30 text-[10px]">{t("profile.mirror_tip")}</p>
+          <button
+            onClick={() => navigate("/settings?tab=privacy")}
+            className="flex-shrink-0 text-[10px] font-bold text-cyan-400 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20"
+          >
+            {t("profile.mirror_go_settings")}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 /* ─── Tokens ─────────────────────────────────────────────────── */
 const T = {
   violet: "#7c3aed", indigo: "#6366f1", blue: "#3b82f6",
@@ -956,18 +1122,24 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
     <div className="max-w-2xl mx-auto pb-10 relative">
 
       {actuallyOwner && mirrorMode && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className="mx-4 mt-3 mb-1 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 flex items-center gap-3 z-20 relative">
-          <span className="text-lg">🪞</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-cyan-300 text-xs font-bold">{t("profile.mirror_banner_title")}</p>
-            <p className="text-cyan-300/60 text-[10px] mt-0.5">{t("profile.mirror_banner_desc")}</p>
-          </div>
-          <button onClick={() => navigate(`/profile/${userId}`)}
-            className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold text-cyan-200 bg-cyan-500/15 border border-cyan-500/30">
-            {t("profile.mirror_exit")}
-          </button>
-        </motion.div>
+        <>
+          {/* ── Mirror banner ── */}
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+            className="mx-4 mt-3 mb-1 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 flex items-center gap-3 z-20 relative">
+            <span className="text-lg">🪞</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-cyan-300 text-xs font-bold">{t("profile.mirror_banner_title")}</p>
+              <p className="text-cyan-300/60 text-[10px] mt-0.5">{t("profile.mirror_banner_desc")}</p>
+            </div>
+            <button onClick={() => navigate(`/profile/${userId}`)}
+              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold text-cyan-200 bg-cyan-500/15 border border-cyan-500/30">
+              {t("profile.mirror_exit")}
+            </button>
+          </motion.div>
+
+          {/* ── Mirror detail panel ── */}
+          <MirrorPanel userId={userId} />
+        </>
       )}
 
       {/* ══ Cover ══════════════════════════════════════════════════ */}

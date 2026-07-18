@@ -1,3 +1,8 @@
+# Large asset dirs that are not needed in Docker build
+attached_assets/
+.cache/
+.local/
+
 # Build outputs
 **/dist
 **/.tsbuildinfo

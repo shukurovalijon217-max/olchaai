@@ -10,13 +10,18 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+const dbUrl = process.env.DATABASE_URL!;
+const needsSsl = dbUrl.includes("render.com") || dbUrl.includes("neon.tech") ||
+  (process.env.NODE_ENV === "production" && !dbUrl.includes("localhost") && !dbUrl.includes("127.0.0.1"));
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: dbUrl,
   max: 20,
   min: 2,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
   allowExitOnIdle: false,
+  ...(needsSsl ? { ssl: { rejectUnauthorized: false } } : {}),
 });
 
 pool.on("error", (err) => {

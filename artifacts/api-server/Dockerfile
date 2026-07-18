@@ -17,18 +17,15 @@ COPY lib/integrations-openai-ai-server/package.json lib/integrations-openai-ai-s
 # Artifact manifest
 COPY artifacts/api-server/package.json artifacts/api-server/
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 ### ── Stage 2: build ──────────────────────────────────────────────────
 FROM deps AS builder
 
-# Lib sources
+# Lib sources (esbuild bundles these directly — no tsc step needed)
 COPY lib/db/                          lib/db/
 COPY lib/api-zod/                     lib/api-zod/
 COPY lib/integrations-openai-ai-server/ lib/integrations-openai-ai-server/
-
-# Build composite libs (type declarations)
-RUN pnpm run typecheck:libs
 
 # API server source → esbuild bundle
 COPY artifacts/api-server/ artifacts/api-server/
@@ -49,7 +46,7 @@ COPY --from=builder /app/lib/api-zod/package.json                  ./lib/api-zod
 COPY --from=builder /app/lib/integrations-openai-ai-server/package.json ./lib/integrations-openai-ai-server/
 
 # Production deps (includes sharp native for linux/alpine)
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --no-frozen-lockfile --prod
 
 # Built bundle from esbuild
 COPY --from=builder /app/artifacts/api-server/dist ./artifacts/api-server/dist

@@ -53,6 +53,7 @@ import challengesRouter from "./challenges";
 import otubeAiRouter from "./otubeAi";
 import growTogetherRouter from "./growTogether";
 import socialAuraRouter from "./socialAura";
+import creatorDashboardRouter from "./creatorDashboard";
 
 const router: IRouter = Router();
 
@@ -173,6 +174,7 @@ router.use(nexusCoreRouter);
 router.use(platformCostsRouter);
 router.use(aiAutopilotRouter);
 router.use(monetizationRouter);
+router.use(creatorDashboardRouter);
 router.use(gifsRouter);
 router.use(treasuryRouter);
 router.use(aiAdminActionsRouter);

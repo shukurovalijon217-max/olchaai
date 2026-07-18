@@ -1,3 +1,4 @@
+import { createHmac } from "crypto";
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import storageRouter from "./storage";
@@ -54,9 +55,26 @@ import socialAuraRouter from "./socialAura";
 
 const router: IRouter = Router();
 
-/* ── GET /ice-config — WebRTC ICE server config (STUN + TURN via Metered) ── */
+/* ── GET /ice-config — WebRTC ICE server config ── */
 type IceServer = { urls: string; username?: string; credential?: string };
-let iceCache: { servers: IceServer[]; expiresAt: number } | null = null;
+
+/**
+ * Generate time-limited TURN credentials for self-hosted Coturn.
+ * Uses HMAC-SHA1 shared-secret auth (RFC 8489 / Coturn use-auth-secret).
+ * Credentials expire after `ttlSeconds` (default 24h).
+ */
+function coturnCredentials(secret: string, domain: string, ttlSeconds = 86400): IceServer[] {
+  const expiry = Math.floor(Date.now() / 1000) + ttlSeconds;
+  const username = `${expiry}:olchaai`;
+  const credential = createHmac("sha1", secret).update(username).digest("base64");
+  return [
+    { urls: `stun:${domain}:3478` },
+    { urls: `turn:${domain}:3478`,               username, credential },
+    { urls: `turn:${domain}:3478?transport=tcp`, username, credential },
+    { urls: `turns:${domain}:5349`,              username, credential },
+    { urls: `turns:${domain}:5349?transport=tcp`,username, credential },
+  ];
+}
 
 async function fetchMeteredIceServers(): Promise<IceServer[]> {
   const apiKey = process.env["METERED_API_KEY"];
@@ -84,26 +102,29 @@ router.get("/ice-config", async (_req, res) => {
     { urls: "stun:stun.cloudflare.com:3478" },
   ];
 
-  // Return cached if still valid (credentials last 24h, refresh every 12h)
-  if (iceCache && Date.now() < iceCache.expiresAt) {
-    res.set("Cache-Control", "public, max-age=300");
-    res.json({ iceServers: iceCache.servers });
+  // 1. O'z Coturn serverimiz (COTURN_DOMAIN + COTURN_SECRET env bo'lsa)
+  const coturnDomain = process.env["COTURN_DOMAIN"];
+  const coturnSecret = process.env["COTURN_SECRET"];
+  if (coturnDomain && coturnSecret) {
+    const turnServers = coturnCredentials(coturnSecret, coturnDomain);
+    // Credentials 24h davom etadi, har 12 soatda yangi credential beriladi
+    res.set("Cache-Control", "private, max-age=43200");
+    res.json({ iceServers: [...STUN, ...turnServers] });
     return;
   }
 
+  // 2. Metered TURN (agar COTURN sozlanmagan bo'lsa)
   const metered = await fetchMeteredIceServers();
   if (metered.length > 0) {
-    const servers = [...STUN, ...metered];
-    iceCache = { servers, expiresAt: Date.now() + 12 * 60 * 60 * 1000 };
     res.set("Cache-Control", "public, max-age=300");
-    res.json({ iceServers: servers });
+    res.json({ iceServers: [...STUN, ...metered] });
     return;
   }
 
-  // Fallback: public openrelay TURN (free, no credentials needed)
+  // 3. Fallback: bepul openrelay
   const fallbackTurn: IceServer[] = [
-    { urls: "turn:openrelay.metered.ca:80",               username: "openrelayproject", credential: "openrelayproject" },
-    { urls: "turn:openrelay.metered.ca:443",              username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "turn:openrelay.metered.ca:80",                username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "turn:openrelay.metered.ca:443",               username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
   ];
   res.set("Cache-Control", "public, max-age=60");

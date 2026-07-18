@@ -41,7 +41,7 @@ export function resolveApiUrl(url: string | null | undefined): string {
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
     return url;
   }
-  const base = (import.meta.env.VITE_API_BASE_URL ?? "");
+  const base = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
   return `${base}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
@@ -69,6 +69,6 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
     return `${cloudinaryMatch[1]}w_${w},q_${q},f_auto/${cloudinaryMatch[2]}`;
   }
 
-  const base = (import.meta.env.VITE_API_BASE_URL ?? "");
+  const base = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
   return `${base}/api/media/img?url=${encodeURIComponent(resolveApiUrl(url))}&w=${w}&q=${q}`;
 }

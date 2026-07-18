@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 const WS_URL = import.meta.env.VITE_WS_URL
   ?? `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/go/ws`;
 

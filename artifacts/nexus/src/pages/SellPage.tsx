@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useCreateProduct, useRequestUploadUrl } from "@workspace/api-client-react";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 export default function SellPage() {
   const { t } = useTranslation();

@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useListProducts, useListMarketplaceCategories } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 // ─── Favorites (localStorage) ────────────────────────────────────────────────
 function getFavs(): Set<number> {

@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 export interface UploadResult {
   objectPath: string;

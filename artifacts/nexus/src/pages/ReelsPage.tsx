@@ -45,7 +45,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { resolveApiUrl } from "@/lib/utils";
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface FeedItem {

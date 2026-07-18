@@ -65,7 +65,8 @@ const FactCheckPage     = lazy(() => import("@/pages/FactCheckPage"));
 const CoSpacesPage      = lazy(() => import("@/pages/CoSpacesPage"));
 const MuniAIPage        = lazy(() => import("@/pages/MuniAIPage"));
 const VoiceTranslatorPage = lazy(() => import("@/pages/VoiceTranslatorPage"));
-const FeatureHubPage    = lazy(() => import("@/pages/FeatureHubPage"));
+const FeatureHubPage         = lazy(() => import("@/pages/FeatureHubPage"));
+const CreatorDashboardPage   = lazy(() => import("@/pages/CreatorDashboardPage"));
 const NotFound          = lazy(() => import("@/pages/not-found"));
 
 const PageLoader = () => (
@@ -291,6 +292,9 @@ function Router() {
         )} />
         <Route path="/features" component={() => (
           <ProtectedRoute><Layout><FeatureHubPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/kreator" component={() => (
+          <ProtectedRoute><Layout><CreatorDashboardPage /></Layout></ProtectedRoute>
         )} />
         <Route path="/" component={() => (
           <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

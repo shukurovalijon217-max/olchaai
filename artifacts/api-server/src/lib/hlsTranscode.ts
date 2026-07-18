@@ -170,7 +170,72 @@ async function resolveDownloadUrl(videoUrl: string): Promise<string> {
   return signGetUrl(bucketName, objectName);
 }
 
-/** Transcode one rendition into its own subdirectory */
+/* ── GPU encoder detection (cached at module load) ───────────── */
+type HwEncoder = "h264_nvenc" | "h264_vaapi" | "h264_qsv" | "libx264";
+
+let _hwEncoder: HwEncoder | null | undefined = undefined; // undefined = not yet probed
+
+async function detectHwEncoder(): Promise<HwEncoder> {
+  if (_hwEncoder !== undefined) return _hwEncoder ?? "libx264";
+  try {
+    // Try NVENC first (NVIDIA — fastest)
+    await execAsync("ffmpeg -hide_banner -f lavfi -i color=size=32x32:duration=0.1 -c:v h264_nvenc -f null - 2>&1", { timeout: 5000 });
+    logger.info("HLS: GPU encoder selected: h264_nvenc (NVIDIA CUDA)");
+    _hwEncoder = "h264_nvenc";
+    return "h264_nvenc";
+  } catch { /* no NVENC */ }
+  try {
+    // Try VAAPI (Intel/AMD iGPU)
+    await execAsync("ffmpeg -hide_banner -vaapi_device /dev/dri/renderD128 -f lavfi -i color=size=32x32:duration=0.1 -vf 'format=nv12,hwupload' -c:v h264_vaapi -f null - 2>&1", { timeout: 5000 });
+    logger.info("HLS: GPU encoder selected: h264_vaapi (Intel/AMD VAAPI)");
+    _hwEncoder = "h264_vaapi";
+    return "h264_vaapi";
+  } catch { /* no VAAPI */ }
+  try {
+    // Try Intel QSV
+    await execAsync("ffmpeg -hide_banner -f lavfi -i color=size=32x32:duration=0.1 -c:v h264_qsv -f null - 2>&1", { timeout: 5000 });
+    logger.info("HLS: GPU encoder selected: h264_qsv (Intel Quick Sync)");
+    _hwEncoder = "h264_qsv";
+    return "h264_qsv";
+  } catch { /* no QSV */ }
+  logger.info("HLS: No GPU encoder found, using libx264 (CPU)");
+  _hwEncoder = null;
+  return "libx264";
+}
+
+function buildEncoderArgs(encoder: HwEncoder, rendition: typeof RENDITIONS[number]): string {
+  switch (encoder) {
+    case "h264_nvenc":
+      return [
+        `-hwaccel cuda -hwaccel_output_format cuda`,
+        `-c:v h264_nvenc -preset p4 -tune hq`,
+        `-b:v ${rendition.videoBr} -maxrate ${rendition.videoBr} -bufsize ${rendition.videoBr}`,
+        `-vf "scale_cuda=${rendition.scale},format=yuv420p"`,
+      ].join(" ");
+    case "h264_vaapi":
+      return [
+        `-vaapi_device /dev/dri/renderD128 -hwaccel vaapi -hwaccel_output_format vaapi`,
+        `-c:v h264_vaapi -qp ${rendition.crf}`,
+        `-b:v ${rendition.videoBr} -maxrate ${rendition.videoBr} -bufsize ${rendition.videoBr}`,
+        `-vf "scale_vaapi=${rendition.scale},format=nv12|vaapi,hwupload"`,
+      ].join(" ");
+    case "h264_qsv":
+      return [
+        `-hwaccel qsv`,
+        `-c:v h264_qsv -global_quality ${rendition.crf}`,
+        `-b:v ${rendition.videoBr} -maxrate ${rendition.videoBr}`,
+        `-vf "scale=${rendition.scale},format=yuv420p"`,
+      ].join(" ");
+    default: // libx264 CPU fallback
+      return [
+        `-c:v libx264 -preset veryfast -threads 0 -crf ${rendition.crf}`,
+        `-b:v ${rendition.videoBr} -maxrate ${rendition.videoBr} -bufsize ${rendition.videoBr}`,
+        `-vf "scale=${rendition.scale},format=yuv420p"`,
+      ].join(" ");
+  }
+}
+
+/** Transcode one rendition into its own subdirectory (GPU-accelerated with fallback) */
 async function transcodeRendition(
   downloadUrl: string,
   rendition: typeof RENDITIONS[number],
@@ -179,15 +244,16 @@ async function transcodeRendition(
   const outDir = join(tmpDir, rendition.name);
   await mkdir(outDir, { recursive: true });
 
-  const playlist = join(outDir, "playlist.m3u8");
+  const playlist   = join(outDir, "playlist.m3u8");
   const segPattern = join(outDir, "seg_%03d.ts");
+
+  const encoder = await detectHwEncoder();
+  const encArgs = buildEncoderArgs(encoder, rendition);
 
   const cmd = [
     "ffmpeg -y",
     `-i ${JSON.stringify(downloadUrl)}`,
-    `-c:v libx264 -preset veryfast -crf ${rendition.crf}`,
-    `-b:v ${rendition.videoBr} -maxrate ${rendition.videoBr} -bufsize ${rendition.videoBr}`,
-    `-vf "scale=${rendition.scale},format=yuv420p"`,
+    encArgs,
     `-c:a aac -b:a ${rendition.audioBr}`,
     `-hls_time 4`,
     `-hls_playlist_type vod`,
@@ -196,7 +262,30 @@ async function transcodeRendition(
     JSON.stringify(playlist),
   ].join(" ");
 
-  await execAsync(cmd, { timeout: 10 * 60_000, maxBuffer: 50 * 1024 * 1024 });
+  try {
+    await execAsync(cmd, { timeout: 10 * 60_000, maxBuffer: 50 * 1024 * 1024 });
+  } catch (err) {
+    // GPU failed mid-transcode — fall back to CPU libx264
+    if (encoder !== "libx264") {
+      logger.warn({ err, encoder, rendition: rendition.name }, "HLS: GPU encode failed, retrying with libx264");
+      _hwEncoder = null; // force CPU for subsequent renditions
+      const cpuArgs = buildEncoderArgs("libx264", rendition);
+      const cpuCmd = [
+        "ffmpeg -y",
+        `-i ${JSON.stringify(downloadUrl)}`,
+        cpuArgs,
+        `-c:a aac -b:a ${rendition.audioBr}`,
+        `-hls_time 4`,
+        `-hls_playlist_type vod`,
+        `-hls_flags independent_segments`,
+        `-hls_segment_filename ${JSON.stringify(segPattern)}`,
+        JSON.stringify(playlist),
+      ].join(" ");
+      await execAsync(cpuCmd, { timeout: 10 * 60_000, maxBuffer: 50 * 1024 * 1024 });
+    } else {
+      throw err;
+    }
+  }
 }
 
 /** Build HLS master playlist referencing all renditions */

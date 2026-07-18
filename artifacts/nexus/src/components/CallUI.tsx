@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Mic, MicOff, Volume2, Headphones, Video, VideoOff,
-  PhoneOff, Phone, Minimize2, Maximize2,
+  PhoneOff, Phone, Minimize2, Maximize2, SwitchCamera,
 } from "lucide-react";
 
 function formatDur(s: number) {
@@ -24,6 +24,7 @@ export interface CallUIProps {
   onToggleMute: () => void;
   cameraOn: boolean;
   onToggleCamera: () => void;
+  onFlipCamera: () => Promise<void>;
   onEnd: () => void;
   onAccept?: () => void;
   onDecline?: () => void;
@@ -31,7 +32,7 @@ export interface CallUIProps {
 
 export default function CallUI({
   type, name, avatar, phase, localStream, remoteStream,
-  muted, onToggleMute, cameraOn, onToggleCamera,
+  muted, onToggleMute, cameraOn, onToggleCamera, onFlipCamera,
   onEnd, onAccept, onDecline,
 }: CallUIProps) {
   const [speaker, setSpeaker] = useState(true);
@@ -280,6 +281,22 @@ export default function CallUI({
                 <span className="text-white/55 text-[11px]">{isVideo ? (cameraOn ? "Kamera" : "Kamera yoq") : "Kamera"}</span>
               </div>
             </div>
+
+            {isVideo && (
+              <div className="flex justify-center w-full">
+                <div className="flex flex-col items-center gap-2">
+                  <motion.button whileTap={{ scale: 0.88 }} onClick={() => { void onFlipCamera(); }}
+                    className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200"
+                    style={{
+                      background: "rgba(255,255,255,0.12)",
+                      backdropFilter: "blur(16px)",
+                    }}>
+                    <SwitchCamera className="w-6 h-6 text-white" />
+                  </motion.button>
+                  <span className="text-white/55 text-[11px]">Aylantirish</span>
+                </div>
+              </div>
+            )}
 
             <motion.button
               whileTap={{ scale: 0.9 }}

@@ -996,7 +996,7 @@ export default function MessagesPage() {
     ? new Date(apiMsgs[apiMsgs.length-1].createdAt as string) : new Date(0);
   const allMsgs: LocalMsg[] = [
     ...apiMsgs.map(m=>({
-      id:String(m.id), senderId:m.senderId, type:"text" as MsgType, content:m.content,
+      id:String(m.id), senderId:m.senderId, type:(m.type||"text") as MsgType, content:m.content||"", mediaUrl:m.mediaUrl||undefined,
       reactions:[], starred:false, pinned:false, deleted:false, edited:false, forwarded:false,
       status:"read" as const, ts:new Date(m.createdAt||Date.now()),
       isPending: m.isPending,
@@ -1160,7 +1160,13 @@ export default function MessagesPage() {
   const handleImage = (file:File) => {
     const url = URL.createObjectURL(file);
     addMsg({type:"image",mediaUrl:url,content:""});
-    uploadBlob(file,file.name,file.type).catch(()=>{});
+    uploadBlob(file,file.name,file.type)
+      .then(serverUrl=>{
+        if(convId) sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"image",mediaUrl:serverUrl}},{
+          onSuccess:()=>qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)}),
+        });
+      })
+      .catch(()=>{});
   };
   const handleFile = (file:File) => {
     addMsg({type:"file",fileName:file.name});
@@ -1171,7 +1177,13 @@ export default function MessagesPage() {
     const msg = addMsg({type:"video_note",mediaUrl:tempUrl,duration:dur});
     setShowRoundVid(false);
     uploadBlob(blob,`video_${Date.now()}.webm`,"video/webm")
-      .then(serverUrl=>{ updateMsg(msg.id,{mediaUrl:serverUrl}); URL.revokeObjectURL(tempUrl); })
+      .then(serverUrl=>{
+        updateMsg(msg.id,{mediaUrl:serverUrl});
+        URL.revokeObjectURL(tempUrl);
+        if(convId) sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"video_note",mediaUrl:serverUrl}},{
+          onSuccess:()=>qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)}),
+        });
+      })
       .catch(()=>{});
   };
   const startVoice = async () => {
@@ -1196,7 +1208,13 @@ export default function MessagesPage() {
       const dur = voiceElapsed;
       const m = addMsg({type:"voice",mediaUrl:tempUrl,duration:dur});
       uploadBlob(blob,`voice_${Date.now()}.webm`,"audio/webm")
-        .then(serverUrl=>{ updateMsg(m.id,{mediaUrl:serverUrl}); URL.revokeObjectURL(tempUrl); })
+        .then(serverUrl=>{
+          updateMsg(m.id,{mediaUrl:serverUrl});
+          URL.revokeObjectURL(tempUrl);
+          if(convId) sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"voice",mediaUrl:serverUrl}},{
+            onSuccess:()=>qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)}),
+          });
+        })
         .catch(()=>{});
     };
     if(voiceTimer.current) clearInterval(voiceTimer.current);
@@ -1213,7 +1231,12 @@ export default function MessagesPage() {
     setShowDraw(false);
     const msg = addMsg({ type: "drawing", mediaUrl: dataUrl });
     uploadBlob(blob, `drawing_${Date.now()}.png`, "image/png")
-      .then(url => updateMsg(msg.id, { mediaUrl: url }))
+      .then(url => {
+        updateMsg(msg.id, { mediaUrl: url });
+        if(convId) sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"drawing",mediaUrl:url}},{
+          onSuccess:()=>qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)}),
+        });
+      })
       .catch(() => {});
   };
 

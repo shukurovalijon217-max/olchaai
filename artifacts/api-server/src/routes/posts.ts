@@ -79,15 +79,44 @@ router.get("/posts", async (req, res) => {
     const notExpired = sql`(${postsTable.destructAt} IS NULL OR ${postsTable.destructAt} > NOW())`;
 
     const enriched = await cacheAside("posts", cacheKey ?? `__skip__${Date.now()}`, async () => {
-      let posts;
+      type PostRow = Record<string, unknown> & { id: number };
+      let posts: PostRow[];
       if (userId) {
-        posts = await db.select().from(postsTable).where(and(eq(postsTable.authorId, userId), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+        posts = (await db.select().from(postsTable).where(and(eq(postsTable.authorId, userId), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset)) as PostRow[];
       } else if (type && type !== "all") {
-        posts = await db.select().from(postsTable).where(and(eq(postsTable.type, type), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+        posts = (await db.select().from(postsTable).where(and(eq(postsTable.type, type), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset)) as PostRow[];
       } else {
-        posts = await db.select().from(postsTable).where(and(midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+        // Fetch a larger pool for ML ranking (2x requested limit)
+        const fetchLimit = viewerId && offset === 0 ? Math.min(limit * 2, 60) : limit;
+        posts = (await db.select().from(postsTable).where(and(midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(fetchLimit).offset(offset)) as PostRow[];
+
+        // ML personalization: re-rank for authenticated users on first page
+        if (viewerId && offset === 0 && posts.length > 1) {
+          try {
+            const { rankFeedPosts } = await import("../lib/mlFeedRanking");
+            const rankedIds = await rankFeedPosts(
+              posts.map(p => ({
+                id: (p as any).id as number,
+                content: (p as any).content ?? null,
+                caption: (p as any).caption ?? null,
+                likesCount: (p as any).likesCount ?? 0,
+                commentsCount: (p as any).commentsCount ?? 0,
+                createdAt: (p as any).createdAt ?? null,
+              })),
+              viewerId,
+            );
+            // Reorder posts according to ML ranking, slice to requested limit
+            const idxMap = new Map(posts.map((p, i) => [(p as any).id as number, i]));
+            posts = rankedIds
+              .map(id => posts[idxMap.get(id) ?? -1])
+              .filter((p): p is PostRow => !!p)
+              .slice(0, limit);
+          } catch { /* ranking failure is non-fatal — keep chronological order */ }
+        } else {
+          posts = posts.slice(0, limit);
+        }
       }
-      return batchEnrichPosts(posts, viewerId);
+      return batchEnrichPosts(posts as Parameters<typeof batchEnrichPosts>[0], viewerId);
     }, cacheKey ? 15 : 0);
 
     if (cacheKey) res.setHeader("X-Cache", "HIT");

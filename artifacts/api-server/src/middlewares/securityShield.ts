@@ -16,6 +16,7 @@ import { db } from "@workspace/db";
 import { pgTable, serial, text, boolean, timestamp, integer } from "drizzle-orm/pg-core";
 import { eq, and, gt, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { reportAttack as aiCoreReportAttack } from "../lib/aiCoreClient";
 
 /* ─── DB Tables ─────────────────────────────────────────────────── */
 const bannedIpsTable = pgTable("banned_ips", {
@@ -277,6 +278,8 @@ const BAN_DURATIONS: Record<number, number | "permanent"> = {
 
 async function strike(ip: string, reason: string, path: string, severity: "medium" | "high" | "critical", payload?: string, ua?: string, userId?: number) {
   await logSecurityEvent(ip, reason, path, severity, payload, ua, userId);
+  // Cross-report to AI Core so it can track this IP across both security systems
+  aiCoreReportAttack(ip, reason, `path=${path} severity=${severity}${payload ? ` sample=${payload.slice(0, 80)}` : ""}`);
   const currentStrikes = strikeCache.get(ip) ?? 0;
   const newStrikes = currentStrikes + 1;
 

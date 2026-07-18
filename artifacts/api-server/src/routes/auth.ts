@@ -8,6 +8,7 @@ import { eq, and, gt } from "drizzle-orm";
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
 import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput, signMobileToken, checkEndpointRateLimit } from "../lib/security";
 import { indexUser } from "../lib/meili";
+import { reportAuthFailure as aiCoreReportAuthFailure } from "../lib/aiCoreClient";
 
 const getResend = () => {
   const key = process.env.RESEND_API_KEY;
@@ -220,6 +221,7 @@ router.post("/auth/login", async (req, res) => {
     }
     if (!user) {
       recordLoginFailure(ip, identifier);
+      aiCoreReportAuthFailure(ip, identifier);
       res.status(401).json({ error: "Email/username yoki parol noto'g'ri" }); return;
     }
     if (!user.passwordHash) {
@@ -228,6 +230,7 @@ router.post("/auth/login", async (req, res) => {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       recordLoginFailure(ip, identifier);
+      aiCoreReportAuthFailure(ip, identifier);
       res.status(401).json({ error: "Email/username yoki parol noto'g'ri" }); return;
     }
     clearLoginAttempts(ip, identifier);

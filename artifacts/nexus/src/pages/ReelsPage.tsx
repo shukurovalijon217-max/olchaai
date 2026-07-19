@@ -988,7 +988,7 @@ function ReelSlide({
 
 /* ─── MAIN PAGE ──────────────────────────────────────────────── */
 export default function ReelsPage() {
-  const { data: initialReels = [], isLoading } = useListReels({ limit: 20 } as any);
+  const { data: initialReels = [], isLoading, isError: reelsError, refetch: refetchReels } = useListReels({ limit: 20 } as any);
   const [feed,      setFeed]      = useState<FeedItem[]>([]);
   const [current,   setCurrent]   = useState(0);
   const [likedIds,  setLikedIds]  = useState<Set<number>>(new Set());
@@ -1189,14 +1189,22 @@ export default function ReelsPage() {
           <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>🎬</div>
           <div className="text-center">
-            <p className="font-black text-white mb-1">Hali reel yo'q</p>
-            <p className="text-sm text-white/45">Birinchi reelni yuklang!</p>
+            <p className="font-black text-white mb-1">{reelsError ? "Server xatosi" : "Hali reel yo'q"}</p>
+            <p className="text-sm text-white/45">{reelsError ? "Qayta urinib ko'ring" : "Birinchi reelni yuklang!"}</p>
           </div>
-          <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCreateOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white text-sm font-bold"
-            style={{ background: "linear-gradient(135deg,#7c3aed,#ec4899)", boxShadow: "0 4px 24px rgba(124,58,237,0.45)" }}>
-            <Plus className="w-4 h-4" /> Reel qo'shish
-          </motion.button>
+          {reelsError ? (
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => refetchReels()}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white text-sm font-bold"
+              style={{ background: "linear-gradient(135deg,#7c3aed,#ec4899)", boxShadow: "0 4px 24px rgba(124,58,237,0.45)" }}>
+              <Plus className="w-4 h-4" /> Qayta urinish
+            </motion.button>
+          ) : (
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCreateOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white text-sm font-bold"
+              style={{ background: "linear-gradient(135deg,#7c3aed,#ec4899)", boxShadow: "0 4px 24px rgba(124,58,237,0.45)" }}>
+              <Plus className="w-4 h-4" /> Reel qo'shish
+            </motion.button>
+          )}
         </div>
 
       ) : reel && (

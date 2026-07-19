@@ -313,7 +313,7 @@ export default function HomePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: feed } = useGetAiFeed();
-  const { data: posts = [], isLoading } = useListPosts();
+  const { data: posts = [], isLoading, isError: postsError, refetch: refetchPosts } = useListPosts();
   const { data: storiesRaw = [] } = useListStories();
   const { dockExpanded, commentPanelOpen } = usePip();
 
@@ -603,14 +603,14 @@ export default function HomePage() {
                 <motion.div animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 2.5, repeat: Infinity }}>
                   <Flame className="w-16 h-16 text-violet-500/40" />
                 </motion.div>
-                <p className="text-white/40 text-sm">{t("home.no_posts")}</p>
+                <p className="text-white/40 text-sm">{postsError ? "Server xatosi. Qayta urinib ko'ring." : t("home.no_posts")}</p>
                 <motion.button
                   whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                  onClick={() => setSheetOpen(true)}
+                  onClick={() => postsError ? refetchPosts() : setSheetOpen(true)}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold"
                 >
                   <MoreHorizontal className="w-4 h-4" />
-                  {t("home.create_post")}
+                  {postsError ? "Qayta urinish" : t("home.create_post")}
                 </motion.button>
               </div>
             ) : (

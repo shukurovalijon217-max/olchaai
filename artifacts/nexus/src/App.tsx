@@ -79,11 +79,12 @@ const PageLoader = () => (
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: 3,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15_000),
       refetchOnWindowFocus: false,
-      staleTime: 60_000,        // 1 daqiqa: qayta fetch qilmasdan cache ishlatadi
-      gcTime: 5 * 60_000,       // 5 daqiqa: xotirada saqlaydi
-      refetchOnReconnect: true,  // Internet qayta ulanganida yangilaydi
+      staleTime: 60_000,
+      gcTime: 15 * 60_000,      // 15 daqiqa: xotirada saqlaydi (iOS reload uchun)
+      refetchOnReconnect: true,
     },
   },
 });

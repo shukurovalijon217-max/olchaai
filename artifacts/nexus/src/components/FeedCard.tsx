@@ -470,7 +470,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
   /* Background audio with trim */
   useEffect(() => {
-    if (!audioUrl || !isPhoto) return;
+    if (!audioUrl) return;
     const trimStart = (post as any).audioTrimStart != null ? Number((post as any).audioTrimStart) : undefined;
     const trimEnd   = (post as any).audioTrimEnd   != null ? Number((post as any).audioTrimEnd)   : undefined;
     if (!audioRef.current) {
@@ -497,7 +497,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
       audioRef.current.pause();
     }
     return () => { audioRef.current?.pause(); };
-  }, [isInView, isPhoto, muted, audioUrl]);
+  }, [isInView, muted, audioUrl]);
 
   /* Close panels on scroll away */
   useEffect(() => {
@@ -1000,12 +1000,10 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
       </div>
 
-      {/* ═══ LAYER 20: RIGHT ORB COLUMN — tap to show ═══ */}
-      <motion.div
+      {/* ═══ LAYER 20: RIGHT ORB COLUMN — always visible ═══ */}
+      <div
         className="absolute right-3 flex flex-col items-center gap-2 scale-90 origin-top-right"
-        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 48px)", pointerEvents: (overlayVisible && !commentOpen) ? "auto" : "none" }}
-        animate={{ opacity: (overlayVisible && !commentOpen) ? 1 : 0, x: (overlayVisible && !commentOpen) ? 0 : 10 }}
-        transition={{ duration: 0.22, ease: "easeOut" }}
+        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 48px)", pointerEvents: commentOpen ? "none" : "auto" }}
         onPointerDown={e => { e.stopPropagation(); showOverlayBriefly(); }}
       >
         {/* Like */}
@@ -1092,7 +1090,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
             )}
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* ═══ LAYER 18: CAPTION + MOOD + POLL + TAGS (bottom-left) ═══ */}
       <motion.div
@@ -1102,8 +1100,8 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         transition={{ delay: 0.28, duration: 0.45 }}
       >
         {/* Song name — marquee + long press to download */}
-        {audioName && audioUrl && (
-          <SongTicker name={audioName} url={resolveApiUrl(audioUrl)} accent={accent} />
+        {audioName && (
+          <SongTicker name={audioName} url={audioUrl ? resolveApiUrl(audioUrl) : ""} accent={accent} />
         )}
 
         {/* Caption */}

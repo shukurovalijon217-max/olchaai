@@ -1096,7 +1096,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       </div>
     );
   }
-  if (!user) return <div className="text-center py-20 text-muted-foreground">User not found</div>;
+  if (!user) return <div className="text-center py-20 text-muted-foreground">Foydalanuvchi topilmadi</div>;
 
   /* ── Qulfli profil (private account, viewer is not following) ── */
   const isLocked = (user as any).isPrivate === true && !(following ?? user.isFollowing) && !isOwner;

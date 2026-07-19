@@ -6357,7 +6357,7 @@ export default function OTubePage() {
   const activeSig  = SIGNALS.find(s=>s.id===signal)!;
   const tab        = activeSig.tab;
 
-  const { data:raw=[], isLoading } = useListReels({ limit: 50 });
+  const { data:raw=[], isLoading, isError: rawError, refetch: refetchRaw } = useListReels({ limit: 50 });
   /* Real trending — ordered by 24h view velocity on the server */
   const { data:trendingRaw=[] } = useListReels(
     { sort: "trending" as const, limit: 50 },
@@ -6385,7 +6385,7 @@ export default function OTubePage() {
     const base = signal === "fire" ? trendingRaw : raw;
     if (!query.trim()) return base;
     const q = query.toLowerCase();
-    return base.filter(r=>r.caption.toLowerCase().includes(q)||r.author.displayName.toLowerCase().includes(q));
+    return base.filter(r=>(r.caption??"").toLowerCase().includes(q)||(r.author?.displayName??"").toLowerCase().includes(q));
   },[raw, trendingRaw, signal, query]);
 
   /* derived: the currently playing video + helper to open by object */
@@ -6603,9 +6603,17 @@ export default function OTubePage() {
             <div className="flex flex-col items-center justify-center py-24 gap-3">
               <OTubeMark size={52}/>
               <p style={{color:"rgba(255,255,255,0.25)",fontSize:13,fontFamily:"monospace"}}>
-                {query?`"${query}" — signal topilmadi`:"Kontent yo'q"}
+                {rawError ? "Server bilan bog'liq xato" : query?`"${query}" — signal topilmadi`:"Kontent yo'q"}
               </p>
-              {query && (
+              {rawError && (
+                <motion.button whileTap={{scale:0.9}} onClick={()=>refetchRaw()}
+                  className="flex items-center gap-2 px-4 py-2"
+                  style={{background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`}}>
+                  <RefreshCw style={{width:13,height:13,color:T.cyan}}/>
+                  <span style={{fontSize:11,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>QAYTA URINISH</span>
+                </motion.button>
+              )}
+              {!rawError && query && (
                 <motion.button whileTap={{scale:0.9}} onClick={()=>setQuery("")}
                   className="flex items-center gap-2 px-4 py-2"
                   style={{background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`}}>

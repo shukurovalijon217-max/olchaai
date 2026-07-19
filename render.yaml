@@ -165,10 +165,7 @@ services:
     plan: starter
     region: oregon
     rootDir: .
-    buildCommand: >-
-      npx --yes pnpm@10.26.1 install --no-frozen-lockfile &&
-      pnpm run typecheck:libs &&
-      BASE_PATH=/ pnpm --filter @workspace/nexus run build
+    buildCommand: npx --yes pnpm@10.26.1 install --no-frozen-lockfile
     startCommand: node artifacts/nexus/server.cjs
     envVars:
       - key: NODE_ENV

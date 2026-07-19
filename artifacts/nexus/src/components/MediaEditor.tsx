@@ -865,9 +865,10 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   /* ── Audio server upload ── */
   const [audioServerUrl, setAudioServerUrl] = useState("");   // real server URL after upload
   const [audioUploading, setAudioUploading] = useState(false);
+  const [audioUploadFailed, setAudioUploadFailed] = useState(false);
   const { uploadFile: uploadAudioFile } = useMediaUpload({
-    onSuccess: r => { setAudioServerUrl(r.serveUrl); setAudioUploading(false); },
-    onError: () => setAudioUploading(false),
+    onSuccess: r => { setAudioServerUrl(r.serveUrl); setAudioUploading(false); setAudioUploadFailed(false); },
+    onError: () => { setAudioUploading(false); setAudioUploadFailed(true); },
   });
 
   /* ── Audio upload + trim state ── */
@@ -939,6 +940,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     if (!file) return;
     const blobUrl = URL.createObjectURL(file);
     setAudioServerUrl("");
+    setAudioUploadFailed(false);
     loadAudioUrl(blobUrl, file.name.replace(/\.[^.]+$/, ""), true);
     setAudioUploading(true);
     uploadAudioFile(new File([file], file.name, { type: file.type }));
@@ -1260,14 +1262,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             disabled={audioUploading}
             className="justify-self-end px-3.5 py-1 rounded-full text-xs font-bold text-white"
             style={{
-              background: "rgba(255,255,255,0.10)",
+              background: audioUploadFailed ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.10)",
               backdropFilter: "blur(14px) saturate(1.6)",
               WebkitBackdropFilter: "blur(14px) saturate(1.6)",
-              border: "1px solid rgba(255,255,255,0.25)",
+              border: audioUploadFailed ? "1px solid rgba(239,68,68,0.55)" : "1px solid rgba(255,255,255,0.25)",
               boxShadow: "0 2px 10px rgba(0,0,0,0.25)",
               opacity: audioUploading ? 0.6 : 1,
             }}>
-            {audioUploading ? "Yuklanmoqda…" : "Tayyor"}
+            {audioUploading ? "Yuklanmoqda…" : audioUploadFailed ? "⚠ Retry" : "Tayyor"}
           </button>
         </div>
 
@@ -2089,7 +2091,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                     {fmtTime(audioTrimStart)} – {fmtTime(audioTrimEnd)}
                   </span>
                 )}
-                <button onClick={() => { setAudioName(""); setAudioUploadUrl(""); setMusicQuery(""); setMusicTab("search"); }}
+                <button onClick={() => { setAudioName(""); setAudioUploadUrl(""); setAudioServerUrl(""); setAudioUploadFailed(false); setMusicQuery(""); setMusicTab("search"); }}
                   className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ background:"rgba(255,255,255,0.12)" }}>
                   <X className="w-3.5 h-3.5 text-white/70" />
@@ -2356,6 +2358,12 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                       <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background:"rgba(16,185,129,0.12)", border:"1px solid rgba(16,185,129,0.3)" }}>
                         <span className="text-green-400 text-sm">✓</span>
                         <span className="text-[11px] font-bold text-green-300">Audio yuklandi — endi o'ynaydi!</span>
+                      </div>
+                    )}
+                    {audioUploadFailed && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background:"rgba(239,68,68,0.12)", border:"1px solid rgba(239,68,68,0.35)" }}>
+                        <span className="text-red-400 text-sm">⚠</span>
+                        <span className="text-[11px] font-bold text-red-300">Audio yuklanmadi. Qaytadan tanlang yoki qo'shiq nomini kiriting.</span>
                       </div>
                     )}
                     {/* Track info + transport */}

@@ -338,7 +338,7 @@ const mobileNavMainItems = [
 ];
 
 /* ─── Muni AI Floating Panel ────────────────────────────────── */
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL);
 
 function MuniPanel() {
   const { t } = useTranslation();

@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 
 interface PostDetailPageProps { postId: number; }
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
+const API = (import.meta.env.VITE_API_BASE_URL);
 
 interface VoiceCommentData {
   id: number;

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ShieldCheck, ShieldX, AlertTriangle, HelpCircle, Trophy, Search, CheckCircle2, XCircle, Star, TrendingUp, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
+const API = (import.meta.env.VITE_API_BASE_URL);
 
 interface CredibilityEntry {
   id: number; score: number; totalChecked: number; trueCount: number;

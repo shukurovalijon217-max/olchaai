@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Users, Plus, ChevronLeft, CheckCircle2, Circle, Zap, Globe, Code, Palette, TrendingUp, Music, BookOpen, Loader2, UserPlus, Flag, Send } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
+const API = (import.meta.env.VITE_API_BASE_URL);
 
 interface Space {
   id: number; name: string; description: string | null;

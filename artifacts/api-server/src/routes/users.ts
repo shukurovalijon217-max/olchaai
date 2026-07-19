@@ -66,6 +66,7 @@ router.get("/users/stats/summary", async (req, res) => {
 router.get("/users/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    if (!id || isNaN(id) || id <= 0) { res.status(400).json({ error: "Noto'g'ri foydalanuvchi ID" }); return; }
     const viewerId = (req.session as any)?.userId as number | undefined;
     const cacheKey = `profile:${id}:viewer:${viewerId ?? 0}`;
     const result = await cacheAside("users", cacheKey, async () => {

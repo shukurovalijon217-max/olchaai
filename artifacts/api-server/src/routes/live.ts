@@ -60,6 +60,18 @@ router.patch("/live/:id/end", requireAuth, async (req: any, res) => {
   }
 });
 
+// GET /live/streams — alias for /live/active
+router.get("/live/streams", async (req, res) => {
+  try {
+    const streams = await db.select().from(liveStreamsTable).where(eq(liveStreamsTable.status, "active")).orderBy(liveStreamsTable.startedAt);
+    const enriched = await Promise.all(streams.map(async (s) => {
+      const [host] = await db.select().from(usersTable).where(eq(usersTable.id, s.hostId));
+      return { ...s, host: host ? { id: host.id, username: host.username, displayName: host.displayName, avatarUrl: host.avatarUrl, isVerified: host.isVerified } : null };
+    }));
+    res.json(enriched);
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Internal server error" }); }
+});
+
 // GET /live/active
 router.get("/live/active", async (req, res) => {
   try {

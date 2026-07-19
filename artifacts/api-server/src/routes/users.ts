@@ -397,10 +397,9 @@ router.get("/users/me/blocks", async (req, res) => {
   if (!blockerId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
   try {
     const rows = await db.execute(sql`SELECT blocked_id FROM user_blocks WHERE blocker_id = ${blockerId}`);
-    const ids = (rows as any).rows.map((r: any) => Number(r.blocked_id));
+    const ids = ((rows as any).rows ?? []).map((r: any) => Number(r.blocked_id));
     res.json({ blockedIds: ids });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
+  } catch {
+    res.json({ blockedIds: [] });
   }
 });

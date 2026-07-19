@@ -184,6 +184,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       p.startsWith("/api/auth") ||
       p.startsWith("/api/wallet") ||
       p.startsWith("/api/messages") ||
+      p.startsWith("/api/conversations") ||
       p.startsWith("/api/notifications") ||
       p.startsWith("/api/creator") ||
       p.startsWith("/api/groups") ||
@@ -195,7 +196,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       p.startsWith("/api/energy") ||
       p.startsWith("/api/emotion") ||
       p.startsWith("/api/anon") ||
-      p.startsWith("/api/plans")
+      p.startsWith("/api/plans") ||
+      p.startsWith("/api/muni") ||
+      p.startsWith("/api/ai") ||
+      p.startsWith("/api/openai") ||
+      p.startsWith("/api/translate")
     ) {
       res.setHeader("Cache-Control", "private, no-store");
     } else if (p.startsWith("/api/media/img")) {

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useGetProduct, useListProductReviews, useBuyProduct } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
+const API = (import.meta.env.VITE_API_BASE_URL);
 
 function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
   const val = rating / 100;

@@ -49,7 +49,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
+const API = (import.meta.env.VITE_API_BASE_URL);
 
 function PushInitializer({ userId }: { userId: number | null }) {
   usePushNotifications(!!userId);

@@ -35,7 +35,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCall } from "@/context/CallContext";
 import { useRealtime } from "@/context/RealtimeContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
+const API = (import.meta.env.VITE_API_BASE_URL);
 
 /* ── Types ──────────────────────────────────────────────────── */
 type MsgType = "text" | "image" | "voice" | "video_note" | "file" | "sticker" | "poll" | "drawing";

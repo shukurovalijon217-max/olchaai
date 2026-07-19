@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
+const API = (import.meta.env.VITE_API_BASE_URL);
 
 async function subscribePush() {
   if (!("Notification" in window) || !("serviceWorker" in navigator)) return;

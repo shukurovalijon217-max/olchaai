@@ -8,7 +8,7 @@ import {
   RefreshCw, ChevronRight, Loader2, X, Eye, EyeOff
 } from "lucide-react";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api.onrender.com");
+const API = (import.meta.env.VITE_API_BASE_URL);
 
 const fmt = (tiyin: number) =>
   (tiyin / 100).toLocaleString("uz-UZ", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + " so'm";

@@ -1,0 +1,25 @@
+name: Keep Render Services Warm
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping olchaai.com (Nexus frontend)
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://olchaai.com)
+          echo "Nexus: $STATUS"
+
+      - name: Ping API server
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://olchaai.com/api/healthz)
+          echo "API: $STATUS"
+
+      - name: Ping Go real-time service
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://olchaai-go.onrender.com/go/health || echo "timeout")
+          echo "Go: $STATUS"

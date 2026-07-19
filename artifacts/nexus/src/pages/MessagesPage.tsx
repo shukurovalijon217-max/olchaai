@@ -930,6 +930,38 @@ export default function MessagesPage() {
   const [showChatMenu, setShowChatMenu] = useState(false);
   const [mutedConvs, setMutedConvs] = useState<Set<number>>(new Set());
   const [blockedConvs, setBlockedConvs] = useState<Set<number>>(new Set());
+  const [blockLoading, setBlockLoading] = useState(false);
+
+  /* Load blocked users from server on mount */
+  useEffect(() => {
+    fetch(`${API}/api/users/me/blocks`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.blockedIds && Array.isArray(data.blockedIds)) {
+          setBlockedConvs(new Set(data.blockedIds));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  /* Block / unblock — persists to server */
+  const toggleBlock = async (userId: number) => {
+    if (!userId || blockLoading) return;
+    const isBlocked = blockedConvs.has(userId);
+    setBlockLoading(true);
+    try {
+      const method = isBlocked ? "DELETE" : "POST";
+      const res = await fetch(`${API}/api/users/${userId}/block`, { method, credentials: "include" });
+      if (res.ok) {
+        setBlockedConvs(prev => {
+          const s = new Set(prev);
+          isBlocked ? s.delete(userId) : s.add(userId);
+          return s;
+        });
+      }
+    } catch { /* silent */ }
+    finally { setBlockLoading(false); }
+  };
   const [pinnedConvIds, setPinnedConvIds] = useState<Set<number>>(new Set());
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [hiddenMsgIds, setHiddenMsgIds] = useState<Set<string>>(new Set());
@@ -1492,11 +1524,10 @@ export default function MessagesPage() {
                         { icon:Bell,    label:convId&&mutedConvs.has(convId)?t("msg.unmute"):t("msg.mute"),
                           action:()=>{ if(!convId) return; setMutedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); setShowChatMenu(false); } },
                         { icon:Share2,  label:t("msg.share_contact"),    action:()=>{ addMsg({type:"text",content:`👤 ${getOther(activeConv)?.displayName||"Kontakt"}ning kartochkasi`}); setShowChatMenu(false); } },
-                        { icon:Zap,     label:t("msg.turbo_mode"),           action:()=>{ setShowChatMenu(false); } },
-                        { icon:Flag,    label:t("msg.report"),              action:()=>{ setShowChatMenu(false); }, danger:true },
+                        { icon:Flag,    label:t("msg.report"),              action:()=>{ if(!activeOtherId) { setShowChatMenu(false); return; } fetch(`${API}/api/moderation/report`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({contentType:"user",contentId:activeOtherId,reason:"spam_or_abuse",description:""})}).catch(()=>{}); setShowChatMenu(false); }, danger:true },
                         { icon:Trash2,  label:t("msg.clear_history"),      action:()=>{ setShowClearConfirm(true); setShowChatMenu(false); }, danger:true },
-                        { icon:Lock,    label:convId&&blockedConvs.has(convId)?t("msg.unblock"):t("msg.block"),
-                          action:()=>{ if(!convId) return; setBlockedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); setShowChatMenu(false); }, danger:true },
+                        { icon:Lock,    label:activeOtherId&&blockedConvs.has(activeOtherId)?t("msg.unblock"):t("msg.block"),
+                          action:()=>{ if(!activeOtherId) return; void toggleBlock(activeOtherId); setShowChatMenu(false); }, danger:true },
                       ].map((item,i)=>(
                         <button key={i} onClick={item.action}
                           className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors text-left ${(item as {danger?:boolean}).danger?"text-destructive":"text-foreground"}`}>
@@ -1737,10 +1768,11 @@ export default function MessagesPage() {
                             <Bell className="w-4 h-4 opacity-60"/>
                             {convId&&mutedConvs.has(convId)?t("msg.unmute"):t("msg.mute")}
                           </button>
-                          <button onClick={()=>{ if(!convId) return; setBlockedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); }}
-                            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors">
+                          <button onClick={()=>{ if(!activeOtherId) return; void toggleBlock(activeOtherId); }}
+                            disabled={blockLoading}
+                            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors disabled:opacity-50">
                             <Lock className="w-4 h-4 opacity-70"/>
-                            {convId&&blockedConvs.has(convId)?t("msg.unblock"):t("msg.block")}
+                            {activeOtherId&&blockedConvs.has(activeOtherId)?t("msg.unblock"):t("msg.block")}
                           </button>
                           <button onClick={()=>{ setShowClearConfirm(true); setShowProfilePanel(false); }}
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors">

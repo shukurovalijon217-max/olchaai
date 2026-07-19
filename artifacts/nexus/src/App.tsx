@@ -1,5 +1,6 @@
 import { useEffect, Component, type ReactNode, lazy, Suspense } from "react";
 import "@/lib/i18n";
+import { initE2E } from "@/lib/e2eEncryption";
 
 // Keep-alive: prevents Render free/starter instances from spinning down
 const WS_BASE = import.meta.env.VITE_WS_URL?.replace(/^wss?:/, "https:").replace("/go/ws", "") ?? "";
@@ -137,6 +138,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       setLocation("/login");
     }
   }, [loading, user, setLocation]);
+
+  /* E2E encryption key pair init — runs once after login */
+  useEffect(() => {
+    if (user) { initE2E().catch(() => {}); }
+  }, [user?.id]);
 
   if (loading) {
     return (

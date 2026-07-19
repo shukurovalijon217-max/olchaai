@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, readDb } from "@workspace/db";
 import { postsTable, postLikesTable, commentsTable, commentLikesTable, usersTable, moderationQueueTable, followsTable } from "@workspace/db";
-import { eq, sql, desc, and, inArray } from "drizzle-orm";
+import { eq, sql, desc, and, inArray, notInArray } from "drizzle-orm";
 import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { enrichWithCDN } from "../lib/bunny";
@@ -89,7 +89,18 @@ router.get("/posts", async (req, res) => {
       } else {
         // Fetch a larger pool for ML ranking (2x requested limit)
         const fetchLimit = viewerId && offset === 0 ? Math.min(limit * 2, 60) : limit;
-        posts = (await db.select().from(postsTable).where(and(midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(fetchLimit).offset(offset)) as PostRow[];
+
+        // Filter out posts from users blocked by the viewer
+        let blockFilter: ReturnType<typeof and> | undefined;
+        if (viewerId) {
+          const blockRows = await db.execute(sql`SELECT blocked_id FROM user_blocks WHERE blocker_id = ${viewerId}`);
+          const blockedIds = ((blockRows as any).rows ?? []).map((r: any) => Number(r.blocked_id)).filter(Boolean);
+          if (blockedIds.length > 0) {
+            blockFilter = notInArray(postsTable.authorId, blockedIds) as any;
+          }
+        }
+
+        posts = (await db.select().from(postsTable).where(and(midnightCond, notExpired, blockFilter)).orderBy(desc(postsTable.createdAt)).limit(fetchLimit).offset(offset)) as PostRow[];
 
         // ML personalization: re-rank for authenticated users on first page
         if (viewerId && offset === 0 && posts.length > 1) {

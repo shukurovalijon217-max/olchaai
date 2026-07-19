@@ -1067,14 +1067,30 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
         {/* Volume (video or audio) */}
         {(isVideo || hasAudio) && (
-          <Orb
-            icon={muted
-              ? <VolumeX className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.45)" }} />
-              : <Volume2 className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.85)" }} />
-            }
-            active={!muted} activeColor={accent} inView={isInView}
-            onClick={() => setMuted(m => !m)}
-          />
+          <div className="flex flex-col items-center gap-1.5">
+            <Orb
+              icon={muted
+                ? <VolumeX className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.45)" }} />
+                : <Volume2 className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.85)" }} />
+              }
+              active={!muted} activeColor={accent} inView={isInView}
+              onClick={() => setMuted(m => !m)}
+            />
+            {muted && isInView && (
+              <span
+                className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full select-none pointer-events-none"
+                style={{
+                  background: "rgba(0,0,0,0.55)",
+                  color: accent,
+                  animation: "pulse 1.8s ease-in-out infinite",
+                  border: `1px solid ${accent}55`,
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                🔊
+              </span>
+            )}
+          </div>
         )}
       </motion.div>
 

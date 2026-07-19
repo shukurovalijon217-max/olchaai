@@ -134,7 +134,7 @@ function Orb({
   return (
     <motion.button
       whileTap={{ scale: 0.68 }}
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
       className="flex flex-col items-center gap-[3px]"
     >
       <div className="flex items-center justify-center relative" style={{ width: 42, height: 42 }}>
@@ -422,8 +422,8 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
       onSuccess: (data: any) => {
         if (typeof data?.liked === "boolean") setLiked(data.liked);
         if (typeof data?.likesCount === "number") setLikes(data.likesCount);
-        queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
-        queryClient.invalidateQueries({ queryKey: getGetAiFeedQueryKey() });
+        // Don't invalidate the entire list — optimistic state already updated above,
+        // and broad invalidation causes the feed to go back to isLoading=true on every like.
       },
       onError: () => {
         setLiked(post.isLiked ?? false);

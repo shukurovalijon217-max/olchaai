@@ -127,7 +127,7 @@ function TunnelPostCard({ post, isActive, colorIdx }: TunnelPostCardProps) {
 
       {/* Header */}
       <div className="flex items-center gap-3 p-4 pb-2">
-        <Link href={`/profile/${post.author.username ?? post.author.id}`}>
+        <Link href={`/profile/${post.author.id}`}>
           <div
             style={{
               width: 42,

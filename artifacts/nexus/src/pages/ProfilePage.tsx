@@ -1104,7 +1104,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
     return <LockedProfileView user={user} onFollow={handleFollow} followPending={follow.isPending} />;
   }
 
-  const myPosts = posts.filter(p => p.author.id === userId);
+  // posts already filtered by userId on the server — no client-side re-filter needed
+  const myPosts = posts;
 
   const openViewer = (idx: number) => { setViewerIdx(idx); setViewerOpen(true); };
 
@@ -1325,7 +1326,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
           className="grid gap-2 mb-5"
           style={{ gridTemplateColumns: isOwner && plans.length > 0 ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr" }}>
-          <BigStatNode value={myPosts.length} label={t("profile.posts")} accent="#a78bfa" />
+          <BigStatNode value={(user as any).postsCount ?? myPosts.length} label={t("profile.posts")} accent="#a78bfa" />
           <BigStatNode value={user.followersCount ?? 0} label={t("profile.stat_followers")} accent="#818cf8" />
           <BigStatNode value={user.followingCount ?? 0} label={t("profile.stat_following")} accent="#60a5fa" />
           {isOwner && plans.length > 0 && (

@@ -35,7 +35,7 @@ router.get("/gifs/search", async (req, res) => {
     const r = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0", "Referer": "https://tenor.com/" },
     });
-    if (!r.ok) { res.status(r.status).json({ results: [] }); return; }
+    if (!r.ok) { res.status(200).json({ results: [] }); return; }
     const data = await r.json() as { results: unknown[] };
 
     const proxy = (tenorUrl: string) =>

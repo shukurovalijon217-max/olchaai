@@ -135,16 +135,21 @@ router.get("/search/semantic", async (req: any, res) => {
     }
 
     /* 2. Load all post embeddings (JSONB array) */
-    const rows = await readDb.execute(sql`
-      SELECT pe.post_id, pe.embedding,
-             p.content, p.media_url, p.author_id, p.likes_count, p.comments_count, p.created_at
-      FROM post_embeddings pe
-      JOIN posts p ON p.id = pe.post_id
-      WHERE p.deleted_at IS NULL
-      LIMIT 2000
-    `);
-
-    const rawRows = (rows as any).rows ?? (rows as any) ?? [];
+    let rawRows: any[] = [];
+    try {
+      const rows = await readDb.execute(sql`
+        SELECT pe.post_id, pe.embedding,
+               p.content, p.media_url, p.author_id, p.likes_count, p.comments_count, p.created_at
+        FROM post_embeddings pe
+        JOIN posts p ON p.id = pe.post_id
+        WHERE p.deleted_at IS NULL
+        LIMIT 2000
+      `);
+      rawRows = (rows as any).rows ?? (rows as any) ?? [];
+    } catch {
+      /* post_embeddings table may not exist yet — return empty semantic results */
+      res.json({ posts: [], query: q, source: "semantic", error: "embeddings_unavailable" }); return;
+    }
 
     /* 3. Cosine similarity for each post */
     const scored: Array<{ score: number; post: any }> = [];

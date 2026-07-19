@@ -15,9 +15,8 @@ router.get("/grow-together/goal", requireAuth, async (req: any, res) => {
       sql`SELECT * FROM grow_together_goals WHERE user_id = ${req.session.userId} ORDER BY created_at DESC LIMIT 1`
     );
     res.json((result as any).rows?.[0] ?? null);
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Xato" });
+  } catch {
+    res.json(null);
   }
 });
 
@@ -63,9 +62,8 @@ router.get("/grow-together/matches", requireAuth, async (req: any, res) => {
       LIMIT 20
     `);
     res.json((result as any).rows ?? []);
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Xato" });
+  } catch {
+    res.json([]);
   }
 });
 
@@ -105,9 +103,8 @@ router.get("/grow-together/connections", requireAuth, async (req: any, res) => {
       ORDER BY c.created_at DESC
     `);
     res.json((result as any).rows ?? []);
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Xato" });
+  } catch {
+    res.json([]);
   }
 });
 

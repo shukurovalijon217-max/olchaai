@@ -42,6 +42,10 @@ export function midnightVisibilityCondition(timezone?: string | null): SQL {
 export async function midnightVisibilityConditionForReq(req: { session?: { userId?: number } }): Promise<SQL> {
   const userId = req.session?.userId;
   if (!userId) return midnightVisibilityCondition(null);
-  const [u] = await db.select({ timezone: usersTable.timezone }).from(usersTable).where(eq(usersTable.id, userId));
-  return midnightVisibilityCondition(u?.timezone ?? null);
+  try {
+    const [u] = await db.select({ timezone: usersTable.timezone }).from(usersTable).where(eq(usersTable.id, userId));
+    return midnightVisibilityCondition(u?.timezone ?? null);
+  } catch {
+    return midnightVisibilityCondition(null);
+  }
 }

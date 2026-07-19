@@ -70,6 +70,7 @@ router.get("/challenges", async (req, res) => {
 router.get("/challenges/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    if (!id || isNaN(id)) { res.status(404).json({ error: "Not found" }); return; }
     const viewerId = (req.session as any)?.userId as number | undefined;
     const [row] = await db.select().from(challengesTable).where(eq(challengesTable.id, id));
     if (!row) { res.status(404).json({ error: "Not found" }); return; }

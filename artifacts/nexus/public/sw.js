@@ -1,5 +1,5 @@
 /* GilosAI Service Worker — global edge cache + offline shell */
-const CACHE_VERSION = "gilos-v5";
+const CACHE_VERSION = "gilos-v6";
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 const IMG_CACHE     = `${CACHE_VERSION}-img`;
@@ -183,7 +183,7 @@ async function staleWhileRevalidate(request, cacheName) {
 
   // If we have cache, return it immediately and update in background
   if (cached) {
-    event.waitUntil(fetchPromise);
+    fetchPromise.catch(() => {}); // fire-and-forget background update (no event.waitUntil needed)
     return cached;
   }
 

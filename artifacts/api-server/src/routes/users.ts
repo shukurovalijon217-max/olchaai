@@ -358,3 +358,48 @@ router.get("/users/:id/followers", async (req, res) => {
 });
 
 export default router;
+
+/* ── Block / Unblock user ─────────────────────────── */
+router.post("/users/:id/block", async (req, res) => {
+  const blockerId = (req.session as any)?.userId as number | undefined;
+  if (!blockerId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+  const blockedId = Number(req.params.id);
+  if (!blockedId || blockerId === blockedId) { res.status(400).json({ error: "Noto'g'ri so'rov" }); return; }
+  try {
+    await db.execute(
+      sql`INSERT INTO user_blocks (blocker_id, blocked_id) VALUES (${blockerId}, ${blockedId}) ON CONFLICT DO NOTHING`
+    );
+    res.json({ blocked: true, blockedId });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/users/:id/block", async (req, res) => {
+  const blockerId = (req.session as any)?.userId as number | undefined;
+  if (!blockerId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+  const blockedId = Number(req.params.id);
+  try {
+    await db.execute(
+      sql`DELETE FROM user_blocks WHERE blocker_id = ${blockerId} AND blocked_id = ${blockedId}`
+    );
+    res.json({ blocked: false, blockedId });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/users/me/blocks", async (req, res) => {
+  const blockerId = (req.session as any)?.userId as number | undefined;
+  if (!blockerId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+  try {
+    const rows = await db.execute(sql`SELECT blocked_id FROM user_blocks WHERE blocker_id = ${blockerId}`);
+    const ids = (rows as any).rows.map((r: any) => Number(r.blocked_id));
+    res.json({ blockedIds: ids });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});

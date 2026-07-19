@@ -92,7 +92,7 @@ router.get("/conversations", async (req, res) => {
     const myConvIds = myRows.map(r => r.conversationId);
     if (myConvIds.length === 0) { res.json([]); return; }
 
-    await Promise.all(myConvIds.map(id => finalizeDueScheduledMessages(id)));
+    await Promise.allSettled(myConvIds.map(id => finalizeDueScheduledMessages(id)));
 
     const convs = await db.select().from(chatConversationsTable)
       .where(inArray(chatConversationsTable.id, myConvIds))

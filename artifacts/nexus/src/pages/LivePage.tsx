@@ -94,7 +94,7 @@ export default function LivePage({ liveId }: LivePageProps) {
 
   const fetchBalance = async () => {
     try {
-      const r = await fetch(`${API}/wallet`);
+      const r = await fetch(`${API}/api/wallet`, { credentials: "include" });
       if (r.ok) { const d = await r.json(); setBalance(d.wallet?.balance ?? 0); }
     } catch {}
   };
@@ -232,7 +232,12 @@ export default function LivePage({ liveId }: LivePageProps) {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(s => {
       localStreamRef.current = s;
       if (localVideoRef.current) localVideoRef.current.srcObject = s;
-    }).catch(() => {});
+    }).catch((err) => {
+      const msg = err?.name === "NotAllowedError"
+        ? t("live.camera_denied", "Kamera/mikrofon ruxsati rad etildi. Brauzer sozlamalaridan ruxsat bering.")
+        : t("live.camera_error", "Kamera yoki mikrofonga ulanib bo'lmadi.");
+      setGiftError(msg);
+    });
     return () => { localStreamRef.current?.getTracks().forEach(t => t.stop()); };
   }, [isHost, stream?.id]);
 

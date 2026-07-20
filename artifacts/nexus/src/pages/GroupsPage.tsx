@@ -1025,26 +1025,40 @@ export default function GroupsPage() {
 
   const handleDeletePost = async (postId: number) => {
     if (!selectedGroup) return;
-    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    if (r.ok) {
-      setGroupPosts(prev => prev.filter(p => p.id !== postId));
-      setSelectedGroup(prev => prev ? { ...prev, postsCount: Math.max(0, (prev.postsCount ?? 0) - 1) } : null);
-      qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+    try {
+      const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (r.ok) {
+        setGroupPosts(prev => prev.filter(p => p.id !== postId));
+        setSelectedGroup(prev => prev ? { ...prev, postsCount: Math.max(0, (prev.postsCount ?? 0) - 1) } : null);
+        qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+      } else {
+        const d = await r.json().catch(() => ({}));
+        toast.error(d?.error ?? "Post o'chirilmadi");
+      }
+    } catch {
+      toast.error("Tarmoq xatosi. Qayta urinib ko'ring.");
     }
   };
 
   const handleDeleteGroup = async () => {
     if (!selectedGroup) return;
-    const r = await fetch(`${API}/api/groups/${selectedGroup.id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    if (r.ok) {
-      closeDetail();
-      qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+    try {
+      const r = await fetch(`${API}/api/groups/${selectedGroup.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (r.ok) {
+        closeDetail();
+        qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+      } else {
+        const d = await r.json().catch(() => ({}));
+        toast.error(d?.error ?? "Guruh o'chirilmadi");
+      }
+    } catch {
+      toast.error("Tarmoq xatosi. Qayta urinib ko'ring.");
     }
   };
 

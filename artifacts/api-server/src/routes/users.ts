@@ -358,6 +358,27 @@ router.get("/users/:id/followers", async (req, res) => {
   }
 });
 
+router.get("/users/:id/following", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const viewerId = (req.session as any)?.userId as number | undefined;
+    const follows = await db.select().from(followsTable).where(eq(followsTable.followerId, id));
+    const userIds = follows.map(f => f.followingId);
+    if (userIds.length === 0) { res.json([]); return; }
+
+    const users = await db.select().from(usersTable).where(inArray(usersTable.id, userIds));
+    const statsMap = await getUserStatsMap(userIds, viewerId);
+    const enriched = users.map((u) => ({
+      ...publicUser(u, viewerId),
+      ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false })
+    }));
+    res.json(enriched);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
 
 /* ── Block / Unblock user ─────────────────────────── */

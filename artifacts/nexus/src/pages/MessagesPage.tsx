@@ -102,13 +102,40 @@ function dayLabel(d: Date, t: any) {
 }
 function uid() { return crypto.randomUUID().replace(/-/g, "").slice(0, 12); }
 async function uploadBlob(blob: Blob, name: string, mime: string): Promise<string> {
-  const fd = new FormData();
-  fd.append("file", blob, name);
-  fd.append("path", `chat/${name}`);
-  fd.append("contentType", mime);
-  const r = await fetch(`${API}/api/storage/objects`, { method: "POST", body: fd });
-  const j = await r.json();
-  return `${API}/api/storage${j.objectPath}`;
+  // Step 1: get upload URL from the server (R2 proxy or Replit storage)
+  const urlRes = await fetch(`${API}/api/storage/uploads/request-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ name, size: blob.size, contentType: mime }),
+  });
+  if (!urlRes.ok) {
+    const body = await urlRes.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error ?? "Upload URL olishda xato");
+  }
+  const { uploadURL, objectPath } = await urlRes.json() as { uploadURL: string; objectPath: string };
+
+  // Step 2: PUT the blob to the upload URL
+  const putRes = await fetch(uploadURL, {
+    method: "PUT",
+    headers: { "Content-Type": mime },
+    credentials: "omit",
+    body: blob,
+  });
+  if (!putRes.ok) throw new Error("Fayl yuklanmadi");
+
+  // Step 3: read the real public URL from PUT response (R2 proxy returns { url, objectPath })
+  try {
+    const putBody = await putRes.clone().json() as { url?: string; objectPath?: string };
+    if (putBody?.url) return putBody.url;
+    if (putBody?.objectPath) {
+      const p = putBody.objectPath;
+      return p.startsWith("http") ? p : `${API}/api/storage${p}`;
+    }
+  } catch { /* not JSON — fall through */ }
+
+  // Fallback: objectPath from step 1 (Replit storage returns a real path here)
+  return objectPath.startsWith("http") ? objectPath : `${API}/api/storage${objectPath}`;
 }
 
 /* ── EmojiPicker (bottom-sheet modal) ──────────────────────── */

@@ -78,7 +78,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       if (/^https:\/\/[\w-]+\.replit\.app$/.test(origin) ||
           /^https:\/\/[\w-]+\.repl\.co$/.test(origin) ||
           /^https:\/\/[\w-]+(\.onrender\.com)$/.test(origin) ||
+          /^https:\/\/[\w-]+(\.up\.railway\.app)$/.test(origin) ||
+          /^https:\/\/[\w-]+(\.railway\.app)$/.test(origin) ||
           /^https?:\/\/(www\.)?olchaai\.com$/.test(origin) ||
+          /^https?:\/\/(www\.)?gilosai\.com$/.test(origin) ||
           ALLOWED_ORIGINS.has(origin)) {
         return cb(null, true);
       }

@@ -500,6 +500,9 @@ router.get("/posts/trending", async (req, res) => {
 router.get("/posts/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    if (isNaN(id) || !Number.isInteger(id) || id <= 0) {
+      res.status(400).json({ error: "Noto'g'ri post ID" }); return;
+    }
     const viewerId = (req.session as any)?.userId as number | undefined;
     const midnightCond = await midnightVisibilityConditionForReq(req);
     const [post] = await db.select().from(postsTable).where(and(eq(postsTable.id, id), midnightCond));

@@ -529,25 +529,45 @@ router.get("/admin/commission/stats", async (req, res) => {
   }
 });
 
+const SETTINGS_DEFAULTS = {
+  maintenanceMode: false,
+  registrationOpen: true,
+  contentModerationEnabled: true,
+  aiModerationThreshold: 0.7,
+  maxPostLength: 2000,
+  maxFileSize: 100,
+  premiumEnabled: true,
+  adsEnabled: true,
+  platform: "OlchaAI",
+  version: "1.0.0",
+};
+
 // GET /admin/settings
 router.get("/admin/settings", async (req, res) => {
-  res.json({
-    maintenanceMode: false,
-    registrationOpen: true,
-    contentModerationEnabled: true,
-    aiModerationThreshold: 0.7,
-    maxPostLength: 2000,
-    maxFileSize: 100,
-    premiumEnabled: true,
-    adsEnabled: true,
-    platform: "OlchaAI",
-    version: "1.0.0",
-  });
+  try {
+    const result = await db.execute(sql`SELECT settings FROM admin_settings WHERE id = 1`);
+    const row = (result as any).rows?.[0];
+    const settings = row?.settings ? { ...SETTINGS_DEFAULTS, ...row.settings } : SETTINGS_DEFAULTS;
+    res.json(settings);
+  } catch {
+    res.json(SETTINGS_DEFAULTS);
+  }
 });
 
 // PATCH /admin/settings  
 router.patch("/admin/settings", async (req, res) => {
-  res.json({ ok: true, settings: req.body });
+  try {
+    const merged = { ...SETTINGS_DEFAULTS, ...req.body };
+    await db.execute(sql`
+      INSERT INTO admin_settings (id, settings, updated_at)
+      VALUES (1, ${JSON.stringify(merged)}::jsonb, NOW())
+      ON CONFLICT (id) DO UPDATE SET settings = ${JSON.stringify(merged)}::jsonb, updated_at = NOW()
+    `);
+    res.json({ ok: true, settings: merged });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Sozlamalarni saqlashda xato" });
+  }
 });
 
 // ===== PREMIUM CONFIG =====

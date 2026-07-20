@@ -100,7 +100,7 @@ function dayLabel(d: Date, t: any) {
   if (diff === 1) return t("msg.yesterday");
   return d.toLocaleDateString(i18n.language === "uz" ? "uz-UZ" : "en-US", { day:"numeric", month:"long" });
 }
-function uid() { return Math.random().toString(36).slice(2); }
+function uid() { return crypto.randomUUID().replace(/-/g, "").slice(0, 12); }
 async function uploadBlob(blob: Blob, name: string, mime: string): Promise<string> {
   const fd = new FormData();
   fd.append("file", blob, name);

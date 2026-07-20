@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import {
@@ -376,7 +377,7 @@ function GrowTogetherWidget({ enabled }: { enabled: boolean }) {
         body: JSON.stringify({ goalText }),
       });
       if (r.ok) { setSaved(true); setTimeout(() => setSaved(false), 1500); void loadMatches(); }
-    } catch { /* ignore */ }
+    } catch { toast.error(t("common.network_error")); }
     finally { setSaving(false); }
   };
 
@@ -385,7 +386,7 @@ function GrowTogetherWidget({ enabled }: { enabled: boolean }) {
     try {
       const r = await fetch(`${API}/api/grow-together/matches`, { credentials: "include" });
       if (r.ok) setMatches(await r.json());
-    } catch { /* ignore */ }
+    } catch { toast.error(t("common.network_error")); }
     finally { setLoading(false); }
   };
 
@@ -393,7 +394,7 @@ function GrowTogetherWidget({ enabled }: { enabled: boolean }) {
     try {
       await fetch(`${API}/api/grow-together/connect/${partnerId}`, { method: "POST", credentials: "include" });
       setConnected(prev => new Set([...prev, partnerId]));
-    } catch { /* ignore */ }
+    } catch { toast.error(t("common.network_error")); }
   };
 
   if (!enabled) return null;
@@ -468,7 +469,7 @@ function SocialAuraWidget({ enabled }: { enabled: boolean }) {
     try {
       const r = await fetch(`${API}/api/users/aura`, { credentials: "include" });
       if (r.ok) setAura(await r.json());
-    } catch { /* ignore */ }
+    } catch { toast.error(t("common.network_error")); }
     finally { setLoading(false); }
   };
 

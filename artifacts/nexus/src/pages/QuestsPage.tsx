@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
   Zap, Star, Heart, MessageCircle, Play, Share2,
@@ -91,7 +92,7 @@ export default function QuestsPage() {
       ]);
       if (cRes.ok) setCoins(await cRes.json());
       if (qRes.ok) setQuests(await qRes.json());
-    } catch { /* ignore */ }
+    } catch { toast.error(t("common.network_error")); }
     finally { setLoading(false); }
   };
 
@@ -112,7 +113,7 @@ export default function QuestsPage() {
         setTimeout(() => setJustClaimed(null), 3000);
         await fetchData();
       }
-    } catch { /* ignore */ }
+    } catch { toast.error(t("common.network_error")); }
     finally { setClaiming(null); }
   };
 

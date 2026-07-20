@@ -135,26 +135,25 @@ function Orb({
     <motion.button
       whileTap={{ scale: 0.68 }}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="flex flex-col items-center gap-[3px]"
+      className="flex flex-col items-center gap-[2px]"
     >
       <div
-        className="flex items-center justify-center relative rounded-full"
+        className="flex items-center justify-center relative"
         style={{
-          width: 44,
-          height: 44,
-          background: "rgba(0,0,0,0.42)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          border: active ? `1.5px solid ${activeColor}66` : "1.5px solid rgba(255,255,255,0.14)",
-          boxShadow: active ? `0 0 10px ${activeColor}44` : "0 2px 8px rgba(0,0,0,0.4)",
-          transition: "border 0.18s, box-shadow 0.18s",
+          width: 36,
+          height: 36,
+          filter: active
+            ? `drop-shadow(0 0 8px ${activeColor})`
+            : "drop-shadow(0 1px 6px rgba(0,0,0,0.95))",
+          transition: "filter 0.18s",
         }}
       >
         {icon}
       </div>
       {count !== undefined && count > 0 && (
         <span className="text-[9px] font-black tabular-nums leading-none"
-          style={{ color: active ? activeColor : "rgba(255,255,255,0.65)" }}>
+          style={{ color: active ? activeColor : "rgba(255,255,255,0.85)",
+            textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
           {fmt(count)}
         </span>
       )}
@@ -356,12 +355,12 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* Unified overlay tap-to-show (back arrow + author + subscribe + orbs) */
-  const [overlayVisible, setOverlayVisible] = useState(false);
+  const [overlayVisible, setOverlayVisible] = useState(true);
   const overlayHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showOverlayBriefly = useCallback(() => {
     setOverlayVisible(true);
     if (overlayHideTimer.current) clearTimeout(overlayHideTimer.current);
-    overlayHideTimer.current = setTimeout(() => setOverlayVisible(false), 3200);
+    overlayHideTimer.current = setTimeout(() => setOverlayVisible(false), 3000);
   }, []);
 
   /* Avatar double-tap → live story bubble → tap again → fullscreen story */
@@ -426,6 +425,11 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const commentRef = useRef<HTMLTextAreaElement>(null);
   const audioRef   = useRef<HTMLAudioElement | null>(null);
   const isInView   = useInView(cardRef, { amount: 0.55 });
+
+  /* Re-show action orbs whenever this card enters view, then auto-hide after 3s */
+  useEffect(() => {
+    if (isInView) showOverlayBriefly();
+  }, [isInView, showOverlayBriefly]);
 
   /* ── Query client + mutations ── */
   const queryClient = useQueryClient();
@@ -1012,10 +1016,12 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
       </div>
 
-      {/* ═══ LAYER 20: RIGHT ORB COLUMN — always visible ═══ */}
-      <div
-        className="absolute right-3 flex flex-col items-center gap-2 origin-top-right"
-        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 56px)", pointerEvents: commentOpen ? "none" : "auto" }}
+      {/* ═══ LAYER 20: RIGHT ORB COLUMN — tap-to-show, auto-hides in 3s ═══ */}
+      <motion.div
+        className="absolute right-3 flex flex-col items-center gap-3 origin-top-right"
+        animate={{ opacity: overlayVisible ? 1 : 0, scale: overlayVisible ? 1 : 0.85 }}
+        transition={{ duration: 0.25 }}
+        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 28px)", pointerEvents: (commentOpen || !overlayVisible) ? "none" : "auto" }}
         onPointerDown={e => e.stopPropagation()}
       >
         {/* Like */}
@@ -1102,7 +1108,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
             )}
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* ═══ LAYER 18: CAPTION + MOOD + POLL + TAGS (bottom-left) ═══ */}
       <motion.div

@@ -59,7 +59,7 @@ interface LocalMsg {
   deleted: boolean;
   edited: boolean;
   forwarded: boolean;
-  status: "sending" | "sent" | "delivered" | "read";
+  status: "sending" | "sent" | "delivered" | "read" | "failed";
   ts: Date;
   isEphemeral?: boolean;
   isPending?: boolean;
@@ -701,13 +701,29 @@ function MsgBubble({
               )}
               {msg.type==="video_note"&&msg.mediaUrl&&(
                 <div className="flex flex-col items-center gap-1">
-                  <VideoNoteBubble url={msg.mediaUrl}/>
+                  <div className="relative">
+                    <VideoNoteBubble url={msg.mediaUrl}/>
+                    {msg.status==="failed"&&(
+                      <div className="absolute inset-0 rounded-full flex items-center justify-center"
+                        style={{background:"rgba(0,0,0,0.55)"}}>
+                        <span className="text-white text-[10px] font-semibold text-center px-1">Yuklanmadi</span>
+                      </div>
+                    )}
+                    {msg.isPending&&msg.status!=="failed"&&(
+                      <div className="absolute inset-0 rounded-full flex items-center justify-center"
+                        style={{background:"rgba(0,0,0,0.4)"}}>
+                        <div className="w-5 h-5 rounded-full border-2 border-white/60 border-t-transparent animate-spin"/>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1">
                     {msg.starred&&<Star className="w-2.5 h-2.5 text-yellow-400 fill-current"/>}
                     <span className="text-[10px] text-muted-foreground">{formatTs(msg.ts)}</span>
-                    {isMe&&(msg.status==="read"
-                      ?<CheckCheck className="w-3 h-3 text-cyan-300"/>
-                      :<CheckCheck className="w-3 h-3 text-muted-foreground/50"/>)}
+                    {isMe&&(msg.status==="failed"
+                      ?<span className="text-[10px] text-red-400">✕</span>
+                      :msg.status==="read"
+                        ?<CheckCheck className="w-3 h-3 text-cyan-300"/>
+                        :<CheckCheck className="w-3 h-3 text-muted-foreground/50"/>)}
                   </div>
                 </div>
               )}
@@ -1211,17 +1227,27 @@ export default function MessagesPage() {
   };
   const handleVideoNote = (blob:Blob,dur:number) => {
     const tempUrl = URL.createObjectURL(blob);
-    const msg = addMsg({type:"video_note",mediaUrl:tempUrl,duration:dur});
+    const msg = addMsg({type:"video_note",mediaUrl:tempUrl,duration:dur,isPending:true});
     setShowRoundVid(false);
+    const doSend = (url:string) => {
+      if(!convId) return;
+      sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"video_note",mediaUrl:url}},{
+        onSuccess:()=>{
+          updateMsg(msg.id,{status:"delivered"});
+          qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)});
+        },
+        onError:()=>{ updateMsg(msg.id,{status:"failed"}); },
+      });
+    };
     uploadBlob(blob,`video_${Date.now()}.webm`,"video/webm")
       .then(serverUrl=>{
-        updateMsg(msg.id,{mediaUrl:serverUrl});
+        updateMsg(msg.id,{mediaUrl:serverUrl,isPending:false});
         URL.revokeObjectURL(tempUrl);
-        if(convId) sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"video_note",mediaUrl:serverUrl}},{
-          onSuccess:()=>qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)}),
-        });
+        doSend(serverUrl);
       })
-      .catch(()=>{});
+      .catch(()=>{
+        updateMsg(msg.id,{status:"failed",isPending:false});
+      });
   };
   const startVoice = async () => {
     try {

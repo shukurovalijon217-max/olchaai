@@ -756,7 +756,7 @@ export default function GroupsPage() {
         qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
         setShowSettings(false);
       }
-    } catch { /* silent */ } finally {
+    } catch { showToast(t("groups.toast.save_error") || "Saqlashda xato"); } finally {
       setSettingsSaving(false);
     }
   }, [selectedGroup, settingsForm, qc]);
@@ -1036,10 +1036,10 @@ export default function GroupsPage() {
         qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
       } else {
         const d = await r.json().catch(() => ({}));
-        toast.error(d?.error ?? "Post o'chirilmadi");
+        showToast(d?.error ?? "Post o'chirilmadi");
       }
     } catch {
-      toast.error("Tarmoq xatosi. Qayta urinib ko'ring.");
+      showToast("Tarmoq xatosi. Qayta urinib ko'ring.");
     }
   };
 
@@ -1055,10 +1055,10 @@ export default function GroupsPage() {
         qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
       } else {
         const d = await r.json().catch(() => ({}));
-        toast.error(d?.error ?? "Guruh o'chirilmadi");
+        showToast(d?.error ?? "Guruh o'chirilmadi");
       }
     } catch {
-      toast.error("Tarmoq xatosi. Qayta urinib ko'ring.");
+      showToast("Tarmoq xatosi. Qayta urinib ko'ring.");
     }
   };
 

@@ -114,7 +114,7 @@ export default function CreatorDashboardPage() {
         <div className="flex items-center gap-2">
           <StatusBadge status={summary.monetizationStatus} />
           {!isActive && summary.monetizationStatus === "none" && (
-            <Link href="/features">
+            <Link href="/feature-hub">
               <button className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition flex items-center gap-1">
                 Monetizatsiya <ArrowRight className="w-3 h-3" />
               </button>
@@ -270,7 +270,7 @@ export default function CreatorDashboardPage() {
               Daromad olish uchun monetizatsiya dasturiga qo'shiling.
               Kamida 1,000 ta obunachi va 10,000 ta ko'rish talab etiladi.
             </p>
-            <Link href="/features">
+            <Link href="/feature-hub">
               <button className="mt-2 px-3 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-semibold rounded-lg transition">
                 Ariza topshirish
               </button>

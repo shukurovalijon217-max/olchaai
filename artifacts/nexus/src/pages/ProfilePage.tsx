@@ -1054,7 +1054,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
     if (!liveTitle.trim()) return;
     setLiveStarting(true);
     try { const stream = await startLive.mutateAsync({ data: { title: liveTitle.trim() } }); navigate(`/live/${stream.id}`); }
-    catch { setLiveStarting(false); }
+    catch (err: any) { setLiveStarting(false); import("sonner").then(({ toast }) => toast.error(err?.response?.data?.error ?? "Live boshlashda xato")).catch(()=>{}); }
   };
   const handleSubscribe = async (planId: number) => {
     setSubError(null); setSubscribingPlanId(planId);
@@ -1065,7 +1065,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const handleUnsubscribe = async (planId: number) => {
     setSubscribingPlanId(planId);
     try { await unsubscribeMutation.mutateAsync({ planId }); await refetchSub(); }
-    catch {} finally { setSubscribingPlanId(null); }
+    catch (err: any) { import("sonner").then(({ toast }) => toast.error(err?.response?.data?.error ?? t("profile.sub_error") ?? "Xato yuz berdi")).catch(()=>{}); }
+    finally { setSubscribingPlanId(null); }
   };
   const handleCreatePlan = async () => {
     if (!newPlanName.trim() || !newPlanPrice) return;
@@ -1075,7 +1076,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       await createPlanMutation.mutateAsync({ data: { name: newPlanName.trim(), description: newPlanDesc.trim() || undefined, price: Math.round(parseFloat(newPlanPrice) * 100), perks } });
       qc.invalidateQueries({ queryKey: getListCreatorPlansQueryKey(userId) });
       setNewPlanName(""); setNewPlanDesc(""); setNewPlanPrice(""); setNewPlanPerks("");
-    } catch {} finally { setCreatingPlan(false); }
+    } catch (err: any) { import("sonner").then(({ toast }) => toast.error(err?.response?.data?.error ?? "Reja yaratishda xato")).catch(()=>{}); }
+    finally { setCreatingPlan(false); }
   };
 
   /* ── Loading skeleton ── */

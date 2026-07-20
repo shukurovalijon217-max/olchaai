@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Plus, Package, ShoppingBag, Eye, ArrowLeft, Edit2, Trash2, CheckCircle, Truck } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -54,7 +55,7 @@ export default function MyShopPage() {
       await deleteProduct({ id: productId });
       await refetchProducts();
     } catch (e: any) {
-      alert(e?.data?.error ?? t("common.error"));
+      toast.error(e?.data?.error ?? t("common.error"));
     }
   };
 

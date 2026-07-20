@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { Bell, Heart, MessageCircle, UserPlus, AtSign, Users, Info, X, Trash2, CheckCheck } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast as _shadcnToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
   useListNotifications,

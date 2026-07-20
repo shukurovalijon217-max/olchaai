@@ -292,7 +292,7 @@ function PlatformCostsSection() {
       ]);
       setSummary(s);
       setRequests(r.requests ?? []);
-    } catch {}
+    } catch { import("sonner").then(({ toast }) => toast.error("Xarajatlar ma'lumotini yuklashda xato")).catch(()=>{}); }
     setLoadingSummary(false);
   };
 
@@ -2273,7 +2273,7 @@ function AiAutopilotTab() {
       setScale(sc);
       setBannedUsers(b.users ?? []);
       setWarnedUsers(w.users ?? []);
-    } catch {}
+    } catch { import("sonner").then(({ toast }) => toast.error("AI statistika ma'lumotini yuklashda xato")).catch(()=>{}); }
     setLoading(false);
   };
 
@@ -2836,7 +2836,7 @@ function NexusCoreTab() {
         ]);
         setHealth(h);
         setTraffic(tr);
-      } catch {}
+      } catch { /* health check — silent is ok, UI shows disconnected state */ }
       setLoading(false);
     };
     void load();

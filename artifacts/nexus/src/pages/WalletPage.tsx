@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -325,13 +326,13 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        alert(d?.error ?? "To'lov usuli qo'shilmadi. Qayta urinib ko'ring.");
+        toast.error(d?.error ?? "To'lov usuli qo'shilmadi. Qayta urinib ko'ring.");
         return;
       }
       qc.invalidateQueries({ queryKey: ["wallet-pms"] });
       onClose();
     } catch {
-      alert("Tarmoq xatosi. Qayta urinib ko'ring.");
+      toast.error("Tarmoq xatosi. Qayta urinib ko'ring.");
     } finally {
       setSaving(false);
     }

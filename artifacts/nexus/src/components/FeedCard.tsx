@@ -137,12 +137,24 @@ function Orb({
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       className="flex flex-col items-center gap-[3px]"
     >
-      <div className="flex items-center justify-center relative" style={{ width: 42, height: 42 }}>
+      <div
+        className="flex items-center justify-center relative rounded-full"
+        style={{
+          width: 44,
+          height: 44,
+          background: "rgba(0,0,0,0.42)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          border: active ? `1.5px solid ${activeColor}66` : "1.5px solid rgba(255,255,255,0.14)",
+          boxShadow: active ? `0 0 10px ${activeColor}44` : "0 2px 8px rgba(0,0,0,0.4)",
+          transition: "border 0.18s, box-shadow 0.18s",
+        }}
+      >
         {icon}
       </div>
       {count !== undefined && count > 0 && (
         <span className="text-[9px] font-black tabular-nums leading-none"
-          style={{ color: active ? activeColor : "rgba(255,255,255,0.45)" }}>
+          style={{ color: active ? activeColor : "rgba(255,255,255,0.65)" }}>
           {fmt(count)}
         </span>
       )}
@@ -1002,9 +1014,9 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
       {/* ═══ LAYER 20: RIGHT ORB COLUMN — always visible ═══ */}
       <div
-        className="absolute right-3 flex flex-col items-center gap-2 scale-90 origin-top-right"
-        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 48px)", pointerEvents: commentOpen ? "none" : "auto" }}
-        onPointerDown={e => { e.stopPropagation(); showOverlayBriefly(); }}
+        className="absolute right-3 flex flex-col items-center gap-2 origin-top-right"
+        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 56px)", pointerEvents: commentOpen ? "none" : "auto" }}
+        onPointerDown={e => e.stopPropagation()}
       >
         {/* Like */}
         <div className="relative">

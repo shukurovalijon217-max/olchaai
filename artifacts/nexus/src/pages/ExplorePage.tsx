@@ -260,14 +260,15 @@ export default function ExplorePage() {
                         width: "100%", height: "100%", borderRadius: "50%",
                         overflow: "hidden", background: "var(--card)",
                         display: "flex", alignItems: "center", justifyContent: "center",
+                        position: "relative",
                       }}>
-                        {u.avatarUrl ? (
+                        <span style={{ fontSize: 22, fontWeight: 800, color: "#8b5cf6" }}>
+                          {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
+                        </span>
+                        {u.avatarUrl && (
                           <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <span style={{ fontSize: 22, fontWeight: 800, color: "#8b5cf6" }}>
-                            {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
-                          </span>
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                            onError={e => { e.currentTarget.style.display = "none"; }} />
                         )}
                       </div>
                     </div>
@@ -348,14 +349,15 @@ export default function ExplorePage() {
                       background: isFollowed ? "rgba(139,92,246,0.2)" : "linear-gradient(135deg,#8b5cf6,#3b82f6,#ec4899)",
                     }}>
                       <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden",
-                        background: "var(--card)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {u.avatarUrl ? (
+                        background: "var(--card)", display: "flex", alignItems: "center", justifyContent: "center",
+                        position: "relative" }}>
+                        <span style={{ fontSize: 22, fontWeight: 800, color: "#8b5cf6" }}>
+                          {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
+                        </span>
+                        {u.avatarUrl && (
                           <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <span style={{ fontSize: 22, fontWeight: 800, color: "#8b5cf6" }}>
-                            {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
-                          </span>
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                            onError={e => { e.currentTarget.style.display = "none"; }} />
                         )}
                       </div>
                     </div>
@@ -441,13 +443,13 @@ export default function ExplorePage() {
                       display: "flex", alignItems: "center", justifyContent: "center",
                       overflow: "hidden", zIndex: 2,
                     }}>
-                      {u.avatarUrl ? (
+                      <span style={{ fontSize: 17, fontWeight: 800, color: "#8b5cf6" }}>
+                        {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
+                      </span>
+                      {u.avatarUrl && (
                         <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                      ) : (
-                        <span style={{ fontSize: 17, fontWeight: 800, color: "#8b5cf6" }}>
-                          {(u.displayName ?? u.username)?.[0]?.toUpperCase()}
-                        </span>
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={e => { e.currentTarget.style.display = "none"; }} />
                       )}
                     </div>
                   </div>
@@ -523,12 +525,13 @@ export default function ExplorePage() {
                       width: 40, height: 40, borderRadius: 12, overflow: "hidden",
                       background: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.2)",
                       display: "flex", alignItems: "center", justifyContent: "center",
+                      position: "relative",
                     }}>
-                      {group.avatarUrl ? (
+                      <span style={{ fontSize: 18, fontWeight: 800, color: "white" }}>{group.name[0]}</span>
+                      {group.avatarUrl && (
                         <img loading="lazy" decoding="async" src={group.avatarUrl} alt=""
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <span style={{ fontSize: 18, fontWeight: 800, color: "white" }}>{group.name[0]}</span>
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={e => { e.currentTarget.style.display = "none"; }} />
                       )}
                     </div>
                   </div>

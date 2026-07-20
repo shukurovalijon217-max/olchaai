@@ -5,7 +5,7 @@
     "buildCommand": "echo 'dist already built'"
   },
   "deploy": {
-    "startCommand": "npx serve dist/public -p $PORT --single",
+    "startCommand": "node server.js",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }

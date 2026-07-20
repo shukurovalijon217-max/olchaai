@@ -976,7 +976,7 @@ function LockedProfileView({ user, onFollow, followPending }: {
 /* ─── Main Page ───────────────────────────────────────────────── */
 export default function ProfilePage({ userId }: ProfilePageProps) {
   const { t } = useTranslation();
-  const { data: user, isLoading } = useGetUser(userId, { query: { queryKey: getGetUserQueryKey(userId) } });
+  const { data: user, isLoading, isError: userError, refetch: refetchUser } = useGetUser(userId, { query: { queryKey: getGetUserQueryKey(userId) } });
   const { data: posts = [] } = useListPosts({ userId });
   const { data: reels = [] } = useListReels({ userId });
   const [following, setFollowing] = useState<boolean | null>(null);
@@ -1096,6 +1096,14 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       </div>
     );
   }
+  if (userError) return (
+    <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+      <p className="text-muted-foreground text-sm">Server bilan bog'liq xato</p>
+      <button onClick={() => refetchUser()} className="px-5 py-2 rounded-2xl bg-violet-600 text-white text-sm font-semibold">
+        Qayta urinish
+      </button>
+    </div>
+  );
   if (!user) return <div className="text-center py-20 text-muted-foreground">Foydalanuvchi topilmadi</div>;
 
   /* ── Qulfli profil (private account, viewer is not following) ── */

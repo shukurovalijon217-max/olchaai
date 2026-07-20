@@ -55,7 +55,10 @@ router.get("/users/stats/summary", async (req, res) => {
   try {
     const [total] = await readDb.select({ count: sql<number>`count(*)::int` }).from(usersTable);
     const [verified] = await readDb.select({ count: sql<number>`count(*)::int` }).from(usersTable).where(eq(usersTable.isVerified, true));
-    res.json({ totalUsers: total.count, newToday: Math.floor(total.count * 0.02), activeToday: Math.floor(total.count * 0.35), verifiedCount: verified.count });
+    const [newToday] = await readDb.select({ count: sql<number>`count(*)::int` }).from(usersTable).where(sql`created_at >= NOW() - INTERVAL '24 hours'`);
+    const sessionResult = await readDb.execute(sql`SELECT count(*)::int AS count FROM user_sessions WHERE expire > NOW()`);
+    const activeCount = (sessionResult as any).rows?.[0]?.count ?? 0;
+    res.json({ totalUsers: total.count, newToday: newToday.count, activeToday: activeCount, verifiedCount: verified.count });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

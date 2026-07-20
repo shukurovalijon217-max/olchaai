@@ -1059,7 +1059,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         <Orb
           icon={<Sparkles className="w-[17px] h-[17px]" style={{ color: "rgba(192,132,252,0.85)" }} />}
           active={false} activeColor="#c084fc"
-          onClick={() => {}}
+          onClick={() => { navigate("/feature-hub"); }}
         />
 
         {/* More/Delete */}

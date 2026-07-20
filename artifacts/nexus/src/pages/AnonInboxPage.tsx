@@ -47,7 +47,7 @@ export default function AnonInboxPage() {
   useEffect(() => { fetchInbox(); }, []);
 
   const shareLink = user
-    ? `${window.location.origin}${import.meta.env.BASE_URL}ask/${user.id}`
+    ? `${window.location.origin}/ask/${user.id}`
     : "";
 
   const handleCopy = async () => {

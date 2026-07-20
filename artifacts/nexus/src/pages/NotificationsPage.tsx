@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { Bell, Heart, MessageCircle, UserPlus, AtSign, Users, Info, X, Trash2, CheckCheck } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import {
   useListNotifications,
@@ -145,6 +146,10 @@ export default function NotificationsPage() {
       onSuccess: () => {
         qc.setQueryData(getListNotificationsQueryKey(), []);
         setShowConfirmClear(false);
+      },
+      onError: () => {
+        setShowConfirmClear(false);
+        toast.error("Bildirishnomalar o'chirilmadi. Qayta urinib ko'ring.");
       },
     });
   };

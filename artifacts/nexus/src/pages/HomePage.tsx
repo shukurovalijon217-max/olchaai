@@ -386,7 +386,10 @@ export default function HomePage() {
       });
       await qc.invalidateQueries({ queryKey: getListStoriesQueryKey() });
       closeViewer();
-    } catch { /* silent */ }
+    } catch {
+      // Story o'chirishda xato — foydalanuvchiga bildirish
+      import("sonner").then(({ toast }) => toast.error("Story o'chirishda xato. Qayta urinib ko'ring.")).catch(()=>{});
+    }
   }, [activeStory, qc, closeViewer]);
 
   const goNextInGroup = useCallback(() => {
@@ -472,7 +475,11 @@ export default function HomePage() {
   }, []);
 
   const feedRef = useRef<HTMLDivElement>(null);
-  const displayPosts = feed?.posts?.length ? feed.posts : posts;
+  const displayPosts = (() => {
+    const base = feed?.posts?.length ? feed.posts : (posts ?? []);
+    const seen = new Set<string | number>();
+    return base.filter(p => { const id = (p as any).id; if (seen.has(id)) return false; seen.add(id); return true; });
+  })();
 
   const ECHO_THRESHOLD = 55;
   const showEchoBanner =

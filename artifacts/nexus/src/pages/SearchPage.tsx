@@ -68,7 +68,7 @@ export default function SearchPage() {
   const reels    = data?.reels    ?? [];
   const products = data?.products ?? [];
 
-  const hasResults = users.length + posts.length + reels.length + products.length > 0;
+  const hasResults = users.length + posts.length + reels.length + products.length + semanticPosts.length > 0;
 
   return (
     <div className="min-h-screen bg-background pb-20">

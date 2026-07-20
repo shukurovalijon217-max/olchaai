@@ -317,14 +317,21 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
     if (!type || !title) return;
     setSaving(true);
     try {
-      await fetch(`${API}/api/wallet/payment-methods`, {
+      const r = await fetch(`${API}/api/wallet/payment-methods`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ type, title, maskedNumber: masked || undefined, holderName: holder || undefined, expiryDate: expiry || undefined, isDefault }),
       });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        alert(d?.error ?? "To'lov usuli qo'shilmadi. Qayta urinib ko'ring.");
+        return;
+      }
       qc.invalidateQueries({ queryKey: ["wallet-pms"] });
       onClose();
+    } catch {
+      alert("Tarmoq xatosi. Qayta urinib ko'ring.");
     } finally {
       setSaving(false);
     }

@@ -115,7 +115,12 @@ export function CallProvider({ children }: { children: ReactNode }) {
         setState(prev => prev ? { ...prev, phase: "connected" } : prev);
       }
       if (["failed", "disconnected", "closed"].includes(pc.connectionState)) {
-        if (stateRef.current) cleanup();
+        if (stateRef.current) {
+          if (pc.connectionState === "failed") {
+            toast({ title: "Aloqa uzildi", description: "Qo'ng'iroq ulanishi muvaffaqiyatsiz. Qayta urinib ko'ring.", variant: "destructive" });
+          }
+          cleanup();
+        }
       }
     };
     pcRef.current = pc;

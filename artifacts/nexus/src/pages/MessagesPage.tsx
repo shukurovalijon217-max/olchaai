@@ -926,7 +926,7 @@ export default function MessagesPage() {
   const [search, setSearch] = useState("");
   const [msgSearch, setMsgSearch] = useState("");
   const [showMsgSearch, setShowMsgSearch] = useState(false);
-  const [tab, setTab] = useState<"all"|"unread"|"groups">("all");
+  const [tab, setTab] = useState<"all"|"unread"|"groups"|"archived">("all");
   const [showChatMenu, setShowChatMenu] = useState(false);
   const [mutedConvs, setMutedConvs] = useState<Set<number>>(new Set());
   const [blockedConvs, setBlockedConvs] = useState<Set<number>>(new Set());
@@ -963,6 +963,9 @@ export default function MessagesPage() {
     finally { setBlockLoading(false); }
   };
   const [pinnedConvIds, setPinnedConvIds] = useState<Set<number>>(new Set());
+  const [archivedConvIds, setArchivedConvIds] = useState<Set<number>>(()=>{
+    try { return new Set(JSON.parse(localStorage.getItem("olcha_archived_convs")||"[]")); } catch { return new Set(); }
+  });
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [hiddenMsgIds, setHiddenMsgIds] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<{id:string;isMe:boolean}|null>(null);
@@ -1061,7 +1064,9 @@ export default function MessagesPage() {
     .filter(c=>{
       const other = c.participants?.find(p=>p.id!==ME_ID);
       const matchSearch = !search||other?.displayName?.toLowerCase().includes(search.toLowerCase());
+      if(archivedConvIds.has(c.id)) return tab==="archived"&&matchSearch;
       if(tab==="unread") return matchSearch&&(c.unreadCount||0)>0;
+      if(tab==="archived") return false;
       return matchSearch;
     });
 
@@ -1370,10 +1375,10 @@ export default function MessagesPage() {
               className="w-full pl-8 pr-3 py-2 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground focus:outline-none border border-transparent focus:border-primary/40 transition-colors"/>
           </div>
           <div className="flex gap-1 mt-2.5">
-            {(["all","unread","groups"] as const).map(tb=>(
+            {(["all","unread","groups","archived"] as const).map(tb=>(
               <button key={tb} onClick={()=>setTab(tb)}
                 className={`flex-1 py-1 rounded-lg text-xs font-semibold transition-colors ${tab===tb?"bg-primary/15 text-primary":"text-muted-foreground hover:text-foreground"}`}>
-                {tb==="all" ? t("msg.tabs.all") : tb==="unread" ? t("msg.tabs.unread") : t("msg.tabs.groups")}
+                {tb==="all" ? t("msg.tabs.all") : tb==="unread" ? t("msg.tabs.unread") : tb==="groups" ? t("msg.tabs.groups") : "Arxiv"}
               </button>
             ))}
           </div>
@@ -1441,7 +1446,8 @@ export default function MessagesPage() {
                 action:()=>{ setPinnedConvIds(p=>{const s=new Set(p);s.has(convCtxMenu)?s.delete(convCtxMenu):s.add(convCtxMenu);return s;}); }},
               { icon: mutedConvs.has(convCtxMenu)?BellRing:BellOff, label:mutedConvs.has(convCtxMenu)?t("msg.unmute"):t("msg.mute"),
                 action:()=>{ setMutedConvs(p=>{const s=new Set(p);s.has(convCtxMenu)?s.delete(convCtxMenu):s.add(convCtxMenu);return s;}); }},
-              { icon: Archive, label:t("msg.archive"), action:()=>{} },
+              { icon: Archive, label:archivedConvIds.has(convCtxMenu)?t("msg.unarchive")||"Arxivdan chiqarish":t("msg.archive"),
+                action:()=>{ setArchivedConvIds(p=>{const s=new Set(p);s.has(convCtxMenu)?s.delete(convCtxMenu):s.add(convCtxMenu);localStorage.setItem("olcha_archived_convs",JSON.stringify([...s]));return s;}); }},
               { icon: Trash2,  label:t("msg.delete"),  action:()=>{ setShowClearConfirm(true); setActiveId(convCtxMenu); }, danger:true },
             ].map((item,i)=>(
               <button key={i} onClick={()=>{item.action();setConvCtxMenu(null);}}
@@ -1698,7 +1704,7 @@ export default function MessagesPage() {
                           { icon:Video,         label:t("msg.video"),   color:"bg-blue-500/15 text-blue-400",
                             action:()=>{ setShowProfilePanel(false); if(other?.id) startCall({id:other.id,name:other.displayName||"?",avatar:other.avatarUrl||undefined},"video"); } },
                           { icon:Share2,        label:t("msg.share"), color:"bg-purple-500/15 text-purple-400",
-                            action:()=>{ navigator.share?.({title:other?.displayName||"",text:`OlchaAI: @${other?.username}`}).catch(()=>{}); } },
+                            action:()=>{ const txt=`OlchaAI: @${other?.username}`; if(navigator.share){navigator.share({title:other?.displayName||"",text:txt}).catch(()=>{});}else{navigator.clipboard?.writeText(txt).catch(()=>{}); } } },
                         ].map((btn,i)=>(
                           <button key={i} onClick={btn.action} className="flex flex-col items-center gap-1.5">
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${btn.color}`}>

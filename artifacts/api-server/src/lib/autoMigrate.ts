@@ -39,6 +39,216 @@ const MIGRATIONS = [
     translated JSONB NOT NULL,
     cached_at TIMESTAMPTZ DEFAULT NOW()
   )`,
+  /* ── Missing core tables (Railway fresh DB) ─────────────────── */
+  `CREATE TABLE IF NOT EXISTS wallets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    balance INTEGER NOT NULL DEFAULT 0,
+    earnings_balance INTEGER NOT NULL DEFAULT 0,
+    ad_revenue_balance INTEGER NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL DEFAULT 'UZS',
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    wallet_id INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'UZS',
+    status TEXT NOT NULL DEFAULT 'completed',
+    payment_method TEXT,
+    description TEXT,
+    reference TEXT,
+    metadata TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS treasury_transactions (
+    id SERIAL PRIMARY KEY,
+    type TEXT NOT NULL,
+    amount BIGINT NOT NULL,
+    source TEXT NOT NULL,
+    description TEXT,
+    reference TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS reels (
+    id SERIAL PRIMARY KEY,
+    author_id INTEGER NOT NULL,
+    video_url TEXT NOT NULL,
+    thumbnail_url TEXT,
+    caption TEXT NOT NULL,
+    audio_track TEXT,
+    duration INTEGER DEFAULT 30,
+    likes_count INTEGER NOT NULL DEFAULT 0,
+    comments_count INTEGER NOT NULL DEFAULT 0,
+    views_count INTEGER NOT NULL DEFAULT 0,
+    tags TEXT[],
+    hls_url TEXT,
+    hls_status TEXT DEFAULT 'pending',
+    type TEXT NOT NULL DEFAULT 'reel',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS reel_likes (
+    id SERIAL PRIMARY KEY,
+    reel_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS reel_comments (
+    id SERIAL PRIMARY KEY,
+    reel_id INTEGER NOT NULL,
+    author_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    likes_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS reel_collaborators (
+    id SERIAL PRIMARY KEY,
+    owner_id INTEGER NOT NULL,
+    invitee_handle TEXT NOT NULL,
+    permission TEXT NOT NULL DEFAULT 'edit',
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS reel_versions (
+    id SERIAL PRIMARY KEY,
+    reel_id INTEGER NOT NULL,
+    editor_id INTEGER NOT NULL,
+    caption TEXT,
+    tags TEXT[],
+    note TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS reel_watch_progress (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    reel_id INTEGER NOT NULL,
+    position_sec INTEGER NOT NULL DEFAULT 0,
+    duration_sec INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS stories (
+    id SERIAL PRIMARY KEY,
+    author_id INTEGER NOT NULL,
+    media_url TEXT NOT NULL,
+    media_type TEXT NOT NULL DEFAULT 'photo',
+    caption TEXT,
+    views_count INTEGER NOT NULL DEFAULT 0,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS story_views (
+    id SERIAL PRIMARY KEY,
+    story_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS user_blocks (
+    id SERIAL PRIMARY KEY,
+    blocker_id INTEGER NOT NULL,
+    blocked_id INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS user_coins (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    balance INTEGER NOT NULL DEFAULT 0,
+    total_earned INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS user_interactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    content_type TEXT NOT NULL,
+    content_id INTEGER NOT NULL,
+    interaction_type TEXT NOT NULL,
+    duration_ms INTEGER,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS user_interest_profiles (
+    user_id INTEGER NOT NULL,
+    embedding JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS user_moods (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    mood TEXT NOT NULL,
+    energy_level INTEGER NOT NULL DEFAULT 5,
+    note TEXT,
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS user_streaks (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    current_streak INTEGER NOT NULL DEFAULT 0,
+    longest_streak INTEGER NOT NULL DEFAULT 0,
+    last_active_date TEXT,
+    xp INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS user_books (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    google_book_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    authors TEXT NOT NULL,
+    description TEXT,
+    thumbnail_url TEXT,
+    published_date TEXT,
+    page_count INTEGER,
+    categories TEXT,
+    language TEXT DEFAULT 'uz',
+    isbn TEXT,
+    status TEXT NOT NULL DEFAULT 'want_to_read',
+    current_page INTEGER DEFAULT 0,
+    rating INTEGER,
+    review TEXT,
+    is_favorite BOOLEAN DEFAULT FALSE,
+    added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS user_titles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    earned_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS scenarios (
+    id SERIAL PRIMARY KEY,
+    creator_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    thumbnail TEXT,
+    is_published BOOLEAN NOT NULL DEFAULT FALSE,
+    view_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS scenario_branches (
+    id SERIAL PRIMARY KEY,
+    scenario_id INTEGER NOT NULL,
+    parent_id INTEGER,
+    video_url TEXT,
+    choice_text TEXT NOT NULL,
+    choice_emoji TEXT NOT NULL DEFAULT '👉',
+    is_root BOOLEAN NOT NULL DEFAULT FALSE,
+    order_index INTEGER NOT NULL DEFAULT 0,
+    view_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS voice_comments (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL,
+    author_id INTEGER NOT NULL,
+    audio_url TEXT NOT NULL,
+    duration_ms INTEGER NOT NULL DEFAULT 0,
+    waveform_data TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
   /* ── Performance indexes ───────────────────────────────────── */
   `CREATE INDEX IF NOT EXISTS idx_transactions_wallet  ON transactions (wallet_id, created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_transactions_user    ON transactions (user_id, created_at DESC)`,

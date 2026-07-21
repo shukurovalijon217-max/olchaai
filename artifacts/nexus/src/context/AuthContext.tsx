@@ -107,6 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = text ? JSON.parse(text) : {};
       if (!res.ok) return { error: data.error ?? "Kirish xatosi" };
       setUser(data);
+      /* Touch daily streak — fire-and-forget */
+      fetch(`${API}/api/gamification/streak/touch`, { method: "POST", credentials: "include" }).catch(() => {});
       return {};
     } catch {
       return { error: "Server bilan aloqa xatosi" };
@@ -125,6 +127,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = text ? JSON.parse(text) : {};
       if (!res.ok) return { error: data.error ?? "Ro'yxatdan o'tish xatosi" };
       setUser(data);
+      /* Touch daily streak on first login */
+      fetch(`${API}/api/gamification/streak/touch`, { method: "POST", credentials: "include" }).catch(() => {});
       return {};
     } catch {
       return { error: "Server bilan aloqa xatosi" };

@@ -10,5 +10,8 @@
     "healthcheckTimeout": 20,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
-  }
+  },
+  "watchPatterns": [
+    "artifacts/olcha-go/**"
+  ]
 }

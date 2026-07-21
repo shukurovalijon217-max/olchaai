@@ -515,6 +515,30 @@ router.get("/posts/:id", async (req, res) => {
   }
 });
 
+/* ── PATCH /posts/:id ───────────────────────────────────────── */
+router.patch("/posts/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+    const [existing] = await db.select({ authorId: postsTable.authorId }).from(postsTable).where(eq(postsTable.id, id)).limit(1);
+    if (!existing) { res.status(404).json({ error: "Post topilmadi" }); return; }
+    const isAdmin = (req.session as any)?.isAdmin;
+    if (existing.authorId !== userId && !isAdmin) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
+    const { content, mediaUrl, type } = req.body as { content?: string; mediaUrl?: string | null; type?: string };
+    const updates: Record<string, unknown> = {};
+    if (content !== undefined) updates.content = content;
+    if (mediaUrl !== undefined) updates.mediaUrl = mediaUrl;
+    if (type !== undefined) updates.type = type;
+    if (Object.keys(updates).length === 0) { res.status(400).json({ error: "Hech narsa o'zgartirilmadi" }); return; }
+    const [updated] = await db.update(postsTable).set(updates).where(eq(postsTable.id, id)).returning();
+    res.json(updated);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 /* ── DELETE /posts/:id ──────────────────────────────────────── */
 router.delete("/posts/:id", async (req, res) => {
   try {

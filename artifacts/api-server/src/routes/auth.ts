@@ -2,9 +2,9 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
 import { db } from "@workspace/db";
-import { usersTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@workspace/db";
+import { usersTable, followsTable, postsTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@workspace/db";
 import type { NotifPrefs, PrivacySettings } from "@workspace/db";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
 import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput, signMobileToken, checkEndpointRateLimit } from "../lib/security";
 import { indexUser } from "../lib/meili";
@@ -260,8 +260,13 @@ router.get("/auth/me", async (req, res) => {
     if (!user) {
       res.status(401).json({ error: "Foydalanuvchi topilmadi" }); return;
     }
+    const [[followers], [following], [postsCount]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, userId)),
+      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, userId)),
+      db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, userId)),
+    ]);
     const { passwordHash: _, ...safeUser } = user;
-    res.json(safeUser);
+    res.json({ ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Server xatosi" });

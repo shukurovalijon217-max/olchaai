@@ -69,7 +69,7 @@ router.post("/compare", (req: Request, res: Response) => {
  */
 const _bunnyCdnHost = (process.env.BUNNY_CDN_HOSTNAME ?? "").replace(/^https?:\/\//, "").replace(/\/$/, "");
 const ALLOWED_HOSTS = new RegExp(
-  `\\.(googleusercontent\\.com|googleapis\\.com|gcs\\.olchaai\\.com|replit\\.com|replit\\.app|storage\\.googleapis\\.com|cloudinary\\.com|onrender\\.com|olchaai\\.com${_bunnyCdnHost ? `|${_bunnyCdnHost.replace(/\./g, "\\.")}` : ""})$`,
+  `\\.(googleusercontent\\.com|googleapis\\.com|gcs\\.olchaai\\.com|replit\\.com|replit\\.app|storage\\.googleapis\\.com|cloudinary\\.com|onrender\\.com|olchaai\\.com|railway\\.app|up\\.railway\\.app|r2\\.cloudflarestorage\\.com|r2\\.dev${_bunnyCdnHost ? `|${_bunnyCdnHost.replace(/\./g, "\\.")}` : ""})$`,
   "i",
 );
 

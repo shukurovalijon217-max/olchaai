@@ -63,12 +63,18 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
   }
 
   // Cloudinary URLs: use native transformation parameters directly (no proxy needed)
-  // Pattern: https://res.cloudinary.com/{cloud}/{type}/upload/{public_id}
   const cloudinaryMatch = url.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/[^/]+\/upload\/)(.+)$/);
   if (cloudinaryMatch) {
     return `${cloudinaryMatch[1]}w_${w},q_${q},f_auto/${cloudinaryMatch[2]}`;
   }
 
+  // Relative URLs (stored in DB as /api/storage/objects/... or /api/storage/uploads/...)
+  // must be served directly — the media proxy cannot parse relative URLs.
+  if (url.startsWith("/")) {
+    return resolveApiUrl(url);
+  }
+
+  // Only proxy absolute CDN URLs (R2 public CDN, GCS, etc.) through the WebP optimizer.
   const base = (import.meta.env.VITE_API_BASE_URL);
-  return `${base}/api/media/img?url=${encodeURIComponent(resolveApiUrl(url))}&w=${w}&q=${q}`;
+  return `${base}/api/media/img?url=${encodeURIComponent(url)}&w=${w}&q=${q}`;
 }

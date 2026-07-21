@@ -219,8 +219,8 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
     if (voiceLoaded) { setVoiceOpen(v => !v); return; }
     setVoiceOpen(true);
     try {
-      const res = await fetch(`${API}/api/voice-comments?postId=${post.id}`, { credentials: "include" });
-      if (res.ok) { const data = await res.json(); setVoiceComments(data.comments ?? []); }
+      const res = await fetch(`${API}/api/posts/${post.id}/voice-comments`, { credentials: "include" });
+      if (res.ok) { const data = await res.json(); setVoiceComments(Array.isArray(data) ? data : (data.comments ?? [])); }
     } catch { /* silent */ }
     setVoiceLoaded(true);
   };
@@ -236,10 +236,19 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         if (blob.size < 1000) return;
         setSendingVoice(true);
         try {
-          const fd = new FormData();
-          fd.append("audio", blob, "voice.webm");
-          fd.append("postId", post.id.toString());
-          const res = await fetch(`${API}/api/voice-comments`, { method: "POST", credentials: "include", body: fd });
+          /* Convert to base64 data URL so we can POST JSON (no separate upload step) */
+          const reader = new FileReader();
+          const audioUrl: string = await new Promise((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          const durationMs = Math.min(blob.size / 8, 10_000); // rough estimate
+          const res = await fetch(`${API}/api/posts/${post.id}/voice-comments`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ audioUrl, durationMs }),
+          });
           if (res.ok) {
             const data = await res.json();
             setVoiceComments(prev => [...prev, data]);
@@ -265,7 +274,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
     try {
       const res = await fetch(`${API}/api/wallet/tip`, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipientId: post.author.id, amount, message: tipMsg || undefined }),
+        body: JSON.stringify({ toUserId: post.author.id, amount, message: tipMsg || undefined }),
       });
       if (res.ok) { setTipDone(true); setTimeout(() => { setTipOpen(false); setTipDone(false); setTipCustom(""); setTipMsg(""); }, 2000); }
     } catch { /* silent */ }
@@ -581,7 +590,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                           <Mic className="w-3 h-3 text-rose-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-medium text-foreground">{vc.user?.displayName ?? "User"}</p>
+                          <p className="text-[10px] font-medium text-foreground">{vc.author?.displayName ?? vc.author?.username ?? "User"}</p>
                           <audio src={vc.audioUrl} controls className="h-6 w-full mt-0.5" style={{ accentColor: "var(--primary)" }} />
                         </div>
                       </div>

@@ -699,6 +699,75 @@ router.get("/posts/:id/comments", async (req, res) => {
   }
 });
 
+/* ── DELETE /posts/:id/comments/:commentId ──────────────────── */
+router.delete("/posts/:id/comments/:commentId", async (req, res) => {
+  try {
+    const postId = Number(req.params.id);
+    const commentId = Number(req.params.commentId);
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Login kerak" }); return; }
+
+    const [comment] = await db.select({ id: commentsTable.id, authorId: commentsTable.authorId })
+      .from(commentsTable).where(eq(commentsTable.id, commentId)).limit(1);
+    if (!comment) { res.status(404).json({ error: "Izoh topilmadi" }); return; }
+
+    const [me] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    if (comment.authorId !== userId && !me?.isAdmin) {
+      res.status(403).json({ error: "Ruxsat yo'q" }); return;
+    }
+
+    await db.delete(commentLikesTable).where(eq(commentLikesTable.commentId, commentId));
+    await db.delete(commentsTable).where(eq(commentsTable.id, commentId));
+    await db.update(postsTable)
+      .set({ commentsCount: sql`GREATEST(0, ${postsTable.commentsCount} - 1)` })
+      .where(eq(postsTable.id, postId));
+
+    res.json({ deleted: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── POST /posts/:id/save — toggle save/bookmark ────────────── */
+router.post("/posts/:id/save", async (req, res) => {
+  try {
+    const postId = Number(req.params.id);
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Login kerak" }); return; }
+
+    const existing = await db.execute(
+      sql`SELECT id FROM post_saves WHERE post_id = ${postId} AND user_id = ${userId} LIMIT 1`
+    );
+    const rows = (existing as any).rows ?? [];
+    if (rows.length > 0) {
+      await db.execute(sql`DELETE FROM post_saves WHERE post_id = ${postId} AND user_id = ${userId}`);
+      res.json({ saved: false });
+    } else {
+      await db.execute(sql`INSERT INTO post_saves(post_id, user_id) VALUES(${postId}, ${userId}) ON CONFLICT DO NOTHING`);
+      res.json({ saved: true });
+    }
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── GET /posts/saved — foydalanuvchi saqlagan postlar ─────── */
+router.get("/posts/saved", async (req, res) => {
+  try {
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Login kerak" }); return; }
+    const rows = await db.execute(
+      sql`SELECT p.* FROM post_saves s JOIN posts p ON s.post_id = p.id WHERE s.user_id = ${userId} ORDER BY s.created_at DESC LIMIT 50`
+    );
+    res.json((rows as any).rows ?? []);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 /* ── POST /posts/:id/comments ───────────────────────────────── */
 router.post("/posts/:id/comments", async (req, res) => {
   try {

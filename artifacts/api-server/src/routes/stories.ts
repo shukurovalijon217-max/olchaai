@@ -33,12 +33,15 @@ router.get("/stories", async (req, res) => {
 
 router.post("/stories", async (req, res) => {
   try {
-    const { mediaUrl, mediaType, caption } = req.body;
+    const { mediaUrl, mediaType, caption, type, backgroundColor, content } = req.body;
     const authorId = (req.session as any)?.userId as number | undefined;
     if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
+    const storyType = type || (mediaUrl ? (mediaType || "photo") : "text");
+    const storyCaption = caption || content || null;
+
     // AI scan caption before saving
-    const scan = await scanContentAsync(caption ?? "");
+    const scan = await scanContentAsync(storyCaption ?? "");
     if (scan.autoBlock) {
       res.status(422).json({
         error: "Story avtomatik bloklandi — qoidalarga zid material aniqlandi.",
@@ -47,7 +50,15 @@ router.post("/stories", async (req, res) => {
     }
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const [story] = await db.insert(storiesTable).values({ authorId, mediaUrl, mediaType: mediaType || "photo", caption, expiresAt }).returning();
+    const [story] = await db.insert(storiesTable).values({
+      authorId,
+      mediaUrl: mediaUrl || null,
+      mediaType: mediaType || storyType,
+      type: storyType,
+      backgroundColor: backgroundColor || null,
+      caption: storyCaption,
+      expiresAt,
+    }).returning();
 
     if (scan.verdict !== "clean") {
       await db.insert(moderationQueueTable).values({

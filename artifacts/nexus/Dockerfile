@@ -25,10 +25,13 @@ FROM deps AS builder
 COPY lib/api-client-react/         lib/api-client-react/
 COPY lib/integrations-openai-ai-react/ lib/integrations-openai-ai-react/
 
-# Nexus source (VITE_API_BASE_URL="" so server.js patches at runtime)
+# Nexus source
 COPY artifacts/nexus/ artifacts/nexus/
 
-# Build
+# VITE_API_BASE_URL set at build time via Railway Variables
+# Build stamp to bust Docker layer cache: 2026-07-21-v4
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN pnpm --filter @workspace/nexus run build
 
 ### ── Stage 3: runtime ────────────────────────────────────────────────
@@ -43,6 +46,8 @@ COPY --from=builder /app/artifacts/nexus/package.json ./package.json
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV API_TARGET=https://olchaai-api-production.up.railway.app
+ENV WS_URL=wss://olchaai-go-production.up.railway.app/go/ws
 
 EXPOSE 3000
 

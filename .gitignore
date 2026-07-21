@@ -2,7 +2,9 @@
 
 # compiled output
 dist
-!artifacts/nexus/dist/public
+!artifacts/nexus/dist/
+!artifacts/nexus/dist/public/
+!artifacts/nexus/dist/public/**
 tmp
 out-tsc
 *.tsbuildinfo

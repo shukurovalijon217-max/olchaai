@@ -33,10 +33,9 @@ export function getNetworkTier(): NetworkTier {
  */
 /**
  * Resolves a URL that may be a relative `/api/...` path stored in the DB.
- * In production, VITE_API_BASE_URL is set to https://olchaai-api.onrender.com
- * so relative paths are prefixed with it. Already-absolute URLs pass through.
+ * Resolves R2 media URLs to Nexus proxy path so cookies and auth work.
  */
-const R2_DOMAIN = "media.olchaai.com";
+const R2_DOMAIN = "media.gilos.ai";
 // Guarded base: VITE_API_BASE_URL may be undefined in some build configs
 const API_BASE: string = "";
 

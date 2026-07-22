@@ -862,7 +862,7 @@ export default function FeatureHubPage() {
         <div className="mt-8 p-4 rounded-2xl border border-white/5 bg-white/[0.02] text-center">
           <p className="text-white/30 text-xs leading-relaxed">
             {t("featurehub.footer")} {" "}
-            <span className="text-primary">feedback@gilosai.com</span>
+            <span className="text-primary">feedback@gilos.ai</span>
           </p>
         </div>
       </div>

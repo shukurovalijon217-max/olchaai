@@ -50,7 +50,7 @@ export default function StoryViewer({
   const [imgLoaded, setImgLoaded] = useState(false);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 120 + 8));
+  const [likeCount, setLikeCount] = useState(0);
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [heartBurst, setHeartBurst] = useState(false);
@@ -81,7 +81,7 @@ export default function StoryViewer({
     setImgLoaded(false);
     setLiked(false);
     setSaved(false);
-    setLikeCount(Math.floor(Math.random() * 120 + 8));
+    setLikeCount(0);
     setShowReply(false);
   }, [storyIdx, groupIdx]);
 

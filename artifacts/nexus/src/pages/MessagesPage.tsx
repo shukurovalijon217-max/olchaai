@@ -602,7 +602,7 @@ function MsgBubble({
   msg: LocalMsg; isMe: boolean; selected: boolean;
   onReply:(m:LocalMsg)=>void;
   onUpdate:(id:string,patch:Partial<LocalMsg>)=>void;
-  onDelete:(id:string)=>void;
+  onDelete:(id:string, serverId:number)=>void;
   onForward:(id:string)=>void;
   onSelect:(id:string)=>void;
 }) {
@@ -837,7 +837,7 @@ function MsgBubble({
               onCopy={()=>navigator.clipboard.writeText(msg.content||"")}
               onStar={()=>onUpdate(msg.id,{starred:!msg.starred})}
               onPin={()=>onUpdate(msg.id,{pinned:!msg.pinned})}
-              onDelete={()=>onDelete(msg.id)}
+              onDelete={()=>onDelete(msg.id, parseInt(msg.id,10)||0)}
               onForward={()=>onForward(msg.id)}
               onEdit={()=>{setEditing(true);setEditText(msg.content||"");}}
               onSelect={()=>onSelect(msg.id)}
@@ -1013,7 +1013,7 @@ export default function MessagesPage() {
   });
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [hiddenMsgIds, setHiddenMsgIds] = useState<Set<string>>(new Set());
-  const [deleteTarget, setDeleteTarget] = useState<{id:string;isMe:boolean}|null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{id:string;isMe:boolean;serverId:number}|null>(null);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [profileTab, setProfileTab] = useState<"info"|"media"|"files">("info");
   const [showPinnedPanel, setShowPinnedPanel] = useState(false);
@@ -1653,17 +1653,17 @@ export default function MessagesPage() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    {deleteTarget.isMe&&(
+                    {deleteTarget.serverId > 0 && (
                       <button onClick={async ()=>{
-                        const msgIdNum = Number(deleteTarget.id.split("-")[0]) || 0;
                         setHiddenMsgIds(p=>new Set([...p,deleteTarget.id]));
                         setLocalMsgs(p=>p.filter(m=>m.id!==deleteTarget.id));
                         setDeleteTarget(null);
-                        if(convId && msgIdNum > 0){
-                          try{ await fetch(`${API}/api/conversations/${convId}/messages/${msgIdNum}`,{method:"DELETE",credentials:"include"}); }catch{}
+                        if(convId){
+                          try{ await fetch(`${API}/api/conversations/${convId}/messages/${deleteTarget.serverId}`,{method:"DELETE",credentials:"include"}); }catch{}
                           qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)});
                         }
-                      }} className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90">
+                      }} className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90 flex items-center justify-center gap-2">
+                        <Trash2 className="w-4 h-4"/>
                         {t("msg.delete_for_everyone")}
                       </button>
                     )}
@@ -2022,7 +2022,7 @@ export default function MessagesPage() {
                     msg={msg} isMe={isMe}
                     selected={selectedMsgs.has(msg.id)}
                     onReply={m=>setReplyTo(m)}
-                    onDelete={(id)=>setDeleteTarget({id,isMe})}
+                    onDelete={(id,serverId)=>setDeleteTarget({id,isMe,serverId})}
                     onUpdate={(id,patch)=>setLocalMsgs(prev=>prev.map(m=>m.id===id?{...m,...patch}:m))}
                     onForward={(id)=>setForwardMsgId(id)}
                     onSelect={(id)=>toggleSelect(id)}
@@ -2134,26 +2134,27 @@ export default function MessagesPage() {
             <AnimatePresence>
               {showFmtBar&&(
                 <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}}
-                  className="flex items-center gap-1 px-1 pb-1 overflow-x-auto">
+                  className="flex items-center gap-1.5 px-2 pb-2 pt-1 overflow-x-auto">
                   {[
-                    { icon:Bold,      label:t("msg.fmt.bold"),   before:"**", after:"**" },
-                    { icon:Italic,    label:t("msg.fmt.italic"),  before:"_",  after:"_" },
-                    { icon:AlignLeft, label:t("msg.fmt.quote"),    before:"> ", after:"" },
-                    { icon:Hash,      label:t("msg.fmt.code"),     before:"`",  after:"`" },
-                    { icon:AtSign,    label:t("msg.fmt.mention"), before:"@",  after:"" },
-                    { icon:Link,      label:t("msg.fmt.link"),      before:"[",  after:"](url)" },
+                    { icon:Bold,      label:"Bold",    before:"**", after:"**", color:"from-violet-500 to-purple-600" },
+                    { icon:Italic,    label:"Italic",  before:"_",  after:"_",  color:"from-blue-500 to-cyan-600" },
+                    { icon:AlignLeft, label:"Quote",   before:"> ", after:"",   color:"from-emerald-500 to-teal-600" },
+                    { icon:Hash,      label:"Code",    before:"`",  after:"`",  color:"from-orange-500 to-amber-600" },
+                    { icon:AtSign,    label:"Mention", before:"@",  after:"",   color:"from-pink-500 to-rose-600" },
+                    { icon:Link,      label:"Link",    before:"[",  after:"](url)", color:"from-sky-500 to-indigo-600" },
                   ].map(fmt=>(
                     <button key={fmt.label}
                       onClick={()=>insertFmt(fmt.before,fmt.after)}
-                      className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                      title={fmt.label}>
-                      <fmt.icon className="w-3.5 h-3.5"/>
+                      title={fmt.label}
+                      className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-gradient-to-r ${fmt.color} text-white text-[11px] font-semibold shadow-sm hover:opacity-90 active:scale-95 transition-all`}>
+                      <fmt.icon className="w-3 h-3"/>
+                      {fmt.label}
                     </button>
                   ))}
-                  <div className="w-px h-5 bg-border mx-1 flex-shrink-0"/>
+                  <div className="w-px h-5 bg-border mx-0.5 flex-shrink-0"/>
                   {["❤️","😂","🔥","👍","🎉","💯"].map(e=>(
                     <button key={e} onClick={()=>setText(prev=>prev+e)}
-                      className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center text-base transition-colors">{e}</button>
+                      className="flex-shrink-0 w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-base transition-all hover:scale-110 active:scale-95">{e}</button>
                   ))}
                 </motion.div>
               )}

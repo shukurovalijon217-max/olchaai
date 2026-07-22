@@ -61,6 +61,23 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return output;
 }
 
+async function unsubscribePush() {
+  try {
+    if (!("serviceWorker" in navigator)) return;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await fetch(`${API}/api/notifications/push-unsubscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ endpoint: sub.endpoint }),
+      }).catch(() => {});
+      await sub.unsubscribe();
+    }
+  } catch {}
+}
+
 /** Call this hook inside a component rendered when user is logged in */
 export function usePushNotifications(enabled: boolean) {
   useEffect(() => {
@@ -70,3 +87,6 @@ export function usePushNotifications(enabled: boolean) {
     return () => clearTimeout(t);
   }, [enabled]);
 }
+
+/** Call before logout to unsubscribe push notifications */
+export { unsubscribePush };

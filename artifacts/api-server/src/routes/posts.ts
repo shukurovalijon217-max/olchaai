@@ -293,9 +293,9 @@ router.post("/posts/:id/hot-take", async (req: any, res) => {
 router.get("/posts/:id/hot-take", async (req: any, res) => {
   try {
     const postId = Number(req.params.id);
-    const userId = Number((req.session as any)?.userId ?? 0);
+    const userId = Number((req.session as any)?.userId) || null;
     const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const pool = new Pool({ connectionString: process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL });
     const [{ rows }, { rows: userRow }] = await Promise.all([
       pool.query(`SELECT vote, COUNT(*) as count FROM hot_take_votes WHERE post_id=$1 GROUP BY vote`, [postId]),
       userId ? pool.query(`SELECT vote FROM hot_take_votes WHERE post_id=$1 AND user_id=$2`, [postId, userId]) : { rows: [] },
@@ -374,9 +374,9 @@ router.post("/posts/:id/vote", async (req: any, res) => {
 router.get("/posts/:id/votes", async (req: any, res) => {
   try {
     const postId = Number(req.params.id);
-    const userId = Number((req.session as any)?.userId ?? 0);
+    const userId = Number((req.session as any)?.userId) || null;
     const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const pool = new Pool({ connectionString: process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL });
     const [{ rows: voteRows }, { rows: userRows }] = await Promise.all([
       pool.query(`SELECT option_index, COUNT(*) as count FROM post_votes WHERE post_id=$1 GROUP BY option_index`, [postId]),
       userId ? pool.query(`SELECT option_index FROM post_votes WHERE post_id=$1 AND user_id=$2`, [postId, userId]) : { rows: [] },
@@ -398,8 +398,8 @@ router.post("/posts", async (req: any, res) => {
     const { content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, audioTrimStart, audioTrimEnd, pollQuestion, pollOptions, mood, filterName, tags, midnightOnly,
       destructAt, geoLat, geoLng, geoRadiusKm, emotionLock, lockedEmotion, liveMoodEnabled, seriesName, seriesOrder, collabCanvasEnabled, collabCanvasId } = req.body;
     const sessionUserId: number | undefined = req.session?.userId;
-    const authorId = sessionUserId ?? Number(req.body.authorId);
-    if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
+    if (!sessionUserId) { res.status(401).json({ error: "Login kerak" }); return; }
+    const authorId = sessionUserId;
 
     const [post] = await db
       .insert(postsTable)

@@ -53,7 +53,7 @@ export default defineConfig({
       process.env.VITE_API_BASE_URL ?? ""
     ),
     "import.meta.env.VITE_WS_URL": JSON.stringify(
-      process.env.VITE_WS_URL || "wss://olchaai-go.onrender.com/go/ws"
+      process.env.VITE_WS_URL || "wss://olchaai-go-production.up.railway.app/go/ws"
     ),
   },
   optimizeDeps: {

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePushNotifications, unsubscribePush } from "@/hooks/usePushNotifications";
 
 export interface NotifPrefs {
   likes: boolean;
@@ -136,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    try { await unsubscribePush(); } catch {}
     await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
     setUser(null);
   };

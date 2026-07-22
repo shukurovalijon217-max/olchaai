@@ -1978,7 +1978,7 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                   <div className="mt-3 p-3.5"
                     style={{borderRadius:12,background:"rgba(255,255,255,0.04)"}}>
                     <p style={{fontSize:10,color:"rgba(255,255,255,0.38)",lineHeight:1.7}}>
-                      Min: 100 000 so'm. GILOS Pay orqali har oyning 15-sanasida chiqariladi.
+                      Daromadlar har oyning 15-sanasida chiqariladi.
                     </p>
                   </div>
                 </>

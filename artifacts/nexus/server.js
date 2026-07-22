@@ -3,6 +3,7 @@ import https from "https";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import zlib from "zlib";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,12 +28,38 @@ const MIME = {
   ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg",
 };
 
+// GZIP-compressible MIME types
+const COMPRESSIBLE = new Set([
+  "text/html", "application/javascript", "text/css", "application/json",
+  "image/svg+xml", "text/plain", "application/xml", "application/manifest+json",
+]);
+
 const HOP_BY_HOP = new Set([
   "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
   "te", "trailers", "transfer-encoding", "upgrade",
   "cf-connecting-ip", "cf-ipcountry", "cf-ray", "cf-visitor", "cf-worker",
   "x-forwarded-proto", "x-real-ip",
 ]);
+
+/* ── Gzip a Buffer synchronously for static files ─────────────────── */
+function gzipSync(buf) {
+  try { return zlib.gzipSync(buf, { level: 6 }); } catch { return buf; }
+}
+
+/* ── In-memory gzip cache for static assets ──────────────────────── */
+const gzCache = new Map(); // filePath → {etag, gz, plain, mime}
+
+function readStatic(fp) {
+  const cached = gzCache.get(fp);
+  if (cached) return cached;
+  const plain = fs.readFileSync(fp);
+  const mime = MIME[path.extname(fp).toLowerCase()] || "application/octet-stream";
+  const gz = COMPRESSIBLE.has(mime) ? gzipSync(plain) : null;
+  const etag = `"${crypto.createHash("md5").update(plain).digest("hex").slice(0,10)}"`;
+  const entry = { plain, gz, mime, etag };
+  gzCache.set(fp, entry);
+  return entry;
+}
 
 /* ── Manual AWS Signature V4 presigned GET URL for R2 ─────────────── */
 function r2PresignedUrl(key, ttlSec = 3600) {
@@ -52,7 +79,6 @@ function r2PresignedUrl(key, ttlSec = 3600) {
   qp.set("X-Amz-Date",          amzDate);
   qp.set("X-Amz-Expires",       String(ttlSec));
   qp.set("X-Amz-SignedHeaders", "host");
-  // sort canonical query string
   const sortedQs = [...qp.entries()].sort(([a],[b]) => a.localeCompare(b))
     .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
 
@@ -134,6 +160,8 @@ function proxyToApi(req, res) {
     headers["host"] = url.hostname;
     headers["x-forwarded-host"] = req.headers.host || "";
     headers["x-forwarded-proto"] = "https";
+    // Ask API for gzip so we can forward the compressed bytes directly
+    headers["accept-encoding"] = req.headers["accept-encoding"] || "gzip, deflate, br";
     if (body.length > 0) headers["content-length"] = String(body.length);
 
     const opts = {
@@ -164,38 +192,60 @@ function proxyToApi(req, res) {
 function serveStatic(req, res) {
   let urlPath = req.url.split("?")[0];
   if (urlPath === "/") urlPath = "/index.html";
-  const filePath = path.join(DIST, urlPath);
-  const ext = path.extname(filePath).toLowerCase();
 
   const tryFile = (fp) => {
     try {
-      let data = fs.readFileSync(fp);
-      const mime = MIME[path.extname(fp).toLowerCase()] || "application/octet-stream";
+      let entry = readStatic(fp);
+      const { mime } = entry;
       const isHtml = mime === "text/html";
       const isJs = mime === "application/javascript";
 
-      if (isJs) data = patchJsBundle(data);
+      // ETag / conditional GET
+      if (req.headers["if-none-match"] === entry.etag && !isHtml && !isJs) {
+        res.writeHead(304);
+        res.end();
+        return true;
+      }
 
+      let data = entry.plain;
+      if (isJs) {
+        data = patchJsBundle(data);
+        // Recompress patched JS
+        entry = { ...entry, plain: data, gz: COMPRESSIBLE.has(mime) ? gzipSync(data) : null };
+      }
       if (isHtml) {
         let html = data.toString("utf-8");
         const inject = `<script>window.__API_BASE__="${API_TARGET}";window.__WS_URL__="${WS_URL}";</script>`;
         html = html.replace("</head>", inject + "</head>");
         data = Buffer.from(html, "utf-8");
+        entry = { ...entry, plain: data, gz: gzipSync(data) };
       }
 
-      res.writeHead(200, {
+      const acceptsGzip = (req.headers["accept-encoding"] || "").includes("gz");
+      const useGzip = acceptsGzip && entry.gz && entry.gz.length < data.length;
+      const body = useGzip ? entry.gz : data;
+
+      const headers = {
         "Content-Type": mime,
-        "Content-Length": data.length,
-        "Cache-Control": isHtml ? "no-cache, no-store, must-revalidate" :
-          isJs ? "no-cache" : "public, max-age=31536000, immutable",
-      });
-      res.end(data);
+        "Content-Length": body.length,
+        "ETag": entry.etag,
+        "Vary": "Accept-Encoding",
+        "Cache-Control": isHtml
+          ? "no-cache, no-store, must-revalidate"
+          : "public, max-age=31536000, immutable",
+      };
+      if (useGzip) headers["Content-Encoding"] = "gzip";
+
+      res.writeHead(200, headers);
+      res.end(body);
       return true;
     } catch {
       return false;
     }
   };
 
+  const filePath = path.join(DIST, urlPath);
+  const ext = path.extname(filePath).toLowerCase();
   if (tryFile(filePath)) return;
   if (!ext || ext === ".html") {
     if (tryFile(path.join(DIST, "index.html"))) return;
@@ -210,10 +260,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", r2: R2_ENABLED }));
 
-  // R2 media serve — if R2 credentials are in env, handle here directly
-  // (avoids Railway API hop and works even when API server is being deployed)
   } else if (R2_ENABLED && url.startsWith("/api/storage/r2-serve/")) {
-    // Extract key: /api/storage/r2-serve/uploads/xxx.mp4 → uploads/xxx.mp4
     const key = url.slice("/api/storage/r2-serve/".length).split("?")[0];
     if (!key) { res.writeHead(400).end("Bad key"); return; }
     serveR2(key, req, res);
@@ -226,5 +273,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Nexus :${PORT} → ${API_TARGET} | R2_ENABLED=${R2_ENABLED}`);
+  console.log(`Nexus :${PORT} → ${API_TARGET} | R2_ENABLED=${R2_ENABLED} | gzip=on`);
 });

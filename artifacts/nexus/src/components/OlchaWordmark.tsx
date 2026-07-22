@@ -16,7 +16,7 @@ interface LetterStyle {
 }
 
 /**
- * Per-letter brand color spec — "OlchaAI" neon wordmark:
+ * Per-letter brand color spec — "GILOS" neon wordmark:
  *  G = cherry-red neon    i = magenta neon    l = amber-orange neon
  *  o = purple neon        s = cyan neon       AI = cyan+pink neon shimmer
  */

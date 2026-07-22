@@ -1484,16 +1484,16 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
                       className="aspect-[3/4] rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/reel"
                       style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
-                      {/* Video always visible — autoplay muted loop shows live content */}
+                      {/* Video thumbnail — shows first frame, plays on hover */}
                       {reel.videoUrl ? (
                         <video
-                          src={reel.videoUrl}
+                          src={reel.videoUrl + "#t=0.001"}
                           className="w-full h-full object-cover"
                           muted
-                          autoPlay
-                          loop
                           playsInline
                           preload="metadata"
+                          onMouseEnter={e => { e.currentTarget.play().catch(() => {}); }}
+                          onMouseLeave={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
                         />
                       ) : reel.thumbnailUrl ? (
                         <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />

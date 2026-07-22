@@ -649,7 +649,7 @@ function ReelSlide({
 
       {/* Ambient blur bg */}
       {reel.thumbnailUrl && (
-        <img loading="lazy" decoding="async" src={reel.thumbnailUrl} alt="" aria-hidden
+        <img loading="lazy" decoding="async" src={resolveApiUrl(reel.thumbnailUrl)} alt="" aria-hidden
           className="absolute inset-[-8%] w-[116%] h-[116%] object-cover pointer-events-none"
           style={{ filter: "blur(60px) saturate(2.2) brightness(0.14)", zIndex: 0 }} />
       )}
@@ -657,7 +657,7 @@ function ReelSlide({
         background: "radial-gradient(ellipse at 50% 35%, rgba(124,58,237,0.07) 0%, rgba(0,0,0,0.4) 100%)" }} />
 
       {/* Video */}
-      <ReelVideoEl videoUrl={reel.videoUrl} hlsUrl={reel.hlsUrl} thumbnailUrl={reel.thumbnailUrl}
+      <ReelVideoEl videoUrl={resolveApiUrl(reel.videoUrl) || undefined} hlsUrl={reel.hlsUrl} thumbnailUrl={resolveApiUrl(reel.thumbnailUrl) || undefined}
         isActive={isActive} muted={muted} videoRef={videoRef} onPlayState={setPaused} />
 
       {/* Gradient overlays */}
@@ -1157,7 +1157,7 @@ export default function ReelsPage() {
       <div className="absolute inset-0 z-0 overflow-hidden">
         <AnimatePresence mode="wait">
           {reel?.thumbnailUrl && (
-            <motion.img key={reel.id} src={reel.thumbnailUrl} alt="" aria-hidden
+            <motion.img key={reel.id} src={resolveApiUrl(reel.thumbnailUrl)} alt="" aria-hidden
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
               className="absolute inset-[-12%] w-[124%] h-[124%] object-cover"
@@ -1169,8 +1169,8 @@ export default function ReelsPage() {
 
       {/* Video preload */}
       <div style={{ display: "none" }} aria-hidden>
-        {[current + 1, current + 2].map(i => { const r = feed[i]; return r?.videoUrl ? <video key={r.id} src={r.videoUrl} preload="auto" muted playsInline loop /> : null; })}
-        {[current + 1, current + 2, current + 3].map(i => { const r = feed[i]; return r?.thumbnailUrl ? <img key={`t-${r.id}`} src={r.thumbnailUrl} loading="eager" alt="" /> : null; })}
+        {[current + 1, current + 2].map(i => { const r = feed[i]; return r?.videoUrl ? <video key={r.id} src={resolveApiUrl(r.videoUrl)} preload="auto" muted playsInline loop /> : null; })}
+        {[current + 1, current + 2, current + 3].map(i => { const r = feed[i]; return r?.thumbnailUrl ? <img key={`t-${r.id}`} src={resolveApiUrl(r.thumbnailUrl)} loading="eager" alt="" /> : null; })}
       </div>
 
       {/* Loading */}

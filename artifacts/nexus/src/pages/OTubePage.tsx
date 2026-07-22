@@ -3,6 +3,7 @@
  * "BROADCAST STATION" — Kiberpu / Arcade / Neon estetikasi
  * YouTube'dan tubdan boshqa ko'rinish
  */
+import { resolveApiUrl } from "@/lib/utils";
 import React, {
   useState, useRef, useEffect, useCallback, useMemo,
 } from "react";
@@ -2154,9 +2155,9 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
       {/* Thumbnail — info panel lives INSIDE so it doesn't overlap Watch Party row */}
       <div style={{aspectRatio:expanded?"4/3":"16/9",position:"relative",transition:"all 0.4s cubic-bezier(.4,0,.2,1)",overflow:"hidden"}}>
         {video.thumbnailUrl
-          ? <img loading="lazy" decoding="async" src={video.thumbnailUrl} alt={video.caption} className="w-full h-full object-cover"/>
+          ? <img loading="lazy" decoding="async" src={resolveApiUrl(video.thumbnailUrl)} alt={video.caption} className="w-full h-full object-cover"/>
           : video.videoUrl
-          ? <video src={video.videoUrl} autoPlay muted playsInline loop
+          ? <video src={resolveApiUrl(video.videoUrl)} autoPlay muted playsInline loop
               className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
           : (video as any).audioTrack
           ? <div className="w-full h-full flex flex-col items-center justify-center gap-2"
@@ -2425,10 +2426,10 @@ function TrendRow({ video, onPlay, idx }:
       {/* Thumbnail — fills entire card, no border visible */}
       <div style={{aspectRatio:"3/4",position:"relative",overflow:"hidden"}}>
         {video.thumbnailUrl
-          ? <img loading="lazy" decoding="async" src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
+          ? <img loading="lazy" decoding="async" src={resolveApiUrl(video.thumbnailUrl)} alt="" className="w-full h-full object-cover"
               style={{transform:"scale(1.04)"}}/>
           : video.videoUrl
-          ? <video src={video.videoUrl} autoPlay muted playsInline loop
+          ? <video src={resolveApiUrl(video.videoUrl)} autoPlay muted playsInline loop
               className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
           : (video as any).audioTrack
           ? <div className="w-full h-full flex flex-col items-center justify-center gap-2"
@@ -2566,10 +2567,10 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
       {/* Full-bleed image — NO bottom info box */}
       <div style={{aspectRatio:ar,position:"relative",overflow:"hidden",borderRadius:16}}>
         {video.thumbnailUrl
-          ? <img loading="lazy" decoding="async" src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
+          ? <img loading="lazy" decoding="async" src={resolveApiUrl(video.thumbnailUrl)} alt="" className="w-full h-full object-cover"
               style={{transition:"transform 0.4s"}}/>
           : video.videoUrl
-          ? <video src={video.videoUrl} autoPlay muted playsInline loop
+          ? <video src={resolveApiUrl(video.videoUrl)} autoPlay muted playsInline loop
               className="w-full h-full object-cover"
               style={{pointerEvents:"none"}}/>
           : (video as any).audioTrack
@@ -2822,9 +2823,9 @@ function ContinueRow({ items, onPlay }: { items:ContinueWatchingItem[]; onPlay:(
               whileTap={{scale:0.93}} onClick={()=>onPlay(v)}>
               <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
                 {v.thumbnailUrl
-                  ? <img loading="lazy" decoding="async" src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                  ? <img loading="lazy" decoding="async" src={resolveApiUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
                   : v.videoUrl
-                  ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+                  ? <video src={resolveApiUrl(v.videoUrl)} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                   : (v as any).audioTrack
                   ? <div className="w-full h-full flex items-center justify-center"
                       style={{background:`linear-gradient(135deg,#1a004028,#000)`}}>
@@ -5867,9 +5868,9 @@ function MoodRow({ title, emoji, col, videos, onPlay }:
             whileTap={{scale:0.93}} onClick={()=>onPlay(v)}>
             <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
               {v.thumbnailUrl
-                ? <img loading="lazy" decoding="async" src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                ? <img loading="lazy" decoding="async" src={resolveApiUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
                 : v.videoUrl
-                ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+                ? <video src={resolveApiUrl(v.videoUrl)} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                 : <div className="w-full h-full"
                     style={{background:`linear-gradient(135deg,${col}22,#000)`}}/>}
               <div className="absolute inset-0 pointer-events-none"
@@ -5898,9 +5899,9 @@ function ShortsCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
       style={{width:112,aspectRatio:"9/16",borderRadius:14,
         boxShadow:`0 4px 20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)`}}>
       {video.thumbnailUrl
-        ? <img loading="lazy" decoding="async" src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+        ? <img loading="lazy" decoding="async" src={resolveApiUrl(video.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
         : video.videoUrl
-        ? <video src={video.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+        ? <video src={resolveApiUrl(video.videoUrl)} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
         : <div className="w-full h-full" style={{background:"linear-gradient(180deg,#1a0028,#000510)"}}/>}
       <div className="absolute inset-0 pointer-events-none"
         style={{background:"linear-gradient(to top,rgba(0,0,0,0.88) 0%,transparent 55%)"}}/>
@@ -6016,9 +6017,9 @@ function CoverflowRow({ videos, onPlay }: { videos: Reel[]; onPlay:(v:Reel)=>voi
               >
                 {/* Thumbnail / video */}
                 {v.thumbnailUrl
-                  ? <img loading="lazy" decoding="async" src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                  ? <img loading="lazy" decoding="async" src={resolveApiUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
                   : v.videoUrl
-                  ? <video src={v.videoUrl} autoPlay muted playsInline loop
+                  ? <video src={resolveApiUrl(v.videoUrl)} autoPlay muted playsInline loop
                       className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                   : <div className="w-full h-full"
                       style={{background:`linear-gradient(135deg,${accent}28,#050010)`}}/>}
@@ -6755,9 +6756,9 @@ export default function OTubePage() {
                   <div style={{width:80,aspectRatio:"16/9",flexShrink:0,borderRadius:8,
                     position:"relative",overflow:"hidden"}}>
                     {v.thumbnailUrl
-                      ? <img loading="lazy" decoding="async" src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
+                      ? <img loading="lazy" decoding="async" src={resolveApiUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
                       : v.videoUrl
-                      ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+                      ? <video src={resolveApiUrl(v.videoUrl)} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                       : <div className="w-full h-full" style={{background:"#0a0218"}}/>}
                   </div>
                   <div className="flex-1 min-w-0">

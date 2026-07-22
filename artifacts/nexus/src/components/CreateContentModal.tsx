@@ -3336,7 +3336,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       <div>
                         <p className="text-xs font-bold text-white/45 mb-2">{t("create.swipe_link_title")}</p>
                         <div className="flex gap-2 items-center">
-                          <input placeholder="https://gilos.ai/..." value={storyLink} onChange={e=>setStoryLink(e.target.value)}
+                          <input placeholder="https://GILOS/..." value={storyLink} onChange={e=>setStoryLink(e.target.value)}
                             className="flex-1 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
                             style={{ background:"rgba(52,211,153,0.07)", border:"1px solid rgba(52,211,153,0.25)" }}/>
                           {storyLink && <span className="text-emerald-400 text-lg">✓</span>}

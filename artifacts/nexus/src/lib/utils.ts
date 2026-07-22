@@ -35,7 +35,7 @@ export function getNetworkTier(): NetworkTier {
  * Resolves a URL that may be a relative `/api/...` path stored in the DB.
  * Resolves R2 media URLs to Nexus proxy path so cookies and auth work.
  */
-const R2_DOMAIN = "media.gilos.ai";
+const R2_DOMAIN = "media.GILOS";
 // Guarded base: VITE_API_BASE_URL may be undefined in some build configs
 const API_BASE: string = "";
 

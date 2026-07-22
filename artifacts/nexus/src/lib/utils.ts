@@ -42,10 +42,10 @@ const API_BASE: string = (import.meta.env.VITE_API_BASE_URL as string) || "";
 
 export function resolveApiUrl(url: string | null | undefined): string {
   if (!url) return "";
-  // R2 custom domain broken → proxy through /api/storage/r2-serve
+  // R2 custom domain → proxy through Nexus own server (relative, no API_BASE hop)
   if (url.includes(R2_DOMAIN)) {
     const key = url.split(`${R2_DOMAIN}/`)[1] || "";
-    return `${API_BASE}/api/storage/r2-serve/${key}`;
+    return `/api/storage/r2-serve/${key}`;
   }
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
     return url;

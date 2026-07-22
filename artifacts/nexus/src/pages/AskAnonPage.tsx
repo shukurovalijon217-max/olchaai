@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Ghost, Send, CheckCircle2 } from "lucide-react";
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 export default function AskAnonPage({ userId }: { userId: number }) {
   const { t } = useTranslation();

@@ -8,7 +8,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import AIPaywall from "@/components/AIPaywall";
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 interface AIUsage { used: number; remaining: number; limit: number; isPremium: boolean; }
 

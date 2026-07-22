@@ -34,7 +34,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePip } from "@/context/PipContext";
 import { toast } from "@/hooks/use-toast";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL);
+const API_BASE = "";
 
 /* ─── Accent palette (per post index) ───────────────────────── */
 const ACCENTS = [
@@ -754,7 +754,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
           </div>
         ) : isVideo && post.mediaUrl ? (
           <video ref={videoRef} src={resolveApiUrl(post.mediaUrl)} muted={muted} loop playsInline
-            className="w-full h-full object-cover" />
+            preload="none" className="w-full h-full object-cover" />
         ) : isPhoto && post.mediaUrl && !mediaError ? (
           <img src={imgOptUrl(post.mediaUrl, 900)} alt={post.content}
             loading="lazy" decoding="async"

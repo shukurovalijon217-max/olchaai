@@ -4,7 +4,7 @@ import { initE2E } from "@/lib/e2eEncryption";
 
 // Keep-alive: prevents Render free/starter instances from spinning down
 const WS_BASE = import.meta.env.VITE_WS_URL?.replace(/^wss?:/, "https:").replace("/go/ws", "") ?? "";
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = "";
 function useKeepAlive() {
   useEffect(() => {
     const ping = () => {
@@ -100,7 +100,7 @@ class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNod
   componentDidCatch(error: Error, info: { componentStack: string }) {
     console.error("[ErrorBoundary] React crash:", error.message, "\n", error.stack, "\nComponent stack:", info.componentStack);
     try {
-      const API = (import.meta.env.VITE_API_BASE_URL);
+      const API = "";
       fetch(`${API}/api/client-error`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

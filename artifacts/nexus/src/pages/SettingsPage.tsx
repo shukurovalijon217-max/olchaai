@@ -13,7 +13,7 @@ import { LANGUAGES, type LangCode, applyRTL, ensureTranslation } from "@/lib/i18
 import { COUNTRIES, countryFlag, getCountryByCode } from "@/lib/countries";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | "language" | "location" | "monetization";
 

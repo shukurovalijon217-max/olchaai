@@ -37,7 +37,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCall } from "@/context/CallContext";
 import { useRealtime } from "@/context/RealtimeContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 /* ── Types ──────────────────────────────────────────────────── */
 type MsgType = "text" | "image" | "voice" | "video_note" | "file" | "sticker" | "poll" | "drawing";

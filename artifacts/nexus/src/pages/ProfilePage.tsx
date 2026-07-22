@@ -1487,13 +1487,13 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                       {/* Video thumbnail — shows first frame, plays on hover */}
                       {reel.videoUrl ? (
                         <video
-                          src={reel.videoUrl + "#t=0.001"}
+                          src={resolveApiUrl(reel.videoUrl)}
                           className="w-full h-full object-cover"
+                          autoPlay
                           muted
+                          loop
                           playsInline
-                          preload="metadata"
-                          onMouseEnter={e => { e.currentTarget.play().catch(() => {}); }}
-                          onMouseLeave={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
+                          preload="auto"
                         />
                       ) : reel.thumbnailUrl ? (
                         <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />

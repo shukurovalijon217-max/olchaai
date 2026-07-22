@@ -36,8 +36,16 @@ export function getNetworkTier(): NetworkTier {
  * In production, VITE_API_BASE_URL is set to https://olchaai-api.onrender.com
  * so relative paths are prefixed with it. Already-absolute URLs pass through.
  */
+const R2_DOMAIN = "media.olchaai.com";
+
 export function resolveApiUrl(url: string | null | undefined): string {
   if (!url) return "";
+  // R2 custom domain broken → proxy through /api/storage/r2-serve
+  if (url.includes(R2_DOMAIN)) {
+    const key = url.split(`${R2_DOMAIN}/`)[1] || "";
+    const base = (import.meta.env.VITE_API_BASE_URL);
+    return `${base}/api/storage/r2-serve/${key}`;
+  }
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
     return url;
   }

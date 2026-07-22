@@ -1,3 +1,4 @@
+import { resolveApiUrl } from "@/lib/utils";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useParams } from "wouter";
@@ -432,7 +433,7 @@ export default function CoViewPage() {
 
         {/* Video or placeholder */}
         {room.content?.videoUrl ? (
-          <video ref={videoRef} src={room.content.videoUrl}
+          <video ref={videoRef} src={resolveApiUrl(room.content.videoUrl)}
             poster={room.content.thumbnailUrl ?? undefined}
             style={{ width: "100%", aspectRatio: "16/9", objectFit: "contain", display: "block" }}
             playsInline controls={false} muted={muted}

@@ -888,7 +888,7 @@ export default function GroupsPage() {
     }
   };
 
-  /* ── Internal OlchaAI share ─────────────────────────────────────── */
+  /* ── Internal GILOS share ─────────────────────────────────────── */
   const handleShareToFeed = async () => {
     if (!sharePost || sharingPost) return;
     setSharingPost(true);
@@ -1016,7 +1016,7 @@ export default function GroupsPage() {
     const text = `${post.authorDisplayName}: ${post.content}`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: selectedGroup?.name ?? "OlchaAI", text, url: window.location.href });
+        await navigator.share({ title: selectedGroup?.name ?? "GILOS", text, url: window.location.href });
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(text).catch(() => {});
@@ -2358,7 +2358,7 @@ export default function GroupsPage() {
                                   {post.commentsCount > 0 && <span>{post.commentsCount}</span>}
                                 </motion.button>
 
-                                {/* Share - OlchaAI internal */}
+                                {/* Share - GILOS internal */}
                                 <motion.button whileTap={{ scale: 0.9 }}
                                   onClick={() => { setSharePost(post); setShareComment(""); }}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all">

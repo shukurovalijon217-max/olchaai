@@ -159,7 +159,7 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
       model: AI_CHAT_MODEL,
       max_completion_tokens: 800,
       messages: [
-        { role: "system", content: "Siz OlchaAI platformasining AI yordamchisisiz. Foydalanuvchi qaysi tilda yozsa, o'sha tilda javob bering. Qisqa, aniq va foydali javoblar bering." },
+        { role: "system", content: "Siz GILOS platformasining AI yordamchisisiz. Foydalanuvchi qaysi tilda yozsa, o'sha tilda javob bering. Qisqa, aniq va foydali javoblar bering." },
         ...chatMessages,
       ],
       stream: true,
@@ -209,7 +209,7 @@ router.post("/openai/generate-caption", async (req, res) => {
         },
         {
           role: "user",
-          content: `Mavzu: "${topic}"\nOhang: ${tone || "qiziqarli"}\nPlatforma: ${platform || "OlchaAI"}\n\nQisqa caption + hashtaglar yoz.`,
+          content: `Mavzu: "${topic}"\nOhang: ${tone || "qiziqarli"}\nPlatforma: ${platform || "GILOS"}\n\nQisqa caption + hashtaglar yoz.`,
         },
       ],
     });
@@ -307,7 +307,7 @@ router.post("/openai/voice-chat", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "Siz OlchaAI platformasining ovozli AI yordamchisisiz. Qisqa, aniq va foydali javoblar bering. Foydalanuvchi qaysi tilda gapirsa, o'sha tilda javob bering.",
+          content: "Siz GILOS platformasining ovozli AI yordamchisisiz. Qisqa, aniq va foydali javoblar bering. Foydalanuvchi qaysi tilda gapirsa, o'sha tilda javob bering.",
         },
         { role: "user", content: transcript },
       ],

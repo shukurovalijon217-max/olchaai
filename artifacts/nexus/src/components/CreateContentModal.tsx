@@ -4282,7 +4282,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div>
                           <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⚖️ Litsenziya</p>
                           <div className="grid grid-cols-2 gap-2">
-                            {[{v:"standard",l:"Standard (OlchaAI)"},{v:"cc",l:"Creative Commons"},{v:"commercial",l:"Tijorat maqsadli"},{v:"educational",l:"Ta'lim maqsadli"}].map(({v,l})=>(
+                            {[{v:"standard",l:"Standard (GILOS)"},{v:"cc",l:"Creative Commons"},{v:"commercial",l:"Tijorat maqsadli"},{v:"educational",l:"Ta'lim maqsadli"}].map(({v,l})=>(
                               <button key={v} onClick={()=>setOtubeLicense(v)}
                                 className="py-2.5 px-3 rounded-xl text-[11px] font-bold transition-all"
                                 style={{background:otubeLicense===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeLicense===v?"white":"rgba(255,255,255,0.5)",border:otubeLicense===v?"none":"1px solid rgba(255,255,255,0.08)"}}>

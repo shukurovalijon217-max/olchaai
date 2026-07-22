@@ -1757,7 +1757,7 @@ export default function MessagesPage() {
                           { icon:Video,         label:t("msg.video"),   color:"bg-blue-500/15 text-blue-400",
                             action:()=>{ setShowProfilePanel(false); if(other?.id) startCall({id:other.id,name:other.displayName||"?",avatar:other.avatarUrl||undefined},"video"); } },
                           { icon:Share2,        label:t("msg.share"), color:"bg-purple-500/15 text-purple-400",
-                            action:()=>{ const txt=`OlchaAI: @${other?.username}`; if(navigator.share){navigator.share({title:other?.displayName||"",text:txt}).catch(()=>{});}else{navigator.clipboard?.writeText(txt).catch(()=>{}); } } },
+                            action:()=>{ const txt=`GILOS: @${other?.username}`; if(navigator.share){navigator.share({title:other?.displayName||"",text:txt}).catch(()=>{});}else{navigator.clipboard?.writeText(txt).catch(()=>{}); } } },
                         ].map((btn,i)=>(
                           <button key={i} onClick={btn.action} className="flex flex-col items-center gap-1.5">
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${btn.color}`}>

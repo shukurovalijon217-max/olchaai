@@ -445,7 +445,7 @@ router.post("/admin/notify/broadcast", async (req, res) => {
       userId,
       type,
       message,
-      actorName: "OlchaAI Admin",
+      actorName: "GILOS Admin",
       targetId: null,
       isRead: false,
     }));
@@ -538,7 +538,7 @@ const SETTINGS_DEFAULTS = {
   maxFileSize: 100,
   premiumEnabled: true,
   adsEnabled: true,
-  platform: "OlchaAI",
+  platform: "GILOS",
   version: "1.0.0",
 };
 
@@ -685,7 +685,7 @@ router.post("/admin/stripe/seed", async (req, res) => {
     const yearly = await stripe.prices.create({
       product: product.id, unit_amount: 7999, currency: "usd", recurring: { interval: "year" },
     });
-    res.json({ message: "OlchaAI Premium yaratildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
+    res.json({ message: "GILOS Premium yaratildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Stripe mahsulot yaratishda xato" });

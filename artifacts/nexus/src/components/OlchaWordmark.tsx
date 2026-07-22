@@ -91,7 +91,7 @@ export default function OlchaWordmark({
     <span
       className={className}
       role="img"
-      aria-label="OlchaAI"
+      aria-label="GILOS"
       style={{ position: "relative", display: "inline-flex", alignItems: "baseline" }}
     >
       <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "baseline" }}>

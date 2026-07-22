@@ -51,9 +51,37 @@ packages = ["vlang"]
 CLOUDINARY_CLOUD_NAME = "lskuslne"
 CLOUDINARY_API_KEY = "784642968216699"
 CLOUDINARY_API_SECRET = "K4C2yoyFQrn-1eAJZSssJp89O1w"
-VAPID_PUBLIC_KEY = "BPetmSyptHtSnl6wRN8Uk06zHqynxjJBLI3EU4bfRTMavxk6YOnPbJua-P0MU31fchtR8csVuxelVUT8FILD0Hc"
+VAPID_PUBLIC_KEY = "BGnCO18sYE44IboDLBh2K2VZ7s7LCqxICDgoTFarMF4lAjiwDD7DkQ9XRdOMRvkKVP3rzKoDI5scn24vrDjH4ZM"
 VAPID_PRIVATE_KEY = "bs-TM3ovP64rkkF_bvnTjN5XP5c4J7tMo6F6Xal0t5U"
 VAPID_SUBJECT = "mailto:admin@olchaai.com"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-132f6f09-be31-4b72-b16d-3a5f5a26d812"
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 8099
+externalPort = 8099
+
+[[ports]]
+localPort = 9000
+externalPort = 9000
+
+[[ports]]
+localPort = 18245
+externalPort = 80
+
+[[ports]]
+localPort = 18348
+externalPort = 3000
+
+[[ports]]
+localPort = 23681
+externalPort = 3002

@@ -37,20 +37,20 @@ export function getNetworkTier(): NetworkTier {
  * so relative paths are prefixed with it. Already-absolute URLs pass through.
  */
 const R2_DOMAIN = "media.olchaai.com";
+// Guarded base: VITE_API_BASE_URL may be undefined in some build configs
+const API_BASE: string = (import.meta.env.VITE_API_BASE_URL as string) || "";
 
 export function resolveApiUrl(url: string | null | undefined): string {
   if (!url) return "";
   // R2 custom domain broken → proxy through /api/storage/r2-serve
   if (url.includes(R2_DOMAIN)) {
     const key = url.split(`${R2_DOMAIN}/`)[1] || "";
-    const base = (import.meta.env.VITE_API_BASE_URL);
-    return `${base}/api/storage/r2-serve/${key}`;
+    return `${API_BASE}/api/storage/r2-serve/${key}`;
   }
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
     return url;
   }
-  const base = (import.meta.env.VITE_API_BASE_URL);
-  return `${base}${url.startsWith("/") ? url : `/${url}`}`;
+  return `${API_BASE}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
 export function imgOptUrl(url: string | null | undefined, width = 800, quality = 80): string {

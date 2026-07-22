@@ -28,9 +28,9 @@ COPY lib/integrations-openai-ai-react/ lib/integrations-openai-ai-react/
 # Nexus source
 COPY artifacts/nexus/ artifacts/nexus/
 
-# VITE_API_BASE_URL set at build time via Railway Variables
-# Build stamp to bust Docker layer cache: 2026-07-22-v1
-ARG VITE_API_BASE_URL
+# VITE_API_BASE_URL set at build time via Railway Variables (default "" = relative paths)
+# Build stamp to bust Docker layer cache: 2026-07-22-v2
+ARG VITE_API_BASE_URL=""
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN pnpm --filter @workspace/nexus run build
 

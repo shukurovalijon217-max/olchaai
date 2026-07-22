@@ -28,8 +28,9 @@ COPY lib/integrations-openai-ai-react/ lib/integrations-openai-ai-react/
 # Nexus source
 COPY artifacts/nexus/ artifacts/nexus/
 
-# VITE_API_BASE_URL set at build time via Railway Variables
-ARG VITE_API_BASE_URL
+# VITE_API_BASE_URL set at build time via Railway Variables (default "" = relative paths)
+# Cache bust: 2026-07-22-v3
+ARG VITE_API_BASE_URL=""
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN pnpm --filter @workspace/nexus run build
 

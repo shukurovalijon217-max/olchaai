@@ -58,6 +58,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ["@emoji-mart/react", "@emoji-mart/data"],
+    exclude: ["hls.js"],
   },
   root: path.resolve(import.meta.dirname),
   build: {
@@ -66,16 +67,21 @@ export default defineConfig({
     target: "es2020",
     minify: "esbuild",
     cssMinify: true,
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "vendor-react":    ["react", "react-dom"],
-          "vendor-motion":   ["framer-motion"],
-          "vendor-query":    ["@tanstack/react-query"],
-          "vendor-icons":    ["lucide-react"],
-          "vendor-i18n":     ["i18next", "react-i18next"],
-          "vendor-router":   ["wouter"],
-          "vendor-ui":       ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-tooltip"],
+        manualChunks(id) {
+          // Heavy libraries → separate lazy chunks
+          if (id.includes("hls.js"))    return "vendor-hls";
+          if (id.includes("recharts"))  return "vendor-charts";
+          if (id.includes("framer-motion")) return "vendor-motion";
+          if (id.includes("@tanstack/react-query")) return "vendor-query";
+          if (id.includes("lucide-react")) return "vendor-icons";
+          if (id.includes("i18next") || id.includes("react-i18next")) return "vendor-i18n";
+          if (id.includes("wouter"))   return "vendor-router";
+          if (id.includes("@radix-ui")) return "vendor-ui";
+          if (id.includes("react-dom") || id.includes("react/")) return "vendor-react";
+          if (id.includes("@emoji-mart")) return "vendor-emoji";
         },
       },
       treeshake: {
@@ -83,8 +89,9 @@ export default defineConfig({
         moduleSideEffects: false,
       },
     },
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 600,
     reportCompressedSize: false,
+    sourcemap: false,
   },
   server: {
     port,

@@ -39,6 +39,6 @@
 - [Stories UX: clarify location before building](stories-location-ambiguity.md) — "stories" can mean a dedicated stories screen OR a live-bubble on feed-post avatars; these are different features, confirm which before building.
 - [Privacy Policy page pattern](privacy-policy-page.md) — /privacy route (PrivacyPolicyPage.tsx) linked from login footer + Settings privacy tab; real GDPR/O'zbek-law-referencing content, not a stub.
 - [Push token cross-user leak](push-token-cross-user-leak.md) — push tokens must be deleted on logout (server) and unsubscribed on client; else next user on same device gets previous user's notifications.
-- [Railway migration lessons](railway-migration.md) — migrated from Render to Railway; Nexus uses node server.js proxy; must patch minified bundle if built with wrong API URL; CF headers must be stripped before proxying.
+- [Railway Docker build for Nexus](railway-docker-nexus.md) — root Dockerfile (node:24-slim, NOT alpine) + .dockerignore must allow artifacts/nexus and lib/api-client-react; Railpack can't copy server.js to runtime, Docker builder required.
 - [Render deploy pnpm lockfile fix](render-pnpm-lockfile.md) — (LEGACY/Render) pnpm v8 lockfileVersion 9.0 fix; kept for reference only, project now on Railway.
-- [Nexus dist pre-built for Render](nexus-render-dist.md) — (LEGACY/Render) dist build and push pattern; now superseded by Railway node server.js with runtime gs-patch.
+- [Nexus dist pre-built for Render](nexus-render-dist.md) — (LEGACY/Render) dist build and push pattern; now superseded by Railway Docker build.

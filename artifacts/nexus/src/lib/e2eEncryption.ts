@@ -4,7 +4,7 @@
  * Private key NEVER leaves the device (stored in IndexedDB / localStorage)
  */
 
-const DB_NAME = "olchaai_e2e";
+const DB_NAME = "gilos_e2e";
 const KEY_STORE = "keys";
 const PRIVATE_KEY_ID = "myPrivateKey";
 

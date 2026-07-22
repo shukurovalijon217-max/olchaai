@@ -5,20 +5,27 @@ import {
   userInteractionsTable, contentAnalysisTable,
 } from "@workspace/db";
 import { desc, eq, and, inArray } from "drizzle-orm";
-import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
+import { aiClient as openai, AI_MODEL as AI_CHAT_MODEL, AI_PROVIDER } from "../lib/aiClient";
 import { checkAIAccess, incrementAIUsage } from "../lib/aiAccess";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStatsMap } from "../lib/userStats";
 
 const router = Router();
 
-/* ── OpenAI config health check (public, no auth) ── */
+/* ── AI config health check (public, no auth) ── */
 router.get("/ai/config-status", (_req, res) => {
-  const hasKey = !!process.env.OPENAI_API_KEY;
+  const hasGroq   = !!process.env.GROQ_API_KEY;
+  const hasOpenAI = !!process.env.OPENAI_API_KEY;
+  const ready = hasGroq || hasOpenAI;
   res.json({
-    openai: hasKey ? "configured" : "missing",
-    status: hasKey ? "ok" : "error",
-    message: hasKey ? "AI services ready" : "OPENAI_API_KEY environment variable is not set",
+    provider:  AI_PROVIDER,
+    model:     AI_CHAT_MODEL,
+    groq:      hasGroq   ? "configured" : "missing",
+    openai:    hasOpenAI ? "configured" : "missing",
+    status:    ready ? "ok" : "error",
+    message:   ready
+      ? `AI services ready (${AI_PROVIDER}: ${AI_CHAT_MODEL})`
+      : "Neither GROQ_API_KEY nor OPENAI_API_KEY is set",
   });
 });
 
@@ -419,7 +426,7 @@ router.post("/ai/video-suggest", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: `Siz OlchaAI NEXUS video platformasi uchun video sarlavhasi, teglar va tavsif yozishga yordam berasiz. Fayl nomi asosida jozibali, qisqa sarlavha (60 belgigacha), 4-6 ta tegdan iborat ro'yxat va 1-2 jumlalik tavsif tuzing. Faqat JSON qaytaring: {"title": string, "tags": string[], "caption": string}. Boshqa hech narsa yozmang.`,
+          content: `Siz GILOS NEXUS video platformasi uchun video sarlavhasi, teglar va tavsif yozishga yordam berasiz. Fayl nomi asosida jozibali, qisqa sarlavha (60 belgigacha), 4-6 ta tegdan iborat ro'yxat va 1-2 jumlalik tavsif tuzing. Faqat JSON qaytaring: {"title": string, "tags": string[], "caption": string}. Boshqa hech narsa yozmang.`,
         },
         { role: "user", content: `Video fayl nomi: ${fileName || "video"}` },
       ],

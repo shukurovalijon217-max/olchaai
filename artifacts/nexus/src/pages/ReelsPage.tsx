@@ -567,7 +567,7 @@ function ReelSlide({
   const handleSendToUser = async (toUser: { id: number; displayName?: string; username?: string }) => {
     if (!user || shareSending) return;
     setShareSending(toUser.id);
-    const content = `📤 *${reel.author?.displayName ?? "OlchaAI"}* tomonidan reel:\n${window.location.origin}/reels`;
+    const content = `📤 *${reel.author?.displayName ?? "GILOS"}* tomonidan reel:\n${window.location.origin}/reels`;
     try {
       const convRes = await fetch(`${API}/api/conversations`, {
         method: "POST", credentials: "include",
@@ -872,7 +872,7 @@ function ReelSlide({
               <div className="flex items-center gap-1">
                 <span className="text-white font-black text-[13px] truncate"
                   style={{ textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}>
-                  {reel.author?.displayName ?? "OlchaAI"}
+                  {reel.author?.displayName ?? "GILOS"}
                 </span>
                 {reel.author?.isVerified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: neonColor }} />}
                 {reel._aiSuggested && <Zap className="w-3 h-3 text-violet-400 flex-shrink-0" />}
@@ -940,7 +940,7 @@ function ReelSlide({
               <input
                 value={shareQuery}
                 onChange={e => setShareQuery(e.target.value)}
-                placeholder="OlchaAI foydalanuvchisini qidirish..."
+                placeholder="GILOS foydalanuvchisini qidirish..."
                 className="w-full px-4 py-2.5 rounded-2xl text-white text-[13px] placeholder:text-white/30 focus:outline-none"
                 style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
               />
@@ -950,7 +950,7 @@ function ReelSlide({
                 <p className="text-white/30 text-[13px] text-center py-4">Topilmadi</p>
               )}
               {shareResults.length === 0 && !shareQuery.trim() && (
-                <p className="text-white/20 text-[12px] text-center py-4">Qidirish orqali OlchaAI foydalanuvchilarini toping</p>
+                <p className="text-white/20 text-[12px] text-center py-4">Qidirish orqali GILOS foydalanuvchilarini toping</p>
               )}
               {shareResults.map(u => (
                 <div key={u.id} className="flex items-center gap-3 py-2">

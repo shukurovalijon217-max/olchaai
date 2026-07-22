@@ -58,7 +58,7 @@ router.post("/compare", (req: Request, res: Response) => {
     similarity,
     duplicate: hamming <= 6,      // ≤6 bits diff → likely duplicate
     similar: hamming <= 15,       // ≤15 bits → visually similar
-    engine: "OlchaAI-C++-MediaHasher-v1",
+    engine: "GILOS-C++-MediaHasher-v1",
   });
 });
 

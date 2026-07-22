@@ -1,5 +1,5 @@
 /**
- * OlchaAI Media Fingerprinter — Node.js wrapper for the C++ pHash engine.
+ * GILOS Media Fingerprinter — Node.js wrapper for the C++ pHash engine.
  *
  * Usage:
  *   const result = await hashImagePixels(pixels);   // pixels: number[] of 64 grayscale ints

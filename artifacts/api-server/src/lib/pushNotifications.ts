@@ -27,7 +27,7 @@ async function getWebPush() {
   if (!webPushReady) {
     const pub  = process.env["VAPID_PUBLIC_KEY"];
     const priv = process.env["VAPID_PRIVATE_KEY"];
-    const sub  = process.env["VAPID_SUBJECT"] ?? "mailto:admin@olchaai.com";
+    const sub  = process.env["VAPID_SUBJECT"] ?? "mailto:admin@gilosai.com";
     if (pub && priv) {
       wp.setVapidDetails(sub, pub, priv);
       webPushReady = true;

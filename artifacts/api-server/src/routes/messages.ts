@@ -6,6 +6,7 @@ import { scanContentAsync } from "../moderation/aiFilter.js";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { getUserStatsMap } from "../lib/userStats";
 import { sendNotification } from "../lib/pushNotifications";
+import { cacheAside, cacheDel } from "../lib/cache";
 
 const GO_SERVICE = process.env.GO_SERVICE_URL ?? "http://localhost:8099";
 
@@ -88,28 +89,36 @@ router.get("/conversations", async (req, res) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
   try {
-    const myRows = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.userId, userId));
-    const myConvIds = myRows.map(r => r.conversationId);
-    if (myConvIds.length === 0) { res.json([]); return; }
+    const cacheKey = `user:${userId}`;
+    const enriched = await cacheAside("convo", cacheKey, async () => {
+      const myRows = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.userId, userId));
+      const myConvIds = myRows.map(r => r.conversationId);
+      if (myConvIds.length === 0) return [];
 
-    await Promise.allSettled(myConvIds.map(id => finalizeDueScheduledMessages(id)));
+      await Promise.allSettled(myConvIds.map(id => finalizeDueScheduledMessages(id)));
 
-    const convs = await db.select().from(chatConversationsTable)
-      .where(inArray(chatConversationsTable.id, myConvIds))
-      .orderBy(desc(chatConversationsTable.updatedAt))
-      .limit(50);
+      const [convs, allParticipantRows] = await Promise.all([
+        db.select().from(chatConversationsTable)
+          .where(inArray(chatConversationsTable.id, myConvIds))
+          .orderBy(desc(chatConversationsTable.updatedAt))
+          .limit(50),
+        db.select().from(chatParticipantsTable).where(inArray(chatParticipantsTable.conversationId, myConvIds)),
+      ]);
 
-    const allParticipantRows = await db.select().from(chatParticipantsTable).where(inArray(chatParticipantsTable.conversationId, myConvIds));
-    const allParticipantIds = [...new Set(allParticipantRows.map(r => r.userId))];
-    const statsMap = await getUserStatsMap(allParticipantIds, userId);
-    const users = await db.select().from(usersTable).where(inArray(usersTable.id, allParticipantIds));
-    const userMap = new Map(users.map(u => [u.id, { ...u, ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }) }]));
+      const allParticipantIds = [...new Set(allParticipantRows.map(r => r.userId))];
+      const [statsMap, users] = await Promise.all([
+        getUserStatsMap(allParticipantIds, userId),
+        db.select().from(usersTable).where(inArray(usersTable.id, allParticipantIds)),
+      ]);
+      const userMap = new Map(users.map(u => [u.id, { ...u, ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }) }]));
 
-    const enriched = convs.map((c) => {
-      const parts = allParticipantRows.filter(r => r.conversationId === c.id);
-      const participants = parts.map(p => userMap.get(p.userId)).filter(Boolean);
-      return { ...c, participants };
-    });
+      return convs.map((c) => {
+        const parts = allParticipantRows.filter(r => r.conversationId === c.id);
+        const participants = parts.map(p => userMap.get(p.userId)).filter(Boolean);
+        return { ...c, participants };
+      });
+    }, 20);
+
     res.json(enriched);
   } catch (err) {
     req.log.error(err);

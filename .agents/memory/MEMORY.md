@@ -1,5 +1,5 @@
 - [OlCha platform stack](olcha-stack.md) — Go real-time (:8099/go/*), Express API (:8080/api/*), Nexus web (/), Expo mobile; always rebuild Go binary after changes.
-- [Neon DB migration](neon-db-migration.md) — NEON_DATABASE_URL takes priority over DATABASE_URL in lib/db/src/index.ts; project: nameless-heart-27817431, region: aws-ap-southeast-1, pooler URL used for connection pooling.
+- [DB priority and production split](db-production-split.md) — DATABASE_URL=Railway (primary), NEON_DATABASE_URL=fallback; olchaai.com still served from Render as of July 2026; Railway DB has migrated real users/posts/reels (Alijon id:22, omen id:12, 5 others id:72-76).
 - [Orval codegen conflict fix](orval-codegen-conflict.md) — inline OpenAPI request body schemas cause duplicate type exports; always use $ref to component schemas for request bodies.
 - [Nexus frontend import conventions](nexus-imports.md) — Nexus pages must import hooks from @workspace/api-client-react and user from useAuth(), not api-zod or useCurrentUser.
 - [OpenAI integration setup](openai-integration.md) — Uses OPENAI_API_KEY directly (not Replit proxy); ai_conversations/ai_messages tables; image gen uses dall-e-3 with response_format b64_json.

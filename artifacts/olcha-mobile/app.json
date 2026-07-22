@@ -31,7 +31,7 @@
       [
         "expo-router",
         {
-          "origin": "https://ai-universal-platform.replit.app/"
+          "origin": "https://olchaai.com/"
         }
       ],
       "expo-font",

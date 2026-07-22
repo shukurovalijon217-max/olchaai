@@ -970,7 +970,7 @@ export default function LoginPage() {
                     required
                     className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
                     style={{ background: "rgba(30,12,4,0.9)", border: "1px solid #2a1408", color: "#c8a060" }}
-                    placeholder="siz@olchaai.com"
+                    placeholder="siz@gilosai.com"
                     autoComplete="email"
                   />
                 )}

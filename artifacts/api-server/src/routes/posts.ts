@@ -295,7 +295,7 @@ router.get("/posts/:id/hot-take", async (req: any, res) => {
     const postId = Number(req.params.id);
     const userId = Number((req.session as any)?.userId) || null;
     const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL });
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL ?? process.env.NEON_DATABASE_URL });
     const [{ rows }, { rows: userRow }] = await Promise.all([
       pool.query(`SELECT vote, COUNT(*) as count FROM hot_take_votes WHERE post_id=$1 GROUP BY vote`, [postId]),
       userId ? pool.query(`SELECT vote FROM hot_take_votes WHERE post_id=$1 AND user_id=$2`, [postId, userId]) : { rows: [] },
@@ -376,7 +376,7 @@ router.get("/posts/:id/votes", async (req: any, res) => {
     const postId = Number(req.params.id);
     const userId = Number((req.session as any)?.userId) || null;
     const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL });
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL ?? process.env.NEON_DATABASE_URL });
     const [{ rows: voteRows }, { rows: userRows }] = await Promise.all([
       pool.query(`SELECT option_index, COUNT(*) as count FROM post_votes WHERE post_id=$1 GROUP BY option_index`, [postId]),
       userId ? pool.query(`SELECT option_index FROM post_votes WHERE post_id=$1 AND user_id=$2`, [postId, userId]) : { rows: [] },

@@ -1484,17 +1484,21 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
                       className="aspect-[3/4] rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/reel"
                       style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
-                      {/* Video thumbnail — static poster or thumbnail image, no autoplay */}
-                      {reel.thumbnailUrl ? (
-                        <img src={resolveApiUrl(reel.thumbnailUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                      ) : reel.videoUrl ? (
+                      {/* Video — hover to play, thumbnail as poster */}
+                      {reel.videoUrl ? (
                         <video
                           src={resolveApiUrl(reel.videoUrl)}
+                          poster={reel.thumbnailUrl ? resolveApiUrl(reel.thumbnailUrl) : undefined}
                           className="w-full h-full object-cover"
                           muted
                           playsInline
                           preload="metadata"
+                          loop
+                          onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play().catch(() => {})}
+                          onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
                         />
+                      ) : reel.thumbnailUrl ? (
+                        <img src={resolveApiUrl(reel.thumbnailUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"
                           style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.18), rgba(59,130,246,0.12))" }}>

@@ -1,6 +1,6 @@
 import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
-import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable, moderationQueueTable, commentsTable } from "@workspace/db";
+import { usersTable, postsTable, reelsTable, reelCommentsTable, reelLikesTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable, moderationQueueTable, commentsTable } from "@workspace/db";
 import { eq, sql, desc, sum, and, inArray } from "drizzle-orm";
 import { getCommissionRate, setCommissionRate, applyCommission } from "../lib/commission";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
@@ -289,6 +289,17 @@ router.delete("/admin/posts/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     await db.delete(postsTable).where(eq(postsTable.id, id));
+    res.json({ ok: true });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
+});
+
+// DELETE /admin/reels/:id — OTube videoni admin tomonidan o'chirish
+router.delete("/admin/reels/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await db.delete(reelCommentsTable).where(eq(reelCommentsTable.reelId, id));
+    await db.delete(reelLikesTable).where(eq(reelLikesTable.reelId, id));
+    await db.delete(reelsTable).where(eq(reelsTable.id, id));
     res.json({ ok: true });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
 });

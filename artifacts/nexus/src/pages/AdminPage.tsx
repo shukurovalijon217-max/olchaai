@@ -3186,8 +3186,11 @@ export default function AdminPage() {
     qc.invalidateQueries({ queryKey: getAdminListUsersQueryKey() });
   };
 
-  const handleDeletePost = async (id: number) => {
-    await fetch(`${API}/api/admin/posts/${id}`, { method: "DELETE", credentials: "include" });
+  const handleDeleteContent = async (id: number, type: string) => {
+    const endpoint = (type === "reel" || type === "video")
+      ? `${API}/api/admin/reels/${id}`
+      : `${API}/api/admin/posts/${id}`;
+    await fetch(endpoint, { method: "DELETE", credentials: "include" });
     refetchContent();
   };
 
@@ -3406,7 +3409,7 @@ export default function AdminPage() {
                           <button className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/8 text-white/50 text-xs hover:text-white/80 transition-colors">
                             <Eye className="w-3 h-3" /> Ko'rish
                           </button>
-                          <button onClick={() => handleDeletePost(item.id)}
+                          <button onClick={() => handleDeleteContent(item.id, item.type)}
                             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 text-xs hover:bg-red-500/25 transition-colors">
                             <Trash2 className="w-3 h-3" /> O'chirish
                           </button>

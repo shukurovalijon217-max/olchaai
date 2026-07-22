@@ -26,6 +26,8 @@ import {
   useSendMessage,
   useCreateConversation,
   useListUsers,
+  useDeleteMessage,
+  useDeleteConversation,
   getGetConversationMessagesQueryKey,
   getListConversationsQueryKey,
   type Conversation,
@@ -1652,8 +1654,16 @@ export default function MessagesPage() {
                   </div>
                   <div className="flex flex-col gap-2">
                     {deleteTarget.isMe&&(
-                      <button onClick={()=>{ setHiddenMsgIds(p=>new Set([...p,deleteTarget.id])); setLocalMsgs(p=>p.filter(m=>m.id!==deleteTarget.id)); setDeleteTarget(null); }}
-                        className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90">
+                      <button onClick={async ()=>{
+                        const msgIdNum = Number(deleteTarget.id.split("-")[0]) || 0;
+                        setHiddenMsgIds(p=>new Set([...p,deleteTarget.id]));
+                        setLocalMsgs(p=>p.filter(m=>m.id!==deleteTarget.id));
+                        setDeleteTarget(null);
+                        if(convId && msgIdNum > 0){
+                          try{ await fetch(`${API}/api/conversations/${convId}/messages/${msgIdNum}`,{method:"DELETE",credentials:"include"}); }catch{}
+                          qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)});
+                        }
+                      }} className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90">
                         {t("msg.delete_for_everyone")}
                       </button>
                     )}

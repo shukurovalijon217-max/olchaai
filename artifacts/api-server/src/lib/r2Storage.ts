@@ -144,6 +144,33 @@ export async function r2ObjectExists(objectPath: string): Promise<boolean> {
 }
 
 /**
+ * Stream an R2 object directly to the caller — no redirect, no presigned URL.
+ * Returns null if the object is not found.
+ */
+export async function r2StreamObject(
+  keyOrUrl: string
+): Promise<{ body: Readable; contentType: string; contentLength?: number } | null> {
+  const client = getR2Client();
+  let key = keyOrUrl;
+  if (key.startsWith("r2://")) key = key.slice("r2://".length);
+  else if (key.includes("/uploads/")) key = "uploads/" + key.split("/uploads/")[1];
+  else if (key.startsWith("uploads/")) { /* already bare key */ }
+
+  try {
+    const cmd = new GetObjectCommand({ Bucket: getBucketName(), Key: key });
+    const resp = await client.send(cmd);
+    if (!resp.Body) return null;
+    const body = resp.Body as unknown as Readable;
+    const contentType = resp.ContentType ?? "application/octet-stream";
+    const contentLength = resp.ContentLength;
+    return { body, contentType, contentLength };
+  } catch (err: any) {
+    if (err?.name === "NoSuchKey" || err?.$metadata?.httpStatusCode === 404) return null;
+    throw err;
+  }
+}
+
+/**
  * Generate a presigned GET URL for an R2 object.
  * Works with any key format — r2://, full CDN URL, or bare key.
  */

@@ -19,6 +19,7 @@ import {
   r2GetPresignedUploadUrl,
   r2UploadStream,
   r2GetPresignedDownloadUrl,
+  r2StreamObject,
 } from "../lib/r2Storage";
 
 /* ── Short-lived upload token ────────────────────────────────────────
@@ -352,8 +353,8 @@ router.delete("/storage/objects/delete", async (req: Request, res: Response) => 
 
 /**
  * GET /storage/r2-serve/*key
- * Redirect to a presigned R2 GET URL for any R2 object.
- * Fixes broken media.olchaai.com custom domain.
+ * Stream R2 object directly to the client — no redirect, no CORS issue.
+ * Supports Range requests for video seeking.
  */
 router.get(/^\/storage\/r2-serve\/(.+)$/, async (req: Request, res: Response) => {
   if (!isR2Enabled()) {
@@ -362,11 +363,32 @@ router.get(/^\/storage\/r2-serve\/(.+)$/, async (req: Request, res: Response) =>
   }
   try {
     const key = (req.params as unknown as string[])[0] ?? "";
-    const url = await r2GetPresignedDownloadUrl(key, 3600);
-    res.redirect(302, url);
+
+    // For range requests (video seeking), fall back to presigned redirect
+    // since AWS SDK streaming doesn't easily support byte ranges
+    const rangeHeader = req.headers.range;
+    if (rangeHeader) {
+      const url = await r2GetPresignedDownloadUrl(key, 3600);
+      res.redirect(302, url);
+      return;
+    }
+
+    const result = await r2StreamObject(key);
+    if (!result) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    res.setHeader("Content-Type", result.contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    if (result.contentLength) {
+      res.setHeader("Content-Length", result.contentLength);
+    }
+    result.body.pipe(res);
   } catch (err) {
     req.log.error({ err }, "R2 serve error");
-    res.status(404).json({ error: "Not found" });
+    res.status(500).json({ error: "Failed to serve file" });
   }
 });
 

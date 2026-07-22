@@ -107,7 +107,7 @@ router.get("/img", async (req: Request, res: Response) => {
   }
 
   const cacheKey = `webp:${width}:${quality}:${decoded}`;
-  const cached = cacheGet<Buffer>(cacheKey);
+  const cached = await cacheGet<Buffer>(cacheKey);
   if (cached) {
     res.setHeader("Content-Type", "image/webp");
     res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
@@ -123,7 +123,7 @@ router.get("/img", async (req: Request, res: Response) => {
       .webp({ quality, effort: 4 })
       .toBuffer();
 
-    cacheSet(cacheKey, webp, 60 * 60 * 1000); // 1h
+    await cacheSet(cacheKey, webp, 60 * 60 * 1000); // 1h
 
     res.setHeader("Content-Type", "image/webp");
     res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");

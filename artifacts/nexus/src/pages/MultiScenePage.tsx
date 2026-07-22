@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Play, GitBranch, Plus, Eye, ChevronLeft, Globe, Lock, Sparkles, RotateCcw, Film } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 interface Branch {
   id: number; scenarioId: number; parentId: number | null;

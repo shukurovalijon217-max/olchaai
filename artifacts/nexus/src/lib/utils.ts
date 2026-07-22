@@ -38,7 +38,7 @@ export function getNetworkTier(): NetworkTier {
  */
 const R2_DOMAIN = "media.olchaai.com";
 // Guarded base: VITE_API_BASE_URL may be undefined in some build configs
-const API_BASE: string = (import.meta.env.VITE_API_BASE_URL as string) || "";
+const API_BASE: string = "";
 
 export function resolveApiUrl(url: string | null | undefined): string {
   if (!url) return "";
@@ -83,6 +83,6 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
   }
 
   // Only proxy absolute CDN URLs (R2 public CDN, GCS, etc.) through the WebP optimizer.
-  const base = (import.meta.env.VITE_API_BASE_URL);
+  const base = "";
   return `${base}/api/media/img?url=${encodeURIComponent(url)}&w=${w}&q=${q}`;
 }

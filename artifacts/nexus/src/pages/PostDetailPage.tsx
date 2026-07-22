@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 
 interface PostDetailPageProps { postId: number; }
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 interface VoiceCommentData {
   id: number;

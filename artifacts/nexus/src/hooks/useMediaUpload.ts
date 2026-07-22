@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 export interface UploadResult {
   objectPath: string;

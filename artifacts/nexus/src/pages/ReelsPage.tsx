@@ -45,7 +45,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { resolveApiUrl } from "@/lib/utils";
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface FeedItem {
@@ -417,7 +417,7 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
       <video ref={videoRef as React.RefObject<HTMLVideoElement>}
         poster={thumbnailUrl ?? undefined}
         className="absolute inset-0 w-full h-full object-contain z-[2]"
-        loop playsInline muted={muted} preload="auto"
+        loop playsInline muted={muted} preload="metadata"
         onLoadedData={() => setLoading(false)} onCanPlay={() => setLoading(false)}
         onWaiting={() => setLoading(true)}
         onPlaying={() => { setLoading(false); onPlayState(false); }}
@@ -1169,7 +1169,7 @@ export default function ReelsPage() {
 
       {/* Video preload */}
       <div style={{ display: "none" }} aria-hidden>
-        {[current + 1, current + 2].map(i => { const r = feed[i]; return r?.videoUrl ? <video key={r.id} src={resolveApiUrl(r.videoUrl)} preload="auto" muted playsInline loop /> : null; })}
+        {[current + 1].map(i => { const r = feed[i]; return r?.videoUrl ? <video key={r.id} src={resolveApiUrl(r.videoUrl)} preload="none" muted playsInline /> : null; })}
         {[current + 1, current + 2, current + 3].map(i => { const r = feed[i]; return r?.thumbnailUrl ? <img key={`t-${r.id}`} src={resolveApiUrl(r.thumbnailUrl)} loading="eager" alt="" /> : null; })}
       </div>
 

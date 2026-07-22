@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 interface Quest {
   id: number; key: string; reward: number; target: number;

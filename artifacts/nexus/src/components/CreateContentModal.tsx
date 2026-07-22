@@ -24,7 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { getFeaturePref } from "@/lib/sounds";
 
-const API = (import.meta.env.VITE_API_BASE_URL);
+const API = "";
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 type Permission = "everyone" | "followers" | "friends" | "none";

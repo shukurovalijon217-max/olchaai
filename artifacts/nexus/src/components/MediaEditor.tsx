@@ -860,7 +860,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [musicApiResults, setMusicApiResults] = useState<ApiSong[]>([]);
   const [musicApiLoading, setMusicApiLoading] = useState(false);
   const musicDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const API_BASE = (import.meta.env.VITE_API_BASE_URL);
+  const API_BASE = "";
 
   /* ── Audio server upload ── */
   const [audioServerUrl, setAudioServerUrl] = useState("");   // real server URL after upload

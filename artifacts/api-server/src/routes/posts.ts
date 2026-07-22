@@ -543,6 +543,19 @@ router.patch("/posts/:id", async (req, res) => {
 router.delete("/posts/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const userId = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Login kerak" }); return; }
+
+    const [post] = await db.select({ authorId: postsTable.authorId })
+      .from(postsTable).where(eq(postsTable.id, id)).limit(1);
+    if (!post) { res.status(404).json({ error: "Post topilmadi" }); return; }
+
+    const [me] = await db.select({ isAdmin: usersTable.isAdmin })
+      .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    if (post.authorId !== userId && !me?.isAdmin) {
+      res.status(403).json({ error: "Ruxsat yo'q" }); return;
+    }
+
     const commentRows = await db
       .select({ id: commentsTable.id })
       .from(commentsTable)

@@ -11,6 +11,7 @@ import { useListPosts, useGetAiFeed, useListStories, getListStoriesQueryKey } fr
 import { useAuth } from "@/context/AuthContext";
 import FeedCard from "@/components/FeedCard";
 import StoriesBar from "@/components/StoriesBar";
+import StoryViewer from "@/components/StoryViewer";
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
 import { getFeaturePref } from "@/lib/sounds";
@@ -639,116 +640,32 @@ export default function HomePage() {
 
       {/* ── STORY VIEWER ── */}
       <AnimatePresence>
-        {activeStory && activeGroup && viewerGroupIdx !== null && (
-          <motion.div
-            key={`viewer-${viewerGroupIdx}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-0 z-[200] flex flex-col"
-            style={{ background: "#000", touchAction: "none" }}
-            onPointerDown={(e) => { if ((e.target as HTMLElement).closest("button")) return; setStoryPaused(true); }}
-            onPointerUp={() => setStoryPaused(false)}
-            onPointerLeave={() => setStoryPaused(false)}
-            onPointerCancel={() => setStoryPaused(false)}
-          >
-            {/* Media crossfade */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${viewerGroupIdx}-${viewerStoryIdx}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-                className="absolute inset-0"
-              >
-                {activeStory.mediaUrl ? (
-                  <>
-                    {/* Loading placeholder shown until image is ready */}
-                    {!storyImgLoaded && (
-                      <div
-                        className="absolute inset-0 z-10"
-                        style={{ background: "linear-gradient(160deg,#1a0830 0%,#0a1020 100%)" }}
-                      />
-                    )}
-                    <img
-                      src={activeStory.mediaUrl}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      fetchPriority="high"
-                      decoding="async"
-                      onLoad={() => setStoryImgLoaded(true)}
-                      onError={(e) => {
-                        setStoryImgLoaded(true);
-                        const el = e.currentTarget as HTMLImageElement;
-                        el.style.display = "none";
-                        const fb = el.nextElementSibling as HTMLElement | null;
-                        if (fb) { fb.style.display = "flex"; }
-                      }}
-                    />
-                    <div
-                      className="w-full h-full items-center justify-center px-10"
-                      style={{ display: "none", background: "linear-gradient(160deg,#2a0845,#0d1a44)" }}
-                    >
-                      <p className="text-white text-xl font-bold text-center">{activeStory.caption || "✨"}</p>
-                    </div>
-                  </>
-                ) : (
-                  <div
-                    className="w-full h-full flex items-center justify-center px-10"
-                    style={{ background: "linear-gradient(160deg,#2e0a55 0%,#0f1f50 50%,#1a0535 100%)" }}
-                  >
-                    <p className="text-white text-2xl font-bold text-center leading-snug drop-shadow-lg">
-                      {activeStory.caption || "✨"}
-                    </p>
-                  </div>
-                )}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ background: "linear-gradient(to bottom,rgba(0,0,0,0.6) 0%,transparent 25%,transparent 65%,rgba(0,0,0,0.7) 100%)" }}
-                />
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Close button — minimal, top-right */}
-            <button
-              onClick={closeViewer}
-              className="absolute top-10 right-4 z-30 p-2 rounded-full"
-              style={{ background: "rgba(0,0,0,0.28)", backdropFilter: "blur(8px)" }}
-            >
-              <X className="w-5 h-5 text-white/60" />
-            </button>
-
-            {/* Delete button — only visible to story owner */}
-            {user && (activeStory as any)?.authorId === user.id && (
-              <button
-                onClick={deleteActiveStory}
-                className="absolute top-10 right-16 z-30 p-2 rounded-full"
-                style={{ background: "rgba(180,0,0,0.32)", backdropFilter: "blur(8px)" }}
-              >
-                <Trash2 className="w-5 h-5 text-red-400" />
-              </button>
-            )}
-
-            {/* Caption — ultra-minimal, bottom float */}
-            {activeStory.caption && (
-              <div className="absolute bottom-0 left-0 right-0 z-10 px-6 pb-12 pt-16"
-                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)" }}
-              >
-                <p
-                  className="text-white/90 text-[15px] font-light leading-relaxed tracking-wide"
-                  style={{ textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}
-                >
-                  {activeStory.caption}
-                </p>
-              </div>
-            )}
-
-            {/* Tap zones for prev/next */}
-            <button className="absolute left-0 top-0 w-1/3 h-full z-20" onClick={goPrevInGroup} />
-            <button className="absolute right-0 top-0 w-1/3 h-full z-20" onClick={goNextInGroup} />
-          </motion.div>
+        {viewerGroupIdx !== null && storyGroups.length > 0 && (
+          <StoryViewer
+            storyGroups={storyGroups}
+            groupIdx={viewerGroupIdx}
+            storyIdx={viewerStoryIdx}
+            userId={user?.id}
+            onClose={closeViewer}
+            onNextGroup={() => {
+              if (viewerGroupIdx < storyGroups.length - 1) {
+                setViewerGroupIdx(i => (i ?? 0) + 1);
+                setViewerStoryIdx(0);
+              } else {
+                closeViewer();
+              }
+            }}
+            onPrevGroup={() => {
+              if (viewerGroupIdx > 0) {
+                setViewerGroupIdx(i => (i ?? 1) - 1);
+                setViewerStoryIdx(0);
+              }
+            }}
+            onNextStory={() => setViewerStoryIdx(i => i + 1)}
+            onPrevStory={() => setViewerStoryIdx(i => i - 1)}
+            onDelete={deleteActiveStory}
+            STORY_DURATION={STORY_DURATION}
+          />
         )}
       </AnimatePresence>
 

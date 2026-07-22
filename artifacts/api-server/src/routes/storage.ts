@@ -18,6 +18,7 @@ import {
   isR2Enabled,
   r2GetPresignedUploadUrl,
   r2UploadStream,
+  r2GetPresignedDownloadUrl,
 } from "../lib/r2Storage";
 
 /* ── Short-lived upload token ────────────────────────────────────────
@@ -346,6 +347,27 @@ router.delete("/storage/objects/delete", async (req: Request, res: Response) => 
   } catch (error) {
     req.log.error({ err: error }, "Error deleting object");
     res.status(500).json({ error: "Failed to delete object" });
+  }
+});
+
+/**
+ * GET /storage/r2-serve/*key
+ * Redirect to a presigned R2 GET URL for any R2 object.
+ * Fixes broken media.olchaai.com custom domain.
+ */
+router.get("/storage/r2-serve/*key", async (req: Request, res: Response) => {
+  if (!isR2Enabled()) {
+    res.status(503).json({ error: "R2 not configured" });
+    return;
+  }
+  try {
+    const raw = req.params.key;
+    const key = Array.isArray(raw) ? raw.join("/") : raw;
+    const url = await r2GetPresignedDownloadUrl(key, 3600);
+    res.redirect(302, url);
+  } catch (err) {
+    req.log.error({ err }, "R2 serve error");
+    res.status(404).json({ error: "Not found" });
   }
 });
 

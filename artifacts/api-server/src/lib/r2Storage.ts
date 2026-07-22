@@ -8,6 +8,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
@@ -140,6 +141,24 @@ export async function r2ObjectExists(objectPath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Generate a presigned GET URL for an R2 object.
+ * Works with any key format — r2://, full CDN URL, or bare key.
+ */
+export async function r2GetPresignedDownloadUrl(
+  keyOrUrl: string,
+  ttlSec = 3600
+): Promise<string> {
+  const client = getR2Client();
+  let key = keyOrUrl;
+  // r2://uploads/file.mp4 → uploads/file.mp4
+  if (key.startsWith("r2://")) key = key.slice("r2://".length);
+  // https://media.olchaai.com/uploads/file.mp4 → uploads/file.mp4
+  else if (key.includes("/uploads/")) key = "uploads/" + key.split("/uploads/")[1];
+  const command = new GetObjectCommand({ Bucket: getBucketName(), Key: key });
+  return getSignedUrl(client, command, { expiresIn: ttlSec });
 }
 
 function contentTypeToExt(contentType: string): string {

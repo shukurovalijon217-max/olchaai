@@ -22,14 +22,8 @@ attached_assets/
 .git
 .gitignore
 
-# Artifacts not needed for Nexus or API builds
+# Artifacts not needed for Nexus build
 artifacts/olcha-mobile
 artifacts/spatial-ar
-artifacts/ai-core
 artifacts/olcha-go
 artifacts/mockup-sandbox
-
-# Lib packages not needed for Nexus build
-lib/api-spec
-lib/integrations
-lib/object-storage-web

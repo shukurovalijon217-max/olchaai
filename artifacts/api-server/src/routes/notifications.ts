@@ -32,6 +32,26 @@ router.post("/notifications/push-subscribe", async (req: any, res) => {
   }
 });
 
+/* ── Unsubscribe web push (called on logout) ── */
+router.post("/notifications/push-unsubscribe", async (req: any, res) => {
+  try {
+    const userId = req.session?.userId;
+    const { endpoint } = req.body ?? {};
+    if (userId && endpoint) {
+      const rows = await db.select({ token: pushTokensTable.token }).from(pushTokensTable)
+        .where(eq(pushTokensTable.userId, userId));
+      const match = rows.find(r => { try { return JSON.parse(r.token)?.endpoint === endpoint; } catch { return false; } });
+      if (match) {
+        await db.delete(pushTokensTable)
+          .where(and(eq(pushTokensTable.userId, userId), eq(pushTokensTable.token, match.token)));
+      }
+    }
+    res.json({ ok: true });
+  } catch {
+    res.json({ ok: true });
+  }
+});
+
 /* ── Get notifications for the current user only ── */
 router.get("/notifications", async (req, res) => {
   try {

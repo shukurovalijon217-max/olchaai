@@ -81,7 +81,8 @@ function coturnCredentials(secret: string, domain: string, ttlSeconds = 86400): 
 async function fetchMeteredIceServers(): Promise<IceServer[]> {
   const apiKey = process.env["METERED_API_KEY"];
   if (!apiKey) return [];
-  const url = `https://gilos.metered.live/api/v1/turn/credentials?apiKey=${encodeURIComponent(apiKey)}`;
+  const appName = process.env["METERED_APP_NAME"] ?? "olchaai";
+  const url = `https://${appName}.metered.live/api/v1/turn/credentials?apiKey=${encodeURIComponent(apiKey)}`;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 4000);
   try {

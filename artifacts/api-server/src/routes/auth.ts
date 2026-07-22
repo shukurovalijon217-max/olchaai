@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
 import { db } from "@workspace/db";
-import { usersTable, followsTable, postsTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@workspace/db";
+import { usersTable, followsTable, postsTable, pushTokensTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@workspace/db";
 import type { NotifPrefs, PrivacySettings } from "@workspace/db";
 import { eq, and, gt, sql } from "drizzle-orm";
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
@@ -244,7 +244,13 @@ router.post("/auth/login", async (req, res) => {
   }
 });
 
-router.post("/auth/logout", (req, res) => {
+router.post("/auth/logout", async (req, res) => {
+  try {
+    const userId = req.session?.userId;
+    if (userId) {
+      await db.delete(pushTokensTable).where(eq(pushTokensTable.userId, userId)).catch(() => {});
+    }
+  } catch {}
   req.session.destroy(() => {
     res.json({ ok: true });
   });

@@ -128,11 +128,16 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", function () {
-          navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      /* Kill all service workers and their caches immediately */
+      (function () {
+        if (!("serviceWorker" in navigator)) return;
+        caches.keys().then(function (keys) {
+          keys.forEach(function (k) { caches.delete(k); });
         });
-      }
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        });
+      })();
     </script>
   </body>
 </html>

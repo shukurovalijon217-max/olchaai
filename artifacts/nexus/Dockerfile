@@ -1,16 +1,20 @@
 ### Pre-built dist — build context = artifacts/nexus/
-### Railway Dockerfile Path: artifacts/nexus/Dockerfile (Settings da belgilangan)
+### Railway Dockerfile Path: artifacts/nexus/Dockerfile
 ### Watch Paths: artifacts/nexus/**
-# Deploy stamp: 2026-07-23-v16
+# Deploy stamp: 2026-07-23-v17
 FROM node:24-alpine
 
-WORKDIR /app/nexus
+WORKDIR /app/artifacts/nexus
 
-# server.js FIRST — changing it invalidates all subsequent layers (incl. dist/public)
+# ARG CACHEBUST forces Docker to invalidate COPY layers below when value changes
+ARG CACHEBUST=1
+RUN echo "Cache bust: $CACHEBUST"
+
+# server.js first — its change also invalidates dist/public layer
 COPY server.js ./server.js
 COPY package.json ./package.json
 
-# dist/public AFTER server.js — cache busted whenever server.js changes
+# dist/public — busted by CACHEBUST arg and server.js change
 COPY dist/public ./dist/public
 
 ENV NODE_ENV=production

@@ -120,11 +120,12 @@ function serveStatic(req, res) {
         return true;
       }
 
+      const isSW = urlPath === "/sw.js" || urlPath === "/service-worker.js";
       const headers = {
         "Content-Type": mime,
         "Content-Length": data.length,
         "ETag": etag,
-        "Cache-Control": isHtml
+        "Cache-Control": (isHtml || isSW)
           ? "no-cache, must-revalidate"
           : "public, max-age=31536000, immutable",
       };

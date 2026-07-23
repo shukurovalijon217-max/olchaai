@@ -42,3 +42,4 @@
 - [Railway Docker build for Nexus](railway-docker-nexus.md) — root Dockerfile (node:24-slim, NOT alpine) + .dockerignore must allow artifacts/nexus and lib/api-client-react; Railpack can't copy server.js to runtime, Docker builder required.
 - [Render deploy pnpm lockfile fix](render-pnpm-lockfile.md) — (LEGACY/Render) pnpm v8 lockfileVersion 9.0 fix; kept for reference only, project now on Railway.
 - [Nexus dist pre-built for Render](nexus-render-dist.md) — (LEGACY/Render) dist build and push pattern; now superseded by Railway Docker build.
+- [Railway Dockerfile build context fix](railway-build-context.md) — Railway build context=repo root; .dockerignore **/dist blocks dist/public; fix: !artifacts/nexus/dist exception + use full repo-root COPY paths.

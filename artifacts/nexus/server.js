@@ -78,6 +78,27 @@ const keepAgent = new https.Agent({
 /* Simple in-memory file cache — HTML files are never cached (always read fresh) */
 const fileCache = new Map();
 
+/* Scan assets/ once and cache the real main bundle filenames */
+let _realJs  = null;
+let _realCss = null;
+function getRealAssets() {
+  if (_realJs !== null) return { js: _realJs, css: _realCss };
+  try {
+    const assetsDir = path.join(DIST, "assets");
+    const files = fs.readdirSync(assetsDir);
+    /* Pick the largest index-*.js (the main bundle, not a chunk) */
+    let biggest = 0;
+    for (const f of files) {
+      if (/^index-[^.]+\.js$/.test(f)) {
+        const sz = fs.statSync(path.join(assetsDir, f)).size;
+        if (sz > biggest) { biggest = sz; _realJs = f; }
+      }
+    }
+    _realCss = files.find(f => /^index-[^.]+\.css$/.test(f)) || null;
+  } catch { /* ignore */ }
+  return { js: _realJs, css: _realCss };
+}
+
 function readFile(fp) {
   const ext    = path.extname(fp).toLowerCase();
   const isHtml = ext === ".html";
@@ -85,8 +106,18 @@ function readFile(fp) {
     const hit = fileCache.get(fp);
     if (hit) return hit;
   }
-  const data  = fs.readFileSync(fp);
-  const mime  = MIME[ext] || "application/octet-stream";
+  let data = fs.readFileSync(fp);
+  const mime = MIME[ext] || "application/octet-stream";
+
+  /* For HTML: rewrite stale bundle hash → actual asset on disk */
+  if (isHtml) {
+    const { js, css } = getRealAssets();
+    let html = data.toString("utf8");
+    if (js)  html = html.replace(/\/assets\/index-[^"']+\.js/g,  `/assets/${js}`);
+    if (css) html = html.replace(/\/assets\/index-[^"']+\.css/g, `/assets/${css}`);
+    data = Buffer.from(html, "utf8");
+  }
+
   const etag  = `"${crypto.createHash("md5").update(data).digest("hex").slice(0,10)}"`;
   const entry = { data, mime, etag };
   if (!isHtml) fileCache.set(fp, entry);

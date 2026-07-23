@@ -123,25 +123,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-DeYWdbgW.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/vendor-query-C6VXM9vM.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-react-CMlehoq8.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-i18n-CCMtE8lN.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-router-Cg1VwE05.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-HUS1rNE3.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-charts-CGsUumnN.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-icons-Cfdr6dEE.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-motion-D3CL5x5w.js">
+    <script type="module" crossorigin src="/assets/index-j7tmOXtb.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-BayKAwYr.css">
   </head>
   <body>
     <div id="root"></div>
     <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", function () {
-          navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      /* Kill all service workers and their caches immediately */
+      (function () {
+        if (!("serviceWorker" in navigator)) return;
+        caches.keys().then(function (keys) {
+          keys.forEach(function (k) { caches.delete(k); });
         });
-      }
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        });
+      })();
     </script>
   </body>
 </html>

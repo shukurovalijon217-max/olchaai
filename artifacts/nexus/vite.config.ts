@@ -68,27 +68,7 @@ export default defineConfig({
     minify: "esbuild",
     cssMinify: true,
     cssCodeSplit: true,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          // Heavy libraries → separate lazy chunks
-          if (id.includes("hls.js"))    return "vendor-hls";
-          if (id.includes("recharts"))  return "vendor-charts";
-          if (id.includes("framer-motion")) return "vendor-motion";
-          if (id.includes("@tanstack/react-query")) return "vendor-query";
-          if (id.includes("lucide-react")) return "vendor-icons";
-          if (id.includes("i18next") || id.includes("react-i18next")) return "vendor-i18n";
-          if (id.includes("wouter"))   return "vendor-router";
-          if (id.includes("@radix-ui")) return "vendor-ui";
-          if (id.includes("react-dom") || id.includes("react/")) return "vendor-react";
-          if (id.includes("@emoji-mart")) return "vendor-emoji";
-        },
-      },
-      treeshake: {
-        preset: "recommended",
-        moduleSideEffects: false,
-      },
-    },
+    rollupOptions: {},
     chunkSizeWarningLimit: 600,
     reportCompressedSize: false,
     sourcemap: false,

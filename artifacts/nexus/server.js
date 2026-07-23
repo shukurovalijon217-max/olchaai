@@ -125,9 +125,12 @@ function serveStatic(req, res) {
         "Content-Type": mime,
         "Content-Length": data.length,
         "ETag": etag,
-        "Cache-Control": (isHtml || isSW)
-          ? "no-cache, must-revalidate"
+        "Cache-Control": isHtml
+          ? "no-store, no-cache, must-revalidate, max-age=0"
+          : isSW
+          ? "no-store, no-cache, must-revalidate, max-age=0"
           : "public, max-age=31536000, immutable",
+        ...(isHtml ? { "Pragma": "no-cache", "Expires": "0" } : {}),
       };
       if (!isHtml) headers["Accept-Ranges"] = "bytes";
 

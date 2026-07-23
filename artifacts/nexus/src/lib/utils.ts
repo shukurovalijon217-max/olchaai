@@ -33,18 +33,18 @@ export function getNetworkTier(): NetworkTier {
  */
 /**
  * Resolves a URL that may be a relative `/api/...` path stored in the DB.
- * Resolves R2 media URLs to Nexus proxy path so cookies and auth work.
+ * media.olchaai.com URLs are served directly via Cloudflare → R2 (no Railway hop).
  */
-const R2_DOMAIN = "media.GILOS";
+// R2 public CDN domain — matches Cloudflare DNS record (media.olchaai.com → R2 bucket)
+const R2_DOMAIN = "media.olchaai.com";
 // Guarded base: VITE_API_BASE_URL may be undefined in some build configs
 const API_BASE: string = "";
 
 export function resolveApiUrl(url: string | null | undefined): string {
   if (!url) return "";
-  // R2 custom domain → proxy through Nexus own server (relative, no API_BASE hop)
+  // R2 public CDN → serve directly through Cloudflare (no Railway proxy hop needed)
   if (url.includes(R2_DOMAIN)) {
-    const key = url.split(`${R2_DOMAIN}/`)[1] || "";
-    return `/api/storage/r2-serve/${key}`;
+    return url; // https://media.olchaai.com/... → Cloudflare → R2 directly
   }
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
     return url;
@@ -81,7 +81,12 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
     return resolveApiUrl(url);
   }
 
-  // Only proxy absolute CDN URLs (R2 public CDN, GCS, etc.) through the WebP optimizer.
+  // R2 public CDN (media.olchaai.com) — served directly via Cloudflare, no proxy needed
+  if (url.includes(R2_DOMAIN)) {
+    return url;
+  }
+
+  // Only proxy other absolute CDN URLs through the WebP optimizer.
   const base = "";
   return `${base}/api/media/img?url=${encodeURIComponent(url)}&w=${w}&q=${q}`;
 }

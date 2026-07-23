@@ -1,16 +1,17 @@
-### Pre-built dist — build context = REPO ROOT
-# Deploy stamp: 2026-07-23-v13
+### Pre-built dist — build context = artifacts/nexus/
+### Railway Dockerfile Path: artifacts/nexus/Dockerfile (Settings da belgilangan)
+### Watch Paths: artifacts/nexus/**
+# Deploy stamp: 2026-07-23-v16
 FROM node:24-alpine
 
 WORKDIR /app/nexus
 
-# Cache-bust: change this value to force Railway to re-copy dist
-ARG BUST=20260723v13
+# server.js FIRST — changing it invalidates all subsequent layers (incl. dist/public)
+COPY server.js ./server.js
+COPY package.json ./package.json
 
-# Build context = repo root
-COPY artifacts/nexus/dist/public ./dist/public
-COPY artifacts/nexus/server.js ./server.js
-COPY artifacts/nexus/package.json ./package.json
+# dist/public AFTER server.js — cache busted whenever server.js changes
+COPY dist/public ./dist/public
 
 ENV NODE_ENV=production
 ENV PORT=3000

@@ -305,11 +305,6 @@ const server = http.createServer((req, res) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
 
-  const done = res.end.bind(res);
-  res.end = function(...args) {
-    res.setHeader("Server-Timing", `total;dur=${Date.now() - t0}`);
-    return done(...args);
-  };
 
   if (url === "/healthz" || url === "/health") {
     res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-cache" });

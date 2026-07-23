@@ -1,13 +1,14 @@
 ### Pre-built dist — build context = artifacts/nexus/
-### Railway Dockerfile Path: artifacts/nexus/Dockerfile
-# v19 — back to working v15 base; server.js startup patcher handles index.html hash
+### Railway Dockerfile Path: artifacts/nexus/Dockerfile (Settings da belgilangan)
+# v22 — exact V15 config that worked; dynamic bundle hash rewrite in server.js
 FROM node:24-alpine
 
 WORKDIR /app/nexus
 
+# dist/public FIRST (V15 order) — server.js getRealAssets() picks largest bundle
+COPY dist/public ./dist/public
 COPY server.js ./server.js
 COPY package.json ./package.json
-COPY dist/public ./dist/public
 
 ENV NODE_ENV=production
 ENV PORT=3000

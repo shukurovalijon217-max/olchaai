@@ -1,11 +1,13 @@
-### Pre-built dist — build context = REPO ROOT (Railway rootDirectory not set)
-### Railway clones repo root as build context regardless of where railway.json lives.
-# Deploy stamp: 2026-07-23-v12
+### Pre-built dist — build context = REPO ROOT
+# Deploy stamp: 2026-07-23-v13
 FROM node:24-alpine
 
 WORKDIR /app/nexus
 
-# Build context = repo root, so paths start from repo root
+# Cache-bust: change this value to force Railway to re-copy dist
+ARG BUST=20260723v13
+
+# Build context = repo root
 COPY artifacts/nexus/dist/public ./dist/public
 COPY artifacts/nexus/server.js ./server.js
 COPY artifacts/nexus/package.json ./package.json

@@ -1,13 +1,14 @@
-### Pre-built dist approach — Railway build context is artifacts/nexus/
-### so all COPY paths are relative to that directory.
-# Deploy stamp: 2026-07-23-v10
+### Pre-built dist — build context = REPO ROOT (Railway rootDirectory not set)
+### Railway clones repo root as build context regardless of where railway.json lives.
+# Deploy stamp: 2026-07-23-v12
 FROM node:24-alpine
 
 WORKDIR /app/nexus
 
-COPY dist ./dist
-COPY server.js ./server.js
-COPY package.json ./package.json
+# Build context = repo root, so paths start from repo root
+COPY artifacts/nexus/dist/public ./dist/public
+COPY artifacts/nexus/server.js ./server.js
+COPY artifacts/nexus/package.json ./package.json
 
 ENV NODE_ENV=production
 ENV PORT=3000

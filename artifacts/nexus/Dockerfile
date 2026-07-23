@@ -1,14 +1,13 @@
-### Pre-built dist approach — no builder stage needed
-### Vite build runs locally; dist is committed to repo and copied directly.
-### This avoids Railway Docker layer cache issues with workspace packages.
-# Deploy stamp: 2026-07-23-v9
-FROM node:24-alpine AS runtime
+### Pre-built dist approach — Railway build context is artifacts/nexus/
+### so all COPY paths are relative to that directory.
+# Deploy stamp: 2026-07-23-v10
+FROM node:24-alpine
 
-WORKDIR /app/artifacts/nexus
+WORKDIR /app/nexus
 
-COPY artifacts/nexus/dist ./dist
-COPY artifacts/nexus/server.js ./server.js
-COPY artifacts/nexus/package.json ./package.json
+COPY dist ./dist
+COPY server.js ./server.js
+COPY package.json ./package.json
 
 ENV NODE_ENV=production
 ENV PORT=3000

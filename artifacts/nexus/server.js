@@ -10,6 +10,35 @@ const DIST = path.join(__dirname, "dist/public");
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.railway.app";
 
+/* On startup: patch index.html to use whatever index-*.js / index-*.css is
+   actually present in dist/public/assets/. This survives Docker layer cache
+   mismatches where index.html gets cached with a stale bundle hash. */
+(function patchIndexHtml() {
+  try {
+    const assetsDir = path.join(DIST, "assets");
+    const files     = fs.readdirSync(assetsDir);
+    const jsFile    = files.find(f => /^index-[^.]+\.js$/.test(f));
+    const cssFile   = files.find(f => /^index-[^.]+\.css$/.test(f));
+    if (!jsFile && !cssFile) return;
+
+    const indexPath = path.join(DIST, "index.html");
+    let html = fs.readFileSync(indexPath, "utf8");
+    const original = html;
+
+    if (jsFile)  html = html.replace(/\/assets\/index-[^"']+\.js/g,  `/assets/${jsFile}`);
+    if (cssFile) html = html.replace(/\/assets\/index-[^"']+\.css/g, `/assets/${cssFile}`);
+
+    if (html !== original) {
+      fs.writeFileSync(indexPath, html, "utf8");
+      console.log(`[startup] patched index.html → js:${jsFile} css:${cssFile}`);
+    } else {
+      console.log(`[startup] index.html already correct (js:${jsFile} css:${cssFile})`);
+    }
+  } catch (e) {
+    console.error("[startup] patchIndexHtml failed:", e.message);
+  }
+}());
+
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js":   "application/javascript",
@@ -46,18 +75,21 @@ const keepAgent = new https.Agent({
   timeout: 20000, scheduling: "lifo",
 });
 
-/* Simple in-memory file cache */
+/* Simple in-memory file cache — HTML files are never cached (always read fresh) */
 const fileCache = new Map();
 
 function readFile(fp) {
-  const hit = fileCache.get(fp);
-  if (hit) return hit;
+  const ext    = path.extname(fp).toLowerCase();
+  const isHtml = ext === ".html";
+  if (!isHtml) {
+    const hit = fileCache.get(fp);
+    if (hit) return hit;
+  }
   const data  = fs.readFileSync(fp);
-  const ext   = path.extname(fp).toLowerCase();
   const mime  = MIME[ext] || "application/octet-stream";
   const etag  = `"${crypto.createHash("md5").update(data).digest("hex").slice(0,10)}"`;
   const entry = { data, mime, etag };
-  fileCache.set(fp, entry);
+  if (!isHtml) fileCache.set(fp, entry);
   return entry;
 }
 

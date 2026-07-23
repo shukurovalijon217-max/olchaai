@@ -70,6 +70,7 @@ export async function r2GetPresignedUploadUrl(
     Bucket: getBucketName(),
     Key: key,
     ContentType: contentType,
+    CacheControl: "public, max-age=31536000, immutable",
   });
 
   const uploadURL = await getSignedUrl(client, command, { expiresIn: ttlSec });
@@ -107,6 +108,7 @@ export async function r2UploadStream(
       Bucket: getBucketName(),
       Key: key,
       ContentType: contentType,
+      CacheControl: "public, max-age=31536000, immutable",
       Body: stream,
       ...(contentLength ? { ContentLength: contentLength } : {}),
     }),

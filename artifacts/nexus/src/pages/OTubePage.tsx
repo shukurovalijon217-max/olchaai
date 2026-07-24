@@ -6408,7 +6408,7 @@ function OTubeMusicPlayer() {
       <motion.button
         onClick={() => setOpen(v => !v)}
         whileTap={{ scale: 0.88 }}
-        className="fixed z-[80] md:hidden"
+        className="fixed z-[80]"
         style={{
           bottom: "calc(env(safe-area-inset-bottom,0px) + 14px)",
           left: 16,

@@ -16,9 +16,14 @@ if (!dbUrl) {
 const needsSsl = dbUrl.includes("neon.tech") ||
   (dbUrl.includes("sslmode=require") && !dbUrl.includes(".internal"));
 
+// Per-worker pool size: total DB connections = DB_POOL_MAX × WEB_CONCURRENCY workers.
+// Default: 10 per worker × 2 workers = 20 total (safe for Railway Hobby/Pro).
+// Set DB_POOL_MAX env var to tune per your Railway plan's DB connection limit.
+const perWorkerMax = Math.max(5, parseInt(process.env["DB_POOL_MAX"] ?? "10", 10));
+
 export const pool = new Pool({
   connectionString: dbUrl,
-  max: 20,
+  max: perWorkerMax,
   min: 2,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,

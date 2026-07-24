@@ -237,3 +237,19 @@ server.headersTimeout   = 70_000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Nexus :${PORT} → ${API_TARGET} | dist=${DIST}`);
 });
+
+/* Graceful shutdown — Railway sends SIGTERM before replacing the container */
+function shutdown(signal) {
+  console.log(`[${signal}] Graceful shutdown — closing server`);
+  server.close(() => {
+    console.log("Server closed. Exiting.");
+    process.exit(0);
+  });
+  // Force-kill if connections don't drain in 10s
+  setTimeout(() => {
+    console.error("Force exit after 10s drain timeout");
+    process.exit(1);
+  }, 10_000).unref();
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT",  () => shutdown("SIGINT"));

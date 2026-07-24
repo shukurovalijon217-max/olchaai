@@ -10,7 +10,8 @@
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
     "sleepApplication": false,
-    "drainSeconds": 15
+    "drainSeconds": 15,
+    "numReplicas": 2
   },
   "watchPatterns": [
     "artifacts/api-server/**",

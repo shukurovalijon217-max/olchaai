@@ -1243,8 +1243,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── FLOATING USER AVATAR BUBBLE ── */}
       {!isImmersive && !playerOpen && !commentPanelOpen && <FloatingAvatar />}
 
-      {/* ── MUNI FLOATING AI ── */}
-      {location !== "/reels" && !playerOpen && !commentPanelOpen && <MuniPanel />}
+      {/* ── MUNI FLOATING AI (OTube da yashirilgan — u yerda MusicPlayer bor) ── */}
+      {location !== "/reels" && location !== "/otube" && !playerOpen && !commentPanelOpen && <MuniPanel />}
 
       {/* ── DOCK EDGE TABS — hidden while a full-screen player or comment panel is open ── */}
       {!playerOpen && !commentPanelOpen && <DockEdgeTab side="right" />}

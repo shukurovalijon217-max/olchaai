@@ -623,7 +623,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
       onSuccess: (data) => {
         setLiked(data.liked);
         setLikesCount(data.likesCount);
-        qc.invalidateQueries({ queryKey: ["/api/reels"] });
+        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
       },
       onError: () => {
         setLiked(liked);
@@ -643,7 +643,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
       onSuccess: (data) => {
         setFollowState(video.author.id, data.following);
         setSubbed(data.following);
-        qc.invalidateQueries({ queryKey: ["/api/reels"] });
+        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
       },
       onError: () => {
         const prev = !subbed;
@@ -658,7 +658,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
   const deleteMut = useDeleteReel({
     mutation: {
       onSuccess: () => {
-        qc.invalidateQueries({ queryKey: ["/api/reels"] });
+        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
         onClose();
       },
     },
@@ -2032,7 +2032,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
       onSuccess: (data) => {
         setFollowState(author.id, data.following);
         setSubbed(data.following);
-        qc.invalidateQueries({ queryKey: ["/api/reels"] });
+        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
       },
       onError: () => {
         const prev = getFollowState(author.id, author.isFollowing);
@@ -2520,7 +2520,7 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
       onSuccess: (data) => {
         setLiked(data.liked);
         setLikesCount(data.likesCount);
-        qc.invalidateQueries({ queryKey: ["/api/reels"] });
+        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
       },
     },
   });

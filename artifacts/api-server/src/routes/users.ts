@@ -287,6 +287,8 @@ router.post("/users/:id/follow", async (req, res) => {
       await db.insert(followsTable).values({ followerId, followingId });
     }
     const [followers] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, followingId));
+    cacheDelPattern("reels:list"); // isFollowing field reels feed da bor — cache yangilanishi kerak
+    cacheDelPattern("users:");
     res.json({ following: !isFollowing, followersCount: followers.count });
 
     if (!isFollowing) {

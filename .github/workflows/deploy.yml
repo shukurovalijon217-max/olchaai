@@ -1,4 +1,4 @@
-name: Deploy — Auto Deploy to Railway
+name: Deploy — API Server to Railway
 
 on:
   push:
@@ -10,14 +10,13 @@ jobs:
     name: Deploy API Server → Railway
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: []
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install Railway CLI
-        run: npm install -g @railway/cli
+        run: npm install -g @railway/cli@3
 
       - name: Deploy API Server
         env:
@@ -25,35 +24,3 @@ jobs:
         run: |
           railway up --service api-server --detach
         working-directory: artifacts/api-server
-
-  deploy-nexus:
-    name: Deploy Nexus Frontend → Cloudflare Pages
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Build Nexus
-        run: pnpm --filter @workspace/nexus run build
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy artifacts/nexus/dist/public --project-name=olchaai --branch=main

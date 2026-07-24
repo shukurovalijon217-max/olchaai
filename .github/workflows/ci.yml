@@ -10,21 +10,22 @@ jobs:
   typecheck-and-build:
     name: Typecheck + Build Nexus
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
+          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile

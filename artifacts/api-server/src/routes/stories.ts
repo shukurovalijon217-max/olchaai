@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
+import { db, readDb } from "@workspace/db";
 import { storiesTable, storyViewsTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, gt, and, inArray } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter";
@@ -13,10 +13,10 @@ router.get("/stories", async (req, res) => {
     const viewerId = (req.session as any)?.userId as number | undefined;
     const enriched = await cacheAside("stories", `list:${viewerId ?? 0}`, async () => {
       const now = new Date();
-      const stories = await db.select().from(storiesTable).where(gt(storiesTable.expiresAt, now));
+      const stories = await readDb.select().from(storiesTable).where(gt(storiesTable.expiresAt, now));
       const authorIds = [...new Set(stories.map(s => s.authorId))];
       const statsMap = await getUserStatsMap(authorIds, viewerId);
-      const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
+      const authors = authorIds.length > 0 ? await readDb.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
       const authorMap = new Map(authors.map(a => [a.id, a]));
       return stories.map((s) => {
         const author = authorMap.get(s.authorId);

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
+import { db, readDb } from "@workspace/db";
 import { notificationsTable, pushTokensTable } from "@workspace/db";
 import { eq, desc, and } from "drizzle-orm";
 import { cacheAside, cacheDelPattern } from "../lib/cache";
@@ -38,7 +38,7 @@ router.post("/notifications/push-unsubscribe", async (req: any, res) => {
     const userId = req.session?.userId;
     const { endpoint } = req.body ?? {};
     if (userId && endpoint) {
-      const rows = await db.select({ token: pushTokensTable.token }).from(pushTokensTable)
+      const rows = await readDb.select({ token: pushTokensTable.token }).from(pushTokensTable)
         .where(eq(pushTokensTable.userId, userId));
       const match = rows.find(r => { try { return JSON.parse(r.token)?.endpoint === endpoint; } catch { return false; } });
       if (match) {
@@ -61,11 +61,11 @@ router.get("/notifications", async (req, res) => {
     const notifs = await cacheAside("notifs", `${userId}:${unread}`, async () => {
       const userFilter = eq(notificationsTable.userId, userId);
       if (unread) {
-        return db.select().from(notificationsTable)
+        return readDb.select().from(notificationsTable)
           .where(and(userFilter, eq(notificationsTable.isRead, false)))
           .orderBy(desc(notificationsTable.createdAt)).limit(50);
       }
-      return db.select().from(notificationsTable)
+      return readDb.select().from(notificationsTable)
         .where(userFilter)
         .orderBy(desc(notificationsTable.createdAt)).limit(50);
     }, 10);

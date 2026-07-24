@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
+import { db, readDb } from "@workspace/db";
 import {
   productsTable, productOrdersTable, productReviewsTable,
   walletsTable, transactionsTable, usersTable,
@@ -41,7 +41,7 @@ router.get("/marketplace/products", async (req: any, res) => {
     const limit = Math.min(Number(req.query.limit ?? 24), 60);
     const offset = Number(req.query.offset ?? 0);
 
-    let rows = await db.select().from(productsTable).where(eq(productsTable.status, "active"));
+    let rows = await readDb.select().from(productsTable).where(eq(productsTable.status, "active"));
 
     if (q) rows = rows.filter(p => p.title.toLowerCase().includes(q.toLowerCase()) || p.description?.toLowerCase().includes(q.toLowerCase()));
     if (category) rows = rows.filter(p => p.category === category);
@@ -59,7 +59,7 @@ router.get("/marketplace/products", async (req: any, res) => {
     const paginated = rows.slice(offset, offset + limit);
 
     const enriched = await Promise.all(paginated.map(async p => {
-      const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, p.sellerId));
+      const [seller] = await readDb.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, p.sellerId));
       return { ...p, mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [], tags: p.tags ? JSON.parse(p.tags) : [], seller };
     }));
 
@@ -87,7 +87,7 @@ router.post("/marketplace/products", requireAuth, async (req: any, res) => {
     /* Meilisearch index — fire-and-forget */
     void (async () => {
       try {
-        const [seller] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, req.session.userId));
+        const [seller] = await readDb.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, req.session.userId));
         indexProduct({ id: product.id, title: product.title, description: product.description ?? undefined, price: product.price, category: product.category, condition: product.condition ?? "new", location: product.location ?? undefined, thumbnailUrl: product.thumbnailUrl ?? undefined, sellerId: req.session.userId, sellerName: seller?.displayName ?? undefined, rating: 0, status: "active" });
       } catch { /* non-fatal */ }
     })();
@@ -109,7 +109,7 @@ router.get("/marketplace/products/:id", async (req: any, res) => {
   try {
     const [product] = await db.select().from(productsTable).where(eq(productsTable.id, Number(req.params.id)));
     if (!product) { res.status(404).json({ error: "Topilmadi" }); return; }
-    const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified }).from(usersTable).where(eq(usersTable.id, product.sellerId));
+    const [seller] = await readDb.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified }).from(usersTable).where(eq(usersTable.id, product.sellerId));
     await db.update(productsTable).set({ viewsCount: sql`${productsTable.viewsCount} + 1` }).where(eq(productsTable.id, product.id));
     res.json({ ...product, mediaUrls: product.mediaUrls ? JSON.parse(product.mediaUrls) : [], tags: product.tags ? JSON.parse(product.tags) : [], seller });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Mahsulotni olishda xato" }); }
@@ -203,9 +203,9 @@ router.get("/marketplace/orders", requireAuth, async (req: any, res) => {
       : await db.select().from(productOrdersTable).where(eq(productOrdersTable.buyerId, myId)).orderBy(desc(productOrdersTable.createdAt));
 
     const enriched = await Promise.all(orders.map(async o => {
-      const [product] = await db.select({ id: productsTable.id, title: productsTable.title, thumbnailUrl: productsTable.thumbnailUrl }).from(productsTable).where(eq(productsTable.id, o.productId));
+      const [product] = await readDb.select({ id: productsTable.id, title: productsTable.title, thumbnailUrl: productsTable.thumbnailUrl }).from(productsTable).where(eq(productsTable.id, o.productId));
       const otherId = role === "seller" ? o.buyerId : o.sellerId;
-      const [other] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, otherId));
+      const [other] = await readDb.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, otherId));
       return { ...o, product, [role === "seller" ? "buyer" : "seller"]: other };
     }));
 
@@ -229,9 +229,9 @@ router.patch("/marketplace/orders/:id/status", requireAuth, async (req: any, res
 // GET /marketplace/products/:id/reviews
 router.get("/marketplace/products/:id/reviews", async (req: any, res) => {
   try {
-    const reviews = await db.select().from(productReviewsTable).where(eq(productReviewsTable.productId, Number(req.params.id))).orderBy(desc(productReviewsTable.createdAt));
+    const reviews = await readDb.select().from(productReviewsTable).where(eq(productReviewsTable.productId, Number(req.params.id))).orderBy(desc(productReviewsTable.createdAt));
     const enriched = await Promise.all(reviews.map(async r => {
-      const [reviewer] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, r.reviewerId));
+      const [reviewer] = await readDb.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, r.reviewerId));
       return { ...r, reviewer };
     }));
     res.json(enriched);
@@ -273,7 +273,7 @@ router.get("/marketplace/featured", async (req: any, res) => {
       .slice(0, 8);
 
     const enrich = async (p: typeof all[0]) => {
-      const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, p.sellerId));
+      const [seller] = await readDb.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, p.sellerId));
       return { ...p, mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [], tags: p.tags ? JSON.parse(p.tags) : [], seller };
     };
 
@@ -291,7 +291,7 @@ router.get("/marketplace/featured", async (req: any, res) => {
 router.get("/marketplace/seller/:id", async (req: any, res) => {
   try {
     const sellerId = Number(req.params.id);
-    const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified, createdAt: usersTable.createdAt }).from(usersTable).where(eq(usersTable.id, sellerId));
+    const [seller] = await readDb.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified, createdAt: usersTable.createdAt }).from(usersTable).where(eq(usersTable.id, sellerId));
     if (!seller) { res.status(404).json({ error: "Sotuvchi topilmadi" }); return; }
 
     const products = await db.select().from(productsTable).where(and(eq(productsTable.sellerId, sellerId), eq(productsTable.status, "active"))).orderBy(desc(productsTable.createdAt));

@@ -290,6 +290,7 @@ router.post("/reels/:id/like", async (req, res) => {
     }
 
     const [reel] = await db.select({ likesCount: reelsTable.likesCount, authorId: reelsTable.authorId, caption: reelsTable.caption }).from(reelsTable).where(eq(reelsTable.id, reelId));
+    cacheDelPattern("reels:list"); // invalidate feed cache so next GET /reels reflects new like state
     res.json({ liked: !isLiked, likesCount: reel?.likesCount ?? 0 });
 
     /* Push notification to reel author — fire-and-forget */

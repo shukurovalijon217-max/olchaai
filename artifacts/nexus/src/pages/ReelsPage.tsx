@@ -42,7 +42,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import CreateContentModal from "@/components/CreateContentModal";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { resolveApiUrl } from "@/lib/utils";
 
 const API = "";
@@ -1005,13 +1005,22 @@ export default function ReelsPage() {
   const qc       = useQueryClient();
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const search = useSearch();
 
   const watchedTags = useRef<string[]>([]);
   const watchedIds  = useRef<Set<number>>(new Set());
 
   useEffect(() => {
-    if (initialReels.length > 0 && feed.length === 0) setFeed(initialReels as FeedItem[]);
-  }, [initialReels, feed.length]);
+    if (initialReels.length > 0 && feed.length === 0) {
+      setFeed(initialReels as FeedItem[]);
+      // startId URL param — profil reels dan kelganda o'sha reeldan boshlash
+      const startId = new URLSearchParams(search).get("startId");
+      if (startId) {
+        const idx = (initialReels as FeedItem[]).findIndex(r => r.id === Number(startId));
+        if (idx > 0) setCurrent(idx);
+      }
+    }
+  }, [initialReels, feed.length, search]);
 
   // Initialize liked state from server's isLiked flag when reels first load
   useEffect(() => {
@@ -1117,7 +1126,7 @@ export default function ReelsPage() {
     followMut.mutate({ id: authorId }, {
       onSuccess: (data) => {
         setFollowOverrides(prev => new Map(prev).set(authorId, data.following));
-        qc.invalidateQueries({ queryKey: getListReelsQueryKey({ limit: 20 } as any) });
+        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
       },
       onError: () => {
         setFollowOverrides(prev => new Map(prev).set(authorId, current));

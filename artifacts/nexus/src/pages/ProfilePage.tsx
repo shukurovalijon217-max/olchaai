@@ -1480,7 +1480,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                 <motion.div key={reel.id}
                   initial={{ opacity: 0, scale: 0.88, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ delay: i * 0.03, type: "spring", stiffness: 280, damping: 22 }}>
-                  <Link href="/reels">
+                  <Link href={`/reels?startId=${reel.id}`}>
                     <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
                       className="aspect-[3/4] rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/reel"
                       style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>

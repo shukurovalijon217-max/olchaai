@@ -3,7 +3,7 @@ import os from "node:os";
 import { logger } from "./lib/logger";
 
 const WORKERS = Math.max(1, Math.min(
-  parseInt(process.env["WEB_CONCURRENCY"] ?? "1", 10) || 1,
+  parseInt(process.env["WEB_CONCURRENCY"] ?? "2", 10) || 2,
   os.cpus().length,
   4
 ));

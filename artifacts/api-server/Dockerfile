@@ -55,6 +55,10 @@ WORKDIR /app/artifacts/api-server
 
 ENV NODE_ENV=production
 ENV PORT=8080
+# Heap: 512MB — API server with cluster workers + TF.js engine
+# WEB_CONCURRENCY controls worker count (matches Railway vCPU count)
+ENV NODE_OPTIONS=--max-old-space-size=512
+ENV WEB_CONCURRENCY=2
 
 EXPOSE 8080
 

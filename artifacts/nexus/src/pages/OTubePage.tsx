@@ -6338,7 +6338,238 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* MiniPlayer moved to global PipContext — no local component needed */
+/* OTube Music Player — floating orb, expands left into a mini player */
+
+const JAMENDO_CLIENT = "b6747d04";
+
+function OTubeMusicPlayer() {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [tracks, setTracks] = useState<Array<{ id: string; name: string; artist_name: string; audio: string }>>([]);
+  const [idx, setIdx] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const current = tracks[idx] ?? null;
+
+  const doSearch = async (q: string) => {
+    const t = q.trim();
+    if (!t) return;
+    setSearching(true);
+    try {
+      const res = await fetch(
+        `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT}&format=json&limit=20&search=${encodeURIComponent(t)}&audioformat=mp32`
+      );
+      const data = await res.json() as { results?: Array<{ id: string; name: string; artist_name: string; audio: string }> };
+      setTracks(data.results ?? []);
+      setIdx(0);
+      setPlaying(false);
+    } catch { /* silent */ }
+    setSearching(false);
+  };
+
+  /* When track index changes, load new src */
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !current) return;
+    audio.src = current.audio;
+    if (playing) { audio.play().catch(() => setPlaying(false)); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, current?.audio]);
+
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio || !current) return;
+    if (playing) { audio.pause(); setPlaying(false); }
+    else { audio.play().catch(() => {}); setPlaying(true); }
+  };
+
+  const goNext = () => { if (idx < tracks.length - 1) setIdx(i => i + 1); };
+  const goPrev = () => { if (idx > 0) setIdx(i => i - 1); };
+
+  const gViolet = "linear-gradient(135deg,#7c3aed 0%,#a855f7 60%,#6d28d9 100%)";
+
+  return (
+    <>
+      <audio
+        ref={audioRef}
+        onTimeUpdate={() => {
+          const a = audioRef.current;
+          if (a && a.duration > 0) setProgress(a.currentTime / a.duration);
+        }}
+        onEnded={goNext}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      />
+
+      {/* ── Orb button ── */}
+      <motion.button
+        onClick={() => setOpen(v => !v)}
+        whileTap={{ scale: 0.88 }}
+        className="fixed z-[80] md:hidden"
+        style={{
+          bottom: "calc(env(safe-area-inset-bottom,0px) + 14px)",
+          left: 16,
+          width: 36, height: 36, borderRadius: "50%",
+          background: gViolet,
+          boxShadow: "0 0 14px rgba(168,85,247,0.55), inset 0 2px 8px rgba(0,0,0,0.4)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          border: "none", cursor: "pointer",
+        }}
+      >
+        <AnimatePresence mode="wait">
+          {open ? (
+            <motion.div key="x"
+              initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+              <X style={{ width: 16, height: 16, color: "white" }} />
+            </motion.div>
+          ) : (
+            <motion.div key="mus"
+              initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+              <Music style={{ width: 16, height: 16, color: "white" }} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
+
+      {/* ── Expanded panel — slides in from left ── */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, x: -220, scale: 0.92 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: -220, scale: 0.92 }}
+            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            className="fixed z-[79]"
+            style={{
+              bottom: "calc(env(safe-area-inset-bottom,0px) + 60px)",
+              left: 8,
+              width: 270,
+              borderRadius: 18,
+              background: "rgba(8,2,20,0.93)",
+              border: "1px solid rgba(168,85,247,0.3)",
+              boxShadow: "0 8px 40px rgba(168,85,247,0.22), 0 2px 16px rgba(0,0,0,0.65)",
+              backdropFilter: "blur(22px)",
+              overflow: "hidden",
+            }}
+          >
+            {/* Search bar */}
+            <div style={{ padding: "9px 9px 7px", borderBottom: "1px solid rgba(168,85,247,0.12)" }}>
+              <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                <input
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && doSearch(query)}
+                  placeholder="Qo'shiq yoki artist qidiring..."
+                  style={{
+                    flex: 1, height: 30, borderRadius: 10,
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(168,85,247,0.22)",
+                    color: "white", fontSize: 11, padding: "0 8px",
+                    outline: "none",
+                  }}
+                />
+                <button
+                  onClick={() => doSearch(query)}
+                  style={{
+                    width: 30, height: 30, borderRadius: 10,
+                    background: "rgba(168,85,247,0.22)",
+                    border: "1px solid rgba(168,85,247,0.4)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", flexShrink: 0,
+                  }}
+                >
+                  {searching
+                    ? <div style={{ width: 11, height: 11, borderRadius: "50%", border: "2px solid #a855f7", borderTopColor: "transparent", animation: "spin 0.75s linear infinite" }} />
+                    : <Search style={{ width: 13, height: 13, color: "#a855f7" }} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Track info */}
+            {current ? (
+              <div style={{ padding: "8px 10px 4px" }}>
+                <p style={{ fontSize: 11.5, fontWeight: 700, color: "rgba(255,255,255,0.92)", marginBottom: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {current.name}
+                </p>
+                <p style={{ fontSize: 9.5, color: "#a855f7", marginBottom: 5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {current.artist_name}
+                </p>
+                {/* Progress bar */}
+                <div style={{ height: 2.5, background: "rgba(168,85,247,0.14)", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${progress * 100}%`, background: "#a855f7", transition: "width 0.25s linear" }} />
+                </div>
+                {/* Track counter */}
+                <p style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", marginTop: 3, textAlign: "right" }}>
+                  {idx + 1} / {tracks.length}
+                </p>
+              </div>
+            ) : (
+              <div style={{ padding: "12px 10px 4px", textAlign: "center", color: "rgba(255,255,255,0.28)", fontSize: 10 }}>
+                Qo'shiq nomini yozing va qidiring
+              </div>
+            )}
+
+            {/* Controls */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "5px 10px 10px" }}>
+              <button
+                onClick={goPrev}
+                disabled={idx === 0 || !tracks.length}
+                style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: (idx === 0 || !tracks.length) ? "rgba(255,255,255,0.04)" : "rgba(168,85,247,0.15)",
+                  border: "1px solid rgba(168,85,247,0.2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: (idx === 0 || !tracks.length) ? "default" : "pointer",
+                  opacity: (idx === 0 || !tracks.length) ? 0.35 : 1,
+                }}
+              >
+                <ChevronLeft style={{ width: 14, height: 14, color: "#a855f7" }} />
+              </button>
+
+              <button
+                onClick={togglePlay}
+                disabled={!current}
+                style={{
+                  width: 38, height: 38, borderRadius: "50%",
+                  background: gViolet,
+                  border: "none",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: current ? "pointer" : "default",
+                  boxShadow: current ? "0 0 16px rgba(168,85,247,0.45)" : "none",
+                  opacity: current ? 1 : 0.35,
+                }}
+              >
+                {playing
+                  ? <Pause style={{ width: 17, height: 17, color: "white" }} />
+                  : <Play style={{ width: 17, height: 17, color: "white" }} />}
+              </button>
+
+              <button
+                onClick={goNext}
+                disabled={idx >= tracks.length - 1 || !tracks.length}
+                style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: (idx >= tracks.length - 1 || !tracks.length) ? "rgba(255,255,255,0.04)" : "rgba(168,85,247,0.15)",
+                  border: "1px solid rgba(168,85,247,0.2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: (idx >= tracks.length - 1 || !tracks.length) ? "default" : "pointer",
+                  opacity: (idx >= tracks.length - 1 || !tracks.length) ? 0.35 : 1,
+                }}
+              >
+                <ChevronRight style={{ width: 14, height: 14, color: "#a855f7" }} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────── */
 
 export default function OTubePage() {
   const { t } = useTranslation();
@@ -6821,6 +7052,9 @@ export default function OTubePage() {
 
       {/* Floating action button — only when player closed and NOT in full-screen shorts view */}
       {!selected && tab !== "shorts" && <FloatingFAB/>}
+
+      {/* OTube Music Player — replaces MuniAI orb on this page */}
+      {!selected && <OTubeMusicPlayer />}
     </>
   );
 }

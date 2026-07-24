@@ -1,14 +1,15 @@
-### Pre-built dist — build context = artifacts/nexus/
-### Railway Dockerfile Path: artifacts/nexus/Dockerfile (Settings da belgilangan)
-# v22 — exact V15 config that worked; dynamic bundle hash rewrite in server.js
+### Pre-built dist — build context = REPO ROOT
+### Railway Dockerfile Path: artifacts/nexus/Dockerfile
+### Railway Root Directory: (empty — repo root)
+# v24 — repo-root COPY paths (server.js lives in artifacts/nexus/)
 FROM node:24-alpine
 
 WORKDIR /app/nexus
 
-# dist/public FIRST (V15 order) — server.js getRealAssets() picks largest bundle
-COPY dist/public ./dist/public
-COPY server.js ./server.js
-COPY package.json ./package.json
+# Repo-root paths — Railway build context is the repo root
+COPY artifacts/nexus/dist/public ./dist/public
+COPY artifacts/nexus/server.js ./server.js
+COPY artifacts/nexus/package.json ./package.json
 
 ENV NODE_ENV=production
 ENV PORT=3000

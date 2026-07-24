@@ -5,6 +5,7 @@ attached_assets/
 
 # Build outputs
 **/dist
+!artifacts/nexus/dist
 **/.tsbuildinfo
 **/node_modules
 

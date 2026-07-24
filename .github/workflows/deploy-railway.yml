@@ -40,4 +40,4 @@ jobs:
             --environment 3f9b1d72-3c22-4d24-a00a-12346a7b4da1 \
             --detach
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ vars.RAILWAY_TOKEN }}

@@ -158,7 +158,7 @@ const server = http.createServer(async (req, res) => {
       const etag = `"${BUILD_ID}-${crypto.createHash("md5").update(content).digest("hex").slice(0,8)}"`;
       res.writeHead(200, {
         "Content-Type": mime,
-        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0",
         "Pragma": "no-cache",
         "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
         "ETag": etag,
@@ -169,6 +169,7 @@ const server = http.createServer(async (req, res) => {
         "Surrogate-Control": "no-store",
         "Surrogate-Key": `deploy-${BUILD_ID}`,
         "Vary": "Accept-Encoding",
+        "Clear-Site-Data": '"cache"',
       });
     }
     res.end(content);

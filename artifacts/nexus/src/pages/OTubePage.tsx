@@ -6789,7 +6789,7 @@ function OTubeMusicOrb() {
             style={{
               position: "fixed",
               bottom: "calc(env(safe-area-inset-bottom,0px) + 138px)",
-              left: 14,
+              right: 14,
               zIndex: 95,
               background: "rgba(6,0,18,0.97)",
               border: "1px solid rgba(168,85,247,0.4)",
@@ -6921,7 +6921,7 @@ function OTubeMusicOrb() {
         style={{
           position:"fixed",
           bottom:"calc(env(safe-area-inset-bottom,0px) + 72px)",
-          left:14, zIndex:95,
+          right:14, zIndex:95,
           width:36, height:36, borderRadius:"50%",
           border:"none", cursor:"pointer",
           background:"transparent", padding:0,

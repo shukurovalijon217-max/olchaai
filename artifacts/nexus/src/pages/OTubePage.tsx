@@ -6788,8 +6788,8 @@ function OTubeMusicOrb() {
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             style={{
               position: "fixed",
-              bottom: "calc(env(safe-area-inset-bottom,0px) + 138px)",
-              right: 14,
+              bottom: "calc(env(safe-area-inset-bottom,0px) + 72px)",
+              left: 14,
               zIndex: 95,
               background: "rgba(6,0,18,0.97)",
               border: "1px solid rgba(168,85,247,0.4)",

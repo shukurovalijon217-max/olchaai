@@ -1,0 +1,43 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build Nexus
+        run: pnpm --filter @workspace/nexus run build
+        env:
+          VITE_API_BASE_URL: ""
+          VITE_WS_URL: "wss://olchaai-go-production.up.railway.app/go/ws"
+
+      - name: Trigger Railway redeploy via API
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://backboard.railway.app/graphql/v2" \
+            -H "Authorization: Bearer ${{ vars.RAILWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data-raw '{
+              "query": "mutation { serviceInstanceRedeploy(environmentId: \"3f9b1d72-3c22-4d24-a00a-12346a7b4da1\", serviceId: \"6a712054-0c1a-4e3d-b8e9-39082e1b0af5\") }"
+            }')
+          echo "Railway API response: $RESPONSE"
+          # Don't fail the workflow if Railway API is unavailable
+          exit 0

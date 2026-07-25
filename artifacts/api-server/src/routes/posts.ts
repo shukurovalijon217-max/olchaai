@@ -101,19 +101,34 @@ router.get("/posts", async (req, res) => {
 router.get("/music/search", async (req: any, res) => {
   try {
     const q = String(req.query.q ?? "").trim();
-    if (!q || q.length < 2) { res.json({ results: [] }); return; }
-    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=25&lang=en_us`;
-    const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
-    if (!r.ok) { res.json({ results: [] }); return; }
-    const data = await r.json() as { results?: any[] };
-    const results = (data.results ?? []).map((t: any) => ({
-      name: `${t.artistName} — ${t.trackName}`,
-      artist: t.artistName ?? "",
-      title:  t.trackName  ?? "",
-      album:  t.collectionName ?? "",
-      artwork: (t.artworkUrl100 ?? "").replace("100x100", "60x60"),
-      preview: t.previewUrl ?? "",
-    }));
+    if (!q) { res.json({ results: [] }); return; }
+    /* Search both global + US stores for broadest coverage (old & new songs) */
+    const mkUrl = (country: string) =>
+      `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=50&country=${country}&explicit=Yes`;
+    const [r1, r2] = await Promise.allSettled([
+      fetch(mkUrl("us"), { signal: AbortSignal.timeout(7000) }),
+      fetch(mkUrl("gb"), { signal: AbortSignal.timeout(7000) }),
+    ]);
+    const seen = new Set<string>();
+    const results: any[] = [];
+    for (const settled of [r1, r2]) {
+      if (settled.status !== "fulfilled" || !settled.value.ok) continue;
+      const data = await settled.value.json() as { results?: any[] };
+      for (const t of data.results ?? []) {
+        const key = `${t.artistName}|${t.trackName}`;
+        if (seen.has(key) || !t.previewUrl) continue;
+        seen.add(key);
+        results.push({
+          id:      String(t.trackId ?? results.length),
+          name:    `${t.artistName} — ${t.trackName}`,
+          artist:  t.artistName ?? "",
+          title:   t.trackName  ?? "",
+          album:   t.collectionName ?? "",
+          artwork: (t.artworkUrl100 ?? "").replace("100x100bb", "60x60bb"),
+          preview: t.previewUrl ?? "",
+        });
+      }
+    }
     res.json({ results });
   } catch (err) {
     req.log.warn(err, "music search failed");

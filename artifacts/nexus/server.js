@@ -92,7 +92,10 @@ const server = http.createServer(async (req, res) => {
     const isAsset = filePath.includes("/assets/");
     res.writeHead(200, {
       "Content-Type": mime,
-      "Cache-Control": isAsset ? "public, max-age=31536000, immutable" : "no-cache",
+      "Cache-Control": isAsset
+        ? "public, max-age=31536000, immutable"
+        : "no-store, no-cache, must-revalidate, proxy-revalidate",
+      ...(isAsset ? {} : { "Pragma": "no-cache", "Expires": "0" }),
     });
     res.end(content);
   } catch {

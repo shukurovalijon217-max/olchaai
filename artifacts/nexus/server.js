@@ -98,9 +98,12 @@ const server = http.createServer(async (req, res) => {
       ...(isAsset ? {} : {
         "Pragma": "no-cache",
         "Expires": "0",
-        "CDN-Cache-Control": "no-store",
-        "Cloudflare-CDN-Cache-Control": "no-store",
+        "CDN-Cache-Control": "no-store, max-age=0",
+        "Cloudflare-CDN-Cache-Control": "no-store, max-age=0",
         "Surrogate-Control": "no-store",
+        "Clear-Site-Data": "\"cache\"",
+        "Vary": "Accept-Encoding",
+        "X-Accel-Expires": "0",
       }),
     });
     res.end(content);

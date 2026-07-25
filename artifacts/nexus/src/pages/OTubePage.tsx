@@ -6663,41 +6663,47 @@ export default function OTubePage() {
 /* ─────────────────────────────────────────────────────── */
 /* OTubeMusicOrb — floating circular Jamendo music player  */
 /* ─────────────────────────────────────────────────────── */
-interface JamendoTrack { id: string; name: string; artist_name: string; audio: string; album_image: string; }
+/* Built-in fallback tracks — no API needed, always works */
+const FALLBACK_TRACKS = [
+  { id:"1", name:"Ambient Flow",    artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",  album_image:"" },
+  { id:"2", name:"Electronic Pulse",artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",  album_image:"" },
+  { id:"3", name:"Deep Space",      artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",  album_image:"" },
+  { id:"4", name:"Night Drive",     artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",  album_image:"" },
+  { id:"5", name:"Chill Waves",     artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",  album_image:"" },
+];
+
+interface MusicTrack { id: string; name: string; artist_name: string; audio: string; album_image: string; }
 
 function OTubeMusicOrb() {
-  const [tracks, setTracks]     = useState<JamendoTrack[]>([]);
+  const [tracks, setTracks]     = useState<MusicTrack[]>(FALLBACK_TRACKS);
   const [idx, setIdx]           = useState(0);
   const [playing, setPlaying]   = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [loading, setLoading]   = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  /* Try Jamendo, fall back to built-in tracks silently */
   useEffect(() => {
-    setLoading(true);
-    fetch(
-      "https://api.jamendo.com/v3.0/tracks/?client_id=b5cfffa1&format=json&limit=8&include=musicinfo&audioformat=mp31&tags=ambient+electronic&order=popularity_total"
-    )
+    fetch("https://api.jamendo.com/v3.0/tracks/?client_id=b5cfffa1&format=json&limit=8&audioformat=mp31&tags=ambient+electronic&order=popularity_total")
       .then(r => r.json())
-      .then((d: { results?: JamendoTrack[] }) => {
-        if (d.results?.length) setTracks(d.results);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .then((d: { results?: MusicTrack[] }) => { if (d.results?.length) setTracks(d.results); })
+      .catch(() => {});
   }, []);
 
   const track = tracks[idx];
 
+  /* Load new track when idx changes */
   useEffect(() => {
-    if (!track) return;
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !track) return;
+    const wasPaused = !playing;
     audio.src = track.audio;
     audio.load();
-    if (playing) audio.play().catch(() => setPlaying(false));
-  }, [idx, track]);
+    if (!wasPaused) audio.play().catch(() => setPlaying(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx]);
 
+  /* Play / pause */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -6705,160 +6711,186 @@ function OTubeMusicOrb() {
     else audio.pause();
   }, [playing]);
 
+  /* Progress + auto-next */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     const onTime = () => setProgress(audio.duration ? audio.currentTime / audio.duration : 0);
-    const onEnd  = () => { setIdx(i => (i + 1) % Math.max(tracks.length, 1)); };
+    const onEnd  = () => setIdx(i => (i + 1) % tracks.length);
     audio.addEventListener("timeupdate", onTime);
     audio.addEventListener("ended", onEnd);
     return () => { audio.removeEventListener("timeupdate", onTime); audio.removeEventListener("ended", onEnd); };
   }, [tracks.length]);
 
-  const prev = () => setIdx(i => (i - 1 + tracks.length) % Math.max(tracks.length, 1));
-  const next = () => setIdx(i => (i + 1) % Math.max(tracks.length, 1));
+  const prev = () => setIdx(i => (i - 1 + tracks.length) % tracks.length);
+  const next = () => setIdx(i => (i + 1) % tracks.length);
+  const togglePlay = () => {
+    if (!playing && audioRef.current && !audioRef.current.src) {
+      audioRef.current.src = track.audio;
+      audioRef.current.load();
+    }
+    setPlaying(p => !p);
+  };
 
-  /* circumference for SVG progress ring */
   const R = 26; const C = 2 * Math.PI * R;
+
+  /* vinyl record colors when no album art */
+  const VINYL_COLORS = ["#3b0764","#1e1b4b","#0f172a","#0c1a2e","#1a0533"];
+  const vinylBg = VINYL_COLORS[parseInt(track?.id ?? "0") % VINYL_COLORS.length];
 
   return (
     <>
-      <audio ref={audioRef} preload="none"/>
-      <div
+      <audio ref={audioRef} preload="none" crossOrigin="anonymous"/>
+
+      {/* ── Expanded panel — appears above the orb ── */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, x: -20, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: -20, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 380, damping: 28 }}
+            style={{
+              position: "fixed",
+              bottom: "calc(env(safe-area-inset-bottom,0px) + 134px)",
+              left: 14,
+              zIndex: 95,
+              background: "rgba(8,0,20,0.95)",
+              border: "1px solid rgba(168,85,247,0.4)",
+              borderRadius: 18,
+              backdropFilter: "blur(24px)",
+              padding: "12px 14px",
+              width: 230,
+              boxShadow: "0 0 50px rgba(168,85,247,0.3), 0 8px 32px rgba(0,0,0,0.6)",
+            }}
+          >
+            {/* Track info */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              {/* Mini vinyl */}
+              <div style={{
+                width: 40, height: 40, borderRadius: "50%", flexShrink: 0,
+                background: track.album_image ? "transparent" : `radial-gradient(circle at 50%,#111 28%,${vinylBg} 30%,${vinylBg} 100%)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                overflow: "hidden",
+                animation: playing ? "spin 4s linear infinite" : "none",
+                border: "1px solid rgba(168,85,247,0.3)",
+              }}>
+                {track.album_image
+                  ? <img src={track.album_image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
+                  : <div style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(168,85,247,0.6)" }}/>
+                }
+              </div>
+              <div style={{ overflow: "hidden", flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {track.name}
+                </div>
+                <div style={{ fontSize: 10, color: "rgba(168,85,247,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {track.artist_name}
+                </div>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 10 }}>
+              <div style={{ height: "100%", width: `${progress * 100}%`, background: "linear-gradient(90deg,#a855f7,#6366f1)", borderRadius: 2, transition: "width 0.5s linear" }}/>
+            </div>
+
+            {/* Controls */}
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 18 }}>
+              <button onClick={prev} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.55)", padding: 4, lineHeight: 0 }}>
+                <ChevronLeft style={{ width: 18, height: 18 }}/>
+              </button>
+              <button onClick={togglePlay} style={{
+                width: 38, height: 38, borderRadius: "50%",
+                background: "linear-gradient(135deg,#a855f7,#6366f1)",
+                border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 0 16px rgba(168,85,247,0.55)",
+              }}>
+                {playing
+                  ? <Pause style={{ width: 16, height: 16, color: "#fff" }}/>
+                  : <Play  style={{ width: 16, height: 16, color: "#fff", marginLeft: 2 }}/>
+                }
+              </button>
+              <button onClick={next} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.55)", padding: 4, lineHeight: 0 }}>
+                <ChevronRight style={{ width: 18, height: 18 }}/>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Orb — fixed bottom-LEFT ── */}
+      <motion.button
+        onClick={() => {
+          setExpanded(v => !v);
+          if (!expanded && !playing) togglePlay();
+        }}
+        whileTap={{ scale: 0.85 }}
         style={{
           position: "fixed",
           bottom: "calc(env(safe-area-inset-bottom,0px) + 72px)",
-          right: 14,
-          zIndex: 90,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-end",
-          gap: 8,
-          pointerEvents: "none",
+          left: 14,
+          zIndex: 95,
+          width: 56, height: 56,
+          borderRadius: "50%",
+          border: "none",
+          cursor: "pointer",
+          background: "transparent",
+          padding: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
         }}
       >
-        {/* Expanded panel */}
-        <AnimatePresence>
-          {expanded && track && (
-            <motion.div
-              initial={{ opacity: 0, y: 12, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 380, damping: 28 }}
-              style={{
-                pointerEvents: "auto",
-                background: "rgba(10,0,24,0.92)",
-                border: "1px solid rgba(168,85,247,0.35)",
-                borderRadius: 18,
-                backdropFilter: "blur(20px)",
-                padding: "12px 14px",
-                width: 220,
-                boxShadow: "0 0 40px rgba(168,85,247,0.25)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <img
-                  src={track.album_image}
-                  alt=""
-                  style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
-                />
-                <div style={{ overflow: "hidden", flex: 1 }}>
-                  <div style={{
-                    fontSize: 12, fontWeight: 700, color: "#fff",
-                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                  }}>{track.name}</div>
-                  <div style={{
-                    fontSize: 10, color: "rgba(168,85,247,0.9)",
-                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                  }}>{track.artist_name}</div>
-                </div>
-              </div>
+        {/* SVG progress ring */}
+        <svg width={64} height={64} style={{ position: "absolute", inset: -4, transform: "rotate(-90deg)", pointerEvents: "none" }}>
+          <circle cx={32} cy={32} r={R} fill="none" stroke="rgba(168,85,247,0.18)" strokeWidth={2.5}/>
+          <circle
+            cx={32} cy={32} r={R} fill="none"
+            stroke="url(#mring)" strokeWidth={2.5}
+            strokeDasharray={C} strokeDashoffset={C * (1 - progress)}
+            strokeLinecap="round"
+            style={{ transition: "stroke-dashoffset 0.5s linear" }}
+          />
+          <defs>
+            <linearGradient id="mring" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#a855f7"/>
+              <stop offset="100%" stopColor="#6366f1"/>
+            </linearGradient>
+          </defs>
+        </svg>
 
-              {/* Progress bar */}
-              <div style={{ marginTop: 10, height: 3, borderRadius: 2, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${progress * 100}%`, background: "linear-gradient(90deg,#a855f7,#6366f1)", borderRadius: 2, transition: "width 0.5s linear" }}/>
-              </div>
+        {/* Disc body */}
+        <div style={{
+          width: 48, height: 48, borderRadius: "50%", overflow: "hidden",
+          background: track.album_image
+            ? "transparent"
+            : `radial-gradient(circle at 50%,#0a0018 28%,${vinylBg} 30%,${vinylBg} 72%,#0a0018 74%)`,
+          border: `1.5px solid ${playing ? "rgba(168,85,247,0.7)" : "rgba(168,85,247,0.35)"}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: playing
+            ? "0 0 22px rgba(168,85,247,0.7), inset 0 0 8px rgba(0,0,0,0.6)"
+            : "0 0 10px rgba(168,85,247,0.25)",
+          animation: playing ? "spin 5s linear infinite" : "none",
+        }}>
+          {track.album_image
+            ? <img src={track.album_image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
+            : <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(168,85,247,0.7)", boxShadow: "0 0 6px #a855f7" }}/>
+          }
+        </div>
 
-              {/* Controls */}
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 20, marginTop: 10 }}>
-                <button onClick={prev} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)", padding: 4 }}>
-                  <ChevronLeft style={{ width: 18, height: 18 }}/>
-                </button>
-                <button
-                  onClick={() => setPlaying(p => !p)}
-                  style={{
-                    width: 36, height: 36, borderRadius: "50%",
-                    background: "linear-gradient(135deg,#a855f7,#6366f1)",
-                    border: "none", cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 0 14px rgba(168,85,247,0.5)",
-                  }}
-                >
-                  {playing
-                    ? <Pause style={{ width: 16, height: 16, color: "#fff" }}/>
-                    : <Play  style={{ width: 16, height: 16, color: "#fff", marginLeft: 1 }}/>
-                  }
-                </button>
-                <button onClick={next} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)", padding: 4 }}>
-                  <ChevronRight style={{ width: 18, height: 18 }}/>
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Orb button */}
-        <motion.button
-          onClick={() => {
-            if (!expanded && !playing && tracks.length > 0) setPlaying(true);
-            setExpanded(v => !v);
-          }}
-          whileTap={{ scale: 0.88 }}
-          style={{
-            pointerEvents: "auto",
-            width: 52, height: 52, borderRadius: "50%",
-            border: "none", cursor: "pointer",
-            position: "relative",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: "transparent",
-          }}
-        >
-          {/* SVG progress ring */}
-          <svg width={60} height={60} style={{ position: "absolute", inset: -4, transform: "rotate(-90deg)" }}>
-            <circle cx={30} cy={30} r={R} fill="none" stroke="rgba(168,85,247,0.15)" strokeWidth={2.5}/>
-            {playing && (
-              <circle
-                cx={30} cy={30} r={R} fill="none"
-                stroke="url(#mgrd)" strokeWidth={2.5}
-                strokeDasharray={C} strokeDashoffset={C * (1 - progress)}
-                strokeLinecap="round"
-                style={{ transition: "stroke-dashoffset 0.5s linear" }}
-              />
-            )}
-            <defs>
-              <linearGradient id="mgrd" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#a855f7"/>
-                <stop offset="100%" stopColor="#6366f1"/>
-              </linearGradient>
-            </defs>
-          </svg>
-
-          {/* Album art or icon */}
-          <div style={{
-            width: 44, height: 44, borderRadius: "50%", overflow: "hidden",
-            background: "radial-gradient(circle at 40% 35%, rgba(168,85,247,0.4), rgba(10,0,24,0.95))",
-            border: "1.5px solid rgba(168,85,247,0.5)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: playing ? "0 0 18px rgba(168,85,247,0.6)" : "0 0 8px rgba(168,85,247,0.25)",
-          }}>
-            {track?.album_image
-              ? <img src={track.album_image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%",
-                  animation: playing ? "spin 8s linear infinite" : "none" }}/>
-              : <Music2 style={{ width: 20, height: 20, color: loading ? "rgba(168,85,247,0.4)" : "rgba(168,85,247,0.9)" }}/>
-            }
-          </div>
-        </motion.button>
-      </div>
+        {/* Pulse ring when playing */}
+        {playing && (
+          <motion.div
+            animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              position: "absolute", inset: -6, borderRadius: "50%",
+              border: "1.5px solid rgba(168,85,247,0.5)",
+              pointerEvents: "none",
+            }}
+          />
+        )}
+      </motion.button>
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </>

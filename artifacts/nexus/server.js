@@ -1,6 +1,7 @@
 import http from "http";
 import fs from "fs";
 import path from "path";
+import zlib from "zlib";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,8 +27,37 @@ const MIME = {
   ".webm": "video/webm",
 };
 
+const COMPRESSIBLE = new Set([".html", ".js", ".css", ".json", ".svg"]);
+
 function getMime(filePath) {
   return MIME[path.extname(filePath).toLowerCase()] || "application/octet-stream";
+}
+
+function sendCompressed(req, res, content, mime, cacheControl) {
+  const ext = path.extname(req.url.split("?")[0]).toLowerCase();
+  const accept = req.headers["accept-encoding"] || "";
+  const canGzip = COMPRESSIBLE.has(ext);
+
+  if (canGzip && accept.includes("br")) {
+    zlib.brotliCompress(content, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }, (err, buf) => {
+      if (err) return sendRaw(res, content, mime, cacheControl);
+      res.writeHead(200, { "Content-Type": mime, "Content-Encoding": "br", "Cache-Control": cacheControl, "Vary": "Accept-Encoding" });
+      res.end(buf);
+    });
+  } else if (canGzip && accept.includes("gzip")) {
+    zlib.gzip(content, { level: 6 }, (err, buf) => {
+      if (err) return sendRaw(res, content, mime, cacheControl);
+      res.writeHead(200, { "Content-Type": mime, "Content-Encoding": "gzip", "Cache-Control": cacheControl, "Vary": "Accept-Encoding" });
+      res.end(buf);
+    });
+  } else {
+    sendRaw(res, content, mime, cacheControl);
+  }
+}
+
+function sendRaw(res, content, mime, cacheControl) {
+  res.writeHead(200, { "Content-Type": mime, "Cache-Control": cacheControl });
+  res.end(content);
 }
 
 async function proxyToApi(req, res, body) {
@@ -90,11 +120,8 @@ const server = http.createServer(async (req, res) => {
     const content = fs.readFileSync(filePath);
     const mime = getMime(filePath);
     const isAsset = filePath.includes("/assets/");
-    res.writeHead(200, {
-      "Content-Type": mime,
-      "Cache-Control": isAsset ? "public, max-age=31536000, immutable" : "no-cache",
-    });
-    res.end(content);
+    const cacheControl = isAsset ? "public, max-age=31536000, immutable" : "no-cache";
+    sendCompressed(req, res, content, mime, cacheControl);
   } catch {
     res.writeHead(404);
     res.end("Not found");

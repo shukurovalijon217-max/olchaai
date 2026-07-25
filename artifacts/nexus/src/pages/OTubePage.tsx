@@ -6663,47 +6663,78 @@ export default function OTubePage() {
 /* ─────────────────────────────────────────────────────── */
 /* OTubeMusicOrb — floating circular Jamendo music player  */
 /* ─────────────────────────────────────────────────────── */
-/* Built-in fallback tracks — no API needed, always works */
-const FALLBACK_TRACKS = [
-  { id:"1", name:"Ambient Flow",    artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",  album_image:"" },
-  { id:"2", name:"Electronic Pulse",artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",  album_image:"" },
-  { id:"3", name:"Deep Space",      artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",  album_image:"" },
-  { id:"4", name:"Night Drive",     artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",  album_image:"" },
-  { id:"5", name:"Chill Waves",     artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",  album_image:"" },
-];
-
 interface MusicTrack { id: string; name: string; artist_name: string; audio: string; album_image: string; }
 
-function OTubeMusicOrb() {
-  const [tracks, setTracks]     = useState<MusicTrack[]>(FALLBACK_TRACKS);
-  const [idx, setIdx]           = useState(0);
-  const [playing, setPlaying]   = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+const FALLBACK_TRACKS: MusicTrack[] = [
+  { id:"1", name:"Ambient Flow",    artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", album_image:"" },
+  { id:"2", name:"Electronic Pulse",artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", album_image:"" },
+  { id:"3", name:"Deep Space",      artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", album_image:"" },
+  { id:"4", name:"Night Drive",     artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3", album_image:"" },
+  { id:"5", name:"Chill Waves",     artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3", album_image:"" },
+];
 
-  /* Try Jamendo, fall back to built-in tracks silently */
-  useEffect(() => {
-    fetch("https://api.jamendo.com/v3.0/tracks/?client_id=b5cfffa1&format=json&limit=8&audioformat=mp31&tags=ambient+electronic&order=popularity_total")
+const GENRES = [
+  { id:"pop",         label:"🎤 Pop"        },
+  { id:"rock",        label:"🎸 Rock"       },
+  { id:"hiphop",      label:"🎧 Hip-Hop"    },
+  { id:"electronic",  label:"⚡ Electronic" },
+  { id:"jazz",        label:"🎷 Jazz"       },
+  { id:"classical",   label:"🎻 Classical"  },
+  { id:"ambient",     label:"🌊 Ambient"    },
+  { id:"reggae",      label:"🌿 Reggae"     },
+  { id:"rnb",         label:"💜 R&B"        },
+  { id:"lofi",        label:"☕ Lo-Fi"      },
+  { id:"metal",       label:"🤘 Metal"      },
+  { id:"folk",        label:"🪕 Folk"       },
+];
+
+const JAMENDO_BASE = "https://api.jamendo.com/v3.0/tracks/?client_id=b5cfffa1&format=json&limit=10&audioformat=mp31&order=popularity_total";
+
+function OTubeMusicOrb() {
+  const [tracks, setTracks]       = useState<MusicTrack[]>(FALLBACK_TRACKS);
+  const [idx, setIdx]             = useState(0);
+  const [playing, setPlaying]     = useState(false);
+  const [expanded, setExpanded]   = useState(false);
+  const [progress, setProgress]   = useState(0);
+  const [searching, setSearching] = useState(false);
+  const [searchQ, setSearchQ]     = useState("");
+  const [genre, setGenre]         = useState("");
+  const [loadingApi, setLoadingApi] = useState(false);
+  const audioRef  = useRef<HTMLAudioElement | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
+
+  /* Fetch from Jamendo: genre or search query */
+  const fetchJamendo = useCallback((q: string, g: string) => {
+    setLoadingApi(true);
+    let url = JAMENDO_BASE;
+    if (q.trim()) url += `&namesearch=${encodeURIComponent(q.trim())}`;
+    else if (g)   url += `&tags=${encodeURIComponent(g)}`;
+    fetch(url)
       .then(r => r.json())
-      .then((d: { results?: MusicTrack[] }) => { if (d.results?.length) setTracks(d.results); })
-      .catch(() => {});
+      .then((d: { results?: MusicTrack[] }) => {
+        if (d.results?.length) { setTracks(d.results); setIdx(0); }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingApi(false));
   }, []);
+
+  /* On mount: try default genre */
+  useEffect(() => { fetchJamendo("", "ambient electronic"); }, [fetchJamendo]);
 
   const track = tracks[idx];
 
-  /* Load new track when idx changes */
+  /* Load when idx changes */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !track) return;
-    const wasPaused = !playing;
+    const wasPlaying = playing;
     audio.src = track.audio;
     audio.load();
-    if (!wasPaused) audio.play().catch(() => setPlaying(false));
+    if (wasPlaying) audio.play().catch(() => setPlaying(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx]);
 
-  /* Play / pause */
+  /* Play/pause */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -6724,17 +6755,29 @@ function OTubeMusicOrb() {
 
   const prev = () => setIdx(i => (i - 1 + tracks.length) % tracks.length);
   const next = () => setIdx(i => (i + 1) % tracks.length);
+
   const togglePlay = () => {
-    if (!playing && audioRef.current && !audioRef.current.src) {
+    if (!playing && audioRef.current && !audioRef.current.src && track) {
       audioRef.current.src = track.audio;
       audioRef.current.load();
     }
     setPlaying(p => !p);
   };
 
-  const R = 26; const C = 2 * Math.PI * R;
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchJamendo(searchQ, "");
+    setGenre("");
+  };
 
-  /* vinyl record colors when no album art */
+  const handleGenre = (g: string) => {
+    setGenre(g);
+    setSearchQ("");
+    fetchJamendo("", g);
+    setSearching(false);
+  };
+
+  const R = 26; const C = 2 * Math.PI * R;
   const VINYL_COLORS = ["#3b0764","#1e1b4b","#0f172a","#0c1a2e","#1a0533"];
   const vinylBg = VINYL_COLORS[parseInt(track?.id ?? "0") % VINYL_COLORS.length];
 
@@ -6742,85 +6785,140 @@ function OTubeMusicOrb() {
     <>
       <audio ref={audioRef} preload="none" crossOrigin="anonymous"/>
 
-      {/* ── Expanded panel — appears above the orb ── */}
+      {/* ── Expanded panel ── */}
       <AnimatePresence>
         {expanded && (
           <motion.div
-            initial={{ opacity: 0, x: -20, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -20, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 380, damping: 28 }}
+            initial={{ opacity: 0, y: 16, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.92 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
             style={{
               position: "fixed",
-              bottom: "calc(env(safe-area-inset-bottom,0px) + 134px)",
+              bottom: "calc(env(safe-area-inset-bottom,0px) + 138px)",
               left: 14,
               zIndex: 95,
-              background: "rgba(8,0,20,0.95)",
+              background: "rgba(6,0,18,0.97)",
               border: "1px solid rgba(168,85,247,0.4)",
-              borderRadius: 18,
-              backdropFilter: "blur(24px)",
-              padding: "12px 14px",
-              width: 230,
-              boxShadow: "0 0 50px rgba(168,85,247,0.3), 0 8px 32px rgba(0,0,0,0.6)",
+              borderRadius: 20,
+              backdropFilter: "blur(28px)",
+              width: 252,
+              overflow: "hidden",
+              boxShadow: "0 0 60px rgba(168,85,247,0.25), 0 12px 40px rgba(0,0,0,0.7)",
             }}
           >
-            {/* Track info */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              {/* Mini vinyl */}
+            {/* Header — track info */}
+            <div style={{ padding: "12px 14px 8px", display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{
-                width: 40, height: 40, borderRadius: "50%", flexShrink: 0,
-                background: track.album_image ? "transparent" : `radial-gradient(circle at 50%,#111 28%,${vinylBg} 30%,${vinylBg} 100%)`,
+                width: 42, height: 42, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
+                background: track?.album_image ? "transparent" : `radial-gradient(circle at 50%,#111 28%,${vinylBg} 30%,${vinylBg} 100%)`,
+                border: "1px solid rgba(168,85,247,0.35)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                overflow: "hidden",
                 animation: playing ? "spin 4s linear infinite" : "none",
-                border: "1px solid rgba(168,85,247,0.3)",
               }}>
-                {track.album_image
-                  ? <img src={track.album_image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
-                  : <div style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(168,85,247,0.6)" }}/>
+                {track?.album_image
+                  ? <img src={track.album_image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
+                  : <div style={{ width:8,height:8,borderRadius:"50%",background:"rgba(168,85,247,0.7)" }}/>
                 }
               </div>
-              <div style={{ overflow: "hidden", flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {track.name}
+              <div style={{ overflow:"hidden", flex:1 }}>
+                <div style={{ fontSize:12,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                  {loadingApi ? "Qidirilmoqda..." : (track?.name ?? "—")}
                 </div>
-                <div style={{ fontSize: 10, color: "rgba(168,85,247,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {track.artist_name}
+                <div style={{ fontSize:10,color:"rgba(168,85,247,0.85)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                  {track?.artist_name ?? ""}
                 </div>
               </div>
+              {/* search toggle */}
+              <button
+                onClick={() => { setSearching(v=>!v); setTimeout(()=>searchRef.current?.focus(),100); }}
+                style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(168,85,247,0.8)",padding:4,lineHeight:0,flexShrink:0 }}
+              >
+                <Search style={{ width:15,height:15 }}/>
+              </button>
+            </div>
+
+            {/* Search box */}
+            <AnimatePresence>
+              {searching && (
+                <motion.form
+                  initial={{ height:0, opacity:0 }}
+                  animate={{ height:"auto", opacity:1 }}
+                  exit={{ height:0, opacity:0 }}
+                  transition={{ duration:0.2 }}
+                  onSubmit={handleSearch}
+                  style={{ overflow:"hidden", padding:"0 14px 8px" }}
+                >
+                  <div style={{ display:"flex",gap:6 }}>
+                    <input
+                      ref={searchRef}
+                      value={searchQ}
+                      onChange={e=>setSearchQ(e.target.value)}
+                      placeholder="Qo'shiq, artist..."
+                      style={{
+                        flex:1, background:"rgba(168,85,247,0.1)", border:"1px solid rgba(168,85,247,0.3)",
+                        borderRadius:10, padding:"6px 10px", fontSize:12, color:"#fff", outline:"none",
+                      }}
+                    />
+                    <button type="submit" style={{
+                      background:"linear-gradient(135deg,#a855f7,#6366f1)", border:"none", borderRadius:10,
+                      padding:"0 10px", cursor:"pointer", color:"#fff", fontSize:12, fontWeight:700,
+                    }}>→</button>
+                  </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
+
+            {/* Genre chips */}
+            <div style={{ padding:"0 14px 8px", display:"flex", flexWrap:"wrap", gap:5 }}>
+              {GENRES.map(g => (
+                <button
+                  key={g.id}
+                  onClick={() => handleGenre(g.id)}
+                  style={{
+                    background: genre===g.id ? "linear-gradient(135deg,#a855f7,#6366f1)" : "rgba(168,85,247,0.1)",
+                    border: `1px solid ${genre===g.id ? "transparent" : "rgba(168,85,247,0.25)"}`,
+                    borderRadius: 20, padding:"3px 9px", fontSize:10, color:"#fff",
+                    cursor:"pointer", fontWeight: genre===g.id ? 700 : 400,
+                    transition:"all 0.15s",
+                  }}
+                >
+                  {g.label}
+                </button>
+              ))}
             </div>
 
             {/* Progress bar */}
-            <div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 10 }}>
-              <div style={{ height: "100%", width: `${progress * 100}%`, background: "linear-gradient(90deg,#a855f7,#6366f1)", borderRadius: 2, transition: "width 0.5s linear" }}/>
+            <div style={{ margin:"0 14px 8px", height:3, borderRadius:2, background:"rgba(255,255,255,0.08)", overflow:"hidden" }}>
+              <div style={{ height:"100%", width:`${progress*100}%`, background:"linear-gradient(90deg,#a855f7,#6366f1)", borderRadius:2, transition:"width 0.5s linear" }}/>
             </div>
 
             {/* Controls */}
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 18 }}>
-              <button onClick={prev} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.55)", padding: 4, lineHeight: 0 }}>
-                <ChevronLeft style={{ width: 18, height: 18 }}/>
+            <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:20, padding:"0 14px 12px" }}>
+              <button onClick={prev} style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.5)",padding:4,lineHeight:0 }}>
+                <ChevronLeft style={{ width:20,height:20 }}/>
               </button>
               <button onClick={togglePlay} style={{
-                width: 38, height: 38, borderRadius: "50%",
-                background: "linear-gradient(135deg,#a855f7,#6366f1)",
-                border: "none", cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 0 16px rgba(168,85,247,0.55)",
+                width:40,height:40,borderRadius:"50%",
+                background:"linear-gradient(135deg,#a855f7,#6366f1)",
+                border:"none",cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:"0 0 18px rgba(168,85,247,0.6)",
               }}>
                 {playing
-                  ? <Pause style={{ width: 16, height: 16, color: "#fff" }}/>
-                  : <Play  style={{ width: 16, height: 16, color: "#fff", marginLeft: 2 }}/>
+                  ? <Pause style={{ width:17,height:17,color:"#fff" }}/>
+                  : <Play  style={{ width:17,height:17,color:"#fff",marginLeft:2 }}/>
                 }
               </button>
-              <button onClick={next} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.55)", padding: 4, lineHeight: 0 }}>
-                <ChevronRight style={{ width: 18, height: 18 }}/>
+              <button onClick={next} style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.5)",padding:4,lineHeight:0 }}>
+                <ChevronRight style={{ width:20,height:20 }}/>
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Orb — fixed bottom-LEFT ── */}
+      {/* ── Orb — bottom-LEFT ── */}
       <motion.button
         onClick={() => {
           setExpanded(v => !v);
@@ -6828,29 +6926,20 @@ function OTubeMusicOrb() {
         }}
         whileTap={{ scale: 0.85 }}
         style={{
-          position: "fixed",
-          bottom: "calc(env(safe-area-inset-bottom,0px) + 72px)",
-          left: 14,
-          zIndex: 95,
-          width: 56, height: 56,
-          borderRadius: "50%",
-          border: "none",
-          cursor: "pointer",
-          background: "transparent",
-          padding: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
+          position:"fixed",
+          bottom:"calc(env(safe-area-inset-bottom,0px) + 72px)",
+          left:14, zIndex:95,
+          width:56, height:56, borderRadius:"50%",
+          border:"none", cursor:"pointer",
+          background:"transparent", padding:0,
+          display:"flex", alignItems:"center", justifyContent:"center",
         }}
       >
-        {/* SVG progress ring */}
-        <svg width={64} height={64} style={{ position: "absolute", inset: -4, transform: "rotate(-90deg)", pointerEvents: "none" }}>
+        <svg width={64} height={64} style={{ position:"absolute",inset:-4,transform:"rotate(-90deg)",pointerEvents:"none" }}>
           <circle cx={32} cy={32} r={R} fill="none" stroke="rgba(168,85,247,0.18)" strokeWidth={2.5}/>
-          <circle
-            cx={32} cy={32} r={R} fill="none"
-            stroke="url(#mring)" strokeWidth={2.5}
-            strokeDasharray={C} strokeDashoffset={C * (1 - progress)}
-            strokeLinecap="round"
-            style={{ transition: "stroke-dashoffset 0.5s linear" }}
-          />
+          <circle cx={32} cy={32} r={R} fill="none" stroke="url(#mring)" strokeWidth={2.5}
+            strokeDasharray={C} strokeDashoffset={C*(1-progress)}
+            strokeLinecap="round" style={{ transition:"stroke-dashoffset 0.5s linear" }}/>
           <defs>
             <linearGradient id="mring" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="#a855f7"/>
@@ -6859,40 +6948,31 @@ function OTubeMusicOrb() {
           </defs>
         </svg>
 
-        {/* Disc body */}
         <div style={{
-          width: 48, height: 48, borderRadius: "50%", overflow: "hidden",
-          background: track.album_image
-            ? "transparent"
+          width:48, height:48, borderRadius:"50%", overflow:"hidden",
+          background: track?.album_image ? "transparent"
             : `radial-gradient(circle at 50%,#0a0018 28%,${vinylBg} 30%,${vinylBg} 72%,#0a0018 74%)`,
-          border: `1.5px solid ${playing ? "rgba(168,85,247,0.7)" : "rgba(168,85,247,0.35)"}`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: playing
-            ? "0 0 22px rgba(168,85,247,0.7), inset 0 0 8px rgba(0,0,0,0.6)"
-            : "0 0 10px rgba(168,85,247,0.25)",
+          border:`1.5px solid ${playing?"rgba(168,85,247,0.7)":"rgba(168,85,247,0.35)"}`,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          boxShadow: playing ? "0 0 24px rgba(168,85,247,0.7)" : "0 0 10px rgba(168,85,247,0.25)",
           animation: playing ? "spin 5s linear infinite" : "none",
         }}>
-          {track.album_image
-            ? <img src={track.album_image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
-            : <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(168,85,247,0.7)", boxShadow: "0 0 6px #a855f7" }}/>
+          {track?.album_image
+            ? <img src={track.album_image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
+            : <Music2 style={{ width:20,height:20,color:"rgba(168,85,247,0.85)" }}/>
           }
         </div>
 
-        {/* Pulse ring when playing */}
         {playing && (
           <motion.div
-            animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              position: "absolute", inset: -6, borderRadius: "50%",
-              border: "1.5px solid rgba(168,85,247,0.5)",
-              pointerEvents: "none",
-            }}
+            animate={{ scale:[1,1.4,1], opacity:[0.45,0,0.45] }}
+            transition={{ duration:2, repeat:Infinity, ease:"easeInOut" }}
+            style={{ position:"absolute",inset:-8,borderRadius:"50%",border:"1.5px solid rgba(168,85,247,0.45)",pointerEvents:"none" }}
           />
         )}
       </motion.button>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </>
   );
 }

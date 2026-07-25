@@ -1013,7 +1013,7 @@ export default function GroupsPage() {
     const text = `${post.authorDisplayName}: ${post.content}`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: selectedGroup?.name ?? "OlchaAI", text, url: window.location.href });
+        await navigator.share({ title: selectedGroup?.name ?? "GILOS", text, url: window.location.href });
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(text).catch(() => {});

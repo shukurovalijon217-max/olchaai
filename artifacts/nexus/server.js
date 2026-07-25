@@ -2,11 +2,15 @@ import http from "http";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import crypto from "crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.railway.app";
 const DIST = path.join(__dirname, "dist", "public");
+
+/* Build-time unique token — changes every deploy so Cloudflare sees a new ETag */
+const BUILD_ID = Date.now().toString(36);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -60,7 +64,7 @@ const server = http.createServer(async (req, res) => {
   // Health check
   if (req.url === "/healthz") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ ok: true }));
+    return res.end(JSON.stringify({ ok: true, build: BUILD_ID }));
   }
 
   // API proxy
@@ -90,20 +94,32 @@ const server = http.createServer(async (req, res) => {
     const content = fs.readFileSync(filePath);
     const mime = getMime(filePath);
     const isAsset = filePath.includes("/assets/");
-    res.writeHead(200, {
-      "Content-Type": mime,
-      "Cache-Control": isAsset
-        ? "public, max-age=31536000, immutable"
-        : "private, no-store, no-cache, max-age=0, must-revalidate",
-      ...(isAsset ? {} : {
+
+    if (isAsset) {
+      /* Hashed assets — cache forever */
+      res.writeHead(200, {
+        "Content-Type": mime,
+        "Cache-Control": "public, max-age=31536000, immutable",
+      });
+    } else {
+      /* HTML / SPA shell — never cache anywhere */
+      const etag = `"${BUILD_ID}-${crypto.createHash("md5").update(content).digest("hex").slice(0,8)}"`;
+      res.writeHead(200, {
+        "Content-Type": mime,
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
         "Pragma": "no-cache",
-        "Expires": "0",
+        "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+        "ETag": etag,
+        "Last-Modified": new Date().toUTCString(),
+        /* Cloudflare-specific: force bypass even with Cache Everything rule */
+        "CF-Cache-Status": "BYPASS",
         "CDN-Cache-Control": "no-store",
         "Cloudflare-CDN-Cache-Control": "no-store",
         "Surrogate-Control": "no-store",
+        "Surrogate-Key": `deploy-${BUILD_ID}`,
         "Vary": "Accept-Encoding",
-      }),
-    });
+      });
+    }
     res.end(content);
   } catch {
     res.writeHead(404);
@@ -112,5 +128,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Nexus serving on port ${PORT}`);
+  console.log(`Nexus serving on port ${PORT} [build=${BUILD_ID}]`);
 });

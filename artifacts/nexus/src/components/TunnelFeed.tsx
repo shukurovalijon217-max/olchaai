@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, X, Zap, BadgeCheck, Loader2, ArrowDown } from "lucide-react";
+import { Heart, MessageCircle, X, ChevronDown, Zap, BadgeCheck, Loader2, ArrowDown } from "lucide-react";
 import { useLikePost, getListPostsQueryKey } from "@workspace/api-client-react";
 import type { Post } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 
-const API_BASE = "".replace(/\/+$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
 
 const STEP_Z = 520;
 const NEAR_CLIP = 420;
@@ -127,7 +127,7 @@ function TunnelPostCard({ post, isActive, colorIdx }: TunnelPostCardProps) {
 
       {/* Header */}
       <div className="flex items-center gap-3 p-4 pb-2">
-        <Link href={`/profile/${post.author.id}`}>
+        <Link href={`/profile/${post.author.username ?? post.author.id}`}>
           <div
             style={{
               width: 42,
@@ -147,8 +147,6 @@ function TunnelPostCard({ post, isActive, colorIdx }: TunnelPostCardProps) {
               <img
                 src={post.author.avatarUrl}
                 alt=""
-                loading="lazy"
-                decoding="async"
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
@@ -222,8 +220,6 @@ function TunnelPostCard({ post, isActive, colorIdx }: TunnelPostCardProps) {
             <img
               src={post.mediaUrl}
               alt=""
-              loading="lazy"
-              decoding="async"
               style={{
                 width: "100%",
                 height: "auto",
@@ -814,6 +810,55 @@ export default function TunnelFeed({ initialPosts, onExit }: TunnelFeedProps) {
           )}
         </div>
 
+        {/* Nav arrows */}
+        <div style={{ display: "flex", gap: 10 }}>
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            onClick={prevPost}
+            disabled={activeIndex === 0}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              background: activeIndex === 0 ? "rgba(255,255,255,0.04)" : "rgba(139,92,246,0.18)",
+              border: `1px solid ${activeIndex === 0 ? "rgba(255,255,255,0.1)" : "rgba(139,92,246,0.5)"}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: activeIndex === 0 ? "default" : "pointer",
+              opacity: activeIndex === 0 ? 0.35 : 1,
+            }}
+          >
+            <ChevronDown
+              style={{
+                width: 18,
+                height: 18,
+                color: "#a78bfa",
+                transform: "rotate(180deg)",
+              }}
+            />
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            onClick={nextPost}
+            disabled={activeIndex >= posts.length - 1}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              background: "rgba(139,92,246,0.18)",
+              border: "1px solid rgba(139,92,246,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 0 14px rgba(139,92,246,0.35)",
+            }}
+          >
+            <ChevronDown style={{ width: 18, height: 18, color: "#a78bfa" }} />
+          </motion.button>
+        </div>
       </div>
 
       {/* ── ENTRY HINT ── */}

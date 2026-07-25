@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, readDb } from "@workspace/db";
+import { db } from "@workspace/db";
 import { storiesTable, storyViewsTable, usersTable, moderationQueueTable } from "@workspace/db";
 import { eq, sql, gt, and, inArray } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter";
@@ -13,10 +13,10 @@ router.get("/stories", async (req, res) => {
     const viewerId = (req.session as any)?.userId as number | undefined;
     const enriched = await cacheAside("stories", `list:${viewerId ?? 0}`, async () => {
       const now = new Date();
-      const stories = await readDb.select().from(storiesTable).where(gt(storiesTable.expiresAt, now));
+      const stories = await db.select().from(storiesTable).where(gt(storiesTable.expiresAt, now));
       const authorIds = [...new Set(stories.map(s => s.authorId))];
       const statsMap = await getUserStatsMap(authorIds, viewerId);
-      const authors = authorIds.length > 0 ? await readDb.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
+      const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
       const authorMap = new Map(authors.map(a => [a.id, a]));
       return stories.map((s) => {
         const author = authorMap.get(s.authorId);
@@ -33,15 +33,12 @@ router.get("/stories", async (req, res) => {
 
 router.post("/stories", async (req, res) => {
   try {
-    const { mediaUrl, mediaType, caption, type, backgroundColor, content } = req.body;
-    const authorId = (req.session as any)?.userId as number | undefined;
+    const { mediaUrl, mediaType, caption } = req.body;
+    const authorId = (req.session as any)?.userId ?? Number(req.body.authorId);
     if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
-    const storyType = type || (mediaUrl ? (mediaType || "photo") : "text");
-    const storyCaption = caption || content || null;
-
     // AI scan caption before saving
-    const scan = await scanContentAsync(storyCaption ?? "");
+    const scan = await scanContentAsync(caption ?? "");
     if (scan.autoBlock) {
       res.status(422).json({
         error: "Story avtomatik bloklandi — qoidalarga zid material aniqlandi.",
@@ -50,15 +47,7 @@ router.post("/stories", async (req, res) => {
     }
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const [story] = await db.insert(storiesTable).values({
-      authorId,
-      mediaUrl: mediaUrl || null,
-      mediaType: mediaType || storyType,
-      type: storyType,
-      backgroundColor: backgroundColor || null,
-      caption: storyCaption,
-      expiresAt,
-    }).returning();
+    const [story] = await db.insert(storiesTable).values({ authorId, mediaUrl, mediaType: mediaType || "photo", caption, expiresAt }).returning();
 
     if (scan.verdict !== "clean") {
       await db.insert(moderationQueueTable).values({

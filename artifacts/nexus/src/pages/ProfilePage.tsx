@@ -1,5 +1,4 @@
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
-import PostViewer from "@/components/PostViewer";
 import {
   BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon,
   Camera, Loader2, Radio, Bell, BellOff, Star, Check, X, Sparkles,
@@ -24,172 +23,6 @@ import { resolveApiUrl } from "@/lib/utils";
 import ProfileOrb from "@/components/ProfileOrb";
 
 interface ProfilePageProps { userId: number; }
-
-/* ─── MirrorPanel ─────────────────────────────────────────────── */
-interface MirrorField { field: string; reason: string; }
-interface MirrorData {
-  profile: {
-    displayName: string; username: string; avatarUrl: string | null;
-    coverUrl: string | null; isVerified: boolean; bio: string | null;
-    followersCount: number | null; followingCount: number | null; postsCount: number;
-    isPrivate: boolean;
-  };
-  mirrorMeta: {
-    isPrivate: boolean; isGhost: boolean; ghostUntil: string | null;
-    hiddenFields: MirrorField[]; visibleFields: string[];
-  };
-}
-
-const FIELD_KEY: Record<string, string> = {
-  displayName: "profile.mirror_field_displayName",
-  username: "profile.mirror_field_username",
-  avatarUrl: "profile.mirror_field_avatarUrl",
-  coverUrl: "profile.mirror_field_coverUrl",
-  isVerified: "profile.mirror_field_isVerified",
-  bio: "profile.mirror_field_bio",
-  followersCount: "profile.mirror_field_followersCount",
-  followingCount: "profile.mirror_field_followingCount",
-  onlineStatus: "profile.mirror_field_onlineStatus",
-  posts: "profile.mirror_field_posts",
-  email: "profile.mirror_field_email",
-  phone: "profile.mirror_field_phone",
-};
-
-function MirrorPanel({ userId }: { userId: number }) {
-  const { t } = useTranslation();
-  const [data, setData] = useState<MirrorData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [, navigate] = useLocation();
-
-  useEffect(() => {
-    setLoading(true);
-    fetch(`/api/users/${userId}/mirror-view`, { credentials: "include" })
-      .then(r => r.ok ? r.json() : null)
-      .then((d: MirrorData | null) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [userId]);
-
-  if (loading) {
-    return (
-      <div className="mx-4 my-2 rounded-2xl border border-cyan-500/20 bg-[#080614] px-4 py-5 flex items-center justify-center gap-2">
-        <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
-        <span className="text-cyan-400/70 text-xs">{t("profile.mirror_loading")}</span>
-      </div>
-    );
-  }
-  if (!data) return null;
-
-  const { mirrorMeta, profile } = data;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 28 }}
-      className="mx-4 my-2 rounded-2xl border border-cyan-500/25 overflow-hidden"
-      style={{ background: "linear-gradient(135deg, rgba(6,182,212,0.06), rgba(8,6,20,0.98))" }}
-    >
-      {/* Warnings */}
-      {mirrorMeta.isPrivate && (
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-cyan-500/15 bg-amber-500/10">
-          <Lock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-          <p className="text-amber-300 text-[11px] font-semibold">{t("profile.mirror_private_warning")}</p>
-        </div>
-      )}
-      {mirrorMeta.isGhost && (
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-cyan-500/15 bg-slate-500/10">
-          <Eye className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-          <p className="text-slate-300 text-[11px] font-semibold">{t("profile.mirror_ghost_warning")}</p>
-        </div>
-      )}
-
-      {/* Stranger's profile preview */}
-      <div className="px-4 py-4">
-        <div className="flex items-center gap-3 mb-4">
-          {profile.avatarUrl ? (
-            <img src={resolveApiUrl(profile.avatarUrl)} className="w-12 h-12 rounded-full object-cover ring-2 ring-cyan-500/30" />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-black text-lg">
-              {profile.displayName?.[0]?.toUpperCase() ?? "?"}
-            </div>
-          )}
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-white font-bold text-sm">{profile.displayName}</span>
-              {profile.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400" />}
-            </div>
-            <span className="text-white/40 text-[11px]">@{profile.username}</span>
-            {profile.bio && <p className="text-white/60 text-[11px] mt-0.5 line-clamp-1">{profile.bio}</p>}
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="flex gap-4 mb-4">
-          {[
-            { label: t("profile.mirror_field_followersCount"), val: profile.followersCount },
-            { label: t("profile.mirror_field_followingCount"), val: profile.followingCount },
-            { label: t("profile.mirror_field_posts"), val: profile.postsCount },
-          ].map(({ label, val }) => (
-            <div key={label} className="text-center">
-              {val !== null ? (
-                <span className="text-white font-bold text-sm">{val}</span>
-              ) : (
-                <Lock className="w-3.5 h-3.5 text-white/30 mx-auto" />
-              )}
-              <p className="text-white/40 text-[10px] mt-0.5">{label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Visible / Hidden breakdown */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Visible */}
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
-            <p className="text-emerald-400 text-[10px] font-black tracking-wider uppercase mb-2">
-              ✅ {t("profile.mirror_stranger_sees")}
-            </p>
-            <div className="space-y-1">
-              {mirrorMeta.visibleFields.map(f => (
-                <div key={f} className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                  <span className="text-white/70 text-[11px]">{t(FIELD_KEY[f] ?? `profile.mirror_field_${f}`)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Hidden */}
-          <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3">
-            <p className="text-rose-400 text-[10px] font-black tracking-wider uppercase mb-2">
-              🔒 {t("profile.mirror_hidden_from")}
-            </p>
-            <div className="space-y-1">
-              {mirrorMeta.hiddenFields.map(f => (
-                <div key={f.field} className="group relative flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400 flex-shrink-0" />
-                  <span className="text-white/50 text-[11px] line-through decoration-rose-400/50">
-                    {t(FIELD_KEY[f.field] ?? `profile.mirror_field_${f.field}`)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Tip */}
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <p className="text-white/30 text-[10px]">{t("profile.mirror_tip")}</p>
-          <button
-            onClick={() => navigate("/settings?tab=privacy")}
-            className="flex-shrink-0 text-[10px] font-bold text-cyan-400 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20"
-          >
-            {t("profile.mirror_go_settings")}
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
 
 /* ─── Tokens ─────────────────────────────────────────────────── */
 const T = {
@@ -251,12 +84,6 @@ function BottomSheet({ open, onClose, children, maxH = "70vh" }: {
       )}
     </AnimatePresence>
   );
-}
-
-/* ─── Helper: is the URL a video file? ─────────────────────────── */
-function isVideoUrl(url?: string | null): boolean {
-  if (!url) return false;
-  return /\.(mp4|mov|webm|ogg|avi|mkv)(\?|$)/i.test(url);
 }
 
 /* ─── 3D Avatar ────────────────────────────────────────────────── */
@@ -349,12 +176,7 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
             {isUploading ? (
               <div className="w-full h-full flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
             ) : avatarUrl ? (
-              isVideoUrl(avatarUrl) ? (
-                <video src={resolveApiUrl(avatarUrl)} autoPlay muted loop playsInline
-                  className="w-full h-full object-cover" />
-              ) : (
-                <img src={resolveApiUrl(avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-              )
+              <img src={resolveApiUrl(avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
             ) : (
               <div className="w-full h-full flex items-center justify-center"
                 style={{ background: "radial-gradient(circle at 35% 35%, rgba(124,58,237,0.32), rgba(59,130,246,0.22), rgba(16,185,129,0.12))" }}>
@@ -363,7 +185,7 @@ function Avatar3D({ avatarUrl, displayName, isVerified, isUploading, isOwner, on
               </div>
             )}
             {isOwner && (
-              <div className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover/av:opacity-100 active:opacity-100 transition-opacity rounded-[20px]">
+              <div className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover/av:opacity-100 transition-opacity rounded-[20px]">
                 <Camera className="w-5 h-5 text-white" />
               </div>
             )}
@@ -448,7 +270,12 @@ function LiveSheet({ open, onClose, liveTitle, setLiveTitle, onStart, starting }
               className="w-1.5 h-1.5 rounded-full bg-white" />
             <span className="text-white text-[10px] font-black tracking-[0.15em]">LIVE</span>
           </div>
-          {/* viewer count shown after going live (LivePage handles real-time via Go WS) */}
+          {/* viewer count mock */}
+          <div className="absolute top-2.5 right-3 flex items-center gap-1 px-2 py-1 rounded-full"
+            style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(6px)" }}>
+            <Users className="w-3 h-3 text-white/60" />
+            <span className="text-white/70 text-[10px] font-semibold">0</span>
+          </div>
         </div>
 
         <input value={liveTitle} onChange={e => setLiveTitle(e.target.value)}
@@ -861,122 +688,10 @@ function TabBtn({ active, icon: Icon, label, onClick }: { active: boolean; icon:
   );
 }
 
-/* ─── Locked Profile View ─────────────────────────────────────── */
-function LockedProfileView({ user, onFollow, followPending }: {
-  user: any; onFollow: () => void; followPending: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="max-w-2xl mx-auto pb-10 select-none">
-
-      {/* ── Cover — aniq, hira yo'q ── */}
-      <div className="h-48 overflow-hidden relative rounded-b-3xl">
-        {user.coverUrl ? (
-          isVideoUrl(user.coverUrl)
-            ? <video src={resolveApiUrl(user.coverUrl)} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
-            : <img src={resolveApiUrl(user.coverUrl)} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 bg-[#07050f]">
-            <motion.div animate={{ x:[0,45,-10,0], y:[0,-25,10,0] }} transition={{ duration:14, repeat:Infinity, ease:"easeInOut" }}
-              className="absolute -top-20 -left-20 w-80 h-80 rounded-full"
-              style={{ background:"radial-gradient(circle,rgba(124,58,237,0.7) 0%,transparent 68%)", filter:"blur(26px)" }} />
-            <motion.div animate={{ x:[0,-30,14,0], y:[0,18,-14,0] }} transition={{ duration:11, repeat:Infinity, ease:"easeInOut", delay:2.5 }}
-              className="absolute -bottom-12 -right-12 w-72 h-72 rounded-full"
-              style={{ background:"radial-gradient(circle,rgba(59,130,246,0.6) 0%,transparent 68%)", filter:"blur(22px)" }} />
-            <motion.div animate={{ x:[0,18,-18,0], y:[0,12,-10,0] }} transition={{ duration:9, repeat:Infinity, ease:"easeInOut", delay:1 }}
-              className="absolute top-1/4 left-1/3 w-44 h-44 rounded-full"
-              style={{ background:"radial-gradient(circle,rgba(52,211,153,0.35) 0%,transparent 68%)", filter:"blur(18px)" }} />
-          </div>
-        )}
-        {/* faqat pastki gradient */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-      </div>
-
-      {/* ── Avatar — aniq ── */}
-      <div className="px-4 -mt-12 relative z-10">
-        <Avatar3D avatarUrl={user.avatarUrl} displayName={user.displayName}
-          isVerified={user.isVerified} isUploading={false} isOwner={false}
-          onUploadClick={() => {}} size={96} />
-      </div>
-
-      {/* ── Ism + username ── */}
-      <div className="px-4 mt-3 mb-8">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-lg font-black text-foreground">{user.displayName}</h1>
-          {user.isVerified && <BadgeCheck className="w-4.5 h-4.5 text-violet-400" />}
-        </div>
-        <p className="text-xs text-muted-foreground">@{user.username}</p>
-      </div>
-
-      {/* ── Markaziy Lock Kapsule ── */}
-      <div className="flex justify-center mt-6">
-        <motion.div
-          layout
-          onClick={() => { if (!open) setOpen(true); }}
-          animate={open
-            ? { width: 200, background: "linear-gradient(135deg,#7c3aed,#4f46e5,#2563eb)" }
-            : { width: 52,  background: "linear-gradient(135deg,#3b0764,#1e1b4b)" }
-          }
-          transition={{ type:"spring", stiffness:380, damping:32 }}
-          className="relative overflow-hidden cursor-pointer"
-          style={{
-            height: 52, borderRadius: 999,
-            border: "1.5px solid rgba(139,92,246,0.55)",
-            boxShadow: open
-              ? "0 0 32px rgba(124,58,237,0.55), 0 0 8px rgba(99,102,241,0.4)"
-              : "0 0 18px rgba(124,58,237,0.35), inset 0 0 12px rgba(139,92,246,0.15)",
-            display:"flex", alignItems:"center", justifyContent: open ? "space-between" : "center",
-            padding: open ? "0 8px 0 16px" : "0",
-          }}
-        >
-          {/* Shimmer */}
-          <motion.div animate={{ x:["-120%","220%"] }} transition={{ duration:2.2, repeat:Infinity, ease:"linear", repeatDelay:1 }}
-            className="absolute inset-0 pointer-events-none"
-            style={{ background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)", skewX:-15 }} />
-
-          {/* Lock icon — har doim ko'rinadi */}
-          <motion.div layout animate={open ? { rotate:[0,-12,12,0] } : { rotate:0 }}
-            transition={open ? { duration:0.4, delay:0.1 } : {}}>
-            <Lock className="w-5 h-5 text-violet-300 flex-shrink-0" />
-          </motion.div>
-
-          {/* Kuzatish matni va tugma — faqat ochilganda */}
-          <AnimatePresence>
-            {open && (
-              <motion.div initial={{ opacity:0, x:12 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0 }}
-                transition={{ delay:0.1 }}
-                className="flex items-center gap-2 ml-2">
-                <span className="text-white text-sm font-bold whitespace-nowrap">Kuzatish</span>
-                <motion.button
-                  whileTap={{ scale:0.88 }}
-                  disabled={followPending}
-                  onClick={(e) => { e.stopPropagation(); onFollow(); }}
-                  className="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center flex-shrink-0"
-                >
-                  {followPending
-                    ? <Loader2 className="w-4 h-4 text-white animate-spin" />
-                    : <UserPlus className="w-4 h-4 text-white" />}
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </div>
-
-      {/* Obunachi soni */}
-      <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.3 }}
-        className="text-center text-xs text-muted-foreground/50 mt-4">
-        {(user.followersCount ?? 0).toLocaleString()} ta obunachi
-      </motion.p>
-    </div>
-  );
-}
-
 /* ─── Main Page ───────────────────────────────────────────────── */
 export default function ProfilePage({ userId }: ProfilePageProps) {
   const { t } = useTranslation();
-  const { data: user, isLoading, isError: userError, refetch: refetchUser } = useGetUser(userId, { query: { queryKey: getGetUserQueryKey(userId) } });
+  const { data: user, isLoading } = useGetUser(userId, { query: { queryKey: getGetUserQueryKey(userId) } });
   const { data: posts = [] } = useListPosts({ userId });
   const { data: reels = [] } = useListReels({ userId });
   const [following, setFollowing] = useState<boolean | null>(null);
@@ -1006,8 +721,6 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const [creatingPlan, setCreatingPlan] = useState(false);
   const [subscribingPlanId, setSubscribingPlanId] = useState<number | null>(null);
   const [subError, setSubError] = useState<string | null>(null);
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerIdx, setViewerIdx] = useState(0);
 
   const { data: plans = [] } = useListCreatorPlans(userId, { query: { queryKey: getListCreatorPlansQueryKey(userId) } });
   const { data: subCheck, refetch: refetchSub } = useCheckCreatorSubscription(userId, { query: { queryKey: getCheckCreatorSubscriptionQueryKey(userId), enabled: !isOwner && !!me } });
@@ -1054,7 +767,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
     if (!liveTitle.trim()) return;
     setLiveStarting(true);
     try { const stream = await startLive.mutateAsync({ data: { title: liveTitle.trim() } }); navigate(`/live/${stream.id}`); }
-    catch (err: any) { setLiveStarting(false); import("sonner").then(({ toast }) => toast.error(err?.response?.data?.error ?? "Live boshlashda xato")).catch(()=>{}); }
+    catch { setLiveStarting(false); }
   };
   const handleSubscribe = async (planId: number) => {
     setSubError(null); setSubscribingPlanId(planId);
@@ -1065,8 +778,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const handleUnsubscribe = async (planId: number) => {
     setSubscribingPlanId(planId);
     try { await unsubscribeMutation.mutateAsync({ planId }); await refetchSub(); }
-    catch (err: any) { import("sonner").then(({ toast }) => toast.error(err?.response?.data?.error ?? t("profile.sub_error") ?? "Xato yuz berdi")).catch(()=>{}); }
-    finally { setSubscribingPlanId(null); }
+    catch {} finally { setSubscribingPlanId(null); }
   };
   const handleCreatePlan = async () => {
     if (!newPlanName.trim() || !newPlanPrice) return;
@@ -1076,8 +788,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       await createPlanMutation.mutateAsync({ data: { name: newPlanName.trim(), description: newPlanDesc.trim() || undefined, price: Math.round(parseFloat(newPlanPrice) * 100), perks } });
       qc.invalidateQueries({ queryKey: getListCreatorPlansQueryKey(userId) });
       setNewPlanName(""); setNewPlanDesc(""); setNewPlanPrice(""); setNewPlanPerks("");
-    } catch (err: any) { import("sonner").then(({ toast }) => toast.error(err?.response?.data?.error ?? "Reja yaratishda xato")).catch(()=>{}); }
-    finally { setCreatingPlan(false); }
+    } catch {} finally { setCreatingPlan(false); }
   };
 
   /* ── Loading skeleton ── */
@@ -1098,26 +809,9 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       </div>
     );
   }
-  if (userError) return (
-    <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
-      <p className="text-muted-foreground text-sm">Server bilan bog'liq xato</p>
-      <button onClick={() => refetchUser()} className="px-5 py-2 rounded-2xl bg-violet-600 text-white text-sm font-semibold">
-        Qayta urinish
-      </button>
-    </div>
-  );
-  if (!user) return <div className="text-center py-20 text-muted-foreground">Foydalanuvchi topilmadi</div>;
+  if (!user) return <div className="text-center py-20 text-muted-foreground">User not found</div>;
 
-  /* ── Qulfli profil (private account, viewer is not following) ── */
-  const isLocked = (user as any).isPrivate === true && !(following ?? user.isFollowing) && !isOwner;
-  if (isLocked) {
-    return <LockedProfileView user={user} onFollow={handleFollow} followPending={follow.isPending} />;
-  }
-
-  // posts already filtered by userId on the server — no client-side re-filter needed
-  const myPosts = posts;
-
-  const openViewer = (idx: number) => { setViewerIdx(idx); setViewerOpen(true); };
+  const myPosts = posts.filter(p => p.author.id === userId);
 
   /* Analytics calculations */
   const totalLikes = myPosts.reduce((s, p) => s + (p.likesCount ?? 0), 0) + reels.reduce((s, r) => s + (r.likesCount ?? 0), 0);
@@ -1133,38 +827,27 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
     <div className="max-w-2xl mx-auto pb-10 relative">
 
       {actuallyOwner && mirrorMode && (
-        <>
-          {/* ── Mirror banner ── */}
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            className="mx-4 mt-3 mb-1 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 flex items-center gap-3 z-20 relative">
-            <span className="text-lg">🪞</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-cyan-300 text-xs font-bold">{t("profile.mirror_banner_title")}</p>
-              <p className="text-cyan-300/60 text-[10px] mt-0.5">{t("profile.mirror_banner_desc")}</p>
-            </div>
-            <button onClick={() => navigate(`/profile/${userId}`)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold text-cyan-200 bg-cyan-500/15 border border-cyan-500/30">
-              {t("profile.mirror_exit")}
-            </button>
-          </motion.div>
-
-          {/* ── Mirror detail panel ── */}
-          <MirrorPanel userId={userId} />
-        </>
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="mx-4 mt-3 mb-1 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 flex items-center gap-3 z-20 relative">
+          <span className="text-lg">🪞</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-cyan-300 text-xs font-bold">{t("profile.mirror_banner_title")}</p>
+            <p className="text-cyan-300/60 text-[10px] mt-0.5">{t("profile.mirror_banner_desc")}</p>
+          </div>
+          <button onClick={() => navigate(`/profile/${userId}`)}
+            className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold text-cyan-200 bg-cyan-500/15 border border-cyan-500/30">
+            {t("profile.mirror_exit")}
+          </button>
+        </motion.div>
       )}
 
       {/* ══ Cover ══════════════════════════════════════════════════ */}
       <div className="h-40 overflow-hidden relative group/cover rounded-b-3xl z-10">
         <AnimatePresence mode="wait">
           {user.coverUrl ? (
-            isVideoUrl(user.coverUrl) ? (
-              <video key="cv" src={resolveApiUrl(user.coverUrl)} autoPlay muted loop playsInline
-                className="absolute inset-0 w-full h-full object-cover" />
-            ) : (
             <motion.img key="ci" src={resolveApiUrl(user.coverUrl)} alt=""
               initial={{ scale: 1.06, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.55 }}
               className="absolute inset-0 w-full h-full object-cover" />
-            )
           ) : (
             <motion.div key="cd" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[#07050f] overflow-hidden">
               {/* Aurora blobs */}
@@ -1206,7 +889,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
         {isOwner && (
           <>
-            <input ref={coverInputRef} type="file" accept="image/*,video/*" className="hidden"
+            <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) upCover(f); e.target.value = ""; }} />
             <AnimatePresence>
               {coverUploading && (
@@ -1219,12 +902,11 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             </AnimatePresence>
             {!coverUploading && (
               <div onClick={() => coverInputRef.current?.click()}
-                className="absolute inset-0 opacity-0 group-hover/cover:opacity-100 active:opacity-100 transition-all cursor-pointer flex items-end justify-end p-3 z-10"
+                className="absolute inset-0 opacity-0 group-hover/cover:opacity-100 transition-all cursor-pointer flex items-end justify-end p-3 z-10"
                 style={{ background: "rgba(0,0,0,0.25)" }}>
                 <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.93 }}
-                  className="flex items-center gap-1.5 px-3 h-9 rounded-xl bg-black/50 border border-white/20 backdrop-blur-md shadow-xl">
+                  className="w-9 h-9 rounded-xl bg-black/40 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-xl">
                   <Camera className="w-4 h-4 text-white" />
-                  <span className="text-white text-[11px] font-semibold">Rasm / Video</span>
                 </motion.div>
               </div>
             )}
@@ -1237,7 +919,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         {/* Avatar row */}
         <div className="flex items-end justify-between" style={{ marginTop: -44 }}>
           <div className="relative z-10">
-            <input ref={avatarInputRef} type="file" accept="image/*,video/*" className="hidden"
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
             <Avatar3D avatarUrl={user.avatarUrl} displayName={user.displayName} isVerified={user.isVerified}
               isUploading={avatarUploading} isOwner={isOwner} onUploadClick={() => avatarInputRef.current?.click()} size={96} />
@@ -1321,14 +1003,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               </motion.div>
             )}
           </div>
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <p className="text-xs text-muted-foreground">@{user.username}</p>
-            {(user as any).isPrivate && isOwner && (
-              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-[10px] font-bold text-violet-400">
-                <Lock className="w-2.5 h-2.5" /> Yopiq
-              </span>
-            )}
-          </div>
+          <p className="text-xs text-muted-foreground mb-1.5">@{user.username}</p>
           {user.bio && <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2">{user.bio}</p>}
         </motion.div>
 
@@ -1336,7 +1011,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
           className="grid gap-2 mb-5"
           style={{ gridTemplateColumns: isOwner && plans.length > 0 ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr" }}>
-          <BigStatNode value={(user as any).postsCount ?? myPosts.length} label={t("profile.posts")} accent="#a78bfa" />
+          <BigStatNode value={myPosts.length} label={t("profile.posts")} accent="#a78bfa" />
           <BigStatNode value={user.followersCount ?? 0} label={t("profile.stat_followers")} accent="#818cf8" />
           <BigStatNode value={user.followingCount ?? 0} label={t("profile.stat_following")} accent="#60a5fa" />
           {isOwner && plans.length > 0 && (
@@ -1375,7 +1050,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             {/* ─── Hero featured post ─── */}
             {topPost && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 24 }}>
-                  <motion.div whileTap={{ scale: 0.98 }} onClick={() => openViewer(0)}
+                <Link href={`/post/${topPost.id}`}>
+                  <motion.div whileTap={{ scale: 0.98 }}
                     className="w-full rounded-2xl overflow-hidden relative cursor-pointer group/hero"
                     style={{ height: 200, boxShadow: "0 4px 28px rgba(124,58,237,0.18)" }}>
                     {topPost.mediaUrl && topPost.type !== "video"
@@ -1418,18 +1094,17 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                       </div>
                     )}
                   </motion.div>
+                </Link>
               </motion.div>
             )}
             {/* ─── 3-col grid ─── */}
             <div className="grid grid-cols-3 gap-1.5">
-              {myPosts.filter(p => p.id !== topPost?.id).map((post, i) => {
-                const gridIdx = topPost ? i + 1 : i;
-                return (
-                  <motion.div key={post.id}
-                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.04 + 0.08, type: "spring", stiffness: 280, damping: 24 }}>
+              {myPosts.filter(p => p.id !== topPost?.id).map((post, i) => (
+                <motion.div key={post.id}
+                  initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.04 + 0.08, type: "spring", stiffness: 280, damping: 24 }}>
+                  <Link href={`/post/${post.id}`}>
                     <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
-                      onClick={() => openViewer(gridIdx)}
                       className="aspect-square rounded-xl overflow-hidden bg-card cursor-pointer relative group/post"
                       style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.25)" }}>
                       {post.mediaUrl && post.type !== "video"
@@ -1457,9 +1132,9 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                         </div>
                       )}
                     </motion.div>
-                  </motion.div>
-                );
-              })}
+                  </Link>
+                </motion.div>
+              ))}
             </div>
           </div>
         )}
@@ -1480,25 +1155,23 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                 <motion.div key={reel.id}
                   initial={{ opacity: 0, scale: 0.88, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ delay: i * 0.03, type: "spring", stiffness: 280, damping: 22 }}>
-                  <Link href={`/reels?startId=${reel.id}`}>
+                  <Link href="/reels">
                     <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
                       className="aspect-[3/4] rounded-xl overflow-hidden bg-card border border-white/8 cursor-pointer relative group/reel"
                       style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
-                      {/* Video — hover to play, thumbnail as poster */}
+                      {/* Video always visible — autoplay muted loop shows live content */}
                       {reel.videoUrl ? (
                         <video
-                          src={resolveApiUrl(reel.videoUrl)}
-                          poster={reel.thumbnailUrl ? resolveApiUrl(reel.thumbnailUrl) : undefined}
+                          src={reel.videoUrl}
                           className="w-full h-full object-cover"
                           muted
+                          autoPlay
+                          loop
                           playsInline
                           preload="metadata"
-                          loop
-                          onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play().catch(() => {})}
-                          onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
                         />
                       ) : reel.thumbnailUrl ? (
-                        <img src={resolveApiUrl(reel.thumbnailUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                        <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"
                           style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.18), rgba(59,130,246,0.12))" }}>
@@ -1622,19 +1295,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         targetUser={{ displayName: user.displayName, username: user.username, avatarUrl: user.avatarUrl }}
         targetUserId={userId}
         isOwner={isOwner}
-        hidden={viewerOpen}
       />
-
-      {/* ── Post Viewer ── */}
-      <AnimatePresence>
-        {viewerOpen && (
-          <PostViewer
-            posts={myPosts}
-            startIndex={viewerIdx}
-            onClose={() => setViewerOpen(false)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

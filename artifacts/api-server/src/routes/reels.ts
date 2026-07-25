@@ -1,19 +1,16 @@
 import { Router } from "express";
-import { db, readDb } from "@workspace/db";
+import { db } from "@workspace/db";
 import {
   reelsTable, reelLikesTable, reelCommentsTable, usersTable, moderationQueueTable, followsTable, walletsTable, transactionsTable,
   userInteractionsTable, reelWatchProgressTable, reelCollaboratorsTable,
 } from "@workspace/db";
 import { eq, sql, desc, and, inArray, not, count, gte } from "drizzle-orm";
-import { rewriteVideoToBunnyCDN } from "../lib/bunny";
 import { accumulateViewEarning } from "./monetization";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheGet, cacheSet, cacheAside, cacheDelPattern } from "../lib/cache";
 import { transcodeReelToHLS, parseGcsPath } from "../lib/hlsTranscode";
 import { objectStorageClient } from "../lib/objectStorage";
-import { sendNotification } from "../lib/pushNotifications";
-import { indexReel } from "../lib/meili";
 
 const router = Router();
 
@@ -35,17 +32,17 @@ async function batchEnrichReels(
 
   const [authors, likedRows, statsMap, views24hRows] = await Promise.all([
     authorIds.length > 0
-      ? readDb.select().from(usersTable).where(inArray(usersTable.id, authorIds))
+      ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : Promise.resolve([]),
     viewerId && reelIds.length > 0
-      ? readDb
+      ? db
           .select({ reelId: reelLikesTable.reelId })
           .from(reelLikesTable)
           .where(and(inArray(reelLikesTable.reelId, reelIds), eq(reelLikesTable.userId, viewerId)))
       : Promise.resolve([]),
     getUserStatsMap(authorIds, viewerId),
     reelIds.length > 0
-      ? readDb.select({ reelId: userInteractionsTable.contentId, n: count() })
+      ? db.select({ reelId: userInteractionsTable.contentId, n: count() })
           .from(userInteractionsTable)
           .where(and(
             eq(userInteractionsTable.contentType, "reel"),
@@ -63,7 +60,7 @@ async function batchEnrichReels(
 
   // Normalize hlsUrl: existing DB records may have relative paths like "/api/reels/hls/..."
   // In production, frontend and API run on different hosts, so we need full URLs.
-  const apiBase = (process.env.API_BASE_URL ?? process.env.RENDER_EXTERNAL_URL ?? "").replace(/\/$/, "");
+  const apiBase = (process.env.API_BASE_URL ?? "").replace(/\/$/, "");
 
   return reels.map(reel => {
     const author = authorMap.get(reel.authorId as number);
@@ -75,8 +72,8 @@ async function batchEnrichReels(
     const fixUrl = (u: string | null | undefined) =>
       u && u.startsWith("/") && apiBase ? `${apiBase}${u}` : (u ?? undefined);
 
-    const hlsUrl      = rewriteVideoToBunnyCDN(fixUrl((reel as any).hlsUrl));
-    const videoUrl    = rewriteVideoToBunnyCDN(fixUrl(reel.videoUrl));
+    const hlsUrl      = fixUrl((reel as any).hlsUrl);
+    const videoUrl    = fixUrl(reel.videoUrl);
     const thumbnailUrl = fixUrl(reel.thumbnailUrl ?? undefined);
 
     return {
@@ -115,38 +112,14 @@ router.get("/reels", async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 10, 50);
     const offset = Number(req.query.offset) || 0;
     const userId = req.query.userId ? Number(req.query.userId) : null;
-    const sort = String(req.query.sort || "top"); // "top" | "trending" | "latest"
-    const typeFilter = req.query.type ? String(req.query.type) : null; // "reel" | "short"
 
-    const cacheKey = `${limit}:${offset}:${userId ?? "all"}:${viewerId ?? 0}:${sort}:${typeFilter ?? "all"}`;
+    const cacheKey = `${limit}:${offset}:${userId ?? "all"}:${viewerId ?? 0}`;
     const result = await cacheAside("reels:list", cacheKey, async () => {
-      let q = db.select().from(reelsTable).$dynamic();
-
-      const conditions = [];
-      if (userId) conditions.push(eq(reelsTable.authorId, userId));
-      if (typeFilter) conditions.push(eq(reelsTable.type, typeFilter));
-      if (conditions.length > 0) q = q.where(and(...conditions));
-
-      if (sort === "trending") {
-        /* Order by 24h velocity — uses user_interactions (contentType=reel, interactionType=view) */
-        q = q.orderBy(
-          desc(sql`(
-            SELECT COUNT(*) FROM user_interactions
-            WHERE content_type = 'reel'
-              AND interaction_type = 'view'
-              AND content_id = ${reelsTable.id}
-              AND created_at > NOW() - INTERVAL '24 hours'
-          )`),
-        );
-      } else if (sort === "latest") {
-        q = q.orderBy(desc(reelsTable.createdAt));
-      } else {
-        q = q.orderBy(desc(reelsTable.viewsCount));
-      }
-
-      const rows = await q.limit(limit).offset(offset);
+      const rows = await (userId
+        ? db.select().from(reelsTable).where(eq(reelsTable.authorId, userId)).orderBy(desc(reelsTable.createdAt)).limit(limit).offset(offset)
+        : db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(limit).offset(offset));
       return batchEnrichReels(rows, viewerId);
-    }, 20);
+    }, 20); /* 20s TTL — fresh enough, reduces DB load by ~90% on hot feed */
 
     res.json(result);
   } catch (err) {
@@ -193,28 +166,18 @@ router.get("/reels/similar", async (req, res) => {
 router.post("/reels", async (req, res) => {
   try {
     const viewerId = (req.session as any)?.userId as number | undefined;
-    const { videoUrl, thumbnailUrl, caption, audioTrack, duration, tags, type } = req.body;
+    const { videoUrl, thumbnailUrl, caption, audioTrack, duration, tags } = req.body;
     const authorId = viewerId ?? Number(req.body.authorId);
     if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
-    const reelType = type === "short" ? "short" : "reel";
-
     const [reel] = await db
       .insert(reelsTable)
-      .values({ authorId, videoUrl, thumbnailUrl, caption, audioTrack, duration, tags, type: reelType })
+      .values({ authorId, videoUrl, thumbnailUrl, caption, audioTrack, duration, tags })
       .returning();
 
     const [enriched] = await batchEnrichReels([reel], viewerId);
-    cacheDelPattern("reels:list");
+    cacheDelPattern("reels:list"); /* invalidate feed cache on new reel */
     res.status(201).json(enriched);
-
-    /* Meilisearch index — fire-and-forget */
-    void (async () => {
-      try {
-        const [author] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, authorId));
-        indexReel({ id: reel.id, caption: reel.caption ?? "", authorId, authorName: author?.displayName ?? undefined, thumbnailUrl: reel.thumbnailUrl ?? undefined, viewsCount: 0, likesCount: 0 });
-      } catch { /* non-fatal */ }
-    })();
 
     /* HLS transcoding in background — never blocks response */
     void transcodeReelToHLS(reel.id, videoUrl).catch(() => {});
@@ -289,29 +252,8 @@ router.post("/reels/:id/like", async (req, res) => {
       await db.update(reelsTable).set({ likesCount: sql`${reelsTable.likesCount} + 1` }).where(eq(reelsTable.id, reelId));
     }
 
-    const [reel] = await db.select({ likesCount: reelsTable.likesCount, authorId: reelsTable.authorId, caption: reelsTable.caption }).from(reelsTable).where(eq(reelsTable.id, reelId));
-    cacheDelPattern("reels:list"); // invalidate feed cache so next GET /reels reflects new like state
+    const [reel] = await db.select({ likesCount: reelsTable.likesCount }).from(reelsTable).where(eq(reelsTable.id, reelId));
     res.json({ liked: !isLiked, likesCount: reel?.likesCount ?? 0 });
-
-    /* Push notification to reel author — fire-and-forget */
-    if (!isLiked && reel?.authorId && reel.authorId !== userId) {
-      void (async () => {
-        try {
-          const [liker] = await db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, userId));
-          await sendNotification({
-            userId: reel.authorId!,
-            title: "❤️ Reel like",
-            body: `${liker?.displayName ?? "Kimdir"} reelingizni yoqtirdi`,
-            type: "like",
-            actorName: liker?.displayName ?? undefined,
-            actorAvatar: liker?.avatarUrl ?? undefined,
-            targetId: reelId,
-            targetType: "reel",
-            data: { reelId: String(reelId), type: "reel_like" },
-          });
-        } catch { /* non-fatal */ }
-      })();
-    }
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -478,37 +420,13 @@ router.delete("/reels/collaborators/:id", requireAuth, async (req: any, res) => 
 router.post("/reels/:id/view", async (req, res) => {
   try {
     const reelId = Number(req.params.id);
-    const userId = (req.session as any)?.userId as number | undefined;
 
-    /* Deduplicate — permanent per logged-in user (DB check), 24h per IP for anon */
-    if (userId) {
-      const existing = await db.select({ id: userInteractionsTable.id })
-        .from(userInteractionsTable)
-        .where(and(
-          eq(userInteractionsTable.userId, userId),
-          eq(userInteractionsTable.contentType, "reel"),
-          eq(userInteractionsTable.contentId, reelId),
-          eq(userInteractionsTable.interactionType, "view"),
-        ))
-        .limit(1);
-      if (existing.length > 0) { res.json({ ok: true, deduplicated: true }); return; }
-    } else {
-      const anonKey = `rview:${reelId}:${req.ip}`;
-      const already = await cacheGet(anonKey);
-      if (already) { res.json({ ok: true, deduplicated: true }); return; }
-      await cacheSet(anonKey, "1", 86400); /* 24h TTL for anonymous */
-    }
-
-    /* Record the view interaction (also used for AI feed signals) */
-    if (userId) {
-      await db.insert(userInteractionsTable).values({
-        userId,
-        contentType: "reel",
-        contentId: reelId,
-        interactionType: "view",
-        durationMs: null,
-      });
-    }
+    /* Deduplicate: same user (or IP) can only add 1 view per reel per hour */
+    const userId  = (req.session as any)?.userId as number | undefined;
+    const viewKey = `rview:${reelId}:${userId ?? req.ip}`;
+    const already = await cacheGet(viewKey);
+    if (already) { res.json({ ok: true, deduplicated: true }); return; }
+    await cacheSet(viewKey, "1", 3600); /* 1 hour TTL */
 
     /* Increment view count */
     await db.update(reelsTable)

@@ -42,10 +42,10 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import CreateContentModal from "@/components/CreateContentModal";
 import { useTranslation } from "react-i18next";
-import { useLocation, useSearch } from "wouter";
+import { useLocation } from "wouter";
 import { resolveApiUrl } from "@/lib/utils";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface FeedItem {
@@ -298,7 +298,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
                   style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
                   {c.author.avatarUrl
-                    ? <img loading="lazy" decoding="async" src={c.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    ? <img src={c.author.avatarUrl} alt="" className="w-full h-full object-cover" />
                     : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
                         {initials(c.author.displayName)}
                       </div>}
@@ -319,7 +319,7 @@ function CommentsSheet({ reelId, commentsCount, onClose, user }: {
           <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden"
             style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
             {user?.avatarUrl
-              ? <img loading="lazy" decoding="async" src={resolveApiUrl(user.avatarUrl)} alt="" className="w-full h-full object-cover" />
+              ? <img src={resolveApiUrl(user.avatarUrl)} alt="" className="w-full h-full object-cover" />
               : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
                   {initials(user?.displayName)}
                 </div>}
@@ -403,7 +403,7 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
 
   if (!videoUrl && !hlsUrl) return (
     <div className="absolute inset-0">
-      {thumbnailUrl ? <img loading="lazy" decoding="async" src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
+      {thumbnailUrl ? <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
         : <div className="w-full h-full" style={{ background: "linear-gradient(135deg,#1e0533,#030314)" }} />}
     </div>
   );
@@ -411,13 +411,13 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
   return (
     <div className="absolute inset-0">
       {thumbnailUrl && (
-        <img loading="lazy" decoding="async" src={thumbnailUrl} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110"
+        <img src={thumbnailUrl} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110"
           style={{ filter: "blur(24px) brightness(0.28)", pointerEvents: "none" }} />
       )}
       <video ref={videoRef as React.RefObject<HTMLVideoElement>}
         poster={thumbnailUrl ?? undefined}
         className="absolute inset-0 w-full h-full object-contain z-[2]"
-        loop playsInline muted={muted} preload="metadata"
+        loop playsInline muted={muted} preload="auto"
         onLoadedData={() => setLoading(false)} onCanPlay={() => setLoading(false)}
         onWaiting={() => setLoading(true)}
         onPlaying={() => { setLoading(false); onPlayState(false); }}
@@ -509,7 +509,21 @@ function LeftOrb({
   return (
     <motion.button whileTap={{ scale: 0.68 }} onClick={onClick}
       className="flex flex-col items-center gap-1">
-      <div className="flex items-center justify-center relative" style={{ width: 44, height: 44 }}>
+      <div className="w-[44px] h-[44px] rounded-full flex items-center justify-center relative"
+        style={{
+          background: active ? `${activeColor}28` : "rgba(4,3,14,0.60)",
+          border: `1.5px solid ${active ? activeColor + "55" : "rgba(255,255,255,0.13)"}`,
+          backdropFilter: "blur(24px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.8)",
+          boxShadow: active
+            ? `0 0 22px ${activeColor}44, inset 0 1px 0 rgba(255,255,255,0.14)`
+            : "0 2px 16px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.07)",
+        }}>
+        {active && (
+          <motion.div className="absolute inset-0 rounded-full pointer-events-none"
+            animate={{ opacity: [0.2, 0.55, 0.2] }} transition={{ duration: 2.2, repeat: Infinity }}
+            style={{ background: `radial-gradient(circle, ${activeColor}30 0%, transparent 70%)` }} />
+        )}
         {icon}
       </div>
       {count !== undefined && count > 0 && (
@@ -567,7 +581,7 @@ function ReelSlide({
   const handleSendToUser = async (toUser: { id: number; displayName?: string; username?: string }) => {
     if (!user || shareSending) return;
     setShareSending(toUser.id);
-    const content = `📤 *${reel.author?.displayName ?? "GILOS"}* tomonidan reel:\n${window.location.origin}/reels`;
+    const content = `📤 *${reel.author?.displayName ?? "OlchaAI"}* tomonidan reel:\n${window.location.origin}/reels`;
     try {
       const convRes = await fetch(`${API}/api/conversations`, {
         method: "POST", credentials: "include",
@@ -649,7 +663,7 @@ function ReelSlide({
 
       {/* Ambient blur bg */}
       {reel.thumbnailUrl && (
-        <img loading="lazy" decoding="async" src={resolveApiUrl(reel.thumbnailUrl)} alt="" aria-hidden
+        <img src={reel.thumbnailUrl} alt="" aria-hidden
           className="absolute inset-[-8%] w-[116%] h-[116%] object-cover pointer-events-none"
           style={{ filter: "blur(60px) saturate(2.2) brightness(0.14)", zIndex: 0 }} />
       )}
@@ -657,7 +671,7 @@ function ReelSlide({
         background: "radial-gradient(ellipse at 50% 35%, rgba(124,58,237,0.07) 0%, rgba(0,0,0,0.4) 100%)" }} />
 
       {/* Video */}
-      <ReelVideoEl videoUrl={resolveApiUrl(reel.videoUrl) || undefined} hlsUrl={reel.hlsUrl} thumbnailUrl={resolveApiUrl(reel.thumbnailUrl) || undefined}
+      <ReelVideoEl videoUrl={reel.videoUrl} hlsUrl={reel.hlsUrl} thumbnailUrl={reel.thumbnailUrl}
         isActive={isActive} muted={muted} videoRef={videoRef} onPlayState={setPaused} />
 
       {/* Gradient overlays */}
@@ -744,11 +758,11 @@ function ReelSlide({
           {/* Right: mute + add */}
           <div className="flex items-center gap-2">
             <motion.button whileTap={{ scale: 0.8 }} onClick={onMute}
-              className="flex items-center justify-center p-1">
-              {muted
-                ? <VolumeX className="w-5 h-5" style={{ color: "rgba(255,255,255,0.5)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.9))" }} />
-                : <Volume2 className="w-5 h-5" style={{ color: "rgba(255,255,255,0.9)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.9))" }} />
-              }
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(0,0,0,0.42)", backdropFilter: "blur(18px)",
+                border: `1px solid ${muted ? "rgba(255,255,255,0.09)" : neonColor + "38"}`,
+                boxShadow: muted ? "none" : `0 0 12px ${neonColor}30` }}>
+              {muted ? <VolumeX className="w-3.5 h-3.5 text-white/40" /> : <Volume2 className="w-3.5 h-3.5 text-white/85" />}
             </motion.button>
           </div>
         </div>
@@ -862,7 +876,7 @@ function ReelSlide({
               <div className="absolute inset-[2px] rounded-full overflow-hidden z-10 flex items-center justify-center"
                 style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
                 {reel.author?.avatarUrl
-                  ? <img loading="lazy" decoding="async" src={resolveApiUrl(reel.author.avatarUrl)} alt="" className="w-full h-full object-cover" />
+                  ? <img src={resolveApiUrl(reel.author.avatarUrl)} alt="" className="w-full h-full object-cover" />
                   : <span className="text-[10px] font-black text-white select-none">{initials(reel.author?.displayName)}</span>}
               </div>
             </div>
@@ -872,7 +886,7 @@ function ReelSlide({
               <div className="flex items-center gap-1">
                 <span className="text-white font-black text-[13px] truncate"
                   style={{ textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}>
-                  {reel.author?.displayName ?? "GILOS"}
+                  {reel.author?.displayName ?? "OlchaAI"}
                 </span>
                 {reel.author?.isVerified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: neonColor }} />}
                 {reel._aiSuggested && <Zap className="w-3 h-3 text-violet-400 flex-shrink-0" />}
@@ -940,7 +954,7 @@ function ReelSlide({
               <input
                 value={shareQuery}
                 onChange={e => setShareQuery(e.target.value)}
-                placeholder="GILOS foydalanuvchisini qidirish..."
+                placeholder="OlchaAI foydalanuvchisini qidirish..."
                 className="w-full px-4 py-2.5 rounded-2xl text-white text-[13px] placeholder:text-white/30 focus:outline-none"
                 style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
               />
@@ -950,14 +964,14 @@ function ReelSlide({
                 <p className="text-white/30 text-[13px] text-center py-4">Topilmadi</p>
               )}
               {shareResults.length === 0 && !shareQuery.trim() && (
-                <p className="text-white/20 text-[12px] text-center py-4">Qidirish orqali GILOS foydalanuvchilarini toping</p>
+                <p className="text-white/20 text-[12px] text-center py-4">Qidirish orqali OlchaAI foydalanuvchilarini toping</p>
               )}
               {shareResults.map(u => (
                 <div key={u.id} className="flex items-center gap-3 py-2">
                   <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0"
                     style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
                     {u.avatarUrl
-                      ? <img loading="lazy" decoding="async" src={resolveApiUrl(u.avatarUrl)} alt="" className="w-full h-full object-cover" />
+                      ? <img src={resolveApiUrl(u.avatarUrl)} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">
                           {(u.displayName ?? "?").slice(0, 2).toUpperCase()}
                         </div>}
@@ -988,7 +1002,7 @@ function ReelSlide({
 
 /* ─── MAIN PAGE ──────────────────────────────────────────────── */
 export default function ReelsPage() {
-  const { data: initialReels = [], isLoading, isError: reelsError, refetch: refetchReels } = useListReels({ limit: 20 } as any);
+  const { data: initialReels = [], isLoading } = useListReels({ limit: 20 } as any);
   const [feed,      setFeed]      = useState<FeedItem[]>([]);
   const [current,   setCurrent]   = useState(0);
   const [likedIds,  setLikedIds]  = useState<Set<number>>(new Set());
@@ -1005,22 +1019,13 @@ export default function ReelsPage() {
   const qc       = useQueryClient();
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const search = useSearch();
 
   const watchedTags = useRef<string[]>([]);
   const watchedIds  = useRef<Set<number>>(new Set());
 
   useEffect(() => {
-    if (initialReels.length > 0 && feed.length === 0) {
-      setFeed(initialReels as FeedItem[]);
-      // startId URL param — profil reels dan kelganda o'sha reeldan boshlash
-      const startId = new URLSearchParams(search).get("startId");
-      if (startId) {
-        const idx = (initialReels as FeedItem[]).findIndex(r => r.id === Number(startId));
-        if (idx > 0) setCurrent(idx);
-      }
-    }
-  }, [initialReels, feed.length, search]);
+    if (initialReels.length > 0 && feed.length === 0) setFeed(initialReels as FeedItem[]);
+  }, [initialReels, feed.length]);
 
   // Initialize liked state from server's isLiked flag when reels first load
   useEffect(() => {
@@ -1126,7 +1131,7 @@ export default function ReelsPage() {
     followMut.mutate({ id: authorId }, {
       onSuccess: (data) => {
         setFollowOverrides(prev => new Map(prev).set(authorId, data.following));
-        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
+        qc.invalidateQueries({ queryKey: getListReelsQueryKey({ limit: 20 } as any) });
       },
       onError: () => {
         setFollowOverrides(prev => new Map(prev).set(authorId, current));
@@ -1166,7 +1171,7 @@ export default function ReelsPage() {
       <div className="absolute inset-0 z-0 overflow-hidden">
         <AnimatePresence mode="wait">
           {reel?.thumbnailUrl && (
-            <motion.img key={reel.id} src={resolveApiUrl(reel.thumbnailUrl)} alt="" aria-hidden
+            <motion.img key={reel.id} src={reel.thumbnailUrl} alt="" aria-hidden
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
               className="absolute inset-[-12%] w-[124%] h-[124%] object-cover"
@@ -1178,8 +1183,8 @@ export default function ReelsPage() {
 
       {/* Video preload */}
       <div style={{ display: "none" }} aria-hidden>
-        {[current + 1].map(i => { const r = feed[i]; return r?.videoUrl ? <video key={r.id} src={resolveApiUrl(r.videoUrl)} preload="none" muted playsInline /> : null; })}
-        {[current + 1, current + 2, current + 3].map(i => { const r = feed[i]; return r?.thumbnailUrl ? <img key={`t-${r.id}`} src={resolveApiUrl(r.thumbnailUrl)} loading="eager" alt="" /> : null; })}
+        {[current + 1, current + 2].map(i => { const r = feed[i]; return r?.videoUrl ? <video key={r.id} src={r.videoUrl} preload="auto" muted playsInline loop /> : null; })}
+        {[current + 1, current + 2, current + 3].map(i => { const r = feed[i]; return r?.thumbnailUrl ? <img key={`t-${r.id}`} src={r.thumbnailUrl} loading="eager" alt="" /> : null; })}
       </div>
 
       {/* Loading */}
@@ -1198,22 +1203,14 @@ export default function ReelsPage() {
           <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>🎬</div>
           <div className="text-center">
-            <p className="font-black text-white mb-1">{reelsError ? "Server xatosi" : "Hali reel yo'q"}</p>
-            <p className="text-sm text-white/45">{reelsError ? "Qayta urinib ko'ring" : "Birinchi reelni yuklang!"}</p>
+            <p className="font-black text-white mb-1">Hali reel yo'q</p>
+            <p className="text-sm text-white/45">Birinchi reelni yuklang!</p>
           </div>
-          {reelsError ? (
-            <motion.button whileTap={{ scale: 0.95 }} onClick={() => refetchReels()}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white text-sm font-bold"
-              style={{ background: "linear-gradient(135deg,#7c3aed,#ec4899)", boxShadow: "0 4px 24px rgba(124,58,237,0.45)" }}>
-              <Plus className="w-4 h-4" /> Qayta urinish
-            </motion.button>
-          ) : (
-            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCreateOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white text-sm font-bold"
-              style={{ background: "linear-gradient(135deg,#7c3aed,#ec4899)", boxShadow: "0 4px 24px rgba(124,58,237,0.45)" }}>
-              <Plus className="w-4 h-4" /> Reel qo'shish
-            </motion.button>
-          )}
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCreateOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white text-sm font-bold"
+            style={{ background: "linear-gradient(135deg,#7c3aed,#ec4899)", boxShadow: "0 4px 24px rgba(124,58,237,0.45)" }}>
+            <Plus className="w-4 h-4" /> Reel qo'shish
+          </motion.button>
         </div>
 
       ) : reel && (
@@ -1284,7 +1281,7 @@ export default function ReelsPage() {
                       boxShadow: isAct ? "0 0 14px rgba(167,139,250,0.45)" : "none",
                       opacity: Math.max(0.15, 1 - dist * 0.22), transition: "all 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}>
                     {r.thumbnailUrl
-                      ? <img loading="lazy" decoding="async" src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                      ? <img src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full" style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }} />}
                   </motion.button>
                 );

@@ -26,8 +26,6 @@ import {
   useSendMessage,
   useCreateConversation,
   useListUsers,
-  useDeleteMessage,
-  useDeleteConversation,
   getGetConversationMessagesQueryKey,
   getListConversationsQueryKey,
   type Conversation,
@@ -37,7 +35,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCall } from "@/context/CallContext";
 import { useRealtime } from "@/context/RealtimeContext";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 /* ── Types ──────────────────────────────────────────────────── */
 type MsgType = "text" | "image" | "voice" | "video_note" | "file" | "sticker" | "poll" | "drawing";
@@ -61,7 +59,7 @@ interface LocalMsg {
   deleted: boolean;
   edited: boolean;
   forwarded: boolean;
-  status: "sending" | "sent" | "delivered" | "read" | "failed";
+  status: "sending" | "sent" | "delivered" | "read";
   ts: Date;
   isEphemeral?: boolean;
   isPending?: boolean;
@@ -102,42 +100,15 @@ function dayLabel(d: Date, t: any) {
   if (diff === 1) return t("msg.yesterday");
   return d.toLocaleDateString(i18n.language === "uz" ? "uz-UZ" : "en-US", { day:"numeric", month:"long" });
 }
-function uid() { return crypto.randomUUID().replace(/-/g, "").slice(0, 12); }
+function uid() { return Math.random().toString(36).slice(2); }
 async function uploadBlob(blob: Blob, name: string, mime: string): Promise<string> {
-  // Step 1: get upload URL from the server (R2 proxy or Replit storage)
-  const urlRes = await fetch(`${API}/api/storage/uploads/request-url`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ name, size: blob.size, contentType: mime }),
-  });
-  if (!urlRes.ok) {
-    const body = await urlRes.json().catch(() => ({})) as { error?: string };
-    throw new Error(body.error ?? "Upload URL olishda xato");
-  }
-  const { uploadURL, objectPath } = await urlRes.json() as { uploadURL: string; objectPath: string };
-
-  // Step 2: PUT the blob to the upload URL
-  const putRes = await fetch(uploadURL, {
-    method: "PUT",
-    headers: { "Content-Type": mime },
-    credentials: "omit",
-    body: blob,
-  });
-  if (!putRes.ok) throw new Error("Fayl yuklanmadi");
-
-  // Step 3: read the real public URL from PUT response (R2 proxy returns { url, objectPath })
-  try {
-    const putBody = await putRes.clone().json() as { url?: string; objectPath?: string };
-    if (putBody?.url) return putBody.url;
-    if (putBody?.objectPath) {
-      const p = putBody.objectPath;
-      return p.startsWith("http") ? p : `${API}/api/storage${p}`;
-    }
-  } catch { /* not JSON — fall through */ }
-
-  // Fallback: objectPath from step 1 (Replit storage returns a real path here)
-  return objectPath.startsWith("http") ? objectPath : `${API}/api/storage${objectPath}`;
+  const fd = new FormData();
+  fd.append("file", blob, name);
+  fd.append("path", `chat/${name}`);
+  fd.append("contentType", mime);
+  const r = await fetch(`${API}/api/storage/objects`, { method: "POST", body: fd });
+  const j = await r.json();
+  return `${API}/api/storage${j.objectPath}`;
 }
 
 /* ── EmojiPicker (bottom-sheet modal) ──────────────────────── */
@@ -358,7 +329,7 @@ function ContactPickerModal({ users, onPick, onClose }: {
             <button key={user.id} onClick={()=>{ onPick(user); onClose(); }}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex-shrink-0 overflow-hidden flex items-center justify-center text-primary font-bold text-sm">
-                {user.avatarUrl ? <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover"/> : (user.displayName?.[0]||"?").toUpperCase()}
+                {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/> : (user.displayName?.[0]||"?").toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>
@@ -602,7 +573,7 @@ function MsgBubble({
   msg: LocalMsg; isMe: boolean; selected: boolean;
   onReply:(m:LocalMsg)=>void;
   onUpdate:(id:string,patch:Partial<LocalMsg>)=>void;
-  onDelete:(id:string, serverId:number)=>void;
+  onDelete:(id:string)=>void;
   onForward:(id:string)=>void;
   onSelect:(id:string)=>void;
 }) {
@@ -710,13 +681,13 @@ function MsgBubble({
               )}
               {msg.type==="image"&&msg.mediaUrl&&(
                 <div className="overflow-hidden rounded-2xl">
-                  <img loading="lazy" decoding="async" src={msg.mediaUrl} alt="" className="max-w-[220px] max-h-[220px] object-cover"/>
+                  <img src={msg.mediaUrl} alt="" className="max-w-[220px] max-h-[220px] object-cover"/>
                   {msg.content&&<p className="px-3 py-2 text-sm msg-neon-text">{msg.content}</p>}
                 </div>
               )}
               {msg.type==="drawing"&&msg.mediaUrl&&(
                 <div className="overflow-hidden rounded-2xl relative group/draw">
-                  <img loading="lazy" decoding="async" src={msg.mediaUrl} alt={t("msg.drawing")} className="max-w-[240px] max-h-[200px] object-contain bg-[#1a1a2e]"/>
+                  <img src={msg.mediaUrl} alt={t("msg.drawing")} className="max-w-[240px] max-h-[200px] object-contain bg-[#1a1a2e]"/>
                   <div className="absolute top-1.5 left-2 flex items-center gap-1 opacity-60">
                     <PenLine className="w-3 h-3 text-white"/>
                     <span className="text-[9px] text-white font-medium">{t("msg.drawing")}</span>
@@ -730,29 +701,13 @@ function MsgBubble({
               )}
               {msg.type==="video_note"&&msg.mediaUrl&&(
                 <div className="flex flex-col items-center gap-1">
-                  <div className="relative">
-                    <VideoNoteBubble url={msg.mediaUrl}/>
-                    {msg.status==="failed"&&(
-                      <div className="absolute inset-0 rounded-full flex items-center justify-center"
-                        style={{background:"rgba(0,0,0,0.55)"}}>
-                        <span className="text-white text-[10px] font-semibold text-center px-1">Yuklanmadi</span>
-                      </div>
-                    )}
-                    {msg.isPending&&msg.status!=="failed"&&(
-                      <div className="absolute inset-0 rounded-full flex items-center justify-center"
-                        style={{background:"rgba(0,0,0,0.4)"}}>
-                        <div className="w-5 h-5 rounded-full border-2 border-white/60 border-t-transparent animate-spin"/>
-                      </div>
-                    )}
-                  </div>
+                  <VideoNoteBubble url={msg.mediaUrl}/>
                   <div className="flex items-center gap-1">
                     {msg.starred&&<Star className="w-2.5 h-2.5 text-yellow-400 fill-current"/>}
                     <span className="text-[10px] text-muted-foreground">{formatTs(msg.ts)}</span>
-                    {isMe&&(msg.status==="failed"
-                      ?<span className="text-[10px] text-red-400">✕</span>
-                      :msg.status==="read"
-                        ?<CheckCheck className="w-3 h-3 text-cyan-300"/>
-                        :<CheckCheck className="w-3 h-3 text-muted-foreground/50"/>)}
+                    {isMe&&(msg.status==="read"
+                      ?<CheckCheck className="w-3 h-3 text-cyan-300"/>
+                      :<CheckCheck className="w-3 h-3 text-muted-foreground/50"/>)}
                   </div>
                 </div>
               )}
@@ -837,7 +792,7 @@ function MsgBubble({
               onCopy={()=>navigator.clipboard.writeText(msg.content||"")}
               onStar={()=>onUpdate(msg.id,{starred:!msg.starred})}
               onPin={()=>onUpdate(msg.id,{pinned:!msg.pinned})}
-              onDelete={()=>onDelete(msg.id, parseInt(msg.id,10)||0)}
+              onDelete={()=>onDelete(msg.id)}
               onForward={()=>onForward(msg.id)}
               onEdit={()=>{setEditing(true);setEditText(msg.content||"");}}
               onSelect={()=>onSelect(msg.id)}
@@ -897,7 +852,7 @@ function ForwardModal({
               <button key={c.id} onClick={()=>onForward(c.id)}
                 className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-muted text-left transition-colors">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {other?.avatarUrl ? <img loading="lazy" decoding="async" src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
+                  {other?.avatarUrl ? <img src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
                 </div>
                 <span className="text-sm text-foreground">{other?.displayName||t("msg.unknown_user")}</span>
               </button>
@@ -971,49 +926,14 @@ export default function MessagesPage() {
   const [search, setSearch] = useState("");
   const [msgSearch, setMsgSearch] = useState("");
   const [showMsgSearch, setShowMsgSearch] = useState(false);
-  const [tab, setTab] = useState<"all"|"unread"|"groups"|"archived">("all");
+  const [tab, setTab] = useState<"all"|"unread"|"groups">("all");
   const [showChatMenu, setShowChatMenu] = useState(false);
   const [mutedConvs, setMutedConvs] = useState<Set<number>>(new Set());
   const [blockedConvs, setBlockedConvs] = useState<Set<number>>(new Set());
-  const [blockLoading, setBlockLoading] = useState(false);
-
-  /* Load blocked users from server on mount */
-  useEffect(() => {
-    fetch(`${API}/api/users/me/blocks`, { credentials: "include" })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.blockedIds && Array.isArray(data.blockedIds)) {
-          setBlockedConvs(new Set(data.blockedIds));
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  /* Block / unblock — persists to server */
-  const toggleBlock = async (userId: number) => {
-    if (!userId || blockLoading) return;
-    const isBlocked = blockedConvs.has(userId);
-    setBlockLoading(true);
-    try {
-      const method = isBlocked ? "DELETE" : "POST";
-      const res = await fetch(`${API}/api/users/${userId}/block`, { method, credentials: "include" });
-      if (res.ok) {
-        setBlockedConvs(prev => {
-          const s = new Set(prev);
-          isBlocked ? s.delete(userId) : s.add(userId);
-          return s;
-        });
-      }
-    } catch { /* silent */ }
-    finally { setBlockLoading(false); }
-  };
   const [pinnedConvIds, setPinnedConvIds] = useState<Set<number>>(new Set());
-  const [archivedConvIds, setArchivedConvIds] = useState<Set<number>>(()=>{
-    try { return new Set(JSON.parse(localStorage.getItem("olcha_archived_convs")||"[]")); } catch { return new Set(); }
-  });
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [hiddenMsgIds, setHiddenMsgIds] = useState<Set<string>>(new Set());
-  const [deleteTarget, setDeleteTarget] = useState<{id:string;isMe:boolean;serverId:number}|null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{id:string;isMe:boolean}|null>(null);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [profileTab, setProfileTab] = useState<"info"|"media"|"files">("info");
   const [showPinnedPanel, setShowPinnedPanel] = useState(false);
@@ -1076,7 +996,7 @@ export default function MessagesPage() {
     ? new Date(apiMsgs[apiMsgs.length-1].createdAt as string) : new Date(0);
   const allMsgs: LocalMsg[] = [
     ...apiMsgs.map(m=>({
-      id:String(m.id), senderId:m.senderId, type:(m.type||"text") as MsgType, content:m.content||"", mediaUrl:m.mediaUrl||undefined,
+      id:String(m.id), senderId:m.senderId, type:"text" as MsgType, content:m.content,
       reactions:[], starred:false, pinned:false, deleted:false, edited:false, forwarded:false,
       status:"read" as const, ts:new Date(m.createdAt||Date.now()),
       isPending: m.isPending,
@@ -1109,9 +1029,7 @@ export default function MessagesPage() {
     .filter(c=>{
       const other = c.participants?.find(p=>p.id!==ME_ID);
       const matchSearch = !search||other?.displayName?.toLowerCase().includes(search.toLowerCase());
-      if(archivedConvIds.has(c.id)) return tab==="archived"&&matchSearch;
       if(tab==="unread") return matchSearch&&(c.unreadCount||0)>0;
-      if(tab==="archived") return false;
       return matchSearch;
     });
 
@@ -1242,13 +1160,7 @@ export default function MessagesPage() {
   const handleImage = (file:File) => {
     const url = URL.createObjectURL(file);
     addMsg({type:"image",mediaUrl:url,content:""});
-    uploadBlob(file,file.name,file.type)
-      .then(serverUrl=>{
-        if(convId) sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"image",mediaUrl:serverUrl}},{
-          onSuccess:()=>qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)}),
-        });
-      })
-      .catch(()=>{});
+    uploadBlob(file,file.name,file.type).catch(()=>{});
   };
   const handleFile = (file:File) => {
     addMsg({type:"file",fileName:file.name});
@@ -1256,27 +1168,11 @@ export default function MessagesPage() {
   };
   const handleVideoNote = (blob:Blob,dur:number) => {
     const tempUrl = URL.createObjectURL(blob);
-    const msg = addMsg({type:"video_note",mediaUrl:tempUrl,duration:dur,isPending:true});
+    const msg = addMsg({type:"video_note",mediaUrl:tempUrl,duration:dur});
     setShowRoundVid(false);
-    const doSend = (url:string) => {
-      if(!convId) return;
-      sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"video_note",mediaUrl:url}},{
-        onSuccess:()=>{
-          updateMsg(msg.id,{status:"delivered"});
-          qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)});
-        },
-        onError:()=>{ updateMsg(msg.id,{status:"failed"}); },
-      });
-    };
     uploadBlob(blob,`video_${Date.now()}.webm`,"video/webm")
-      .then(serverUrl=>{
-        updateMsg(msg.id,{mediaUrl:serverUrl,isPending:false});
-        URL.revokeObjectURL(tempUrl);
-        doSend(serverUrl);
-      })
-      .catch(()=>{
-        updateMsg(msg.id,{status:"failed",isPending:false});
-      });
+      .then(serverUrl=>{ updateMsg(msg.id,{mediaUrl:serverUrl}); URL.revokeObjectURL(tempUrl); })
+      .catch(()=>{});
   };
   const startVoice = async () => {
     try {
@@ -1300,13 +1196,7 @@ export default function MessagesPage() {
       const dur = voiceElapsed;
       const m = addMsg({type:"voice",mediaUrl:tempUrl,duration:dur});
       uploadBlob(blob,`voice_${Date.now()}.webm`,"audio/webm")
-        .then(serverUrl=>{
-          updateMsg(m.id,{mediaUrl:serverUrl});
-          URL.revokeObjectURL(tempUrl);
-          if(convId) sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"voice",mediaUrl:serverUrl}},{
-            onSuccess:()=>qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)}),
-          });
-        })
+        .then(serverUrl=>{ updateMsg(m.id,{mediaUrl:serverUrl}); URL.revokeObjectURL(tempUrl); })
         .catch(()=>{});
     };
     if(voiceTimer.current) clearInterval(voiceTimer.current);
@@ -1323,12 +1213,7 @@ export default function MessagesPage() {
     setShowDraw(false);
     const msg = addMsg({ type: "drawing", mediaUrl: dataUrl });
     uploadBlob(blob, `drawing_${Date.now()}.png`, "image/png")
-      .then(url => {
-        updateMsg(msg.id, { mediaUrl: url });
-        if(convId) sendApi.mutate({id:convId,data:{senderId:ME_ID,content:"",type:"drawing",mediaUrl:url}},{
-          onSuccess:()=>qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)}),
-        });
-      })
+      .then(url => updateMsg(msg.id, { mediaUrl: url }))
       .catch(() => {});
   };
 
@@ -1430,10 +1315,10 @@ export default function MessagesPage() {
               className="w-full pl-8 pr-3 py-2 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground focus:outline-none border border-transparent focus:border-primary/40 transition-colors"/>
           </div>
           <div className="flex gap-1 mt-2.5">
-            {(["all","unread","groups","archived"] as const).map(tb=>(
+            {(["all","unread","groups"] as const).map(tb=>(
               <button key={tb} onClick={()=>setTab(tb)}
                 className={`flex-1 py-1 rounded-lg text-xs font-semibold transition-colors ${tab===tb?"bg-primary/15 text-primary":"text-muted-foreground hover:text-foreground"}`}>
-                {tb==="all" ? t("msg.tabs.all") : tb==="unread" ? t("msg.tabs.unread") : tb==="groups" ? t("msg.tabs.groups") : "Arxiv"}
+                {tb==="all" ? t("msg.tabs.all") : tb==="unread" ? t("msg.tabs.unread") : t("msg.tabs.groups")}
               </button>
             ))}
           </div>
@@ -1460,7 +1345,7 @@ export default function MessagesPage() {
                 className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isActive?"bg-primary/10 border border-primary/20":"hover:bg-muted"}`}>
                 <div className="relative flex-shrink-0">
                   <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden">
-                    {other?.avatarUrl ? <img loading="lazy" decoding="async" src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="text-base font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
+                    {other?.avatarUrl ? <img src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="text-base font-bold text-primary">{other?.displayName?.[0]||"?"}</span>}
                   </div>
                   {isOnline(other?.id)&&<div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-sidebar"/>}
                 </div>
@@ -1501,8 +1386,7 @@ export default function MessagesPage() {
                 action:()=>{ setPinnedConvIds(p=>{const s=new Set(p);s.has(convCtxMenu)?s.delete(convCtxMenu):s.add(convCtxMenu);return s;}); }},
               { icon: mutedConvs.has(convCtxMenu)?BellRing:BellOff, label:mutedConvs.has(convCtxMenu)?t("msg.unmute"):t("msg.mute"),
                 action:()=>{ setMutedConvs(p=>{const s=new Set(p);s.has(convCtxMenu)?s.delete(convCtxMenu):s.add(convCtxMenu);return s;}); }},
-              { icon: Archive, label:archivedConvIds.has(convCtxMenu)?t("msg.unarchive")||"Arxivdan chiqarish":t("msg.archive"),
-                action:()=>{ setArchivedConvIds(p=>{const s=new Set(p);s.has(convCtxMenu)?s.delete(convCtxMenu):s.add(convCtxMenu);localStorage.setItem("olcha_archived_convs",JSON.stringify([...s]));return s;}); }},
+              { icon: Archive, label:t("msg.archive"), action:()=>{} },
               { icon: Trash2,  label:t("msg.delete"),  action:()=>{ setShowClearConfirm(true); setActiveId(convCtxMenu); }, danger:true },
             ].map((item,i)=>(
               <button key={i} onClick={()=>{item.action();setConvCtxMenu(null);}}
@@ -1521,10 +1405,14 @@ export default function MessagesPage() {
           {/* Header */}
           <div className="flex items-center gap-3 px-4 border-b border-border flex-shrink-0"
             style={{paddingTop:"calc(env(safe-area-inset-top,0px) + 12px)",paddingBottom:12}}>
+            <button onClick={()=>setShowList(true)}
+              className="md:hidden w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground flex-shrink-0">
+              <ChevronLeft className="w-5 h-5"/>
+            </button>
             <button className="relative flex-shrink-0" onClick={()=>setShowProfilePanel(true)}>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center overflow-hidden">
                 {getOther(activeConv)?.avatarUrl
-                  ?<img loading="lazy" decoding="async" src={getOther(activeConv)!.avatarUrl!} alt="" className="w-full h-full object-cover"/>
+                  ?<img src={getOther(activeConv)!.avatarUrl!} alt="" className="w-full h-full object-cover"/>
                   :<span className="text-sm font-bold text-primary">{getOther(activeConv)?.displayName?.[0]}</span>}
               </div>
               {isOnline(getOther(activeConv)?.id)&&<div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-background"/>}
@@ -1585,10 +1473,11 @@ export default function MessagesPage() {
                         { icon:Bell,    label:convId&&mutedConvs.has(convId)?t("msg.unmute"):t("msg.mute"),
                           action:()=>{ if(!convId) return; setMutedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); setShowChatMenu(false); } },
                         { icon:Share2,  label:t("msg.share_contact"),    action:()=>{ addMsg({type:"text",content:`👤 ${getOther(activeConv)?.displayName||"Kontakt"}ning kartochkasi`}); setShowChatMenu(false); } },
-                        { icon:Flag,    label:t("msg.report"),              action:()=>{ if(!activeOtherId) { setShowChatMenu(false); return; } fetch(`${API}/api/moderation/report`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({contentType:"user",contentId:activeOtherId,reason:"spam_or_abuse",description:""})}).catch(()=>{}); setShowChatMenu(false); }, danger:true },
+                        { icon:Zap,     label:t("msg.turbo_mode"),           action:()=>{ setShowChatMenu(false); } },
+                        { icon:Flag,    label:t("msg.report"),              action:()=>{ setShowChatMenu(false); }, danger:true },
                         { icon:Trash2,  label:t("msg.clear_history"),      action:()=>{ setShowClearConfirm(true); setShowChatMenu(false); }, danger:true },
-                        { icon:Lock,    label:activeOtherId&&blockedConvs.has(activeOtherId)?t("msg.unblock"):t("msg.block"),
-                          action:()=>{ if(!activeOtherId) return; void toggleBlock(activeOtherId); setShowChatMenu(false); }, danger:true },
+                        { icon:Lock,    label:convId&&blockedConvs.has(convId)?t("msg.unblock"):t("msg.block"),
+                          action:()=>{ if(!convId) return; setBlockedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); setShowChatMenu(false); }, danger:true },
                       ].map((item,i)=>(
                         <button key={i} onClick={item.action}
                           className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors text-left ${(item as {danger?:boolean}).danger?"text-destructive":"text-foreground"}`}>
@@ -1653,17 +1542,9 @@ export default function MessagesPage() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    {deleteTarget.serverId > 0 && (
-                      <button onClick={async ()=>{
-                        setHiddenMsgIds(p=>new Set([...p,deleteTarget.id]));
-                        setLocalMsgs(p=>p.filter(m=>m.id!==deleteTarget.id));
-                        setDeleteTarget(null);
-                        if(convId){
-                          try{ await fetch(`${API}/api/conversations/${convId}/messages/${deleteTarget.serverId}`,{method:"DELETE",credentials:"include"}); }catch{}
-                          qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convId)});
-                        }
-                      }} className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90 flex items-center justify-center gap-2">
-                        <Trash2 className="w-4 h-4"/>
+                    {deleteTarget.isMe&&(
+                      <button onClick={()=>{ setHiddenMsgIds(p=>new Set([...p,deleteTarget.id])); setLocalMsgs(p=>p.filter(m=>m.id!==deleteTarget.id)); setDeleteTarget(null); }}
+                        className="w-full py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90">
                         {t("msg.delete_for_everyone")}
                       </button>
                     )}
@@ -1743,7 +1624,7 @@ export default function MessagesPage() {
                     <div className="px-6 py-8 flex flex-col items-center gap-3 bg-gradient-to-b from-primary/5 to-transparent">
                       <div className="relative">
                         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-3xl font-bold text-primary-foreground overflow-hidden ring-4 ring-primary/20">
-                          {other?.avatarUrl ? <img loading="lazy" decoding="async" src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : other?.displayName?.[0]?.toUpperCase()||"?"}
+                          {other?.avatarUrl ? <img src={other.avatarUrl} alt="" className="w-full h-full object-cover"/> : other?.displayName?.[0]?.toUpperCase()||"?"}
                         </div>
                         {isOnline(other?.id)&&<div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-background"/>}
                       </div>
@@ -1767,7 +1648,7 @@ export default function MessagesPage() {
                           { icon:Video,         label:t("msg.video"),   color:"bg-blue-500/15 text-blue-400",
                             action:()=>{ setShowProfilePanel(false); if(other?.id) startCall({id:other.id,name:other.displayName||"?",avatar:other.avatarUrl||undefined},"video"); } },
                           { icon:Share2,        label:t("msg.share"), color:"bg-purple-500/15 text-purple-400",
-                            action:()=>{ const txt=`GILOS: @${other?.username}`; if(navigator.share){navigator.share({title:other?.displayName||"",text:txt}).catch(()=>{});}else{navigator.clipboard?.writeText(txt).catch(()=>{}); } } },
+                            action:()=>{ navigator.share?.({title:other?.displayName||"",text:`OlchaAI: @${other?.username}`}).catch(()=>{}); } },
                         ].map((btn,i)=>(
                           <button key={i} onClick={btn.action} className="flex flex-col items-center gap-1.5">
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${btn.color}`}>
@@ -1837,11 +1718,10 @@ export default function MessagesPage() {
                             <Bell className="w-4 h-4 opacity-60"/>
                             {convId&&mutedConvs.has(convId)?t("msg.unmute"):t("msg.mute")}
                           </button>
-                          <button onClick={()=>{ if(!activeOtherId) return; void toggleBlock(activeOtherId); }}
-                            disabled={blockLoading}
-                            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors disabled:opacity-50">
+                          <button onClick={()=>{ if(!convId) return; setBlockedConvs(p=>{const s=new Set(p);s.has(convId)?s.delete(convId):s.add(convId);return s;}); }}
+                            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors">
                             <Lock className="w-4 h-4 opacity-70"/>
-                            {activeOtherId&&blockedConvs.has(activeOtherId)?t("msg.unblock"):t("msg.block")}
+                            {convId&&blockedConvs.has(convId)?t("msg.unblock"):t("msg.block")}
                           </button>
                           <button onClick={()=>{ setShowClearConfirm(true); setShowProfilePanel(false); }}
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors">
@@ -1868,7 +1748,7 @@ export default function MessagesPage() {
                           <div className="grid grid-cols-3 gap-1">
                             {mediaInChat.map(m=>(
                               <div key={m.id} className="aspect-square rounded-xl overflow-hidden bg-muted">
-                                <img loading="lazy" decoding="async" src={m.mediaUrl} alt="" className="w-full h-full object-cover"/>
+                                <img src={m.mediaUrl} alt="" className="w-full h-full object-cover"/>
                               </div>
                             ))}
                           </div>
@@ -1965,7 +1845,7 @@ export default function MessagesPage() {
                       <div key={m.id} className="flex items-start gap-3 p-3 bg-muted/40 rounded-xl">
                         <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 mt-0.5 flex-shrink-0"/>
                         <div className="flex-1 min-w-0">
-                          {m.type==="image"&&m.mediaUrl&&<img loading="lazy" decoding="async" src={m.mediaUrl} alt="" className="w-16 h-16 rounded-xl object-cover mb-1"/>}
+                          {m.type==="image"&&m.mediaUrl&&<img src={m.mediaUrl} alt="" className="w-16 h-16 rounded-xl object-cover mb-1"/>}
                           <p className="text-sm text-foreground line-clamp-2">{m.content||`📎 ${t("msg.media")}`}</p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">{formatTs(m.ts)}</p>
                         </div>
@@ -2022,7 +1902,7 @@ export default function MessagesPage() {
                     msg={msg} isMe={isMe}
                     selected={selectedMsgs.has(msg.id)}
                     onReply={m=>setReplyTo(m)}
-                    onDelete={(id,serverId)=>setDeleteTarget({id,isMe,serverId})}
+                    onDelete={(id)=>setDeleteTarget({id,isMe})}
                     onUpdate={(id,patch)=>setLocalMsgs(prev=>prev.map(m=>m.id===id?{...m,...patch}:m))}
                     onForward={(id)=>setForwardMsgId(id)}
                     onSelect={(id)=>toggleSelect(id)}
@@ -2134,27 +2014,26 @@ export default function MessagesPage() {
             <AnimatePresence>
               {showFmtBar&&(
                 <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}}
-                  className="flex items-center gap-1.5 px-2 pb-2 pt-1 overflow-x-auto">
+                  className="flex items-center gap-1 px-1 pb-1 overflow-x-auto">
                   {[
-                    { icon:Bold,      label:"Bold",    before:"**", after:"**", color:"from-violet-500 to-purple-600" },
-                    { icon:Italic,    label:"Italic",  before:"_",  after:"_",  color:"from-blue-500 to-cyan-600" },
-                    { icon:AlignLeft, label:"Quote",   before:"> ", after:"",   color:"from-emerald-500 to-teal-600" },
-                    { icon:Hash,      label:"Code",    before:"`",  after:"`",  color:"from-orange-500 to-amber-600" },
-                    { icon:AtSign,    label:"Mention", before:"@",  after:"",   color:"from-pink-500 to-rose-600" },
-                    { icon:Link,      label:"Link",    before:"[",  after:"](url)", color:"from-sky-500 to-indigo-600" },
+                    { icon:Bold,      label:t("msg.fmt.bold"),   before:"**", after:"**" },
+                    { icon:Italic,    label:t("msg.fmt.italic"),  before:"_",  after:"_" },
+                    { icon:AlignLeft, label:t("msg.fmt.quote"),    before:"> ", after:"" },
+                    { icon:Hash,      label:t("msg.fmt.code"),     before:"`",  after:"`" },
+                    { icon:AtSign,    label:t("msg.fmt.mention"), before:"@",  after:"" },
+                    { icon:Link,      label:t("msg.fmt.link"),      before:"[",  after:"](url)" },
                   ].map(fmt=>(
                     <button key={fmt.label}
                       onClick={()=>insertFmt(fmt.before,fmt.after)}
-                      title={fmt.label}
-                      className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-gradient-to-r ${fmt.color} text-white text-[11px] font-semibold shadow-sm hover:opacity-90 active:scale-95 transition-all`}>
-                      <fmt.icon className="w-3 h-3"/>
-                      {fmt.label}
+                      className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      title={fmt.label}>
+                      <fmt.icon className="w-3.5 h-3.5"/>
                     </button>
                   ))}
-                  <div className="w-px h-5 bg-border mx-0.5 flex-shrink-0"/>
+                  <div className="w-px h-5 bg-border mx-1 flex-shrink-0"/>
                   {["❤️","😂","🔥","👍","🎉","💯"].map(e=>(
                     <button key={e} onClick={()=>setText(prev=>prev+e)}
-                      className="flex-shrink-0 w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-base transition-all hover:scale-110 active:scale-95">{e}</button>
+                      className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center text-base transition-colors">{e}</button>
                   ))}
                 </motion.div>
               )}
@@ -2312,7 +2191,7 @@ export default function MessagesPage() {
                       onClick={()=>{ setActiveId(conv.id); setShowList(false); setShowNewConv(false); }}
                       className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-muted transition-colors text-left">
                       <div className="w-10 h-10 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center flex-shrink-0">
-                        {o?.avatarUrl ? <img loading="lazy" decoding="async" src={o.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary text-sm">{o?.displayName?.[0]||"?"}</span>}
+                        {o?.avatarUrl ? <img src={o.avatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="font-bold text-primary text-sm">{o?.displayName?.[0]||"?"}</span>}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{o?.displayName||"Unknown"}</p>

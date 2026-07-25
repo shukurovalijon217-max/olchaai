@@ -1,0 +1,152 @@
+## OlchaAI — Render.com Blueprint (Production — 10K+ users)
+## Docs: https://render.com/docs/blueprint-spec
+##
+## Tariflar (oylik narx):
+##   DB standard:        $20/oy  — 10GB, high-availability
+##   API standard x2:    $50/oy  — 2GB RAM x 2 instance, autoscale
+##   AI Core starter:    $7/oy   — 512MB RAM (OpenAI I/O bound, RAM kichik yetadi)
+##   Go starter:         $7/oy   — 512MB RAM (Go juda tejamkor)
+##   Frontend starter:   $7/oy   — 512MB RAM (static serve)
+##   Jami taxminan:     ~$91/oy
+##
+## Cloudflare (DNS + CDN + WAF): bepul plan yetadi 10K uchun
+
+databases:
+  - name: olchaai-db
+    databaseName: olchaai
+    user: olchaai
+    plan: standard          # $20/oy — 10GB, backups, no cold-start
+    region: oregon
+    ipAllowList: []         # Cloudflare + Render internal only
+
+services:
+  # ── 1. Express API Server ────────────────────────────────────────────────
+  #  standard plan: 2GB RAM, 1 CPU
+  #  2 ta instance: 10K req/s ni osongina ko'taradi
+  #  Cloudflare WAF + Rate Limiting API'ni botlardan himoya qiladi
+  - type: web
+    name: olchaai-api
+    runtime: node
+    plan: standard
+    region: oregon
+    numInstances: 2          # 2 instance — load balancing Render tomonidan avtomatik
+    rootDir: .
+    buildCommand: >-
+      pnpm install --frozen-lockfile &&
+      pnpm run typecheck:libs &&
+      pnpm --filter @workspace/db run push-force &&
+      psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS upload_sessions (uuid TEXT PRIMARY KEY, cloudinary_url TEXT, created_at TIMESTAMPTZ DEFAULT NOW())" &&
+      psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS ai_admin_actions (id SERIAL PRIMARY KEY, action_type TEXT NOT NULL, target_type TEXT NOT NULL, target_id INTEGER, reason TEXT, details JSONB NOT NULL DEFAULT '{}', ai_confidence REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'executed', executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW())" &&
+      psql "$DATABASE_URL" -c "DROP TABLE IF EXISTS platform_treasury CASCADE; CREATE TABLE platform_treasury (id SERIAL PRIMARY KEY, total_revenue BIGINT NOT NULL DEFAULT 0, available_balance BIGINT NOT NULL DEFAULT 0, total_withdrawn BIGINT NOT NULL DEFAULT 0, premium_revenue BIGINT NOT NULL DEFAULT 0, marketplace_revenue BIGINT NOT NULL DEFAULT 0, gift_revenue BIGINT NOT NULL DEFAULT 0, other_revenue BIGINT NOT NULL DEFAULT 0, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()); INSERT INTO platform_treasury (id) VALUES (1) ON CONFLICT DO NOTHING;" &&
+      psql "$DATABASE_URL" -c "DROP TABLE IF EXISTS treasury_transactions CASCADE; CREATE TABLE treasury_transactions (id SERIAL PRIMARY KEY, type TEXT NOT NULL, amount BIGINT NOT NULL, source TEXT NOT NULL, description TEXT, reference TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());" &&
+      psql "$DATABASE_URL" -c "DROP TABLE IF EXISTS infra_costs CASCADE; CREATE TABLE infra_costs (id SERIAL PRIMARY KEY, provider TEXT NOT NULL, service_name TEXT NOT NULL, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'USD', billing_cycle TEXT NOT NULL DEFAULT 'monthly', auto_pay_enabled BOOLEAN NOT NULL DEFAULT TRUE, last_paid_at TIMESTAMPTZ, next_due_at TIMESTAMPTZ, notes TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());" &&
+      psql "$DATABASE_URL" -c "DROP TABLE IF EXISTS infra_payments CASCADE; CREATE TABLE infra_payments (id SERIAL PRIMARY KEY, cost_id INTEGER NOT NULL, provider TEXT NOT NULL, service_name TEXT NOT NULL, amount_cents INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'paid', paid_from TEXT NOT NULL DEFAULT 'treasury', notes TEXT, paid_at TIMESTAMPTZ DEFAULT NOW());" &&
+      psql "$DATABASE_URL" -c "DROP TABLE IF EXISTS email_verifications CASCADE; CREATE TABLE email_verifications (id SERIAL PRIMARY KEY, email TEXT NOT NULL, otp TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL, verified BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT NOW());" &&
+      psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS user_sessions (sid VARCHAR NOT NULL COLLATE \"default\", sess JSON NOT NULL, expire TIMESTAMP(6) NOT NULL, CONSTRAINT session_pkey PRIMARY KEY (sid) NOT DEFERRABLE INITIALLY IMMEDIATE); CREATE INDEX IF NOT EXISTS IDX_session_expire ON user_sessions (expire);" &&
+      pnpm --filter @workspace/api-server run build
+    startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: WEB_CONCURRENCY
+        value: 2             # standard plan: 1 CPU → 2 Node.js worker cluster
+      - key: DATABASE_URL
+        fromDatabase:
+          name: olchaai-db
+          property: connectionString
+      - key: SESSION_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://olchaai.com,https://www.olchaai.com
+      - key: FRONTEND_URL
+        value: https://olchaai.com
+      - key: API_BASE_URL
+        value: https://olchaai-api.onrender.com
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+  # ── 2. AI Core Service ───────────────────────────────────────────────────
+  #  starter plan yetadi: AI Core asosan OpenAI'ga so'rov yuboradi (I/O bound)
+  #  RAM intensiv operatsiyalar yo'q
+  - type: web
+    name: olchaai-ai-core
+    runtime: node
+    plan: starter
+    region: oregon
+    rootDir: .
+    buildCommand: >-
+      pnpm install --frozen-lockfile &&
+      pnpm run typecheck:libs &&
+      pnpm --filter @workspace/ai-core run build
+    startCommand: node --enable-source-maps artifacts/ai-core/dist/index.mjs
+    healthCheckPath: /ai-core/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: olchaai-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+
+  # ── 3. Go Real-Time Service ──────────────────────────────────────────────
+  #  starter plan yetadi: Go goroutine-based, 512MB RAM bilan 50K+ WebSocket
+  #  connectionni osongina ko'taradi
+  - type: web
+    name: olchaai-go
+    runtime: go
+    plan: starter
+    region: oregon
+    rootDir: artifacts/olcha-go
+    buildCommand: go build -o bin/olcha-go ./cmd/server/
+    startCommand: ./bin/olcha-go
+    healthCheckPath: /go/health
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: olchaai-db
+          property: connectionString
+
+  # ── 4. Nexus — React Frontend (Static) ───────────────────────────────────
+  #  starter plan yetadi: statik fayllar serve qiladi
+  #  Cloudflare CDN keshlab oladi → Render serverga deyarli traffic tushmaydi
+  - type: web
+    name: olchaai-nexus
+    runtime: node
+    plan: starter
+    region: oregon
+    rootDir: .
+    buildCommand: >-
+      pnpm install --frozen-lockfile &&
+      pnpm run typecheck:libs &&
+      BASE_PATH=/ pnpm --filter @workspace/nexus run build
+    startCommand: npx serve -s artifacts/nexus/dist/public -l 10000
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: VITE_API_BASE_URL
+        value: https://olchaai-api.onrender.com
+      - key: VITE_AI_CORE_URL
+        value: https://olchaai-ai-core.onrender.com/ai-core

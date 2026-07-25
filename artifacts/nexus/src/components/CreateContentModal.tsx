@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, ImagePlus, Video, Music, FileText, Upload, Loader2,
-  CheckCircle2, Play, Film, Camera, Type,
+  CheckCircle2, Play, Film, Camera,
   Maximize2, Square, RectangleVertical,
   MessageCircle, Share2, Users, Globe, Ban, Plus, Trash2,
   Sparkles, BarChart2, ChevronDown, ChevronUp,
@@ -24,7 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { getFeaturePref } from "@/lib/sounds";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 type Permission = "everyone" | "followers" | "friends" | "none";
@@ -187,7 +187,7 @@ function UploadZone({
           ) : file?.type?.startsWith("video") ? (
             <video src={preview} className="w-full h-full object-cover" muted playsInline controls />
           ) : (
-            <img loading="lazy" decoding="async" src={preview} alt="" className="w-full h-full object-cover" />
+            <img src={preview} alt="" className="w-full h-full object-cover" />
           )}
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
             <Upload className="w-6 h-6 text-white" />
@@ -271,12 +271,9 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
         setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, progress: 30 } : m));
 
         /* Step 2 — PUT file with XHR for progress */
-        let finalObjectPath = objectPath;
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open("PUT", uploadURL);
-          // Do NOT set withCredentials — upload URL is authenticated via presigned token,
-          // not session cookie. withCredentials on a cross-origin R2 URL causes CORS errors.
           xhr.setRequestHeader("Content-Type", pending.file.type || "application/octet-stream");
           xhr.upload.onprogress = e => {
             if (e.lengthComputable)
@@ -284,24 +281,12 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                 ? { ...m, progress: 30 + Math.round((e.loaded / e.total) * 65) }
                 : m));
           };
-          xhr.onload = () => {
-            if (xhr.status < 300) {
-              try {
-                const body = JSON.parse(xhr.responseText);
-                if (body?.objectPath) finalObjectPath = body.objectPath;
-              } catch {}
-              resolve();
-            } else {
-              reject(new Error(`PUT xatosi ${xhr.status}`));
-            }
-          };
+          xhr.onload = () => xhr.status < 300 ? resolve() : reject(new Error(`PUT xatosi ${xhr.status}`));
           xhr.onerror = () => reject(new Error("Tarmoq xatosi"));
           xhr.send(pending.file);
         });
 
-        const serveUrl = finalObjectPath.startsWith("http")
-          ? finalObjectPath
-          : `${API}/api/storage${finalObjectPath}`;
+        const serveUrl = `${API}/api/storage${objectPath}`;
 
         /* Step 3 — for videos, ask the server to transcode/compress in place
            before marking the item done. Best-effort: any failure here just
@@ -1430,7 +1415,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                 {item.file.type.startsWith("video") ? (
                                   <video src={item.preview} className="w-full h-full object-cover" muted />
                                 ) : (
-                                  <img loading="lazy" decoding="async" src={item.preview} alt="" className="w-full h-full object-cover" />
+                                  <img src={item.preview} alt="" className="w-full h-full object-cover" />
                                 )}
 
                                 {/* Video badge */}
@@ -1505,36 +1490,6 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             )}
                           </motion.div>
                         </AnimatePresence>
-                      )}
-
-                      {/* ─── Edit overlays / music button ─── */}
-                      {mediaQueue.some(m => m.file.type.startsWith("image")) && (
-                        <button
-                          onClick={() => {
-                            const arr = mediaQueue.filter(m => m.file.type.startsWith("image")).map(m => m.file);
-                            const prevs = mediaQueue.filter(m => m.file.type.startsWith("image")).map(m => m.preview);
-                            setEditorFiles(arr);
-                            setEditorPreviews(prevs);
-                            setEditorOpen(true);
-                          }}
-                          className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-2xl transition-all"
-                          style={{
-                            background: (postOverlays.length > 0 || postAudioName)
-                              ? "linear-gradient(135deg,rgba(124,58,237,0.25),rgba(6,182,212,0.15))"
-                              : "rgba(255,255,255,0.04)",
-                            border: (postOverlays.length > 0 || postAudioName)
-                              ? "1px solid rgba(124,58,237,0.45)"
-                              : "1px dashed rgba(255,255,255,0.12)",
-                          }}
-                        >
-                          <Type className="w-3.5 h-3.5 text-violet-400" />
-                          <span className="text-xs font-bold text-white/70">
-                            {postOverlays.length > 0 || postAudioName
-                              ? `✏️ ${postOverlays.length > 0 ? `${postOverlays.length} matn` : ""}${postOverlays.length > 0 && postAudioName ? " · " : ""}${postAudioName ? `🎵 ${postAudioName}` : ""}`
-                              : t("create.add_text_music", "Matn & Musiqa qo'shish")}
-                          </span>
-                          <Music className="w-3.5 h-3.5 text-cyan-400" />
-                        </button>
                       )}
 
                       {/* Display format (shown when has images) */}
@@ -2898,7 +2853,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <div>
                                 <p className="text-[10px] font-bold text-white/40 mb-2 uppercase tracking-wider">📀 Trending Audio kutubxonasi</p>
                                 <div className="space-y-1.5">
-                                  {[{t:"Billie Jean",a:"Michael Jackson"},{t:"Blinding Lights",a:"The Weeknd"},{t:"As It Was",a:"Harry Styles"},{t:"Flowers",a:"Miley Cyrus"},{t:"Cruel Summer",a:"Taylor Swift"},{t:"STAY",a:"The Kid LAROI"}].map(s=>(
+                                  {[{t:"Billie Jean",a:"Michael Jackson",v:"4.2M"},{t:"Blinding Lights",a:"The Weeknd",v:"8.1M"},{t:"As It Was",a:"Harry Styles",v:"6.5M"},{t:"Flowers",a:"Miley Cyrus",v:"5.3M"},{t:"Cruel Summer",a:"Taylor Swift",v:"7.8M"},{t:"STAY",a:"The Kid LAROI",v:"9.2M"}].map(s=>(
                                     <button key={s.t} onClick={()=>setReelTrAudio(s.t)}
                                       className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[10px] transition-all"
                                       style={{ background:reelTrAudio===s.t?"rgba(251,191,36,0.15)":"rgba(255,255,255,0.04)", border:reelTrAudio===s.t?"1px solid rgba(251,191,36,0.5)":"1px solid rgba(255,255,255,0.07)" }}>
@@ -2907,6 +2862,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                                         <p className="text-white/35">{s.a}</p>
                                       </div>
                                       <div className="flex items-center gap-2">
+                                        <span className="text-[8px] text-amber-400">{s.v} foy.</span>
                                         {reelTrAudio===s.t && <span className="text-amber-400">✓</span>}
                                       </div>
                                     </button>
@@ -3251,7 +3207,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               <p className="text-xs text-white/40">{upStoryProg}%</p>
                             </div>
                           ) : storyFile.type.startsWith("image") ? (
-                            <img loading="lazy" decoding="async" src={storyPreview} alt="" className="w-full max-h-72 object-cover" />
+                            <img src={storyPreview} alt="" className="w-full max-h-72 object-cover" />
                           ) : (
                             <video src={storyPreview} className="w-full max-h-72 object-cover" controls muted />
                           )}
@@ -3336,7 +3292,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                       <div>
                         <p className="text-xs font-bold text-white/45 mb-2">{t("create.swipe_link_title")}</p>
                         <div className="flex gap-2 items-center">
-                          <input placeholder="https://GILOS/..." value={storyLink} onChange={e=>setStoryLink(e.target.value)}
+                          <input placeholder="https://olchaai.com/..." value={storyLink} onChange={e=>setStoryLink(e.target.value)}
                             className="flex-1 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none"
                             style={{ background:"rgba(52,211,153,0.07)", border:"1px solid rgba(52,211,153,0.25)" }}/>
                           {storyLink && <span className="text-emerald-400 text-lg">✓</span>}
@@ -4281,7 +4237,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div>
                           <p className="text-[10px] font-bold text-white/45 mb-2 uppercase tracking-wider">⚖️ Litsenziya</p>
                           <div className="grid grid-cols-2 gap-2">
-                            {[{v:"standard",l:"Standard (GILOS)"},{v:"cc",l:"Creative Commons"},{v:"commercial",l:"Tijorat maqsadli"},{v:"educational",l:"Ta'lim maqsadli"}].map(({v,l})=>(
+                            {[{v:"standard",l:"Standard (OlchaAI)"},{v:"cc",l:"Creative Commons"},{v:"commercial",l:"Tijorat maqsadli"},{v:"educational",l:"Ta'lim maqsadli"}].map(({v,l})=>(
                               <button key={v} onClick={()=>setOtubeLicense(v)}
                                 className="py-2.5 px-3 rounded-xl text-[11px] font-bold transition-all"
                                 style={{background:otubeLicense===v?"linear-gradient(135deg,#059669,#34d399)":"rgba(255,255,255,0.06)",color:otubeLicense===v?"white":"rgba(255,255,255,0.5)",border:otubeLicense===v?"none":"1px solid rgba(255,255,255,0.08)"}}>
@@ -4806,10 +4762,11 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <div className="rounded-2xl p-4" style={{background:"linear-gradient(135deg,rgba(180,83,9,0.2),rgba(251,146,60,0.08))"}}>
                           <p className="text-[10px] font-bold text-white/45 mb-3 uppercase tracking-wider">{t("create.chal_stats_title")}</p>
                           <div className="grid grid-cols-3 gap-3 text-center">
-                            {[{e:"👥",l:t("create.chal_stats_part")},{e:"👁",l:t("create.chal_stats_views")},{e:"🔥",l:t("create.chal_stats_viral")}].map(({e,l})=>(
+                            {[{e:"👥",l:t("create.chal_stats_part"),v:"500–2K"},{e:"👁",l:t("create.chal_stats_views"),v:"50K+"},{e:"🔥",l:t("create.chal_stats_viral"),v:"78%"}].map(({e,l,v})=>(
                               <div key={l}>
                                 <span className="text-xl">{e}</span>
-                                <p className="text-[9px] text-white/30 leading-tight mt-1">{l}</p>
+                                <p className="text-sm font-black mt-1" style={{color:"#fb923c"}}>{v}</p>
+                                <p className="text-[9px] text-white/30 leading-tight mt-0.5">{l}</p>
                               </div>
                             ))}
                           </div>

@@ -21,7 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 /* ── Upload cover image ─────────────────────────────────────── */
 async function uploadFile(file: File): Promise<string> {
@@ -33,11 +33,8 @@ async function uploadFile(file: File): Promise<string> {
   });
   if (!r.ok) throw new Error(i18n.t("groups.upload_error"));
   const { uploadURL, objectPath } = await r.json();
-  const putR = await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type }, credentials: "include" });
-  let finalPath = objectPath as string;
-  try { const b = await putR.json(); if (b?.objectPath) finalPath = b.objectPath; } catch {}
-  if (finalPath.startsWith("http")) return finalPath;
-  const cleanPath = String(finalPath).replace(/^\/+/, "");
+  await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+  const cleanPath = String(objectPath).replace(/^\/+/, "");
   return `${API}/api/storage/objects/${cleanPath}`;
 }
 
@@ -756,7 +753,7 @@ export default function GroupsPage() {
         qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
         setShowSettings(false);
       }
-    } catch { showToast(t("groups.toast.save_error") || "Saqlashda xato"); } finally {
+    } catch { /* silent */ } finally {
       setSettingsSaving(false);
     }
   }, [selectedGroup, settingsForm, qc]);
@@ -888,7 +885,7 @@ export default function GroupsPage() {
     }
   };
 
-  /* ── Internal GILOS share ─────────────────────────────────────── */
+  /* ── Internal OlchaAI share ─────────────────────────────────────── */
   const handleShareToFeed = async () => {
     if (!sharePost || sharingPost) return;
     setSharingPost(true);
@@ -1016,7 +1013,7 @@ export default function GroupsPage() {
     const text = `${post.authorDisplayName}: ${post.content}`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: selectedGroup?.name ?? "GILOS", text, url: window.location.href });
+        await navigator.share({ title: selectedGroup?.name ?? "OlchaAI", text, url: window.location.href });
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(text).catch(() => {});
@@ -1025,40 +1022,26 @@ export default function GroupsPage() {
 
   const handleDeletePost = async (postId: number) => {
     if (!selectedGroup) return;
-    try {
-      const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (r.ok) {
-        setGroupPosts(prev => prev.filter(p => p.id !== postId));
-        setSelectedGroup(prev => prev ? { ...prev, postsCount: Math.max(0, (prev.postsCount ?? 0) - 1) } : null);
-        qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
-      } else {
-        const d = await r.json().catch(() => ({}));
-        showToast(d?.error ?? "Post o'chirilmadi");
-      }
-    } catch {
-      showToast("Tarmoq xatosi. Qayta urinib ko'ring.");
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}/posts/${postId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (r.ok) {
+      setGroupPosts(prev => prev.filter(p => p.id !== postId));
+      setSelectedGroup(prev => prev ? { ...prev, postsCount: Math.max(0, (prev.postsCount ?? 0) - 1) } : null);
+      qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
     }
   };
 
   const handleDeleteGroup = async () => {
     if (!selectedGroup) return;
-    try {
-      const r = await fetch(`${API}/api/groups/${selectedGroup.id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (r.ok) {
-        closeDetail();
-        qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
-      } else {
-        const d = await r.json().catch(() => ({}));
-        showToast(d?.error ?? "Guruh o'chirilmadi");
-      }
-    } catch {
-      showToast("Tarmoq xatosi. Qayta urinib ko'ring.");
+    const r = await fetch(`${API}/api/groups/${selectedGroup.id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (r.ok) {
+      closeDetail();
+      qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
     }
   };
 
@@ -1897,7 +1880,7 @@ export default function GroupsPage() {
                     {/* Drawing preview in composer */}
                     {drawingPreview && (
                       <div className="relative mt-2 mb-1">
-                        <img loading="lazy" decoding="async" src={drawingPreview} alt={t("groups.detail.draw")} className="rounded-xl w-full max-h-48 object-contain bg-[#1a1a2e]" />
+                        <img src={drawingPreview} alt={t("groups.detail.draw")} className="rounded-xl w-full max-h-48 object-contain bg-[#1a1a2e]" />
                         <div className="absolute top-2 left-2 flex items-center gap-1 opacity-70">
                           <PenLine className="w-3 h-3 text-white" />
                           <span className="text-[9px] text-white font-medium">{t("groups.detail.draw")}</span>
@@ -2358,7 +2341,7 @@ export default function GroupsPage() {
                                   {post.commentsCount > 0 && <span>{post.commentsCount}</span>}
                                 </motion.button>
 
-                                {/* Share - GILOS internal */}
+                                {/* Share - OlchaAI internal */}
                                 <motion.button whileTap={{ scale: 0.9 }}
                                   onClick={() => { setSharePost(post); setShareComment(""); }}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all">

@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useCreateProduct, useRequestUploadUrl } from "@workspace/api-client-react";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 export default function SellPage() {
   const { t } = useTranslation();
@@ -54,10 +54,8 @@ export default function SellPage() {
     try {
       for (const file of Array.from(files)) {
         const uploadData = await requestUpload({ data: { name: file.name, size: file.size, contentType: file.type } });
-        const putRes = await fetch(uploadData.uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type }, credentials: "include" });
-        let finalPath = uploadData.objectPath;
-        try { const b = await putRes.json(); if (b?.objectPath) finalPath = b.objectPath; } catch {}
-        const publicUrl = finalPath.startsWith("http") ? finalPath : `${API}/api/storage${finalPath}`;
+        await fetch(uploadData.uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+        const publicUrl = `${API}/api/storage${uploadData.objectPath}`;
         setMediaUrls(prev => [...prev, publicUrl]);
       }
     } catch {
@@ -144,7 +142,7 @@ export default function SellPage() {
           <div className="grid grid-cols-3 gap-2">
             {mediaUrls.map((url, i) => (
               <div key={url} className="relative aspect-square rounded-xl overflow-hidden bg-amber-950/30">
-                <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-full object-cover" />
+                <img src={url} alt="" className="w-full h-full object-cover" />
                 {i === 0 && <span className="absolute top-1 left-1 bg-amber-700 text-white text-xs px-1.5 py-0.5 rounded">{t("sell.main")}</span>}
                 <button
                   onClick={() => setMediaUrls(prev => prev.filter((_, j) => j !== i))}

@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Users, FileText, Play, ShoppingBag, X, TrendingUp, Sparkles } from "lucide-react";
+import { Search, Users, FileText, Play, ShoppingBag, X, TrendingUp } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import { useSearchAll, getSearchAllQueryKey } from "@workspace/api-client-react";
+import { useSearchAll } from "@workspace/api-client-react";
 
 type TabId = "all" | "users" | "posts" | "reels" | "products";
 
 function Avatar({ url, name, size = 40 }: { url?: string | null; name?: string; size?: number }) {
   return url ? (
-    <img loading="lazy" decoding="async" src={url} alt={name} style={{ width: size, height: size }} className="rounded-full object-cover flex-shrink-0" />
+    <img src={url} alt={name} style={{ width: size, height: size }} className="rounded-full object-cover flex-shrink-0" />
   ) : (
     <div style={{ width: size, height: size }} className="rounded-full bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center flex-shrink-0">
       <span className="text-amber-100 font-bold text-sm">{(name ?? "?")[0].toUpperCase()}</span>
@@ -26,49 +25,32 @@ export default function SearchPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const TABS = [
-    { id: "all" as TabId,      label: t("search.tab_all"),      icon: TrendingUp },
-    { id: "users" as TabId,    label: t("search.tab_users"),    icon: Users },
-    { id: "posts" as TabId,    label: t("search.tab_posts"),    icon: FileText },
-    { id: "reels" as TabId,    label: "Reels",                   icon: Play },
+    { id: "all" as TabId, label: t("search.tab_all"), icon: TrendingUp },
+    { id: "users" as TabId, label: t("search.tab_users"), icon: Users },
+    { id: "posts" as TabId, label: t("search.tab_posts"), icon: FileText },
+    { id: "reels" as TabId, label: "Reels", icon: Play },
     { id: "products" as TabId, label: t("search.tab_products"), icon: ShoppingBag },
   ];
 
   useEffect(() => {
-    const id = setTimeout(() => setDebouncedQ(query.trim()), 400);
-    return () => clearTimeout(id);
+    const t = setTimeout(() => setDebouncedQ(query.trim()), 400);
+    return () => clearTimeout(t);
   }, [query]);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  /* ── Regular search ── */
-  const enabled     = debouncedQ.length >= 1;
-  const searchParams = { q: debouncedQ || "_", type: activeTab === "all" ? undefined : activeTab };
-  const { data, isLoading, isFetching } = useSearchAll(
-    searchParams,
-    { query: { enabled, queryKey: getSearchAllQueryKey(searchParams) } },
+  const enabled = debouncedQ.length >= 1;
+  const { data, isLoading } = useSearchAll(
+    { q: debouncedQ || " ", type: activeTab === "all" ? undefined : activeTab },
   );
-  const showLoading = enabled && (isLoading || isFetching);
+  const showLoading = enabled && isLoading;
 
-  /* ── Semantic search — only for posts, only when query ≥ 3 chars ── */
-  const semanticEnabled = debouncedQ.length >= 3 && (activeTab === "all" || activeTab === "posts");
-  const { data: semanticData, isFetching: semanticFetching } = useQuery({
-    queryKey: ["search-semantic", debouncedQ],
-    queryFn: async () => {
-      const r = await fetch(`/api/search/semantic?q=${encodeURIComponent(debouncedQ)}&limit=5`, { credentials: "include" });
-      if (!r.ok) return null;
-      return r.json() as Promise<{ posts: any[]; query: string }>;
-    },
-    enabled: semanticEnabled,
-    staleTime: 30_000,
-  });
-  const semanticPosts: any[] = semanticData?.posts ?? [];
-
-  const users    = data?.users    ?? [];
-  const posts    = data?.posts    ?? [];
-  const reels    = data?.reels    ?? [];
+  const users = data?.users ?? [];
+  const posts = data?.posts ?? [];
+  const reels = data?.reels ?? [];
   const products = data?.products ?? [];
 
-  const hasResults = users.length + posts.length + reels.length + products.length + semanticPosts.length > 0;
+  const hasResults = users.length + posts.length + reels.length + products.length > 0;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -111,7 +93,7 @@ export default function SearchPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-4">
-        {/* Empty / hint */}
+        {/* Empty / hint state */}
         {!debouncedQ && (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
             <div className="w-16 h-16 rounded-full bg-amber-900/30 flex items-center justify-center">
@@ -129,61 +111,15 @@ export default function SearchPage() {
         )}
 
         {/* No results */}
-        {enabled && !showLoading && !hasResults && !semanticFetching && semanticPosts.length === 0 && (
+        {enabled && !showLoading && !hasResults && (
           <div className="flex flex-col items-center py-16 gap-2 text-center">
             <p className="text-muted-foreground text-sm">"{debouncedQ}" {t("search.no_results")}</p>
           </div>
         )}
 
         {/* Results */}
-        {enabled && !showLoading && (
+        {enabled && !showLoading && hasResults && (
           <div className="space-y-6">
-
-            {/* ── AI Semantic Search Results ── */}
-            {(activeTab === "all" || activeTab === "posts") && semanticEnabled && (semanticPosts.length > 0 || semanticFetching) && (
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2 text-purple-400">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  AI Semantic Qidiruv
-                  {semanticFetching && <span className="w-3 h-3 border border-purple-400 border-t-transparent rounded-full animate-spin ml-1" />}
-                  {!semanticFetching && semanticPosts.length > 0 && (
-                    <span className="ml-auto text-purple-500/60 normal-case font-normal">ma'no bo'yicha</span>
-                  )}
-                </h3>
-                <div className="space-y-2">
-                  {semanticPosts.map((p: any) => (
-                    <button
-                      key={`sem-${p.id}`}
-                      onClick={() => navigate(`/post/${p.id}`)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-purple-950/20 hover:bg-purple-950/40 border border-purple-900/20 transition-colors text-left"
-                    >
-                      {p.mediaUrl ? (
-                        <img loading="lazy" decoding="async" src={p.mediaUrl} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-14 h-14 rounded-lg bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                          <Sparkles className="w-5 h-5 text-purple-500" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm line-clamp-2">{p.content}</p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-muted-foreground">❤️ {p.likesCount}</span>
-                          {p.author && (
-                            <span className="text-xs text-purple-400/70">@{p.author.username}</span>
-                          )}
-                          {typeof p._similarity === "number" && (
-                            <span className="text-xs text-purple-400/60 ml-auto">
-                              {Math.round(p._similarity * 100)}% o'xshash
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-
             {/* Users */}
             {(activeTab === "all" || activeTab === "users") && users.length > 0 && (
               <section>
@@ -206,6 +142,9 @@ export default function SearchPage() {
                         <div className="text-xs text-muted-foreground">@{u.username}</div>
                         {u.bio && <div className="text-xs text-muted-foreground mt-0.5 truncate">{u.bio}</div>}
                       </div>
+                      <div className="text-right flex-shrink-0">
+                        {u.isVerified && <span className="text-amber-500 text-xs">✓ {t("search.verified")}</span>}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -226,7 +165,7 @@ export default function SearchPage() {
                       className="w-full flex items-center gap-3 p-3 rounded-xl bg-amber-950/20 hover:bg-amber-950/40 transition-colors text-left"
                     >
                       {p.mediaUrl ? (
-                        <img loading="lazy" decoding="async" src={p.mediaUrl} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+                        <img src={p.mediaUrl} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
                       ) : (
                         <div className="w-14 h-14 rounded-lg bg-amber-900/30 flex items-center justify-center flex-shrink-0">
                           <FileText className="w-5 h-5 text-amber-600" />
@@ -259,7 +198,7 @@ export default function SearchPage() {
                       className="relative aspect-[9/16] rounded-xl overflow-hidden bg-amber-950/30 group"
                     >
                       {r.thumbnailUrl ? (
-                        <img loading="lazy" decoding="async" src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Play className="w-8 h-8 text-amber-600" />
@@ -291,7 +230,7 @@ export default function SearchPage() {
                     >
                       <div className="aspect-square bg-amber-900/20">
                         {p.thumbnailUrl ? (
-                          <img loading="lazy" decoding="async" src={p.thumbnailUrl} alt={p.title} className="w-full h-full object-cover" />
+                          <img src={p.thumbnailUrl} alt={p.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <ShoppingBag className="w-8 h-8 text-amber-600/50" />

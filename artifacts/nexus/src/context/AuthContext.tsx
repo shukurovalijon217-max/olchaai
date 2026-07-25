@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { usePushNotifications, unsubscribePush } from "@/hooks/usePushNotifications";
 
 export interface NotifPrefs {
   likes: boolean;
@@ -8,7 +7,6 @@ export interface NotifPrefs {
   messages: boolean;
   groups: boolean;
   premium: boolean;
-  emailNotifs?: boolean;
 }
 
 export interface PrivacySettings {
@@ -49,12 +47,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const API = "";
-
-function PushInitializer({ userId }: { userId: number | null }) {
-  usePushNotifications(!!userId);
-  return null;
-}
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -107,8 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = text ? JSON.parse(text) : {};
       if (!res.ok) return { error: data.error ?? "Kirish xatosi" };
       setUser(data);
-      /* Touch daily streak — fire-and-forget */
-      fetch(`${API}/api/gamification/streak/touch`, { method: "POST", credentials: "include" }).catch(() => {});
       return {};
     } catch {
       return { error: "Server bilan aloqa xatosi" };
@@ -127,8 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = text ? JSON.parse(text) : {};
       if (!res.ok) return { error: data.error ?? "Ro'yxatdan o'tish xatosi" };
       setUser(data);
-      /* Touch daily streak on first login */
-      fetch(`${API}/api/gamification/streak/touch`, { method: "POST", credentials: "include" }).catch(() => {});
       return {};
     } catch {
       return { error: "Server bilan aloqa xatosi" };
@@ -136,14 +125,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    try { await unsubscribePush(); } catch {}
     await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
     setUser(null);
   };
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, refetch: fetchMe }}>
-      <PushInitializer userId={user?.id ?? null} />
       {children}
     </AuthContext.Provider>
   );

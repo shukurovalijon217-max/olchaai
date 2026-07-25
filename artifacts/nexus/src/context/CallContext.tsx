@@ -5,31 +5,16 @@ import { useRealtime } from "@/context/RealtimeContext";
 import { playCallRingtone, getFeaturePref } from "@/lib/sounds";
 import CallUI, { type CallPhase } from "@/components/CallUI";
 import { toast } from "@/hooks/use-toast";
-import { resolveApiUrl } from "@/lib/utils";
 
-const STUN_FALLBACK: RTCIceServer[] = [
+const STUN = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
+  // TURN relay fallback — without this, calls fail to connect across most
+  // mobile-carrier/symmetric NATs since direct P2P (STUN-only) can't traverse them.
   { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
 ];
-
-let iceServersCache: RTCIceServer[] | null = null;
-async function getIceServers(): Promise<RTCIceServer[]> {
-  if (iceServersCache) return iceServersCache;
-  try {
-    const r = await fetch(resolveApiUrl("/api/ice-config"), { signal: AbortSignal.timeout(3000) });
-    if (r.ok) {
-      const data = await r.json() as { iceServers: RTCIceServer[] };
-      if (Array.isArray(data.iceServers) && data.iceServers.length > 0) {
-        iceServersCache = data.iceServers;
-        return iceServersCache;
-      }
-    }
-  } catch { /* fallback */ }
-  return STUN_FALLBACK;
-}
 
 const RING_TIMEOUT_MS = 45000;
 
@@ -48,7 +33,6 @@ interface CallState {
 interface CallContextValue {
   startCall: (peer: CallPeer, type: "voice" | "video") => void;
   hasActiveCall: boolean;
-  flipCamera: () => Promise<void>;
 }
 
 const CallContext = createContext<CallContextValue | null>(null);
@@ -62,7 +46,6 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [muted, setMuted] = useState(false);
   const [cameraOn, setCameraOn] = useState(true);
-  const facingModeRef = useRef<"user" | "environment">("user");
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -100,9 +83,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
     send({ type, toId, payload: payload ?? {} });
   }, [send]);
 
-  const ensurePeer = useCallback(async (toId: number) => {
-    const iceServers = await getIceServers();
-    const pc = new RTCPeerConnection({ iceServers });
+  const ensurePeer = useCallback((toId: number) => {
+    const pc = new RTCPeerConnection({ iceServers: STUN });
     pc.onicecandidate = ({ candidate }) => {
       if (!candidate) return;
       sendCallMsg("call_ice", toId, candidate.toJSON());
@@ -115,12 +97,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         setState(prev => prev ? { ...prev, phase: "connected" } : prev);
       }
       if (["failed", "disconnected", "closed"].includes(pc.connectionState)) {
-        if (stateRef.current) {
-          if (pc.connectionState === "failed") {
-            toast({ title: "Aloqa uzildi", description: "Qo'ng'iroq ulanishi muvaffaqiyatsiz. Qayta urinib ko'ring.", variant: "destructive" });
-          }
-          cleanup();
-        }
+        if (stateRef.current) cleanup();
       }
     };
     pcRef.current = pc;
@@ -136,47 +113,16 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const getMedia = useCallback(async (type: "voice" | "video") => {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
-      video: type === "video" ? { facingMode: facingModeRef.current } : false,
+      video: type === "video" ? { facingMode: "user" } : false,
     });
     localStreamRef.current = stream;
     setLocalStream(stream);
     return stream;
   }, []);
 
-  const flipCamera = useCallback(async () => {
-    if (!stateRef.current || stateRef.current.type !== "video") return;
-    facingModeRef.current = facingModeRef.current === "user" ? "environment" : "user";
-    try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { facingMode: facingModeRef.current },
-      });
-      const newVideoTrack = newStream.getVideoTracks()[0];
-      if (!newVideoTrack) return;
-      const oldStream = localStreamRef.current;
-      if (oldStream) {
-        oldStream.getVideoTracks().forEach(t => t.stop());
-        oldStream.removeTrack(oldStream.getVideoTracks()[0]);
-        oldStream.addTrack(newVideoTrack);
-      }
-      if (pcRef.current) {
-        const sender = pcRef.current.getSenders().find(s => s.track?.kind === "video");
-        if (sender) await sender.replaceTrack(newVideoTrack);
-      }
-      setLocalStream(oldStream ? new MediaStream([...oldStream.getAudioTracks(), newVideoTrack]) : newStream);
-    } catch {
-      facingModeRef.current = facingModeRef.current === "user" ? "environment" : "user";
-    }
-  }, []);
-
   const startCall = useCallback((peer: CallPeer, type: "voice" | "video") => {
     if (!user?.id || stateRef.current) return;
     setState({ phase: "ringing_out", type, peer });
-    // For video calls: open camera immediately so the caller sees themselves while waiting.
-    // Fire-and-forget — if the user denies the camera we continue without a preview.
-    if (type === "video") {
-      getMedia("video").catch(() => {});
-    }
     sendCallMsg("call_invite", peer.id, {
       type,
       fromName: user.displayName ?? user.username,
@@ -191,7 +137,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         toast({ title: "Javob berilmadi", description: `${peer.name} qo'ng'iroqqa javob bermadi.` });
       }
     }, RING_TIMEOUT_MS);
-  }, [user, getMedia, sendCallMsg, clearRingTimeout, cleanup]);
+  }, [user, sendCallMsg, clearRingTimeout, cleanup]);
 
   const acceptCall = useCallback(async () => {
     const s = stateRef.current;
@@ -259,10 +205,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
         clearRingTimeout();
         setState({ ...s, phase: "connecting" });
         try {
-          // Reuse the stream already opened in startCall (for video); open now for voice.
-          const stream = localStreamRef.current ?? await getMedia(s.type);
-          if (!localStreamRef.current) { localStreamRef.current = stream; setLocalStream(stream); }
-          const pc = await ensurePeer(s.peer.id);
+          const stream = await getMedia(s.type);
+          const pc = ensurePeer(s.peer.id);
           stream.getTracks().forEach(t => pc.addTrack(t, stream));
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
@@ -277,7 +221,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         const s = stateRef.current;
         if (!s || s.peer.id !== msg.fromId) return;
         try {
-          const pc = await ensurePeer(s.peer.id);
+          const pc = ensurePeer(s.peer.id);
           localStreamRef.current?.getTracks().forEach(t => pc.addTrack(t, localStreamRef.current!));
           await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
           await drainIce(pc);
@@ -324,7 +268,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
   }, [subscribe, sendCallMsg, ensurePeer, drainIce, getMedia, cleanup, stopRingtone, clearRingTimeout]);
 
   return (
-    <CallContext.Provider value={{ startCall, hasActiveCall: !!state, flipCamera }}>
+    <CallContext.Provider value={{ startCall, hasActiveCall: !!state }}>
       {children}
       <AnimatePresence>
         {state && (
@@ -339,7 +283,6 @@ export function CallProvider({ children }: { children: ReactNode }) {
             onToggleMute={toggleMute}
             cameraOn={cameraOn}
             onToggleCamera={toggleCamera}
-            onFlipCamera={flipCamera}
             onEnd={endCall}
             onAccept={state.phase === "ringing_in" ? acceptCall : undefined}
             onDecline={state.phase === "ringing_in" ? declineCall : undefined}

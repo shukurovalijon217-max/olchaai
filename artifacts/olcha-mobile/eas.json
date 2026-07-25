@@ -10,8 +10,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "olchaai.com",
-        "EXPO_PUBLIC_API_URL": "https://olchaai-api-production.up.railway.app"
+        "EXPO_PUBLIC_DOMAIN": "ai-universal-platform.replit.app"
       }
     },
     "preview": {
@@ -20,8 +19,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "olchaai.com",
-        "EXPO_PUBLIC_API_URL": "https://olchaai-api-production.up.railway.app"
+        "EXPO_PUBLIC_DOMAIN": "ai-universal-platform.replit.app"
       }
     },
     "production": {
@@ -29,8 +27,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "olchaai.com",
-        "EXPO_PUBLIC_API_URL": "https://olchaai-api-production.up.railway.app"
+        "EXPO_PUBLIC_DOMAIN": "ai-universal-platform.replit.app"
       }
     }
   },

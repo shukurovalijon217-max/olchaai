@@ -20,21 +20,21 @@ import {
   Heart, MessageCircle, Share2, Trash2,
   VolumeX, Volume2, BadgeCheck, Check, Send, X,
   Music, Sparkles, MoreHorizontal, Link,
-  UserPlus, UserCheck, Loader2, Flag, Brain, ImageOff,
+  UserPlus, UserCheck, Download, Loader2, Flag, Brain, ImageOff,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import type { Post } from "@workspace/api-client-react";
 import {
   PostType, useLikePost, useDeletePost,
-  getListPostsQueryKey, getGetAiFeedQueryKey, getListReelsQueryKey, useFollowUser,
+  getListPostsQueryKey, getGetAiFeedQueryKey, useFollowUser,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { usePip } from "@/context/PipContext";
 import { toast } from "@/hooks/use-toast";
 
-const API_BASE = "";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 /* ─── Accent palette (per post index) ───────────────────────── */
 const ACCENTS = [
@@ -53,53 +53,6 @@ const initials = (name?: string) =>
 
 const isVideoUrl = (url: string) =>
   /\.(mp4|webm|mov|avi|m4v)(\?|$)/i.test(url);
-
-/* ─── SONG TICKER (marquee + long-press download) ─────────────── */
-function SongTicker({ name, url, accent }: { name: string; url: string; accent: string }) {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [pressing, setPressing] = useState(false);
-
-  const startPress = (e: React.PointerEvent) => {
-    e.stopPropagation();
-    setPressing(true);
-    timerRef.current = setTimeout(() => {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = name;
-      a.click();
-      setPressing(false);
-    }, 600);
-  };
-  const endPress = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setPressing(false);
-  };
-
-  const label = `♪  ${name}   `;
-  return (
-    <div
-      className="inline-flex items-center gap-1.5 mb-2 select-none cursor-pointer"
-      onPointerDown={startPress}
-      onPointerUp={endPress}
-      onPointerLeave={endPress}
-      onPointerCancel={endPress}
-    >
-      <span className="music-note-bounce flex-shrink-0" style={{ fontSize: 14, color: accent, textShadow: `0 0 10px ${accent}` }}>♪</span>
-      <div className="song-marquee-wrap">
-        <span
-          className="song-marquee-inner text-[12px] font-bold text-white"
-          style={{
-            textShadow: "0 1px 6px rgba(0,0,0,0.9)",
-            opacity: pressing ? 0.65 : 1,
-            transition: "opacity 0.15s",
-          }}
-        >
-          {label}{label}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /* ─── WAVEFORM STRIP ─────────────────────────────────────────── */
 function Waveform({ active, color }: { active: boolean; color: string }) {
@@ -134,26 +87,34 @@ function Orb({
   return (
     <motion.button
       whileTap={{ scale: 0.68 }}
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="flex flex-col items-center gap-[2px]"
+      onClick={onClick}
+      className="flex flex-col items-center gap-[3px]"
     >
       <div
-        className="flex items-center justify-center relative"
+        className="w-[42px] h-[42px] rounded-full flex items-center justify-center relative overflow-hidden"
         style={{
-          width: 36,
-          height: 36,
-          filter: active
-            ? `drop-shadow(0 0 8px ${activeColor})`
-            : "drop-shadow(0 1px 6px rgba(0,0,0,0.95))",
-          transition: "filter 0.18s",
+          background: active ? `${activeColor}28` : "rgba(6,4,16,0.58)",
+          border: `1.5px solid ${active ? activeColor + "55" : "rgba(255,255,255,0.12)"}`,
+          backdropFilter: "blur(24px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.8)",
+          boxShadow: active
+            ? `0 0 20px ${activeColor}44, inset 0 1px 0 rgba(255,255,255,0.14)`
+            : "0 2px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
         }}
       >
+        {active && inView && (
+          <motion.div
+            className="absolute inset-0 rounded-full pointer-events-none"
+            animate={{ opacity: [0.2, 0.5, 0.2] }}
+            transition={{ duration: 2.2, repeat: Infinity }}
+            style={{ background: `radial-gradient(circle, ${activeColor}30 0%, transparent 70%)` }}
+          />
+        )}
         {icon}
       </div>
       {count !== undefined && count > 0 && (
         <span className="text-[9px] font-black tabular-nums leading-none"
-          style={{ color: active ? activeColor : "rgba(255,255,255,0.85)",
-            textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
+          style={{ color: active ? activeColor : "rgba(255,255,255,0.45)" }}>
           {fmt(count)}
         </span>
       )}
@@ -303,9 +264,6 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         if (typeof data?.following === "boolean") {
           setSubscribed(data.following);
         }
-        queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
-        queryClient.invalidateQueries({ queryKey: getGetAiFeedQueryKey() });
-        queryClient.invalidateQueries({ queryKey: getListReelsQueryKey() });
       },
       onError: () => {
         setSubscribed(post.author?.isFollowing ?? false);
@@ -355,12 +313,12 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* Unified overlay tap-to-show (back arrow + author + subscribe + orbs) */
-  const [overlayVisible, setOverlayVisible] = useState(true);
+  const [overlayVisible, setOverlayVisible] = useState(false);
   const overlayHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showOverlayBriefly = useCallback(() => {
     setOverlayVisible(true);
     if (overlayHideTimer.current) clearTimeout(overlayHideTimer.current);
-    overlayHideTimer.current = setTimeout(() => setOverlayVisible(false), 3000);
+    overlayHideTimer.current = setTimeout(() => setOverlayVisible(false), 3200);
   }, []);
 
   /* Avatar double-tap → live story bubble → tap again → fullscreen story */
@@ -426,11 +384,6 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   const audioRef   = useRef<HTMLAudioElement | null>(null);
   const isInView   = useInView(cardRef, { amount: 0.55 });
 
-  /* Re-show action orbs whenever this card enters view, then auto-hide after 3s */
-  useEffect(() => {
-    if (isInView) showOverlayBriefly();
-  }, [isInView, showOverlayBriefly]);
-
   /* ── Query client + mutations ── */
   const queryClient = useQueryClient();
   const likePost = useLikePost({
@@ -438,8 +391,8 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
       onSuccess: (data: any) => {
         if (typeof data?.liked === "boolean") setLiked(data.liked);
         if (typeof data?.likesCount === "number") setLikes(data.likesCount);
-        // Don't invalidate the entire list — optimistic state already updated above,
-        // and broad invalidation causes the feed to go back to isLoading=true on every like.
+        queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetAiFeedQueryKey() });
       },
       onError: () => {
         setLiked(post.isLiked ?? false);
@@ -486,7 +439,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
   /* Background audio with trim */
   useEffect(() => {
-    if (!audioUrl) return;
+    if (!audioUrl || !isPhoto) return;
     const trimStart = (post as any).audioTrimStart != null ? Number((post as any).audioTrimStart) : undefined;
     const trimEnd   = (post as any).audioTrimEnd   != null ? Number((post as any).audioTrimEnd)   : undefined;
     if (!audioRef.current) {
@@ -513,7 +466,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
       audioRef.current.pause();
     }
     return () => { audioRef.current?.pause(); };
-  }, [isInView, muted, audioUrl]);
+  }, [isInView, isPhoto, muted, audioUrl]);
 
   /* Close panels on scroll away */
   useEffect(() => {
@@ -608,7 +561,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
     if (!user || shareSending) return;
     setShareSending(toUser.id);
     const postUrl = `${window.location.origin}/post/${post.id}`;
-    const content = `📤 *${post.author?.displayName ?? "GILOS"}* tomonidan post:\n${postUrl}`;
+    const content = `📤 *${post.author?.displayName ?? "OlchaAI"}* tomonidan post:\n${postUrl}`;
     try {
       const convRes = await fetch(`${API_BASE}/api/conversations`, {
         method: "POST", credentials: "include",
@@ -738,7 +691,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                   : <img src={allMedia[slideIdx]} alt={post.content} className={`w-full h-full ${photoFit}`} loading="lazy" decoding="async" />
                 }
                 <div className="absolute inset-0 -z-10">
-                  <img loading="lazy" decoding="async" src={allMedia[slideIdx]} alt="" aria-hidden className="w-full h-full object-cover"
+                  <img src={allMedia[slideIdx]} alt="" aria-hidden className="w-full h-full object-cover"
                     style={{ filter: "blur(28px) saturate(1.4) brightness(0.28)", transform: "scale(1.18)" }} />
                 </div>
               </motion.div>
@@ -754,7 +707,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
           </div>
         ) : isVideo && post.mediaUrl ? (
           <video ref={videoRef} src={resolveApiUrl(post.mediaUrl)} muted={muted} loop playsInline
-            preload="none" className="w-full h-full object-cover" />
+            className="w-full h-full object-cover" />
         ) : isPhoto && post.mediaUrl && !mediaError ? (
           <img src={imgOptUrl(post.mediaUrl, 900)} alt={post.content}
             loading="lazy" decoding="async"
@@ -885,11 +838,10 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
               style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
             <div className="absolute inset-[2.5px] rounded-full overflow-hidden z-10 flex items-center justify-center"
               style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
-              <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
-              {post.author?.avatarUrl && (
-                <img src={resolveApiUrl(post.author.avatarUrl)} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async"
-                  onError={e => { e.currentTarget.style.display = "none"; }} />
-              )}
+              {post.author?.avatarUrl
+                ? <img src={resolveApiUrl(post.author.avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
+              }
             </div>
 
             {/* ── Live story bubble — appears on avatar double-tap, tap again → fullscreen story ── */}
@@ -951,7 +903,6 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                       if (typeof data?.following === "boolean") setSubscribed(data.following);
                       queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
                       queryClient.invalidateQueries({ queryKey: getGetAiFeedQueryKey() });
-                      queryClient.invalidateQueries({ queryKey: getListReelsQueryKey() });
                     },
                     onError: () => setSubscribed(!next),
                   }
@@ -1001,12 +952,12 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                   <div className="flex items-center gap-1">
                     <span className="text-white font-black text-[13px] truncate"
                       style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
-                      {post.author?.displayName ?? "GILOS"}
+                      {post.author?.displayName ?? "OlchaAI"}
                     </span>
                     {(post.author as any)?.isVerified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: accent }} />}
                   </div>
                   <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.42)" }}>
-                    {post.author?.username && !post.author.username.includes('@') ? `@${post.author.username}` : ""}
+                    @{post.author?.username ?? "user"}
                   </span>
                 </div>
               </div>
@@ -1017,13 +968,13 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
       </div>
 
-      {/* ═══ LAYER 20: RIGHT ORB COLUMN — tap-to-show, auto-hides in 3s ═══ */}
+      {/* ═══ LAYER 20: RIGHT ORB COLUMN — tap to show ═══ */}
       <motion.div
-        className="absolute right-3 flex flex-col items-center gap-3 origin-top-right"
-        animate={{ opacity: overlayVisible ? 1 : 0, scale: overlayVisible ? 1 : 0.85 }}
-        transition={{ duration: 0.25 }}
-        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 28px)", pointerEvents: (commentOpen || !overlayVisible) ? "none" : "auto" }}
-        onPointerDown={e => e.stopPropagation()}
+        className="absolute right-3 flex flex-col items-center gap-2 scale-90 origin-top-right"
+        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 48px)", pointerEvents: (overlayVisible && !commentOpen) ? "auto" : "none" }}
+        animate={{ opacity: (overlayVisible && !commentOpen) ? 1 : 0, x: (overlayVisible && !commentOpen) ? 0 : 10 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+        onPointerDown={e => { e.stopPropagation(); showOverlayBriefly(); }}
       >
         {/* Like */}
         <div className="relative">
@@ -1066,7 +1017,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         <Orb
           icon={<Sparkles className="w-[17px] h-[17px]" style={{ color: "rgba(192,132,252,0.85)" }} />}
           active={false} activeColor="#c084fc"
-          onClick={() => { navigate("/feature-hub"); }}
+          onClick={() => {}}
         />
 
         {/* More/Delete */}
@@ -1084,30 +1035,14 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
         {/* Volume (video or audio) */}
         {(isVideo || hasAudio) && (
-          <div className="flex flex-col items-center gap-1.5">
-            <Orb
-              icon={muted
-                ? <VolumeX className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.45)" }} />
-                : <Volume2 className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.85)" }} />
-              }
-              active={!muted} activeColor={accent} inView={isInView}
-              onClick={() => setMuted(m => !m)}
-            />
-            {muted && isInView && (
-              <span
-                className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full select-none pointer-events-none"
-                style={{
-                  background: "rgba(0,0,0,0.55)",
-                  color: accent,
-                  animation: "pulse 1.8s ease-in-out infinite",
-                  border: `1px solid ${accent}55`,
-                  backdropFilter: "blur(4px)",
-                }}
-              >
-                🔊
-              </span>
-            )}
-          </div>
+          <Orb
+            icon={muted
+              ? <VolumeX className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.45)" }} />
+              : <Volume2 className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.85)" }} />
+            }
+            active={!muted} activeColor={accent} inView={isInView}
+            onClick={() => setMuted(m => !m)}
+          />
         )}
       </motion.div>
 
@@ -1118,9 +1053,17 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         initial={{ opacity: 0, y: 10 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         transition={{ delay: 0.28, duration: 0.45 }}
       >
-        {/* Song name — marquee + long press to download */}
-        {audioName && (
-          <SongTicker name={audioName} url={audioUrl ? resolveApiUrl(audioUrl) : ""} accent={accent} />
+        {/* Song name (download on tap) */}
+        {audioName && audioUrl && (
+          <a href={resolveApiUrl(audioUrl)} download={audioName}
+            className="inline-flex items-center gap-1.5 mb-2 cursor-pointer"
+            onClick={e => e.stopPropagation()}
+            style={{ textDecoration: "none" }}>
+            <span className="music-note-bounce text-white select-none" style={{ fontSize: 14, textShadow: `0 0 12px ${accent}` }}>♪</span>
+            <span className="text-[12px] font-bold text-white truncate max-w-[160px]"
+              style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>{audioName}</span>
+            <Download className="w-3 h-3 flex-shrink-0" style={{ color: accent }} />
+          </a>
         )}
 
         {/* Caption */}
@@ -1265,20 +1208,18 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                 </p>
               ) : commentsList.map((c: any) => (
                 <div key={c.id} className="flex gap-2.5 items-start">
-                  <div className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center text-[11px] font-bold text-white relative overflow-hidden"
-                    style={{ background: accent + "55" }}>
-                    {(c.author?.displayName ?? "?")[0]}
-                    {c.author?.avatarUrl && (
-                      <img loading="lazy" decoding="async" src={resolveApiUrl(c.author.avatarUrl)} alt="" className="absolute inset-0 w-full h-full object-cover"
-                        onError={e => { e.currentTarget.style.display = "none"; }} />
-                    )}
-                  </div>
+                  {c.author?.avatarUrl ? (
+                    <img src={resolveApiUrl(c.author.avatarUrl)} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center text-[11px] font-bold text-white"
+                      style={{ background: accent + "55" }}>
+                      {(c.author?.displayName ?? "?")[0]}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-white/80 text-[12px] font-semibold truncate">{c.author?.displayName ?? "Foydalanuvchi"}</span>
-                      {c.author?.username && !c.author.username.includes('@') && (
-                        <span className="text-white/25 text-[10px] flex-shrink-0">@{c.author.username}</span>
-                      )}
+                      <span className="text-white/25 text-[10px] flex-shrink-0">@{c.author?.username}</span>
                     </div>
                     <p className="text-white/90 text-[13px] leading-snug mt-0.5 break-words">{c.content}</p>
                   </div>
@@ -1362,13 +1303,8 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
                 <div key={u.id} className="flex items-center gap-3 py-2">
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
                     style={{ background: "linear-gradient(135deg,#7c3aed44,#ec489944)" }}>
-                    <div className="w-full h-full flex items-center justify-center text-xs font-black text-white relative">
-                      {initials(u.displayName)}
-                      {u.avatarUrl && (
-                        <img loading="lazy" decoding="async" src={resolveApiUrl(u.avatarUrl)} alt="" className="absolute inset-0 w-full h-full object-cover"
-                          onError={e => { e.currentTarget.style.display = "none"; }} />
-                      )}
-                    </div>
+                    {u.avatarUrl ? <img src={resolveApiUrl(u.avatarUrl)} alt="" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-xs font-black text-white">{initials(u.displayName)}</div>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-white text-[13px] font-semibold truncate block">{u.displayName}</span>

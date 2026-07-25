@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,7 +8,7 @@ import {
   RefreshCw, ChevronRight, Loader2, X, Eye, EyeOff
 } from "lucide-react";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 const fmt = (tiyin: number) =>
   (tiyin / 100).toLocaleString("uz-UZ", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + " so'm";
@@ -318,21 +317,14 @@ function AddMethodModal({ onClose }: { onClose: () => void }) {
     if (!type || !title) return;
     setSaving(true);
     try {
-      const r = await fetch(`${API}/api/wallet/payment-methods`, {
+      await fetch(`${API}/api/wallet/payment-methods`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ type, title, maskedNumber: masked || undefined, holderName: holder || undefined, expiryDate: expiry || undefined, isDefault }),
       });
-      if (!r.ok) {
-        const d = await r.json().catch(() => ({}));
-        toast.error(d?.error ?? "To'lov usuli qo'shilmadi. Qayta urinib ko'ring.");
-        return;
-      }
       qc.invalidateQueries({ queryKey: ["wallet-pms"] });
       onClose();
-    } catch {
-      toast.error("Tarmoq xatosi. Qayta urinib ko'ring.");
     } finally {
       setSaving(false);
     }

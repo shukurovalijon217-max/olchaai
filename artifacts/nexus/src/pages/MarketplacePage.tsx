@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useListProducts, useListMarketplaceCategories } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 // ─── Favorites (localStorage) ────────────────────────────────────────────────
 function getFavs(): Set<number> {
@@ -19,12 +19,10 @@ function saveFavs(s: Set<number>) {
 // ─── API helpers ──────────────────────────────────────────────────────────────
 async function fetchFeatured() {
   const r = await fetch(`${API}/api/marketplace/featured`, { credentials: "include" });
-  if (!r.ok) return [];
   return r.json();
 }
 async function fetchStats() {
   const r = await fetch(`${API}/api/marketplace/stats`, { credentials: "include" });
-  if (!r.ok) return null;
   return r.json();
 }
 

@@ -7,7 +7,6 @@ import {
   User, ShieldCheck, LogOut, Crown, Settings, Wallet, Radio,
   Search, ShoppingBag, Bot, BookOpen, ChevronRight, ChevronLeft,
   MoreHorizontal, X, Zap, Trophy, Ghost, Send, GitBranch, Globe, Brain, Sparkles, Star, Languages,
-  TrendingUp,
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import FloatingAvatar from "@/components/FloatingAvatar";
@@ -303,7 +302,6 @@ const navItems = [
   { href: "/muni", icon: Star, key: "nav.muni" },
   { href: "/voice-translate", icon: Languages, key: "nav.voice_translate" },
   { href: "/features", icon: Zap, key: "nav.features" },
-  { href: "/kreator", icon: TrendingUp, key: "nav.kreator" },
 ];
 
 const bottomNavItems = [
@@ -338,7 +336,7 @@ const mobileNavMainItems = [
 ];
 
 /* ─── Muni AI Floating Panel ────────────────────────────────── */
-const API_BASE = "";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 function MuniPanel() {
   const { t } = useTranslation();
@@ -736,7 +734,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     >
                       {user.avatarUrl ? (
                         <div className="relative">
-                          <img loading="lazy" decoding="async" src={user.avatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-violet-500/40" />
+                          <img src={user.avatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-violet-500/40" />
                           <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-sidebar" />
                         </div>
                       ) : (
@@ -1110,13 +1108,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       dir: "left" as const,
                     },
                     {
-                      label: t("nav.sect_hub"),
-                      color: "#a855f7",
-                      shadow: "rgba(168,85,247,0.6)",
-                      hrefs: ["/features"],
-                      dir: "left" as const,
-                    },
-                    {
                       label: t("nav.sect_settings"),
                       color: "#94a3b8",
                       shadow: "rgba(148,163,184,0.5)",
@@ -1183,7 +1174,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-2.5">
                           {user.avatarUrl ? (
                             <div className="relative">
-                              <img loading="lazy" decoding="async" src={user.avatarUrl} className="w-9 h-9 rounded-full object-cover ring-2 ring-violet-500/40" />
+                              <img src={user.avatarUrl} className="w-9 h-9 rounded-full object-cover ring-2 ring-violet-500/40" />
                               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0a0818]" />
                             </div>
                           ) : (
@@ -1243,8 +1234,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── FLOATING USER AVATAR BUBBLE ── */}
       {!isImmersive && !playerOpen && !commentPanelOpen && <FloatingAvatar />}
 
-      {/* ── MUNI FLOATING AI (OTube da yashirilgan — u yerda MusicPlayer bor) ── */}
-      {location !== "/reels" && location !== "/otube" && !playerOpen && !commentPanelOpen && <MuniPanel />}
+      {/* ── MUNI FLOATING AI ── */}
+      {location !== "/reels" && !playerOpen && !commentPanelOpen && <MuniPanel />}
 
       {/* ── DOCK EDGE TABS — hidden while a full-screen player or comment panel is open ── */}
       {!playerOpen && !commentPanelOpen && <DockEdgeTab side="right" />}

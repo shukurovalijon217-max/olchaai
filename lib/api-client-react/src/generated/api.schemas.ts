@@ -128,17 +128,6 @@ export interface LikeResult {
   likesCount: number;
 }
 
-/**
- * Content type
- */
-export type ReelType = typeof ReelType[keyof typeof ReelType];
-
-
-export const ReelType = {
-  reel: 'reel',
-  short: 'short',
-} as const;
-
 export interface Reel {
   id: number;
   author: User;
@@ -156,17 +145,7 @@ export interface Reel {
   tags?: string[];
   createdAt: string;
   views24h?: number;
-  /** Content type */
-  type?: ReelType;
 }
-
-export type ReelInputType = typeof ReelInputType[keyof typeof ReelInputType];
-
-
-export const ReelInputType = {
-  reel: 'reel',
-  short: 'short',
-} as const;
 
 export interface ReelInput {
   authorId: number;
@@ -176,7 +155,6 @@ export interface ReelInput {
   audioTrack?: string;
   duration?: number;
   tags?: string[];
-  type?: ReelInputType;
 }
 
 export interface ReelAnalytics {
@@ -436,8 +414,6 @@ export interface Message {
   senderId: number;
   content: string;
   /** @nullable */
-  type?: string | null;
-  /** @nullable */
   mediaUrl?: string | null;
   isRead?: boolean;
   createdAt: string;
@@ -453,7 +429,6 @@ export interface Message {
 export interface MessageInput {
   senderId: number;
   content: string;
-  type?: string;
   mediaUrl?: string;
   /** time_capsule: ISO timestamp to deliver this message at, instead of immediately */
   scheduledAt?: string;
@@ -967,26 +942,7 @@ export type ListReelsParams = {
 limit?: number;
 offset?: number;
 userId?: number;
-sort?: ListReelsSort;
-type?: ListReelsType;
 };
-
-export type ListReelsSort = typeof ListReelsSort[keyof typeof ListReelsSort];
-
-
-export const ListReelsSort = {
-  top: 'top',
-  trending: 'trending',
-  latest: 'latest',
-} as const;
-
-export type ListReelsType = typeof ListReelsType[keyof typeof ListReelsType];
-
-
-export const ListReelsType = {
-  reel: 'reel',
-  short: 'short',
-} as const;
 
 export type DeleteReel200 = {
   ok?: boolean;

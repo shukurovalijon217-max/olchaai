@@ -23,17 +23,10 @@ logger.info("║       OlchaAI — AI Core Service            ║");
 logger.info("║  Fully Autonomous • Pentagon-Grade Sec   ║");
 logger.info("╚══════════════════════════════════════════╝");
 
-// startSecurityAgent is async — it loads DB blocks before the server accepts traffic
-startSecurityAgent().then(() => {
-  startModerationAgent();
-  startAnalyticsAgent();
-  startOrchestrator();
-}).catch((err) => {
-  logger.error({ err }, "Security agent failed to start — continuing in memory-only mode");
-  startModerationAgent();
-  startAnalyticsAgent();
-  startOrchestrator();
-});
+startSecurityAgent();
+startModerationAgent();
+startAnalyticsAgent();
+startOrchestrator();
 
 const server = app.listen(port, () => {
   logger.info({ port }, "AI Core HTTP server listening");

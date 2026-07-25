@@ -9,8 +9,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useGetLive, useEndLive, useSendLiveGift } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 
-const API = "";
-const STUN_FALLBACK: RTCIceServer[] = [
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const STUN = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
   { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
@@ -18,25 +18,7 @@ const STUN_FALLBACK: RTCIceServer[] = [
   { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
 ];
 
-let _iceCache: RTCIceServer[] | null = null;
-async function fetchIceServers(): Promise<RTCIceServer[]> {
-  if (_iceCache) return _iceCache;
-  try {
-    const r = await fetch("/api/ice-config", { signal: AbortSignal.timeout(3000) });
-    if (r.ok) {
-      const data = await r.json() as { iceServers: RTCIceServer[] };
-      if (Array.isArray(data.iceServers) && data.iceServers.length > 0) {
-        _iceCache = data.iceServers;
-        return _iceCache;
-      }
-    }
-  } catch { /* fallback */ }
-  return STUN_FALLBACK;
-}
-
 function buildWsUrl(userId: number) {
-  const base = import.meta.env.VITE_WS_URL;
-  if (base) return `${base}?userId=${userId}`;
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
   return `${proto}://${window.location.host}/go/ws?userId=${userId}`;
 }
@@ -75,8 +57,6 @@ export default function LivePage({ liveId }: LivePageProps) {
   const localStreamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef<Map<number, RTCPeerConnection>>(new Map());
   const icQueueRef = useRef<Map<number, RTCIceCandidateInit[]>>(new Map());
-  const iceServersRef = useRef<RTCIceServer[]>(STUN_FALLBACK);
-  useEffect(() => { fetchIceServers().then(s => { iceServersRef.current = s; }).catch(() => {}); }, []);
 
   const [camOn, setCamOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
@@ -94,7 +74,7 @@ export default function LivePage({ liveId }: LivePageProps) {
 
   const fetchBalance = async () => {
     try {
-      const r = await fetch(`${API}/api/wallet`, { credentials: "include" });
+      const r = await fetch(`${API}/wallet`);
       if (r.ok) { const d = await r.json(); setBalance(d.wallet?.balance ?? 0); }
     } catch {}
   };
@@ -117,7 +97,7 @@ export default function LivePage({ liveId }: LivePageProps) {
   };
 
   const createPeer = useCallback((peerId: number): RTCPeerConnection => {
-    const pc = new RTCPeerConnection({ iceServers: iceServersRef.current });
+    const pc = new RTCPeerConnection({ iceServers: STUN });
     peersRef.current.set(peerId, pc);
     pc.onicecandidate = ({ candidate }) => {
       if (!candidate || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -232,12 +212,7 @@ export default function LivePage({ liveId }: LivePageProps) {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(s => {
       localStreamRef.current = s;
       if (localVideoRef.current) localVideoRef.current.srcObject = s;
-    }).catch((err) => {
-      const msg = err?.name === "NotAllowedError"
-        ? t("live.camera_denied", "Kamera/mikrofon ruxsati rad etildi. Brauzer sozlamalaridan ruxsat bering.")
-        : t("live.camera_error", "Kamera yoki mikrofonga ulanib bo'lmadi.");
-      setGiftError(msg);
-    });
+    }).catch(() => {});
     return () => { localStreamRef.current?.getTracks().forEach(t => t.stop()); };
   }, [isHost, stream?.id]);
 
@@ -323,7 +298,7 @@ export default function LivePage({ liveId }: LivePageProps) {
           <div className="absolute top-14 left-4 flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary/40 overflow-hidden border border-white/20">
               {stream.host.avatarUrl
-                ? <img loading="lazy" decoding="async" src={stream.host.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ? <img src={stream.host.avatarUrl} alt="" className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">{stream.host?.displayName?.[0]}</div>
               }
             </div>

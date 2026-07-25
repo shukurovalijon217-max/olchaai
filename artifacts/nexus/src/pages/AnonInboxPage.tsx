@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 interface AnonQuestion {
   id: number;
@@ -47,7 +47,7 @@ export default function AnonInboxPage() {
   useEffect(() => { fetchInbox(); }, []);
 
   const shareLink = user
-    ? `${window.location.origin}/ask/${user.id}`
+    ? `${window.location.origin}${import.meta.env.BASE_URL}ask/${user.id}`
     : "";
 
   const handleCopy = async () => {

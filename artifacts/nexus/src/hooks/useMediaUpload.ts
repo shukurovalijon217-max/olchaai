@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 export interface UploadResult {
   objectPath: string;
@@ -51,9 +51,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
       const putRes = await fetch(uploadURL, {
         method: "PUT",
         headers: { "Content-Type": file.type || "application/octet-stream" },
-        // No credentials — upload URL is authenticated via presigned token (R2) or HMAC proxy token.
-        // Sending credentials to a cross-origin R2 URL causes a CORS error.
-        credentials: "omit",
         body: file,
       });
       if (!putRes.ok) {
@@ -66,21 +63,16 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
       }
       setProgress(100);
 
-      let finalObjectPath = objectPath;
-      let serveUrl = objectPath.startsWith("http") ? objectPath : `${API}/api/storage${objectPath}`;
+      let serveUrl = `${API}/api/storage${objectPath}`;
       try {
         const putBody = await putRes.clone().json();
         if (putBody?.url && typeof putBody.url === "string") {
           serveUrl = putBody.url;
         }
-        if (putBody?.objectPath && typeof putBody.objectPath === "string") {
-          finalObjectPath = putBody.objectPath;
-          serveUrl = putBody.url ?? putBody.objectPath;
-        }
       } catch {}
 
       const result: UploadResult = {
-        objectPath: finalObjectPath,
+        objectPath,
         serveUrl,
         fileName: file.name,
         contentType: file.type,

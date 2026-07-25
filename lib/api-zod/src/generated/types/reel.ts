@@ -5,7 +5,6 @@
  * NEXUS Super Social Platform API
  * OpenAPI spec version: 0.1.0
  */
-import type { ReelType } from './reelType';
 import type { User } from './user';
 
 export interface Reel {
@@ -25,6 +24,4 @@ export interface Reel {
   tags?: string[];
   createdAt: string;
   views24h?: number;
-  /** Content type */
-  type?: ReelType;
 }

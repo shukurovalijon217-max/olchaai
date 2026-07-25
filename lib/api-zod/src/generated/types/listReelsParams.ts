@@ -5,13 +5,9 @@
  * NEXUS Super Social Platform API
  * OpenAPI spec version: 0.1.0
  */
-import type { ListReelsSort } from './listReelsSort';
-import type { ListReelsType } from './listReelsType';
 
 export type ListReelsParams = {
 limit?: number;
 offset?: number;
 userId?: number;
-sort?: ListReelsSort;
-type?: ListReelsType;
 };

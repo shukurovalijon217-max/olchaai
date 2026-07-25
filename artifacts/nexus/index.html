@@ -10,7 +10,7 @@
     <title>GILOS — Super Social Platforma</title>
     <meta name="description" content="GILOS — AI yordamida ishlaydi. Post, reels, stories, marketplace, jonli efir, xabar va ko'p imkoniyatlar bir platformada." />
     <meta name="application-name" content="GILOS" />
-    <meta name="keywords" content="GILOS, ijtimoiy tarmoq, social network, Uzbekistan, AI, reels, marketplace, live" />
+    <meta name="keywords" content="GILOS, OlchaAI, ijtimoiy tarmoq, social network, Uzbekistan, AI, reels, marketplace, live" />
     <meta name="robots" content="index, follow" />
     <meta property="og:site_name" content="GILOS" />
     <meta property="og:title" content="GILOS — Super Social Platforma" />
@@ -33,7 +33,7 @@
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "GILOS",
-        "alternateName": "GILOS",
+        "alternateName": "OlchaAI",
         "url": "https://olchaai.com/",
         "logo": "https://olchaai.com/olcha-logo.png",
         "description": "GILOS — AI-powered unified super social platform.",
@@ -118,8 +118,6 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://olchaai.com">
     <link rel="dns-prefetch" href="https://olchaai.com">
-    <link rel="preconnect" href="https://olchaai-api-production.up.railway.app" crossorigin>
-    <link rel="dns-prefetch" href="https://olchaai-api-production.up.railway.app">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
@@ -128,16 +126,11 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      /* Kill all service workers and their caches immediately */
-      (function () {
-        if (!("serviceWorker" in navigator)) return;
-        caches.keys().then(function (keys) {
-          keys.forEach(function (k) { caches.delete(k); });
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/sw.js", { scope: "/" });
         });
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-          regs.forEach(function (r) { r.unregister(); });
-        });
-      })();
+      }
     </script>
   </body>
 </html>

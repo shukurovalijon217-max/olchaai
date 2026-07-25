@@ -1,21 +1,5 @@
 import { useEffect, Component, type ReactNode, lazy, Suspense } from "react";
 import "@/lib/i18n";
-import { initE2E } from "@/lib/e2eEncryption";
-
-// Keep-alive: prevents Render free/starter instances from spinning down
-const WS_BASE = import.meta.env.VITE_WS_URL?.replace(/^wss?:/, "https:").replace("/go/ws", "") ?? "";
-const API_BASE = "";
-function useKeepAlive() {
-  useEffect(() => {
-    const ping = () => {
-      if (WS_BASE) fetch(`${WS_BASE}/go/health`, { mode: "no-cors" }).catch(() => {});
-      if (API_BASE) fetch(`${API_BASE}/api/healthz`, { mode: "no-cors" }).catch(() => {});
-    };
-    ping();
-    const id = setInterval(ping, 4 * 60 * 1000); // every 4 min
-    return () => clearInterval(id);
-  }, []);
-}
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -66,8 +50,7 @@ const FactCheckPage     = lazy(() => import("@/pages/FactCheckPage"));
 const CoSpacesPage      = lazy(() => import("@/pages/CoSpacesPage"));
 const MuniAIPage        = lazy(() => import("@/pages/MuniAIPage"));
 const VoiceTranslatorPage = lazy(() => import("@/pages/VoiceTranslatorPage"));
-const FeatureHubPage         = lazy(() => import("@/pages/FeatureHubPage"));
-const CreatorDashboardPage   = lazy(() => import("@/pages/CreatorDashboardPage"));
+const FeatureHubPage    = lazy(() => import("@/pages/FeatureHubPage"));
 const NotFound          = lazy(() => import("@/pages/not-found"));
 
 const PageLoader = () => (
@@ -77,16 +60,7 @@ const PageLoader = () => (
 );
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 4,
-      retryDelay: (attempt) => [3000, 8000, 20000, 40000][attempt] ?? 40000,
-      refetchOnWindowFocus: false,
-      staleTime: 60_000,
-      gcTime: 15 * 60_000,      // 15 daqiqa: xotirada saqlaydi (iOS reload uchun)
-      refetchOnReconnect: true,
-    },
-  },
+  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 });
 
 class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -100,7 +74,7 @@ class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNod
   componentDidCatch(error: Error, info: { componentStack: string }) {
     console.error("[ErrorBoundary] React crash:", error.message, "\n", error.stack, "\nComponent stack:", info.componentStack);
     try {
-      const API = "";
+      const API = (import.meta.env.VITE_API_BASE_URL ?? "");
       fetch(`${API}/api/client-error`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -139,11 +113,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       setLocation("/login");
     }
   }, [loading, user, setLocation]);
-
-  /* E2E encryption key pair init — runs once after login */
-  useEffect(() => {
-    if (user) { initE2E().catch(() => {}); }
-  }, [user?.id]);
 
   if (loading) {
     return (
@@ -300,9 +269,6 @@ function Router() {
         <Route path="/features" component={() => (
           <ProtectedRoute><Layout><FeatureHubPage /></Layout></ProtectedRoute>
         )} />
-        <Route path="/kreator" component={() => (
-          <ProtectedRoute><Layout><CreatorDashboardPage /></Layout></ProtectedRoute>
-        )} />
         <Route path="/" component={() => (
           <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>
         )} />
@@ -313,7 +279,6 @@ function Router() {
 }
 
 export default function App() {
-  useKeepAlive();
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

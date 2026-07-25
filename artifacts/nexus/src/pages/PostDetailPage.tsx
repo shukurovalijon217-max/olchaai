@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { playSmsSound, getFeaturePref } from "@/lib/sounds";
 import { motion } from "framer-motion";
-import { ArrowLeft, Send, Heart, BadgeCheck, Loader2, Mic, Trash2 } from "lucide-react";
+import { ArrowLeft, Send, Heart, BadgeCheck, Loader2, Mic } from "lucide-react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import {
@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 
 interface PostDetailPageProps { postId: number; }
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 interface VoiceCommentData {
   id: number;
@@ -40,21 +40,8 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
   const { data: comments = [] } = useListPostComments(postId, { query: { queryKey: getListPostCommentsQueryKey(postId) } });
   const [text, setText] = useState("");
   const addComment = useCreatePostComment();
-  const [deletingComment, setDeletingComment] = useState<number | null>(null);
   const qc = useQueryClient();
   const { user } = useAuth();
-
-  const handleDeleteComment = async (commentId: number) => {
-    if (deletingComment) return;
-    setDeletingComment(commentId);
-    try {
-      await fetch(`${API}/api/posts/${postId}/comments/${commentId}`, {
-        method: "DELETE", credentials: "include",
-      });
-      qc.invalidateQueries({ queryKey: getListPostCommentsQueryKey(postId) });
-    } catch { /* ignore */ }
-    setDeletingComment(null);
-  };
 
   const [commentLikes, setCommentLikes] = useState<Record<number, { liked: boolean; count: number }>>({});
 
@@ -166,7 +153,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center flex-shrink-0 overflow-hidden border border-border/60">
             {user?.avatarUrl
-              ? <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
               : <span className="text-xs font-bold text-primary">{user?.displayName?.[0]?.toUpperCase() ?? "?"}</span>
             }
           </div>
@@ -228,7 +215,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
                   className="flex gap-3 items-center px-1">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500/25 to-blue-500/25 flex-shrink-0 flex items-center justify-center overflow-hidden border border-violet-500/20">
                     {vc.author?.avatarUrl
-                      ? <img loading="lazy" decoding="async" src={vc.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      ? <img src={vc.author.avatarUrl} alt="" className="w-full h-full object-cover" />
                       : <span className="text-xs font-bold text-violet-400">{vc.author?.displayName?.[0]?.toUpperCase() ?? "?"}</span>
                     }
                   </div>
@@ -284,7 +271,7 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex-shrink-0 flex items-center justify-center overflow-hidden border border-border/50">
                 {comment.author.avatarUrl
-                  ? <img loading="lazy" decoding="async" src={comment.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ? <img src={comment.author.avatarUrl} alt="" className="w-full h-full object-cover" />
                   : <span className="text-xs font-bold text-primary">{comment.author.displayName?.[0]?.toUpperCase()}</span>
                 }
               </div>
@@ -312,15 +299,6 @@ export default function PostDetailPage({ postId }: PostDetailPageProps) {
                       </button>
                     );
                   })()}
-                  {(user && (comment.author?.id === user.id || (user as any).isAdmin)) && (
-                    <button
-                      onClick={() => handleDeleteComment(comment.id)}
-                      disabled={deletingComment === comment.id}
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors ml-auto disabled:opacity-40"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
                 </div>
               </div>
             </motion.div>

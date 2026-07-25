@@ -43,7 +43,7 @@ const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "ai-autopilot", key: "admin.ai_autopilot", icon: Bot },
 ];
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 const VERDICT_COLOR: Record<string, string> = {
   clean: "bg-emerald-400/15 text-emerald-400",
@@ -292,7 +292,7 @@ function PlatformCostsSection() {
       ]);
       setSummary(s);
       setRequests(r.requests ?? []);
-    } catch { import("sonner").then(({ toast }) => toast.error("Xarajatlar ma'lumotini yuklashda xato")).catch(()=>{}); }
+    } catch {}
     setLoadingSummary(false);
   };
 
@@ -610,7 +610,7 @@ function PlatformCostsSection() {
 /* ── Monetization Tab ─────────────────────────────────────────── */
 function MonetizationTab() {
   const { t } = useTranslation();
-  const API_BASE = "";
+  const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "");
   const [stats, setStats] = useState<any>(null);
   const [cfg, setCfg] = useState<any>(null);
   const [topContent, setTopContent] = useState<any[]>([]);
@@ -1011,7 +1011,7 @@ function MonetizationTab() {
                 {payouts.map(p => (
                   <div key={p.id} className="px-5 py-4 flex items-center gap-4">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600/50 to-pink-600/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
-                      {p.user?.avatarUrl ? <img loading="lazy" decoding="async" src={p.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (p.user?.displayName?.[0] ?? "?")}
+                      {p.user?.avatarUrl ? <img src={p.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (p.user?.displayName?.[0] ?? "?")}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
@@ -1159,7 +1159,7 @@ function MonetizationTab() {
                 {applications.map(a => (
                   <div key={a.id} className="px-5 py-4 flex items-center gap-4">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-600/50 to-orange-600/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
-                      {a.user?.avatarUrl ? <img loading="lazy" decoding="async" src={a.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (a.user?.displayName?.[0] ?? "?")}
+                      {a.user?.avatarUrl ? <img src={a.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (a.user?.displayName?.[0] ?? "?")}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
@@ -2273,7 +2273,7 @@ function AiAutopilotTab() {
       setScale(sc);
       setBannedUsers(b.users ?? []);
       setWarnedUsers(w.users ?? []);
-    } catch { import("sonner").then(({ toast }) => toast.error("AI statistika ma'lumotini yuklashda xato")).catch(()=>{}); }
+    } catch {}
     setLoading(false);
   };
 
@@ -2836,7 +2836,7 @@ function NexusCoreTab() {
         ]);
         setHealth(h);
         setTraffic(tr);
-      } catch { /* health check — silent is ok, UI shows disconnected state */ }
+      } catch {}
       setLoading(false);
     };
     void load();
@@ -3186,11 +3186,8 @@ export default function AdminPage() {
     qc.invalidateQueries({ queryKey: getAdminListUsersQueryKey() });
   };
 
-  const handleDeleteContent = async (id: number, type: string) => {
-    const endpoint = (type === "reel" || type === "video")
-      ? `${API}/api/admin/reels/${id}`
-      : `${API}/api/admin/posts/${id}`;
-    await fetch(endpoint, { method: "DELETE", credentials: "include" });
+  const handleDeletePost = async (id: number) => {
+    await fetch(`${API}/api/admin/posts/${id}`, { method: "DELETE", credentials: "include" });
     refetchContent();
   };
 
@@ -3318,7 +3315,7 @@ export default function AdminPage() {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <div className="w-7 h-7 rounded-full bg-white/10 overflow-hidden flex-shrink-0">
-                                {user.avatarUrl && <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover" />}
+                                {user.avatarUrl && <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />}
                               </div>
                               <div>
                                 <p className="font-semibold text-white text-xs">{user.displayName || user.username}</p>
@@ -3409,7 +3406,7 @@ export default function AdminPage() {
                           <button className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/8 text-white/50 text-xs hover:text-white/80 transition-colors">
                             <Eye className="w-3 h-3" /> Ko'rish
                           </button>
-                          <button onClick={() => handleDeleteContent(item.id, item.type)}
+                          <button onClick={() => handleDeletePost(item.id)}
                             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 text-xs hover:bg-red-500/25 transition-colors">
                             <Trash2 className="w-3 h-3" /> O'chirish
                           </button>

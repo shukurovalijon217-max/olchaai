@@ -1,6 +1,6 @@
 import { Router, type RequestHandler } from "express";
 import { db } from "@workspace/db";
-import { usersTable, postsTable, reelsTable, reelCommentsTable, reelLikesTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable, moderationQueueTable, commentsTable } from "@workspace/db";
+import { usersTable, postsTable, reelsTable, storiesTable, groupsTable, walletsTable, transactionsTable, notificationsTable, premiumConfigTable, moderationQueueTable, commentsTable } from "@workspace/db";
 import { eq, sql, desc, sum, and, inArray } from "drizzle-orm";
 import { getCommissionRate, setCommissionRate, applyCommission } from "../lib/commission";
 import { getUncachableStripeClient } from "../stripe/stripeClient";
@@ -293,17 +293,6 @@ router.delete("/admin/posts/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
 });
 
-// DELETE /admin/reels/:id — OTube videoni admin tomonidan o'chirish
-router.delete("/admin/reels/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    await db.delete(reelCommentsTable).where(eq(reelCommentsTable.reelId, id));
-    await db.delete(reelLikesTable).where(eq(reelLikesTable.reelId, id));
-    await db.delete(reelsTable).where(eq(reelsTable.id, id));
-    res.json({ ok: true });
-  } catch (err) { req.log.error(err); res.status(500).json({ error: "Xato" }); }
-});
-
 // GET /admin/finance — moliyaviy umumiy ko'rinish
 router.get("/admin/finance", async (req, res) => {
   try {
@@ -456,7 +445,7 @@ router.post("/admin/notify/broadcast", async (req, res) => {
       userId,
       type,
       message,
-      actorName: "GILOS Admin",
+      actorName: "OlchaAI Admin",
       targetId: null,
       isRead: false,
     }));
@@ -540,45 +529,25 @@ router.get("/admin/commission/stats", async (req, res) => {
   }
 });
 
-const SETTINGS_DEFAULTS = {
-  maintenanceMode: false,
-  registrationOpen: true,
-  contentModerationEnabled: true,
-  aiModerationThreshold: 0.7,
-  maxPostLength: 2000,
-  maxFileSize: 100,
-  premiumEnabled: true,
-  adsEnabled: true,
-  platform: "GILOS",
-  version: "1.0.0",
-};
-
 // GET /admin/settings
 router.get("/admin/settings", async (req, res) => {
-  try {
-    const result = await db.execute(sql`SELECT settings FROM admin_settings WHERE id = 1`);
-    const row = (result as any).rows?.[0];
-    const settings = row?.settings ? { ...SETTINGS_DEFAULTS, ...row.settings } : SETTINGS_DEFAULTS;
-    res.json(settings);
-  } catch {
-    res.json(SETTINGS_DEFAULTS);
-  }
+  res.json({
+    maintenanceMode: false,
+    registrationOpen: true,
+    contentModerationEnabled: true,
+    aiModerationThreshold: 0.7,
+    maxPostLength: 2000,
+    maxFileSize: 100,
+    premiumEnabled: true,
+    adsEnabled: true,
+    platform: "OlchaAI",
+    version: "1.0.0",
+  });
 });
 
 // PATCH /admin/settings  
 router.patch("/admin/settings", async (req, res) => {
-  try {
-    const merged = { ...SETTINGS_DEFAULTS, ...req.body };
-    await db.execute(sql`
-      INSERT INTO admin_settings (id, settings, updated_at)
-      VALUES (1, ${JSON.stringify(merged)}::jsonb, NOW())
-      ON CONFLICT (id) DO UPDATE SET settings = ${JSON.stringify(merged)}::jsonb, updated_at = NOW()
-    `);
-    res.json({ ok: true, settings: merged });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Sozlamalarni saqlashda xato" });
-  }
+  res.json({ ok: true, settings: req.body });
 });
 
 // ===== PREMIUM CONFIG =====
@@ -696,24 +665,10 @@ router.post("/admin/stripe/seed", async (req, res) => {
     const yearly = await stripe.prices.create({
       product: product.id, unit_amount: 7999, currency: "usd", recurring: { interval: "year" },
     });
-    res.json({ message: "GILOS Premium yaratildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
+    res.json({ message: "OlchaAI Premium yaratildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Stripe mahsulot yaratishda xato" });
-  }
-});
-
-/* ── Clean all notifications (admin only) ── */
-router.delete("/admin/notifications/clear-all", async (req, res) => {
-  try {
-    const { type } = req.query;
-    const result = type
-      ? await db.delete(notificationsTable).where(eq(notificationsTable.type, String(type))).returning()
-      : await db.delete(notificationsTable).returning();
-    res.json({ deleted: result.length });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Server xatosi" });
   }
 });
 

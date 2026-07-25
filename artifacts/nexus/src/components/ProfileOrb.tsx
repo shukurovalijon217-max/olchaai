@@ -50,7 +50,7 @@ import { useAuth } from "@/context/AuthContext";
    TYPES
 ══════════════════════════════════════════════════════════════ */
 interface OrbUser { displayName: string; username: string; avatarUrl?: string | null }
-interface ProfileOrbProps { targetUser: OrbUser; targetUserId: number; isOwner?: boolean; hidden?: boolean }
+interface ProfileOrbProps { targetUser: OrbUser; targetUserId: number; isOwner?: boolean }
 
 type OrbMode =
   | "idle"
@@ -789,7 +789,7 @@ function CommentPanelContent({ targetUserId, postId, onSelectPost, onClose }:
                         <div className="flex-1">
                           <div className="inline-block px-3 py-2 rounded-2xl rounded-tl-sm bg-white/8 border border-white/10">
                             <p className="text-[10px] font-semibold text-violet-400 mb-0.5">
-                              {c.author?.id===me?.id?t("orb.mine"):c.author?.username?.includes('@')?c.author?.displayName??t("orb.user"):`@${c.author?.username??"?"}`}
+                              {c.author?.id===me?.id?t("orb.mine"):`@${c.author?.username??"?"}`}
                             </p>
                             <EmojiText text={c.content} className="text-sm text-foreground leading-relaxed" />
                           </div>
@@ -1020,8 +1020,7 @@ function loadPos() {
 /* ══════════════════════════════════════════════════════════════
    MAIN: ProfileOrb
 ══════════════════════════════════════════════════════════════ */
-export default function ProfileOrb({ targetUser, targetUserId, isOwner, hidden }: ProfileOrbProps) {
-  if (hidden) return null;
+export default function ProfileOrb({ targetUser, targetUserId, isOwner }: ProfileOrbProps) {
   const { t } = useTranslation();
   const { user:me } = useAuth();
   const meId = me?.id ?? 0;
@@ -1216,7 +1215,7 @@ export default function ProfileOrb({ targetUser, targetUserId, isOwner, hidden }
         {/* Avatar */}
         <div style={{ position:"absolute", inset:3, borderRadius:"50%", overflow:"hidden", border:"2px solid rgba(236,72,153,0.4)", boxShadow:"inset 0 2px 14px rgba(0,0,0,0.55), 0 0 22px rgba(236,72,153,0.42)" }}>
           {targetUser.avatarUrl
-            ? <img loading="lazy" decoding="async" src={targetUser.avatarUrl} alt={targetUser.displayName} draggable={false} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+            ? <img src={targetUser.avatarUrl} alt={targetUser.displayName} draggable={false} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
             : <div style={{ width:"100%", height:"100%", background:"linear-gradient(135deg,#7c3aed 0%,#ec4899 55%,#be185d 100%)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:ORB*0.26, fontWeight:800, color:"#fff", textShadow:"0 1px 8px rgba(0,0,0,0.5)" }}>{initials}</div>
           }
         </div>

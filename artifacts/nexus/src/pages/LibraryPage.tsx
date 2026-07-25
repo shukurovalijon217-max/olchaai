@@ -99,8 +99,7 @@ function MicButton3D({ isListening, onClick }: { isListening: boolean; onClick: 
   const glareY = useTransform(my, [-0.5, 0.5], ["5%", "95%"]);
   const shadowColor = useMotionTemplate`${useTransform(mx, [-0.5,0.5], [-10,10])}px ${useTransform(my, [-0.5,0.5], [-10,10])}px 28px ${isListening ? "rgba(239,68,68,0.55)" : "rgba(0,0,0,0.45)"}`;
   const onMove = (e: React.MouseEvent) => {
-    if (!wrapRef.current) return;
-    const r = wrapRef.current.getBoundingClientRect();
+    const r = wrapRef.current!.getBoundingClientRect();
     mx.set((e.clientX - r.left) / r.width - 0.5);
     my.set((e.clientY - r.top) / r.height - 0.5);
   };
@@ -160,8 +159,7 @@ function SpeakButton3D({ text, lang, isActive, onClick, label = "O'qish" }: {
   const glareY = useTransform(my, [-0.5, 0.5], ["5%", "95%"]);
   const shadowColor = useMotionTemplate`${useTransform(mx, [-0.5,0.5], [-10,10])}px ${useTransform(my, [-0.5,0.5], [-10,10])}px 28px ${isActive ? "rgba(139,92,246,0.55)" : "rgba(0,0,0,0.45)"}`;
   const onMove = (e: React.MouseEvent) => {
-    if (!wrapRef.current) return;
-    const r = wrapRef.current.getBoundingClientRect();
+    const r = wrapRef.current!.getBoundingClientRect();
     mx.set((e.clientX - r.left) / r.width - 0.5);
     my.set((e.clientY - r.top) / r.height - 0.5);
   };
@@ -218,8 +216,7 @@ function TranslateButton3D({ loading, disabled, onClick }: {
   const glareY = useTransform(my, [-0.5, 0.5], ["-10%", "110%"]);
   const shimX = useMotionValue(-150);
   const onMove = (e: React.MouseEvent) => {
-    if (!wrapRef.current) return;
-    const r = wrapRef.current.getBoundingClientRect();
+    const r = wrapRef.current!.getBoundingClientRect();
     mx.set((e.clientX - r.left) / r.width - 0.5);
     my.set((e.clientY - r.top) / r.height - 0.5);
   };
@@ -440,7 +437,7 @@ const WEB_ENGINES = [
   { label: "Scholar", bg: "bg-blue-500/10 border-blue-500/20", textColor: "text-blue-300",  Logo: ScholarLogo },
 ];
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 interface Book {
   id: number;
@@ -821,7 +818,7 @@ export default function LibraryPage() {
                       whileHover={{ y: -2 }} className="text-left group">
                       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted mb-2 border border-border">
                         {book.thumbnailUrl ? (
-                          <img loading="lazy" decoding="async" src={book.thumbnailUrl} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <img src={book.thumbnailUrl} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <BookOpen className="w-8 h-8 text-muted-foreground opacity-40" />
@@ -1168,7 +1165,7 @@ export default function LibraryPage() {
                     <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="group">
                       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted mb-2 border border-border">
                         {item.thumbnailUrl ? (
-                          <img loading="lazy" decoding="async" src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ background: "linear-gradient(135deg,#1a1035 0%,#0d1a2e 100%)" }}>
                             <span className="text-4xl font-black" style={{ color: "rgba(120,87,255,0.4)" }}>{item.title?.[0]?.toUpperCase()}</span>
@@ -1400,7 +1397,7 @@ export default function LibraryPage() {
                 <div className="flex items-start gap-4">
                   <div className="w-20 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden bg-muted">
                     {selected.thumbnailUrl ? (
-                      <img loading="lazy" decoding="async" src={selected.thumbnailUrl} alt={selected.title} className="w-full h-full object-cover" />
+                      <img src={selected.thumbnailUrl} alt={selected.title} className="w-full h-full object-cover" />
                     ) : <div className="w-full h-full flex items-center justify-center"><BookOpen className="w-6 h-6 text-muted-foreground opacity-40" /></div>}
                   </div>
                   <div className="flex-1 min-w-0">

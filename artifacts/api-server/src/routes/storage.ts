@@ -1,6 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { Readable } from "stream";
-import { createHmac, timingSafeEqual } from "crypto";
 import {
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
@@ -17,50 +16,7 @@ import {
 import {
   isR2Enabled,
   r2GetPresignedUploadUrl,
-  r2UploadStream,
-  r2GetPresignedDownloadUrl,
-  r2StreamObject,
 } from "../lib/r2Storage";
-
-/* ── Short-lived upload token ────────────────────────────────────────
-   Avoids cross-origin session-cookie issues: the POST /request-url
-   endpoint generates a signed token, embeds it in the uploadURL as
-   ?ut=<token>, and the PUT /r2-proxy endpoint verifies it instead of
-   checking req.session.  Token is HMAC-SHA256 over a timestamp, valid
-   for 15 minutes.
-   ─────────────────────────────────────────────────────────────────── */
-function uploadTokenSecret(): string {
-  return process.env["SESSION_SECRET"] || "olcha-upload-secret-2024";
-}
-
-function generateUploadToken(): string {
-  const ts = Math.floor(Date.now() / 1000);
-  const mac = createHmac("sha256", uploadTokenSecret())
-    .update(`r2upload:${ts}`)
-    .digest("hex")
-    .slice(0, 24);
-  return `${ts}.${mac}`;
-}
-
-function verifyUploadToken(token: string | undefined): boolean {
-  if (!token) return false;
-  const parts = token.split(".");
-  if (parts.length !== 2) return false;
-  const [tsStr, mac] = parts;
-  const ts = parseInt(tsStr, 10);
-  if (isNaN(ts)) return false;
-  const now = Math.floor(Date.now() / 1000);
-  if (now - ts > 900) return false; // 15-minute expiry
-  const expected = createHmac("sha256", uploadTokenSecret())
-    .update(`r2upload:${ts}`)
-    .digest("hex")
-    .slice(0, 24);
-  try {
-    return timingSafeEqual(Buffer.from(mac), Buffer.from(expected));
-  } catch {
-    return false;
-  }
-}
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -82,23 +38,14 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
   try {
     const { name, size, contentType } = parsed.data;
 
-    // Priority 1: Cloudflare R2 — server-side proxy upload via /r2-proxy.
-    // The browser PUTs to this API server (which has full CORS + credentials support),
-    // and the server streams the body directly to R2.
-    // This avoids the browser CORS limitation where R2 presigned PUTs cannot return
-    // Access-Control-Allow-Credentials: true, which breaks XHR withCredentials mode.
+    // Priority 1: Cloudflare R2 (production CDN)
+    // objectPath is the public CDN URL so the frontend can store it as mediaUrl directly.
     if (isR2Enabled()) {
-      const token = generateUploadToken();
-      // Derive the external API base URL (Render sets RENDER_EXTERNAL_URL automatically).
-      const apiBase =
-        (process.env.API_EXTERNAL_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/+$/, "") ||
-        `${(req.headers["x-forwarded-proto"] as string) || req.protocol}://${req.headers.host}`;
-      const uploadURL = `${apiBase}/api/storage/uploads/r2-proxy?ut=${token}`;
+      const { uploadURL, objectPath } = await r2GetPresignedUploadUrl(contentType);
       res.json(
         RequestUploadUrlResponse.parse({
           uploadURL,
-          // objectPath is a placeholder; the real public URL comes from the r2-proxy response body.
-          objectPath: "/api/storage/uploads/pending",
+          objectPath,
           metadata: { name, size, contentType },
         }),
       );
@@ -166,41 +113,6 @@ router.get("/storage/cloudinary-check", async (req: Request, res: Response) => {
   }
   const result = await pingCloudinary();
   res.json(result);
-});
-
-/**
- * PUT /storage/uploads/r2-proxy
- *
- * R2 server-side proxy upload.
- * Client PUTs raw file body here; server streams it directly to R2.
- * This avoids browser CORS restrictions on direct R2 presigned PUTs.
- * Authenticated via short-lived HMAC token in ?ut= query param (no
- * cross-origin session cookie required).
- */
-router.put("/storage/uploads/r2-proxy", async (req: Request, res: Response) => {
-  const token = req.query["ut"] as string | undefined;
-  if (!verifyUploadToken(token)) {
-    res.status(401).json({ error: "Invalid or expired upload token" });
-    return;
-  }
-  if (!isR2Enabled()) {
-    res.status(503).json({ error: "R2 not configured" });
-    return;
-  }
-
-  const contentType = (req.headers["content-type"] as string) || "application/octet-stream";
-  const contentLength = req.headers["content-length"]
-    ? parseInt(req.headers["content-length"] as string, 10)
-    : undefined;
-
-  try {
-    const { objectPath, publicUrl } = await r2UploadStream(req, contentType, contentLength);
-    res.status(200).json({ ok: true, url: publicUrl, objectPath });
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    req.log.error({ err: error, msg }, "R2 proxy upload failed");
-    res.status(500).json({ error: "Upload failed", detail: msg });
-  }
 });
 
 /**
@@ -348,47 +260,6 @@ router.delete("/storage/objects/delete", async (req: Request, res: Response) => 
   } catch (error) {
     req.log.error({ err: error }, "Error deleting object");
     res.status(500).json({ error: "Failed to delete object" });
-  }
-});
-
-/**
- * GET /storage/r2-serve/*key
- * Stream R2 object directly to the client — no redirect, no CORS issue.
- * Supports Range requests for video seeking.
- */
-router.get(/^\/storage\/r2-serve\/(.+)$/, async (req: Request, res: Response) => {
-  if (!isR2Enabled()) {
-    res.status(503).json({ error: "R2 not configured" });
-    return;
-  }
-  try {
-    const key = (req.params as unknown as string[])[0] ?? "";
-
-    // For range requests (video seeking), fall back to presigned redirect
-    // since AWS SDK streaming doesn't easily support byte ranges
-    const rangeHeader = req.headers.range;
-    if (rangeHeader) {
-      const url = await r2GetPresignedDownloadUrl(key, 3600);
-      res.redirect(302, url);
-      return;
-    }
-
-    const result = await r2StreamObject(key);
-    if (!result) {
-      res.status(404).json({ error: "Not found" });
-      return;
-    }
-
-    res.setHeader("Content-Type", result.contentType);
-    res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    if (result.contentLength) {
-      res.setHeader("Content-Length", result.contentLength);
-    }
-    result.body.pipe(res);
-  } catch (err) {
-    req.log.error({ err }, "R2 serve error");
-    res.status(500).json({ error: "Failed to serve file" });
   }
 });
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Flame, MoreHorizontal, X, Radio,
+  Flame, MoreHorizontal, ChevronDown, X, Radio,
   PenLine, BookOpen, Film, MonitorPlay, Trophy, Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -11,13 +11,12 @@ import { useListPosts, useGetAiFeed, useListStories, getListStoriesQueryKey } fr
 import { useAuth } from "@/context/AuthContext";
 import FeedCard from "@/components/FeedCard";
 import StoriesBar from "@/components/StoriesBar";
-import StoryViewer from "@/components/StoryViewer";
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
 import { getFeaturePref } from "@/lib/sounds";
 import { usePip } from "@/context/PipContext";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 
@@ -314,7 +313,7 @@ export default function HomePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: feed } = useGetAiFeed();
-  const { data: posts = [], isLoading, isError: postsError, refetch: refetchPosts } = useListPosts();
+  const { data: posts = [], isLoading } = useListPosts();
   const { data: storiesRaw = [] } = useListStories();
   const { dockExpanded, commentPanelOpen } = usePip();
 
@@ -387,10 +386,7 @@ export default function HomePage() {
       });
       await qc.invalidateQueries({ queryKey: getListStoriesQueryKey() });
       closeViewer();
-    } catch {
-      // Story o'chirishda xato — foydalanuvchiga bildirish
-      import("sonner").then(({ toast }) => toast.error("Story o'chirishda xato. Qayta urinib ko'ring.")).catch(()=>{});
-    }
+    } catch { /* silent */ }
   }, [activeStory, qc, closeViewer]);
 
   const goNextInGroup = useCallback(() => {
@@ -476,11 +472,7 @@ export default function HomePage() {
   }, []);
 
   const feedRef = useRef<HTMLDivElement>(null);
-  const displayPosts = (() => {
-    const base = feed?.posts?.length ? feed.posts : (posts ?? []);
-    const seen = new Set<string | number>();
-    return base.filter(p => { const id = (p as any).id; if (seen.has(id)) return false; seen.add(id); return true; });
-  })();
+  const displayPosts = feed?.posts?.length ? feed.posts : posts;
 
   const ECHO_THRESHOLD = 55;
   const showEchoBanner =
@@ -489,6 +481,11 @@ export default function HomePage() {
     (feed?.echoScore ?? 0) >= ECHO_THRESHOLD &&
     !!feed?.echoTopTag;
 
+  const scrollDown = () => {
+    if (!feedRef.current) return;
+    const h = feedRef.current.clientHeight;
+    feedRef.current.scrollBy({ top: h, behavior: "smooth" });
+  };
 
   /* FAB tap: burst sparkle then open sheet */
   const handleFabClick = useCallback(() => {
@@ -611,14 +608,14 @@ export default function HomePage() {
                 <motion.div animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 2.5, repeat: Infinity }}>
                   <Flame className="w-16 h-16 text-violet-500/40" />
                 </motion.div>
-                <p className="text-white/40 text-sm">{postsError ? "Server xatosi. Qayta urinib ko'ring." : t("home.no_posts")}</p>
+                <p className="text-white/40 text-sm">{t("home.no_posts")}</p>
                 <motion.button
                   whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                  onClick={() => postsError ? refetchPosts() : setSheetOpen(true)}
+                  onClick={() => setSheetOpen(true)}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold"
                 >
                   <MoreHorizontal className="w-4 h-4" />
-                  {postsError ? "Qayta urinish" : t("home.create_post")}
+                  {t("home.create_post")}
                 </motion.button>
               </div>
             ) : (
@@ -640,32 +637,116 @@ export default function HomePage() {
 
       {/* ── STORY VIEWER ── */}
       <AnimatePresence>
-        {viewerGroupIdx !== null && storyGroups.length > 0 && (
-          <StoryViewer
-            storyGroups={storyGroups}
-            groupIdx={viewerGroupIdx}
-            storyIdx={viewerStoryIdx}
-            userId={user?.id}
-            onClose={closeViewer}
-            onNextGroup={() => {
-              if (viewerGroupIdx < storyGroups.length - 1) {
-                setViewerGroupIdx(i => (i ?? 0) + 1);
-                setViewerStoryIdx(0);
-              } else {
-                closeViewer();
-              }
-            }}
-            onPrevGroup={() => {
-              if (viewerGroupIdx > 0) {
-                setViewerGroupIdx(i => (i ?? 1) - 1);
-                setViewerStoryIdx(0);
-              }
-            }}
-            onNextStory={() => setViewerStoryIdx(i => i + 1)}
-            onPrevStory={() => setViewerStoryIdx(i => i - 1)}
-            onDelete={deleteActiveStory}
-            STORY_DURATION={STORY_DURATION}
-          />
+        {activeStory && activeGroup && viewerGroupIdx !== null && (
+          <motion.div
+            key={`viewer-${viewerGroupIdx}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="fixed inset-0 z-[200] flex flex-col"
+            style={{ background: "#000", touchAction: "none" }}
+            onPointerDown={(e) => { if ((e.target as HTMLElement).closest("button")) return; setStoryPaused(true); }}
+            onPointerUp={() => setStoryPaused(false)}
+            onPointerLeave={() => setStoryPaused(false)}
+            onPointerCancel={() => setStoryPaused(false)}
+          >
+            {/* Media crossfade */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${viewerGroupIdx}-${viewerStoryIdx}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="absolute inset-0"
+              >
+                {activeStory.mediaUrl ? (
+                  <>
+                    {/* Loading placeholder shown until image is ready */}
+                    {!storyImgLoaded && (
+                      <div
+                        className="absolute inset-0 z-10"
+                        style={{ background: "linear-gradient(160deg,#1a0830 0%,#0a1020 100%)" }}
+                      />
+                    )}
+                    <img
+                      src={activeStory.mediaUrl}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      fetchPriority="high"
+                      decoding="async"
+                      onLoad={() => setStoryImgLoaded(true)}
+                      onError={(e) => {
+                        setStoryImgLoaded(true);
+                        const el = e.currentTarget as HTMLImageElement;
+                        el.style.display = "none";
+                        const fb = el.nextElementSibling as HTMLElement | null;
+                        if (fb) { fb.style.display = "flex"; }
+                      }}
+                    />
+                    <div
+                      className="w-full h-full items-center justify-center px-10"
+                      style={{ display: "none", background: "linear-gradient(160deg,#2a0845,#0d1a44)" }}
+                    >
+                      <p className="text-white text-xl font-bold text-center">{activeStory.caption || "✨"}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center px-10"
+                    style={{ background: "linear-gradient(160deg,#2e0a55 0%,#0f1f50 50%,#1a0535 100%)" }}
+                  >
+                    <p className="text-white text-2xl font-bold text-center leading-snug drop-shadow-lg">
+                      {activeStory.caption || "✨"}
+                    </p>
+                  </div>
+                )}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: "linear-gradient(to bottom,rgba(0,0,0,0.6) 0%,transparent 25%,transparent 65%,rgba(0,0,0,0.7) 100%)" }}
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Close button — minimal, top-right */}
+            <button
+              onClick={closeViewer}
+              className="absolute top-10 right-4 z-30 p-2 rounded-full"
+              style={{ background: "rgba(0,0,0,0.28)", backdropFilter: "blur(8px)" }}
+            >
+              <X className="w-5 h-5 text-white/60" />
+            </button>
+
+            {/* Delete button — only visible to story owner */}
+            {user && (activeStory as any)?.authorId === user.id && (
+              <button
+                onClick={deleteActiveStory}
+                className="absolute top-10 right-16 z-30 p-2 rounded-full"
+                style={{ background: "rgba(180,0,0,0.32)", backdropFilter: "blur(8px)" }}
+              >
+                <Trash2 className="w-5 h-5 text-red-400" />
+              </button>
+            )}
+
+            {/* Caption — ultra-minimal, bottom float */}
+            {activeStory.caption && (
+              <div className="absolute bottom-0 left-0 right-0 z-10 px-6 pb-12 pt-16"
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)" }}
+              >
+                <p
+                  className="text-white/90 text-[15px] font-light leading-relaxed tracking-wide"
+                  style={{ textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}
+                >
+                  {activeStory.caption}
+                </p>
+              </div>
+            )}
+
+            {/* Tap zones for prev/next */}
+            <button className="absolute left-0 top-0 w-1/3 h-full z-20" onClick={goPrevInGroup} />
+            <button className="absolute right-0 top-0 w-1/3 h-full z-20" onClick={goNextInGroup} />
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -747,7 +828,7 @@ export default function HomePage() {
                   }}
                 >
                   {holoUser.avatarUrl ? (
-                    <img loading="lazy" decoding="async" src={holoUser.avatarUrl} alt="" className="w-full h-full object-cover"
+                    <img src={holoUser.avatarUrl} alt="" className="w-full h-full object-cover"
                       style={{ filter: "saturate(1.3) brightness(1.1)" }} />
                   ) : (
                     <span className="text-3xl font-black text-violet-300">
@@ -933,6 +1014,33 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
+      {/* ── Scroll hint ── */}
+      <AnimatePresence>
+        {!isLoading && displayPosts.length > 1 && (
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: 1.5 }}
+            onClick={scrollDown}
+            className="fixed z-40 flex flex-col items-center gap-1 pointer-events-auto"
+            style={{ bottom: 88, right: 20 }}
+          >
+            <motion.div
+              animate={{ y: [0, 5, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              <ChevronDown className="w-4 h-4 text-white/55" />
+            </motion.div>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* ── Create Sheet (bottom drawer) ── */}
       <CreateSheet

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
   Zap, Star, Heart, MessageCircle, Play, Share2,
@@ -9,7 +8,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 interface Quest {
   id: number; key: string; reward: number; target: number;
@@ -92,7 +91,7 @@ export default function QuestsPage() {
       ]);
       if (cRes.ok) setCoins(await cRes.json());
       if (qRes.ok) setQuests(await qRes.json());
-    } catch { toast.error(t("common.network_error")); }
+    } catch { /* ignore */ }
     finally { setLoading(false); }
   };
 
@@ -113,7 +112,7 @@ export default function QuestsPage() {
         setTimeout(() => setJustClaimed(null), 3000);
         await fetchData();
       }
-    } catch { toast.error(t("common.network_error")); }
+    } catch { /* ignore */ }
     finally { setClaiming(null); }
   };
 

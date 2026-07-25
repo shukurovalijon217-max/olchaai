@@ -8,11 +8,9 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
-  GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
-import type { Readable } from "stream";
 
 export function isR2Enabled(): boolean {
   return !!(
@@ -33,10 +31,6 @@ function getR2Client(): S3Client {
       secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!.trim(),
     },
     forcePathStyle: false,
-    // AWS SDK v3 ≥3.750 adds automatic CRC32 checksums which break stream uploads
-    // and presigned PUTs from the browser. Disable them for R2 compatibility.
-    requestChecksumCalculation: "WHEN_REQUIRED" as any,
-    responseChecksumValidation: "WHEN_REQUIRED" as any,
   });
 }
 
@@ -70,7 +64,6 @@ export async function r2GetPresignedUploadUrl(
     Bucket: getBucketName(),
     Key: key,
     ContentType: contentType,
-    CacheControl: "public, max-age=31536000, immutable",
   });
 
   const uploadURL = await getSignedUrl(client, command, { expiresIn: ttlSec });
@@ -88,34 +81,6 @@ export function r2ObjectPathToPublicUrl(objectPath: string): string | null {
   if (!objectPath.startsWith("r2://")) return null;
   const key = objectPath.slice("r2://".length);
   return getPublicUrl(key);
-}
-
-/**
- * Upload a Node.js Readable stream directly to R2 (server-side, no CORS needed).
- * Returns the public CDN URL and objectPath (same value).
- */
-export async function r2UploadStream(
-  stream: Readable,
-  contentType: string,
-  contentLength?: number,
-): Promise<{ objectPath: string; publicUrl: string }> {
-  const client = getR2Client();
-  const ext = contentTypeToExt(contentType);
-  const key = `uploads/${randomUUID()}${ext}`;
-
-  await client.send(
-    new PutObjectCommand({
-      Bucket: getBucketName(),
-      Key: key,
-      ContentType: contentType,
-      CacheControl: "public, max-age=31536000, immutable",
-      Body: stream,
-      ...(contentLength ? { ContentLength: contentLength } : {}),
-    }),
-  );
-
-  const publicUrl = getPublicUrl(key);
-  return { objectPath: publicUrl, publicUrl };
 }
 
 /**
@@ -143,51 +108,6 @@ export async function r2ObjectExists(objectPath: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-/**
- * Stream an R2 object directly to the caller — no redirect, no presigned URL.
- * Returns null if the object is not found.
- */
-export async function r2StreamObject(
-  keyOrUrl: string
-): Promise<{ body: Readable; contentType: string; contentLength?: number } | null> {
-  const client = getR2Client();
-  let key = keyOrUrl;
-  if (key.startsWith("r2://")) key = key.slice("r2://".length);
-  else if (key.includes("/uploads/")) key = "uploads/" + key.split("/uploads/")[1];
-  else if (key.startsWith("uploads/")) { /* already bare key */ }
-
-  try {
-    const cmd = new GetObjectCommand({ Bucket: getBucketName(), Key: key });
-    const resp = await client.send(cmd);
-    if (!resp.Body) return null;
-    const body = resp.Body as unknown as Readable;
-    const contentType = resp.ContentType ?? "application/octet-stream";
-    const contentLength = resp.ContentLength;
-    return { body, contentType, contentLength };
-  } catch (err: any) {
-    if (err?.name === "NoSuchKey" || err?.$metadata?.httpStatusCode === 404) return null;
-    throw err;
-  }
-}
-
-/**
- * Generate a presigned GET URL for an R2 object.
- * Works with any key format — r2://, full CDN URL, or bare key.
- */
-export async function r2GetPresignedDownloadUrl(
-  keyOrUrl: string,
-  ttlSec = 3600
-): Promise<string> {
-  const client = getR2Client();
-  let key = keyOrUrl;
-  // r2://uploads/file.mp4 → uploads/file.mp4
-  if (key.startsWith("r2://")) key = key.slice("r2://".length);
-  // https://media.olchaai.com/uploads/file.mp4 → uploads/file.mp4
-  else if (key.includes("/uploads/")) key = "uploads/" + key.split("/uploads/")[1];
-  const command = new GetObjectCommand({ Bucket: getBucketName(), Key: key });
-  return getSignedUrl(client, command, { expiresIn: ttlSec });
 }
 
 function contentTypeToExt(contentType: string): string {

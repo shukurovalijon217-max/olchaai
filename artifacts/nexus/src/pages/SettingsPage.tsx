@@ -13,14 +13,14 @@ import { LANGUAGES, type LangCode, applyRTL, ensureTranslation } from "@/lib/i18
 import { COUNTRIES, countryFlag, getCountryByCode } from "@/lib/countries";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 type Tab = "profile" | "account" | "notifications" | "appearance" | "privacy" | "language" | "location" | "monetization";
 
 /* ─── Default preferences ─────────────────────────────────── */
 const DEFAULT_NOTIF: NotifPrefs = {
   likes: true, comments: true, followers: true,
-  messages: true, groups: false, premium: false, emailNotifs: true,
+  messages: true, groups: false, premium: false,
 };
 const DEFAULT_PRIVACY: PrivacySettings = {
   privateProfile: false, activityStatus: true,
@@ -217,7 +217,7 @@ function ProfileContent() {
                 <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
               </div>
             ) : avatarUrl ? (
-              <img loading="lazy" decoding="async" src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-white/20" />
+              <img src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-white/20" />
             ) : (
               <div className="w-16 h-16 rounded-full bg-violet-500/30 flex items-center justify-center text-xl font-bold text-violet-300 ring-2 ring-violet-500/30">
                 {(displayName || user?.displayName || "?")[0]?.toUpperCase()}
@@ -390,7 +390,6 @@ function NotificationsContent() {
           <ToggleRow color="amber" label={t("settings.notif_messages")} description={t("settings.notif_messages_desc")} on={prefs.messages} onChange={v => update("messages", v)} />
           <ToggleRow color="amber" label={t("settings.notif_groups")} description={t("settings.notif_groups_desc")} on={prefs.groups} onChange={v => update("groups", v)} />
           <ToggleRow color="amber" label={t("settings.notif_premium")} description={t("settings.notif_premium_desc")} on={prefs.premium} onChange={v => update("premium", v)} />
-          <ToggleRow color="violet" label={t("settings.notif_email")} description={t("settings.notif_email_desc")} on={prefs.emailNotifs ?? true} onChange={v => update("emailNotifs", v)} />
         </div>
       </SF>
     </div>
@@ -972,17 +971,8 @@ export default function SettingsPage() {
   const currentCode = i18nRef.language.split("-")[0] as LangCode;
   const currentLang = LANGUAGES.find(l => l.code === currentCode);
 
-  const tabParam = new URLSearchParams(window.location.search).get("tab") as Tab | null;
-  const [openPanels, setOpenPanels] = useState<Set<Tab>>(() => tabParam ? new Set([tabParam]) : new Set());
-  const toggle = (id: Tab) => setOpenPanels(prev => {
-    const next = new Set(prev);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    return next;
-  });
-
-  useEffect(() => {
-    if (tabParam) setOpenPanels(prev => new Set([...prev, tabParam]));
-  }, [tabParam]);
+  const [openPanel, setOpenPanel] = useState<Tab | null>("profile");
+  const toggle = (id: Tab) => setOpenPanel(prev => prev === id ? null : id);
 
   const PANELS: { id: Tab; icon: typeof User; label: string; color: string; preview?: React.ReactNode }[] = [
     { id: "profile",       icon: User,              color: "violet", label: t("settings.profile"),              preview: user?.displayName ? `${user.displayName} · @${user.username}` : undefined },
@@ -1026,7 +1016,7 @@ export default function SettingsPage() {
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}>
           {PANELS.map(({ id, icon, label, color, preview }) => (
             <motion.div key={id} variants={{ hidden: { opacity: 0, y: 20, scale: 0.97 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 380, damping: 28 } } }}>
-              <Panel color={color} icon={icon} label={label} preview={preview} isOpen={openPanels.has(id)} onToggle={() => toggle(id)}>
+              <Panel color={color} icon={icon} label={label} preview={preview} isOpen={openPanel === id} onToggle={() => toggle(id)}>
                 {CONTENT[id]}
               </Panel>
             </motion.div>

@@ -2,13 +2,11 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
 import { db } from "@workspace/db";
-import { usersTable, followsTable, postsTable, pushTokensTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@workspace/db";
+import { usersTable, DEFAULT_NOTIF_PREFS, DEFAULT_PRIVACY_SETTINGS } from "@workspace/db";
 import type { NotifPrefs, PrivacySettings } from "@workspace/db";
-import { eq, and, gt, sql } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
 import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput, signMobileToken, checkEndpointRateLimit } from "../lib/security";
-import { indexUser } from "../lib/meili";
-import { reportAuthFailure as aiCoreReportAuthFailure } from "../lib/aiCoreClient";
 
 const getResend = () => {
   const key = process.env.RESEND_API_KEY;
@@ -42,12 +40,12 @@ router.post("/auth/send-otp", async (req, res) => {
       res.status(400).json({ error: "Email manzil noto'g'ri" }); return;
     }
 
-    // Rate limit: max 10 OTP per email per hour
+    // Rate limit: max 3 OTP per email per hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const recent = await db.select().from(emailVerifications)
       .where(and(eq(emailVerifications.email, email), gt(emailVerifications.createdAt, oneHourAgo)));
-    if (recent.length >= 10) {
-      res.status(429).json({ error: "Juda ko'p urinish. Bir ozdan so'ng qayta urinib ko'ring." }); return;
+    if (recent.length >= 3) {
+      res.status(429).json({ error: "1 soat ichida ko'pi bilan 3 ta kod yuboriladi. Keyinroq urinib ko'ring." }); return;
     }
 
     // Delete old unverified codes for this email
@@ -61,9 +59,7 @@ router.post("/auth/send-otp", async (req, res) => {
 
     const emailHtml = `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0502;color:#c8a060;border-radius:16px">
-          <div style="font-size:32px;font-weight:900;letter-spacing:4px;margin-bottom:8px">
-            <span style="color:#ff1744;text-shadow:0 0 12px rgba(255,23,68,0.9)">G</span><span style="color:#e91e8c;text-shadow:0 0 12px rgba(233,30,140,0.9)">I</span><span style="color:#ff5722;text-shadow:0 0 12px rgba(255,87,34,0.9)">L</span><span style="color:#9333ea;text-shadow:0 0 12px rgba(168,85,247,0.9)">O</span><span style="color:#00e5ff;text-shadow:0 0 12px rgba(0,229,255,0.9)">S</span>
-          </div>
+          <div style="font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:8px">OlchaAI</div>
           <div style="font-size:14px;color:#7a4820;margin-bottom:32px">AI-powered ijtimoiy koinot</div>
           <div style="font-size:14px;color:#a07040;margin-bottom:16px">Ro'yxatdan o'tish tasdiqlash kodi:</div>
           <div style="font-size:48px;font-weight:900;letter-spacing:12px;color:#e8b060;background:rgba(50,20,5,0.8);border-radius:12px;padding:20px 24px;text-align:center;margin-bottom:24px">${otp}</div>
@@ -71,17 +67,17 @@ router.post("/auth/send-otp", async (req, res) => {
         </div>
       `;
 
-    const emailPayload = { to: email, subject: `${otp} — GILOS tasdiqlash kodi`, html: emailHtml };
+    const emailPayload = { to: email, subject: `${otp} — OlchaAI tasdiqlash kodi`, html: emailHtml };
 
     // Try verified domain first, fall back to Resend shared domain
-    let { error: sendError } = await getResend().emails.send({ from: "GILOS <noreply@olchaai.com>", ...emailPayload });
+    let { error: sendError } = await getResend().emails.send({ from: "OlchaAI <noreply@olcha.com>", ...emailPayload });
 
     if (sendError) {
       const msg = (sendError as { message?: string }).message ?? "";
       const isDomainNotVerified = msg.includes("verify a domain") || msg.includes("testing emails") || msg.includes("not verified");
       if (isDomainNotVerified) {
-        req.log.warn("olchaai.com domain not verified yet, falling back to onboarding@resend.dev");
-        const fallback = await getResend().emails.send({ from: "GILOS <onboarding@resend.dev>", ...emailPayload });
+        req.log.warn("olcha.com domain not verified yet, falling back to onboarding@resend.dev");
+        const fallback = await getResend().emails.send({ from: "OlchaAI <onboarding@resend.dev>", ...emailPayload });
         sendError = fallback.error ?? null;
       }
     }
@@ -149,14 +145,6 @@ router.post("/auth/register", async (req, res) => {
     if (normalizedPhone.length < 9) {
       res.status(400).json({ error: "Telefon raqami noto'g'ri" }); return;
     }
-
-    // ── REQUIRE verified email OTP before registration ──────────
-    const [emailVerified] = await db.select().from(emailVerifications)
-      .where(and(eq(emailVerifications.email, email), eq(emailVerifications.verified, true)));
-    if (!emailVerified) {
-      res.status(400).json({ error: "Email tasdiqlash kodi kiritilmagan yoki noto'g'ri. Avval emailingizni tasdiqlang." }); return;
-    }
-
     const [existing, existingUsername, existingPhone] = await Promise.all([
       db.select().from(usersTable).where(eq(usersTable.email, email)),
       db.select().from(usersTable).where(eq(usersTable.username, username)),
@@ -177,15 +165,9 @@ router.post("/auth/register", async (req, res) => {
       username, displayName, email, phone: normalizedPhone, passwordHash, isAdmin,
     }).returning();
 
-    // Clean up used verification record
-    await db.delete(emailVerifications).where(eq(emailVerifications.id, emailVerified.id)).catch(() => {});
-
     req.session.userId = user.id;
     const { passwordHash: _, ...safeUser } = user;
     res.status(201).json({ ...safeUser, token: signMobileToken(user.id) });
-
-    /* Meilisearch index — fire-and-forget */
-    indexUser({ id: user.id, username: user.username, displayName: user.displayName ?? user.username, bio: user.bio ?? undefined, avatarUrl: user.avatarUrl ?? undefined, isVerified: false, followersCount: 0 });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Server xatosi" });
@@ -221,7 +203,6 @@ router.post("/auth/login", async (req, res) => {
     }
     if (!user) {
       recordLoginFailure(ip, identifier);
-      aiCoreReportAuthFailure(ip, identifier);
       res.status(401).json({ error: "Email/username yoki parol noto'g'ri" }); return;
     }
     if (!user.passwordHash) {
@@ -230,7 +211,6 @@ router.post("/auth/login", async (req, res) => {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       recordLoginFailure(ip, identifier);
-      aiCoreReportAuthFailure(ip, identifier);
       res.status(401).json({ error: "Email/username yoki parol noto'g'ri" }); return;
     }
     clearLoginAttempts(ip, identifier);
@@ -244,13 +224,7 @@ router.post("/auth/login", async (req, res) => {
   }
 });
 
-router.post("/auth/logout", async (req, res) => {
-  try {
-    const userId = req.session?.userId;
-    if (userId) {
-      await db.delete(pushTokensTable).where(eq(pushTokensTable.userId, userId)).catch(() => {});
-    }
-  } catch {}
+router.post("/auth/logout", (req, res) => {
   req.session.destroy(() => {
     res.json({ ok: true });
   });
@@ -266,13 +240,8 @@ router.get("/auth/me", async (req, res) => {
     if (!user) {
       res.status(401).json({ error: "Foydalanuvchi topilmadi" }); return;
     }
-    const [[followers], [following], [postsCount]] = await Promise.all([
-      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, userId)),
-      db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, userId)),
-      db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, userId)),
-    ]);
     const { passwordHash: _, ...safeUser } = user;
-    res.json({ ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count });
+    res.json(safeUser);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Server xatosi" });

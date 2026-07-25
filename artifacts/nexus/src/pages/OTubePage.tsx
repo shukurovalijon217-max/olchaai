@@ -3,7 +3,6 @@
  * "BROADCAST STATION" — Kiberpu / Arcade / Neon estetikasi
  * YouTube'dan tubdan boshqa ko'rinish
  */
-import { resolveApiUrl } from "@/lib/utils";
 import React, {
   useState, useRef, useEffect, useCallback, useMemo,
 } from "react";
@@ -38,7 +37,7 @@ import {
 /* ─────────────────────────────────────────────────────── */
 /* API base URL — must be absolute in production           */
 /* ─────────────────────────────────────────────────────── */
-const API_BASE = "";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
 
 /* ─────────────────────────────────────────────────────── */
 /* Design tokens — NEXUS AURORA BROADCAST                  */
@@ -379,7 +378,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
             overflow:"hidden",
             display:"flex",alignItems:"center",justifyContent:"center"}}>
             {user.avatarUrl
-              ? <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
+              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
               : <span style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>
                   {(user.displayName||user.username||"S")[0].toUpperCase()}
                 </span>}
@@ -425,7 +424,7 @@ function CommentsPanel({ reelId, onClose }: { reelId:number; onClose:()=>void })
               overflow:"hidden",
               display:"flex",alignItems:"center",justifyContent:"center"}}>
               {c.author.avatarUrl
-                ? <img loading="lazy" decoding="async" src={c.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
+                ? <img src={c.author.avatarUrl} alt="" className="w-full h-full object-cover"/>
                 : <span style={{fontSize:10,fontWeight:900,color:"white"}}>
                     {(c.author.displayName||c.author.username||"?")[0].toUpperCase()}
                   </span>}
@@ -559,9 +558,6 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
   const swipeTY = useRef(0);
   const swipeTX = useRef(0);
   const swipeActive = useRef(false);
-  const [dragY, setDragY] = useState(0);
-  const [isSnapping, setIsSnapping] = useState(false);
-  const isDragging = useRef(false);
 
   const [playing,   setPlaying]   = useState(false);
   const [muted,     setMuted]     = useState(settings.muteDefault);
@@ -623,7 +619,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
       onSuccess: (data) => {
         setLiked(data.liked);
         setLikesCount(data.likesCount);
-        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
       },
       onError: () => {
         setLiked(liked);
@@ -643,7 +639,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
       onSuccess: (data) => {
         setFollowState(video.author.id, data.following);
         setSubbed(data.following);
-        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
       },
       onError: () => {
         const prev = !subbed;
@@ -658,7 +654,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
   const deleteMut = useDeleteReel({
     mutation: {
       onSuccess: () => {
-        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
         onClose();
       },
     },
@@ -725,47 +721,6 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
     document.addEventListener("fullscreenchange", h);
     return () => document.removeEventListener("fullscreenchange", h);
   }, []);
-
-  /* ── Keyboard + Mouse Wheel navigation (desktop) ── */
-  useEffect(() => {
-    const wheelCooldown = { active: false };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-        e.preventDefault();
-        if (e.key === "ArrowUp" && hasNext && onNext) {
-          setSwipeHint("up");
-          setTimeout(() => setSwipeHint(null), 400);
-          setTimeout(() => onNext(), 160);
-        } else if (e.key === "ArrowDown" && hasPrev && onPrev) {
-          setSwipeHint("down");
-          setTimeout(() => setSwipeHint(null), 400);
-          setTimeout(() => onPrev(), 160);
-        }
-      }
-    };
-    const onWheel = (e: WheelEvent) => {
-      if (wheelCooldown.active) return;
-      if (Math.abs(e.deltaY) < 40) return;
-      wheelCooldown.active = true;
-      setTimeout(() => { wheelCooldown.active = false; }, 800);
-      if (e.deltaY > 0 && hasNext && onNext) {
-        setSwipeHint("up");
-        setTimeout(() => setSwipeHint(null), 400);
-        setTimeout(() => onNext(), 160);
-      } else if (e.deltaY < 0 && hasPrev && onPrev) {
-        setSwipeHint("down");
-        setTimeout(() => setSwipeHint(null), 400);
-        setTimeout(() => onPrev(), 160);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("wheel", onWheel, { passive: true });
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("wheel", onWheel);
-    };
-  }, [hasNext, hasPrev, onNext, onPrev]);
 
   /* Tell the global chrome (Muni assistant orb, dock edge tabs, avatar bubble)
      to hide while this full-screen player is mounted, so they stop swallowing
@@ -958,9 +913,8 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           flexShrink:0,display:"flex",alignItems:"center",gap:8,
           paddingTop:"calc(env(safe-area-inset-top,0px) + 8px)",
           paddingBottom:8,paddingLeft:12,paddingRight:10,
-          background:"rgba(0,0,0,0.18)",backdropFilter:"blur(22px)",
-          WebkitBackdropFilter:"blur(22px)",
-          borderBottom:"1px solid rgba(255,255,255,0.06)",
+          background:"rgba(2,0,8,0.97)",backdropFilter:"blur(20px)",
+          borderBottom:"1px solid rgba(255,255,255,0.05)",
         }}>
           <motion.button whileTap={{scale:0.82}} onClick={onClose}
             style={{width:36,height:36,flexShrink:0,borderRadius:"50%",
@@ -975,20 +929,20 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             </p>
             <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.35)",
               overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {video.author.displayName||video.author.username} · {fmt(video.viewsCount)} {t("otube.views_short")}
+              {video.author.displayName||video.author.username} · {fmt(video.viewsCount)} ko'rish
             </p>
           </div>
           <motion.button whileTap={{scale:0.9}}
             onClick={(e)=>{e.stopPropagation();if(requireLogin())followMut.mutate({id:video.author.id});}}
             disabled={followMut.isPending}
-            style={{padding:"5px 10px",borderRadius:99,flexShrink:0,
-              background:"rgba(255,255,255,0.10)",
-              backdropFilter:"blur(16px)",
-              WebkitBackdropFilter:"blur(16px)",
-              border:`1px solid ${subbed?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.22)"}`,
+            style={{padding:"7px 13px",borderRadius:99,flexShrink:0,
+              background:"rgba(255,255,255,0.07)",
+              backdropFilter:"blur(10px)",
+              border:`1px solid ${subbed?"rgba(255,255,255,0.1)":"rgba(255,107,0,0.55)"}`,
+              boxShadow:subbed?"none":"0 0 14px rgba(255,107,0,0.22)",
               opacity:followMut.isPending?0.6:1,
-              fontSize:10,fontWeight:600,color:subbed?"rgba(255,255,255,0.40)":"rgba(255,255,255,0.9)"}}>
-            {subbed?t("otube.subscribed"):t("otube.subscribe")}
+              fontSize:11,fontWeight:700,color:subbed?"rgba(255,255,255,0.45)":"#ff9a52"}}>
+            {subbed?"✓ Obuna":"···Obuna"}
           </motion.button>
           <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();toggleFull();}}
             style={{width:32,height:32,flexShrink:0,borderRadius:"50%",
@@ -1009,21 +963,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           swipeTY.current=e.touches[0].clientY;
           swipeTX.current=e.touches[0].clientX;
           swipeActive.current=true;
-          isDragging.current=false;
           startHold(e);
-        }}
-        onTouchMove={(e)=>{
-          if(!swipeActive.current)return;
-          const dy=e.touches[0].clientY-swipeTY.current;
-          const dx=e.touches[0].clientX-swipeTX.current;
-          if(!isDragging.current){
-            if(Math.abs(dy)<Math.abs(dx))return;
-            isDragging.current=true;
-          }
-          e.stopPropagation();
-          /* rubber-band: slow down at edges */
-          const clamped=dy*(Math.abs(dy)>120?0.25:0.6);
-          setDragY(clamped);
         }}
         onTouchEnd={(e)=>{
           endHold();
@@ -1031,54 +971,24 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           swipeActive.current=false;
           const dy=swipeTY.current-e.changedTouches[0].clientY;
           const dx=swipeTX.current-e.changedTouches[0].clientX;
-          if(isDragging.current&&Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>55){
-            const vh=window.innerHeight;
+          if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>80){
             if(dy>0&&hasNext&&onNext){
-              /* yuqoriga suring: joriy video tepaga chiqadi, keyingi pastdan kiradi */
-              setIsSnapping(true);
-              setDragY(-vh*1.05);
-              setTimeout(()=>{
-                setIsSnapping(false);
-                setDragY(vh*0.35);
-                onNext();
-                requestAnimationFrame(()=>requestAnimationFrame(()=>{
-                  setIsSnapping(true);
-                  setDragY(0);
-                }));
-              },230);
+              setSwipeHint("up");
+              setTimeout(()=>setSwipeHint(null),400);
+              setTimeout(()=>onNext(),160);
             } else if(dy<0&&hasPrev&&onPrev){
-              /* pastga suring: joriy video pastga chiqadi, oldingi tepadan kiradi */
-              setIsSnapping(true);
-              setDragY(vh*1.05);
-              setTimeout(()=>{
-                setIsSnapping(false);
-                setDragY(-vh*0.35);
-                onPrev();
-                requestAnimationFrame(()=>requestAnimationFrame(()=>{
-                  setIsSnapping(true);
-                  setDragY(0);
-                }));
-              },230);
-            } else {
-              setIsSnapping(true);
-              setDragY(0);
+              setSwipeHint("down");
+              setTimeout(()=>setSwipeHint(null),400);
+              setTimeout(()=>onPrev(),160);
             }
-          } else {
-            setIsSnapping(true);
-            setDragY(0);
           }
-          isDragging.current=false;
         }}
         onMouseDown={startHold} onMouseUp={endHold}>
         <video
           ref={videoRef}
           poster={video.thumbnailUrl??undefined}
           muted={muted} playsInline loop={settings.loop}
-          style={{width:"100%",height:"100%",objectFit:"cover",display:"block",
-            transform:`translateY(${dragY}px)`,
-            transition:isSnapping?"transform 0.24s cubic-bezier(0.4,0,0.2,1)":"none",
-            willChange:"transform",
-          }}
+          style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
           onTimeUpdate={()=>{
             const v=videoRef.current;
             if(v&&isFinite(v.duration)&&v.duration>0){
@@ -1110,35 +1020,34 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               }}>
               <span style={{fontSize:36,lineHeight:1}}>{swipeHint==="up"?"⬆":"⬇"}</span>
               <span style={{fontSize:14,fontWeight:700,color:"white",marginTop:8,letterSpacing:"0.04em"}}>
-                {swipeHint==="up"?t("otube.next_video"):t("otube.prev_video")}
+                {swipeHint==="up"?"Keyingi video":"Oldingi video"}
               </span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── NEXT VIDEO INDICATOR (bottom edge, hint only) ── */}
+        {/* ── NEXT VIDEO INDICATOR (bottom edge) ── */}
         {hasNext && (
           <div style={{
             position:"absolute",bottom:0,left:0,right:0,
             display:"flex",alignItems:"center",justifyContent:"center",
             paddingBottom:10,pointerEvents:"none",zIndex:30,
           }}>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,opacity:0.4}}>
-              <motion.div animate={{y:[0,-5,0]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>
-                <ChevronUp style={{width:20,height:20,color:"white"}}/>
+            <div style={{
+              display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+              opacity:0.45,
+            }}>
+              <motion.div
+                animate={{y:[0,-4,0]}} transition={{duration:1.4,repeat:Infinity,ease:"easeInOut"}}>
+                <ChevronUp style={{width:18,height:18,color:"white"}}/>
               </motion.div>
-              <span style={{fontSize:9,fontWeight:600,color:"white",letterSpacing:"0.06em"}}>{t("otube.swipe_up")}</span>
+              <span style={{fontSize:9,fontWeight:600,color:"white",letterSpacing:"0.06em"}}>KEYINGI</span>
             </div>
           </div>
         )}
 
         {/* ── RIGHT SIDE ACTION PANEL — auto-hide on idle ── */}
-        <div
-          onTouchStart={(e)=>e.stopPropagation()}
-          onTouchMove={(e)=>e.stopPropagation()}
-          onTouchEnd={(e)=>e.stopPropagation()}
-          onClick={(e)=>e.stopPropagation()}
-          style={{
+        <div style={{
           position:"absolute", right:0, top:0, bottom:168,
           width:50,
           display:"flex", flexDirection:"column", alignItems:"center",
@@ -1158,17 +1067,17 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             },
             {
               icon:<ThumbsDown style={{width:15,height:15,fill:disliked?"white":"none",color:"white"}}/>,
-              label:t("otube.dislike"), col:"rgba(255,255,255,0.9)", active:disliked,
+              label:"Ko'rmadim", col:"rgba(255,255,255,0.9)", active:disliked,
               act:()=>{if(!requireLogin())return;setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});},
             },
             {
               icon:<Share2 style={{width:15,height:15,color:"white"}}/>,
-              label:t("otube.share_btn"), col:"rgba(255,255,255,0.9)", active:shared,
+              label:"Ulashish", col:"rgba(255,255,255,0.9)", active:shared,
               act:()=>void handleShare(),
             },
             {
               icon:<Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"white"}}/>,
-              label:t("otube.save_btn"), col:saved?T.violet:"rgba(255,255,255,0.9)", active:saved,
+              label:"Saqlash", col:saved?T.violet:"rgba(255,255,255,0.9)", active:saved,
               bg:saved?"rgba(120,0,255,0.85)":"rgba(30,30,40,0.75)",
               act:()=>toggleSave(),
             },
@@ -1179,12 +1088,12 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             },
             {
               icon:<Star style={{width:15,height:15,color:"white"}}/>,
-              label:t("otube.donate_btn"), col:"rgba(255,255,255,0.9)", active:donating,
+              label:"Yordam", col:"rgba(255,255,255,0.9)", active:donating,
               act:()=>{if(!requireLogin())return;setDonating(d=>!d);setShowMore(false);},
             },
             {
               icon:<Sparkles style={{width:15,height:15,color:"white"}}/>,
-              label:t("otube.reaction"), col:"rgba(255,255,255,0.9)", active:danmaku,
+              label:"Reakciya", col:"rgba(255,255,255,0.9)", active:danmaku,
               act:()=>setDanmaku(d=>!d),
             },
             {
@@ -1194,7 +1103,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             },
             {
               icon:<Upload style={{width:15,height:15,color:"white",transform:"rotate(180deg)"}}/>,
-              label:t("otube.download_btn"), col:"rgba(255,255,255,0.9)", active:false,
+              label:"Yuklab", col:"rgba(255,255,255,0.9)", active:false,
               act:()=>{
                 if(!video.videoUrl)return;
                 const a=document.createElement("a");a.href=video.videoUrl;
@@ -1204,12 +1113,12 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             },
             {
               icon:<PictureInPicture2 style={{width:15,height:15,color:"white"}}/>,
-              label:t("otube.mini_btn"), col:"rgba(255,255,255,0.9)", active:false,
+              label:"Mini", col:"rgba(255,255,255,0.9)", active:false,
               act:()=>void handlePip(),
             },
             ...(isOwner ? [{
               icon:<Trash2 style={{width:15,height:15,color:"#ff4444"}}/>,
-              label:t("otube.delete_btn"), col:"#ff6666", active:false,
+              label:"O'chirish", col:"#ff6666", active:false,
               bg:"rgba(255,30,30,0.18)",
               act:()=>setConfirmDelete(true),
             }] : []),
@@ -1218,8 +1127,15 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             <motion.button key={i} whileTap={{scale:0.82}}
               onClick={(e)=>{e.stopPropagation();b.act();}}
               style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-                padding:"6px 0",width:"100%"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:34,height:34}}>
+                padding:"4px 0",width:"100%"}}>
+              <div style={{
+                width:34,height:34,borderRadius:"50%",
+                background:b.bg??(b.active?"rgba(60,60,80,0.9)":"rgba(30,30,40,0.75)"),
+                backdropFilter:"blur(16px)",
+                border:`1px solid ${b.active?"rgba(255,255,255,0.25)":"rgba(255,255,255,0.12)"}`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:"0 2px 8px rgba(0,0,0,0.55)",
+              }}>
                 {b.icon}
               </div>
               <span style={{fontSize:8,fontWeight:600,color:b.col,
@@ -1250,13 +1166,11 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               exit={{opacity:0,scale:1.4}} transition={{duration:0.14}}
               style={{position:"absolute",top:"50%",left:"50%",
                 transform:"translate(-50%,-50%)",pointerEvents:"none",
-                width:68,height:68,borderRadius:"50%",
-                background:"rgba(255,255,255,0.12)",backdropFilter:"blur(20px)",
-                WebkitBackdropFilter:"blur(20px)",
-                border:"1.5px solid rgba(255,255,255,0.30)",
-                boxShadow:"0 4px 24px rgba(0,0,0,0.25)",
+                width:72,height:72,borderRadius:"50%",
+                background:"rgba(0,0,0,0.52)",backdropFilter:"blur(14px)",
+                border:"1.5px solid rgba(255,255,255,0.18)",
                 display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <Play style={{width:26,height:26,fill:"rgba(255,255,255,0.95)",color:"rgba(255,255,255,0.95)",marginLeft:4}}/>
+              <Play style={{width:28,height:28,fill:"white",color:"white",marginLeft:4}}/>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1286,15 +1200,15 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                 background:"rgba(255,255,255,0.15)",margin:"0 auto 14px"}}/>
               <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
                 {[
-                  {icon:<ThumbsUp style={{width:18,height:18,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:liked?t("otube.liked"):t("otube.like_btn"),col:T.cyan,on:liked,act:()=>{if(requireLogin())likeMut.mutate({id:video.id});}},
-                  {icon:<ThumbsDown style={{width:18,height:18,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.5)"}}/>,label:t("otube.dislike_menu"),col:T.orange,on:disliked,act:()=>{if(!requireLogin())return;setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}},
-                  {icon:<Sparkles style={{width:18,height:18,color:danmaku?"#ffd700":"rgba(255,255,255,0.5)"}}/>,label:t("otube.reaction_menu"),col:"#ffd700",on:danmaku,act:()=>{setDanmaku(d=>!d);setShowMore(false);}},
-                  {icon:<Gauge style={{width:18,height:18,color:showSpeed?T.orange:"rgba(255,255,255,0.5)"}}/>,label:t("otube.speed_btn"),col:T.orange,on:showSpeed,act:()=>{setShowSpeed(s=>!s);setShowMore(false);}},
+                  {icon:<ThumbsUp style={{width:18,height:18,fill:liked?T.cyan:"none",color:liked?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:liked?"Yoqdim":"Yoqtirish",col:T.cyan,on:liked,act:()=>{if(requireLogin())likeMut.mutate({id:video.id});}},
+                  {icon:<ThumbsDown style={{width:18,height:18,fill:disliked?T.orange:"none",color:disliked?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Yoqmadi",col:T.orange,on:disliked,act:()=>{if(!requireLogin())return;setDisliked(d=>!d);if(liked)likeMut.mutate({id:video.id});}},
+                  {icon:<Sparkles style={{width:18,height:18,color:danmaku?"#ffd700":"rgba(255,255,255,0.5)"}}/>,label:"Reaktsiya",col:"#ffd700",on:danmaku,act:()=>{setDanmaku(d=>!d);setShowMore(false);}},
+                  {icon:<Gauge style={{width:18,height:18,color:showSpeed?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Tezlik",col:T.orange,on:showSpeed,act:()=>{setShowSpeed(s=>!s);setShowMore(false);}},
                   {icon:<Brain style={{width:18,height:18,color:showDub?T.cyan:"rgba(255,255,255,0.55)"}}/>,label:"AI Dub",col:T.cyan,on:showDub,act:()=>{if(requireLogin()){setShowDub(s=>!s);setShowMore(false);}}},
-                  {icon:<Star style={{width:18,height:18,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.5)"}}/>,label:t("otube.gift_btn"),col:T.orange,on:donating,act:()=>{if(!requireLogin())return;setDonating(d=>!d);setShowMore(false);}},
-                  {icon:<Upload style={{width:18,height:18,color:"rgba(255,255,255,0.5)",transform:"rotate(180deg)"}}/>,label:t("otube.download_btn"),col:"rgba(200,200,200,0.7)",on:false,act:()=>{if(!video.videoUrl)return;const a=document.createElement("a");a.href=video.videoUrl;a.download=`${video.caption||"video"}.mp4`;document.body.appendChild(a);a.click();document.body.removeChild(a);setShowMore(false);}},
-                  {icon:<PictureInPicture2 style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>,label:t("otube.mini_btn"),col:T.cyan,on:false,act:()=>{void handlePip();setShowMore(false);}},
-                  ...(isOwner?[{icon:<Trash2 style={{width:18,height:18,color:"#ff3b30"}}/>,label:t("otube.delete_btn"),col:"#ff3b30",on:false,act:()=>{setConfirmDelete(true);setShowMore(false);}}]:[]),
+                  {icon:<Star style={{width:18,height:18,fill:donating?T.orange:"none",color:donating?T.orange:"rgba(255,255,255,0.5)"}}/>,label:"Sovg'a",col:T.orange,on:donating,act:()=>{if(!requireLogin())return;setDonating(d=>!d);setShowMore(false);}},
+                  {icon:<Upload style={{width:18,height:18,color:"rgba(255,255,255,0.5)",transform:"rotate(180deg)"}}/>,label:"Yuklab",col:"rgba(200,200,200,0.7)",on:false,act:()=>{if(!video.videoUrl)return;const a=document.createElement("a");a.href=video.videoUrl;a.download=`${video.caption||"video"}.mp4`;document.body.appendChild(a);a.click();document.body.removeChild(a);setShowMore(false);}},
+                  {icon:<PictureInPicture2 style={{width:18,height:18,color:"rgba(255,255,255,0.5)"}}/>,label:"Mini",col:T.cyan,on:false,act:()=>{void handlePip();setShowMore(false);}},
+                  ...(isOwner?[{icon:<Trash2 style={{width:18,height:18,color:"#ff3b30"}}/>,label:"O'chirish",col:"#ff3b30",on:false,act:()=>{setConfirmDelete(true);setShowMore(false);}}]:[]),
                 ].map((b,i)=>(
                   <motion.button key={i} whileTap={{scale:0.82}} onClick={()=>b.act()}
                     style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5,
@@ -1324,12 +1238,12 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <Brain style={{width:16,height:16,color:T.cyan}}/>
-                  <span style={{fontSize:13,fontWeight:700,color:"white"}}>{t("otube.dub_title")}</span>
+                  <span style={{fontSize:13,fontWeight:700,color:"white"}}>AI Dublyaj</span>
                 </div>
                 <button onClick={()=>setShowDub(false)} style={{color:"rgba(255,255,255,0.4)",fontSize:18,lineHeight:1}}>✕</button>
               </div>
               {/* Language selector */}
-              <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:8}}>{t("otube.choose_lang")}</p>
+              <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:8}}>Tilni tanlang:</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
                 {[{code:"uz",name:"O'zbek"},{code:"ru",name:"Русский"},{code:"en",name:"English"},{code:"tr",name:"Türkçe"},{code:"zh",name:"中文"},{code:"es",name:"Español"}].map(({code,name})=>(
                   <button key={code} onClick={()=>{setDubLang(code);setDubResult(null);}}
@@ -1354,12 +1268,12 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                 }}
                 style={{width:"100%",padding:"12px",borderRadius:12,background:dubbing?"rgba(255,255,255,0.1)":T.cyan,
                   color:dubbing?"rgba(255,255,255,0.4)":"#000",fontWeight:700,fontSize:13,marginBottom:12}}>
-                {dubbing?t("otube.creating"):t("otube.dub_action")}
+                {dubbing?"Yaratilmoqda...":"🎙 Dublyaj qilish"}
               </button>
               {/* Result */}
               {dubResult&&(
                 <div style={{background:"rgba(255,255,255,0.05)",borderRadius:12,padding:12,border:"1px solid rgba(255,255,255,0.08)"}}>
-                  <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:6}}>{t("otube.translation_label")}</p>
+                  <p style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:6}}>Tarjima:</p>
                   <p style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:10,lineHeight:1.5}}>{dubResult.translated}</p>
                   <button onClick={()=>{
                     const audio=new Audio(`data:audio/mp3;base64,${dubResult.audioB64}`);
@@ -1404,7 +1318,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               )}
               {giftResult==="ok" && (
                 <p style={{fontSize:12,color:"#00ff88",textAlign:"center",marginBottom:10,fontWeight:700}}>
-                  {t("otube.gift_sent")}
+                  ✓ Sovg'a yuborildi!
                 </p>
               )}
               {giftResult==="low" && (
@@ -1498,7 +1412,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                     style={{flex:1,padding:"11px 0",borderRadius:14,
                       background:deleteMut.isPending?"rgba(255,59,48,0.4)":"#ff3b30",
                       fontSize:13,fontWeight:700,color:"white"}}>
-                    {deleteMut.isPending?t("otube.deleting"):t("otube.delete_btn")}
+                    {deleteMut.isPending?"O'chirilmoqda…":"O'chirish"}
                   </button>
                 </div>
               </motion.div>
@@ -1545,14 +1459,14 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
               <button onClick={(e)=>{e.stopPropagation();setShowDesc(d=>!d);}}
                 style={{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",
                   padding:"3px 0",cursor:"pointer"}}>
-                <span style={{fontSize:10.5,fontWeight:700,color:"rgba(255,255,255,0.55)"}}>{t("otube.description")}</span>
+                <span style={{fontSize:10.5,fontWeight:700,color:"rgba(255,255,255,0.55)"}}>Tavsif</span>
                 <ChevronDown style={{width:11,height:11,color:"rgba(255,255,255,0.4)",
                   transform:showDesc?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.2s"}}/>
               </button>
               <p style={{margin:0,fontSize:10,color:"rgba(255,255,255,0.45)",lineHeight:1.4,
                 overflow:"hidden",textOverflow:"ellipsis",
                 display:"-webkit-box",WebkitLineClamp:showDesc?10:1,WebkitBoxOrient:"vertical" as const}}>
-                {video.caption||"Video"} · @{video.author.username} · {fmt(video.viewsCount)} {t("otube.views_short")} · {fmt(likesCount)} like
+                {video.caption||"Video"} · @{video.author.username} · {fmt(video.viewsCount)} ko'rish · {fmt(likesCount)} like
               </p>
             </div>
 
@@ -1566,37 +1480,46 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                   padding:"3px 9px",borderRadius:6,background:"rgba(255,255,255,0.1)",
                   border:`1px solid ${speed!==1?"rgba(255,107,0,0.4)":"rgba(255,255,255,0.15)"}`,
                   display:"flex",alignItems:"center",gap:3}}>
-                {speed}× {t("otube.speed_label")}
+                {speed}× TEZLIK
                 <ChevronRight style={{width:10,height:10}}/>
               </button>
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:14,padding:"6px 14px 8px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px 8px"}}>
               <motion.button whileTap={{scale:0.82}} onClick={(e)=>{e.stopPropagation();togglePlay();}}
-                style={{display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                style={{width:42,height:42,flexShrink:0,borderRadius:"50%",
+                  background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.2)",
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
                 {playing
-                  ?<Pause style={{width:18,height:18,fill:"white",color:"white"}}/>
-                  :<Play  style={{width:18,height:18,fill:"white",color:"white",marginLeft:2}}/>}
+                  ?<Pause style={{width:16,height:16,fill:"white",color:"white"}}/>
+                  :<Play  style={{width:16,height:16,fill:"white",color:"white",marginLeft:2}}/>}
               </motion.button>
               <motion.button whileTap={{scale:0.85}}
                 onClick={(e)=>{e.stopPropagation();const v=videoRef.current;if(v){v.currentTime=0;setProgress(0);setCurTime(0);}}}
-                style={{display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                <RotateCcw style={{width:15,height:15,color:"rgba(255,255,255,0.6)"}}/>
+                style={{width:32,height:32,flexShrink:0,borderRadius:"50%",
+                  background:"rgba(255,255,255,0.08)",
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <RotateCcw style={{width:13,height:13,color:"rgba(255,255,255,0.6)"}}/>
               </motion.button>
               <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)",
                 fontFamily:"monospace",flex:1}}>
                 {fmtTime(curTime)}/{fmtTime(duration)}
               </span>
               <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();setMuted(m=>!m);}}
-                style={{display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
+                  background:muted?"rgba(255,255,255,0.08)":"rgba(0,229,255,0.12)",
+                  border:`1px solid ${muted?"rgba(255,255,255,0.1)":"rgba(0,229,255,0.3)"}`,
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
                 {muted
-                  ?<VolumeX style={{width:15,height:15,color:"rgba(255,255,255,0.5)"}}/>
-                  :<Volume2 style={{width:15,height:15,color:"#00e5ff"}}/>}
+                  ?<VolumeX style={{width:13,height:13,color:"rgba(255,255,255,0.5)"}}/>
+                  :<Volume2 style={{width:13,height:13,color:"#00e5ff"}}/>}
               </motion.button>
               <motion.button whileTap={{scale:0.85}} onClick={(e)=>{e.stopPropagation();toggleFull();}}
-                style={{display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
+                  background:"rgba(255,255,255,0.08)",
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
                 {isFull
-                  ?<Minimize2 style={{width:15,height:15,color:"rgba(255,255,255,0.6)"}}/>
-                  :<Maximize2 style={{width:15,height:15,color:"rgba(255,255,255,0.6)"}}/>}
+                  ?<Minimize2 style={{width:13,height:13,color:"rgba(255,255,255,0.6)"}}/>
+                  :<Maximize2 style={{width:13,height:13,color:"rgba(255,255,255,0.6)"}}/>}
               </motion.button>
             </div>
           </div>
@@ -1627,7 +1550,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                 {video.caption||"OTube Video"}
               </p>
               <p style={{margin:0,fontSize:9.5,color:"rgba(255,255,255,0.35)"}}>
-                {fmt(video.viewsCount)} {t("otube.views_short")}
+                {fmt(video.viewsCount)} ko'rish
               </p>
             </div>
           </div>
@@ -1734,57 +1657,14 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
   const { user } = useAuth();
   const [tab, setTab] = useState<"player"|"monetize">("player");
   const sP = <K extends keyof PlayerSettings>(k:K,v:PlayerSettings[K])=>onSettings({...settings,[k]:v});
-  const [saving, setSaving] = useState(false);
-  const [saveOk, setSaveOk] = useState(false);
+  const sM = <K extends keyof MonetizationSettings>(k:K,v:MonetizationSettings[K])=>onMonetize({...monetize,[k]:v});
   const [walletEarnings, setWalletEarnings] = useState<number|null>(null);
-  const [followersCount, setFollowersCount] = useState<number>(0);
-
-  /* Save monetization setting immediately to server */
-  const sM = <K extends keyof MonetizationSettings>(k: K, v: MonetizationSettings[K]) => {
-    const next = { ...monetize, [k]: v };
-    onMonetize(next);
-    setSaving(true); setSaveOk(false);
-    const body: Record<string, unknown> = {};
-    if (k === "adsEnabled")        body["adsEnabled"]         = v;
-    if (k === "superThanks")       body["superThanksEnabled"] = v;
-    if (k === "membershipEnabled") body["membershipEnabled"]  = v;
-    if (k === "donation")          body["donationMin"]        = Number(v);
-    if (k === "creatorMode") { setSaving(false); return; } // local only
-    fetch(`${API_BASE}/api/creator/monetization/settings`, {
-      method: "PATCH", credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }).then(r => r.ok ? (setSaveOk(true), setTimeout(()=>setSaveOk(false),2000)) : null)
-      .catch(()=>{}).finally(()=>setSaving(false));
-  };
-
-  /* Load settings + wallet + followers when monetize tab opens */
   useEffect(()=>{
     if(!open||tab!=="monetize")return;
-    fetch(`${API_BASE}/api/creator/monetization`,{credentials:"include"})
-      .then(r=>r.json())
-      .then(d=>{
-        setWalletEarnings((d.earningsBalance??0));
-        if(d.settings){
-          onMonetize({
-            ...monetize,
-            adsEnabled: d.settings.adsEnabled ?? true,
-            superThanks: d.settings.superThanksEnabled ?? true,
-            membershipEnabled: d.settings.membershipEnabled ?? false,
-            donation: String(d.settings.donationMin ?? 2000) as MonetizationSettings["donation"],
-          });
-        }
-      })
-      .catch(()=>{});
     fetch(`${API_BASE}/api/wallet`,{credentials:"include"})
       .then(r=>r.json())
       .then(d=>setWalletEarnings((d.wallet?.earningsBalance??0)+(d.wallet?.adRevenueBalance??0)))
-      .catch(()=>{});
-    if(user?.id){
-      fetch(`${API_BASE}/api/users/${user.id}/followers/count`,{credentials:"include"})
-        .then(r=>r.json()).then(d=>setFollowersCount(d.count??0)).catch(()=>{});
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      .catch(()=>setWalletEarnings(null));
   },[open,tab]);
   const rev = monetize.creatorMode ? String(walletEarnings ?? 0) : "0";
   const { data: myReelsForRevenue=[] } = useListReels(
@@ -1899,7 +1779,7 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                       {[
                         {l:t("otube.views_label"),v:fmt(views),i:"👁"},
                         {l:t("otube.income_label"),v:`${Number(rev).toLocaleString()} so'm`,i:"💰"},
-                        {l:t("otube.subscribers_label"),v:followersCount>=1000?`${(followersCount/1000).toFixed(1)}K`:String(followersCount),i:"👥"},
+                        {l:t("otube.subscribers_label"),v:"1.2K",i:"👥"},
                       ].map(s=>(
                         <div key={s.l} className="p-2.5 text-center"
                           style={{borderRadius:12,background:"rgba(0,0,0,0.3)"}}>
@@ -1910,14 +1790,6 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                       ))}
                     </div>
                   </div>
-
-                  {/* Save status */}
-                  {(saving||saveOk) && (
-                    <div style={{fontSize:10,color:saveOk?"#00ff88":"rgba(255,255,255,0.4)",
-                      textAlign:"right",marginBottom:4,transition:"color 0.3s"}}>
-                      {saveOk ? "✓ Saqlandi" : "Saqlanmoqda…"}
-                    </div>
-                  )}
 
                   <SecHead>{t("otube.creator_tab")}</SecHead>
                   <TRow icon="🎥" label={t("otube.creator_tab")} sub={t("otube.creator_sub")}
@@ -1978,7 +1850,7 @@ function SettingsDrawer({ open,onClose,settings,onSettings,monetize,onMonetize }
                   <div className="mt-3 p-3.5"
                     style={{borderRadius:12,background:"rgba(255,255,255,0.04)"}}>
                     <p style={{fontSize:10,color:"rgba(255,255,255,0.38)",lineHeight:1.7}}>
-                      Daromadlar har oyning 15-sanasida chiqariladi.
+                      Min: 100 000 so'm. OlchaAI Pay orqali har oyning 15-sanasida chiqariladi.
                     </p>
                   </div>
                 </>
@@ -2005,7 +1877,6 @@ function ChBadge({ n: _n, color=T.cyan }: { n:string; color?:string }) {
 /* Channel row — real follow (redesigned)                  */
 /* ─────────────────────────────────────────────────────── */
 function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
-  const { t } = useTranslation();
   const COLORS = [T.cyan, T.orange, T.violet, "#00ff88", "#ff2d55"];
   const col = COLORS[idx % COLORS.length];
   const [subbed, setSubbed] = useState(() => getFollowState(author.id, author.isFollowing));
@@ -2032,7 +1903,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
       onSuccess: (data) => {
         setFollowState(author.id, data.following);
         setSubbed(data.following);
-        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
       },
       onError: () => {
         const prev = getFollowState(author.id, author.isFollowing);
@@ -2062,7 +1933,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
           boxShadow:`0 0 0 2px ${col}44, 0 0 20px ${col}22`,
           display:"flex",alignItems:"center",justifyContent:"center"}}>
         {author.avatarUrl
-          ? <img loading="lazy" decoding="async" src={author.avatarUrl} alt="" className="w-full h-full object-cover"/>
+          ? <img src={author.avatarUrl} alt="" className="w-full h-full object-cover"/>
           : <span style={{fontSize:17,fontWeight:900,color:"white"}}>{(author.displayName||author.username||"?")[0]}</span>}
       </div>
       {/* Name — clickable → profile */}
@@ -2083,7 +1954,7 @@ function ChannelRow({ author, idx }: { author: Reel["author"]; idx: number }) {
           boxShadow: subbed?"none":`0 0 14px ${col}33`,
           opacity: followMut.isPending ? 0.6 : 1}}>
         <span style={{fontSize:10,fontWeight:700,color:subbed?"rgba(255,255,255,0.4)":col}}>
-          {subbed?t("otube.subscribed"):t("otube.subscribe")}
+          {subbed?"✓ Obuna":"··· Obuna"}
         </span>
       </motion.button>
     </motion.div>
@@ -2155,9 +2026,9 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
       {/* Thumbnail — info panel lives INSIDE so it doesn't overlap Watch Party row */}
       <div style={{aspectRatio:expanded?"4/3":"16/9",position:"relative",transition:"all 0.4s cubic-bezier(.4,0,.2,1)",overflow:"hidden"}}>
         {video.thumbnailUrl
-          ? <img loading="lazy" decoding="async" src={resolveApiUrl(video.thumbnailUrl)} alt={video.caption} className="w-full h-full object-cover"/>
+          ? <img src={video.thumbnailUrl} alt={video.caption} className="w-full h-full object-cover"/>
           : video.videoUrl
-          ? <video src={resolveApiUrl(video.videoUrl)} autoPlay muted playsInline loop
+          ? <video src={video.videoUrl} autoPlay muted playsInline loop
               className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
           : (video as any).audioTrack
           ? <div className="w-full h-full flex flex-col items-center justify-center gap-2"
@@ -2171,16 +2042,14 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
             </div>}
         <div className="absolute inset-0 pointer-events-none"
           style={{background:"linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.1) 50%,transparent 100%)"}}/>
-        {/* Play button — glass iOS style */}
+        {/* Play button — round */}
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div whileTap={{scale:0.88}}
             style={{width:64,height:64,borderRadius:"50%",
-              background:"rgba(255,255,255,0.12)",backdropFilter:"blur(20px)",
-              WebkitBackdropFilter:"blur(20px)",
-              border:"1.5px solid rgba(255,255,255,0.30)",
-              boxShadow:"0 4px 24px rgba(0,0,0,0.25)",
+              background:"rgba(0,0,0,0.45)",backdropFilter:"blur(12px)",
+              boxShadow:`0 0 0 1.5px rgba(255,255,255,0.25), 0 0 40px rgba(0,229,255,0.25)`,
               display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <Play style={{width:22,height:22,fill:"rgba(255,255,255,0.95)",color:"rgba(255,255,255,0.95)",marginLeft:3}}/>
+            <Play style={{width:22,height:22,fill:"white",color:"white",marginLeft:3}}/>
           </motion.div>
         </div>
         {/* View count top-left chip — real data only */}
@@ -2209,7 +2078,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
                     animate={{strokeDashoffset:`${2*Math.PI*13.5*0.27}`}}
                     transition={{duration:2,ease:"easeOut",delay:0.5}}/>
                 </svg>
-                <img loading="lazy" decoding="async" src={video.author.avatarUrl} alt=""
+                <img src={video.author.avatarUrl} alt=""
                   style={{width:24,height:24,borderRadius:"50%",objectFit:"cover",
                     position:"absolute",top:4,left:4,zIndex:2}}/>
               </div>
@@ -2249,7 +2118,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
             background:"linear-gradient(135deg,rgba(0,229,255,0.2),rgba(157,0,255,0.2))",
             display:"flex",alignItems:"center",justifyContent:"center"}}>
             {user.avatarUrl
-              ? <img loading="lazy" decoding="async" src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
+              ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover"/>
               : <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>
                   {(user.displayName||user.username||"S")[0].toUpperCase()}
                 </span>}
@@ -2337,12 +2206,10 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const [creating, setCreating] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
 
   const handleJoin = async () => {
     if (creating) return;
     setCreating(true);
-    setErr(null);
     try {
       const r = await fetch(`${API_BASE}/api/coview/rooms`, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
@@ -2351,40 +2218,23 @@ function WatchPartyBtn({ videoId }: { videoId: number }) {
       if (r.ok) {
         const room = await r.json();
         navigate(`/coview/${room.inviteCode}`);
-      } else if (r.status === 401) {
-        setErr("Kirish talab qilinadi");
-        setTimeout(() => setErr(null), 3000);
-      } else {
-        setErr("Xatolik yuz berdi");
-        setTimeout(() => setErr(null), 3000);
       }
-    } catch {
-      setErr("Tarmoq xatosi");
-      setTimeout(() => setErr(null), 3000);
-    }
+    } catch { /* silent */ }
     finally { setCreating(false); }
   };
 
   return (
-    <div className="flex flex-col flex-1 gap-1">
-      {err && (
-        <div style={{fontSize:9,color:"#f87171",textAlign:"center",padding:"2px 6px",
-          background:"rgba(239,68,68,0.12)",borderRadius:6}}>
-          {err}
-        </div>
-      )}
-      <motion.button whileTap={{scale:0.88}}
-        onClick={handleJoin} disabled={creating}
-        className="flex items-center gap-1.5 px-3 py-1.5 w-full"
-        style={{borderRadius:99,
-          background: err ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.06)",
-          boxShadow:`0 0 0 1px ${err ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.08)"}`}}>
-        <Users style={{width:11,height:11,color:"rgba(255,255,255,0.45)"}}/>
-        <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)"}}>
-          {creating?"…":t("otube.watch_join")}
-        </span>
-      </motion.button>
-    </div>
+    <motion.button whileTap={{scale:0.88}}
+      onClick={handleJoin} disabled={creating}
+      className="flex items-center gap-1.5 px-3 py-1.5 flex-1"
+      style={{borderRadius:99,
+        background:"rgba(255,255,255,0.06)",
+        boxShadow:"0 0 0 1px rgba(255,255,255,0.08)"}}>
+      <Users style={{width:11,height:11,color:"rgba(255,255,255,0.45)"}}/>
+      <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)"}}>
+        {creating?"…":t("otube.watch_join")}
+      </span>
+    </motion.button>
   );
 }
 
@@ -2426,10 +2276,10 @@ function TrendRow({ video, onPlay, idx }:
       {/* Thumbnail — fills entire card, no border visible */}
       <div style={{aspectRatio:"3/4",position:"relative",overflow:"hidden"}}>
         {video.thumbnailUrl
-          ? <img loading="lazy" decoding="async" src={resolveApiUrl(video.thumbnailUrl)} alt="" className="w-full h-full object-cover"
+          ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
               style={{transform:"scale(1.04)"}}/>
           : video.videoUrl
-          ? <video src={resolveApiUrl(video.videoUrl)} autoPlay muted playsInline loop
+          ? <video src={video.videoUrl} autoPlay muted playsInline loop
               className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
           : (video as any).audioTrack
           ? <div className="w-full h-full flex flex-col items-center justify-center gap-2"
@@ -2520,7 +2370,7 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
       onSuccess: (data) => {
         setLiked(data.liked);
         setLikesCount(data.likesCount);
-        qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
+        qc.invalidateQueries({ queryKey: ["/api/reels"] });
       },
     },
   });
@@ -2567,10 +2417,10 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
       {/* Full-bleed image — NO bottom info box */}
       <div style={{aspectRatio:ar,position:"relative",overflow:"hidden",borderRadius:16}}>
         {video.thumbnailUrl
-          ? <img loading="lazy" decoding="async" src={resolveApiUrl(video.thumbnailUrl)} alt="" className="w-full h-full object-cover"
+          ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"
               style={{transition:"transform 0.4s"}}/>
           : video.videoUrl
-          ? <video src={resolveApiUrl(video.videoUrl)} autoPlay muted playsInline loop
+          ? <video src={video.videoUrl} autoPlay muted playsInline loop
               className="w-full h-full object-cover"
               style={{pointerEvents:"none"}}/>
           : (video as any).audioTrack
@@ -2648,8 +2498,8 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
               <span style={{fontSize:9,color:"rgba(255,255,255,0.4)"}} className="truncate">
                 {video.author.displayName}
               </span>
-              {/* Verified badge — only real verified accounts */}
-              {video.author.isVerified && (
+              {/* Verified badge */}
+              {(video.viewsCount > 300 || video.author.id % 3 === 0) && (
                 <ShieldCheck style={{width:8,height:8,color:"#ffd700",flexShrink:0}}/>
               )}
             </div>
@@ -2823,9 +2673,9 @@ function ContinueRow({ items, onPlay }: { items:ContinueWatchingItem[]; onPlay:(
               whileTap={{scale:0.93}} onClick={()=>onPlay(v)}>
               <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
                 {v.thumbnailUrl
-                  ? <img loading="lazy" decoding="async" src={resolveApiUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
+                  ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                   : v.videoUrl
-                  ? <video src={resolveApiUrl(v.videoUrl)} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+                  ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                   : (v as any).audioTrack
                   ? <div className="w-full h-full flex items-center justify-center"
                       style={{background:`linear-gradient(135deg,#1a004028,#000)`}}>
@@ -2980,16 +2830,14 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
       const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
       const xhr = new XMLHttpRequest();
       xhr.upload.onprogress = (e) => { if(e.lengthComputable) setProgress(Math.round(e.loaded/e.total*88)); };
-      let xhrObjectPath = objectPath;
       await new Promise<void>((res,rej)=>{
         xhr.open("PUT",uploadURL); xhr.setRequestHeader("Content-Type",file.type);
-        xhr.onload=()=>{ if(xhr.status<300){ try{ const b=JSON.parse(xhr.responseText); if(b?.objectPath) xhrObjectPath=b.objectPath; }catch{} res(); } else rej(new Error("Upload failed")); };
+        xhr.onload=()=>xhr.status<300?res():rej(new Error("Upload failed"));
         xhr.onerror=()=>rej(new Error("Network error")); xhr.send(file);
       });
-      const videoUrl = xhrObjectPath.startsWith("http") ? xhrObjectPath : `${API_BASE}/api/storage${xhrObjectPath}`;
       setProgress(95); setPhase("creating");
       createMut.mutate({data:{
-        authorId:user.id, videoUrl,
+        authorId:user.id, videoUrl:`${API_BASE}/api/storage${objectPath}`,
         caption:caption||title, tags:tagList, duration:0,
         // thumbSrc is a local blob URL — only pass thumbnailUrl if it's a real remote URL
         thumbnailUrl: (thumbSrc && !thumbSrc.startsWith("blob:")) ? thumbSrc : undefined,
@@ -3097,7 +2945,7 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
                     background:thumbSrc?"#000":"rgba(0,229,255,0.04)",
                     display:"flex",alignItems:"center",justifyContent:"center"}}>
                   {thumbSrc
-                    ? <img loading="lazy" decoding="async" src={thumbSrc} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    ? <img src={thumbSrc} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                     : <ImagePlus style={{width:20,height:20,color:`${T.cyan}66`}}/>}
                 </motion.div>
                 <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",gap:4}}>
@@ -3827,13 +3675,13 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
             </div>
             <div>
               <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>🎬 DEMO VIDEO URL</span>
-              <input value={demoUrl} onChange={e=>setDemoUrl(e.target.value)} placeholder="GILOS yoki YouTube havolasi…"
+              <input value={demoUrl} onChange={e=>setDemoUrl(e.target.value)} placeholder="OlchaAI yoki YouTube havolasi…"
                 style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none"}}/>
             </div>
             <div>
               <span style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.1em"}}>📢 ULASHISH SHABLONI</span>
               <textarea value={shareTemplate} onChange={e=>setShareTemplate(e.target.value)} rows={2} maxLength={200}
-                placeholder="Men #{name} challengeda! @GILOS orqali qo'shiling…"
+                placeholder="Men #{name} challengeda! @OlchaAI orqali qo'shiling…"
                 style={{width:"100%",marginTop:4,padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"white",fontSize:12,outline:"none",resize:"none"}}/>
             </div>
           </div>
@@ -3877,11 +3725,17 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
                 <div style={{width:16,height:16,borderRadius:99,background:"white"}}/>
               </button>
             </div>
-            {/* Stats shown after challenge is live */}
+            {/* Estimated stats */}
             <div style={{padding:"14px",borderRadius:12,background:"rgba(0,255,136,0.04)",border:"1px solid rgba(0,255,136,0.12)"}}>
-              <div style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.08em",marginBottom:6}}>📊 STATISTIKA</div>
-              <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",textAlign:"center",padding:"8px 0"}}>
-                Challenge yaratilgandan keyin ko'rsatkichlar shu yerda chiqadi
+              <div style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"0.08em",marginBottom:10}}>📊 PROGNOZ</div>
+              <div className="flex gap-4">
+                {[{l:"Ishtirokchi",v:"1.2K–5K",e:"👥"},{l:"Ko'rishlar",v:"50K+",e:"👁"},{l:"Viral Ball",v:"87%",e:"🚀"}].map(({l,v,e})=>(
+                  <div key={l} style={{flex:1,textAlign:"center"}}>
+                    <div style={{fontSize:18}}>{e}</div>
+                    <div style={{fontSize:12,fontWeight:800,color:G}}>{v}</div>
+                    <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{l}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -3940,7 +3794,7 @@ function ChallengeModal({ onClose }: { onClose: ()=>void }) {
               {[
                 {v:privateChallenge,s:setPrivateChallenge,l:"🔒 Maxfiy Challenge (faqat taklif bilan)"},
                 {v:autoExtend,s:setAutoExtend,l:"⏰ Avtomatik muddat uzaytirish"},
-                {v:boostEnabled,s:setBoostEnabled,l:"🚀 GILOS Boost — kengaytirilgan ko'rish"},
+                {v:boostEnabled,s:setBoostEnabled,l:"🚀 OlchaAI Boost — kengaytirilgan ko'rish"},
                 {v:notifyAll,s:setNotifyAll,l:"🔔 Barcha ishtirokchilarga xabar"},
                 {v:notifyWinner,s:setNotifyWinner,l:"🏆 G'olibga maxsus bildirishnoma"},
               ].map(({v,s,l})=>(
@@ -4031,7 +3885,6 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const [stickers, setStickers]   = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished]   = useState(false);
-  const [publishErr, setPublishErr] = useState("");
   const [exportQ, setExportQ]     = useState<"720p"|"1080p"|"4K">("1080p");
   const [transition, setTransition] = useState("cut");
   const [brightness, setBrightness] = useState(100);
@@ -4115,8 +3968,8 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const uploadUrlMut = useRequestUploadUrl();
   const createMut    = useCreateReel({
     mutation: {
-      onSuccess: () => { qc.invalidateQueries({queryKey:["/api/reels"]}); setPublished(true); setPublishing(false); setPublishErr(""); },
-      onError:   (e) => { setPublishing(false); setPublishErr(e instanceof Error ? e.message : "Video saqlashda xato"); },
+      onSuccess: () => { qc.invalidateQueries({queryKey:["/api/reels"]}); setPublished(true); setPublishing(false); },
+      onError:   () => setPublishing(false),
     }
   });
 
@@ -4180,7 +4033,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
     { id:"lofi",     name:"Lo-Fi Beats",      emoji:"🎹", bpm:75  },
     { id:"trap",     name:"Future Trap",      emoji:"🎤", bpm:144 },
     { id:"ambient",  name:"Space Ambient",    emoji:"🌌", bpm:60  },
-    { id:"hiphop",   name:"GILOS Hip-Hop",    emoji:"🎧", bpm:92  },
+    { id:"hiphop",   name:"OlchaAI Hip-Hop",    emoji:"🎧", bpm:92  },
     { id:"none",     name:"Musiqasiz",        emoji:"🔇", bpm:0   },
   ];
 
@@ -4223,24 +4076,21 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
 
   const handlePublish = async () => {
     if (!file||!user) return;
-    setPublishing(true); setPublishErr("");
+    setPublishing(true);
     try {
       const req: UploadUrlRequest = {name:file.name,size:file.size,contentType:file.type};
       const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
       const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file});
-      if (!res.ok) throw new Error(`Yuklash xatosi: ${res.status}`);
-      let studioObjectPath = objectPath;
-      try { const b=await res.json(); if(b?.objectPath) studioObjectPath=b.objectPath; } catch {}
-      const studioVideoUrl = studioObjectPath.startsWith("http") ? studioObjectPath : `${API_BASE}/api/storage${studioObjectPath}`;
+      if (!res.ok) throw new Error("Upload failed");
       createMut.mutate({data:{
         authorId:user.id,
-        videoUrl:studioVideoUrl,
-        caption:caption||"OTube Studio · GILOS",
+        videoUrl:`${API_BASE}/api/storage${objectPath}`,
+        caption:caption||"OTube Studio · OlchaAI",
         audioTrack:music&&music!=="none"?music:undefined,
         tags:["otube-studio","olcha","studio"],
         duration:0,
       }});
-    } catch(e) { setPublishing(false); setPublishErr(e instanceof Error ? e.message : "Xato yuz berdi"); }
+    } catch { setPublishing(false); }
   };
 
   const TABS = [
@@ -5403,7 +5253,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
             <div>
               <div style={{fontSize:9,color:T.cyan,fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>⚙️ MAXSUS PARAMETRLAR</div>
               <div className="flex flex-col gap-2">
-                {[{v:stabilize,s:setStabilize,l:"📷 Video Stabilizator"},{v:autoColor,s:setAutoColor,l:"🎨 Avto Rang Korreksiya"},{v:colorLimiter,s:setColorLimiter,l:"🎯 Broadcast Color Limiter"},{v:watermark,s:setWatermark,l:"💧 GILOS Suv Belgisi"}].map(({v,s,l})=>(
+                {[{v:stabilize,s:setStabilize,l:"📷 Video Stabilizator"},{v:autoColor,s:setAutoColor,l:"🎨 Avto Rang Korreksiya"},{v:colorLimiter,s:setColorLimiter,l:"🎯 Broadcast Color Limiter"},{v:watermark,s:setWatermark,l:"💧 OlchaAI Suv Belgisi"}].map(({v,s,l})=>(
                   <div key={l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
                     <span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>{l}</span>
                     <button onClick={()=>s((p:boolean)=>!p)} style={{width:34,height:20,borderRadius:99,padding:"0 2px",display:"flex",alignItems:"center",background:v?T.cyan:"rgba(255,255,255,0.12)",justifyContent:v?"flex-end":"flex-start"}}>
@@ -5653,12 +5503,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
           </>
         ) : (
           <>
-            {publishErr && (
-              <div style={{flex:1,fontSize:10,color:"#ff6b6b",fontWeight:600,wordBreak:"break-word"}}>
-                ⚠️ {publishErr}
-              </div>
-            )}
-            {!publishErr && file && (
+            {file && (
               <div style={{flex:1,fontSize:9,color:"rgba(255,255,255,0.3)"}}>
                 {file.name.slice(0,22)}… · {(file.size/1024/1024).toFixed(1)}MB · {exportQ}
               </div>
@@ -5868,9 +5713,9 @@ function MoodRow({ title, emoji, col, videos, onPlay }:
             whileTap={{scale:0.93}} onClick={()=>onPlay(v)}>
             <div style={{aspectRatio:"16/9",position:"relative",overflow:"hidden"}}>
               {v.thumbnailUrl
-                ? <img loading="lazy" decoding="async" src={resolveApiUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
+                ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                 : v.videoUrl
-                ? <video src={resolveApiUrl(v.videoUrl)} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+                ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                 : <div className="w-full h-full"
                     style={{background:`linear-gradient(135deg,${col}22,#000)`}}/>}
               <div className="absolute inset-0 pointer-events-none"
@@ -5899,9 +5744,9 @@ function ShortsCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
       style={{width:112,aspectRatio:"9/16",borderRadius:14,
         boxShadow:`0 4px 20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)`}}>
       {video.thumbnailUrl
-        ? <img loading="lazy" decoding="async" src={resolveApiUrl(video.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
+        ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
         : video.videoUrl
-        ? <video src={resolveApiUrl(video.videoUrl)} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+        ? <video src={video.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
         : <div className="w-full h-full" style={{background:"linear-gradient(180deg,#1a0028,#000510)"}}/>}
       <div className="absolute inset-0 pointer-events-none"
         style={{background:"linear-gradient(to top,rgba(0,0,0,0.88) 0%,transparent 55%)"}}/>
@@ -6017,9 +5862,9 @@ function CoverflowRow({ videos, onPlay }: { videos: Reel[]; onPlay:(v:Reel)=>voi
               >
                 {/* Thumbnail / video */}
                 {v.thumbnailUrl
-                  ? <img loading="lazy" decoding="async" src={resolveApiUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
+                  ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                   : v.videoUrl
-                  ? <video src={resolveApiUrl(v.videoUrl)} autoPlay muted playsInline loop
+                  ? <video src={v.videoUrl} autoPlay muted playsInline loop
                       className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                   : <div className="w-full h-full"
                       style={{background:`linear-gradient(135deg,${accent}28,#050010)`}}/>}
@@ -6306,7 +6151,7 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
                   background:"rgba(255,255,255,0.07)", overflow:"hidden",
                   display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>
                   {n.actorAvatar
-                    ? <img loading="lazy" decoding="async" src={n.actorAvatar} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+                    ? <img src={n.actorAvatar} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
                     : <span>{typeIcon(n.type)}</span>}
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
@@ -6338,238 +6183,7 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* OTube Music Player — floating orb, expands left into a mini player */
-
-const JAMENDO_CLIENT = "b6747d04";
-
-function OTubeMusicPlayer() {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [tracks, setTracks] = useState<Array<{ id: string; name: string; artist_name: string; audio: string }>>([]);
-  const [idx, setIdx] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [searching, setSearching] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  const current = tracks[idx] ?? null;
-
-  const doSearch = async (q: string) => {
-    const t = q.trim();
-    if (!t) return;
-    setSearching(true);
-    try {
-      const res = await fetch(
-        `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT}&format=json&limit=20&search=${encodeURIComponent(t)}&audioformat=mp32`
-      );
-      const data = await res.json() as { results?: Array<{ id: string; name: string; artist_name: string; audio: string }> };
-      setTracks(data.results ?? []);
-      setIdx(0);
-      setPlaying(false);
-    } catch { /* silent */ }
-    setSearching(false);
-  };
-
-  /* When track index changes, load new src */
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !current) return;
-    audio.src = current.audio;
-    if (playing) { audio.play().catch(() => setPlaying(false)); }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, current?.audio]);
-
-  const togglePlay = () => {
-    const audio = audioRef.current;
-    if (!audio || !current) return;
-    if (playing) { audio.pause(); setPlaying(false); }
-    else { audio.play().catch(() => {}); setPlaying(true); }
-  };
-
-  const goNext = () => { if (idx < tracks.length - 1) setIdx(i => i + 1); };
-  const goPrev = () => { if (idx > 0) setIdx(i => i - 1); };
-
-  const gViolet = "linear-gradient(135deg,#7c3aed 0%,#a855f7 60%,#6d28d9 100%)";
-
-  return (
-    <>
-      <audio
-        ref={audioRef}
-        onTimeUpdate={() => {
-          const a = audioRef.current;
-          if (a && a.duration > 0) setProgress(a.currentTime / a.duration);
-        }}
-        onEnded={goNext}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-      />
-
-      {/* ── Orb button ── */}
-      <motion.button
-        onClick={() => setOpen(v => !v)}
-        whileTap={{ scale: 0.88 }}
-        className="fixed z-[80]"
-        style={{
-          bottom: "calc(env(safe-area-inset-bottom,0px) + 14px)",
-          left: 16,
-          width: 36, height: 36, borderRadius: "50%",
-          background: gViolet,
-          boxShadow: "0 0 14px rgba(168,85,247,0.55), inset 0 2px 8px rgba(0,0,0,0.4)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          border: "none", cursor: "pointer",
-        }}
-      >
-        <AnimatePresence mode="wait">
-          {open ? (
-            <motion.div key="x"
-              initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-              <X style={{ width: 16, height: 16, color: "white" }} />
-            </motion.div>
-          ) : (
-            <motion.div key="mus"
-              initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-              <Music style={{ width: 16, height: 16, color: "white" }} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
-
-      {/* ── Expanded panel — slides in from left ── */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, x: -220, scale: 0.92 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -220, scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            className="fixed z-[79]"
-            style={{
-              bottom: "calc(env(safe-area-inset-bottom,0px) + 60px)",
-              left: 8,
-              width: 270,
-              borderRadius: 18,
-              background: "rgba(8,2,20,0.93)",
-              border: "1px solid rgba(168,85,247,0.3)",
-              boxShadow: "0 8px 40px rgba(168,85,247,0.22), 0 2px 16px rgba(0,0,0,0.65)",
-              backdropFilter: "blur(22px)",
-              overflow: "hidden",
-            }}
-          >
-            {/* Search bar */}
-            <div style={{ padding: "9px 9px 7px", borderBottom: "1px solid rgba(168,85,247,0.12)" }}>
-              <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-                <input
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && doSearch(query)}
-                  placeholder="Qo'shiq yoki artist qidiring..."
-                  style={{
-                    flex: 1, height: 30, borderRadius: 10,
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(168,85,247,0.22)",
-                    color: "white", fontSize: 11, padding: "0 8px",
-                    outline: "none",
-                  }}
-                />
-                <button
-                  onClick={() => doSearch(query)}
-                  style={{
-                    width: 30, height: 30, borderRadius: 10,
-                    background: "rgba(168,85,247,0.22)",
-                    border: "1px solid rgba(168,85,247,0.4)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    cursor: "pointer", flexShrink: 0,
-                  }}
-                >
-                  {searching
-                    ? <div style={{ width: 11, height: 11, borderRadius: "50%", border: "2px solid #a855f7", borderTopColor: "transparent", animation: "spin 0.75s linear infinite" }} />
-                    : <Search style={{ width: 13, height: 13, color: "#a855f7" }} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Track info */}
-            {current ? (
-              <div style={{ padding: "8px 10px 4px" }}>
-                <p style={{ fontSize: 11.5, fontWeight: 700, color: "rgba(255,255,255,0.92)", marginBottom: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {current.name}
-                </p>
-                <p style={{ fontSize: 9.5, color: "#a855f7", marginBottom: 5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {current.artist_name}
-                </p>
-                {/* Progress bar */}
-                <div style={{ height: 2.5, background: "rgba(168,85,247,0.14)", borderRadius: 2, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${progress * 100}%`, background: "#a855f7", transition: "width 0.25s linear" }} />
-                </div>
-                {/* Track counter */}
-                <p style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", marginTop: 3, textAlign: "right" }}>
-                  {idx + 1} / {tracks.length}
-                </p>
-              </div>
-            ) : (
-              <div style={{ padding: "12px 10px 4px", textAlign: "center", color: "rgba(255,255,255,0.28)", fontSize: 10 }}>
-                Qo'shiq nomini yozing va qidiring
-              </div>
-            )}
-
-            {/* Controls */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "5px 10px 10px" }}>
-              <button
-                onClick={goPrev}
-                disabled={idx === 0 || !tracks.length}
-                style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: (idx === 0 || !tracks.length) ? "rgba(255,255,255,0.04)" : "rgba(168,85,247,0.15)",
-                  border: "1px solid rgba(168,85,247,0.2)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: (idx === 0 || !tracks.length) ? "default" : "pointer",
-                  opacity: (idx === 0 || !tracks.length) ? 0.35 : 1,
-                }}
-              >
-                <ChevronLeft style={{ width: 14, height: 14, color: "#a855f7" }} />
-              </button>
-
-              <button
-                onClick={togglePlay}
-                disabled={!current}
-                style={{
-                  width: 38, height: 38, borderRadius: "50%",
-                  background: gViolet,
-                  border: "none",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: current ? "pointer" : "default",
-                  boxShadow: current ? "0 0 16px rgba(168,85,247,0.45)" : "none",
-                  opacity: current ? 1 : 0.35,
-                }}
-              >
-                {playing
-                  ? <Pause style={{ width: 17, height: 17, color: "white" }} />
-                  : <Play style={{ width: 17, height: 17, color: "white" }} />}
-              </button>
-
-              <button
-                onClick={goNext}
-                disabled={idx >= tracks.length - 1 || !tracks.length}
-                style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: (idx >= tracks.length - 1 || !tracks.length) ? "rgba(255,255,255,0.04)" : "rgba(168,85,247,0.15)",
-                  border: "1px solid rgba(168,85,247,0.2)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: (idx >= tracks.length - 1 || !tracks.length) ? "default" : "pointer",
-                  opacity: (idx >= tracks.length - 1 || !tracks.length) ? 0.35 : 1,
-                }}
-              >
-                <ChevronRight style={{ width: 14, height: 14, color: "#a855f7" }} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
-
-/* ─────────────────────────────────────────────────────── */
+/* MiniPlayer moved to global PipContext — no local component needed */
 
 export default function OTubePage() {
   const { t } = useTranslation();
@@ -6589,17 +6203,7 @@ export default function OTubePage() {
   const activeSig  = SIGNALS.find(s=>s.id===signal)!;
   const tab        = activeSig.tab;
 
-  const { data:raw=[], isLoading, isError: rawError, refetch: refetchRaw } = useListReels({ limit: 50 });
-  /* Real trending — ordered by 24h view velocity on the server */
-  const { data:trendingRaw=[] } = useListReels(
-    { sort: "trending" as const, limit: 50 },
-    { query: { enabled: signal === "fire", queryKey: getListReelsQueryKey({ sort: "trending" as const, limit: 50 }) } },
-  );
-  /* Real shorts — filtered by type=short on the server */
-  const { data:shortsRaw=[] } = useListReels(
-    { type: "short" as const, limit: 50 },
-    { query: { enabled: tab === "shorts", queryKey: getListReelsQueryKey({ type: "short" as const, limit: 50 }) } },
-  );
+  const { data:raw=[], isLoading } = useListReels();
   const { data:notifList=[] } = useListNotifications();
   useEffect(()=>{ setNotifDot(notifList.some((n:Notification)=>!n.isRead)); },[notifList]);
   const { data:continueWatching=[] } = useGetContinueWatching();
@@ -6614,11 +6218,10 @@ export default function OTubePage() {
   },[isLoading, raw]);
 
   const reels = useMemo(()=>{
-    const base = signal === "fire" ? trendingRaw : raw;
-    if (!query.trim()) return base;
+    if (!query.trim()) return raw;
     const q = query.toLowerCase();
-    return base.filter(r=>(r.caption??"").toLowerCase().includes(q)||(r.author?.displayName??"").toLowerCase().includes(q));
-  },[raw, trendingRaw, signal, query]);
+    return raw.filter(r=>r.caption.toLowerCase().includes(q)||r.author.displayName.toLowerCase().includes(q));
+  },[raw,query]);
 
   /* derived: the currently playing video + helper to open by object */
   const selected = selectedIdx !== null ? (reels[selectedIdx] ?? null) : null;
@@ -6639,7 +6242,7 @@ export default function OTubePage() {
 
   const featured = reels[0]??null;
   const trending = reels.slice(1,9);
-  const shorts   = shortsRaw.length > 0 ? shortsRaw : reels.slice(0,6);
+  const shorts   = reels.slice(0,6);
   const grid     = reels.slice(1);
   const newest   = [...reels].reverse().slice(0,4);
 
@@ -6803,6 +6406,12 @@ export default function OTubePage() {
                       letterSpacing:"0.04em",transition:"all 0.25s"}}>
                       {t(`otube.signal_${id}`)}
                     </span>
+                    {/* SHORTS badge */}
+                    {id==="shorts" && !active && (
+                      <motion.div animate={{scale:[1,1.08,1]}} transition={{duration:2.5,repeat:Infinity}}
+                        style={{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",
+                          background:T.pulse,boxShadow:`0 0 6px ${T.pulse}`}}/>
+                    )}
                   </motion.button>
                 );
               })}
@@ -6835,17 +6444,9 @@ export default function OTubePage() {
             <div className="flex flex-col items-center justify-center py-24 gap-3">
               <OTubeMark size={52}/>
               <p style={{color:"rgba(255,255,255,0.25)",fontSize:13,fontFamily:"monospace"}}>
-                {rawError ? "Server bilan bog'liq xato" : query?`"${query}" — signal topilmadi`:"Kontent yo'q"}
+                {query?`"${query}" — signal topilmadi`:"Kontent yo'q"}
               </p>
-              {rawError && (
-                <motion.button whileTap={{scale:0.9}} onClick={()=>refetchRaw()}
-                  className="flex items-center gap-2 px-4 py-2"
-                  style={{background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`}}>
-                  <RefreshCw style={{width:13,height:13,color:T.cyan}}/>
-                  <span style={{fontSize:11,color:T.cyan,fontWeight:700,letterSpacing:"0.1em"}}>QAYTA URINISH</span>
-                </motion.button>
-              )}
-              {!rawError && query && (
+              {query && (
                 <motion.button whileTap={{scale:0.9}} onClick={()=>setQuery("")}
                   className="flex items-center gap-2 px-4 py-2"
                   style={{background:`${T.cyan}18`,border:`1px solid ${T.cyan}44`}}>
@@ -6987,9 +6588,9 @@ export default function OTubePage() {
                   <div style={{width:80,aspectRatio:"16/9",flexShrink:0,borderRadius:8,
                     position:"relative",overflow:"hidden"}}>
                     {v.thumbnailUrl
-                      ? <img loading="lazy" decoding="async" src={resolveApiUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover"/>
+                      ? <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover"/>
                       : v.videoUrl
-                      ? <video src={resolveApiUrl(v.videoUrl)} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
+                      ? <video src={v.videoUrl} autoPlay muted playsInline loop className="w-full h-full object-cover" style={{pointerEvents:"none"}}/>
                       : <div className="w-full h-full" style={{background:"#0a0218"}}/>}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -7052,9 +6653,6 @@ export default function OTubePage() {
 
       {/* Floating action button — only when player closed and NOT in full-screen shorts view */}
       {!selected && tab !== "shorts" && <FloatingFAB/>}
-
-      {/* OTube Music Player — replaces MuniAI orb on this page */}
-      {!selected && <OTubeMusicPlayer />}
     </>
   );
 }

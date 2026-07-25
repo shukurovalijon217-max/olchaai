@@ -1,5 +1,5 @@
 /**
- * /api/go/* — Proxy routes to the GILOS Go real-time microservice.
+ * /api/go/* — Proxy routes to the OlchaAI Go real-time microservice.
  * Exposes Go service capabilities (feed ranking, trending, WS stats) via the main API.
  */
 import { Router, Request, Response } from "express";
@@ -46,20 +46,8 @@ router.get("/stats", async (req: Request, res: Response) => {
 });
 
 // Internal: push a real-time notification to a user via Go WS hub
-// SECURITY: this endpoint MUST only be callable by internal Express services.
-// We block it here so that external users cannot broadcast arbitrary messages
-// to all connected clients (userId=0 → broadcastAll attack).
-router.post("/notify", (req: Request, res: Response) => {
-  // Only allow requests that carry the internal service secret.
-  // Express calls Go directly via the notifyGo() helper — this Express-side
-  // route must never be reachable by an authenticated or unauthenticated client.
-  const secret = req.headers["x-internal-secret"];
-  const expected = process.env.INTERNAL_SERVICE_SECRET;
-  if (!expected || secret !== expected) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-  proxyToGo("/go/notify", req, res, "POST");
+router.post("/notify", async (req: Request, res: Response) => {
+  await proxyToGo("/go/notify", req, res, "POST");
 });
 
 export default router;

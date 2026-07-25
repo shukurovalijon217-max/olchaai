@@ -8,7 +8,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import AIPaywall from "@/components/AIPaywall";
 
-const API = "";
+const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
 interface AIUsage { used: number; remaining: number; limit: number; isPremium: boolean; }
 
@@ -49,7 +49,7 @@ export default function AIChatPage() {
   const QUICK_ACTIONS = [
     { icon: Wand2, label: t("ai.quick_caption"), prompt: "Instagram uchun jozibali caption yoz: " },
     { icon: FileText, label: t("ai.quick_edit"), prompt: "Quyidagi matnni yaxshila: " },
-    { icon: Sparkles, label: t("ai.quick_idea"), prompt: "GILOS uchun kontent g'oyalar ber" },
+    { icon: Sparkles, label: t("ai.quick_idea"), prompt: "OlchaAI uchun kontent g'oyalar ber" },
     { icon: Image, label: t("ai.quick_prompt"), prompt: "DALL-E uchun ajoyib rasm prompt yoz: " },
   ];
 
@@ -267,7 +267,7 @@ export default function AIChatPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ topic: captionTopic, tone: "qiziqarli", platform: "GILOS" }),
+        body: JSON.stringify({ topic: captionTopic, tone: "qiziqarli", platform: "OlchaAI" }),
       });
       if (r.status === 402) {
         const data = await r.json();
@@ -318,7 +318,7 @@ export default function AIChatPage() {
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-foreground">GILOS</h1>
+              <h1 className="text-base font-bold text-foreground">OlchaAI</h1>
               <p className="text-[11px] text-muted-foreground">{t("ai.subtitle")}</p>
             </div>
           </div>
@@ -523,7 +523,7 @@ export default function AIChatPage() {
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-violet-400 font-semibold flex items-center gap-1">
-                      <Bot className="w-3.5 h-3.5" /> GILOS:
+                      <Bot className="w-3.5 h-3.5" /> OlchaAI:
                     </p>
                     {voiceAudio && (
                       <button
@@ -544,7 +544,7 @@ export default function AIChatPage() {
                 {[
                   t("ai.tab_chat"),
                   "Groq AI + Whisper",
-                  "GILOS",
+                  "OlchaAI",
                   "DALL-E 3",
                 ].map(tip => (
                   <div key={tip} className="bg-muted/50 rounded-xl px-3 py-2 text-xs text-muted-foreground text-center">
@@ -635,7 +635,7 @@ export default function AIChatPage() {
             {imageResult && (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                 className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                <img loading="lazy" decoding="async" src={imageResult.startsWith("http") ? imageResult : `data:image/png;base64,${imageResult}`} alt="AI generated" className="w-full rounded-xl" />
+                <img src={imageResult.startsWith("http") ? imageResult : `data:image/png;base64,${imageResult}`} alt="AI generated" className="w-full rounded-xl" />
                 <a href={imageResult.startsWith("http") ? imageResult : `data:image/png;base64,${imageResult}`} download="olcha-ai-image.png" target="_blank" rel="noreferrer"
                   className="block w-full text-center py-2.5 rounded-xl bg-primary/15 text-primary text-sm font-semibold hover:bg-primary/25 transition-colors">
                   {t("ai.download")}
@@ -651,7 +651,7 @@ export default function AIChatPage() {
         used={aiUsage?.used ?? 0}
         limit={aiUsage?.limit ?? 100}
         onClose={() => setShowPaywall(false)}
-        featureName="GILOS"
+        featureName="OlchaAI"
       />
     </div>
   );

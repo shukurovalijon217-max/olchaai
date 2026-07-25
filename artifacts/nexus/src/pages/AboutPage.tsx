@@ -10,7 +10,7 @@ export default function AboutPage() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    document.title = `${t("about.title")} — GILOS`;
+    document.title = `${t("about.title")} — OlchaAI`;
   }, [t]);
 
   return (

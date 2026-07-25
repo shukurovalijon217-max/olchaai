@@ -3,7 +3,7 @@ import os from "node:os";
 import { logger } from "./lib/logger";
 
 const WORKERS = Math.max(1, Math.min(
-  parseInt(process.env["WEB_CONCURRENCY"] ?? "2", 10) || 2,
+  parseInt(process.env["WEB_CONCURRENCY"] ?? "1", 10) || 1,
   os.cpus().length,
   4
 ));
@@ -23,12 +23,6 @@ if (cluster.isPrimary) {
   const { default: app } = await import("./app.js");
   const { initTFEngine } = await import("./moderation/tfEngine.js");
   const { cleanupSeedData } = await import("./lib/cleanupSeedData.js");
-  const { autoMigrate } = await import("./lib/autoMigrate.js");
-
-  // Run DB migrations before accepting traffic — safe to run on every boot
-  if (cluster.worker?.id === 1) {
-    await autoMigrate().catch((err) => logger.warn({ err }, "autoMigrate failed (non-fatal)"));
-  }
 
   const rawPort = process.env["PORT"];
   if (!rawPort) throw new Error("PORT environment variable is required but was not provided.");
@@ -56,9 +50,5 @@ if (cluster.isPrimary) {
     // One-time, idempotent removal of leftover seed/demo accounts and their
     // content (safe to run on every boot — no-ops once already cleaned).
     cleanupSeedData().catch((err) => logger.warn({ err }, "Seed data cleanup errored (non-fatal)"));
-
-    // Pre-warm top language translation cache so all users get instant translations
-    const { warmOnStartup } = await import("./lib/warmTranslations.js");
-    warmOnStartup("v6").catch((err) => logger.warn({ err }, "warmTranslations startup failed (non-fatal)"));
   }
 }

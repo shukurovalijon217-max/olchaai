@@ -8,15 +8,12 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { pool as dbPool } from "@workspace/db";
-// build: 2026-07-21-v3
 import { WebhookHandlers } from "./stripe/webhookHandlers";
 import { creditTreasury } from "./routes/treasury";
 import { systemMonitor, normalisePath } from "./lib/systemMonitor";
 import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 import { securityShield } from "./middlewares/securityShield";
 import { resilienceMiddleware } from "./middlewares/resilience";
-import { setupMeiliIndexes } from "./lib/meili";
-import { userRateLimit } from "./middlewares/userRateLimit";
 
 const app: Express = express();
 
@@ -79,10 +76,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       if (/^https:\/\/[\w-]+\.replit\.app$/.test(origin) ||
           /^https:\/\/[\w-]+\.repl\.co$/.test(origin) ||
           /^https:\/\/[\w-]+(\.onrender\.com)$/.test(origin) ||
-          /^https:\/\/[\w-]+(\.up\.railway\.app)$/.test(origin) ||
-          /^https:\/\/[\w-]+(\.railway\.app)$/.test(origin) ||
           /^https?:\/\/(www\.)?olchaai\.com$/.test(origin) ||
-          /^https?:\/\/(www\.)?gilosai\.com$/.test(origin) ||
           ALLOWED_ORIGINS.has(origin)) {
         return cb(null, true);
       }
@@ -141,10 +135,7 @@ app.post(
 );
 
 app.use((req, res, next) => {
-  if (req.method === "PUT" && (
-    req.path.startsWith("/api/storage/uploads/cloud/") ||
-    req.path.startsWith("/api/storage/uploads/r2-proxy")
-  )) {
+  if (req.path.startsWith("/api/storage/uploads/cloud/") && req.method === "PUT") {
     return next();
   }
   express.json({ limit: "50mb" })(req, res, next);
@@ -188,7 +179,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       p.startsWith("/api/auth") ||
       p.startsWith("/api/wallet") ||
       p.startsWith("/api/messages") ||
-      p.startsWith("/api/conversations") ||
       p.startsWith("/api/notifications") ||
       p.startsWith("/api/creator") ||
       p.startsWith("/api/groups") ||
@@ -200,11 +190,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       p.startsWith("/api/energy") ||
       p.startsWith("/api/emotion") ||
       p.startsWith("/api/anon") ||
-      p.startsWith("/api/plans") ||
-      p.startsWith("/api/muni") ||
-      p.startsWith("/api/ai") ||
-      p.startsWith("/api/openai") ||
-      p.startsWith("/api/translate")
+      p.startsWith("/api/plans")
     ) {
       res.setHeader("Cache-Control", "private, no-store");
     } else if (p.startsWith("/api/media/img")) {
@@ -233,7 +219,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 /* ── NEXUS Security Shield — Pentagon-grade auto-defense ─────── */
 app.use(securityShield);
-app.use("/api", userRateLimit);
 
 /* ── Mobile Bearer token auth: HMAC-signed token ──────────────── */
 app.use("/api", (req: Request, res: Response, next: NextFunction) => {
@@ -315,8 +300,5 @@ app.post("/api/client-error", (req: Request, res: Response) => {
   req.log.error({ message, stack, componentStack, url }, "[client-error] Frontend crash");
   res.status(204).end();
 });
-
-/* ── Meilisearch index setup (non-blocking, runs once on startup) ── */
-void setupMeiliIndexes();
 
 export default app;

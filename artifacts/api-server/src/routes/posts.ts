@@ -1,17 +1,15 @@
 import { Router } from "express";
-import { db, readDb } from "@workspace/db";
+import { db } from "@workspace/db";
 import { postsTable, postLikesTable, commentsTable, commentLikesTable, usersTable, moderationQueueTable, followsTable } from "@workspace/db";
-import { eq, sql, desc, and, inArray, notInArray } from "drizzle-orm";
+import { eq, sql, desc, and, inArray } from "drizzle-orm";
 import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { scanContentAsync } from "../moderation/aiFilter";
-import { enrichWithCDN } from "../lib/bunny";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { notifyComment, notifyLike } from "../lib/emailNotify";
 import { sendNotification } from "../lib/pushNotifications";
-import { indexPost, deletePostIndex } from "../lib/meili";
 
 const router = Router();
 
@@ -27,10 +25,10 @@ async function batchEnrichPosts(
 
   const [authors, likedRows, statsMap] = await Promise.all([
     authorIds.length > 0
-      ? readDb.select().from(usersTable).where(inArray(usersTable.id, authorIds))
+      ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
       : Promise.resolve([]),
     viewerId && postIds.length > 0
-      ? readDb
+      ? db
           .select({ postId: postLikesTable.postId })
           .from(postLikesTable)
           .where(and(inArray(postLikesTable.postId, postIds), eq(postLikesTable.userId, viewerId)))
@@ -53,7 +51,7 @@ async function batchEnrichPosts(
         id: author?.id ?? post.authorId,
         username: author?.username ?? "deleted",
         displayName: author?.displayName ?? "Deleted User",
-        avatarUrl: enrichWithCDN({ avatarUrl: author?.avatarUrl ?? null }).avatarUrl,
+        avatarUrl: author?.avatarUrl ?? null,
         isVerified: author?.isVerified ?? false,
         ...stats,
       },
@@ -80,60 +78,15 @@ router.get("/posts", async (req, res) => {
     const notExpired = sql`(${postsTable.destructAt} IS NULL OR ${postsTable.destructAt} > NOW())`;
 
     const enriched = await cacheAside("posts", cacheKey ?? `__skip__${Date.now()}`, async () => {
-      type PostRow = Record<string, unknown> & { id: number };
-      let posts: PostRow[];
+      let posts;
       if (userId) {
-        posts = (await db.select().from(postsTable).where(and(eq(postsTable.authorId, userId), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset)) as PostRow[];
+        posts = await db.select().from(postsTable).where(and(eq(postsTable.authorId, userId), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
       } else if (type && type !== "all") {
-        posts = (await db.select().from(postsTable).where(and(eq(postsTable.type, type), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset)) as PostRow[];
+        posts = await db.select().from(postsTable).where(and(eq(postsTable.type, type), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
       } else {
-        // Fetch a larger pool for ML ranking (2x requested limit)
-        const fetchLimit = viewerId && offset === 0 ? Math.min(limit * 2, 60) : limit;
-
-        // Filter out posts from users blocked by the viewer
-        let blockFilter: ReturnType<typeof notInArray> | undefined;
-        if (viewerId) {
-          try {
-            const blockRows = await db.execute(sql`SELECT blocked_id FROM user_blocks WHERE blocker_id = ${viewerId}`);
-            const blockedIds = ((blockRows as any).rows ?? []).map((r: any) => Number(r.blocked_id)).filter(Boolean);
-            if (blockedIds.length > 0) {
-              blockFilter = notInArray(postsTable.authorId, blockedIds);
-            }
-          } catch { /* user_blocks table may not exist in all envs — skip block filter */ }
-        }
-
-        const whereConds = blockFilter
-          ? and(midnightCond, notExpired, blockFilter)
-          : and(midnightCond, notExpired);
-        posts = (await db.select().from(postsTable).where(whereConds).orderBy(desc(postsTable.createdAt)).limit(fetchLimit).offset(offset)) as PostRow[];
-
-        // ML personalization: re-rank for authenticated users on first page
-        if (viewerId && offset === 0 && posts.length > 1) {
-          try {
-            const { rankFeedPosts } = await import("../lib/mlFeedRanking");
-            const rankedIds = await rankFeedPosts(
-              posts.map(p => ({
-                id: (p as any).id as number,
-                content: (p as any).content ?? null,
-                caption: (p as any).caption ?? null,
-                likesCount: (p as any).likesCount ?? 0,
-                commentsCount: (p as any).commentsCount ?? 0,
-                createdAt: (p as any).createdAt ?? null,
-              })),
-              viewerId,
-            );
-            // Reorder posts according to ML ranking, slice to requested limit
-            const idxMap = new Map(posts.map((p, i) => [(p as any).id as number, i]));
-            posts = rankedIds
-              .map(id => posts[idxMap.get(id) ?? -1])
-              .filter((p): p is PostRow => !!p)
-              .slice(0, limit);
-          } catch { /* ranking failure is non-fatal — keep chronological order */ }
-        } else {
-          posts = posts.slice(0, limit);
-        }
+        posts = await db.select().from(postsTable).where(and(midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
       }
-      return batchEnrichPosts(posts as Parameters<typeof batchEnrichPosts>[0], viewerId);
+      return batchEnrichPosts(posts, viewerId);
     }, cacheKey ? 15 : 0);
 
     if (cacheKey) res.setHeader("X-Cache", "HIT");
@@ -293,9 +246,9 @@ router.post("/posts/:id/hot-take", async (req: any, res) => {
 router.get("/posts/:id/hot-take", async (req: any, res) => {
   try {
     const postId = Number(req.params.id);
-    const userId = Number((req.session as any)?.userId) || null;
+    const userId = Number((req.session as any)?.userId ?? 0);
     const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL ?? process.env.NEON_DATABASE_URL });
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
     const [{ rows }, { rows: userRow }] = await Promise.all([
       pool.query(`SELECT vote, COUNT(*) as count FROM hot_take_votes WHERE post_id=$1 GROUP BY vote`, [postId]),
       userId ? pool.query(`SELECT vote FROM hot_take_votes WHERE post_id=$1 AND user_id=$2`, [postId, userId]) : { rows: [] },
@@ -305,8 +258,8 @@ router.get("/posts/:id/hot-take", async (req: any, res) => {
     const cold = Number(rows.find((r: any) => r.vote === "cold")?.count ?? 0);
     res.json({ fire, cold, userVote: userRow[0]?.vote ?? null });
   } catch (err) {
-    req.log.warn(err, "hot_take_votes table may be missing");
-    res.json({ fire: 0, cold: 0, userVote: null });
+    req.log.error(err);
+    res.status(500).json({ fire: 0, cold: 0, userVote: null });
   }
 });
 
@@ -322,7 +275,7 @@ router.post("/posts/ai-caption", async (req: any, res) => {
       messages: [
         {
           role: "system",
-          content: `Sen GILOS ijtimoiy tarmoq uchun ijodiy caption/izoh yozuvchi AI yordamchisan. Foydalanuvchi so'ragan tilda (o'zbek, rus yoki ingliz) qisqa, jozibali, emoji ishlatgan 3 ta har xil caption yoz. Har birini JSON arrayda qaytargin.`,
+          content: `Sen OlchaAI ijtimoiy tarmoq uchun ijodiy caption/izoh yozuvchi AI yordamchisan. Foydalanuvchi so'ragan tilda (o'zbek, rus yoki ingliz) qisqa, jozibali, emoji ishlatgan 3 ta har xil caption yoz. Har birini JSON arrayda qaytargin.`,
         },
         {
           role: "user",
@@ -374,9 +327,9 @@ router.post("/posts/:id/vote", async (req: any, res) => {
 router.get("/posts/:id/votes", async (req: any, res) => {
   try {
     const postId = Number(req.params.id);
-    const userId = Number((req.session as any)?.userId) || null;
+    const userId = Number((req.session as any)?.userId ?? 0);
     const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL ?? process.env.NEON_DATABASE_URL });
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
     const [{ rows: voteRows }, { rows: userRows }] = await Promise.all([
       pool.query(`SELECT option_index, COUNT(*) as count FROM post_votes WHERE post_id=$1 GROUP BY option_index`, [postId]),
       userId ? pool.query(`SELECT option_index FROM post_votes WHERE post_id=$1 AND user_id=$2`, [postId, userId]) : { rows: [] },
@@ -387,8 +340,8 @@ router.get("/posts/:id/votes", async (req: any, res) => {
       userVote: userRows[0] ? Number(userRows[0].option_index) : null,
     });
   } catch (err) {
-    req.log.warn(err, "post_votes table may be missing");
-    res.json({ votes: [], userVote: null });
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -398,8 +351,8 @@ router.post("/posts", async (req: any, res) => {
     const { content, type, mediaUrl, mediaUrls, overlays, audioName, audioUrl, audioTrimStart, audioTrimEnd, pollQuestion, pollOptions, mood, filterName, tags, midnightOnly,
       destructAt, geoLat, geoLng, geoRadiusKm, emotionLock, lockedEmotion, liveMoodEnabled, seriesName, seriesOrder, collabCanvasEnabled, collabCanvasId } = req.body;
     const sessionUserId: number | undefined = req.session?.userId;
-    if (!sessionUserId) { res.status(401).json({ error: "Login kerak" }); return; }
-    const authorId = sessionUserId;
+    const authorId = sessionUserId ?? Number(req.body.authorId);
+    if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
     const [post] = await db
       .insert(postsTable)
@@ -422,14 +375,6 @@ router.post("/posts", async (req: any, res) => {
 
     const [enriched] = await batchEnrichPosts([post], sessionUserId);
     res.status(201).json(enriched);
-
-    /* Meilisearch index — fire-and-forget */
-    void (async () => {
-      try {
-        const [author] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, authorId));
-        indexPost({ id: post.id, content: post.content ?? "", authorId, authorName: author?.displayName ?? "", mediaUrl: post.mediaUrl ?? undefined, likesCount: 0, commentsCount: 0, createdAt: Date.now() });
-      } catch { /* non-fatal */ }
-    })();
 
     /* AI scan & autopilot — fire-and-forget, never blocks response */
     void (async () => {
@@ -500,9 +445,6 @@ router.get("/posts/trending", async (req, res) => {
 router.get("/posts/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (isNaN(id) || !Number.isInteger(id) || id <= 0) {
-      res.status(400).json({ error: "Noto'g'ri post ID" }); return;
-    }
     const viewerId = (req.session as any)?.userId as number | undefined;
     const midnightCond = await midnightVisibilityConditionForReq(req);
     const [post] = await db.select().from(postsTable).where(and(eq(postsTable.id, id), midnightCond));
@@ -515,47 +457,10 @@ router.get("/posts/:id", async (req, res) => {
   }
 });
 
-/* ── PATCH /posts/:id ───────────────────────────────────────── */
-router.patch("/posts/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    const userId = (req.session as any)?.userId as number | undefined;
-    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
-    const [existing] = await db.select({ authorId: postsTable.authorId }).from(postsTable).where(eq(postsTable.id, id)).limit(1);
-    if (!existing) { res.status(404).json({ error: "Post topilmadi" }); return; }
-    const isAdmin = (req.session as any)?.isAdmin;
-    if (existing.authorId !== userId && !isAdmin) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
-    const { content, mediaUrl, type } = req.body as { content?: string; mediaUrl?: string | null; type?: string };
-    const updates: Record<string, unknown> = {};
-    if (content !== undefined) updates.content = content;
-    if (mediaUrl !== undefined) updates.mediaUrl = mediaUrl;
-    if (type !== undefined) updates.type = type;
-    if (Object.keys(updates).length === 0) { res.status(400).json({ error: "Hech narsa o'zgartirilmadi" }); return; }
-    const [updated] = await db.update(postsTable).set(updates).where(eq(postsTable.id, id)).returning();
-    res.json(updated);
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 /* ── DELETE /posts/:id ──────────────────────────────────────── */
 router.delete("/posts/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const userId = (req.session as any)?.userId as number | undefined;
-    if (!userId) { res.status(401).json({ error: "Login kerak" }); return; }
-
-    const [post] = await db.select({ authorId: postsTable.authorId })
-      .from(postsTable).where(eq(postsTable.id, id)).limit(1);
-    if (!post) { res.status(404).json({ error: "Post topilmadi" }); return; }
-
-    const [me] = await db.select({ isAdmin: usersTable.isAdmin })
-      .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-    if (post.authorId !== userId && !me?.isAdmin) {
-      res.status(403).json({ error: "Ruxsat yo'q" }); return;
-    }
-
     const commentRows = await db
       .select({ id: commentsTable.id })
       .from(commentsTable)
@@ -606,7 +511,7 @@ router.post("/posts/:id/like", async (req, res) => {
       void (async () => {
         try {
           const [postAuthor, liker] = await Promise.all([
-            db.select({ email: usersTable.email, displayName: usersTable.displayName, notifPrefs: usersTable.notifPrefs }).from(usersTable).where(eq(usersTable.id, post.authorId!)).limit(1),
+            db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, post.authorId!)).limit(1),
             db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
           ]);
           const likerName = liker[0]?.displayName ?? "Kimdir";
@@ -622,9 +527,7 @@ router.post("/posts/:id/like", async (req, res) => {
             targetType: "post",
             data: { postId: String(postId), type: "like" },
           });
-          const authorPrefs = postAuthor[0]?.notifPrefs;
-          const emailOk = authorPrefs == null || (authorPrefs.emailNotifs ?? true);
-          if (postAuthor[0]?.email && emailOk) {
+          if (postAuthor[0]?.email) {
             await notifyLike({
               toEmail: postAuthor[0].email,
               toName: postAuthor[0].displayName ?? "Foydalanuvchi",
@@ -675,8 +578,6 @@ router.post("/posts/:id/comments/:commentId/like", async (req, res) => {
 router.get("/posts/:id/comments", async (req, res) => {
   try {
     const postId = Number(req.params.id);
-    // Validate postId to prevent NaN/0 queries that could leak data
-    if (!postId || isNaN(postId)) { res.json([]); return; }
     const comments = await db
       .select()
       .from(commentsTable)
@@ -712,85 +613,13 @@ router.get("/posts/:id/comments", async (req, res) => {
   }
 });
 
-/* ── DELETE /posts/:id/comments/:commentId ──────────────────── */
-router.delete("/posts/:id/comments/:commentId", async (req, res) => {
-  try {
-    const postId = Number(req.params.id);
-    const commentId = Number(req.params.commentId);
-    const userId = (req.session as any)?.userId as number | undefined;
-    if (!userId) { res.status(401).json({ error: "Login kerak" }); return; }
-
-    const [comment] = await db.select({ id: commentsTable.id, authorId: commentsTable.authorId })
-      .from(commentsTable).where(eq(commentsTable.id, commentId)).limit(1);
-    if (!comment) { res.status(404).json({ error: "Izoh topilmadi" }); return; }
-
-    const [me] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-    if (comment.authorId !== userId && !me?.isAdmin) {
-      res.status(403).json({ error: "Ruxsat yo'q" }); return;
-    }
-
-    await db.delete(commentLikesTable).where(eq(commentLikesTable.commentId, commentId));
-    await db.delete(commentsTable).where(eq(commentsTable.id, commentId));
-    await db.update(postsTable)
-      .set({ commentsCount: sql`GREATEST(0, ${postsTable.commentsCount} - 1)` })
-      .where(eq(postsTable.id, postId));
-
-    res.json({ deleted: true });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-/* ── POST /posts/:id/save — toggle save/bookmark ────────────── */
-router.post("/posts/:id/save", async (req, res) => {
-  try {
-    const postId = Number(req.params.id);
-    const userId = (req.session as any)?.userId as number | undefined;
-    if (!userId) { res.status(401).json({ error: "Login kerak" }); return; }
-
-    const existing = await db.execute(
-      sql`SELECT id FROM post_saves WHERE post_id = ${postId} AND user_id = ${userId} LIMIT 1`
-    );
-    const rows = (existing as any).rows ?? [];
-    if (rows.length > 0) {
-      await db.execute(sql`DELETE FROM post_saves WHERE post_id = ${postId} AND user_id = ${userId}`);
-      res.json({ saved: false });
-    } else {
-      await db.execute(sql`INSERT INTO post_saves(post_id, user_id) VALUES(${postId}, ${userId}) ON CONFLICT DO NOTHING`);
-      res.json({ saved: true });
-    }
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-/* ── GET /posts/saved — foydalanuvchi saqlagan postlar ─────── */
-router.get("/posts/saved", async (req, res) => {
-  try {
-    const userId = (req.session as any)?.userId as number | undefined;
-    if (!userId) { res.status(401).json({ error: "Login kerak" }); return; }
-    const rows = await db.execute(
-      sql`SELECT p.* FROM post_saves s JOIN posts p ON s.post_id = p.id WHERE s.user_id = ${userId} ORDER BY s.created_at DESC LIMIT 50`
-    );
-    res.json((rows as any).rows ?? []);
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 /* ── POST /posts/:id/comments ───────────────────────────────── */
 router.post("/posts/:id/comments", async (req, res) => {
   try {
     const postId = Number(req.params.id);
-    if (!postId || isNaN(postId)) { res.status(400).json({ error: "Noto'g'ri post ID" }); return; }
     const { content } = req.body;
-    // SECURITY: use ONLY session userId — never accept authorId from request body
-    // (body-based authorId allows impersonation of any user)
-    const authorId = (req.session as any)?.userId as number | undefined;
-    if (!authorId) { res.status(401).json({ error: "Izoh yozish uchun tizimga kiring" }); return; }
+    const authorId = (req.session as any)?.userId ?? Number(req.body.authorId);
+    if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
 
     const [comment] = await db.insert(commentsTable).values({ postId, authorId, content }).returning();
     await db.update(postsTable).set({ commentsCount: sql`${postsTable.commentsCount} + 1` }).where(eq(postsTable.id, postId));
@@ -825,10 +654,8 @@ router.post("/posts/:id/comments", async (req, res) => {
             targetType: "post",
             data: { postId: String(postId), type: "comment" },
           });
-          const [postAuthor] = await db.select({ email: usersTable.email, displayName: usersTable.displayName, notifPrefs: usersTable.notifPrefs }).from(usersTable).where(eq(usersTable.id, postRow.authorId)).limit(1);
-          const cmtAuthorPrefs = postAuthor?.notifPrefs;
-          const cmtEmailOk = cmtAuthorPrefs == null || (cmtAuthorPrefs.emailNotifs ?? true);
-          if (postAuthor?.email && cmtEmailOk) {
+          const [postAuthor] = await db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, postRow.authorId)).limit(1);
+          if (postAuthor?.email) {
             await notifyComment({
               toEmail: postAuthor.email,
               toName: postAuthor.displayName ?? "Foydalanuvchi",

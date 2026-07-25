@@ -860,15 +860,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [musicApiResults, setMusicApiResults] = useState<ApiSong[]>([]);
   const [musicApiLoading, setMusicApiLoading] = useState(false);
   const musicDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const API_BASE = "";
+  const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "");
 
   /* ── Audio server upload ── */
   const [audioServerUrl, setAudioServerUrl] = useState("");   // real server URL after upload
   const [audioUploading, setAudioUploading] = useState(false);
-  const [audioUploadFailed, setAudioUploadFailed] = useState(false);
   const { uploadFile: uploadAudioFile } = useMediaUpload({
-    onSuccess: r => { setAudioServerUrl(r.serveUrl); setAudioUploading(false); setAudioUploadFailed(false); },
-    onError: () => { setAudioUploading(false); setAudioUploadFailed(true); },
+    onSuccess: r => { setAudioServerUrl(r.serveUrl); setAudioUploading(false); },
+    onError: () => setAudioUploading(false),
   });
 
   /* ── Audio upload + trim state ── */
@@ -940,7 +939,6 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     if (!file) return;
     const blobUrl = URL.createObjectURL(file);
     setAudioServerUrl("");
-    setAudioUploadFailed(false);
     loadAudioUrl(blobUrl, file.name.replace(/\.[^.]+$/, ""), true);
     setAudioUploading(true);
     uploadAudioFile(new File([file], file.name, { type: file.type }));
@@ -965,15 +963,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     trimDragRef.current = { type, startX: e.clientX, startVal: type==="start" ? audioTrimStart : audioTrimEnd };
   };
   const onTrimMove = (e: React.PointerEvent) => {
-    const trimDrag = trimDragRef.current;
-    if (!trimDrag || !trimTrackRef.current) return;
+    if (!trimDragRef.current || !trimTrackRef.current) return;
     const rect = trimTrackRef.current.getBoundingClientRect();
-    const frac = (e.clientX - trimDrag.startX) / rect.width;
+    const frac = (e.clientX - trimDragRef.current.startX) / rect.width;
     const delta = frac * (audioDuration || 60);
-    if (trimDrag.type === "start") {
-      setAudioTrimStart(prev => Math.max(0, Math.min(audioTrimEnd - 1, trimDrag.startVal + delta)));
+    if (trimDragRef.current.type === "start") {
+      setAudioTrimStart(prev => Math.max(0, Math.min(audioTrimEnd - 1, trimDragRef.current!.startVal + delta)));
     } else {
-      setAudioTrimEnd(prev => Math.max(audioTrimStart + 1, Math.min(audioDuration || 60, trimDrag.startVal + delta)));
+      setAudioTrimEnd(prev => Math.max(audioTrimStart + 1, Math.min(audioDuration || 60, trimDragRef.current!.startVal + delta)));
     }
   };
   const onTrimUp = () => { trimDragRef.current = null; };
@@ -1057,21 +1054,19 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     setSelectedId(id);
   };
   const onPointerMove = useCallback((e: React.PointerEvent) => {
-    /* resize takes priority — capture ref before async setter */
-    const resize = resizeRef.current;
-    if (resize) {
-      const dy = resize.startY - e.clientY;
-      const newSize = Math.max(12, Math.min(110, resize.startSize + dy * 0.55));
-      setItems(p => p.map(i => i.id === resize.id ? { ...i, fontSize: newSize } : i));
+    /* resize takes priority */
+    if (resizeRef.current) {
+      const dy = resizeRef.current.startY - e.clientY;
+      const newSize = Math.max(12, Math.min(110, resizeRef.current.startSize + dy * 0.55));
+      setItems(p => p.map(i => i.id === resizeRef.current!.id ? { ...i, fontSize: newSize } : i));
       return;
     }
-    const drag = dragRef.current;
-    if (!drag || !containerRef.current) return;
+    if (!dragRef.current || !containerRef.current) return;
     const r = containerRef.current.getBoundingClientRect();
-    const dx = ((e.clientX - drag.sx) / r.width) * 100;
-    const dy = ((e.clientY - drag.sy) / r.height) * 100;
-    setItems(p => p.map(i => i.id === drag.id
-      ? { ...i, x: Math.max(4, Math.min(96, drag.ox + dx)), y: Math.max(4, Math.min(96, drag.oy + dy)) }
+    const dx = ((e.clientX - dragRef.current.sx) / r.width) * 100;
+    const dy = ((e.clientY - dragRef.current.sy) / r.height) * 100;
+    setItems(p => p.map(i => i.id === dragRef.current!.id
+      ? { ...i, x: Math.max(4,Math.min(96,dragRef.current!.ox+dx)), y: Math.max(4,Math.min(96,dragRef.current!.oy+dy)) }
       : i));
   }, []);
   const onPointerUp = () => { dragRef.current = null; resizeRef.current = null; };
@@ -1130,7 +1125,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     <motion.div
       initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
       className="fixed inset-0 flex flex-col"
-      style={{ zIndex:99999, background:"#000", touchAction:"none" }}
+      style={{ zIndex:200, background:"#000", touchAction:"none" }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onClick={() => { setSelectedId(null); setPanel("none"); }}
@@ -1142,7 +1137,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
           <video ref={videoRef} src={previews[slide]} className="w-full h-full object-cover" muted loop playsInline autoPlay
             style={{ filter: combinedCss !== "none" ? combinedCss : undefined, transition:"filter 0.25s ease" }} />
         ) : (
-          <img loading="lazy" decoding="async" src={previews[slide]} alt="" className="w-full h-full object-cover"
+          <img src={previews[slide]} alt="" className="w-full h-full object-cover"
             style={{ filter: combinedCss !== "none" ? combinedCss : undefined, transition:"filter 0.25s ease" }} />
         )}
 
@@ -1262,14 +1257,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             disabled={audioUploading}
             className="justify-self-end px-3.5 py-1 rounded-full text-xs font-bold text-white"
             style={{
-              background: audioUploadFailed ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.10)",
+              background: "rgba(255,255,255,0.10)",
               backdropFilter: "blur(14px) saturate(1.6)",
               WebkitBackdropFilter: "blur(14px) saturate(1.6)",
-              border: audioUploadFailed ? "1px solid rgba(239,68,68,0.55)" : "1px solid rgba(255,255,255,0.25)",
+              border: "1px solid rgba(255,255,255,0.25)",
               boxShadow: "0 2px 10px rgba(0,0,0,0.25)",
               opacity: audioUploading ? 0.6 : 1,
             }}>
-            {audioUploading ? "Yuklanmoqda…" : audioUploadFailed ? "⚠ Retry" : "Tayyor"}
+            {audioUploading ? "Yuklanmoqda…" : "Tayyor"}
           </button>
         </div>
 
@@ -1998,7 +1993,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                         <video src={previews[0]} className="w-full h-full object-cover"
                           style={{ filter: f.css === "none" ? undefined : f.css }} muted playsInline />
                       ) : (
-                        <img loading="lazy" decoding="async" src={previews[0]} alt={f.label} className="w-full h-full object-cover"
+                        <img src={previews[0]} alt={f.label} className="w-full h-full object-cover"
                           style={{ filter: f.css === "none" ? undefined : f.css }} />
                       )
                     )}
@@ -2091,7 +2086,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                     {fmtTime(audioTrimStart)} – {fmtTime(audioTrimEnd)}
                   </span>
                 )}
-                <button onClick={() => { setAudioName(""); setAudioUploadUrl(""); setAudioServerUrl(""); setAudioUploadFailed(false); setMusicQuery(""); setMusicTab("search"); }}
+                <button onClick={() => { setAudioName(""); setAudioUploadUrl(""); setMusicQuery(""); setMusicTab("search"); }}
                   className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ background:"rgba(255,255,255,0.12)" }}>
                   <X className="w-3.5 h-3.5 text-white/70" />
@@ -2182,7 +2177,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                             borderLeft: isSelected ? "2.5px solid #06b6d4" : "2.5px solid transparent",
                           }}>
                           {song.artwork
-                            ? <img loading="lazy" decoding="async" src={song.artwork} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" style={{ border:"1px solid rgba(255,255,255,0.1)" }} />
+                            ? <img src={song.artwork} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" style={{ border:"1px solid rgba(255,255,255,0.1)" }} />
                             : <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background:"rgba(6,182,212,0.2)" }}><Music className="w-4 h-4 text-cyan-300" /></div>}
                           <div className="flex flex-col items-start flex-1 min-w-0">
                             <span className="text-[13px] font-semibold text-white truncate w-full text-left leading-tight">{song.title}</span>
@@ -2358,12 +2353,6 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                       <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background:"rgba(16,185,129,0.12)", border:"1px solid rgba(16,185,129,0.3)" }}>
                         <span className="text-green-400 text-sm">✓</span>
                         <span className="text-[11px] font-bold text-green-300">Audio yuklandi — endi o'ynaydi!</span>
-                      </div>
-                    )}
-                    {audioUploadFailed && (
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background:"rgba(239,68,68,0.12)", border:"1px solid rgba(239,68,68,0.35)" }}>
-                        <span className="text-red-400 text-sm">⚠</span>
-                        <span className="text-[11px] font-bold text-red-300">Audio yuklanmadi. Qaytadan tanlang yoki qo'shiq nomini kiriting.</span>
                       </div>
                     )}
                     {/* Track info + transport */}
@@ -2752,7 +2741,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                           <video src={previews[0]} className="w-full h-full object-cover" muted playsInline
                             style={{ filter: f.css === "none" ? undefined : f.css }} />
                         ) : (
-                          <img loading="lazy" decoding="async" src={previews[0]} alt="" className="w-full h-full object-cover"
+                          <img src={previews[0]} alt="" className="w-full h-full object-cover"
                             style={{ filter: f.css === "none" ? undefined : f.css }} />
                         )
                       ) : (

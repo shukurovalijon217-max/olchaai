@@ -48,30 +48,26 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"],
   },
-  define: {
-    "import.meta.env.VITE_API_BASE_URL": JSON.stringify(
-      process.env.VITE_API_BASE_URL ?? ""
-    ),
-    "import.meta.env.VITE_WS_URL": JSON.stringify(
-      process.env.VITE_WS_URL || "wss://olchaai-go-production.up.railway.app/go/ws"
-    ),
-  },
   optimizeDeps: {
     include: ["@emoji-mart/react", "@emoji-mart/data"],
-    exclude: ["hls.js"],
   },
   root: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    target: "es2020",
-    minify: "esbuild",
-    cssMinify: true,
-    cssCodeSplit: true,
-    rollupOptions: {},
-    chunkSizeWarningLimit: 600,
-    reportCompressedSize: false,
-    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react":    ["react", "react-dom"],
+          "vendor-motion":   ["framer-motion"],
+          "vendor-query":    ["@tanstack/react-query"],
+          "vendor-icons":    ["lucide-react"],
+          "vendor-i18n":     ["i18next", "react-i18next"],
+          "vendor-router":   ["wouter"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 800,
   },
   server: {
     port,

@@ -363,12 +363,6 @@ paths:
         - in: query
           name: userId
           schema: { type: integer }
-        - in: query
-          name: sort
-          schema: { type: string, enum: [top, trending, latest], default: top }
-        - in: query
-          name: type
-          schema: { type: string, enum: [reel, short] }
       responses:
         "200":
           description: OK
@@ -2107,7 +2101,6 @@ components:
         tags: { type: array, items: { type: string } }
         createdAt: { type: string }
         views24h: { type: integer }
-        type: { type: string, enum: [reel, short], description: "Content type" }
 
     ReelInput:
       type: object
@@ -2120,7 +2113,6 @@ components:
         audioTrack: { type: string }
         duration: { type: integer }
         tags: { type: array, items: { type: string } }
-        type: { type: string, enum: [reel, short] }
 
     ReelAnalytics:
       type: object
@@ -2379,7 +2371,6 @@ components:
         conversationId: { type: integer }
         senderId: { type: integer }
         content: { type: string }
-        type: { type: ["string", "null"] }
         mediaUrl: { type: ["string", "null"] }
         isRead: { type: boolean }
         createdAt: { type: string }
@@ -2396,7 +2387,6 @@ components:
       properties:
         senderId: { type: integer }
         content: { type: string }
-        type: { type: string }
         mediaUrl: { type: string }
         scheduledAt:
           type: string

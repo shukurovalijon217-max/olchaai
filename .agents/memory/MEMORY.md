@@ -1,5 +1,4 @@
 - [OlCha platform stack](olcha-stack.md) — Go real-time (:8099/go/*), Express API (:8080/api/*), Nexus web (/), Expo mobile; always rebuild Go binary after changes.
-- [DB priority and production split](db-production-split.md) — DATABASE_URL=Railway (primary), NEON_DATABASE_URL=fallback; olchaai.com still served from Render as of July 2026; Railway DB has migrated real users/posts/reels (Alijon id:22, omen id:12, 5 others id:72-76).
 - [Orval codegen conflict fix](orval-codegen-conflict.md) — inline OpenAPI request body schemas cause duplicate type exports; always use $ref to component schemas for request bodies.
 - [Nexus frontend import conventions](nexus-imports.md) — Nexus pages must import hooks from @workspace/api-client-react and user from useAuth(), not api-zod or useCurrentUser.
 - [OpenAI integration setup](openai-integration.md) — Uses OPENAI_API_KEY directly (not Replit proxy); ai_conversations/ai_messages tables; image gen uses dall-e-3 with response_format b64_json.
@@ -25,10 +24,7 @@
 - [OTube collab/challenges API contracts](otube-api-contracts.md) — collaborators invite by username handle not userId; challenges need name/hashtag/category not title/description; no total-views endpoint, sum client-side.
 - [Orval generated hooks + conditional enabled](orval-enabled-querykey.md) — passing query.enabled without an explicit queryKey can throw TS2741; always pass getXxxQueryKey(params) alongside enabled.
 - [Testing Stripe Checkout Sessions](stripe-checkout-testing.md) — no payment_intent exists until the hosted page loads; curl can verify creation + unpaid-rejection + idempotency, not the paid-credit path.
-- [GILOS brand spec](brand-visual-identity.md) — brand is GILOS everywhere; Stripe product names stay "OlchaAI Premium" (dashboard); domain URLs olchaai.com stay; OlchaWordmark.tsx:19 is a code comment, safe to leave.
-- [GROQ + OpenAI smart client](groq-openai-client.md) — api-server uses aiClient.ts (Groq-first llama-3.3-70b-versatile, OpenAI fallback); ai-core/orchestrator.ts has same pattern; GROQ_API_KEY already set in Railway.
-- [In-memory LRU cache module](cache-module.md) — cache.ts exports cacheAside/cacheDel/cacheDelPattern/cacheGet/cacheSet; cacheDelPattern(1 arg) scans all buckets (legacy), 2 args = named bucket; used in posts/conversations/reels/stories/users routes.
-- [VAPID Web Push setup](vapid-setup.md) — VAPID_PUBLIC_KEY env var + VAPID_PRIVATE_KEY secret both set; public key exposed at GET /api/notifications/vapid-key; VAPID_SUBJECT defaults to mailto:admin@gilosai.com.
+- [GilosAI brand visual identity spec](brand-visual-identity.md) — brand renamed OlchaAI→GilosAI; wordmark shows only "GILOS" (5 neon letters, no "AI"); component file is GilosWordmark.tsx; old OlchaWordmark.tsx kept as dead file.
 - [Safari red "!" address bar icon](safari-fraudulent-warning-icon.md) — Safe Browsing "Fraudulent Website" residual warning, not a TLS issue; check Google Transparency Report for live status before assuming still-flagged.
 - [Trust proxy required for secure session cookies](trust-proxy-session-cookies.md) — missing app.set("trust proxy",1) silently breaks ALL login-gated features in prod only, dev unaffected.
 - [Silent userId fallback breaks toggle actions](silent-userid-fallback.md) — a route defaulting session userId to a hardcoded value (not 401ing) silently acts on the wrong user; feels like "the button does nothing".
@@ -38,8 +34,3 @@
 - [Raw i18n key leaks & translation fallback](raw-i18n-key-leak-and-translation-fallback.md) — array `label` fields holding i18n keys need t() at every render site; ensureTranslation() must not cache a failed batch as if it succeeded.
 - [Stories UX: clarify location before building](stories-location-ambiguity.md) — "stories" can mean a dedicated stories screen OR a live-bubble on feed-post avatars; these are different features, confirm which before building.
 - [Privacy Policy page pattern](privacy-policy-page.md) — /privacy route (PrivacyPolicyPage.tsx) linked from login footer + Settings privacy tab; real GDPR/O'zbek-law-referencing content, not a stub.
-- [Push token cross-user leak](push-token-cross-user-leak.md) — push tokens must be deleted on logout (server) and unsubscribed on client; else next user on same device gets previous user's notifications.
-- [Railway Docker build for Nexus](railway-docker-nexus.md) — root Dockerfile (node:24-slim, NOT alpine) + .dockerignore must allow artifacts/nexus and lib/api-client-react; Railpack can't copy server.js to runtime, Docker builder required.
-- [Render deploy pnpm lockfile fix](render-pnpm-lockfile.md) — (LEGACY/Render) pnpm v8 lockfileVersion 9.0 fix; kept for reference only, project now on Railway.
-- [Nexus dist pre-built for Render](nexus-render-dist.md) — (LEGACY/Render) dist build and push pattern; now superseded by Railway Docker build.
-- [Railway Dockerfile build context fix](railway-build-context.md) — Railway build context=repo root; .dockerignore **/dist blocks dist/public; fix: !artifacts/nexus/dist exception + use full repo-root COPY paths.

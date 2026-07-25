@@ -58,7 +58,7 @@ router.post("/compare", (req: Request, res: Response) => {
     similarity,
     duplicate: hamming <= 6,      // ≤6 bits diff → likely duplicate
     similar: hamming <= 15,       // ≤15 bits → visually similar
-    engine: "GILOS-C++-MediaHasher-v1",
+    engine: "OlchaAI-C++-MediaHasher-v1",
   });
 });
 
@@ -67,11 +67,7 @@ router.post("/compare", (req: Request, res: Response) => {
  * Fetches a remote image, converts to WebP, caches 1h in-memory.
  * Used by the frontend to serve feed/profile images as WebP.
  */
-const _bunnyCdnHost = (process.env.BUNNY_CDN_HOSTNAME ?? "").replace(/^https?:\/\//, "").replace(/\/$/, "");
-const ALLOWED_HOSTS = new RegExp(
-  `\\.(googleusercontent\\.com|googleapis\\.com|gcs\\.olchaai\\.com|replit\\.com|replit\\.app|storage\\.googleapis\\.com|cloudinary\\.com|onrender\\.com|olchaai\\.com|railway\\.app|up\\.railway\\.app|r2\\.cloudflarestorage\\.com|r2\\.dev${_bunnyCdnHost ? `|${_bunnyCdnHost.replace(/\./g, "\\.")}` : ""})$`,
-  "i",
-);
+const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com)$/i;
 
 function fetchRemote(url: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -107,7 +103,7 @@ router.get("/img", async (req: Request, res: Response) => {
   }
 
   const cacheKey = `webp:${width}:${quality}:${decoded}`;
-  const cached = await cacheGet<Buffer>(cacheKey);
+  const cached = cacheGet<Buffer>(cacheKey);
   if (cached) {
     res.setHeader("Content-Type", "image/webp");
     res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
@@ -123,7 +119,7 @@ router.get("/img", async (req: Request, res: Response) => {
       .webp({ quality, effort: 4 })
       .toBuffer();
 
-    await cacheSet(cacheKey, webp, 60 * 60 * 1000); // 1h
+    cacheSet(cacheKey, webp, 60 * 60 * 1000); // 1h
 
     res.setHeader("Content-Type", "image/webp");
     res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");

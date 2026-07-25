@@ -33,23 +33,16 @@ export function getNetworkTier(): NetworkTier {
  */
 /**
  * Resolves a URL that may be a relative `/api/...` path stored in the DB.
- * media.olchaai.com URLs are served directly via Cloudflare → R2 (no Railway hop).
+ * In production, VITE_API_BASE_URL is set to https://olchaai-api.onrender.com
+ * so relative paths are prefixed with it. Already-absolute URLs pass through.
  */
-// R2 public CDN domain — matches Cloudflare DNS record (media.olchaai.com → R2 bucket)
-const R2_DOMAIN = "media.olchaai.com";
-// Guarded base: VITE_API_BASE_URL may be undefined in some build configs
-const API_BASE: string = "";
-
 export function resolveApiUrl(url: string | null | undefined): string {
   if (!url) return "";
-  // R2 public CDN → serve directly through Cloudflare (no Railway proxy hop needed)
-  if (url.includes(R2_DOMAIN)) {
-    return url; // https://media.olchaai.com/... → Cloudflare → R2 directly
-  }
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
     return url;
   }
-  return `${API_BASE}${url.startsWith("/") ? url : `/${url}`}`;
+  const base = (import.meta.env.VITE_API_BASE_URL ?? "");
+  return `${base}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
 export function imgOptUrl(url: string | null | undefined, width = 800, quality = 80): string {
@@ -70,23 +63,12 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
   }
 
   // Cloudinary URLs: use native transformation parameters directly (no proxy needed)
+  // Pattern: https://res.cloudinary.com/{cloud}/{type}/upload/{public_id}
   const cloudinaryMatch = url.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/[^/]+\/upload\/)(.+)$/);
   if (cloudinaryMatch) {
     return `${cloudinaryMatch[1]}w_${w},q_${q},f_auto/${cloudinaryMatch[2]}`;
   }
 
-  // Relative URLs (stored in DB as /api/storage/objects/... or /api/storage/uploads/...)
-  // must be served directly — the media proxy cannot parse relative URLs.
-  if (url.startsWith("/")) {
-    return resolveApiUrl(url);
-  }
-
-  // R2 public CDN (media.olchaai.com) — served directly via Cloudflare, no proxy needed
-  if (url.includes(R2_DOMAIN)) {
-    return url;
-  }
-
-  // Only proxy other absolute CDN URLs through the WebP optimizer.
-  const base = "";
-  return `${base}/api/media/img?url=${encodeURIComponent(url)}&w=${w}&q=${q}`;
+  const base = (import.meta.env.VITE_API_BASE_URL ?? "");
+  return `${base}/api/media/img?url=${encodeURIComponent(resolveApiUrl(url))}&w=${w}&q=${q}`;
 }

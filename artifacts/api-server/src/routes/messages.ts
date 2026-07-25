@@ -6,7 +6,6 @@ import { scanContentAsync } from "../moderation/aiFilter.js";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { getUserStatsMap } from "../lib/userStats";
 import { sendNotification } from "../lib/pushNotifications";
-import { cacheAside, cacheDel } from "../lib/cache";
 
 const GO_SERVICE = process.env.GO_SERVICE_URL ?? "http://localhost:8099";
 
@@ -89,36 +88,28 @@ router.get("/conversations", async (req, res) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
   try {
-    const cacheKey = `user:${userId}`;
-    const enriched = await cacheAside("convo", cacheKey, async () => {
-      const myRows = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.userId, userId));
-      const myConvIds = myRows.map(r => r.conversationId);
-      if (myConvIds.length === 0) return [];
+    const myRows = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.userId, userId));
+    const myConvIds = myRows.map(r => r.conversationId);
+    if (myConvIds.length === 0) { res.json([]); return; }
 
-      await Promise.allSettled(myConvIds.map(id => finalizeDueScheduledMessages(id)));
+    await Promise.all(myConvIds.map(id => finalizeDueScheduledMessages(id)));
 
-      const [convs, allParticipantRows] = await Promise.all([
-        db.select().from(chatConversationsTable)
-          .where(inArray(chatConversationsTable.id, myConvIds))
-          .orderBy(desc(chatConversationsTable.updatedAt))
-          .limit(50),
-        db.select().from(chatParticipantsTable).where(inArray(chatParticipantsTable.conversationId, myConvIds)),
-      ]);
+    const convs = await db.select().from(chatConversationsTable)
+      .where(inArray(chatConversationsTable.id, myConvIds))
+      .orderBy(desc(chatConversationsTable.updatedAt))
+      .limit(50);
 
-      const allParticipantIds = [...new Set(allParticipantRows.map(r => r.userId))];
-      const [statsMap, users] = await Promise.all([
-        getUserStatsMap(allParticipantIds, userId),
-        db.select().from(usersTable).where(inArray(usersTable.id, allParticipantIds)),
-      ]);
-      const userMap = new Map(users.map(u => [u.id, { ...u, ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }) }]));
+    const allParticipantRows = await db.select().from(chatParticipantsTable).where(inArray(chatParticipantsTable.conversationId, myConvIds));
+    const allParticipantIds = [...new Set(allParticipantRows.map(r => r.userId))];
+    const statsMap = await getUserStatsMap(allParticipantIds, userId);
+    const users = await db.select().from(usersTable).where(inArray(usersTable.id, allParticipantIds));
+    const userMap = new Map(users.map(u => [u.id, { ...u, ...(statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }) }]));
 
-      return convs.map((c) => {
-        const parts = allParticipantRows.filter(r => r.conversationId === c.id);
-        const participants = parts.map(p => userMap.get(p.userId)).filter(Boolean);
-        return { ...c, participants };
-      });
-    }, 20);
-
+    const enriched = convs.map((c) => {
+      const parts = allParticipantRows.filter(r => r.conversationId === c.id);
+      const participants = parts.map(p => userMap.get(p.userId)).filter(Boolean);
+      return { ...c, participants };
+    });
     res.json(enriched);
   } catch (err) {
     req.log.error(err);
@@ -191,7 +182,7 @@ router.post("/conversations/:id/messages", async (req: any, res) => {
   if (!senderId) return;
   try {
     const conversationId = Number(req.params["id"]);
-    const { content, mediaUrl, scheduledAt, type: msgType } = req.body;
+    const { content, mediaUrl, scheduledAt } = req.body;
     if (!(await isParticipant(conversationId, senderId))) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
 
     const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
@@ -201,7 +192,7 @@ router.post("/conversations/:id/messages", async (req: any, res) => {
     const scan = await scanContentAsync(content ?? "");
 
     const [msg] = await db.insert(chatMessagesTable)
-      .values({ conversationId, senderId, content, type: msgType ?? "text", mediaUrl, scheduledAt: scheduledDate ?? undefined })
+      .values({ conversationId, senderId, content, mediaUrl, scheduledAt: scheduledDate ?? undefined })
       .returning();
 
     // AI Autopilot decision (warnings/bans/logging)

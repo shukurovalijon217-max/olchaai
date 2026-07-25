@@ -3,7 +3,7 @@
 
 FROM node:24-slim AS deps
 
-RUN corepack enable && corepack prepare pnpm@10 --activate
+RUN npm install -g pnpm@10 --no-fund --no-audit
 
 WORKDIR /app
 

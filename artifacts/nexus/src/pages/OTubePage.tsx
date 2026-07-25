@@ -2506,7 +2506,7 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
             <motion.button whileTap={{scale:0.65}}
               onClick={e=>{e.stopPropagation();likeMut.mutate({id:video.id});}}
               className="flex items-center gap-1 px-2 py-1"
-              style={{borderRadius:99,background:liked?`${T.orange}22`:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)"}}>
+              style={{borderRadius:99,background:liked?`${T.orange}22`:"transparent"}}>
               <Heart style={{width:9,height:9,fill:liked?T.orange:"none",
                 color:liked?T.orange:"rgba(255,255,255,0.4)"}}/>
               <span style={{fontSize:8,fontFamily:"monospace",
@@ -6935,9 +6935,9 @@ function OTubeMusicOrb() {
           display:"flex", alignItems:"center", justifyContent:"center",
         }}
       >
-        <svg width={44} height={44} style={{ position:"absolute",inset:-4,transform:"rotate(-90deg)",pointerEvents:"none" }}>
-          <circle cx={22} cy={22} r={R} fill="none" stroke="rgba(168,85,247,0.18)" strokeWidth={2}/>
-          <circle cx={22} cy={22} r={R} fill="none" stroke="url(#mring)" strokeWidth={2}
+        <svg width={36} height={36} style={{ position:"absolute",inset:0,transform:"rotate(-90deg)",pointerEvents:"none" }}>
+          <circle cx={18} cy={18} r={R} fill="none" stroke="rgba(168,85,247,0.18)" strokeWidth={1.5}/>
+          <circle cx={18} cy={18} r={R} fill="none" stroke="url(#mring)" strokeWidth={1.5}
             strokeDasharray={C} strokeDashoffset={C*(1-progress)}
             strokeLinecap="round" style={{ transition:"stroke-dashoffset 0.5s linear" }}/>
           <defs>
@@ -6949,7 +6949,7 @@ function OTubeMusicOrb() {
         </svg>
 
         <div style={{
-          width:30, height:30, borderRadius:"50%", overflow:"hidden",
+          width:28, height:28, borderRadius:"50%", overflow:"hidden",
           background: track?.album_image ? "transparent"
             : `radial-gradient(circle at 50%,#0a0018 28%,${vinylBg} 30%,${vinylBg} 72%,#0a0018 74%)`,
           border:`1.5px solid ${playing?"rgba(168,85,247,0.7)":"rgba(168,85,247,0.35)"}`,

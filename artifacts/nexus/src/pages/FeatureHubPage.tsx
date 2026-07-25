@@ -80,8 +80,7 @@ function FeatureCard({ f, enabled, onToggle }: {
       <div className="p-4">
         <div className="flex items-start gap-3">
           {/* Icon */}
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${f.color} bg-opacity-20`}
-            style={{ background: `linear-gradient(135deg, var(--tw-gradient-from, #7c3aed22), var(--tw-gradient-to, #4f46e522))` }}>
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${f.color.replace(/from-(\S+)/g, 'from-$1/25').replace(/to-(\S+)/g, 'to-$1/25')}`}>
             <span className="text-xl">{f.emoji}</span>
           </div>
 

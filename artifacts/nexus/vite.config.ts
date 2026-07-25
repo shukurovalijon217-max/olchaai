@@ -58,12 +58,12 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          "vendor-react":    ["react", "react-dom"],
-          "vendor-motion":   ["framer-motion"],
-          "vendor-query":    ["@tanstack/react-query"],
-          "vendor-icons":    ["lucide-react"],
-          "vendor-i18n":     ["i18next", "react-i18next"],
-          "vendor-router":   ["wouter"],
+          "v2-react":    ["react", "react-dom"],
+          "v2-motion":   ["framer-motion"],
+          "v2-query":    ["@tanstack/react-query"],
+          "v2-icons":    ["lucide-react"],
+          "v2-i18n":     ["i18next", "react-i18next"],
+          "v2-router":   ["wouter"],
         },
       },
     },

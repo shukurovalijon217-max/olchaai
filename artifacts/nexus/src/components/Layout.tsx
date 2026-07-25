@@ -346,8 +346,10 @@ function MuniPanel() {
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const [location] = useLocation();
-  const isOTube = location === "/otube";
-  const isLeftSide = isOTube || location === "/";
+  const isOTube = location === "/otube" || location.startsWith("/otube/");
+  const isLeftSide = location === "/";
+
+  if (isOTube) return null;
 
   const SUGGESTS = ["suggest_1", "suggest_2", "suggest_3", "suggest_4"];
 

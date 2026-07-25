@@ -1,18 +1,17 @@
-/* GilosAI Service Worker — global edge cache + offline shell */
-const CACHE_VERSION = "gilos-v4";
+/* GilosAI Service Worker — v5: HTML never cached */
+const CACHE_VERSION = "gilos-v5";
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
-/* App shell: cached forever after first load */
+/* Only non-HTML static assets pre-cached */
 const SHELL_ASSETS = [
-  "/",
   "/manifest.json",
   "/favicon.ico",
   "/favicon.png",
   "/apple-touch-icon.png",
 ];
 
-/* ── Install: pre-cache app shell ─────────────────────────────── */
+/* ── Install ─────────────────────────────────────────────────── */
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(SHELL_ASSETS))
@@ -20,15 +19,11 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-/* ── Activate: delete old caches ─────────────────────────────── */
+/* ── Activate: wipe ALL old caches ──────────────────────────── */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => (k.startsWith("olcha-") || k.startsWith("gilos-")) && k !== STATIC_CACHE && k !== API_CACHE)
-          .map((k) => caches.delete(k))
-      )
+      Promise.all(keys.filter((k) => k !== STATIC_CACHE && k !== API_CACHE).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -39,40 +34,37 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  /* Skip non-GET, cross-origin except googleapis fonts, and WebSocket */
   if (request.method !== "GET") return;
+
+  /* HTML navigation — ALWAYS network, never cache */
+  if (request.mode === "navigate" ||
+      url.pathname === "/" || url.pathname === "/index.html") {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   if (url.origin !== self.location.origin &&
       !url.hostname.includes("fonts.googleapis.com") &&
       !url.hostname.includes("fonts.gstatic.com")) return;
 
-  /* API calls: network-first, short stale fallback (30s) */
+  /* API: network-first */
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(networkFirst(request, API_CACHE, 30));
     return;
   }
 
-  /* JS/CSS/fonts: cache-first (Vite hashes filenames → safe) */
+  /* Hashed JS/CSS/fonts: cache-first (safe — content-hashed filenames) */
   if (/\.(js|css|woff2?|ttf|otf)(\?.*)?$/.test(url.pathname) ||
       url.hostname.includes("fonts.gstatic.com")) {
     event.respondWith(cacheFirst(request, STATIC_CACHE));
     return;
   }
 
-  /* Images: cache-first, 7-day TTL */
+  /* Images: cache-first */
   if (/\.(png|jpg|jpeg|webp|gif|svg|ico)(\?.*)?$/.test(url.pathname)) {
     event.respondWith(cacheFirst(request, STATIC_CACHE));
     return;
   }
-
-  /* HTML navigation: network-first, fallback to cached shell "/" */
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(() => caches.match("/"))
-    );
-    return;
-  }
-
-  /* Everything else: network */
 });
 
 async function cacheFirst(request, cacheName) {

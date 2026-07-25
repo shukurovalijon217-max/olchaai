@@ -6659,7 +6659,7 @@ export default function OTubePage() {
 /* ─────────────────────────────────────────────────────── */
 /* OTubeMusicOrb — floating circular iTunes music player   */
 /* ─────────────────────────────────────────────────────── */
-interface MusicTrack { id: string; name: string; artist: string; preview: string; artwork: string; }
+interface MusicTrack { id: string; name: string; artist: string; preview: string; artwork: string; duration?: number; full?: boolean; }
 
 const FALLBACK_TRACKS: MusicTrack[] = [
   { id:"1", name:"Blinding Lights",  artist:"The Weeknd",  preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/46/ca/d8/46cad844-a1e0-d9e6-0c0f-4e6a9a9c9a9a/mzaf_8357987261602778203.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/a9/82/df/a982df60-81f5-ae18-8b99-c3d99b13ea41/00602507451691.rgb.jpg/60x60bb.jpg" },
@@ -6697,14 +6697,18 @@ function OTubeMusicOrb() {
   const audioRef  = useRef<HTMLAudioElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  /* Fetch from iTunes Search API via our CORS-safe proxy */
-  const fetchItunes = useCallback((q: string, g: string) => {
+  /* Audius to'liq + iTunes preview qidiruv */
+  const fetchMusic = useCallback((q: string, g: string) => {
     const query = q.trim() || g || "top hits";
     setLoadingApi(true);
     fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`)
       .then(r => r.json())
       .then((d: { results?: MusicTrack[] }) => {
-        const res = (d.results ?? []).filter(t => t.preview);
+        const res = (d.results ?? []).filter(t => t.preview).map(t => ({
+          ...t,
+          /* Relative stream URLs → absolute */
+          preview: t.preview.startsWith("/") ? `${API_BASE}${t.preview}` : t.preview,
+        }));
         if (res.length) { setTracks(res); setIdx(0); }
       })
       .catch(() => {})
@@ -6712,7 +6716,7 @@ function OTubeMusicOrb() {
   }, []);
 
   /* On mount: load popular tracks */
-  useEffect(() => { fetchItunes("", "pop hits 2024"); }, [fetchItunes]);
+  useEffect(() => { fetchMusic("", "pop hits 2024"); }, [fetchMusic]);
 
   const track = tracks[idx];
 
@@ -6759,14 +6763,14 @@ function OTubeMusicOrb() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchItunes(searchQ, "");
+    fetchMusic(searchQ, "");
     setGenre("");
   };
 
   const handleGenre = (g: string) => {
     setGenre(g);
     setSearchQ("");
-    fetchItunes("", g);
+    fetchMusic("", g);
     setSearching(false);
   };
 

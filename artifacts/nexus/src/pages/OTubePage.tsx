@@ -6800,67 +6800,51 @@ function OTubeMusicOrb() {
               boxShadow: "0 0 60px rgba(168,85,247,0.25), 0 12px 40px rgba(0,0,0,0.7)",
             }}
           >
-            {/* Header — track info */}
-            <div style={{ padding: "12px 14px 8px", display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{
-                width: 42, height: 42, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
-                background: track?.artwork ? "transparent" : `radial-gradient(circle at 50%,#111 28%,${vinylBg} 30%,${vinylBg} 100%)`,
-                border: "1px solid rgba(168,85,247,0.35)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                animation: playing ? "spin 4s linear infinite" : "none",
-              }}>
-                {track?.artwork
-                  ? <img src={track.artwork} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
-                  : <div style={{ width:8,height:8,borderRadius:"50%",background:"rgba(168,85,247,0.7)" }}/>
-                }
-              </div>
-              <div style={{ overflow:"hidden", flex:1 }}>
-                <div style={{ fontSize:12,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
-                  {loadingApi ? "Qidirilmoqda..." : (track?.name ?? "—")}
+            {/* Header — track info + search always visible */}
+            <div style={{ padding: "12px 14px 8px" }}>
+              {/* Track row */}
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                <div style={{
+                  width:40, height:40, borderRadius:"50%", flexShrink:0, overflow:"hidden",
+                  background: track?.artwork ? "transparent" : `radial-gradient(circle at 50%,#111 28%,${vinylBg} 30%,${vinylBg} 100%)`,
+                  border:"1px solid rgba(168,85,247,0.35)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  animation: playing ? "spin 4s linear infinite" : "none",
+                }}>
+                  {track?.artwork
+                    ? <img src={track.artwork} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
+                    : <div style={{ width:8,height:8,borderRadius:"50%",background:"rgba(168,85,247,0.7)" }}/>
+                  }
                 </div>
-                <div style={{ fontSize:10,color:"rgba(168,85,247,0.85)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
-                  {track?.artist ?? ""}
-                </div>
-              </div>
-              {/* search toggle */}
-              <button
-                onClick={() => { setSearching(v=>!v); setTimeout(()=>searchRef.current?.focus(),100); }}
-                style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(168,85,247,0.8)",padding:4,lineHeight:0,flexShrink:0 }}
-              >
-                <Search style={{ width:15,height:15 }}/>
-              </button>
-            </div>
-
-            {/* Search box */}
-            <AnimatePresence>
-              {searching && (
-                <motion.form
-                  initial={{ height:0, opacity:0 }}
-                  animate={{ height:"auto", opacity:1 }}
-                  exit={{ height:0, opacity:0 }}
-                  transition={{ duration:0.2 }}
-                  onSubmit={handleSearch}
-                  style={{ overflow:"hidden", padding:"0 14px 8px" }}
-                >
-                  <div style={{ display:"flex",gap:6 }}>
-                    <input
-                      ref={searchRef}
-                      value={searchQ}
-                      onChange={e=>setSearchQ(e.target.value)}
-                      placeholder="Qo'shiq, artist..."
-                      style={{
-                        flex:1, background:"rgba(168,85,247,0.1)", border:"1px solid rgba(168,85,247,0.3)",
-                        borderRadius:10, padding:"6px 10px", fontSize:12, color:"#fff", outline:"none",
-                      }}
-                    />
-                    <button type="submit" style={{
-                      background:"linear-gradient(135deg,#a855f7,#6366f1)", border:"none", borderRadius:10,
-                      padding:"0 10px", cursor:"pointer", color:"#fff", fontSize:12, fontWeight:700,
-                    }}>→</button>
+                <div style={{ overflow:"hidden", flex:1 }}>
+                  <div style={{ fontSize:12,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                    {loadingApi ? "Qidirilmoqda..." : (track?.name ?? "—")}
                   </div>
-                </motion.form>
-              )}
-            </AnimatePresence>
+                  <div style={{ fontSize:10,color:"rgba(168,85,247,0.8)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                    {track?.artist ?? ""}
+                  </div>
+                </div>
+              </div>
+              {/* Search — always visible */}
+              <form onSubmit={handleSearch} style={{ display:"flex", gap:6 }}>
+                <input
+                  ref={searchRef}
+                  value={searchQ}
+                  onChange={e => setSearchQ(e.target.value)}
+                  placeholder="🔍 Qo'shiq yoki artist izlang..."
+                  style={{
+                    flex:1, background:"rgba(168,85,247,0.12)", border:"1px solid rgba(168,85,247,0.35)",
+                    borderRadius:12, padding:"7px 11px", fontSize:12, color:"#fff", outline:"none",
+                    WebkitAppearance:"none",
+                  }}
+                />
+                <button type="submit" disabled={loadingApi} style={{
+                  background:"linear-gradient(135deg,#a855f7,#6366f1)", border:"none", borderRadius:12,
+                  padding:"0 12px", cursor:"pointer", color:"#fff", fontSize:13, fontWeight:800,
+                  opacity: loadingApi ? 0.6 : 1,
+                }}>→</button>
+              </form>
+            </div>
 
             {/* Genre chips */}
             <div style={{ padding:"0 14px 8px", display:"flex", flexWrap:"wrap", gap:5 }}>
@@ -6871,7 +6855,7 @@ function OTubeMusicOrb() {
                   style={{
                     background: genre===g.id ? "linear-gradient(135deg,#a855f7,#6366f1)" : "rgba(168,85,247,0.1)",
                     border: `1px solid ${genre===g.id ? "transparent" : "rgba(168,85,247,0.25)"}`,
-                    borderRadius: 20, padding:"3px 9px", fontSize:10, color:"#fff",
+                    borderRadius:20, padding:"3px 9px", fontSize:10, color:"#fff",
                     cursor:"pointer", fontWeight: genre===g.id ? 700 : 400,
                     transition:"all 0.15s",
                   }}
@@ -6913,15 +6897,12 @@ function OTubeMusicOrb() {
 
       {/* ── Orb — bottom-LEFT ── */}
       <motion.button
-        onClick={() => {
-          setExpanded(v => !v);
-          if (!expanded && !playing) togglePlay();
-        }}
+        onClick={() => setExpanded(v => !v)}
         whileTap={{ scale: 0.85 }}
         style={{
           position:"fixed",
           bottom:"calc(env(safe-area-inset-bottom,0px) + 72px)",
-          right:14, zIndex:95,
+          left:14, zIndex:95,
           width:36, height:36, borderRadius:"50%",
           border:"none", cursor:"pointer",
           background:"transparent", padding:0,

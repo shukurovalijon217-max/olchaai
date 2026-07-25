@@ -94,16 +94,14 @@ const server = http.createServer(async (req, res) => {
       "Content-Type": mime,
       "Cache-Control": isAsset
         ? "public, max-age=31536000, immutable"
-        : "no-store, no-cache, must-revalidate, proxy-revalidate, s-maxage=0",
+        : "private, no-store, no-cache, max-age=0, must-revalidate",
       ...(isAsset ? {} : {
         "Pragma": "no-cache",
         "Expires": "0",
-        "CDN-Cache-Control": "no-store, max-age=0",
-        "Cloudflare-CDN-Cache-Control": "no-store, max-age=0",
+        "CDN-Cache-Control": "no-store",
+        "Cloudflare-CDN-Cache-Control": "no-store",
         "Surrogate-Control": "no-store",
-        "Clear-Site-Data": "\"cache\"",
         "Vary": "Accept-Encoding",
-        "X-Accel-Expires": "0",
       }),
     });
     res.end(content);

@@ -511,13 +511,9 @@ function LeftOrb({
       className="flex flex-col items-center gap-1">
       <div className="w-[44px] h-[44px] rounded-full flex items-center justify-center relative"
         style={{
-          background: active ? `${activeColor}28` : "rgba(4,3,14,0.60)",
-          border: `1.5px solid ${active ? activeColor + "55" : "rgba(255,255,255,0.13)"}`,
-          backdropFilter: "blur(24px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.8)",
-          boxShadow: active
-            ? `0 0 22px ${activeColor}44, inset 0 1px 0 rgba(255,255,255,0.14)`
-            : "0 2px 16px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.07)",
+          background: active ? `${activeColor}28` : "transparent",
+          border: active ? `1.5px solid ${activeColor}55` : "none",
+          boxShadow: active ? `0 0 22px ${activeColor}44` : "none",
         }}>
         {active && (
           <motion.div className="absolute inset-0 rounded-full pointer-events-none"
@@ -759,9 +755,9 @@ function ReelSlide({
           <div className="flex items-center gap-2">
             <motion.button whileTap={{ scale: 0.8 }} onClick={onMute}
               className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(0,0,0,0.42)", backdropFilter: "blur(18px)",
-                border: `1px solid ${muted ? "rgba(255,255,255,0.09)" : neonColor + "38"}`,
-                boxShadow: muted ? "none" : `0 0 12px ${neonColor}30` }}>
+              style={{ background: "transparent",
+                border: muted ? "none" : `1px solid ${neonColor}55`,
+                boxShadow: muted ? "none" : `0 0 10px ${neonColor}30` }}>
               {muted ? <VolumeX className="w-3.5 h-3.5 text-white/40" /> : <Volume2 className="w-3.5 h-3.5 text-white/85" />}
             </motion.button>
           </div>

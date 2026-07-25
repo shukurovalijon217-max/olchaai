@@ -6777,7 +6777,7 @@ function OTubeMusicOrb() {
     setSearching(false);
   };
 
-  const R = 26; const C = 2 * Math.PI * R;
+  const R = 16; const C = 2 * Math.PI * R;
   const VINYL_COLORS = ["#3b0764","#1e1b4b","#0f172a","#0c1a2e","#1a0533"];
   const vinylBg = VINYL_COLORS[parseInt(track?.id ?? "0") % VINYL_COLORS.length];
 
@@ -6929,15 +6929,15 @@ function OTubeMusicOrb() {
           position:"fixed",
           bottom:"calc(env(safe-area-inset-bottom,0px) + 72px)",
           left:14, zIndex:95,
-          width:56, height:56, borderRadius:"50%",
+          width:36, height:36, borderRadius:"50%",
           border:"none", cursor:"pointer",
           background:"transparent", padding:0,
           display:"flex", alignItems:"center", justifyContent:"center",
         }}
       >
-        <svg width={64} height={64} style={{ position:"absolute",inset:-4,transform:"rotate(-90deg)",pointerEvents:"none" }}>
-          <circle cx={32} cy={32} r={R} fill="none" stroke="rgba(168,85,247,0.18)" strokeWidth={2.5}/>
-          <circle cx={32} cy={32} r={R} fill="none" stroke="url(#mring)" strokeWidth={2.5}
+        <svg width={44} height={44} style={{ position:"absolute",inset:-4,transform:"rotate(-90deg)",pointerEvents:"none" }}>
+          <circle cx={22} cy={22} r={R} fill="none" stroke="rgba(168,85,247,0.18)" strokeWidth={2}/>
+          <circle cx={22} cy={22} r={R} fill="none" stroke="url(#mring)" strokeWidth={2}
             strokeDasharray={C} strokeDashoffset={C*(1-progress)}
             strokeLinecap="round" style={{ transition:"stroke-dashoffset 0.5s linear" }}/>
           <defs>
@@ -6949,17 +6949,17 @@ function OTubeMusicOrb() {
         </svg>
 
         <div style={{
-          width:48, height:48, borderRadius:"50%", overflow:"hidden",
+          width:30, height:30, borderRadius:"50%", overflow:"hidden",
           background: track?.album_image ? "transparent"
             : `radial-gradient(circle at 50%,#0a0018 28%,${vinylBg} 30%,${vinylBg} 72%,#0a0018 74%)`,
           border:`1.5px solid ${playing?"rgba(168,85,247,0.7)":"rgba(168,85,247,0.35)"}`,
           display:"flex", alignItems:"center", justifyContent:"center",
-          boxShadow: playing ? "0 0 24px rgba(168,85,247,0.7)" : "0 0 10px rgba(168,85,247,0.25)",
+          boxShadow: playing ? "0 0 14px rgba(168,85,247,0.7)" : "0 0 6px rgba(168,85,247,0.25)",
           animation: playing ? "spin 5s linear infinite" : "none",
         }}>
           {track?.album_image
             ? <img src={track.album_image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
-            : <Music2 style={{ width:20,height:20,color:"rgba(168,85,247,0.85)" }}/>
+            : <Music2 style={{ width:13,height:13,color:"rgba(168,85,247,0.85)" }}/>
           }
         </div>
 

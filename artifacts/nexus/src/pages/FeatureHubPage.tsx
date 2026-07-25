@@ -28,6 +28,21 @@ interface Feature {
   unique: boolean;      // not on any other social platform
 }
 
+const FEATURE_COLORS: Record<string, [string, string]> = {
+  sound_notif:      ["#f59e0b", "#ea580c"],
+  time_capsule:     ["#8b5cf6", "#7e22ce"],
+  anon_inbox:       ["#ec4899", "#e11d48"],
+  mirror_mode:      ["#06b6d4", "#0f766e"],
+  ghost_mode:       ["#94a3b8", "#4b5563"],
+  energy_broadcast: ["#facc15", "#d97706"],
+  emotion_radar:    ["#10b981", "#15803d"],
+  midnight_confess: ["#4f46e5", "#4c1d95"],
+  grow_together:    ["#84cc16", "#059669"],
+  social_aura:      ["#d946ef", "#be185d"],
+  echo_detector:    ["#3b82f6", "#0891b2"],
+  focus_shield:     ["#14b8a6", "#0e7490"],
+};
+
 const FEATURES: Feature[] = [
   { id: "sound_notif", icon: Volume2, emoji: "🔔", tag: "yangi", color: "from-amber-500 to-orange-600", defaultOn: true, unique: false },
   { id: "time_capsule", icon: Clock, emoji: "⏳", tag: "eksklyuziv", color: "from-violet-500 to-purple-700", defaultOn: false, link: "/messages", unique: true },
@@ -80,9 +95,15 @@ function FeatureCard({ f, enabled, onToggle }: {
       <div className="p-4">
         <div className="flex items-start gap-3">
           {/* Icon */}
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${f.color.replace(/from-(\S+)/g, 'from-$1/25').replace(/to-(\S+)/g, 'to-$1/25')}`}>
-            <span className="text-xl">{f.emoji}</span>
-          </div>
+          {(() => {
+            const [c1, c2] = FEATURE_COLORS[f.id] ?? ["#7c3aed", "#4f46e5"];
+            return (
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: `linear-gradient(135deg, ${c1}35 0%, ${c2}35 100%)`, border: `1px solid ${c1}40` }}>
+                <span className="text-xl">{f.emoji}</span>
+              </div>
+            );
+          })()}
 
           {/* Content */}
           <div className="flex-1 min-w-0">

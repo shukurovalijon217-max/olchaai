@@ -97,42 +97,106 @@ router.get("/posts", async (req, res) => {
   }
 });
 
-/* ── GET /music/search — iTunes proxy (CORS-safe) ──────────── */
+/* ── GET /music/search — Audius (full tracks) + iTunes (previews) ── */
+const AUDIUS_HOST = "https://discoveryprovider.audius.co";
+const AUDIUS_APP  = "olchaai";
+
 router.get("/music/search", async (req: any, res) => {
   try {
     const q = String(req.query.q ?? "").trim();
     if (!q) { res.json({ results: [] }); return; }
-    /* Search both global + US stores for broadest coverage (old & new songs) */
-    const mkUrl = (country: string) =>
-      `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=50&country=${country}&explicit=Yes`;
-    const [r1, r2] = await Promise.allSettled([
-      fetch(mkUrl("us"), { signal: AbortSignal.timeout(7000) }),
-      fetch(mkUrl("gb"), { signal: AbortSignal.timeout(7000) }),
+
+    /* Run Audius + iTunes in parallel */
+    const [audiusRes, itunesRes] = await Promise.allSettled([
+      fetch(
+        `${AUDIUS_HOST}/v1/tracks/search?query=${encodeURIComponent(q)}&limit=30&app_name=${AUDIUS_APP}`,
+        { signal: AbortSignal.timeout(7000) }
+      ),
+      fetch(
+        `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=30&country=us`,
+        { signal: AbortSignal.timeout(7000) }
+      ),
     ]);
-    const seen = new Set<string>();
+
+    const seen    = new Set<string>();
     const results: any[] = [];
-    for (const settled of [r1, r2]) {
-      if (settled.status !== "fulfilled" || !settled.value.ok) continue;
-      const data = await settled.value.json() as { results?: any[] };
-      for (const t of data.results ?? []) {
+
+    /* 1. Audius — to'liq qo'shiqlar (primary) */
+    if (audiusRes.status === "fulfilled" && audiusRes.value.ok) {
+      const d = await audiusRes.value.json() as { data?: any[] };
+      for (const t of d.data ?? []) {
+        if (!t.id) continue;
+        const key = `${t.user?.name ?? ""}|${t.title}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const artObj = t.artwork ?? {};
+        const artwork = artObj["150x150"] ?? artObj["480x480"] ?? artObj["_150x150"] ?? "";
+        results.push({
+          id:       `au_${t.id}`,
+          name:     `${t.user?.name ?? "Unknown"} — ${t.title}`,
+          artist:   t.user?.name ?? "Unknown",
+          title:    t.title ?? "",
+          album:    "",
+          artwork,
+          /* stream via our proxy so CORS is handled server-side */
+          preview:  `/api/music/stream/${t.id}`,
+          duration: t.duration ?? 0,
+          full:     true,
+        });
+      }
+    }
+
+    /* 2. iTunes — 30s previews (fill gaps) */
+    if (itunesRes.status === "fulfilled" && itunesRes.value.ok) {
+      const d = await itunesRes.value.json() as { results?: any[] };
+      for (const t of d.results ?? []) {
+        if (!t.previewUrl) continue;
         const key = `${t.artistName}|${t.trackName}`;
-        if (seen.has(key) || !t.previewUrl) continue;
+        if (seen.has(key)) continue;
         seen.add(key);
         results.push({
-          id:      String(t.trackId ?? results.length),
+          id:      `it_${t.trackId}`,
           name:    `${t.artistName} — ${t.trackName}`,
           artist:  t.artistName ?? "",
           title:   t.trackName  ?? "",
           album:   t.collectionName ?? "",
           artwork: (t.artworkUrl100 ?? "").replace("100x100bb", "60x60bb"),
-          preview: t.previewUrl ?? "",
+          preview: t.previewUrl,
+          duration: 30,
+          full:    false,
         });
       }
     }
+
     res.json({ results });
   } catch (err) {
     req.log.warn(err, "music search failed");
     res.json({ results: [] });
+  }
+});
+
+/* ── GET /music/stream/:id — Audius full track proxy (CORS-safe) ── */
+router.get("/music/stream/:id", async (req: any, res) => {
+  try {
+    const id = String(req.params.id ?? "").replace(/[^a-zA-Z0-9_-]/g, "");
+    if (!id) { res.status(400).end(); return; }
+    /* Audius returns 302 → CDN; follow the redirect and stream */
+    const upstream = await fetch(
+      `${AUDIUS_HOST}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
+      { signal: AbortSignal.timeout(15000), redirect: "follow" }
+    );
+    if (!upstream.ok || !upstream.body) { res.status(502).end(); return; }
+    const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
+    const cl = upstream.headers.get("content-length");
+    res.setHeader("Content-Type", ct);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    if (cl) res.setHeader("Content-Length", cl);
+    const { Readable } = await import("stream");
+    Readable.fromWeb(upstream.body as any).pipe(res);
+  } catch (err) {
+    req.log.warn(err, "music stream failed");
+    if (!res.headersSent) res.status(502).end();
   }
 });
 

@@ -210,7 +210,7 @@ export default function PremiumPage() {
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-500 text-xs font-semibold mb-4">
-              <Sparkles className="w-3.5 h-3.5" /> OlchaAI Premium
+              <Sparkles className="w-3.5 h-3.5" /> GILOS Premium
             </div>
             <h1 className="text-4xl sm:text-5xl font-black text-foreground mb-4 leading-tight">
               <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">{t("premium.hero_title")}</span>

@@ -56,6 +56,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   };
   const [liked, setLiked] = useState(post.isLiked);
   const [count, setCount] = useState(post.likesCount);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
@@ -409,7 +410,10 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
             </div>
           );
           return (
-            <div className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden`}>
+            <div
+              className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden cursor-zoom-in`}
+              onClick={() => setLightboxUrl(url)}
+            >
               <FastImage src={url} className="absolute inset-0 w-full h-full" />
             </div>
           );
@@ -700,6 +704,37 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                 </>
               )}
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Lightbox ──────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <motion.img
+              src={lightboxUrl}
+              alt=""
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="max-w-[95vw] max-h-[90vh] rounded-xl object-contain shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

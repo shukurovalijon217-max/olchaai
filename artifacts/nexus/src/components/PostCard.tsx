@@ -57,6 +57,8 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const [liked, setLiked] = useState(post.isLiked);
   const [count, setCount] = useState(post.likesCount);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState(0);
+  const [slideIdx, setSlideIdx] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
@@ -382,39 +384,86 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         </div>
 
         {/* Media */}
-        {post.mediaUrl && (() => {
-          const url = post.mediaUrl;
+        {(() => {
+          const rawUrls: string[] = (post as any).mediaUrls ?? [];
+          const allMedia = rawUrls.length > 0
+            ? rawUrls
+            : post.mediaUrl ? [post.mediaUrl] : [];
+
+          if (allMedia.length === 0) return null;
+
+          const url = allMedia[0];
           const isAudio = url.match(/\.(mp3|wav|ogg|aac|m4a)(\?|$)/i) !== null;
           const isVideo = post.type === "video" && !isAudio;
+
           if (isAudio) return (
             <div className="flex items-center gap-3 px-4 py-3 bg-muted/50">
               <div className="w-9 h-9 rounded-xl bg-amber-400/15 flex items-center justify-center flex-shrink-0">
                 <Music className="w-4 h-4 text-amber-400" />
               </div>
               <audio controls src={url} className="flex-1 h-8 min-w-0" style={{ accentColor: "var(--primary)" }} />
-              <a
-                href={url}
-                download
+              <a href={url} download
                 className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
                 style={{ background: "rgba(251,191,36,0.12)", color: "#fbbf24" }}
-                title="Yuklab olish"
-                onClick={e => e.stopPropagation()}
-              >
+                title="Yuklab olish" onClick={e => e.stopPropagation()}>
                 <Download className="w-4 h-4" />
               </a>
             </div>
           );
+
           if (isVideo) return (
             <div className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden`}>
               <FastVideo src={url} className="absolute inset-0 w-full h-full" />
             </div>
           );
+
+          /* ── Multi-image carousel ────────────────────────────────── */
+          const cur = Math.min(slideIdx, allMedia.length - 1);
           return (
-            <div
-              className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden cursor-zoom-in`}
-              onClick={() => setLightboxUrl(url)}
-            >
-              <FastImage src={url} className="absolute inset-0 w-full h-full" />
+            <div className="relative w-full">
+              <div
+                className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden cursor-zoom-in`}
+                onClick={() => { setLightboxIdx(cur); setLightboxUrl(allMedia[cur]); }}
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div key={cur}
+                    initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.18 }}
+                    className="absolute inset-0">
+                    <FastImage src={allMedia[cur]} className="absolute inset-0 w-full h-full object-cover" />
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Prev / Next arrows */}
+                {allMedia.length > 1 && (
+                  <>
+                    <button onClick={e => { e.stopPropagation(); setSlideIdx(i => Math.max(0, i - 1)); }}
+                      disabled={cur === 0}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center disabled:opacity-0 transition-opacity hover:bg-black/70 z-10">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); setSlideIdx(i => Math.min(allMedia.length - 1, i + 1)); }}
+                      disabled={cur === allMedia.length - 1}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center disabled:opacity-0 transition-opacity hover:bg-black/70 z-10">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    {/* Counter badge */}
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/60 text-white text-xs font-semibold z-10">
+                      {cur + 1}/{allMedia.length}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Dot indicators */}
+              {allMedia.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 pt-2 pb-1">
+                  {allMedia.map((_, i) => (
+                    <button key={i} onClick={() => setSlideIdx(i)}
+                      className={`rounded-full transition-all ${i === cur ? "w-4 h-1.5 bg-primary" : "w-1.5 h-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"}`} />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })()}
@@ -710,33 +759,62 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
 
       {/* ── Lightbox ──────────────────────────────────────────────── */}
       <AnimatePresence>
-        {lightboxUrl && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90"
-            onClick={() => setLightboxUrl(null)}
-          >
-            <motion.img
-              src={lightboxUrl}
-              alt=""
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+        {lightboxUrl && (() => {
+          const rawUrls: string[] = (post as any).mediaUrls ?? [];
+          const allLb = rawUrls.length > 0 ? rawUrls : post.mediaUrl ? [post.mediaUrl] : [lightboxUrl];
+          const lbCur = Math.min(lightboxIdx, allLb.length - 1);
+          return (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
-              className="max-w-[95vw] max-h-[90vh] rounded-xl object-contain shadow-2xl"
-              onClick={e => e.stopPropagation()}
-            />
-            <button
+              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/92"
               onClick={() => setLightboxUrl(null)}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
             >
-              <X className="w-5 h-5" />
-            </button>
-          </motion.div>
-        )}
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.img
+                  key={lbCur}
+                  src={allLb[lbCur]}
+                  alt=""
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.94 }}
+                  transition={{ duration: 0.15 }}
+                  className="max-w-[95vw] max-h-[88vh] rounded-xl object-contain shadow-2xl"
+                  onClick={e => e.stopPropagation()}
+                />
+              </AnimatePresence>
+
+              {/* Close */}
+              <button onClick={() => setLightboxUrl(null)}
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/25 transition-colors z-10">
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Prev / Next in lightbox */}
+              {allLb.length > 1 && (
+                <>
+                  <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => Math.max(0, i - 1)); }}
+                    disabled={lbCur === 0}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/25 transition disabled:opacity-0 z-10">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => Math.min(allLb.length - 1, i + 1)); }}
+                    disabled={lbCur === allLb.length - 1}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/25 transition disabled:opacity-0 z-10">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                  {/* Counter */}
+                  <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                    {allLb.map((_, i) => (
+                      <button key={i} onClick={e => { e.stopPropagation(); setLightboxIdx(i); }}
+                        className={`rounded-full transition-all ${i === lbCur ? "w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/40"}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
     </>
   );

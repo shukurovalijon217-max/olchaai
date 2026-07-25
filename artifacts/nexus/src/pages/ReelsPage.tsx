@@ -143,7 +143,11 @@ function useTypewriter(text: string, active: boolean, speed = 26) {
 function AudioChip({ track, color }: { track: string; color: string }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const short = track.length > 22 ? track.slice(0, 22) + "…" : track;
+  // Clean up file paths — show only filename without extension/path
+  const displayTrack = (/^https?:\/\/|^\/|uploads\//.test(track))
+    ? decodeURIComponent(track.split("/").pop() ?? track).replace(/\.[a-z0-9]{2,5}$/i, "").replace(/[_-]/g, " ")
+    : track;
+  const short = displayTrack.length > 22 ? displayTrack.slice(0, 22) + "…" : displayTrack;
   return (
     <div className="relative" style={{ zIndex: 40 }}>
       <motion.button whileTap={{ scale: 0.92 }} onClick={() => setOpen(v => !v)}

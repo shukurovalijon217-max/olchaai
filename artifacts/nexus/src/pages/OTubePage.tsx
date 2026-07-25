@@ -1078,7 +1078,7 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             {
               icon:<Bookmark style={{width:15,height:15,fill:saved?T.violet:"none",color:saved?T.violet:"white"}}/>,
               label:"Saqlash", col:saved?T.violet:"rgba(255,255,255,0.9)", active:saved,
-              bg:saved?"rgba(120,0,255,0.85)":"rgba(30,30,40,0.75)",
+              bg:saved?"rgba(120,0,255,0.85)":undefined,
               act:()=>toggleSave(),
             },
             {
@@ -1130,11 +1130,9 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                 padding:"4px 0",width:"100%"}}>
               <div style={{
                 width:34,height:34,borderRadius:"50%",
-                background:b.bg??(b.active?"rgba(60,60,80,0.9)":"rgba(30,30,40,0.75)"),
-                backdropFilter:"blur(16px)",
-                border:`1px solid ${b.active?"rgba(255,255,255,0.25)":"rgba(255,255,255,0.12)"}`,
+                background:b.bg??(b.active?"rgba(255,255,255,0.18)":"transparent"),
+                border:b.active?`1px solid rgba(255,255,255,0.25)`:"none",
                 display:"flex",alignItems:"center",justifyContent:"center",
-                boxShadow:"0 2px 8px rgba(0,0,0,0.55)",
               }}>
                 {b.icon}
               </div>
@@ -2054,7 +2052,7 @@ function HeroCard({ video, onPlay }: { video:Reel; onPlay:()=>void }) {
         </div>
         {/* View count top-left chip — real data only */}
         <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1"
-          style={{borderRadius:99,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(12px)"}}>
+          style={{borderRadius:99,background:"transparent"}}>
           <Eye style={{width:9,height:9,color:"rgba(255,255,255,0.7)"}}/>
           <span style={{fontSize:9,fontWeight:600,color:"rgba(255,255,255,0.8)",fontFamily:"monospace"}}>{fmt(video.viewsCount)}</span>
         </div>
@@ -2450,9 +2448,7 @@ function BentoCard({ video, onPlay, wide=false, idx=0 }:
           )}
           {myReact && (
             <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",damping:14}}
-              style={{width:22,height:22,borderRadius:"50%",background:"rgba(0,0,0,0.6)",
-                display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,
-                backdropFilter:"blur(8px)"}}>
+              style={{width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>
               {myReact}
             </motion.div>
           )}

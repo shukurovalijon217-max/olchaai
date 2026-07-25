@@ -1,13 +1,17 @@
 import http from "http";
+import https from "https";
+import net from "net";
+import tls from "tls";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = parseInt(process.env.PORT || "3000", 10);
+const PORT       = parseInt(process.env.PORT || "3000", 10);
 const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.railway.app";
-const DIST = path.join(__dirname, "dist", "public");
+const GO_TARGET  = process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app";
+const DIST       = path.join(__dirname, "dist", "public");
 
 /* Build-time unique token — changes every deploy so Cloudflare sees a new ETag */
 const BUILD_ID = Date.now().toString(36);
@@ -34,8 +38,17 @@ function getMime(filePath) {
   return MIME[path.extname(filePath).toLowerCase()] || "application/octet-stream";
 }
 
-async function proxyToApi(req, res, body) {
-  const url = `${API_TARGET}${req.url}`;
+/* Parse a URL into { hostname, port, isTls } */
+function parseTarget(urlStr) {
+  const u = new URL(urlStr);
+  const isTls = u.protocol === "https:";
+  const port  = u.port ? parseInt(u.port) : (isTls ? 443 : 80);
+  return { hostname: u.hostname, port, isTls };
+}
+
+/* HTTP proxy (for /api and /go regular requests) */
+async function proxyHttp(req, res, body, target) {
+  const url = `${target}${req.url}`;
   const headers = { ...req.headers };
   delete headers["host"];
   delete headers["connection"];
@@ -60,49 +73,88 @@ async function proxyToApi(req, res, body) {
   }
 }
 
+/* WebSocket tunnel — forward the raw upgrade handshake + bidirectional pipe */
+function proxyWebSocket(req, clientSocket, head, target) {
+  const { hostname, port, isTls } = parseTarget(target);
+
+  const connect = isTls ? tls.connect : net.connect;
+  const options = isTls
+    ? { host: hostname, port, servername: hostname }
+    : { host: hostname, port };
+
+  const upstream = connect(options, () => {
+    /* Reconstruct the HTTP/1.1 upgrade request verbatim */
+    const reqLine = `GET ${req.url} HTTP/1.1\r\n`;
+    const headers = Object.entries({ ...req.headers, host: hostname })
+      .map(([k, v]) => `${k}: ${v}`)
+      .join("\r\n");
+    upstream.write(`${reqLine}${headers}\r\n\r\n`);
+    if (head && head.length) upstream.write(head);
+
+    /* Bidirectional pipe */
+    upstream.pipe(clientSocket);
+    clientSocket.pipe(upstream);
+  });
+
+  upstream.on("error", (err) => {
+    console.error("WS upstream error:", err.message);
+    clientSocket.destroy();
+  });
+  clientSocket.on("error", () => upstream.destroy());
+  clientSocket.on("close", () => upstream.destroy());
+  upstream.on("close", () => clientSocket.destroy());
+}
+
 const server = http.createServer(async (req, res) => {
-  // Health check
+  /* Health check */
   if (req.url === "/healthz") {
     res.writeHead(200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ ok: true, build: BUILD_ID }));
   }
 
-  // API proxy
+  /* API proxy → olchaai-api */
   if (req.url.startsWith("/api")) {
     const chunks = [];
     req.on("data", (c) => chunks.push(c));
     req.on("end", () => {
       const body = chunks.length ? Buffer.concat(chunks) : undefined;
-      proxyToApi(req, res, body);
+      proxyHttp(req, res, body, API_TARGET);
     });
     return;
   }
 
-  // Static files with SPA fallback
+  /* Go service HTTP proxy → olchaai-go */
+  if (req.url.startsWith("/go")) {
+    const chunks = [];
+    req.on("data", (c) => chunks.push(c));
+    req.on("end", () => {
+      const body = chunks.length ? Buffer.concat(chunks) : undefined;
+      proxyHttp(req, res, body, GO_TARGET);
+    });
+    return;
+  }
+
+  /* Static files with SPA fallback */
   let filePath = path.join(DIST, req.url.split("?")[0]);
 
-  // Directory → index.html
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, "index.html");
   }
-
   if (!fs.existsSync(filePath)) {
     filePath = path.join(DIST, "index.html");
   }
 
   try {
     const content = fs.readFileSync(filePath);
-    const mime = getMime(filePath);
+    const mime    = getMime(filePath);
     const isAsset = filePath.includes("/assets/");
 
     if (isAsset) {
-      /* Hashed assets — cache forever */
       res.writeHead(200, {
         "Content-Type": mime,
         "Cache-Control": "public, max-age=31536000, immutable",
       });
     } else {
-      /* HTML / SPA shell — never cache anywhere */
       const etag = `"${BUILD_ID}-${crypto.createHash("md5").update(content).digest("hex").slice(0,8)}"`;
       res.writeHead(200, {
         "Content-Type": mime,
@@ -111,7 +163,6 @@ const server = http.createServer(async (req, res) => {
         "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
         "ETag": etag,
         "Last-Modified": new Date().toUTCString(),
-        /* Cloudflare-specific: force bypass even with Cache Everything rule */
         "CF-Cache-Status": "BYPASS",
         "CDN-Cache-Control": "no-store",
         "Cloudflare-CDN-Cache-Control": "no-store",
@@ -124,6 +175,15 @@ const server = http.createServer(async (req, res) => {
   } catch {
     res.writeHead(404);
     res.end("Not found");
+  }
+});
+
+/* WebSocket upgrade proxy → olchaai-go */
+server.on("upgrade", (req, socket, head) => {
+  if (req.url.startsWith("/go")) {
+    proxyWebSocket(req, socket, head, GO_TARGET);
+  } else {
+    socket.destroy();
   }
 });
 

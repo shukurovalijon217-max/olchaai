@@ -6657,16 +6657,16 @@ export default function OTubePage() {
 }
 
 /* ─────────────────────────────────────────────────────── */
-/* OTubeMusicOrb — floating circular Jamendo music player  */
+/* OTubeMusicOrb — floating circular iTunes music player   */
 /* ─────────────────────────────────────────────────────── */
-interface MusicTrack { id: string; name: string; artist_name: string; audio: string; album_image: string; }
+interface MusicTrack { id: string; name: string; artist: string; preview: string; artwork: string; }
 
 const FALLBACK_TRACKS: MusicTrack[] = [
-  { id:"1", name:"Ambient Flow",    artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", album_image:"" },
-  { id:"2", name:"Electronic Pulse",artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", album_image:"" },
-  { id:"3", name:"Deep Space",      artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", album_image:"" },
-  { id:"4", name:"Night Drive",     artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3", album_image:"" },
-  { id:"5", name:"Chill Waves",     artist_name:"SoundHelix", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3", album_image:"" },
+  { id:"1", name:"Blinding Lights",  artist:"The Weeknd",  preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/46/ca/d8/46cad844-a1e0-d9e6-0c0f-4e6a9a9c9a9a/mzaf_8357987261602778203.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/a9/82/df/a982df60-81f5-ae18-8b99-c3d99b13ea41/00602507451691.rgb.jpg/60x60bb.jpg" },
+  { id:"2", name:"Shape of You",     artist:"Ed Sheeran",  preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/47/a6/7c/47a67c50-3c30-a44c-0432-d2a23aad3e48/mzaf_4916895036505765793.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/77/5e/4e/775e4e54-b2e1-b7a7-afc3-37de05e1c498/190295851286.jpg/60x60bb.jpg" },
+  { id:"3", name:"Uptown Funk",      artist:"Bruno Mars",  preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/97/69/5e/97695e74-2f28-eff4-1b1e-dd8e2e5e38b3/mzaf_2218382991440671505.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music6/v4/4a/f6/b5/4af6b5a0-a7a9-c42a-3c3a-9a6578e64e8c/886444256551.jpg/60x60bb.jpg" },
+  { id:"4", name:"Stay",             artist:"Kid Laroi",   preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/ec/95/89/ec958938-d745-a0c6-45e9-c7e01da01c94/mzaf_1866174285745498282.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/7a/3e/2a/7a3e2a7d-c39b-7b80-b4fa-b8c3b47e28d8/21UMGIM52813.rgb.jpg/60x60bb.jpg" },
+  { id:"5", name:"As It Was",        artist:"Harry Styles",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/6b/ce/1d/6bce1de8-96fc-ad38-fd24-2b2e1bea2e11/mzaf_4890649541505085085.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/69/b8/8d/69b88d97-1bac-8cef-7b82-fc8c6dcd5773/22UMGIM66931.rgb.jpg/60x60bb.jpg" },
 ];
 
 const GENRES = [
@@ -6684,8 +6684,6 @@ const GENRES = [
   { id:"folk",        label:"🪕 Folk"       },
 ];
 
-const JAMENDO_BASE = "https://api.jamendo.com/v3.0/tracks/?client_id=b5cfffa1&format=json&limit=10&audioformat=mp31&order=popularity_total";
-
 function OTubeMusicOrb() {
   const [tracks, setTracks]       = useState<MusicTrack[]>(FALLBACK_TRACKS);
   const [idx, setIdx]             = useState(0);
@@ -6699,23 +6697,22 @@ function OTubeMusicOrb() {
   const audioRef  = useRef<HTMLAudioElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  /* Fetch from Jamendo: genre or search query */
-  const fetchJamendo = useCallback((q: string, g: string) => {
+  /* Fetch from iTunes Search API via our CORS-safe proxy */
+  const fetchItunes = useCallback((q: string, g: string) => {
+    const query = q.trim() || g || "top hits";
     setLoadingApi(true);
-    let url = JAMENDO_BASE;
-    if (q.trim()) url += `&namesearch=${encodeURIComponent(q.trim())}`;
-    else if (g)   url += `&tags=${encodeURIComponent(g)}`;
-    fetch(url)
+    fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`)
       .then(r => r.json())
       .then((d: { results?: MusicTrack[] }) => {
-        if (d.results?.length) { setTracks(d.results); setIdx(0); }
+        const res = (d.results ?? []).filter(t => t.preview);
+        if (res.length) { setTracks(res); setIdx(0); }
       })
       .catch(() => {})
       .finally(() => setLoadingApi(false));
   }, []);
 
-  /* On mount: try default genre */
-  useEffect(() => { fetchJamendo("", "ambient electronic"); }, [fetchJamendo]);
+  /* On mount: load popular tracks */
+  useEffect(() => { fetchItunes("", "pop hits 2024"); }, [fetchItunes]);
 
   const track = tracks[idx];
 
@@ -6724,7 +6721,7 @@ function OTubeMusicOrb() {
     const audio = audioRef.current;
     if (!audio || !track) return;
     const wasPlaying = playing;
-    audio.src = track.audio;
+    audio.src = track.preview;
     audio.load();
     if (wasPlaying) audio.play().catch(() => setPlaying(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -6754,7 +6751,7 @@ function OTubeMusicOrb() {
 
   const togglePlay = () => {
     if (!playing && audioRef.current && !audioRef.current.src && track) {
-      audioRef.current.src = track.audio;
+      audioRef.current.src = track.preview;
       audioRef.current.load();
     }
     setPlaying(p => !p);
@@ -6762,14 +6759,14 @@ function OTubeMusicOrb() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchJamendo(searchQ, "");
+    fetchItunes(searchQ, "");
     setGenre("");
   };
 
   const handleGenre = (g: string) => {
     setGenre(g);
     setSearchQ("");
-    fetchJamendo("", g);
+    fetchItunes("", g);
     setSearching(false);
   };
 
@@ -6807,13 +6804,13 @@ function OTubeMusicOrb() {
             <div style={{ padding: "12px 14px 8px", display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{
                 width: 42, height: 42, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
-                background: track?.album_image ? "transparent" : `radial-gradient(circle at 50%,#111 28%,${vinylBg} 30%,${vinylBg} 100%)`,
+                background: track?.artwork ? "transparent" : `radial-gradient(circle at 50%,#111 28%,${vinylBg} 30%,${vinylBg} 100%)`,
                 border: "1px solid rgba(168,85,247,0.35)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 animation: playing ? "spin 4s linear infinite" : "none",
               }}>
-                {track?.album_image
-                  ? <img src={track.album_image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
+                {track?.artwork
+                  ? <img src={track.artwork} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
                   : <div style={{ width:8,height:8,borderRadius:"50%",background:"rgba(168,85,247,0.7)" }}/>
                 }
               </div>
@@ -6822,7 +6819,7 @@ function OTubeMusicOrb() {
                   {loadingApi ? "Qidirilmoqda..." : (track?.name ?? "—")}
                 </div>
                 <div style={{ fontSize:10,color:"rgba(168,85,247,0.85)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
-                  {track?.artist_name ?? ""}
+                  {track?.artist ?? ""}
                 </div>
               </div>
               {/* search toggle */}
@@ -6946,15 +6943,15 @@ function OTubeMusicOrb() {
 
         <div style={{
           width:28, height:28, borderRadius:"50%", overflow:"hidden",
-          background: track?.album_image ? "transparent"
+          background: track?.artwork ? "transparent"
             : `radial-gradient(circle at 50%,#0a0018 28%,${vinylBg} 30%,${vinylBg} 72%,#0a0018 74%)`,
           border:`1.5px solid ${playing?"rgba(168,85,247,0.7)":"rgba(168,85,247,0.35)"}`,
           display:"flex", alignItems:"center", justifyContent:"center",
           boxShadow: playing ? "0 0 14px rgba(168,85,247,0.7)" : "0 0 6px rgba(168,85,247,0.25)",
           animation: playing ? "spin 5s linear infinite" : "none",
         }}>
-          {track?.album_image
-            ? <img src={track.album_image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
+          {track?.artwork
+            ? <img src={track.artwork} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
             : <Music2 style={{ width:13,height:13,color:"rgba(168,85,247,0.85)" }}/>
           }
         </div>

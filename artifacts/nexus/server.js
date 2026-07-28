@@ -13,6 +13,42 @@ const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.
 const GO_TARGET  = process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app";
 const DIST       = path.join(__dirname, "dist", "public");
 
+/* ── Security headers — gigant standart ──────────────────────────
+   Har bir javobga qo'shiladi: XSS, clickjacking, sniffing, HSTS   */
+const SECURITY_HEADERS = {
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+  "X-Frame-Options": "SAMEORIGIN",
+  "X-Content-Type-Options": "nosniff",
+  "X-XSS-Protection": "1; mode=block",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=self, microphone=self, geolocation=self, payment=()",
+  "X-DNS-Prefetch-Control": "on",
+};
+
+/* ── Proxy-layer rate limiter — API ga kelmasdan oldin to'xtатади ──
+   300 req/min/IP global, /api/auth/* uchun 20 req/min             */
+const proxyRateMap   = new Map(); // ip → { count, resetAt }
+const authRateMap    = new Map(); // ip → { count, resetAt }
+const PROXY_WINDOW   = 60_000;
+const PROXY_MAX      = 300;
+const AUTH_MAX       = 20;
+
+function proxyRateLimit(ip, isAuth) {
+  const now  = Date.now();
+  const map  = isAuth ? authRateMap : proxyRateMap;
+  const max  = isAuth ? AUTH_MAX    : PROXY_MAX;
+  const rec  = map.get(ip);
+  if (!rec || rec.resetAt <= now) { map.set(ip, { count: 1, resetAt: now + PROXY_WINDOW }); return true; }
+  rec.count++;
+  return rec.count <= max;
+}
+// Temiz saqlash — har 2 daqiqada
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of proxyRateMap) if (v.resetAt <= now) proxyRateMap.delete(k);
+  for (const [k, v] of authRateMap)  if (v.resetAt <= now) authRateMap.delete(k);
+}, 120_000);
+
 /* Build-time unique token — changes every deploy so Cloudflare sees a new ETag */
 const BUILD_ID = Date.now().toString(36);
 
@@ -110,6 +146,9 @@ function proxyWebSocket(req, clientSocket, head, target) {
 }
 
 const server = http.createServer(async (req, res) => {
+  /* Security headers — barcha javoblarga */
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
+
   /* Health check */
   if (req.url === "/healthz") {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -118,6 +157,13 @@ const server = http.createServer(async (req, res) => {
 
   /* API proxy → olchaai-api */
   if (req.url.startsWith("/api")) {
+    /* Proxy-layer rate limit */
+    const ip     = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "0.0.0.0").split(",")[0].trim();
+    const isAuth = req.url.startsWith("/api/auth");
+    if (!proxyRateLimit(ip, isAuth)) {
+      res.writeHead(429, { "Content-Type": "application/json", "Retry-After": "60" });
+      return res.end(JSON.stringify({ error: "Too many requests", retryAfterMs: 60000 }));
+    }
     const chunks = [];
     req.on("data", (c) => chunks.push(c));
     req.on("end", () => {
@@ -157,23 +203,18 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, {
         "Content-Type": mime,
         "Cache-Control": "public, max-age=31536000, immutable",
+        "Vary": "Accept-Encoding",
       });
     } else {
+      /* index.html — Cloudflare edge 5s TTL, browser no-cache */
       const etag = `"${BUILD_ID}-${crypto.createHash("md5").update(content).digest("hex").slice(0,8)}"`;
       res.writeHead(200, {
         "Content-Type": mime,
-        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0",
-        "Pragma": "no-cache",
-        "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+        "Cache-Control": "public, max-age=0, s-maxage=5, must-revalidate",
         "ETag": etag,
         "Last-Modified": new Date().toUTCString(),
-        "CF-Cache-Status": "BYPASS",
-        "CDN-Cache-Control": "no-store",
-        "Cloudflare-CDN-Cache-Control": "no-store",
-        "Surrogate-Control": "no-store",
         "Surrogate-Key": `deploy-${BUILD_ID}`,
         "Vary": "Accept-Encoding",
-        "Clear-Site-Data": '"cache"',
       });
     }
     res.end(content);

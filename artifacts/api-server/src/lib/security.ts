@@ -41,21 +41,34 @@ export function verifyMobileToken(token: string): number | null {
   }
 }
 
-/** Simple in-memory rate limiter (per IP, per window) */
-const ipHits = new Map<string, { count: number; resetAt: number }>();
-const WINDOW_MS = 60_000; // 1 minute
-const MAX_HITS = 300;    // 300 requests per minute per IP
+/** Two-level rate limiter — per-minute + per-second burst protection */
+const ipHits       = new Map<string, { count: number; resetAt: number }>();
+const ipBurst      = new Map<string, { count: number; resetAt: number }>();
+const WINDOW_MS    = 60_000;  // 1 daqiqa
+const MAX_HITS     = 300;     // 300 req/daqiqa/IP
+const BURST_WINDOW = 1_000;   // 1 soniya
+const MAX_BURST    = 30;      // 30 req/soniya/IP (DDoS burst himoyasi)
 
 export function checkRateLimit(ip: string): boolean {
   const now = Date.now();
+
+  // 1. Per-second burst check
+  const burst = ipBurst.get(ip);
+  if (!burst || burst.resetAt <= now) {
+    ipBurst.set(ip, { count: 1, resetAt: now + BURST_WINDOW });
+  } else {
+    burst.count++;
+    if (burst.count > MAX_BURST) return false; // burst bloklash
+  }
+
+  // 2. Per-minute window check
   const rec = ipHits.get(ip);
   if (!rec || rec.resetAt <= now) {
     ipHits.set(ip, { count: 1, resetAt: now + WINDOW_MS });
     return true;
   }
   rec.count++;
-  if (rec.count > MAX_HITS) return false;
-  return true;
+  return rec.count <= MAX_HITS;
 }
 
 /**

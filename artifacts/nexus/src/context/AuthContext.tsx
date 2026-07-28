@@ -49,17 +49,43 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const API = (import.meta.env.VITE_API_BASE_URL ?? "");
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+const USER_CACHE_KEY = "gilos_user_cache_v1";
 
-  const fetchMe = async (retries = 2) => {
+function readCachedUser(): AuthUser | null {
+  try {
+    const raw = localStorage.getItem(USER_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as AuthUser;
+  } catch { return null; }
+}
+
+function writeCachedUser(u: AuthUser | null) {
+  try {
+    if (u) localStorage.setItem(USER_CACHE_KEY, JSON.stringify(u));
+    else localStorage.removeItem(USER_CACHE_KEY);
+  } catch { /* ignore */ }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  // Darhol cached foydalanuvchini ko'rsatish — HECH QANDAY spinner yo'q
+  const [user, setUser] = useState<AuthUser | null>(() => readCachedUser());
+  const [loading, setLoading] = useState(() => readCachedUser() === null);
+
+  const fetchMe = async (retries = 1) => {
     try {
-      const res = await fetch(`${API}/api/auth/me`, { credentials: "include" });
+      // 8 soniya timeout
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`${API}/api/auth/me`, {
+        credentials: "include",
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
       if (res.ok) {
         const userData = await res.json();
         setUser(userData);
-        // Apply saved language preference from server (overrides localStorage if different)
+        writeCachedUser(userData);
+        // Apply saved language preference from server
         const savedLang = userData?.notifPrefs?.language as string | undefined;
         if (savedLang) {
           localStorage.setItem("olcha_lang_user", savedLang);
@@ -67,20 +93,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           i18nInst.changeLanguage(savedLang);
         }
       } else if (res.status === 401) {
-        // Real session expiry — log out
         setUser(null);
+        writeCachedUser(null);
       }
-      // Other status codes (500, 503, etc.): keep current user state
+      // 5xx va boshqalar: cache ni saqlaymiz
     } catch {
-      // Network error (internet disconnect, timeout, etc.)
-      // Retry before giving up — don't log the user out on a transient error
+      // Timeout yoki tarmoq xatosi — bir marta qayta urinish
       if (retries > 0) {
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise(r => setTimeout(r, 1000));
         return fetchMe(retries - 1);
       }
-      // After all retries exhausted, keep existing user state (don't logout)
-      // Only clear user on initial load (when user is still null from useState)
-      setUser(prev => prev);
+      // Tarmoq yo'q — cached user ni saqlaymiz, chiqarmaymiz
     } finally {
       setLoading(false);
     }
@@ -100,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = text ? JSON.parse(text) : {};
       if (!res.ok) return { error: data.error ?? "Kirish xatosi" };
       setUser(data);
+      writeCachedUser(data);
       return {};
     } catch {
       return { error: "Server bilan aloqa xatosi" };
@@ -118,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = text ? JSON.parse(text) : {};
       if (!res.ok) return { error: data.error ?? "Ro'yxatdan o'tish xatosi" };
       setUser(data);
+      writeCachedUser(data);
       return {};
     } catch {
       return { error: "Server bilan aloqa xatosi" };
@@ -127,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
     setUser(null);
+    writeCachedUser(null);
   };
 
   return (

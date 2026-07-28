@@ -53,12 +53,16 @@ async function proxyHttp(req, res, body, target) {
   delete headers["host"];
   delete headers["connection"];
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000); // 15s proxy timeout
     const upstream = await fetch(url, {
       method: req.method,
       headers,
       body: ["GET", "HEAD"].includes(req.method) ? undefined : body,
       redirect: "manual",
+      signal: controller.signal,
     });
+    clearTimeout(timer);
     res.writeHead(upstream.status, Object.fromEntries(
       [...upstream.headers.entries()].filter(([k]) =>
         !["transfer-encoding", "connection"].includes(k.toLowerCase())

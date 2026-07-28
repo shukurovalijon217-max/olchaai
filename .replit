@@ -3,6 +3,7 @@ modules = ["nodejs-24", "go-1.25", "python-3.11", "postgresql-16"]
 [deployment]
 router = "application"
 deploymentTarget = "autoscale"
+build = ["pnpm", "--filter", "@workspace/nexus", "run", "build"]
 
 [deployment.postBuild]
 args = ["pnpm", "store", "prune"]

@@ -1,8 +1,16 @@
 # See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # compiled output
-dist
 tmp
+# dist — deploy uchun kerakli papkalar gitignore EMAS
+# (artifacts/nexus/dist, artifacts/api-server/dist, artifacts/ai-core/dist — git da bo'lishi shart)
+dist
+!artifacts/nexus/dist/
+!artifacts/nexus/dist/**
+!artifacts/api-server/dist/
+!artifacts/api-server/dist/**
+!artifacts/ai-core/dist/
+!artifacts/ai-core/dist/**
 out-tsc
 *.tsbuildinfo
 .expo

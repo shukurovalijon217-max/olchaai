@@ -30,8 +30,8 @@ const SECURITY_HEADERS = {
 const proxyRateMap   = new Map(); // ip → { count, resetAt }
 const authRateMap    = new Map(); // ip → { count, resetAt }
 const PROXY_WINDOW   = 60_000;
-const PROXY_MAX      = 300;
-const AUTH_MAX       = 20;
+const PROXY_MAX      = 500;
+const AUTH_MAX       = 60;   // login/register uchun 60 req/min (avval 20 — juda kam edi)
 
 function proxyRateLimit(ip, isAuth) {
   const now  = Date.now();

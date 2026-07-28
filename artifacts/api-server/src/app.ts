@@ -138,7 +138,12 @@ app.use((req, res, next) => {
   if (req.path.startsWith("/api/storage/uploads/cloud/") && req.method === "PUT") {
     return next();
   }
-  express.json({ limit: "50mb" })(req, res, next);
+  // Media upload endpointlari uchun 20mb, qolganlar 2mb
+  const isMediaUpload =
+    req.path.includes("/upload") ||
+    req.path.includes("/media") ||
+    req.path.includes("/voice-comments");
+  express.json({ limit: isMediaUpload ? "20mb" : "2mb" })(req, res, next);
 });
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
@@ -236,7 +241,9 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   const { checkRateLimit } = require("./lib/security");
   const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
   if (!checkRateLimit(ip)) {
-    res.status(429).json({ error: "Too many requests. Please slow down." });
+    res.status(429)
+      .setHeader("Retry-After", "60")
+      .json({ error: "Too many requests. Please slow down.", retryAfterMs: 60_000 });
     return;
   }
   next();

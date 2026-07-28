@@ -112,22 +112,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => { fetchMe(); }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      const res = await fetch(`${API}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      const text = await res.text();
-      const data = text ? JSON.parse(text) : {};
-      if (!res.ok) return { error: data.error ?? "Kirish xatosi" };
-      setUser(data);
-      writeCachedUser(data);
-      return {};
-    } catch {
-      return { error: "Server bilan aloqa xatosi" };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 20000);
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
+        if (res.status === 429) return { error: "Ko'p urinish — 1 daqiqa kuting" };
+        if (res.status === 502 || res.status === 503) {
+          if (attempt === 0) { await new Promise(r => setTimeout(r, 3000)); continue; }
+          return { error: "Server yuklanmoqda — qayta urinib ko'ring" };
+        }
+        if (!res.ok) return { error: data.error ?? "Kirish xatosi" };
+        setUser(data);
+        writeCachedUser(data);
+        return {};
+      } catch {
+        if (attempt === 0) { await new Promise(r => setTimeout(r, 2000)); continue; }
+        return { error: "Internet aloqasi yo'q yoki server band" };
+      }
     }
+    return { error: "Server bilan aloqa xatosi" };
   };
 
   const register = async (username: string, displayName: string, email: string, phone: string, password: string) => {

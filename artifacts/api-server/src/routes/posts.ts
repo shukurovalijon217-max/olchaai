@@ -176,25 +176,41 @@ router.get("/music/search", async (req: any, res) => {
   }
 });
 
-/* ── GET /music/stream/:id — Audius full track proxy (CORS-safe) ── */
+/* ── GET /music/stream/:id — Audius CDN redirect (browser streams directly) ── */
 router.get("/music/stream/:id", async (req: any, res) => {
   try {
     const id = String(req.params.id ?? "").replace(/[^a-zA-Z0-9_-]/g, "");
     if (!id) { res.status(400).end(); return; }
-    /* Audius returns 302 → CDN; follow the redirect and stream */
+
+    /* Audius 302 → CDN URL ni olib, to'g'ridan browser ga redirect qilamiz.
+       Shunda browser native audio streaming ishlatadi: seek, progress, Range — hammasi ishlaydi */
     const upstream = await fetch(
       `${AUDIUS_HOST}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
-      { signal: AbortSignal.timeout(15000), redirect: "follow" }
+      { signal: AbortSignal.timeout(8000), redirect: "manual" }
     );
-    if (!upstream.ok || !upstream.body) { res.status(502).end(); return; }
-    const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
-    const cl = upstream.headers.get("content-length");
-    res.setHeader("Content-Type", ct);
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Cache-Control", "public, max-age=3600");
-    if (cl) res.setHeader("Content-Length", cl);
-    const { Readable } = await import("stream");
-    Readable.fromWeb(upstream.body as any).pipe(res);
+
+    const location = upstream.headers.get("location");
+    if (upstream.status === 302 && location) {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", "public, max-age=1800");
+      res.redirect(302, location);
+      return;
+    }
+
+    /* Agar 200 to'g'ridan kelsa — pipe qilish */
+    if (upstream.ok && upstream.body) {
+      const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
+      const cl = upstream.headers.get("content-length");
+      res.setHeader("Content-Type", ct);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      if (cl) res.setHeader("Content-Length", cl);
+      const { Readable } = await import("stream");
+      Readable.fromWeb(upstream.body as any).pipe(res);
+      return;
+    }
+
+    res.status(502).end();
   } catch (err) {
     req.log.warn(err, "music stream failed");
     if (!res.headersSent) res.status(502).end();

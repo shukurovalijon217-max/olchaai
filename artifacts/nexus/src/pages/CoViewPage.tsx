@@ -69,7 +69,11 @@ export default function CoViewPage() {
     const ws = new WebSocket(`${WS_URL}?userId=${user.id}`);
     ws.onopen = () => {
       setWsConnected(true);
-      ws.send(JSON.stringify({ type: "coview_join", roomId: roomCode }));
+      // isHost va hostId yuboramiz — Go server restart bo'lganda ham host to'g'ri qoladi
+      ws.send(JSON.stringify({
+        type: "coview_join", roomId: roomCode,
+        payload: { isHost: room?.hostId === user?.id, hostId: room?.hostId ?? 0 },
+      }));
       // Host: xona holatini yangi a'zolarga yuborish uchun pozitsiyani e'lon qil
       if (videoRef.current) {
         ws.send(JSON.stringify({

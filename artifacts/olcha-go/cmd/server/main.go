@@ -353,7 +353,19 @@ func handleWSMessage(hub *Hub, liveHub *LiveHub, coViewHub *CoViewHub, c *Client
                 log.Info().Str("room", msg.RoomID).Int("from", c.userID).Msg("live:gift")
 
         case "coview_join":
+                // Payload da isHost flag bo'lsa, uni e'tibor qilamiz
+                var joinPayload struct {
+                        IsHost bool `json:"isHost"`
+                        HostID int  `json:"hostId"`
+                }
+                json.Unmarshal(msg.Payload, &joinPayload)
                 room := coViewHub.getOrCreate(msg.RoomID, c.userID)
+                // Agar payload da haqiqiy hostId ko'rsatilgan bo'lsa — xotirani to'g'irlaymiz
+                if joinPayload.HostID > 0 && joinPayload.IsHost {
+                        room.mu.Lock()
+                        room.HostID = c.userID
+                        room.mu.Unlock()
+                }
                 room.add(c.userID)
                 ack, _ := json.Marshal(map[string]any{
                         "type":      "coview_joined",

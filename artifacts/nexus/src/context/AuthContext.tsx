@@ -53,13 +53,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchMe = async (retries = 2) => {
+  const fetchMe = async (retries = 1) => {
     try {
-      const res = await fetch(`${API}/api/auth/me`, { credentials: "include" });
+      // 5 soniya timeout — sekin API dan himoya
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`${API}/api/auth/me`, {
+        credentials: "include",
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
       if (res.ok) {
         const userData = await res.json();
         setUser(userData);
-        // Apply saved language preference from server (overrides localStorage if different)
+        // Apply saved language preference from server
         const savedLang = userData?.notifPrefs?.language as string | undefined;
         if (savedLang) {
           localStorage.setItem("olcha_lang_user", savedLang);
@@ -67,19 +74,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           i18nInst.changeLanguage(savedLang);
         }
       } else if (res.status === 401) {
-        // Real session expiry — log out
         setUser(null);
       }
       // Other status codes (500, 503, etc.): keep current user state
     } catch {
-      // Network error (internet disconnect, timeout, etc.)
-      // Retry before giving up — don't log the user out on a transient error
+      // Timeout yoki tarmoq xatosi — bir marta qayta urinish
       if (retries > 0) {
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise(r => setTimeout(r, 800));
         return fetchMe(retries - 1);
       }
-      // After all retries exhausted, keep existing user state (don't logout)
-      // Only clear user on initial load (when user is still null from useState)
       setUser(prev => prev);
     } finally {
       setLoading(false);

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import {
-  walletsTable, transactionsTable, paymentMethodsTable,
+  walletsTable, transactionsTable, paymentMethodsTable, usersTable,
 } from "@workspace/db";
 import { eq, desc, and } from "drizzle-orm";
 import { z } from "zod";
@@ -459,6 +459,77 @@ router.post("/wallet/tip", requireAuth, async (req: any, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Tip yuborishda xato" });
+  }
+});
+
+// ── Admin bonus ────────────────────────────────────────────────────────
+// POST /api/admin/wallet/bonus — foydalanuvchi hamyoniga bonus tanga/sum qo'shish
+const bonusSchema = z.object({
+  userId: z.number().int().positive(),
+  amount: z.number().int().min(100).max(100_000_000),
+  reason: z.string().min(1).max(200).default("Admin bonus"),
+});
+
+router.post("/admin/wallet/bonus", requireAuth, async (req: any, res) => {
+  try {
+    const [adminUser] = await db
+      .select({ isAdmin: usersTable.isAdmin })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.session.userId))
+      .limit(1);
+    if (!adminUser?.isAdmin) {
+      res.status(403).json({ error: "Admin huquqi talab qilinadi" }); return;
+    }
+
+    const parsed = bonusSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Noto'g'ri ma'lumot", details: parsed.error.flatten() });
+      return;
+    }
+    const { userId, amount, reason } = parsed.data;
+
+    // Foydalanuvchi mavjudmi tekshir
+    const [targetUser] = await db
+      .select({ id: usersTable.id, displayName: usersTable.displayName })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+    if (!targetUser) {
+      res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return;
+    }
+
+    const wallet = await getOrCreateWallet(userId);
+    const newBalance = wallet.balance + amount;
+
+    await db
+      .update(walletsTable)
+      .set({ balance: newBalance, updatedAt: new Date() })
+      .where(eq(walletsTable.id, wallet.id));
+
+    const ref = `BONUS-${Date.now()}-${userId}`;
+    await db.insert(transactionsTable).values({
+      userId,
+      walletId: wallet.id,
+      type: "deposit",
+      amount,
+      status: "completed",
+      paymentMethod: "admin_bonus",
+      description: `Admin bonus: ${reason}`,
+      reference: ref,
+    });
+
+    res.json({
+      ok: true,
+      userId,
+      displayName: targetUser.displayName,
+      amount,
+      newBalance,
+      reason,
+      reference: ref,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Bonus berishda xato" });
   }
 });
 

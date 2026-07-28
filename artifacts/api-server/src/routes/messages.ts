@@ -6,6 +6,7 @@ import { scanContentAsync } from "../moderation/aiFilter.js";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { getUserStatsMap } from "../lib/userStats";
 import { sendNotification } from "../lib/pushNotifications";
+import { trackQuestAction } from "../lib/trackQuest";
 
 const GO_SERVICE = process.env.GO_SERVICE_URL ?? "http://localhost:8099";
 
@@ -252,6 +253,9 @@ router.post("/conversations/:id/messages", async (req: any, res) => {
       isPending: isFutureScheduled,
       ...(decision.action === "warned" ? { warning: decision.message } : {}),
     });
+
+    /* Quest tracker */
+    if (!isFutureScheduled) void trackQuestAction(senderId, "send_message");
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

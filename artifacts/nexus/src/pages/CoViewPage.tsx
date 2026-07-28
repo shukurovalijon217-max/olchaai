@@ -70,6 +70,13 @@ export default function CoViewPage() {
     ws.onopen = () => {
       setWsConnected(true);
       ws.send(JSON.stringify({ type: "coview_join", roomId: roomCode }));
+      // Host: xona holatini yangi a'zolarga yuborish uchun pozitsiyani e'lon qil
+      if (videoRef.current) {
+        ws.send(JSON.stringify({
+          type: "coview_sync", roomId: roomCode,
+          payload: { playing: !videoRef.current.paused, time: videoRef.current.currentTime },
+        }));
+      }
     };
     ws.onclose = () => setWsConnected(false);
     ws.onmessage = (e) => {
@@ -260,6 +267,15 @@ export default function CoViewPage() {
               controls={false}
               onTimeUpdate={() => {
                 if (videoRef.current) setSyncTime(Math.floor(videoRef.current.currentTime));
+              }}
+              onPlay={() => {
+                if (isHost) sendSync(true);
+              }}
+              onPause={() => {
+                if (isHost) sendSync(false);
+              }}
+              onSeeked={() => {
+                if (isHost && videoRef.current) sendSync(isPlaying, videoRef.current.currentTime);
               }}
             />
           ) : (

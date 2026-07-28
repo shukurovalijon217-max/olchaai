@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { voiceCommentsTable, usersTable, postsTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { r2GetPresignedUploadUrl, isR2Enabled } from "../lib/r2Storage";
 
 const router = Router();
 
@@ -26,6 +27,27 @@ async function enrichVoiceComment(vc: typeof voiceCommentsTable.$inferSelect) {
     .where(eq(usersTable.id, vc.authorId));
   return { ...vc, author: author ?? null };
 }
+
+// POST /api/voice-comments/upload-url — R2 presigned URL olish (audio to'g'ridan R2 ga yuklanadi)
+router.post("/voice-comments/upload-url", requireAuth, async (req: any, res) => {
+  try {
+    if (!isR2Enabled()) {
+      res.status(503).json({ error: "R2 saqlash sozlanmagan" });
+      return;
+    }
+    const { contentType = "audio/webm" } = req.body ?? {};
+    const allowed = ["audio/webm", "audio/ogg", "audio/mp4", "audio/wav", "audio/mpeg"];
+    if (!allowed.includes(contentType)) {
+      res.status(400).json({ error: "Faqat audio fayllar ruxsat etilgan" });
+      return;
+    }
+    const { uploadURL, publicUrl } = await r2GetPresignedUploadUrl(contentType, 300);
+    res.json({ uploadURL, audioUrl: publicUrl });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Upload URL olishda xato" });
+  }
+});
 
 router.get("/posts/:id/voice-comments", async (req, res) => {
   try {

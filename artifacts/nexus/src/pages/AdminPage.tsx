@@ -11,7 +11,7 @@ import {
   Bot, BrainCircuit, Gauge, MemoryStick, Radio, UserCheck, ShieldX,
   PlayCircle, Film, Music, TrendingDown as TDown, Check, ChevronDown,
   CircleDollarSign, Banknote, ArrowRightLeft, BarChart2, Landmark,
-  Server, Cloud, CreditCard, CalendarClock
+  Server, Cloud, CreditCard, CalendarClock, Gift, Loader2
 } from "lucide-react";
 import {
   useGetAdminDashboard, useAdminListUsers, useAdminListContent,
@@ -1516,6 +1516,86 @@ function InfraCostsPanel() {
   );
 }
 
+function AdminBonusPanel() {
+  const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "");
+  const [userId, setUserId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const handleBonus = async () => {
+    const uid = parseInt(userId);
+    const amt = parseInt(amount);
+    if (!uid || !amt || amt < 100) { setResult({ ok: false, msg: "Foydalanuvchi ID va summa (min 100) kiriting" }); return; }
+    setLoading(true); setResult(null);
+    try {
+      const r = await fetch(`${API_BASE}/api/admin/wallet/bonus`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: uid, amount: amt, reason: reason || "Admin bonus" }),
+      });
+      const d = await r.json();
+      if (r.ok) {
+        setResult({ ok: true, msg: `✅ ${d.displayName} ga ${(amt / 100).toLocaleString()} so'm bonus berildi. Yangi balans: ${(d.newBalance / 100).toLocaleString()} so'm` });
+        setUserId(""); setAmount(""); setReason("");
+      } else {
+        setResult({ ok: false, msg: d.error ?? "Xato" });
+      }
+    } catch {
+      setResult({ ok: false, msg: "Ulanish xatosi" });
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <Gift className="w-4 h-4 text-amber-400" />
+        <h3 className="text-sm font-bold text-foreground">Admin Bonus</h3>
+        <span className="text-xs text-muted-foreground ml-1">— to'ldirmasdan hamyonga bonus qo'shish</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Foydalanuvchi ID</label>
+          <input
+            type="number" value={userId} onChange={e => setUserId(e.target.value)}
+            placeholder="Masalan: 12"
+            className="w-full px-3 py-2 rounded-xl bg-muted border border-border/50 text-sm outline-none focus:ring-2 ring-amber-500/40"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Miqdor (tiyinda, 100 = 1 so'm)</label>
+          <input
+            type="number" value={amount} onChange={e => setAmount(e.target.value)}
+            placeholder="Masalan: 10000 = 100 so'm"
+            className="w-full px-3 py-2 rounded-xl bg-muted border border-border/50 text-sm outline-none focus:ring-2 ring-amber-500/40"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Sabab (ixtiyoriy)</label>
+          <input
+            value={reason} onChange={e => setReason(e.target.value)}
+            placeholder="Test uchun bonus"
+            className="w-full px-3 py-2 rounded-xl bg-muted border border-border/50 text-sm outline-none focus:ring-2 ring-amber-500/40"
+          />
+        </div>
+      </div>
+      <button
+        onClick={handleBonus} disabled={loading || !userId || !amount}
+        className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition disabled:opacity-50 flex items-center gap-2"
+      >
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Gift className="w-4 h-4" />}
+        Bonus ber
+      </button>
+      {result && (
+        <p className={`text-sm rounded-xl px-4 py-2 ${result.ok ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}`}>
+          {result.msg}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function FinanceTab() {
   const { t } = useTranslation();
   const [data, setData] = useState<any>(null);
@@ -1856,6 +1936,9 @@ function FinanceTab() {
           </p>
         </div>
       </div>
+
+      {/* ===== ADMIN BONUS — foydalanuvchiga bonus berish ===== */}
+      <AdminBonusPanel />
 
       {/* ===== ADMIN WALLET (my earnings) ===== */}
       {commStats && (

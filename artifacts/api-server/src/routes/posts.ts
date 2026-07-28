@@ -10,6 +10,7 @@ import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { notifyComment, notifyLike } from "../lib/emailNotify";
 import { sendNotification } from "../lib/pushNotifications";
+import { trackQuestAction } from "../lib/trackQuest";
 
 const router = Router();
 
@@ -455,6 +456,9 @@ router.post("/posts", async (req: any, res) => {
     const [enriched] = await batchEnrichPosts([post], sessionUserId);
     res.status(201).json(enriched);
 
+    /* Quest tracker — fire-and-forget */
+    if (sessionUserId) void trackQuestAction(sessionUserId, "create_post");
+
     /* AI scan & autopilot — fire-and-forget, never blocks response */
     void (async () => {
       try {
@@ -585,6 +589,9 @@ router.post("/posts/:id/like", async (req, res) => {
     const [post] = await db.select({ likesCount: postsTable.likesCount, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
     res.json({ liked: !isLiked, likesCount: post?.likesCount ?? 0 });
 
+    /* Quest tracker */
+    if (!isLiked && userId) void trackQuestAction(userId, "like_post");
+
     // Push + Email: like bo'lganda post egasiga xabar (o'ziga xabar ketmasin)
     if (!isLiked && post?.authorId && post.authorId !== userId) {
       void (async () => {
@@ -714,6 +721,9 @@ router.post("/posts/:id/comments", async (req, res) => {
         ...stats,
       },
     });
+
+    /* Quest tracker */
+    void trackQuestAction(authorId, "comment");
 
     /* Push + Email bildirishnoma — post egasiga */
     void (async () => {

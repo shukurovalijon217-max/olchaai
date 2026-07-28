@@ -124,14 +124,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           signal: controller.signal,
         });
         clearTimeout(timer);
-        const text = await res.text();
-        const data = text ? JSON.parse(text) : {};
+        // Status avval tekshiriladi — Cloudflare HTML qaytarsa JSON.parse xato bermasligi uchun
         if (res.status === 429) return { error: "Ko'p urinish — 1 daqiqa kuting" };
-        if (res.status === 502 || res.status === 503) {
+        if (res.status === 403) return { error: "Kirish taqiqlangan — keyinroq urinib ko'ring" };
+        if (res.status === 502 || res.status === 503 || res.status === 504) {
           if (attempt === 0) { await new Promise(r => setTimeout(r, 3000)); continue; }
           return { error: "Server yuklanmoqda — qayta urinib ko'ring" };
         }
-        if (!res.ok) return { error: data.error ?? "Kirish xatosi" };
+        let data: any = {};
+        try {
+          const text = await res.text();
+          data = text ? JSON.parse(text) : {};
+        } catch { /* non-JSON javob — data bo'sh qoladi */ }
+        if (!res.ok) return { error: data.error ?? `Server xatosi (${res.status})` };
         setUser(data);
         writeCachedUser(data);
         return {};

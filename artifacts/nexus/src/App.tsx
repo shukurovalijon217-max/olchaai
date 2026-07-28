@@ -51,6 +51,7 @@ const CoSpacesPage      = lazy(() => import("@/pages/CoSpacesPage"));
 const MuniAIPage        = lazy(() => import("@/pages/MuniAIPage"));
 const VoiceTranslatorPage = lazy(() => import("@/pages/VoiceTranslatorPage"));
 const FeatureHubPage    = lazy(() => import("@/pages/FeatureHubPage"));
+const ComparisonPage    = lazy(() => import("@/pages/ComparisonPage"));
 const NotFound          = lazy(() => import("@/pages/not-found"));
 
 const PageLoader = () => (
@@ -275,6 +276,9 @@ function Router() {
         )} />
         <Route path="/features" component={() => (
           <ProtectedRoute><Layout><FeatureHubPage /></Layout></ProtectedRoute>
+        )} />
+        <Route path="/compare" component={() => (
+          <ProtectedRoute><Layout><ComparisonPage /></Layout></ProtectedRoute>
         )} />
         <Route path="/" component={() => (
           <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

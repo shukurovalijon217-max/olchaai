@@ -95,7 +95,16 @@ export default function QuestsPage() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    // Har 30 soniyada avtomatik yangilanish
+    const interval = setInterval(fetchData, 30_000);
+    // Sahifaga qaytganda ham yangilash
+    const onVisible = () => { if (document.visibilityState === "visible") fetchData(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleClaim = async (key: string) => {
     if (claiming) return;

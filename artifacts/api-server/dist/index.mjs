@@ -98138,31 +98138,28 @@ function getOpenAIClient() {
   _openai = new OpenAI({ apiKey: key });
   return _openai;
 }
-var USE_GROQ, AI_CHAT_MODEL, _groq, _openai, openai, openaiImages;
+function makeProxy(getClient) {
+  return new Proxy({}, {
+    get(_target, prop) {
+      const client = getClient();
+      const val = client[prop];
+      return typeof val === "function" ? val.bind(client) : val;
+    }
+  });
+}
+var USE_GROQ, AI_CHAT_MODEL, WHISPER_MODEL, _groq, _openai, openai, openaiImages, openaiAudio;
 var init_client2 = __esm({
   "../../lib/integrations-openai-ai-server/src/client.ts"() {
     "use strict";
     init_openai();
     USE_GROQ = !!process.env.GROQ_API_KEY;
     AI_CHAT_MODEL = USE_GROQ ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
+    WHISPER_MODEL = USE_GROQ ? "whisper-large-v3" : "whisper-1";
     _groq = null;
     _openai = null;
-    openai = new Proxy({}, {
-      get(_target, prop) {
-        const client = getGroqClient();
-        const val = client[prop];
-        if (typeof val === "function") return val.bind(client);
-        return val;
-      }
-    });
-    openaiImages = new Proxy({}, {
-      get(_target, prop) {
-        const client = getOpenAIClient();
-        const val = client[prop];
-        if (typeof val === "function") return val.bind(client);
-        return val;
-      }
-    });
+    openai = makeProxy(getGroqClient);
+    openaiImages = makeProxy(getOpenAIClient);
+    openaiAudio = makeProxy(getOpenAIClient);
   }
 });
 
@@ -127019,7 +127016,7 @@ var init_voiceTranslate = __esm({
         const buffer = Buffer.from(audioBase64, "base64");
         const file2 = new File([buffer], "audio.webm", { type: "audio/webm" });
         const transcription = await openai.audio.transcriptions.create({
-          model: "whisper-1",
+          model: WHISPER_MODEL,
           file: file2,
           language: sourceLang || void 0,
           response_format: "verbose_json"
@@ -127105,7 +127102,7 @@ Rules:
           }]
         });
         const translatedText = translationRes.choices[0]?.message?.content?.trim() ?? "";
-        const ttsRes = await openai.audio.speech.create({
+        const ttsRes = await openaiAudio.audio.speech.create({
           model: "tts-1-hd",
           voice: profile.ttsVoice,
           input: translatedText,
@@ -127171,7 +127168,7 @@ Rules:
           })
         ]);
         const translated = translationRes.choices[0]?.message?.content?.trim() ?? "";
-        const ttsRes = await openai.audio.speech.create({
+        const ttsRes = await openaiAudio.audio.speech.create({
           model: "tts-1-hd",
           voice,
           input: translated,
@@ -129484,7 +129481,7 @@ var init_otubeAi = __esm({
         const buffer = Buffer.from(audioBase64, "base64");
         const file2 = new File([buffer], "audio.webm", { type: "audio/webm" });
         const transcription = await openai.audio.transcriptions.create({
-          model: "whisper-1",
+          model: WHISPER_MODEL,
           file: file2,
           response_format: "verbose_json"
         });
@@ -129520,7 +129517,7 @@ var init_otubeAi = __esm({
           caption.trim(),
           400
         );
-        const ttsResp = await openai.audio.speech.create({
+        const ttsResp = await openaiAudio.audio.speech.create({
           model: "tts-1",
           voice: "nova",
           input: translated.slice(0, 4096)

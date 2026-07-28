@@ -5,7 +5,7 @@
   and voice-over caption transcription (Whisper STT).
 */
 import { Router } from "express";
-import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
+import { openai, openaiAudio, AI_CHAT_MODEL, WHISPER_MODEL } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 import { db, userInteractionsTable, reelsTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
@@ -236,7 +236,7 @@ router.post("/otube/ai/voice-caption", requireAuth, async (req: any, res) => {
     const file = new File([buffer], "audio.webm", { type: "audio/webm" });
 
     const transcription = await openai.audio.transcriptions.create({
-      model: "whisper-1",
+      model: WHISPER_MODEL,
       file,
       response_format: "verbose_json",
     });
@@ -268,7 +268,7 @@ router.post("/otube/ai/dub", requireAuth, async (req: any, res) => {
       400,
     );
 
-    const ttsResp = await openai.audio.speech.create({
+    const ttsResp = await openaiAudio.audio.speech.create({
       model: "tts-1",
       voice: "nova",
       input: translated.slice(0, 4096),

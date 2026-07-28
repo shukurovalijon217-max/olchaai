@@ -14,15 +14,25 @@ import { agentLog, agentWarn, agentError } from "./logger.js";
 import { getStats as secStats } from "./security.js";
 import { getModerationStats } from "./moderation.js";
 import { getLatestSnapshot } from "./analytics.js";
-const AI_CHAT_MODEL = process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
+
+const USE_GROQ      = !!process.env.GROQ_API_KEY;
+const AI_CHAT_MODEL = USE_GROQ ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
 
 const AGENT = "Orchestrator";
 const HEARTBEAT_MS = 30_000;
 const MAX_LOG_ENTRIES = 200;
 
+/* Groq (tez, arzon) → OpenAI fallback */
 let openai: OpenAI | null = null;
 try {
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (USE_GROQ) {
+    openai = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY!,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
+  } else {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
 } catch {
   /* degraded mode */
 }

@@ -8,7 +8,7 @@
   the translation prompt AND the TTS voice selection.
 */
 import { Router } from "express";
-import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
+import { openai, openaiAudio, AI_CHAT_MODEL, WHISPER_MODEL } from "@workspace/integrations-openai-ai-server";
 import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
 
 const router = Router();
@@ -58,7 +58,7 @@ router.post("/voice/translate", async (req, res) => {
     const file = new File([buffer], "audio.webm", { type: "audio/webm" });
 
     const transcription = await openai.audio.transcriptions.create({
-      model: "whisper-1",
+      model: WHISPER_MODEL,
       file,
       language: sourceLang || undefined,
       response_format: "verbose_json",
@@ -149,7 +149,7 @@ Rules:
     const translatedText = translationRes.choices[0]?.message?.content?.trim() ?? "";
 
     /* ── Step 4: TTS with matched voice ─────────────────────── */
-    const ttsRes = await openai.audio.speech.create({
+    const ttsRes = await openaiAudio.audio.speech.create({
       model: "tts-1-hd",
       voice: profile.ttsVoice,
       input: translatedText,
@@ -214,7 +214,7 @@ router.post("/voice/translate-text", async (req, res) => {
 
     const translated = translationRes.choices[0]?.message?.content?.trim() ?? "";
 
-    const ttsRes = await openai.audio.speech.create({
+    const ttsRes = await openaiAudio.audio.speech.create({
       model: "tts-1-hd",
       voice,
       input: translated,

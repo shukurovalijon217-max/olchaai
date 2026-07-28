@@ -813,13 +813,15 @@ func main() {
         coViewHub := newCoViewHub()
         mux := http.NewServeMux()
 
-        mux.HandleFunc("/go/health", func(w http.ResponseWriter, r *http.Request) {
+        healthHandler := func(w http.ResponseWriter, r *http.Request) {
                 w.Header().Set("Content-Type", "application/json")
                 json.NewEncoder(w).Encode(map[string]any{
-                        "ok": true, "service": "olcha-go", "goVersion": "1.25",
+                        "ok": true, "service": "olcha-go", "goVersion": "1.24",
                         "uptime": time.Since(startTime).String(),
                 })
-        })
+        }
+        mux.HandleFunc("/go/health", healthHandler)
+        mux.HandleFunc("/healthz", healthHandler)
 
         mux.HandleFunc("/go/ws", func(w http.ResponseWriter, r *http.Request) {
                 serveWS(hub, liveHub, coViewHub, w, r)

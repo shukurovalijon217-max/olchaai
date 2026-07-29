@@ -4,3 +4,4 @@
 !artifacts/nexus/server.js
 !artifacts/nexus/start.sh
 !artifacts/api-server/dist/**
+!docker/stubs/**

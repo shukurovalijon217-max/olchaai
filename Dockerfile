@@ -1,4 +1,4 @@
-### Nexus + API Server — pre-built, Railway tez deploy
+### Nexus + API Server — pre-built, npm install YO'Q (stub modules)
 ### API :8080 (internal), Nexus $PORT (external)
 FROM node:24-slim
 
@@ -9,18 +9,19 @@ COPY artifacts/nexus/dist/      ./dist/
 COPY artifacts/nexus/server.js  ./server.js
 
 # API server bundle
-RUN mkdir -p /app/api
+RUN mkdir -p /app/api/dist
 COPY artifacts/api-server/dist/ /app/api/dist/
 
-# Static ESM deps (bundlelanmagan — startup uchun kerak)
-WORKDIR /app/api
-RUN npm install --no-save \
-      @google-cloud/storage \
-      "@aws-sdk/client-s3" \
-      "@aws-sdk/s3-request-presigner" \
-      sharp
+# Static ESM import stubs (npm install o'rniga — tezroq build)
+RUN mkdir -p /app/api/node_modules/@google-cloud \
+             /app/api/node_modules/@aws-sdk \
+             /app/api/node_modules/sharp
+COPY docker/stubs/@google-cloud/storage /app/api/node_modules/@google-cloud/storage/
+COPY docker/stubs/@aws-sdk/client-s3    /app/api/node_modules/@aws-sdk/client-s3/
+COPY docker/stubs/@aws-sdk/s3-request-presigner /app/api/node_modules/@aws-sdk/s3-request-presigner/
+COPY docker/stubs/sharp                 /app/api/node_modules/sharp/
 
-WORKDIR /app
+# Start script
 COPY artifacts/nexus/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 

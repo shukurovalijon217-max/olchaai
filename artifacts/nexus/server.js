@@ -13,7 +13,7 @@ const PORT       = parseInt(process.env.PORT || "3000", 10);
 const API_TARGET = process.env.API_TARGET || "https://olchaai-api.onrender.com";
 
 /* If API_TARGET points to localhost, spawn the API server in-process */
-if (API_TARGET.startsWith("http://localhost:") || API_TARGET.startsWith("http://127.0.0.1:")) {
+if (API_TARGET.startsWith("http://127.0.0.1:") || API_TARGET.startsWith("http://localhost:")) {
   const apiPort = API_TARGET.replace(/.*:(\d+).*/, "$1");
   const apiEntry = path.join(__dirname, "api", "dist", "index.mjs");
   if (fs.existsSync(apiEntry)) {

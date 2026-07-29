@@ -885,7 +885,7 @@ export default function GroupsPage() {
     }
   };
 
-  /* ── Internal OlchaAI share ─────────────────────────────────────── */
+  /* ── Internal GILOS share ─────────────────────────────────────── */
   const handleShareToFeed = async () => {
     if (!sharePost || sharingPost) return;
     setSharingPost(true);
@@ -2341,7 +2341,7 @@ export default function GroupsPage() {
                                   {post.commentsCount > 0 && <span>{post.commentsCount}</span>}
                                 </motion.button>
 
-                                {/* Share - OlchaAI internal */}
+                                {/* Share - GILOS internal */}
                                 <motion.button whileTap={{ scale: 0.9 }}
                                   onClick={() => { setSharePost(post); setShareComment(""); }}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all">

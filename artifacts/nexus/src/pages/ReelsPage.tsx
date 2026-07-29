@@ -1,5 +1,5 @@
 /**
- * OLCHA REELS — "AURORA" Edition  v3.0
+ * GILOS REELS — "AURORA" Edition  v3.0
  * ─────────────────────────────────────────────────────────────────
  * Innovations over EVERY existing social platform:
  *

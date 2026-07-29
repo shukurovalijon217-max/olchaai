@@ -24,7 +24,7 @@ type Platform = {
 };
 
 const PLATFORMS: Platform[] = [
-  { id: "gilos",     name: "GilosAI",    subtitle: "olchaai.com", color: "#f97316", bg: "from-orange-950/60 to-amber-950/40",  border: "border-orange-500/40",  score: 94, badge: "🏆 Yetakchi", highlight: true },
+  { id: "gilos",     name: "GILOS",    subtitle: "olchaai.com", color: "#f97316", bg: "from-orange-950/60 to-amber-950/40",  border: "border-orange-500/40",  score: 94, badge: "🏆 Yetakchi", highlight: true },
   { id: "instagram", name: "Instagram",  subtitle: "Meta",        color: "#e1306c", bg: "from-pink-950/40 to-rose-950/30",     border: "border-pink-800/30",    score: 72 },
   { id: "tiktok",    name: "TikTok",     subtitle: "ByteDance",   color: "#00f2ea", bg: "from-cyan-950/40 to-teal-950/30",     border: "border-cyan-800/30",    score: 68 },
   { id: "telegram",  name: "Telegram",   subtitle: "TON Group",   color: "#2aabee", bg: "from-blue-950/40 to-sky-950/30",      border: "border-blue-800/30",    score: 65 },
@@ -206,7 +206,7 @@ export default function ComparisonPage() {
     setOpenCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
 
   const togglePlatform = (id: PlatformId) => {
-    if (id === "gilos") return; // GilosAI always visible
+    if (id === "gilos") return; // GILOS always visible
     setActivePlatforms(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -234,12 +234,12 @@ export default function ComparisonPage() {
             </div>
             <div>
               <h1 className="text-2xl font-black text-foreground leading-tight">Qiyosiy Tahlil</h1>
-              <p className="text-sm text-muted-foreground">GilosAI vs Dunyo Gigantlari</p>
+              <p className="text-sm text-muted-foreground">GILOS vs Dunyo Gigantlari</p>
             </div>
           </div>
 
           <p className="text-sm text-muted-foreground max-w-xl leading-relaxed">
-            GilosAI — O'zbekistondagi birinchi to'liq AI ijtimoiy platforma. Quyida Instagram, TikTok, YouTube, Telegram va boshqalar bilan batafsil qiyos.
+            GILOS — O'zbekistondagi birinchi to'liq AI ijtimoiy platforma. Quyida Instagram, TikTok, YouTube, Telegram va boshqalar bilan batafsil qiyos.
           </p>
 
           {/* Score cards */}
@@ -318,7 +318,7 @@ export default function ComparisonPage() {
         <div className="rounded-2xl border border-orange-500/25 bg-gradient-to-br from-orange-950/20 to-amber-950/10 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Crown className="w-5 h-5 text-orange-400" />
-            <h2 className="text-base font-bold text-foreground">GilosAI — Faqat Bizda Mavjud</h2>
+            <h2 className="text-base font-bold text-foreground">GILOS — Faqat Bizda Mavjud</h2>
             <span className="ml-auto text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-semibold">
               {UNIQUE_FEATURES.length} ta unikal
             </span>

@@ -50,7 +50,7 @@ COPY artifacts/nexus/server.js ./server.js
 
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV API_TARGET=https://olchaai-api-production.up.railway.app
+ENV API_TARGET=https://olchaai-api.onrender.com
 ENV WS_URL=wss://olchaai-go-production.up.railway.app/go/ws
 ENV NODE_OPTIONS=--max-old-space-size=512
 

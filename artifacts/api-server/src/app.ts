@@ -236,23 +236,9 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-/* ── IP-based rate limiting ────────────────────────────────────── */
-app.use("/api", (req: Request, res: Response, next: NextFunction) => {
-  const { checkRateLimit } = require("./lib/security");
-  /* cf-connecting-ip — Cloudflare tomonidan o'rnatilgan haqiqiy foydalanuvchi IP.
-     x-forwarded-for birinchi elementi Railway Nexus proxy IP si bo'lishi mumkin — ishonchsiz. */
-  const ip = (req.headers["cf-connecting-ip"] as string)?.trim()
-    ?? (req.headers["x-forwarded-for"] as string)?.split(",").pop()?.trim()
-    ?? req.socket.remoteAddress
-    ?? "unknown";
-  if (!checkRateLimit(ip)) {
-    res.status(429)
-      .setHeader("Retry-After", "60")
-      .json({ error: "Too many requests. Please slow down.", retryAfterMs: 60_000 });
-    return;
-  }
-  next();
-});
+/* ── IP-based rate limiting — olib tashlandi ─────────────────────
+   Railway proxy orqali barcha foydalanuvchilar bir IP ko'rinadi.
+   Login brute-force himoyasi (15 urinish → 3 daqiqa) routes/auth.ts da. */
 
 /* ── AI Auto-Scale: rate limiting + memory pressure management ─── */
 app.use("/api", aiAutoScaleMiddleware);

@@ -43596,7 +43596,7 @@ async function callOpenAI(prompt) {
     messages: [
       {
         role: "system",
-        content: "You are the central AI orchestrator for OlchaAI, a social platform. Give concise, actionable decisions (1-3 sentences). No markdown."
+        content: "You are the central AI orchestrator for GILOS, a social platform. Give concise, actionable decisions (1-3 sentences). No markdown."
       },
       { role: "user", content: prompt }
     ]
@@ -43870,7 +43870,7 @@ if (!rawPort) throw new Error("PORT env var is required");
 var port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) throw new Error(`Invalid PORT: "${rawPort}"`);
 logger.info("\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557");
-logger.info("\u2551       OlchaAI \u2014 AI Core Service            \u2551");
+logger.info("\u2551       GILOS \u2014 AI Core Service            \u2551");
 logger.info("\u2551  Fully Autonomous \u2022 Pentagon-Grade Sec   \u2551");
 logger.info("\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255D");
 startSecurityAgent();

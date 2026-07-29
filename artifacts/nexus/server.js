@@ -21,7 +21,13 @@ if (API_TARGET.startsWith("http://127.0.0.1:") || API_TARGET.startsWith("http://
     function startApi() {
       console.log(`[nexus] Spawning API server on port ${apiPort}…`);
       const api = spawn(process.execPath, ["--enable-source-maps", "--no-warnings", apiEntry], {
-        env: { ...process.env, PORT: apiPort, NODE_PATH: path.join(__dirname, "api", "node_modules") },
+        env: {
+        ...process.env,
+        PORT: apiPort,
+        NODE_PATH: path.join(__dirname, "api", "node_modules"),
+        // Railway may store DB URL under either name — ensure both are set
+        DATABASE_URL: process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || "",
+      },
         stdio: ["ignore", "inherit", "inherit"],
         cwd: path.join(__dirname, "api"),
       });

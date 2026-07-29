@@ -78302,6 +78302,9 @@ var init_src2 = __esm({
     init_schema2();
     init_schema2();
     ({ Pool: Pool3 } = esm_default);
+    if (!process.env.DATABASE_URL && process.env.NEON_DATABASE_URL) {
+      process.env.DATABASE_URL = process.env.NEON_DATABASE_URL;
+    }
     if (!process.env.DATABASE_URL) {
       throw new Error(
         "DATABASE_URL must be set. Did you forget to provision a database?"

@@ -77,8 +77,8 @@ export function checkRateLimit(ip: string): boolean {
  */
 const loginAttempts = new Map<string, { fails: number; lockedUntil: number }>();
 const LOGIN_WINDOW_MS = 15 * 60_000; // 15 minutes
-const MAX_LOGIN_FAILS = 10;
-const LOCKOUT_MS = 15 * 60_000;     // 15-minute lockout
+const MAX_LOGIN_FAILS = 15;          // 15 urinishdan keyin lock (avval 10 edi)
+const LOCKOUT_MS = 3 * 60_000;      // 3-daqiqa lockout (avval 15 daqiqa edi — juda og'ir edi)
 
 export function checkLoginBruteForce(ip: string, identifier: string): { allowed: boolean; remainingMs?: number } {
   const key = `${ip}::${identifier.toLowerCase()}`;

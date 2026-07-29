@@ -86409,8 +86409,8 @@ var init_security = __esm({
     MAX_BURST = 30;
     loginAttempts = /* @__PURE__ */ new Map();
     LOGIN_WINDOW_MS = 15 * 6e4;
-    MAX_LOGIN_FAILS = 10;
-    LOCKOUT_MS = 15 * 6e4;
+    MAX_LOGIN_FAILS = 15;
+    LOCKOUT_MS = 3 * 6e4;
     setInterval(() => {
       const now = Date.now();
       for (const [ip, rec] of ipHits.entries()) {

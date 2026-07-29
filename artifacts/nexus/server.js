@@ -6,10 +6,29 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
+import { spawn } from "child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT       = parseInt(process.env.PORT || "3000", 10);
 const API_TARGET = process.env.API_TARGET || "https://olchaai-api.onrender.com";
+
+/* If API_TARGET points to localhost, spawn the API server in-process */
+if (API_TARGET.startsWith("http://localhost:") || API_TARGET.startsWith("http://127.0.0.1:")) {
+  const apiPort = API_TARGET.replace(/.*:(\d+).*/, "$1");
+  const apiEntry = path.join(__dirname, "api", "dist", "index.mjs");
+  if (fs.existsSync(apiEntry)) {
+    console.log(`[nexus] Spawning API server on port ${apiPort}…`);
+    const api = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
+      env: { ...process.env, PORT: apiPort },
+      stdio: "inherit",
+    });
+    api.on("exit", (code) => {
+      console.error(`[nexus] API server exited with code ${code} — continuing Nexus`);
+    });
+  } else {
+    console.warn("[nexus] API entry not found at", apiEntry, "— /api/* will return 502");
+  }
+}
 const GO_TARGET  = process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app";
 const DIST       = path.join(__dirname, "dist", "public");
 

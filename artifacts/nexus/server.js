@@ -9,7 +9,7 @@ import crypto from "crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT       = parseInt(process.env.PORT || "3000", 10);
-const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.railway.app";
+const API_TARGET = process.env.API_TARGET || "https://olchaai-api.onrender.com";
 const GO_TARGET  = process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app";
 const DIST       = path.join(__dirname, "dist", "public");
 

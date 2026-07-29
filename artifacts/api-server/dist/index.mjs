@@ -130201,15 +130201,6 @@ var init_app = __esm({
       }
       next();
     });
-    app.use("/api", (req, res, next) => {
-      const { checkRateLimit: checkRateLimit2 } = (init_security(), __toCommonJS(security_exports));
-      const ip = req.headers["cf-connecting-ip"]?.trim() ?? req.headers["x-forwarded-for"]?.split(",").pop()?.trim() ?? req.socket.remoteAddress ?? "unknown";
-      if (!checkRateLimit2(ip)) {
-        res.status(429).setHeader("Retry-After", "60").json({ error: "Too many requests. Please slow down.", retryAfterMs: 6e4 });
-        return;
-      }
-      next();
-    });
     app.use("/api", aiAutoScaleMiddleware);
     app.use("/api", resilienceMiddleware);
     app.use("/api", (req, res, next) => {

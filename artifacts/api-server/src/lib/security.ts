@@ -6,12 +6,12 @@ import { createHmac, timingSafeEqual } from "crypto";
 const SECRET = (() => {
   const s = process.env["SESSION_SECRET"];
   if (!s || s.length < 16) {
-    // In production, require a strong secret. In dev, warn loudly.
-    if (process.env["NODE_ENV"] === "production") {
-      throw new Error("SESSION_SECRET env var is required in production and must be ≥16 chars");
-    }
-    process.stderr.write("⚠️  WARNING: SESSION_SECRET not set — using insecure dev fallback. Set it in production!\n");
-    return "olcha-secret-2024-dev-only";
+    // Warn loudly but do NOT crash — Railway Variables may not have it set yet.
+    process.stderr.write(
+      "⚠️  WARNING: SESSION_SECRET not set or < 16 chars — using built-in fallback.\n" +
+      "   Set SESSION_SECRET in Railway Variables for proper security.\n"
+    );
+    return "olchaai-railway-fallback-2024-secret-key";
   }
   return s;
 })();

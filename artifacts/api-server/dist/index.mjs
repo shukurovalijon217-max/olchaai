@@ -78309,17 +78309,13 @@ var init_src2 = __esm({
     }
     pool = new Pool3({
       connectionString: process.env.DATABASE_URL,
-      // High-concurrency pool settings
-      max: 20,
-      // max simultaneous DB connections
-      min: 2,
-      // keep 2 connections warm (fast first-request)
+      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : void 0,
+      max: 10,
+      min: 1,
       idleTimeoutMillis: 3e4,
-      // release idle connections after 30s
-      connectionTimeoutMillis: 5e3,
-      // fail fast if DB is unreachable (5s)
+      connectionTimeoutMillis: 8e3,
+      // fail fast if DB unreachable
       allowExitOnIdle: false
-      // keep pool alive in cluster workers
     });
     pool.on("error", (err) => {
       process.stderr.write(`[DB pool error] ${err.message}

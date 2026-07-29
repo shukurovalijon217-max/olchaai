@@ -10,7 +10,13 @@ import { spawn } from "child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT       = parseInt(process.env.PORT || "3000", 10);
-const API_TARGET = process.env.API_TARGET || "https://olchaai-api.onrender.com";
+let API_TARGET = process.env.API_TARGET || "https://olchaai-api.onrender.com";
+/* Detect self-referencing Railway loop: Railway Variables overrides Dockerfile ENV
+   with the same service URL → 429 proxy loop.  Force localhost when detected. */
+if (API_TARGET.includes(".railway.app") || API_TARGET.includes(".onrender.com")) {
+  console.log(`[nexus] Loop/stale detected (${API_TARGET}) — switching to localhost:13337`);
+  API_TARGET = "http://127.0.0.1:13337";
+}
 
 /* If API_TARGET points to localhost, spawn the API server in-process */
 if (API_TARGET.startsWith("http://127.0.0.1:") || API_TARGET.startsWith("http://localhost:")) {

@@ -17,14 +17,22 @@ if (API_TARGET.startsWith("http://127.0.0.1:") || API_TARGET.startsWith("http://
   const apiPort = API_TARGET.replace(/.*:(\d+).*/, "$1");
   const apiEntry = path.join(__dirname, "api", "dist", "index.mjs");
   if (fs.existsSync(apiEntry)) {
-    console.log(`[nexus] Spawning API server on port ${apiPort}…`);
-    const api = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
-      env: { ...process.env, PORT: apiPort },
-      stdio: "inherit",
-    });
-    api.on("exit", (code) => {
-      console.error(`[nexus] API server exited with code ${code} — continuing Nexus`);
-    });
+    let restartDelay = 2000;
+    function startApi() {
+      console.log(`[nexus] Spawning API server on port ${apiPort}…`);
+      const api = spawn(process.execPath, ["--enable-source-maps", "--no-warnings", apiEntry], {
+        env: { ...process.env, PORT: apiPort, NODE_PATH: path.join(__dirname, "api", "node_modules") },
+        stdio: ["ignore", "inherit", "inherit"],
+        cwd: path.join(__dirname, "api"),
+      });
+      api.on("exit", (code, signal) => {
+        console.error(`[nexus] API exited code=${code} signal=${signal} — restarting in ${restartDelay}ms`);
+        setTimeout(() => { startApi(); }, restartDelay);
+        restartDelay = Math.min(restartDelay * 2, 30000); // exponential backoff cap 30s
+      });
+      api.on("error", (err) => console.error("[nexus] API spawn error:", err.message));
+    }
+    startApi();
   } else {
     console.warn("[nexus] API entry not found at", apiEntry, "— /api/* will return 502");
   }

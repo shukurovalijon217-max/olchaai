@@ -130393,24 +130393,9 @@ var init_cleanupSeedData = __esm({
 init_logger();
 import cluster from "node:cluster";
 import os from "node:os";
-var WORKERS = Math.max(1, Math.min(
-  parseInt(process.env["WEB_CONCURRENCY"] ?? "1", 10) || 1,
-  os.cpus().length,
-  4
-));
-if (cluster.isPrimary) {
-  logger.info({ workers: WORKERS, cpus: os.cpus().length }, "Primary starting workers");
-  for (let i = 0; i < WORKERS; i++) {
-    cluster.fork();
-  }
-  cluster.on("exit", (worker, code, signal) => {
-    logger.warn({ pid: worker.process.pid, code, signal }, "Worker died \u2014 restarting");
-    setTimeout(() => cluster.fork(), 1e3);
-  });
-} else {
+var SINGLE_PROCESS = process.env["SINGLE_PROCESS"] === "1" || process.env["SINGLE_PROCESS"] === "true";
+async function runServer() {
   const { default: app2 } = await Promise.resolve().then(() => (init_app(), app_exports));
-  const { initTFEngine: initTFEngine2 } = await Promise.resolve().then(() => (init_tfEngine(), tfEngine_exports));
-  const { cleanupSeedData: cleanupSeedData2 } = await Promise.resolve().then(() => (init_cleanupSeedData(), cleanupSeedData_exports));
   const rawPort = process.env["PORT"];
   if (!rawPort) throw new Error("PORT environment variable is required but was not provided.");
   const port = Number(rawPort);
@@ -130421,14 +130406,42 @@ if (cluster.isPrimary) {
         reject(err);
         return;
       }
-      logger.info({ port, workerId: cluster.worker?.id }, "Worker listening");
+      logger.info({ port, singleProcess: SINGLE_PROCESS }, "API server listening");
       resolve();
     });
   });
-  if (cluster.worker?.id === 1) {
-    logger.info("Stripe ready (direct API mode \u2014 no DB schema required)");
+  logger.info("Stripe ready (direct API mode)");
+  try {
+    const { initTFEngine: initTFEngine2 } = await Promise.resolve().then(() => (init_tfEngine(), tfEngine_exports));
     initTFEngine2().then(() => logger.info("TensorFlow.js engine ready")).catch((err) => logger.warn({ err }, "TF engine unavailable \u2014 using rule-based only"));
+  } catch (err) {
+    logger.warn({ err }, "TF engine module unavailable");
+  }
+  try {
+    const { cleanupSeedData: cleanupSeedData2 } = await Promise.resolve().then(() => (init_cleanupSeedData(), cleanupSeedData_exports));
     cleanupSeedData2().catch((err) => logger.warn({ err }, "Seed data cleanup errored (non-fatal)"));
+  } catch (err) {
+    logger.warn({ err }, "cleanupSeedData unavailable");
+  }
+}
+if (SINGLE_PROCESS) {
+  logger.info("Starting in single-process mode (SINGLE_PROCESS=1)");
+  await runServer();
+} else {
+  const WORKERS = Math.max(1, Math.min(
+    parseInt(process.env["WEB_CONCURRENCY"] ?? "1", 10) || 1,
+    os.cpus().length,
+    4
+  ));
+  if (cluster.isPrimary) {
+    logger.info({ workers: WORKERS, cpus: os.cpus().length }, "Primary starting workers");
+    for (let i = 0; i < WORKERS; i++) cluster.fork();
+    cluster.on("exit", (worker, code, signal) => {
+      logger.warn({ pid: worker.process.pid, code, signal }, "Worker died \u2014 restarting");
+      setTimeout(() => cluster.fork(), 1e3);
+    });
+  } else {
+    await runServer();
   }
 }
 /*! Bundled license information:

@@ -30,7 +30,9 @@ if (API_TARGET.startsWith("http://127.0.0.1:") || API_TARGET.startsWith("http://
         env: {
         ...process.env,
         PORT: apiPort,
+        SINGLE_PROCESS: "1",             // skip cluster.fork() — run inline
         NODE_PATH: path.join(__dirname, "api", "node_modules"),
+        NODE_OPTIONS: "--max-old-space-size=256",  // keep API footprint small
         // Railway may store DB URL under either name — ensure both are set
         DATABASE_URL: process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || "",
       },

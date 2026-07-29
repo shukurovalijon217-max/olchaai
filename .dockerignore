@@ -1,7 +1,6 @@
-# Faqat Dockerfile uchun kerakli fayllar uzatilsin
 **
 !Dockerfile
-!artifacts/nexus/dist/
+!artifacts/nexus/dist/**
 !artifacts/nexus/server.js
 !artifacts/nexus/start.sh
-!artifacts/api-server/dist/
+!artifacts/api-server/dist/**

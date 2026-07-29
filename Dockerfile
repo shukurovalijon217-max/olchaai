@@ -1,12 +1,6 @@
-### Nexus + API Server — pre-built, Railway qayta build qilmaydi
+### Nexus + API Server — pre-built, Railway tez deploy
 ### API :8080 (internal), Nexus $PORT (external)
-
-FROM node:24-slim AS runtime
-
-# sharp prebuilt binary uchun libvips runtime (Debian slim da bor)
-RUN apt-get update -qq && apt-get install -y --no-install-recommends \
-    libvips42 \
-  && rm -rf /var/lib/apt/lists/*
+FROM node:24-slim
 
 WORKDIR /app
 
@@ -14,22 +8,19 @@ WORKDIR /app
 COPY artifacts/nexus/dist/      ./dist/
 COPY artifacts/nexus/server.js  ./server.js
 
-# API server bundle (esbuild)
+# API server bundle
 RUN mkdir -p /app/api
 COPY artifacts/api-server/dist/ /app/api/dist/
 
-# Static ESM deps (bundlelanmagan, runtime kerak)
+# Static ESM deps (bundlelanmagan — startup uchun kerak)
 WORKDIR /app/api
-RUN npm install --no-save --prefer-offline \
+RUN npm install --no-save \
       @google-cloud/storage \
-      @aws-sdk/client-s3 \
-      @aws-sdk/s3-request-presigner \
-      sharp \
-    2>&1 | tail -2
+      "@aws-sdk/client-s3" \
+      "@aws-sdk/s3-request-presigner" \
+      sharp
 
 WORKDIR /app
-
-# Start script
 COPY artifacts/nexus/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 

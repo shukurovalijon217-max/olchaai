@@ -10,7 +10,6 @@ import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { notifyComment, notifyLike } from "../lib/emailNotify";
 import { sendNotification } from "../lib/pushNotifications";
-import { trackQuestAction } from "../lib/trackQuest";
 
 const router = Router();
 
@@ -176,41 +175,25 @@ router.get("/music/search", async (req: any, res) => {
   }
 });
 
-/* ── GET /music/stream/:id — Audius CDN redirect (browser streams directly) ── */
+/* ── GET /music/stream/:id — Audius full track proxy (CORS-safe) ── */
 router.get("/music/stream/:id", async (req: any, res) => {
   try {
     const id = String(req.params.id ?? "").replace(/[^a-zA-Z0-9_-]/g, "");
     if (!id) { res.status(400).end(); return; }
-
-    /* Audius 302 → CDN URL ni olib, to'g'ridan browser ga redirect qilamiz.
-       Shunda browser native audio streaming ishlatadi: seek, progress, Range — hammasi ishlaydi */
+    /* Audius returns 302 → CDN; follow the redirect and stream */
     const upstream = await fetch(
       `${AUDIUS_HOST}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
-      { signal: AbortSignal.timeout(8000), redirect: "manual" }
+      { signal: AbortSignal.timeout(15000), redirect: "follow" }
     );
-
-    const location = upstream.headers.get("location");
-    if (upstream.status === 302 && location) {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=1800");
-      res.redirect(302, location);
-      return;
-    }
-
-    /* Agar 200 to'g'ridan kelsa — pipe qilish */
-    if (upstream.ok && upstream.body) {
-      const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
-      const cl = upstream.headers.get("content-length");
-      res.setHeader("Content-Type", ct);
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=3600");
-      if (cl) res.setHeader("Content-Length", cl);
-      const { Readable } = await import("stream");
-      Readable.fromWeb(upstream.body as any).pipe(res);
-      return;
-    }
-
-    res.status(502).end();
+    if (!upstream.ok || !upstream.body) { res.status(502).end(); return; }
+    const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
+    const cl = upstream.headers.get("content-length");
+    res.setHeader("Content-Type", ct);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    if (cl) res.setHeader("Content-Length", cl);
+    const { Readable } = await import("stream");
+    Readable.fromWeb(upstream.body as any).pipe(res);
   } catch (err) {
     req.log.warn(err, "music stream failed");
     if (!res.headersSent) res.status(502).end();
@@ -371,7 +354,7 @@ router.post("/posts/ai-caption", async (req: any, res) => {
       messages: [
         {
           role: "system",
-          content: `Sen GILOS ijtimoiy tarmoq uchun ijodiy caption/izoh yozuvchi AI yordamchisan. Foydalanuvchi so'ragan tilda (o'zbek, rus yoki ingliz) qisqa, jozibali, emoji ishlatgan 3 ta har xil caption yoz. Har birini JSON arrayda qaytargin.`,
+          content: `Sen OlchaAI ijtimoiy tarmoq uchun ijodiy caption/izoh yozuvchi AI yordamchisan. Foydalanuvchi so'ragan tilda (o'zbek, rus yoki ingliz) qisqa, jozibali, emoji ishlatgan 3 ta har xil caption yoz. Har birini JSON arrayda qaytargin.`,
         },
         {
           role: "user",
@@ -471,9 +454,6 @@ router.post("/posts", async (req: any, res) => {
 
     const [enriched] = await batchEnrichPosts([post], sessionUserId);
     res.status(201).json(enriched);
-
-    /* Quest tracker — fire-and-forget */
-    if (sessionUserId) void trackQuestAction(sessionUserId, "create_post");
 
     /* AI scan & autopilot — fire-and-forget, never blocks response */
     void (async () => {
@@ -605,9 +585,6 @@ router.post("/posts/:id/like", async (req, res) => {
     const [post] = await db.select({ likesCount: postsTable.likesCount, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
     res.json({ liked: !isLiked, likesCount: post?.likesCount ?? 0 });
 
-    /* Quest tracker */
-    if (!isLiked && userId) void trackQuestAction(userId, "like_post");
-
     // Push + Email: like bo'lganda post egasiga xabar (o'ziga xabar ketmasin)
     if (!isLiked && post?.authorId && post.authorId !== userId) {
       void (async () => {
@@ -737,9 +714,6 @@ router.post("/posts/:id/comments", async (req, res) => {
         ...stats,
       },
     });
-
-    /* Quest tracker */
-    void trackQuestAction(authorId, "comment");
 
     /* Push + Email bildirishnoma — post egasiga */
     void (async () => {

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import type { OlchaAIPost } from "../hooks/useOlchaAIData";
-import { timeAgo } from "../hooks/useOlchaAIData";
+import type { GILOSPost } from "../hooks/useGILOSData";
+import { timeAgo } from "../hooks/useGILOSData";
 
 const AVATAR_COLORS = [
   "linear-gradient(135deg,#ff6b6b,#ee5a24)",
@@ -32,7 +32,7 @@ function CornerBracket({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 }
 
 interface CyberCardProps {
-  post: OlchaAIPost;
+  post: GILOSPost;
   isActive: boolean;
   stackIndex: number;
 }
@@ -84,7 +84,7 @@ export function CyberCard({ post, isActive, stackIndex }: CyberCardProps) {
   const handleShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: "OlchaAI", text: post.content, url: postUrl });
+        await navigator.share({ title: "GILOS", text: post.content, url: postUrl });
         return;
       } catch {
         /* user cancelled or share failed, fall back to copy */
@@ -211,7 +211,7 @@ export function CyberCard({ post, isActive, stackIndex }: CyberCardProps) {
                 ◈
               </motion.div>
               <span style={{ fontSize: 9, fontFamily: "monospace", color: "rgba(0,229,255,0.5)", letterSpacing: "0.15em" }}>
-                OLCHA · AR FEED
+                GILOS · AR FEED
               </span>
             </div>
             {/* Animated scan */}
@@ -321,10 +321,10 @@ export function CyberCard({ post, isActive, stackIndex }: CyberCardProps) {
             <span>{shareCopied ? "Nusxalandi" : "Ulash"}</span>
           </button>
 
-          {/* OlchaAI tag */}
+          {/* GILOS tag */}
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#00e5ff", boxShadow: "0 0 6px #00e5ff" }} />
-            <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(0,229,255,0.5)", letterSpacing: "0.1em" }}>OLCHA</span>
+            <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(0,229,255,0.5)", letterSpacing: "0.1em" }}>GILOS</span>
           </div>
         </div>
 

@@ -239,7 +239,12 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
 /* ── IP-based rate limiting ────────────────────────────────────── */
 app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   const { checkRateLimit } = require("./lib/security");
-  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
+  /* cf-connecting-ip — Cloudflare tomonidan o'rnatilgan haqiqiy foydalanuvchi IP.
+     x-forwarded-for birinchi elementi Railway Nexus proxy IP si bo'lishi mumkin — ishonchsiz. */
+  const ip = (req.headers["cf-connecting-ip"] as string)?.trim()
+    ?? (req.headers["x-forwarded-for"] as string)?.split(",").pop()?.trim()
+    ?? req.socket.remoteAddress
+    ?? "unknown";
   if (!checkRateLimit(ip)) {
     res.status(429)
       .setHeader("Retry-After", "60")

@@ -25,28 +25,24 @@ const SECURITY_HEADERS = {
   "X-DNS-Prefetch-Control": "on",
 };
 
-/* ── Proxy-layer rate limiter — API ga kelmasdan oldin to'xtатади ──
-   300 req/min/IP global, /api/auth/* uchun 20 req/min             */
+/* ── Proxy-layer rate limiter — faqat umumiy himoya ──────────────
+   Auth uchun alohida limit yo'q — API server o'zi brute-force
+   himoyasini boshqaradi. Bu yerda faqat DDoS uchun 1000 req/min.  */
 const proxyRateMap   = new Map(); // ip → { count, resetAt }
-const authRateMap    = new Map(); // ip → { count, resetAt }
 const PROXY_WINDOW   = 60_000;
-const PROXY_MAX      = 500;
-const AUTH_MAX       = 60;   // login/register uchun 60 req/min (avval 20 — juda kam edi)
+const PROXY_MAX      = 1000;
 
-function proxyRateLimit(ip, isAuth) {
-  const now  = Date.now();
-  const map  = isAuth ? authRateMap : proxyRateMap;
-  const max  = isAuth ? AUTH_MAX    : PROXY_MAX;
-  const rec  = map.get(ip);
-  if (!rec || rec.resetAt <= now) { map.set(ip, { count: 1, resetAt: now + PROXY_WINDOW }); return true; }
+function proxyRateLimit(ip) {
+  const now = Date.now();
+  const rec = proxyRateMap.get(ip);
+  if (!rec || rec.resetAt <= now) { proxyRateMap.set(ip, { count: 1, resetAt: now + PROXY_WINDOW }); return true; }
   rec.count++;
-  return rec.count <= max;
+  return rec.count <= PROXY_MAX;
 }
 // Temiz saqlash — har 2 daqiqada
 setInterval(() => {
   const now = Date.now();
   for (const [k, v] of proxyRateMap) if (v.resetAt <= now) proxyRateMap.delete(k);
-  for (const [k, v] of authRateMap)  if (v.resetAt <= now) authRateMap.delete(k);
 }, 120_000);
 
 /* Build-time unique token — changes every deploy so Cloudflare sees a new ETag */
@@ -157,10 +153,12 @@ const server = http.createServer(async (req, res) => {
 
   /* API proxy → olchaai-api */
   if (req.url.startsWith("/api")) {
-    /* Proxy-layer rate limit */
-    const ip     = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "0.0.0.0").split(",")[0].trim();
-    const isAuth = req.url.startsWith("/api/auth");
-    if (!proxyRateLimit(ip, isAuth)) {
+    /* Proxy-layer rate limit — cf-connecting-ip Cloudflare orqali eng ishonchli IP */
+    const ip = req.headers["cf-connecting-ip"]
+      || (req.headers["x-forwarded-for"] || "").split(",").pop()?.trim()
+      || req.socket.remoteAddress
+      || "0.0.0.0";
+    if (!proxyRateLimit(ip)) {
       res.writeHead(429, { "Content-Type": "application/json", "Retry-After": "60" });
       return res.end(JSON.stringify({ error: "Too many requests", retryAfterMs: 60000 }));
     }

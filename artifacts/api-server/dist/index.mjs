@@ -86476,21 +86476,21 @@ var init_auth = __esm({
         await db.insert(emailVerifications).values({ email: email3, otp, expiresAt });
         const emailHtml = `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0502;color:#c8a060;border-radius:16px">
-          <div style="font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:8px">OlchaAI</div>
+          <div style="font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:8px">GILOS</div>
           <div style="font-size:14px;color:#7a4820;margin-bottom:32px">AI-powered ijtimoiy koinot</div>
           <div style="font-size:14px;color:#a07040;margin-bottom:16px">Ro'yxatdan o'tish tasdiqlash kodi:</div>
           <div style="font-size:48px;font-weight:900;letter-spacing:12px;color:#e8b060;background:rgba(50,20,5,0.8);border-radius:12px;padding:20px 24px;text-align:center;margin-bottom:24px">${otp}</div>
           <div style="font-size:12px;color:#4a2810">Bu kod 10 daqiqa ichida yaroqli. Agar siz yubormasangiz, xabarni e'tiborsiz qoldiring.</div>
         </div>
       `;
-        const emailPayload = { to: email3, subject: `${otp} \u2014 OlchaAI tasdiqlash kodi`, html: emailHtml };
-        let { error: sendError } = await getResend().emails.send({ from: "OlchaAI <noreply@olcha.com>", ...emailPayload });
+        const emailPayload = { to: email3, subject: `${otp} \u2014 GILOS tasdiqlash kodi`, html: emailHtml };
+        let { error: sendError } = await getResend().emails.send({ from: "GILOS <noreply@olcha.com>", ...emailPayload });
         if (sendError) {
           const msg = sendError.message ?? "";
           const isDomainNotVerified = msg.includes("verify a domain") || msg.includes("testing emails") || msg.includes("not verified");
           if (isDomainNotVerified) {
             req.log.warn("olcha.com domain not verified yet, falling back to onboarding@resend.dev");
-            const fallback = await getResend().emails.send({ from: "OlchaAI <onboarding@resend.dev>", ...emailPayload });
+            const fallback = await getResend().emails.send({ from: "GILOS <onboarding@resend.dev>", ...emailPayload });
             sendError = fallback.error ?? null;
           }
         }
@@ -86939,7 +86939,7 @@ function base(content) {
       </div>
       <div style="padding:24px">${content}</div>
       <div style="padding:12px 24px;background:#ffffff08;font-size:11px;color:#888">
-        OlchaAI \u2014 <a href="https://olchaai.com" style="color:#a78bfa">olchaai.com</a>
+        GILOS \u2014 <a href="https://olchaai.com" style="color:#a78bfa">olchaai.com</a>
         &nbsp;\xB7&nbsp; Bildirishnomalarni o'chirish uchun sozlamalarga kiring.
       </div>
     </div>`;
@@ -86995,8 +86995,8 @@ var init_emailNotify = __esm({
     "use strict";
     init_dist();
     init_logger();
-    FROM = "OlchaAI <noreply@olcha.com>";
-    FROM_FALLBACK = "OlchaAI <onboarding@resend.dev>";
+    FROM = "GILOS <noreply@olcha.com>";
+    FROM_FALLBACK = "GILOS <onboarding@resend.dev>";
   }
 });
 
@@ -99460,7 +99460,7 @@ var init_posts2 = __esm({
           messages: [
             {
               role: "system",
-              content: `Sen OlchaAI ijtimoiy tarmoq uchun ijodiy caption/izoh yozuvchi AI yordamchisan. Foydalanuvchi so'ragan tilda (o'zbek, rus yoki ingliz) qisqa, jozibali, emoji ishlatgan 3 ta har xil caption yoz. Har birini JSON arrayda qaytargin.`
+              content: `Sen GILOS ijtimoiy tarmoq uchun ijodiy caption/izoh yozuvchi AI yordamchisan. Foydalanuvchi so'ragan tilda (o'zbek, rus yoki ingliz) qisqa, jozibali, emoji ishlatgan 3 ta har xil caption yoz. Har birini JSON arrayda qaytargin.`
             },
             {
               role: "user",
@@ -102918,7 +102918,7 @@ Tags: 3-6 relevant hashtags without #.`
           messages: [
             {
               role: "system",
-              content: `Siz OlchaAI NEXUS video platformasi uchun video sarlavhasi, teglar va tavsif yozishga yordam berasiz. Fayl nomi asosida jozibali, qisqa sarlavha (60 belgigacha), 4-6 ta tegdan iborat ro'yxat va 1-2 jumlalik tavsif tuzing. Faqat JSON qaytaring: {"title": string, "tags": string[], "caption": string}. Boshqa hech narsa yozmang.`
+              content: `Siz GILOS NEXUS video platformasi uchun video sarlavhasi, teglar va tavsif yozishga yordam berasiz. Fayl nomi asosida jozibali, qisqa sarlavha (60 belgigacha), 4-6 ta tegdan iborat ro'yxat va 1-2 jumlalik tavsif tuzing. Faqat JSON qaytaring: {"title": string, "tags": string[], "caption": string}. Boshqa hech narsa yozmang.`
             },
             { role: "user", content: `Video fayl nomi: ${fileName || "video"}` }
           ],
@@ -122464,7 +122464,7 @@ var init_admin2 = __esm({
           userId,
           type,
           message,
-          actorName: "OlchaAI Admin",
+          actorName: "GILOS Admin",
           targetId: null,
           isRead: false
         }));
@@ -122542,7 +122542,7 @@ var init_admin2 = __esm({
         maxFileSize: 100,
         premiumEnabled: true,
         adsEnabled: true,
-        platform: "OlchaAI",
+        platform: "GILOS",
         version: "1.0.0"
       });
     });
@@ -122585,7 +122585,7 @@ var init_admin2 = __esm({
         const stripe = await getUncachableStripeClient();
         let productId = current.stripeProductId;
         if (!productId) {
-          const existing = await stripe.products.search({ query: "name:'OlchaAI Premium' AND active:'true'" });
+          const existing = await stripe.products.search({ query: "name:'GILOS Premium' AND active:'true'" });
           productId = existing.data[0]?.id ?? null;
         }
         if (!productId) {
@@ -122636,14 +122636,14 @@ var init_admin2 = __esm({
     router14.post("/admin/stripe/seed", async (req, res) => {
       try {
         const stripe = await getUncachableStripeClient();
-        const existing = await stripe.products.search({ query: "name:'OlchaAI Premium' AND active:'true'" });
+        const existing = await stripe.products.search({ query: "name:'GILOS Premium' AND active:'true'" });
         if (existing.data.length > 0) {
           const prices = await stripe.prices.list({ product: existing.data[0].id, active: true });
           res.json({ message: "Mahsulot allaqachon mavjud", productId: existing.data[0].id, prices: prices.data });
           return;
         }
         const product = await stripe.products.create({
-          name: "OlchaAI Premium",
+          name: "GILOS Premium",
           description: "Reklama yo'q, eksklyuziv badge, kengaytirilgan tahlil va boshqa premium xususiyatlar.",
           metadata: { app: "olcha" }
         });
@@ -122659,7 +122659,7 @@ var init_admin2 = __esm({
           currency: "usd",
           recurring: { interval: "year" }
         });
-        res.json({ message: "OlchaAI Premium yaratildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
+        res.json({ message: "GILOS Premium yaratildi", productId: product.id, monthlyPriceId: monthly.id, yearlyPriceId: yearly.id });
       } catch (err) {
         req.log.error(err);
         res.status(500).json({ error: "Stripe mahsulot yaratishda xato" });
@@ -123445,7 +123445,7 @@ var init_media = __esm({
         // ≤6 bits diff → likely duplicate
         similar: hamming <= 15,
         // ≤15 bits → visually similar
-        engine: "OlchaAI-C++-MediaHasher-v1"
+        engine: "GILOS-MediaHasher-v1"
       });
     });
     ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com)$/i;
@@ -125025,7 +125025,7 @@ var init_openai_chat = __esm({
           model: AI_CHAT_MODEL,
           max_completion_tokens: 800,
           messages: [
-            { role: "system", content: "Siz OlchaAI platformasining AI yordamchisisiz. Foydalanuvchi qaysi tilda yozsa, o'sha tilda javob bering. Qisqa, aniq va foydali javoblar bering." },
+            { role: "system", content: "Siz GILOS platformasining yordamchisisiz. Foydalanuvchi qaysi tilda yozsa, o'sha tilda javob bering. Qisqa, aniq va foydali javoblar bering." },
             ...chatMessages
           ],
           stream: true
@@ -125083,7 +125083,7 @@ var init_openai_chat = __esm({
               role: "user",
               content: `Mavzu: "${topic}"
 Ohang: ${tone || "qiziqarli"}
-Platforma: ${platform || "OlchaAI"}
+Platforma: ${platform || "GILOS"}
 
 Qisqa caption + hashtaglar yoz.`
             }
@@ -125191,7 +125191,7 @@ Qisqa caption + hashtaglar yoz.`
           messages: [
             {
               role: "system",
-              content: "Siz OlchaAI platformasining ovozli AI yordamchisisiz. Qisqa, aniq va foydali javoblar bering. Foydalanuvchi qaysi tilda gapirsa, o'sha tilda javob bering."
+              content: "Siz GILOS platformasining ovozli yordamchisisiz. Qisqa, aniq va foydali javoblar bering. Foydalanuvchi qaysi tilda gapirsa, o'sha tilda javob bering."
             },
             { role: "user", content: transcript }
           ]
@@ -125356,7 +125356,7 @@ var init_library2 = __esm({
       try {
         const limit2 = Math.min(Number(maxResults), 40);
         const url2 = `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=${limit2}&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,language,isbn,first_sentence`;
-        const response = await fetch(url2, { headers: { "User-Agent": "OlchaAI/1.0 (social platform)" } });
+        const response = await fetch(url2, { headers: { "User-Agent": "GILOS/1.0 (social platform)" } });
         const data = await response.json();
         res.json({
           items: (data.docs ?? []).map((d) => mapOpenLibDoc(d)),
@@ -125376,7 +125376,7 @@ var init_library2 = __esm({
       const subject = subjects[Math.floor(Math.random() * subjects.length)];
       try {
         const url2 = `https://openlibrary.org/subjects/${subject}.json?limit=12`;
-        const response = await fetch(url2, { headers: { "User-Agent": "OlchaAI/1.0 (social platform)" } });
+        const response = await fetch(url2, { headers: { "User-Agent": "GILOS/1.0 (social platform)" } });
         const data = await response.json();
         const items = (data.works ?? []).map((w) => {
           const work = w;
@@ -125433,7 +125433,7 @@ Faqat JSON qaytargin, boshqa matn yo'q.`
           }),
           fetch(
             `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=6&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,language,isbn,first_sentence`,
-            { headers: { "User-Agent": "OlchaAI/1.0" } }
+            { headers: { "User-Agent": "GILOS/1.0" } }
           ).then((r) => r.json())
         ]);
         let aiData = {};
@@ -125452,7 +125452,7 @@ Faqat JSON qaytargin, boshqa matn yo'q.`
         if (books.length === 0 && aiData.webQuery && String(aiData.webQuery) !== q) {
           try {
             const fbUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(String(aiData.webQuery))}&limit=6&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,language,isbn,first_sentence`;
-            const fbResp = await fetch(fbUrl, { headers: { "User-Agent": "OlchaAI/1.0" } });
+            const fbResp = await fetch(fbUrl, { headers: { "User-Agent": "GILOS/1.0" } });
             const fbData = await fbResp.json();
             books = (fbData.docs ?? []).map((d) => mapOpenLibDoc(d));
           } catch {
@@ -125484,7 +125484,7 @@ Faqat JSON qaytargin, boshqa matn yo'q.`
       try {
         const langpair = from === "auto" ? `${from}|${to}` : `${from}|${to}`;
         const url2 = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${langpair}&de=olcha@olchaai.com`;
-        const resp = await fetch(url2, { headers: { "User-Agent": "OlchaAI/1.0" } });
+        const resp = await fetch(url2, { headers: { "User-Agent": "GILOS/1.0" } });
         if (!resp.ok) {
           res.status(502).json({ error: "Translation service unavailable" });
           return;
@@ -126867,7 +126867,7 @@ var init_muniAi = __esm({
     init_src3();
     init_aiAccess();
     router37 = (0, import_express37.Router)();
-    WISDOM_SYSTEM = `Sen "Muni AI" \u2014 OlchaAI platformasining shaxsiy AI yordamchisisan.
+    WISDOM_SYSTEM = `Sen "Muni AI" \u2014 GILOS platformasining shaxsiy yordamchisisan.
 Foydalanuvchilarga hayot, shaxsiy rivojlanish, munosabatlar, motivatsiya va kundalik masalalar bo'yicha yordam berasan.
 
 USLUB:
@@ -126878,7 +126878,7 @@ USLUB:
 - Kerak bo'lganda amaliy qadamlar, ro'yxat yoki aniq tavsiyalar taklif qil
 - Foydalanuvchi qaysi tilda yozsa, o'sha tilda javob ber
 - Javoblarni qisqa va tartibli tut, kerak bo'lsa tuzilgan (bandlar/ro'yxat) shaklda ber`;
-    TRADER_SYSTEM = `Sen "Muni AI" \u2014 OlchaAI platformasining bozor va savdo psixologiyasi bo'yicha AI yordamchisisan.
+    TRADER_SYSTEM = `Sen "Muni AI" \u2014 GILOS platformasining bozor va savdo psixologiyasi bo'yicha yordamchisisan.
 
 FOKUS:
 - Bozor harakati, savdo strategiyalari, risk boshqaruvi va trading psixologiyasi
@@ -130203,7 +130203,7 @@ var init_app = __esm({
     });
     app.use("/api", (req, res, next) => {
       const { checkRateLimit: checkRateLimit2 } = (init_security(), __toCommonJS(security_exports));
-      const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
+      const ip = req.headers["cf-connecting-ip"]?.trim() ?? req.headers["x-forwarded-for"]?.split(",").pop()?.trim() ?? req.socket.remoteAddress ?? "unknown";
       if (!checkRateLimit2(ip)) {
         res.status(429).setHeader("Retry-After", "60").json({ error: "Too many requests. Please slow down.", retryAfterMs: 6e4 });
         return;

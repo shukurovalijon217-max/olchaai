@@ -16,7 +16,7 @@ function IframeShell() {
       {!loaded && (
         <View style={s.loading}>
           <ActivityIndicator size="large" color="#7857ff" />
-          <Text style={s.loadingTxt}>OlchaAI yuklanmoqda...</Text>
+          <Text style={s.loadingTxt}>GILOS yuklanmoqda...</Text>
         </View>
       )}
       {loaded && (
@@ -31,7 +31,7 @@ function IframeShell() {
             flex: 1,
           }}
           allow="camera; microphone; fullscreen; geolocation; autoplay"
-          title="OlchaAI"
+          title="GILOS"
         />
       )}
     </View>
@@ -48,7 +48,7 @@ function NativeWebView() {
       {loading && (
         <View style={s.loading}>
           <ActivityIndicator size="large" color="#7857ff" />
-          <Text style={s.loadingTxt}>OlchaAI yuklanmoqda...</Text>
+          <Text style={s.loadingTxt}>GILOS yuklanmoqda...</Text>
         </View>
       )}
       <WebView
@@ -84,7 +84,7 @@ function NativeWebView() {
   );
 }
 
-export default function OlchaAIApp() {
+export default function GILOSApp() {
   if (Platform.OS === "web") return <IframeShell />;
   return <NativeWebView />;
 }

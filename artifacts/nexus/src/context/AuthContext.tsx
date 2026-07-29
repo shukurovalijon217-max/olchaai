@@ -125,7 +125,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         clearTimeout(timer);
         // Status avval tekshiriladi — Cloudflare HTML qaytarsa JSON.parse xato bermasligi uchun
-        if (res.status === 429) return { error: "Ko'p urinish — 1 daqiqa kuting" };
+        if (res.status === 429) {
+          try {
+            const d = await res.json().catch(() => ({}));
+            return { error: d.error ?? "Ko'p urinish — biroz kuting" };
+          } catch { return { error: "Ko'p urinish — biroz kuting" }; }
+        }
         if (res.status === 403) return { error: "Kirish taqiqlangan — keyinroq urinib ko'ring" };
         if (res.status === 502 || res.status === 503 || res.status === 504) {
           if (attempt === 0) { await new Promise(r => setTimeout(r, 3000)); continue; }

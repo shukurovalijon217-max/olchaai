@@ -241,7 +241,11 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
    Login brute-force himoyasi (15 urinish → 3 daqiqa) routes/auth.ts da. */
 
 /* ── AI Auto-Scale: rate limiting + memory pressure management ─── */
-app.use("/api", aiAutoScaleMiddleware);
+/* Auth routes are always exempt — never block login/register/logout */
+app.use("/api", (req, res, next) => {
+  if (req.path.startsWith("/auth/")) return next();
+  aiAutoScaleMiddleware(req, res, next);
+});
 
 /* ── Resilience: timeout + load shedder + concurrency cap ────────
    Prevents any request from hanging forever and sheds excess load

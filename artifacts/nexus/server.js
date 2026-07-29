@@ -142,7 +142,7 @@ const server = http.createServer(async (req, res) => {
   /* Health check */
   if (req.url === "/healthz") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ ok: true, build: BUILD_ID }));
+    return res.end(JSON.stringify({ ok: true, build: BUILD_ID, nexusPort: PORT, apiTarget: API_TARGET }));
   }
 
   /* API proxy → olchaai-api */

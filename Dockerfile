@@ -23,7 +23,7 @@ COPY docker/stubs/sharp                      /app/api/node_modules/sharp/
 
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV API_TARGET=http://127.0.0.1:8080
+ENV API_TARGET=http://127.0.0.1:13337
 ENV WS_URL=wss://olchaai-go-production.up.railway.app/go/ws
 ENV NODE_OPTIONS=--max-old-space-size=768
 

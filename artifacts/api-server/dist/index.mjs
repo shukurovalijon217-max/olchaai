@@ -99041,107 +99041,6 @@ var init_pushNotifications = __esm({
   }
 });
 
-// src/lib/trackQuest.ts
-function todayDate() {
-  return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-}
-async function getOrCreateCoins(userId) {
-  const existing = await db.query.userCoinsTable.findFirst({
-    where: eq(userCoinsTable.userId, userId)
-  });
-  if (existing) return existing;
-  const [created] = await db.insert(userCoinsTable).values({ userId }).returning();
-  return created;
-}
-async function checkAndGrantTitle(userId, totalEarned) {
-  const earned = TITLE_THRESHOLDS.filter((t) => totalEarned >= t.min);
-  const newTitle = earned[earned.length - 1]?.title;
-  if (!newTitle) return;
-  const existing = await db.select().from(userTitlesTable).where(
-    and(
-      eq(userTitlesTable.userId, userId),
-      eq(userTitlesTable.title, newTitle)
-    )
-  );
-  if (existing.length === 0) {
-    await db.insert(userTitlesTable).values({ userId, title: newTitle });
-  }
-}
-async function trackQuestAction(userId, actionKey) {
-  try {
-    const questKeys = QUEST_ACTION_MAP[actionKey];
-    if (!questKeys?.length) return;
-    const today = todayDate();
-    const quests = await db.select().from(dailyQuestsTable).where(eq(dailyQuestsTable.isActive, true));
-    let totalCoinsEarned = 0;
-    for (const questKey of questKeys) {
-      const quest = quests.find((q) => q.key === questKey);
-      if (!quest) continue;
-      const existing = await db.query.questProgressTable.findFirst({
-        where: and(
-          eq(questProgressTable.userId, userId),
-          eq(questProgressTable.questKey, questKey),
-          eq(questProgressTable.date, today)
-        )
-      });
-      if (existing?.completedAt) continue;
-      const currentProgress = existing?.progress ?? 0;
-      const newProgress = Math.min(currentProgress + 1, quest.target);
-      const completed = newProgress >= quest.target;
-      const completedAt = completed ? /* @__PURE__ */ new Date() : null;
-      if (existing) {
-        await db.update(questProgressTable).set({ progress: newProgress, completedAt }).where(eq(questProgressTable.id, existing.id));
-      } else {
-        await db.insert(questProgressTable).values({
-          userId,
-          questKey,
-          progress: newProgress,
-          completedAt,
-          date: today
-        });
-      }
-      if (completed) {
-        const coins = await getOrCreateCoins(userId);
-        const newBalance = coins.balance + quest.reward;
-        const newTotalEarned = coins.totalEarned + quest.reward;
-        await db.update(userCoinsTable).set({
-          balance: newBalance,
-          totalEarned: newTotalEarned,
-          updatedAt: /* @__PURE__ */ new Date()
-        }).where(eq(userCoinsTable.userId, userId));
-        totalCoinsEarned += quest.reward;
-        await checkAndGrantTitle(userId, newTotalEarned);
-      }
-    }
-  } catch {
-  }
-}
-var QUEST_ACTION_MAP, TITLE_THRESHOLDS;
-var init_trackQuest = __esm({
-  "src/lib/trackQuest.ts"() {
-    "use strict";
-    init_src2();
-    init_src2();
-    init_drizzle_orm();
-    QUEST_ACTION_MAP = {
-      create_post: ["create_post", "write_post"],
-      like_post: ["like_3", "like_posts"],
-      comment: ["comment_2", "leave_comment"],
-      send_message: ["send_message"],
-      watch_reel: ["watch_reel", "watch_videos"],
-      streak_touch: ["streak_touch", "daily_login"],
-      share_post: ["share_post"]
-    };
-    TITLE_THRESHOLDS = [
-      { min: 0, title: "\u{1F331} Yangi" },
-      { min: 50, title: "\u2B50 Faol" },
-      { min: 200, title: "\u{1F525} Qizg'in" },
-      { min: 500, title: "\u{1F48E} Olmosli" },
-      { min: 1e3, title: "\u{1F451} Afsonaviy" }
-    ];
-  }
-});
-
 // src/routes/posts.ts
 async function batchEnrichPosts(posts, viewerId = 0) {
   if (posts.length === 0) return [];
@@ -99191,7 +99090,6 @@ var init_posts2 = __esm({
     init_userStats();
     init_emailNotify();
     init_pushNotifications();
-    init_trackQuest();
     router5 = (0, import_express5.Router)();
     router5.get("/posts", async (req, res) => {
       try {
@@ -99300,27 +99198,20 @@ var init_posts2 = __esm({
         }
         const upstream = await fetch(
           `${AUDIUS_HOST}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
-          { signal: AbortSignal.timeout(8e3), redirect: "manual" }
+          { signal: AbortSignal.timeout(15e3), redirect: "follow" }
         );
-        const location = upstream.headers.get("location");
-        if (upstream.status === 302 && location) {
-          res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Cache-Control", "public, max-age=1800");
-          res.redirect(302, location);
+        if (!upstream.ok || !upstream.body) {
+          res.status(502).end();
           return;
         }
-        if (upstream.ok && upstream.body) {
-          const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
-          const cl = upstream.headers.get("content-length");
-          res.setHeader("Content-Type", ct);
-          res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Cache-Control", "public, max-age=3600");
-          if (cl) res.setHeader("Content-Length", cl);
-          const { Readable: Readable3 } = await import("stream");
-          Readable3.fromWeb(upstream.body).pipe(res);
-          return;
-        }
-        res.status(502).end();
+        const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
+        const cl = upstream.headers.get("content-length");
+        res.setHeader("Content-Type", ct);
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cache-Control", "public, max-age=3600");
+        if (cl) res.setHeader("Content-Length", cl);
+        const { Readable: Readable3 } = await import("stream");
+        Readable3.fromWeb(upstream.body).pipe(res);
       } catch (err) {
         req.log.warn(err, "music stream failed");
         if (!res.headersSent) res.status(502).end();
@@ -99460,7 +99351,7 @@ var init_posts2 = __esm({
           messages: [
             {
               role: "system",
-              content: `Sen GILOS ijtimoiy tarmoq uchun ijodiy caption/izoh yozuvchi AI yordamchisan. Foydalanuvchi so'ragan tilda (o'zbek, rus yoki ingliz) qisqa, jozibali, emoji ishlatgan 3 ta har xil caption yoz. Har birini JSON arrayda qaytargin.`
+              content: `Sen OlchaAI ijtimoiy tarmoq uchun ijodiy caption/izoh yozuvchi AI yordamchisan. Foydalanuvchi so'ragan tilda (o'zbek, rus yoki ingliz) qisqa, jozibali, emoji ishlatgan 3 ta har xil caption yoz. Har birini JSON arrayda qaytargin.`
             },
             {
               role: "user",
@@ -99599,7 +99490,6 @@ var init_posts2 = __esm({
         }).returning();
         const [enriched] = await batchEnrichPosts([post], sessionUserId);
         res.status(201).json(enriched);
-        if (sessionUserId) void trackQuestAction(sessionUserId, "create_post");
         void (async () => {
           try {
             const scan = await scanContentAsync(content ?? "");
@@ -99716,7 +99606,6 @@ var init_posts2 = __esm({
         }
         const [post] = await db.select({ likesCount: postsTable.likesCount, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
         res.json({ liked: !isLiked, likesCount: post?.likesCount ?? 0 });
-        if (!isLiked && userId) void trackQuestAction(userId, "like_post");
         if (!isLiked && post?.authorId && post.authorId !== userId) {
           void (async () => {
             try {
@@ -99834,7 +99723,6 @@ var init_posts2 = __esm({
             ...stats
           }
         });
-        void trackQuestAction(authorId, "comment");
         void (async () => {
           try {
             const [postRow] = await db.select({ authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
@@ -101225,6 +101113,107 @@ var init_stories2 = __esm({
       }
     });
     stories_default = router8;
+  }
+});
+
+// src/lib/trackQuest.ts
+function todayDate() {
+  return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+}
+async function getOrCreateCoins(userId) {
+  const existing = await db.query.userCoinsTable.findFirst({
+    where: eq(userCoinsTable.userId, userId)
+  });
+  if (existing) return existing;
+  const [created] = await db.insert(userCoinsTable).values({ userId }).returning();
+  return created;
+}
+async function checkAndGrantTitle(userId, totalEarned) {
+  const earned = TITLE_THRESHOLDS.filter((t) => totalEarned >= t.min);
+  const newTitle = earned[earned.length - 1]?.title;
+  if (!newTitle) return;
+  const existing = await db.select().from(userTitlesTable).where(
+    and(
+      eq(userTitlesTable.userId, userId),
+      eq(userTitlesTable.title, newTitle)
+    )
+  );
+  if (existing.length === 0) {
+    await db.insert(userTitlesTable).values({ userId, title: newTitle });
+  }
+}
+async function trackQuestAction(userId, actionKey) {
+  try {
+    const questKeys = QUEST_ACTION_MAP[actionKey];
+    if (!questKeys?.length) return;
+    const today = todayDate();
+    const quests = await db.select().from(dailyQuestsTable).where(eq(dailyQuestsTable.isActive, true));
+    let totalCoinsEarned = 0;
+    for (const questKey of questKeys) {
+      const quest = quests.find((q) => q.key === questKey);
+      if (!quest) continue;
+      const existing = await db.query.questProgressTable.findFirst({
+        where: and(
+          eq(questProgressTable.userId, userId),
+          eq(questProgressTable.questKey, questKey),
+          eq(questProgressTable.date, today)
+        )
+      });
+      if (existing?.completedAt) continue;
+      const currentProgress = existing?.progress ?? 0;
+      const newProgress = Math.min(currentProgress + 1, quest.target);
+      const completed = newProgress >= quest.target;
+      const completedAt = completed ? /* @__PURE__ */ new Date() : null;
+      if (existing) {
+        await db.update(questProgressTable).set({ progress: newProgress, completedAt }).where(eq(questProgressTable.id, existing.id));
+      } else {
+        await db.insert(questProgressTable).values({
+          userId,
+          questKey,
+          progress: newProgress,
+          completedAt,
+          date: today
+        });
+      }
+      if (completed) {
+        const coins = await getOrCreateCoins(userId);
+        const newBalance = coins.balance + quest.reward;
+        const newTotalEarned = coins.totalEarned + quest.reward;
+        await db.update(userCoinsTable).set({
+          balance: newBalance,
+          totalEarned: newTotalEarned,
+          updatedAt: /* @__PURE__ */ new Date()
+        }).where(eq(userCoinsTable.userId, userId));
+        totalCoinsEarned += quest.reward;
+        await checkAndGrantTitle(userId, newTotalEarned);
+      }
+    }
+  } catch {
+  }
+}
+var QUEST_ACTION_MAP, TITLE_THRESHOLDS;
+var init_trackQuest = __esm({
+  "src/lib/trackQuest.ts"() {
+    "use strict";
+    init_src2();
+    init_src2();
+    init_drizzle_orm();
+    QUEST_ACTION_MAP = {
+      create_post: ["create_post", "write_post"],
+      like_post: ["like_3", "like_posts"],
+      comment: ["comment_2", "leave_comment"],
+      send_message: ["send_message"],
+      watch_reel: ["watch_reel", "watch_videos"],
+      streak_touch: ["streak_touch", "daily_login"],
+      share_post: ["share_post"]
+    };
+    TITLE_THRESHOLDS = [
+      { min: 0, title: "\u{1F331} Yangi" },
+      { min: 50, title: "\u2B50 Faol" },
+      { min: 200, title: "\u{1F525} Qizg'in" },
+      { min: 500, title: "\u{1F48E} Olmosli" },
+      { min: 1e3, title: "\u{1F451} Afsonaviy" }
+    ];
   }
 });
 
@@ -130201,7 +130190,10 @@ var init_app = __esm({
       }
       next();
     });
-    app.use("/api", aiAutoScaleMiddleware);
+    app.use("/api", (req, res, next) => {
+      if (req.path.startsWith("/auth/")) return next();
+      aiAutoScaleMiddleware(req, res, next);
+    });
     app.use("/api", resilienceMiddleware);
     app.use("/api", (req, res, next) => {
       const key = normalisePath(req.method, req.path);

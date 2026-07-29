@@ -1,4 +1,4 @@
-/* GILOS Service Worker — v5: HTML never cached */
+/* GilosAI Service Worker — v5: HTML never cached */
 const CACHE_VERSION = "gilos-v5";
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;

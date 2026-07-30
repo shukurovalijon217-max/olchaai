@@ -145,7 +145,15 @@ async function proxyHttp(req, res, body, target) {
   } catch (err) {
     logProxyError(req.method, req.url, err);
     console.error(`[proxy-err] ${req.method} ${req.url}: ${err?.constructor?.name} ${err?.message} code=${err?.code}`);
-    safeReply(res, 502, { error: "Bad Gateway" });
+    /* Return 503 (not 502) so Railway Hikari passes our diagnostic body through
+       instead of replacing it with its own "Application failed to respond" page. */
+    safeReply(res, 503, {
+      error: "Upstream fetch failed",
+      errType: err?.constructor?.name,
+      errMsg: String(err?.message ?? "").slice(0, 200),
+      errCode: err?.code,
+      url: req.url,
+    });
   } finally {
     /* Always cancel the timer — whether success, error, or abort */
     clearTimeout(timer);

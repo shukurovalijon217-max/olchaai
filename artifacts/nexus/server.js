@@ -104,7 +104,12 @@ function proxyHttp(req, res, body, target) {
   };
 
   const proto = targetUrl.protocol === "https:" ? https : http;
-  const proxyReq = proto.request(options, (proxyRes) => {
+  /* agent:false — no connection reuse.  A stale keep-alive connection in the
+     pool silently fails to fire either the response callback or the error
+     event, causing the request to hang forever until Railway LB times out
+     and returns its own 502.  Each proxy request gets a fresh TCP+TLS
+     connection, eliminating the stale-socket hang. */
+  const proxyReq = proto.request({ ...options, agent: false }, (proxyRes) => {
     /* Strip hop-by-hop headers before forwarding */
     const fwdHeaders = {};
     for (const [k, v] of Object.entries(proxyRes.headers)) {

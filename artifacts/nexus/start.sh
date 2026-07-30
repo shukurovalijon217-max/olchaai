@@ -11,8 +11,8 @@ case "${API_TARGET:-http://localhost:3001}" in
 esac
 
 if [ "$USE_BUNDLED_API" = "1" ]; then
-  echo "[start] API server starting on port 3001 (bundled)..."
-  PORT=3001 node --enable-source-maps /app/api/dist/index.mjs &
+  echo "[start] API server starting on port 3001 (bundled, single-process)..."
+  PORT=3001 SINGLE_PROCESS=1 node --enable-source-maps /app/api/dist/index.mjs &
   API_PID=$!
   echo "[start] Waiting for API server to be ready..."
   sleep 3

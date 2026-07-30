@@ -1,2 +1,2 @@
-Thu Jul 30 08:58:36 AM UTC 2026
-olchaai-api redeploy triggered — port conflict fix: API now on 3001, API_TARGET=http://localhost:3001
+Thu Jul 30 09:15:11 AM UTC 2026
+fix: SINGLE_PROCESS=1 — avoid cluster mode silent worker crashes on Railway

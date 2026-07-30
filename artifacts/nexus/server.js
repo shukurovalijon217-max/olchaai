@@ -171,9 +171,21 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({ ok: true, build: BUILD_ID, nexusPort: PORT, apiTarget: API_TARGET }));
   }
 
-  if (req.url === "/debug-errors") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify(recentErrors, null, 2));
+  /* ── Network reachability diagnostic ── */
+  if (req.url === "/api-reach") {
+    const tStart = Date.now();
+    fetch(`${API_TARGET}/healthz`, { signal: AbortSignal.timeout(8000) })
+      .then(r => r.json())
+      .then(data => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, ms: Date.now() - tStart, data }));
+      })
+      .catch(err => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, ms: Date.now() - tStart,
+          type: err?.constructor?.name, msg: err?.message, code: err?.code }));
+      });
+    return;
   }
 
   if (req.url.startsWith("/api")) {

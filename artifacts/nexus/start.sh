@@ -4,15 +4,15 @@
 # Only start the bundled API server when API_TARGET points to localhost.
 # When Railway Variables override API_TARGET to an external service, skip the bundle.
 USE_BUNDLED_API=0
-case "${API_TARGET:-http://localhost:8080}" in
+case "${API_TARGET:-http://localhost:3001}" in
   http://localhost:*|http://127.0.0.1:*)
     USE_BUNDLED_API=1
     ;;
 esac
 
 if [ "$USE_BUNDLED_API" = "1" ]; then
-  echo "[start] API server starting on port 8080 (bundled)..."
-  PORT=8080 node --enable-source-maps /app/api/dist/index.mjs &
+  echo "[start] API server starting on port 3001 (bundled)..."
+  PORT=3001 node --enable-source-maps /app/api/dist/index.mjs &
   API_PID=$!
   echo "[start] Waiting for API server to be ready..."
   sleep 3

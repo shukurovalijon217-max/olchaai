@@ -88,7 +88,7 @@ RUN chmod +x /app/start.sh
 ENV NODE_ENV=production
 ENV PORT=3000
 # API runs internally on 8080, Nexus proxy points to it
-ENV API_TARGET=http://localhost:8080
+ENV API_TARGET=http://localhost:3001
 ENV WS_URL=wss://olchaai-go-production.up.railway.app/go/ws
 ENV NODE_OPTIONS=--max-old-space-size=768
 

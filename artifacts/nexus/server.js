@@ -78,6 +78,10 @@ async function proxyHttp(req, res, body, target) {
   const headers = { ...req.headers };
   delete headers["host"];
   delete headers["transfer-encoding"];
+  // Remove accept-encoding so olchaai-api returns plain (uncompressed) JSON.
+  // If we forward it, olchaai-api returns gzip bytes that we'd need to decompress
+  // before forwarding — simpler to just disable compression for proxy requests.
+  delete headers["accept-encoding"];
   if (["GET", "HEAD", "DELETE", "OPTIONS"].includes(req.method)) {
     delete headers["content-length"];
   }

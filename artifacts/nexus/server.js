@@ -26,7 +26,11 @@ if (API_TARGET.startsWith("http://127.0.0.1:") || API_TARGET.startsWith("http://
     // Patch env so the API module sees the right PORT and mode before it imports
     process.env.PORT = apiPort;
     process.env.SINGLE_PROCESS = "1";
-    process.env.DATABASE_URL = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || "";
+    // If DATABASE_URL points to Render (which is down), override with Neon URL
+    if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("render.com")) {
+      process.env.DATABASE_URL = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || "";
+      console.log("[nexus] DATABASE_URL overridden with NEON_DATABASE_URL");
+    }
     // NODE_PATH for stub modules (@google-cloud/storage etc.)
     const stubDir = path.join(__dirname, "api", "node_modules");
     process.env.NODE_PATH = stubDir;

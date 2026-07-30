@@ -1,28 +1,43 @@
 #!/bin/sh
-# Start API server on port 8080 (internal), then Nexus proxy on $PORT (external)
+# Start Nexus proxy (and optionally the bundled API server if API_TARGET is localhost)
 
-echo "[start] API server starting on port 8080..."
-PORT=8080 node --enable-source-maps /app/api/dist/index.mjs &
-API_PID=$!
+# Only start the bundled API server when API_TARGET points to localhost.
+# When Railway Variables override API_TARGET to an external service, skip the bundle.
+USE_BUNDLED_API=0
+case "${API_TARGET:-http://localhost:8080}" in
+  http://localhost:*|http://127.0.0.1:*)
+    USE_BUNDLED_API=1
+    ;;
+esac
+
+if [ "$USE_BUNDLED_API" = "1" ]; then
+  echo "[start] API server starting on port 8080 (bundled)..."
+  PORT=8080 node --enable-source-maps /app/api/dist/index.mjs &
+  API_PID=$!
+  echo "[start] Waiting for API server to be ready..."
+  sleep 3
+fi
 
 echo "[start] Nexus proxy starting on port ${PORT:-3000}..."
 node /app/server.js &
 NEXUS_PID=$!
 
-# Monitor: if either process exits, kill the other and exit
-# (Railway will restart the container automatically)
+# Monitor: if Nexus exits, restart container.
+# If bundled API exits (and we need it), restart container.
 while true; do
   sleep 5
-  # Check if API is still running
-  if ! kill -0 $API_PID 2>/dev/null; then
-    echo "[start] API server died — stopping container"
-    kill $NEXUS_PID 2>/dev/null
-    exit 1
-  fi
-  # Check if Nexus is still running
+
   if ! kill -0 $NEXUS_PID 2>/dev/null; then
     echo "[start] Nexus server died — stopping container"
-    kill $API_PID 2>/dev/null
+    [ "$USE_BUNDLED_API" = "1" ] && kill $API_PID 2>/dev/null
     exit 1
+  fi
+
+  if [ "$USE_BUNDLED_API" = "1" ]; then
+    if ! kill -0 $API_PID 2>/dev/null; then
+      echo "[start] Bundled API server died — stopping container"
+      kill $NEXUS_PID 2>/dev/null
+      exit 1
+    fi
   fi
 done

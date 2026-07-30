@@ -32,6 +32,7 @@ import {
   Type, Smile, Music, ChevronLeft, Camera, Mic2, ImagePlus,
   Wand2, AlignCenter, FastForward, Palette, SlidersHorizontal,
   PictureInPicture2, MoreVertical, Trash2,
+  Download, Shuffle, Repeat, Heart,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────── */
@@ -6662,79 +6663,82 @@ export default function OTubePage() {
 /* ─────────────────────────────────────────────────────── */
 /* OTubeMusicOrb — floating circular iTunes music player   */
 /* ─────────────────────────────────────────────────────── */
-interface MusicTrack { id: string; name: string; artist: string; preview: string; artwork: string; duration?: number; full?: boolean; }
+interface MusicTrack {
+  id: string; name: string; artist: string; title?: string;
+  preview: string; artwork: string; duration?: number; full?: boolean;
+}
 
 const FALLBACK_TRACKS: MusicTrack[] = [
-  { id:"1", name:"Blinding Lights",  artist:"The Weeknd",  preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/46/ca/d8/46cad844-a1e0-d9e6-0c0f-4e6a9a9c9a9a/mzaf_8357987261602778203.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/a9/82/df/a982df60-81f5-ae18-8b99-c3d99b13ea41/00602507451691.rgb.jpg/60x60bb.jpg" },
-  { id:"2", name:"Shape of You",     artist:"Ed Sheeran",  preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/47/a6/7c/47a67c50-3c30-a44c-0432-d2a23aad3e48/mzaf_4916895036505765793.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/77/5e/4e/775e4e54-b2e1-b7a7-afc3-37de05e1c498/190295851286.jpg/60x60bb.jpg" },
-  { id:"3", name:"Uptown Funk",      artist:"Bruno Mars",  preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/97/69/5e/97695e74-2f28-eff4-1b1e-dd8e2e5e38b3/mzaf_2218382991440671505.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music6/v4/4a/f6/b5/4af6b5a0-a7a9-c42a-3c3a-9a6578e64e8c/886444256551.jpg/60x60bb.jpg" },
-  { id:"4", name:"Stay",             artist:"Kid Laroi",   preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/ec/95/89/ec958938-d745-a0c6-45e9-c7e01da01c94/mzaf_1866174285745498282.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/7a/3e/2a/7a3e2a7d-c39b-7b80-b4fa-b8c3b47e28d8/21UMGIM52813.rgb.jpg/60x60bb.jpg" },
-  { id:"5", name:"As It Was",        artist:"Harry Styles",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/6b/ce/1d/6bce1de8-96fc-ad38-fd24-2b2e1bea2e11/mzaf_4890649541505085085.plus.aac.p.m4a", artwork:"https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/69/b8/8d/69b88d97-1bac-8cef-7b82-fc8c6dcd5773/22UMGIM66931.rgb.jpg/60x60bb.jpg" },
+  { id:"fb1", name:"Chill Lofi Beat", artist:"LoFi Dreams", preview:"", artwork:"", duration:180, full:true },
 ];
 
 const GENRES = [
-  { id:"pop",         label:"🎤 Pop"        },
-  { id:"rock",        label:"🎸 Rock"       },
-  { id:"hiphop",      label:"🎧 Hip-Hop"    },
-  { id:"electronic",  label:"⚡ Electronic" },
-  { id:"jazz",        label:"🎷 Jazz"       },
-  { id:"classical",   label:"🎻 Classical"  },
-  { id:"ambient",     label:"🌊 Ambient"    },
-  { id:"reggae",      label:"🌿 Reggae"     },
-  { id:"rnb",         label:"💜 R&B"        },
-  { id:"lofi",        label:"☕ Lo-Fi"      },
-  { id:"metal",       label:"🤘 Metal"      },
-  { id:"folk",        label:"🪕 Folk"       },
+  { id:"pop hits 2024",  label:"🎤 Pop"        },
+  { id:"hip hop 2024",   label:"🎧 Hip-Hop"    },
+  { id:"electronic",     label:"⚡ Electronic" },
+  { id:"jazz",           label:"🎷 Jazz"       },
+  { id:"classical",      label:"🎻 Classical"  },
+  { id:"ambient chill",  label:"🌊 Ambient"    },
+  { id:"rock",           label:"🎸 Rock"       },
+  { id:"lofi",           label:"☕ Lo-Fi"      },
+  { id:"rnb soul",       label:"💜 R&B"        },
+  { id:"reggae",         label:"🌿 Reggae"     },
+  { id:"metal",          label:"🤘 Metal"      },
 ];
 
 function OTubeMusicOrb() {
-  const [tracks, setTracks]       = useState<MusicTrack[]>(FALLBACK_TRACKS);
-  const [idx, setIdx]             = useState(0);
-  const [playing, setPlaying]     = useState(false);
-  const [expanded, setExpanded]   = useState(false);
-  const [progress, setProgress]   = useState(0);
-  const [searching, setSearching] = useState(false);
-  const [searchQ, setSearchQ]     = useState("");
-  const [genre, setGenre]         = useState("");
+  const [tracks, setTracks]         = useState<MusicTrack[]>(FALLBACK_TRACKS);
+  const [idx, setIdx]               = useState(0);
+  const [playing, setPlaying]       = useState(false);
+  const [expanded, setExpanded]     = useState(false);
+  const [progress, setProgress]     = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration]     = useState(0);
+  const [searchQ, setSearchQ]       = useState("");
+  const [genre, setGenre]           = useState("pop hits 2024");
   const [loadingApi, setLoadingApi] = useState(false);
-  const audioRef  = useRef<HTMLAudioElement | null>(null);
-  const searchRef = useRef<HTMLInputElement | null>(null);
+  const [shuffleOn, setShuffleOn]   = useState(false);
+  const [repeatOne, setRepeatOne]   = useState(false);
+  const [liked, setLiked]           = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-  /* Audius to'liq + iTunes preview qidiruv */
+  const track = tracks[idx];
+
+  /* fetch — Audius full tracks first, iTunes 30s as fallback */
   const fetchMusic = useCallback((q: string, g: string) => {
     const query = q.trim() || g || "top hits";
     setLoadingApi(true);
     fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`)
       .then(r => r.json())
       .then((d: { results?: MusicTrack[] }) => {
-        const res = (d.results ?? []).filter(t => t.preview).map(t => ({
+        const all = (d.results ?? []).filter(t => t.preview).map(t => ({
           ...t,
-          /* Relative stream URLs → absolute */
           preview: t.preview.startsWith("/") ? `${API_BASE}${t.preview}` : t.preview,
         }));
-        if (res.length) { setTracks(res); setIdx(0); }
+        /* sort: Audius full tracks before iTunes 30s previews */
+        const sorted = [...all.filter(t => t.full !== false), ...all.filter(t => t.full === false)];
+        if (sorted.length) { setTracks(sorted); setIdx(0); }
       })
       .catch(() => {})
       .finally(() => setLoadingApi(false));
   }, []);
 
-  /* On mount: load popular tracks */
-  useEffect(() => { fetchMusic("", "pop hits 2024"); }, [fetchMusic]);
+  useEffect(() => { fetchMusic("", genre); }, [fetchMusic]);
 
-  const track = tracks[idx];
-
-  /* Load when idx changes */
+  /* load audio when track changes */
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !track) return;
-    const wasPlaying = playing;
+    if (!audio || !track?.preview) return;
+    const was = playing;
     audio.src = track.preview;
     audio.load();
-    if (wasPlaying) audio.play().catch(() => setPlaying(false));
+    setProgress(0); setCurrentTime(0); setDuration(0); setLiked(false);
+    if (was) audio.play().catch(() => setPlaying(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx]);
 
-  /* Play/pause */
+  /* play / pause */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -6742,30 +6746,40 @@ function OTubeMusicOrb() {
     else audio.pause();
   }, [playing]);
 
-  /* Progress + auto-next */
+  /* progress + auto-next / repeat / shuffle */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onTime = () => setProgress(audio.duration ? audio.currentTime / audio.duration : 0);
-    const onEnd  = () => setIdx(i => (i + 1) % tracks.length);
+    const onTime = () => {
+      setCurrentTime(audio.currentTime);
+      setDuration(audio.duration || 0);
+      setProgress(audio.duration ? audio.currentTime / audio.duration : 0);
+    };
+    const onEnd = () => {
+      if (repeatOne) { audio.currentTime = 0; audio.play().catch(() => {}); return; }
+      if (shuffleOn && tracks.length > 1) {
+        setIdx(i => { let n = i; while (n === i) n = Math.floor(Math.random() * tracks.length); return n; });
+      } else {
+        setIdx(i => (i + 1) % tracks.length);
+      }
+    };
+    const onMeta = () => setDuration(audio.duration || 0);
     audio.addEventListener("timeupdate", onTime);
     audio.addEventListener("ended", onEnd);
-    return () => { audio.removeEventListener("timeupdate", onTime); audio.removeEventListener("ended", onEnd); };
-  }, [tracks.length]);
+    audio.addEventListener("loadedmetadata", onMeta);
+    return () => {
+      audio.removeEventListener("timeupdate", onTime);
+      audio.removeEventListener("ended", onEnd);
+      audio.removeEventListener("loadedmetadata", onMeta);
+    };
+  }, [tracks.length, shuffleOn, repeatOne]);
 
   const prev = () => setIdx(i => (i - 1 + tracks.length) % tracks.length);
   const next = () => setIdx(i => (i + 1) % tracks.length);
 
-  const togglePlay = () => {
-    if (!playing && audioRef.current && !audioRef.current.src && track) {
-      audioRef.current.src = track.preview;
-      audioRef.current.load();
-    }
-    setPlaying(p => !p);
-  };
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!searchQ.trim()) return;
     fetchMusic(searchQ, "");
     setGenre("");
   };
@@ -6774,138 +6788,273 @@ function OTubeMusicOrb() {
     setGenre(g);
     setSearchQ("");
     fetchMusic("", g);
-    setSearching(false);
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !audio.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = ratio * audio.duration;
+  };
+
+  const handleDownload = async () => {
+    if (!track || downloading) return;
+    setDownloading(true);
+    try {
+      const resp = await fetch(track.preview);
+      const blob = await resp.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objUrl;
+      a.download = `${track.artist} - ${track.title || track.name}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objUrl);
+      toast({ title: "✓ Yuklab olindi", description: track.title || track.name });
+    } catch {
+      toast({ title: "Yuklab bo'lmadi", variant: "destructive" });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const fmtTime = (s: number) => {
+    if (!s || isNaN(s)) return "--:--";
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
   const R = 16; const C = 2 * Math.PI * R;
   const VINYL_COLORS = ["#3b0764","#1e1b4b","#0f172a","#0c1a2e","#1a0533"];
-  const vinylBg = VINYL_COLORS[parseInt(track?.id ?? "0") % VINYL_COLORS.length];
+  const vinylBg = VINYL_COLORS[parseInt(track?.id?.replace(/\D/g,"") ?? "0") % VINYL_COLORS.length];
 
   return (
     <>
       <audio ref={audioRef} preload="none" crossOrigin="anonymous"/>
 
-      {/* ── Expanded panel ── */}
+      {/* ── Expanded compact panel ── */}
       <AnimatePresence>
         {expanded && (
           <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            initial={{ opacity:0, y:18, scale:0.93 }}
+            animate={{ opacity:1, y:0,  scale:1    }}
+            exit   ={{ opacity:0, y:18, scale:0.93 }}
+            transition={{ type:"spring", stiffness:430, damping:33 }}
             style={{
-              position: "fixed",
-              bottom: "calc(env(safe-area-inset-bottom,0px) + 72px)",
-              left: 14,
-              zIndex: 95,
-              background: "rgba(6,0,18,0.97)",
-              border: "1px solid rgba(168,85,247,0.4)",
-              borderRadius: 20,
-              backdropFilter: "blur(28px)",
-              width: 252,
-              overflow: "hidden",
-              boxShadow: "0 0 60px rgba(168,85,247,0.25), 0 12px 40px rgba(0,0,0,0.7)",
+              position:"fixed",
+              bottom:"calc(env(safe-area-inset-bottom,0px) + 72px)",
+              left:14, zIndex:95,
+              background:"rgba(8,0,22,0.97)",
+              border:"1px solid rgba(168,85,247,0.28)",
+              borderRadius:22,
+              backdropFilter:"blur(32px)",
+              width:238,
+              overflow:"hidden",
+              boxShadow:"0 0 36px rgba(168,85,247,0.18), 0 18px 44px rgba(0,0,0,0.85)",
             }}
           >
-            {/* Header — track info + search always visible */}
-            <div style={{ padding: "12px 14px 8px" }}>
-              {/* Track row */}
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-                <div style={{
-                  width:40, height:40, borderRadius:"50%", flexShrink:0, overflow:"hidden",
-                  background: track?.artwork ? "transparent" : `radial-gradient(circle at 50%,#111 28%,${vinylBg} 30%,${vinylBg} 100%)`,
-                  border:"1px solid rgba(168,85,247,0.35)",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  animation: playing ? "spin 4s linear infinite" : "none",
-                }}>
-                  {track?.artwork
-                    ? <img src={track.artwork} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
-                    : <div style={{ width:8,height:8,borderRadius:"50%",background:"rgba(168,85,247,0.7)" }}/>
-                  }
+            {/* Track info */}
+            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 13px 8px" }}>
+              <div style={{
+                width:42, height:42, borderRadius:10, flexShrink:0, overflow:"hidden",
+                background:`radial-gradient(circle at 50%,#111 28%,${vinylBg} 30%,${vinylBg} 100%)`,
+                border:"1px solid rgba(168,85,247,0.3)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                animation: playing ? "spin 4s linear infinite" : "none",
+              }}>
+                {track?.artwork
+                  ? <img src={track.artwork} alt="" style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
+                  : <Music2 style={{ width:15,height:15,color:"rgba(168,85,247,0.7)" }}/>
+                }
+              </div>
+              <div style={{ flex:1, overflow:"hidden" }}>
+                <div style={{ fontSize:11,fontWeight:700,color:"#fff",
+                  whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                  {loadingApi ? "Qidirilmoqda…" : (track?.title || track?.name || "—")}
                 </div>
-                <div style={{ overflow:"hidden", flex:1 }}>
-                  <div style={{ fontSize:12,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
-                    {loadingApi ? "Qidirilmoqda..." : (track?.name ?? "—")}
-                  </div>
-                  <div style={{ fontSize:10,color:"rgba(168,85,247,0.8)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:2 }}>
+                  <span style={{ fontSize:9,color:"rgba(168,85,247,0.7)",
+                    whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",flex:1 }}>
                     {track?.artist ?? ""}
-                  </div>
+                  </span>
+                  {track?.full && (
+                    <span style={{ fontSize:7,fontWeight:800,color:"#00e5ff",
+                      background:"rgba(0,229,255,0.12)",padding:"1px 4px",borderRadius:4,flexShrink:0 }}>
+                      FULL
+                    </span>
+                  )}
+                  {track?.full === false && (
+                    <span style={{ fontSize:7,fontWeight:800,color:"#ff8c00",
+                      background:"rgba(255,140,0,0.12)",padding:"1px 4px",borderRadius:4,flexShrink:0 }}>
+                      30s
+                    </span>
+                  )}
                 </div>
               </div>
-              {/* Search — always visible */}
-              <form onSubmit={handleSearch} style={{ display:"flex", gap:6 }}>
-                <input
-                  ref={searchRef}
-                  value={searchQ}
-                  onChange={e => setSearchQ(e.target.value)}
-                  placeholder="🔍 Qo'shiq yoki artist izlang..."
-                  style={{
-                    flex:1, background:"rgba(168,85,247,0.12)", border:"1px solid rgba(168,85,247,0.35)",
-                    borderRadius:12, padding:"7px 11px", fontSize:12, color:"#fff", outline:"none",
-                    WebkitAppearance:"none",
-                  }}
-                />
-                <button type="submit" disabled={loadingApi} style={{
-                  background:"linear-gradient(135deg,#a855f7,#6366f1)", border:"none", borderRadius:12,
-                  padding:"0 12px", cursor:"pointer", color:"#fff", fontSize:13, fontWeight:800,
-                  opacity: loadingApi ? 0.6 : 1,
-                }}>→</button>
-              </form>
             </div>
 
-            {/* Genre chips */}
-            <div style={{ padding:"0 14px 8px", display:"flex", flexWrap:"wrap", gap:5 }}>
+            {/* Progress bar — tappable/seekable */}
+            <div onClick={handleSeek} style={{
+              margin:"0 13px 3px", height:3, borderRadius:2,
+              background:"rgba(255,255,255,0.09)", cursor:"pointer",
+            }}>
+              <div style={{
+                height:"100%", width:`${progress*100}%`,
+                background:"linear-gradient(90deg,#a855f7,#6366f1)",
+                borderRadius:2, transition:"width 0.4s linear",
+              }}/>
+            </div>
+            <div style={{ display:"flex", justifyContent:"space-between", padding:"0 13px 7px" }}>
+              <span style={{ fontSize:8, color:"rgba(255,255,255,0.28)" }}>{fmtTime(currentTime)}</span>
+              <span style={{ fontSize:8, color:"rgba(255,255,255,0.28)" }}>
+                {fmtTime(duration || (track?.duration ?? 0))}
+              </span>
+            </div>
+
+            {/* Main controls */}
+            <div style={{ display:"flex", justifyContent:"center", alignItems:"center",
+              gap:20, padding:"0 13px 10px" }}>
+              <button onClick={prev} style={{ background:"none",border:"none",cursor:"pointer",
+                color:"rgba(255,255,255,0.45)",padding:4,lineHeight:0 }}>
+                <ChevronLeft style={{ width:20,height:20 }}/>
+              </button>
+              <button onClick={() => setPlaying(p => !p)} style={{
+                width:36,height:36,borderRadius:"50%",
+                background:"linear-gradient(135deg,#a855f7,#6366f1)",
+                border:"none",cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:"0 0 14px rgba(168,85,247,0.55)",
+              }}>
+                {playing
+                  ? <Pause style={{ width:14,height:14,color:"#fff" }}/>
+                  : <Play  style={{ width:14,height:14,color:"#fff",marginLeft:2 }}/>
+                }
+              </button>
+              <button onClick={next} style={{ background:"none",border:"none",cursor:"pointer",
+                color:"rgba(255,255,255,0.45)",padding:4,lineHeight:0 }}>
+                <ChevronRight style={{ width:20,height:20 }}/>
+              </button>
+            </div>
+
+            {/* iOS-style function carousel — no circles, icon + label */}
+            <div style={{
+              display:"flex", overflowX:"auto", scrollbarWidth:"none",
+              padding:"0 6px 10px", gap:0,
+              WebkitOverflowScrolling:"touch" as any,
+            }}>
+              {([
+                {
+                  icon: <Shuffle style={{ width:15,height:15,
+                    color: shuffleOn ? "#a855f7" : "rgba(255,255,255,0.45)" }}/>,
+                  label:"Tasodif", active:shuffleOn,
+                  act:() => setShuffleOn(s => !s),
+                },
+                {
+                  icon: <Repeat style={{ width:15,height:15,
+                    color: repeatOne ? "#a855f7" : "rgba(255,255,255,0.45)" }}/>,
+                  label:"Takror", active:repeatOne,
+                  act:() => setRepeatOne(r => !r),
+                },
+                {
+                  icon: <Heart style={{ width:15,height:15,
+                    fill: liked ? "#ff3b5c" : "none",
+                    color: liked ? "#ff3b5c" : "rgba(255,255,255,0.45)" }}/>,
+                  label:"Sevimli", active:liked,
+                  act:() => setLiked(l => !l),
+                },
+                {
+                  icon: downloading
+                    ? <RefreshCw style={{ width:15,height:15,color:"#a855f7",
+                        animation:"spin 1s linear infinite" }}/>
+                    : <Download style={{ width:15,height:15,color:"rgba(255,255,255,0.45)" }}/>,
+                  label:"Yuklab", active:false,
+                  act: handleDownload,
+                },
+                {
+                  icon: <Share2 style={{ width:15,height:15,color:"rgba(255,255,255,0.45)" }}/>,
+                  label:"Ulash", active:false,
+                  act:() => {
+                    if (track) navigator.share?.({ title: track.title || track.name, text: track.artist })
+                      .catch(() => {});
+                  },
+                },
+              ] as { icon:React.ReactNode; label:string; active:boolean; act:()=>void }[])
+                .map((b,i) => (
+                  <button key={i} onClick={b.act} style={{
+                    display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+                    padding:"5px 10px",background:"none",border:"none",
+                    cursor:"pointer",flexShrink:0,
+                  }}>
+                    <div style={{
+                      width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center",
+                      filter: b.active ? "drop-shadow(0 0 5px rgba(168,85,247,0.9))" : "none",
+                      opacity: b.active ? 1 : 0.72,
+                    }}>
+                      {b.icon}
+                    </div>
+                    <span style={{ fontSize:7.5,fontWeight:600,whiteSpace:"nowrap",
+                      color: b.active ? "#a855f7" : "rgba(255,255,255,0.3)" }}>
+                      {b.label}
+                    </span>
+                  </button>
+                ))
+              }
+            </div>
+
+            {/* Genre chips — horizontal scroll */}
+            <div style={{
+              display:"flex", overflowX:"auto", scrollbarWidth:"none",
+              gap:5, padding:"0 13px 8px",
+              WebkitOverflowScrolling:"touch" as any,
+            }}>
               {GENRES.map(g => (
-                <button
-                  key={g.id}
-                  onClick={() => handleGenre(g.id)}
-                  style={{
-                    background: genre===g.id ? "linear-gradient(135deg,#a855f7,#6366f1)" : "rgba(168,85,247,0.1)",
-                    border: `1px solid ${genre===g.id ? "transparent" : "rgba(168,85,247,0.25)"}`,
-                    borderRadius:20, padding:"3px 9px", fontSize:10, color:"#fff",
-                    cursor:"pointer", fontWeight: genre===g.id ? 700 : 400,
-                    transition:"all 0.15s",
-                  }}
-                >
+                <button key={g.id} onClick={() => handleGenre(g.id)} style={{
+                  background: genre===g.id
+                    ? "linear-gradient(135deg,#a855f7,#6366f1)"
+                    : "rgba(168,85,247,0.1)",
+                  border:`1px solid ${genre===g.id ? "transparent" : "rgba(168,85,247,0.2)"}`,
+                  borderRadius:20, padding:"3px 9px", fontSize:9, color:"#fff",
+                  cursor:"pointer", fontWeight: genre===g.id ? 700 : 400,
+                  flexShrink:0, transition:"all 0.15s",
+                }}>
                   {g.label}
                 </button>
               ))}
             </div>
 
-            {/* Progress bar */}
-            <div style={{ margin:"0 14px 8px", height:3, borderRadius:2, background:"rgba(255,255,255,0.08)", overflow:"hidden" }}>
-              <div style={{ height:"100%", width:`${progress*100}%`, background:"linear-gradient(90deg,#a855f7,#6366f1)", borderRadius:2, transition:"width 0.5s linear" }}/>
-            </div>
-
-            {/* Controls */}
-            <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:20, padding:"0 14px 12px" }}>
-              <button onClick={prev} style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.5)",padding:4,lineHeight:0 }}>
-                <ChevronLeft style={{ width:20,height:20 }}/>
-              </button>
-              <button onClick={togglePlay} style={{
-                width:40,height:40,borderRadius:"50%",
+            {/* Search */}
+            <form onSubmit={handleSearch} style={{ display:"flex", gap:6, padding:"0 13px 12px" }}>
+              <input
+                value={searchQ}
+                onChange={e => setSearchQ(e.target.value)}
+                placeholder="🔍 Qo'shiq yoki artist..."
+                style={{
+                  flex:1, background:"rgba(168,85,247,0.09)",
+                  border:"1px solid rgba(168,85,247,0.28)",
+                  borderRadius:12, padding:"6px 10px",
+                  fontSize:11, color:"#fff", outline:"none",
+                  WebkitAppearance:"none",
+                }}
+              />
+              <button type="submit" disabled={loadingApi} style={{
                 background:"linear-gradient(135deg,#a855f7,#6366f1)",
-                border:"none",cursor:"pointer",
-                display:"flex",alignItems:"center",justifyContent:"center",
-                boxShadow:"0 0 18px rgba(168,85,247,0.6)",
-              }}>
-                {playing
-                  ? <Pause style={{ width:17,height:17,color:"#fff" }}/>
-                  : <Play  style={{ width:17,height:17,color:"#fff",marginLeft:2 }}/>
-                }
-              </button>
-              <button onClick={next} style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.5)",padding:4,lineHeight:0 }}>
-                <ChevronRight style={{ width:20,height:20 }}/>
-              </button>
-            </div>
+                border:"none", borderRadius:12,
+                padding:"0 11px", cursor:"pointer",
+                color:"#fff", fontSize:12, fontWeight:800,
+                opacity: loadingApi ? 0.5 : 1,
+              }}>→</button>
+            </form>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Orb — bottom-LEFT ── */}
+      {/* ── Orb button ── */}
       <motion.button
         onClick={() => setExpanded(v => !v)}
-        whileTap={{ scale: 0.85 }}
+        whileTap={{ scale:0.85 }}
         style={{
           position:"fixed",
           bottom:"calc(env(safe-area-inset-bottom,0px) + 72px)",
@@ -6916,26 +7065,31 @@ function OTubeMusicOrb() {
           display:"flex", alignItems:"center", justifyContent:"center",
         }}
       >
-        <svg width={36} height={36} style={{ position:"absolute",inset:0,transform:"rotate(-90deg)",pointerEvents:"none" }}>
-          <circle cx={18} cy={18} r={R} fill="none" stroke="rgba(168,85,247,0.18)" strokeWidth={1.5}/>
-          <circle cx={18} cy={18} r={R} fill="none" stroke="url(#mring)" strokeWidth={1.5}
+        <svg width={36} height={36} style={{ position:"absolute",inset:0,
+          transform:"rotate(-90deg)",pointerEvents:"none" }}>
+          <circle cx={18} cy={18} r={R} fill="none"
+            stroke="rgba(168,85,247,0.18)" strokeWidth={1.5}/>
+          <circle cx={18} cy={18} r={R} fill="none"
+            stroke="url(#mring)" strokeWidth={1.5}
             strokeDasharray={C} strokeDashoffset={C*(1-progress)}
-            strokeLinecap="round" style={{ transition:"stroke-dashoffset 0.5s linear" }}/>
+            strokeLinecap="round"
+            style={{ transition:"stroke-dashoffset 0.5s linear" }}/>
           <defs>
             <linearGradient id="mring" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#a855f7"/>
+              <stop offset="0%"   stopColor="#a855f7"/>
               <stop offset="100%" stopColor="#6366f1"/>
             </linearGradient>
           </defs>
         </svg>
-
         <div style={{
           width:28, height:28, borderRadius:"50%", overflow:"hidden",
           background: track?.artwork ? "transparent"
             : `radial-gradient(circle at 50%,#0a0018 28%,${vinylBg} 30%,${vinylBg} 72%,#0a0018 74%)`,
           border:`1.5px solid ${playing?"rgba(168,85,247,0.7)":"rgba(168,85,247,0.35)"}`,
           display:"flex", alignItems:"center", justifyContent:"center",
-          boxShadow: playing ? "0 0 14px rgba(168,85,247,0.7)" : "0 0 6px rgba(168,85,247,0.25)",
+          boxShadow: playing
+            ? "0 0 14px rgba(168,85,247,0.7)"
+            : "0 0 6px rgba(168,85,247,0.25)",
           animation: playing ? "spin 5s linear infinite" : "none",
         }}>
           {track?.artwork
@@ -6943,12 +7097,12 @@ function OTubeMusicOrb() {
             : <Music2 style={{ width:13,height:13,color:"rgba(168,85,247,0.85)" }}/>
           }
         </div>
-
         {playing && (
           <motion.div
             animate={{ scale:[1,1.4,1], opacity:[0.45,0,0.45] }}
             transition={{ duration:2, repeat:Infinity, ease:"easeInOut" }}
-            style={{ position:"absolute",inset:-8,borderRadius:"50%",border:"1.5px solid rgba(168,85,247,0.45)",pointerEvents:"none" }}
+            style={{ position:"absolute",inset:-8,borderRadius:"50%",
+              border:"1.5px solid rgba(168,85,247,0.45)",pointerEvents:"none" }}
           />
         )}
       </motion.button>

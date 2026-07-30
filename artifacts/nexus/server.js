@@ -145,14 +145,15 @@ async function proxyHttp(req, res, body, target) {
   } catch (err) {
     logProxyError(req.method, req.url, err);
     console.error(`[proxy-err] ${req.method} ${req.url}: ${err?.constructor?.name} ${err?.message} code=${err?.code}`);
-    /* Return 503 (not 502) so Railway Hikari passes our diagnostic body through
-       instead of replacing it with its own "Application failed to respond" page. */
-    safeReply(res, 503, {
-      error: "Upstream fetch failed",
+    /* Return 200 temporarily for diagnostics — Railway Hikari intercepts all
+       5xx codes and hides the actual error. Will revert after root cause found. */
+    safeReply(res, 200, {
+      __nexus_proxy_error: true,
       errType: err?.constructor?.name,
-      errMsg: String(err?.message ?? "").slice(0, 200),
+      errMsg: String(err?.message ?? "").slice(0, 300),
       errCode: err?.code,
       url: req.url,
+      target: API_TARGET,
     });
   } finally {
     /* Always cancel the timer — whether success, error, or abort */

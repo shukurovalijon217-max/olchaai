@@ -74,16 +74,13 @@ function safeReply(res, status, body) {
   } catch (_) { /* client disconnected */ }
 }
 
-/* HTTP proxy — uses raw https.request() so we get the raw wire bytes
-   (no automatic gzip decompression unlike fetch()) and stream the response
-   directly to the client without buffering large bodies in memory. */
-function proxyHttp(req, res, body, target) {
-  const targetUrl = new URL(`${target}${req.url}`);
+/* HTTP proxy using fetch() with explicit Connection: close to prevent
+   stale keep-alive connections from silently hanging. */
+async function proxyHttp(req, res, body, target) {
+  const url = `${target}${req.url}`;
 
-  /* Build forwarded headers */
   const headers = { ...req.headers };
   delete headers["host"];
-  delete headers["connection"];
   delete headers["transfer-encoding"];
   if (["GET", "HEAD", "DELETE", "OPTIONS"].includes(req.method)) {
     delete headers["content-length"];
@@ -92,50 +89,52 @@ function proxyHttp(req, res, body, target) {
   const existingXff = headers["x-forwarded-for"];
   headers["x-forwarded-for"] = existingXff ? `${existingXff}, ${clientIp}` : clientIp;
   if (!headers["x-forwarded-proto"]) headers["x-forwarded-proto"] = "https";
-  headers["host"] = targetUrl.hostname;
+  /* Force connection close so keep-alive pool does not silently reuse a
+     stale socket, which causes certain requests to hang until Railway LB
+     times out and returns its own 502. */
+  headers["connection"] = "close";
 
-  const options = {
-    hostname: targetUrl.hostname,
-    port: targetUrl.port || (targetUrl.protocol === "https:" ? 443 : 80),
-    path: targetUrl.pathname + targetUrl.search,
-    method: req.method,
-    headers,
-    timeout: 25_000,
-  };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25_000);
 
-  const proto = targetUrl.protocol === "https:" ? https : http;
-  /* agent:false — no connection reuse.  A stale keep-alive connection in the
-     pool silently fails to fire either the response callback or the error
-     event, causing the request to hang forever until Railway LB times out
-     and returns its own 502.  Each proxy request gets a fresh TCP+TLS
-     connection, eliminating the stale-socket hang. */
-  const proxyReq = proto.request({ ...options, agent: false }, (proxyRes) => {
-    /* Strip hop-by-hop headers before forwarding */
+  try {
+    const upstream = await fetch(url, {
+      method: req.method,
+      headers,
+      body: ["GET", "HEAD"].includes(req.method) ? undefined : body,
+      redirect: "manual",
+      signal: controller.signal,
+    });
+
+    /* Buffer full body before writing headers so that if the body read
+       fails we can still send a clean error without an incomplete response
+       confusing Railway Hikari into showing its own 502 fallback page. */
+    const buf = await upstream.arrayBuffer();
+
     const fwdHeaders = {};
-    for (const [k, v] of Object.entries(proxyRes.headers)) {
+    for (const [k, v] of upstream.headers.entries()) {
       const lk = k.toLowerCase();
-      if (lk === "transfer-encoding" || lk === "connection") continue;
+      /* Drop hop-by-hop and encoding headers — fetch() auto-decompresses
+         gzip/br, so forwarding Content-Encoding with the decompressed body
+         would cause double-decompression errors on the client. */
+      if (lk === "transfer-encoding" || lk === "connection" ||
+          lk === "content-encoding" || lk === "content-length") continue;
       fwdHeaders[k] = v;
     }
+    fwdHeaders["content-length"] = String(buf.byteLength);
+
     try {
-      res.writeHead(proxyRes.statusCode, fwdHeaders);
-    } catch (_) { proxyRes.destroy(); return; }
-    proxyRes.pipe(res, { end: true });
-  });
+      res.writeHead(upstream.status, fwdHeaders);
+      if (!res.writableEnded) res.end(Buffer.from(buf));
+    } catch (_) { /* client disconnected */ }
 
-  proxyReq.on("timeout", () => {
-    proxyReq.destroy();
-    safeReply(res, 504, { error: "Upstream timeout" });
-  });
-
-  proxyReq.on("error", (err) => {
+  } catch (err) {
     logProxyError(req.method, req.url, err);
-    console.error(`[proxy-err] ${req.method} ${req.url}: ${err?.message} code=${err?.code}`);
+    console.error(`[proxy-err] ${req.method} ${req.url}: ${err?.constructor?.name} ${err?.message}`);
     safeReply(res, 502, { error: "Bad Gateway" });
-  });
-
-  if (body) proxyReq.write(body);
-  proxyReq.end();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /* WebSocket tunnel */

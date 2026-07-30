@@ -26,6 +26,13 @@ process.on("uncaughtException", (err) => {
   console.error("[uncaughtException]", err.message, err.stack);
 });
 
+/* ── In-memory error log (last 20 proxy errors) ── */
+const recentErrors = [];
+function logProxyError(method, url, err) {
+  recentErrors.unshift({ t: new Date().toISOString(), method, url, type: err?.constructor?.name, msg: err?.message, code: err?.code });
+  if (recentErrors.length > 20) recentErrors.pop();
+}
+
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript",
@@ -136,7 +143,8 @@ async function proxyHttp(req, res, body, target) {
     } catch (_) { /* client disconnected */ }
 
   } catch (err) {
-    console.error(`[proxy-err] ${req.method} ${req.url}: ${err.constructor?.name} ${err.message}`);
+    logProxyError(req.method, req.url, err);
+    console.error(`[proxy-err] ${req.method} ${req.url}: ${err?.constructor?.name} ${err?.message} code=${err?.code}`);
     safeReply(res, 502, { error: "Bad Gateway" });
   } finally {
     /* Always cancel the timer — whether success, error, or abort */
@@ -176,6 +184,11 @@ const server = http.createServer((req, res) => {
   if (req.url === "/healthz") {
     res.writeHead(200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ ok: true, build: BUILD_ID, nexusPort: PORT, apiTarget: API_TARGET }));
+  }
+
+  if (req.url === "/debug-errors") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(recentErrors, null, 2));
   }
 
   if (req.url.startsWith("/api")) {

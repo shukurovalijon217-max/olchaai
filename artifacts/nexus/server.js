@@ -26,12 +26,6 @@ process.on("uncaughtException", (err) => {
   console.error("[uncaughtException]", err.message, err.stack);
 });
 
-/* ── In-memory error log (last 20 proxy errors) ── */
-const recentErrors = [];
-function logProxyError(method, url, err) {
-  recentErrors.unshift({ t: new Date().toISOString(), method, url, type: err?.constructor?.name, msg: err?.message, code: err?.code });
-  if (recentErrors.length > 20) recentErrors.pop();
-}
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -74,8 +68,10 @@ function safeReply(res, status, body) {
   } catch (_) { /* client disconnected */ }
 }
 
-/* HTTP proxy using fetch() with explicit Connection: close to prevent
-   stale keep-alive connections from silently hanging. */
+/* HTTP proxy — used only for /go/* (WebSocket upgrades use proxyWebSocket).
+   REST API calls now go directly from the browser to olchaai-api via
+   VITE_API_BASE_URL, so this is kept only as a fallback for any /api/*
+   requests that still land on Nexus (e.g. server-side health checks). */
 async function proxyHttp(req, res, body, target) {
   const url = `${target}${req.url}`;
 
@@ -89,10 +85,6 @@ async function proxyHttp(req, res, body, target) {
   const existingXff = headers["x-forwarded-for"];
   headers["x-forwarded-for"] = existingXff ? `${existingXff}, ${clientIp}` : clientIp;
   if (!headers["x-forwarded-proto"]) headers["x-forwarded-proto"] = "https";
-  /* Force connection close so keep-alive pool does not silently reuse a
-     stale socket, which causes certain requests to hang until Railway LB
-     times out and returns its own 502. */
-  headers["connection"] = "close";
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 25_000);
@@ -106,17 +98,11 @@ async function proxyHttp(req, res, body, target) {
       signal: controller.signal,
     });
 
-    /* Buffer full body before writing headers so that if the body read
-       fails we can still send a clean error without an incomplete response
-       confusing Railway Hikari into showing its own 502 fallback page. */
     const buf = await upstream.arrayBuffer();
 
     const fwdHeaders = {};
     for (const [k, v] of upstream.headers.entries()) {
       const lk = k.toLowerCase();
-      /* Drop hop-by-hop and encoding headers — fetch() auto-decompresses
-         gzip/br, so forwarding Content-Encoding with the decompressed body
-         would cause double-decompression errors on the client. */
       if (lk === "transfer-encoding" || lk === "connection" ||
           lk === "content-encoding" || lk === "content-length") continue;
       fwdHeaders[k] = v;
@@ -129,7 +115,6 @@ async function proxyHttp(req, res, body, target) {
     } catch (_) { /* client disconnected */ }
 
   } catch (err) {
-    logProxyError(req.method, req.url, err);
     console.error(`[proxy-err] ${req.method} ${req.url}: ${err?.constructor?.name} ${err?.message}`);
     safeReply(res, 502, { error: "Bad Gateway" });
   } finally {
@@ -171,29 +156,6 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({ ok: true, build: BUILD_ID, nexusPort: PORT, apiTarget: API_TARGET }));
   }
 
-  /* ── Proxy diagnostic: what does olchaai-api actually return? ── */
-  if (req.url.startsWith("/probe-api")) {
-    const target = req.url.replace("/probe-api", "") || "/healthz";
-    const tStart = Date.now();
-    fetch(`${API_TARGET}${target}`, {
-      headers: { cookie: req.headers["cookie"] || "" },
-      signal: AbortSignal.timeout(8000),
-    })
-      .then(async r => {
-        const status = r.status;
-        const hdrs = Object.fromEntries(r.headers.entries());
-        let body = "";
-        try { body = (await r.text()).slice(0, 300); } catch(_) {}
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, ms: Date.now()-tStart, status, hdrs, body }));
-      })
-      .catch(err => {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: false, ms: Date.now()-tStart,
-          type: err?.constructor?.name, msg: err?.message, code: err?.code }));
-      });
-    return;
-  }
 
   if (req.url.startsWith("/api")) {
     const chunks = [];

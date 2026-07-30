@@ -547,80 +547,68 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
           )}
         </AnimatePresence>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 px-3 pb-3 pt-1">
+        {/* Actions — icon only, no background boxes */}
+        <div className="flex items-center gap-4 px-3 pb-3 pt-1">
           {/* Like */}
-          <motion.button whileTap={{ scale: 0.85 }} onClick={handleLike}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              liked ? "text-pink-400 bg-pink-400/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}>
-            <Heart className={`w-4 h-4 transition-transform ${liked ? "fill-current scale-110" : ""}`} />
-            <span>{count}</span>
+          <motion.button whileTap={{ scale: 0.82 }} onClick={handleLike}
+            className={`flex items-center gap-1 transition-colors ${liked ? "text-pink-400" : "text-muted-foreground hover:text-pink-400"}`}>
+            <Heart className={`w-[18px] h-[18px] transition-transform ${liked ? "fill-current scale-110" : ""}`} />
+            <span className="text-xs font-medium">{count}</span>
           </motion.button>
 
           {/* Comment */}
           <Link href={`/post/${post.id}`}>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <MessageCircle className="w-4 h-4" />
-              <span>{post.commentsCount}</span>
+            <button className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+              <MessageCircle className="w-[18px] h-[18px]" />
+              <span className="text-xs font-medium">{post.commentsCount}</span>
             </button>
           </Link>
 
           {/* Share */}
-          <motion.button whileTap={{ scale: 0.85 }} onClick={handleShare}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              shared ? "text-emerald-400 bg-emerald-400/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}>
-            {shared ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-            <span>{shared ? t("common.copied") : (post.sharesCount ?? 0)}</span>
+          <motion.button whileTap={{ scale: 0.82 }} onClick={handleShare}
+            className={`flex items-center gap-1 transition-colors ${shared ? "text-emerald-400" : "text-muted-foreground hover:text-emerald-400"}`}>
+            {shared ? <Check className="w-[18px] h-[18px]" /> : <Share2 className="w-[18px] h-[18px]" />}
+            <span className="text-xs font-medium">{shared ? t("common.copied") : (post.sharesCount ?? 0)}</span>
           </motion.button>
 
           {/* AI Analyze */}
-          <motion.button whileTap={{ scale: 0.85 }} onClick={handleAnalyze} disabled={analyzing}
+          <motion.button whileTap={{ scale: 0.82 }} onClick={handleAnalyze} disabled={analyzing}
             title={t("post.ai_analysis")}
-            className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              showAnalysis ? "text-violet-400 bg-violet-400/10" : "text-muted-foreground hover:text-violet-400 hover:bg-violet-400/10"
-            }`}>
-            {analyzing
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Sparkles className="w-4 h-4" />
-            }
-            <span className="hidden sm:inline">AI</span>
+            className={`ml-auto transition-colors ${showAnalysis ? "text-violet-400" : "text-muted-foreground hover:text-violet-400"}`}>
+            {analyzing ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Sparkles className="w-[18px] h-[18px]" />}
           </motion.button>
 
           {/* Share Card */}
-          <motion.button whileTap={{ scale: 0.85 }} onClick={handleShareCard} disabled={sharing}
+          <motion.button whileTap={{ scale: 0.82 }} onClick={handleShareCard} disabled={sharing}
             title={t("post.download_card")}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-amber-400 hover:bg-amber-400/10 disabled:opacity-50">
-            {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            className="text-muted-foreground hover:text-amber-400 transition-colors disabled:opacity-40">
+            {sharing ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Download className="w-[18px] h-[18px]" />}
           </motion.button>
 
           {/* Voice Comments */}
           {user && (
-            <motion.button whileTap={{ scale: 0.85 }} onClick={loadVoiceComments}
+            <motion.button whileTap={{ scale: 0.82 }} onClick={loadVoiceComments}
               title={t("voice.title")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                voiceOpen ? "text-rose-400 bg-rose-400/10" : "text-muted-foreground hover:text-rose-400 hover:bg-rose-400/10"
-              }`}>
-              <Mic className="w-4 h-4" />
+              className={`transition-colors ${voiceOpen ? "text-rose-400" : "text-muted-foreground hover:text-rose-400"}`}>
+              <Mic className="w-[18px] h-[18px]" />
             </motion.button>
           )}
 
           {/* Tip */}
           {user && user.id !== post.author.id && (
-            <motion.button whileTap={{ scale: 0.85 }} onClick={() => setTipOpen(true)}
+            <motion.button whileTap={{ scale: 0.82 }} onClick={() => setTipOpen(true)}
               title={t("tip.title")}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-yellow-400 hover:bg-yellow-400/10">
-              <Gift className="w-4 h-4" />
+              className="text-muted-foreground hover:text-yellow-400 transition-colors">
+              <Gift className="w-[18px] h-[18px]" />
             </motion.button>
           )}
 
           {/* CoView */}
           {user && (
-            <motion.button whileTap={{ scale: 0.85 }} onClick={handleCoView}
+            <motion.button whileTap={{ scale: 0.82 }} onClick={handleCoView}
               title={t("coview.watch_together")}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-blue-400 hover:bg-blue-400/10">
-              <Tv2 className="w-4 h-4" />
+              className="text-muted-foreground hover:text-blue-400 transition-colors">
+              <Tv2 className="w-[18px] h-[18px]" />
             </motion.button>
           )}
         </div>

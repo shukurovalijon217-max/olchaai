@@ -125,11 +125,21 @@ async function proxyHttp(req, res, body, target) {
        By buffering first we keep the option to send a clean error response. */
     const buf = await upstream.arrayBuffer();
 
-    /* Forward response headers, strip hop-by-hop */
+    /* Forward response headers, strip hop-by-hop and encoding headers.
+       Node.js fetch() auto-decompresses gzip/br/deflate responses, so the
+       body in `buf` is already plain bytes.  If we forward Content-Encoding
+       the client will try to decompress already-decompressed data and fail.
+       Similarly, Content-Length from the upstream reflects the compressed
+       size; we overwrite it below with the actual decompressed length. */
     const fwdHeaders = {};
     for (const [k, v] of upstream.headers.entries()) {
       const lk = k.toLowerCase();
-      if (lk === "transfer-encoding" || lk === "connection") continue;
+      if (
+        lk === "transfer-encoding" ||
+        lk === "connection" ||
+        lk === "content-encoding" ||   // body is already decompressed by fetch
+        lk === "content-length"        // will be set below to decompressed size
+      ) continue;
       fwdHeaders[k] = v;
     }
     /* Set correct content-length for the buffered body */

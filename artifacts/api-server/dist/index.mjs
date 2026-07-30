@@ -78465,7 +78465,10 @@ async function r2GetPresignedUploadUrl(contentType, ttlSec = 900) {
   const command = new PutObjectCommand({
     Bucket: getBucketName(),
     Key: key,
-    ContentType: contentType
+    ContentType: contentType,
+    // Tell Cloudflare CDN to cache this object permanently at the edge.
+    // Files are content-addressed (UUID key) so they are effectively immutable.
+    CacheControl: "public, max-age=31536000, immutable"
   });
   const uploadURL = await getSignedUrl(client, command, { expiresIn: ttlSec });
   const publicUrl = getPublicUrl(key);

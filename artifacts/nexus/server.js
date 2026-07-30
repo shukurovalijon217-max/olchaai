@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
+import { Readable } from "stream";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT       = parseInt(process.env.PORT || "3000", 10);
@@ -14,7 +15,7 @@ const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.
 const GO_TARGET  = process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app";
 const DIST       = path.join(__dirname, "dist", "public");
 
-/* Build-time unique token — changes every deploy so Cloudflare sees a new ETag */
+/* Build-time unique token */
 const BUILD_ID = Date.now().toString(36);
 
 /* ── Prevent unhandled rejections from crashing the process ── */
@@ -47,7 +48,6 @@ function getMime(filePath) {
   return MIME[path.extname(filePath).toLowerCase()] || "application/octet-stream";
 }
 
-/* Parse a URL into { hostname, port, isTls } */
 function parseTarget(urlStr) {
   const u = new URL(urlStr);
   const isTls = u.protocol === "https:";
@@ -64,19 +64,26 @@ function safeReply(res, status, body) {
     if (!res.writableEnded) {
       res.end(typeof body === "string" ? body : JSON.stringify(body));
     }
-  } catch (_) { /* client disconnected — ignore */ }
+  } catch (_) { /* client disconnected */ }
 }
 
-/* HTTP proxy (for /api and /go regular requests) */
+/* HTTP proxy — streaming so Railway LB never sees a hang */
 async function proxyHttp(req, res, body, target) {
   const url = `${target}${req.url}`;
+
+  /* Strip headers that confuse upstream or cause protocol issues */
   const headers = { ...req.headers };
   delete headers["host"];
   delete headers["connection"];
+  delete headers["transfer-encoding"];
+  /* Node fetch sets its own content-length; removing from fwd avoids mismatch */
+  if (["GET", "HEAD", "DELETE", "OPTIONS"].includes(req.method)) {
+    delete headers["content-length"];
+  }
 
-  /* 60-second timeout so Cloudflare (100s limit) never sees a hang */
+  /* 25s — safely under Railway LB's ~30s response timeout */
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 60_000);
+  const timer = setTimeout(() => controller.abort(), 25_000);
 
   try {
     const upstream = await fetch(url, {
@@ -86,6 +93,8 @@ async function proxyHttp(req, res, body, target) {
       redirect: "manual",
       signal: controller.signal,
     });
+
+    clearTimeout(timer);
 
     /* Forward response headers, strip hop-by-hop */
     const fwdHeaders = {};
@@ -97,42 +106,48 @@ async function proxyHttp(req, res, body, target) {
 
     try {
       res.writeHead(upstream.status, fwdHeaders);
-    } catch (e) {
-      /* headers already sent — just drain and bail */
-      await upstream.arrayBuffer().catch(() => {});
+    } catch (_) {
+      /* headers already sent or client gone — drain upstream body and bail */
+      upstream.body?.cancel().catch(() => {});
       return;
     }
 
-    const buf = await upstream.arrayBuffer();
-    try { res.end(Buffer.from(buf)); } catch (_) { /* client gone */ }
+    /* Stream body — avoids buffering the full response in memory */
+    if (upstream.body) {
+      const nodeStream = Readable.fromWeb(upstream.body);
+      nodeStream.on("error", () => {
+        try { if (!res.writableEnded) res.end(); } catch (_) {}
+      });
+      res.on("close", () => {
+        try { upstream.body.cancel().catch(() => {}); } catch (_) {}
+      });
+      nodeStream.pipe(res, { end: true });
+    } else {
+      res.end();
+    }
 
   } catch (err) {
-    console.error("Proxy error:", err.message);
-    safeReply(res, 502, { error: "Bad Gateway" });
-  } finally {
     clearTimeout(timer);
+    console.error("Proxy error [%s %s]:", req.method, req.url, err.message);
+    safeReply(res, 502, { error: "Bad Gateway" });
   }
 }
 
-/* WebSocket tunnel — forward the raw upgrade handshake + bidirectional pipe */
+/* WebSocket tunnel */
 function proxyWebSocket(req, clientSocket, head, target) {
   const { hostname, port, isTls } = parseTarget(target);
-
   const connect = isTls ? tls.connect : net.connect;
   const options = isTls
     ? { host: hostname, port, servername: hostname }
     : { host: hostname, port };
 
   const upstream = connect(options, () => {
-    /* Reconstruct the HTTP/1.1 upgrade request verbatim */
     const reqLine = `GET ${req.url} HTTP/1.1\r\n`;
     const hdrs = Object.entries({ ...req.headers, host: hostname })
       .map(([k, v]) => `${k}: ${v}`)
       .join("\r\n");
     upstream.write(`${reqLine}${hdrs}\r\n\r\n`);
     if (head && head.length) upstream.write(head);
-
-    /* Bidirectional pipe */
     upstream.pipe(clientSocket);
     clientSocket.pipe(upstream);
   });
@@ -147,16 +162,15 @@ function proxyWebSocket(req, clientSocket, head, target) {
 }
 
 const server = http.createServer((req, res) => {
-  /* Health check */
   if (req.url === "/healthz") {
     res.writeHead(200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ ok: true, build: BUILD_ID, nexusPort: PORT, apiTarget: API_TARGET }));
   }
 
-  /* API proxy → olchaai-api */
   if (req.url.startsWith("/api")) {
     const chunks = [];
     req.on("data", (c) => chunks.push(c));
+    req.on("error", (e) => console.error("req error:", e.message));
     req.on("end", () => {
       const body = chunks.length ? Buffer.concat(chunks) : undefined;
       proxyHttp(req, res, body, API_TARGET).catch((err) => {
@@ -164,13 +178,9 @@ const server = http.createServer((req, res) => {
         safeReply(res, 502, { error: "Bad Gateway" });
       });
     });
-    req.on("error", (err) => {
-      console.error("req error:", err.message);
-    });
     return;
   }
 
-  /* Go service HTTP proxy → olchaai-go */
   if (req.url.startsWith("/go")) {
     const chunks = [];
     req.on("data", (c) => chunks.push(c));
@@ -186,7 +196,6 @@ const server = http.createServer((req, res) => {
 
   /* Static files with SPA fallback */
   let filePath = path.join(DIST, req.url.split("?")[0]);
-
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, "index.html");
   }
@@ -229,7 +238,6 @@ const server = http.createServer((req, res) => {
   }
 });
 
-/* WebSocket upgrade proxy → olchaai-go */
 server.on("upgrade", (req, socket, head) => {
   if (req.url.startsWith("/go")) {
     proxyWebSocket(req, socket, head, GO_TARGET);

@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
-import { Readable } from "stream";
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT       = parseInt(process.env.PORT || "3000", 10);
@@ -117,19 +117,13 @@ async function proxyHttp(req, res, body, target) {
       return;
     }
 
-    /* Stream body — avoids buffering the full response in memory */
-    if (upstream.body) {
-      const nodeStream = Readable.fromWeb(upstream.body);
-      nodeStream.on("error", () => {
-        try { if (!res.writableEnded) res.end(); } catch (_) {}
-      });
-      res.on("close", () => {
-        try { upstream.body.cancel().catch(() => {}); } catch (_) {}
-      });
-      nodeStream.pipe(res, { end: true });
-    } else {
-      res.end();
-    }
+    /* Buffer the full response body and send it.
+       With accept-encoding: identity the response is uncompressed,
+       so arrayBuffer() is safe and avoids Readable.fromWeb issues. */
+    const buf = await upstream.arrayBuffer();
+    try {
+      if (!res.writableEnded) res.end(Buffer.from(buf));
+    } catch (_) { /* client disconnected */ }
 
   } catch (err) {
     clearTimeout(timer);

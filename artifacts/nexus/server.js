@@ -90,6 +90,7 @@ async function proxyHttp(req, res, body, target) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 25_000);
 
+  console.log(`[proxy] ${req.method} ${req.url} → ${url}`);
   try {
     const upstream = await fetch(url, {
       method: req.method,
@@ -98,6 +99,8 @@ async function proxyHttp(req, res, body, target) {
       redirect: "manual",
       signal: controller.signal,
     });
+
+    console.log(`[proxy] ${req.method} ${req.url} ← ${upstream.status}`);
 
     /* NOTE: do NOT clearTimeout here — keep the AbortController alive so that
        arrayBuffer() is also covered by the 25-second timeout. */
@@ -119,12 +122,13 @@ async function proxyHttp(req, res, body, target) {
 
     /* Buffer the full response body — still covered by the AbortController */
     const buf = await upstream.arrayBuffer();
+    console.log(`[proxy] ${req.method} ${req.url} body=${buf.byteLength}b sent`);
     try {
       if (!res.writableEnded) res.end(Buffer.from(buf));
     } catch (_) { /* client disconnected */ }
 
   } catch (err) {
-    console.error("Proxy error [%s %s]:", req.method, req.url, err.message);
+    console.error(`[proxy-err] ${req.method} ${req.url}: ${err.constructor?.name} ${err.message}`);
     safeReply(res, 502, { error: "Bad Gateway" });
   } finally {
     /* Always cancel the timer — whether success, error, or abort */

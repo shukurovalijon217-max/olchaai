@@ -6,13 +6,14 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
+import { spawn } from "child_process";
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT       = parseInt(process.env.PORT || "3000", 10);
 /* olchaai-api is a SEPARATE Railway service — proxy directly, no loop */
-const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.railway.app";
-const GO_TARGET  = process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app";
+const API_TARGET = (process.env.API_TARGET || "https://olchaai-api-production.up.railway.app").trim();
+const GO_TARGET  = (process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app").trim();
 const DIST       = path.join(__dirname, "dist", "public");
 
 /* Build-time unique token */
@@ -25,6 +26,29 @@ process.on("unhandledRejection", (reason) => {
 process.on("uncaughtException", (err) => {
   console.error("[uncaughtException]", err.message, err.stack);
 });
+
+/* ── Bundled API auto-start ───────────────────────────────────────────────
+   When API_TARGET points to localhost (bundled mode), spawn the Express API
+   as a child process. This runs regardless of what start.sh does, so it is
+   immune to Docker layer-cache issues with the start script.          ── */
+const IS_BUNDLED = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(API_TARGET);
+if (IS_BUNDLED) {
+  const apiPort = API_TARGET.replace(/^https?:\/\/[^:]+:?/, "").replace(/\/.*$/, "") || "3001";
+  const apiEntry = path.join(__dirname, "api", "dist", "index.mjs");
+  if (fs.existsSync(apiEntry)) {
+    console.log(`[nexus] Starting bundled API on port ${apiPort}…`);
+    const apiEnv = { ...process.env, PORT: apiPort, SINGLE_PROCESS: "1" };
+    const api = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
+      env: apiEnv, stdio: "inherit",
+    });
+    api.on("exit", (code) => {
+      console.error(`[nexus] Bundled API exited (code=${code}) — restarting server`);
+      process.exit(1); // Railway will restart the container
+    });
+  } else {
+    console.warn(`[nexus] Bundled API entry not found at ${apiEntry} — running proxy-only`);
+  }
+}
 
 
 const MIME = {

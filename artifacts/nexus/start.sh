@@ -14,7 +14,9 @@ fi
 # Only start the bundled API server when API_TARGET points to localhost.
 # When Railway Variables override API_TARGET to an external service, skip the bundle.
 USE_BUNDLED_API=0
-case "${API_TARGET:-http://localhost:3001}" in
+# Trim leading/trailing whitespace from API_TARGET (Railway dashboard can inject spaces)
+API_TARGET=$(printf '%s' "${API_TARGET:-http://localhost:3001}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+case "$API_TARGET" in
   http://localhost:*|http://127.0.0.1:*)
     USE_BUNDLED_API=1
     ;;

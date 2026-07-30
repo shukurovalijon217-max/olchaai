@@ -88,33 +88,13 @@ function Orb({
     <motion.button
       whileTap={{ scale: 0.68 }}
       onClick={onClick}
-      className="flex flex-col items-center gap-[3px]"
+      className="flex flex-col items-center gap-[4px]"
+      style={{ filter: "drop-shadow(0 1px 6px rgba(0,0,0,0.7))" }}
     >
-      <div
-        className="w-[42px] h-[42px] rounded-full flex items-center justify-center relative overflow-hidden"
-        style={{
-          background: active ? `${activeColor}28` : "rgba(6,4,16,0.58)",
-          border: `1.5px solid ${active ? activeColor + "55" : "rgba(255,255,255,0.12)"}`,
-          backdropFilter: "blur(24px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.8)",
-          boxShadow: active
-            ? `0 0 20px ${activeColor}44, inset 0 1px 0 rgba(255,255,255,0.14)`
-            : "0 2px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
-        }}
-      >
-        {active && inView && (
-          <motion.div
-            className="absolute inset-0 rounded-full pointer-events-none"
-            animate={{ opacity: [0.2, 0.5, 0.2] }}
-            transition={{ duration: 2.2, repeat: Infinity }}
-            style={{ background: `radial-gradient(circle, ${activeColor}30 0%, transparent 70%)` }}
-          />
-        )}
-        {icon}
-      </div>
+      {icon}
       {count !== undefined && count > 0 && (
-        <span className="text-[9px] font-black tabular-nums leading-none"
-          style={{ color: active ? activeColor : "rgba(255,255,255,0.45)" }}>
+        <span className="text-[10px] font-black tabular-nums leading-none"
+          style={{ color: active ? activeColor : "rgba(255,255,255,0.75)", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>
           {fmt(count)}
         </span>
       )}
@@ -621,7 +601,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
       ref={cardRef}
       className="relative w-full flex-shrink-0 select-none overflow-hidden"
       style={{
-        height: "100dvh",
+        height: "calc(100dvh - 88px)",
         scrollSnapAlign: "start",
         background: isVideo ? "#060308" : isPhoto ? "#040810" : "#04040e",
       }}
@@ -950,7 +930,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
       {/* ═══ LAYER 20: RIGHT ORB COLUMN — always visible ═══ */}
       <div
         className="absolute right-3 flex flex-col items-center gap-2"
-        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 64px)", pointerEvents: commentOpen ? "none" : "auto" }}
+        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 14px)", pointerEvents: commentOpen ? "none" : "auto" }}
         onPointerDown={e => e.stopPropagation()}
       >
         {/* Like */}

@@ -128336,18 +128336,6 @@ async function securityShield(req, res, next) {
       return;
     }
   }
-  const sess = req.session;
-  if (sess.userId && sess.boundIp && sess.boundIp !== ip) {
-    logger.warn({ userId: sess.userId, origIp: sess.boundIp, newIp: ip }, "NEXUS Shield: session IP change detected");
-    await logSecurityEvent(ip, "session_hijack_attempt", path3, "critical", `origIp:${sess.boundIp}`, ua, sess.userId);
-    req.session.destroy(() => {
-    });
-    res.status(401).json({ error: "Sessiya xavfsizligi buzildi. Qayta kirish kerak." });
-    return;
-  }
-  if (sess.userId && !sess.boundIp) {
-    sess.boundIp = ip;
-  }
   next();
 }
 async function getSecurityStats() {
@@ -130225,6 +130213,9 @@ var init_app = __esm({
       next();
     });
     app.use("/api", routes_default);
+    app.get("/healthz", (_req, res) => {
+      res.json({ ok: true, service: "api" });
+    });
     app.post("/api/client-error", (req, res) => {
       const { message, stack, componentStack, url: url2 } = req.body ?? {};
       req.log.error({ message, stack, componentStack, url: url2 }, "[client-error] Frontend crash");

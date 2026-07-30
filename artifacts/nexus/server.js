@@ -4,48 +4,13 @@ import net from "net";
 import tls from "tls";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath, pathToFileURL } from "url";
+import { fileURLToPath } from "url";
 import crypto from "crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT       = parseInt(process.env.PORT || "3000", 10);
-let API_TARGET = process.env.API_TARGET || "https://olchaai-api.onrender.com";
-/* Detect self-referencing Railway loop: Railway Variables overrides Dockerfile ENV
-   with the same service URL → 429 proxy loop.  Force localhost when detected. */
-if (API_TARGET.includes(".railway.app") || API_TARGET.includes(".onrender.com")) {
-  console.log(`[nexus] Loop/stale detected (${API_TARGET}) — switching to localhost:13337`);
-  API_TARGET = "http://127.0.0.1:13337";
-}
-
-/* If API_TARGET is localhost, import the API server bundle directly in this process.
-   No spawn/fork = no child-process issues in Railway containers. */
-if (API_TARGET.startsWith("http://127.0.0.1:") || API_TARGET.startsWith("http://localhost:")) {
-  const apiPort = API_TARGET.replace(/.*:(\d+).*/, "$1");
-  const apiEntry = path.join(__dirname, "api", "dist", "index.mjs");
-  if (fs.existsSync(apiEntry)) {
-    // Patch env so the API module sees the right PORT and mode before it imports
-    process.env.PORT = apiPort;
-    process.env.SINGLE_PROCESS = "1";
-    // If DATABASE_URL points to Render (which is down), override with Neon URL
-    if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("render.com")) {
-      process.env.DATABASE_URL = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || "";
-      console.log("[nexus] DATABASE_URL overridden with NEON_DATABASE_URL");
-    }
-    // NODE_PATH for stub modules (@google-cloud/storage etc.)
-    const stubDir = path.join(__dirname, "api", "node_modules");
-    process.env.NODE_PATH = stubDir;
-    console.log(`[nexus] Importing API server in-process on port ${apiPort}…`);
-    import(pathToFileURL(apiEntry).href).then(() => {
-      console.log("[nexus] API server module loaded ✓");
-      // Restore PORT so Nexus server.listen() uses the right port
-      process.env.PORT = String(PORT);
-    }).catch((err) => {
-      console.error("[nexus] API server import failed:", err.message);
-    });
-  } else {
-    console.warn("[nexus] API entry not found at", apiEntry, "— /api/* will return 502");
-  }
-}
+/* olchaai-api is a SEPARATE Railway service — proxy directly, no loop */
+const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.railway.app";
 const GO_TARGET  = process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app";
 const DIST       = path.join(__dirname, "dist", "public");
 

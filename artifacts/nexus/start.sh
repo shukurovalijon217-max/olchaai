@@ -1,6 +1,15 @@
 #!/bin/sh
 # Start Nexus proxy (and optionally the bundled API server if API_TARGET is localhost)
 
+# ── IS_API_SERVICE mode ────────────────────────────────────────────────────────
+# When IS_API_SERVICE=1 this container IS the Express API (not a Nexus frontend).
+# Just run the API directly on Railway's assigned PORT. No Nexus, no monitoring loop.
+if [ "${IS_API_SERVICE:-0}" = "1" ]; then
+  echo "[start] Running as standalone Express API service on PORT=${PORT}"
+  exec node --enable-source-maps /app/api/dist/index.mjs
+fi
+
+# ── Normal Nexus mode ──────────────────────────────────────────────────────────
 # Only start the bundled API server when API_TARGET points to localhost.
 # When Railway Variables override API_TARGET to an external service, skip the bundle.
 USE_BUNDLED_API=0

@@ -1,2 +1,2 @@
-Thu Jul 30 09:20:25 AM UTC 2026
-fix: force stage-3 cache bust — SINGLE_PROCESS=1 was not in container (dist COPY was cached)
+Thu Jul 30 09:27:00 AM UTC 2026
+fix: IS_API_SERVICE=1 — run Express API directly on PORT, no Nexus layer

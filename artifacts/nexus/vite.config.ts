@@ -23,6 +23,13 @@ const basePath = process.env.BASE_PATH ?? "/";
 
 export default defineConfig({
   base: basePath,
+  define: {
+    /* Ensure the production API base URL is always baked into the bundle
+       even when VITE_API_BASE_URL env-var is missing or empty at build time. */
+    "import.meta.env.VITE_API_BASE_URL": JSON.stringify(
+      process.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app"
+    ),
+  },
   plugins: [
     react(),
     tailwindcss(),

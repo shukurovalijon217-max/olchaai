@@ -1,1 +1,2 @@
-# restarted Wed Jul 29 07:41:22 AM UTC 2026
+Thu Jul 30 09:39:21 AM UTC 2026
+fix: .dockerignore now includes start.sh + /healthz in api + rebuilt dist

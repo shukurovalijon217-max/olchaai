@@ -296,6 +296,14 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
 
 app.use("/api", router);
 
+/* ── Railway healthcheck — must respond at bare /healthz ───────────
+   Railway checks this path before routing traffic to the new container.
+   Without it IS_API_SERVICE=1 containers fail healthcheck and Railway
+   falls back to the previous deployment.  ─────────────────────────── */
+app.get("/healthz", (_req: Request, res: Response) => {
+  res.json({ ok: true, service: "api" });
+});
+
 /* ── Frontend crash reporter (no auth required — fire-and-forget) ── */
 app.post("/api/client-error", (req: Request, res: Response) => {
   const { message, stack, componentStack, url } = req.body ?? {};

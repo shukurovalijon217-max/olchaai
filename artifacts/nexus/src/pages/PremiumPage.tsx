@@ -24,7 +24,7 @@ interface Product {
   prices: Price[];
 }
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
 
 // ── Currency detection from browser locale ─────────────────────────────────
 const LANG_TO_CURRENCY: Record<string, string> = {

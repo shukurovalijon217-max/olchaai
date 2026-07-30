@@ -49,10 +49,12 @@ COPY artifacts/nexus/vite.config.ts artifacts/nexus/
 COPY artifacts/nexus/components.json artifacts/nexus/
 COPY artifacts/nexus/tsconfig.json  artifacts/nexus/
 
-ARG VITE_API_BASE_URL=""
+ARG VITE_API_BASE_URL="https://olchaai-api-production.up.railway.app"
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
-RUN pnpm --filter @workspace/nexus run build
+# Explicitly pass the URL in the build command to prevent Docker layer cache from
+# reusing a stale build that was compiled with VITE_API_BASE_URL=""
+RUN VITE_API_BASE_URL="${VITE_API_BASE_URL}" pnpm --filter @workspace/nexus run build
 
 # Build API server (esbuild bundles all workspace libs)
 COPY artifacts/api-server/src/      artifacts/api-server/src/
@@ -66,8 +68,9 @@ FROM node:24-alpine AS runtime
 
 WORKDIR /app
 
-# Nexus frontend static build
-COPY --from=builder /app/artifacts/nexus/dist ./dist
+# Nexus frontend static build — COPY from build context (pre-built dist committed to git)
+# This ensures Docker always uses the committed dist/ regardless of builder stage cache.
+COPY artifacts/nexus/dist ./dist
 COPY artifacts/nexus/server.js ./server.js
 
 # API server bundle
@@ -85,7 +88,7 @@ RUN chmod +x /app/start.sh
 ENV NODE_ENV=production
 ENV PORT=3000
 # API runs internally on 8080, Nexus proxy points to it
-ENV API_TARGET=http://localhost:8080
+ENV API_TARGET=http://localhost:3001
 ENV WS_URL=wss://olchaai-go-production.up.railway.app/go/ws
 ENV NODE_OPTIONS=--max-old-space-size=768
 

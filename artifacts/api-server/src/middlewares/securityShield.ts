@@ -399,19 +399,12 @@ export async function securityShield(req: Request, res: Response, next: NextFunc
     }
   }
 
-  // ── 9. Session hijacking detection ─────────────────────────
-  const sess = req.session as { userId?: number; boundIp?: string };
-  if (sess.userId && sess.boundIp && sess.boundIp !== ip) {
-    logger.warn({ userId: sess.userId, origIp: sess.boundIp, newIp: ip }, "NEXUS Shield: session IP change detected");
-    await logSecurityEvent(ip, "session_hijack_attempt", path, "critical", `origIp:${sess.boundIp}`, ua, sess.userId);
-    req.session.destroy(() => {});
-    res.status(401).json({ error: "Sessiya xavfsizligi buzildi. Qayta kirish kerak." });
-    return;
-  }
-  // Bind session to IP on first use
-  if (sess.userId && !sess.boundIp) {
-    sess.boundIp = ip;
-  }
+  // ── 9. Session hijacking detection — IP binding disabled.
+  //    Multi-proxy deployments (Cloudflare → Railway Nexus → API) mean the IP
+  //    seen by this service changes every time Nexus is redeployed, causing
+  //    legitimate requests to be rejected as hijack attempts.  The session ID
+  //    itself is cryptographically signed (HMAC) and stored in Neon DB, which
+  //    already provides strong session security without IP binding.
 
   next();
 }

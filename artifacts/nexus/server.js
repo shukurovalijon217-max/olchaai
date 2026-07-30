@@ -85,6 +85,14 @@ async function proxyHttp(req, res, body, target) {
   if (["GET", "HEAD", "DELETE", "OPTIONS"].includes(req.method)) {
     delete headers["content-length"];
   }
+  /* Ensure the real client IP is always forwarded so that backend security
+     middleware (which binds sessions to IPs) sees the correct, stable IP.
+     Railway LB may or may not set x-forwarded-for; we always append our
+     client's socket address so olchaai-api gets the full proxy chain. */
+  const clientIp = req.socket?.remoteAddress ?? "unknown";
+  const existingXff = headers["x-forwarded-for"];
+  headers["x-forwarded-for"] = existingXff ? `${existingXff}, ${clientIp}` : clientIp;
+  if (!headers["x-forwarded-proto"]) headers["x-forwarded-proto"] = "https";
 
   /* 25s — safely under Railway LB's ~30s response timeout */
   const controller = new AbortController();

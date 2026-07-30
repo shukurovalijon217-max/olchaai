@@ -77,6 +77,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const [recording, setRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordingStartRef = useRef<number>(0);
   const [sendingVoice, setSendingVoice] = useState(false);
   /* Delete confirm */
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -222,8 +223,8 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
     if (voiceLoaded) { setVoiceOpen(v => !v); return; }
     setVoiceOpen(true);
     try {
-      const res = await fetch(`${API}/api/voice-comments?postId=${post.id}`, { credentials: "include" });
-      if (res.ok) { const data = await res.json(); setVoiceComments(data.comments ?? []); }
+      const res = await fetch(`${API}/api/posts/${post.id}/voice-comments`, { credentials: "include" });
+      if (res.ok) { const data = await res.json(); setVoiceComments(Array.isArray(data) ? data : []); }
     } catch { /* silent */ }
     setVoiceLoaded(true);
   };
@@ -237,12 +238,34 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         stream.getTracks().forEach(t => t.stop());
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         if (blob.size < 1000) return;
+        const durationMs = Math.min(Date.now() - recordingStartRef.current, 10_000);
         setSendingVoice(true);
         try {
-          const fd = new FormData();
-          fd.append("audio", blob, "voice.webm");
-          fd.append("postId", post.id.toString());
-          const res = await fetch(`${API}/api/voice-comments`, { method: "POST", credentials: "include", body: fd });
+          // Step 1: get R2 presigned upload URL
+          const urlRes = await fetch(`${API}/api/voice-comments/upload-url`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contentType: "audio/webm" }),
+          });
+          if (!urlRes.ok) return;
+          const { uploadURL, audioUrl } = await urlRes.json();
+
+          // Step 2: upload audio blob directly to R2
+          const uploadRes = await fetch(uploadURL, {
+            method: "PUT",
+            headers: { "Content-Type": "audio/webm" },
+            body: blob,
+          });
+          if (!uploadRes.ok) return;
+
+          // Step 3: save voice comment record with the R2 URL
+          const res = await fetch(`${API}/api/posts/${post.id}/voice-comments`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ audioUrl, durationMs }),
+          });
           if (res.ok) {
             const data = await res.json();
             setVoiceComments(prev => [...prev, data]);
@@ -251,6 +274,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         finally { setSendingVoice(false); }
       };
       recorderRef.current = mr;
+      recordingStartRef.current = Date.now();
       mr.start();
       setRecording(true);
       setTimeout(() => { if (recorderRef.current?.state === "recording") { recorderRef.current.stop(); setRecording(false); } }, 10000);

@@ -278,7 +278,7 @@ function Router() {
           <ProtectedRoute><Layout><FeatureHubPage /></Layout></ProtectedRoute>
         )} />
         <Route path="/compare" component={() => (
-          <ProtectedRoute><Layout><ComparisonPage /></Layout></ProtectedRoute>
+          <AdminRoute><Layout><ComparisonPage /></Layout></AdminRoute>
         )} />
         <Route path="/" component={() => (
           <ProtectedRoute><Layout><HomePage /></Layout></ProtectedRoute>

@@ -99282,22 +99282,32 @@ var init_posts2 = __esm({
           res.status(400).end();
           return;
         }
-        const upstream = await fetch(
-          `${AUDIUS_HOST}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
-          { signal: AbortSignal.timeout(15e3), redirect: "follow" }
-        );
-        if (!upstream.ok || !upstream.body) {
-          res.status(502).end();
-          return;
-        }
-        const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
-        const cl = upstream.headers.get("content-length");
-        res.setHeader("Content-Type", ct);
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=3600");
-        if (cl) res.setHeader("Content-Length", cl);
+        const forDownload = !!req.query.dl;
+        const rawFilename = String(req.query.fn ?? `track_${id}.mp3`).replace(/[^\w\s.\-()]/g, "").slice(0, 120);
         const { Readable: Readable3 } = await import("stream");
-        Readable3.fromWeb(upstream.body).pipe(res);
+        for (const host of AUDIUS_HOSTS) {
+          try {
+            const upstream = await fetch(
+              `${host}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
+              { signal: AbortSignal.timeout(2e4), redirect: "follow" }
+            );
+            if (!upstream.ok || !upstream.body) continue;
+            const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
+            if (ct.includes("text/html")) continue;
+            const cl = upstream.headers.get("content-length");
+            res.setHeader("Content-Type", ct);
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Cache-Control", "public, max-age=3600");
+            if (cl) res.setHeader("Content-Length", cl);
+            if (forDownload) {
+              res.setHeader("Content-Disposition", `attachment; filename="${rawFilename}"`);
+            }
+            Readable3.fromWeb(upstream.body).pipe(res);
+            return;
+          } catch {
+          }
+        }
+        res.status(502).json({ error: "audio unavailable" });
       } catch (err) {
         req.log.warn(err, "music stream failed");
         if (!res.headersSent) res.status(502).end();

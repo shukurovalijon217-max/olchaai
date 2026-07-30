@@ -5,6 +5,7 @@ import { eq, sql, desc, and, inArray } from "drizzle-orm";
 import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
+import { trackQuestAction } from "../lib/trackQuest";
 import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
@@ -455,6 +456,9 @@ router.post("/posts", async (req: any, res) => {
     const [enriched] = await batchEnrichPosts([post], sessionUserId);
     res.status(201).json(enriched);
 
+    /* Quest tracker — fire-and-forget */
+    void trackQuestAction(authorId, "create_post");
+
     /* AI scan & autopilot — fire-and-forget, never blocks response */
     void (async () => {
       try {
@@ -585,6 +589,9 @@ router.post("/posts/:id/like", async (req, res) => {
     const [post] = await db.select({ likesCount: postsTable.likesCount, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
     res.json({ liked: !isLiked, likesCount: post?.likesCount ?? 0 });
 
+    /* Quest tracker — faqat like qo'yganda (unlike emas) */
+    if (!isLiked) void trackQuestAction(userId, "like_post");
+
     // Push + Email: like bo'lganda post egasiga xabar (o'ziga xabar ketmasin)
     if (!isLiked && post?.authorId && post.authorId !== userId) {
       void (async () => {
@@ -714,6 +721,9 @@ router.post("/posts/:id/comments", async (req, res) => {
         ...stats,
       },
     });
+
+    /* Quest tracker — izoh yozildi */
+    void trackQuestAction(authorId, "comment");
 
     /* Push + Email bildirishnoma — post egasiga */
     void (async () => {

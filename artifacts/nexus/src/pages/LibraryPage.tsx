@@ -437,7 +437,7 @@ const WEB_ENGINES = [
   { label: "Scholar", bg: "bg-blue-500/10 border-blue-500/20", textColor: "text-blue-300",  Logo: ScholarLogo },
 ];
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
 
 interface Book {
   id: number;

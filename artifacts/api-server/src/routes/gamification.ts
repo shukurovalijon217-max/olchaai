@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { userCoinsTable, dailyQuestsTable, questProgressTable, userTitlesTable, userStreaksTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
+import { trackQuestAction } from "../lib/trackQuest";
 
 const router = Router();
 
@@ -176,6 +177,9 @@ router.post("/gamification/streak/touch", requireAuth, async (req: any, res) => 
       currentStreak: updated.currentStreak, longestStreak: updated.longestStreak,
       xp: updated.xp, lastActiveDate: updated.lastActiveDate, touchedToday: true,
     });
+
+    /* Quest tracker — yangi kun streaki */
+    void trackQuestAction(req.session.userId, "streak_touch");
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

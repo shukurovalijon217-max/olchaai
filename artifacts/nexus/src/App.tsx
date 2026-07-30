@@ -82,7 +82,7 @@ class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNod
   componentDidCatch(error: Error, info: { componentStack: string }) {
     console.error("[ErrorBoundary] React crash:", error.message, "\n", error.stack, "\nComponent stack:", info.componentStack);
     try {
-      const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+      const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
       fetch(`${API}/api/client-error`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

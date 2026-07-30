@@ -6,6 +6,7 @@ import {
 } from "@workspace/db";
 import { eq, sql, desc, and, inArray, not, count, gte } from "drizzle-orm";
 import { accumulateViewEarning } from "./monetization";
+import { trackQuestAction } from "../lib/trackQuest";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheGet, cacheSet, cacheAside, cacheDelPattern } from "../lib/cache";
@@ -254,6 +255,9 @@ router.post("/reels/:id/like", async (req, res) => {
 
     const [reel] = await db.select({ likesCount: reelsTable.likesCount }).from(reelsTable).where(eq(reelsTable.id, reelId));
     res.json({ liked: !isLiked, likesCount: reel?.likesCount ?? 0 });
+
+    /* Quest tracker — faqat like qo'yganda */
+    if (!isLiked) void trackQuestAction(userId, "like_post");
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -441,6 +445,9 @@ router.post("/reels/:id/view", async (req, res) => {
     }
 
     res.json({ ok: true });
+
+    /* Quest tracker — foydalanuvchi reel ko'rdi */
+    if (userId) void trackQuestAction(userId, "watch_reel");
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

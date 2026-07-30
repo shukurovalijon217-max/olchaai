@@ -170,7 +170,7 @@ function FeatureCard({ f, enabled, onToggle }: {
   );
 }
 
-const API = (import.meta.env.VITE_API_BASE_URL ?? "");
+const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
 
 /* ── Ghost Mode Widget (live feature) ── */
 function GhostWidget({ active, ghostUntil, toggling, onToggle }: {

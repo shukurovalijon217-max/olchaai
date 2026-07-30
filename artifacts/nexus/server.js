@@ -11,8 +11,8 @@ import crypto from "crypto";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT       = parseInt(process.env.PORT || "3000", 10);
 /* olchaai-api is a SEPARATE Railway service — proxy directly, no loop */
-const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.railway.app";
-const GO_TARGET  = process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app";
+const API_TARGET = (process.env.API_TARGET || "https://olchaai-api-production.up.railway.app").trim();
+const GO_TARGET  = (process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app").trim();
 const DIST       = path.join(__dirname, "dist", "public");
 
 /* Build-time unique token */

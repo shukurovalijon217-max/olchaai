@@ -171,18 +171,25 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({ ok: true, build: BUILD_ID, nexusPort: PORT, apiTarget: API_TARGET }));
   }
 
-  /* ── Network reachability diagnostic ── */
-  if (req.url === "/api-reach") {
+  /* ── Proxy diagnostic: what does olchaai-api actually return? ── */
+  if (req.url.startsWith("/probe-api")) {
+    const target = req.url.replace("/probe-api", "") || "/healthz";
     const tStart = Date.now();
-    fetch(`${API_TARGET}/healthz`, { signal: AbortSignal.timeout(8000) })
-      .then(r => r.json())
-      .then(data => {
+    fetch(`${API_TARGET}${target}`, {
+      headers: { cookie: req.headers["cookie"] || "" },
+      signal: AbortSignal.timeout(8000),
+    })
+      .then(async r => {
+        const status = r.status;
+        const hdrs = Object.fromEntries(r.headers.entries());
+        let body = "";
+        try { body = (await r.text()).slice(0, 300); } catch(_) {}
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, ms: Date.now() - tStart, data }));
+        res.end(JSON.stringify({ ok: true, ms: Date.now()-tStart, status, hdrs, body }));
       })
       .catch(err => {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: false, ms: Date.now() - tStart,
+        res.end(JSON.stringify({ ok: false, ms: Date.now()-tStart,
           type: err?.constructor?.name, msg: err?.message, code: err?.code }));
       });
     return;

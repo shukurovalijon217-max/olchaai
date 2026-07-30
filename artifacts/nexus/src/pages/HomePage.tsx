@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useListPosts, useGetAiFeed, useListStories, getListStoriesQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 import FeedCard from "@/components/FeedCard";
-import StoriesBar from "@/components/StoriesBar";
+
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
 import { getFeaturePref } from "@/lib/sounds";
@@ -578,14 +578,6 @@ export default function HomePage() {
           </motion.div>
         )}
       </AnimatePresence>
-      </div>
-
-      {/* ── STORIES BAR (#16) ── */}
-      <div className="px-3 py-2" style={{ background: "#06060f", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <StoriesBar
-          onCreateStory={() => { setCreateTab("story"); setCreateOpen(true); }}
-          onAvatarClick={openStoryForAuthor}
-        />
       </div>
 
       {/* ── SNAP SCROLL FEED ── */}

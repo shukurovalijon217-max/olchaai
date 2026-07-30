@@ -99173,7 +99173,22 @@ async function batchEnrichPosts(posts, viewerId = 0) {
     };
   });
 }
-var import_express5, router5, AUDIUS_HOST, AUDIUS_APP, posts_default;
+async function audiusSearch(q, limit2 = 40) {
+  for (const host of AUDIUS_HOSTS) {
+    try {
+      const r = await fetch(
+        `${host}/v1/tracks/search?query=${encodeURIComponent(q)}&limit=${limit2}&app_name=${AUDIUS_APP}`,
+        { signal: AbortSignal.timeout(8e3) }
+      );
+      if (!r.ok) continue;
+      const d = await r.json();
+      if ((d.data ?? []).length > 0) return d.data;
+    } catch {
+    }
+  }
+  return [];
+}
+var import_express5, router5, AUDIUS_HOSTS, AUDIUS_APP, posts_default;
 var init_posts2 = __esm({
   "src/routes/posts.ts"() {
     "use strict";
@@ -99219,7 +99234,11 @@ var init_posts2 = __esm({
         res.status(500).json({ error: "Internal server error" });
       }
     });
-    AUDIUS_HOST = "https://discoveryprovider.audius.co";
+    AUDIUS_HOSTS = [
+      "https://discoveryprovider.audius.co",
+      "https://discoveryprovider2.audius.co",
+      "https://discoveryprovider3.audius.co"
+    ];
     AUDIUS_APP = "olchaai";
     router5.get("/music/search", async (req, res) => {
       try {
@@ -99228,60 +99247,27 @@ var init_posts2 = __esm({
           res.json({ results: [] });
           return;
         }
-        const [audiusRes, itunesRes] = await Promise.allSettled([
-          fetch(
-            `${AUDIUS_HOST}/v1/tracks/search?query=${encodeURIComponent(q)}&limit=30&app_name=${AUDIUS_APP}`,
-            { signal: AbortSignal.timeout(7e3) }
-          ),
-          fetch(
-            `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=30&country=us`,
-            { signal: AbortSignal.timeout(7e3) }
-          )
-        ]);
+        const tracks = await audiusSearch(q);
         const seen = /* @__PURE__ */ new Set();
         const results = [];
-        if (audiusRes.status === "fulfilled" && audiusRes.value.ok) {
-          const d = await audiusRes.value.json();
-          for (const t of d.data ?? []) {
-            if (!t.id) continue;
-            const key = `${t.user?.name ?? ""}|${t.title}`;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            const artObj = t.artwork ?? {};
-            const artwork = artObj["150x150"] ?? artObj["480x480"] ?? artObj["_150x150"] ?? "";
-            results.push({
-              id: `au_${t.id}`,
-              name: `${t.user?.name ?? "Unknown"} \u2014 ${t.title}`,
-              artist: t.user?.name ?? "Unknown",
-              title: t.title ?? "",
-              album: "",
-              artwork,
-              /* stream via our proxy so CORS is handled server-side */
-              preview: `/api/music/stream/${t.id}`,
-              duration: t.duration ?? 0,
-              full: true
-            });
-          }
-        }
-        if (itunesRes.status === "fulfilled" && itunesRes.value.ok) {
-          const d = await itunesRes.value.json();
-          for (const t of d.results ?? []) {
-            if (!t.previewUrl) continue;
-            const key = `${t.artistName}|${t.trackName}`;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            results.push({
-              id: `it_${t.trackId}`,
-              name: `${t.artistName} \u2014 ${t.trackName}`,
-              artist: t.artistName ?? "",
-              title: t.trackName ?? "",
-              album: t.collectionName ?? "",
-              artwork: (t.artworkUrl100 ?? "").replace("100x100bb", "60x60bb"),
-              preview: t.previewUrl,
-              duration: 30,
-              full: false
-            });
-          }
+        for (const t of tracks) {
+          if (!t.id) continue;
+          const key = `${t.user?.name ?? ""}|${t.title}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          const artObj = t.artwork ?? {};
+          const artwork = artObj["150x150"] ?? artObj["480x480"] ?? artObj["_150x150"] ?? "";
+          results.push({
+            id: `au_${t.id}`,
+            name: `${t.user?.name ?? "Unknown"} \u2014 ${t.title}`,
+            artist: t.user?.name ?? "Unknown",
+            title: t.title ?? "",
+            album: "",
+            artwork,
+            preview: `/api/music/stream/${t.id}`,
+            duration: t.duration ?? 0,
+            full: true
+          });
         }
         res.json({ results });
       } catch (err) {

@@ -98,75 +98,56 @@ router.get("/posts", async (req, res) => {
   }
 });
 
-/* ── GET /music/search — Audius (full tracks) + iTunes (previews) ── */
-const AUDIUS_HOST = "https://discoveryprovider.audius.co";
+/* ── GET /music/search — Audius full tracks only (no 30s previews) ── */
+const AUDIUS_HOSTS = [
+  "https://discoveryprovider.audius.co",
+  "https://discoveryprovider2.audius.co",
+  "https://discoveryprovider3.audius.co",
+];
 const AUDIUS_APP  = "olchaai";
+
+async function audiusSearch(q: string, limit = 40): Promise<any[]> {
+  for (const host of AUDIUS_HOSTS) {
+    try {
+      const r = await fetch(
+        `${host}/v1/tracks/search?query=${encodeURIComponent(q)}&limit=${limit}&app_name=${AUDIUS_APP}`,
+        { signal: AbortSignal.timeout(8000) }
+      );
+      if (!r.ok) continue;
+      const d = await r.json() as { data?: any[] };
+      if ((d.data ?? []).length > 0) return d.data!;
+    } catch { /* try next host */ }
+  }
+  return [];
+}
 
 router.get("/music/search", async (req: any, res) => {
   try {
     const q = String(req.query.q ?? "").trim();
     if (!q) { res.json({ results: [] }); return; }
 
-    /* Run Audius + iTunes in parallel */
-    const [audiusRes, itunesRes] = await Promise.allSettled([
-      fetch(
-        `${AUDIUS_HOST}/v1/tracks/search?query=${encodeURIComponent(q)}&limit=30&app_name=${AUDIUS_APP}`,
-        { signal: AbortSignal.timeout(7000) }
-      ),
-      fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=30&country=us`,
-        { signal: AbortSignal.timeout(7000) }
-      ),
-    ]);
-
-    const seen    = new Set<string>();
+    const tracks = await audiusSearch(q);
+    const seen   = new Set<string>();
     const results: any[] = [];
 
-    /* 1. Audius — to'liq qo'shiqlar (primary) */
-    if (audiusRes.status === "fulfilled" && audiusRes.value.ok) {
-      const d = await audiusRes.value.json() as { data?: any[] };
-      for (const t of d.data ?? []) {
-        if (!t.id) continue;
-        const key = `${t.user?.name ?? ""}|${t.title}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const artObj = t.artwork ?? {};
-        const artwork = artObj["150x150"] ?? artObj["480x480"] ?? artObj["_150x150"] ?? "";
-        results.push({
-          id:       `au_${t.id}`,
-          name:     `${t.user?.name ?? "Unknown"} — ${t.title}`,
-          artist:   t.user?.name ?? "Unknown",
-          title:    t.title ?? "",
-          album:    "",
-          artwork,
-          /* stream via our proxy so CORS is handled server-side */
-          preview:  `/api/music/stream/${t.id}`,
-          duration: t.duration ?? 0,
-          full:     true,
-        });
-      }
-    }
-
-    /* 2. iTunes — 30s previews (fill gaps) */
-    if (itunesRes.status === "fulfilled" && itunesRes.value.ok) {
-      const d = await itunesRes.value.json() as { results?: any[] };
-      for (const t of d.results ?? []) {
-        if (!t.previewUrl) continue;
-        const key = `${t.artistName}|${t.trackName}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        results.push({
-          id:      `it_${t.trackId}`,
-          name:    `${t.artistName} — ${t.trackName}`,
-          artist:  t.artistName ?? "",
-          title:   t.trackName  ?? "",
-          album:   t.collectionName ?? "",
-          artwork: (t.artworkUrl100 ?? "").replace("100x100bb", "60x60bb"),
-          preview: t.previewUrl,
-          duration: 30,
-          full:    false,
-        });
-      }
+    for (const t of tracks) {
+      if (!t.id) continue;
+      const key = `${t.user?.name ?? ""}|${t.title}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const artObj  = t.artwork ?? {};
+      const artwork = artObj["150x150"] ?? artObj["480x480"] ?? artObj["_150x150"] ?? "";
+      results.push({
+        id:       `au_${t.id}`,
+        name:     `${t.user?.name ?? "Unknown"} — ${t.title}`,
+        artist:   t.user?.name ?? "Unknown",
+        title:    t.title ?? "",
+        album:    "",
+        artwork,
+        preview:  `/api/music/stream/${t.id}`,
+        duration: t.duration ?? 0,
+        full:     true,
+      });
     }
 
     res.json({ results });

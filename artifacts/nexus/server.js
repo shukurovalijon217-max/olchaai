@@ -76,6 +76,11 @@ async function proxyHttp(req, res, body, target) {
   delete headers["host"];
   delete headers["connection"];
   delete headers["transfer-encoding"];
+  /* Node fetch automatically decompresses gzip/br responses, so we must ask
+     for identity encoding — otherwise the upstream sends compressed bytes,
+     fetch decompresses them, but still forwards Content-Encoding: gzip to the
+     client, causing a double-decompression error / connection termination. */
+  headers["accept-encoding"] = "identity";
   /* Node fetch sets its own content-length; removing from fwd avoids mismatch */
   if (["GET", "HEAD", "DELETE", "OPTIONS"].includes(req.method)) {
     delete headers["content-length"];

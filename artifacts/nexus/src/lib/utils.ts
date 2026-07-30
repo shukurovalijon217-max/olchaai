@@ -33,7 +33,7 @@ export function getNetworkTier(): NetworkTier {
  */
 /**
  * Resolves a URL that may be a relative `/api/...` path stored in the DB.
- * In production, VITE_API_BASE_URL is set to https://olchaai-api.onrender.com
+ * In production, VITE_API_BASE_URL is set to https://olchaai-api-production.up.railway.app
  * so relative paths are prefixed with it. Already-absolute URLs pass through.
  */
 export function resolveApiUrl(url: string | null | undefined): string {

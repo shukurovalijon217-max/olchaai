@@ -70,7 +70,7 @@ services:
       - key: FRONTEND_URL
         value: https://olchaai.com
       - key: API_BASE_URL
-        value: https://olchaai-api.onrender.com
+        value: https://olchaai-api-production.up.railway.app
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -147,6 +147,6 @@ services:
       - key: PORT
         value: 10000
       - key: VITE_API_BASE_URL
-        value: https://olchaai-api.onrender.com
+        value: https://olchaai-api-production.up.railway.app
       - key: VITE_AI_CORE_URL
-        value: https://olchaai-ai-core.onrender.com/ai-core
+        value: https://olchaai-ai-core-production.up.railway.app/ai-core

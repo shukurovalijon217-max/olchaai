@@ -99,7 +99,8 @@ async function proxyHttp(req, res, body, target) {
       signal: controller.signal,
     });
 
-    clearTimeout(timer);
+    /* NOTE: do NOT clearTimeout here — keep the AbortController alive so that
+       arrayBuffer() is also covered by the 25-second timeout. */
 
     /* Forward response headers, strip hop-by-hop */
     const fwdHeaders = {};
@@ -112,23 +113,22 @@ async function proxyHttp(req, res, body, target) {
     try {
       res.writeHead(upstream.status, fwdHeaders);
     } catch (_) {
-      /* headers already sent or client gone — drain upstream body and bail */
       upstream.body?.cancel().catch(() => {});
       return;
     }
 
-    /* Buffer the full response body and send it.
-       With accept-encoding: identity the response is uncompressed,
-       so arrayBuffer() is safe and avoids Readable.fromWeb issues. */
+    /* Buffer the full response body — still covered by the AbortController */
     const buf = await upstream.arrayBuffer();
     try {
       if (!res.writableEnded) res.end(Buffer.from(buf));
     } catch (_) { /* client disconnected */ }
 
   } catch (err) {
-    clearTimeout(timer);
     console.error("Proxy error [%s %s]:", req.method, req.url, err.message);
     safeReply(res, 502, { error: "Bad Gateway" });
+  } finally {
+    /* Always cancel the timer — whether success, error, or abort */
+    clearTimeout(timer);
   }
 }
 

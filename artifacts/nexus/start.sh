@@ -6,6 +6,7 @@
 # Just run the API directly on Railway's assigned PORT. No Nexus, no monitoring loop.
 if [ "${IS_API_SERVICE:-0}" = "1" ]; then
   echo "[start] Running as standalone Express API service on PORT=${PORT}"
+  export SINGLE_PROCESS=1
   exec node --enable-source-maps /app/api/dist/index.mjs
 fi
 

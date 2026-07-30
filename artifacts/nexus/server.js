@@ -121,7 +121,7 @@ async function proxyHttp(req, res, body, target) {
   } catch (err) {
     const detail = `${err?.constructor?.name}: ${err?.message}`;
     console.error(`[proxy-err] ${req.method} ${req.url}: ${detail}`);
-    safeReply(res, 502, { error: "Bad Gateway", detail, path: req.url });
+    safeReply(res, 502, { error: "Bad Gateway" });
   } finally {
     clearTimeout(timer);
   }

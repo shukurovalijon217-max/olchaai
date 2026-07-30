@@ -6798,26 +6798,21 @@ function OTubeMusicOrb() {
     audio.currentTime = ratio * audio.duration;
   };
 
-  const handleDownload = async () => {
-    if (!track || downloading) return;
-    setDownloading(true);
-    try {
-      const resp = await fetch(track.preview);
-      const blob = await resp.blob();
-      const objUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objUrl;
-      a.download = `${track.artist} - ${track.title || track.name}.mp3`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(objUrl);
-      toast({ title: "✓ Yuklab olindi", description: track.title || track.name });
-    } catch {
-      toast({ title: "Yuklab bo'lmadi", variant: "destructive" });
-    } finally {
-      setDownloading(false);
-    }
+  const handleDownload = () => {
+    if (!track) return;
+    const fname = encodeURIComponent(
+      `${track.artist} - ${track.title || track.name}.mp3`
+    );
+    /* Use stream endpoint with ?dl=1 — server sets Content-Disposition so
+       the browser saves the file directly without buffering the whole track */
+    const url = `${track.preview}?dl=1&fn=${fname}`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${track.artist} - ${track.title || track.name}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast({ title: "✓ Yuklab boshlandi", description: track.title || track.name });
   };
 
   const fmtTime = (s: number) => {

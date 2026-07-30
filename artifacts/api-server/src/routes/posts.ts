@@ -157,25 +157,42 @@ router.get("/music/search", async (req: any, res) => {
   }
 });
 
-/* ── GET /music/stream/:id — Audius full track proxy (CORS-safe) ── */
+/* ── GET /music/stream/:id — Audius full track proxy (CORS-safe, fallback hosts) ── */
 router.get("/music/stream/:id", async (req: any, res) => {
   try {
     const id = String(req.params.id ?? "").replace(/[^a-zA-Z0-9_-]/g, "");
     if (!id) { res.status(400).end(); return; }
-    /* Audius returns 302 → CDN; follow the redirect and stream */
-    const upstream = await fetch(
-      `${AUDIUS_HOST}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
-      { signal: AbortSignal.timeout(15000), redirect: "follow" }
-    );
-    if (!upstream.ok || !upstream.body) { res.status(502).end(); return; }
-    const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
-    const cl = upstream.headers.get("content-length");
-    res.setHeader("Content-Type", ct);
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Cache-Control", "public, max-age=3600");
-    if (cl) res.setHeader("Content-Length", cl);
+
+    /* optional download mode: adds Content-Disposition so browser saves the file */
+    const forDownload = !!req.query.dl;
+    const rawFilename = String(req.query.fn ?? `track_${id}.mp3`)
+      .replace(/[^\w\s.\-()]/g, "").slice(0, 120);
+
+    /* try each discovery provider in order until one gives us audio */
     const { Readable } = await import("stream");
-    Readable.fromWeb(upstream.body as any).pipe(res);
+    for (const host of AUDIUS_HOSTS) {
+      try {
+        const upstream = await fetch(
+          `${host}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
+          { signal: AbortSignal.timeout(20000), redirect: "follow" }
+        );
+        if (!upstream.ok || !upstream.body) continue;
+        const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
+        /* reject HTML — means we hit a dead content node */
+        if (ct.includes("text/html")) continue;
+        const cl = upstream.headers.get("content-length");
+        res.setHeader("Content-Type", ct);
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cache-Control", "public, max-age=3600");
+        if (cl) res.setHeader("Content-Length", cl);
+        if (forDownload) {
+          res.setHeader("Content-Disposition", `attachment; filename="${rawFilename}"`);
+        }
+        Readable.fromWeb(upstream.body as any).pipe(res);
+        return;
+      } catch { /* try next host */ }
+    }
+    res.status(502).json({ error: "audio unavailable" });
   } catch (err) {
     req.log.warn(err, "music stream failed");
     if (!res.headersSent) res.status(502).end();

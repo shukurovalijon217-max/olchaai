@@ -74,92 +74,63 @@ function safeReply(res, status, body) {
   } catch (_) { /* client disconnected */ }
 }
 
-/* HTTP proxy — streaming so Railway LB never sees a hang */
-async function proxyHttp(req, res, body, target) {
-  const url = `${target}${req.url}`;
+/* HTTP proxy — uses raw https.request() so we get the raw wire bytes
+   (no automatic gzip decompression unlike fetch()) and stream the response
+   directly to the client without buffering large bodies in memory. */
+function proxyHttp(req, res, body, target) {
+  const targetUrl = new URL(`${target}${req.url}`);
 
-  /* Strip headers that confuse upstream or cause protocol issues */
+  /* Build forwarded headers */
   const headers = { ...req.headers };
   delete headers["host"];
   delete headers["connection"];
   delete headers["transfer-encoding"];
-  /* Node fetch automatically decompresses gzip/br responses, so we must ask
-     for identity encoding — otherwise the upstream sends compressed bytes,
-     fetch decompresses them, but still forwards Content-Encoding: gzip to the
-     client, causing a double-decompression error / connection termination. */
-  headers["accept-encoding"] = "identity";
-  headers["x-no-compression"] = "1"; // tell olchaai-api compression() to skip gzip
-  /* Node fetch sets its own content-length; removing from fwd avoids mismatch */
   if (["GET", "HEAD", "DELETE", "OPTIONS"].includes(req.method)) {
     delete headers["content-length"];
   }
-  /* Ensure the real client IP is always forwarded so that backend security
-     middleware (which binds sessions to IPs) sees the correct, stable IP.
-     Railway LB may or may not set x-forwarded-for; we always append our
-     client's socket address so olchaai-api gets the full proxy chain. */
   const clientIp = req.socket?.remoteAddress ?? "unknown";
   const existingXff = headers["x-forwarded-for"];
   headers["x-forwarded-for"] = existingXff ? `${existingXff}, ${clientIp}` : clientIp;
   if (!headers["x-forwarded-proto"]) headers["x-forwarded-proto"] = "https";
+  headers["host"] = targetUrl.hostname;
 
-  /* 25s — safely under Railway LB's ~30s response timeout */
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25_000);
+  const options = {
+    hostname: targetUrl.hostname,
+    port: targetUrl.port || (targetUrl.protocol === "https:" ? 443 : 80),
+    path: targetUrl.pathname + targetUrl.search,
+    method: req.method,
+    headers,
+    timeout: 25_000,
+  };
 
-  console.log(`[proxy] ${req.method} ${req.url} → ${url}`);
-  try {
-    const upstream = await fetch(url, {
-      method: req.method,
-      headers,
-      body: ["GET", "HEAD"].includes(req.method) ? undefined : body,
-      redirect: "manual",
-      signal: controller.signal,
-    });
-
-    console.log(`[proxy] ${req.method} ${req.url} ← ${upstream.status}`);
-
-    /* Buffer the FULL response body BEFORE writing any headers to the client.
-       If we write headers first and the body read then fails (e.g. the upstream
-       connection drops mid-transfer for a larger response), headers are already
-       sent and we cannot send an error status — Railway Hikari sees an incomplete
-       HTTP response and replaces it with its own 502 fallback page.
-       By buffering first we keep the option to send a clean error response. */
-    const buf = await upstream.arrayBuffer();
-
-    /* Forward response headers, strip hop-by-hop and encoding headers.
-       Node.js fetch() auto-decompresses gzip/br/deflate responses, so the
-       body in `buf` is already plain bytes.  If we forward Content-Encoding
-       the client will try to decompress already-decompressed data and fail.
-       Similarly, Content-Length from the upstream reflects the compressed
-       size; we overwrite it below with the actual decompressed length. */
+  const proto = targetUrl.protocol === "https:" ? https : http;
+  const proxyReq = proto.request(options, (proxyRes) => {
+    /* Strip hop-by-hop headers before forwarding */
     const fwdHeaders = {};
-    for (const [k, v] of upstream.headers.entries()) {
+    for (const [k, v] of Object.entries(proxyRes.headers)) {
       const lk = k.toLowerCase();
-      if (
-        lk === "transfer-encoding" ||
-        lk === "connection" ||
-        lk === "content-encoding" ||   // body is already decompressed by fetch
-        lk === "content-length"        // will be set below to decompressed size
-      ) continue;
+      if (lk === "transfer-encoding" || lk === "connection") continue;
       fwdHeaders[k] = v;
     }
-    /* Set correct content-length for the buffered body */
-    fwdHeaders["content-length"] = String(buf.byteLength);
-
-    console.log(`[proxy] ${req.method} ${req.url} body=${buf.byteLength}b sending`);
     try {
-      res.writeHead(upstream.status, fwdHeaders);
-      if (!res.writableEnded) res.end(Buffer.from(buf));
-    } catch (_) { /* client disconnected after body was ready — ignore */ }
+      res.writeHead(proxyRes.statusCode, fwdHeaders);
+    } catch (_) { proxyRes.destroy(); return; }
+    proxyRes.pipe(res, { end: true });
+  });
 
-  } catch (err) {
+  proxyReq.on("timeout", () => {
+    proxyReq.destroy();
+    safeReply(res, 504, { error: "Upstream timeout" });
+  });
+
+  proxyReq.on("error", (err) => {
     logProxyError(req.method, req.url, err);
-    console.error(`[proxy-err] ${req.method} ${req.url}: ${err?.constructor?.name} ${err?.message} code=${err?.code}`);
+    console.error(`[proxy-err] ${req.method} ${req.url}: ${err?.message} code=${err?.code}`);
     safeReply(res, 502, { error: "Bad Gateway" });
-  } finally {
-    /* Always cancel the timer — whether success, error, or abort */
-    clearTimeout(timer);
-  }
+  });
+
+  if (body) proxyReq.write(body);
+  proxyReq.end();
 }
 
 /* WebSocket tunnel */

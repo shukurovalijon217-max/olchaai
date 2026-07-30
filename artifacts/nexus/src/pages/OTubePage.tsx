@@ -112,7 +112,7 @@ interface MonetizationSettings {
   donation: "500"|"2000"|"10000"|"50000";
 }
 const DEF_S: PlayerSettings = {
-  autoplay:true, loop:true, muteDefault:false, quality:"Auto",
+  autoplay:true, loop:false, muteDefault:false, quality:"Auto",
   cinemaMode:false, showTitle:true, hdStream:true, dataWarning:false,
 };
 const DEF_M: MonetizationSettings = {

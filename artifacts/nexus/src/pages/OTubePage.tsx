@@ -1046,14 +1046,14 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
           </div>
         )}
 
-        {/* ── RIGHT SIDE ACTION PANEL — auto-hide on idle ── */}
+        {/* ── LEFT SIDE ACTION PANEL — moved from right, iOS-style icons ── */}
         <div style={{
-          position:"absolute", right:0, top:0, bottom:168,
-          width:50,
+          position:"absolute", left:0, top:0, bottom:168,
+          width:52,
           display:"flex", flexDirection:"column", alignItems:"center",
-          justifyContent:"center",
+          justifyContent:"flex-end",
           gap:0, zIndex:22,
-          paddingTop:8, paddingBottom:8,
+          paddingTop:8, paddingBottom:24,
           overflowY:"auto", scrollbarWidth:"none",
           opacity: showCtrl ? 1 : 0,
           pointerEvents: showCtrl ? "auto" : "none",
@@ -1126,19 +1126,20 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
             .map((b,i)=>(
             <motion.button key={i} whileTap={{scale:0.82}}
               onClick={(e)=>{e.stopPropagation();b.act();}}
-              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-                padding:"4px 0",width:"100%"}}>
+              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+                padding:"6px 4px",width:"100%"}}>
+              {/* iOS-style: no circle, just icon with subtle glow when active */}
               <div style={{
-                width:34,height:34,borderRadius:"50%",
-                background:b.bg??(b.active?"rgba(255,255,255,0.18)":"transparent"),
-                border:b.active?`1px solid rgba(255,255,255,0.25)`:"none",
+                width:28,height:28,
                 display:"flex",alignItems:"center",justifyContent:"center",
+                filter: b.active ? `drop-shadow(0 0 6px ${b.col})` : "none",
+                opacity: b.active ? 1 : 0.75,
               }}>
                 {b.icon}
               </div>
-              <span style={{fontSize:8,fontWeight:600,color:b.col,
+              <span style={{fontSize:8,fontWeight:600,color:b.active?b.col:"rgba(255,255,255,0.55)",
                 textShadow:"0 1px 4px rgba(0,0,0,0.95)",lineHeight:1.2,textAlign:"center",
-                maxWidth:44,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                maxWidth:46,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                 {b.label}
               </span>
             </motion.button>
@@ -1211,10 +1212,12 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
                   <motion.button key={i} whileTap={{scale:0.82}} onClick={()=>b.act()}
                     style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5,
                       padding:"10px 4px",borderRadius:14,
-                      background:b.on?`${b.col}18`:"rgba(255,255,255,0.04)",
-                      border:`1px solid ${b.on?`${b.col}44`:"rgba(255,255,255,0.06)"}`}}>
-                    {b.icon}
-                    <span style={{fontSize:9.5,color:"rgba(255,255,255,0.38)",fontWeight:600,lineHeight:1,textAlign:"center"}}>
+                      background:"transparent",border:"none"}}>
+                    <div style={{width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",
+                      filter:b.on?`drop-shadow(0 0 8px ${b.col})`:"none",opacity:b.on?1:0.72}}>
+                      {b.icon}
+                    </div>
+                    <span style={{fontSize:9.5,color:b.on?b.col:"rgba(255,255,255,0.45)",fontWeight:600,lineHeight:1,textAlign:"center"}}>
                       {b.label}
                     </span>
                   </motion.button>

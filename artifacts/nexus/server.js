@@ -109,9 +109,19 @@ async function proxyHttp(req, res, body, target) {
       const lk = k.toLowerCase();
       if (lk === "transfer-encoding" || lk === "connection" ||
           lk === "content-encoding" || lk === "content-length") continue;
+      // Don't forward cache headers that cause Railway CDN to cache API responses.
+      // A cached empty/stale body would be forwarded as 200+0bytes → Railway 502.
+      if (req.url?.startsWith("/api")) {
+        if (lk === "etag" || lk === "vary" || lk === "age" ||
+            lk === "cache-control" || lk === "x-cache") continue;
+      }
       fwdHeaders[k] = v;
     }
     fwdHeaders["content-length"] = String(buf.byteLength);
+    // Force no-store for API responses so Railway CDN never caches them
+    if (req.url?.startsWith("/api")) {
+      fwdHeaders["cache-control"] = "private, no-store";
+    }
 
     try {
       res.writeHead(upstream.status, fwdHeaders);

@@ -286,7 +286,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
           xhr.send(pending.file);
         });
 
-        const serveUrl = `${API}/api/storage${objectPath}`;
+        // When R2 is active, objectPath is already a full CDN URL — don't wrap it again
+        const serveUrl = objectPath.startsWith("http") ? objectPath : `${API}/api/storage${objectPath}`;
 
         /* Step 3 — for videos, ask the server to transcode/compress in place
            before marking the item done. Best-effort: any failure here just

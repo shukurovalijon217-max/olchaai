@@ -2836,8 +2836,10 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
         xhr.onerror=()=>rej(new Error("Network error")); xhr.send(file);
       });
       setProgress(95); setPhase("creating");
+      // objectPath is a full CDN URL when R2 is active, otherwise a /objects/... path
+      const resolvedVideoUrl = objectPath.startsWith("http") ? objectPath : `${API_BASE}/api/storage${objectPath}`;
       createMut.mutate({data:{
-        authorId:user.id, videoUrl:`${API_BASE}/api/storage${objectPath}`,
+        authorId:user.id, videoUrl: resolvedVideoUrl,
         caption:caption||title, tags:tagList, duration:0,
         // thumbSrc is a local blob URL — only pass thumbnailUrl if it's a real remote URL
         thumbnailUrl: (thumbSrc && !thumbSrc.startsWith("blob:")) ? thumbSrc : undefined,
@@ -4082,9 +4084,10 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
       const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
       const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file});
       if (!res.ok) throw new Error("Upload failed");
+      const resolvedVideoUrl2 = objectPath.startsWith("http") ? objectPath : `${API_BASE}/api/storage${objectPath}`;
       createMut.mutate({data:{
         authorId:user.id,
-        videoUrl:`${API_BASE}/api/storage${objectPath}`,
+        videoUrl: resolvedVideoUrl2,
         caption:caption||"OTube Studio · GILOS",
         audioTrack:music&&music!=="none"?music:undefined,
         tags:["otube-studio","olcha","studio"],

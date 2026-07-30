@@ -49,7 +49,7 @@ COPY artifacts/nexus/vite.config.ts artifacts/nexus/
 COPY artifacts/nexus/components.json artifacts/nexus/
 COPY artifacts/nexus/tsconfig.json  artifacts/nexus/
 
-ARG VITE_API_BASE_URL=""
+ARG VITE_API_BASE_URL="https://olchaai-api-production.up.railway.app"
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 RUN pnpm --filter @workspace/nexus run build

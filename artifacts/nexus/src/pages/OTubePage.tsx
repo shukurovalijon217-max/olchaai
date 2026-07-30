@@ -6736,7 +6736,7 @@ function OTubeMusicOrb() {
     setProgress(0); setCurrentTime(0); setDuration(0); setLiked(false);
     if (was) audio.play().catch(() => setPlaying(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx]);
+  }, [track?.preview]);
 
   /* play / pause */
   useEffect(() => {

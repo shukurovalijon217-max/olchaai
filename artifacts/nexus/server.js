@@ -17,6 +17,14 @@ const DIST       = path.join(__dirname, "dist", "public");
 /* Build-time unique token — changes every deploy so Cloudflare sees a new ETag */
 const BUILD_ID = Date.now().toString(36);
 
+/* ── Prevent unhandled rejections from crashing the process ── */
+process.on("unhandledRejection", (reason) => {
+  console.error("[unhandledRejection]", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[uncaughtException]", err.message, err.stack);
+});
+
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript",
@@ -47,30 +55,62 @@ function parseTarget(urlStr) {
   return { hostname: u.hostname, port, isTls };
 }
 
+/* Safe response helper — never throws even if client already disconnected */
+function safeReply(res, status, body) {
+  try {
+    if (!res.headersSent) {
+      res.writeHead(status, { "Content-Type": "application/json" });
+    }
+    if (!res.writableEnded) {
+      res.end(typeof body === "string" ? body : JSON.stringify(body));
+    }
+  } catch (_) { /* client disconnected — ignore */ }
+}
+
 /* HTTP proxy (for /api and /go regular requests) */
 async function proxyHttp(req, res, body, target) {
   const url = `${target}${req.url}`;
   const headers = { ...req.headers };
   delete headers["host"];
   delete headers["connection"];
+
+  /* 60-second timeout so Cloudflare (100s limit) never sees a hang */
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60_000);
+
   try {
     const upstream = await fetch(url, {
       method: req.method,
       headers,
       body: ["GET", "HEAD"].includes(req.method) ? undefined : body,
       redirect: "manual",
+      signal: controller.signal,
     });
-    res.writeHead(upstream.status, Object.fromEntries(
-      [...upstream.headers.entries()].filter(([k]) =>
-        !["transfer-encoding", "connection"].includes(k.toLowerCase())
-      )
-    ));
+
+    /* Forward response headers, strip hop-by-hop */
+    const fwdHeaders = {};
+    for (const [k, v] of upstream.headers.entries()) {
+      const lk = k.toLowerCase();
+      if (lk === "transfer-encoding" || lk === "connection") continue;
+      fwdHeaders[k] = v;
+    }
+
+    try {
+      res.writeHead(upstream.status, fwdHeaders);
+    } catch (e) {
+      /* headers already sent — just drain and bail */
+      await upstream.arrayBuffer().catch(() => {});
+      return;
+    }
+
     const buf = await upstream.arrayBuffer();
-    res.end(Buffer.from(buf));
+    try { res.end(Buffer.from(buf)); } catch (_) { /* client gone */ }
+
   } catch (err) {
     console.error("Proxy error:", err.message);
-    res.writeHead(502, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Bad Gateway" }));
+    safeReply(res, 502, { error: "Bad Gateway" });
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -86,10 +126,10 @@ function proxyWebSocket(req, clientSocket, head, target) {
   const upstream = connect(options, () => {
     /* Reconstruct the HTTP/1.1 upgrade request verbatim */
     const reqLine = `GET ${req.url} HTTP/1.1\r\n`;
-    const headers = Object.entries({ ...req.headers, host: hostname })
+    const hdrs = Object.entries({ ...req.headers, host: hostname })
       .map(([k, v]) => `${k}: ${v}`)
       .join("\r\n");
-    upstream.write(`${reqLine}${headers}\r\n\r\n`);
+    upstream.write(`${reqLine}${hdrs}\r\n\r\n`);
     if (head && head.length) upstream.write(head);
 
     /* Bidirectional pipe */
@@ -106,7 +146,7 @@ function proxyWebSocket(req, clientSocket, head, target) {
   upstream.on("close", () => clientSocket.destroy());
 }
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer((req, res) => {
   /* Health check */
   if (req.url === "/healthz") {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -119,7 +159,13 @@ const server = http.createServer(async (req, res) => {
     req.on("data", (c) => chunks.push(c));
     req.on("end", () => {
       const body = chunks.length ? Buffer.concat(chunks) : undefined;
-      proxyHttp(req, res, body, API_TARGET);
+      proxyHttp(req, res, body, API_TARGET).catch((err) => {
+        console.error("proxyHttp unhandled:", err.message);
+        safeReply(res, 502, { error: "Bad Gateway" });
+      });
+    });
+    req.on("error", (err) => {
+      console.error("req error:", err.message);
     });
     return;
   }
@@ -130,7 +176,10 @@ const server = http.createServer(async (req, res) => {
     req.on("data", (c) => chunks.push(c));
     req.on("end", () => {
       const body = chunks.length ? Buffer.concat(chunks) : undefined;
-      proxyHttp(req, res, body, GO_TARGET);
+      proxyHttp(req, res, body, GO_TARGET).catch((err) => {
+        console.error("proxyHttp/go unhandled:", err.message);
+        safeReply(res, 502, { error: "Bad Gateway" });
+      });
     });
     return;
   }

@@ -39,20 +39,24 @@ export default function StoriesBar({ onCreateStory, onAvatarClick }: Props) {
   return (
     <>
       <style>{`
-        @keyframes story-ring-spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @keyframes story-ring-pulse {
-          0%,100% { opacity: 1; }
-          50%      { opacity: 0.6; }
+        @keyframes sv-glow {
+          0%,100% {
+            box-shadow: 0 0 0 2px #a855f7,
+                        0 0 10px rgba(168,85,247,0.65),
+                        0 0 22px rgba(168,85,247,0.3);
+          }
+          50% {
+            box-shadow: 0 0 0 2.5px #ec4899,
+                        0 0 18px rgba(236,72,153,0.85),
+                        0 0 38px rgba(236,72,153,0.38);
+          }
         }
       `}</style>
 
       <div style={{
         display: "flex",
         overflowX: "auto",
-        gap: 16,
+        gap: 18,
         padding: "10px 14px 8px",
         scrollbarWidth: "none",
         WebkitOverflowScrolling: "touch" as any,
@@ -69,32 +73,27 @@ export default function StoriesBar({ onCreateStory, onAvatarClick }: Props) {
           }}
         >
           <div style={{ position: "relative", width: 54, height: 54 }}>
-            {/* Subtle dashed ring */}
-            <div style={{
-              position: "absolute", inset: -2, borderRadius: "50%",
-              border: "1.5px dashed rgba(168,85,247,0.55)",
-            }}/>
-            {/* Avatar */}
+            {/* Avatar with static glow border */}
             <div style={{
               width: 54, height: 54, borderRadius: "50%",
               overflow: "hidden",
-              background: user?.avatarUrl ? "transparent" : "linear-gradient(135deg,#1a0030,#0a0820)",
-              border: "1.5px solid rgba(168,85,247,0.35)",
+              background: "linear-gradient(135deg,#1e0040,#0a0820)",
+              boxShadow: "0 0 0 2px rgba(168,85,247,0.45), 0 0 10px rgba(168,85,247,0.25)",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt=""
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
               ) : (
-                <span style={{ fontSize: 18, fontWeight: 800, color: "rgba(168,85,247,0.7)" }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: "rgba(168,85,247,0.6)" }}>
                   {(user?.displayName || user?.username || "G")[0].toUpperCase()}
                 </span>
               )}
             </div>
             {/* + badge */}
             <div style={{
-              position: "absolute", bottom: 0, right: 0,
-              width: 20, height: 20, borderRadius: "50%",
+              position: "absolute", bottom: 1, right: 1,
+              width: 19, height: 19, borderRadius: "50%",
               background: "linear-gradient(135deg,#a855f7,#6366f1)",
               border: "2px solid #06060f",
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -120,10 +119,10 @@ export default function StoriesBar({ onCreateStory, onAvatarClick }: Props) {
               ref={(el: HTMLDivElement | null) => {
                 if (el && g.author?.id != null) itemRefs.current.set(g.author.id!, el);
               }}
-              initial={{ opacity: 0, scale: 0.8, x: 12 }}
+              initial={{ opacity: 0, scale: 0.8, x: 10 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ delay: i * 0.035, type: "spring", stiffness: 360, damping: 26 }}
+              transition={{ delay: i * 0.04, type: "spring", stiffness: 380, damping: 26 }}
               whileTap={{ scale: 0.88 }}
               onClick={() => handleClick(g.author?.id)}
               style={{
@@ -133,22 +132,13 @@ export default function StoriesBar({ onCreateStory, onAvatarClick }: Props) {
               }}
             >
               <div style={{ position: "relative", width: 54, height: 54 }}>
-                {/* Animated conic-gradient spinning ring */}
+                {/* Avatar — glows by itself, no outer ring */}
                 <div style={{
-                  position: "absolute", inset: -2.5, borderRadius: "50%",
-                  background: "conic-gradient(from 0deg, #a855f7 0%, #ec4899 25%, #6366f1 50%, #06b6d4 75%, #a855f7 100%)",
-                  animation: "story-ring-spin 2.2s linear infinite",
-                }}/>
-                {/* Gap between ring and avatar */}
-                <div style={{
-                  position: "absolute", inset: 1, borderRadius: "50%",
-                  background: "#06060f",
-                }}/>
-                {/* Avatar */}
-                <div style={{
-                  position: "absolute", inset: 2.5, borderRadius: "50%",
+                  width: 54, height: 54, borderRadius: "50%",
                   overflow: "hidden",
                   background: "linear-gradient(135deg,#2d0a4e,#0a1240)",
+                  /* pulsing glow — the avatar "burns" */
+                  animation: "sv-glow 2.4s ease-in-out infinite",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
                   {g.author?.avatarUrl ? (
@@ -156,15 +146,16 @@ export default function StoriesBar({ onCreateStory, onAvatarClick }: Props) {
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       loading="lazy" decoding="async"/>
                   ) : (
-                    <span style={{ fontSize: 17, fontWeight: 800, color: "#a855f7" }}>
+                    <span style={{ fontSize: 18, fontWeight: 800, color: "#a855f7" }}>
                       {(g.author?.displayName || g.author?.username || "?")[0]?.toUpperCase()}
                     </span>
                   )}
                 </div>
-                {/* Count badge (>1 story) */}
+
+                {/* Count badge */}
                 {g.count > 1 && (
                   <div style={{
-                    position: "absolute", bottom: 0, right: 0,
+                    position: "absolute", bottom: 1, right: 1,
                     width: 17, height: 17, borderRadius: "50%",
                     background: "#a855f7",
                     border: "2px solid #06060f",
@@ -175,6 +166,7 @@ export default function StoriesBar({ onCreateStory, onAvatarClick }: Props) {
                   </div>
                 )}
               </div>
+
               <span style={{
                 fontSize: 9, fontWeight: 500,
                 color: "rgba(255,255,255,0.55)",
@@ -189,10 +181,7 @@ export default function StoriesBar({ onCreateStory, onAvatarClick }: Props) {
 
         {/* Empty state */}
         {groups.length === 0 && (
-          <div style={{
-            display: "flex", alignItems: "center",
-            paddingLeft: 2, paddingTop: 10,
-          }}>
+          <div style={{ display: "flex", alignItems: "center", paddingTop: 10 }}>
             <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)" }}>
               Hali story yo'q
             </span>

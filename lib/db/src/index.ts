@@ -4,6 +4,10 @@ import * as schema from "./schema";
 
 const { Pool } = pg;
 
+// Accept both DATABASE_URL and NEON_DATABASE_URL (Railway may use either)
+if (!process.env.DATABASE_URL && process.env.NEON_DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.NEON_DATABASE_URL;
+}
 if (!process.env.DATABASE_URL) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
@@ -12,12 +16,14 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // High-concurrency pool settings
-  max: 20,                    // max simultaneous DB connections
-  min: 2,                     // keep 2 connections warm (fast first-request)
-  idleTimeoutMillis: 30_000,  // release idle connections after 30s
-  connectionTimeoutMillis: 5_000, // fail fast if DB is unreachable (5s)
-  allowExitOnIdle: false,     // keep pool alive in cluster workers
+  ssl: process.env.NODE_ENV === "production"
+    ? { rejectUnauthorized: false }   // Neon/Railway SSL — disable cert verification
+    : undefined,
+  max: 10,
+  min: 1,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 8_000,     // fail fast if DB unreachable
+  allowExitOnIdle: false,
 });
 
 // Log pool errors to prevent silent crashes

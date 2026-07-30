@@ -1,0 +1,6 @@
+**
+!Dockerfile
+!artifacts/nexus/dist/**
+!artifacts/nexus/server.js
+!artifacts/api-server/dist/**
+!docker/stubs/**

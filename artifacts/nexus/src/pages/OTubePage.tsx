@@ -6697,55 +6697,23 @@ function OTubeMusicOrb() {
   const audioRef  = useRef<HTMLAudioElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  /* Audius to'g'ridan — API server shart emas */
-  const fetchAudiusDirect = useCallback(async (q: string): Promise<MusicTrack[]> => {
-    const r = await fetch(
-      `https://discoveryprovider.audius.co/v1/tracks/search?query=${encodeURIComponent(q)}&limit=25&app_name=olchaai`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if (!r.ok) return [];
-    const d = await r.json() as { data?: any[] };
-    return (d.data ?? [])
-      .filter((t: any) => t?.id && t?.title)
-      .map((t: any) => {
-        const art = t.artwork ?? {};
-        return {
-          id:       `au_${t.id}`,
-          name:     t.title ?? "",
-          artist:   t.user?.name ?? "Unknown",
-          artwork:  art["150x150"] ?? art["480x480"] ?? "",
-          /* To'g'ridan Audius CDN redirect — our proxy orqali */
-          preview:  `${API_BASE}/api/music/stream/${t.id}`,
-          duration: t.duration ?? 0,
-          full:     true,
-        };
-      });
-  }, []);
-
-  /* Asosiy fetch: API server → muvaffaqiyatsiz bo'lsa Audius to'g'ridan */
+  /* Audius to'liq + iTunes preview qidiruv */
   const fetchMusic = useCallback((q: string, g: string) => {
     const query = q.trim() || g || "top hits";
     setLoadingApi(true);
-
-    const apiPromise = fetch(
-      `${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`,
-      { signal: AbortSignal.timeout(6000) }
-    )
-      .then(r => r.ok ? r.json() : Promise.reject())
+    fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`)
+      .then(r => r.json())
       .then((d: { results?: MusicTrack[] }) => {
         const res = (d.results ?? []).filter(t => t.preview).map(t => ({
           ...t,
+          /* Relative stream URLs → absolute */
           preview: t.preview.startsWith("/") ? `${API_BASE}${t.preview}` : t.preview,
         }));
-        return res;
-      });
-
-    apiPromise
-      .catch(() => fetchAudiusDirect(query)) /* API cold bo'lsa — Audius to'g'ridan */
-      .then(res => { if (res.length) { setTracks(res); setIdx(0); } })
+        if (res.length) { setTracks(res); setIdx(0); }
+      })
       .catch(() => {})
       .finally(() => setLoadingApi(false));
-  }, [fetchAudiusDirect]);
+  }, []);
 
   /* On mount: load popular tracks */
   useEffect(() => { fetchMusic("", "pop hits 2024"); }, [fetchMusic]);

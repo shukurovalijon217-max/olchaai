@@ -9,41 +9,10 @@ import crypto from "crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT       = parseInt(process.env.PORT || "3000", 10);
-const API_TARGET = process.env.API_TARGET || "https://olchaai-api.onrender.com";
+/* olchaai-api is a SEPARATE Railway service — proxy directly, no loop */
+const API_TARGET = process.env.API_TARGET || "https://olchaai-api-production.up.railway.app";
 const GO_TARGET  = process.env.GO_TARGET  || "https://olchaai-go-production.up.railway.app";
 const DIST       = path.join(__dirname, "dist", "public");
-
-/* ── Security headers — gigant standart ──────────────────────────
-   Har bir javobga qo'shiladi: XSS, clickjacking, sniffing, HSTS   */
-const SECURITY_HEADERS = {
-  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-  "X-Frame-Options": "SAMEORIGIN",
-  "X-Content-Type-Options": "nosniff",
-  "X-XSS-Protection": "1; mode=block",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=self, microphone=self, geolocation=self, payment=()",
-  "X-DNS-Prefetch-Control": "on",
-};
-
-/* ── Proxy-layer rate limiter — faqat umumiy himoya ──────────────
-   Auth uchun alohida limit yo'q — API server o'zi brute-force
-   himoyasini boshqaradi. Bu yerda faqat DDoS uchun 1000 req/min.  */
-const proxyRateMap   = new Map(); // ip → { count, resetAt }
-const PROXY_WINDOW   = 60_000;
-const PROXY_MAX      = 1000;
-
-function proxyRateLimit(ip) {
-  const now = Date.now();
-  const rec = proxyRateMap.get(ip);
-  if (!rec || rec.resetAt <= now) { proxyRateMap.set(ip, { count: 1, resetAt: now + PROXY_WINDOW }); return true; }
-  rec.count++;
-  return rec.count <= PROXY_MAX;
-}
-// Temiz saqlash — har 2 daqiqada
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, v] of proxyRateMap) if (v.resetAt <= now) proxyRateMap.delete(k);
-}, 120_000);
 
 /* Build-time unique token — changes every deploy so Cloudflare sees a new ETag */
 const BUILD_ID = Date.now().toString(36);
@@ -85,16 +54,12 @@ async function proxyHttp(req, res, body, target) {
   delete headers["host"];
   delete headers["connection"];
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15000); // 15s proxy timeout
     const upstream = await fetch(url, {
       method: req.method,
       headers,
       body: ["GET", "HEAD"].includes(req.method) ? undefined : body,
       redirect: "manual",
-      signal: controller.signal,
     });
-    clearTimeout(timer);
     res.writeHead(upstream.status, Object.fromEntries(
       [...upstream.headers.entries()].filter(([k]) =>
         !["transfer-encoding", "connection"].includes(k.toLowerCase())
@@ -142,26 +107,14 @@ function proxyWebSocket(req, clientSocket, head, target) {
 }
 
 const server = http.createServer(async (req, res) => {
-  /* Security headers — barcha javoblarga */
-  for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
-
   /* Health check */
   if (req.url === "/healthz") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ ok: true, build: BUILD_ID }));
+    return res.end(JSON.stringify({ ok: true, build: BUILD_ID, nexusPort: PORT, apiTarget: API_TARGET }));
   }
 
   /* API proxy → olchaai-api */
   if (req.url.startsWith("/api")) {
-    /* Proxy-layer rate limit — cf-connecting-ip Cloudflare orqali eng ishonchli IP */
-    const ip = req.headers["cf-connecting-ip"]
-      || (req.headers["x-forwarded-for"] || "").split(",").pop()?.trim()
-      || req.socket.remoteAddress
-      || "0.0.0.0";
-    if (!proxyRateLimit(ip)) {
-      res.writeHead(429, { "Content-Type": "application/json", "Retry-After": "60" });
-      return res.end(JSON.stringify({ error: "Too many requests", retryAfterMs: 60000 }));
-    }
     const chunks = [];
     req.on("data", (c) => chunks.push(c));
     req.on("end", () => {
@@ -201,18 +154,23 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, {
         "Content-Type": mime,
         "Cache-Control": "public, max-age=31536000, immutable",
-        "Vary": "Accept-Encoding",
       });
     } else {
-      /* index.html — Cloudflare edge 5s TTL, browser no-cache */
       const etag = `"${BUILD_ID}-${crypto.createHash("md5").update(content).digest("hex").slice(0,8)}"`;
       res.writeHead(200, {
         "Content-Type": mime,
-        "Cache-Control": "public, max-age=0, s-maxage=5, must-revalidate",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0",
+        "Pragma": "no-cache",
+        "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
         "ETag": etag,
         "Last-Modified": new Date().toUTCString(),
+        "CF-Cache-Status": "BYPASS",
+        "CDN-Cache-Control": "no-store",
+        "Cloudflare-CDN-Cache-Control": "no-store",
+        "Surrogate-Control": "no-store",
         "Surrogate-Key": `deploy-${BUILD_ID}`,
         "Vary": "Accept-Encoding",
+        "Clear-Site-Data": '"cache"',
       });
     }
     res.end(content);

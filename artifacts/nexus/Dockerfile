@@ -68,8 +68,9 @@ FROM node:24-alpine AS runtime
 
 WORKDIR /app
 
-# Nexus frontend static build
-COPY --from=builder /app/artifacts/nexus/dist ./dist
+# Nexus frontend static build — COPY from build context (pre-built dist committed to git)
+# This ensures Docker always uses the committed dist/ regardless of builder stage cache.
+COPY artifacts/nexus/dist ./dist
 COPY artifacts/nexus/server.js ./server.js
 
 # API server bundle

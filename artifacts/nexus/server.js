@@ -88,6 +88,7 @@ async function proxyHttp(req, res, body, target) {
      fetch decompresses them, but still forwards Content-Encoding: gzip to the
      client, causing a double-decompression error / connection termination. */
   headers["accept-encoding"] = "identity";
+  headers["x-no-compression"] = "1"; // tell olchaai-api compression() to skip gzip
   /* Node fetch sets its own content-length; removing from fwd avoids mismatch */
   if (["GET", "HEAD", "DELETE", "OPTIONS"].includes(req.method)) {
     delete headers["content-length"];

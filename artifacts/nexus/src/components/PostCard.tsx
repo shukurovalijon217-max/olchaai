@@ -30,7 +30,7 @@ const SENTIMENT_COLOR: Record<string, string> = {
   negative: "text-red-400",
 };
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API = (import.meta.env.VITE_API_BASE_URL || "");
 
 interface Analysis {
   tags?: string[];

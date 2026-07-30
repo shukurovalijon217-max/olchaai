@@ -37,7 +37,7 @@ import {
 /* ─────────────────────────────────────────────────────── */
 /* API base URL — must be absolute in production           */
 /* ─────────────────────────────────────────────────────── */
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app").replace(/\/+$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 
 /* ─────────────────────────────────────────────────────── */
 /* Design tokens — NEXUS AURORA BROADCAST                  */

@@ -33,10 +33,10 @@ jobs:
       - name: Trigger Railway redeploy via API
         run: |
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://backboard.railway.app/graphql/v2" \
-            -H "Authorization: Bearer ${{ vars.RAILWAY_TOKEN }}" \
+            -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
             -H "Content-Type: application/json" \
             --data-raw '{
-              "query": "mutation { serviceInstanceRedeploy(environmentId: \"3f9b1d72-3c22-4d24-a00a-12346a7b4da1\", serviceId: \"6a712054-0c1a-4e3d-b8e9-39082e1b0af5\") }"
+              "query": "mutation { serviceInstanceRedeploy(environmentId: \"3f9b1d72-2c6d-49db-b756-42ac52ba7aa0\", serviceId: \"6a712054-7af1-4910-a96e-9e0696490b44\") }"
             }')
           echo "Railway API response: $RESPONSE"
           # Don't fail the workflow if Railway API is unavailable

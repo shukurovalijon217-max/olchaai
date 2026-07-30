@@ -376,6 +376,8 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   /* Floating like number */
   const [likeFloat, setLikeFloat] = useState<{ key: number; delta: number } | null>(null);
   let floatKey = useRef(0);
+  /* Debounce: prevent duplicate like on rapid double-tap (#12) */
+  const lastLikeMs = useRef(0);
 
   /* ── Refs ── */
   const cardRef    = useRef<HTMLDivElement>(null);
@@ -496,6 +498,9 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   /* ── Handlers ── */
   const handleLike = () => {
     if (!user) return;
+    const now = Date.now();
+    if (now - lastLikeMs.current < 600) return; // 600 ms debounce — no duplicate credits
+    lastLikeMs.current = now;
     const next = !liked;
     setLiked(next);
     setLikes(l => next ? l + 1 : Math.max(0, l - 1));

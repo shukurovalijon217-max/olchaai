@@ -49,7 +49,7 @@ COPY artifacts/nexus/vite.config.ts artifacts/nexus/
 COPY artifacts/nexus/components.json artifacts/nexus/
 COPY artifacts/nexus/tsconfig.json  artifacts/nexus/
 
-ARG VITE_API_BASE_URL="https://olchaai-api-production.up.railway.app"
+ARG VITE_API_BASE_URL=""
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # Explicitly pass the URL in the build command to prevent Docker layer cache from
@@ -93,4 +93,6 @@ ENV WS_URL=wss://olchaai-go-production.up.railway.app/go/ws
 ENV NODE_OPTIONS=--max-old-space-size=768
 
 EXPOSE 3000
-CMD ["/app/start.sh"]
+# server.js spawns the bundled API when API_TARGET is localhost, then starts the proxy.
+# Using node directly avoids the sh→case match issue that caused silent API mis-starts.
+CMD ["node", "/app/server.js"]

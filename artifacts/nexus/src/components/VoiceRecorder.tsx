@@ -31,13 +31,22 @@ export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRec
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const waveHistRef = useRef<number[][]>([]);
 
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const { uploadFile, isUploading } = useMediaUpload({
     onSuccess: (r) => {
       if (blobRef.current) {
+        setUploadError(null);
         const waveformData = JSON.stringify(frozenBars);
         onVoiceComment(r.serveUrl, elapsed, waveformData);
         reset();
       }
+    },
+    onError: (err) => {
+      setUploadError(err?.message?.includes("R2") || err?.message?.includes("503")
+        ? "Ovoz yuklash vaqtincha ishlamayapti. Keyinroq urinib ko'ring."
+        : "Yuklashda xatolik yuz berdi.");
+      setTimeout(() => setUploadError(null), 4000);
     },
   });
 
@@ -227,6 +236,19 @@ export default function VoiceRecorder({ onVoiceComment, isSubmitting }: VoiceRec
               className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white disabled:opacity-45 hover:bg-violet-500 transition-colors shrink-0 shadow-md shadow-violet-600/30">
               {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* R2 upload error toast (#9) */}
+      <AnimatePresence>
+        {uploadError && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
+            className="absolute bottom-full left-0 right-0 mb-2 px-3 py-2 rounded-xl text-xs font-medium text-red-300"
+            style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}
+          >
+            {uploadError}
           </motion.div>
         )}
       </AnimatePresence>

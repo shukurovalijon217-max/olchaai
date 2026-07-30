@@ -576,13 +576,21 @@ export default function HomePage() {
       </AnimatePresence>
       </div>
 
+      {/* ── STORIES BAR (#16) ── */}
+      <div className="px-3 py-2" style={{ background: "#06060f", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <StoriesBar
+          onCreateStory={() => { setCreateTab("story"); setCreateOpen(true); }}
+          onAvatarClick={openStoryForAuthor}
+        />
+      </div>
+
       {/* ── SNAP SCROLL FEED ── */}
       <div
         ref={feedRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{
-          height: "100dvh",
+          height: "calc(100dvh - 88px)",
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
           scrollBehavior: "smooth",

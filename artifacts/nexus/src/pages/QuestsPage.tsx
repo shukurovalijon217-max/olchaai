@@ -82,6 +82,9 @@ export default function QuestsPage() {
   const [claiming, setClaiming] = useState<string | null>(null);
   const [justClaimed, setJustClaimed] = useState<string | null>(null);
   const [coinBurst, setCoinBurst] = useState<{ key: string; reward: number } | null>(null);
+  /* Quest mid-session completion toast (#11) */
+  const [newlyDone, setNewlyDone] = useState<Quest | null>(null);
+  const prevCompletedRef = useRef<Set<string>>(new Set());
 
   const fetchData = async () => {
     try {
@@ -90,7 +93,18 @@ export default function QuestsPage() {
         fetch(`${API}/api/gamification/quests`, { credentials: "include" }),
       ]);
       if (cRes.ok) setCoins(await cRes.json());
-      if (qRes.ok) setQuests(await qRes.json());
+      if (qRes.ok) {
+        const freshQuests: Quest[] = await qRes.json();
+        setQuests(freshQuests);
+        // Detect newly completed quests and show toast
+        freshQuests.forEach(q => {
+          if (q.completedAt && !q.claimedAt && !prevCompletedRef.current.has(q.key)) {
+            setNewlyDone(q);
+            setTimeout(() => setNewlyDone(null), 3500);
+          }
+          if (q.completedAt) prevCompletedRef.current.add(q.key);
+        });
+      }
     } catch { /* ignore */ }
     finally { setLoading(false); }
   };
@@ -138,6 +152,40 @@ export default function QuestsPage() {
 
   return (
     <div className="min-h-screen pb-24 px-4 max-w-lg mx-auto pt-4">
+
+      {/* Quest completion toast — mid-session (#11) */}
+      <AnimatePresence>
+        {newlyDone && (
+          <motion.div
+            key="quest-done-toast"
+            initial={{ opacity: 0, y: -40, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className="fixed top-4 left-1/2 z-[300] -translate-x-1/2 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl"
+            style={{
+              background: "linear-gradient(135deg,rgba(16,185,129,0.92),rgba(5,150,105,0.9))",
+              border: "1px solid rgba(52,211,153,0.5)",
+              backdropFilter: "blur(12px)",
+              minWidth: 240,
+              maxWidth: 320,
+            }}
+          >
+            <motion.div
+              animate={{ rotate: [0, 15, -10, 15, 0], scale: [1, 1.25, 1] }}
+              transition={{ duration: 0.6 }}
+              className="text-2xl shrink-0"
+            >🎯</motion.div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-sm font-bold leading-tight">Quest bajarildi!</p>
+              <p className="text-emerald-100/80 text-xs mt-0.5 truncate">
+                {newlyDone.reward} tanga mukofot tayyorlangan ✨
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <div className="flex items-center gap-3 mb-1">

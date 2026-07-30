@@ -117,8 +117,13 @@ async function proxyHttp(req, res, body, target) {
 
     console.log(`[proxy] ${req.method} ${req.url} ← ${upstream.status}`);
 
-    /* NOTE: do NOT clearTimeout here — keep the AbortController alive so that
-       arrayBuffer() is also covered by the 25-second timeout. */
+    /* Buffer the FULL response body BEFORE writing any headers to the client.
+       If we write headers first and the body read then fails (e.g. the upstream
+       connection drops mid-transfer for a larger response), headers are already
+       sent and we cannot send an error status — Railway Hikari sees an incomplete
+       HTTP response and replaces it with its own 502 fallback page.
+       By buffering first we keep the option to send a clean error response. */
+    const buf = await upstream.arrayBuffer();
 
     /* Forward response headers, strip hop-by-hop */
     const fwdHeaders = {};
@@ -127,34 +132,19 @@ async function proxyHttp(req, res, body, target) {
       if (lk === "transfer-encoding" || lk === "connection") continue;
       fwdHeaders[k] = v;
     }
+    /* Set correct content-length for the buffered body */
+    fwdHeaders["content-length"] = String(buf.byteLength);
 
+    console.log(`[proxy] ${req.method} ${req.url} body=${buf.byteLength}b sending`);
     try {
       res.writeHead(upstream.status, fwdHeaders);
-    } catch (_) {
-      upstream.body?.cancel().catch(() => {});
-      return;
-    }
-
-    /* Buffer the full response body — still covered by the AbortController */
-    const buf = await upstream.arrayBuffer();
-    console.log(`[proxy] ${req.method} ${req.url} body=${buf.byteLength}b sent`);
-    try {
       if (!res.writableEnded) res.end(Buffer.from(buf));
-    } catch (_) { /* client disconnected */ }
+    } catch (_) { /* client disconnected after body was ready — ignore */ }
 
   } catch (err) {
     logProxyError(req.method, req.url, err);
     console.error(`[proxy-err] ${req.method} ${req.url}: ${err?.constructor?.name} ${err?.message} code=${err?.code}`);
-    /* Return 200 temporarily for diagnostics — Railway Hikari intercepts all
-       5xx codes and hides the actual error. Will revert after root cause found. */
-    safeReply(res, 200, {
-      __nexus_proxy_error: true,
-      errType: err?.constructor?.name,
-      errMsg: String(err?.message ?? "").slice(0, 300),
-      errCode: err?.code,
-      url: req.url,
-      target: API_TARGET,
-    });
+    safeReply(res, 502, { error: "Bad Gateway" });
   } finally {
     /* Always cancel the timer — whether success, error, or abort */
     clearTimeout(timer);

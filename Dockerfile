@@ -14,16 +14,11 @@ COPY artifacts/nexus/server.js ./server.js
 # ── API server bundle (pre-built with esbuild, committed to git) ──
 COPY artifacts/api-server/dist/ /app/api/dist/
 
-# ── Real package: @aws-sdk/s3-request-presigner ───────────────────
-# Pure JavaScript, no native compilation, no binary download.
-# Required for R2 presigned upload/download URLs.
-RUN cd /app/api \
- && npm init -y --quiet \
- && npm install --no-save --loglevel=error @aws-sdk/s3-request-presigner
-
 # ── File-based stubs (committed to git, zero network calls) ───────
-# @google-cloud/storage  → Replit object storage (not used for R2 media)
-# sharp                  → image resize (graceful no-op stub)
+# @google-cloud/storage  → not used for R2 media; graceful no-op stub
+# sharp                  → image resize; graceful no-op stub
+# @aws-sdk/s3-request-presigner is now bundled by esbuild — no npm install needed
+RUN mkdir -p /app/api/node_modules/@google-cloud /app/api/node_modules
 COPY stubs/@google-cloud/storage/ /app/api/node_modules/@google-cloud/storage/
 COPY stubs/sharp/                 /app/api/node_modules/sharp/
 

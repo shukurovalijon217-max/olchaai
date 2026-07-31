@@ -114,6 +114,32 @@ export async function r2ObjectExists(objectPath: string): Promise<boolean> {
   }
 }
 
+/**
+ * Upload a raw Buffer directly to R2 (server-side upload).
+ * Returns the public CDN URL for the uploaded object.
+ *
+ * @param buffer      File content as a Buffer
+ * @param key         R2 object key (e.g. "voice-comments/42.webm")
+ * @param contentType MIME type of the file
+ */
+export async function r2UploadBuffer(
+  buffer: Buffer,
+  key: string,
+  contentType: string
+): Promise<string> {
+  const client = getR2Client();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: getBucketName(),
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+      ContentLength: buffer.length,
+    })
+  );
+  return getPublicUrl(key);
+}
+
 function contentTypeToExt(contentType: string): string {
   const map: Record<string, string> = {
     "video/mp4": ".mp4",

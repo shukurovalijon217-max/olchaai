@@ -41,10 +41,16 @@ if (IS_BUNDLED) {
     const api = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
       env: apiEnv, stdio: "inherit",
     });
-    api.on("exit", (code) => {
-      console.error(`[nexus] Bundled API exited (code=${code}) — restarting server`);
-      process.exit(1); // Railway will restart the container
-    });
+    const spawnApi = () => {
+      const child = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
+        env: apiEnv, stdio: "inherit",
+      });
+      child.on("exit", (code) => {
+        console.error(`[nexus] Bundled API exited (code=${code}) — restarting in 3s`);
+        setTimeout(spawnApi, 3000);
+      });
+    };
+    spawnApi();
   } else {
     console.warn(`[nexus] Bundled API entry not found at ${apiEntry} — running proxy-only`);
   }

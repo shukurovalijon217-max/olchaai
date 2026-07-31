@@ -198,8 +198,17 @@ function proxyWebSocket(req, clientSocket, head, target) {
 
 const server = http.createServer((req, res) => {
   if (req.url === "/healthz") {
+    const bundleExists = fs.existsSync(path.join(__dirname, "api", "dist", "index.mjs"));
     res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ ok: true, build: BUILD_ID, nexusPort: PORT, apiTarget: API_TARGET }));
+    return res.end(JSON.stringify({
+      ok: true,
+      build: BUILD_ID,
+      nexusPort: PORT,
+      apiTarget: process.env.API_TARGET || API_TARGET,
+      bundleExists,
+      isBundledMode: IS_BUNDLED,
+      nodeVer: process.version,
+    }));
   }
 
 

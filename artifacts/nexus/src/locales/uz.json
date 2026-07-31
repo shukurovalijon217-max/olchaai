@@ -1828,7 +1828,8 @@
     "seconds": "soniya",
     "mic_denied": "Mikrofon ruxsati yo'q",
     "close": "Yopish",
-    "record_title": "Ovozli izoh (10 sek)"
+    "record_title": "Ovozli izoh (10 sek)",
+    "upload_error": "Ovoz yuklash imkonsiz, qayta urinib ko'ring"
   },
   "coview": {
     "title": "Birga Ko'rish",

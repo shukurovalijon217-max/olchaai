@@ -1826,7 +1826,8 @@
     "seconds": "sec",
     "mic_denied": "Microphone permission denied",
     "close": "Close",
-    "record_title": "Voice comment (10 sec)"
+    "record_title": "Voice comment (10 sec)",
+    "upload_error": "Voice upload unavailable, try again"
   },
   "coview": {
     "title": "Watch Together",

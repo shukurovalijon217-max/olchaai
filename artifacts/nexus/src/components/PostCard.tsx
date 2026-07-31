@@ -79,6 +79,13 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const chunksRef = useRef<Blob[]>([]);
   const recordingStartRef = useRef<number>(0);
   const [sendingVoice, setSendingVoice] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const voiceErrorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showVoiceError = (msg: string) => {
+    setVoiceError(msg);
+    if (voiceErrorTimerRef.current) clearTimeout(voiceErrorTimerRef.current);
+    voiceErrorTimerRef.current = setTimeout(() => setVoiceError(null), 4000);
+  };
   /* Delete confirm */
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   /* Tip */
@@ -248,7 +255,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ contentType: "audio/webm" }),
           });
-          if (!urlRes.ok) return;
+          if (!urlRes.ok) { showVoiceError(t("voice.upload_error")); return; }
           const { uploadURL, audioUrl } = await urlRes.json();
 
           // Step 2: upload audio blob directly to R2
@@ -257,7 +264,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
             headers: { "Content-Type": "audio/webm" },
             body: blob,
           });
-          if (!uploadRes.ok) return;
+          if (!uploadRes.ok) { showVoiceError(t("voice.upload_error")); return; }
 
           // Step 3: save voice comment record with the R2 URL
           const res = await fetch(`${API}/api/posts/${post.id}/voice-comments`, {
@@ -270,7 +277,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
             const data = await res.json();
             setVoiceComments(prev => [...prev, data]);
           }
-        } catch { /* silent */ }
+        } catch { showVoiceError(t("voice.upload_error")); }
         finally { setSendingVoice(false); }
       };
       recorderRef.current = mr;
@@ -636,6 +643,20 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                       : <><Mic className="w-3 h-3" />{t("voice.record")}</>}
                   </motion.button>
                 </div>
+                <AnimatePresence>
+                  {voiceError && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-destructive/10 border border-destructive/20 overflow-hidden"
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
+                      <span className="text-xs text-destructive font-medium">{voiceError}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 {voiceComments.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-2">{t("voice.no_voices")}</p>
                 ) : (

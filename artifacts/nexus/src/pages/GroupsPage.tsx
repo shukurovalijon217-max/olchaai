@@ -1375,7 +1375,9 @@ export default function GroupsPage() {
             >
               {form.coverPreview ? (
                 <>
-                  <img src={form.coverPreview} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                  {isVideoUrl(form.coverPreview)
+                    ? <video src={form.coverPreview} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+                    : <img src={form.coverPreview} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                     <Upload className="w-6 h-6 text-white" />
                   </div>
@@ -1435,7 +1437,9 @@ export default function GroupsPage() {
               <div className="h-20 flex items-center justify-center relative"
                 style={{ background: `linear-gradient(135deg, ${form.themeColor}40, ${form.themeColor}20)` }}>
                 {form.coverPreview
-                  ? <img src={form.coverPreview} alt="" className="w-full h-full object-cover absolute inset-0" loading="lazy" decoding="async" />
+                  ? isVideoUrl(form.coverPreview)
+                    ? <video src={form.coverPreview} className="w-full h-full object-cover absolute inset-0" autoPlay muted loop playsInline />
+                    : <img src={form.coverPreview} alt="" className="w-full h-full object-cover absolute inset-0" loading="lazy" decoding="async" />
                   : <span className="text-4xl z-10 relative">{form.icon}</span>}
               </div>
               <div className="p-3 bg-card">

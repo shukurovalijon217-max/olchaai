@@ -28,11 +28,11 @@ var __export = (target, all) => {
   for (var name2 in all)
     __defProp(target, name2, { get: all[name2], enumerable: true });
 };
-var __copyProps = (to, from, except3, desc4) => {
+var __copyProps = (to, from, except2, desc3) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except3)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc4 = __getOwnPropDesc(from, key)) || desc4.enumerable });
+      if (!__hasOwnProp.call(to, key) && key !== except2)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc3 = __getOwnPropDesc(from, key)) || desc3.enumerable });
   }
   return to;
 };
@@ -482,35 +482,35 @@ var require_redact = __commonJS({
       let inQuotes = false;
       let quoteChar = "";
       for (let i5 = 0; i5 < path3.length; i5++) {
-        const char3 = path3[i5];
-        if (!inBrackets && char3 === ".") {
+        const char2 = path3[i5];
+        if (!inBrackets && char2 === ".") {
           if (current) {
             parts.push(current);
             current = "";
           }
-        } else if (char3 === "[") {
+        } else if (char2 === "[") {
           if (current) {
             parts.push(current);
             current = "";
           }
           inBrackets = true;
-        } else if (char3 === "]" && inBrackets) {
+        } else if (char2 === "]" && inBrackets) {
           parts.push(current);
           current = "";
           inBrackets = false;
           inQuotes = false;
-        } else if ((char3 === '"' || char3 === "'") && inBrackets) {
+        } else if ((char2 === '"' || char2 === "'") && inBrackets) {
           if (!inQuotes) {
             inQuotes = true;
-            quoteChar = char3;
-          } else if (char3 === quoteChar) {
+            quoteChar = char2;
+          } else if (char2 === quoteChar) {
             inQuotes = false;
             quoteChar = "";
           } else {
-            current += char3;
+            current += char2;
           }
         } else {
-          current += char3;
+          current += char2;
         }
       }
       if (current) {
@@ -807,18 +807,18 @@ var require_redact = __commonJS({
       let inQuotes = false;
       let quoteChar = "";
       for (let i5 = 0; i5 < path3.length; i5++) {
-        const char3 = path3[i5];
-        if ((char3 === '"' || char3 === "'") && bracketCount > 0) {
+        const char2 = path3[i5];
+        if ((char2 === '"' || char2 === "'") && bracketCount > 0) {
           if (!inQuotes) {
             inQuotes = true;
-            quoteChar = char3;
-          } else if (char3 === quoteChar) {
+            quoteChar = char2;
+          } else if (char2 === quoteChar) {
             inQuotes = false;
             quoteChar = "";
           }
-        } else if (char3 === "[" && !inQuotes) {
+        } else if (char2 === "[" && !inQuotes) {
           bracketCount++;
-        } else if (char3 === "]" && !inQuotes) {
+        } else if (char2 === "]" && !inQuotes) {
           bracketCount--;
           if (bracketCount < 0) {
             throw new Error(`Invalid redaction path (${path3})`);
@@ -1050,13 +1050,13 @@ var require_time = __commonJS({
       const secondsSinceEpoch = currentTimeNs / NS_PER_SEC;
       const nanosWithinSecond = currentTimeNs % NS_PER_SEC;
       const msSinceEpoch = Number(secondsSinceEpoch * 1000n + nanosWithinSecond / 1000000n);
-      const date8 = new Date(msSinceEpoch);
-      const year2 = date8.getUTCFullYear();
-      const month = (date8.getUTCMonth() + 1).toString().padStart(2, "0");
-      const day = date8.getUTCDate().toString().padStart(2, "0");
-      const hours = date8.getUTCHours().toString().padStart(2, "0");
-      const minutes = date8.getUTCMinutes().toString().padStart(2, "0");
-      const seconds = date8.getUTCSeconds().toString().padStart(2, "0");
+      const date7 = new Date(msSinceEpoch);
+      const year2 = date7.getUTCFullYear();
+      const month = (date7.getUTCMonth() + 1).toString().padStart(2, "0");
+      const day = date7.getUTCDate().toString().padStart(2, "0");
+      const hours = date7.getUTCHours().toString().padStart(2, "0");
+      const minutes = date7.getUTCMinutes().toString().padStart(2, "0");
+      const seconds = date7.getUTCSeconds().toString().padStart(2, "0");
       return `,"time":"${year2}-${month}-${day}T${hours}:${minutes}:${seconds}.${nanosWithinSecond.toString().padStart(9, "0")}Z"`;
     };
     module.exports = { nullTime, epochTime, unixTime, isoTime, isoTimeNano };
@@ -2036,7 +2036,7 @@ var require_indexes = __commonJS({
 var require_thread_stream = __commonJS({
   "../../node_modules/.pnpm/thread-stream@3.1.0/node_modules/thread-stream/index.js"(exports, module) {
     "use strict";
-    var { version: version5 } = require_package();
+    var { version: version4 } = require_package();
     var { EventEmitter: EventEmitter2 } = __require("events");
     var { Worker } = __require("worker_threads");
     var { join: join7 } = __require("path");
@@ -2085,7 +2085,7 @@ var require_thread_stream = __commonJS({
           stateBuf: stream[kImpl].stateBuf,
           workerData: {
             $context: {
-              threadStreamVersion: version5
+              threadStreamVersion: version4
             },
             ...workerData
           }
@@ -2667,14 +2667,14 @@ var require_tools = __commonJS({
       let result = "";
       let last = 0;
       let found = false;
-      let point3 = 255;
+      let point2 = 255;
       const l3 = str2.length;
       if (l3 > 100) {
         return JSON.stringify(str2);
       }
-      for (var i5 = 0; i5 < l3 && point3 >= 32; i5++) {
-        point3 = str2.charCodeAt(i5);
-        if (point3 === 34 || point3 === 92) {
+      for (var i5 = 0; i5 < l3 && point2 >= 32; i5++) {
+        point2 = str2.charCodeAt(i5);
+        if (point2 === 34 || point2 === 92) {
           result += str2.slice(last, i5) + "\\";
           last = i5;
           found = true;
@@ -2685,16 +2685,16 @@ var require_tools = __commonJS({
       } else {
         result += str2.slice(last);
       }
-      return point3 < 32 ? JSON.stringify(str2) : '"' + result + '"';
+      return point2 < 32 ? JSON.stringify(str2) : '"' + result + '"';
     }
-    function asJson(obj, msg, num, time6) {
+    function asJson(obj, msg, num, time5) {
       if (asJsonChan.hasSubscribers === false) {
-        return _asJson.call(this, obj, msg, num, time6);
+        return _asJson.call(this, obj, msg, num, time5);
       }
       const store2 = { instance: this, arguments };
-      return asJsonChan.traceSync(_asJson, store2, this, obj, msg, num, time6);
+      return asJsonChan.traceSync(_asJson, store2, this, obj, msg, num, time5);
     }
-    function _asJson(obj, msg, num, time6) {
+    function _asJson(obj, msg, num, time5) {
       const stringify3 = this[stringifySym];
       const stringifySafe = this[stringifySafeSym];
       const stringifiers = this[stringifiersSym];
@@ -2704,7 +2704,7 @@ var require_tools = __commonJS({
       const formatters2 = this[formattersSym];
       const messageKey = this[messageKeySym];
       const errorKey = this[errorKeySym];
-      let data = this[lsCacheSym][num] + time6;
+      let data = this[lsCacheSym][num] + time5;
       data = data + chindings;
       let value;
       if (formatters2.log) {
@@ -3195,7 +3195,7 @@ var require_proto = __commonJS({
       noop: noop2
     } = require_tools();
     var {
-      version: version5
+      version: version4
     } = require_meta();
     var redaction = require_redaction();
     var constructor = class Pino {
@@ -3207,7 +3207,7 @@ var require_proto = __commonJS({
       setBindings,
       flush: flush2,
       isLevelEnabled,
-      version: version5,
+      version: version4,
       get level() {
         return this[getLevelSym]();
       },
@@ -3531,7 +3531,7 @@ var require_safe_stable_stringify = __commonJS({
         }
       }
       const circularValue = getCircularValueOption(options);
-      const bigint7 = getBooleanOption(options, "bigint");
+      const bigint6 = getBooleanOption(options, "bigint");
       const deterministic = getDeterministicOption(options);
       const comparator = typeof deterministic === "function" ? deterministic : void 0;
       const maximumDepth = getPositiveIntegerOption(options, "maximumDepth");
@@ -3639,7 +3639,7 @@ ${originalIndentation}`;
           case "undefined":
             return void 0;
           case "bigint":
-            if (bigint7) {
+            if (bigint6) {
               return String(value);
             }
           // fallthrough
@@ -3730,7 +3730,7 @@ ${originalIndentation}`;
           case "undefined":
             return void 0;
           case "bigint":
-            if (bigint7) {
+            if (bigint6) {
               return String(value);
             }
           // fallthrough
@@ -3842,7 +3842,7 @@ ${originalIndentation}`;
           case "undefined":
             return void 0;
           case "bigint":
-            if (bigint7) {
+            if (bigint6) {
               return String(value);
             }
           // fallthrough
@@ -3938,7 +3938,7 @@ ${originalIndentation}`;
           case "undefined":
             return void 0;
           case "bigint":
-            if (bigint7) {
+            if (bigint6) {
               return String(value);
             }
           // fallthrough
@@ -4159,7 +4159,7 @@ var require_pino = __commonJS({
     var stdSerializers = require_pino_std_serializers();
     var caller = require_caller();
     var redaction = require_redaction();
-    var time6 = require_time();
+    var time5 = require_time();
     var proto = require_proto();
     var symbols = require_symbols();
     var { configure: configure2 } = require_safe_stable_stringify();
@@ -4174,7 +4174,7 @@ var require_pino = __commonJS({
       normalizeDestFileDescriptor,
       noop: noop2
     } = require_tools();
-    var { version: version5 } = require_meta();
+    var { version: version4 } = require_meta();
     var {
       chindingsSym,
       redactFmtSym,
@@ -4200,7 +4200,7 @@ var require_pino = __commonJS({
       mixinMergeStrategySym,
       msgPrefixSym
     } = symbols;
-    var { epochTime, nullTime } = time6;
+    var { epochTime, nullTime } = time5;
     var { pid } = process;
     var hostname2 = os2.hostname();
     var defaultErrorSerializer = stdSerializers.err;
@@ -4246,7 +4246,7 @@ var require_pino = __commonJS({
         redact,
         crlf,
         serializers: serializers2,
-        timestamp: timestamp3,
+        timestamp: timestamp2,
         messageKey,
         errorKey,
         nestedKey,
@@ -4296,8 +4296,8 @@ var require_pino = __commonJS({
           chindings = coreChindings(Object.assign({}, base2, { name: name2 }));
         }
       }
-      const time7 = timestamp3 instanceof Function ? timestamp3 : timestamp3 ? epochTime : nullTime;
-      const timeSliceIndex = time7().indexOf(":") + 1;
+      const time6 = timestamp2 instanceof Function ? timestamp2 : timestamp2 ? epochTime : nullTime;
+      const timeSliceIndex = time6().indexOf(":") + 1;
       if (useOnlyCustomLevels && !customLevels) throw Error("customLevels is required if useOnlyCustomLevels is set true");
       if (mixin && typeof mixin !== "function") throw Error(`Unknown mixin type "${typeof mixin}" - expected "function"`);
       if (msgPrefix && typeof msgPrefix !== "string") throw Error(`Unknown msgPrefix type "${typeof msgPrefix}" - expected "string"`);
@@ -4313,7 +4313,7 @@ var require_pino = __commonJS({
         [levelCompSym]: levelCompFunc,
         [useOnlyCustomLevelsSym]: useOnlyCustomLevels,
         [streamSym]: stream,
-        [timeSym]: time7,
+        [timeSym]: time6,
         [timeSliceIndexSym]: timeSliceIndex,
         [stringifySym]: stringify2,
         [stringifySafeSym]: stringifySafe,
@@ -4353,9 +4353,9 @@ var require_pino = __commonJS({
     module.exports.multistream = require_multistream();
     module.exports.levels = mappings();
     module.exports.stdSerializers = serializers;
-    module.exports.stdTimeFunctions = Object.assign({}, time6);
+    module.exports.stdTimeFunctions = Object.assign({}, time5);
     module.exports.symbols = symbols;
-    module.exports.version = version5;
+    module.exports.version = version4;
     module.exports.default = pino2;
     module.exports.pino = pino2;
   }
@@ -4932,10 +4932,10 @@ var require_supports_color = __commonJS({
         return 3;
       }
       if ("TERM_PROGRAM" in env2) {
-        const version5 = parseInt((env2.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+        const version4 = parseInt((env2.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
         switch (env2.TERM_PROGRAM) {
           case "iTerm.app":
-            return version5 >= 3 ? 3 : 2;
+            return version4 >= 3 ? 3 : 2;
           case "Apple_Terminal":
             return 2;
         }
@@ -5289,12 +5289,12 @@ var require_depd = __commonJS({
     }
     function callSiteLocation(callSite) {
       var file2 = callSite.getFileName() || "<anonymous>";
-      var line3 = callSite.getLineNumber();
+      var line2 = callSite.getLineNumber();
       var colm = callSite.getColumnNumber();
       if (callSite.isEval()) {
         file2 = callSite.getEvalOrigin() + ", " + file2;
       }
-      var site = [file2, line3, colm];
+      var site = [file2, line2, colm];
       site.callSite = callSite;
       site.name = callSite.getFunctionName();
       return site;
@@ -5316,8 +5316,8 @@ var require_depd = __commonJS({
       return typeName && callSite.getMethodName() ? typeName + "." + funcName : funcName;
     }
     function formatPlain(msg, caller, stack) {
-      var timestamp3 = (/* @__PURE__ */ new Date()).toUTCString();
-      var formatted = timestamp3 + " " + this._namespace + " deprecated " + msg;
+      var timestamp2 = (/* @__PURE__ */ new Date()).toUTCString();
+      var formatted = timestamp2 + " " + this._namespace + " deprecated " + msg;
       if (this._traced) {
         for (var i5 = 0; i5 < stack.length; i5++) {
           formatted += "\n    at " + stack[i5].toString();
@@ -5809,10 +5809,10 @@ var require_http_errors = __commonJS({
       return ServerError;
     }
     function nameFunc(func, name2) {
-      var desc4 = Object.getOwnPropertyDescriptor(func, "name");
-      if (desc4 && desc4.configurable) {
-        desc4.value = name2;
-        Object.defineProperty(func, "name", desc4);
+      var desc3 = Object.getOwnPropertyDescriptor(func, "name");
+      if (desc3 && desc3.configurable) {
+        desc3.value = name2;
+        Object.defineProperty(func, "name", desc3);
       }
     }
     function populateConstructorExports(exports2, codes, HttpError) {
@@ -20086,11 +20086,11 @@ var require_json = __commonJS({
     var debug = require_src()("body-parser:json");
     var read = require_read();
     var { normalizeOptions } = require_utils();
-    module.exports = json4;
+    module.exports = json3;
     var FIRST_CHAR_REGEXP = /^[\x20\x09\x0a\x0d]*([^\x20\x09\x0a\x0d])/;
     var JSON_SYNTAX_CHAR = "#";
     var JSON_SYNTAX_REGEXP = /#+/g;
-    function json4(options) {
+    function json3(options) {
       const normalizedOptions = normalizeOptions(options, "application/json");
       var reviver = options?.reviver;
       var strict = options?.strict !== false;
@@ -20124,8 +20124,8 @@ var require_json = __commonJS({
         read(req, res, next, parse4, debug, readOptions);
       };
     }
-    function createStrictSyntaxError(str2, char3) {
-      var index2 = str2.indexOf(char3);
+    function createStrictSyntaxError(str2, char2) {
+      var index2 = str2.indexOf(char2);
       var partial2 = "";
       if (index2 !== -1) {
         partial2 = str2.substring(0, index2) + JSON_SYNTAX_CHAR.repeat(str2.length - index2);
@@ -20190,8 +20190,8 @@ var require_text = __commonJS({
     var debug = require_src()("body-parser:text");
     var read = require_read();
     var { normalizeOptions, passthrough } = require_utils();
-    module.exports = text3;
-    function text3(options) {
+    module.exports = text2;
+    function text2(options) {
       const normalizedOptions = normalizeOptions(options, "text/plain");
       return function textParser(req, res, next) {
         read(req, res, next, passthrough, debug, normalizedOptions);
@@ -21256,14 +21256,14 @@ var require_get = __commonJS({
         throw e5;
       }
     }
-    var desc4 = !!hasProtoAccessor && gOPD && gOPD(
+    var desc3 = !!hasProtoAccessor && gOPD && gOPD(
       Object.prototype,
       /** @type {keyof typeof Object.prototype} */
       "__proto__"
     );
     var $Object = Object;
     var $getPrototypeOf = $Object.getPrototypeOf;
-    module.exports = desc4 && typeof desc4.get === "function" ? callBind([desc4.get]) : typeof $getPrototypeOf === "function" ? (
+    module.exports = desc3 && typeof desc3.get === "function" ? callBind([desc3.get]) : typeof $getPrototypeOf === "function" ? (
       /** @type {import('./get')} */
       function getDunder(value) {
         return $getPrototypeOf(value == null ? value : $Object(value));
@@ -21613,10 +21613,10 @@ var require_get_intrinsic = __commonJS({
             return void undefined2;
           }
           if ($gOPD && i5 + 1 >= parts.length) {
-            var desc4 = $gOPD(value, part);
-            isOwn = !!desc4;
-            if (isOwn && "get" in desc4 && !("originalValue" in desc4.get)) {
-              value = desc4.get;
+            var desc3 = $gOPD(value, part);
+            isOwn = !!desc3;
+            if (isOwn && "get" in desc3 && !("originalValue" in desc3.get)) {
+              value = desc3.get;
             } else {
               value = value[part];
             }
@@ -22160,8 +22160,8 @@ var require_stringify = __commonJS({
       formatter: formats.formatters[defaultFormat],
       // deprecated
       indices: false,
-      serializeDate: function serializeDate(date8) {
-        return toISO.call(date8);
+      serializeDate: function serializeDate(date7) {
+        return toISO.call(date7);
       },
       skipNulls: false,
       strictNullHandling: false
@@ -23139,8 +23139,8 @@ var require_view = __commonJS({
     var extname = path3.extname;
     var join7 = path3.join;
     var resolve = path3.resolve;
-    module.exports = View3;
-    function View3(name2, options) {
+    module.exports = View2;
+    function View2(name2, options) {
       var opts = options || {};
       this.defaultEngine = opts.defaultEngine;
       this.ext = extname(name2);
@@ -23166,7 +23166,7 @@ var require_view = __commonJS({
       this.engine = opts.engines[this.ext];
       this.path = this.lookup(fileName);
     }
-    View3.prototype.lookup = function lookup(name2) {
+    View2.prototype.lookup = function lookup(name2) {
       var path4;
       var roots = [].concat(this.root);
       debug('lookup "%s"', name2);
@@ -23179,7 +23179,7 @@ var require_view = __commonJS({
       }
       return path4;
     };
-    View3.prototype.render = function render2(options, callback) {
+    View2.prototype.render = function render2(options, callback) {
       var sync = true;
       debug('render "%s"', this.path);
       this.engine(this.path, options, function onRender() {
@@ -23197,7 +23197,7 @@ var require_view = __commonJS({
       });
       sync = false;
     };
-    View3.prototype.resolve = function resolve2(dir, file2) {
+    View2.prototype.resolve = function resolve2(dir, file2) {
       var ext = this.ext;
       var path4 = join7(dir, file2);
       var stat = tryStat(path4);
@@ -23415,7 +23415,7 @@ var require_ipaddr = __commonJS({
           return ipaddr.IPv6.parse("::ffff:" + this.toString());
         };
         IPv4.prototype.prefixLengthFromSubnetMask = function() {
-          var cidr3, i5, k5, octet, stop, zeros, zerotable;
+          var cidr2, i5, k5, octet, stop, zeros, zerotable;
           zerotable = {
             0: 8,
             128: 7,
@@ -23427,7 +23427,7 @@ var require_ipaddr = __commonJS({
             254: 1,
             255: 0
           };
-          cidr3 = 0;
+          cidr2 = 0;
           stop = false;
           for (i5 = k5 = 3; k5 >= 0; i5 = k5 += -1) {
             octet = this.octets[i5];
@@ -23439,12 +23439,12 @@ var require_ipaddr = __commonJS({
               if (zeros !== 8) {
                 stop = true;
               }
-              cidr3 += zeros;
+              cidr2 += zeros;
             } else {
               return null;
             }
           }
-          return 32 - cidr3;
+          return 32 - cidr2;
         };
         return IPv4;
       })();
@@ -23622,7 +23622,7 @@ var require_ipaddr = __commonJS({
           return new ipaddr.IPv4([high >> 8, high & 255, low >> 8, low & 255]);
         };
         IPv6.prototype.prefixLengthFromSubnetMask = function() {
-          var cidr3, i5, k5, part, stop, zeros, zerotable;
+          var cidr2, i5, k5, part, stop, zeros, zerotable;
           zerotable = {
             0: 16,
             32768: 15,
@@ -23642,7 +23642,7 @@ var require_ipaddr = __commonJS({
             65534: 1,
             65535: 0
           };
-          cidr3 = 0;
+          cidr2 = 0;
           stop = false;
           for (i5 = k5 = 7; k5 >= 0; i5 = k5 += -1) {
             part = this.parts[i5];
@@ -23654,12 +23654,12 @@ var require_ipaddr = __commonJS({
               if (zeros !== 16) {
                 stop = true;
               }
-              cidr3 += zeros;
+              cidr2 += zeros;
             } else {
               return null;
             }
           }
-          return 128 - cidr3;
+          return 128 - cidr2;
         };
         return IPv6;
       })();
@@ -23831,11 +23831,11 @@ var require_ipaddr = __commonJS({
         return new this(octets);
       };
       ipaddr.IPv4.broadcastAddressFromCIDR = function(string4) {
-        var cidr3, error41, i5, ipInterfaceOctets, octets, subnetMaskOctets;
+        var cidr2, error41, i5, ipInterfaceOctets, octets, subnetMaskOctets;
         try {
-          cidr3 = this.parseCIDR(string4);
-          ipInterfaceOctets = cidr3[0].toByteArray();
-          subnetMaskOctets = this.subnetMaskFromPrefixLength(cidr3[1]).toByteArray();
+          cidr2 = this.parseCIDR(string4);
+          ipInterfaceOctets = cidr2[0].toByteArray();
+          subnetMaskOctets = this.subnetMaskFromPrefixLength(cidr2[1]).toByteArray();
           octets = [];
           i5 = 0;
           while (i5 < 4) {
@@ -23849,11 +23849,11 @@ var require_ipaddr = __commonJS({
         }
       };
       ipaddr.IPv4.networkAddressFromCIDR = function(string4) {
-        var cidr3, error41, i5, ipInterfaceOctets, octets, subnetMaskOctets;
+        var cidr2, error41, i5, ipInterfaceOctets, octets, subnetMaskOctets;
         try {
-          cidr3 = this.parseCIDR(string4);
-          ipInterfaceOctets = cidr3[0].toByteArray();
-          subnetMaskOctets = this.subnetMaskFromPrefixLength(cidr3[1]).toByteArray();
+          cidr2 = this.parseCIDR(string4);
+          ipInterfaceOctets = cidr2[0].toByteArray();
+          subnetMaskOctets = this.subnetMaskFromPrefixLength(cidr2[1]).toByteArray();
           octets = [];
           i5 = 0;
           while (i5 < 4) {
@@ -24334,11 +24334,11 @@ var require_dist = __commonJS({
     exports.TokenData = TokenData;
     var PathError = class extends TypeError {
       constructor(message, originalPath) {
-        let text3 = message;
+        let text2 = message;
         if (originalPath)
-          text3 += `: ${originalPath}`;
-        text3 += `; visit https://git.new/pathToRegexpError for info`;
-        super(text3);
+          text2 += `: ${originalPath}`;
+        text2 += `; visit https://git.new/pathToRegexpError for info`;
+        super(text2);
         this.originalPath = originalPath;
       }
     };
@@ -25346,7 +25346,7 @@ var require_application = __commonJS({
     "use strict";
     var finalhandler = require_finalhandler();
     var debug = require_src()("express:application");
-    var View3 = require_view();
+    var View2 = require_view();
     var http3 = __require("node:http");
     var methods = require_utils3().methods;
     var compileETag = require_utils3().compileETag;
@@ -25405,7 +25405,7 @@ var require_application = __commonJS({
       this.locals = /* @__PURE__ */ Object.create(null);
       this.mountpath = "/";
       this.locals.settings = this.settings;
-      this.set("view", View3);
+      this.set("view", View2);
       this.set("views", resolve("views"));
       this.set("jsonp callback name", "callback");
       if (env2 === "production") {
@@ -25561,8 +25561,8 @@ var require_application = __commonJS({
         view = cache5[name2];
       }
       if (!view) {
-        var View4 = this.get("view");
-        view = new View4(name2, {
+        var View3 = this.get("view");
+        view = new View3(name2, {
           defaultEngine: this.get("view engine"),
           root: this.get("views"),
           engines
@@ -26237,9 +26237,9 @@ var require_fresh = __commonJS({
       }
       return true;
     }
-    function parseHttpDate(date8) {
-      var timestamp3 = date8 && Date.parse(date8);
-      return typeof timestamp3 === "number" ? timestamp3 : NaN;
+    function parseHttpDate(date7) {
+      var timestamp2 = date7 && Date.parse(date7);
+      return typeof timestamp2 === "number" ? timestamp2 : NaN;
     }
     function parseTokenList(str2) {
       var end = 0;
@@ -26406,7 +26406,7 @@ var require_request = __commonJS({
       var querystring = parse4(this).query;
       return queryparse(querystring);
     });
-    req.is = function is3(types3) {
+    req.is = function is2(types3) {
       var arr = types3;
       if (!Array.isArray(types3)) {
         arr = new Array(arguments.length);
@@ -26641,8 +26641,8 @@ var require_content_disposition = __commonJS({
       }
       return new ContentDisposition(type, params);
     }
-    function pencode(char3) {
-      return "%" + String(char3).charCodeAt(0).toString(16).toUpperCase();
+    function pencode(char2) {
+      return "%" + String(char2).charCodeAt(0).toString(16).toUpperCase();
     }
     function qstring(val) {
       var str2 = String(val);
@@ -26672,8 +26672,8 @@ var require_content_disposition = __commonJS({
       }
       return normalized.slice(start + 1, end);
     }
-    function isHexDigit(char3) {
-      const code = char3.charCodeAt(0);
+    function isHexDigit(char2) {
+      const code = char2.charCodeAt(0);
       return code >= 48 && code <= 57 || // 0-9
       code >= 65 && code <= 70 || // A-F
       code >= 97 && code <= 102;
@@ -27331,9 +27331,9 @@ var require_send = __commonJS({
       }
       return list2;
     }
-    function parseHttpDate(date8) {
-      var timestamp3 = date8 && Date.parse(date8);
-      return typeof timestamp3 === "number" ? timestamp3 : NaN;
+    function parseHttpDate(date7) {
+      var timestamp2 = date7 && Date.parse(date7);
+      return typeof timestamp2 === "number" ? timestamp2 : NaN;
     }
     function parseTokenList(str2) {
       var end = 0;
@@ -27569,7 +27569,7 @@ var require_response = __commonJS({
       }
       return this;
     };
-    res.json = function json4(obj) {
+    res.json = function json3(obj) {
       var app2 = this.app;
       var escape2 = app2.get("json escape");
       var replacer = app2.get("json replacer");
@@ -27894,9 +27894,9 @@ var require_response = __commonJS({
       file2.pipe(res2);
     }
     function stringify2(value, replacer, spaces, escape2) {
-      var json4 = replacer || spaces ? JSON.stringify(value, replacer, spaces) : JSON.stringify(value);
-      if (escape2 && typeof json4 === "string") {
-        json4 = json4.replace(/[<>&]/g, function(c5) {
+      var json3 = replacer || spaces ? JSON.stringify(value, replacer, spaces) : JSON.stringify(value);
+      if (escape2 && typeof json3 === "string") {
+        json3 = json3.replace(/[<>&]/g, function(c5) {
           switch (c5.charCodeAt(0)) {
             case 60:
               return "\\u003c";
@@ -27910,7 +27910,7 @@ var require_response = __commonJS({
           }
         });
       }
-      return json4;
+      return json3;
     }
   }
 });
@@ -30318,8 +30318,8 @@ var require_cookie2 = __commonJS({
        * @param {Date} date
        * @api public
        */
-      set expires(date8) {
-        this._expires = date8;
+      set expires(date7) {
+        this._expires = date7;
         this.originalMaxAge = this.maxAge;
       },
       /**
@@ -31038,8 +31038,8 @@ var require_postgres_array = __commonJS({
       consumeDimensions() {
         if (this.source[0] === "[") {
           while (!this.isEof()) {
-            var char3 = this.nextCharacter();
-            if (char3.value === "=") break;
+            var char2 = this.nextCharacter();
+            if (char2.value === "=") break;
           }
         }
       }
@@ -31126,23 +31126,23 @@ var require_postgres_date = __commonJS({
       var second = parseInt(matches[6], 10);
       var ms = matches[7];
       ms = ms ? 1e3 * parseFloat(ms) : 0;
-      var date8;
+      var date7;
       var offset = timeZoneOffset(isoDate);
       if (offset != null) {
-        date8 = new Date(Date.UTC(year2, month, day, hour, minute, second, ms));
+        date7 = new Date(Date.UTC(year2, month, day, hour, minute, second, ms));
         if (is0To99(year2)) {
-          date8.setUTCFullYear(year2);
+          date7.setUTCFullYear(year2);
         }
         if (offset !== 0) {
-          date8.setTime(date8.getTime() - offset);
+          date7.setTime(date7.getTime() - offset);
         }
       } else {
-        date8 = new Date(year2, month, day, hour, minute, second, ms);
+        date7 = new Date(year2, month, day, hour, minute, second, ms);
         if (is0To99(year2)) {
-          date8.setFullYear(year2);
+          date7.setFullYear(year2);
         }
       }
-      return date8;
+      return date7;
     };
     function getDate(isoDate) {
       var matches = DATE.exec(isoDate);
@@ -31156,11 +31156,11 @@ var require_postgres_date = __commonJS({
       }
       var month = parseInt(matches[2], 10) - 1;
       var day = matches[3];
-      var date8 = new Date(year2, month, day);
+      var date7 = new Date(year2, month, day);
       if (is0To99(year2)) {
-        date8.setFullYear(year2);
+        date7.setFullYear(year2);
       }
-      return date8;
+      return date7;
     }
     function timeZoneOffset(isoDate) {
       if (isoDate.endsWith("+00")) {
@@ -31275,9 +31275,9 @@ var require_postgres_interval = __commonJS({
       var microseconds = fraction + "000000".slice(fraction.length);
       return parseInt(microseconds, 10) / 1e3;
     }
-    function parse4(interval3) {
-      if (!interval3) return {};
-      var matches = INTERVAL.exec(interval3);
+    function parse4(interval2) {
+      if (!interval2) return {};
+      var matches = INTERVAL.exec(interval2);
       var isNegative = matches[8] === "-";
       return Object.keys(positions).reduce(function(parsed, property) {
         var position = positions[property];
@@ -31457,12 +31457,12 @@ var require_textParsers = __commonJS({
       if (value[0] !== "<" && value[1] !== "(") {
         return null;
       }
-      var point3 = "(";
+      var point2 = "(";
       var radius = "";
       var pointParsed = false;
       for (var i5 = 2; i5 < value.length - 1; i5++) {
         if (!pointParsed) {
-          point3 += value[i5];
+          point2 += value[i5];
         }
         if (value[i5] === ")") {
           pointParsed = true;
@@ -31475,7 +31475,7 @@ var require_textParsers = __commonJS({
         }
         radius += value[i5];
       }
-      var result = parsePoint(point3);
+      var result = parsePoint(point2);
       result.radius = parseFloat(radius);
       return result;
     };
@@ -32066,12 +32066,12 @@ var require_utils4 = __commonJS({
       }
       return JSON.stringify(val);
     }
-    function dateToString(date8) {
-      let offset = -date8.getTimezoneOffset();
-      let year2 = date8.getFullYear();
+    function dateToString(date7) {
+      let offset = -date7.getTimezoneOffset();
+      let year2 = date7.getFullYear();
       const isBCYear = year2 < 1;
       if (isBCYear) year2 = Math.abs(year2) + 1;
-      let ret = String(year2).padStart(4, "0") + "-" + String(date8.getMonth() + 1).padStart(2, "0") + "-" + String(date8.getDate()).padStart(2, "0") + "T" + String(date8.getHours()).padStart(2, "0") + ":" + String(date8.getMinutes()).padStart(2, "0") + ":" + String(date8.getSeconds()).padStart(2, "0") + "." + String(date8.getMilliseconds()).padStart(3, "0");
+      let ret = String(year2).padStart(4, "0") + "-" + String(date7.getMonth() + 1).padStart(2, "0") + "-" + String(date7.getDate()).padStart(2, "0") + "T" + String(date7.getHours()).padStart(2, "0") + ":" + String(date7.getMinutes()).padStart(2, "0") + ":" + String(date7.getSeconds()).padStart(2, "0") + "." + String(date7.getMilliseconds()).padStart(3, "0");
       if (offset < 0) {
         ret += "-";
         offset *= -1;
@@ -32082,11 +32082,11 @@ var require_utils4 = __commonJS({
       if (isBCYear) ret += " BC";
       return ret;
     }
-    function dateToStringUTC(date8) {
-      let year2 = date8.getUTCFullYear();
+    function dateToStringUTC(date7) {
+      let year2 = date7.getUTCFullYear();
       const isBCYear = year2 < 1;
       if (isBCYear) year2 = Math.abs(year2) + 1;
-      let ret = String(year2).padStart(4, "0") + "-" + String(date8.getUTCMonth() + 1).padStart(2, "0") + "-" + String(date8.getUTCDate()).padStart(2, "0") + "T" + String(date8.getUTCHours()).padStart(2, "0") + ":" + String(date8.getUTCMinutes()).padStart(2, "0") + ":" + String(date8.getUTCSeconds()).padStart(2, "0") + "." + String(date8.getUTCMilliseconds()).padStart(3, "0");
+      let ret = String(year2).padStart(4, "0") + "-" + String(date7.getUTCMonth() + 1).padStart(2, "0") + "-" + String(date7.getUTCDate()).padStart(2, "0") + "T" + String(date7.getUTCHours()).padStart(2, "0") + ":" + String(date7.getUTCMinutes()).padStart(2, "0") + ":" + String(date7.getUTCSeconds()).padStart(2, "0") + "." + String(date7.getUTCMilliseconds()).padStart(3, "0");
       ret += "+00:00";
       if (isBCYear) ret += " BC";
       return ret;
@@ -32158,12 +32158,12 @@ var require_utils_legacy = __commonJS({
       const outer = md5(Buffer.concat([Buffer.from(inner), salt]));
       return "md5" + outer;
     }
-    function sha256(text3) {
-      return nodeCrypto3.createHash("sha256").update(text3).digest();
+    function sha256(text2) {
+      return nodeCrypto3.createHash("sha256").update(text2).digest();
     }
-    function hashByName(hashName, text3) {
+    function hashByName(hashName, text2) {
       hashName = hashName.replace(/(\D)-/, "$1");
-      return nodeCrypto3.createHash(hashName).update(text3).digest();
+      return nodeCrypto3.createHash(hashName).update(text2).digest();
     }
     function hmacSha256(key, msg) {
       return nodeCrypto3.createHmac("sha256", key).update(msg).digest();
@@ -32216,11 +32216,11 @@ var require_utils_webcrypto = __commonJS({
       const outer = await md5(Buffer.concat([Buffer.from(inner), salt]));
       return "md5" + outer;
     }
-    async function sha256(text3) {
-      return await subtleCrypto.digest("SHA-256", text3);
+    async function sha256(text2) {
+      return await subtleCrypto.digest("SHA-256", text2);
     }
-    async function hashByName(hashName, text3) {
-      return await subtleCrypto.digest(hashName, text3);
+    async function hashByName(hashName, text2) {
+      return await subtleCrypto.digest(hashName, text2);
     }
     async function hmacSha256(keyBuffer, msg) {
       const key = await subtleCrypto.importKey("raw", keyBuffer, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
@@ -32441,21 +32441,21 @@ var require_sasl = __commonJS({
         throw new Error("SASL: SCRAM-SERVER-FINAL-MESSAGE: server signature does not match");
       }
     }
-    function isPrintableChars(text3) {
-      if (typeof text3 !== "string") {
+    function isPrintableChars(text2) {
+      if (typeof text2 !== "string") {
         throw new TypeError("SASL: text must be a string");
       }
-      return text3.split("").map((_, i5) => text3.charCodeAt(i5)).every((c5) => c5 >= 33 && c5 <= 43 || c5 >= 45 && c5 <= 126);
+      return text2.split("").map((_, i5) => text2.charCodeAt(i5)).every((c5) => c5 >= 33 && c5 <= 43 || c5 >= 45 && c5 <= 126);
     }
-    function isBase64(text3) {
-      return /^(?:[a-zA-Z0-9+/]{4})*(?:[a-zA-Z0-9+/]{2}==|[a-zA-Z0-9+/]{3}=)?$/.test(text3);
+    function isBase64(text2) {
+      return /^(?:[a-zA-Z0-9+/]{4})*(?:[a-zA-Z0-9+/]{2}==|[a-zA-Z0-9+/]{3}=)?$/.test(text2);
     }
-    function parseAttributePairs(text3) {
-      if (typeof text3 !== "string") {
+    function parseAttributePairs(text2) {
+      if (typeof text2 !== "string") {
         throw new TypeError("SASL: attribute pairs text must be a string");
       }
       return new Map(
-        text3.split(",").map((attrValue) => {
+        text2.split(",").map((attrValue) => {
           if (!/^.=/.test(attrValue)) {
             throw new Error("SASL: Invalid attribute pair entry");
           }
@@ -32964,12 +32964,12 @@ var require_result = __commonJS({
         }
         const row = {};
         for (let i5 = 0; i5 < fieldDescriptions.length; i5++) {
-          const desc4 = fieldDescriptions[i5];
-          row[desc4.name] = null;
+          const desc3 = fieldDescriptions[i5];
+          row[desc3.name] = null;
           if (this._types) {
-            this._parsers[i5] = this._types.getTypeParser(desc4.dataTypeID, desc4.format || "text");
+            this._parsers[i5] = this._types.getTypeParser(desc3.dataTypeID, desc3.format || "text");
           } else {
-            this._parsers[i5] = types3.getTypeParser(desc4.dataTypeID, desc4.format || "text");
+            this._parsers[i5] = types3.getTypeParser(desc3.dataTypeID, desc3.format || "text");
           }
         }
         this._prebuiltEmptyResultObject = { ...row };
@@ -33314,9 +33314,9 @@ var require_messages = __commonJS({
     };
     exports.ReadyForQueryMessage = ReadyForQueryMessage;
     var CommandCompleteMessage = class {
-      constructor(length, text3) {
+      constructor(length, text2) {
         this.length = length;
-        this.text = text3;
+        this.text = text2;
         this.name = "commandComplete";
       }
     };
@@ -33465,8 +33465,8 @@ var require_serializer = __commonJS({
         /* code.startup */
       );
     };
-    var query = (text3) => {
-      return writer.addCString(text3).flush(
+    var query = (text2) => {
+      return writer.addCString(text2).flush(
         81
         /* code.query */
       );
@@ -33586,8 +33586,8 @@ var require_serializer = __commonJS({
       return msg.name ? cstringMessage(68, `${msg.type}${msg.name || ""}`) : msg.type === "P" ? emptyDescribePortal : emptyDescribeStatement;
     };
     var close = (msg) => {
-      const text3 = `${msg.type}${msg.name || ""}`;
-      return cstringMessage(67, text3);
+      const text2 = `${msg.type}${msg.name || ""}`;
+      return cstringMessage(67, text2);
     };
     var copyData = (chunk) => {
       return writer.add(chunk).flush(
@@ -33859,8 +33859,8 @@ var require_parser = __commonJS({
       return new messages_1.ReadyForQueryMessage(LATEINIT_LENGTH, status);
     };
     var parseCommandCompleteMessage = (reader) => {
-      const text3 = reader.cstring();
-      return new messages_1.CommandCompleteMessage(LATEINIT_LENGTH, text3);
+      const text2 = reader.cstring();
+      return new messages_1.CommandCompleteMessage(LATEINIT_LENGTH, text2);
     };
     var parseCopyData = (reader, length) => {
       const chunk = reader.bytes(length - 4);
@@ -34227,8 +34227,8 @@ var require_connection = __commonJS({
         }
         return this.stream.write(buffer);
       }
-      query(text3) {
-        this._send(serialize.query(text3));
+      query(text2) {
+        this._send(serialize.query(text2));
       }
       // send parse message
       parse(query) {
@@ -34465,8 +34465,8 @@ var require_helper = __commonJS({
     module.exports.getPassword = function(connInfo, stream, cb) {
       var pass2;
       var lineStream = stream.pipe(split2());
-      function onLine(line3) {
-        var entry = parseLine(line3);
+      function onLine(line2) {
+        var entry = parseLine(line2);
         if (entry && isValidEntry(entry) && matcher(connInfo, entry)) {
           pass2 = entry[passKey];
           lineStream.end();
@@ -34484,8 +34484,8 @@ var require_helper = __commonJS({
       stream.on("error", onErr);
       lineStream.on("data", onLine).on("end", onEnd).on("error", onErr);
     };
-    var parseLine = module.exports.parseLine = function(line3) {
-      if (line3.length < 11 || line3.match(/^\s+#/)) {
+    var parseLine = module.exports.parseLine = function(line2) {
+      if (line2.length < 11 || line2.match(/^\s+#/)) {
         return null;
       }
       var curChar = "";
@@ -34496,15 +34496,15 @@ var require_helper = __commonJS({
       var obj = {};
       var isLastField = false;
       var addToObj = function(idx, i0, i1) {
-        var field = line3.substring(i0, i1);
+        var field = line2.substring(i0, i1);
         if (!Object.hasOwnProperty.call(process.env, "PGPASS_NO_DEESCAPE")) {
           field = field.replace(/\\([:\\])/g, "$1");
         }
         obj[fieldNames[idx]] = field;
       };
-      for (var i5 = 0; i5 < line3.length - 1; i5 += 1) {
-        curChar = line3.charAt(i5 + 1);
-        prevChar = line3.charAt(i5);
+      for (var i5 = 0; i5 < line2.length - 1; i5 += 1) {
+        curChar = line2.charAt(i5 + 1);
+        prevChar = line2.charAt(i5);
         isLastField = fieldIdx == nrOfFields - 1;
         if (isLastField) {
           addToObj(fieldIdx, startIdx);
@@ -35545,9 +35545,9 @@ var require_pg_pool = __commonJS({
         this._idle.push(new IdleItem(client, idleListener, tid));
         this._pulseQueue();
       }
-      query(text3, values, cb) {
-        if (typeof text3 === "function") {
-          const response2 = promisify2(this.Promise, text3);
+      query(text2, values, cb) {
+        if (typeof text2 === "function") {
+          const response2 = promisify2(this.Promise, text2);
           setImmediate(function() {
             return response2.callback(new Error("Passing a function as the first parameter to pool.query is not supported"));
           });
@@ -35575,7 +35575,7 @@ var require_pg_pool = __commonJS({
           client.once("error", onError);
           this.log("dispatching query");
           try {
-            client.query(text3, values, (err2, res) => {
+            client.query(text2, values, (err2, res) => {
               this.log("query dispatched");
               client.removeListener("error", onError);
               if (clientReleased) {
@@ -36840,8 +36840,8 @@ var init_ZodError = __esm({
       "not_finite"
     ]);
     quotelessJson = (obj) => {
-      const json4 = JSON.stringify(obj, null, 2);
-      return json4.replace(/"([^"]+)":/g, "$1:");
+      const json3 = JSON.stringify(obj, null, 2);
+      return json3.replace(/"([^"]+)":/g, "$1:");
     };
     ZodError = class _ZodError extends Error {
       get errors() {
@@ -37245,11 +37245,11 @@ function datetimeRegex(args) {
   regex = `${regex}(${opts.join("|")})`;
   return new RegExp(`^${regex}$`);
 }
-function isValidIP(ip, version5) {
-  if ((version5 === "v4" || !version5) && ipv4Regex.test(ip)) {
+function isValidIP(ip, version4) {
+  if ((version4 === "v4" || !version4) && ipv4Regex.test(ip)) {
     return true;
   }
-  if ((version5 === "v6" || !version5) && ipv6Regex.test(ip)) {
+  if ((version4 === "v6" || !version4) && ipv6Regex.test(ip)) {
     return true;
   }
   return false;
@@ -37276,11 +37276,11 @@ function isValidJWT(jwt2, alg) {
     return false;
   }
 }
-function isValidCidr(ip, version5) {
-  if ((version5 === "v4" || !version5) && ipv4CidrRegex.test(ip)) {
+function isValidCidr(ip, version4) {
+  if ((version4 === "v4" || !version4) && ipv4CidrRegex.test(ip)) {
     return true;
   }
-  if ((version5 === "v6" || !version5) && ipv6CidrRegex.test(ip)) {
+  if ((version4 === "v6" || !version4) && ipv6CidrRegex.test(ip)) {
     return true;
   }
   return false;
@@ -42423,8 +42423,8 @@ function createObjectAccessGroup(group4) {
   }
 }
 async function setObjectAclPolicy(objectFile, aclPolicy) {
-  const [exists3] = await objectFile.exists();
-  if (!exists3) {
+  const [exists2] = await objectFile.exists();
+  if (!exists2) {
     throw new Error(`Object not found: ${objectFile.name}`);
   }
   await objectFile.setMetadata({
@@ -42588,8 +42588,8 @@ var init_objectStorage = __esm({
           const { bucketName, objectName } = parseObjectPath(fullPath);
           const bucket = objectStorageClient.bucket(bucketName);
           const file2 = bucket.file(objectName);
-          const [exists3] = await file2.exists();
-          if (exists3) {
+          const [exists2] = await file2.exists();
+          if (exists2) {
             return file2;
           }
         }
@@ -43793,20 +43793,20 @@ var require_lodash = __commonJS({
           return shuffleSelf(copyArray(array2));
         }
         function assignMergeValue(object2, key, value) {
-          if (value !== undefined2 && !eq4(object2[key], value) || value === undefined2 && !(key in object2)) {
+          if (value !== undefined2 && !eq3(object2[key], value) || value === undefined2 && !(key in object2)) {
             baseAssignValue(object2, key, value);
           }
         }
         function assignValue(object2, key, value) {
           var objValue = object2[key];
-          if (!(hasOwnProperty.call(object2, key) && eq4(objValue, value)) || value === undefined2 && !(key in object2)) {
+          if (!(hasOwnProperty.call(object2, key) && eq3(objValue, value)) || value === undefined2 && !(key in object2)) {
             baseAssignValue(object2, key, value);
           }
         }
         function assocIndexOf(array2, key) {
           var length = array2.length;
           while (length--) {
-            if (eq4(array2[length][0], key)) {
+            if (eq3(array2[length][0], key)) {
               return length;
             }
           }
@@ -44584,7 +44584,7 @@ var require_lodash = __commonJS({
           var index2 = -1, length = array2.length, resIndex = 0, result2 = [];
           while (++index2 < length) {
             var value = array2[index2], computed = iteratee2 ? iteratee2(value) : value;
-            if (!index2 || !eq4(computed, seen)) {
+            if (!index2 || !eq3(computed, seen)) {
               var seen = computed;
               result2[resIndex++] = value === 0 ? 0 : value;
             }
@@ -45280,7 +45280,7 @@ var require_lodash = __commonJS({
           return setWrapToString(setter(result2, newData), func, bitmask);
         }
         function customDefaultsAssignIn(objValue, srcValue, key, object2) {
-          if (objValue === undefined2 || eq4(objValue, objectProto[key]) && !hasOwnProperty.call(object2, key)) {
+          if (objValue === undefined2 || eq3(objValue, objectProto[key]) && !hasOwnProperty.call(object2, key)) {
             return srcValue;
           }
           return objValue;
@@ -45355,7 +45355,7 @@ var require_lodash = __commonJS({
             case boolTag:
             case dateTag:
             case numberTag:
-              return eq4(+object2, +other);
+              return eq3(+object2, +other);
             case errorTag:
               return object2.name == other.name && object2.message == other.message;
             case regexpTag:
@@ -45639,7 +45639,7 @@ var require_lodash = __commonJS({
           }
           var type = typeof index2;
           if (type == "number" ? isArrayLike(object2) && isIndex(index2, object2.length) : type == "string" && index2 in object2) {
-            return eq4(object2[index2], value);
+            return eq3(object2[index2], value);
           }
           return false;
         }
@@ -46122,7 +46122,7 @@ var require_lodash = __commonJS({
           var length = array2 == null ? 0 : array2.length;
           if (length) {
             var index2 = baseSortedIndex(array2, value);
-            if (index2 < length && eq4(array2[index2], value)) {
+            if (index2 < length && eq3(array2[index2], value)) {
               return index2;
             }
           }
@@ -46138,7 +46138,7 @@ var require_lodash = __commonJS({
           var length = array2 == null ? 0 : array2.length;
           if (length) {
             var index2 = baseSortedIndex(array2, value, true) - 1;
-            if (eq4(array2[index2], value)) {
+            if (eq3(array2[index2], value)) {
               return index2;
             }
           }
@@ -46176,7 +46176,7 @@ var require_lodash = __commonJS({
         function takeWhile(array2, predicate) {
           return array2 && array2.length ? baseWhile(array2, getIteratee(predicate, 3)) : [];
         }
-        var union4 = baseRest(function(arrays) {
+        var union3 = baseRest(function(arrays) {
           return baseUniq(baseFlatten(arrays, 1, isArrayLikeObject, true));
         });
         var unionBy = baseRest(function(arrays) {
@@ -46565,37 +46565,37 @@ var require_lodash = __commonJS({
             maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
             trailing = "trailing" in options ? !!options.trailing : trailing;
           }
-          function invokeFunc(time6) {
+          function invokeFunc(time5) {
             var args = lastArgs, thisArg = lastThis;
             lastArgs = lastThis = undefined2;
-            lastInvokeTime = time6;
+            lastInvokeTime = time5;
             result2 = func.apply(thisArg, args);
             return result2;
           }
-          function leadingEdge(time6) {
-            lastInvokeTime = time6;
+          function leadingEdge(time5) {
+            lastInvokeTime = time5;
             timerId = setTimeout2(timerExpired, wait);
-            return leading ? invokeFunc(time6) : result2;
+            return leading ? invokeFunc(time5) : result2;
           }
-          function remainingWait(time6) {
-            var timeSinceLastCall = time6 - lastCallTime, timeSinceLastInvoke = time6 - lastInvokeTime, timeWaiting = wait - timeSinceLastCall;
+          function remainingWait(time5) {
+            var timeSinceLastCall = time5 - lastCallTime, timeSinceLastInvoke = time5 - lastInvokeTime, timeWaiting = wait - timeSinceLastCall;
             return maxing ? nativeMin(timeWaiting, maxWait - timeSinceLastInvoke) : timeWaiting;
           }
-          function shouldInvoke(time6) {
-            var timeSinceLastCall = time6 - lastCallTime, timeSinceLastInvoke = time6 - lastInvokeTime;
+          function shouldInvoke(time5) {
+            var timeSinceLastCall = time5 - lastCallTime, timeSinceLastInvoke = time5 - lastInvokeTime;
             return lastCallTime === undefined2 || timeSinceLastCall >= wait || timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= maxWait;
           }
           function timerExpired() {
-            var time6 = now();
-            if (shouldInvoke(time6)) {
-              return trailingEdge(time6);
+            var time5 = now();
+            if (shouldInvoke(time5)) {
+              return trailingEdge(time5);
             }
-            timerId = setTimeout2(timerExpired, remainingWait(time6));
+            timerId = setTimeout2(timerExpired, remainingWait(time5));
           }
-          function trailingEdge(time6) {
+          function trailingEdge(time5) {
             timerId = undefined2;
             if (trailing && lastArgs) {
-              return invokeFunc(time6);
+              return invokeFunc(time5);
             }
             lastArgs = lastThis = undefined2;
             return result2;
@@ -46611,10 +46611,10 @@ var require_lodash = __commonJS({
             return timerId === undefined2 ? result2 : trailingEdge(now());
           }
           function debounced() {
-            var time6 = now(), isInvoking = shouldInvoke(time6);
+            var time5 = now(), isInvoking = shouldInvoke(time5);
             lastArgs = arguments;
             lastThis = this;
-            lastCallTime = time6;
+            lastCallTime = time5;
             if (isInvoking) {
               if (timerId === undefined2) {
                 return leadingEdge(lastCallTime);
@@ -46769,11 +46769,11 @@ var require_lodash = __commonJS({
         function conformsTo(object2, source) {
           return source == null || baseConformsTo(object2, source, keys(source));
         }
-        function eq4(value, other) {
+        function eq3(value, other) {
           return value === other || value !== value && other !== other;
         }
-        var gt5 = createRelationalOperation(baseGt);
-        var gte3 = createRelationalOperation(function(value, other) {
+        var gt4 = createRelationalOperation(baseGt);
+        var gte2 = createRelationalOperation(function(value, other) {
           return value >= other;
         });
         var isArguments = baseIsArguments(/* @__PURE__ */ (function() {
@@ -46873,7 +46873,7 @@ var require_lodash = __commonJS({
           }
           return baseIsNative(value);
         }
-        function isNull3(value) {
+        function isNull2(value) {
           return value === null;
         }
         function isNil(value) {
@@ -46914,8 +46914,8 @@ var require_lodash = __commonJS({
         function isWeakSet(value) {
           return isObjectLike(value) && baseGetTag(value) == weakSetTag;
         }
-        var lt4 = createRelationalOperation(baseLt);
-        var lte3 = createRelationalOperation(function(value, other) {
+        var lt3 = createRelationalOperation(baseLt);
+        var lte2 = createRelationalOperation(function(value, other) {
           return value <= other;
         });
         function toArray(value) {
@@ -47017,7 +47017,7 @@ var require_lodash = __commonJS({
             while (++propsIndex < propsLength) {
               var key = props[propsIndex];
               var value = object2[key];
-              if (value === undefined2 || eq4(value, objectProto[key]) && !hasOwnProperty.call(object2, key)) {
+              if (value === undefined2 || eq3(value, objectProto[key]) && !hasOwnProperty.call(object2, key)) {
                 object2[key] = source[key];
               }
             }
@@ -47855,7 +47855,7 @@ var require_lodash = __commonJS({
         lodash.toPlainObject = toPlainObject;
         lodash.transform = transform3;
         lodash.unary = unary;
-        lodash.union = union4;
+        lodash.union = union3;
         lodash.unionBy = unionBy;
         lodash.unionWith = unionWith;
         lodash.uniq = uniq;
@@ -47898,7 +47898,7 @@ var require_lodash = __commonJS({
         lodash.defaultTo = defaultTo;
         lodash.divide = divide;
         lodash.endsWith = endsWith;
-        lodash.eq = eq4;
+        lodash.eq = eq3;
         lodash.escape = escape2;
         lodash.escapeRegExp = escapeRegExp;
         lodash.every = every;
@@ -47916,8 +47916,8 @@ var require_lodash = __commonJS({
         lodash.forOwn = forOwn;
         lodash.forOwnRight = forOwnRight;
         lodash.get = get2;
-        lodash.gt = gt5;
-        lodash.gte = gte3;
+        lodash.gt = gt4;
+        lodash.gte = gte2;
         lodash.has = has2;
         lodash.hasIn = hasIn;
         lodash.head = head;
@@ -47949,7 +47949,7 @@ var require_lodash = __commonJS({
         lodash.isNaN = isNaN2;
         lodash.isNative = isNative;
         lodash.isNil = isNil;
-        lodash.isNull = isNull3;
+        lodash.isNull = isNull2;
         lodash.isNumber = isNumber;
         lodash.isObject = isObject3;
         lodash.isObjectLike = isObjectLike;
@@ -47969,8 +47969,8 @@ var require_lodash = __commonJS({
         lodash.lastIndexOf = lastIndexOf;
         lodash.lowerCase = lowerCase;
         lodash.lowerFirst = lowerFirst;
-        lodash.lt = lt4;
-        lodash.lte = lte3;
+        lodash.lt = lt3;
+        lodash.lte = lte2;
         lodash.max = max2;
         lodash.maxBy = maxBy;
         lodash.mean = mean;
@@ -48473,10 +48473,10 @@ var require_baseAssignValue = __commonJS({
 // ../../node_modules/.pnpm/lodash@4.18.1/node_modules/lodash/eq.js
 var require_eq = __commonJS({
   "../../node_modules/.pnpm/lodash@4.18.1/node_modules/lodash/eq.js"(exports, module) {
-    function eq4(value, other) {
+    function eq3(value, other) {
       return value === other || value !== value && other !== other;
     }
-    module.exports = eq4;
+    module.exports = eq3;
   }
 });
 
@@ -48484,12 +48484,12 @@ var require_eq = __commonJS({
 var require_assignValue = __commonJS({
   "../../node_modules/.pnpm/lodash@4.18.1/node_modules/lodash/_assignValue.js"(exports, module) {
     var baseAssignValue = require_baseAssignValue();
-    var eq4 = require_eq();
+    var eq3 = require_eq();
     var objectProto = Object.prototype;
     var hasOwnProperty = objectProto.hasOwnProperty;
     function assignValue(object2, key, value) {
       var objValue = object2[key];
-      if (!(hasOwnProperty.call(object2, key) && eq4(objValue, value)) || value === void 0 && !(key in object2)) {
+      if (!(hasOwnProperty.call(object2, key) && eq3(objValue, value)) || value === void 0 && !(key in object2)) {
         baseAssignValue(object2, key, value);
       }
     }
@@ -48697,7 +48697,7 @@ var require_isIndex = __commonJS({
 // ../../node_modules/.pnpm/lodash@4.18.1/node_modules/lodash/_isIterateeCall.js
 var require_isIterateeCall = __commonJS({
   "../../node_modules/.pnpm/lodash@4.18.1/node_modules/lodash/_isIterateeCall.js"(exports, module) {
-    var eq4 = require_eq();
+    var eq3 = require_eq();
     var isArrayLike = require_isArrayLike();
     var isIndex = require_isIndex();
     var isObject3 = require_isObject();
@@ -48707,7 +48707,7 @@ var require_isIterateeCall = __commonJS({
       }
       var type = typeof index2;
       if (type == "number" ? isArrayLike(object2) && isIndex(index2, object2.length) : type == "string" && index2 in object2) {
-        return eq4(object2[index2], value);
+        return eq3(object2[index2], value);
       }
       return false;
     }
@@ -49459,11 +49459,11 @@ var require_listCacheClear = __commonJS({
 // ../../node_modules/.pnpm/lodash@4.18.1/node_modules/lodash/_assocIndexOf.js
 var require_assocIndexOf = __commonJS({
   "../../node_modules/.pnpm/lodash@4.18.1/node_modules/lodash/_assocIndexOf.js"(exports, module) {
-    var eq4 = require_eq();
+    var eq3 = require_eq();
     function assocIndexOf(array2, key) {
       var length = array2.length;
       while (length--) {
-        if (eq4(array2[length][0], key)) {
+        if (eq3(array2[length][0], key)) {
           return length;
         }
       }
@@ -50040,7 +50040,7 @@ var require_equalByTag = __commonJS({
   "../../node_modules/.pnpm/lodash@4.18.1/node_modules/lodash/_equalByTag.js"(exports, module) {
     var Symbol2 = require_Symbol();
     var Uint8Array2 = require_Uint8Array();
-    var eq4 = require_eq();
+    var eq3 = require_eq();
     var equalArrays = require_equalArrays();
     var mapToArray = require_mapToArray();
     var setToArray = require_setToArray();
@@ -50075,7 +50075,7 @@ var require_equalByTag = __commonJS({
         case boolTag:
         case dateTag:
         case numberTag:
-          return eq4(+object2, +other);
+          return eq3(+object2, +other);
         case errorTag:
           return object2.name == other.name && object2.message == other.message;
         case regexpTag:
@@ -52034,8 +52034,8 @@ var require_getSDKVersions = __commonJS({
     }
     function getSDKVersions(useSDKVersion = "default", useNodeVersion = "default") {
       const sdkSemver = useSDKVersion === "default" ? readSdkSemver() : useSDKVersion;
-      const version5 = process.version.slice(1);
-      const techVersion = useNodeVersion === "default" ? version5 : useNodeVersion;
+      const version4 = process.version.slice(1);
+      const techVersion = useNodeVersion === "default" ? version4 : useNodeVersion;
       const product = "A";
       return {
         sdkSemver,
@@ -52107,10 +52107,10 @@ var require_base64Map = __commonJS({
     var chars2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     var num = 0;
     var base64Map = {};
-    [...chars2].forEach((char3) => {
+    [...chars2].forEach((char2) => {
       let key = num.toString(2);
       key = stringPad(key, 6, "0");
-      base64Map[key] = char3;
+      base64Map[key] = char2;
       num++;
     });
     module.exports = base64Map;
@@ -52681,14 +52681,14 @@ var require_utils6 = __commonJS({
       }
       let {
         resource_type,
-        text: text3,
+        text: text2,
         type,
         public_id,
         format: format2,
         url: fetchUrl
       } = layer;
       const components = [];
-      if (!isEmpty(text3) && isEmpty(resource_type)) {
+      if (!isEmpty(text2) && isEmpty(resource_type)) {
         resource_type = "text";
       }
       if (!isEmpty(fetchUrl) && isEmpty(type)) {
@@ -52707,7 +52707,7 @@ var require_utils6 = __commonJS({
         components.push(type);
       }
       if (resource_type === "text" || resource_type === "subtitles") {
-        if (isEmpty(public_id) && isEmpty(text3)) {
+        if (isEmpty(public_id) && isEmpty(text2)) {
           throw new Error("Must supply either text or public_in in overlay");
         }
         const textOptions = textStyle(layer);
@@ -52718,9 +52718,9 @@ var require_utils6 = __commonJS({
           public_id = public_id.replace("/", ":");
           components.push(public_id);
         }
-        if (!isEmpty(text3)) {
+        if (!isEmpty(text2)) {
           const variablesRegex = new RegExp(/(\$\([a-zA-Z]\w+\))/g);
-          const textDividedByVariables = text3.split(variablesRegex).filter((x) => x);
+          const textDividedByVariables = text2.split(variablesRegex).filter((x) => x);
           const encodedParts = textDividedByVariables.map((subText) => {
             const matches = variablesRegex[Symbol.match](subText);
             const isVariable = matches ? matches.length > 0 : false;
@@ -53136,7 +53136,7 @@ var require_utils6 = __commonJS({
       let type = consumeOption(options, "type", null);
       let transformation = utils.generate_transformation_string(options);
       let resource_type = consumeOption(options, "resource_type", "image");
-      let version5 = consumeOption(options, "version");
+      let version4 = consumeOption(options, "version");
       let force_version = consumeOption(options, "force_version", config2().force_version);
       if (force_version == null) {
         force_version = true;
@@ -53160,7 +53160,7 @@ var require_utils6 = __commonJS({
       if (preloaded) {
         resource_type = preloaded[1];
         type = preloaded[2];
-        version5 = preloaded[3];
+        version4 = preloaded[3];
         public_id = preloaded[4];
       }
       let original_source = public_id;
@@ -53173,13 +53173,13 @@ var require_utils6 = __commonJS({
       }
       [resource_type, type] = finalize_resource_type(resource_type, type, url_suffix, use_root_path, shorten);
       [public_id, source_to_sign] = finalize_source(public_id, format2, url_suffix);
-      if (version5 == null && force_version && source_to_sign.indexOf("/") >= 0 && !source_to_sign.match(/^v[0-9]+/) && !source_to_sign.match(/^https?:\//)) {
-        version5 = 1;
+      if (version4 == null && force_version && source_to_sign.indexOf("/") >= 0 && !source_to_sign.match(/^v[0-9]+/) && !source_to_sign.match(/^https?:\//)) {
+        version4 = 1;
       }
-      if (version5 != null) {
-        version5 = `v${version5}`;
+      if (version4 != null) {
+        version4 = `v${version4}`;
       } else {
-        version5 = null;
+        version4 = null;
       }
       transformation = transformation.replace(/([^:])\/\//g, "$1/");
       if (sign_url && isEmpty(auth_token)) {
@@ -53198,7 +53198,7 @@ var require_utils6 = __commonJS({
         signature = `s--${truncated}--`;
       }
       let prefix = build_distribution_domain(public_id, options);
-      let resultUrl = [prefix, resource_type, type, signature, transformation, version5, public_id].filter(function(part) {
+      let resultUrl = [prefix, resource_type, type, signature, transformation, version4, public_id].filter(function(part) {
         return part != null && part !== "";
       }).join("/").replace(/ /g, "%20");
       if (sign_url && !isEmpty(auth_token)) {
@@ -53421,20 +53421,20 @@ var require_utils6 = __commonJS({
       params.api_key = apiKey;
       return params;
     }
-    function webhook_signature(data, timestamp3, options = {}) {
+    function webhook_signature(data, timestamp2, options = {}) {
       ensurePresenceOf({
         data,
-        timestamp: timestamp3
+        timestamp: timestamp2
       });
       let api_secret = ensureOption(options, "api_secret");
       let signature_algorithm = ensureOption(options, "signature_algorithm", DEFAULT_SIGNATURE_ALGORITHM);
-      return compute_hash(data + timestamp3 + api_secret, signature_algorithm, "hex");
+      return compute_hash(data + timestamp2 + api_secret, signature_algorithm, "hex");
     }
-    function verifyNotificationSignature(body, timestamp3, signature, valid_for = 7200) {
-      if (timestamp3 < Math.round(Date.now() / 1e3) - valid_for) {
+    function verifyNotificationSignature(body, timestamp2, signature, valid_for = 7200) {
+      if (timestamp2 < Math.round(Date.now() / 1e3) - valid_for) {
         return false;
       }
-      const payload_hash = utils.webhook_signature(body, timestamp3, {
+      const payload_hash = utils.webhook_signature(body, timestamp2, {
         api_secret: config2().api_secret,
         signature_algorithm: config2().signature_algorithm
       });
@@ -53821,12 +53821,12 @@ $.cloudinary.config(${JSON.stringify(params)});
       keys: (source) => Object.keys(source),
       ensurePresenceOf
     });
-    function verify_api_response_signature(public_id, version5, signature) {
+    function verify_api_response_signature(public_id, version4, signature) {
       const api_secret = config2().api_secret;
       const expected = exports.api_sign_request(
         {
           public_id,
-          version: version5
+          version: version4
         },
         api_secret,
         null,
@@ -53873,7 +53873,7 @@ var require_cache = __commonJS({
       flushAll() {
       }
     };
-    var Cache3 = {
+    var Cache2 = {
       /**
        * The adapter interface. Extend this class to implement a specific adapter.
        * @type CacheAdapter
@@ -53949,12 +53949,12 @@ var require_cache = __commonJS({
         return this.adapter.flushAll();
       }
     };
-    Object.defineProperty(Cache3, "instance", {
+    Object.defineProperty(Cache2, "instance", {
       get() {
         return global[CACHE];
       }
     });
-    Object.defineProperty(Cache3, "adapter", {
+    Object.defineProperty(Cache2, "adapter", {
       /**
        *
        * @return {CacheAdapter} The current cache adapter
@@ -53970,12 +53970,12 @@ var require_cache = __commonJS({
         global[CACHE_ADAPTER] = adapter;
       }
     });
-    Object.freeze(Cache3);
+    Object.freeze(Cache2);
     var symbols = Object.getOwnPropertySymbols(global);
     if (symbols.indexOf(CACHE) < 0) {
-      global[CACHE] = Cache3;
+      global[CACHE] = Cache2;
     }
-    module.exports = Cache3;
+    module.exports = Cache2;
   }
 });
 
@@ -54016,7 +54016,7 @@ var require_uploader = __commonJS({
     var isSecure = !(upload_prefix && upload_prefix.slice(0, 5) === "http:");
     var https3 = isSecure ? __require("https") : __require("http");
     var { URL: URL2 } = __require("url");
-    var Cache3 = require_cache();
+    var Cache2 = require_cache();
     var utils = require_utils6();
     var UploadStream = require_upload_stream();
     var config2 = require_config();
@@ -54211,7 +54211,7 @@ var require_uploader = __commonJS({
       });
     };
     var TEXT_PARAMS = ["public_id", "font_family", "font_size", "font_color", "text_align", "font_weight", "font_style", "background", "opacity", "text_decoration", "font_hinting", "font_antialiasing"];
-    exports.text = function text3(content, callback, options = {}) {
+    exports.text = function text2(content, callback, options = {}) {
       return call_api("text", callback, options, function() {
         let textParams = pickOnlyExistingValues(options, ...TEXT_PARAMS);
         let params = {
@@ -54311,7 +54311,7 @@ var require_uploader = __commonJS({
             transformation,
             url: url2,
             breakpoints
-          }) => Cache3.set(
+          }) => Cache2.set(
             result.public_id,
             {
               type,
@@ -55695,7 +55695,7 @@ var require_srcsetUtils = __commonJS({
   "../../node_modules/.pnpm/cloudinary@2.10.0/node_modules/cloudinary/lib/utils/srcsetUtils.js"(exports, module) {
     var utils = require_utils6();
     var generateBreakpoints = require_generateBreakpoints();
-    var Cache3 = require_cache();
+    var Cache2 = require_cache();
     var isEmpty = utils.isEmpty;
     function scaledUrl(public_id, width, transformation, options = {}) {
       let configParams = utils.extractUrlParams(options);
@@ -55706,7 +55706,7 @@ var require_srcsetUtils = __commonJS({
     function getOrGenerateBreakpoints(public_id, srcset = {}, options = {}) {
       let breakpoints = [];
       if (srcset.useCache) {
-        breakpoints = Cache3.get(public_id, options);
+        breakpoints = Cache2.get(public_id, options);
         if (!breakpoints) {
           breakpoints = [];
         }
@@ -56280,7 +56280,7 @@ var init_esm = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/entity.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/entity.js
 function is(value, type) {
   if (!value || typeof value !== "object") {
     return false;
@@ -56304,17 +56304,18 @@ function is(value, type) {
   }
   return false;
 }
-var entityKind;
+var entityKind, hasOwnEntityKind;
 var init_entity = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/entity.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/entity.js"() {
     entityKind = /* @__PURE__ */ Symbol.for("drizzle:entityKind");
+    hasOwnEntityKind = /* @__PURE__ */ Symbol.for("drizzle:hasOwnEntityKind");
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/logger.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/logger.js
 var ConsoleLogWriter, DefaultLogger, NoopLogger;
 var init_logger2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/logger.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/logger.js"() {
     init_entity();
     ConsoleLogWriter = class {
       static [entityKind] = "ConsoleLogWriter";
@@ -56348,10 +56349,10 @@ var init_logger2 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/query-promise.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/query-promise.js
 var QueryPromise;
 var init_query_promise = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/query-promise.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/query-promise.js"() {
     init_entity();
     QueryPromise = class {
       static [entityKind] = "QueryPromise";
@@ -56378,10 +56379,10 @@ var init_query_promise = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/column.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/column.js
 var Column;
 var init_column = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/column.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/column.js"() {
     init_entity();
     Column = class {
       constructor(table, config2) {
@@ -56435,10 +56436,10 @@ var init_column = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/column-builder.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/column-builder.js
 var ColumnBuilder;
 var init_column_builder = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/column-builder.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/column-builder.js"() {
     init_entity();
     ColumnBuilder = class {
       static [entityKind] = "ColumnBuilder";
@@ -56544,18 +56545,18 @@ var init_column_builder = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/table.utils.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/table.utils.js
 var TableName;
 var init_table_utils = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/table.utils.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/table.utils.js"() {
     TableName = /* @__PURE__ */ Symbol.for("drizzle:Name");
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/foreign-keys.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/foreign-keys.js
 var ForeignKeyBuilder, ForeignKey;
 var init_foreign_keys = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/foreign-keys.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/foreign-keys.js"() {
     init_entity();
     init_table_utils();
     ForeignKeyBuilder = class {
@@ -56616,16 +56617,16 @@ var init_foreign_keys = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/tracing-utils.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 var init_tracing_utils = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/tracing-utils.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/tracing-utils.js"() {
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/unique-constraint.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/unique-constraint.js
 function unique(name2) {
   return new UniqueOnConstraintBuilder(name2);
 }
@@ -56634,7 +56635,7 @@ function uniqueKeyName(table, columns) {
 }
 var UniqueConstraintBuilder, UniqueOnConstraintBuilder, UniqueConstraint;
 var init_unique_constraint = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/unique-constraint.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/unique-constraint.js"() {
     init_entity();
     init_table_utils();
     UniqueConstraintBuilder = class {
@@ -56685,21 +56686,21 @@ var init_unique_constraint = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/array.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/array.js
 function parsePgArrayValue(arrayString, startFrom, inQuotes) {
   for (let i5 = startFrom; i5 < arrayString.length; i5++) {
-    const char3 = arrayString[i5];
-    if (char3 === "\\") {
+    const char2 = arrayString[i5];
+    if (char2 === "\\") {
       i5++;
       continue;
     }
-    if (char3 === '"') {
+    if (char2 === '"') {
       return [arrayString.slice(startFrom, i5).replace(/\\/g, ""), i5 + 1];
     }
     if (inQuotes) {
       continue;
     }
-    if (char3 === "," || char3 === "}") {
+    if (char2 === "," || char2 === "}") {
       return [arrayString.slice(startFrom, i5).replace(/\\/g, ""), i5];
     }
   }
@@ -56710,8 +56711,8 @@ function parsePgNestedArray(arrayString, startFrom = 0) {
   let i5 = startFrom;
   let lastCharIsComma = false;
   while (i5 < arrayString.length) {
-    const char3 = arrayString[i5];
-    if (char3 === ",") {
+    const char2 = arrayString[i5];
+    if (char2 === ",") {
       if (lastCharIsComma || i5 === startFrom) {
         result.push("");
       }
@@ -56720,20 +56721,20 @@ function parsePgNestedArray(arrayString, startFrom = 0) {
       continue;
     }
     lastCharIsComma = false;
-    if (char3 === "\\") {
+    if (char2 === "\\") {
       i5 += 2;
       continue;
     }
-    if (char3 === '"') {
+    if (char2 === '"') {
       const [value2, startFrom2] = parsePgArrayValue(arrayString, i5 + 1, true);
       result.push(value2);
       i5 = startFrom2;
       continue;
     }
-    if (char3 === "}") {
+    if (char2 === "}") {
       return [result, i5 + 1];
     }
-    if (char3 === "{") {
+    if (char2 === "{") {
       const [value2, startFrom2] = parsePgNestedArray(arrayString, i5 + 1);
       result.push(value2);
       i5 = startFrom2;
@@ -56761,14 +56762,14 @@ function makePgArray(array2) {
   }).join(",")}}`;
 }
 var init_array = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/array.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/array.js"() {
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/common.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/common.js
 var PgColumnBuilder, PgColumn, ExtraConfigColumn, IndexedColumn, PgArrayBuilder, PgArray;
 var init_common = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/common.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/common.js"() {
     init_column_builder();
     init_column();
     init_entity();
@@ -56961,7 +56962,7 @@ var init_common = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/enum.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/enum.js
 function isPgEnum(obj) {
   return !!obj && typeof obj === "function" && isPgEnumSym in obj && obj[isPgEnumSym] === true;
 }
@@ -56991,7 +56992,7 @@ function pgEnumObjectWithSchema(enumName, values, schema) {
 }
 var PgEnumObjectColumnBuilder, PgEnumObjectColumn, isPgEnumSym, PgEnumColumnBuilder, PgEnumColumn;
 var init_enum = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/enum.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/enum.js"() {
     init_entity();
     init_common();
     PgEnumObjectColumnBuilder = class extends PgColumnBuilder {
@@ -57050,17 +57051,17 @@ var init_enum = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/subquery.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/subquery.js
 var Subquery, WithSubquery;
 var init_subquery = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/subquery.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/subquery.js"() {
     init_entity();
     Subquery = class {
       static [entityKind] = "Subquery";
-      constructor(sql4, fields, alias, isWith = false, usedTables = []) {
+      constructor(sql3, fields, alias, isWith = false, usedTables = []) {
         this._ = {
           brand: "Subquery",
-          sql: sql4,
+          sql: sql3,
           selectedFields: fields,
           alias,
           isWith,
@@ -57077,18 +57078,18 @@ var init_subquery = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/version.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/version.js
 var version;
 var init_version = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/version.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/version.js"() {
     version = "0.45.2";
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/tracing.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/tracing.js
 var otel, rawTracer, tracer;
 var init_tracing = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/tracing.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/tracing.js"() {
     init_tracing_utils();
     init_version();
     tracer = {
@@ -57100,14 +57101,14 @@ var init_tracing = __esm({
           rawTracer = otel.trace.getTracer("drizzle-orm", version);
         }
         return iife(
-          (otel22, rawTracer22) => rawTracer22.startActiveSpan(
+          (otel2, rawTracer2) => rawTracer2.startActiveSpan(
             name2,
             (span) => {
               try {
                 return fn(span);
               } catch (e5) {
                 span.setStatus({
-                  code: otel22.SpanStatusCode.ERROR,
+                  code: otel2.SpanStatusCode.ERROR,
                   message: e5 instanceof Error ? e5.message : "Unknown error"
                   // eslint-disable-line no-instanceof/no-instanceof
                 });
@@ -57125,15 +57126,15 @@ var init_tracing = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/view-common.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig;
 var init_view_common = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/view-common.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/view-common.js"() {
     ViewBaseConfig = /* @__PURE__ */ Symbol.for("drizzle:ViewBaseConfig");
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/table.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/table.js
 function isTable(table) {
   return typeof table === "object" && table !== null && IsDrizzleTable in table;
 }
@@ -57145,7 +57146,7 @@ function getTableUniqueName(table) {
 }
 var Schema, Columns, ExtraConfigColumns, OriginalName, BaseName, IsAlias, ExtraConfigBuilder, IsDrizzleTable, Table;
 var init_table = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/table.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/table.js"() {
     init_entity();
     init_table_utils();
     Schema = /* @__PURE__ */ Symbol.for("drizzle:Schema");
@@ -57205,7 +57206,7 @@ var init_table = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/sql.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/sql.js
 function isSQLWrapper(value) {
   return value !== null && value !== void 0 && typeof value.getSQL === "function";
 }
@@ -57223,8 +57224,14 @@ function mergeQueries(queries) {
   }
   return result;
 }
+function name(value) {
+  return new Name(value);
+}
 function isDriverValueEncoder(value) {
   return typeof value === "object" && value !== null && "mapToDriverValue" in value && typeof value.mapToDriverValue === "function";
+}
+function param(value, encoder) {
+  return new Param(value, encoder);
 }
 function sql(strings, ...params) {
   const queryChunks = [];
@@ -57235,6 +57242,9 @@ function sql(strings, ...params) {
     queryChunks.push(param2, new StringChunk(strings[paramIndex + 1]));
   }
   return new SQL(queryChunks);
+}
+function placeholder(name2) {
+  return new Placeholder(name2);
 }
 function fillPlaceholders(params, values) {
   return params.map((p3) => {
@@ -57256,9 +57266,12 @@ function fillPlaceholders(params, values) {
 function isView(view) {
   return typeof view === "object" && view !== null && IsDrizzleView in view;
 }
+function getViewName(view) {
+  return view[ViewBaseConfig].name;
+}
 var FakePrimitiveParam, StringChunk, SQL, Name, noopDecoder, noopEncoder, noopMapper, Param, Placeholder, IsDrizzleView, View;
 var init_sql = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/sql.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/sql.js"() {
     init_entity();
     init_enum();
     init_subquery();
@@ -57552,7 +57565,7 @@ var init_sql = __esm({
       }
       sql22.param = param2;
     })(sql || (sql = {}));
-    ((SQL22) => {
+    ((SQL2) => {
       class Aliased {
         constructor(sql22, fieldAlias) {
           this.sql = sql22;
@@ -57569,7 +57582,7 @@ var init_sql = __esm({
           return new Aliased(this.sql, this.fieldAlias);
         }
       }
-      SQL22.Aliased = Aliased;
+      SQL2.Aliased = Aliased;
     })(SQL || (SQL = {}));
     Placeholder = class {
       constructor(name2) {
@@ -57614,9 +57627,12 @@ var init_sql = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/alias.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/alias.js
 function aliasedTable(table, tableAlias) {
   return new Proxy(table, new TableAliasProxyHandler(tableAlias, false));
+}
+function aliasedRelation(relation, tableAlias) {
+  return new Proxy(relation, new RelationTableAliasProxyHandler(tableAlias));
 }
 function aliasedTableColumn(column, tableAlias) {
   return new Proxy(
@@ -57643,7 +57659,7 @@ function mapColumnsInSQLToAlias(query, alias) {
 }
 var ColumnAliasProxyHandler, TableAliasProxyHandler, RelationTableAliasProxyHandler;
 var init_alias = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/alias.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/alias.js"() {
     init_column();
     init_entity();
     init_sql();
@@ -57720,10 +57736,10 @@ var init_alias = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/selection-proxy.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/selection-proxy.js
 var SelectionProxyHandler;
 var init_selection_proxy = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/selection-proxy.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/selection-proxy.js"() {
     init_alias();
     init_column();
     init_entity();
@@ -57799,7 +57815,7 @@ var init_selection_proxy = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/utils.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/utils.js
 function mapResultRow(columns, row, joinsNotNullableMap) {
   const nullifyMap = {};
   const result = columns.reduce(
@@ -57953,7 +57969,7 @@ function isConfig(data) {
 }
 var textDecoder;
 var init_utils = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/utils.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/utils.js"() {
     init_column();
     init_entity();
     init_sql();
@@ -57964,10 +57980,10 @@ var init_utils = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/int.common.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/int.common.js
 var PgIntColumnBaseBuilder;
 var init_int_common = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/int.common.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/int.common.js"() {
     init_entity();
     init_common();
     PgIntColumnBaseBuilder = class extends PgColumnBuilder {
@@ -58010,7 +58026,7 @@ var init_int_common = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigint.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigint.js
 function bigint(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   if (config2.mode === "number") {
@@ -58020,7 +58036,7 @@ function bigint(a5, b5) {
 }
 var PgBigInt53Builder, PgBigInt53, PgBigInt64Builder, PgBigInt64;
 var init_bigint = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigint.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigint.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -58073,7 +58089,7 @@ var init_bigint = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigserial.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigserial.js
 function bigserial(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   if (config2.mode === "number") {
@@ -58083,7 +58099,7 @@ function bigserial(a5, b5) {
 }
 var PgBigSerial53Builder, PgBigSerial53, PgBigSerial64Builder, PgBigSerial64;
 var init_bigserial = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigserial.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigserial.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -58141,13 +58157,13 @@ var init_bigserial = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/boolean.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/boolean.js
 function boolean(name2) {
   return new PgBooleanBuilder(name2 ?? "");
 }
 var PgBooleanBuilder, PgBoolean;
 var init_boolean = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/boolean.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/boolean.js"() {
     init_entity();
     init_common();
     PgBooleanBuilder = class extends PgColumnBuilder {
@@ -58169,14 +58185,14 @@ var init_boolean = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/char.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/char.js
 function char(a5, b5 = {}) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   return new PgCharBuilder(name2, config2);
 }
 var PgCharBuilder, PgChar;
 var init_char = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/char.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/char.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -58206,13 +58222,13 @@ var init_char = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/cidr.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/cidr.js
 function cidr(name2) {
   return new PgCidrBuilder(name2 ?? "");
 }
 var PgCidrBuilder, PgCidr;
 var init_cidr = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/cidr.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/cidr.js"() {
     init_entity();
     init_common();
     PgCidrBuilder = class extends PgColumnBuilder {
@@ -58234,7 +58250,7 @@ var init_cidr = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/custom.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/custom.js
 function customType(customTypeParams) {
   return (a5, b5) => {
     const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
@@ -58243,7 +58259,7 @@ function customType(customTypeParams) {
 }
 var PgCustomColumnBuilder, PgCustomColumn;
 var init_custom = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/custom.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/custom.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -58286,10 +58302,10 @@ var init_custom = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.common.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.common.js
 var PgDateColumnBaseBuilder;
 var init_date_common = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.common.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.common.js"() {
     init_entity();
     init_sql();
     init_common();
@@ -58302,7 +58318,7 @@ var init_date_common = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.js
 function date(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   if (config2?.mode === "date") {
@@ -58312,7 +58328,7 @@ function date(a5, b5) {
 }
 var PgDateBuilder, PgDate, PgDateStringBuilder, PgDateString;
 var init_date = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -58366,13 +58382,13 @@ var init_date = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/double-precision.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/double-precision.js
 function doublePrecision(name2) {
   return new PgDoublePrecisionBuilder(name2 ?? "");
 }
 var PgDoublePrecisionBuilder, PgDoublePrecision;
 var init_double_precision = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/double-precision.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/double-precision.js"() {
     init_entity();
     init_common();
     PgDoublePrecisionBuilder = class extends PgColumnBuilder {
@@ -58403,13 +58419,13 @@ var init_double_precision = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/inet.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/inet.js
 function inet(name2) {
   return new PgInetBuilder(name2 ?? "");
 }
 var PgInetBuilder, PgInet;
 var init_inet = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/inet.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/inet.js"() {
     init_entity();
     init_common();
     PgInetBuilder = class extends PgColumnBuilder {
@@ -58431,13 +58447,13 @@ var init_inet = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/integer.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/integer.js
 function integer(name2) {
   return new PgIntegerBuilder(name2 ?? "");
 }
 var PgIntegerBuilder, PgInteger;
 var init_integer = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/integer.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/integer.js"() {
     init_entity();
     init_common();
     init_int_common();
@@ -58466,14 +58482,14 @@ var init_integer = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/interval.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/interval.js
 function interval(a5, b5 = {}) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   return new PgIntervalBuilder(name2, config2);
 }
 var PgIntervalBuilder, PgInterval;
 var init_interval = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/interval.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/interval.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -58501,13 +58517,13 @@ var init_interval = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/json.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/json.js
 function json(name2) {
   return new PgJsonBuilder(name2 ?? "");
 }
 var PgJsonBuilder, PgJson;
 var init_json = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/json.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/json.js"() {
     init_entity();
     init_common();
     PgJsonBuilder = class extends PgColumnBuilder {
@@ -58545,13 +58561,13 @@ var init_json = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/jsonb.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/jsonb.js
 function jsonb(name2) {
   return new PgJsonbBuilder(name2 ?? "");
 }
 var PgJsonbBuilder, PgJsonb;
 var init_jsonb = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/jsonb.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/jsonb.js"() {
     init_entity();
     init_common();
     PgJsonbBuilder = class extends PgColumnBuilder {
@@ -58589,7 +58605,7 @@ var init_jsonb = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/line.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/line.js
 function line(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   if (!config2?.mode || config2.mode === "tuple") {
@@ -58599,7 +58615,7 @@ function line(a5, b5) {
 }
 var PgLineBuilder, PgLineTuple, PgLineABCBuilder, PgLineABC;
 var init_line = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/line.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/line.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -58658,13 +58674,13 @@ var init_line = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr.js
 function macaddr(name2) {
   return new PgMacaddrBuilder(name2 ?? "");
 }
 var PgMacaddrBuilder, PgMacaddr;
 var init_macaddr = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr.js"() {
     init_entity();
     init_common();
     PgMacaddrBuilder = class extends PgColumnBuilder {
@@ -58686,13 +58702,13 @@ var init_macaddr = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
 function macaddr8(name2) {
   return new PgMacaddr8Builder(name2 ?? "");
 }
 var PgMacaddr8Builder, PgMacaddr8;
 var init_macaddr8 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr8.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr8.js"() {
     init_entity();
     init_common();
     PgMacaddr8Builder = class extends PgColumnBuilder {
@@ -58714,7 +58730,7 @@ var init_macaddr8 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/numeric.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/numeric.js
 function numeric(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   const mode = config2?.mode;
@@ -58722,7 +58738,7 @@ function numeric(a5, b5) {
 }
 var PgNumericBuilder, PgNumeric, PgNumericNumberBuilder, PgNumericNumber, PgNumericBigIntBuilder, PgNumericBigInt;
 var init_numeric = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/numeric.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/numeric.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -58839,7 +58855,7 @@ var init_numeric = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/point.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/point.js
 function point(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   if (!config2?.mode || config2.mode === "tuple") {
@@ -58849,7 +58865,7 @@ function point(a5, b5) {
 }
 var PgPointTupleBuilder, PgPointTuple, PgPointObjectBuilder, PgPointObject;
 var init_point = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/point.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/point.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -58914,7 +58930,7 @@ var init_point = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
 function hexToBytes(hex) {
   const bytes = [];
   for (let c5 = 0; c5 < hex.length; c5 += 2) {
@@ -58953,11 +58969,11 @@ function parseEWKB(hex) {
   throw new Error("Unsupported geometry type");
 }
 var init_utils2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js"() {
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
 function geometry(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   if (!config2?.mode || config2.mode === "tuple") {
@@ -58967,7 +58983,7 @@ function geometry(a5, b5) {
 }
 var PgGeometryBuilder, PgGeometry, PgGeometryObjectBuilder, PgGeometryObject;
 var init_geometry = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -59026,13 +59042,13 @@ var init_geometry = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/real.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/real.js
 function real(name2) {
   return new PgRealBuilder(name2 ?? "");
 }
 var PgRealBuilder, PgReal;
 var init_real = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/real.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/real.js"() {
     init_entity();
     init_common();
     PgRealBuilder = class extends PgColumnBuilder {
@@ -59064,13 +59080,13 @@ var init_real = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/serial.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/serial.js
 function serial(name2) {
   return new PgSerialBuilder(name2 ?? "");
 }
 var PgSerialBuilder, PgSerial;
 var init_serial = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/serial.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/serial.js"() {
     init_entity();
     init_common();
     PgSerialBuilder = class extends PgColumnBuilder {
@@ -59094,13 +59110,13 @@ var init_serial = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallint.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallint.js
 function smallint(name2) {
   return new PgSmallIntBuilder(name2 ?? "");
 }
 var PgSmallIntBuilder, PgSmallInt;
 var init_smallint = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallint.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallint.js"() {
     init_entity();
     init_common();
     init_int_common();
@@ -59129,13 +59145,13 @@ var init_smallint = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallserial.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallserial.js
 function smallserial(name2) {
   return new PgSmallSerialBuilder(name2 ?? "");
 }
 var PgSmallSerialBuilder, PgSmallSerial;
 var init_smallserial = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallserial.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallserial.js"() {
     init_entity();
     init_common();
     PgSmallSerialBuilder = class extends PgColumnBuilder {
@@ -59162,14 +59178,14 @@ var init_smallserial = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/text.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/text.js
 function text(a5, b5 = {}) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   return new PgTextBuilder(name2, config2);
 }
 var PgTextBuilder, PgText;
 var init_text = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/text.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/text.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -59194,14 +59210,14 @@ var init_text = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/time.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/time.js
 function time(a5, b5 = {}) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   return new PgTimeBuilder(name2, config2.withTimezone ?? false, config2.precision);
 }
 var PgTimeBuilder, PgTime;
 var init_time = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/time.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/time.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -59237,7 +59253,7 @@ var init_time = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/timestamp.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/timestamp.js
 function timestamp(a5, b5 = {}) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   if (config2?.mode === "string") {
@@ -59247,7 +59263,7 @@ function timestamp(a5, b5 = {}) {
 }
 var PgTimestampBuilder, PgTimestamp, PgTimestampStringBuilder, PgTimestampString;
 var init_timestamp = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/timestamp.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/timestamp.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -59327,13 +59343,13 @@ var init_timestamp = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/uuid.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/uuid.js
 function uuid(name2) {
   return new PgUUIDBuilder(name2 ?? "");
 }
 var PgUUIDBuilder, PgUUID;
 var init_uuid = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/uuid.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/uuid.js"() {
     init_entity();
     init_sql();
     init_common();
@@ -59362,14 +59378,14 @@ var init_uuid = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/varchar.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/varchar.js
 function varchar(a5, b5 = {}) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   return new PgVarcharBuilder(name2, config2);
 }
 var PgVarcharBuilder, PgVarchar;
 var init_varchar = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/varchar.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/varchar.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -59399,14 +59415,14 @@ var init_varchar = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
 function bit(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   return new PgBinaryVectorBuilder(name2, config2);
 }
 var PgBinaryVectorBuilder, PgBinaryVector;
 var init_bit = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -59434,14 +59450,14 @@ var init_bit = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
 function halfvec(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   return new PgHalfVectorBuilder(name2, config2);
 }
 var PgHalfVectorBuilder, PgHalfVector;
 var init_halfvec = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -59475,14 +59491,14 @@ var init_halfvec = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
 function sparsevec(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   return new PgSparseVectorBuilder(name2, config2);
 }
 var PgSparseVectorBuilder, PgSparseVector;
 var init_sparsevec = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -59510,14 +59526,14 @@ var init_sparsevec = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
 function vector(a5, b5) {
   const { name: name2, config: config2 } = getColumnNameAndConfig(a5, b5);
   return new PgVectorBuilder(name2, config2);
 }
 var PgVectorBuilder, PgVector;
 var init_vector = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js"() {
     init_entity();
     init_utils();
     init_common();
@@ -59551,7 +59567,7 @@ var init_vector = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/all.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/all.js
 function getPgColumnBuilders() {
   return {
     bigint,
@@ -59589,7 +59605,7 @@ function getPgColumnBuilders() {
   };
 }
 var init_all = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/all.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/all.js"() {
     init_bigint();
     init_bigserial();
     init_boolean();
@@ -59625,7 +59641,7 @@ var init_all = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/table.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/table.js
 function pgTableWithSchema(name2, columns, extraConfig, schema, baseName = name2) {
   const rawTable = new PgTable(name2, schema, baseName);
   const parsedColumns = typeof columns === "function" ? columns(getPgColumnBuilders()) : columns;
@@ -59661,7 +59677,7 @@ function pgTableWithSchema(name2, columns, extraConfig, schema, baseName = name2
 }
 var InlineForeignKeys, EnableRLS, PgTable, pgTable;
 var init_table2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/table.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/table.js"() {
     init_entity();
     init_table();
     init_all();
@@ -59689,10 +59705,10 @@ var init_table2 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/checks.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/checks.js
 var CheckBuilder, Check;
 var init_checks = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/checks.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/checks.js"() {
     init_entity();
     CheckBuilder = class {
       constructor(name2, value) {
@@ -59719,9 +59735,9 @@ var init_checks = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/index.js
 var init_columns = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/index.js"() {
     init_bigint();
     init_bigserial();
     init_boolean();
@@ -59760,13 +59776,13 @@ var init_columns = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/indexes.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/indexes.js
 function index(name2) {
   return new IndexBuilderOn(false, name2);
 }
 var IndexBuilderOn, IndexBuilder, Index;
 var init_indexes = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/indexes.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/indexes.js"() {
     init_sql();
     init_entity();
     init_columns();
@@ -59877,10 +59893,10 @@ var init_indexes = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/policies.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/policies.js
 var PgPolicy;
 var init_policies = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/policies.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/policies.js"() {
     init_entity();
     PgPolicy = class {
       constructor(name2, config2) {
@@ -59909,10 +59925,10 @@ var init_policies = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/primary-keys.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/primary-keys.js
 var PrimaryKeyBuilder, PrimaryKey;
 var init_primary_keys = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/primary-keys.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/primary-keys.js"() {
     init_entity();
     init_table2();
     PrimaryKeyBuilder = class {
@@ -59946,15 +59962,15 @@ var init_primary_keys = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-common.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-common.js
 var PgViewConfig;
 var init_view_common2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-common.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-common.js"() {
     PgViewConfig = /* @__PURE__ */ Symbol.for("drizzle:PgViewConfig");
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/casing.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/casing.js
 function toSnakeCase(input) {
   const words = input.replace(/['\u2019]/g, "").match(/[\da-z]+|[A-Z]+(?![a-z])|[A-Z][\da-z]+/g) ?? [];
   return words.map((word) => word.toLowerCase()).join("_");
@@ -59971,7 +59987,7 @@ function noopCase(input) {
 }
 var CasingCache;
 var init_casing = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/casing.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/casing.js"() {
     init_entity();
     init_table();
     CasingCache = class {
@@ -60013,10 +60029,10 @@ var init_casing = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/errors.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/errors.js
 var DrizzleError, DrizzleQueryError, TransactionRollbackError;
 var init_errors2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/errors.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/errors.js"() {
     init_entity();
     DrizzleError = class extends Error {
       static [entityKind] = "DrizzleError";
@@ -60046,7 +60062,7 @@ params: ${params}`);
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/conditions.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -60142,9 +60158,39 @@ function ilike(column, value) {
 function notIlike(column, value) {
   return sql`${column} not ilike ${value}`;
 }
+function arrayContains(column, values) {
+  if (Array.isArray(values)) {
+    if (values.length === 0) {
+      throw new Error("arrayContains requires at least one value");
+    }
+    const array2 = sql`${bindIfParam(values, column)}`;
+    return sql`${column} @> ${array2}`;
+  }
+  return sql`${column} @> ${bindIfParam(values, column)}`;
+}
+function arrayContained(column, values) {
+  if (Array.isArray(values)) {
+    if (values.length === 0) {
+      throw new Error("arrayContained requires at least one value");
+    }
+    const array2 = sql`${bindIfParam(values, column)}`;
+    return sql`${column} <@ ${array2}`;
+  }
+  return sql`${column} <@ ${bindIfParam(values, column)}`;
+}
+function arrayOverlaps(column, values) {
+  if (Array.isArray(values)) {
+    if (values.length === 0) {
+      throw new Error("arrayOverlaps requires at least one value");
+    }
+    const array2 = sql`${bindIfParam(values, column)}`;
+    return sql`${column} && ${array2}`;
+  }
+  return sql`${column} && ${bindIfParam(values, column)}`;
+}
 var eq, ne, gt, gte, lt, lte;
 var init_conditions = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/conditions.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/conditions.js"() {
     init_column();
     init_entity();
     init_table();
@@ -60170,7 +60216,7 @@ var init_conditions = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/select.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/select.js
 function asc(column) {
   return sql`${column} asc`;
 }
@@ -60178,20 +60224,20 @@ function desc(column) {
   return sql`${column} desc`;
 }
 var init_select = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/select.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/select.js"() {
     init_sql();
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/index.js
 var init_expressions = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/index.js"() {
     init_conditions();
     init_select();
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/relations.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/relations.js
 function getOperators() {
   return {
     and,
@@ -60287,6 +60333,17 @@ function extractTablesRelationalConfig(schema, configHelpers) {
     }
   }
   return { tables: tablesConfig, tableNamesMap };
+}
+function relations(table, relations2) {
+  return new Relations(
+    table,
+    (helpers) => Object.fromEntries(
+      Object.entries(relations2(helpers)).map(([key, value]) => [
+        key,
+        value.withFieldName(key)
+      ])
+    )
+  );
 }
 function createOne(sourceTable) {
   return function one(table, config2) {
@@ -60401,7 +60458,7 @@ function mapRelationalRow(tablesConfig, tableConfig, row, buildQueryResultSelect
 }
 var Relation, Relations, One, Many;
 var init_relations = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/relations.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/relations.js"() {
     init_table();
     init_column();
     init_entity();
@@ -60463,39 +60520,106 @@ var init_relations = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/aggregate.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/aggregate.js
+function count(expression) {
+  return sql`count(${expression || sql.raw("*")})`.mapWith(Number);
+}
+function countDistinct(expression) {
+  return sql`count(distinct ${expression})`.mapWith(Number);
+}
+function avg(expression) {
+  return sql`avg(${expression})`.mapWith(String);
+}
+function avgDistinct(expression) {
+  return sql`avg(distinct ${expression})`.mapWith(String);
+}
+function sum(expression) {
+  return sql`sum(${expression})`.mapWith(String);
+}
+function sumDistinct(expression) {
+  return sql`sum(distinct ${expression})`.mapWith(String);
+}
+function max(expression) {
+  return sql`max(${expression})`.mapWith(is(expression, Column) ? expression : String);
+}
+function min(expression) {
+  return sql`min(${expression})`.mapWith(is(expression, Column) ? expression : String);
+}
 var init_aggregate = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/aggregate.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/aggregate.js"() {
+    init_column();
+    init_entity();
+    init_sql();
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/vector.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/vector.js
+function toSql(value) {
+  return JSON.stringify(value);
+}
+function l2Distance(column, value) {
+  if (Array.isArray(value)) {
+    return sql`${column} <-> ${toSql(value)}`;
+  }
+  return sql`${column} <-> ${value}`;
+}
+function l1Distance(column, value) {
+  if (Array.isArray(value)) {
+    return sql`${column} <+> ${toSql(value)}`;
+  }
+  return sql`${column} <+> ${value}`;
+}
+function innerProduct(column, value) {
+  if (Array.isArray(value)) {
+    return sql`${column} <#> ${toSql(value)}`;
+  }
+  return sql`${column} <#> ${value}`;
+}
+function cosineDistance(column, value) {
+  if (Array.isArray(value)) {
+    return sql`${column} <=> ${toSql(value)}`;
+  }
+  return sql`${column} <=> ${value}`;
+}
+function hammingDistance(column, value) {
+  if (Array.isArray(value)) {
+    return sql`${column} <~> ${toSql(value)}`;
+  }
+  return sql`${column} <~> ${value}`;
+}
+function jaccardDistance(column, value) {
+  if (Array.isArray(value)) {
+    return sql`${column} <%> ${toSql(value)}`;
+  }
+  return sql`${column} <%> ${value}`;
+}
 var init_vector2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/vector.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/vector.js"() {
+    init_sql();
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/index.js
 var init_functions = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/index.js"() {
     init_aggregate();
     init_vector2();
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/index.js
 var init_sql2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/index.js"() {
     init_expressions();
     init_functions();
     init_sql();
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-base.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-base.js
 var PgViewBase;
 var init_view_base = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-base.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-base.js"() {
     init_entity();
     init_sql();
     PgViewBase = class extends View {
@@ -60504,10 +60628,10 @@ var init_view_base = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/dialect.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/dialect.js
 var PgDialect;
 var init_dialect = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/dialect.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/dialect.js"() {
     init_alias();
     init_casing();
     init_column();
@@ -61629,10 +61753,10 @@ var init_dialect = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/query-builders/query-builder.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/query-builders/query-builder.js
 var TypedQueryBuilder;
 var init_query_builder = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/query-builders/query-builder.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/query-builders/query-builder.js"() {
     init_entity();
     TypedQueryBuilder = class {
       static [entityKind] = "TypedQueryBuilder";
@@ -61644,7 +61768,7 @@ var init_query_builder = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.js
 function createSetOperator(type, isAll) {
   return (leftSelect, rightSelect, ...restSelects) => {
     const setOperators = [rightSelect, ...restSelects].map((select) => ({
@@ -61664,7 +61788,7 @@ function createSetOperator(type, isAll) {
 }
 var PgSelectBuilder, PgSelectQueryBuilderBase, PgSelectBase, getPgSetOperators, union, unionAll, intersect, intersectAll, except, exceptAll;
 var init_select2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.js"() {
     init_entity();
     init_view_base();
     init_query_builder();
@@ -62478,10 +62602,10 @@ var init_select2 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query-builder.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query-builder.js
 var QueryBuilder;
 var init_query_builder2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query-builder.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query-builder.js"() {
     init_entity();
     init_dialect();
     init_selection_proxy();
@@ -62575,7 +62699,7 @@ var init_query_builder2 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view.js
 function pgViewWithSchema(name2, selection, schema) {
   if (selection) {
     return new ManualViewBuilder(name2, selection, schema);
@@ -62590,7 +62714,7 @@ function pgMaterializedViewWithSchema(name2, selection, schema) {
 }
 var DefaultViewBuilderCore, ViewBuilder, ManualViewBuilder, MaterializedViewBuilderCore, MaterializedViewBuilder, ManualMaterializedViewBuilder, PgView, PgMaterializedViewConfig, PgMaterializedView;
 var init_view = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view.js"() {
     init_entity();
     init_selection_proxy();
     init_utils();
@@ -62824,7 +62948,7 @@ var init_view = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils.js
 function extractUsedTable(table) {
   if (is(table, PgTable)) {
     return [table[Schema] ? `${table[Schema]}.${table[Table.Symbol.BaseName]}` : table[Table.Symbol.BaseName]];
@@ -62838,7 +62962,7 @@ function extractUsedTable(table) {
   return [];
 }
 var init_utils3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils.js"() {
     init_entity();
     init_table2();
     init_sql();
@@ -62847,10 +62971,10 @@ var init_utils3 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/delete.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/delete.js
 var PgDeleteBase;
 var init_delete = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/delete.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/delete.js"() {
     init_entity();
     init_query_promise();
     init_selection_proxy();
@@ -62955,10 +63079,10 @@ var init_delete = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/insert.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/insert.js
 var PgInsertBuilder, PgInsertBase;
 var init_insert = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/insert.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/insert.js"() {
     init_entity();
     init_query_promise();
     init_selection_proxy();
@@ -63162,10 +63286,10 @@ var init_insert = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/refresh-materialized-view.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/refresh-materialized-view.js
 var PgRefreshMaterializedView;
 var init_refresh_materialized_view = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/refresh-materialized-view.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/refresh-materialized-view.js"() {
     init_entity();
     init_query_promise();
     init_tracing();
@@ -63224,16 +63348,16 @@ var init_refresh_materialized_view = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.types.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.types.js
 var init_select_types = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.types.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.types.js"() {
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/update.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/update.js
 var PgUpdateBuilder, PgUpdateBase;
 var init_update = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/update.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/update.js"() {
     init_entity();
     init_table2();
     init_query_promise();
@@ -63457,9 +63581,9 @@ var init_update = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/index.js
 var init_query_builders = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/index.js"() {
     init_delete();
     init_insert();
     init_query_builder2();
@@ -63470,10 +63594,10 @@ var init_query_builders = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/count.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/count.js
 var PgCountBuilder;
 var init_count = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/count.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/count.js"() {
     init_entity();
     init_sql();
     PgCountBuilder = class _PgCountBuilder extends SQL {
@@ -63528,10 +63652,10 @@ var init_count = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query.js
 var RelationalQueryBuilder, PgRelationalQuery;
 var init_query = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query.js"() {
     init_entity();
     init_query_promise();
     init_relations();
@@ -63650,17 +63774,17 @@ var init_query = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/raw.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/raw.js
 var PgRaw;
 var init_raw = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/raw.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/raw.js"() {
     init_entity();
     init_query_promise();
     PgRaw = class extends QueryPromise {
-      constructor(execute, sql4, query, mapBatchResult) {
+      constructor(execute, sql3, query, mapBatchResult) {
         super();
         this.execute = execute;
-        this.sql = sql4;
+        this.sql = sql3;
         this.query = query;
         this.mapBatchResult = mapBatchResult;
       }
@@ -63686,10 +63810,10 @@ var init_raw = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/db.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/db.js
 var PgDatabase;
 var init_db = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/db.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/db.js"() {
     init_entity();
     init_query_builders();
     init_selection_proxy();
@@ -63979,9 +64103,9 @@ var init_db = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js
-async function hashQuery(sql4, params) {
-  const dataToHash = `${sql4}-${JSON.stringify(params)}`;
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js
+async function hashQuery(sql3, params) {
+  const dataToHash = `${sql3}-${JSON.stringify(params)}`;
   const encoder = new TextEncoder();
   const data = encoder.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -63991,7 +64115,7 @@ async function hashQuery(sql4, params) {
 }
 var Cache, NoopCache;
 var init_cache = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js"() {
     init_entity();
     Cache = class {
       static [entityKind] = "Cache";
@@ -64012,23 +64136,23 @@ var init_cache = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/index.js
 var init_core = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/index.js"() {
     init_cache();
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/alias.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/alias.js
 var init_alias2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/alias.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/alias.js"() {
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/roles.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/roles.js
 var PgRole;
 var init_roles = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/roles.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/roles.js"() {
     init_entity();
     PgRole = class {
       constructor(name2, config2) {
@@ -64056,13 +64180,13 @@ var init_roles = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/sequence.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/sequence.js
 function pgSequenceWithSchema(name2, options, schema) {
   return new PgSequence(name2, options, schema);
 }
 var PgSequence;
 var init_sequence = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/sequence.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/sequence.js"() {
     init_entity();
     PgSequence = class {
       constructor(seqName, seqOptions, schema) {
@@ -64075,10 +64199,10 @@ var init_sequence = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/schema.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/schema.js
 var PgSchema;
 var init_schema = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/schema.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/schema.js"() {
     init_entity();
     init_sql();
     init_enum();
@@ -64119,10 +64243,10 @@ var init_schema = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/session.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/session.js
 var PgPreparedQuery, PgSession, PgTransaction;
 var init_session = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/session.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/session.js"() {
     init_cache();
     init_entity();
     init_errors2();
@@ -64290,22 +64414,22 @@ var init_session = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/subquery.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/subquery.js
 var init_subquery2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/subquery.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/subquery.js"() {
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/index.js
 var init_utils4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/index.js"() {
     init_array();
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/index.js
 var init_pg_core = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/index.js"() {
     init_alias2();
     init_checks();
     init_columns();
@@ -64330,10 +64454,10 @@ var init_pg_core = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/session.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/session.js
 var Pool2, types2, NodePgPreparedQuery, NodePgSession, NodePgTransaction;
 var init_session2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/session.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/session.js"() {
     init_esm();
     init_core();
     init_entity();
@@ -64560,7 +64684,7 @@ var init_session2 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/driver.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/driver.js
 function construct(client, config2 = {}) {
   const dialect = new PgDialect({ casing: config2.casing });
   let logger3;
@@ -64610,7 +64734,7 @@ function drizzle(...params) {
 }
 var NodePgDriver, NodePgDatabase;
 var init_driver = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/driver.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/driver.js"() {
     init_esm();
     init_entity();
     init_logger2();
@@ -64645,23 +64769,144 @@ var init_driver = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/index.js
 var init_node_postgres = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/index.js"() {
     init_driver();
     init_session2();
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/operations.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/operations.js
 var init_operations = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/operations.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/operations.js"() {
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/index.js
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/index.js
+var drizzle_orm_exports = {};
+__export(drizzle_orm_exports, {
+  BaseName: () => BaseName,
+  Column: () => Column,
+  ColumnAliasProxyHandler: () => ColumnAliasProxyHandler,
+  ColumnBuilder: () => ColumnBuilder,
+  Columns: () => Columns,
+  ConsoleLogWriter: () => ConsoleLogWriter,
+  DefaultLogger: () => DefaultLogger,
+  DrizzleError: () => DrizzleError,
+  DrizzleQueryError: () => DrizzleQueryError,
+  ExtraConfigBuilder: () => ExtraConfigBuilder,
+  ExtraConfigColumns: () => ExtraConfigColumns,
+  FakePrimitiveParam: () => FakePrimitiveParam,
+  IsAlias: () => IsAlias,
+  Many: () => Many,
+  Name: () => Name,
+  NoopLogger: () => NoopLogger,
+  One: () => One,
+  OriginalName: () => OriginalName,
+  Param: () => Param,
+  Placeholder: () => Placeholder,
+  QueryPromise: () => QueryPromise,
+  Relation: () => Relation,
+  RelationTableAliasProxyHandler: () => RelationTableAliasProxyHandler,
+  Relations: () => Relations,
+  SQL: () => SQL,
+  Schema: () => Schema,
+  StringChunk: () => StringChunk,
+  Subquery: () => Subquery,
+  Table: () => Table,
+  TableAliasProxyHandler: () => TableAliasProxyHandler,
+  TransactionRollbackError: () => TransactionRollbackError,
+  View: () => View,
+  ViewBaseConfig: () => ViewBaseConfig,
+  WithSubquery: () => WithSubquery,
+  aliasedRelation: () => aliasedRelation,
+  aliasedTable: () => aliasedTable,
+  aliasedTableColumn: () => aliasedTableColumn,
+  and: () => and,
+  applyMixins: () => applyMixins,
+  arrayContained: () => arrayContained,
+  arrayContains: () => arrayContains,
+  arrayOverlaps: () => arrayOverlaps,
+  asc: () => asc,
+  avg: () => avg,
+  avgDistinct: () => avgDistinct,
+  between: () => between,
+  bindIfParam: () => bindIfParam,
+  cosineDistance: () => cosineDistance,
+  count: () => count,
+  countDistinct: () => countDistinct,
+  createMany: () => createMany,
+  createOne: () => createOne,
+  createTableRelationsHelpers: () => createTableRelationsHelpers,
+  desc: () => desc,
+  entityKind: () => entityKind,
+  eq: () => eq,
+  exists: () => exists,
+  extractTablesRelationalConfig: () => extractTablesRelationalConfig,
+  fillPlaceholders: () => fillPlaceholders,
+  getColumnNameAndConfig: () => getColumnNameAndConfig,
+  getOperators: () => getOperators,
+  getOrderByOperators: () => getOrderByOperators,
+  getTableColumns: () => getTableColumns,
+  getTableLikeName: () => getTableLikeName,
+  getTableName: () => getTableName,
+  getTableUniqueName: () => getTableUniqueName,
+  getViewName: () => getViewName,
+  getViewSelectedFields: () => getViewSelectedFields,
+  gt: () => gt,
+  gte: () => gte,
+  hammingDistance: () => hammingDistance,
+  hasOwnEntityKind: () => hasOwnEntityKind,
+  haveSameKeys: () => haveSameKeys,
+  ilike: () => ilike,
+  inArray: () => inArray,
+  innerProduct: () => innerProduct,
+  is: () => is,
+  isConfig: () => isConfig,
+  isDriverValueEncoder: () => isDriverValueEncoder,
+  isNotNull: () => isNotNull,
+  isNull: () => isNull,
+  isSQLWrapper: () => isSQLWrapper,
+  isTable: () => isTable,
+  isView: () => isView,
+  jaccardDistance: () => jaccardDistance,
+  l1Distance: () => l1Distance,
+  l2Distance: () => l2Distance,
+  like: () => like,
+  lt: () => lt,
+  lte: () => lte,
+  mapColumnsInAliasedSQLToAlias: () => mapColumnsInAliasedSQLToAlias,
+  mapColumnsInSQLToAlias: () => mapColumnsInSQLToAlias,
+  mapRelationalRow: () => mapRelationalRow,
+  mapResultRow: () => mapResultRow,
+  mapUpdateSet: () => mapUpdateSet,
+  max: () => max,
+  min: () => min,
+  name: () => name,
+  ne: () => ne,
+  noopDecoder: () => noopDecoder,
+  noopEncoder: () => noopEncoder,
+  noopMapper: () => noopMapper,
+  normalizeRelation: () => normalizeRelation,
+  not: () => not,
+  notBetween: () => notBetween,
+  notExists: () => notExists,
+  notIlike: () => notIlike,
+  notInArray: () => notInArray,
+  notLike: () => notLike,
+  or: () => or,
+  orderSelectedFields: () => orderSelectedFields,
+  param: () => param,
+  placeholder: () => placeholder,
+  relations: () => relations,
+  sql: () => sql,
+  sum: () => sum,
+  sumDistinct: () => sumDistinct,
+  textDecoder: () => textDecoder
+});
 var init_drizzle_orm = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/index.js"() {
+  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/index.js"() {
     init_alias();
     init_column_builder();
     init_column();
@@ -65541,13 +65786,13 @@ function time2(args) {
   return new RegExp(`^${timeSource(args)}$`);
 }
 function datetime(args) {
-  const time6 = timeSource({ precision: args.precision });
+  const time5 = timeSource({ precision: args.precision });
   const opts = ["Z"];
   if (args.local)
     opts.push("");
   if (args.offset)
     opts.push(`([+-]\\d{2}:\\d{2})`);
-  const timeRegex2 = `${time6}(?:${opts.join("|")})`;
+  const timeRegex2 = `${time5}(?:${opts.join("|")})`;
   return new RegExp(`^${dateSource}T(?:${timeRegex2})$`);
 }
 var cuid, cuid2, ulid, xid, ksuid, nanoid, duration, extendedDuration, guid, uuid2, uuid4, uuid6, uuid7, email, html5Email, rfc5322Email, unicodeEmail, browserEmail, _emoji, ipv4, ipv6, cidrv4, cidrv6, base64, base64url, hostname, domain, e164, dateSource, date2, string, bigint2, integer2, number, boolean2, _null, _undefined, lowercase, uppercase;
@@ -65562,10 +65807,10 @@ var init_regexes = __esm({
     duration = /^P(?:(\d+W)|(?!.*W)(?=\d|T\d)(\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+([.,]\d+)?S)?)?)$/;
     extendedDuration = /^[-+]?P(?!$)(?:(?:[-+]?\d+Y)|(?:[-+]?\d+[.,]\d+Y$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:(?:[-+]?\d+W)|(?:[-+]?\d+[.,]\d+W$))?(?:(?:[-+]?\d+D)|(?:[-+]?\d+[.,]\d+D$))?(?:T(?=[\d+-])(?:(?:[-+]?\d+H)|(?:[-+]?\d+[.,]\d+H$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:[-+]?\d+(?:[.,]\d+)?S)?)??$/;
     guid = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
-    uuid2 = (version5) => {
-      if (!version5)
+    uuid2 = (version4) => {
+      if (!version4)
         return /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$/;
-      return new RegExp(`^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${version5}[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`);
+      return new RegExp(`^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${version4}[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`);
     };
     uuid4 = /* @__PURE__ */ uuid2(4);
     uuid6 = /* @__PURE__ */ uuid2(6);
@@ -66174,8 +66419,8 @@ var init_doc = __esm({
         const lines = content.split("\n").filter((x) => x);
         const minIndent = Math.min(...lines.map((x) => x.length - x.trimStart().length));
         const dedented = lines.map((x) => x.slice(minIndent)).map((x) => " ".repeat(this.indent * 2) + x);
-        for (const line3 of dedented) {
-          this.content.push(line3);
+        for (const line2 of dedented) {
+          this.content.push(line2);
         }
       }
       compile() {
@@ -74072,24 +74317,24 @@ var init_to_json_schema = __esm({
             const _json2 = result.schema;
             switch (def.type) {
               case "string": {
-                const json4 = _json2;
-                json4.type = "string";
+                const json3 = _json2;
+                json3.type = "string";
                 const { minimum, maximum, format: format2, patterns, contentEncoding } = schema._zod.bag;
                 if (typeof minimum === "number")
-                  json4.minLength = minimum;
+                  json3.minLength = minimum;
                 if (typeof maximum === "number")
-                  json4.maxLength = maximum;
+                  json3.maxLength = maximum;
                 if (format2) {
-                  json4.format = formatMap[format2] ?? format2;
-                  if (json4.format === "")
-                    delete json4.format;
+                  json3.format = formatMap[format2] ?? format2;
+                  if (json3.format === "")
+                    delete json3.format;
                 }
                 if (contentEncoding)
-                  json4.contentEncoding = contentEncoding;
+                  json3.contentEncoding = contentEncoding;
                 if (patterns && patterns.size > 0) {
                   const regexes = [...patterns];
                   if (regexes.length === 1)
-                    json4.pattern = regexes[0].source;
+                    json3.pattern = regexes[0].source;
                   else if (regexes.length > 1) {
                     result.schema.allOf = [
                       ...regexes.map((regex) => ({
@@ -74102,41 +74347,41 @@ var init_to_json_schema = __esm({
                 break;
               }
               case "number": {
-                const json4 = _json2;
+                const json3 = _json2;
                 const { minimum, maximum, format: format2, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
                 if (typeof format2 === "string" && format2.includes("int"))
-                  json4.type = "integer";
+                  json3.type = "integer";
                 else
-                  json4.type = "number";
+                  json3.type = "number";
                 if (typeof exclusiveMinimum === "number")
-                  json4.exclusiveMinimum = exclusiveMinimum;
+                  json3.exclusiveMinimum = exclusiveMinimum;
                 if (typeof minimum === "number") {
-                  json4.minimum = minimum;
+                  json3.minimum = minimum;
                   if (typeof exclusiveMinimum === "number") {
                     if (exclusiveMinimum >= minimum)
-                      delete json4.minimum;
+                      delete json3.minimum;
                     else
-                      delete json4.exclusiveMinimum;
+                      delete json3.exclusiveMinimum;
                   }
                 }
                 if (typeof exclusiveMaximum === "number")
-                  json4.exclusiveMaximum = exclusiveMaximum;
+                  json3.exclusiveMaximum = exclusiveMaximum;
                 if (typeof maximum === "number") {
-                  json4.maximum = maximum;
+                  json3.maximum = maximum;
                   if (typeof exclusiveMaximum === "number") {
                     if (exclusiveMaximum <= maximum)
-                      delete json4.maximum;
+                      delete json3.maximum;
                     else
-                      delete json4.exclusiveMaximum;
+                      delete json3.exclusiveMaximum;
                   }
                 }
                 if (typeof multipleOf === "number")
-                  json4.multipleOf = multipleOf;
+                  json3.multipleOf = multipleOf;
                 break;
               }
               case "boolean": {
-                const json4 = _json2;
-                json4.type = "boolean";
+                const json3 = _json2;
+                json3.type = "boolean";
                 break;
               }
               case "bigint": {
@@ -74184,23 +74429,23 @@ var init_to_json_schema = __esm({
                 break;
               }
               case "array": {
-                const json4 = _json2;
+                const json3 = _json2;
                 const { minimum, maximum } = schema._zod.bag;
                 if (typeof minimum === "number")
-                  json4.minItems = minimum;
+                  json3.minItems = minimum;
                 if (typeof maximum === "number")
-                  json4.maxItems = maximum;
-                json4.type = "array";
-                json4.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
+                  json3.maxItems = maximum;
+                json3.type = "array";
+                json3.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
                 break;
               }
               case "object": {
-                const json4 = _json2;
-                json4.type = "object";
-                json4.properties = {};
+                const json3 = _json2;
+                json3.type = "object";
+                json3.properties = {};
                 const shape = def.shape;
                 for (const key in shape) {
-                  json4.properties[key] = this.process(shape[key], {
+                  json3.properties[key] = this.process(shape[key], {
                     ...params,
                     path: [...params.path, "properties", key]
                   });
@@ -74215,15 +74460,15 @@ var init_to_json_schema = __esm({
                   }
                 }));
                 if (requiredKeys.size > 0) {
-                  json4.required = Array.from(requiredKeys);
+                  json3.required = Array.from(requiredKeys);
                 }
                 if (def.catchall?._zod.def.type === "never") {
-                  json4.additionalProperties = false;
+                  json3.additionalProperties = false;
                 } else if (!def.catchall) {
                   if (this.io === "output")
-                    json4.additionalProperties = false;
+                    json3.additionalProperties = false;
                 } else if (def.catchall) {
-                  json4.additionalProperties = this.process(def.catchall, {
+                  json3.additionalProperties = this.process(def.catchall, {
                     ...params,
                     path: [...params.path, "additionalProperties"]
                   });
@@ -74231,15 +74476,15 @@ var init_to_json_schema = __esm({
                 break;
               }
               case "union": {
-                const json4 = _json2;
-                json4.anyOf = def.options.map((x, i5) => this.process(x, {
+                const json3 = _json2;
+                json3.anyOf = def.options.map((x, i5) => this.process(x, {
                   ...params,
                   path: [...params.path, "anyOf", i5]
                 }));
                 break;
               }
               case "intersection": {
-                const json4 = _json2;
+                const json3 = _json2;
                 const a5 = this.process(def.left, {
                   ...params,
                   path: [...params.path, "allOf", 0]
@@ -74253,17 +74498,17 @@ var init_to_json_schema = __esm({
                   ...isSimpleIntersection(a5) ? a5.allOf : [a5],
                   ...isSimpleIntersection(b5) ? b5.allOf : [b5]
                 ];
-                json4.allOf = allOf;
+                json3.allOf = allOf;
                 break;
               }
               case "tuple": {
-                const json4 = _json2;
-                json4.type = "array";
+                const json3 = _json2;
+                json3.type = "array";
                 const prefixItems = def.items.map((x, i5) => this.process(x, { ...params, path: [...params.path, "prefixItems", i5] }));
                 if (this.target === "draft-2020-12") {
-                  json4.prefixItems = prefixItems;
+                  json3.prefixItems = prefixItems;
                 } else {
-                  json4.items = prefixItems;
+                  json3.items = prefixItems;
                 }
                 if (def.rest) {
                   const rest = this.process(def.rest, {
@@ -74271,29 +74516,29 @@ var init_to_json_schema = __esm({
                     path: [...params.path, "items"]
                   });
                   if (this.target === "draft-2020-12") {
-                    json4.items = rest;
+                    json3.items = rest;
                   } else {
-                    json4.additionalItems = rest;
+                    json3.additionalItems = rest;
                   }
                 }
                 if (def.rest) {
-                  json4.items = this.process(def.rest, {
+                  json3.items = this.process(def.rest, {
                     ...params,
                     path: [...params.path, "items"]
                   });
                 }
                 const { minimum, maximum } = schema._zod.bag;
                 if (typeof minimum === "number")
-                  json4.minItems = minimum;
+                  json3.minItems = minimum;
                 if (typeof maximum === "number")
-                  json4.maxItems = maximum;
+                  json3.maxItems = maximum;
                 break;
               }
               case "record": {
-                const json4 = _json2;
-                json4.type = "object";
-                json4.propertyNames = this.process(def.keyType, { ...params, path: [...params.path, "propertyNames"] });
-                json4.additionalProperties = this.process(def.valueType, {
+                const json3 = _json2;
+                json3.type = "object";
+                json3.propertyNames = this.process(def.keyType, { ...params, path: [...params.path, "propertyNames"] });
+                json3.additionalProperties = this.process(def.valueType, {
                   ...params,
                   path: [...params.path, "additionalProperties"]
                 });
@@ -74312,17 +74557,17 @@ var init_to_json_schema = __esm({
                 break;
               }
               case "enum": {
-                const json4 = _json2;
+                const json3 = _json2;
                 const values = getEnumValues(def.entries);
                 if (values.every((v) => typeof v === "number"))
-                  json4.type = "number";
+                  json3.type = "number";
                 if (values.every((v) => typeof v === "string"))
-                  json4.type = "string";
-                json4.enum = values;
+                  json3.type = "string";
+                json3.enum = values;
                 break;
               }
               case "literal": {
-                const json4 = _json2;
+                const json3 = _json2;
                 const vals = [];
                 for (const val of def.values) {
                   if (val === void 0) {
@@ -74343,23 +74588,23 @@ var init_to_json_schema = __esm({
                 if (vals.length === 0) {
                 } else if (vals.length === 1) {
                   const val = vals[0];
-                  json4.type = val === null ? "null" : typeof val;
-                  json4.const = val;
+                  json3.type = val === null ? "null" : typeof val;
+                  json3.const = val;
                 } else {
                   if (vals.every((v) => typeof v === "number"))
-                    json4.type = "number";
+                    json3.type = "number";
                   if (vals.every((v) => typeof v === "string"))
-                    json4.type = "string";
+                    json3.type = "string";
                   if (vals.every((v) => typeof v === "boolean"))
-                    json4.type = "string";
+                    json3.type = "string";
                   if (vals.every((v) => v === null))
-                    json4.type = "null";
-                  json4.enum = vals;
+                    json3.type = "null";
+                  json3.enum = vals;
                 }
                 break;
               }
               case "file": {
-                const json4 = _json2;
+                const json3 = _json2;
                 const file2 = {
                   type: "string",
                   format: "binary",
@@ -74373,15 +74618,15 @@ var init_to_json_schema = __esm({
                 if (mime) {
                   if (mime.length === 1) {
                     file2.contentMediaType = mime[0];
-                    Object.assign(json4, file2);
+                    Object.assign(json3, file2);
                   } else {
-                    json4.anyOf = mime.map((m3) => {
+                    json3.anyOf = mime.map((m3) => {
                       const mFile = { ...file2, contentMediaType: m3 };
                       return mFile;
                     });
                   }
                 } else {
-                  Object.assign(json4, file2);
+                  Object.assign(json3, file2);
                 }
                 break;
               }
@@ -74402,8 +74647,8 @@ var init_to_json_schema = __esm({
                 break;
               }
               case "success": {
-                const json4 = _json2;
-                json4.type = "boolean";
+                const json3 = _json2;
+                json3.type = "boolean";
                 break;
               }
               case "default": {
@@ -74438,12 +74683,12 @@ var init_to_json_schema = __esm({
                 break;
               }
               case "template_literal": {
-                const json4 = _json2;
+                const json3 = _json2;
                 const pattern = schema._zod.pattern;
                 if (!pattern)
                   throw new Error("Pattern not found in template literal");
-                json4.type = "string";
-                json4.pattern = pattern.source;
+                json3.type = "string";
+                json3.pattern = pattern.source;
                 break;
               }
               case "pipe": {
@@ -76288,7 +76533,7 @@ var init_v4 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0__zod@3.25.76/node_modules/drizzle-zod/index.mjs
+// ../../node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash_78e064001f6c5c6e778dff9636bd3bfd/node_modules/drizzle-zod/index.mjs
 function isColumnType(column, columnTypes) {
   return columnTypes.includes(column.columnType);
 }
@@ -76350,11 +76595,11 @@ function numberColumnToSchema(column, z, coerce2) {
   let unsigned = column.getSQLType().includes("unsigned");
   let min2;
   let max2;
-  let integer5 = false;
+  let integer4 = false;
   if (isColumnType(column, ["MySqlTinyInt", "SingleStoreTinyInt"])) {
     min2 = unsigned ? 0 : CONSTANTS.INT8_MIN;
     max2 = unsigned ? CONSTANTS.INT8_UNSIGNED_MAX : CONSTANTS.INT8_MAX;
-    integer5 = true;
+    integer4 = true;
   } else if (isColumnType(column, [
     "PgSmallInt",
     "PgSmallSerial",
@@ -76363,7 +76608,7 @@ function numberColumnToSchema(column, z, coerce2) {
   ])) {
     min2 = unsigned ? 0 : CONSTANTS.INT16_MIN;
     max2 = unsigned ? CONSTANTS.INT16_UNSIGNED_MAX : CONSTANTS.INT16_MAX;
-    integer5 = true;
+    integer4 = true;
   } else if (isColumnType(column, [
     "PgReal",
     "MySqlFloat",
@@ -76373,7 +76618,7 @@ function numberColumnToSchema(column, z, coerce2) {
   ])) {
     min2 = unsigned ? 0 : CONSTANTS.INT24_MIN;
     max2 = unsigned ? CONSTANTS.INT24_UNSIGNED_MAX : CONSTANTS.INT24_MAX;
-    integer5 = isColumnType(column, ["MySqlMediumInt", "SingleStoreMediumInt"]);
+    integer4 = isColumnType(column, ["MySqlMediumInt", "SingleStoreMediumInt"]);
   } else if (isColumnType(column, [
     "PgInteger",
     "PgSerial",
@@ -76382,7 +76627,7 @@ function numberColumnToSchema(column, z, coerce2) {
   ])) {
     min2 = unsigned ? 0 : CONSTANTS.INT32_MIN;
     max2 = unsigned ? CONSTANTS.INT32_UNSIGNED_MAX : CONSTANTS.INT32_MAX;
-    integer5 = true;
+    integer4 = true;
   } else if (isColumnType(column, [
     "PgDoublePrecision",
     "MySqlReal",
@@ -76405,16 +76650,16 @@ function numberColumnToSchema(column, z, coerce2) {
     unsigned = unsigned || isColumnType(column, ["MySqlSerial", "SingleStoreSerial"]);
     min2 = unsigned ? 0 : Number.MIN_SAFE_INTEGER;
     max2 = Number.MAX_SAFE_INTEGER;
-    integer5 = true;
+    integer4 = true;
   } else if (isColumnType(column, ["MySqlYear", "SingleStoreYear"])) {
     min2 = 1901;
     max2 = 2155;
-    integer5 = true;
+    integer4 = true;
   } else {
     min2 = Number.MIN_SAFE_INTEGER;
     max2 = Number.MAX_SAFE_INTEGER;
   }
-  let schema = coerce2 === true || coerce2?.number ? integer5 ? z.coerce.number() : z.coerce.number().int() : integer5 ? z.int() : z.number();
+  let schema = coerce2 === true || coerce2?.number ? integer4 ? z.coerce.number() : z.coerce.number().int() : integer4 ? z.int() : z.number();
   schema = schema.gte(min2).lte(max2);
   return schema;
 }
@@ -76500,7 +76745,7 @@ function handleColumns(columns, refinements, conditions, factory) {
 }
 var CONSTANTS, literalSchema, jsonSchema, bufferSchema, insertConditions, createInsertSchema;
 var init_drizzle_zod = __esm({
-  "../../node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_pg@8.20.0__zod@3.25.76/node_modules/drizzle-zod/index.mjs"() {
+  "../../node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash_78e064001f6c5c6e778dff9636bd3bfd/node_modules/drizzle-zod/index.mjs"() {
     init_v4();
     init_drizzle_orm();
     CONSTANTS = {
@@ -78110,4120 +78355,6 @@ var init_src2 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/entity.js
-function is2(value, type) {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-  if (value instanceof type) {
-    return true;
-  }
-  if (!Object.prototype.hasOwnProperty.call(type, entityKind2)) {
-    throw new Error(
-      `Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`
-    );
-  }
-  let cls = Object.getPrototypeOf(value).constructor;
-  if (cls) {
-    while (cls) {
-      if (entityKind2 in cls && cls[entityKind2] === type[entityKind2]) {
-        return true;
-      }
-      cls = Object.getPrototypeOf(cls);
-    }
-  }
-  return false;
-}
-var entityKind2, hasOwnEntityKind;
-var init_entity2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/entity.js"() {
-    entityKind2 = /* @__PURE__ */ Symbol.for("drizzle:entityKind");
-    hasOwnEntityKind = /* @__PURE__ */ Symbol.for("drizzle:hasOwnEntityKind");
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/column.js
-var Column2;
-var init_column2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/column.js"() {
-    init_entity2();
-    Column2 = class {
-      constructor(table, config2) {
-        this.table = table;
-        this.config = config2;
-        this.name = config2.name;
-        this.keyAsName = config2.keyAsName;
-        this.notNull = config2.notNull;
-        this.default = config2.default;
-        this.defaultFn = config2.defaultFn;
-        this.onUpdateFn = config2.onUpdateFn;
-        this.hasDefault = config2.hasDefault;
-        this.primary = config2.primaryKey;
-        this.isUnique = config2.isUnique;
-        this.uniqueName = config2.uniqueName;
-        this.uniqueType = config2.uniqueType;
-        this.dataType = config2.dataType;
-        this.columnType = config2.columnType;
-        this.generated = config2.generated;
-        this.generatedIdentity = config2.generatedIdentity;
-      }
-      static [entityKind2] = "Column";
-      name;
-      keyAsName;
-      primary;
-      notNull;
-      default;
-      defaultFn;
-      onUpdateFn;
-      hasDefault;
-      isUnique;
-      uniqueName;
-      uniqueType;
-      dataType;
-      columnType;
-      enumValues = void 0;
-      generated = void 0;
-      generatedIdentity = void 0;
-      config;
-      mapFromDriverValue(value) {
-        return value;
-      }
-      mapToDriverValue(value) {
-        return value;
-      }
-      // ** @internal */
-      shouldDisableInsert() {
-        return this.config.generated !== void 0 && this.config.generated.type !== "byDefault";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/column-builder.js
-var ColumnBuilder2;
-var init_column_builder2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/column-builder.js"() {
-    init_entity2();
-    ColumnBuilder2 = class {
-      static [entityKind2] = "ColumnBuilder";
-      config;
-      constructor(name2, dataType, columnType) {
-        this.config = {
-          name: name2,
-          keyAsName: name2 === "",
-          notNull: false,
-          default: void 0,
-          hasDefault: false,
-          primaryKey: false,
-          isUnique: false,
-          uniqueName: void 0,
-          uniqueType: void 0,
-          dataType,
-          columnType,
-          generated: void 0
-        };
-      }
-      /**
-       * Changes the data type of the column. Commonly used with `json` columns. Also, useful for branded types.
-       *
-       * @example
-       * ```ts
-       * const users = pgTable('users', {
-       * 	id: integer('id').$type<UserId>().primaryKey(),
-       * 	details: json('details').$type<UserDetails>().notNull(),
-       * });
-       * ```
-       */
-      $type() {
-        return this;
-      }
-      /**
-       * Adds a `not null` clause to the column definition.
-       *
-       * Affects the `select` model of the table - columns *without* `not null` will be nullable on select.
-       */
-      notNull() {
-        this.config.notNull = true;
-        return this;
-      }
-      /**
-       * Adds a `default <value>` clause to the column definition.
-       *
-       * Affects the `insert` model of the table - columns *with* `default` are optional on insert.
-       *
-       * If you need to set a dynamic default value, use {@link $defaultFn} instead.
-       */
-      default(value) {
-        this.config.default = value;
-        this.config.hasDefault = true;
-        return this;
-      }
-      /**
-       * Adds a dynamic default value to the column.
-       * The function will be called when the row is inserted, and the returned value will be used as the column value.
-       *
-       * **Note:** This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`.
-       */
-      $defaultFn(fn) {
-        this.config.defaultFn = fn;
-        this.config.hasDefault = true;
-        return this;
-      }
-      /**
-       * Alias for {@link $defaultFn}.
-       */
-      $default = this.$defaultFn;
-      /**
-       * Adds a dynamic update value to the column.
-       * The function will be called when the row is updated, and the returned value will be used as the column value if none is provided.
-       * If no `default` (or `$defaultFn`) value is provided, the function will be called when the row is inserted as well, and the returned value will be used as the column value.
-       *
-       * **Note:** This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`.
-       */
-      $onUpdateFn(fn) {
-        this.config.onUpdateFn = fn;
-        this.config.hasDefault = true;
-        return this;
-      }
-      /**
-       * Alias for {@link $onUpdateFn}.
-       */
-      $onUpdate = this.$onUpdateFn;
-      /**
-       * Adds a `primary key` clause to the column definition. This implicitly makes the column `not null`.
-       *
-       * In SQLite, `integer primary key` implicitly makes the column auto-incrementing.
-       */
-      primaryKey() {
-        this.config.primaryKey = true;
-        this.config.notNull = true;
-        return this;
-      }
-      /** @internal Sets the name of the column to the key within the table definition if a name was not given. */
-      setName(name2) {
-        if (this.config.name !== "") return;
-        this.config.name = name2;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/table.utils.js
-var TableName2;
-var init_table_utils2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/table.utils.js"() {
-    TableName2 = /* @__PURE__ */ Symbol.for("drizzle:Name");
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/foreign-keys.js
-var ForeignKeyBuilder2, ForeignKey2;
-var init_foreign_keys2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/foreign-keys.js"() {
-    init_entity2();
-    init_table_utils2();
-    ForeignKeyBuilder2 = class {
-      static [entityKind2] = "PgForeignKeyBuilder";
-      /** @internal */
-      reference;
-      /** @internal */
-      _onUpdate = "no action";
-      /** @internal */
-      _onDelete = "no action";
-      constructor(config2, actions) {
-        this.reference = () => {
-          const { name: name2, columns, foreignColumns } = config2();
-          return { name: name2, columns, foreignTable: foreignColumns[0].table, foreignColumns };
-        };
-        if (actions) {
-          this._onUpdate = actions.onUpdate;
-          this._onDelete = actions.onDelete;
-        }
-      }
-      onUpdate(action) {
-        this._onUpdate = action === void 0 ? "no action" : action;
-        return this;
-      }
-      onDelete(action) {
-        this._onDelete = action === void 0 ? "no action" : action;
-        return this;
-      }
-      /** @internal */
-      build(table) {
-        return new ForeignKey2(table, this);
-      }
-    };
-    ForeignKey2 = class {
-      constructor(table, builder) {
-        this.table = table;
-        this.reference = builder.reference;
-        this.onUpdate = builder._onUpdate;
-        this.onDelete = builder._onDelete;
-      }
-      static [entityKind2] = "PgForeignKey";
-      reference;
-      onUpdate;
-      onDelete;
-      getName() {
-        const { name: name2, columns, foreignColumns } = this.reference();
-        const columnNames = columns.map((column) => column.name);
-        const foreignColumnNames = foreignColumns.map((column) => column.name);
-        const chunks = [
-          this.table[TableName2],
-          ...columnNames,
-          foreignColumns[0].table[TableName2],
-          ...foreignColumnNames
-        ];
-        return name2 ?? `${chunks.join("_")}_fk`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/tracing-utils.js
-function iife2(fn, ...args) {
-  return fn(...args);
-}
-var init_tracing_utils2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/tracing-utils.js"() {
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/unique-constraint.js
-function uniqueKeyName2(table, columns) {
-  return `${table[TableName2]}_${columns.join("_")}_unique`;
-}
-var UniqueConstraintBuilder2, UniqueOnConstraintBuilder2, UniqueConstraint2;
-var init_unique_constraint2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/unique-constraint.js"() {
-    init_entity2();
-    init_table_utils2();
-    UniqueConstraintBuilder2 = class {
-      constructor(columns, name2) {
-        this.name = name2;
-        this.columns = columns;
-      }
-      static [entityKind2] = "PgUniqueConstraintBuilder";
-      /** @internal */
-      columns;
-      /** @internal */
-      nullsNotDistinctConfig = false;
-      nullsNotDistinct() {
-        this.nullsNotDistinctConfig = true;
-        return this;
-      }
-      /** @internal */
-      build(table) {
-        return new UniqueConstraint2(table, this.columns, this.nullsNotDistinctConfig, this.name);
-      }
-    };
-    UniqueOnConstraintBuilder2 = class {
-      static [entityKind2] = "PgUniqueOnConstraintBuilder";
-      /** @internal */
-      name;
-      constructor(name2) {
-        this.name = name2;
-      }
-      on(...columns) {
-        return new UniqueConstraintBuilder2(columns, this.name);
-      }
-    };
-    UniqueConstraint2 = class {
-      constructor(table, columns, nullsNotDistinct, name2) {
-        this.table = table;
-        this.columns = columns;
-        this.name = name2 ?? uniqueKeyName2(this.table, this.columns.map((column) => column.name));
-        this.nullsNotDistinct = nullsNotDistinct;
-      }
-      static [entityKind2] = "PgUniqueConstraint";
-      columns;
-      name;
-      nullsNotDistinct = false;
-      getName() {
-        return this.name;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/array.js
-function parsePgArrayValue2(arrayString, startFrom, inQuotes) {
-  for (let i5 = startFrom; i5 < arrayString.length; i5++) {
-    const char3 = arrayString[i5];
-    if (char3 === "\\") {
-      i5++;
-      continue;
-    }
-    if (char3 === '"') {
-      return [arrayString.slice(startFrom, i5).replace(/\\/g, ""), i5 + 1];
-    }
-    if (inQuotes) {
-      continue;
-    }
-    if (char3 === "," || char3 === "}") {
-      return [arrayString.slice(startFrom, i5).replace(/\\/g, ""), i5];
-    }
-  }
-  return [arrayString.slice(startFrom).replace(/\\/g, ""), arrayString.length];
-}
-function parsePgNestedArray2(arrayString, startFrom = 0) {
-  const result = [];
-  let i5 = startFrom;
-  let lastCharIsComma = false;
-  while (i5 < arrayString.length) {
-    const char3 = arrayString[i5];
-    if (char3 === ",") {
-      if (lastCharIsComma || i5 === startFrom) {
-        result.push("");
-      }
-      lastCharIsComma = true;
-      i5++;
-      continue;
-    }
-    lastCharIsComma = false;
-    if (char3 === "\\") {
-      i5 += 2;
-      continue;
-    }
-    if (char3 === '"') {
-      const [value2, startFrom2] = parsePgArrayValue2(arrayString, i5 + 1, true);
-      result.push(value2);
-      i5 = startFrom2;
-      continue;
-    }
-    if (char3 === "}") {
-      return [result, i5 + 1];
-    }
-    if (char3 === "{") {
-      const [value2, startFrom2] = parsePgNestedArray2(arrayString, i5 + 1);
-      result.push(value2);
-      i5 = startFrom2;
-      continue;
-    }
-    const [value, newStartFrom] = parsePgArrayValue2(arrayString, i5, false);
-    result.push(value);
-    i5 = newStartFrom;
-  }
-  return [result, i5];
-}
-function parsePgArray2(arrayString) {
-  const [result] = parsePgNestedArray2(arrayString, 1);
-  return result;
-}
-function makePgArray2(array2) {
-  return `{${array2.map((item) => {
-    if (Array.isArray(item)) {
-      return makePgArray2(item);
-    }
-    if (typeof item === "string") {
-      return `"${item.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-    }
-    return `${item}`;
-  }).join(",")}}`;
-}
-var init_array2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/array.js"() {
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/common.js
-var PgColumnBuilder2, PgColumn2, ExtraConfigColumn2, IndexedColumn2, PgArrayBuilder2, PgArray2;
-var init_common2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/common.js"() {
-    init_column_builder2();
-    init_column2();
-    init_entity2();
-    init_foreign_keys2();
-    init_tracing_utils2();
-    init_unique_constraint2();
-    init_array2();
-    PgColumnBuilder2 = class extends ColumnBuilder2 {
-      foreignKeyConfigs = [];
-      static [entityKind2] = "PgColumnBuilder";
-      array(size) {
-        return new PgArrayBuilder2(this.config.name, this, size);
-      }
-      references(ref, actions = {}) {
-        this.foreignKeyConfigs.push({ ref, actions });
-        return this;
-      }
-      unique(name2, config2) {
-        this.config.isUnique = true;
-        this.config.uniqueName = name2;
-        this.config.uniqueType = config2?.nulls;
-        return this;
-      }
-      generatedAlwaysAs(as) {
-        this.config.generated = {
-          as,
-          type: "always",
-          mode: "stored"
-        };
-        return this;
-      }
-      /** @internal */
-      buildForeignKeys(column, table) {
-        return this.foreignKeyConfigs.map(({ ref, actions }) => {
-          return iife2(
-            (ref2, actions2) => {
-              const builder = new ForeignKeyBuilder2(() => {
-                const foreignColumn = ref2();
-                return { columns: [column], foreignColumns: [foreignColumn] };
-              });
-              if (actions2.onUpdate) {
-                builder.onUpdate(actions2.onUpdate);
-              }
-              if (actions2.onDelete) {
-                builder.onDelete(actions2.onDelete);
-              }
-              return builder.build(table);
-            },
-            ref,
-            actions
-          );
-        });
-      }
-      /** @internal */
-      buildExtraConfigColumn(table) {
-        return new ExtraConfigColumn2(table, this.config);
-      }
-    };
-    PgColumn2 = class extends Column2 {
-      constructor(table, config2) {
-        if (!config2.uniqueName) {
-          config2.uniqueName = uniqueKeyName2(table, [config2.name]);
-        }
-        super(table, config2);
-        this.table = table;
-      }
-      static [entityKind2] = "PgColumn";
-    };
-    ExtraConfigColumn2 = class extends PgColumn2 {
-      static [entityKind2] = "ExtraConfigColumn";
-      getSQLType() {
-        return this.getSQLType();
-      }
-      indexConfig = {
-        order: this.config.order ?? "asc",
-        nulls: this.config.nulls ?? "last",
-        opClass: this.config.opClass
-      };
-      defaultConfig = {
-        order: "asc",
-        nulls: "last",
-        opClass: void 0
-      };
-      asc() {
-        this.indexConfig.order = "asc";
-        return this;
-      }
-      desc() {
-        this.indexConfig.order = "desc";
-        return this;
-      }
-      nullsFirst() {
-        this.indexConfig.nulls = "first";
-        return this;
-      }
-      nullsLast() {
-        this.indexConfig.nulls = "last";
-        return this;
-      }
-      /**
-       * ### PostgreSQL documentation quote
-       *
-       * > An operator class with optional parameters can be specified for each column of an index.
-       * The operator class identifies the operators to be used by the index for that column.
-       * For example, a B-tree index on four-byte integers would use the int4_ops class;
-       * this operator class includes comparison functions for four-byte integers.
-       * In practice the default operator class for the column's data type is usually sufficient.
-       * The main point of having operator classes is that for some data types, there could be more than one meaningful ordering.
-       * For example, we might want to sort a complex-number data type either by absolute value or by real part.
-       * We could do this by defining two operator classes for the data type and then selecting the proper class when creating an index.
-       * More information about operator classes check:
-       *
-       * ### Useful links
-       * https://www.postgresql.org/docs/current/sql-createindex.html
-       *
-       * https://www.postgresql.org/docs/current/indexes-opclass.html
-       *
-       * https://www.postgresql.org/docs/current/xindex.html
-       *
-       * ### Additional types
-       * If you have the `pg_vector` extension installed in your database, you can use the
-       * `vector_l2_ops`, `vector_ip_ops`, `vector_cosine_ops`, `vector_l1_ops`, `bit_hamming_ops`, `bit_jaccard_ops`, `halfvec_l2_ops`, `sparsevec_l2_ops` options, which are predefined types.
-       *
-       * **You can always specify any string you want in the operator class, in case Drizzle doesn't have it natively in its types**
-       *
-       * @param opClass
-       * @returns
-       */
-      op(opClass) {
-        this.indexConfig.opClass = opClass;
-        return this;
-      }
-    };
-    IndexedColumn2 = class {
-      static [entityKind2] = "IndexedColumn";
-      constructor(name2, keyAsName, type, indexConfig) {
-        this.name = name2;
-        this.keyAsName = keyAsName;
-        this.type = type;
-        this.indexConfig = indexConfig;
-      }
-      name;
-      keyAsName;
-      type;
-      indexConfig;
-    };
-    PgArrayBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgArrayBuilder";
-      constructor(name2, baseBuilder, size) {
-        super(name2, "array", "PgArray");
-        this.config.baseBuilder = baseBuilder;
-        this.config.size = size;
-      }
-      /** @internal */
-      build(table) {
-        const baseColumn = this.config.baseBuilder.build(table);
-        return new PgArray2(
-          table,
-          this.config,
-          baseColumn
-        );
-      }
-    };
-    PgArray2 = class _PgArray extends PgColumn2 {
-      constructor(table, config2, baseColumn, range2) {
-        super(table, config2);
-        this.baseColumn = baseColumn;
-        this.range = range2;
-        this.size = config2.size;
-      }
-      size;
-      static [entityKind2] = "PgArray";
-      getSQLType() {
-        return `${this.baseColumn.getSQLType()}[${typeof this.size === "number" ? this.size : ""}]`;
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") {
-          value = parsePgArray2(value);
-        }
-        return value.map((v) => this.baseColumn.mapFromDriverValue(v));
-      }
-      mapToDriverValue(value, isNestedArray = false) {
-        const a5 = value.map(
-          (v) => v === null ? null : is2(this.baseColumn, _PgArray) ? this.baseColumn.mapToDriverValue(v, true) : this.baseColumn.mapToDriverValue(v)
-        );
-        if (isNestedArray) return a5;
-        return makePgArray2(a5);
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/enum.js
-function isPgEnum2(obj) {
-  return !!obj && typeof obj === "function" && isPgEnumSym2 in obj && obj[isPgEnumSym2] === true;
-}
-function pgEnumWithSchema2(enumName, values, schema) {
-  const enumInstance = Object.assign(
-    (name2) => new PgEnumColumnBuilder2(name2 ?? "", enumInstance),
-    {
-      enumName,
-      enumValues: values,
-      schema,
-      [isPgEnumSym2]: true
-    }
-  );
-  return enumInstance;
-}
-function pgEnumObjectWithSchema2(enumName, values, schema) {
-  const enumInstance = Object.assign(
-    (name2) => new PgEnumObjectColumnBuilder2(name2 ?? "", enumInstance),
-    {
-      enumName,
-      enumValues: Object.values(values),
-      schema,
-      [isPgEnumSym2]: true
-    }
-  );
-  return enumInstance;
-}
-var PgEnumObjectColumnBuilder2, PgEnumObjectColumn2, isPgEnumSym2, PgEnumColumnBuilder2, PgEnumColumn2;
-var init_enum2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/enum.js"() {
-    init_entity2();
-    init_common2();
-    PgEnumObjectColumnBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgEnumObjectColumnBuilder";
-      constructor(name2, enumInstance) {
-        super(name2, "string", "PgEnumObjectColumn");
-        this.config.enum = enumInstance;
-      }
-      /** @internal */
-      build(table) {
-        return new PgEnumObjectColumn2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgEnumObjectColumn2 = class extends PgColumn2 {
-      static [entityKind2] = "PgEnumObjectColumn";
-      enum;
-      enumValues = this.config.enum.enumValues;
-      constructor(table, config2) {
-        super(table, config2);
-        this.enum = config2.enum;
-      }
-      getSQLType() {
-        return this.enum.enumName;
-      }
-    };
-    isPgEnumSym2 = /* @__PURE__ */ Symbol.for("drizzle:isPgEnum");
-    PgEnumColumnBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgEnumColumnBuilder";
-      constructor(name2, enumInstance) {
-        super(name2, "string", "PgEnumColumn");
-        this.config.enum = enumInstance;
-      }
-      /** @internal */
-      build(table) {
-        return new PgEnumColumn2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgEnumColumn2 = class extends PgColumn2 {
-      static [entityKind2] = "PgEnumColumn";
-      enum = this.config.enum;
-      enumValues = this.config.enum.enumValues;
-      constructor(table, config2) {
-        super(table, config2);
-        this.enum = config2.enum;
-      }
-      getSQLType() {
-        return this.enum.enumName;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/subquery.js
-var Subquery2, WithSubquery2;
-var init_subquery3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/subquery.js"() {
-    init_entity2();
-    Subquery2 = class {
-      static [entityKind2] = "Subquery";
-      constructor(sql4, fields, alias, isWith = false, usedTables = []) {
-        this._ = {
-          brand: "Subquery",
-          sql: sql4,
-          selectedFields: fields,
-          alias,
-          isWith,
-          usedTables
-        };
-      }
-      // getSQL(): SQL<unknown> {
-      // 	return new SQL([this]);
-      // }
-    };
-    WithSubquery2 = class extends Subquery2 {
-      static [entityKind2] = "WithSubquery";
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/version.js
-var version3;
-var init_version2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/version.js"() {
-    version3 = "0.45.2";
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/tracing.js
-var otel2, rawTracer2, tracer2;
-var init_tracing2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/tracing.js"() {
-    init_tracing_utils2();
-    init_version2();
-    tracer2 = {
-      startActiveSpan(name2, fn) {
-        if (!otel2) {
-          return fn();
-        }
-        if (!rawTracer2) {
-          rawTracer2 = otel2.trace.getTracer("drizzle-orm", version3);
-        }
-        return iife2(
-          (otel22, rawTracer22) => rawTracer22.startActiveSpan(
-            name2,
-            (span) => {
-              try {
-                return fn(span);
-              } catch (e5) {
-                span.setStatus({
-                  code: otel22.SpanStatusCode.ERROR,
-                  message: e5 instanceof Error ? e5.message : "Unknown error"
-                  // eslint-disable-line no-instanceof/no-instanceof
-                });
-                throw e5;
-              } finally {
-                span.end();
-              }
-            }
-          ),
-          otel2,
-          rawTracer2
-        );
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/view-common.js
-var ViewBaseConfig2;
-var init_view_common3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/view-common.js"() {
-    ViewBaseConfig2 = /* @__PURE__ */ Symbol.for("drizzle:ViewBaseConfig");
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/table.js
-function isTable2(table) {
-  return typeof table === "object" && table !== null && IsDrizzleTable2 in table;
-}
-function getTableName2(table) {
-  return table[TableName2];
-}
-function getTableUniqueName2(table) {
-  return `${table[Schema2] ?? "public"}.${table[TableName2]}`;
-}
-var Schema2, Columns2, ExtraConfigColumns2, OriginalName2, BaseName2, IsAlias2, ExtraConfigBuilder2, IsDrizzleTable2, Table2;
-var init_table3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/table.js"() {
-    init_entity2();
-    init_table_utils2();
-    Schema2 = /* @__PURE__ */ Symbol.for("drizzle:Schema");
-    Columns2 = /* @__PURE__ */ Symbol.for("drizzle:Columns");
-    ExtraConfigColumns2 = /* @__PURE__ */ Symbol.for("drizzle:ExtraConfigColumns");
-    OriginalName2 = /* @__PURE__ */ Symbol.for("drizzle:OriginalName");
-    BaseName2 = /* @__PURE__ */ Symbol.for("drizzle:BaseName");
-    IsAlias2 = /* @__PURE__ */ Symbol.for("drizzle:IsAlias");
-    ExtraConfigBuilder2 = /* @__PURE__ */ Symbol.for("drizzle:ExtraConfigBuilder");
-    IsDrizzleTable2 = /* @__PURE__ */ Symbol.for("drizzle:IsDrizzleTable");
-    Table2 = class {
-      static [entityKind2] = "Table";
-      /** @internal */
-      static Symbol = {
-        Name: TableName2,
-        Schema: Schema2,
-        OriginalName: OriginalName2,
-        Columns: Columns2,
-        ExtraConfigColumns: ExtraConfigColumns2,
-        BaseName: BaseName2,
-        IsAlias: IsAlias2,
-        ExtraConfigBuilder: ExtraConfigBuilder2
-      };
-      /**
-       * @internal
-       * Can be changed if the table is aliased.
-       */
-      [TableName2];
-      /**
-       * @internal
-       * Used to store the original name of the table, before any aliasing.
-       */
-      [OriginalName2];
-      /** @internal */
-      [Schema2];
-      /** @internal */
-      [Columns2];
-      /** @internal */
-      [ExtraConfigColumns2];
-      /**
-       *  @internal
-       * Used to store the table name before the transformation via the `tableCreator` functions.
-       */
-      [BaseName2];
-      /** @internal */
-      [IsAlias2] = false;
-      /** @internal */
-      [IsDrizzleTable2] = true;
-      /** @internal */
-      [ExtraConfigBuilder2] = void 0;
-      constructor(name2, schema, baseName) {
-        this[TableName2] = this[OriginalName2] = name2;
-        this[Schema2] = schema;
-        this[BaseName2] = baseName;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/sql.js
-function isSQLWrapper2(value) {
-  return value !== null && value !== void 0 && typeof value.getSQL === "function";
-}
-function mergeQueries2(queries) {
-  const result = { sql: "", params: [] };
-  for (const query of queries) {
-    result.sql += query.sql;
-    result.params.push(...query.params);
-    if (query.typings?.length) {
-      if (!result.typings) {
-        result.typings = [];
-      }
-      result.typings.push(...query.typings);
-    }
-  }
-  return result;
-}
-function name(value) {
-  return new Name2(value);
-}
-function isDriverValueEncoder2(value) {
-  return typeof value === "object" && value !== null && "mapToDriverValue" in value && typeof value.mapToDriverValue === "function";
-}
-function param(value, encoder) {
-  return new Param2(value, encoder);
-}
-function sql2(strings, ...params) {
-  const queryChunks = [];
-  if (params.length > 0 || strings.length > 0 && strings[0] !== "") {
-    queryChunks.push(new StringChunk2(strings[0]));
-  }
-  for (const [paramIndex, param2] of params.entries()) {
-    queryChunks.push(param2, new StringChunk2(strings[paramIndex + 1]));
-  }
-  return new SQL2(queryChunks);
-}
-function placeholder(name2) {
-  return new Placeholder2(name2);
-}
-function fillPlaceholders2(params, values) {
-  return params.map((p3) => {
-    if (is2(p3, Placeholder2)) {
-      if (!(p3.name in values)) {
-        throw new Error(`No value for placeholder "${p3.name}" was provided`);
-      }
-      return values[p3.name];
-    }
-    if (is2(p3, Param2) && is2(p3.value, Placeholder2)) {
-      if (!(p3.value.name in values)) {
-        throw new Error(`No value for placeholder "${p3.value.name}" was provided`);
-      }
-      return p3.encoder.mapToDriverValue(values[p3.value.name]);
-    }
-    return p3;
-  });
-}
-function isView2(view) {
-  return typeof view === "object" && view !== null && IsDrizzleView2 in view;
-}
-function getViewName(view) {
-  return view[ViewBaseConfig2].name;
-}
-var FakePrimitiveParam2, StringChunk2, SQL2, Name2, noopDecoder2, noopEncoder2, noopMapper2, Param2, Placeholder2, IsDrizzleView2, View2;
-var init_sql3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/sql.js"() {
-    init_entity2();
-    init_enum2();
-    init_subquery3();
-    init_tracing2();
-    init_view_common3();
-    init_column2();
-    init_table3();
-    FakePrimitiveParam2 = class {
-      static [entityKind2] = "FakePrimitiveParam";
-    };
-    StringChunk2 = class {
-      static [entityKind2] = "StringChunk";
-      value;
-      constructor(value) {
-        this.value = Array.isArray(value) ? value : [value];
-      }
-      getSQL() {
-        return new SQL2([this]);
-      }
-    };
-    SQL2 = class _SQL {
-      constructor(queryChunks) {
-        this.queryChunks = queryChunks;
-        for (const chunk of queryChunks) {
-          if (is2(chunk, Table2)) {
-            const schemaName = chunk[Table2.Symbol.Schema];
-            this.usedTables.push(
-              schemaName === void 0 ? chunk[Table2.Symbol.Name] : schemaName + "." + chunk[Table2.Symbol.Name]
-            );
-          }
-        }
-      }
-      static [entityKind2] = "SQL";
-      /** @internal */
-      decoder = noopDecoder2;
-      shouldInlineParams = false;
-      /** @internal */
-      usedTables = [];
-      append(query) {
-        this.queryChunks.push(...query.queryChunks);
-        return this;
-      }
-      toQuery(config2) {
-        return tracer2.startActiveSpan("drizzle.buildSQL", (span) => {
-          const query = this.buildQueryFromSourceParams(this.queryChunks, config2);
-          span?.setAttributes({
-            "drizzle.query.text": query.sql,
-            "drizzle.query.params": JSON.stringify(query.params)
-          });
-          return query;
-        });
-      }
-      buildQueryFromSourceParams(chunks, _config) {
-        const config2 = Object.assign({}, _config, {
-          inlineParams: _config.inlineParams || this.shouldInlineParams,
-          paramStartIndex: _config.paramStartIndex || { value: 0 }
-        });
-        const {
-          casing,
-          escapeName,
-          escapeParam,
-          prepareTyping,
-          inlineParams,
-          paramStartIndex
-        } = config2;
-        return mergeQueries2(chunks.map((chunk) => {
-          if (is2(chunk, StringChunk2)) {
-            return { sql: chunk.value.join(""), params: [] };
-          }
-          if (is2(chunk, Name2)) {
-            return { sql: escapeName(chunk.value), params: [] };
-          }
-          if (chunk === void 0) {
-            return { sql: "", params: [] };
-          }
-          if (Array.isArray(chunk)) {
-            const result = [new StringChunk2("(")];
-            for (const [i5, p3] of chunk.entries()) {
-              result.push(p3);
-              if (i5 < chunk.length - 1) {
-                result.push(new StringChunk2(", "));
-              }
-            }
-            result.push(new StringChunk2(")"));
-            return this.buildQueryFromSourceParams(result, config2);
-          }
-          if (is2(chunk, _SQL)) {
-            return this.buildQueryFromSourceParams(chunk.queryChunks, {
-              ...config2,
-              inlineParams: inlineParams || chunk.shouldInlineParams
-            });
-          }
-          if (is2(chunk, Table2)) {
-            const schemaName = chunk[Table2.Symbol.Schema];
-            const tableName = chunk[Table2.Symbol.Name];
-            return {
-              sql: schemaName === void 0 || chunk[IsAlias2] ? escapeName(tableName) : escapeName(schemaName) + "." + escapeName(tableName),
-              params: []
-            };
-          }
-          if (is2(chunk, Column2)) {
-            const columnName = casing.getColumnCasing(chunk);
-            if (_config.invokeSource === "indexes") {
-              return { sql: escapeName(columnName), params: [] };
-            }
-            const schemaName = chunk.table[Table2.Symbol.Schema];
-            return {
-              sql: chunk.table[IsAlias2] || schemaName === void 0 ? escapeName(chunk.table[Table2.Symbol.Name]) + "." + escapeName(columnName) : escapeName(schemaName) + "." + escapeName(chunk.table[Table2.Symbol.Name]) + "." + escapeName(columnName),
-              params: []
-            };
-          }
-          if (is2(chunk, View2)) {
-            const schemaName = chunk[ViewBaseConfig2].schema;
-            const viewName = chunk[ViewBaseConfig2].name;
-            return {
-              sql: schemaName === void 0 || chunk[ViewBaseConfig2].isAlias ? escapeName(viewName) : escapeName(schemaName) + "." + escapeName(viewName),
-              params: []
-            };
-          }
-          if (is2(chunk, Param2)) {
-            if (is2(chunk.value, Placeholder2)) {
-              return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
-            }
-            const mappedValue = chunk.value === null ? null : chunk.encoder.mapToDriverValue(chunk.value);
-            if (is2(mappedValue, _SQL)) {
-              return this.buildQueryFromSourceParams([mappedValue], config2);
-            }
-            if (inlineParams) {
-              return { sql: this.mapInlineParam(mappedValue, config2), params: [] };
-            }
-            let typings = ["none"];
-            if (prepareTyping) {
-              typings = [prepareTyping(chunk.encoder)];
-            }
-            return { sql: escapeParam(paramStartIndex.value++, mappedValue), params: [mappedValue], typings };
-          }
-          if (is2(chunk, Placeholder2)) {
-            return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
-          }
-          if (is2(chunk, _SQL.Aliased) && chunk.fieldAlias !== void 0) {
-            return { sql: escapeName(chunk.fieldAlias), params: [] };
-          }
-          if (is2(chunk, Subquery2)) {
-            if (chunk._.isWith) {
-              return { sql: escapeName(chunk._.alias), params: [] };
-            }
-            return this.buildQueryFromSourceParams([
-              new StringChunk2("("),
-              chunk._.sql,
-              new StringChunk2(") "),
-              new Name2(chunk._.alias)
-            ], config2);
-          }
-          if (isPgEnum2(chunk)) {
-            if (chunk.schema) {
-              return { sql: escapeName(chunk.schema) + "." + escapeName(chunk.enumName), params: [] };
-            }
-            return { sql: escapeName(chunk.enumName), params: [] };
-          }
-          if (isSQLWrapper2(chunk)) {
-            if (chunk.shouldOmitSQLParens?.()) {
-              return this.buildQueryFromSourceParams([chunk.getSQL()], config2);
-            }
-            return this.buildQueryFromSourceParams([
-              new StringChunk2("("),
-              chunk.getSQL(),
-              new StringChunk2(")")
-            ], config2);
-          }
-          if (inlineParams) {
-            return { sql: this.mapInlineParam(chunk, config2), params: [] };
-          }
-          return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
-        }));
-      }
-      mapInlineParam(chunk, { escapeString }) {
-        if (chunk === null) {
-          return "null";
-        }
-        if (typeof chunk === "number" || typeof chunk === "boolean") {
-          return chunk.toString();
-        }
-        if (typeof chunk === "string") {
-          return escapeString(chunk);
-        }
-        if (typeof chunk === "object") {
-          const mappedValueAsString = chunk.toString();
-          if (mappedValueAsString === "[object Object]") {
-            return escapeString(JSON.stringify(chunk));
-          }
-          return escapeString(mappedValueAsString);
-        }
-        throw new Error("Unexpected param value: " + chunk);
-      }
-      getSQL() {
-        return this;
-      }
-      as(alias) {
-        if (alias === void 0) {
-          return this;
-        }
-        return new _SQL.Aliased(this, alias);
-      }
-      mapWith(decoder) {
-        this.decoder = typeof decoder === "function" ? { mapFromDriverValue: decoder } : decoder;
-        return this;
-      }
-      inlineParams() {
-        this.shouldInlineParams = true;
-        return this;
-      }
-      /**
-       * This method is used to conditionally include a part of the query.
-       *
-       * @param condition - Condition to check
-       * @returns itself if the condition is `true`, otherwise `undefined`
-       */
-      if(condition) {
-        return condition ? this : void 0;
-      }
-    };
-    Name2 = class {
-      constructor(value) {
-        this.value = value;
-      }
-      static [entityKind2] = "Name";
-      brand;
-      getSQL() {
-        return new SQL2([this]);
-      }
-    };
-    noopDecoder2 = {
-      mapFromDriverValue: (value) => value
-    };
-    noopEncoder2 = {
-      mapToDriverValue: (value) => value
-    };
-    noopMapper2 = {
-      ...noopDecoder2,
-      ...noopEncoder2
-    };
-    Param2 = class {
-      /**
-       * @param value - Parameter value
-       * @param encoder - Encoder to convert the value to a driver parameter
-       */
-      constructor(value, encoder = noopEncoder2) {
-        this.value = value;
-        this.encoder = encoder;
-      }
-      static [entityKind2] = "Param";
-      brand;
-      getSQL() {
-        return new SQL2([this]);
-      }
-    };
-    ((sql22) => {
-      function empty() {
-        return new SQL2([]);
-      }
-      sql22.empty = empty;
-      function fromList(list2) {
-        return new SQL2(list2);
-      }
-      sql22.fromList = fromList;
-      function raw(str2) {
-        return new SQL2([new StringChunk2(str2)]);
-      }
-      sql22.raw = raw;
-      function join7(chunks, separator) {
-        const result = [];
-        for (const [i5, chunk] of chunks.entries()) {
-          if (i5 > 0 && separator !== void 0) {
-            result.push(separator);
-          }
-          result.push(chunk);
-        }
-        return new SQL2(result);
-      }
-      sql22.join = join7;
-      function identifier(value) {
-        return new Name2(value);
-      }
-      sql22.identifier = identifier;
-      function placeholder2(name2) {
-        return new Placeholder2(name2);
-      }
-      sql22.placeholder = placeholder2;
-      function param2(value, encoder) {
-        return new Param2(value, encoder);
-      }
-      sql22.param = param2;
-    })(sql2 || (sql2 = {}));
-    ((SQL22) => {
-      class Aliased {
-        constructor(sql22, fieldAlias) {
-          this.sql = sql22;
-          this.fieldAlias = fieldAlias;
-        }
-        static [entityKind2] = "SQL.Aliased";
-        /** @internal */
-        isSelectionField = false;
-        getSQL() {
-          return this.sql;
-        }
-        /** @internal */
-        clone() {
-          return new Aliased(this.sql, this.fieldAlias);
-        }
-      }
-      SQL22.Aliased = Aliased;
-    })(SQL2 || (SQL2 = {}));
-    Placeholder2 = class {
-      constructor(name2) {
-        this.name = name2;
-      }
-      static [entityKind2] = "Placeholder";
-      getSQL() {
-        return new SQL2([this]);
-      }
-    };
-    IsDrizzleView2 = /* @__PURE__ */ Symbol.for("drizzle:IsDrizzleView");
-    View2 = class {
-      static [entityKind2] = "View";
-      /** @internal */
-      [ViewBaseConfig2];
-      /** @internal */
-      [IsDrizzleView2] = true;
-      constructor({ name: name2, schema, selectedFields, query }) {
-        this[ViewBaseConfig2] = {
-          name: name2,
-          originalName: name2,
-          schema,
-          selectedFields,
-          query,
-          isExisting: !query,
-          isAlias: false
-        };
-      }
-      getSQL() {
-        return new SQL2([this]);
-      }
-    };
-    Column2.prototype.getSQL = function() {
-      return new SQL2([this]);
-    };
-    Table2.prototype.getSQL = function() {
-      return new SQL2([this]);
-    };
-    Subquery2.prototype.getSQL = function() {
-      return new SQL2([this]);
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/alias.js
-function aliasedTable2(table, tableAlias) {
-  return new Proxy(table, new TableAliasProxyHandler2(tableAlias, false));
-}
-function aliasedRelation(relation, tableAlias) {
-  return new Proxy(relation, new RelationTableAliasProxyHandler2(tableAlias));
-}
-function aliasedTableColumn2(column, tableAlias) {
-  return new Proxy(
-    column,
-    new ColumnAliasProxyHandler2(new Proxy(column.table, new TableAliasProxyHandler2(tableAlias, false)))
-  );
-}
-function mapColumnsInAliasedSQLToAlias2(query, alias) {
-  return new SQL2.Aliased(mapColumnsInSQLToAlias2(query.sql, alias), query.fieldAlias);
-}
-function mapColumnsInSQLToAlias2(query, alias) {
-  return sql2.join(query.queryChunks.map((c5) => {
-    if (is2(c5, Column2)) {
-      return aliasedTableColumn2(c5, alias);
-    }
-    if (is2(c5, SQL2)) {
-      return mapColumnsInSQLToAlias2(c5, alias);
-    }
-    if (is2(c5, SQL2.Aliased)) {
-      return mapColumnsInAliasedSQLToAlias2(c5, alias);
-    }
-    return c5;
-  }));
-}
-var ColumnAliasProxyHandler2, TableAliasProxyHandler2, RelationTableAliasProxyHandler2;
-var init_alias3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/alias.js"() {
-    init_column2();
-    init_entity2();
-    init_sql3();
-    init_table3();
-    init_view_common3();
-    ColumnAliasProxyHandler2 = class {
-      constructor(table) {
-        this.table = table;
-      }
-      static [entityKind2] = "ColumnAliasProxyHandler";
-      get(columnObj, prop) {
-        if (prop === "table") {
-          return this.table;
-        }
-        return columnObj[prop];
-      }
-    };
-    TableAliasProxyHandler2 = class {
-      constructor(alias, replaceOriginalName) {
-        this.alias = alias;
-        this.replaceOriginalName = replaceOriginalName;
-      }
-      static [entityKind2] = "TableAliasProxyHandler";
-      get(target, prop) {
-        if (prop === Table2.Symbol.IsAlias) {
-          return true;
-        }
-        if (prop === Table2.Symbol.Name) {
-          return this.alias;
-        }
-        if (this.replaceOriginalName && prop === Table2.Symbol.OriginalName) {
-          return this.alias;
-        }
-        if (prop === ViewBaseConfig2) {
-          return {
-            ...target[ViewBaseConfig2],
-            name: this.alias,
-            isAlias: true
-          };
-        }
-        if (prop === Table2.Symbol.Columns) {
-          const columns = target[Table2.Symbol.Columns];
-          if (!columns) {
-            return columns;
-          }
-          const proxiedColumns = {};
-          Object.keys(columns).map((key) => {
-            proxiedColumns[key] = new Proxy(
-              columns[key],
-              new ColumnAliasProxyHandler2(new Proxy(target, this))
-            );
-          });
-          return proxiedColumns;
-        }
-        const value = target[prop];
-        if (is2(value, Column2)) {
-          return new Proxy(value, new ColumnAliasProxyHandler2(new Proxy(target, this)));
-        }
-        return value;
-      }
-    };
-    RelationTableAliasProxyHandler2 = class {
-      constructor(alias) {
-        this.alias = alias;
-      }
-      static [entityKind2] = "RelationTableAliasProxyHandler";
-      get(target, prop) {
-        if (prop === "sourceTable") {
-          return aliasedTable2(target.sourceTable, this.alias);
-        }
-        return target[prop];
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/errors.js
-var DrizzleError2, DrizzleQueryError2, TransactionRollbackError2;
-var init_errors5 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/errors.js"() {
-    init_entity2();
-    DrizzleError2 = class extends Error {
-      static [entityKind2] = "DrizzleError";
-      constructor({ message, cause }) {
-        super(message);
-        this.name = "DrizzleError";
-        this.cause = cause;
-      }
-    };
-    DrizzleQueryError2 = class _DrizzleQueryError extends Error {
-      constructor(query, params, cause) {
-        super(`Failed query: ${query}
-params: ${params}`);
-        this.query = query;
-        this.params = params;
-        this.cause = cause;
-        Error.captureStackTrace(this, _DrizzleQueryError);
-        if (cause) this.cause = cause;
-      }
-    };
-    TransactionRollbackError2 = class extends DrizzleError2 {
-      static [entityKind2] = "TransactionRollbackError";
-      constructor() {
-        super({ message: "Rollback" });
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/logger.js
-var ConsoleLogWriter2, DefaultLogger2, NoopLogger2;
-var init_logger3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/logger.js"() {
-    init_entity2();
-    ConsoleLogWriter2 = class {
-      static [entityKind2] = "ConsoleLogWriter";
-      write(message) {
-        console.log(message);
-      }
-    };
-    DefaultLogger2 = class {
-      static [entityKind2] = "DefaultLogger";
-      writer;
-      constructor(config2) {
-        this.writer = config2?.writer ?? new ConsoleLogWriter2();
-      }
-      logQuery(query, params) {
-        const stringifiedParams = params.map((p3) => {
-          try {
-            return JSON.stringify(p3);
-          } catch {
-            return String(p3);
-          }
-        });
-        const paramsStr = stringifiedParams.length ? ` -- params: [${stringifiedParams.join(", ")}]` : "";
-        this.writer.write(`Query: ${query}${paramsStr}`);
-      }
-    };
-    NoopLogger2 = class {
-      static [entityKind2] = "NoopLogger";
-      logQuery() {
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/operations.js
-var init_operations2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/operations.js"() {
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/query-promise.js
-var QueryPromise2;
-var init_query_promise2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/query-promise.js"() {
-    init_entity2();
-    QueryPromise2 = class {
-      static [entityKind2] = "QueryPromise";
-      [Symbol.toStringTag] = "QueryPromise";
-      catch(onRejected) {
-        return this.then(void 0, onRejected);
-      }
-      finally(onFinally) {
-        return this.then(
-          (value) => {
-            onFinally?.();
-            return value;
-          },
-          (reason) => {
-            onFinally?.();
-            throw reason;
-          }
-        );
-      }
-      then(onFulfilled, onRejected) {
-        return this.execute().then(onFulfilled, onRejected);
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/utils.js
-function mapResultRow2(columns, row, joinsNotNullableMap) {
-  const nullifyMap = {};
-  const result = columns.reduce(
-    (result2, { path: path3, field }, columnIndex) => {
-      let decoder;
-      if (is2(field, Column2)) {
-        decoder = field;
-      } else if (is2(field, SQL2)) {
-        decoder = field.decoder;
-      } else if (is2(field, Subquery2)) {
-        decoder = field._.sql.decoder;
-      } else {
-        decoder = field.sql.decoder;
-      }
-      let node = result2;
-      for (const [pathChunkIndex, pathChunk] of path3.entries()) {
-        if (pathChunkIndex < path3.length - 1) {
-          if (!(pathChunk in node)) {
-            node[pathChunk] = {};
-          }
-          node = node[pathChunk];
-        } else {
-          const rawValue = row[columnIndex];
-          const value = node[pathChunk] = rawValue === null ? null : decoder.mapFromDriverValue(rawValue);
-          if (joinsNotNullableMap && is2(field, Column2) && path3.length === 2) {
-            const objectName = path3[0];
-            if (!(objectName in nullifyMap)) {
-              nullifyMap[objectName] = value === null ? getTableName2(field.table) : false;
-            } else if (typeof nullifyMap[objectName] === "string" && nullifyMap[objectName] !== getTableName2(field.table)) {
-              nullifyMap[objectName] = false;
-            }
-          }
-        }
-      }
-      return result2;
-    },
-    {}
-  );
-  if (joinsNotNullableMap && Object.keys(nullifyMap).length > 0) {
-    for (const [objectName, tableName] of Object.entries(nullifyMap)) {
-      if (typeof tableName === "string" && !joinsNotNullableMap[tableName]) {
-        result[objectName] = null;
-      }
-    }
-  }
-  return result;
-}
-function orderSelectedFields2(fields, pathPrefix) {
-  return Object.entries(fields).reduce((result, [name2, field]) => {
-    if (typeof name2 !== "string") {
-      return result;
-    }
-    const newPath = pathPrefix ? [...pathPrefix, name2] : [name2];
-    if (is2(field, Column2) || is2(field, SQL2) || is2(field, SQL2.Aliased) || is2(field, Subquery2)) {
-      result.push({ path: newPath, field });
-    } else if (is2(field, Table2)) {
-      result.push(...orderSelectedFields2(field[Table2.Symbol.Columns], newPath));
-    } else {
-      result.push(...orderSelectedFields2(field, newPath));
-    }
-    return result;
-  }, []);
-}
-function haveSameKeys2(left, right) {
-  const leftKeys = Object.keys(left);
-  const rightKeys = Object.keys(right);
-  if (leftKeys.length !== rightKeys.length) {
-    return false;
-  }
-  for (const [index2, key] of leftKeys.entries()) {
-    if (key !== rightKeys[index2]) {
-      return false;
-    }
-  }
-  return true;
-}
-function mapUpdateSet2(table, values) {
-  const entries = Object.entries(values).filter(([, value]) => value !== void 0).map(([key, value]) => {
-    if (is2(value, SQL2) || is2(value, Column2)) {
-      return [key, value];
-    } else {
-      return [key, new Param2(value, table[Table2.Symbol.Columns][key])];
-    }
-  });
-  if (entries.length === 0) {
-    throw new Error("No values to set");
-  }
-  return Object.fromEntries(entries);
-}
-function applyMixins2(baseClass, extendedClasses) {
-  for (const extendedClass of extendedClasses) {
-    for (const name2 of Object.getOwnPropertyNames(extendedClass.prototype)) {
-      if (name2 === "constructor") continue;
-      Object.defineProperty(
-        baseClass.prototype,
-        name2,
-        Object.getOwnPropertyDescriptor(extendedClass.prototype, name2) || /* @__PURE__ */ Object.create(null)
-      );
-    }
-  }
-}
-function getTableColumns2(table) {
-  return table[Table2.Symbol.Columns];
-}
-function getViewSelectedFields2(view) {
-  return view[ViewBaseConfig2].selectedFields;
-}
-function getTableLikeName2(table) {
-  return is2(table, Subquery2) ? table._.alias : is2(table, View2) ? table[ViewBaseConfig2].name : is2(table, SQL2) ? void 0 : table[Table2.Symbol.IsAlias] ? table[Table2.Symbol.Name] : table[Table2.Symbol.BaseName];
-}
-function getColumnNameAndConfig2(a5, b5) {
-  return {
-    name: typeof a5 === "string" && a5.length > 0 ? a5 : "",
-    config: typeof a5 === "object" ? a5 : b5
-  };
-}
-function isConfig2(data) {
-  if (typeof data !== "object" || data === null) return false;
-  if (data.constructor.name !== "Object") return false;
-  if ("logger" in data) {
-    const type = typeof data["logger"];
-    if (type !== "boolean" && (type !== "object" || typeof data["logger"]["logQuery"] !== "function") && type !== "undefined") return false;
-    return true;
-  }
-  if ("schema" in data) {
-    const type = typeof data["schema"];
-    if (type !== "object" && type !== "undefined") return false;
-    return true;
-  }
-  if ("casing" in data) {
-    const type = typeof data["casing"];
-    if (type !== "string" && type !== "undefined") return false;
-    return true;
-  }
-  if ("mode" in data) {
-    if (data["mode"] !== "default" || data["mode"] !== "planetscale" || data["mode"] !== void 0) return false;
-    return true;
-  }
-  if ("connection" in data) {
-    const type = typeof data["connection"];
-    if (type !== "string" && type !== "object" && type !== "undefined") return false;
-    return true;
-  }
-  if ("client" in data) {
-    const type = typeof data["client"];
-    if (type !== "object" && type !== "function" && type !== "undefined") return false;
-    return true;
-  }
-  if (Object.keys(data).length === 0) return true;
-  return false;
-}
-var textDecoder2;
-var init_utils5 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/utils.js"() {
-    init_column2();
-    init_entity2();
-    init_sql3();
-    init_subquery3();
-    init_table3();
-    init_view_common3();
-    textDecoder2 = typeof TextDecoder === "undefined" ? null : new TextDecoder();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/int.common.js
-var PgIntColumnBaseBuilder2;
-var init_int_common2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/int.common.js"() {
-    init_entity2();
-    init_common2();
-    PgIntColumnBaseBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgIntColumnBaseBuilder";
-      generatedAlwaysAsIdentity(sequence) {
-        if (sequence) {
-          const { name: name2, ...options } = sequence;
-          this.config.generatedIdentity = {
-            type: "always",
-            sequenceName: name2,
-            sequenceOptions: options
-          };
-        } else {
-          this.config.generatedIdentity = {
-            type: "always"
-          };
-        }
-        this.config.hasDefault = true;
-        this.config.notNull = true;
-        return this;
-      }
-      generatedByDefaultAsIdentity(sequence) {
-        if (sequence) {
-          const { name: name2, ...options } = sequence;
-          this.config.generatedIdentity = {
-            type: "byDefault",
-            sequenceName: name2,
-            sequenceOptions: options
-          };
-        } else {
-          this.config.generatedIdentity = {
-            type: "byDefault"
-          };
-        }
-        this.config.hasDefault = true;
-        this.config.notNull = true;
-        return this;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigint.js
-function bigint5(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  if (config2.mode === "number") {
-    return new PgBigInt53Builder2(name2);
-  }
-  return new PgBigInt64Builder2(name2);
-}
-var PgBigInt53Builder2, PgBigInt532, PgBigInt64Builder2, PgBigInt642;
-var init_bigint2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigint.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    init_int_common2();
-    PgBigInt53Builder2 = class extends PgIntColumnBaseBuilder2 {
-      static [entityKind2] = "PgBigInt53Builder";
-      constructor(name2) {
-        super(name2, "number", "PgBigInt53");
-      }
-      /** @internal */
-      build(table) {
-        return new PgBigInt532(table, this.config);
-      }
-    };
-    PgBigInt532 = class extends PgColumn2 {
-      static [entityKind2] = "PgBigInt53";
-      getSQLType() {
-        return "bigint";
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "number") {
-          return value;
-        }
-        return Number(value);
-      }
-    };
-    PgBigInt64Builder2 = class extends PgIntColumnBaseBuilder2 {
-      static [entityKind2] = "PgBigInt64Builder";
-      constructor(name2) {
-        super(name2, "bigint", "PgBigInt64");
-      }
-      /** @internal */
-      build(table) {
-        return new PgBigInt642(
-          table,
-          this.config
-        );
-      }
-    };
-    PgBigInt642 = class extends PgColumn2 {
-      static [entityKind2] = "PgBigInt64";
-      getSQLType() {
-        return "bigint";
-      }
-      // eslint-disable-next-line unicorn/prefer-native-coercion-functions
-      mapFromDriverValue(value) {
-        return BigInt(value);
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigserial.js
-function bigserial2(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  if (config2.mode === "number") {
-    return new PgBigSerial53Builder2(name2);
-  }
-  return new PgBigSerial64Builder2(name2);
-}
-var PgBigSerial53Builder2, PgBigSerial532, PgBigSerial64Builder2, PgBigSerial642;
-var init_bigserial2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/bigserial.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgBigSerial53Builder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgBigSerial53Builder";
-      constructor(name2) {
-        super(name2, "number", "PgBigSerial53");
-        this.config.hasDefault = true;
-        this.config.notNull = true;
-      }
-      /** @internal */
-      build(table) {
-        return new PgBigSerial532(
-          table,
-          this.config
-        );
-      }
-    };
-    PgBigSerial532 = class extends PgColumn2 {
-      static [entityKind2] = "PgBigSerial53";
-      getSQLType() {
-        return "bigserial";
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "number") {
-          return value;
-        }
-        return Number(value);
-      }
-    };
-    PgBigSerial64Builder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgBigSerial64Builder";
-      constructor(name2) {
-        super(name2, "bigint", "PgBigSerial64");
-        this.config.hasDefault = true;
-      }
-      /** @internal */
-      build(table) {
-        return new PgBigSerial642(
-          table,
-          this.config
-        );
-      }
-    };
-    PgBigSerial642 = class extends PgColumn2 {
-      static [entityKind2] = "PgBigSerial64";
-      getSQLType() {
-        return "bigserial";
-      }
-      // eslint-disable-next-line unicorn/prefer-native-coercion-functions
-      mapFromDriverValue(value) {
-        return BigInt(value);
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/boolean.js
-function boolean8(name2) {
-  return new PgBooleanBuilder2(name2 ?? "");
-}
-var PgBooleanBuilder2, PgBoolean2;
-var init_boolean2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/boolean.js"() {
-    init_entity2();
-    init_common2();
-    PgBooleanBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgBooleanBuilder";
-      constructor(name2) {
-        super(name2, "boolean", "PgBoolean");
-      }
-      /** @internal */
-      build(table) {
-        return new PgBoolean2(table, this.config);
-      }
-    };
-    PgBoolean2 = class extends PgColumn2 {
-      static [entityKind2] = "PgBoolean";
-      getSQLType() {
-        return "boolean";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/char.js
-function char2(a5, b5 = {}) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  return new PgCharBuilder2(name2, config2);
-}
-var PgCharBuilder2, PgChar2;
-var init_char2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/char.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgCharBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgCharBuilder";
-      constructor(name2, config2) {
-        super(name2, "string", "PgChar");
-        this.config.length = config2.length;
-        this.config.enumValues = config2.enum;
-      }
-      /** @internal */
-      build(table) {
-        return new PgChar2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgChar2 = class extends PgColumn2 {
-      static [entityKind2] = "PgChar";
-      length = this.config.length;
-      enumValues = this.config.enumValues;
-      getSQLType() {
-        return this.length === void 0 ? `char` : `char(${this.length})`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/cidr.js
-function cidr2(name2) {
-  return new PgCidrBuilder2(name2 ?? "");
-}
-var PgCidrBuilder2, PgCidr2;
-var init_cidr2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/cidr.js"() {
-    init_entity2();
-    init_common2();
-    PgCidrBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgCidrBuilder";
-      constructor(name2) {
-        super(name2, "string", "PgCidr");
-      }
-      /** @internal */
-      build(table) {
-        return new PgCidr2(table, this.config);
-      }
-    };
-    PgCidr2 = class extends PgColumn2 {
-      static [entityKind2] = "PgCidr";
-      getSQLType() {
-        return "cidr";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/custom.js
-function customType2(customTypeParams) {
-  return (a5, b5) => {
-    const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-    return new PgCustomColumnBuilder2(name2, config2, customTypeParams);
-  };
-}
-var PgCustomColumnBuilder2, PgCustomColumn2;
-var init_custom2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/custom.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgCustomColumnBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgCustomColumnBuilder";
-      constructor(name2, fieldConfig, customTypeParams) {
-        super(name2, "custom", "PgCustomColumn");
-        this.config.fieldConfig = fieldConfig;
-        this.config.customTypeParams = customTypeParams;
-      }
-      /** @internal */
-      build(table) {
-        return new PgCustomColumn2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgCustomColumn2 = class extends PgColumn2 {
-      static [entityKind2] = "PgCustomColumn";
-      sqlName;
-      mapTo;
-      mapFrom;
-      constructor(table, config2) {
-        super(table, config2);
-        this.sqlName = config2.customTypeParams.dataType(config2.fieldConfig);
-        this.mapTo = config2.customTypeParams.toDriver;
-        this.mapFrom = config2.customTypeParams.fromDriver;
-      }
-      getSQLType() {
-        return this.sqlName;
-      }
-      mapFromDriverValue(value) {
-        return typeof this.mapFrom === "function" ? this.mapFrom(value) : value;
-      }
-      mapToDriverValue(value) {
-        return typeof this.mapTo === "function" ? this.mapTo(value) : value;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.common.js
-var PgDateColumnBaseBuilder2;
-var init_date_common2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.common.js"() {
-    init_entity2();
-    init_sql3();
-    init_common2();
-    PgDateColumnBaseBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgDateColumnBaseBuilder";
-      defaultNow() {
-        return this.default(sql2`now()`);
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.js
-function date6(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  if (config2?.mode === "date") {
-    return new PgDateBuilder2(name2);
-  }
-  return new PgDateStringBuilder2(name2);
-}
-var PgDateBuilder2, PgDate2, PgDateStringBuilder2, PgDateString2;
-var init_date2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/date.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    init_date_common2();
-    PgDateBuilder2 = class extends PgDateColumnBaseBuilder2 {
-      static [entityKind2] = "PgDateBuilder";
-      constructor(name2) {
-        super(name2, "date", "PgDate");
-      }
-      /** @internal */
-      build(table) {
-        return new PgDate2(table, this.config);
-      }
-    };
-    PgDate2 = class extends PgColumn2 {
-      static [entityKind2] = "PgDate";
-      getSQLType() {
-        return "date";
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") return new Date(value);
-        return value;
-      }
-      mapToDriverValue(value) {
-        return value.toISOString();
-      }
-    };
-    PgDateStringBuilder2 = class extends PgDateColumnBaseBuilder2 {
-      static [entityKind2] = "PgDateStringBuilder";
-      constructor(name2) {
-        super(name2, "string", "PgDateString");
-      }
-      /** @internal */
-      build(table) {
-        return new PgDateString2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgDateString2 = class extends PgColumn2 {
-      static [entityKind2] = "PgDateString";
-      getSQLType() {
-        return "date";
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") return value;
-        return value.toISOString().slice(0, -14);
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/double-precision.js
-function doublePrecision2(name2) {
-  return new PgDoublePrecisionBuilder2(name2 ?? "");
-}
-var PgDoublePrecisionBuilder2, PgDoublePrecision2;
-var init_double_precision2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/double-precision.js"() {
-    init_entity2();
-    init_common2();
-    PgDoublePrecisionBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgDoublePrecisionBuilder";
-      constructor(name2) {
-        super(name2, "number", "PgDoublePrecision");
-      }
-      /** @internal */
-      build(table) {
-        return new PgDoublePrecision2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgDoublePrecision2 = class extends PgColumn2 {
-      static [entityKind2] = "PgDoublePrecision";
-      getSQLType() {
-        return "double precision";
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") {
-          return Number.parseFloat(value);
-        }
-        return value;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/inet.js
-function inet2(name2) {
-  return new PgInetBuilder2(name2 ?? "");
-}
-var PgInetBuilder2, PgInet2;
-var init_inet2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/inet.js"() {
-    init_entity2();
-    init_common2();
-    PgInetBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgInetBuilder";
-      constructor(name2) {
-        super(name2, "string", "PgInet");
-      }
-      /** @internal */
-      build(table) {
-        return new PgInet2(table, this.config);
-      }
-    };
-    PgInet2 = class extends PgColumn2 {
-      static [entityKind2] = "PgInet";
-      getSQLType() {
-        return "inet";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/integer.js
-function integer4(name2) {
-  return new PgIntegerBuilder2(name2 ?? "");
-}
-var PgIntegerBuilder2, PgInteger2;
-var init_integer2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/integer.js"() {
-    init_entity2();
-    init_common2();
-    init_int_common2();
-    PgIntegerBuilder2 = class extends PgIntColumnBaseBuilder2 {
-      static [entityKind2] = "PgIntegerBuilder";
-      constructor(name2) {
-        super(name2, "number", "PgInteger");
-      }
-      /** @internal */
-      build(table) {
-        return new PgInteger2(table, this.config);
-      }
-    };
-    PgInteger2 = class extends PgColumn2 {
-      static [entityKind2] = "PgInteger";
-      getSQLType() {
-        return "integer";
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") {
-          return Number.parseInt(value);
-        }
-        return value;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/interval.js
-function interval2(a5, b5 = {}) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  return new PgIntervalBuilder2(name2, config2);
-}
-var PgIntervalBuilder2, PgInterval2;
-var init_interval2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/interval.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgIntervalBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgIntervalBuilder";
-      constructor(name2, intervalConfig) {
-        super(name2, "string", "PgInterval");
-        this.config.intervalConfig = intervalConfig;
-      }
-      /** @internal */
-      build(table) {
-        return new PgInterval2(table, this.config);
-      }
-    };
-    PgInterval2 = class extends PgColumn2 {
-      static [entityKind2] = "PgInterval";
-      fields = this.config.intervalConfig.fields;
-      precision = this.config.intervalConfig.precision;
-      getSQLType() {
-        const fields = this.fields ? ` ${this.fields}` : "";
-        const precision = this.precision ? `(${this.precision})` : "";
-        return `interval${fields}${precision}`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/json.js
-function json3(name2) {
-  return new PgJsonBuilder2(name2 ?? "");
-}
-var PgJsonBuilder2, PgJson2;
-var init_json2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/json.js"() {
-    init_entity2();
-    init_common2();
-    PgJsonBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgJsonBuilder";
-      constructor(name2) {
-        super(name2, "json", "PgJson");
-      }
-      /** @internal */
-      build(table) {
-        return new PgJson2(table, this.config);
-      }
-    };
-    PgJson2 = class extends PgColumn2 {
-      static [entityKind2] = "PgJson";
-      constructor(table, config2) {
-        super(table, config2);
-      }
-      getSQLType() {
-        return "json";
-      }
-      mapToDriverValue(value) {
-        return JSON.stringify(value);
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") {
-          try {
-            return JSON.parse(value);
-          } catch {
-            return value;
-          }
-        }
-        return value;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/jsonb.js
-function jsonb2(name2) {
-  return new PgJsonbBuilder2(name2 ?? "");
-}
-var PgJsonbBuilder2, PgJsonb2;
-var init_jsonb2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/jsonb.js"() {
-    init_entity2();
-    init_common2();
-    PgJsonbBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgJsonbBuilder";
-      constructor(name2) {
-        super(name2, "json", "PgJsonb");
-      }
-      /** @internal */
-      build(table) {
-        return new PgJsonb2(table, this.config);
-      }
-    };
-    PgJsonb2 = class extends PgColumn2 {
-      static [entityKind2] = "PgJsonb";
-      constructor(table, config2) {
-        super(table, config2);
-      }
-      getSQLType() {
-        return "jsonb";
-      }
-      mapToDriverValue(value) {
-        return JSON.stringify(value);
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") {
-          try {
-            return JSON.parse(value);
-          } catch {
-            return value;
-          }
-        }
-        return value;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/line.js
-function line2(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  if (!config2?.mode || config2.mode === "tuple") {
-    return new PgLineBuilder2(name2);
-  }
-  return new PgLineABCBuilder2(name2);
-}
-var PgLineBuilder2, PgLineTuple2, PgLineABCBuilder2, PgLineABC2;
-var init_line2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/line.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgLineBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgLineBuilder";
-      constructor(name2) {
-        super(name2, "array", "PgLine");
-      }
-      /** @internal */
-      build(table) {
-        return new PgLineTuple2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgLineTuple2 = class extends PgColumn2 {
-      static [entityKind2] = "PgLine";
-      getSQLType() {
-        return "line";
-      }
-      mapFromDriverValue(value) {
-        const [a5, b5, c5] = value.slice(1, -1).split(",");
-        return [Number.parseFloat(a5), Number.parseFloat(b5), Number.parseFloat(c5)];
-      }
-      mapToDriverValue(value) {
-        return `{${value[0]},${value[1]},${value[2]}}`;
-      }
-    };
-    PgLineABCBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgLineABCBuilder";
-      constructor(name2) {
-        super(name2, "json", "PgLineABC");
-      }
-      /** @internal */
-      build(table) {
-        return new PgLineABC2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgLineABC2 = class extends PgColumn2 {
-      static [entityKind2] = "PgLineABC";
-      getSQLType() {
-        return "line";
-      }
-      mapFromDriverValue(value) {
-        const [a5, b5, c5] = value.slice(1, -1).split(",");
-        return { a: Number.parseFloat(a5), b: Number.parseFloat(b5), c: Number.parseFloat(c5) };
-      }
-      mapToDriverValue(value) {
-        return `{${value.a},${value.b},${value.c}}`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr.js
-function macaddr2(name2) {
-  return new PgMacaddrBuilder2(name2 ?? "");
-}
-var PgMacaddrBuilder2, PgMacaddr2;
-var init_macaddr2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr.js"() {
-    init_entity2();
-    init_common2();
-    PgMacaddrBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgMacaddrBuilder";
-      constructor(name2) {
-        super(name2, "string", "PgMacaddr");
-      }
-      /** @internal */
-      build(table) {
-        return new PgMacaddr2(table, this.config);
-      }
-    };
-    PgMacaddr2 = class extends PgColumn2 {
-      static [entityKind2] = "PgMacaddr";
-      getSQLType() {
-        return "macaddr";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
-function macaddr82(name2) {
-  return new PgMacaddr8Builder2(name2 ?? "");
-}
-var PgMacaddr8Builder2, PgMacaddr82;
-var init_macaddr82 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/macaddr8.js"() {
-    init_entity2();
-    init_common2();
-    PgMacaddr8Builder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgMacaddr8Builder";
-      constructor(name2) {
-        super(name2, "string", "PgMacaddr8");
-      }
-      /** @internal */
-      build(table) {
-        return new PgMacaddr82(table, this.config);
-      }
-    };
-    PgMacaddr82 = class extends PgColumn2 {
-      static [entityKind2] = "PgMacaddr8";
-      getSQLType() {
-        return "macaddr8";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/numeric.js
-function numeric2(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  const mode = config2?.mode;
-  return mode === "number" ? new PgNumericNumberBuilder2(name2, config2?.precision, config2?.scale) : mode === "bigint" ? new PgNumericBigIntBuilder2(name2, config2?.precision, config2?.scale) : new PgNumericBuilder2(name2, config2?.precision, config2?.scale);
-}
-var PgNumericBuilder2, PgNumeric2, PgNumericNumberBuilder2, PgNumericNumber2, PgNumericBigIntBuilder2, PgNumericBigInt2;
-var init_numeric2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/numeric.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgNumericBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgNumericBuilder";
-      constructor(name2, precision, scale) {
-        super(name2, "string", "PgNumeric");
-        this.config.precision = precision;
-        this.config.scale = scale;
-      }
-      /** @internal */
-      build(table) {
-        return new PgNumeric2(table, this.config);
-      }
-    };
-    PgNumeric2 = class extends PgColumn2 {
-      static [entityKind2] = "PgNumeric";
-      precision;
-      scale;
-      constructor(table, config2) {
-        super(table, config2);
-        this.precision = config2.precision;
-        this.scale = config2.scale;
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") return value;
-        return String(value);
-      }
-      getSQLType() {
-        if (this.precision !== void 0 && this.scale !== void 0) {
-          return `numeric(${this.precision}, ${this.scale})`;
-        } else if (this.precision === void 0) {
-          return "numeric";
-        } else {
-          return `numeric(${this.precision})`;
-        }
-      }
-    };
-    PgNumericNumberBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgNumericNumberBuilder";
-      constructor(name2, precision, scale) {
-        super(name2, "number", "PgNumericNumber");
-        this.config.precision = precision;
-        this.config.scale = scale;
-      }
-      /** @internal */
-      build(table) {
-        return new PgNumericNumber2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgNumericNumber2 = class extends PgColumn2 {
-      static [entityKind2] = "PgNumericNumber";
-      precision;
-      scale;
-      constructor(table, config2) {
-        super(table, config2);
-        this.precision = config2.precision;
-        this.scale = config2.scale;
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "number") return value;
-        return Number(value);
-      }
-      mapToDriverValue = String;
-      getSQLType() {
-        if (this.precision !== void 0 && this.scale !== void 0) {
-          return `numeric(${this.precision}, ${this.scale})`;
-        } else if (this.precision === void 0) {
-          return "numeric";
-        } else {
-          return `numeric(${this.precision})`;
-        }
-      }
-    };
-    PgNumericBigIntBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgNumericBigIntBuilder";
-      constructor(name2, precision, scale) {
-        super(name2, "bigint", "PgNumericBigInt");
-        this.config.precision = precision;
-        this.config.scale = scale;
-      }
-      /** @internal */
-      build(table) {
-        return new PgNumericBigInt2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgNumericBigInt2 = class extends PgColumn2 {
-      static [entityKind2] = "PgNumericBigInt";
-      precision;
-      scale;
-      constructor(table, config2) {
-        super(table, config2);
-        this.precision = config2.precision;
-        this.scale = config2.scale;
-      }
-      mapFromDriverValue = BigInt;
-      mapToDriverValue = String;
-      getSQLType() {
-        if (this.precision !== void 0 && this.scale !== void 0) {
-          return `numeric(${this.precision}, ${this.scale})`;
-        } else if (this.precision === void 0) {
-          return "numeric";
-        } else {
-          return `numeric(${this.precision})`;
-        }
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/point.js
-function point2(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  if (!config2?.mode || config2.mode === "tuple") {
-    return new PgPointTupleBuilder2(name2);
-  }
-  return new PgPointObjectBuilder2(name2);
-}
-var PgPointTupleBuilder2, PgPointTuple2, PgPointObjectBuilder2, PgPointObject2;
-var init_point2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/point.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgPointTupleBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgPointTupleBuilder";
-      constructor(name2) {
-        super(name2, "array", "PgPointTuple");
-      }
-      /** @internal */
-      build(table) {
-        return new PgPointTuple2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgPointTuple2 = class extends PgColumn2 {
-      static [entityKind2] = "PgPointTuple";
-      getSQLType() {
-        return "point";
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") {
-          const [x, y] = value.slice(1, -1).split(",");
-          return [Number.parseFloat(x), Number.parseFloat(y)];
-        }
-        return [value.x, value.y];
-      }
-      mapToDriverValue(value) {
-        return `(${value[0]},${value[1]})`;
-      }
-    };
-    PgPointObjectBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgPointObjectBuilder";
-      constructor(name2) {
-        super(name2, "json", "PgPointObject");
-      }
-      /** @internal */
-      build(table) {
-        return new PgPointObject2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgPointObject2 = class extends PgColumn2 {
-      static [entityKind2] = "PgPointObject";
-      getSQLType() {
-        return "point";
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") {
-          const [x, y] = value.slice(1, -1).split(",");
-          return { x: Number.parseFloat(x), y: Number.parseFloat(y) };
-        }
-        return value;
-      }
-      mapToDriverValue(value) {
-        return `(${value.x},${value.y})`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
-function hexToBytes2(hex) {
-  const bytes = [];
-  for (let c5 = 0; c5 < hex.length; c5 += 2) {
-    bytes.push(Number.parseInt(hex.slice(c5, c5 + 2), 16));
-  }
-  return new Uint8Array(bytes);
-}
-function bytesToFloat642(bytes, offset) {
-  const buffer = new ArrayBuffer(8);
-  const view = new DataView(buffer);
-  for (let i5 = 0; i5 < 8; i5++) {
-    view.setUint8(i5, bytes[offset + i5]);
-  }
-  return view.getFloat64(0, true);
-}
-function parseEWKB2(hex) {
-  const bytes = hexToBytes2(hex);
-  let offset = 0;
-  const byteOrder = bytes[offset];
-  offset += 1;
-  const view = new DataView(bytes.buffer);
-  const geomType = view.getUint32(offset, byteOrder === 1);
-  offset += 4;
-  let _srid;
-  if (geomType & 536870912) {
-    _srid = view.getUint32(offset, byteOrder === 1);
-    offset += 4;
-  }
-  if ((geomType & 65535) === 1) {
-    const x = bytesToFloat642(bytes, offset);
-    offset += 8;
-    const y = bytesToFloat642(bytes, offset);
-    offset += 8;
-    return [x, y];
-  }
-  throw new Error("Unsupported geometry type");
-}
-var init_utils6 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js"() {
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
-function geometry2(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  if (!config2?.mode || config2.mode === "tuple") {
-    return new PgGeometryBuilder2(name2);
-  }
-  return new PgGeometryObjectBuilder2(name2);
-}
-var PgGeometryBuilder2, PgGeometry2, PgGeometryObjectBuilder2, PgGeometryObject2;
-var init_geometry2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    init_utils6();
-    PgGeometryBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgGeometryBuilder";
-      constructor(name2) {
-        super(name2, "array", "PgGeometry");
-      }
-      /** @internal */
-      build(table) {
-        return new PgGeometry2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgGeometry2 = class extends PgColumn2 {
-      static [entityKind2] = "PgGeometry";
-      getSQLType() {
-        return "geometry(point)";
-      }
-      mapFromDriverValue(value) {
-        return parseEWKB2(value);
-      }
-      mapToDriverValue(value) {
-        return `point(${value[0]} ${value[1]})`;
-      }
-    };
-    PgGeometryObjectBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgGeometryObjectBuilder";
-      constructor(name2) {
-        super(name2, "json", "PgGeometryObject");
-      }
-      /** @internal */
-      build(table) {
-        return new PgGeometryObject2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgGeometryObject2 = class extends PgColumn2 {
-      static [entityKind2] = "PgGeometryObject";
-      getSQLType() {
-        return "geometry(point)";
-      }
-      mapFromDriverValue(value) {
-        const parsed = parseEWKB2(value);
-        return { x: parsed[0], y: parsed[1] };
-      }
-      mapToDriverValue(value) {
-        return `point(${value.x} ${value.y})`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/real.js
-function real2(name2) {
-  return new PgRealBuilder2(name2 ?? "");
-}
-var PgRealBuilder2, PgReal2;
-var init_real2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/real.js"() {
-    init_entity2();
-    init_common2();
-    PgRealBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgRealBuilder";
-      constructor(name2, length) {
-        super(name2, "number", "PgReal");
-        this.config.length = length;
-      }
-      /** @internal */
-      build(table) {
-        return new PgReal2(table, this.config);
-      }
-    };
-    PgReal2 = class extends PgColumn2 {
-      static [entityKind2] = "PgReal";
-      constructor(table, config2) {
-        super(table, config2);
-      }
-      getSQLType() {
-        return "real";
-      }
-      mapFromDriverValue = (value) => {
-        if (typeof value === "string") {
-          return Number.parseFloat(value);
-        }
-        return value;
-      };
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/serial.js
-function serial2(name2) {
-  return new PgSerialBuilder2(name2 ?? "");
-}
-var PgSerialBuilder2, PgSerial2;
-var init_serial2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/serial.js"() {
-    init_entity2();
-    init_common2();
-    PgSerialBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgSerialBuilder";
-      constructor(name2) {
-        super(name2, "number", "PgSerial");
-        this.config.hasDefault = true;
-        this.config.notNull = true;
-      }
-      /** @internal */
-      build(table) {
-        return new PgSerial2(table, this.config);
-      }
-    };
-    PgSerial2 = class extends PgColumn2 {
-      static [entityKind2] = "PgSerial";
-      getSQLType() {
-        return "serial";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallint.js
-function smallint2(name2) {
-  return new PgSmallIntBuilder2(name2 ?? "");
-}
-var PgSmallIntBuilder2, PgSmallInt2;
-var init_smallint2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallint.js"() {
-    init_entity2();
-    init_common2();
-    init_int_common2();
-    PgSmallIntBuilder2 = class extends PgIntColumnBaseBuilder2 {
-      static [entityKind2] = "PgSmallIntBuilder";
-      constructor(name2) {
-        super(name2, "number", "PgSmallInt");
-      }
-      /** @internal */
-      build(table) {
-        return new PgSmallInt2(table, this.config);
-      }
-    };
-    PgSmallInt2 = class extends PgColumn2 {
-      static [entityKind2] = "PgSmallInt";
-      getSQLType() {
-        return "smallint";
-      }
-      mapFromDriverValue = (value) => {
-        if (typeof value === "string") {
-          return Number(value);
-        }
-        return value;
-      };
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallserial.js
-function smallserial2(name2) {
-  return new PgSmallSerialBuilder2(name2 ?? "");
-}
-var PgSmallSerialBuilder2, PgSmallSerial2;
-var init_smallserial2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/smallserial.js"() {
-    init_entity2();
-    init_common2();
-    PgSmallSerialBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgSmallSerialBuilder";
-      constructor(name2) {
-        super(name2, "number", "PgSmallSerial");
-        this.config.hasDefault = true;
-        this.config.notNull = true;
-      }
-      /** @internal */
-      build(table) {
-        return new PgSmallSerial2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgSmallSerial2 = class extends PgColumn2 {
-      static [entityKind2] = "PgSmallSerial";
-      getSQLType() {
-        return "smallserial";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/text.js
-function text2(a5, b5 = {}) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  return new PgTextBuilder2(name2, config2);
-}
-var PgTextBuilder2, PgText2;
-var init_text2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/text.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgTextBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgTextBuilder";
-      constructor(name2, config2) {
-        super(name2, "string", "PgText");
-        this.config.enumValues = config2.enum;
-      }
-      /** @internal */
-      build(table) {
-        return new PgText2(table, this.config);
-      }
-    };
-    PgText2 = class extends PgColumn2 {
-      static [entityKind2] = "PgText";
-      enumValues = this.config.enumValues;
-      getSQLType() {
-        return "text";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/time.js
-function time4(a5, b5 = {}) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  return new PgTimeBuilder2(name2, config2.withTimezone ?? false, config2.precision);
-}
-var PgTimeBuilder2, PgTime2;
-var init_time2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/time.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    init_date_common2();
-    PgTimeBuilder2 = class extends PgDateColumnBaseBuilder2 {
-      constructor(name2, withTimezone, precision) {
-        super(name2, "string", "PgTime");
-        this.withTimezone = withTimezone;
-        this.precision = precision;
-        this.config.withTimezone = withTimezone;
-        this.config.precision = precision;
-      }
-      static [entityKind2] = "PgTimeBuilder";
-      /** @internal */
-      build(table) {
-        return new PgTime2(table, this.config);
-      }
-    };
-    PgTime2 = class extends PgColumn2 {
-      static [entityKind2] = "PgTime";
-      withTimezone;
-      precision;
-      constructor(table, config2) {
-        super(table, config2);
-        this.withTimezone = config2.withTimezone;
-        this.precision = config2.precision;
-      }
-      getSQLType() {
-        const precision = this.precision === void 0 ? "" : `(${this.precision})`;
-        return `time${precision}${this.withTimezone ? " with time zone" : ""}`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/timestamp.js
-function timestamp2(a5, b5 = {}) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  if (config2?.mode === "string") {
-    return new PgTimestampStringBuilder2(name2, config2.withTimezone ?? false, config2.precision);
-  }
-  return new PgTimestampBuilder2(name2, config2?.withTimezone ?? false, config2?.precision);
-}
-var PgTimestampBuilder2, PgTimestamp2, PgTimestampStringBuilder2, PgTimestampString2;
-var init_timestamp2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/timestamp.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    init_date_common2();
-    PgTimestampBuilder2 = class extends PgDateColumnBaseBuilder2 {
-      static [entityKind2] = "PgTimestampBuilder";
-      constructor(name2, withTimezone, precision) {
-        super(name2, "date", "PgTimestamp");
-        this.config.withTimezone = withTimezone;
-        this.config.precision = precision;
-      }
-      /** @internal */
-      build(table) {
-        return new PgTimestamp2(table, this.config);
-      }
-    };
-    PgTimestamp2 = class extends PgColumn2 {
-      static [entityKind2] = "PgTimestamp";
-      withTimezone;
-      precision;
-      constructor(table, config2) {
-        super(table, config2);
-        this.withTimezone = config2.withTimezone;
-        this.precision = config2.precision;
-      }
-      getSQLType() {
-        const precision = this.precision === void 0 ? "" : ` (${this.precision})`;
-        return `timestamp${precision}${this.withTimezone ? " with time zone" : ""}`;
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") return new Date(this.withTimezone ? value : value + "+0000");
-        return value;
-      }
-      mapToDriverValue = (value) => {
-        return value.toISOString();
-      };
-    };
-    PgTimestampStringBuilder2 = class extends PgDateColumnBaseBuilder2 {
-      static [entityKind2] = "PgTimestampStringBuilder";
-      constructor(name2, withTimezone, precision) {
-        super(name2, "string", "PgTimestampString");
-        this.config.withTimezone = withTimezone;
-        this.config.precision = precision;
-      }
-      /** @internal */
-      build(table) {
-        return new PgTimestampString2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgTimestampString2 = class extends PgColumn2 {
-      static [entityKind2] = "PgTimestampString";
-      withTimezone;
-      precision;
-      constructor(table, config2) {
-        super(table, config2);
-        this.withTimezone = config2.withTimezone;
-        this.precision = config2.precision;
-      }
-      getSQLType() {
-        const precision = this.precision === void 0 ? "" : `(${this.precision})`;
-        return `timestamp${precision}${this.withTimezone ? " with time zone" : ""}`;
-      }
-      mapFromDriverValue(value) {
-        if (typeof value === "string") return value;
-        const shortened = value.toISOString().slice(0, -1).replace("T", " ");
-        if (this.withTimezone) {
-          const offset = value.getTimezoneOffset();
-          const sign3 = offset <= 0 ? "+" : "-";
-          return `${shortened}${sign3}${Math.floor(Math.abs(offset) / 60).toString().padStart(2, "0")}`;
-        }
-        return shortened;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/uuid.js
-function uuid5(name2) {
-  return new PgUUIDBuilder2(name2 ?? "");
-}
-var PgUUIDBuilder2, PgUUID2;
-var init_uuid2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/uuid.js"() {
-    init_entity2();
-    init_sql3();
-    init_common2();
-    PgUUIDBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgUUIDBuilder";
-      constructor(name2) {
-        super(name2, "string", "PgUUID");
-      }
-      /**
-       * Adds `default gen_random_uuid()` to the column definition.
-       */
-      defaultRandom() {
-        return this.default(sql2`gen_random_uuid()`);
-      }
-      /** @internal */
-      build(table) {
-        return new PgUUID2(table, this.config);
-      }
-    };
-    PgUUID2 = class extends PgColumn2 {
-      static [entityKind2] = "PgUUID";
-      getSQLType() {
-        return "uuid";
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/varchar.js
-function varchar2(a5, b5 = {}) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  return new PgVarcharBuilder2(name2, config2);
-}
-var PgVarcharBuilder2, PgVarchar2;
-var init_varchar2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/varchar.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgVarcharBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgVarcharBuilder";
-      constructor(name2, config2) {
-        super(name2, "string", "PgVarchar");
-        this.config.length = config2.length;
-        this.config.enumValues = config2.enum;
-      }
-      /** @internal */
-      build(table) {
-        return new PgVarchar2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgVarchar2 = class extends PgColumn2 {
-      static [entityKind2] = "PgVarchar";
-      length = this.config.length;
-      enumValues = this.config.enumValues;
-      getSQLType() {
-        return this.length === void 0 ? `varchar` : `varchar(${this.length})`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
-function bit2(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  return new PgBinaryVectorBuilder2(name2, config2);
-}
-var PgBinaryVectorBuilder2, PgBinaryVector2;
-var init_bit2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgBinaryVectorBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgBinaryVectorBuilder";
-      constructor(name2, config2) {
-        super(name2, "string", "PgBinaryVector");
-        this.config.dimensions = config2.dimensions;
-      }
-      /** @internal */
-      build(table) {
-        return new PgBinaryVector2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgBinaryVector2 = class extends PgColumn2 {
-      static [entityKind2] = "PgBinaryVector";
-      dimensions = this.config.dimensions;
-      getSQLType() {
-        return `bit(${this.dimensions})`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
-function halfvec2(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  return new PgHalfVectorBuilder2(name2, config2);
-}
-var PgHalfVectorBuilder2, PgHalfVector2;
-var init_halfvec2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgHalfVectorBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgHalfVectorBuilder";
-      constructor(name2, config2) {
-        super(name2, "array", "PgHalfVector");
-        this.config.dimensions = config2.dimensions;
-      }
-      /** @internal */
-      build(table) {
-        return new PgHalfVector2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgHalfVector2 = class extends PgColumn2 {
-      static [entityKind2] = "PgHalfVector";
-      dimensions = this.config.dimensions;
-      getSQLType() {
-        return `halfvec(${this.dimensions})`;
-      }
-      mapToDriverValue(value) {
-        return JSON.stringify(value);
-      }
-      mapFromDriverValue(value) {
-        return value.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
-function sparsevec2(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  return new PgSparseVectorBuilder2(name2, config2);
-}
-var PgSparseVectorBuilder2, PgSparseVector2;
-var init_sparsevec2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgSparseVectorBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgSparseVectorBuilder";
-      constructor(name2, config2) {
-        super(name2, "string", "PgSparseVector");
-        this.config.dimensions = config2.dimensions;
-      }
-      /** @internal */
-      build(table) {
-        return new PgSparseVector2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgSparseVector2 = class extends PgColumn2 {
-      static [entityKind2] = "PgSparseVector";
-      dimensions = this.config.dimensions;
-      getSQLType() {
-        return `sparsevec(${this.dimensions})`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
-function vector2(a5, b5) {
-  const { name: name2, config: config2 } = getColumnNameAndConfig2(a5, b5);
-  return new PgVectorBuilder2(name2, config2);
-}
-var PgVectorBuilder2, PgVector2;
-var init_vector3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js"() {
-    init_entity2();
-    init_utils5();
-    init_common2();
-    PgVectorBuilder2 = class extends PgColumnBuilder2 {
-      static [entityKind2] = "PgVectorBuilder";
-      constructor(name2, config2) {
-        super(name2, "array", "PgVector");
-        this.config.dimensions = config2.dimensions;
-      }
-      /** @internal */
-      build(table) {
-        return new PgVector2(
-          table,
-          this.config
-        );
-      }
-    };
-    PgVector2 = class extends PgColumn2 {
-      static [entityKind2] = "PgVector";
-      dimensions = this.config.dimensions;
-      getSQLType() {
-        return `vector(${this.dimensions})`;
-      }
-      mapToDriverValue(value) {
-        return JSON.stringify(value);
-      }
-      mapFromDriverValue(value) {
-        return value.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/all.js
-function getPgColumnBuilders2() {
-  return {
-    bigint: bigint5,
-    bigserial: bigserial2,
-    boolean: boolean8,
-    char: char2,
-    cidr: cidr2,
-    customType: customType2,
-    date: date6,
-    doublePrecision: doublePrecision2,
-    inet: inet2,
-    integer: integer4,
-    interval: interval2,
-    json: json3,
-    jsonb: jsonb2,
-    line: line2,
-    macaddr: macaddr2,
-    macaddr8: macaddr82,
-    numeric: numeric2,
-    point: point2,
-    geometry: geometry2,
-    real: real2,
-    serial: serial2,
-    smallint: smallint2,
-    smallserial: smallserial2,
-    text: text2,
-    time: time4,
-    timestamp: timestamp2,
-    uuid: uuid5,
-    varchar: varchar2,
-    bit: bit2,
-    halfvec: halfvec2,
-    sparsevec: sparsevec2,
-    vector: vector2
-  };
-}
-var init_all2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/all.js"() {
-    init_bigint2();
-    init_bigserial2();
-    init_boolean2();
-    init_char2();
-    init_cidr2();
-    init_custom2();
-    init_date2();
-    init_double_precision2();
-    init_inet2();
-    init_integer2();
-    init_interval2();
-    init_json2();
-    init_jsonb2();
-    init_line2();
-    init_macaddr2();
-    init_macaddr82();
-    init_numeric2();
-    init_point2();
-    init_geometry2();
-    init_real2();
-    init_serial2();
-    init_smallint2();
-    init_smallserial2();
-    init_text2();
-    init_time2();
-    init_timestamp2();
-    init_uuid2();
-    init_varchar2();
-    init_bit2();
-    init_halfvec2();
-    init_sparsevec2();
-    init_vector3();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/table.js
-function pgTableWithSchema2(name2, columns, extraConfig, schema, baseName = name2) {
-  const rawTable = new PgTable2(name2, schema, baseName);
-  const parsedColumns = typeof columns === "function" ? columns(getPgColumnBuilders2()) : columns;
-  const builtColumns = Object.fromEntries(
-    Object.entries(parsedColumns).map(([name22, colBuilderBase]) => {
-      const colBuilder = colBuilderBase;
-      colBuilder.setName(name22);
-      const column = colBuilder.build(rawTable);
-      rawTable[InlineForeignKeys2].push(...colBuilder.buildForeignKeys(column, rawTable));
-      return [name22, column];
-    })
-  );
-  const builtColumnsForExtraConfig = Object.fromEntries(
-    Object.entries(parsedColumns).map(([name22, colBuilderBase]) => {
-      const colBuilder = colBuilderBase;
-      colBuilder.setName(name22);
-      const column = colBuilder.buildExtraConfigColumn(rawTable);
-      return [name22, column];
-    })
-  );
-  const table = Object.assign(rawTable, builtColumns);
-  table[Table2.Symbol.Columns] = builtColumns;
-  table[Table2.Symbol.ExtraConfigColumns] = builtColumnsForExtraConfig;
-  if (extraConfig) {
-    table[PgTable2.Symbol.ExtraConfigBuilder] = extraConfig;
-  }
-  return Object.assign(table, {
-    enableRLS: () => {
-      table[PgTable2.Symbol.EnableRLS] = true;
-      return table;
-    }
-  });
-}
-var InlineForeignKeys2, EnableRLS2, PgTable2, pgTable2;
-var init_table4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/table.js"() {
-    init_entity2();
-    init_table3();
-    init_all2();
-    InlineForeignKeys2 = /* @__PURE__ */ Symbol.for("drizzle:PgInlineForeignKeys");
-    EnableRLS2 = /* @__PURE__ */ Symbol.for("drizzle:EnableRLS");
-    PgTable2 = class extends Table2 {
-      static [entityKind2] = "PgTable";
-      /** @internal */
-      static Symbol = Object.assign({}, Table2.Symbol, {
-        InlineForeignKeys: InlineForeignKeys2,
-        EnableRLS: EnableRLS2
-      });
-      /**@internal */
-      [InlineForeignKeys2] = [];
-      /** @internal */
-      [EnableRLS2] = false;
-      /** @internal */
-      [Table2.Symbol.ExtraConfigBuilder] = void 0;
-      /** @internal */
-      [Table2.Symbol.ExtraConfigColumns] = {};
-    };
-    pgTable2 = (name2, columns, extraConfig) => {
-      return pgTableWithSchema2(name2, columns, extraConfig, void 0);
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/primary-keys.js
-var PrimaryKeyBuilder2, PrimaryKey2;
-var init_primary_keys2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/primary-keys.js"() {
-    init_entity2();
-    init_table4();
-    PrimaryKeyBuilder2 = class {
-      static [entityKind2] = "PgPrimaryKeyBuilder";
-      /** @internal */
-      columns;
-      /** @internal */
-      name;
-      constructor(columns, name2) {
-        this.columns = columns;
-        this.name = name2;
-      }
-      /** @internal */
-      build(table) {
-        return new PrimaryKey2(table, this.columns, this.name);
-      }
-    };
-    PrimaryKey2 = class {
-      constructor(table, columns, name2) {
-        this.table = table;
-        this.columns = columns;
-        this.name = name2;
-      }
-      static [entityKind2] = "PgPrimaryKey";
-      columns;
-      name;
-      getName() {
-        return this.name ?? `${this.table[PgTable2.Symbol.Name]}_${this.columns.map((column) => column.name).join("_")}_pk`;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/conditions.js
-function bindIfParam2(value, column) {
-  if (isDriverValueEncoder2(column) && !isSQLWrapper2(value) && !is2(value, Param2) && !is2(value, Placeholder2) && !is2(value, Column2) && !is2(value, Table2) && !is2(value, View2)) {
-    return new Param2(value, column);
-  }
-  return value;
-}
-function and2(...unfilteredConditions) {
-  const conditions = unfilteredConditions.filter(
-    (c5) => c5 !== void 0
-  );
-  if (conditions.length === 0) {
-    return void 0;
-  }
-  if (conditions.length === 1) {
-    return new SQL2(conditions);
-  }
-  return new SQL2([
-    new StringChunk2("("),
-    sql2.join(conditions, new StringChunk2(" and ")),
-    new StringChunk2(")")
-  ]);
-}
-function or2(...unfilteredConditions) {
-  const conditions = unfilteredConditions.filter(
-    (c5) => c5 !== void 0
-  );
-  if (conditions.length === 0) {
-    return void 0;
-  }
-  if (conditions.length === 1) {
-    return new SQL2(conditions);
-  }
-  return new SQL2([
-    new StringChunk2("("),
-    sql2.join(conditions, new StringChunk2(" or ")),
-    new StringChunk2(")")
-  ]);
-}
-function not2(condition) {
-  return sql2`not ${condition}`;
-}
-function inArray2(column, values) {
-  if (Array.isArray(values)) {
-    if (values.length === 0) {
-      return sql2`false`;
-    }
-    return sql2`${column} in ${values.map((v) => bindIfParam2(v, column))}`;
-  }
-  return sql2`${column} in ${bindIfParam2(values, column)}`;
-}
-function notInArray2(column, values) {
-  if (Array.isArray(values)) {
-    if (values.length === 0) {
-      return sql2`true`;
-    }
-    return sql2`${column} not in ${values.map((v) => bindIfParam2(v, column))}`;
-  }
-  return sql2`${column} not in ${bindIfParam2(values, column)}`;
-}
-function isNull2(value) {
-  return sql2`${value} is null`;
-}
-function isNotNull2(value) {
-  return sql2`${value} is not null`;
-}
-function exists2(subquery) {
-  return sql2`exists ${subquery}`;
-}
-function notExists2(subquery) {
-  return sql2`not exists ${subquery}`;
-}
-function between2(column, min2, max2) {
-  return sql2`${column} between ${bindIfParam2(min2, column)} and ${bindIfParam2(
-    max2,
-    column
-  )}`;
-}
-function notBetween2(column, min2, max2) {
-  return sql2`${column} not between ${bindIfParam2(
-    min2,
-    column
-  )} and ${bindIfParam2(max2, column)}`;
-}
-function like2(column, value) {
-  return sql2`${column} like ${value}`;
-}
-function notLike2(column, value) {
-  return sql2`${column} not like ${value}`;
-}
-function ilike2(column, value) {
-  return sql2`${column} ilike ${value}`;
-}
-function notIlike2(column, value) {
-  return sql2`${column} not ilike ${value}`;
-}
-function arrayContains(column, values) {
-  if (Array.isArray(values)) {
-    if (values.length === 0) {
-      throw new Error("arrayContains requires at least one value");
-    }
-    const array2 = sql2`${bindIfParam2(values, column)}`;
-    return sql2`${column} @> ${array2}`;
-  }
-  return sql2`${column} @> ${bindIfParam2(values, column)}`;
-}
-function arrayContained(column, values) {
-  if (Array.isArray(values)) {
-    if (values.length === 0) {
-      throw new Error("arrayContained requires at least one value");
-    }
-    const array2 = sql2`${bindIfParam2(values, column)}`;
-    return sql2`${column} <@ ${array2}`;
-  }
-  return sql2`${column} <@ ${bindIfParam2(values, column)}`;
-}
-function arrayOverlaps(column, values) {
-  if (Array.isArray(values)) {
-    if (values.length === 0) {
-      throw new Error("arrayOverlaps requires at least one value");
-    }
-    const array2 = sql2`${bindIfParam2(values, column)}`;
-    return sql2`${column} && ${array2}`;
-  }
-  return sql2`${column} && ${bindIfParam2(values, column)}`;
-}
-var eq2, ne2, gt2, gte2, lt2, lte2;
-var init_conditions2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/conditions.js"() {
-    init_column2();
-    init_entity2();
-    init_table3();
-    init_sql3();
-    eq2 = (left, right) => {
-      return sql2`${left} = ${bindIfParam2(right, left)}`;
-    };
-    ne2 = (left, right) => {
-      return sql2`${left} <> ${bindIfParam2(right, left)}`;
-    };
-    gt2 = (left, right) => {
-      return sql2`${left} > ${bindIfParam2(right, left)}`;
-    };
-    gte2 = (left, right) => {
-      return sql2`${left} >= ${bindIfParam2(right, left)}`;
-    };
-    lt2 = (left, right) => {
-      return sql2`${left} < ${bindIfParam2(right, left)}`;
-    };
-    lte2 = (left, right) => {
-      return sql2`${left} <= ${bindIfParam2(right, left)}`;
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/select.js
-function asc2(column) {
-  return sql2`${column} asc`;
-}
-function desc2(column) {
-  return sql2`${column} desc`;
-}
-var init_select3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/select.js"() {
-    init_sql3();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/index.js
-var init_expressions2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/index.js"() {
-    init_conditions2();
-    init_select3();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/relations.js
-function getOperators2() {
-  return {
-    and: and2,
-    between: between2,
-    eq: eq2,
-    exists: exists2,
-    gt: gt2,
-    gte: gte2,
-    ilike: ilike2,
-    inArray: inArray2,
-    isNull: isNull2,
-    isNotNull: isNotNull2,
-    like: like2,
-    lt: lt2,
-    lte: lte2,
-    ne: ne2,
-    not: not2,
-    notBetween: notBetween2,
-    notExists: notExists2,
-    notLike: notLike2,
-    notIlike: notIlike2,
-    notInArray: notInArray2,
-    or: or2,
-    sql: sql2
-  };
-}
-function getOrderByOperators2() {
-  return {
-    sql: sql2,
-    asc: asc2,
-    desc: desc2
-  };
-}
-function extractTablesRelationalConfig2(schema, configHelpers) {
-  if (Object.keys(schema).length === 1 && "default" in schema && !is2(schema["default"], Table2)) {
-    schema = schema["default"];
-  }
-  const tableNamesMap = {};
-  const relationsBuffer = {};
-  const tablesConfig = {};
-  for (const [key, value] of Object.entries(schema)) {
-    if (is2(value, Table2)) {
-      const dbName = getTableUniqueName2(value);
-      const bufferedRelations = relationsBuffer[dbName];
-      tableNamesMap[dbName] = key;
-      tablesConfig[key] = {
-        tsName: key,
-        dbName: value[Table2.Symbol.Name],
-        schema: value[Table2.Symbol.Schema],
-        columns: value[Table2.Symbol.Columns],
-        relations: bufferedRelations?.relations ?? {},
-        primaryKey: bufferedRelations?.primaryKey ?? []
-      };
-      for (const column of Object.values(
-        value[Table2.Symbol.Columns]
-      )) {
-        if (column.primary) {
-          tablesConfig[key].primaryKey.push(column);
-        }
-      }
-      const extraConfig = value[Table2.Symbol.ExtraConfigBuilder]?.(value[Table2.Symbol.ExtraConfigColumns]);
-      if (extraConfig) {
-        for (const configEntry of Object.values(extraConfig)) {
-          if (is2(configEntry, PrimaryKeyBuilder2)) {
-            tablesConfig[key].primaryKey.push(...configEntry.columns);
-          }
-        }
-      }
-    } else if (is2(value, Relations2)) {
-      const dbName = getTableUniqueName2(value.table);
-      const tableName = tableNamesMap[dbName];
-      const relations2 = value.config(
-        configHelpers(value.table)
-      );
-      let primaryKey;
-      for (const [relationName, relation] of Object.entries(relations2)) {
-        if (tableName) {
-          const tableConfig = tablesConfig[tableName];
-          tableConfig.relations[relationName] = relation;
-          if (primaryKey) {
-            tableConfig.primaryKey.push(...primaryKey);
-          }
-        } else {
-          if (!(dbName in relationsBuffer)) {
-            relationsBuffer[dbName] = {
-              relations: {},
-              primaryKey
-            };
-          }
-          relationsBuffer[dbName].relations[relationName] = relation;
-        }
-      }
-    }
-  }
-  return { tables: tablesConfig, tableNamesMap };
-}
-function relations(table, relations2) {
-  return new Relations2(
-    table,
-    (helpers) => Object.fromEntries(
-      Object.entries(relations2(helpers)).map(([key, value]) => [
-        key,
-        value.withFieldName(key)
-      ])
-    )
-  );
-}
-function createOne2(sourceTable) {
-  return function one(table, config2) {
-    return new One2(
-      sourceTable,
-      table,
-      config2,
-      config2?.fields.reduce((res, f5) => res && f5.notNull, true) ?? false
-    );
-  };
-}
-function createMany2(sourceTable) {
-  return function many(referencedTable, config2) {
-    return new Many2(sourceTable, referencedTable, config2);
-  };
-}
-function normalizeRelation2(schema, tableNamesMap, relation) {
-  if (is2(relation, One2) && relation.config) {
-    return {
-      fields: relation.config.fields,
-      references: relation.config.references
-    };
-  }
-  const referencedTableTsName = tableNamesMap[getTableUniqueName2(relation.referencedTable)];
-  if (!referencedTableTsName) {
-    throw new Error(
-      `Table "${relation.referencedTable[Table2.Symbol.Name]}" not found in schema`
-    );
-  }
-  const referencedTableConfig = schema[referencedTableTsName];
-  if (!referencedTableConfig) {
-    throw new Error(`Table "${referencedTableTsName}" not found in schema`);
-  }
-  const sourceTable = relation.sourceTable;
-  const sourceTableTsName = tableNamesMap[getTableUniqueName2(sourceTable)];
-  if (!sourceTableTsName) {
-    throw new Error(
-      `Table "${sourceTable[Table2.Symbol.Name]}" not found in schema`
-    );
-  }
-  const reverseRelations = [];
-  for (const referencedTableRelation of Object.values(
-    referencedTableConfig.relations
-  )) {
-    if (relation.relationName && relation !== referencedTableRelation && referencedTableRelation.relationName === relation.relationName || !relation.relationName && referencedTableRelation.referencedTable === relation.sourceTable) {
-      reverseRelations.push(referencedTableRelation);
-    }
-  }
-  if (reverseRelations.length > 1) {
-    throw relation.relationName ? new Error(
-      `There are multiple relations with name "${relation.relationName}" in table "${referencedTableTsName}"`
-    ) : new Error(
-      `There are multiple relations between "${referencedTableTsName}" and "${relation.sourceTable[Table2.Symbol.Name]}". Please specify relation name`
-    );
-  }
-  if (reverseRelations[0] && is2(reverseRelations[0], One2) && reverseRelations[0].config) {
-    return {
-      fields: reverseRelations[0].config.references,
-      references: reverseRelations[0].config.fields
-    };
-  }
-  throw new Error(
-    `There is not enough information to infer relation "${sourceTableTsName}.${relation.fieldName}"`
-  );
-}
-function createTableRelationsHelpers2(sourceTable) {
-  return {
-    one: createOne2(sourceTable),
-    many: createMany2(sourceTable)
-  };
-}
-function mapRelationalRow2(tablesConfig, tableConfig, row, buildQueryResultSelection, mapColumnValue = (value) => value) {
-  const result = {};
-  for (const [
-    selectionItemIndex,
-    selectionItem
-  ] of buildQueryResultSelection.entries()) {
-    if (selectionItem.isJson) {
-      const relation = tableConfig.relations[selectionItem.tsKey];
-      const rawSubRows = row[selectionItemIndex];
-      const subRows = typeof rawSubRows === "string" ? JSON.parse(rawSubRows) : rawSubRows;
-      result[selectionItem.tsKey] = is2(relation, One2) ? subRows && mapRelationalRow2(
-        tablesConfig,
-        tablesConfig[selectionItem.relationTableTsKey],
-        subRows,
-        selectionItem.selection,
-        mapColumnValue
-      ) : subRows.map(
-        (subRow) => mapRelationalRow2(
-          tablesConfig,
-          tablesConfig[selectionItem.relationTableTsKey],
-          subRow,
-          selectionItem.selection,
-          mapColumnValue
-        )
-      );
-    } else {
-      const value = mapColumnValue(row[selectionItemIndex]);
-      const field = selectionItem.field;
-      let decoder;
-      if (is2(field, Column2)) {
-        decoder = field;
-      } else if (is2(field, SQL2)) {
-        decoder = field.decoder;
-      } else {
-        decoder = field.sql.decoder;
-      }
-      result[selectionItem.tsKey] = value === null ? null : decoder.mapFromDriverValue(value);
-    }
-  }
-  return result;
-}
-var Relation2, Relations2, One2, Many2;
-var init_relations2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/relations.js"() {
-    init_table3();
-    init_column2();
-    init_entity2();
-    init_primary_keys2();
-    init_expressions2();
-    init_sql3();
-    Relation2 = class {
-      constructor(sourceTable, referencedTable, relationName) {
-        this.sourceTable = sourceTable;
-        this.referencedTable = referencedTable;
-        this.relationName = relationName;
-        this.referencedTableName = referencedTable[Table2.Symbol.Name];
-      }
-      static [entityKind2] = "Relation";
-      referencedTableName;
-      fieldName;
-    };
-    Relations2 = class {
-      constructor(table, config2) {
-        this.table = table;
-        this.config = config2;
-      }
-      static [entityKind2] = "Relations";
-    };
-    One2 = class _One extends Relation2 {
-      constructor(sourceTable, referencedTable, config2, isNullable) {
-        super(sourceTable, referencedTable, config2?.relationName);
-        this.config = config2;
-        this.isNullable = isNullable;
-      }
-      static [entityKind2] = "One";
-      withFieldName(fieldName) {
-        const relation = new _One(
-          this.sourceTable,
-          this.referencedTable,
-          this.config,
-          this.isNullable
-        );
-        relation.fieldName = fieldName;
-        return relation;
-      }
-    };
-    Many2 = class _Many extends Relation2 {
-      constructor(sourceTable, referencedTable, config2) {
-        super(sourceTable, referencedTable, config2?.relationName);
-        this.config = config2;
-      }
-      static [entityKind2] = "Many";
-      withFieldName(fieldName) {
-        const relation = new _Many(
-          this.sourceTable,
-          this.referencedTable,
-          this.config
-        );
-        relation.fieldName = fieldName;
-        return relation;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/aggregate.js
-function count(expression) {
-  return sql2`count(${expression || sql2.raw("*")})`.mapWith(Number);
-}
-function countDistinct(expression) {
-  return sql2`count(distinct ${expression})`.mapWith(Number);
-}
-function avg(expression) {
-  return sql2`avg(${expression})`.mapWith(String);
-}
-function avgDistinct(expression) {
-  return sql2`avg(distinct ${expression})`.mapWith(String);
-}
-function sum(expression) {
-  return sql2`sum(${expression})`.mapWith(String);
-}
-function sumDistinct(expression) {
-  return sql2`sum(distinct ${expression})`.mapWith(String);
-}
-function max(expression) {
-  return sql2`max(${expression})`.mapWith(is2(expression, Column2) ? expression : String);
-}
-function min(expression) {
-  return sql2`min(${expression})`.mapWith(is2(expression, Column2) ? expression : String);
-}
-var init_aggregate2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/aggregate.js"() {
-    init_column2();
-    init_entity2();
-    init_sql3();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/vector.js
-function toSql(value) {
-  return JSON.stringify(value);
-}
-function l2Distance(column, value) {
-  if (Array.isArray(value)) {
-    return sql2`${column} <-> ${toSql(value)}`;
-  }
-  return sql2`${column} <-> ${value}`;
-}
-function l1Distance(column, value) {
-  if (Array.isArray(value)) {
-    return sql2`${column} <+> ${toSql(value)}`;
-  }
-  return sql2`${column} <+> ${value}`;
-}
-function innerProduct(column, value) {
-  if (Array.isArray(value)) {
-    return sql2`${column} <#> ${toSql(value)}`;
-  }
-  return sql2`${column} <#> ${value}`;
-}
-function cosineDistance(column, value) {
-  if (Array.isArray(value)) {
-    return sql2`${column} <=> ${toSql(value)}`;
-  }
-  return sql2`${column} <=> ${value}`;
-}
-function hammingDistance(column, value) {
-  if (Array.isArray(value)) {
-    return sql2`${column} <~> ${toSql(value)}`;
-  }
-  return sql2`${column} <~> ${value}`;
-}
-function jaccardDistance(column, value) {
-  if (Array.isArray(value)) {
-    return sql2`${column} <%> ${toSql(value)}`;
-  }
-  return sql2`${column} <%> ${value}`;
-}
-var init_vector4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/vector.js"() {
-    init_sql3();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/index.js
-var init_functions2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/index.js"() {
-    init_aggregate2();
-    init_vector4();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/index.js
-var init_sql4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/sql/index.js"() {
-    init_expressions2();
-    init_functions2();
-    init_sql3();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/index.js
-var drizzle_orm_exports = {};
-__export(drizzle_orm_exports, {
-  BaseName: () => BaseName2,
-  Column: () => Column2,
-  ColumnAliasProxyHandler: () => ColumnAliasProxyHandler2,
-  ColumnBuilder: () => ColumnBuilder2,
-  Columns: () => Columns2,
-  ConsoleLogWriter: () => ConsoleLogWriter2,
-  DefaultLogger: () => DefaultLogger2,
-  DrizzleError: () => DrizzleError2,
-  DrizzleQueryError: () => DrizzleQueryError2,
-  ExtraConfigBuilder: () => ExtraConfigBuilder2,
-  ExtraConfigColumns: () => ExtraConfigColumns2,
-  FakePrimitiveParam: () => FakePrimitiveParam2,
-  IsAlias: () => IsAlias2,
-  Many: () => Many2,
-  Name: () => Name2,
-  NoopLogger: () => NoopLogger2,
-  One: () => One2,
-  OriginalName: () => OriginalName2,
-  Param: () => Param2,
-  Placeholder: () => Placeholder2,
-  QueryPromise: () => QueryPromise2,
-  Relation: () => Relation2,
-  RelationTableAliasProxyHandler: () => RelationTableAliasProxyHandler2,
-  Relations: () => Relations2,
-  SQL: () => SQL2,
-  Schema: () => Schema2,
-  StringChunk: () => StringChunk2,
-  Subquery: () => Subquery2,
-  Table: () => Table2,
-  TableAliasProxyHandler: () => TableAliasProxyHandler2,
-  TransactionRollbackError: () => TransactionRollbackError2,
-  View: () => View2,
-  ViewBaseConfig: () => ViewBaseConfig2,
-  WithSubquery: () => WithSubquery2,
-  aliasedRelation: () => aliasedRelation,
-  aliasedTable: () => aliasedTable2,
-  aliasedTableColumn: () => aliasedTableColumn2,
-  and: () => and2,
-  applyMixins: () => applyMixins2,
-  arrayContained: () => arrayContained,
-  arrayContains: () => arrayContains,
-  arrayOverlaps: () => arrayOverlaps,
-  asc: () => asc2,
-  avg: () => avg,
-  avgDistinct: () => avgDistinct,
-  between: () => between2,
-  bindIfParam: () => bindIfParam2,
-  cosineDistance: () => cosineDistance,
-  count: () => count,
-  countDistinct: () => countDistinct,
-  createMany: () => createMany2,
-  createOne: () => createOne2,
-  createTableRelationsHelpers: () => createTableRelationsHelpers2,
-  desc: () => desc2,
-  entityKind: () => entityKind2,
-  eq: () => eq2,
-  exists: () => exists2,
-  extractTablesRelationalConfig: () => extractTablesRelationalConfig2,
-  fillPlaceholders: () => fillPlaceholders2,
-  getColumnNameAndConfig: () => getColumnNameAndConfig2,
-  getOperators: () => getOperators2,
-  getOrderByOperators: () => getOrderByOperators2,
-  getTableColumns: () => getTableColumns2,
-  getTableLikeName: () => getTableLikeName2,
-  getTableName: () => getTableName2,
-  getTableUniqueName: () => getTableUniqueName2,
-  getViewName: () => getViewName,
-  getViewSelectedFields: () => getViewSelectedFields2,
-  gt: () => gt2,
-  gte: () => gte2,
-  hammingDistance: () => hammingDistance,
-  hasOwnEntityKind: () => hasOwnEntityKind,
-  haveSameKeys: () => haveSameKeys2,
-  ilike: () => ilike2,
-  inArray: () => inArray2,
-  innerProduct: () => innerProduct,
-  is: () => is2,
-  isConfig: () => isConfig2,
-  isDriverValueEncoder: () => isDriverValueEncoder2,
-  isNotNull: () => isNotNull2,
-  isNull: () => isNull2,
-  isSQLWrapper: () => isSQLWrapper2,
-  isTable: () => isTable2,
-  isView: () => isView2,
-  jaccardDistance: () => jaccardDistance,
-  l1Distance: () => l1Distance,
-  l2Distance: () => l2Distance,
-  like: () => like2,
-  lt: () => lt2,
-  lte: () => lte2,
-  mapColumnsInAliasedSQLToAlias: () => mapColumnsInAliasedSQLToAlias2,
-  mapColumnsInSQLToAlias: () => mapColumnsInSQLToAlias2,
-  mapRelationalRow: () => mapRelationalRow2,
-  mapResultRow: () => mapResultRow2,
-  mapUpdateSet: () => mapUpdateSet2,
-  max: () => max,
-  min: () => min,
-  name: () => name,
-  ne: () => ne2,
-  noopDecoder: () => noopDecoder2,
-  noopEncoder: () => noopEncoder2,
-  noopMapper: () => noopMapper2,
-  normalizeRelation: () => normalizeRelation2,
-  not: () => not2,
-  notBetween: () => notBetween2,
-  notExists: () => notExists2,
-  notIlike: () => notIlike2,
-  notInArray: () => notInArray2,
-  notLike: () => notLike2,
-  or: () => or2,
-  orderSelectedFields: () => orderSelectedFields2,
-  param: () => param,
-  placeholder: () => placeholder,
-  relations: () => relations,
-  sql: () => sql2,
-  sum: () => sum,
-  sumDistinct: () => sumDistinct,
-  textDecoder: () => textDecoder2
-});
-var init_drizzle_orm2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/index.js"() {
-    init_alias3();
-    init_column_builder2();
-    init_column2();
-    init_entity2();
-    init_errors5();
-    init_logger3();
-    init_operations2();
-    init_query_promise2();
-    init_relations2();
-    init_sql4();
-    init_subquery3();
-    init_table3();
-    init_utils5();
-    init_view_common3();
-  }
-});
-
 // src/lib/cloudinaryStorage.ts
 import { randomUUID as randomUUID2 } from "crypto";
 function isCloudinaryEnabled() {
@@ -82238,11 +78369,11 @@ function configure() {
   });
 }
 function generateUploadSession(baseUrl) {
-  const uuid8 = randomUUID2();
+  const uuid5 = randomUUID2();
   return {
-    uuid: uuid8,
-    uploadURL: `${baseUrl}/api/storage/uploads/cloud/${uuid8}`,
-    objectPath: `/cloud/${uuid8}`
+    uuid: uuid5,
+    uploadURL: `${baseUrl}/api/storage/uploads/cloud/${uuid5}`,
+    objectPath: `/cloud/${uuid5}`
   };
 }
 function getResourceType(contentType) {
@@ -82250,23 +78381,23 @@ function getResourceType(contentType) {
   if (contentType.startsWith("image/")) return "image";
   return "raw";
 }
-async function saveToDb(uuid8, cloudinaryUrl, resourceType) {
+async function saveToDb(uuid5, cloudinaryUrl, resourceType) {
   try {
     await db.execute(
-      sql2`INSERT INTO upload_sessions (uuid, cloudinary_url, created_at)
-          VALUES (${uuid8}, ${cloudinaryUrl}, NOW())
+      sql`INSERT INTO upload_sessions (uuid, cloudinary_url, created_at)
+          VALUES (${uuid5}, ${cloudinaryUrl}, NOW())
           ON CONFLICT (uuid) DO UPDATE SET cloudinary_url = EXCLUDED.cloudinary_url`
     );
   } catch (err) {
-    logger.warn({ err, uuid: uuid8 }, "upload_sessions DB save failed (non-fatal) \u2014 URL still valid via direct Cloudinary path");
+    logger.warn({ err, uuid: uuid5 }, "upload_sessions DB save failed (non-fatal) \u2014 URL still valid via direct Cloudinary path");
   }
 }
-async function streamToCloudinary(uuid8, readableStream, contentType) {
+async function streamToCloudinary(uuid5, readableStream, contentType) {
   configure();
   const resourceType = getResourceType(contentType);
   const cloudinaryUrl = await new Promise((resolve, reject) => {
     const uploadStream = import_cloudinary.v2.uploader.upload_stream(
-      { public_id: uuid8, resource_type: resourceType, overwrite: true },
+      { public_id: uuid5, resource_type: resourceType, overwrite: true },
       (error41, result) => {
         if (error41) return reject(error41);
         resolve(result.secure_url);
@@ -82275,7 +78406,7 @@ async function streamToCloudinary(uuid8, readableStream, contentType) {
     readableStream.on("error", reject);
     readableStream.pipe(uploadStream);
   });
-  await saveToDb(uuid8, cloudinaryUrl, resourceType);
+  await saveToDb(uuid5, cloudinaryUrl, resourceType);
   return cloudinaryUrl;
 }
 async function pingCloudinary() {
@@ -82298,15 +78429,15 @@ async function pingCloudinary() {
     };
   }
 }
-async function getCloudinaryUrl(uuid8) {
+async function getCloudinaryUrl(uuid5) {
   try {
     const rows = await db.execute(
-      sql2`SELECT cloudinary_url FROM upload_sessions WHERE uuid = ${uuid8}`
+      sql`SELECT cloudinary_url FROM upload_sessions WHERE uuid = ${uuid5}`
     );
     const r5 = rows.rows?.[0];
     if (r5?.cloudinary_url) return r5.cloudinary_url;
   } catch (err) {
-    logger.warn({ err, uuid: uuid8 }, "upload_sessions DB lookup failed \u2014 falling back to direct URL");
+    logger.warn({ err, uuid: uuid5 }, "upload_sessions DB lookup failed \u2014 falling back to direct URL");
   }
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   if (!cloudName) return null;
@@ -82318,7 +78449,7 @@ var init_cloudinaryStorage = __esm({
     "use strict";
     import_cloudinary = __toESM(require_cloudinary2(), 1);
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_logger();
   }
 });
@@ -82361,12 +78492,12 @@ var init_stringUnionSelector = __esm({
       SelectorType3["ENV"] = "env";
       SelectorType3["CONFIG"] = "shared config entry";
     })(SelectorType || (SelectorType = {}));
-    stringUnionSelector = (obj, key, union4, type) => {
+    stringUnionSelector = (obj, key, union3, type) => {
       if (!(key in obj))
         return void 0;
       const value = obj[key].toUpperCase();
-      if (!Object.values(union4).includes(value)) {
-        throw new TypeError(`Cannot load ${type} '${key}'. Expected one of ${Object.values(union4)}, got '${obj[key]}'.`);
+      if (!Object.values(union3).includes(value)) {
+        throw new TypeError(`Cannot load ${type} '${key}'. Expected one of ${Object.values(union3)}, got '${obj[key]}'.`);
       }
       return value;
     };
@@ -82412,19 +78543,19 @@ var init_emitWarningIfUnsupportedVersion = __esm({
     state = {
       warningEmitted: false
     };
-    emitWarningIfUnsupportedVersion = (version5) => {
-      if (version5 && !state.warningEmitted) {
+    emitWarningIfUnsupportedVersion = (version4) => {
+      if (version4 && !state.warningEmitted) {
         if (process.env.AWS_SDK_JS_NODE_VERSION_SUPPORT_WARNING_DISABLED === "true") {
           state.warningEmitted = true;
           return;
         }
-        const userMajorVersion = parseInt(version5.substring(1, version5.indexOf(".")));
+        const userMajorVersion = parseInt(version4.substring(1, version4.indexOf(".")));
         const vv = 22;
         if (userMajorVersion < vv) {
           state.warningEmitted = true;
           process.emitWarning(`NodeVersionSupportWarning: The AWS SDK for JavaScript (v3)
 versions published after the first week of January 2027
-will require node >=${vv}. You are running node ${version5}.
+will require node >=${vv}. You are running node ${version4}.
 
 To continue receiving updates to AWS services, bug fixes,
 and security updates please upgrade to node >=${vv}.
@@ -83527,10 +79658,10 @@ var init_getSchemaSerdePlugin = __esm({
 });
 
 // ../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/schema/schemas/Schema.js
-var Schema3;
+var Schema2;
 var init_Schema = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/schema/schemas/Schema.js"() {
-    Schema3 = class {
+    Schema2 = class {
       name;
       namespace;
       traits;
@@ -83558,14 +79689,14 @@ var ListSchema, list;
 var init_ListSchema = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/schema/schemas/ListSchema.js"() {
     init_Schema();
-    ListSchema = class _ListSchema extends Schema3 {
+    ListSchema = class _ListSchema extends Schema2 {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/lis");
       name;
       traits;
       valueSchema;
       symbol = _ListSchema.symbol;
     };
-    list = (namespace, name2, traits, valueSchema) => Schema3.assign(new ListSchema(), {
+    list = (namespace, name2, traits, valueSchema) => Schema2.assign(new ListSchema(), {
       name: name2,
       namespace,
       traits,
@@ -83579,7 +79710,7 @@ var MapSchema, map2;
 var init_MapSchema = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/schema/schemas/MapSchema.js"() {
     init_Schema();
-    MapSchema = class _MapSchema extends Schema3 {
+    MapSchema = class _MapSchema extends Schema2 {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/map");
       name;
       traits;
@@ -83587,7 +79718,7 @@ var init_MapSchema = __esm({
       valueSchema;
       symbol = _MapSchema.symbol;
     };
-    map2 = (namespace, name2, traits, keySchema, valueSchema) => Schema3.assign(new MapSchema(), {
+    map2 = (namespace, name2, traits, keySchema, valueSchema) => Schema2.assign(new MapSchema(), {
       name: name2,
       namespace,
       traits,
@@ -83602,7 +79733,7 @@ var OperationSchema, op;
 var init_OperationSchema = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/schema/schemas/OperationSchema.js"() {
     init_Schema();
-    OperationSchema = class _OperationSchema extends Schema3 {
+    OperationSchema = class _OperationSchema extends Schema2 {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/ope");
       name;
       traits;
@@ -83610,7 +79741,7 @@ var init_OperationSchema = __esm({
       output;
       symbol = _OperationSchema.symbol;
     };
-    op = (namespace, name2, traits, input, output) => Schema3.assign(new OperationSchema(), {
+    op = (namespace, name2, traits, input, output) => Schema2.assign(new OperationSchema(), {
       name: name2,
       namespace,
       traits,
@@ -83625,7 +79756,7 @@ var StructureSchema, struct;
 var init_StructureSchema = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/schema/schemas/StructureSchema.js"() {
     init_Schema();
-    StructureSchema = class _StructureSchema extends Schema3 {
+    StructureSchema = class _StructureSchema extends Schema2 {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/str");
       name;
       traits;
@@ -83633,7 +79764,7 @@ var init_StructureSchema = __esm({
       memberList;
       symbol = _StructureSchema.symbol;
     };
-    struct = (namespace, name2, traits, memberNames, memberList) => Schema3.assign(new StructureSchema(), {
+    struct = (namespace, name2, traits, memberNames, memberList) => Schema2.assign(new StructureSchema(), {
       name: name2,
       namespace,
       traits,
@@ -83654,7 +79785,7 @@ var init_ErrorSchema = __esm({
       ctor;
       symbol = _ErrorSchema.symbol;
     };
-    error40 = (namespace, name2, traits, memberNames, memberList, ctor) => Schema3.assign(new ErrorSchema(), {
+    error40 = (namespace, name2, traits, memberNames, memberList, ctor) => Schema2.assign(new ErrorSchema(), {
       name: name2,
       namespace,
       traits,
@@ -83992,20 +80123,20 @@ var SimpleSchema, sim, simAdapter;
 var init_SimpleSchema = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/schema/schemas/SimpleSchema.js"() {
     init_Schema();
-    SimpleSchema = class _SimpleSchema extends Schema3 {
+    SimpleSchema = class _SimpleSchema extends Schema2 {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/sim");
       name;
       schemaRef;
       traits;
       symbol = _SimpleSchema.symbol;
     };
-    sim = (namespace, name2, schemaRef, traits) => Schema3.assign(new SimpleSchema(), {
+    sim = (namespace, name2, schemaRef, traits) => Schema2.assign(new SimpleSchema(), {
       name: name2,
       namespace,
       traits,
       schemaRef
     });
-    simAdapter = (namespace, name2, traits, schemaRef) => Schema3.assign(new SimpleSchema(), {
+    simAdapter = (namespace, name2, traits, schemaRef) => Schema2.assign(new SimpleSchema(), {
       name: name2,
       namespace,
       traits,
@@ -84154,7 +80285,7 @@ __export(schema_exports2, {
   NormalizedSchema: () => NormalizedSchema,
   OperationSchema: () => OperationSchema,
   SCHEMA: () => SCHEMA,
-  Schema: () => Schema3,
+  Schema: () => Schema2,
   SimpleSchema: () => SimpleSchema,
   StructureSchema: () => StructureSchema,
   TypeRegistry: () => TypeRegistry,
@@ -84552,8 +80683,8 @@ var warningEmitted, emitWarningIfUnsupportedVersion2;
 var init_emitWarningIfUnsupportedVersion2 = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/emitWarningIfUnsupportedVersion.js"() {
     warningEmitted = false;
-    emitWarningIfUnsupportedVersion2 = (version5) => {
-      if (version5 && !warningEmitted && parseInt(version5.substring(1, version5.indexOf("."))) < 16) {
+    emitWarningIfUnsupportedVersion2 = (version4) => {
+      if (version4 && !warningEmitted && parseInt(version4.substring(1, version4.indexOf("."))) < 16) {
         warningEmitted = true;
       }
     };
@@ -84817,7 +80948,7 @@ var init_ser_utils = __esm({
           return value;
       }
     };
-    serializeDateTime = (date8) => date8.toISOString().replace(".000Z", "Z");
+    serializeDateTime = (date7) => date7.toISOString().replace(".000Z", "Z");
   }
 });
 
@@ -85330,14 +81461,14 @@ var init_parse_utils = __esm({
 });
 
 // ../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js
-function dateToUtcString(date8) {
-  const year2 = date8.getUTCFullYear();
-  const month = date8.getUTCMonth();
-  const dayOfWeek = date8.getUTCDay();
-  const dayOfMonthInt = date8.getUTCDate();
-  const hoursInt = date8.getUTCHours();
-  const minutesInt = date8.getUTCMinutes();
-  const secondsInt = date8.getUTCSeconds();
+function dateToUtcString(date7) {
+  const year2 = date7.getUTCFullYear();
+  const month = date7.getUTCMonth();
+  const dayOfWeek = date7.getUTCDay();
+  const dayOfMonthInt = date7.getUTCDate();
+  const hoursInt = date7.getUTCHours();
+  const minutesInt = date7.getUTCMinutes();
+  const secondsInt = date7.getUTCSeconds();
   const dayOfMonthString = dayOfMonthInt < 10 ? `0${dayOfMonthInt}` : `${dayOfMonthInt}`;
   const hoursString = hoursInt < 10 ? `0${hoursInt}` : `${hoursInt}`;
   const minutesString = minutesInt < 10 ? `0${minutesInt}` : `${minutesInt}`;
@@ -85384,11 +81515,11 @@ var init_date_utils = __esm({
       const year2 = strictParseShort(stripLeadingZeroes(yearStr));
       const month = parseDateValue(monthStr, "month", 1, 12);
       const day = parseDateValue(dayStr, "day", 1, 31);
-      const date8 = buildDate(year2, month, day, { hours, minutes, seconds, fractionalMilliseconds });
+      const date7 = buildDate(year2, month, day, { hours, minutes, seconds, fractionalMilliseconds });
       if (offsetStr.toUpperCase() != "Z") {
-        date8.setTime(date8.getTime() - parseOffsetToMilliseconds(offsetStr));
+        date7.setTime(date7.getTime() - parseOffsetToMilliseconds(offsetStr));
       }
-      return date8;
+      return date7;
     };
     IMF_FIXDATE = new RegExp(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? GMT$/);
     RFC_850_DATE = new RegExp(/^(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\d{2})-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-(\d{2}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? GMT$/);
@@ -85441,10 +81572,10 @@ var init_date_utils = __esm({
       }
       return new Date(Math.round(valueAsDouble * 1e3));
     };
-    buildDate = (year2, month, day, time6) => {
+    buildDate = (year2, month, day, time5) => {
       const adjustedMonth = month - 1;
       validateDayOfMonth(year2, adjustedMonth, day);
-      return new Date(Date.UTC(year2, adjustedMonth, day, parseDateValue(time6.hours, "hour", 0, 23), parseDateValue(time6.minutes, "minute", 0, 59), parseDateValue(time6.seconds, "seconds", 0, 60), parseMilliseconds(time6.fractionalMilliseconds)));
+      return new Date(Date.UTC(year2, adjustedMonth, day, parseDateValue(time5.hours, "hour", 0, 23), parseDateValue(time5.minutes, "minute", 0, 59), parseDateValue(time5.seconds, "seconds", 0, 60), parseMilliseconds(time5.fractionalMilliseconds)));
     };
     parseTwoDigitYear = (value) => {
       const thisYear = (/* @__PURE__ */ new Date()).getUTCFullYear();
@@ -85570,18 +81701,18 @@ function range(v, min2, max2) {
     throw new Error(`Value ${_v} out of range [${min2}, ${max2}]`);
   }
 }
-var ddd, mmm, time5, date7, year, RFC3339_WITH_OFFSET2, IMF_FIXDATE2, RFC_850_DATE2, ASC_TIME2, months, _parseEpochTimestamp, _parseRfc3339DateTimeWithOffset, _parseRfc7231DateTime;
+var ddd, mmm, time4, date6, year, RFC3339_WITH_OFFSET2, IMF_FIXDATE2, RFC_850_DATE2, ASC_TIME2, months, _parseEpochTimestamp, _parseRfc3339DateTimeWithOffset, _parseRfc7231DateTime;
 var init_schema_date_utils = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js"() {
     ddd = `(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?:[ne|u?r]?s?day)?`;
     mmm = `(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)`;
-    time5 = `(\\d?\\d):(\\d{2}):(\\d{2})(?:\\.(\\d+))?`;
-    date7 = `(\\d?\\d)`;
+    time4 = `(\\d?\\d):(\\d{2}):(\\d{2})(?:\\.(\\d+))?`;
+    date6 = `(\\d?\\d)`;
     year = `(\\d{4})`;
     RFC3339_WITH_OFFSET2 = new RegExp(/^(\d{4})-(\d\d)-(\d\d)[tT](\d\d):(\d\d):(\d\d)(\.(\d+))?(([-+]\d\d:\d\d)|[zZ])$/);
-    IMF_FIXDATE2 = new RegExp(`^${ddd}, ${date7} ${mmm} ${year} ${time5} GMT$`);
-    RFC_850_DATE2 = new RegExp(`^${ddd}, ${date7}-${mmm}-(\\d\\d) ${time5} GMT$`);
-    ASC_TIME2 = new RegExp(`^${ddd} ${mmm} ( [1-9]|\\d\\d) ${time5} ${year}$`);
+    IMF_FIXDATE2 = new RegExp(`^${ddd}, ${date6} ${mmm} ${year} ${time4} GMT$`);
+    RFC_850_DATE2 = new RegExp(`^${ddd}, ${date6}-${mmm}-(\\d\\d) ${time4} GMT$`);
+    ASC_TIME2 = new RegExp(`^${ddd} ${mmm} ( [1-9]|\\d\\d) ${time4} ${year}$`);
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     _parseEpochTimestamp = (value) => {
       if (value == null) {
@@ -85620,14 +81751,14 @@ var init_schema_date_utils = __esm({
       range(hours, 0, 23);
       range(minutes, 0, 59);
       range(seconds, 0, 60);
-      const date8 = new Date(Date.UTC(Number(yearStr), Number(monthStr) - 1, Number(dayStr), Number(hours), Number(minutes), Number(seconds), Number(ms) ? Math.round(parseFloat(`0.${ms}`) * 1e3) : 0));
-      date8.setUTCFullYear(Number(yearStr));
+      const date7 = new Date(Date.UTC(Number(yearStr), Number(monthStr) - 1, Number(dayStr), Number(hours), Number(minutes), Number(seconds), Number(ms) ? Math.round(parseFloat(`0.${ms}`) * 1e3) : 0));
+      date7.setUTCFullYear(Number(yearStr));
       if (offsetStr.toUpperCase() != "Z") {
         const [, sign3, offsetH, offsetM] = /([+-])(\d\d):(\d\d)/.exec(offsetStr) || [void 0, "+", 0, 0];
         const scalar = sign3 === "-" ? 1 : -1;
-        date8.setTime(date8.getTime() + scalar * (Number(offsetH) * 60 * 60 * 1e3 + Number(offsetM) * 60 * 1e3));
+        date7.setTime(date7.getTime() + scalar * (Number(offsetH) * 60 * 60 * 1e3 + Number(offsetM) * 60 * 1e3));
       }
-      return date8;
+      return date7;
     };
     _parseRfc7231DateTime = (value) => {
       if (value == null) {
@@ -85653,14 +81784,14 @@ var init_schema_date_utils = __esm({
         [, month, day, hour, minute, second, fraction, year2] = matches;
       }
       if (year2 && second) {
-        const timestamp3 = Date.UTC(Number(year2), months.indexOf(month), Number(day), Number(hour), Number(minute), Number(second), fraction ? Math.round(parseFloat(`0.${fraction}`) * 1e3) : 0);
+        const timestamp2 = Date.UTC(Number(year2), months.indexOf(month), Number(day), Number(hour), Number(minute), Number(second), fraction ? Math.round(parseFloat(`0.${fraction}`) * 1e3) : 0);
         range(day, 1, 31);
         range(hour, 0, 23);
         range(minute, 0, 59);
         range(second, 0, 60);
-        const date8 = new Date(timestamp3);
-        date8.setUTCFullYear(Number(year2));
-        return date8;
+        const date7 = new Date(timestamp2);
+        date7.setUTCFullYear(Number(year2));
+        return date7;
       }
       throw new TypeError(`Invalid RFC7231 date-time value ${value}.`);
     };
@@ -85710,8 +81841,8 @@ var init_split_header = __esm({
       let prevChar = void 0;
       let anchor = 0;
       for (let i5 = 0; i5 < z; ++i5) {
-        const char3 = value[i5];
-        switch (char3) {
+        const char2 = value[i5];
+        switch (char2) {
           case `"`:
             if (prevChar !== "\\") {
               withinQuotes = !withinQuotes;
@@ -85725,7 +81856,7 @@ var init_split_header = __esm({
             break;
           default:
         }
-        prevChar = char3;
+        prevChar = char2;
       }
       values.push(value.slice(anchor));
       return values.map((v) => {
@@ -87651,10 +83782,10 @@ var init_ite = __esm({
 });
 
 // ../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/not.js
-var not3;
+var not2;
 var init_not = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/not.js"() {
-    not3 = (value) => !value;
+    not2 = (value) => !value;
   }
 });
 
@@ -87802,7 +83933,7 @@ var init_endpointFunctions = __esm({
       isSet,
       isValidHostLabel,
       ite,
-      not: not3,
+      not: not2,
       parseURL,
       split,
       stringEquals,
@@ -88198,7 +84329,7 @@ var init_evaluateRules = __esm({
 });
 
 // ../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/index.js
-var init_utils7 = __esm({
+var init_utils5 = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/index.js"() {
     init_evaluateRules();
   }
@@ -88210,7 +84341,7 @@ var init_resolveEndpoint = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/resolveEndpoint.js"() {
     init_debug();
     init_types3();
-    init_utils7();
+    init_utils5();
     resolveEndpoint = (ruleSetObject, options) => {
       const { endpointParams, logger: logger3 } = options;
       const { parameters, rules } = ruleSetObject;
@@ -90745,7 +86876,7 @@ var init_EventStreamMarshaller2 = __esm({
 
 // ../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/utils.js
 var readableStreamToIterable, iterableToReadableStream;
-var init_utils8 = __esm({
+var init_utils6 = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/utils.js"() {
     readableStreamToIterable = (readableStream) => ({
       [Symbol.asyncIterator]: async function* () {
@@ -91069,7 +87200,7 @@ var init_event_streams = __esm({
     init_SmithyMessageDecoderStream();
     init_SmithyMessageEncoderStream();
     init_EventStreamMarshaller2();
-    init_utils8();
+    init_utils6();
     init_EventStreamMarshaller();
     init_getChunkedStream();
     init_getUnmarshalledStream();
@@ -92316,8 +88447,8 @@ function parseRetryAfterHeader(response, logger3) {
       let retryAfterSeconds = NaN;
       if (retryAfter.endsWith("GMT")) {
         try {
-          const date8 = parseRfc7231DateTime(retryAfter);
-          retryAfterSeconds = (date8.getTime() - Date.now()) / 1e3;
+          const date7 = parseRfc7231DateTime(retryAfter);
+          retryAfterSeconds = (date7.getTime() - Date.now()) / 1e3;
         } catch (e5) {
           logger3?.trace?.("Failed to parse retry-after header");
           logger3?.trace?.(e5);
@@ -92552,14 +88683,14 @@ var init_DefaultRateLimiter = __esm({
         this.availableTokens = this.availableTokens - amount;
       }
       refillTokenBucket() {
-        const timestamp3 = this.getCurrentTimeInSeconds();
+        const timestamp2 = this.getCurrentTimeInSeconds();
         if (!this.lastTimestamp) {
-          this.lastTimestamp = timestamp3;
+          this.lastTimestamp = timestamp2;
           return;
         }
-        const fillAmount = (timestamp3 - this.lastTimestamp) * this.fillRate;
+        const fillAmount = (timestamp2 - this.lastTimestamp) * this.fillRate;
         this.availableTokens = Math.min(this.maxCapacity, this.availableTokens + fillAmount);
-        this.lastTimestamp = timestamp3;
+        this.lastTimestamp = timestamp2;
       }
       calculateTimeWindow() {
         this.timeWindow = this.getPrecise(Math.pow(this.lastMaxRate * (1 - this.beta) / this.scaleConstant, 1 / 3));
@@ -92567,8 +88698,8 @@ var init_DefaultRateLimiter = __esm({
       cubicThrottle(rateToUse) {
         return this.getPrecise(rateToUse * this.beta);
       }
-      cubicSuccess(timestamp3) {
-        return this.getPrecise(this.scaleConstant * Math.pow(timestamp3 - this.lastThrottleTime - this.timeWindow, 3) + this.lastMaxRate);
+      cubicSuccess(timestamp2) {
+        return this.getPrecise(this.scaleConstant * Math.pow(timestamp2 - this.lastThrottleTime - this.timeWindow, 3) + this.lastMaxRate);
       }
       enableTokenBucket() {
         this.enabled = true;
@@ -94526,14 +90657,14 @@ var init_user_agent_middleware = __esm({
     };
     escapeUserAgent = (userAgentPair) => {
       const name2 = userAgentPair[0].split(UA_NAME_SEPARATOR).map((part) => part.replace(UA_NAME_ESCAPE_REGEX, UA_ESCAPE_CHAR)).join(UA_NAME_SEPARATOR);
-      const version5 = userAgentPair[1]?.replace(UA_VALUE_ESCAPE_REGEX, UA_ESCAPE_CHAR);
+      const version4 = userAgentPair[1]?.replace(UA_VALUE_ESCAPE_REGEX, UA_ESCAPE_CHAR);
       const prefixSeparatorIndex = name2.indexOf(UA_NAME_SEPARATOR);
       const prefix = name2.substring(0, prefixSeparatorIndex);
       let uaName = name2.substring(prefixSeparatorIndex + 1);
       if (prefix === "api") {
         uaName = uaName.toLowerCase();
       }
-      return [prefix, uaName, version5].filter((item) => item && item.length > 0).reduce((acc, item, index2) => {
+      return [prefix, uaName, version4].filter((item) => item && item.length > 0).reduce((acc, item, index2) => {
         switch (index2) {
           case 0:
             return item;
@@ -96996,18 +93127,18 @@ var require_dist_cjs2 = __commonJS({
       }
       return keys.sort().map((key) => serialized[key]).filter((serialized2) => serialized2).join("&");
     };
-    var iso8601 = (time6) => toDate(time6).toISOString().replace(/\.\d{3}Z$/, "Z");
-    var toDate = (time6) => {
-      if (typeof time6 === "number") {
-        return new Date(time6 * 1e3);
+    var iso8601 = (time5) => toDate(time5).toISOString().replace(/\.\d{3}Z$/, "Z");
+    var toDate = (time5) => {
+      if (typeof time5 === "number") {
+        return new Date(time5 * 1e3);
       }
-      if (typeof time6 === "string") {
-        if (Number(time6)) {
-          return new Date(Number(time6) * 1e3);
+      if (typeof time5 === "string") {
+        if (Number(time5)) {
+          return new Date(Number(time5) * 1e3);
         }
-        return new Date(time6);
+        return new Date(time5);
       }
-      return time6;
+      return time5;
     };
     var SignatureV4Base = class {
       service;
@@ -98040,7 +94171,7 @@ var init_jsonReviver = __esm({
 
 // ../../node_modules/.pnpm/@aws-sdk+core@3.975.1/node_modules/@aws-sdk/core/dist-es/submodules/protocols/common.js
 var collectBodyString;
-var init_common3 = __esm({
+var init_common2 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+core@3.975.1/node_modules/@aws-sdk/core/dist-es/submodules/protocols/common.js"() {
     init_protocols();
     init_serde();
@@ -98052,7 +94183,7 @@ var init_common3 = __esm({
 var parseJsonBody, findKey, sanitizeErrorCode, loadRestJsonErrorCode, loadErrorCode;
 var init_parseJsonBody = __esm({
   "../../node_modules/.pnpm/@aws-sdk+core@3.975.1/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/parseJsonBody.js"() {
-    init_common3();
+    init_common2();
     parseJsonBody = (streamBody, context) => collectBodyString(streamBody, context).then((encoded) => {
       if (encoded.length) {
         try {
@@ -98145,7 +94276,7 @@ var init_JsonShapeDeserializer = __esm({
         if (isObject3) {
           if (ns.isStructSchema()) {
             const record2 = value;
-            const union4 = ns.isUnionSchema();
+            const union3 = ns.isUnionSchema();
             const out = {};
             let nameMap = void 0;
             const { jsonName } = this.settings;
@@ -98153,7 +94284,7 @@ var init_JsonShapeDeserializer = __esm({
               nameMap = {};
             }
             let unionSerde;
-            if (union4) {
+            if (union3) {
               unionSerde = new UnionSerde(record2, out);
             }
             for (const [memberName, memberSchema] of ns.structIterator()) {
@@ -98162,14 +94293,14 @@ var init_JsonShapeDeserializer = __esm({
                 fromKey = memberSchema.getMergedTraits().jsonName ?? fromKey;
                 nameMap[fromKey] = memberName;
               }
-              if (union4) {
+              if (union3) {
                 unionSerde.mark(fromKey);
               }
               if (record2[fromKey] != null) {
                 out[memberName] = this._read(memberSchema, record2[fromKey]);
               }
             }
-            if (union4) {
+            if (union3) {
               unionSerde.writeUnknown();
             } else if (typeof record2.__type === "string") {
               for (const k5 in record2) {
@@ -98303,7 +94434,7 @@ var init_jsonReplacer = __esm({
           return value;
         };
       }
-      replaceInJson(json4) {
+      replaceInJson(json3) {
         if (this.stage === 0) {
           throw new Error("@aws-sdk/core/protocols - JsonReplacer not created yet.");
         }
@@ -98312,12 +94443,12 @@ var init_jsonReplacer = __esm({
         }
         this.stage = 2;
         if (this.counter === 0) {
-          return json4;
+          return json3;
         }
         for (const [key, value] of this.values) {
-          json4 = json4.replace(key, value);
+          json3 = json3.replace(key, value);
         }
-        return json4;
+        return json3;
       }
     };
   }
@@ -98885,11 +95016,11 @@ var require_dist_cjs4 = __commonJS({
               childTags.push(p3.parseTag());
             }
           } else {
-            let text3 = "";
+            let text2 = "";
             while (p3.i < p3.z && p3.x[p3.i] !== "<") {
-              text3 += p3.x[p3.i++];
+              text2 += p3.x[p3.i++];
             }
-            textParts.push(p3.decodeEntities(text3));
+            textParts.push(p3.decodeEntities(text2));
           }
         }
         if (!p3.isNext("</")) {
@@ -98904,18 +95035,18 @@ var require_dist_cjs4 = __commonJS({
           return { tag, value: "" };
         }
         if (!hasAttrs && !hasElementChild) {
-          const text3 = textParts.length === 1 ? textParts[0] : textParts.join("");
-          if (text3.trim() === "" && text3.includes("\n")) {
+          const text2 = textParts.length === 1 ? textParts[0] : textParts.join("");
+          if (text2.trim() === "" && text2.includes("\n")) {
             return { tag, value: "" };
           }
-          return { tag, value: text3 };
+          return { tag, value: text2 };
         }
         const obj = /* @__PURE__ */ Object.create(null);
-        for (const text3 of textParts) {
-          if (text3.trim() === "" && text3.includes("\n")) {
+        for (const text2 of textParts) {
+          if (text2.trim() === "" && text2.includes("\n")) {
             continue;
           }
-          obj["#text"] = "#text" in obj ? obj["#text"] + text3 : text3;
+          obj["#text"] = "#text" in obj ? obj["#text"] + text2 : text2;
         }
         for (const child of childTags) {
           if (child.tag in obj) {
@@ -99069,22 +95200,22 @@ var init_XmlShapeDeserializer = __esm({
             return buffer;
           }
           if (ns.isStructSchema()) {
-            const union4 = ns.isUnionSchema();
+            const union3 = ns.isUnionSchema();
             let unionSerde;
-            if (union4) {
+            if (union3) {
               unionSerde = new UnionSerde(value, buffer);
             }
             for (const [memberName, memberSchema] of ns.structIterator()) {
               const memberTraits = memberSchema.getMergedTraits();
               const xmlObjectKey = !memberTraits.httpPayload ? memberSchema.getMemberTraits().xmlName ?? memberName : memberTraits.xmlName ?? memberSchema.getName();
-              if (union4) {
+              if (union3) {
                 unionSerde.mark(xmlObjectKey);
               }
               if (value[xmlObjectKey] != null) {
                 buffer[memberName] = this.readSchema(memberSchema, value[xmlObjectKey]);
               }
             }
-            if (union4) {
+            if (union3) {
               unionSerde.writeUnknown();
             }
             return buffer;
@@ -100550,7 +96681,7 @@ var init_getUpdatedSystemClockOffset = __esm({
 });
 
 // ../../node_modules/.pnpm/@aws-sdk+core@3.975.1/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/index.js
-var init_utils9 = __esm({
+var init_utils7 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+core@3.975.1/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/index.js"() {
     init_getDateHeader();
     init_getSkewCorrectedDate();
@@ -100563,7 +96694,7 @@ var throwSigningPropertyError, validateSigningProperties, AwsSdkSigV4Signer, AWS
 var init_AwsSdkSigV4Signer = __esm({
   "../../node_modules/.pnpm/@aws-sdk+core@3.975.1/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4Signer.js"() {
     init_protocols();
-    init_utils9();
+    init_utils7();
     throwSigningPropertyError = (name2, property) => {
       if (!property) {
         throw new Error(`Property \`${name2}\` is not resolved for AWS SDK SigV4Auth`);
@@ -100647,7 +96778,7 @@ var AwsSdkSigV4ASigner;
 var init_AwsSdkSigV4ASigner = __esm({
   "../../node_modules/.pnpm/@aws-sdk+core@3.975.1/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4ASigner.js"() {
     init_protocols();
-    init_utils9();
+    init_utils7();
     init_AwsSdkSigV4Signer();
     AwsSdkSigV4ASigner = class extends AwsSdkSigV4Signer {
       async sign(httpRequest, identity, signingProperties) {
@@ -101512,8 +97643,8 @@ var require_dist_cjs7 = __commonJS({
         if (typeof maxSockets !== "number" || maxSockets === Infinity) {
           return socketWarningTimestamp;
         }
-        const interval3 = 15e3;
-        if (Date.now() - interval3 < socketWarningTimestamp) {
+        const interval2 = 15e3;
+        if (Date.now() - interval2 < socketWarningTimestamp) {
           return socketWarningTimestamp;
         }
         if (sockets && requests) {
@@ -102597,7 +98728,7 @@ var init_SSOOIDCServiceException = __esm({
 
 // ../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/errors.js
 var AccessDeniedException, AuthorizationPendingException, ExpiredTokenException, InternalServerException, InvalidClientException, InvalidGrantException, InvalidRequestException, InvalidScopeException, SlowDownException, UnauthorizedClientException, UnsupportedGrantTypeException;
-var init_errors6 = __esm({
+var init_errors5 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/errors.js"() {
     init_SSOOIDCServiceException();
     AccessDeniedException = class _AccessDeniedException extends SSOOIDCServiceException {
@@ -102788,7 +98919,7 @@ var _ADE, _APE, _AT, _CS, _CT, _CTR, _CTRr, _CV, _ETE, _ICE, _IGE, _IRE, _ISE, _
 var init_schemas_0 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/schemas/schemas_0.js"() {
     init_schema3();
-    init_errors6();
+    init_errors5();
     init_SSOOIDCServiceException();
     _ADE = "AccessDeniedException";
     _APE = "AuthorizationPendingException";
@@ -103301,7 +99432,7 @@ var init_sso_oidc = __esm({
     init_client2();
     init_schemas_0();
     init_enums();
-    init_errors6();
+    init_errors5();
     init_models_0();
     init_SSOOIDCServiceException();
   }
@@ -103658,7 +99789,7 @@ var init_SSOServiceException = __esm({
 
 // ../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/errors.js
 var InvalidRequestException2, ResourceNotFoundException, TooManyRequestsException, UnauthorizedException;
-var init_errors7 = __esm({
+var init_errors6 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/errors.js"() {
     init_SSOServiceException();
     InvalidRequestException2 = class _InvalidRequestException extends SSOServiceException {
@@ -103717,7 +99848,7 @@ var _ATT, _GRC, _GRCR, _GRCRe, _IRE2, _RC, _RNFE, _SAKT, _STT, _TMRE, _UE, _aI, 
 var init_schemas_02 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/schemas/schemas_0.js"() {
     init_schema3();
-    init_errors7();
+    init_errors6();
     init_SSOServiceException();
     _ATT = "AccessTokenType";
     _GRC = "GetRoleCredentials";
@@ -104130,7 +100261,7 @@ var init_sso = __esm({
     init_commands2();
     init_client2();
     init_schemas_02();
-    init_errors7();
+    init_errors6();
     init_models_02();
     init_SSOServiceException();
   }
@@ -104689,7 +100820,7 @@ var init_STSServiceException = __esm({
 
 // ../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js
 var ExpiredTokenException2, MalformedPolicyDocumentException, PackedPolicyTooLargeException, RegionDisabledException, IDPRejectedClaimException, InvalidIdentityTokenException, IDPCommunicationErrorException;
-var init_errors8 = __esm({
+var init_errors7 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js"() {
     init_STSServiceException();
     ExpiredTokenException2 = class _ExpiredTokenException extends STSServiceException {
@@ -104785,7 +100916,7 @@ var _A, _AKI, _AR, _ARI, _ARR, _ARRs, _ARU, _ARWWI, _ARWWIR, _ARWWIRs, _Au, _C, 
 var init_schemas_03 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js"() {
     init_schema3();
-    init_errors8();
+    init_errors7();
     init_STSServiceException();
     _A = "Arn";
     _AKI = "AccessKeyId";
@@ -105530,7 +101661,7 @@ var init_sts = __esm({
     init_commands3();
     init_client2();
     init_schemas_03();
-    init_errors8();
+    init_errors7();
     init_models_03();
     init_defaultRoleAssumers();
     init_STSServiceException();
@@ -105827,7 +101958,7 @@ var init_SigninServiceException = __esm({
 
 // ../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/errors.js
 var AccessDeniedException2, InternalServerException2, TooManyRequestsError, ValidationException;
-var init_errors9 = __esm({
+var init_errors8 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/errors.js"() {
     init_SigninServiceException();
     AccessDeniedException2 = class _AccessDeniedException extends SigninServiceException {
@@ -105894,7 +102025,7 @@ var _ADE2, _AT2, _COAT, _COATR, _COATRB, _COATRBr, _COATRr, _ISE2, _RT2, _TMRE2,
 var init_schemas_04 = __esm({
   "../../node_modules/.pnpm/@aws-sdk+nested-clients@3.997.31/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/schemas/schemas_0.js"() {
     init_schema3();
-    init_errors9();
+    init_errors8();
     init_SigninServiceException();
     _ADE2 = "AccessDeniedException";
     _AT2 = "AccessToken";
@@ -106357,7 +102488,7 @@ var init_signin = __esm({
     init_client2();
     init_schemas_04();
     init_enums2();
-    init_errors9();
+    init_errors8();
     init_models_04();
     init_SigninServiceException();
   }
@@ -115409,9 +111540,9 @@ var require_dist_cjs16 = __commonJS({
     ];
     var CreateSessionCommand = class extends command5(_ep4, _mw05, "CreateSession", CreateSession$) {
     };
-    var version5 = "3.1084.0";
+    var version4 = "3.1084.0";
     var packageInfo = {
-      version: version5
+      version: version4
     };
     var getRuntimeConfig$1 = (config2) => {
       return {
@@ -117439,10 +113570,10 @@ var init_storage = __esm({
     });
     router2.put("/storage/uploads/cloud/:uuid", async (req, res) => {
       const uuidParam = req.params.uuid;
-      const uuid8 = Array.isArray(uuidParam) ? uuidParam[0] : uuidParam;
+      const uuid5 = Array.isArray(uuidParam) ? uuidParam[0] : uuidParam;
       const contentType = req.headers["content-type"] || "application/octet-stream";
       try {
-        const cloudinaryUrl = await streamToCloudinary(uuid8, req, contentType);
+        const cloudinaryUrl = await streamToCloudinary(uuid5, req, contentType);
         res.status(200).json({ ok: true, url: cloudinaryUrl });
       } catch (error41) {
         const msg = error41 instanceof Error ? error41.message : String(error41);
@@ -117451,9 +113582,9 @@ var init_storage = __esm({
       }
     });
     router2.get("/storage/cloud/:uuid", async (req, res) => {
-      const { uuid: uuid8 } = req.params;
+      const { uuid: uuid5 } = req.params;
       try {
-        const uuidStr = Array.isArray(uuid8) ? uuid8[0] : uuid8;
+        const uuidStr = Array.isArray(uuid5) ? uuid5[0] : uuid5;
         const url2 = await getCloudinaryUrl(uuidStr);
         if (!url2) {
           res.status(404).json({ error: "Not found" });
@@ -119401,7 +115532,7 @@ function decodeWords(str2) {
       }
     ).replace(/(\?=)?__\x00JOIN\x00__(=\?([^?]+)\?[QqBb]\?)?/g, "").replace(/(=\?[^?]+\?[QqBb]\?[^?]*\?=)\s+(?==\?[^?]+\?[QqBb]\?[^?]*\?=)/g, "$1").replace(
       /=\?([\w_\-*]+)\?([QqBb])\?([^?]*)\?=/g,
-      (m3, charset, encoding, text3) => decodeWord(charset, encoding, text3)
+      (m3, charset, encoding, text2) => decodeWord(charset, encoding, text2)
     );
     if (joinString && result.indexOf("\uFFFD") >= 0) {
       joinString = false;
@@ -119490,8 +115621,8 @@ var init_pass_through_decoder = __esm({
       constructor() {
         this.chunks = [];
       }
-      update(line3) {
-        this.chunks.push(line3);
+      update(line2) {
+        this.chunks.push(line2);
         this.chunks.push("\n");
       }
       finalize() {
@@ -119853,9 +115984,9 @@ var init_mime_node = __esm({
       }
       processHeaders() {
         for (let i5 = this.headerLines.length - 1; i5 >= 0; i5--) {
-          let line3 = this.headerLines[i5];
-          if (i5 && /^\s/.test(line3)) {
-            this.headerLines[i5 - 1] += "\n" + line3;
+          let line2 = this.headerLines[i5];
+          if (i5 && /^\s/.test(line2)) {
+            this.headerLines[i5 - 1] += "\n" + line2;
             this.headerLines.splice(i5, 1);
           }
         }
@@ -119905,22 +116036,22 @@ var init_mime_node = __esm({
         this.contentTransferEncoding.encoding = this.contentTransferEncoding.value.toLowerCase().split(/[^\w-]/).shift();
         this.setupContentDecoder(this.contentTransferEncoding.encoding);
       }
-      feed(line3) {
+      feed(line2) {
         switch (this.state) {
           case "header":
-            if (!line3.length) {
+            if (!line2.length) {
               this.state = "body";
               return this.processHeaders();
             }
-            this.headerSize += line3.length;
+            this.headerSize += line2.length;
             if (this.headerSize > this.options.maxHeadersSize) {
               let error41 = new Error(`Maximum header size of ${this.options.maxHeadersSize} bytes exceeded`);
               throw error41;
             }
-            this.headerLines.push(defaultDecoder.decode(line3));
+            this.headerLines.push(defaultDecoder.decode(line2));
             break;
           case "body": {
-            this.contentDecoder.update(line3);
+            this.contentDecoder.update(line2);
           }
         }
       }
@@ -122262,25 +118393,25 @@ function formatHtmlAddresses(addresses) {
 function foldLines(str2, lineLength, afterSpace) {
   str2 = (str2 || "").toString();
   lineLength = lineLength || 76;
-  let pos = 0, len = str2.length, result = "", line3, match;
+  let pos = 0, len = str2.length, result = "", line2, match;
   while (pos < len) {
-    line3 = str2.substr(pos, lineLength);
-    if (line3.length < lineLength) {
-      result += line3;
+    line2 = str2.substr(pos, lineLength);
+    if (line2.length < lineLength) {
+      result += line2;
       break;
     }
-    if (match = line3.match(/^[^\n\r]*(\r?\n|\r)/)) {
-      line3 = match[0];
-      result += line3;
-      pos += line3.length;
+    if (match = line2.match(/^[^\n\r]*(\r?\n|\r)/)) {
+      line2 = match[0];
+      result += line2;
+      pos += line2.length;
       continue;
-    } else if ((match = line3.match(/(\s+)[^\s]*$/)) && match[0].length - (afterSpace ? (match[1] || "").length : 0) < line3.length) {
-      line3 = line3.substr(0, line3.length - (match[0].length - (afterSpace ? (match[1] || "").length : 0)));
-    } else if (match = str2.substr(pos + line3.length).match(/^[^\s]+(\s*)/)) {
-      line3 = line3 + match[0].substr(0, match[0].length - (!afterSpace ? (match[1] || "").length : 0));
+    } else if ((match = line2.match(/(\s+)[^\s]*$/)) && match[0].length - (afterSpace ? (match[1] || "").length : 0) < line2.length) {
+      line2 = line2.substr(0, line2.length - (match[0].length - (afterSpace ? (match[1] || "").length : 0)));
+    } else if (match = str2.substr(pos + line2.length).match(/^[^\s]+(\s*)/)) {
+      line2 = line2 + match[0].substr(0, match[0].length - (!afterSpace ? (match[1] || "").length : 0));
     }
-    result += line3;
-    pos += line3.length;
+    result += line2;
+    pos += line2.length;
     if (pos < len) {
       result += "\r\n";
     }
@@ -122324,8 +118455,8 @@ function formatTextHeader(message) {
     let sepLen = maxKeyLength - row.key.length;
     let prefix = `${row.key}: ${" ".repeat(sepLen)}`;
     let emptyPrefix = `${" ".repeat(row.key.length + 1)} ${" ".repeat(sepLen)}`;
-    let foldedLines = foldLines(row.val, 80, true).split(/\r?\n/).map((line3) => line3.trim());
-    return foldedLines.map((line3, i5) => `${i5 ? emptyPrefix : prefix}${line3}`);
+    let foldedLines = foldLines(row.val, 80, true).split(/\r?\n/).map((line2) => line2.trim());
+    return foldedLines.map((line2, i5) => `${i5 ? emptyPrefix : prefix}${line2}`);
   });
   let maxLineLength = rows.map((r5) => r5.length).reduce((acc, cur) => {
     return cur > acc ? cur : acc;
@@ -122762,17 +118893,17 @@ var init_postal_mime = __esm({
       async finalize() {
         await this.root.finalize();
       }
-      async processLine(line3, isFinal) {
+      async processLine(line2, isFinal) {
         let boundaries = this.boundaries;
-        if (boundaries.length && line3.length > 2 && line3[0] === 45 && line3[1] === 45) {
+        if (boundaries.length && line2.length > 2 && line2[0] === 45 && line2[1] === 45) {
           for (let i5 = boundaries.length - 1; i5 >= 0; i5--) {
             let boundary = boundaries[i5];
-            if (line3.length < boundary.value.length + 2) {
+            if (line2.length < boundary.value.length + 2) {
               continue;
             }
             let boundaryMatches = true;
             for (let j5 = 0; j5 < boundary.value.length; j5++) {
-              if (line3[j5 + 2] !== boundary.value[j5]) {
+              if (line2[j5 + 2] !== boundary.value[j5]) {
                 boundaryMatches = false;
                 break;
               }
@@ -122782,13 +118913,13 @@ var init_postal_mime = __esm({
             }
             let boundaryEnd = boundary.value.length + 2;
             let isTerminator = false;
-            if (line3.length >= boundary.value.length + 4 && line3[boundary.value.length + 2] === 45 && line3[boundary.value.length + 3] === 45) {
+            if (line2.length >= boundary.value.length + 4 && line2[boundary.value.length + 2] === 45 && line2[boundary.value.length + 3] === 45) {
               isTerminator = true;
               boundaryEnd = boundary.value.length + 4;
             }
             let hasValidTrailing = true;
-            for (let j5 = boundaryEnd; j5 < line3.length; j5++) {
-              if (line3[j5] !== 32 && line3[j5] !== 9) {
+            for (let j5 = boundaryEnd; j5 < line2.length; j5++) {
+              if (line2[j5] !== 32 && line2[j5] !== 9) {
                 hasValidTrailing = false;
                 break;
               }
@@ -122814,7 +118945,7 @@ var init_postal_mime = __esm({
             return;
           }
         }
-        this.currentNode.feed(line3);
+        this.currentNode.feed(line2);
         if (isFinal) {
           return this.finalize();
         }
@@ -123077,15 +119208,15 @@ var init_postal_mime = __esm({
         this.av = new Uint8Array(buf);
         this.readPos = 0;
         while (this.readPos < this.av.length) {
-          const line3 = this.readLine();
-          await this.processLine(line3.bytes, line3.done);
+          const line2 = this.readLine();
+          await this.processLine(line2.bytes, line2.done);
         }
         await this.processNodeTree();
         const message = {
           headers: this.root.headers.map((entry) => ({ key: entry.key, originalKey: entry.originalKey, value: entry.value })).reverse()
         };
         for (const key of ["from", "sender"]) {
-          const addressHeader = this.root.headers.find((line3) => line3.key === key);
+          const addressHeader = this.root.headers.find((line2) => line2.key === key);
           if (addressHeader && addressHeader.value) {
             const addresses = address_parser_default(addressHeader.value);
             if (addresses && addresses.length) {
@@ -123094,7 +119225,7 @@ var init_postal_mime = __esm({
           }
         }
         for (const key of ["delivered-to", "return-path"]) {
-          const addressHeader = this.root.headers.find((line3) => line3.key === key);
+          const addressHeader = this.root.headers.find((line2) => line2.key === key);
           if (addressHeader && addressHeader.value) {
             const addresses = address_parser_default(addressHeader.value);
             if (addresses && addresses.length && addresses[0].address) {
@@ -123104,7 +119235,7 @@ var init_postal_mime = __esm({
           }
         }
         for (const key of ["to", "cc", "bcc", "reply-to"]) {
-          const addressHeaders = this.root.headers.filter((line3) => line3.key === key);
+          const addressHeaders = this.root.headers.filter((line2) => line2.key === key);
           let addresses = [];
           addressHeaders.filter((entry) => entry && entry.value).map((entry) => address_parser_default(entry.value)).forEach((parsed) => addresses = addresses.concat(parsed || []));
           if (addresses && addresses.length) {
@@ -123113,21 +119244,21 @@ var init_postal_mime = __esm({
           }
         }
         for (const key of ["subject", "message-id", "in-reply-to", "references"]) {
-          const header = this.root.headers.find((line3) => line3.key === key);
+          const header = this.root.headers.find((line2) => line2.key === key);
           if (header && header.value) {
             const camelKey = toCamelCase2(key);
             message[camelKey] = decodeWords(header.value);
           }
         }
-        let dateHeader = this.root.headers.find((line3) => line3.key === "date");
+        let dateHeader = this.root.headers.find((line2) => line2.key === "date");
         if (dateHeader) {
-          let date8 = new Date(dateHeader.value);
-          if (date8.toString() === "Invalid Date") {
-            date8 = dateHeader.value;
+          let date7 = new Date(dateHeader.value);
+          if (date7.toString() === "Invalid Date") {
+            date7 = dateHeader.value;
           } else {
-            date8 = date8.toISOString();
+            date7 = date7.toISOString();
           }
-          message.date = date8;
+          message.date = date7;
         }
         if (this.textContent?.html) {
           message.html = this.textContent.html;
@@ -123896,14 +120027,14 @@ var require_dist3 = __commonJS({
         if (!msgSignature || !msgId || !msgTimestamp) {
           throw new WebhookVerificationError("Missing required headers");
         }
-        const timestamp3 = this.verifyTimestamp(msgTimestamp);
-        const computedSignature = this.sign(msgId, timestamp3, payload);
+        const timestamp2 = this.verifyTimestamp(msgTimestamp);
+        const computedSignature = this.sign(msgId, timestamp2, payload);
         const expectedSignature = computedSignature.split(",")[1];
         const passedSignatures = msgSignature.split(" ");
         const encoder = new globalThis.TextEncoder();
         for (const versionedSignature of passedSignatures) {
-          const [version5, signature] = versionedSignature.split(",");
-          if (version5 !== "v1") {
+          const [version4, signature] = versionedSignature.split(",");
+          if (version4 !== "v1") {
             continue;
           }
           if ((0, timing_safe_equal_1.timingSafeEqual)(encoder.encode(signature), encoder.encode(expectedSignature))) {
@@ -123912,7 +120043,7 @@ var require_dist3 = __commonJS({
         }
         throw new WebhookVerificationError("No matching signature found");
       }
-      sign(msgId, timestamp3, payload) {
+      sign(msgId, timestamp2, payload) {
         if (typeof payload === "string") {
         } else if (payload.constructor.name === "Buffer") {
           payload = payload.toString();
@@ -123920,24 +120051,24 @@ var require_dist3 = __commonJS({
           throw new Error("Expected payload to be of type string or Buffer.");
         }
         const encoder = new TextEncoder();
-        const timestampNumber = Math.floor(timestamp3.getTime() / 1e3);
+        const timestampNumber = Math.floor(timestamp2.getTime() / 1e3);
         const toSign = encoder.encode(`${msgId}.${timestampNumber}.${payload}`);
         const expectedSignature = base643.encode(sha256.hmac(this.key, toSign));
         return `v1,${expectedSignature}`;
       }
       verifyTimestamp(timestampHeader) {
         const now = Math.floor(Date.now() / 1e3);
-        const timestamp3 = parseInt(timestampHeader, 10);
-        if (isNaN(timestamp3)) {
+        const timestamp2 = parseInt(timestampHeader, 10);
+        if (isNaN(timestamp2)) {
           throw new WebhookVerificationError("Invalid Signature Headers");
         }
-        if (now - timestamp3 > WEBHOOK_TOLERANCE_IN_SECONDS) {
+        if (now - timestamp2 > WEBHOOK_TOLERANCE_IN_SECONDS) {
           throw new WebhookVerificationError("Message timestamp too old");
         }
-        if (timestamp3 > now + WEBHOOK_TOLERANCE_IN_SECONDS) {
+        if (timestamp2 > now + WEBHOOK_TOLERANCE_IN_SECONDS) {
           throw new WebhookVerificationError("Message timestamp too new");
         }
-        return new Date(timestamp3 * 1e3);
+        return new Date(timestamp2 * 1e3);
       }
     };
     exports.Webhook = Webhook2;
@@ -124142,12 +120273,12 @@ function getDefaultBaseUrl() {
 function getDefaultUserAgent() {
   return typeof process !== "undefined" && process.env ? process.env.RESEND_USER_AGENT || defaultUserAgent2 : defaultUserAgent2;
 }
-var import_standardwebhooks, version4, ApiKeys, AutomationRuns, Automations, Batch, Broadcasts, ContactProperties, ContactImports, ContactSegments, ContactTopics, Contacts, DomainClaims, Domains, Attachments$1, Attachments, Receiving, Emails, Events, Logs, Segments, ChainableTemplateResult, Templates, Topics, Webhooks, defaultBaseUrl, defaultUserAgent2, Resend;
+var import_standardwebhooks, version3, ApiKeys, AutomationRuns, Automations, Batch, Broadcasts, ContactProperties, ContactImports, ContactSegments, ContactTopics, Contacts, DomainClaims, Domains, Attachments$1, Attachments, Receiving, Emails, Events, Logs, Segments, ChainableTemplateResult, Templates, Topics, Webhooks, defaultBaseUrl, defaultUserAgent2, Resend;
 var init_dist = __esm({
   "../../node_modules/.pnpm/resend@6.16.0/node_modules/resend/dist/index.mjs"() {
     init_postal_mime();
     import_standardwebhooks = __toESM(require_dist3(), 1);
-    version4 = "6.16.0";
+    version3 = "6.16.0";
     ApiKeys = class {
       constructor(resend) {
         this.resend = resend;
@@ -124748,7 +120879,7 @@ var init_dist = __esm({
         });
       }
       async forwardWrapped(email3, options) {
-        const { to, from, subject, text: text3, html } = options;
+        const { to, from, subject, text: text2, html } = options;
         if (!email3.raw?.download_url) return {
           data: null,
           error: {
@@ -124773,7 +120904,7 @@ var init_dist = __esm({
           from,
           to,
           subject,
-          text: text3,
+          text: text2,
           html,
           attachments: [{
             filename: "forwarded_message.eml",
@@ -124999,7 +121130,7 @@ var init_dist = __esm({
       }
     };
     defaultBaseUrl = "https://api.resend.com";
-    defaultUserAgent2 = `resend-node:${version4}`;
+    defaultUserAgent2 = `resend-node:${version3}`;
     Resend = class {
       constructor(key, options) {
         this.key = key;
@@ -125144,4200 +121275,6 @@ var init_dist = __esm({
         return this.fetchRequest(path3, requestOptions);
       }
     };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/alias.js
-var init_alias4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/alias.js"() {
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/checks.js
-var CheckBuilder2, Check2;
-var init_checks4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/checks.js"() {
-    init_entity2();
-    CheckBuilder2 = class {
-      constructor(name2, value) {
-        this.name = name2;
-        this.value = value;
-      }
-      static [entityKind2] = "PgCheckBuilder";
-      brand;
-      /** @internal */
-      build(table) {
-        return new Check2(table, this);
-      }
-    };
-    Check2 = class {
-      constructor(table, builder) {
-        this.table = table;
-        this.name = builder.name;
-        this.value = builder.value;
-      }
-      static [entityKind2] = "PgCheck";
-      name;
-      value;
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/index.js
-var init_columns2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/index.js"() {
-    init_bigint2();
-    init_bigserial2();
-    init_boolean2();
-    init_char2();
-    init_cidr2();
-    init_common2();
-    init_custom2();
-    init_date2();
-    init_double_precision2();
-    init_enum2();
-    init_inet2();
-    init_int_common2();
-    init_integer2();
-    init_interval2();
-    init_json2();
-    init_jsonb2();
-    init_line2();
-    init_macaddr2();
-    init_macaddr82();
-    init_numeric2();
-    init_point2();
-    init_geometry2();
-    init_real2();
-    init_serial2();
-    init_smallint2();
-    init_smallserial2();
-    init_text2();
-    init_time2();
-    init_timestamp2();
-    init_uuid2();
-    init_varchar2();
-    init_bit2();
-    init_halfvec2();
-    init_sparsevec2();
-    init_vector3();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/selection-proxy.js
-var SelectionProxyHandler2;
-var init_selection_proxy2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/selection-proxy.js"() {
-    init_alias3();
-    init_column2();
-    init_entity2();
-    init_sql3();
-    init_subquery3();
-    init_view_common3();
-    SelectionProxyHandler2 = class _SelectionProxyHandler {
-      static [entityKind2] = "SelectionProxyHandler";
-      config;
-      constructor(config2) {
-        this.config = { ...config2 };
-      }
-      get(subquery, prop) {
-        if (prop === "_") {
-          return {
-            ...subquery["_"],
-            selectedFields: new Proxy(
-              subquery._.selectedFields,
-              this
-            )
-          };
-        }
-        if (prop === ViewBaseConfig2) {
-          return {
-            ...subquery[ViewBaseConfig2],
-            selectedFields: new Proxy(
-              subquery[ViewBaseConfig2].selectedFields,
-              this
-            )
-          };
-        }
-        if (typeof prop === "symbol") {
-          return subquery[prop];
-        }
-        const columns = is2(subquery, Subquery2) ? subquery._.selectedFields : is2(subquery, View2) ? subquery[ViewBaseConfig2].selectedFields : subquery;
-        const value = columns[prop];
-        if (is2(value, SQL2.Aliased)) {
-          if (this.config.sqlAliasedBehavior === "sql" && !value.isSelectionField) {
-            return value.sql;
-          }
-          const newValue = value.clone();
-          newValue.isSelectionField = true;
-          return newValue;
-        }
-        if (is2(value, SQL2)) {
-          if (this.config.sqlBehavior === "sql") {
-            return value;
-          }
-          throw new Error(
-            `You tried to reference "${prop}" field from a subquery, which is a raw SQL field, but it doesn't have an alias declared. Please add an alias to the field using ".as('alias')" method.`
-          );
-        }
-        if (is2(value, Column2)) {
-          if (this.config.alias) {
-            return new Proxy(
-              value,
-              new ColumnAliasProxyHandler2(
-                new Proxy(
-                  value.table,
-                  new TableAliasProxyHandler2(this.config.alias, this.config.replaceOriginalName ?? false)
-                )
-              )
-            );
-          }
-          return value;
-        }
-        if (typeof value !== "object" || value === null) {
-          return value;
-        }
-        return new Proxy(value, new _SelectionProxyHandler(this.config));
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/indexes.js
-var IndexBuilderOn2, IndexBuilder2, Index2;
-var init_indexes2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/indexes.js"() {
-    init_sql3();
-    init_entity2();
-    init_columns2();
-    IndexBuilderOn2 = class {
-      constructor(unique2, name2) {
-        this.unique = unique2;
-        this.name = name2;
-      }
-      static [entityKind2] = "PgIndexBuilderOn";
-      on(...columns) {
-        return new IndexBuilder2(
-          columns.map((it) => {
-            if (is2(it, SQL2)) {
-              return it;
-            }
-            it = it;
-            const clonedIndexedColumn = new IndexedColumn2(it.name, !!it.keyAsName, it.columnType, it.indexConfig);
-            it.indexConfig = JSON.parse(JSON.stringify(it.defaultConfig));
-            return clonedIndexedColumn;
-          }),
-          this.unique,
-          false,
-          this.name
-        );
-      }
-      onOnly(...columns) {
-        return new IndexBuilder2(
-          columns.map((it) => {
-            if (is2(it, SQL2)) {
-              return it;
-            }
-            it = it;
-            const clonedIndexedColumn = new IndexedColumn2(it.name, !!it.keyAsName, it.columnType, it.indexConfig);
-            it.indexConfig = it.defaultConfig;
-            return clonedIndexedColumn;
-          }),
-          this.unique,
-          true,
-          this.name
-        );
-      }
-      /**
-       * Specify what index method to use. Choices are `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`, or user-installed access methods like `bloom`. The default method is `btree.
-       *
-       * If you have the `pg_vector` extension installed in your database, you can use the `hnsw` and `ivfflat` options, which are predefined types.
-       *
-       * **You can always specify any string you want in the method, in case Drizzle doesn't have it natively in its types**
-       *
-       * @param method The name of the index method to be used
-       * @param columns
-       * @returns
-       */
-      using(method, ...columns) {
-        return new IndexBuilder2(
-          columns.map((it) => {
-            if (is2(it, SQL2)) {
-              return it;
-            }
-            it = it;
-            const clonedIndexedColumn = new IndexedColumn2(it.name, !!it.keyAsName, it.columnType, it.indexConfig);
-            it.indexConfig = JSON.parse(JSON.stringify(it.defaultConfig));
-            return clonedIndexedColumn;
-          }),
-          this.unique,
-          true,
-          this.name,
-          method
-        );
-      }
-    };
-    IndexBuilder2 = class {
-      static [entityKind2] = "PgIndexBuilder";
-      /** @internal */
-      config;
-      constructor(columns, unique2, only, name2, method = "btree") {
-        this.config = {
-          name: name2,
-          columns,
-          unique: unique2,
-          only,
-          method
-        };
-      }
-      concurrently() {
-        this.config.concurrently = true;
-        return this;
-      }
-      with(obj) {
-        this.config.with = obj;
-        return this;
-      }
-      where(condition) {
-        this.config.where = condition;
-        return this;
-      }
-      /** @internal */
-      build(table) {
-        return new Index2(this.config, table);
-      }
-    };
-    Index2 = class {
-      static [entityKind2] = "PgIndex";
-      config;
-      constructor(config2, table) {
-        this.config = { ...config2, table };
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/policies.js
-var PgPolicy2;
-var init_policies2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/policies.js"() {
-    init_entity2();
-    PgPolicy2 = class {
-      constructor(name2, config2) {
-        this.name = name2;
-        if (config2) {
-          this.as = config2.as;
-          this.for = config2.for;
-          this.to = config2.to;
-          this.using = config2.using;
-          this.withCheck = config2.withCheck;
-        }
-      }
-      static [entityKind2] = "PgPolicy";
-      as;
-      for;
-      to;
-      using;
-      withCheck;
-      /** @internal */
-      _linkedTable;
-      link(table) {
-        this._linkedTable = table;
-        return this;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-common.js
-var PgViewConfig2;
-var init_view_common4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-common.js"() {
-    PgViewConfig2 = /* @__PURE__ */ Symbol.for("drizzle:PgViewConfig");
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/casing.js
-function toSnakeCase2(input) {
-  const words = input.replace(/['\u2019]/g, "").match(/[\da-z]+|[A-Z]+(?![a-z])|[A-Z][\da-z]+/g) ?? [];
-  return words.map((word) => word.toLowerCase()).join("_");
-}
-function toCamelCase3(input) {
-  const words = input.replace(/['\u2019]/g, "").match(/[\da-z]+|[A-Z]+(?![a-z])|[A-Z][\da-z]+/g) ?? [];
-  return words.reduce((acc, word, i5) => {
-    const formattedWord = i5 === 0 ? word.toLowerCase() : `${word[0].toUpperCase()}${word.slice(1)}`;
-    return acc + formattedWord;
-  }, "");
-}
-function noopCase2(input) {
-  return input;
-}
-var CasingCache2;
-var init_casing2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/casing.js"() {
-    init_entity2();
-    init_table3();
-    CasingCache2 = class {
-      static [entityKind2] = "CasingCache";
-      /** @internal */
-      cache = {};
-      cachedTables = {};
-      convert;
-      constructor(casing) {
-        this.convert = casing === "snake_case" ? toSnakeCase2 : casing === "camelCase" ? toCamelCase3 : noopCase2;
-      }
-      getColumnCasing(column) {
-        if (!column.keyAsName) return column.name;
-        const schema = column.table[Table2.Symbol.Schema] ?? "public";
-        const tableName = column.table[Table2.Symbol.OriginalName];
-        const key = `${schema}.${tableName}.${column.name}`;
-        if (!this.cache[key]) {
-          this.cacheTable(column.table);
-        }
-        return this.cache[key];
-      }
-      cacheTable(table) {
-        const schema = table[Table2.Symbol.Schema] ?? "public";
-        const tableName = table[Table2.Symbol.OriginalName];
-        const tableKey = `${schema}.${tableName}`;
-        if (!this.cachedTables[tableKey]) {
-          for (const column of Object.values(table[Table2.Symbol.Columns])) {
-            const columnKey = `${tableKey}.${column.name}`;
-            this.cache[columnKey] = this.convert(column.name);
-          }
-          this.cachedTables[tableKey] = true;
-        }
-      }
-      clearCache() {
-        this.cache = {};
-        this.cachedTables = {};
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-base.js
-var PgViewBase2;
-var init_view_base2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-base.js"() {
-    init_entity2();
-    init_sql3();
-    PgViewBase2 = class extends View2 {
-      static [entityKind2] = "PgViewBase";
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/dialect.js
-var PgDialect2;
-var init_dialect2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/dialect.js"() {
-    init_alias3();
-    init_casing2();
-    init_column2();
-    init_entity2();
-    init_errors5();
-    init_columns2();
-    init_table4();
-    init_relations2();
-    init_sql4();
-    init_sql3();
-    init_subquery3();
-    init_table3();
-    init_utils5();
-    init_view_common3();
-    init_view_base2();
-    PgDialect2 = class {
-      static [entityKind2] = "PgDialect";
-      /** @internal */
-      casing;
-      constructor(config2) {
-        this.casing = new CasingCache2(config2?.casing);
-      }
-      async migrate(migrations, session2, config2) {
-        const migrationsTable = typeof config2 === "string" ? "__drizzle_migrations" : config2.migrationsTable ?? "__drizzle_migrations";
-        const migrationsSchema = typeof config2 === "string" ? "drizzle" : config2.migrationsSchema ?? "drizzle";
-        const migrationTableCreate = sql2`
-			CREATE TABLE IF NOT EXISTS ${sql2.identifier(migrationsSchema)}.${sql2.identifier(migrationsTable)} (
-				id SERIAL PRIMARY KEY,
-				hash text NOT NULL,
-				created_at bigint
-			)
-		`;
-        await session2.execute(sql2`CREATE SCHEMA IF NOT EXISTS ${sql2.identifier(migrationsSchema)}`);
-        await session2.execute(migrationTableCreate);
-        const dbMigrations = await session2.all(
-          sql2`select id, hash, created_at from ${sql2.identifier(migrationsSchema)}.${sql2.identifier(migrationsTable)} order by created_at desc limit 1`
-        );
-        const lastDbMigration = dbMigrations[0];
-        await session2.transaction(async (tx) => {
-          for await (const migration of migrations) {
-            if (!lastDbMigration || Number(lastDbMigration.created_at) < migration.folderMillis) {
-              for (const stmt of migration.sql) {
-                await tx.execute(sql2.raw(stmt));
-              }
-              await tx.execute(
-                sql2`insert into ${sql2.identifier(migrationsSchema)}.${sql2.identifier(migrationsTable)} ("hash", "created_at") values(${migration.hash}, ${migration.folderMillis})`
-              );
-            }
-          }
-        });
-      }
-      escapeName(name2) {
-        return `"${name2.replace(/"/g, '""')}"`;
-      }
-      escapeParam(num) {
-        return `$${num + 1}`;
-      }
-      escapeString(str2) {
-        return `'${str2.replace(/'/g, "''")}'`;
-      }
-      buildWithCTE(queries) {
-        if (!queries?.length) return void 0;
-        const withSqlChunks = [sql2`with `];
-        for (const [i5, w] of queries.entries()) {
-          withSqlChunks.push(sql2`${sql2.identifier(w._.alias)} as (${w._.sql})`);
-          if (i5 < queries.length - 1) {
-            withSqlChunks.push(sql2`, `);
-          }
-        }
-        withSqlChunks.push(sql2` `);
-        return sql2.join(withSqlChunks);
-      }
-      buildDeleteQuery({ table, where, returning, withList }) {
-        const withSql = this.buildWithCTE(withList);
-        const returningSql = returning ? sql2` returning ${this.buildSelection(returning, { isSingleTable: true })}` : void 0;
-        const whereSql = where ? sql2` where ${where}` : void 0;
-        return sql2`${withSql}delete from ${table}${whereSql}${returningSql}`;
-      }
-      buildUpdateSet(table, set2) {
-        const tableColumns = table[Table2.Symbol.Columns];
-        const columnNames = Object.keys(tableColumns).filter(
-          (colName) => set2[colName] !== void 0 || tableColumns[colName]?.onUpdateFn !== void 0
-        );
-        const setSize = columnNames.length;
-        return sql2.join(columnNames.flatMap((colName, i5) => {
-          const col = tableColumns[colName];
-          const onUpdateFnResult = col.onUpdateFn?.();
-          const value = set2[colName] ?? (is2(onUpdateFnResult, SQL2) ? onUpdateFnResult : sql2.param(onUpdateFnResult, col));
-          const res = sql2`${sql2.identifier(this.casing.getColumnCasing(col))} = ${value}`;
-          if (i5 < setSize - 1) {
-            return [res, sql2.raw(", ")];
-          }
-          return [res];
-        }));
-      }
-      buildUpdateQuery({ table, set: set2, where, returning, withList, from, joins }) {
-        const withSql = this.buildWithCTE(withList);
-        const tableName = table[PgTable2.Symbol.Name];
-        const tableSchema = table[PgTable2.Symbol.Schema];
-        const origTableName = table[PgTable2.Symbol.OriginalName];
-        const alias = tableName === origTableName ? void 0 : tableName;
-        const tableSql = sql2`${tableSchema ? sql2`${sql2.identifier(tableSchema)}.` : void 0}${sql2.identifier(origTableName)}${alias && sql2` ${sql2.identifier(alias)}`}`;
-        const setSql = this.buildUpdateSet(table, set2);
-        const fromSql = from && sql2.join([sql2.raw(" from "), this.buildFromTable(from)]);
-        const joinsSql = this.buildJoins(joins);
-        const returningSql = returning ? sql2` returning ${this.buildSelection(returning, { isSingleTable: !from })}` : void 0;
-        const whereSql = where ? sql2` where ${where}` : void 0;
-        return sql2`${withSql}update ${tableSql} set ${setSql}${fromSql}${joinsSql}${whereSql}${returningSql}`;
-      }
-      /**
-       * Builds selection SQL with provided fields/expressions
-       *
-       * Examples:
-       *
-       * `select <selection> from`
-       *
-       * `insert ... returning <selection>`
-       *
-       * If `isSingleTable` is true, then columns won't be prefixed with table name
-       */
-      buildSelection(fields, { isSingleTable = false } = {}) {
-        const columnsLen = fields.length;
-        const chunks = fields.flatMap(({ field }, i5) => {
-          const chunk = [];
-          if (is2(field, SQL2.Aliased) && field.isSelectionField) {
-            chunk.push(sql2.identifier(field.fieldAlias));
-          } else if (is2(field, SQL2.Aliased) || is2(field, SQL2)) {
-            const query = is2(field, SQL2.Aliased) ? field.sql : field;
-            if (isSingleTable) {
-              chunk.push(
-                new SQL2(
-                  query.queryChunks.map((c5) => {
-                    if (is2(c5, PgColumn2)) {
-                      return sql2.identifier(this.casing.getColumnCasing(c5));
-                    }
-                    return c5;
-                  })
-                )
-              );
-            } else {
-              chunk.push(query);
-            }
-            if (is2(field, SQL2.Aliased)) {
-              chunk.push(sql2` as ${sql2.identifier(field.fieldAlias)}`);
-            }
-          } else if (is2(field, Column2)) {
-            if (isSingleTable) {
-              chunk.push(sql2.identifier(this.casing.getColumnCasing(field)));
-            } else {
-              chunk.push(field);
-            }
-          } else if (is2(field, Subquery2)) {
-            const entries = Object.entries(field._.selectedFields);
-            if (entries.length === 1) {
-              const entry = entries[0][1];
-              const fieldDecoder = is2(entry, SQL2) ? entry.decoder : is2(entry, Column2) ? { mapFromDriverValue: (v) => entry.mapFromDriverValue(v) } : entry.sql.decoder;
-              if (fieldDecoder) {
-                field._.sql.decoder = fieldDecoder;
-              }
-            }
-            chunk.push(field);
-          }
-          if (i5 < columnsLen - 1) {
-            chunk.push(sql2`, `);
-          }
-          return chunk;
-        });
-        return sql2.join(chunks);
-      }
-      buildJoins(joins) {
-        if (!joins || joins.length === 0) {
-          return void 0;
-        }
-        const joinsArray = [];
-        for (const [index2, joinMeta] of joins.entries()) {
-          if (index2 === 0) {
-            joinsArray.push(sql2` `);
-          }
-          const table = joinMeta.table;
-          const lateralSql = joinMeta.lateral ? sql2` lateral` : void 0;
-          const onSql = joinMeta.on ? sql2` on ${joinMeta.on}` : void 0;
-          if (is2(table, PgTable2)) {
-            const tableName = table[PgTable2.Symbol.Name];
-            const tableSchema = table[PgTable2.Symbol.Schema];
-            const origTableName = table[PgTable2.Symbol.OriginalName];
-            const alias = tableName === origTableName ? void 0 : joinMeta.alias;
-            joinsArray.push(
-              sql2`${sql2.raw(joinMeta.joinType)} join${lateralSql} ${tableSchema ? sql2`${sql2.identifier(tableSchema)}.` : void 0}${sql2.identifier(origTableName)}${alias && sql2` ${sql2.identifier(alias)}`}${onSql}`
-            );
-          } else if (is2(table, View2)) {
-            const viewName = table[ViewBaseConfig2].name;
-            const viewSchema = table[ViewBaseConfig2].schema;
-            const origViewName = table[ViewBaseConfig2].originalName;
-            const alias = viewName === origViewName ? void 0 : joinMeta.alias;
-            joinsArray.push(
-              sql2`${sql2.raw(joinMeta.joinType)} join${lateralSql} ${viewSchema ? sql2`${sql2.identifier(viewSchema)}.` : void 0}${sql2.identifier(origViewName)}${alias && sql2` ${sql2.identifier(alias)}`}${onSql}`
-            );
-          } else {
-            joinsArray.push(
-              sql2`${sql2.raw(joinMeta.joinType)} join${lateralSql} ${table}${onSql}`
-            );
-          }
-          if (index2 < joins.length - 1) {
-            joinsArray.push(sql2` `);
-          }
-        }
-        return sql2.join(joinsArray);
-      }
-      buildFromTable(table) {
-        if (is2(table, Table2) && table[Table2.Symbol.IsAlias]) {
-          let fullName = sql2`${sql2.identifier(table[Table2.Symbol.OriginalName])}`;
-          if (table[Table2.Symbol.Schema]) {
-            fullName = sql2`${sql2.identifier(table[Table2.Symbol.Schema])}.${fullName}`;
-          }
-          return sql2`${fullName} ${sql2.identifier(table[Table2.Symbol.Name])}`;
-        }
-        return table;
-      }
-      buildSelectQuery({
-        withList,
-        fields,
-        fieldsFlat,
-        where,
-        having,
-        table,
-        joins,
-        orderBy,
-        groupBy,
-        limit: limit2,
-        offset,
-        lockingClause,
-        distinct,
-        setOperators
-      }) {
-        const fieldsList = fieldsFlat ?? orderSelectedFields2(fields);
-        for (const f5 of fieldsList) {
-          if (is2(f5.field, Column2) && getTableName2(f5.field.table) !== (is2(table, Subquery2) ? table._.alias : is2(table, PgViewBase2) ? table[ViewBaseConfig2].name : is2(table, SQL2) ? void 0 : getTableName2(table)) && !((table2) => joins?.some(
-            ({ alias }) => alias === (table2[Table2.Symbol.IsAlias] ? getTableName2(table2) : table2[Table2.Symbol.BaseName])
-          ))(f5.field.table)) {
-            const tableName = getTableName2(f5.field.table);
-            throw new Error(
-              `Your "${f5.path.join("->")}" field references a column "${tableName}"."${f5.field.name}", but the table "${tableName}" is not part of the query! Did you forget to join it?`
-            );
-          }
-        }
-        const isSingleTable = !joins || joins.length === 0;
-        const withSql = this.buildWithCTE(withList);
-        let distinctSql;
-        if (distinct) {
-          distinctSql = distinct === true ? sql2` distinct` : sql2` distinct on (${sql2.join(distinct.on, sql2`, `)})`;
-        }
-        const selection = this.buildSelection(fieldsList, { isSingleTable });
-        const tableSql = this.buildFromTable(table);
-        const joinsSql = this.buildJoins(joins);
-        const whereSql = where ? sql2` where ${where}` : void 0;
-        const havingSql = having ? sql2` having ${having}` : void 0;
-        let orderBySql;
-        if (orderBy && orderBy.length > 0) {
-          orderBySql = sql2` order by ${sql2.join(orderBy, sql2`, `)}`;
-        }
-        let groupBySql;
-        if (groupBy && groupBy.length > 0) {
-          groupBySql = sql2` group by ${sql2.join(groupBy, sql2`, `)}`;
-        }
-        const limitSql = typeof limit2 === "object" || typeof limit2 === "number" && limit2 >= 0 ? sql2` limit ${limit2}` : void 0;
-        const offsetSql = offset ? sql2` offset ${offset}` : void 0;
-        const lockingClauseSql = sql2.empty();
-        if (lockingClause) {
-          const clauseSql = sql2` for ${sql2.raw(lockingClause.strength)}`;
-          if (lockingClause.config.of) {
-            clauseSql.append(
-              sql2` of ${sql2.join(
-                Array.isArray(lockingClause.config.of) ? lockingClause.config.of : [lockingClause.config.of],
-                sql2`, `
-              )}`
-            );
-          }
-          if (lockingClause.config.noWait) {
-            clauseSql.append(sql2` nowait`);
-          } else if (lockingClause.config.skipLocked) {
-            clauseSql.append(sql2` skip locked`);
-          }
-          lockingClauseSql.append(clauseSql);
-        }
-        const finalQuery = sql2`${withSql}select${distinctSql} ${selection} from ${tableSql}${joinsSql}${whereSql}${groupBySql}${havingSql}${orderBySql}${limitSql}${offsetSql}${lockingClauseSql}`;
-        if (setOperators.length > 0) {
-          return this.buildSetOperations(finalQuery, setOperators);
-        }
-        return finalQuery;
-      }
-      buildSetOperations(leftSelect, setOperators) {
-        const [setOperator, ...rest] = setOperators;
-        if (!setOperator) {
-          throw new Error("Cannot pass undefined values to any set operator");
-        }
-        if (rest.length === 0) {
-          return this.buildSetOperationQuery({ leftSelect, setOperator });
-        }
-        return this.buildSetOperations(
-          this.buildSetOperationQuery({ leftSelect, setOperator }),
-          rest
-        );
-      }
-      buildSetOperationQuery({
-        leftSelect,
-        setOperator: { type, isAll, rightSelect, limit: limit2, orderBy, offset }
-      }) {
-        const leftChunk = sql2`(${leftSelect.getSQL()}) `;
-        const rightChunk = sql2`(${rightSelect.getSQL()})`;
-        let orderBySql;
-        if (orderBy && orderBy.length > 0) {
-          const orderByValues = [];
-          for (const singleOrderBy of orderBy) {
-            if (is2(singleOrderBy, PgColumn2)) {
-              orderByValues.push(sql2.identifier(singleOrderBy.name));
-            } else if (is2(singleOrderBy, SQL2)) {
-              for (let i5 = 0; i5 < singleOrderBy.queryChunks.length; i5++) {
-                const chunk = singleOrderBy.queryChunks[i5];
-                if (is2(chunk, PgColumn2)) {
-                  singleOrderBy.queryChunks[i5] = sql2.identifier(chunk.name);
-                }
-              }
-              orderByValues.push(sql2`${singleOrderBy}`);
-            } else {
-              orderByValues.push(sql2`${singleOrderBy}`);
-            }
-          }
-          orderBySql = sql2` order by ${sql2.join(orderByValues, sql2`, `)} `;
-        }
-        const limitSql = typeof limit2 === "object" || typeof limit2 === "number" && limit2 >= 0 ? sql2` limit ${limit2}` : void 0;
-        const operatorChunk = sql2.raw(`${type} ${isAll ? "all " : ""}`);
-        const offsetSql = offset ? sql2` offset ${offset}` : void 0;
-        return sql2`${leftChunk}${operatorChunk}${rightChunk}${orderBySql}${limitSql}${offsetSql}`;
-      }
-      buildInsertQuery({ table, values: valuesOrSelect, onConflict, returning, withList, select, overridingSystemValue_ }) {
-        const valuesSqlList = [];
-        const columns = table[Table2.Symbol.Columns];
-        const colEntries = Object.entries(columns).filter(([_, col]) => !col.shouldDisableInsert());
-        const insertOrder = colEntries.map(
-          ([, column]) => sql2.identifier(this.casing.getColumnCasing(column))
-        );
-        if (select) {
-          const select2 = valuesOrSelect;
-          if (is2(select2, SQL2)) {
-            valuesSqlList.push(select2);
-          } else {
-            valuesSqlList.push(select2.getSQL());
-          }
-        } else {
-          const values = valuesOrSelect;
-          valuesSqlList.push(sql2.raw("values "));
-          for (const [valueIndex, value] of values.entries()) {
-            const valueList = [];
-            for (const [fieldName, col] of colEntries) {
-              const colValue = value[fieldName];
-              if (colValue === void 0 || is2(colValue, Param2) && colValue.value === void 0) {
-                if (col.defaultFn !== void 0) {
-                  const defaultFnResult = col.defaultFn();
-                  const defaultValue = is2(defaultFnResult, SQL2) ? defaultFnResult : sql2.param(defaultFnResult, col);
-                  valueList.push(defaultValue);
-                } else if (!col.default && col.onUpdateFn !== void 0) {
-                  const onUpdateFnResult = col.onUpdateFn();
-                  const newValue = is2(onUpdateFnResult, SQL2) ? onUpdateFnResult : sql2.param(onUpdateFnResult, col);
-                  valueList.push(newValue);
-                } else {
-                  valueList.push(sql2`default`);
-                }
-              } else {
-                valueList.push(colValue);
-              }
-            }
-            valuesSqlList.push(valueList);
-            if (valueIndex < values.length - 1) {
-              valuesSqlList.push(sql2`, `);
-            }
-          }
-        }
-        const withSql = this.buildWithCTE(withList);
-        const valuesSql = sql2.join(valuesSqlList);
-        const returningSql = returning ? sql2` returning ${this.buildSelection(returning, { isSingleTable: true })}` : void 0;
-        const onConflictSql = onConflict ? sql2` on conflict ${onConflict}` : void 0;
-        const overridingSql = overridingSystemValue_ === true ? sql2`overriding system value ` : void 0;
-        return sql2`${withSql}insert into ${table} ${insertOrder} ${overridingSql}${valuesSql}${onConflictSql}${returningSql}`;
-      }
-      buildRefreshMaterializedViewQuery({ view, concurrently, withNoData }) {
-        const concurrentlySql = concurrently ? sql2` concurrently` : void 0;
-        const withNoDataSql = withNoData ? sql2` with no data` : void 0;
-        return sql2`refresh materialized view${concurrentlySql} ${view}${withNoDataSql}`;
-      }
-      prepareTyping(encoder) {
-        if (is2(encoder, PgJsonb2) || is2(encoder, PgJson2)) {
-          return "json";
-        } else if (is2(encoder, PgNumeric2)) {
-          return "decimal";
-        } else if (is2(encoder, PgTime2)) {
-          return "time";
-        } else if (is2(encoder, PgTimestamp2) || is2(encoder, PgTimestampString2)) {
-          return "timestamp";
-        } else if (is2(encoder, PgDate2) || is2(encoder, PgDateString2)) {
-          return "date";
-        } else if (is2(encoder, PgUUID2)) {
-          return "uuid";
-        } else {
-          return "none";
-        }
-      }
-      sqlToQuery(sql22, invokeSource) {
-        return sql22.toQuery({
-          casing: this.casing,
-          escapeName: this.escapeName,
-          escapeParam: this.escapeParam,
-          escapeString: this.escapeString,
-          prepareTyping: this.prepareTyping,
-          invokeSource
-        });
-      }
-      // buildRelationalQueryWithPK({
-      // 	fullSchema,
-      // 	schema,
-      // 	tableNamesMap,
-      // 	table,
-      // 	tableConfig,
-      // 	queryConfig: config,
-      // 	tableAlias,
-      // 	isRoot = false,
-      // 	joinOn,
-      // }: {
-      // 	fullSchema: Record<string, unknown>;
-      // 	schema: TablesRelationalConfig;
-      // 	tableNamesMap: Record<string, string>;
-      // 	table: PgTable;
-      // 	tableConfig: TableRelationalConfig;
-      // 	queryConfig: true | DBQueryConfig<'many', true>;
-      // 	tableAlias: string;
-      // 	isRoot?: boolean;
-      // 	joinOn?: SQL;
-      // }): BuildRelationalQueryResult<PgTable, PgColumn> {
-      // 	// For { "<relation>": true }, return a table with selection of all columns
-      // 	if (config === true) {
-      // 		const selectionEntries = Object.entries(tableConfig.columns);
-      // 		const selection: BuildRelationalQueryResult<PgTable, PgColumn>['selection'] = selectionEntries.map((
-      // 			[key, value],
-      // 		) => ({
-      // 			dbKey: value.name,
-      // 			tsKey: key,
-      // 			field: value as PgColumn,
-      // 			relationTableTsKey: undefined,
-      // 			isJson: false,
-      // 			selection: [],
-      // 		}));
-      // 		return {
-      // 			tableTsKey: tableConfig.tsName,
-      // 			sql: table,
-      // 			selection,
-      // 		};
-      // 	}
-      // 	// let selection: BuildRelationalQueryResult<PgTable, PgColumn>['selection'] = [];
-      // 	// let selectionForBuild = selection;
-      // 	const aliasedColumns = Object.fromEntries(
-      // 		Object.entries(tableConfig.columns).map(([key, value]) => [key, aliasedTableColumn(value, tableAlias)]),
-      // 	);
-      // 	const aliasedRelations = Object.fromEntries(
-      // 		Object.entries(tableConfig.relations).map(([key, value]) => [key, aliasedRelation(value, tableAlias)]),
-      // 	);
-      // 	const aliasedFields = Object.assign({}, aliasedColumns, aliasedRelations);
-      // 	let where, hasUserDefinedWhere;
-      // 	if (config.where) {
-      // 		const whereSql = typeof config.where === 'function' ? config.where(aliasedFields, operators) : config.where;
-      // 		where = whereSql && mapColumnsInSQLToAlias(whereSql, tableAlias);
-      // 		hasUserDefinedWhere = !!where;
-      // 	}
-      // 	where = and(joinOn, where);
-      // 	// const fieldsSelection: { tsKey: string; value: PgColumn | SQL.Aliased; isExtra?: boolean }[] = [];
-      // 	let joins: Join[] = [];
-      // 	let selectedColumns: string[] = [];
-      // 	// Figure out which columns to select
-      // 	if (config.columns) {
-      // 		let isIncludeMode = false;
-      // 		for (const [field, value] of Object.entries(config.columns)) {
-      // 			if (value === undefined) {
-      // 				continue;
-      // 			}
-      // 			if (field in tableConfig.columns) {
-      // 				if (!isIncludeMode && value === true) {
-      // 					isIncludeMode = true;
-      // 				}
-      // 				selectedColumns.push(field);
-      // 			}
-      // 		}
-      // 		if (selectedColumns.length > 0) {
-      // 			selectedColumns = isIncludeMode
-      // 				? selectedColumns.filter((c) => config.columns?.[c] === true)
-      // 				: Object.keys(tableConfig.columns).filter((key) => !selectedColumns.includes(key));
-      // 		}
-      // 	} else {
-      // 		// Select all columns if selection is not specified
-      // 		selectedColumns = Object.keys(tableConfig.columns);
-      // 	}
-      // 	// for (const field of selectedColumns) {
-      // 	// 	const column = tableConfig.columns[field]! as PgColumn;
-      // 	// 	fieldsSelection.push({ tsKey: field, value: column });
-      // 	// }
-      // 	let initiallySelectedRelations: {
-      // 		tsKey: string;
-      // 		queryConfig: true | DBQueryConfig<'many', false>;
-      // 		relation: Relation;
-      // 	}[] = [];
-      // 	// let selectedRelations: BuildRelationalQueryResult<PgTable, PgColumn>['selection'] = [];
-      // 	// Figure out which relations to select
-      // 	if (config.with) {
-      // 		initiallySelectedRelations = Object.entries(config.with)
-      // 			.filter((entry): entry is [typeof entry[0], NonNullable<typeof entry[1]>] => !!entry[1])
-      // 			.map(([tsKey, queryConfig]) => ({ tsKey, queryConfig, relation: tableConfig.relations[tsKey]! }));
-      // 	}
-      // 	const manyRelations = initiallySelectedRelations.filter((r) =>
-      // 		is(r.relation, Many)
-      // 		&& (schema[tableNamesMap[r.relation.referencedTable[Table.Symbol.Name]]!]?.primaryKey.length ?? 0) > 0
-      // 	);
-      // 	// If this is the last Many relation (or there are no Many relations), we are on the innermost subquery level
-      // 	const isInnermostQuery = manyRelations.length < 2;
-      // 	const selectedExtras: {
-      // 		tsKey: string;
-      // 		value: SQL.Aliased;
-      // 	}[] = [];
-      // 	// Figure out which extras to select
-      // 	if (isInnermostQuery && config.extras) {
-      // 		const extras = typeof config.extras === 'function'
-      // 			? config.extras(aliasedFields, { sql })
-      // 			: config.extras;
-      // 		for (const [tsKey, value] of Object.entries(extras)) {
-      // 			selectedExtras.push({
-      // 				tsKey,
-      // 				value: mapColumnsInAliasedSQLToAlias(value, tableAlias),
-      // 			});
-      // 		}
-      // 	}
-      // 	// Transform `fieldsSelection` into `selection`
-      // 	// `fieldsSelection` shouldn't be used after this point
-      // 	// for (const { tsKey, value, isExtra } of fieldsSelection) {
-      // 	// 	selection.push({
-      // 	// 		dbKey: is(value, SQL.Aliased) ? value.fieldAlias : tableConfig.columns[tsKey]!.name,
-      // 	// 		tsKey,
-      // 	// 		field: is(value, Column) ? aliasedTableColumn(value, tableAlias) : value,
-      // 	// 		relationTableTsKey: undefined,
-      // 	// 		isJson: false,
-      // 	// 		isExtra,
-      // 	// 		selection: [],
-      // 	// 	});
-      // 	// }
-      // 	let orderByOrig = typeof config.orderBy === 'function'
-      // 		? config.orderBy(aliasedFields, orderByOperators)
-      // 		: config.orderBy ?? [];
-      // 	if (!Array.isArray(orderByOrig)) {
-      // 		orderByOrig = [orderByOrig];
-      // 	}
-      // 	const orderBy = orderByOrig.map((orderByValue) => {
-      // 		if (is(orderByValue, Column)) {
-      // 			return aliasedTableColumn(orderByValue, tableAlias) as PgColumn;
-      // 		}
-      // 		return mapColumnsInSQLToAlias(orderByValue, tableAlias);
-      // 	});
-      // 	const limit = isInnermostQuery ? config.limit : undefined;
-      // 	const offset = isInnermostQuery ? config.offset : undefined;
-      // 	// For non-root queries without additional config except columns, return a table with selection
-      // 	if (
-      // 		!isRoot
-      // 		&& initiallySelectedRelations.length === 0
-      // 		&& selectedExtras.length === 0
-      // 		&& !where
-      // 		&& orderBy.length === 0
-      // 		&& limit === undefined
-      // 		&& offset === undefined
-      // 	) {
-      // 		return {
-      // 			tableTsKey: tableConfig.tsName,
-      // 			sql: table,
-      // 			selection: selectedColumns.map((key) => ({
-      // 				dbKey: tableConfig.columns[key]!.name,
-      // 				tsKey: key,
-      // 				field: tableConfig.columns[key] as PgColumn,
-      // 				relationTableTsKey: undefined,
-      // 				isJson: false,
-      // 				selection: [],
-      // 			})),
-      // 		};
-      // 	}
-      // 	const selectedRelationsWithoutPK:
-      // 	// Process all relations without primary keys, because they need to be joined differently and will all be on the same query level
-      // 	for (
-      // 		const {
-      // 			tsKey: selectedRelationTsKey,
-      // 			queryConfig: selectedRelationConfigValue,
-      // 			relation,
-      // 		} of initiallySelectedRelations
-      // 	) {
-      // 		const normalizedRelation = normalizeRelation(schema, tableNamesMap, relation);
-      // 		const relationTableName = relation.referencedTable[Table.Symbol.Name];
-      // 		const relationTableTsName = tableNamesMap[relationTableName]!;
-      // 		const relationTable = schema[relationTableTsName]!;
-      // 		if (relationTable.primaryKey.length > 0) {
-      // 			continue;
-      // 		}
-      // 		const relationTableAlias = `${tableAlias}_${selectedRelationTsKey}`;
-      // 		const joinOn = and(
-      // 			...normalizedRelation.fields.map((field, i) =>
-      // 				eq(
-      // 					aliasedTableColumn(normalizedRelation.references[i]!, relationTableAlias),
-      // 					aliasedTableColumn(field, tableAlias),
-      // 				)
-      // 			),
-      // 		);
-      // 		const builtRelation = this.buildRelationalQueryWithoutPK({
-      // 			fullSchema,
-      // 			schema,
-      // 			tableNamesMap,
-      // 			table: fullSchema[relationTableTsName] as PgTable,
-      // 			tableConfig: schema[relationTableTsName]!,
-      // 			queryConfig: selectedRelationConfigValue,
-      // 			tableAlias: relationTableAlias,
-      // 			joinOn,
-      // 			nestedQueryRelation: relation,
-      // 		});
-      // 		const field = sql`${sql.identifier(relationTableAlias)}.${sql.identifier('data')}`.as(selectedRelationTsKey);
-      // 		joins.push({
-      // 			on: sql`true`,
-      // 			table: new Subquery(builtRelation.sql as SQL, {}, relationTableAlias),
-      // 			alias: relationTableAlias,
-      // 			joinType: 'left',
-      // 			lateral: true,
-      // 		});
-      // 		selectedRelations.push({
-      // 			dbKey: selectedRelationTsKey,
-      // 			tsKey: selectedRelationTsKey,
-      // 			field,
-      // 			relationTableTsKey: relationTableTsName,
-      // 			isJson: true,
-      // 			selection: builtRelation.selection,
-      // 		});
-      // 	}
-      // 	const oneRelations = initiallySelectedRelations.filter((r): r is typeof r & { relation: One } =>
-      // 		is(r.relation, One)
-      // 	);
-      // 	// Process all One relations with PKs, because they can all be joined on the same level
-      // 	for (
-      // 		const {
-      // 			tsKey: selectedRelationTsKey,
-      // 			queryConfig: selectedRelationConfigValue,
-      // 			relation,
-      // 		} of oneRelations
-      // 	) {
-      // 		const normalizedRelation = normalizeRelation(schema, tableNamesMap, relation);
-      // 		const relationTableName = relation.referencedTable[Table.Symbol.Name];
-      // 		const relationTableTsName = tableNamesMap[relationTableName]!;
-      // 		const relationTableAlias = `${tableAlias}_${selectedRelationTsKey}`;
-      // 		const relationTable = schema[relationTableTsName]!;
-      // 		if (relationTable.primaryKey.length === 0) {
-      // 			continue;
-      // 		}
-      // 		const joinOn = and(
-      // 			...normalizedRelation.fields.map((field, i) =>
-      // 				eq(
-      // 					aliasedTableColumn(normalizedRelation.references[i]!, relationTableAlias),
-      // 					aliasedTableColumn(field, tableAlias),
-      // 				)
-      // 			),
-      // 		);
-      // 		const builtRelation = this.buildRelationalQueryWithPK({
-      // 			fullSchema,
-      // 			schema,
-      // 			tableNamesMap,
-      // 			table: fullSchema[relationTableTsName] as PgTable,
-      // 			tableConfig: schema[relationTableTsName]!,
-      // 			queryConfig: selectedRelationConfigValue,
-      // 			tableAlias: relationTableAlias,
-      // 			joinOn,
-      // 		});
-      // 		const field = sql`case when ${sql.identifier(relationTableAlias)} is null then null else json_build_array(${
-      // 			sql.join(
-      // 				builtRelation.selection.map(({ field }) =>
-      // 					is(field, SQL.Aliased)
-      // 						? sql`${sql.identifier(relationTableAlias)}.${sql.identifier(field.fieldAlias)}`
-      // 						: is(field, Column)
-      // 						? aliasedTableColumn(field, relationTableAlias)
-      // 						: field
-      // 				),
-      // 				sql`, `,
-      // 			)
-      // 		}) end`.as(selectedRelationTsKey);
-      // 		const isLateralJoin = is(builtRelation.sql, SQL);
-      // 		joins.push({
-      // 			on: isLateralJoin ? sql`true` : joinOn,
-      // 			table: is(builtRelation.sql, SQL)
-      // 				? new Subquery(builtRelation.sql, {}, relationTableAlias)
-      // 				: aliasedTable(builtRelation.sql, relationTableAlias),
-      // 			alias: relationTableAlias,
-      // 			joinType: 'left',
-      // 			lateral: is(builtRelation.sql, SQL),
-      // 		});
-      // 		selectedRelations.push({
-      // 			dbKey: selectedRelationTsKey,
-      // 			tsKey: selectedRelationTsKey,
-      // 			field,
-      // 			relationTableTsKey: relationTableTsName,
-      // 			isJson: true,
-      // 			selection: builtRelation.selection,
-      // 		});
-      // 	}
-      // 	let distinct: PgSelectConfig['distinct'];
-      // 	let tableFrom: PgTable | Subquery = table;
-      // 	// Process first Many relation - each one requires a nested subquery
-      // 	const manyRelation = manyRelations[0];
-      // 	if (manyRelation) {
-      // 		const {
-      // 			tsKey: selectedRelationTsKey,
-      // 			queryConfig: selectedRelationQueryConfig,
-      // 			relation,
-      // 		} = manyRelation;
-      // 		distinct = {
-      // 			on: tableConfig.primaryKey.map((c) => aliasedTableColumn(c as PgColumn, tableAlias)),
-      // 		};
-      // 		const normalizedRelation = normalizeRelation(schema, tableNamesMap, relation);
-      // 		const relationTableName = relation.referencedTable[Table.Symbol.Name];
-      // 		const relationTableTsName = tableNamesMap[relationTableName]!;
-      // 		const relationTableAlias = `${tableAlias}_${selectedRelationTsKey}`;
-      // 		const joinOn = and(
-      // 			...normalizedRelation.fields.map((field, i) =>
-      // 				eq(
-      // 					aliasedTableColumn(normalizedRelation.references[i]!, relationTableAlias),
-      // 					aliasedTableColumn(field, tableAlias),
-      // 				)
-      // 			),
-      // 		);
-      // 		const builtRelationJoin = this.buildRelationalQueryWithPK({
-      // 			fullSchema,
-      // 			schema,
-      // 			tableNamesMap,
-      // 			table: fullSchema[relationTableTsName] as PgTable,
-      // 			tableConfig: schema[relationTableTsName]!,
-      // 			queryConfig: selectedRelationQueryConfig,
-      // 			tableAlias: relationTableAlias,
-      // 			joinOn,
-      // 		});
-      // 		const builtRelationSelectionField = sql`case when ${
-      // 			sql.identifier(relationTableAlias)
-      // 		} is null then '[]' else json_agg(json_build_array(${
-      // 			sql.join(
-      // 				builtRelationJoin.selection.map(({ field }) =>
-      // 					is(field, SQL.Aliased)
-      // 						? sql`${sql.identifier(relationTableAlias)}.${sql.identifier(field.fieldAlias)}`
-      // 						: is(field, Column)
-      // 						? aliasedTableColumn(field, relationTableAlias)
-      // 						: field
-      // 				),
-      // 				sql`, `,
-      // 			)
-      // 		})) over (partition by ${sql.join(distinct.on, sql`, `)}) end`.as(selectedRelationTsKey);
-      // 		const isLateralJoin = is(builtRelationJoin.sql, SQL);
-      // 		joins.push({
-      // 			on: isLateralJoin ? sql`true` : joinOn,
-      // 			table: isLateralJoin
-      // 				? new Subquery(builtRelationJoin.sql as SQL, {}, relationTableAlias)
-      // 				: aliasedTable(builtRelationJoin.sql as PgTable, relationTableAlias),
-      // 			alias: relationTableAlias,
-      // 			joinType: 'left',
-      // 			lateral: isLateralJoin,
-      // 		});
-      // 		// Build the "from" subquery with the remaining Many relations
-      // 		const builtTableFrom = this.buildRelationalQueryWithPK({
-      // 			fullSchema,
-      // 			schema,
-      // 			tableNamesMap,
-      // 			table,
-      // 			tableConfig,
-      // 			queryConfig: {
-      // 				...config,
-      // 				where: undefined,
-      // 				orderBy: undefined,
-      // 				limit: undefined,
-      // 				offset: undefined,
-      // 				with: manyRelations.slice(1).reduce<NonNullable<typeof config['with']>>(
-      // 					(result, { tsKey, queryConfig: configValue }) => {
-      // 						result[tsKey] = configValue;
-      // 						return result;
-      // 					},
-      // 					{},
-      // 				),
-      // 			},
-      // 			tableAlias,
-      // 		});
-      // 		selectedRelations.push({
-      // 			dbKey: selectedRelationTsKey,
-      // 			tsKey: selectedRelationTsKey,
-      // 			field: builtRelationSelectionField,
-      // 			relationTableTsKey: relationTableTsName,
-      // 			isJson: true,
-      // 			selection: builtRelationJoin.selection,
-      // 		});
-      // 		// selection = builtTableFrom.selection.map((item) =>
-      // 		// 	is(item.field, SQL.Aliased)
-      // 		// 		? { ...item, field: sql`${sql.identifier(tableAlias)}.${sql.identifier(item.field.fieldAlias)}` }
-      // 		// 		: item
-      // 		// );
-      // 		// selectionForBuild = [{
-      // 		// 	dbKey: '*',
-      // 		// 	tsKey: '*',
-      // 		// 	field: sql`${sql.identifier(tableAlias)}.*`,
-      // 		// 	selection: [],
-      // 		// 	isJson: false,
-      // 		// 	relationTableTsKey: undefined,
-      // 		// }];
-      // 		// const newSelectionItem: (typeof selection)[number] = {
-      // 		// 	dbKey: selectedRelationTsKey,
-      // 		// 	tsKey: selectedRelationTsKey,
-      // 		// 	field,
-      // 		// 	relationTableTsKey: relationTableTsName,
-      // 		// 	isJson: true,
-      // 		// 	selection: builtRelationJoin.selection,
-      // 		// };
-      // 		// selection.push(newSelectionItem);
-      // 		// selectionForBuild.push(newSelectionItem);
-      // 		tableFrom = is(builtTableFrom.sql, PgTable)
-      // 			? builtTableFrom.sql
-      // 			: new Subquery(builtTableFrom.sql, {}, tableAlias);
-      // 	}
-      // 	if (selectedColumns.length === 0 && selectedRelations.length === 0 && selectedExtras.length === 0) {
-      // 		throw new DrizzleError(`No fields selected for table "${tableConfig.tsName}" ("${tableAlias}")`);
-      // 	}
-      // 	let selection: BuildRelationalQueryResult<PgTable, PgColumn>['selection'];
-      // 	function prepareSelectedColumns() {
-      // 		return selectedColumns.map((key) => ({
-      // 			dbKey: tableConfig.columns[key]!.name,
-      // 			tsKey: key,
-      // 			field: tableConfig.columns[key] as PgColumn,
-      // 			relationTableTsKey: undefined,
-      // 			isJson: false,
-      // 			selection: [],
-      // 		}));
-      // 	}
-      // 	function prepareSelectedExtras() {
-      // 		return selectedExtras.map((item) => ({
-      // 			dbKey: item.value.fieldAlias,
-      // 			tsKey: item.tsKey,
-      // 			field: item.value,
-      // 			relationTableTsKey: undefined,
-      // 			isJson: false,
-      // 			selection: [],
-      // 		}));
-      // 	}
-      // 	if (isRoot) {
-      // 		selection = [
-      // 			...prepareSelectedColumns(),
-      // 			...prepareSelectedExtras(),
-      // 		];
-      // 	}
-      // 	if (hasUserDefinedWhere || orderBy.length > 0) {
-      // 		tableFrom = new Subquery(
-      // 			this.buildSelectQuery({
-      // 				table: is(tableFrom, PgTable) ? aliasedTable(tableFrom, tableAlias) : tableFrom,
-      // 				fields: {},
-      // 				fieldsFlat: selectionForBuild.map(({ field }) => ({
-      // 					path: [],
-      // 					field: is(field, Column) ? aliasedTableColumn(field, tableAlias) : field,
-      // 				})),
-      // 				joins,
-      // 				distinct,
-      // 			}),
-      // 			{},
-      // 			tableAlias,
-      // 		);
-      // 		selectionForBuild = selection.map((item) =>
-      // 			is(item.field, SQL.Aliased)
-      // 				? { ...item, field: sql`${sql.identifier(tableAlias)}.${sql.identifier(item.field.fieldAlias)}` }
-      // 				: item
-      // 		);
-      // 		joins = [];
-      // 		distinct = undefined;
-      // 	}
-      // 	const result = this.buildSelectQuery({
-      // 		table: is(tableFrom, PgTable) ? aliasedTable(tableFrom, tableAlias) : tableFrom,
-      // 		fields: {},
-      // 		fieldsFlat: selectionForBuild.map(({ field }) => ({
-      // 			path: [],
-      // 			field: is(field, Column) ? aliasedTableColumn(field, tableAlias) : field,
-      // 		})),
-      // 		where,
-      // 		limit,
-      // 		offset,
-      // 		joins,
-      // 		orderBy,
-      // 		distinct,
-      // 	});
-      // 	return {
-      // 		tableTsKey: tableConfig.tsName,
-      // 		sql: result,
-      // 		selection,
-      // 	};
-      // }
-      buildRelationalQueryWithoutPK({
-        fullSchema,
-        schema,
-        tableNamesMap,
-        table,
-        tableConfig,
-        queryConfig: config2,
-        tableAlias,
-        nestedQueryRelation,
-        joinOn
-      }) {
-        let selection = [];
-        let limit2, offset, orderBy = [], where;
-        const joins = [];
-        if (config2 === true) {
-          const selectionEntries = Object.entries(tableConfig.columns);
-          selection = selectionEntries.map(([key, value]) => ({
-            dbKey: value.name,
-            tsKey: key,
-            field: aliasedTableColumn2(value, tableAlias),
-            relationTableTsKey: void 0,
-            isJson: false,
-            selection: []
-          }));
-        } else {
-          const aliasedColumns = Object.fromEntries(
-            Object.entries(tableConfig.columns).map(([key, value]) => [key, aliasedTableColumn2(value, tableAlias)])
-          );
-          if (config2.where) {
-            const whereSql = typeof config2.where === "function" ? config2.where(aliasedColumns, getOperators2()) : config2.where;
-            where = whereSql && mapColumnsInSQLToAlias2(whereSql, tableAlias);
-          }
-          const fieldsSelection = [];
-          let selectedColumns = [];
-          if (config2.columns) {
-            let isIncludeMode = false;
-            for (const [field, value] of Object.entries(config2.columns)) {
-              if (value === void 0) {
-                continue;
-              }
-              if (field in tableConfig.columns) {
-                if (!isIncludeMode && value === true) {
-                  isIncludeMode = true;
-                }
-                selectedColumns.push(field);
-              }
-            }
-            if (selectedColumns.length > 0) {
-              selectedColumns = isIncludeMode ? selectedColumns.filter((c5) => config2.columns?.[c5] === true) : Object.keys(tableConfig.columns).filter((key) => !selectedColumns.includes(key));
-            }
-          } else {
-            selectedColumns = Object.keys(tableConfig.columns);
-          }
-          for (const field of selectedColumns) {
-            const column = tableConfig.columns[field];
-            fieldsSelection.push({ tsKey: field, value: column });
-          }
-          let selectedRelations = [];
-          if (config2.with) {
-            selectedRelations = Object.entries(config2.with).filter((entry) => !!entry[1]).map(([tsKey, queryConfig]) => ({ tsKey, queryConfig, relation: tableConfig.relations[tsKey] }));
-          }
-          let extras;
-          if (config2.extras) {
-            extras = typeof config2.extras === "function" ? config2.extras(aliasedColumns, { sql: sql2 }) : config2.extras;
-            for (const [tsKey, value] of Object.entries(extras)) {
-              fieldsSelection.push({
-                tsKey,
-                value: mapColumnsInAliasedSQLToAlias2(value, tableAlias)
-              });
-            }
-          }
-          for (const { tsKey, value } of fieldsSelection) {
-            selection.push({
-              dbKey: is2(value, SQL2.Aliased) ? value.fieldAlias : tableConfig.columns[tsKey].name,
-              tsKey,
-              field: is2(value, Column2) ? aliasedTableColumn2(value, tableAlias) : value,
-              relationTableTsKey: void 0,
-              isJson: false,
-              selection: []
-            });
-          }
-          let orderByOrig = typeof config2.orderBy === "function" ? config2.orderBy(aliasedColumns, getOrderByOperators2()) : config2.orderBy ?? [];
-          if (!Array.isArray(orderByOrig)) {
-            orderByOrig = [orderByOrig];
-          }
-          orderBy = orderByOrig.map((orderByValue) => {
-            if (is2(orderByValue, Column2)) {
-              return aliasedTableColumn2(orderByValue, tableAlias);
-            }
-            return mapColumnsInSQLToAlias2(orderByValue, tableAlias);
-          });
-          limit2 = config2.limit;
-          offset = config2.offset;
-          for (const {
-            tsKey: selectedRelationTsKey,
-            queryConfig: selectedRelationConfigValue,
-            relation
-          } of selectedRelations) {
-            const normalizedRelation = normalizeRelation2(schema, tableNamesMap, relation);
-            const relationTableName = getTableUniqueName2(relation.referencedTable);
-            const relationTableTsName = tableNamesMap[relationTableName];
-            const relationTableAlias = `${tableAlias}_${selectedRelationTsKey}`;
-            const joinOn2 = and2(
-              ...normalizedRelation.fields.map(
-                (field2, i5) => eq2(
-                  aliasedTableColumn2(normalizedRelation.references[i5], relationTableAlias),
-                  aliasedTableColumn2(field2, tableAlias)
-                )
-              )
-            );
-            const builtRelation = this.buildRelationalQueryWithoutPK({
-              fullSchema,
-              schema,
-              tableNamesMap,
-              table: fullSchema[relationTableTsName],
-              tableConfig: schema[relationTableTsName],
-              queryConfig: is2(relation, One2) ? selectedRelationConfigValue === true ? { limit: 1 } : { ...selectedRelationConfigValue, limit: 1 } : selectedRelationConfigValue,
-              tableAlias: relationTableAlias,
-              joinOn: joinOn2,
-              nestedQueryRelation: relation
-            });
-            const field = sql2`${sql2.identifier(relationTableAlias)}.${sql2.identifier("data")}`.as(selectedRelationTsKey);
-            joins.push({
-              on: sql2`true`,
-              table: new Subquery2(builtRelation.sql, {}, relationTableAlias),
-              alias: relationTableAlias,
-              joinType: "left",
-              lateral: true
-            });
-            selection.push({
-              dbKey: selectedRelationTsKey,
-              tsKey: selectedRelationTsKey,
-              field,
-              relationTableTsKey: relationTableTsName,
-              isJson: true,
-              selection: builtRelation.selection
-            });
-          }
-        }
-        if (selection.length === 0) {
-          throw new DrizzleError2({ message: `No fields selected for table "${tableConfig.tsName}" ("${tableAlias}")` });
-        }
-        let result;
-        where = and2(joinOn, where);
-        if (nestedQueryRelation) {
-          let field = sql2`json_build_array(${sql2.join(
-            selection.map(
-              ({ field: field2, tsKey, isJson }) => isJson ? sql2`${sql2.identifier(`${tableAlias}_${tsKey}`)}.${sql2.identifier("data")}` : is2(field2, SQL2.Aliased) ? field2.sql : field2
-            ),
-            sql2`, `
-          )})`;
-          if (is2(nestedQueryRelation, Many2)) {
-            field = sql2`coalesce(json_agg(${field}${orderBy.length > 0 ? sql2` order by ${sql2.join(orderBy, sql2`, `)}` : void 0}), '[]'::json)`;
-          }
-          const nestedSelection = [{
-            dbKey: "data",
-            tsKey: "data",
-            field: field.as("data"),
-            isJson: true,
-            relationTableTsKey: tableConfig.tsName,
-            selection
-          }];
-          const needsSubquery = limit2 !== void 0 || offset !== void 0 || orderBy.length > 0;
-          if (needsSubquery) {
-            result = this.buildSelectQuery({
-              table: aliasedTable2(table, tableAlias),
-              fields: {},
-              fieldsFlat: [{
-                path: [],
-                field: sql2.raw("*")
-              }],
-              where,
-              limit: limit2,
-              offset,
-              orderBy,
-              setOperators: []
-            });
-            where = void 0;
-            limit2 = void 0;
-            offset = void 0;
-            orderBy = [];
-          } else {
-            result = aliasedTable2(table, tableAlias);
-          }
-          result = this.buildSelectQuery({
-            table: is2(result, PgTable2) ? result : new Subquery2(result, {}, tableAlias),
-            fields: {},
-            fieldsFlat: nestedSelection.map(({ field: field2 }) => ({
-              path: [],
-              field: is2(field2, Column2) ? aliasedTableColumn2(field2, tableAlias) : field2
-            })),
-            joins,
-            where,
-            limit: limit2,
-            offset,
-            orderBy,
-            setOperators: []
-          });
-        } else {
-          result = this.buildSelectQuery({
-            table: aliasedTable2(table, tableAlias),
-            fields: {},
-            fieldsFlat: selection.map(({ field }) => ({
-              path: [],
-              field: is2(field, Column2) ? aliasedTableColumn2(field, tableAlias) : field
-            })),
-            joins,
-            where,
-            limit: limit2,
-            offset,
-            orderBy,
-            setOperators: []
-          });
-        }
-        return {
-          tableTsKey: tableConfig.tsName,
-          sql: result,
-          selection
-        };
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/query-builders/query-builder.js
-var TypedQueryBuilder2;
-var init_query_builder3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/query-builders/query-builder.js"() {
-    init_entity2();
-    TypedQueryBuilder2 = class {
-      static [entityKind2] = "TypedQueryBuilder";
-      /** @internal */
-      getSelectedFields() {
-        return this._.selectedFields;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.js
-function createSetOperator2(type, isAll) {
-  return (leftSelect, rightSelect, ...restSelects) => {
-    const setOperators = [rightSelect, ...restSelects].map((select) => ({
-      type,
-      isAll,
-      rightSelect: select
-    }));
-    for (const setOperator of setOperators) {
-      if (!haveSameKeys2(leftSelect.getSelectedFields(), setOperator.rightSelect.getSelectedFields())) {
-        throw new Error(
-          "Set operator error (union / intersect / except): selected fields are not the same or are in a different order"
-        );
-      }
-    }
-    return leftSelect.addSetOperators(setOperators);
-  };
-}
-var PgSelectBuilder2, PgSelectQueryBuilderBase2, PgSelectBase2, getPgSetOperators2, union3, unionAll2, intersect2, intersectAll2, except2, exceptAll2;
-var init_select4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.js"() {
-    init_entity2();
-    init_view_base2();
-    init_query_builder3();
-    init_query_promise2();
-    init_selection_proxy2();
-    init_sql3();
-    init_subquery3();
-    init_table3();
-    init_tracing2();
-    init_utils5();
-    init_utils5();
-    init_view_common3();
-    init_utils10();
-    PgSelectBuilder2 = class {
-      static [entityKind2] = "PgSelectBuilder";
-      fields;
-      session;
-      dialect;
-      withList = [];
-      distinct;
-      constructor(config2) {
-        this.fields = config2.fields;
-        this.session = config2.session;
-        this.dialect = config2.dialect;
-        if (config2.withList) {
-          this.withList = config2.withList;
-        }
-        this.distinct = config2.distinct;
-      }
-      authToken;
-      /** @internal */
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      /**
-       * Specify the table, subquery, or other target that you're
-       * building a select query against.
-       *
-       * {@link https://www.postgresql.org/docs/current/sql-select.html#SQL-FROM | Postgres from documentation}
-       */
-      from(source) {
-        const isPartialSelect = !!this.fields;
-        const src = source;
-        let fields;
-        if (this.fields) {
-          fields = this.fields;
-        } else if (is2(src, Subquery2)) {
-          fields = Object.fromEntries(
-            Object.keys(src._.selectedFields).map((key) => [key, src[key]])
-          );
-        } else if (is2(src, PgViewBase2)) {
-          fields = src[ViewBaseConfig2].selectedFields;
-        } else if (is2(src, SQL2)) {
-          fields = {};
-        } else {
-          fields = getTableColumns2(src);
-        }
-        return new PgSelectBase2({
-          table: src,
-          fields,
-          isPartialSelect,
-          session: this.session,
-          dialect: this.dialect,
-          withList: this.withList,
-          distinct: this.distinct
-        }).setToken(this.authToken);
-      }
-    };
-    PgSelectQueryBuilderBase2 = class extends TypedQueryBuilder2 {
-      static [entityKind2] = "PgSelectQueryBuilder";
-      _;
-      config;
-      joinsNotNullableMap;
-      tableName;
-      isPartialSelect;
-      session;
-      dialect;
-      cacheConfig = void 0;
-      usedTables = /* @__PURE__ */ new Set();
-      constructor({ table, fields, isPartialSelect, session: session2, dialect, withList, distinct }) {
-        super();
-        this.config = {
-          withList,
-          table,
-          fields: { ...fields },
-          distinct,
-          setOperators: []
-        };
-        this.isPartialSelect = isPartialSelect;
-        this.session = session2;
-        this.dialect = dialect;
-        this._ = {
-          selectedFields: fields,
-          config: this.config
-        };
-        this.tableName = getTableLikeName2(table);
-        this.joinsNotNullableMap = typeof this.tableName === "string" ? { [this.tableName]: true } : {};
-        for (const item of extractUsedTable2(table)) this.usedTables.add(item);
-      }
-      /** @internal */
-      getUsedTables() {
-        return [...this.usedTables];
-      }
-      createJoin(joinType, lateral) {
-        return (table, on) => {
-          const baseTableName = this.tableName;
-          const tableName = getTableLikeName2(table);
-          for (const item of extractUsedTable2(table)) this.usedTables.add(item);
-          if (typeof tableName === "string" && this.config.joins?.some((join7) => join7.alias === tableName)) {
-            throw new Error(`Alias "${tableName}" is already used in this query`);
-          }
-          if (!this.isPartialSelect) {
-            if (Object.keys(this.joinsNotNullableMap).length === 1 && typeof baseTableName === "string") {
-              this.config.fields = {
-                [baseTableName]: this.config.fields
-              };
-            }
-            if (typeof tableName === "string" && !is2(table, SQL2)) {
-              const selection = is2(table, Subquery2) ? table._.selectedFields : is2(table, View2) ? table[ViewBaseConfig2].selectedFields : table[Table2.Symbol.Columns];
-              this.config.fields[tableName] = selection;
-            }
-          }
-          if (typeof on === "function") {
-            on = on(
-              new Proxy(
-                this.config.fields,
-                new SelectionProxyHandler2({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
-              )
-            );
-          }
-          if (!this.config.joins) {
-            this.config.joins = [];
-          }
-          this.config.joins.push({ on, table, joinType, alias: tableName, lateral });
-          if (typeof tableName === "string") {
-            switch (joinType) {
-              case "left": {
-                this.joinsNotNullableMap[tableName] = false;
-                break;
-              }
-              case "right": {
-                this.joinsNotNullableMap = Object.fromEntries(
-                  Object.entries(this.joinsNotNullableMap).map(([key]) => [key, false])
-                );
-                this.joinsNotNullableMap[tableName] = true;
-                break;
-              }
-              case "cross":
-              case "inner": {
-                this.joinsNotNullableMap[tableName] = true;
-                break;
-              }
-              case "full": {
-                this.joinsNotNullableMap = Object.fromEntries(
-                  Object.entries(this.joinsNotNullableMap).map(([key]) => [key, false])
-                );
-                this.joinsNotNullableMap[tableName] = false;
-                break;
-              }
-            }
-          }
-          return this;
-        };
-      }
-      /**
-       * Executes a `left join` operation by adding another table to the current query.
-       *
-       * Calling this method associates each row of the table with the corresponding row from the joined table, if a match is found. If no matching row exists, it sets all columns of the joined table to null.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/joins#left-join}
-       *
-       * @param table the table to join.
-       * @param on the `on` clause.
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all users and their pets
-       * const usersWithPets: { user: User; pets: Pet | null; }[] = await db.select()
-       *   .from(users)
-       *   .leftJoin(pets, eq(users.id, pets.ownerId))
-       *
-       * // Select userId and petId
-       * const usersIdsAndPetIds: { userId: number; petId: number | null; }[] = await db.select({
-       *   userId: users.id,
-       *   petId: pets.id,
-       * })
-       *   .from(users)
-       *   .leftJoin(pets, eq(users.id, pets.ownerId))
-       * ```
-       */
-      leftJoin = this.createJoin("left", false);
-      /**
-       * Executes a `left join lateral` operation by adding subquery to the current query.
-       *
-       * A `lateral` join allows the right-hand expression to refer to columns from the left-hand side.
-       *
-       * Calling this method associates each row of the table with the corresponding row from the joined table, if a match is found. If no matching row exists, it sets all columns of the joined table to null.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/joins#left-join-lateral}
-       *
-       * @param table the subquery to join.
-       * @param on the `on` clause.
-       */
-      leftJoinLateral = this.createJoin("left", true);
-      /**
-       * Executes a `right join` operation by adding another table to the current query.
-       *
-       * Calling this method associates each row of the joined table with the corresponding row from the main table, if a match is found. If no matching row exists, it sets all columns of the main table to null.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/joins#right-join}
-       *
-       * @param table the table to join.
-       * @param on the `on` clause.
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all users and their pets
-       * const usersWithPets: { user: User | null; pets: Pet; }[] = await db.select()
-       *   .from(users)
-       *   .rightJoin(pets, eq(users.id, pets.ownerId))
-       *
-       * // Select userId and petId
-       * const usersIdsAndPetIds: { userId: number | null; petId: number; }[] = await db.select({
-       *   userId: users.id,
-       *   petId: pets.id,
-       * })
-       *   .from(users)
-       *   .rightJoin(pets, eq(users.id, pets.ownerId))
-       * ```
-       */
-      rightJoin = this.createJoin("right", false);
-      /**
-       * Executes an `inner join` operation, creating a new table by combining rows from two tables that have matching values.
-       *
-       * Calling this method retrieves rows that have corresponding entries in both joined tables. Rows without matching entries in either table are excluded, resulting in a table that includes only matching pairs.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/joins#inner-join}
-       *
-       * @param table the table to join.
-       * @param on the `on` clause.
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all users and their pets
-       * const usersWithPets: { user: User; pets: Pet; }[] = await db.select()
-       *   .from(users)
-       *   .innerJoin(pets, eq(users.id, pets.ownerId))
-       *
-       * // Select userId and petId
-       * const usersIdsAndPetIds: { userId: number; petId: number; }[] = await db.select({
-       *   userId: users.id,
-       *   petId: pets.id,
-       * })
-       *   .from(users)
-       *   .innerJoin(pets, eq(users.id, pets.ownerId))
-       * ```
-       */
-      innerJoin = this.createJoin("inner", false);
-      /**
-       * Executes an `inner join lateral` operation, creating a new table by combining rows from two queries that have matching values.
-       *
-       * A `lateral` join allows the right-hand expression to refer to columns from the left-hand side.
-       *
-       * Calling this method retrieves rows that have corresponding entries in both joined tables. Rows without matching entries in either table are excluded, resulting in a table that includes only matching pairs.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/joins#inner-join-lateral}
-       *
-       * @param table the subquery to join.
-       * @param on the `on` clause.
-       */
-      innerJoinLateral = this.createJoin("inner", true);
-      /**
-       * Executes a `full join` operation by combining rows from two tables into a new table.
-       *
-       * Calling this method retrieves all rows from both main and joined tables, merging rows with matching values and filling in `null` for non-matching columns.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/joins#full-join}
-       *
-       * @param table the table to join.
-       * @param on the `on` clause.
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all users and their pets
-       * const usersWithPets: { user: User | null; pets: Pet | null; }[] = await db.select()
-       *   .from(users)
-       *   .fullJoin(pets, eq(users.id, pets.ownerId))
-       *
-       * // Select userId and petId
-       * const usersIdsAndPetIds: { userId: number | null; petId: number | null; }[] = await db.select({
-       *   userId: users.id,
-       *   petId: pets.id,
-       * })
-       *   .from(users)
-       *   .fullJoin(pets, eq(users.id, pets.ownerId))
-       * ```
-       */
-      fullJoin = this.createJoin("full", false);
-      /**
-       * Executes a `cross join` operation by combining rows from two tables into a new table.
-       *
-       * Calling this method retrieves all rows from both main and joined tables, merging all rows from each table.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/joins#cross-join}
-       *
-       * @param table the table to join.
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all users, each user with every pet
-       * const usersWithPets: { user: User; pets: Pet; }[] = await db.select()
-       *   .from(users)
-       *   .crossJoin(pets)
-       *
-       * // Select userId and petId
-       * const usersIdsAndPetIds: { userId: number; petId: number; }[] = await db.select({
-       *   userId: users.id,
-       *   petId: pets.id,
-       * })
-       *   .from(users)
-       *   .crossJoin(pets)
-       * ```
-       */
-      crossJoin = this.createJoin("cross", false);
-      /**
-       * Executes a `cross join lateral` operation by combining rows from two queries into a new table.
-       *
-       * A `lateral` join allows the right-hand expression to refer to columns from the left-hand side.
-       *
-       * Calling this method retrieves all rows from both main and joined queries, merging all rows from each query.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/joins#cross-join-lateral}
-       *
-       * @param table the query to join.
-       */
-      crossJoinLateral = this.createJoin("cross", true);
-      createSetOperator(type, isAll) {
-        return (rightSelection) => {
-          const rightSelect = typeof rightSelection === "function" ? rightSelection(getPgSetOperators2()) : rightSelection;
-          if (!haveSameKeys2(this.getSelectedFields(), rightSelect.getSelectedFields())) {
-            throw new Error(
-              "Set operator error (union / intersect / except): selected fields are not the same or are in a different order"
-            );
-          }
-          this.config.setOperators.push({ type, isAll, rightSelect });
-          return this;
-        };
-      }
-      /**
-       * Adds `union` set operator to the query.
-       *
-       * Calling this method will combine the result sets of the `select` statements and remove any duplicate rows that appear across them.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/set-operations#union}
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all unique names from customers and users tables
-       * await db.select({ name: users.name })
-       *   .from(users)
-       *   .union(
-       *     db.select({ name: customers.name }).from(customers)
-       *   );
-       * // or
-       * import { union } from 'drizzle-orm/pg-core'
-       *
-       * await union(
-       *   db.select({ name: users.name }).from(users),
-       *   db.select({ name: customers.name }).from(customers)
-       * );
-       * ```
-       */
-      union = this.createSetOperator("union", false);
-      /**
-       * Adds `union all` set operator to the query.
-       *
-       * Calling this method will combine the result-set of the `select` statements and keep all duplicate rows that appear across them.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/set-operations#union-all}
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all transaction ids from both online and in-store sales
-       * await db.select({ transaction: onlineSales.transactionId })
-       *   .from(onlineSales)
-       *   .unionAll(
-       *     db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales)
-       *   );
-       * // or
-       * import { unionAll } from 'drizzle-orm/pg-core'
-       *
-       * await unionAll(
-       *   db.select({ transaction: onlineSales.transactionId }).from(onlineSales),
-       *   db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales)
-       * );
-       * ```
-       */
-      unionAll = this.createSetOperator("union", true);
-      /**
-       * Adds `intersect` set operator to the query.
-       *
-       * Calling this method will retain only the rows that are present in both result sets and eliminate duplicates.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/set-operations#intersect}
-       *
-       * @example
-       *
-       * ```ts
-       * // Select course names that are offered in both departments A and B
-       * await db.select({ courseName: depA.courseName })
-       *   .from(depA)
-       *   .intersect(
-       *     db.select({ courseName: depB.courseName }).from(depB)
-       *   );
-       * // or
-       * import { intersect } from 'drizzle-orm/pg-core'
-       *
-       * await intersect(
-       *   db.select({ courseName: depA.courseName }).from(depA),
-       *   db.select({ courseName: depB.courseName }).from(depB)
-       * );
-       * ```
-       */
-      intersect = this.createSetOperator("intersect", false);
-      /**
-       * Adds `intersect all` set operator to the query.
-       *
-       * Calling this method will retain only the rows that are present in both result sets including all duplicates.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/set-operations#intersect-all}
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all products and quantities that are ordered by both regular and VIP customers
-       * await db.select({
-       *   productId: regularCustomerOrders.productId,
-       *   quantityOrdered: regularCustomerOrders.quantityOrdered
-       * })
-       * .from(regularCustomerOrders)
-       * .intersectAll(
-       *   db.select({
-       *     productId: vipCustomerOrders.productId,
-       *     quantityOrdered: vipCustomerOrders.quantityOrdered
-       *   })
-       *   .from(vipCustomerOrders)
-       * );
-       * // or
-       * import { intersectAll } from 'drizzle-orm/pg-core'
-       *
-       * await intersectAll(
-       *   db.select({
-       *     productId: regularCustomerOrders.productId,
-       *     quantityOrdered: regularCustomerOrders.quantityOrdered
-       *   })
-       *   .from(regularCustomerOrders),
-       *   db.select({
-       *     productId: vipCustomerOrders.productId,
-       *     quantityOrdered: vipCustomerOrders.quantityOrdered
-       *   })
-       *   .from(vipCustomerOrders)
-       * );
-       * ```
-       */
-      intersectAll = this.createSetOperator("intersect", true);
-      /**
-       * Adds `except` set operator to the query.
-       *
-       * Calling this method will retrieve all unique rows from the left query, except for the rows that are present in the result set of the right query.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/set-operations#except}
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all courses offered in department A but not in department B
-       * await db.select({ courseName: depA.courseName })
-       *   .from(depA)
-       *   .except(
-       *     db.select({ courseName: depB.courseName }).from(depB)
-       *   );
-       * // or
-       * import { except } from 'drizzle-orm/pg-core'
-       *
-       * await except(
-       *   db.select({ courseName: depA.courseName }).from(depA),
-       *   db.select({ courseName: depB.courseName }).from(depB)
-       * );
-       * ```
-       */
-      except = this.createSetOperator("except", false);
-      /**
-       * Adds `except all` set operator to the query.
-       *
-       * Calling this method will retrieve all rows from the left query, except for the rows that are present in the result set of the right query.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/set-operations#except-all}
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all products that are ordered by regular customers but not by VIP customers
-       * await db.select({
-       *   productId: regularCustomerOrders.productId,
-       *   quantityOrdered: regularCustomerOrders.quantityOrdered,
-       * })
-       * .from(regularCustomerOrders)
-       * .exceptAll(
-       *   db.select({
-       *     productId: vipCustomerOrders.productId,
-       *     quantityOrdered: vipCustomerOrders.quantityOrdered,
-       *   })
-       *   .from(vipCustomerOrders)
-       * );
-       * // or
-       * import { exceptAll } from 'drizzle-orm/pg-core'
-       *
-       * await exceptAll(
-       *   db.select({
-       *     productId: regularCustomerOrders.productId,
-       *     quantityOrdered: regularCustomerOrders.quantityOrdered
-       *   })
-       *   .from(regularCustomerOrders),
-       *   db.select({
-       *     productId: vipCustomerOrders.productId,
-       *     quantityOrdered: vipCustomerOrders.quantityOrdered
-       *   })
-       *   .from(vipCustomerOrders)
-       * );
-       * ```
-       */
-      exceptAll = this.createSetOperator("except", true);
-      /** @internal */
-      addSetOperators(setOperators) {
-        this.config.setOperators.push(...setOperators);
-        return this;
-      }
-      /**
-       * Adds a `where` clause to the query.
-       *
-       * Calling this method will select only those rows that fulfill a specified condition.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/select#filtering}
-       *
-       * @param where the `where` clause.
-       *
-       * @example
-       * You can use conditional operators and `sql function` to filter the rows to be selected.
-       *
-       * ```ts
-       * // Select all cars with green color
-       * await db.select().from(cars).where(eq(cars.color, 'green'));
-       * // or
-       * await db.select().from(cars).where(sql`${cars.color} = 'green'`)
-       * ```
-       *
-       * You can logically combine conditional operators with `and()` and `or()` operators:
-       *
-       * ```ts
-       * // Select all BMW cars with a green color
-       * await db.select().from(cars).where(and(eq(cars.color, 'green'), eq(cars.brand, 'BMW')));
-       *
-       * // Select all cars with the green or blue color
-       * await db.select().from(cars).where(or(eq(cars.color, 'green'), eq(cars.color, 'blue')));
-       * ```
-       */
-      where(where) {
-        if (typeof where === "function") {
-          where = where(
-            new Proxy(
-              this.config.fields,
-              new SelectionProxyHandler2({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
-            )
-          );
-        }
-        this.config.where = where;
-        return this;
-      }
-      /**
-       * Adds a `having` clause to the query.
-       *
-       * Calling this method will select only those rows that fulfill a specified condition. It is typically used with aggregate functions to filter the aggregated data based on a specified condition.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/select#aggregations}
-       *
-       * @param having the `having` clause.
-       *
-       * @example
-       *
-       * ```ts
-       * // Select all brands with more than one car
-       * await db.select({
-       * 	brand: cars.brand,
-       * 	count: sql<number>`cast(count(${cars.id}) as int)`,
-       * })
-       *   .from(cars)
-       *   .groupBy(cars.brand)
-       *   .having(({ count }) => gt(count, 1));
-       * ```
-       */
-      having(having) {
-        if (typeof having === "function") {
-          having = having(
-            new Proxy(
-              this.config.fields,
-              new SelectionProxyHandler2({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
-            )
-          );
-        }
-        this.config.having = having;
-        return this;
-      }
-      groupBy(...columns) {
-        if (typeof columns[0] === "function") {
-          const groupBy = columns[0](
-            new Proxy(
-              this.config.fields,
-              new SelectionProxyHandler2({ sqlAliasedBehavior: "alias", sqlBehavior: "sql" })
-            )
-          );
-          this.config.groupBy = Array.isArray(groupBy) ? groupBy : [groupBy];
-        } else {
-          this.config.groupBy = columns;
-        }
-        return this;
-      }
-      orderBy(...columns) {
-        if (typeof columns[0] === "function") {
-          const orderBy = columns[0](
-            new Proxy(
-              this.config.fields,
-              new SelectionProxyHandler2({ sqlAliasedBehavior: "alias", sqlBehavior: "sql" })
-            )
-          );
-          const orderByArray = Array.isArray(orderBy) ? orderBy : [orderBy];
-          if (this.config.setOperators.length > 0) {
-            this.config.setOperators.at(-1).orderBy = orderByArray;
-          } else {
-            this.config.orderBy = orderByArray;
-          }
-        } else {
-          const orderByArray = columns;
-          if (this.config.setOperators.length > 0) {
-            this.config.setOperators.at(-1).orderBy = orderByArray;
-          } else {
-            this.config.orderBy = orderByArray;
-          }
-        }
-        return this;
-      }
-      /**
-       * Adds a `limit` clause to the query.
-       *
-       * Calling this method will set the maximum number of rows that will be returned by this query.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/select#limit--offset}
-       *
-       * @param limit the `limit` clause.
-       *
-       * @example
-       *
-       * ```ts
-       * // Get the first 10 people from this query.
-       * await db.select().from(people).limit(10);
-       * ```
-       */
-      limit(limit2) {
-        if (this.config.setOperators.length > 0) {
-          this.config.setOperators.at(-1).limit = limit2;
-        } else {
-          this.config.limit = limit2;
-        }
-        return this;
-      }
-      /**
-       * Adds an `offset` clause to the query.
-       *
-       * Calling this method will skip a number of rows when returning results from this query.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/select#limit--offset}
-       *
-       * @param offset the `offset` clause.
-       *
-       * @example
-       *
-       * ```ts
-       * // Get the 10th-20th people from this query.
-       * await db.select().from(people).offset(10).limit(10);
-       * ```
-       */
-      offset(offset) {
-        if (this.config.setOperators.length > 0) {
-          this.config.setOperators.at(-1).offset = offset;
-        } else {
-          this.config.offset = offset;
-        }
-        return this;
-      }
-      /**
-       * Adds a `for` clause to the query.
-       *
-       * Calling this method will specify a lock strength for this query that controls how strictly it acquires exclusive access to the rows being queried.
-       *
-       * See docs: {@link https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE}
-       *
-       * @param strength the lock strength.
-       * @param config the lock configuration.
-       */
-      for(strength, config2 = {}) {
-        this.config.lockingClause = { strength, config: config2 };
-        return this;
-      }
-      /** @internal */
-      getSQL() {
-        return this.dialect.buildSelectQuery(this.config);
-      }
-      toSQL() {
-        const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
-        return rest;
-      }
-      as(alias) {
-        const usedTables = [];
-        usedTables.push(...extractUsedTable2(this.config.table));
-        if (this.config.joins) {
-          for (const it of this.config.joins) usedTables.push(...extractUsedTable2(it.table));
-        }
-        return new Proxy(
-          new Subquery2(this.getSQL(), this.config.fields, alias, false, [...new Set(usedTables)]),
-          new SelectionProxyHandler2({ alias, sqlAliasedBehavior: "alias", sqlBehavior: "error" })
-        );
-      }
-      /** @internal */
-      getSelectedFields() {
-        return new Proxy(
-          this.config.fields,
-          new SelectionProxyHandler2({ alias: this.tableName, sqlAliasedBehavior: "alias", sqlBehavior: "error" })
-        );
-      }
-      $dynamic() {
-        return this;
-      }
-      $withCache(config2) {
-        this.cacheConfig = config2 === void 0 ? { config: {}, enable: true, autoInvalidate: true } : config2 === false ? { enable: false } : { enable: true, autoInvalidate: true, ...config2 };
-        return this;
-      }
-    };
-    PgSelectBase2 = class extends PgSelectQueryBuilderBase2 {
-      static [entityKind2] = "PgSelect";
-      /** @internal */
-      _prepare(name2) {
-        const { session: session2, config: config2, dialect, joinsNotNullableMap, authToken, cacheConfig, usedTables } = this;
-        if (!session2) {
-          throw new Error("Cannot execute a query on a query builder. Please use a database instance instead.");
-        }
-        const { fields } = config2;
-        return tracer2.startActiveSpan("drizzle.prepareQuery", () => {
-          const fieldsList = orderSelectedFields2(fields);
-          const query = session2.prepareQuery(dialect.sqlToQuery(this.getSQL()), fieldsList, name2, true, void 0, {
-            type: "select",
-            tables: [...usedTables]
-          }, cacheConfig);
-          query.joinsNotNullableMap = joinsNotNullableMap;
-          return query.setToken(authToken);
-        });
-      }
-      /**
-       * Create a prepared statement for this query. This allows
-       * the database to remember this query for the given session
-       * and call it by name, rather than specifying the full query.
-       *
-       * {@link https://www.postgresql.org/docs/current/sql-prepare.html | Postgres prepare documentation}
-       */
-      prepare(name2) {
-        return this._prepare(name2);
-      }
-      authToken;
-      /** @internal */
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      execute = (placeholderValues) => {
-        return tracer2.startActiveSpan("drizzle.operation", () => {
-          return this._prepare().execute(placeholderValues, this.authToken);
-        });
-      };
-    };
-    applyMixins2(PgSelectBase2, [QueryPromise2]);
-    getPgSetOperators2 = () => ({
-      union: union3,
-      unionAll: unionAll2,
-      intersect: intersect2,
-      intersectAll: intersectAll2,
-      except: except2,
-      exceptAll: exceptAll2
-    });
-    union3 = createSetOperator2("union", false);
-    unionAll2 = createSetOperator2("union", true);
-    intersect2 = createSetOperator2("intersect", false);
-    intersectAll2 = createSetOperator2("intersect", true);
-    except2 = createSetOperator2("except", false);
-    exceptAll2 = createSetOperator2("except", true);
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query-builder.js
-var QueryBuilder2;
-var init_query_builder4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query-builder.js"() {
-    init_entity2();
-    init_dialect2();
-    init_selection_proxy2();
-    init_subquery3();
-    init_select4();
-    QueryBuilder2 = class {
-      static [entityKind2] = "PgQueryBuilder";
-      dialect;
-      dialectConfig;
-      constructor(dialect) {
-        this.dialect = is2(dialect, PgDialect2) ? dialect : void 0;
-        this.dialectConfig = is2(dialect, PgDialect2) ? void 0 : dialect;
-      }
-      $with = (alias, selection) => {
-        const queryBuilder = this;
-        const as = (qb) => {
-          if (typeof qb === "function") {
-            qb = qb(queryBuilder);
-          }
-          return new Proxy(
-            new WithSubquery2(
-              qb.getSQL(),
-              selection ?? ("getSelectedFields" in qb ? qb.getSelectedFields() ?? {} : {}),
-              alias,
-              true
-            ),
-            new SelectionProxyHandler2({ alias, sqlAliasedBehavior: "alias", sqlBehavior: "error" })
-          );
-        };
-        return { as };
-      };
-      with(...queries) {
-        const self2 = this;
-        function select(fields) {
-          return new PgSelectBuilder2({
-            fields: fields ?? void 0,
-            session: void 0,
-            dialect: self2.getDialect(),
-            withList: queries
-          });
-        }
-        function selectDistinct(fields) {
-          return new PgSelectBuilder2({
-            fields: fields ?? void 0,
-            session: void 0,
-            dialect: self2.getDialect(),
-            distinct: true
-          });
-        }
-        function selectDistinctOn(on, fields) {
-          return new PgSelectBuilder2({
-            fields: fields ?? void 0,
-            session: void 0,
-            dialect: self2.getDialect(),
-            distinct: { on }
-          });
-        }
-        return { select, selectDistinct, selectDistinctOn };
-      }
-      select(fields) {
-        return new PgSelectBuilder2({
-          fields: fields ?? void 0,
-          session: void 0,
-          dialect: this.getDialect()
-        });
-      }
-      selectDistinct(fields) {
-        return new PgSelectBuilder2({
-          fields: fields ?? void 0,
-          session: void 0,
-          dialect: this.getDialect(),
-          distinct: true
-        });
-      }
-      selectDistinctOn(on, fields) {
-        return new PgSelectBuilder2({
-          fields: fields ?? void 0,
-          session: void 0,
-          dialect: this.getDialect(),
-          distinct: { on }
-        });
-      }
-      // Lazy load dialect to avoid circular dependency
-      getDialect() {
-        if (!this.dialect) {
-          this.dialect = new PgDialect2(this.dialectConfig);
-        }
-        return this.dialect;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view.js
-function pgViewWithSchema2(name2, selection, schema) {
-  if (selection) {
-    return new ManualViewBuilder2(name2, selection, schema);
-  }
-  return new ViewBuilder2(name2, schema);
-}
-function pgMaterializedViewWithSchema2(name2, selection, schema) {
-  if (selection) {
-    return new ManualMaterializedViewBuilder2(name2, selection, schema);
-  }
-  return new MaterializedViewBuilder2(name2, schema);
-}
-var DefaultViewBuilderCore2, ViewBuilder2, ManualViewBuilder2, MaterializedViewBuilderCore2, MaterializedViewBuilder2, ManualMaterializedViewBuilder2, PgView2, PgMaterializedViewConfig2, PgMaterializedView2;
-var init_view2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view.js"() {
-    init_entity2();
-    init_selection_proxy2();
-    init_utils5();
-    init_query_builder4();
-    init_table4();
-    init_view_base2();
-    init_view_common4();
-    DefaultViewBuilderCore2 = class {
-      constructor(name2, schema) {
-        this.name = name2;
-        this.schema = schema;
-      }
-      static [entityKind2] = "PgDefaultViewBuilderCore";
-      config = {};
-      with(config2) {
-        this.config.with = config2;
-        return this;
-      }
-    };
-    ViewBuilder2 = class extends DefaultViewBuilderCore2 {
-      static [entityKind2] = "PgViewBuilder";
-      as(qb) {
-        if (typeof qb === "function") {
-          qb = qb(new QueryBuilder2());
-        }
-        const selectionProxy = new SelectionProxyHandler2({
-          alias: this.name,
-          sqlBehavior: "error",
-          sqlAliasedBehavior: "alias",
-          replaceOriginalName: true
-        });
-        const aliasedSelection = new Proxy(qb.getSelectedFields(), selectionProxy);
-        return new Proxy(
-          new PgView2({
-            pgConfig: this.config,
-            config: {
-              name: this.name,
-              schema: this.schema,
-              selectedFields: aliasedSelection,
-              query: qb.getSQL().inlineParams()
-            }
-          }),
-          selectionProxy
-        );
-      }
-    };
-    ManualViewBuilder2 = class extends DefaultViewBuilderCore2 {
-      static [entityKind2] = "PgManualViewBuilder";
-      columns;
-      constructor(name2, columns, schema) {
-        super(name2, schema);
-        this.columns = getTableColumns2(pgTable2(name2, columns));
-      }
-      existing() {
-        return new Proxy(
-          new PgView2({
-            pgConfig: void 0,
-            config: {
-              name: this.name,
-              schema: this.schema,
-              selectedFields: this.columns,
-              query: void 0
-            }
-          }),
-          new SelectionProxyHandler2({
-            alias: this.name,
-            sqlBehavior: "error",
-            sqlAliasedBehavior: "alias",
-            replaceOriginalName: true
-          })
-        );
-      }
-      as(query) {
-        return new Proxy(
-          new PgView2({
-            pgConfig: this.config,
-            config: {
-              name: this.name,
-              schema: this.schema,
-              selectedFields: this.columns,
-              query: query.inlineParams()
-            }
-          }),
-          new SelectionProxyHandler2({
-            alias: this.name,
-            sqlBehavior: "error",
-            sqlAliasedBehavior: "alias",
-            replaceOriginalName: true
-          })
-        );
-      }
-    };
-    MaterializedViewBuilderCore2 = class {
-      constructor(name2, schema) {
-        this.name = name2;
-        this.schema = schema;
-      }
-      static [entityKind2] = "PgMaterializedViewBuilderCore";
-      config = {};
-      using(using) {
-        this.config.using = using;
-        return this;
-      }
-      with(config2) {
-        this.config.with = config2;
-        return this;
-      }
-      tablespace(tablespace) {
-        this.config.tablespace = tablespace;
-        return this;
-      }
-      withNoData() {
-        this.config.withNoData = true;
-        return this;
-      }
-    };
-    MaterializedViewBuilder2 = class extends MaterializedViewBuilderCore2 {
-      static [entityKind2] = "PgMaterializedViewBuilder";
-      as(qb) {
-        if (typeof qb === "function") {
-          qb = qb(new QueryBuilder2());
-        }
-        const selectionProxy = new SelectionProxyHandler2({
-          alias: this.name,
-          sqlBehavior: "error",
-          sqlAliasedBehavior: "alias",
-          replaceOriginalName: true
-        });
-        const aliasedSelection = new Proxy(qb.getSelectedFields(), selectionProxy);
-        return new Proxy(
-          new PgMaterializedView2({
-            pgConfig: {
-              with: this.config.with,
-              using: this.config.using,
-              tablespace: this.config.tablespace,
-              withNoData: this.config.withNoData
-            },
-            config: {
-              name: this.name,
-              schema: this.schema,
-              selectedFields: aliasedSelection,
-              query: qb.getSQL().inlineParams()
-            }
-          }),
-          selectionProxy
-        );
-      }
-    };
-    ManualMaterializedViewBuilder2 = class extends MaterializedViewBuilderCore2 {
-      static [entityKind2] = "PgManualMaterializedViewBuilder";
-      columns;
-      constructor(name2, columns, schema) {
-        super(name2, schema);
-        this.columns = getTableColumns2(pgTable2(name2, columns));
-      }
-      existing() {
-        return new Proxy(
-          new PgMaterializedView2({
-            pgConfig: {
-              tablespace: this.config.tablespace,
-              using: this.config.using,
-              with: this.config.with,
-              withNoData: this.config.withNoData
-            },
-            config: {
-              name: this.name,
-              schema: this.schema,
-              selectedFields: this.columns,
-              query: void 0
-            }
-          }),
-          new SelectionProxyHandler2({
-            alias: this.name,
-            sqlBehavior: "error",
-            sqlAliasedBehavior: "alias",
-            replaceOriginalName: true
-          })
-        );
-      }
-      as(query) {
-        return new Proxy(
-          new PgMaterializedView2({
-            pgConfig: {
-              tablespace: this.config.tablespace,
-              using: this.config.using,
-              with: this.config.with,
-              withNoData: this.config.withNoData
-            },
-            config: {
-              name: this.name,
-              schema: this.schema,
-              selectedFields: this.columns,
-              query: query.inlineParams()
-            }
-          }),
-          new SelectionProxyHandler2({
-            alias: this.name,
-            sqlBehavior: "error",
-            sqlAliasedBehavior: "alias",
-            replaceOriginalName: true
-          })
-        );
-      }
-    };
-    PgView2 = class extends PgViewBase2 {
-      static [entityKind2] = "PgView";
-      [PgViewConfig2];
-      constructor({ pgConfig, config: config2 }) {
-        super(config2);
-        if (pgConfig) {
-          this[PgViewConfig2] = {
-            with: pgConfig.with
-          };
-        }
-      }
-    };
-    PgMaterializedViewConfig2 = /* @__PURE__ */ Symbol.for("drizzle:PgMaterializedViewConfig");
-    PgMaterializedView2 = class extends PgViewBase2 {
-      static [entityKind2] = "PgMaterializedView";
-      [PgMaterializedViewConfig2];
-      constructor({ pgConfig, config: config2 }) {
-        super(config2);
-        this[PgMaterializedViewConfig2] = {
-          with: pgConfig?.with,
-          using: pgConfig?.using,
-          tablespace: pgConfig?.tablespace,
-          withNoData: pgConfig?.withNoData
-        };
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils.js
-function extractUsedTable2(table) {
-  if (is2(table, PgTable2)) {
-    return [table[Schema2] ? `${table[Schema2]}.${table[Table2.Symbol.BaseName]}` : table[Table2.Symbol.BaseName]];
-  }
-  if (is2(table, Subquery2)) {
-    return table._.usedTables ?? [];
-  }
-  if (is2(table, SQL2)) {
-    return table.usedTables ?? [];
-  }
-  return [];
-}
-var init_utils10 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils.js"() {
-    init_entity2();
-    init_table4();
-    init_sql3();
-    init_subquery3();
-    init_table3();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/delete.js
-var PgDeleteBase2;
-var init_delete2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/delete.js"() {
-    init_entity2();
-    init_query_promise2();
-    init_selection_proxy2();
-    init_table3();
-    init_tracing2();
-    init_utils5();
-    init_utils10();
-    PgDeleteBase2 = class extends QueryPromise2 {
-      constructor(table, session2, dialect, withList) {
-        super();
-        this.session = session2;
-        this.dialect = dialect;
-        this.config = { table, withList };
-      }
-      static [entityKind2] = "PgDelete";
-      config;
-      cacheConfig;
-      /**
-       * Adds a `where` clause to the query.
-       *
-       * Calling this method will delete only those rows that fulfill a specified condition.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/delete}
-       *
-       * @param where the `where` clause.
-       *
-       * @example
-       * You can use conditional operators and `sql function` to filter the rows to be deleted.
-       *
-       * ```ts
-       * // Delete all cars with green color
-       * await db.delete(cars).where(eq(cars.color, 'green'));
-       * // or
-       * await db.delete(cars).where(sql`${cars.color} = 'green'`)
-       * ```
-       *
-       * You can logically combine conditional operators with `and()` and `or()` operators:
-       *
-       * ```ts
-       * // Delete all BMW cars with a green color
-       * await db.delete(cars).where(and(eq(cars.color, 'green'), eq(cars.brand, 'BMW')));
-       *
-       * // Delete all cars with the green or blue color
-       * await db.delete(cars).where(or(eq(cars.color, 'green'), eq(cars.color, 'blue')));
-       * ```
-       */
-      where(where) {
-        this.config.where = where;
-        return this;
-      }
-      returning(fields = this.config.table[Table2.Symbol.Columns]) {
-        this.config.returningFields = fields;
-        this.config.returning = orderSelectedFields2(fields);
-        return this;
-      }
-      /** @internal */
-      getSQL() {
-        return this.dialect.buildDeleteQuery(this.config);
-      }
-      toSQL() {
-        const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
-        return rest;
-      }
-      /** @internal */
-      _prepare(name2) {
-        return tracer2.startActiveSpan("drizzle.prepareQuery", () => {
-          return this.session.prepareQuery(this.dialect.sqlToQuery(this.getSQL()), this.config.returning, name2, true, void 0, {
-            type: "delete",
-            tables: extractUsedTable2(this.config.table)
-          }, this.cacheConfig);
-        });
-      }
-      prepare(name2) {
-        return this._prepare(name2);
-      }
-      authToken;
-      /** @internal */
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      execute = (placeholderValues) => {
-        return tracer2.startActiveSpan("drizzle.operation", () => {
-          return this._prepare().execute(placeholderValues, this.authToken);
-        });
-      };
-      /** @internal */
-      getSelectedFields() {
-        return this.config.returningFields ? new Proxy(
-          this.config.returningFields,
-          new SelectionProxyHandler2({
-            alias: getTableName2(this.config.table),
-            sqlAliasedBehavior: "alias",
-            sqlBehavior: "error"
-          })
-        ) : void 0;
-      }
-      $dynamic() {
-        return this;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/insert.js
-var PgInsertBuilder2, PgInsertBase2;
-var init_insert2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/insert.js"() {
-    init_entity2();
-    init_query_promise2();
-    init_selection_proxy2();
-    init_sql3();
-    init_table3();
-    init_tracing2();
-    init_utils5();
-    init_utils10();
-    init_query_builder4();
-    PgInsertBuilder2 = class {
-      constructor(table, session2, dialect, withList, overridingSystemValue_) {
-        this.table = table;
-        this.session = session2;
-        this.dialect = dialect;
-        this.withList = withList;
-        this.overridingSystemValue_ = overridingSystemValue_;
-      }
-      static [entityKind2] = "PgInsertBuilder";
-      authToken;
-      /** @internal */
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      overridingSystemValue() {
-        this.overridingSystemValue_ = true;
-        return this;
-      }
-      values(values) {
-        values = Array.isArray(values) ? values : [values];
-        if (values.length === 0) {
-          throw new Error("values() must be called with at least one value");
-        }
-        const mappedValues = values.map((entry) => {
-          const result = {};
-          const cols = this.table[Table2.Symbol.Columns];
-          for (const colKey of Object.keys(entry)) {
-            const colValue = entry[colKey];
-            result[colKey] = is2(colValue, SQL2) ? colValue : new Param2(colValue, cols[colKey]);
-          }
-          return result;
-        });
-        return new PgInsertBase2(
-          this.table,
-          mappedValues,
-          this.session,
-          this.dialect,
-          this.withList,
-          false,
-          this.overridingSystemValue_
-        ).setToken(this.authToken);
-      }
-      select(selectQuery) {
-        const select = typeof selectQuery === "function" ? selectQuery(new QueryBuilder2()) : selectQuery;
-        if (!is2(select, SQL2) && !haveSameKeys2(this.table[Columns2], select._.selectedFields)) {
-          throw new Error(
-            "Insert select error: selected fields are not the same or are in a different order compared to the table definition"
-          );
-        }
-        return new PgInsertBase2(this.table, select, this.session, this.dialect, this.withList, true);
-      }
-    };
-    PgInsertBase2 = class extends QueryPromise2 {
-      constructor(table, values, session2, dialect, withList, select, overridingSystemValue_) {
-        super();
-        this.session = session2;
-        this.dialect = dialect;
-        this.config = { table, values, withList, select, overridingSystemValue_ };
-      }
-      static [entityKind2] = "PgInsert";
-      config;
-      cacheConfig;
-      returning(fields = this.config.table[Table2.Symbol.Columns]) {
-        this.config.returningFields = fields;
-        this.config.returning = orderSelectedFields2(fields);
-        return this;
-      }
-      /**
-       * Adds an `on conflict do nothing` clause to the query.
-       *
-       * Calling this method simply avoids inserting a row as its alternative action.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/insert#on-conflict-do-nothing}
-       *
-       * @param config The `target` and `where` clauses.
-       *
-       * @example
-       * ```ts
-       * // Insert one row and cancel the insert if there's a conflict
-       * await db.insert(cars)
-       *   .values({ id: 1, brand: 'BMW' })
-       *   .onConflictDoNothing();
-       *
-       * // Explicitly specify conflict target
-       * await db.insert(cars)
-       *   .values({ id: 1, brand: 'BMW' })
-       *   .onConflictDoNothing({ target: cars.id });
-       * ```
-       */
-      onConflictDoNothing(config2 = {}) {
-        if (config2.target === void 0) {
-          this.config.onConflict = sql2`do nothing`;
-        } else {
-          let targetColumn = "";
-          targetColumn = Array.isArray(config2.target) ? config2.target.map((it) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config2.target));
-          const whereSql = config2.where ? sql2` where ${config2.where}` : void 0;
-          this.config.onConflict = sql2`(${sql2.raw(targetColumn)})${whereSql} do nothing`;
-        }
-        return this;
-      }
-      /**
-       * Adds an `on conflict do update` clause to the query.
-       *
-       * Calling this method will update the existing row that conflicts with the row proposed for insertion as its alternative action.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/insert#upserts-and-conflicts}
-       *
-       * @param config The `target`, `set` and `where` clauses.
-       *
-       * @example
-       * ```ts
-       * // Update the row if there's a conflict
-       * await db.insert(cars)
-       *   .values({ id: 1, brand: 'BMW' })
-       *   .onConflictDoUpdate({
-       *     target: cars.id,
-       *     set: { brand: 'Porsche' }
-       *   });
-       *
-       * // Upsert with 'where' clause
-       * await db.insert(cars)
-       *   .values({ id: 1, brand: 'BMW' })
-       *   .onConflictDoUpdate({
-       *     target: cars.id,
-       *     set: { brand: 'newBMW' },
-       *     targetWhere: sql`${cars.createdAt} > '2023-01-01'::date`,
-       *   });
-       * ```
-       */
-      onConflictDoUpdate(config2) {
-        if (config2.where && (config2.targetWhere || config2.setWhere)) {
-          throw new Error(
-            'You cannot use both "where" and "targetWhere"/"setWhere" at the same time - "where" is deprecated, use "targetWhere" or "setWhere" instead.'
-          );
-        }
-        const whereSql = config2.where ? sql2` where ${config2.where}` : void 0;
-        const targetWhereSql = config2.targetWhere ? sql2` where ${config2.targetWhere}` : void 0;
-        const setWhereSql = config2.setWhere ? sql2` where ${config2.setWhere}` : void 0;
-        const setSql = this.dialect.buildUpdateSet(this.config.table, mapUpdateSet2(this.config.table, config2.set));
-        let targetColumn = "";
-        targetColumn = Array.isArray(config2.target) ? config2.target.map((it) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config2.target));
-        this.config.onConflict = sql2`(${sql2.raw(targetColumn)})${targetWhereSql} do update set ${setSql}${whereSql}${setWhereSql}`;
-        return this;
-      }
-      /** @internal */
-      getSQL() {
-        return this.dialect.buildInsertQuery(this.config);
-      }
-      toSQL() {
-        const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
-        return rest;
-      }
-      /** @internal */
-      _prepare(name2) {
-        return tracer2.startActiveSpan("drizzle.prepareQuery", () => {
-          return this.session.prepareQuery(this.dialect.sqlToQuery(this.getSQL()), this.config.returning, name2, true, void 0, {
-            type: "insert",
-            tables: extractUsedTable2(this.config.table)
-          }, this.cacheConfig);
-        });
-      }
-      prepare(name2) {
-        return this._prepare(name2);
-      }
-      authToken;
-      /** @internal */
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      execute = (placeholderValues) => {
-        return tracer2.startActiveSpan("drizzle.operation", () => {
-          return this._prepare().execute(placeholderValues, this.authToken);
-        });
-      };
-      /** @internal */
-      getSelectedFields() {
-        return this.config.returningFields ? new Proxy(
-          this.config.returningFields,
-          new SelectionProxyHandler2({
-            alias: getTableName2(this.config.table),
-            sqlAliasedBehavior: "alias",
-            sqlBehavior: "error"
-          })
-        ) : void 0;
-      }
-      $dynamic() {
-        return this;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/refresh-materialized-view.js
-var PgRefreshMaterializedView2;
-var init_refresh_materialized_view2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/refresh-materialized-view.js"() {
-    init_entity2();
-    init_query_promise2();
-    init_tracing2();
-    PgRefreshMaterializedView2 = class extends QueryPromise2 {
-      constructor(view, session2, dialect) {
-        super();
-        this.session = session2;
-        this.dialect = dialect;
-        this.config = { view };
-      }
-      static [entityKind2] = "PgRefreshMaterializedView";
-      config;
-      concurrently() {
-        if (this.config.withNoData !== void 0) {
-          throw new Error("Cannot use concurrently and withNoData together");
-        }
-        this.config.concurrently = true;
-        return this;
-      }
-      withNoData() {
-        if (this.config.concurrently !== void 0) {
-          throw new Error("Cannot use concurrently and withNoData together");
-        }
-        this.config.withNoData = true;
-        return this;
-      }
-      /** @internal */
-      getSQL() {
-        return this.dialect.buildRefreshMaterializedViewQuery(this.config);
-      }
-      toSQL() {
-        const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
-        return rest;
-      }
-      /** @internal */
-      _prepare(name2) {
-        return tracer2.startActiveSpan("drizzle.prepareQuery", () => {
-          return this.session.prepareQuery(this.dialect.sqlToQuery(this.getSQL()), void 0, name2, true);
-        });
-      }
-      prepare(name2) {
-        return this._prepare(name2);
-      }
-      authToken;
-      /** @internal */
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      execute = (placeholderValues) => {
-        return tracer2.startActiveSpan("drizzle.operation", () => {
-          return this._prepare().execute(placeholderValues, this.authToken);
-        });
-      };
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.types.js
-var init_select_types2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/select.types.js"() {
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/update.js
-var PgUpdateBuilder2, PgUpdateBase2;
-var init_update2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/update.js"() {
-    init_entity2();
-    init_table4();
-    init_query_promise2();
-    init_selection_proxy2();
-    init_sql3();
-    init_subquery3();
-    init_table3();
-    init_utils5();
-    init_view_common3();
-    init_utils10();
-    PgUpdateBuilder2 = class {
-      constructor(table, session2, dialect, withList) {
-        this.table = table;
-        this.session = session2;
-        this.dialect = dialect;
-        this.withList = withList;
-      }
-      static [entityKind2] = "PgUpdateBuilder";
-      authToken;
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      set(values) {
-        return new PgUpdateBase2(
-          this.table,
-          mapUpdateSet2(this.table, values),
-          this.session,
-          this.dialect,
-          this.withList
-        ).setToken(this.authToken);
-      }
-    };
-    PgUpdateBase2 = class extends QueryPromise2 {
-      constructor(table, set2, session2, dialect, withList) {
-        super();
-        this.session = session2;
-        this.dialect = dialect;
-        this.config = { set: set2, table, withList, joins: [] };
-        this.tableName = getTableLikeName2(table);
-        this.joinsNotNullableMap = typeof this.tableName === "string" ? { [this.tableName]: true } : {};
-      }
-      static [entityKind2] = "PgUpdate";
-      config;
-      tableName;
-      joinsNotNullableMap;
-      cacheConfig;
-      from(source) {
-        const src = source;
-        const tableName = getTableLikeName2(src);
-        if (typeof tableName === "string") {
-          this.joinsNotNullableMap[tableName] = true;
-        }
-        this.config.from = src;
-        return this;
-      }
-      getTableLikeFields(table) {
-        if (is2(table, PgTable2)) {
-          return table[Table2.Symbol.Columns];
-        } else if (is2(table, Subquery2)) {
-          return table._.selectedFields;
-        }
-        return table[ViewBaseConfig2].selectedFields;
-      }
-      createJoin(joinType) {
-        return (table, on) => {
-          const tableName = getTableLikeName2(table);
-          if (typeof tableName === "string" && this.config.joins.some((join7) => join7.alias === tableName)) {
-            throw new Error(`Alias "${tableName}" is already used in this query`);
-          }
-          if (typeof on === "function") {
-            const from = this.config.from && !is2(this.config.from, SQL2) ? this.getTableLikeFields(this.config.from) : void 0;
-            on = on(
-              new Proxy(
-                this.config.table[Table2.Symbol.Columns],
-                new SelectionProxyHandler2({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
-              ),
-              from && new Proxy(
-                from,
-                new SelectionProxyHandler2({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
-              )
-            );
-          }
-          this.config.joins.push({ on, table, joinType, alias: tableName });
-          if (typeof tableName === "string") {
-            switch (joinType) {
-              case "left": {
-                this.joinsNotNullableMap[tableName] = false;
-                break;
-              }
-              case "right": {
-                this.joinsNotNullableMap = Object.fromEntries(
-                  Object.entries(this.joinsNotNullableMap).map(([key]) => [key, false])
-                );
-                this.joinsNotNullableMap[tableName] = true;
-                break;
-              }
-              case "inner": {
-                this.joinsNotNullableMap[tableName] = true;
-                break;
-              }
-              case "full": {
-                this.joinsNotNullableMap = Object.fromEntries(
-                  Object.entries(this.joinsNotNullableMap).map(([key]) => [key, false])
-                );
-                this.joinsNotNullableMap[tableName] = false;
-                break;
-              }
-            }
-          }
-          return this;
-        };
-      }
-      leftJoin = this.createJoin("left");
-      rightJoin = this.createJoin("right");
-      innerJoin = this.createJoin("inner");
-      fullJoin = this.createJoin("full");
-      /**
-       * Adds a 'where' clause to the query.
-       *
-       * Calling this method will update only those rows that fulfill a specified condition.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/update}
-       *
-       * @param where the 'where' clause.
-       *
-       * @example
-       * You can use conditional operators and `sql function` to filter the rows to be updated.
-       *
-       * ```ts
-       * // Update all cars with green color
-       * await db.update(cars).set({ color: 'red' })
-       *   .where(eq(cars.color, 'green'));
-       * // or
-       * await db.update(cars).set({ color: 'red' })
-       *   .where(sql`${cars.color} = 'green'`)
-       * ```
-       *
-       * You can logically combine conditional operators with `and()` and `or()` operators:
-       *
-       * ```ts
-       * // Update all BMW cars with a green color
-       * await db.update(cars).set({ color: 'red' })
-       *   .where(and(eq(cars.color, 'green'), eq(cars.brand, 'BMW')));
-       *
-       * // Update all cars with the green or blue color
-       * await db.update(cars).set({ color: 'red' })
-       *   .where(or(eq(cars.color, 'green'), eq(cars.color, 'blue')));
-       * ```
-       */
-      where(where) {
-        this.config.where = where;
-        return this;
-      }
-      returning(fields) {
-        if (!fields) {
-          fields = Object.assign({}, this.config.table[Table2.Symbol.Columns]);
-          if (this.config.from) {
-            const tableName = getTableLikeName2(this.config.from);
-            if (typeof tableName === "string" && this.config.from && !is2(this.config.from, SQL2)) {
-              const fromFields = this.getTableLikeFields(this.config.from);
-              fields[tableName] = fromFields;
-            }
-            for (const join7 of this.config.joins) {
-              const tableName2 = getTableLikeName2(join7.table);
-              if (typeof tableName2 === "string" && !is2(join7.table, SQL2)) {
-                const fromFields = this.getTableLikeFields(join7.table);
-                fields[tableName2] = fromFields;
-              }
-            }
-          }
-        }
-        this.config.returningFields = fields;
-        this.config.returning = orderSelectedFields2(fields);
-        return this;
-      }
-      /** @internal */
-      getSQL() {
-        return this.dialect.buildUpdateQuery(this.config);
-      }
-      toSQL() {
-        const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
-        return rest;
-      }
-      /** @internal */
-      _prepare(name2) {
-        const query = this.session.prepareQuery(this.dialect.sqlToQuery(this.getSQL()), this.config.returning, name2, true, void 0, {
-          type: "insert",
-          tables: extractUsedTable2(this.config.table)
-        }, this.cacheConfig);
-        query.joinsNotNullableMap = this.joinsNotNullableMap;
-        return query;
-      }
-      prepare(name2) {
-        return this._prepare(name2);
-      }
-      authToken;
-      /** @internal */
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      execute = (placeholderValues) => {
-        return this._prepare().execute(placeholderValues, this.authToken);
-      };
-      /** @internal */
-      getSelectedFields() {
-        return this.config.returningFields ? new Proxy(
-          this.config.returningFields,
-          new SelectionProxyHandler2({
-            alias: getTableName2(this.config.table),
-            sqlAliasedBehavior: "alias",
-            sqlBehavior: "error"
-          })
-        ) : void 0;
-      }
-      $dynamic() {
-        return this;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/index.js
-var init_query_builders2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/index.js"() {
-    init_delete2();
-    init_insert2();
-    init_query_builder4();
-    init_refresh_materialized_view2();
-    init_select4();
-    init_select_types2();
-    init_update2();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/count.js
-var PgCountBuilder2;
-var init_count2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/count.js"() {
-    init_entity2();
-    init_sql3();
-    PgCountBuilder2 = class _PgCountBuilder extends SQL2 {
-      constructor(params) {
-        super(_PgCountBuilder.buildEmbeddedCount(params.source, params.filters).queryChunks);
-        this.params = params;
-        this.mapWith(Number);
-        this.session = params.session;
-        this.sql = _PgCountBuilder.buildCount(
-          params.source,
-          params.filters
-        );
-      }
-      sql;
-      token;
-      static [entityKind2] = "PgCountBuilder";
-      [Symbol.toStringTag] = "PgCountBuilder";
-      session;
-      static buildEmbeddedCount(source, filters) {
-        return sql2`(select count(*) from ${source}${sql2.raw(" where ").if(filters)}${filters})`;
-      }
-      static buildCount(source, filters) {
-        return sql2`select count(*) as count from ${source}${sql2.raw(" where ").if(filters)}${filters};`;
-      }
-      /** @intrnal */
-      setToken(token) {
-        this.token = token;
-        return this;
-      }
-      then(onfulfilled, onrejected) {
-        return Promise.resolve(this.session.count(this.sql, this.token)).then(
-          onfulfilled,
-          onrejected
-        );
-      }
-      catch(onRejected) {
-        return this.then(void 0, onRejected);
-      }
-      finally(onFinally) {
-        return this.then(
-          (value) => {
-            onFinally?.();
-            return value;
-          },
-          (reason) => {
-            onFinally?.();
-            throw reason;
-          }
-        );
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query.js
-var RelationalQueryBuilder2, PgRelationalQuery2;
-var init_query2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/query.js"() {
-    init_entity2();
-    init_query_promise2();
-    init_relations2();
-    init_tracing2();
-    RelationalQueryBuilder2 = class {
-      constructor(fullSchema, schema, tableNamesMap, table, tableConfig, dialect, session2) {
-        this.fullSchema = fullSchema;
-        this.schema = schema;
-        this.tableNamesMap = tableNamesMap;
-        this.table = table;
-        this.tableConfig = tableConfig;
-        this.dialect = dialect;
-        this.session = session2;
-      }
-      static [entityKind2] = "PgRelationalQueryBuilder";
-      findMany(config2) {
-        return new PgRelationalQuery2(
-          this.fullSchema,
-          this.schema,
-          this.tableNamesMap,
-          this.table,
-          this.tableConfig,
-          this.dialect,
-          this.session,
-          config2 ? config2 : {},
-          "many"
-        );
-      }
-      findFirst(config2) {
-        return new PgRelationalQuery2(
-          this.fullSchema,
-          this.schema,
-          this.tableNamesMap,
-          this.table,
-          this.tableConfig,
-          this.dialect,
-          this.session,
-          config2 ? { ...config2, limit: 1 } : { limit: 1 },
-          "first"
-        );
-      }
-    };
-    PgRelationalQuery2 = class extends QueryPromise2 {
-      constructor(fullSchema, schema, tableNamesMap, table, tableConfig, dialect, session2, config2, mode) {
-        super();
-        this.fullSchema = fullSchema;
-        this.schema = schema;
-        this.tableNamesMap = tableNamesMap;
-        this.table = table;
-        this.tableConfig = tableConfig;
-        this.dialect = dialect;
-        this.session = session2;
-        this.config = config2;
-        this.mode = mode;
-      }
-      static [entityKind2] = "PgRelationalQuery";
-      /** @internal */
-      _prepare(name2) {
-        return tracer2.startActiveSpan("drizzle.prepareQuery", () => {
-          const { query, builtQuery } = this._toSQL();
-          return this.session.prepareQuery(
-            builtQuery,
-            void 0,
-            name2,
-            true,
-            (rawRows, mapColumnValue) => {
-              const rows = rawRows.map(
-                (row) => mapRelationalRow2(this.schema, this.tableConfig, row, query.selection, mapColumnValue)
-              );
-              if (this.mode === "first") {
-                return rows[0];
-              }
-              return rows;
-            }
-          );
-        });
-      }
-      prepare(name2) {
-        return this._prepare(name2);
-      }
-      _getQuery() {
-        return this.dialect.buildRelationalQueryWithoutPK({
-          fullSchema: this.fullSchema,
-          schema: this.schema,
-          tableNamesMap: this.tableNamesMap,
-          table: this.table,
-          tableConfig: this.tableConfig,
-          queryConfig: this.config,
-          tableAlias: this.tableConfig.tsName
-        });
-      }
-      /** @internal */
-      getSQL() {
-        return this._getQuery().sql;
-      }
-      _toSQL() {
-        const query = this._getQuery();
-        const builtQuery = this.dialect.sqlToQuery(query.sql);
-        return { query, builtQuery };
-      }
-      toSQL() {
-        return this._toSQL().builtQuery;
-      }
-      authToken;
-      /** @internal */
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      execute() {
-        return tracer2.startActiveSpan("drizzle.operation", () => {
-          return this._prepare().execute(void 0, this.authToken);
-        });
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/raw.js
-var PgRaw2;
-var init_raw2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/raw.js"() {
-    init_entity2();
-    init_query_promise2();
-    PgRaw2 = class extends QueryPromise2 {
-      constructor(execute, sql4, query, mapBatchResult) {
-        super();
-        this.execute = execute;
-        this.sql = sql4;
-        this.query = query;
-        this.mapBatchResult = mapBatchResult;
-      }
-      static [entityKind2] = "PgRaw";
-      /** @internal */
-      getSQL() {
-        return this.sql;
-      }
-      getQuery() {
-        return this.query;
-      }
-      mapResult(result, isFromBatch) {
-        return isFromBatch ? this.mapBatchResult(result) : result;
-      }
-      _prepare() {
-        return this;
-      }
-      /** @internal */
-      isResponseInArrayMode() {
-        return false;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/db.js
-var PgDatabase2;
-var init_db2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/db.js"() {
-    init_entity2();
-    init_query_builders2();
-    init_selection_proxy2();
-    init_sql3();
-    init_subquery3();
-    init_count2();
-    init_query2();
-    init_raw2();
-    init_refresh_materialized_view2();
-    PgDatabase2 = class {
-      constructor(dialect, session2, schema) {
-        this.dialect = dialect;
-        this.session = session2;
-        this._ = schema ? {
-          schema: schema.schema,
-          fullSchema: schema.fullSchema,
-          tableNamesMap: schema.tableNamesMap,
-          session: session2
-        } : {
-          schema: void 0,
-          fullSchema: {},
-          tableNamesMap: {},
-          session: session2
-        };
-        this.query = {};
-        if (this._.schema) {
-          for (const [tableName, columns] of Object.entries(this._.schema)) {
-            this.query[tableName] = new RelationalQueryBuilder2(
-              schema.fullSchema,
-              this._.schema,
-              this._.tableNamesMap,
-              schema.fullSchema[tableName],
-              columns,
-              dialect,
-              session2
-            );
-          }
-        }
-        this.$cache = { invalidate: async (_params) => {
-        } };
-      }
-      static [entityKind2] = "PgDatabase";
-      query;
-      /**
-       * Creates a subquery that defines a temporary named result set as a CTE.
-       *
-       * It is useful for breaking down complex queries into simpler parts and for reusing the result set in subsequent parts of the query.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/select#with-clause}
-       *
-       * @param alias The alias for the subquery.
-       *
-       * Failure to provide an alias will result in a DrizzleTypeError, preventing the subquery from being referenced in other queries.
-       *
-       * @example
-       *
-       * ```ts
-       * // Create a subquery with alias 'sq' and use it in the select query
-       * const sq = db.$with('sq').as(db.select().from(users).where(eq(users.id, 42)));
-       *
-       * const result = await db.with(sq).select().from(sq);
-       * ```
-       *
-       * To select arbitrary SQL values as fields in a CTE and reference them in other CTEs or in the main query, you need to add aliases to them:
-       *
-       * ```ts
-       * // Select an arbitrary SQL value as a field in a CTE and reference it in the main query
-       * const sq = db.$with('sq').as(db.select({
-       *   name: sql<string>`upper(${users.name})`.as('name'),
-       * })
-       * .from(users));
-       *
-       * const result = await db.with(sq).select({ name: sq.name }).from(sq);
-       * ```
-       */
-      $with = (alias, selection) => {
-        const self2 = this;
-        const as = (qb) => {
-          if (typeof qb === "function") {
-            qb = qb(new QueryBuilder2(self2.dialect));
-          }
-          return new Proxy(
-            new WithSubquery2(
-              qb.getSQL(),
-              selection ?? ("getSelectedFields" in qb ? qb.getSelectedFields() ?? {} : {}),
-              alias,
-              true
-            ),
-            new SelectionProxyHandler2({ alias, sqlAliasedBehavior: "alias", sqlBehavior: "error" })
-          );
-        };
-        return { as };
-      };
-      $count(source, filters) {
-        return new PgCountBuilder2({ source, filters, session: this.session });
-      }
-      $cache;
-      /**
-       * Incorporates a previously defined CTE (using `$with`) into the main query.
-       *
-       * This method allows the main query to reference a temporary named result set.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/select#with-clause}
-       *
-       * @param queries The CTEs to incorporate into the main query.
-       *
-       * @example
-       *
-       * ```ts
-       * // Define a subquery 'sq' as a CTE using $with
-       * const sq = db.$with('sq').as(db.select().from(users).where(eq(users.id, 42)));
-       *
-       * // Incorporate the CTE 'sq' into the main query and select from it
-       * const result = await db.with(sq).select().from(sq);
-       * ```
-       */
-      with(...queries) {
-        const self2 = this;
-        function select(fields) {
-          return new PgSelectBuilder2({
-            fields: fields ?? void 0,
-            session: self2.session,
-            dialect: self2.dialect,
-            withList: queries
-          });
-        }
-        function selectDistinct(fields) {
-          return new PgSelectBuilder2({
-            fields: fields ?? void 0,
-            session: self2.session,
-            dialect: self2.dialect,
-            withList: queries,
-            distinct: true
-          });
-        }
-        function selectDistinctOn(on, fields) {
-          return new PgSelectBuilder2({
-            fields: fields ?? void 0,
-            session: self2.session,
-            dialect: self2.dialect,
-            withList: queries,
-            distinct: { on }
-          });
-        }
-        function update(table) {
-          return new PgUpdateBuilder2(table, self2.session, self2.dialect, queries);
-        }
-        function insert(table) {
-          return new PgInsertBuilder2(table, self2.session, self2.dialect, queries);
-        }
-        function delete_(table) {
-          return new PgDeleteBase2(table, self2.session, self2.dialect, queries);
-        }
-        return { select, selectDistinct, selectDistinctOn, update, insert, delete: delete_ };
-      }
-      select(fields) {
-        return new PgSelectBuilder2({
-          fields: fields ?? void 0,
-          session: this.session,
-          dialect: this.dialect
-        });
-      }
-      selectDistinct(fields) {
-        return new PgSelectBuilder2({
-          fields: fields ?? void 0,
-          session: this.session,
-          dialect: this.dialect,
-          distinct: true
-        });
-      }
-      selectDistinctOn(on, fields) {
-        return new PgSelectBuilder2({
-          fields: fields ?? void 0,
-          session: this.session,
-          dialect: this.dialect,
-          distinct: { on }
-        });
-      }
-      /**
-       * Creates an update query.
-       *
-       * Calling this method without `.where()` clause will update all rows in a table. The `.where()` clause specifies which rows should be updated.
-       *
-       * Use `.set()` method to specify which values to update.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/update}
-       *
-       * @param table The table to update.
-       *
-       * @example
-       *
-       * ```ts
-       * // Update all rows in the 'cars' table
-       * await db.update(cars).set({ color: 'red' });
-       *
-       * // Update rows with filters and conditions
-       * await db.update(cars).set({ color: 'red' }).where(eq(cars.brand, 'BMW'));
-       *
-       * // Update with returning clause
-       * const updatedCar: Car[] = await db.update(cars)
-       *   .set({ color: 'red' })
-       *   .where(eq(cars.id, 1))
-       *   .returning();
-       * ```
-       */
-      update(table) {
-        return new PgUpdateBuilder2(table, this.session, this.dialect);
-      }
-      /**
-       * Creates an insert query.
-       *
-       * Calling this method will create new rows in a table. Use `.values()` method to specify which values to insert.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/insert}
-       *
-       * @param table The table to insert into.
-       *
-       * @example
-       *
-       * ```ts
-       * // Insert one row
-       * await db.insert(cars).values({ brand: 'BMW' });
-       *
-       * // Insert multiple rows
-       * await db.insert(cars).values([{ brand: 'BMW' }, { brand: 'Porsche' }]);
-       *
-       * // Insert with returning clause
-       * const insertedCar: Car[] = await db.insert(cars)
-       *   .values({ brand: 'BMW' })
-       *   .returning();
-       * ```
-       */
-      insert(table) {
-        return new PgInsertBuilder2(table, this.session, this.dialect);
-      }
-      /**
-       * Creates a delete query.
-       *
-       * Calling this method without `.where()` clause will delete all rows in a table. The `.where()` clause specifies which rows should be deleted.
-       *
-       * See docs: {@link https://orm.drizzle.team/docs/delete}
-       *
-       * @param table The table to delete from.
-       *
-       * @example
-       *
-       * ```ts
-       * // Delete all rows in the 'cars' table
-       * await db.delete(cars);
-       *
-       * // Delete rows with filters and conditions
-       * await db.delete(cars).where(eq(cars.color, 'green'));
-       *
-       * // Delete with returning clause
-       * const deletedCar: Car[] = await db.delete(cars)
-       *   .where(eq(cars.id, 1))
-       *   .returning();
-       * ```
-       */
-      delete(table) {
-        return new PgDeleteBase2(table, this.session, this.dialect);
-      }
-      refreshMaterializedView(view) {
-        return new PgRefreshMaterializedView2(view, this.session, this.dialect);
-      }
-      authToken;
-      execute(query) {
-        const sequel = typeof query === "string" ? sql2.raw(query) : query.getSQL();
-        const builtQuery = this.dialect.sqlToQuery(sequel);
-        const prepared = this.session.prepareQuery(
-          builtQuery,
-          void 0,
-          void 0,
-          false
-        );
-        return new PgRaw2(
-          () => prepared.execute(void 0, this.authToken),
-          sequel,
-          builtQuery,
-          (result) => prepared.mapResult(result, true)
-        );
-      }
-      transaction(transaction, config2) {
-        return this.session.transaction(transaction, config2);
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/roles.js
-var PgRole2;
-var init_roles2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/roles.js"() {
-    init_entity2();
-    PgRole2 = class {
-      constructor(name2, config2) {
-        this.name = name2;
-        if (config2) {
-          this.createDb = config2.createDb;
-          this.createRole = config2.createRole;
-          this.inherit = config2.inherit;
-        }
-      }
-      static [entityKind2] = "PgRole";
-      /** @internal */
-      _existing;
-      /** @internal */
-      createDb;
-      /** @internal */
-      createRole;
-      /** @internal */
-      inherit;
-      existing() {
-        this._existing = true;
-        return this;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/sequence.js
-function pgSequenceWithSchema2(name2, options, schema) {
-  return new PgSequence2(name2, options, schema);
-}
-var PgSequence2;
-var init_sequence2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/sequence.js"() {
-    init_entity2();
-    PgSequence2 = class {
-      constructor(seqName, seqOptions, schema) {
-        this.seqName = seqName;
-        this.seqOptions = seqOptions;
-        this.schema = schema;
-      }
-      static [entityKind2] = "PgSequence";
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/schema.js
-var PgSchema2;
-var init_schema4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/schema.js"() {
-    init_entity2();
-    init_sql3();
-    init_enum2();
-    init_sequence2();
-    init_table4();
-    init_view2();
-    PgSchema2 = class {
-      constructor(schemaName) {
-        this.schemaName = schemaName;
-      }
-      static [entityKind2] = "PgSchema";
-      table = (name2, columns, extraConfig) => {
-        return pgTableWithSchema2(name2, columns, extraConfig, this.schemaName);
-      };
-      view = (name2, columns) => {
-        return pgViewWithSchema2(name2, columns, this.schemaName);
-      };
-      materializedView = (name2, columns) => {
-        return pgMaterializedViewWithSchema2(name2, columns, this.schemaName);
-      };
-      enum(enumName, input) {
-        return Array.isArray(input) ? pgEnumWithSchema2(
-          enumName,
-          [...input],
-          this.schemaName
-        ) : pgEnumObjectWithSchema2(enumName, input, this.schemaName);
-      }
-      sequence = (name2, options) => {
-        return pgSequenceWithSchema2(name2, options, this.schemaName);
-      };
-      getSQL() {
-        return new SQL2([sql2.identifier(this.schemaName)]);
-      }
-      shouldOmitSQLParens() {
-        return true;
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js
-async function hashQuery2(sql4, params) {
-  const dataToHash = `${sql4}-${JSON.stringify(params)}`;
-  const encoder = new TextEncoder();
-  const data = encoder.encode(dataToHash);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = [...new Uint8Array(hashBuffer)];
-  const hashHex = hashArray.map((b5) => b5.toString(16).padStart(2, "0")).join("");
-  return hashHex;
-}
-var Cache2, NoopCache2;
-var init_cache2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js"() {
-    init_entity2();
-    Cache2 = class {
-      static [entityKind2] = "Cache";
-    };
-    NoopCache2 = class extends Cache2 {
-      strategy() {
-        return "all";
-      }
-      static [entityKind2] = "NoopCache";
-      async get(_key2) {
-        return void 0;
-      }
-      async put(_hashedQuery, _response, _tables, _config) {
-      }
-      async onMutate(_params) {
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/session.js
-var PgPreparedQuery2, PgSession2, PgTransaction2;
-var init_session3 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/session.js"() {
-    init_cache2();
-    init_entity2();
-    init_errors5();
-    init_sql4();
-    init_tracing2();
-    init_db2();
-    PgPreparedQuery2 = class {
-      constructor(query, cache5, queryMetadata, cacheConfig) {
-        this.query = query;
-        this.cache = cache5;
-        this.queryMetadata = queryMetadata;
-        this.cacheConfig = cacheConfig;
-        if (cache5 && cache5.strategy() === "all" && cacheConfig === void 0) {
-          this.cacheConfig = { enable: true, autoInvalidate: true };
-        }
-        if (!this.cacheConfig?.enable) {
-          this.cacheConfig = void 0;
-        }
-      }
-      authToken;
-      getQuery() {
-        return this.query;
-      }
-      mapResult(response, _isFromBatch) {
-        return response;
-      }
-      /** @internal */
-      setToken(token) {
-        this.authToken = token;
-        return this;
-      }
-      static [entityKind2] = "PgPreparedQuery";
-      /** @internal */
-      joinsNotNullableMap;
-      /** @internal */
-      async queryWithCache(queryString, params, query) {
-        if (this.cache === void 0 || is2(this.cache, NoopCache2) || this.queryMetadata === void 0) {
-          try {
-            return await query();
-          } catch (e5) {
-            throw new DrizzleQueryError2(queryString, params, e5);
-          }
-        }
-        if (this.cacheConfig && !this.cacheConfig.enable) {
-          try {
-            return await query();
-          } catch (e5) {
-            throw new DrizzleQueryError2(queryString, params, e5);
-          }
-        }
-        if ((this.queryMetadata.type === "insert" || this.queryMetadata.type === "update" || this.queryMetadata.type === "delete") && this.queryMetadata.tables.length > 0) {
-          try {
-            const [res] = await Promise.all([
-              query(),
-              this.cache.onMutate({ tables: this.queryMetadata.tables })
-            ]);
-            return res;
-          } catch (e5) {
-            throw new DrizzleQueryError2(queryString, params, e5);
-          }
-        }
-        if (!this.cacheConfig) {
-          try {
-            return await query();
-          } catch (e5) {
-            throw new DrizzleQueryError2(queryString, params, e5);
-          }
-        }
-        if (this.queryMetadata.type === "select") {
-          const fromCache = await this.cache.get(
-            this.cacheConfig.tag ?? await hashQuery2(queryString, params),
-            this.queryMetadata.tables,
-            this.cacheConfig.tag !== void 0,
-            this.cacheConfig.autoInvalidate
-          );
-          if (fromCache === void 0) {
-            let result;
-            try {
-              result = await query();
-            } catch (e5) {
-              throw new DrizzleQueryError2(queryString, params, e5);
-            }
-            await this.cache.put(
-              this.cacheConfig.tag ?? await hashQuery2(queryString, params),
-              result,
-              // make sure we send tables that were used in a query only if user wants to invalidate it on each write
-              this.cacheConfig.autoInvalidate ? this.queryMetadata.tables : [],
-              this.cacheConfig.tag !== void 0,
-              this.cacheConfig.config
-            );
-            return result;
-          }
-          return fromCache;
-        }
-        try {
-          return await query();
-        } catch (e5) {
-          throw new DrizzleQueryError2(queryString, params, e5);
-        }
-      }
-    };
-    PgSession2 = class {
-      constructor(dialect) {
-        this.dialect = dialect;
-      }
-      static [entityKind2] = "PgSession";
-      /** @internal */
-      execute(query, token) {
-        return tracer2.startActiveSpan("drizzle.operation", () => {
-          const prepared = tracer2.startActiveSpan("drizzle.prepareQuery", () => {
-            return this.prepareQuery(
-              this.dialect.sqlToQuery(query),
-              void 0,
-              void 0,
-              false
-            );
-          });
-          return prepared.setToken(token).execute(void 0, token);
-        });
-      }
-      all(query) {
-        return this.prepareQuery(
-          this.dialect.sqlToQuery(query),
-          void 0,
-          void 0,
-          false
-        ).all();
-      }
-      /** @internal */
-      async count(sql22, token) {
-        const res = await this.execute(sql22, token);
-        return Number(
-          res[0]["count"]
-        );
-      }
-    };
-    PgTransaction2 = class extends PgDatabase2 {
-      constructor(dialect, session2, schema, nestedIndex = 0) {
-        super(dialect, session2, schema);
-        this.schema = schema;
-        this.nestedIndex = nestedIndex;
-      }
-      static [entityKind2] = "PgTransaction";
-      rollback() {
-        throw new TransactionRollbackError2();
-      }
-      /** @internal */
-      getTransactionConfigSQL(config2) {
-        const chunks = [];
-        if (config2.isolationLevel) {
-          chunks.push(`isolation level ${config2.isolationLevel}`);
-        }
-        if (config2.accessMode) {
-          chunks.push(config2.accessMode);
-        }
-        if (typeof config2.deferrable === "boolean") {
-          chunks.push(config2.deferrable ? "deferrable" : "not deferrable");
-        }
-        return sql2.raw(chunks.join(" "));
-      }
-      setTransaction(config2) {
-        return this.session.execute(sql2`set transaction ${this.getTransactionConfigSQL(config2)}`);
-      }
-    };
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/subquery.js
-var init_subquery4 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/subquery.js"() {
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/index.js
-var init_utils11 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/utils/index.js"() {
-    init_array2();
-  }
-});
-
-// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/index.js
-var init_pg_core2 = __esm({
-  "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/index.js"() {
-    init_alias4();
-    init_checks4();
-    init_columns2();
-    init_db2();
-    init_dialect2();
-    init_foreign_keys2();
-    init_indexes2();
-    init_policies2();
-    init_primary_keys2();
-    init_query_builders2();
-    init_roles2();
-    init_schema4();
-    init_sequence2();
-    init_session3();
-    init_subquery4();
-    init_table4();
-    init_unique_constraint2();
-    init_utils10();
-    init_utils11();
-    init_view_common4();
-    init_view2();
   }
 });
 
@@ -129491,21 +121428,21 @@ var init_auth = __esm({
     init_dist();
     init_src2();
     init_src2();
-    init_drizzle_orm2();
-    init_pg_core2();
+    init_drizzle_orm();
+    init_pg_core();
     init_security();
     getResend = () => {
       const key = process.env.RESEND_API_KEY;
       if (!key) throw new Error("RESEND_API_KEY muhit o'zgaruvchisi o'rnatilmagan");
       return new Resend(key);
     };
-    emailVerifications = pgTable2("email_verifications", {
-      id: serial2("id").primaryKey(),
-      email: text2("email").notNull(),
-      otp: text2("otp").notNull(),
-      expiresAt: timestamp2("expires_at", { withTimezone: true }).notNull(),
-      verified: boolean8("verified").default(false),
-      createdAt: timestamp2("created_at", { withTimezone: true }).defaultNow()
+    emailVerifications = pgTable("email_verifications", {
+      id: serial("id").primaryKey(),
+      email: text("email").notNull(),
+      otp: text("otp").notNull(),
+      expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+      verified: boolean("verified").default(false),
+      createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
     });
     router3 = (0, import_express3.Router)();
     router3.post("/auth/send-otp", async (req, res) => {
@@ -129516,12 +121453,12 @@ var init_auth = __esm({
           return;
         }
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1e3);
-        const recent = await db.select().from(emailVerifications).where(and2(eq2(emailVerifications.email, email3), gt2(emailVerifications.createdAt, oneHourAgo)));
+        const recent = await db.select().from(emailVerifications).where(and(eq(emailVerifications.email, email3), gt(emailVerifications.createdAt, oneHourAgo)));
         if (recent.length >= 3) {
           res.status(429).json({ error: "1 soat ichida ko'pi bilan 3 ta kod yuboriladi. Keyinroq urinib ko'ring." });
           return;
         }
-        await db.delete(emailVerifications).where(and2(eq2(emailVerifications.email, email3), eq2(emailVerifications.verified, false)));
+        await db.delete(emailVerifications).where(and(eq(emailVerifications.email, email3), eq(emailVerifications.verified, false)));
         const otp = String(Math.floor(1e5 + Math.random() * 9e5));
         const expiresAt = new Date(Date.now() + 10 * 60 * 1e3);
         await db.insert(emailVerifications).values({ email: email3, otp, expiresAt });
@@ -129564,17 +121501,17 @@ var init_auth = __esm({
           return;
         }
         const now = /* @__PURE__ */ new Date();
-        const [record2] = await db.select().from(emailVerifications).where(and2(
-          eq2(emailVerifications.email, email3),
-          eq2(emailVerifications.otp, otp),
-          eq2(emailVerifications.verified, false),
-          gt2(emailVerifications.expiresAt, now)
+        const [record2] = await db.select().from(emailVerifications).where(and(
+          eq(emailVerifications.email, email3),
+          eq(emailVerifications.otp, otp),
+          eq(emailVerifications.verified, false),
+          gt(emailVerifications.expiresAt, now)
         ));
         if (!record2) {
           res.status(400).json({ error: "Kod noto'g'ri yoki muddati o'tgan" });
           return;
         }
-        await db.update(emailVerifications).set({ verified: true }).where(eq2(emailVerifications.id, record2.id));
+        await db.update(emailVerifications).set({ verified: true }).where(eq(emailVerifications.id, record2.id));
         res.json({ ok: true, verified: true });
       } catch (err) {
         req.log.error(err);
@@ -129603,9 +121540,9 @@ var init_auth = __esm({
           return;
         }
         const [existing, existingUsername, existingPhone] = await Promise.all([
-          db.select().from(usersTable).where(eq2(usersTable.email, email3)),
-          db.select().from(usersTable).where(eq2(usersTable.username, username)),
-          db.select().from(usersTable).where(eq2(usersTable.phone, normalizedPhone))
+          db.select().from(usersTable).where(eq(usersTable.email, email3)),
+          db.select().from(usersTable).where(eq(usersTable.username, username)),
+          db.select().from(usersTable).where(eq(usersTable.phone, normalizedPhone))
         ]);
         if (existing.length > 0) {
           res.status(409).json({ error: "Bu email allaqachon ro'yxatdan o'tgan" });
@@ -129654,10 +121591,10 @@ var init_auth = __esm({
           res.status(429).json({ error: `Juda ko'p urinish. ${mins} daqiqadan so'ng qayta urinib ko'ring.` });
           return;
         }
-        const users = await db.select().from(usersTable).where(eq2(usersTable.email, identifier));
+        const users = await db.select().from(usersTable).where(eq(usersTable.email, identifier));
         let user = users[0];
         if (!user) {
-          const byUsername = await db.select().from(usersTable).where(eq2(usersTable.username, identifier));
+          const byUsername = await db.select().from(usersTable).where(eq(usersTable.username, identifier));
           user = byUsername[0];
         }
         if (!user) {
@@ -129697,7 +121634,7 @@ var init_auth = __esm({
           res.status(401).json({ error: "Kirish talab qilinadi" });
           return;
         }
-        const [user] = await db.select().from(usersTable).where(eq2(usersTable.id, userId));
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
         if (!user) {
           res.status(401).json({ error: "Foydalanuvchi topilmadi" });
           return;
@@ -129734,7 +121671,7 @@ var init_auth = __esm({
           res.status(400).json({ error: "Hech narsa o'zgartirilmadi" });
           return;
         }
-        const [updated] = await db.update(usersTable).set(updates).where(eq2(usersTable.id, userId)).returning();
+        const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
         const { passwordHash: _, ...safeUser } = updated;
         res.json(safeUser);
       } catch (err) {
@@ -129758,7 +121695,7 @@ var init_auth = __esm({
           res.status(400).json({ error: "Yangi parol kamida 6 ta belgidan iborat bo'lishi kerak" });
           return;
         }
-        const [user] = await db.select().from(usersTable).where(eq2(usersTable.id, userId));
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
         if (!user?.passwordHash) {
           res.status(401).json({ error: "Foydalanuvchi topilmadi" });
           return;
@@ -129769,7 +121706,7 @@ var init_auth = __esm({
           return;
         }
         const newHash = await bcryptjs_default.hash(newPassword, 12);
-        await db.update(usersTable).set({ passwordHash: newHash }).where(eq2(usersTable.id, userId));
+        await db.update(usersTable).set({ passwordHash: newHash }).where(eq(usersTable.id, userId));
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);
@@ -129784,7 +121721,7 @@ var init_auth = __esm({
           return;
         }
         const { notifPrefs, privacySettings } = req.body;
-        const [existing] = await db.select().from(usersTable).where(eq2(usersTable.id, userId));
+        const [existing] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
         if (!existing) {
           res.status(404).json({ error: "Foydalanuvchi topilmadi" });
           return;
@@ -129800,7 +121737,7 @@ var init_auth = __esm({
           res.status(400).json({ error: "Hech narsa o'zgartirilmadi" });
           return;
         }
-        const [updated] = await db.update(usersTable).set(updates).where(eq2(usersTable.id, userId)).returning();
+        const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
         const { passwordHash: _, ...safeUser } = updated;
         res.json(safeUser);
       } catch (err) {
@@ -129820,7 +121757,7 @@ var init_auth = __esm({
           res.status(400).json({ error: "Parolni tasdiqlang" });
           return;
         }
-        const [user] = await db.select().from(usersTable).where(eq2(usersTable.id, userId));
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
         if (!user?.passwordHash) {
           res.status(404).json({ error: "Foydalanuvchi topilmadi" });
           return;
@@ -129830,7 +121767,7 @@ var init_auth = __esm({
           res.status(401).json({ error: "Parol noto'g'ri" });
           return;
         }
-        await db.update(usersTable).set({ status: "deleted", email: `deleted_${userId}_${user.email}`, username: `deleted_${userId}` }).where(eq2(usersTable.id, userId));
+        await db.update(usersTable).set({ status: "deleted", email: `deleted_${userId}_${user.email}`, username: `deleted_${userId}` }).where(eq(usersTable.id, userId));
         req.session.destroy(() => {
           res.json({ ok: true });
         });
@@ -129855,13 +121792,13 @@ function isWithinMidnightWindow(timezone, now = /* @__PURE__ */ new Date()) {
   return hour >= WINDOW_START_HOUR || hour < WINDOW_END_HOUR;
 }
 function midnightVisibilityCondition(timezone) {
-  if (isWithinMidnightWindow(timezone)) return eq2(postsTable.midnightOnly, postsTable.midnightOnly);
-  return eq2(postsTable.midnightOnly, false);
+  if (isWithinMidnightWindow(timezone)) return eq(postsTable.midnightOnly, postsTable.midnightOnly);
+  return eq(postsTable.midnightOnly, false);
 }
 async function midnightVisibilityConditionForReq(req) {
   const userId = req.session?.userId;
   if (!userId) return midnightVisibilityCondition(null);
-  const [u] = await db.select({ timezone: usersTable.timezone }).from(usersTable).where(eq2(usersTable.id, userId));
+  const [u] = await db.select({ timezone: usersTable.timezone }).from(usersTable).where(eq(usersTable.id, userId));
   return midnightVisibilityCondition(u?.timezone ?? null);
 }
 var DEFAULT_TZ, WINDOW_START_HOUR, WINDOW_END_HOUR;
@@ -129869,7 +121806,7 @@ var init_midnightVisibility = __esm({
   "src/lib/midnightVisibility.ts"() {
     "use strict";
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     DEFAULT_TZ = "UTC";
     WINDOW_START_HOUR = 23;
     WINDOW_END_HOUR = 5;
@@ -129879,10 +121816,10 @@ var init_midnightVisibility = __esm({
 // src/lib/userStats.ts
 async function getUserStats(userId, viewerId) {
   const [[followers], [following], [postsCount], followCheck] = await Promise.all([
-    db.select({ count: sql2`count(*)::int` }).from(followsTable).where(eq2(followsTable.followingId, userId)),
-    db.select({ count: sql2`count(*)::int` }).from(followsTable).where(eq2(followsTable.followerId, userId)),
-    db.select({ count: sql2`count(*)::int` }).from(postsTable).where(eq2(postsTable.authorId, userId)),
-    viewerId && viewerId !== userId ? db.select({ id: followsTable.followerId }).from(followsTable).where(and2(eq2(followsTable.followerId, viewerId), eq2(followsTable.followingId, userId))).limit(1) : Promise.resolve([])
+    db.select({ count: sql`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, userId)),
+    db.select({ count: sql`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, userId)),
+    db.select({ count: sql`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, userId)),
+    viewerId && viewerId !== userId ? db.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, userId))).limit(1) : Promise.resolve([])
   ]);
   return {
     followersCount: followers.count,
@@ -129896,10 +121833,10 @@ async function getUserStatsMap(userIds, viewerId) {
   if (userIds.length === 0) return statsMap;
   const uniqueIds = [...new Set(userIds)];
   const [followersRows, followingRows, postsRows, viewerFollows] = await Promise.all([
-    db.select({ id: followsTable.followingId, count: sql2`count(*)::int` }).from(followsTable).where(inArray2(followsTable.followingId, uniqueIds)).groupBy(followsTable.followingId),
-    db.select({ id: followsTable.followerId, count: sql2`count(*)::int` }).from(followsTable).where(inArray2(followsTable.followerId, uniqueIds)).groupBy(followsTable.followerId),
-    db.select({ id: postsTable.authorId, count: sql2`count(*)::int` }).from(postsTable).where(inArray2(postsTable.authorId, uniqueIds)).groupBy(postsTable.authorId),
-    viewerId ? db.select({ followingId: followsTable.followingId }).from(followsTable).where(and2(eq2(followsTable.followerId, viewerId), inArray2(followsTable.followingId, uniqueIds))) : Promise.resolve([])
+    db.select({ id: followsTable.followingId, count: sql`count(*)::int` }).from(followsTable).where(inArray(followsTable.followingId, uniqueIds)).groupBy(followsTable.followingId),
+    db.select({ id: followsTable.followerId, count: sql`count(*)::int` }).from(followsTable).where(inArray(followsTable.followerId, uniqueIds)).groupBy(followsTable.followerId),
+    db.select({ id: postsTable.authorId, count: sql`count(*)::int` }).from(postsTable).where(inArray(postsTable.authorId, uniqueIds)).groupBy(postsTable.authorId),
+    viewerId ? db.select({ followingId: followsTable.followingId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), inArray(followsTable.followingId, uniqueIds))) : Promise.resolve([])
   ]);
   const followersCountMap = new Map(followersRows.map((r5) => [r5.id, r5.count]));
   const followingCountMap = new Map(followingRows.map((r5) => [r5.id, r5.count]));
@@ -129919,7 +121856,7 @@ var init_userStats = __esm({
   "src/lib/userStats.ts"() {
     "use strict";
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
   }
 });
 
@@ -130740,9 +122677,9 @@ var init_chunk_2X4SLXT7 = __esm({
                 if (buffer.length > MAX_BUFFER_SIZE) {
                   throw new Error("Buffer size exceeded (1MB)");
                 }
-                for (const line3 of lines) {
-                  if (line3.startsWith("data: ")) {
-                    const data = line3.slice(6);
+                for (const line2 of lines) {
+                  if (line2.startsWith("data: ")) {
+                    const data = line2.slice(6);
                     req.onMessage?.(data);
                   }
                 }
@@ -131343,13 +123280,13 @@ var init_chunk_2X4SLXT7 = __esm({
     };
     HExpireAtCommand = class extends Command2 {
       constructor(cmd, opts) {
-        const [key, fields, timestamp3, option] = cmd;
+        const [key, fields, timestamp2, option] = cmd;
         const fieldArray = Array.isArray(fields) ? fields : [fields];
         super(
           [
             "hexpireat",
             key,
-            timestamp3,
+            timestamp2,
             ...option ? [option] : [],
             "FIELDS",
             fieldArray.length,
@@ -131393,13 +123330,13 @@ var init_chunk_2X4SLXT7 = __esm({
     };
     HPExpireAtCommand = class extends Command2 {
       constructor(cmd, opts) {
-        const [key, fields, timestamp3, option] = cmd;
+        const [key, fields, timestamp2, option] = cmd;
         const fieldArray = Array.isArray(fields) ? fields : [fields];
         super(
           [
             "hpexpireat",
             key,
-            timestamp3,
+            timestamp2,
             ...option ? [option] : [],
             "FIELDS",
             fieldArray.length,
@@ -135250,7 +127187,7 @@ function cacheDelPattern(pattern) {
   }
 }
 var UPSTASH_URL, UPSTASH_TOKEN, redis, store;
-var init_cache3 = __esm({
+var init_cache2 = __esm({
   "src/lib/cache.ts"() {
     "use strict";
     init_nodejs();
@@ -135368,10 +127305,10 @@ var init_users2 = __esm({
     import_express4 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_midnightVisibility();
     init_userStats();
-    init_cache3();
+    init_cache2();
     init_emailNotify();
     router4 = (0, import_express4.Router)();
     router4.get("/users", async (req, res) => {
@@ -135382,7 +127319,7 @@ var init_users2 = __esm({
         const viewerId = req.session?.userId;
         let query = db.select().from(usersTable);
         if (search) {
-          query = query.where(ilike2(usersTable.username, `%${search}%`));
+          query = query.where(ilike(usersTable.username, `%${search}%`));
         }
         const users = await query.limit(limit2).offset(offset);
         const statsMap = await getUserStatsMap(users.map((u) => u.id), viewerId);
@@ -135412,8 +127349,8 @@ var init_users2 = __esm({
     });
     router4.get("/users/stats/summary", async (req, res) => {
       try {
-        const [total] = await db.select({ count: sql2`count(*)::int` }).from(usersTable);
-        const [verified] = await db.select({ count: sql2`count(*)::int` }).from(usersTable).where(eq2(usersTable.isVerified, true));
+        const [total] = await db.select({ count: sql`count(*)::int` }).from(usersTable);
+        const [verified] = await db.select({ count: sql`count(*)::int` }).from(usersTable).where(eq(usersTable.isVerified, true));
         res.json({ totalUsers: total.count, newToday: Math.floor(total.count * 0.02), activeToday: Math.floor(total.count * 0.35), verifiedCount: verified.count });
       } catch (err) {
         req.log.error(err);
@@ -135426,13 +127363,13 @@ var init_users2 = __esm({
         const viewerId = req.session?.userId;
         const cacheKey = `profile:${id}:viewer:${viewerId ?? 0}`;
         const result = await cacheAside("users", cacheKey, async () => {
-          const [user] = await db.select().from(usersTable).where(eq2(usersTable.id, id));
+          const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
           if (!user) return null;
           const [[followers], [following], [postsCount], followCheck] = await Promise.all([
-            db.select({ count: sql2`count(*)::int` }).from(followsTable).where(eq2(followsTable.followingId, id)),
-            db.select({ count: sql2`count(*)::int` }).from(followsTable).where(eq2(followsTable.followerId, id)),
-            db.select({ count: sql2`count(*)::int` }).from(postsTable).where(eq2(postsTable.authorId, id)),
-            viewerId && viewerId !== id ? db.select({ id: followsTable.followerId }).from(followsTable).where(and2(eq2(followsTable.followerId, viewerId), eq2(followsTable.followingId, id))).limit(1) : Promise.resolve([])
+            db.select({ count: sql`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
+            db.select({ count: sql`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
+            db.select({ count: sql`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
+            viewerId && viewerId !== id ? db.select({ id: followsTable.followerId }).from(followsTable).where(and(eq(followsTable.followerId, viewerId), eq(followsTable.followingId, id))).limit(1) : Promise.resolve([])
           ]);
           const { passwordHash: _, ...safeUser } = user;
           return { ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: followCheck.length > 0 };
@@ -135453,7 +127390,7 @@ var init_users2 = __esm({
         const limit2 = Math.min(Number(req.query.limit) || 30, 100);
         const offset = Number(req.query.offset) || 0;
         const midnightCond = await midnightVisibilityConditionForReq(req);
-        const posts = await db.select().from(postsTable).where(and2(eq2(postsTable.authorId, id), midnightCond)).orderBy(desc2(postsTable.createdAt)).limit(limit2).offset(offset);
+        const posts = await db.select().from(postsTable).where(and(eq(postsTable.authorId, id), midnightCond)).orderBy(desc(postsTable.createdAt)).limit(limit2).offset(offset);
         res.json(posts);
       } catch (err) {
         req.log.error(err);
@@ -135464,15 +127401,15 @@ var init_users2 = __esm({
       try {
         const id = Number(req.params.id);
         const { displayName, bio, avatarUrl, coverUrl } = req.body;
-        const [user] = await db.update(usersTable).set({ displayName, bio, avatarUrl, coverUrl }).where(eq2(usersTable.id, id)).returning();
+        const [user] = await db.update(usersTable).set({ displayName, bio, avatarUrl, coverUrl }).where(eq(usersTable.id, id)).returning();
         if (!user) {
           res.status(404).json({ error: "Not found" });
           return;
         }
         const [[followers], [following], [postsCount]] = await Promise.all([
-          db.select({ count: sql2`count(*)::int` }).from(followsTable).where(eq2(followsTable.followingId, id)),
-          db.select({ count: sql2`count(*)::int` }).from(followsTable).where(eq2(followsTable.followerId, id)),
-          db.select({ count: sql2`count(*)::int` }).from(postsTable).where(eq2(postsTable.authorId, id))
+          db.select({ count: sql`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, id)),
+          db.select({ count: sql`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
+          db.select({ count: sql`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id))
         ]);
         const { passwordHash: _, ...safeUser } = user;
         res.json({ ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: false });
@@ -135489,21 +127426,21 @@ var init_users2 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const existing = await db.select().from(followsTable).where(and2(eq2(followsTable.followerId, followerId), eq2(followsTable.followingId, followingId)));
+        const existing = await db.select().from(followsTable).where(and(eq(followsTable.followerId, followerId), eq(followsTable.followingId, followingId)));
         const isFollowing = existing.length > 0;
         if (isFollowing) {
-          await db.delete(followsTable).where(and2(eq2(followsTable.followerId, followerId), eq2(followsTable.followingId, followingId)));
+          await db.delete(followsTable).where(and(eq(followsTable.followerId, followerId), eq(followsTable.followingId, followingId)));
         } else {
           await db.insert(followsTable).values({ followerId, followingId });
         }
-        const [followers] = await db.select({ count: sql2`count(*)::int` }).from(followsTable).where(eq2(followsTable.followingId, followingId));
+        const [followers] = await db.select({ count: sql`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, followingId));
         res.json({ following: !isFollowing, followersCount: followers.count });
         if (!isFollowing) {
           void (async () => {
             try {
               const [followedUser, followerUser] = await Promise.all([
-                db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq2(usersTable.id, followingId)).limit(1),
-                db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq2(usersTable.id, followerId)).limit(1)
+                db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, followingId)).limit(1),
+                db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, followerId)).limit(1)
               ]);
               if (followedUser[0]?.email) {
                 await notifyFollow({
@@ -135525,13 +127462,13 @@ var init_users2 = __esm({
       try {
         const id = Number(req.params.id);
         const viewerId = req.session?.userId;
-        const follows = await db.select().from(followsTable).where(eq2(followsTable.followingId, id));
+        const follows = await db.select().from(followsTable).where(eq(followsTable.followingId, id));
         const userIds = follows.map((f5) => f5.followerId);
         if (userIds.length === 0) {
           res.json([]);
           return;
         }
-        const users = await db.select().from(usersTable).where(inArray2(usersTable.id, userIds));
+        const users = await db.select().from(usersTable).where(inArray(usersTable.id, userIds));
         const statsMap = await getUserStatsMap(userIds, viewerId);
         const enriched = users.map((u) => {
           const { passwordHash: _, ...safeUser } = u;
@@ -135574,7 +127511,7 @@ var init_tslib = __esm({
 
 // ../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/utils/uuid.mjs
 var uuid42;
-var init_uuid3 = __esm({
+var init_uuid2 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/utils/uuid.mjs"() {
     uuid42 = function() {
       const { crypto: crypto5 } = globalThis;
@@ -135596,7 +127533,7 @@ function isAbortError(err) {
   "message" in err && String(err.message).includes("FetchRequestCanceledException"));
 }
 var castToError;
-var init_errors10 = __esm({
+var init_errors9 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/errors.mjs"() {
     castToError = (err) => {
       if (err instanceof Error)
@@ -135629,7 +127566,7 @@ var init_errors10 = __esm({
 var OpenAIError, APIError, APIUserAbortError, APIConnectionError, APIConnectionTimeoutError, BadRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError, InternalServerError, LengthFinishReasonError, ContentFilterFinishReasonError, InvalidWebhookSignatureError, OAuthError, SubjectTokenProviderError;
 var init_error = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/core/error.mjs"() {
-    init_errors10();
+    init_errors9();
     OpenAIError = class extends Error {
     };
     APIError = class _APIError extends OpenAIError {
@@ -135804,9 +127741,9 @@ var init_values = __esm({
       }
       return n3;
     };
-    safeJSON = (text3) => {
+    safeJSON = (text2) => {
       try {
-        return JSON.parse(text3);
+        return JSON.parse(text2);
       } catch (err) {
         return void 0;
       }
@@ -135824,7 +127761,7 @@ var init_sleep2 = __esm({
 
 // ../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/version.mjs
 var VERSION2;
-var init_version3 = __esm({
+var init_version2 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/version.mjs"() {
     VERSION2 = "6.42.0";
   }
@@ -135869,7 +127806,7 @@ function getBrowserInfo() {
 var isRunningInBrowser, getPlatformProperties, normalizeArch, normalizePlatform, _platformHeaders, getPlatformHeaders;
 var init_detect_platform = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/detect-platform.mjs"() {
-    init_version3();
+    init_version2();
     isRunningInBrowser = () => {
       return (
         // @ts-ignore
@@ -136092,7 +128029,7 @@ function maybe_map(val, fn) {
   return fn(val);
 }
 var has, hex_table, limit, encode;
-var init_utils12 = __esm({
+var init_utils8 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/qs/utils.mjs"() {
     init_formats();
     init_values();
@@ -136401,7 +128338,7 @@ function stringify(object2, opts = {}) {
 var array_prefix_generators, push_to_array, toISOString, defaults2, sentinel;
 var init_stringify = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/qs/stringify.mjs"() {
-    init_utils12();
+    init_utils8();
     init_formats();
     init_values();
     array_prefix_generators = {
@@ -136435,8 +128372,8 @@ var init_stringify = __esm({
       formatter: default_formatter,
       /** @deprecated */
       indices: false,
-      serializeDate(date8) {
-        return (toISOString ?? (toISOString = Function.prototype.call.bind(Date.prototype.toISOString)))(date8);
+      serializeDate(date7) {
+        return (toISOString ?? (toISOString = Function.prototype.call.bind(Date.prototype.toISOString)))(date7);
       },
       skipNulls: false,
       strictNullHandling: false
@@ -136449,7 +128386,7 @@ var init_stringify = __esm({
 function stringifyQuery(query) {
   return stringify(query, { arrayFormat: "brackets" });
 }
-var init_query3 = __esm({
+var init_query2 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/utils/query.mjs"() {
     init_stringify();
   }
@@ -136514,7 +128451,7 @@ function findDoubleNewlineIndex(buffer) {
   return -1;
 }
 var _LineDecoder_buffer, _LineDecoder_carriageReturnIndex, LineDecoder;
-var init_line3 = __esm({
+var init_line2 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/decoders/line.mjs"() {
     init_tslib();
     init_bytes();
@@ -136545,8 +128482,8 @@ var init_line3 = __esm({
             continue;
           }
           const endIndex = __classPrivateFieldGet(this, _LineDecoder_carriageReturnIndex, "f") !== null ? patternIndex.preceding - 1 : patternIndex.preceding;
-          const line3 = decodeUTF8(__classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(0, endIndex));
-          lines.push(line3);
+          const line2 = decodeUTF8(__classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(0, endIndex));
+          lines.push(line2);
           __classPrivateFieldSet(this, _LineDecoder_buffer, __classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(patternIndex.index), "f");
           __classPrivateFieldSet(this, _LineDecoder_carriageReturnIndex, null, "f");
         }
@@ -136657,14 +128594,14 @@ async function* _iterSSEMessages(response, controller) {
   const lineDecoder = new LineDecoder();
   const iter = ReadableStreamToAsyncIterable(response.body);
   for await (const sseChunk of iterSSEChunks(iter)) {
-    for (const line3 of lineDecoder.decode(sseChunk)) {
-      const sse = sseDecoder.decode(line3);
+    for (const line2 of lineDecoder.decode(sseChunk)) {
+      const sse = sseDecoder.decode(line2);
       if (sse)
         yield sse;
     }
   }
-  for (const line3 of lineDecoder.flush()) {
-    const sse = sseDecoder.decode(line3);
+  for (const line2 of lineDecoder.flush()) {
+    const sse = sseDecoder.decode(line2);
     if (sse)
       yield sse;
   }
@@ -136703,9 +128640,9 @@ var init_streaming = __esm({
     init_tslib();
     init_error();
     init_shims();
-    init_line3();
+    init_line2();
     init_shims();
-    init_errors10();
+    init_errors9();
     init_bytes();
     init_log();
     init_error();
@@ -136783,12 +128720,12 @@ var init_streaming = __esm({
           const lineDecoder = new LineDecoder();
           const iter = ReadableStreamToAsyncIterable(readableStream);
           for await (const chunk of iter) {
-            for (const line3 of lineDecoder.decode(chunk)) {
-              yield line3;
+            for (const line2 of lineDecoder.decode(chunk)) {
+              yield line2;
             }
           }
-          for (const line3 of lineDecoder.flush()) {
-            yield line3;
+          for (const line2 of lineDecoder.flush()) {
+            yield line2;
           }
         }
         async function* iterator() {
@@ -136798,11 +128735,11 @@ var init_streaming = __esm({
           consumed = true;
           let done = false;
           try {
-            for await (const line3 of iterLines()) {
+            for await (const line2 of iterLines()) {
               if (done)
                 continue;
-              if (line3)
-                yield JSON.parse(line3);
+              if (line2)
+                yield JSON.parse(line2);
             }
             done = true;
           } catch (e5) {
@@ -136879,11 +128816,11 @@ var init_streaming = __esm({
         this.data = [];
         this.chunks = [];
       }
-      decode(line3) {
-        if (line3.endsWith("\r")) {
-          line3 = line3.substring(0, line3.length - 1);
+      decode(line2) {
+        if (line2.endsWith("\r")) {
+          line2 = line2.substring(0, line2.length - 1);
         }
-        if (!line3) {
+        if (!line2) {
           if (!this.event && !this.data.length)
             return null;
           const sse = {
@@ -136896,11 +128833,11 @@ var init_streaming = __esm({
           this.chunks = [];
           return sse;
         }
-        this.chunks.push(line3);
-        if (line3.startsWith(":")) {
+        this.chunks.push(line2);
+        if (line2.startsWith(":")) {
           return null;
         }
-        let [fieldname, _, value] = partition2(line3, ":");
+        let [fieldname, _, value] = partition2(line2, ":");
         if (value.startsWith(" ")) {
           value = value.substring(1);
         }
@@ -136940,11 +128877,11 @@ async function defaultParseResponse(client, props) {
       if (contentLength === "0") {
         return void 0;
       }
-      const json4 = await response.json();
-      return addRequestID(json4, response);
+      const json3 = await response.json();
+      return addRequestID(json3, response);
     }
-    const text3 = await response.text();
-    return text3;
+    const text2 = await response.text();
+    return text2;
   })();
   loggerFor(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails({
     retryOfRequestLogID,
@@ -139476,7 +131413,7 @@ var init_invites = __esm({
 
 // ../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/roles.mjs
 var Roles;
-var init_roles3 = __esm({
+var init_roles2 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/roles.mjs"() {
     init_resource();
     init_pagination();
@@ -139875,7 +131812,7 @@ var init_usage = __esm({
 
 // ../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/groups/roles.mjs
 var Roles2;
-var init_roles4 = __esm({
+var init_roles3 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/groups/roles.mjs"() {
     init_resource();
     init_pagination();
@@ -140048,8 +131985,8 @@ var Groups;
 var init_groups2 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/groups/groups.mjs"() {
     init_resource();
-    init_roles4();
-    init_roles4();
+    init_roles3();
+    init_roles3();
     init_users3();
     init_users3();
     init_pagination();
@@ -140493,7 +132430,7 @@ var init_rate_limits = __esm({
 
 // ../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/projects/roles.mjs
 var Roles3;
-var init_roles5 = __esm({
+var init_roles4 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/projects/roles.mjs"() {
     init_resource();
     init_pagination();
@@ -140807,7 +132744,7 @@ var init_spend_alerts2 = __esm({
 
 // ../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/projects/groups/roles.mjs
 var Roles4;
-var init_roles6 = __esm({
+var init_roles5 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/projects/groups/roles.mjs"() {
     init_resource();
     init_pagination();
@@ -140898,8 +132835,8 @@ var Groups2;
 var init_groups3 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/projects/groups/groups.mjs"() {
     init_resource();
-    init_roles6();
-    init_roles6();
+    init_roles5();
+    init_roles5();
     init_pagination();
     init_path();
     Groups2 = class extends APIResource {
@@ -140988,7 +132925,7 @@ var init_groups3 = __esm({
 
 // ../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/projects/users/roles.mjs
 var Roles5;
-var init_roles7 = __esm({
+var init_roles6 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/projects/users/roles.mjs"() {
     init_resource();
     init_pagination();
@@ -141079,8 +133016,8 @@ var Users2;
 var init_users4 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/projects/users/users.mjs"() {
     init_resource();
-    init_roles7();
-    init_roles7();
+    init_roles6();
+    init_roles6();
     init_pagination();
     init_path();
     Users2 = class extends APIResource {
@@ -141207,8 +133144,8 @@ var init_projects = __esm({
     init_model_permissions();
     init_rate_limits();
     init_rate_limits();
-    init_roles5();
-    init_roles5();
+    init_roles4();
+    init_roles4();
     init_service_accounts();
     init_service_accounts();
     init_spend_alerts2();
@@ -141341,7 +133278,7 @@ var init_projects = __esm({
 
 // ../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/users/roles.mjs
 var Roles6;
-var init_roles8 = __esm({
+var init_roles7 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/users/roles.mjs"() {
     init_resource();
     init_pagination();
@@ -141429,8 +133366,8 @@ var Users3;
 var init_users5 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/admin/organization/users/users.mjs"() {
     init_resource();
-    init_roles8();
-    init_roles8();
+    init_roles7();
+    init_roles7();
     init_pagination();
     init_path();
     Users3 = class extends APIResource {
@@ -141523,8 +133460,8 @@ var init_organization = __esm({
     init_data_retention();
     init_invites();
     init_invites();
-    init_roles3();
-    init_roles3();
+    init_roles2();
+    init_roles2();
     init_spend_alerts();
     init_spend_alerts();
     init_usage();
@@ -142274,15 +134211,15 @@ var init_env = __esm({
 });
 
 // ../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/utils.mjs
-var init_utils13 = __esm({
+var init_utils9 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/utils.mjs"() {
     init_values();
     init_base64();
     init_env();
     init_log();
-    init_uuid3();
+    init_uuid2();
     init_sleep2();
-    init_query3();
+    init_query2();
   }
 });
 
@@ -142296,7 +134233,7 @@ var init_AssistantStream = __esm({
     init_streaming2();
     init_error2();
     init_EventStream();
-    init_utils13();
+    init_utils9();
     AssistantStream = class extends EventStream {
       constructor() {
         super(...arguments);
@@ -143392,7 +135329,7 @@ var Embeddings;
 var init_embeddings = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/resources/embeddings.mjs"() {
     init_resource();
-    init_utils13();
+    init_utils9();
     Embeddings = class extends APIResource {
       /**
        * Creates an embedding vector representing the input text.
@@ -144927,9 +136864,9 @@ var init_content3 = __esm({
       /**
        * Download a skill version zip bundle.
        */
-      retrieve(version5, params, options) {
+      retrieve(version4, params, options) {
         const { skill_id } = params;
-        return this._client.get(path`/skills/${skill_id}/versions/${version5}/content`, {
+        return this._client.get(path`/skills/${skill_id}/versions/${version4}/content`, {
           ...options,
           headers: buildHeaders([{ Accept: "application/binary" }, options?.headers]),
           __security: { bearerAuth: true },
@@ -144964,9 +136901,9 @@ var init_versions2 = __esm({
       /**
        * Get a specific skill version.
        */
-      retrieve(version5, params, options) {
+      retrieve(version4, params, options) {
         const { skill_id } = params;
-        return this._client.get(path`/skills/${skill_id}/versions/${version5}`, {
+        return this._client.get(path`/skills/${skill_id}/versions/${version4}`, {
           ...options,
           __security: { bearerAuth: true }
         });
@@ -144984,9 +136921,9 @@ var init_versions2 = __esm({
       /**
        * Delete a skill version.
        */
-      delete(version5, params, options) {
+      delete(version4, params, options) {
         const { skill_id } = params;
-        return this._client.delete(path`/skills/${skill_id}/versions/${version5}`, {
+        return this._client.delete(path`/skills/${skill_id}/versions/${version4}`, {
           ...options,
           __security: { bearerAuth: true }
         });
@@ -145332,7 +137269,7 @@ var init_files3 = __esm({
     init_resource();
     init_pagination();
     init_headers();
-    init_utils13();
+    init_utils9();
     init_path();
     Files3 = class extends APIResource {
       /**
@@ -145693,9 +137630,9 @@ var init_webhooks = __esm({
         __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_validateSecret).call(this, secret);
         const headersObj = buildHeaders([headers]).values;
         const signatureHeader = __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_getRequiredHeader).call(this, headersObj, "webhook-signature");
-        const timestamp3 = __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_getRequiredHeader).call(this, headersObj, "webhook-timestamp");
+        const timestamp2 = __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_getRequiredHeader).call(this, headersObj, "webhook-timestamp");
         const webhookId = __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_getRequiredHeader).call(this, headersObj, "webhook-id");
-        const timestampSeconds = parseInt(timestamp3, 10);
+        const timestampSeconds = parseInt(timestamp2, 10);
         if (isNaN(timestampSeconds)) {
           throw new InvalidWebhookSignatureError("Invalid webhook timestamp format");
         }
@@ -145708,7 +137645,7 @@ var init_webhooks = __esm({
         }
         const signatures = signatureHeader.split(" ").map((part) => part.startsWith("v1,") ? part.substring(3) : part);
         const decodedSecret = secret.startsWith("whsec_") ? Buffer.from(secret.replace("whsec_", ""), "base64") : Buffer.from(secret, "utf-8");
-        const signedPayload = webhookId ? `${webhookId}.${timestamp3}.${payload}` : `${timestamp3}.${payload}`;
+        const signedPayload = webhookId ? `${webhookId}.${timestamp2}.${payload}` : `${timestamp2}.${payload}`;
         const key = await crypto.subtle.importKey("raw", decodedSecret, { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
         for (const signature of signatures) {
           try {
@@ -145807,15 +137744,15 @@ var _OpenAI_instances, _a3, _OpenAI_encoder, _OpenAI_baseURLOverridden, WORKLOAD
 var init_client4 = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/client.mjs"() {
     init_tslib();
-    init_uuid3();
+    init_uuid2();
     init_values();
     init_sleep2();
-    init_errors10();
+    init_errors9();
     init_detect_platform();
     init_shims();
     init_request_options();
-    init_query3();
-    init_version3();
+    init_query2();
+    init_version2();
     init_error();
     init_pagination();
     init_workload_identity_auth();
@@ -145928,10 +137865,10 @@ var init_client4 = __esm({
         const customHeadersEnv = readEnv("OPENAI_CUSTOM_HEADERS");
         if (customHeadersEnv) {
           const parsed = {};
-          for (const line3 of customHeadersEnv.split("\n")) {
-            const colon = line3.indexOf(":");
+          for (const line2 of customHeadersEnv.split("\n")) {
+            const colon = line2.indexOf(":");
             if (colon >= 0) {
-              parsed[line3.substring(0, colon).trim()] = line3.substring(colon + 1).trim();
+              parsed[line2.substring(0, colon).trim()] = line2.substring(colon + 1).trim();
             }
           }
           options.defaultHeaders = buildHeaders([parsed, options.defaultHeaders]);
@@ -146447,7 +138384,7 @@ var init_azure = __esm({
   "../../node_modules/.pnpm/openai@6.42.0_ws@8.21.0_zod@3.25.76/node_modules/openai/azure.mjs"() {
     init_headers();
     init_error2();
-    init_utils13();
+    init_utils9();
     init_client4();
   }
 });
@@ -146458,7 +138395,7 @@ var init_bedrock = __esm({
     init_error2();
     init_client4();
     init_headers();
-    init_utils13();
+    init_utils9();
     init_ResponsesParser();
     init_resources();
   }
@@ -146597,7 +138534,7 @@ var init_image = __esm({
 });
 
 // ../../lib/integrations-openai-ai-server/src/batch/utils.ts
-var init_utils14 = __esm({
+var init_utils10 = __esm({
   "../../lib/integrations-openai-ai-server/src/batch/utils.ts"() {
     "use strict";
   }
@@ -146607,7 +138544,7 @@ var init_utils14 = __esm({
 var init_batch = __esm({
   "../../lib/integrations-openai-ai-server/src/batch/index.ts"() {
     "use strict";
-    init_utils14();
+    init_utils10();
   }
 });
 
@@ -146683,9 +138620,9 @@ async function initTFEngine() {
     throw e5;
   }
 }
-function tokenize(text3) {
+function tokenize(text2) {
   const vec = new Array(VOCAB_SIZE).fill(0);
-  const words = text3.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/);
+  const words = text2.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/);
   for (const w of words) {
     const idx = VOCAB[w];
     if (idx !== void 0) vec[idx] = Math.min(vec[idx] + 0.2, 1);
@@ -146712,8 +138649,8 @@ function mathForward(inputVec) {
   }
   return out;
 }
-async function tfScanContent(text3) {
-  const inputVec = tokenize(text3);
+async function tfScanContent(text2) {
+  const inputVec = tokenize(text2);
   const hasSignal = inputVec.some((v) => v > 0);
   if (!hasSignal) return { score: 0, categories: {}, engine: "tensorflow" };
   let preds;
@@ -146930,8 +138867,8 @@ var init_tfEngine = __esm({
 });
 
 // src/moderation/aiFilter.ts
-function rulesScan(text3) {
-  if (!text3 || text3.trim().length === 0) {
+function rulesScan(text2) {
+  if (!text2 || text2.trim().length === 0) {
     return { score: 0, categories: {}, verdict: "clean", autoBlock: false, topCategory: null };
   }
   const categories = {};
@@ -146940,7 +138877,7 @@ function rulesScan(text3) {
   for (const rule of RULES) {
     let matches = 0;
     for (const pattern of rule.patterns) {
-      const m3 = text3.match(pattern);
+      const m3 = text2.match(pattern);
       if (m3) matches += m3.length;
     }
     if (matches > 0) {
@@ -146960,9 +138897,9 @@ function rulesScan(text3) {
   const verdict = finalScore >= 0.7 ? "violation" : finalScore >= 0.35 ? "suspicious" : "clean";
   return { score: finalScore, categories, verdict, autoBlock: finalScore >= 0.85, topCategory };
 }
-async function openaiModerationScan(text3) {
+async function openaiModerationScan(text2) {
   try {
-    const res = await openai3.moderations.create({ input: text3.slice(0, 2e3) });
+    const res = await openai3.moderations.create({ input: text2.slice(0, 2e3) });
     const result = res.results[0];
     if (!result) return null;
     const CATEGORY_MAP = {
@@ -147005,16 +138942,16 @@ async function openaiModerationScan(text3) {
     return null;
   }
 }
-function scanContent(text3) {
-  return { ...rulesScan(text3), engine: "rules" };
+function scanContent(text2) {
+  return { ...rulesScan(text2), engine: "rules" };
 }
-async function scanContentAsync(text3) {
-  if (!text3 || text3.trim().length === 0) {
+async function scanContentAsync(text2) {
+  if (!text2 || text2.trim().length === 0) {
     return { score: 0, categories: {}, verdict: "clean", autoBlock: false, topCategory: null, engine: "rules" };
   }
   const [rulesResult, openaiResult] = await Promise.all([
-    Promise.resolve(rulesScan(text3)),
-    openaiModerationScan(text3)
+    Promise.resolve(rulesScan(text2)),
+    openaiModerationScan(text2)
   ]);
   if (openaiResult) {
     const mergedCats2 = { ...openaiResult.categories };
@@ -147037,7 +138974,7 @@ async function scanContentAsync(text3) {
   }
   let tfResult = null;
   try {
-    tfResult = await tfScanContent(text3);
+    tfResult = await tfScanContent(text2);
   } catch {
   }
   if (!tfResult) return { ...rulesResult, engine: "rules" };
@@ -147180,9 +139117,9 @@ function broadcastEvent(event) {
     }
   }
 }
-function preview(text3) {
-  if (!text3) return "";
-  return text3.slice(0, MAX_PREVIEW_LEN) + (text3.length > MAX_PREVIEW_LEN ? "\u2026" : "");
+function preview(text2) {
+  if (!text2) return "";
+  return text2.slice(0, MAX_PREVIEW_LEN) + (text2.length > MAX_PREVIEW_LEN ? "\u2026" : "");
 }
 async function applyAutopilotDecision(opts) {
   const { scan, authorId, contentType, contentId, contentText } = opts;
@@ -147198,16 +139135,16 @@ async function applyAutopilotDecision(opts) {
   if (authorId && (scan.verdict === "violation" || scan.autoBlock)) {
     try {
       const [user] = await db.select({
-        warningCount: sql2`warning_count`,
-        isBanned: sql2`is_banned`
-      }).from(usersTable).where(eq2(usersTable.id, authorId));
+        warningCount: sql`warning_count`,
+        isBanned: sql`is_banned`
+      }).from(usersTable).where(eq(usersTable.id, authorId));
       if (user && !user.isBanned) {
         const newWarningCount = (user.warningCount ?? 0) + 1;
         warningCount = newWarningCount;
         if (newWarningCount >= WARN_THRESHOLD) {
           isBanned2 = true;
           action = "banned";
-          await db.execute(sql2`
+          await db.execute(sql`
             UPDATE users SET
               warning_count = ${newWarningCount},
               is_banned = true,
@@ -147218,7 +139155,7 @@ async function applyAutopilotDecision(opts) {
           message = `Siz avtomatik tarzda bloklangansiz \u2014 qoidabuzarlik aniqlandi (${scan.topCategory ?? "qoidabuzarlik"}). Hisob qaydnomangiz o'chirildi.`;
         } else {
           action = "warned";
-          await db.execute(sql2`
+          await db.execute(sql`
             UPDATE users SET warning_count = ${newWarningCount} WHERE id = ${authorId}
           `);
           const remaining = WARN_THRESHOLD - newWarningCount;
@@ -147274,15 +139211,15 @@ async function countQuery(q2) {
 }
 async function getAutopilotStats() {
   const [total, violations, suspicious, autoBlocked, warned, bannedUsers, todayEvents] = await Promise.all([
-    countQuery(sql2`SELECT count(*)::int AS count FROM ai_moderation_events`),
-    countQuery(sql2`SELECT count(*)::int AS count FROM ai_moderation_events WHERE ai_verdict = 'violation'`),
-    countQuery(sql2`SELECT count(*)::int AS count FROM ai_moderation_events WHERE ai_verdict = 'suspicious'`),
-    countQuery(sql2`SELECT count(*)::int AS count FROM ai_moderation_events WHERE action_taken IN ('deleted','banned')`),
-    countQuery(sql2`SELECT count(*)::int AS count FROM ai_moderation_events WHERE action_taken = 'warned'`),
-    countQuery(sql2`SELECT count(*)::int AS count FROM users WHERE is_banned = true`),
-    countQuery(sql2`SELECT count(*)::int AS count FROM ai_moderation_events WHERE created_at >= now() - interval '24 hours'`)
+    countQuery(sql`SELECT count(*)::int AS count FROM ai_moderation_events`),
+    countQuery(sql`SELECT count(*)::int AS count FROM ai_moderation_events WHERE ai_verdict = 'violation'`),
+    countQuery(sql`SELECT count(*)::int AS count FROM ai_moderation_events WHERE ai_verdict = 'suspicious'`),
+    countQuery(sql`SELECT count(*)::int AS count FROM ai_moderation_events WHERE action_taken IN ('deleted','banned')`),
+    countQuery(sql`SELECT count(*)::int AS count FROM ai_moderation_events WHERE action_taken = 'warned'`),
+    countQuery(sql`SELECT count(*)::int AS count FROM users WHERE is_banned = true`),
+    countQuery(sql`SELECT count(*)::int AS count FROM ai_moderation_events WHERE created_at >= now() - interval '24 hours'`)
   ]);
-  const recentResult = await db.execute(sql2`
+  const recentResult = await db.execute(sql`
     SELECT id, event_type, content_type, content_preview, author_id, ai_score, ai_verdict,
            ai_categories, action_taken, warning_count_after, engine, created_at
     FROM ai_moderation_events
@@ -147297,22 +139234,22 @@ var init_aiAutopilot = __esm({
     "use strict";
     init_src2();
     init_src2();
-    init_drizzle_orm2();
-    init_pg_core2();
-    aiModerationEventsTable = pgTable2("ai_moderation_events", {
-      id: serial2("id").primaryKey(),
-      eventType: text2("event_type").notNull(),
-      contentType: text2("content_type").notNull(),
-      contentId: integer4("content_id"),
-      contentPreview: text2("content_preview"),
-      authorId: integer4("author_id"),
-      aiScore: numeric2("ai_score", { precision: 4, scale: 2 }).notNull().default("0"),
-      aiCategories: jsonb2("ai_categories").notNull().default({}),
-      aiVerdict: text2("ai_verdict").notNull().default("clean"),
-      engine: text2("engine").notNull().default("hybrid"),
-      actionTaken: text2("action_taken").notNull().default("none"),
-      warningCountAfter: integer4("warning_count_after").notNull().default(0),
-      createdAt: timestamp2("created_at").notNull().defaultNow()
+    init_drizzle_orm();
+    init_pg_core();
+    aiModerationEventsTable = pgTable("ai_moderation_events", {
+      id: serial("id").primaryKey(),
+      eventType: text("event_type").notNull(),
+      contentType: text("content_type").notNull(),
+      contentId: integer("content_id"),
+      contentPreview: text("content_preview"),
+      authorId: integer("author_id"),
+      aiScore: numeric("ai_score", { precision: 4, scale: 2 }).notNull().default("0"),
+      aiCategories: jsonb("ai_categories").notNull().default({}),
+      aiVerdict: text("ai_verdict").notNull().default("clean"),
+      engine: text("engine").notNull().default("hybrid"),
+      actionTaken: text("action_taken").notNull().default("none"),
+      warningCountAfter: integer("warning_count_after").notNull().default(0),
+      createdAt: timestamp("created_at").notNull().defaultNow()
     });
     sseClients = /* @__PURE__ */ new Set();
     WARN_THRESHOLD = 3;
@@ -147326,7 +139263,7 @@ function todayDate() {
 }
 async function getOrCreateCoins(userId) {
   const existing = await db.query.userCoinsTable.findFirst({
-    where: eq2(userCoinsTable.userId, userId)
+    where: eq(userCoinsTable.userId, userId)
   });
   if (existing) return existing;
   const [created] = await db.insert(userCoinsTable).values({ userId }).returning();
@@ -147337,9 +139274,9 @@ async function checkAndGrantTitle(userId, totalEarned) {
   const newTitle = earned[earned.length - 1]?.title;
   if (!newTitle) return;
   const existing = await db.select().from(userTitlesTable).where(
-    and2(
-      eq2(userTitlesTable.userId, userId),
-      eq2(userTitlesTable.title, newTitle)
+    and(
+      eq(userTitlesTable.userId, userId),
+      eq(userTitlesTable.title, newTitle)
     )
   );
   if (existing.length === 0) {
@@ -147351,16 +139288,16 @@ async function trackQuestAction(userId, actionKey) {
     const questKeys = QUEST_ACTION_MAP[actionKey];
     if (!questKeys?.length) return;
     const today = todayDate();
-    const quests = await db.select().from(dailyQuestsTable).where(eq2(dailyQuestsTable.isActive, true));
+    const quests = await db.select().from(dailyQuestsTable).where(eq(dailyQuestsTable.isActive, true));
     let totalCoinsEarned = 0;
     for (const questKey of questKeys) {
       const quest = quests.find((q2) => q2.key === questKey);
       if (!quest) continue;
       const existing = await db.query.questProgressTable.findFirst({
-        where: and2(
-          eq2(questProgressTable.userId, userId),
-          eq2(questProgressTable.questKey, questKey),
-          eq2(questProgressTable.date, today)
+        where: and(
+          eq(questProgressTable.userId, userId),
+          eq(questProgressTable.questKey, questKey),
+          eq(questProgressTable.date, today)
         )
       });
       if (existing?.completedAt) continue;
@@ -147369,7 +139306,7 @@ async function trackQuestAction(userId, actionKey) {
       const completed = newProgress >= quest.target;
       const completedAt = completed ? /* @__PURE__ */ new Date() : null;
       if (existing) {
-        await db.update(questProgressTable).set({ progress: newProgress, completedAt }).where(eq2(questProgressTable.id, existing.id));
+        await db.update(questProgressTable).set({ progress: newProgress, completedAt }).where(eq(questProgressTable.id, existing.id));
       } else {
         await db.insert(questProgressTable).values({
           userId,
@@ -147387,7 +139324,7 @@ async function trackQuestAction(userId, actionKey) {
           balance: newBalance,
           totalEarned: newTotalEarned,
           updatedAt: /* @__PURE__ */ new Date()
-        }).where(eq2(userCoinsTable.userId, userId));
+        }).where(eq(userCoinsTable.userId, userId));
         totalCoinsEarned += quest.reward;
         await checkAndGrantTitle(userId, newTotalEarned);
       }
@@ -147401,7 +139338,7 @@ var init_trackQuest = __esm({
     "use strict";
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     QUEST_ACTION_MAP = {
       create_post: ["create_post", "write_post"],
       like_post: ["like_3", "like_posts"],
@@ -147454,7 +139391,7 @@ async function sendNotification(payload) {
   }
   let tokens = [];
   try {
-    tokens = await db.select({ token: pushTokensTable.token }).from(pushTokensTable).where(eq2(pushTokensTable.userId, userId));
+    tokens = await db.select({ token: pushTokensTable.token }).from(pushTokensTable).where(eq(pushTokensTable.userId, userId));
   } catch {
     return;
   }
@@ -147485,7 +139422,7 @@ async function sendNotification(payload) {
       }
     });
     for (const bad of toRemove) {
-      await db.delete(pushTokensTable).where(eq2(pushTokensTable.token, bad)).catch(() => {
+      await db.delete(pushTokensTable).where(eq(pushTokensTable.token, bad)).catch(() => {
       });
     }
   } catch (e5) {
@@ -147497,7 +139434,7 @@ var init_pushNotifications = __esm({
   "src/lib/pushNotifications.ts"() {
     "use strict";
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     messagingInstance = null;
   }
 });
@@ -147508,8 +139445,8 @@ async function batchEnrichPosts(posts, viewerId = 0) {
   const authorIds = [...new Set(posts.map((p3) => p3.authorId).filter(Boolean))];
   const postIds = posts.map((p3) => p3.id);
   const [authors, likedRows, statsMap] = await Promise.all([
-    authorIds.length > 0 ? db.select().from(usersTable).where(inArray2(usersTable.id, authorIds)) : Promise.resolve([]),
-    viewerId && postIds.length > 0 ? db.select({ postId: postLikesTable.postId }).from(postLikesTable).where(and2(inArray2(postLikesTable.postId, postIds), eq2(postLikesTable.userId, viewerId))) : Promise.resolve([]),
+    authorIds.length > 0 ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : Promise.resolve([]),
+    viewerId && postIds.length > 0 ? db.select({ postId: postLikesTable.postId }).from(postLikesTable).where(and(inArray(postLikesTable.postId, postIds), eq(postLikesTable.userId, viewerId))) : Promise.resolve([]),
     getUserStatsMap(authorIds, viewerId)
   ]);
   const authorMap = new Map(authors.map((a5) => [a5.id, a5]));
@@ -147557,12 +139494,12 @@ var init_posts2 = __esm({
     import_express5 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_src3();
     init_aiFilter();
     init_aiAutopilot();
     init_trackQuest();
-    init_cache3();
+    init_cache2();
     init_midnightVisibility();
     init_userStats();
     init_emailNotify();
@@ -147577,15 +139514,15 @@ var init_posts2 = __esm({
         const offset = Number(req.query.offset) || 0;
         const cacheKey = !viewerId && offset < 60 ? `list:${type ?? "all"}:${limit2}:${offset}` : null;
         const midnightCond = await midnightVisibilityConditionForReq(req);
-        const notExpired = sql2`(${postsTable.destructAt} IS NULL OR ${postsTable.destructAt} > NOW())`;
+        const notExpired = sql`(${postsTable.destructAt} IS NULL OR ${postsTable.destructAt} > NOW())`;
         const enriched = await cacheAside("posts", cacheKey ?? `__skip__${Date.now()}`, async () => {
           let posts;
           if (userId) {
-            posts = await db.select().from(postsTable).where(and2(eq2(postsTable.authorId, userId), midnightCond, notExpired)).orderBy(desc2(postsTable.createdAt)).limit(limit2).offset(offset);
+            posts = await db.select().from(postsTable).where(and(eq(postsTable.authorId, userId), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit2).offset(offset);
           } else if (type && type !== "all") {
-            posts = await db.select().from(postsTable).where(and2(eq2(postsTable.type, type), midnightCond, notExpired)).orderBy(desc2(postsTable.createdAt)).limit(limit2).offset(offset);
+            posts = await db.select().from(postsTable).where(and(eq(postsTable.type, type), midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit2).offset(offset);
           } else {
-            posts = await db.select().from(postsTable).where(and2(midnightCond, notExpired)).orderBy(desc2(postsTable.createdAt)).limit(limit2).offset(offset);
+            posts = await db.select().from(postsTable).where(and(midnightCond, notExpired)).orderBy(desc(postsTable.createdAt)).limit(limit2).offset(offset);
           }
           return batchEnrichPosts(posts, viewerId);
         }, cacheKey ? 15 : 0);
@@ -147706,7 +139643,7 @@ var init_posts2 = __esm({
         const userId = req.session?.userId;
         const rows = (r5) => r5?.rows ?? [];
         const [statsRes, followerRes, userAvgRes] = await Promise.all([
-          db.execute(sql2`
+          db.execute(sql`
         SELECT
           coalesce(avg(likes_count), 0)::float as avg_likes,
           coalesce(avg(comments_count), 0)::float as avg_comments,
@@ -147717,8 +139654,8 @@ var init_posts2 = __esm({
           coalesce(avg(likes_count) filter (where hot_take = true), null)::float as avg_likes_hot
         FROM posts
       `),
-          userId ? db.select({ count: sql2`count(*)::int` }).from(followsTable).where(eq2(followsTable.followingId, userId)) : Promise.resolve([{ count: 0 }]),
-          userId ? db.select({ avgLikes: sql2`coalesce(avg(${postsTable.likesCount}), 0)::float`, total: sql2`count(*)::int` }).from(postsTable).where(eq2(postsTable.authorId, userId)) : Promise.resolve([{ avgLikes: 0, total: 0 }])
+          userId ? db.select({ count: sql`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, userId)) : Promise.resolve([{ count: 0 }]),
+          userId ? db.select({ avgLikes: sql`coalesce(avg(${postsTable.likesCount}), 0)::float`, total: sql`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, userId)) : Promise.resolve([{ avgLikes: 0, total: 0 }])
         ]);
         const stats = rows(statsRes)[0] ?? {};
         const overallAvgLikes = Number(stats.avg_likes) || 0;
@@ -147953,7 +139890,7 @@ var init_posts2 = __esm({
           try {
             const scan = await scanContentAsync(content ?? "");
             if (scan.verdict === "clean") return;
-            await db.update(postsTable).set({ isFlagged: true }).where(eq2(postsTable.id, post.id)).catch(() => {
+            await db.update(postsTable).set({ isFlagged: true }).where(eq(postsTable.id, post.id)).catch(() => {
             });
             await db.insert(moderationQueueTable).values({
               contentType: "post",
@@ -147976,7 +139913,7 @@ var init_posts2 = __esm({
               contentText: content ?? ""
             });
             if (decision.isBanned || scan.autoBlock) {
-              await db.delete(postsTable).where(eq2(postsTable.id, post.id)).catch(() => {
+              await db.delete(postsTable).where(eq(postsTable.id, post.id)).catch(() => {
               });
             }
           } catch {
@@ -147991,7 +139928,7 @@ var init_posts2 = __esm({
       try {
         const seriesName = decodeURIComponent(req.params.name);
         const viewerId = req.session?.userId;
-        const posts = await db.select().from(postsTable).where(and2(eq2(postsTable.seriesName, seriesName), sql2`(${postsTable.destructAt} IS NULL OR ${postsTable.destructAt} > NOW())`)).orderBy(postsTable.seriesOrder);
+        const posts = await db.select().from(postsTable).where(and(eq(postsTable.seriesName, seriesName), sql`(${postsTable.destructAt} IS NULL OR ${postsTable.destructAt} > NOW())`)).orderBy(postsTable.seriesOrder);
         const enriched = await batchEnrichPosts(posts, viewerId);
         res.json(enriched);
       } catch (err) {
@@ -148003,7 +139940,7 @@ var init_posts2 = __esm({
       try {
         const viewerId = req.session?.userId;
         const midnightCond = await midnightVisibilityConditionForReq(req);
-        const posts = await db.select().from(postsTable).where(midnightCond).orderBy(desc2(postsTable.likesCount)).limit(10);
+        const posts = await db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.likesCount)).limit(10);
         res.json(await batchEnrichPosts(posts, viewerId));
       } catch (err) {
         req.log.error(err);
@@ -148015,7 +139952,7 @@ var init_posts2 = __esm({
         const id = Number(req.params.id);
         const viewerId = req.session?.userId;
         const midnightCond = await midnightVisibilityConditionForReq(req);
-        const [post] = await db.select().from(postsTable).where(and2(eq2(postsTable.id, id), midnightCond));
+        const [post] = await db.select().from(postsTable).where(and(eq(postsTable.id, id), midnightCond));
         if (!post) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -148030,16 +139967,16 @@ var init_posts2 = __esm({
     router5.delete("/posts/:id", async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const commentRows = await db.select({ id: commentsTable.id }).from(commentsTable).where(eq2(commentsTable.postId, id));
+        const commentRows = await db.select({ id: commentsTable.id }).from(commentsTable).where(eq(commentsTable.postId, id));
         if (commentRows.length > 0) {
-          await db.delete(commentLikesTable).where(inArray2(commentLikesTable.commentId, commentRows.map((c5) => c5.id)));
+          await db.delete(commentLikesTable).where(inArray(commentLikesTable.commentId, commentRows.map((c5) => c5.id)));
         }
         await Promise.all([
-          db.delete(commentsTable).where(eq2(commentsTable.postId, id)),
-          db.delete(postLikesTable).where(eq2(postLikesTable.postId, id)),
-          db.delete(moderationQueueTable).where(and2(eq2(moderationQueueTable.contentType, "post"), eq2(moderationQueueTable.contentId, id)))
+          db.delete(commentsTable).where(eq(commentsTable.postId, id)),
+          db.delete(postLikesTable).where(eq(postLikesTable.postId, id)),
+          db.delete(moderationQueueTable).where(and(eq(moderationQueueTable.contentType, "post"), eq(moderationQueueTable.contentId, id)))
         ]);
-        await db.delete(postsTable).where(eq2(postsTable.id, id));
+        await db.delete(postsTable).where(eq(postsTable.id, id));
         res.status(204).send();
       } catch (err) {
         req.log.error(err);
@@ -148054,24 +139991,24 @@ var init_posts2 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const existing = await db.select({ id: postLikesTable.postId }).from(postLikesTable).where(and2(eq2(postLikesTable.postId, postId), eq2(postLikesTable.userId, userId))).limit(1);
+        const existing = await db.select({ id: postLikesTable.postId }).from(postLikesTable).where(and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, userId))).limit(1);
         const isLiked = existing.length > 0;
         if (isLiked) {
-          await db.delete(postLikesTable).where(and2(eq2(postLikesTable.postId, postId), eq2(postLikesTable.userId, userId)));
-          await db.update(postsTable).set({ likesCount: sql2`GREATEST(0, ${postsTable.likesCount} - 1)` }).where(eq2(postsTable.id, postId));
+          await db.delete(postLikesTable).where(and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, userId)));
+          await db.update(postsTable).set({ likesCount: sql`GREATEST(0, ${postsTable.likesCount} - 1)` }).where(eq(postsTable.id, postId));
         } else {
           await db.insert(postLikesTable).values({ postId, userId }).onConflictDoNothing();
-          await db.update(postsTable).set({ likesCount: sql2`${postsTable.likesCount} + 1` }).where(eq2(postsTable.id, postId));
+          await db.update(postsTable).set({ likesCount: sql`${postsTable.likesCount} + 1` }).where(eq(postsTable.id, postId));
         }
-        const [post] = await db.select({ likesCount: postsTable.likesCount, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq2(postsTable.id, postId));
+        const [post] = await db.select({ likesCount: postsTable.likesCount, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
         res.json({ liked: !isLiked, likesCount: post?.likesCount ?? 0 });
         if (!isLiked) void trackQuestAction(userId, "like_post");
         if (!isLiked && post?.authorId && post.authorId !== userId) {
           void (async () => {
             try {
               const [postAuthor, liker] = await Promise.all([
-                db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq2(usersTable.id, post.authorId)).limit(1),
-                db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq2(usersTable.id, userId)).limit(1)
+                db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, post.authorId)).limit(1),
+                db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, userId)).limit(1)
               ]);
               const likerName = liker[0]?.displayName ?? "Kimdir";
               await sendNotification({
@@ -148110,16 +140047,16 @@ var init_posts2 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const existing = await db.select({ id: commentLikesTable.id }).from(commentLikesTable).where(and2(eq2(commentLikesTable.commentId, commentId), eq2(commentLikesTable.userId, userId))).limit(1);
+        const existing = await db.select({ id: commentLikesTable.id }).from(commentLikesTable).where(and(eq(commentLikesTable.commentId, commentId), eq(commentLikesTable.userId, userId))).limit(1);
         const isLiked = existing.length > 0;
         if (isLiked) {
-          await db.delete(commentLikesTable).where(and2(eq2(commentLikesTable.commentId, commentId), eq2(commentLikesTable.userId, userId)));
-          await db.update(commentsTable).set({ likesCount: sql2`GREATEST(0, ${commentsTable.likesCount} - 1)` }).where(eq2(commentsTable.id, commentId));
+          await db.delete(commentLikesTable).where(and(eq(commentLikesTable.commentId, commentId), eq(commentLikesTable.userId, userId)));
+          await db.update(commentsTable).set({ likesCount: sql`GREATEST(0, ${commentsTable.likesCount} - 1)` }).where(eq(commentsTable.id, commentId));
         } else {
           await db.insert(commentLikesTable).values({ commentId, userId }).onConflictDoNothing();
-          await db.update(commentsTable).set({ likesCount: sql2`${commentsTable.likesCount} + 1` }).where(eq2(commentsTable.id, commentId));
+          await db.update(commentsTable).set({ likesCount: sql`${commentsTable.likesCount} + 1` }).where(eq(commentsTable.id, commentId));
         }
-        const [comment] = await db.select({ likesCount: commentsTable.likesCount }).from(commentsTable).where(eq2(commentsTable.id, commentId));
+        const [comment] = await db.select({ likesCount: commentsTable.likesCount }).from(commentsTable).where(eq(commentsTable.id, commentId));
         res.json({ liked: !isLiked, likesCount: comment?.likesCount ?? 0 });
       } catch (err) {
         req.log.error(err);
@@ -148129,14 +140066,14 @@ var init_posts2 = __esm({
     router5.get("/posts/:id/comments", async (req, res) => {
       try {
         const postId = Number(req.params.id);
-        const comments = await db.select().from(commentsTable).where(eq2(commentsTable.postId, postId)).orderBy(desc2(commentsTable.createdAt));
+        const comments = await db.select().from(commentsTable).where(eq(commentsTable.postId, postId)).orderBy(desc(commentsTable.createdAt));
         if (comments.length === 0) {
           res.json([]);
           return;
         }
         const authorIds = [...new Set(comments.map((c5) => c5.authorId).filter(Boolean))];
         const viewerId = req.session?.userId;
-        const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray2(usersTable.id, authorIds)) : [];
+        const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
         const authorMap = new Map(authors.map((a5) => [a5.id, a5]));
         const statsMap = await getUserStatsMap(authorIds, viewerId);
         res.json(comments.map((c5) => {
@@ -148169,8 +140106,8 @@ var init_posts2 = __esm({
           return;
         }
         const [comment] = await db.insert(commentsTable).values({ postId, authorId, content }).returning();
-        await db.update(postsTable).set({ commentsCount: sql2`${postsTable.commentsCount} + 1` }).where(eq2(postsTable.id, postId));
-        const [author] = await db.select().from(usersTable).where(eq2(usersTable.id, comment.authorId));
+        await db.update(postsTable).set({ commentsCount: sql`${postsTable.commentsCount} + 1` }).where(eq(postsTable.id, postId));
+        const [author] = await db.select().from(usersTable).where(eq(usersTable.id, comment.authorId));
         const stats = await getUserStats(comment.authorId, authorId);
         res.status(201).json({
           ...comment,
@@ -148186,7 +140123,7 @@ var init_posts2 = __esm({
         void trackQuestAction(authorId, "comment");
         void (async () => {
           try {
-            const [postRow] = await db.select({ authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq2(postsTable.id, postId));
+            const [postRow] = await db.select({ authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, postId));
             if (postRow?.authorId && postRow.authorId !== authorId) {
               const commenterName = author?.displayName ?? "Kimdir";
               await sendNotification({
@@ -148200,7 +140137,7 @@ var init_posts2 = __esm({
                 targetType: "post",
                 data: { postId: String(postId), type: "comment" }
               });
-              const [postAuthor] = await db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq2(usersTable.id, postRow.authorId)).limit(1);
+              const [postAuthor] = await db.select({ email: usersTable.email, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, postRow.authorId)).limit(1);
               if (postAuthor?.email) {
                 await notifyComment({
                   toEmail: postAuthor.email,
@@ -148219,9 +140156,9 @@ var init_posts2 = __esm({
             const scan = await scanContentAsync(content ?? "");
             if (scan.verdict === "clean") return;
             if (scan.autoBlock) {
-              await db.delete(commentsTable).where(eq2(commentsTable.id, comment.id)).catch(() => {
+              await db.delete(commentsTable).where(eq(commentsTable.id, comment.id)).catch(() => {
               });
-              await db.update(postsTable).set({ commentsCount: sql2`GREATEST(0, ${postsTable.commentsCount} - 1)` }).where(eq2(postsTable.id, postId)).catch(() => {
+              await db.update(postsTable).set({ commentsCount: sql`GREATEST(0, ${postsTable.commentsCount} - 1)` }).where(eq(postsTable.id, postId)).catch(() => {
               });
             }
             await db.insert(moderationQueueTable).values({
@@ -148252,7 +140189,7 @@ var init_posts2 = __esm({
 // src/routes/monetization.ts
 async function getConfig() {
   if (_cfgCache && Date.now() - _cfgCacheAt < 6e4) return _cfgCache;
-  let [cfg] = await db.select().from(monetizationConfigTable).where(eq2(monetizationConfigTable.id, 1));
+  let [cfg] = await db.select().from(monetizationConfigTable).where(eq(monetizationConfigTable.id, 1));
   if (!cfg) {
     [cfg] = await db.insert(monetizationConfigTable).values({ id: 1 }).onConflictDoNothing().returning();
   }
@@ -148266,7 +140203,7 @@ function burstCache() {
 async function getUserMonStatus(userId) {
   const cached2 = _userMonCache.get(userId);
   if (cached2 && Date.now() - cached2.ts < USER_MON_TTL) return cached2.status;
-  const [cm] = await db.select({ status: creatorMonetizationTable.status }).from(creatorMonetizationTable).where(eq2(creatorMonetizationTable.userId, userId)).limit(1);
+  const [cm] = await db.select({ status: creatorMonetizationTable.status }).from(creatorMonetizationTable).where(eq(creatorMonetizationTable.userId, userId)).limit(1);
   const status = cm?.status ?? "none";
   _userMonCache.set(userId, { status, ts: Date.now() });
   return status;
@@ -148285,9 +140222,9 @@ async function accumulateViewEarning(contentType, contentId, authorId) {
     const grossPerView = Math.round(cfg.revenuePerMille / 1e3 * multiplier);
     const creatorEarning = Math.round(grossPerView * cfg.creatorSharePercent / 100);
     const platformEarning = grossPerView - creatorEarning;
-    const [existing] = await db.select({ id: contentEarningsTable.id, totalViews: contentEarningsTable.totalViews }).from(contentEarningsTable).where(and2(
-      eq2(contentEarningsTable.contentType, contentType),
-      eq2(contentEarningsTable.contentId, contentId)
+    const [existing] = await db.select({ id: contentEarningsTable.id, totalViews: contentEarningsTable.totalViews }).from(contentEarningsTable).where(and(
+      eq(contentEarningsTable.contentType, contentType),
+      eq(contentEarningsTable.contentId, contentId)
     )).limit(1);
     if (!existing) {
       await db.insert(contentEarningsTable).values({
@@ -148300,22 +140237,22 @@ async function accumulateViewEarning(contentType, contentId, authorId) {
     }
     const newTotal = existing.totalViews + 1;
     if (newTotal < cfg.minViewsThreshold) {
-      await db.update(contentEarningsTable).set({ totalViews: newTotal, lastUpdated: /* @__PURE__ */ new Date() }).where(eq2(contentEarningsTable.id, existing.id));
+      await db.update(contentEarningsTable).set({ totalViews: newTotal, lastUpdated: /* @__PURE__ */ new Date() }).where(eq(contentEarningsTable.id, existing.id));
       return;
     }
     await db.update(contentEarningsTable).set({
       totalViews: newTotal,
-      monetizedViews: sql2`${contentEarningsTable.monetizedViews} + 1`,
-      grossEarnings: sql2`${contentEarningsTable.grossEarnings}   + ${grossPerView}`,
-      creatorEarnings: sql2`${contentEarningsTable.creatorEarnings} + ${creatorEarning}`,
-      platformEarnings: sql2`${contentEarningsTable.platformEarnings}+ ${platformEarning}`,
+      monetizedViews: sql`${contentEarningsTable.monetizedViews} + 1`,
+      grossEarnings: sql`${contentEarningsTable.grossEarnings}   + ${grossPerView}`,
+      creatorEarnings: sql`${contentEarningsTable.creatorEarnings} + ${creatorEarning}`,
+      platformEarnings: sql`${contentEarningsTable.platformEarnings}+ ${platformEarning}`,
       lastUpdated: /* @__PURE__ */ new Date()
-    }).where(eq2(contentEarningsTable.id, existing.id));
+    }).where(eq(contentEarningsTable.id, existing.id));
     if (creatorEarning <= 0) return;
     await db.insert(walletsTable).values({ userId: authorId, earningsBalance: creatorEarning }).onConflictDoUpdate({
       target: walletsTable.userId,
       set: {
-        earningsBalance: sql2`${walletsTable.earningsBalance} + ${creatorEarning}`,
+        earningsBalance: sql`${walletsTable.earningsBalance} + ${creatorEarning}`,
         updatedAt: /* @__PURE__ */ new Date()
       }
     });
@@ -148343,7 +140280,7 @@ var init_monetization2 = __esm({
     import_express6 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router6 = (0, import_express6.Router)();
     _cfgCache = null;
     _cfgCacheAt = 0;
@@ -148407,23 +140344,23 @@ var init_monetization2 = __esm({
     router6.get("/admin/monetization/stats", requireAdmin, async (req, res) => {
       try {
         const [totals] = await db.select({
-          totalViews: sql2`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
-          monetizedViews: sql2`COALESCE(SUM(${contentEarningsTable.monetizedViews}), 0)`,
-          grossEarnings: sql2`COALESCE(SUM(${contentEarningsTable.grossEarnings}), 0)`,
-          creatorEarnings: sql2`COALESCE(SUM(${contentEarningsTable.creatorEarnings}), 0)`,
-          platformEarnings: sql2`COALESCE(SUM(${contentEarningsTable.platformEarnings}), 0)`,
-          contentCount: sql2`COUNT(*)`
+          totalViews: sql`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
+          monetizedViews: sql`COALESCE(SUM(${contentEarningsTable.monetizedViews}), 0)`,
+          grossEarnings: sql`COALESCE(SUM(${contentEarningsTable.grossEarnings}), 0)`,
+          creatorEarnings: sql`COALESCE(SUM(${contentEarningsTable.creatorEarnings}), 0)`,
+          platformEarnings: sql`COALESCE(SUM(${contentEarningsTable.platformEarnings}), 0)`,
+          contentCount: sql`COUNT(*)`
         }).from(contentEarningsTable);
         const [payoutStats] = await db.select({
-          pendingCount: sql2`COUNT(*) FILTER (WHERE ${payoutRequestsTable.status} = 'pending')`,
-          pendingAmount: sql2`COALESCE(SUM(${payoutRequestsTable.amount}) FILTER (WHERE ${payoutRequestsTable.status} = 'pending'), 0)`,
-          paidAmount: sql2`COALESCE(SUM(${payoutRequestsTable.amount}) FILTER (WHERE ${payoutRequestsTable.status} IN ('approved','paid')), 0)`,
-          totalRequests: sql2`COUNT(*)`
+          pendingCount: sql`COUNT(*) FILTER (WHERE ${payoutRequestsTable.status} = 'pending')`,
+          pendingAmount: sql`COALESCE(SUM(${payoutRequestsTable.amount}) FILTER (WHERE ${payoutRequestsTable.status} = 'pending'), 0)`,
+          paidAmount: sql`COALESCE(SUM(${payoutRequestsTable.amount}) FILTER (WHERE ${payoutRequestsTable.status} IN ('approved','paid')), 0)`,
+          totalRequests: sql`COUNT(*)`
         }).from(payoutRequestsTable);
         const [appStats] = await db.select({
-          totalActive: sql2`COUNT(*) FILTER (WHERE ${creatorMonetizationTable.status} = 'active')`,
-          totalApplied: sql2`COUNT(*) FILTER (WHERE ${creatorMonetizationTable.status} = 'applied')`,
-          totalRejected: sql2`COUNT(*) FILTER (WHERE ${creatorMonetizationTable.status} = 'rejected')`
+          totalActive: sql`COUNT(*) FILTER (WHERE ${creatorMonetizationTable.status} = 'active')`,
+          totalApplied: sql`COUNT(*) FILTER (WHERE ${creatorMonetizationTable.status} = 'applied')`,
+          totalRejected: sql`COUNT(*) FILTER (WHERE ${creatorMonetizationTable.status} = 'rejected')`
         }).from(creatorMonetizationTable);
         res.json({ ...totals, ...payoutStats, ...appStats });
       } catch (err) {
@@ -148434,7 +140371,7 @@ var init_monetization2 = __esm({
     router6.get("/admin/monetization/top-content", requireAdmin, async (req, res) => {
       try {
         const limit2 = Math.min(Number(req.query.limit) || 50, 200);
-        const rows = await db.select().from(contentEarningsTable).orderBy(desc2(contentEarningsTable.creatorEarnings)).limit(limit2);
+        const rows = await db.select().from(contentEarningsTable).orderBy(desc(contentEarningsTable.creatorEarnings)).limit(limit2);
         if (rows.length === 0) {
           res.json([]);
           return;
@@ -148445,7 +140382,7 @@ var init_monetization2 = __esm({
           username: usersTable.username,
           displayName: usersTable.displayName,
           avatarUrl: usersTable.avatarUrl
-        }).from(usersTable).where(inArray2(usersTable.id, authorIds));
+        }).from(usersTable).where(inArray(usersTable.id, authorIds));
         const authorMap = new Map(authors.map((a5) => [a5.id, a5]));
         res.json(rows.map((r5) => ({ ...r5, author: authorMap.get(r5.authorId) ?? null })));
       } catch (err) {
@@ -148457,7 +140394,7 @@ var init_monetization2 = __esm({
       try {
         const status = String(req.query.status || "pending");
         const limit2 = Math.min(Number(req.query.limit) || 50, 200);
-        const rows = await db.select().from(payoutRequestsTable).where(status === "all" ? void 0 : eq2(payoutRequestsTable.status, status)).orderBy(desc2(payoutRequestsTable.createdAt)).limit(limit2);
+        const rows = await db.select().from(payoutRequestsTable).where(status === "all" ? void 0 : eq(payoutRequestsTable.status, status)).orderBy(desc(payoutRequestsTable.createdAt)).limit(limit2);
         if (rows.length === 0) {
           res.json([]);
           return;
@@ -148468,7 +140405,7 @@ var init_monetization2 = __esm({
           username: usersTable.username,
           displayName: usersTable.displayName,
           avatarUrl: usersTable.avatarUrl
-        }).from(usersTable).where(inArray2(usersTable.id, userIds));
+        }).from(usersTable).where(inArray(usersTable.id, userIds));
         const userMap = new Map(users.map((u) => [u.id, u]));
         res.json(rows.map((r5) => ({ ...r5, user: userMap.get(r5.userId) ?? null })));
       } catch (err) {
@@ -148481,7 +140418,7 @@ var init_monetization2 = __esm({
         const id = Number(req.params.id);
         const adminId = req.session?.userId;
         const { action, adminNote } = req.body;
-        const [payout] = await db.select().from(payoutRequestsTable).where(eq2(payoutRequestsTable.id, id)).limit(1);
+        const [payout] = await db.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, id)).limit(1);
         if (!payout) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -148491,7 +140428,7 @@ var init_monetization2 = __esm({
           return;
         }
         if (action === "approve") {
-          const [wallet] = await db.select().from(walletsTable).where(eq2(walletsTable.userId, payout.userId)).limit(1);
+          const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, payout.userId)).limit(1);
           if (!wallet) {
             res.status(400).json({ error: "Wallet not found" });
             return;
@@ -148501,10 +140438,10 @@ var init_monetization2 = __esm({
             return;
           }
           await db.update(walletsTable).set({
-            earningsBalance: sql2`${walletsTable.earningsBalance} - ${payout.amount}`,
-            balance: sql2`${walletsTable.balance} + ${payout.amount}`,
+            earningsBalance: sql`${walletsTable.earningsBalance} - ${payout.amount}`,
+            balance: sql`${walletsTable.balance} + ${payout.amount}`,
             updatedAt: /* @__PURE__ */ new Date()
-          }).where(eq2(walletsTable.userId, payout.userId));
+          }).where(eq(walletsTable.userId, payout.userId));
           await db.insert(transactionsTable).values({
             userId: payout.userId,
             walletId: wallet.id,
@@ -148520,16 +140457,16 @@ var init_monetization2 = __esm({
             adminNote: adminNote ?? null,
             processedBy: adminId,
             processedAt: /* @__PURE__ */ new Date()
-          }).where(eq2(payoutRequestsTable.id, id));
+          }).where(eq(payoutRequestsTable.id, id));
         } else {
           await db.update(payoutRequestsTable).set({
             status: "rejected",
             adminNote: adminNote ?? null,
             processedBy: adminId,
             processedAt: /* @__PURE__ */ new Date()
-          }).where(eq2(payoutRequestsTable.id, id));
+          }).where(eq(payoutRequestsTable.id, id));
         }
-        const [updated] = await db.select().from(payoutRequestsTable).where(eq2(payoutRequestsTable.id, id));
+        const [updated] = await db.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, id));
         res.json(updated);
       } catch (err) {
         req.log.error(err);
@@ -148540,7 +140477,7 @@ var init_monetization2 = __esm({
       try {
         const status = String(req.query.status || "applied");
         const limit2 = Math.min(Number(req.query.limit) || 50, 200);
-        const rows = await db.select().from(creatorMonetizationTable).where(status === "all" ? void 0 : eq2(creatorMonetizationTable.status, status)).orderBy(desc2(creatorMonetizationTable.appliedAt)).limit(limit2);
+        const rows = await db.select().from(creatorMonetizationTable).where(status === "all" ? void 0 : eq(creatorMonetizationTable.status, status)).orderBy(desc(creatorMonetizationTable.appliedAt)).limit(limit2);
         if (rows.length === 0) {
           res.json([]);
           return;
@@ -148551,13 +140488,13 @@ var init_monetization2 = __esm({
           username: usersTable.username,
           displayName: usersTable.displayName,
           avatarUrl: usersTable.avatarUrl
-        }).from(usersTable).where(inArray2(usersTable.id, userIds));
+        }).from(usersTable).where(inArray(usersTable.id, userIds));
         const userMap = new Map(users.map((u) => [u.id, u]));
         const earningRows = await db.select({
           authorId: contentEarningsTable.authorId,
-          totalViews: sql2`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
-          contentCount: sql2`COUNT(*)`
-        }).from(contentEarningsTable).where(inArray2(contentEarningsTable.authorId, userIds)).groupBy(contentEarningsTable.authorId);
+          totalViews: sql`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
+          contentCount: sql`COUNT(*)`
+        }).from(contentEarningsTable).where(inArray(contentEarningsTable.authorId, userIds)).groupBy(contentEarningsTable.authorId);
         const earningsMap = new Map(earningRows.map((e5) => [e5.authorId, e5]));
         res.json(rows.map((r5) => ({
           ...r5,
@@ -148575,7 +140512,7 @@ var init_monetization2 = __esm({
         const id = Number(req.params.id);
         const adminId = req.session?.userId;
         const { action, rejectionReason } = req.body;
-        const [app2] = await db.select().from(creatorMonetizationTable).where(eq2(creatorMonetizationTable.id, id)).limit(1);
+        const [app2] = await db.select().from(creatorMonetizationTable).where(eq(creatorMonetizationTable.id, id)).limit(1);
         if (!app2) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -148590,7 +140527,7 @@ var init_monetization2 = __esm({
           reviewedAt: /* @__PURE__ */ new Date(),
           reviewedBy: adminId,
           rejectionReason: action === "reject" ? rejectionReason ?? null : null
-        }).where(eq2(creatorMonetizationTable.id, id)).returning();
+        }).where(eq(creatorMonetizationTable.id, id)).returning();
         burstUserMonCache(app2.userId);
         res.json(updated);
       } catch (err) {
@@ -148602,13 +140539,13 @@ var init_monetization2 = __esm({
       try {
         const userId = req.session.userId;
         const cfg = await getConfig();
-        const [cm] = await db.select().from(creatorMonetizationTable).where(eq2(creatorMonetizationTable.userId, userId)).limit(1);
-        const [followerRow] = await db.select({ count: sql2`COUNT(*)` }).from(followsTable).where(eq2(followsTable.followingId, userId));
+        const [cm] = await db.select().from(creatorMonetizationTable).where(eq(creatorMonetizationTable.userId, userId)).limit(1);
+        const [followerRow] = await db.select({ count: sql`COUNT(*)` }).from(followsTable).where(eq(followsTable.followingId, userId));
         const followers = Number(followerRow?.count ?? 0);
         const [stats] = await db.select({
-          totalViews: sql2`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
-          contentCount: sql2`COUNT(DISTINCT ${contentEarningsTable.contentId})`
-        }).from(contentEarningsTable).where(eq2(contentEarningsTable.authorId, userId));
+          totalViews: sql`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
+          contentCount: sql`COUNT(DISTINCT ${contentEarningsTable.contentId})`
+        }).from(contentEarningsTable).where(eq(contentEarningsTable.authorId, userId));
         const totalViews = Number(stats?.totalViews ?? 0);
         const contentCount = Number(stats?.contentCount ?? 0);
         const minFollowers = cfg?.minFollowers ?? 1e3;
@@ -148618,7 +140555,7 @@ var init_monetization2 = __esm({
         const metViews = totalViews >= minTotalViews;
         const metContent = contentCount >= minContentCount;
         const eligible = metFollowers && metViews && metContent;
-        const [wallet] = await db.select({ earningsBalance: walletsTable.earningsBalance }).from(walletsTable).where(eq2(walletsTable.userId, userId)).limit(1);
+        const [wallet] = await db.select({ earningsBalance: walletsTable.earningsBalance }).from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);
         res.json({
           status: cm?.status ?? "none",
           rejectionReason: cm?.rejectionReason ?? null,
@@ -148646,12 +140583,12 @@ var init_monetization2 = __esm({
       try {
         const userId = req.session.userId;
         const cfg = await getConfig();
-        const [followerRow] = await db.select({ count: sql2`COUNT(*)` }).from(followsTable).where(eq2(followsTable.followingId, userId));
+        const [followerRow] = await db.select({ count: sql`COUNT(*)` }).from(followsTable).where(eq(followsTable.followingId, userId));
         const followers = Number(followerRow?.count ?? 0);
         const [stats] = await db.select({
-          totalViews: sql2`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
-          contentCount: sql2`COUNT(DISTINCT ${contentEarningsTable.contentId})`
-        }).from(contentEarningsTable).where(eq2(contentEarningsTable.authorId, userId));
+          totalViews: sql`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
+          contentCount: sql`COUNT(DISTINCT ${contentEarningsTable.contentId})`
+        }).from(contentEarningsTable).where(eq(contentEarningsTable.authorId, userId));
         const totalViews = Number(stats?.totalViews ?? 0);
         const contentCount = Number(stats?.contentCount ?? 0);
         if (followers < (cfg?.minFollowers ?? 1e3)) {
@@ -148666,7 +140603,7 @@ var init_monetization2 = __esm({
           res.status(400).json({ error: `Kamida ${cfg?.minContentCount ?? 10} ta kontent kerak` });
           return;
         }
-        const [existing] = await db.select().from(creatorMonetizationTable).where(eq2(creatorMonetizationTable.userId, userId)).limit(1);
+        const [existing] = await db.select().from(creatorMonetizationTable).where(eq(creatorMonetizationTable.userId, userId)).limit(1);
         if (existing?.status === "applied") {
           res.status(400).json({ error: "Arizangiz allaqachon ko'rib chiqilmoqda" });
           return;
@@ -148686,7 +140623,7 @@ var init_monetization2 = __esm({
             reviewedAt: autoApprove ? now : null,
             reviewedBy: autoApprove ? null : null,
             rejectionReason: null
-          }).where(eq2(creatorMonetizationTable.userId, userId)).returning();
+          }).where(eq(creatorMonetizationTable.userId, userId)).returning();
         } else {
           [result] = await db.insert(creatorMonetizationTable).values({
             userId,
@@ -148706,17 +140643,17 @@ var init_monetization2 = __esm({
       try {
         const userId = req.session.userId;
         const [totals] = await db.select({
-          totalViews: sql2`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
-          monetizedViews: sql2`COALESCE(SUM(${contentEarningsTable.monetizedViews}), 0)`,
-          grossEarnings: sql2`COALESCE(SUM(${contentEarningsTable.grossEarnings}), 0)`,
-          creatorEarnings: sql2`COALESCE(SUM(${contentEarningsTable.creatorEarnings}), 0)`,
-          contentCount: sql2`COUNT(*)`
-        }).from(contentEarningsTable).where(eq2(contentEarningsTable.authorId, userId));
-        const contentBreakdown = await db.select().from(contentEarningsTable).where(eq2(contentEarningsTable.authorId, userId)).orderBy(desc2(contentEarningsTable.creatorEarnings)).limit(20);
-        const [wallet] = await db.select({ earningsBalance: walletsTable.earningsBalance }).from(walletsTable).where(eq2(walletsTable.userId, userId)).limit(1);
-        const myPayouts = await db.select().from(payoutRequestsTable).where(eq2(payoutRequestsTable.userId, userId)).orderBy(desc2(payoutRequestsTable.createdAt)).limit(10);
+          totalViews: sql`COALESCE(SUM(${contentEarningsTable.totalViews}), 0)`,
+          monetizedViews: sql`COALESCE(SUM(${contentEarningsTable.monetizedViews}), 0)`,
+          grossEarnings: sql`COALESCE(SUM(${contentEarningsTable.grossEarnings}), 0)`,
+          creatorEarnings: sql`COALESCE(SUM(${contentEarningsTable.creatorEarnings}), 0)`,
+          contentCount: sql`COUNT(*)`
+        }).from(contentEarningsTable).where(eq(contentEarningsTable.authorId, userId));
+        const contentBreakdown = await db.select().from(contentEarningsTable).where(eq(contentEarningsTable.authorId, userId)).orderBy(desc(contentEarningsTable.creatorEarnings)).limit(20);
+        const [wallet] = await db.select({ earningsBalance: walletsTable.earningsBalance }).from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);
+        const myPayouts = await db.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.userId, userId)).orderBy(desc(payoutRequestsTable.createdAt)).limit(10);
         const cfg = await getConfig();
-        const [cm] = await db.select().from(creatorMonetizationTable).where(eq2(creatorMonetizationTable.userId, userId)).limit(1);
+        const [cm] = await db.select().from(creatorMonetizationTable).where(eq(creatorMonetizationTable.userId, userId)).limit(1);
         res.json({
           totals,
           earningsBalance: wallet?.earningsBalance ?? 0,
@@ -148751,12 +140688,12 @@ var init_monetization2 = __esm({
           res.status(400).json({ error: `Minimal to'lov miqdori: ${((cfg?.minPayoutAmount ?? 5e6) / 100).toLocaleString()} UZS` });
           return;
         }
-        const [wallet] = await db.select({ earningsBalance: walletsTable.earningsBalance }).from(walletsTable).where(eq2(walletsTable.userId, userId)).limit(1);
+        const [wallet] = await db.select({ earningsBalance: walletsTable.earningsBalance }).from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);
         if (!wallet || wallet.earningsBalance < amt) {
           res.status(400).json({ error: "Mablag' yetarli emas" });
           return;
         }
-        const [pending] = await db.select({ id: payoutRequestsTable.id }).from(payoutRequestsTable).where(and2(eq2(payoutRequestsTable.userId, userId), eq2(payoutRequestsTable.status, "pending"))).limit(1);
+        const [pending] = await db.select({ id: payoutRequestsTable.id }).from(payoutRequestsTable).where(and(eq(payoutRequestsTable.userId, userId), eq(payoutRequestsTable.status, "pending"))).limit(1);
         if (pending) {
           res.status(400).json({ error: "Kutayotgan to'lov so'rovi allaqachon mavjud" });
           return;
@@ -148838,11 +140775,11 @@ async function transcodeReelToHLS(reelId, videoUrl) {
     );
     const apiBase = (process.env.API_BASE_URL ?? "").replace(/\/$/, "");
     const hlsUrl = `${apiBase}/api/reels/hls/${reelId}/playlist.m3u8`;
-    await db.update(reelsTable).set({ hlsUrl, hlsStatus: "done" }).where(eq2(reelsTable.id, reelId));
+    await db.update(reelsTable).set({ hlsUrl, hlsStatus: "done" }).where(eq(reelsTable.id, reelId));
     logger.info({ reelId, hlsUrl }, "HLS transcode: complete");
   } catch (err) {
     logger.error({ err, reelId }, "HLS transcode: failed");
-    await db.update(reelsTable).set({ hlsStatus: "error" }).where(eq2(reelsTable.id, reelId)).catch(() => {
+    await db.update(reelsTable).set({ hlsStatus: "error" }).where(eq(reelsTable.id, reelId)).catch(() => {
     });
   } finally {
     await rm(tmpDir, { recursive: true, force: true }).catch(() => {
@@ -148856,7 +140793,7 @@ var init_hlsTranscode = __esm({
     init_objectStorage();
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_logger();
     execAsync = promisify(exec);
     SIDECAR = "http://127.0.0.1:1106";
@@ -148870,14 +140807,14 @@ async function batchEnrichReels(reels, viewerId = 0) {
   const reelIds = reels.map((r5) => r5.id);
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1e3);
   const [authors, likedRows, statsMap, views24hRows] = await Promise.all([
-    authorIds.length > 0 ? db.select().from(usersTable).where(inArray2(usersTable.id, authorIds)) : Promise.resolve([]),
-    viewerId && reelIds.length > 0 ? db.select({ reelId: reelLikesTable.reelId }).from(reelLikesTable).where(and2(inArray2(reelLikesTable.reelId, reelIds), eq2(reelLikesTable.userId, viewerId))) : Promise.resolve([]),
+    authorIds.length > 0 ? db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : Promise.resolve([]),
+    viewerId && reelIds.length > 0 ? db.select({ reelId: reelLikesTable.reelId }).from(reelLikesTable).where(and(inArray(reelLikesTable.reelId, reelIds), eq(reelLikesTable.userId, viewerId))) : Promise.resolve([]),
     getUserStatsMap(authorIds, viewerId),
-    reelIds.length > 0 ? db.select({ reelId: userInteractionsTable.contentId, n: count() }).from(userInteractionsTable).where(and2(
-      eq2(userInteractionsTable.contentType, "reel"),
-      eq2(userInteractionsTable.interactionType, "view"),
-      inArray2(userInteractionsTable.contentId, reelIds),
-      gte2(userInteractionsTable.createdAt, since24h)
+    reelIds.length > 0 ? db.select({ reelId: userInteractionsTable.contentId, n: count() }).from(userInteractionsTable).where(and(
+      eq(userInteractionsTable.contentType, "reel"),
+      eq(userInteractionsTable.interactionType, "view"),
+      inArray(userInteractionsTable.contentId, reelIds),
+      gte(userInteractionsTable.createdAt, since24h)
     )).groupBy(userInteractionsTable.contentId) : Promise.resolve([])
   ]);
   const authorMap = new Map(authors.map((a5) => [a5.id, a5]));
@@ -148926,12 +140863,12 @@ var init_reels2 = __esm({
     import_express7 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_monetization2();
     init_trackQuest();
     init_aiFilter();
     init_userStats();
-    init_cache3();
+    init_cache2();
     init_hlsTranscode();
     init_objectStorage();
     router7 = (0, import_express7.Router)();
@@ -148950,7 +140887,7 @@ var init_reels2 = __esm({
         const userId = req.query.userId ? Number(req.query.userId) : null;
         const cacheKey = `${limit2}:${offset}:${userId ?? "all"}:${viewerId ?? 0}`;
         const result = await cacheAside("reels:list", cacheKey, async () => {
-          const rows = await (userId ? db.select().from(reelsTable).where(eq2(reelsTable.authorId, userId)).orderBy(desc2(reelsTable.createdAt)).limit(limit2).offset(offset) : db.select().from(reelsTable).orderBy(desc2(reelsTable.viewsCount)).limit(limit2).offset(offset));
+          const rows = await (userId ? db.select().from(reelsTable).where(eq(reelsTable.authorId, userId)).orderBy(desc(reelsTable.createdAt)).limit(limit2).offset(offset) : db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(limit2).offset(offset));
           return batchEnrichReels(rows, viewerId);
         }, 20);
         res.json(result);
@@ -148971,10 +140908,10 @@ var init_reels2 = __esm({
           res.json([]);
           return;
         }
-        const overlap = sql2`${reelsTable.tags} && ARRAY[${sql2.join(tags.map((t) => sql2`${t}`), sql2`, `)}]::text[]`;
+        const overlap = sql`${reelsTable.tags} && ARRAY[${sql.join(tags.map((t) => sql`${t}`), sql`, `)}]::text[]`;
         const rows = await db.select().from(reelsTable).where(
-          excludeIds.length > 0 ? and2(overlap, not2(inArray2(reelsTable.id, excludeIds))) : overlap
-        ).orderBy(desc2(reelsTable.viewsCount)).limit(limit2);
+          excludeIds.length > 0 ? and(overlap, not(inArray(reelsTable.id, excludeIds))) : overlap
+        ).orderBy(desc(reelsTable.viewsCount)).limit(limit2);
         res.json(await batchEnrichReels(rows, viewerId));
       } catch (err) {
         req.log.error(err);
@@ -149001,7 +140938,7 @@ var init_reels2 = __esm({
             const scan = await scanContentAsync(caption ?? "");
             if (scan.verdict === "clean") return;
             if (scan.autoBlock) {
-              await db.delete(reelsTable).where(eq2(reelsTable.id, reel.id)).catch(() => {
+              await db.delete(reelsTable).where(eq(reelsTable.id, reel.id)).catch(() => {
               });
             }
             await db.insert(moderationQueueTable).values({
@@ -149033,7 +140970,7 @@ var init_reels2 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [reel] = await db.select({ authorId: reelsTable.authorId }).from(reelsTable).where(eq2(reelsTable.id, reelId)).limit(1);
+        const [reel] = await db.select({ authorId: reelsTable.authorId }).from(reelsTable).where(eq(reelsTable.id, reelId)).limit(1);
         if (!reel) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -149042,9 +140979,9 @@ var init_reels2 = __esm({
           res.status(403).json({ error: "Forbidden" });
           return;
         }
-        await db.delete(reelCommentsTable).where(eq2(reelCommentsTable.reelId, reelId));
-        await db.delete(reelLikesTable).where(eq2(reelLikesTable.reelId, reelId));
-        await db.delete(reelsTable).where(eq2(reelsTable.id, reelId));
+        await db.delete(reelCommentsTable).where(eq(reelCommentsTable.reelId, reelId));
+        await db.delete(reelLikesTable).where(eq(reelLikesTable.reelId, reelId));
+        await db.delete(reelsTable).where(eq(reelsTable.id, reelId));
         cacheDelPattern("reels:list");
         res.json({ ok: true });
       } catch (err) {
@@ -149060,16 +140997,16 @@ var init_reels2 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const existing = await db.select({ reelId: reelLikesTable.reelId }).from(reelLikesTable).where(and2(eq2(reelLikesTable.reelId, reelId), eq2(reelLikesTable.userId, userId))).limit(1);
+        const existing = await db.select({ reelId: reelLikesTable.reelId }).from(reelLikesTable).where(and(eq(reelLikesTable.reelId, reelId), eq(reelLikesTable.userId, userId))).limit(1);
         const isLiked = existing.length > 0;
         if (isLiked) {
-          await db.delete(reelLikesTable).where(and2(eq2(reelLikesTable.reelId, reelId), eq2(reelLikesTable.userId, userId)));
-          await db.update(reelsTable).set({ likesCount: sql2`GREATEST(0, ${reelsTable.likesCount} - 1)` }).where(eq2(reelsTable.id, reelId));
+          await db.delete(reelLikesTable).where(and(eq(reelLikesTable.reelId, reelId), eq(reelLikesTable.userId, userId)));
+          await db.update(reelsTable).set({ likesCount: sql`GREATEST(0, ${reelsTable.likesCount} - 1)` }).where(eq(reelsTable.id, reelId));
         } else {
           await db.insert(reelLikesTable).values({ reelId, userId }).onConflictDoNothing();
-          await db.update(reelsTable).set({ likesCount: sql2`${reelsTable.likesCount} + 1` }).where(eq2(reelsTable.id, reelId));
+          await db.update(reelsTable).set({ likesCount: sql`${reelsTable.likesCount} + 1` }).where(eq(reelsTable.id, reelId));
         }
-        const [reel] = await db.select({ likesCount: reelsTable.likesCount }).from(reelsTable).where(eq2(reelsTable.id, reelId));
+        const [reel] = await db.select({ likesCount: reelsTable.likesCount }).from(reelsTable).where(eq(reelsTable.id, reelId));
         res.json({ liked: !isLiked, likesCount: reel?.likesCount ?? 0 });
         if (!isLiked) void trackQuestAction(userId, "like_post");
       } catch (err) {
@@ -149080,17 +141017,17 @@ var init_reels2 = __esm({
     router7.get("/reels/:id/analytics", async (req, res) => {
       try {
         const reelId = Number(req.params.id);
-        const [reel] = await db.select({ viewsCount: reelsTable.viewsCount, likesCount: reelsTable.likesCount }).from(reelsTable).where(eq2(reelsTable.id, reelId));
+        const [reel] = await db.select({ viewsCount: reelsTable.viewsCount, likesCount: reelsTable.likesCount }).from(reelsTable).where(eq(reelsTable.id, reelId));
         if (!reel) {
           res.status(404).json({ error: "Not found" });
           return;
         }
         const since24h = new Date(Date.now() - 24 * 60 * 60 * 1e3);
-        const [row] = await db.select({ n: count() }).from(userInteractionsTable).where(and2(
-          eq2(userInteractionsTable.contentType, "reel"),
-          eq2(userInteractionsTable.interactionType, "view"),
-          eq2(userInteractionsTable.contentId, reelId),
-          gte2(userInteractionsTable.createdAt, since24h)
+        const [row] = await db.select({ n: count() }).from(userInteractionsTable).where(and(
+          eq(userInteractionsTable.contentType, "reel"),
+          eq(userInteractionsTable.interactionType, "view"),
+          eq(userInteractionsTable.contentId, reelId),
+          gte(userInteractionsTable.createdAt, since24h)
         ));
         const views24h = Number(row?.n ?? 0);
         const viewsCount = reel.viewsCount ?? 0;
@@ -149120,13 +141057,13 @@ var init_reels2 = __esm({
     router7.get("/reels/continue-watching", requireAuth2, async (req, res) => {
       try {
         const userId = req.session.userId;
-        const rows = await db.select().from(reelWatchProgressTable).where(and2(eq2(reelWatchProgressTable.userId, userId), sql2`${reelWatchProgressTable.positionSec} > 0`)).orderBy(desc2(reelWatchProgressTable.updatedAt)).limit(10);
+        const rows = await db.select().from(reelWatchProgressTable).where(and(eq(reelWatchProgressTable.userId, userId), sql`${reelWatchProgressTable.positionSec} > 0`)).orderBy(desc(reelWatchProgressTable.updatedAt)).limit(10);
         if (rows.length === 0) {
           res.json([]);
           return;
         }
         const reelIds = rows.map((r5) => r5.reelId);
-        const reels = await db.select().from(reelsTable).where(inArray2(reelsTable.id, reelIds));
+        const reels = await db.select().from(reelsTable).where(inArray(reelsTable.id, reelIds));
         const enriched = await batchEnrichReels(reels, userId);
         const reelMap = new Map(enriched.map((r5) => [r5.id, r5]));
         const items = rows.map((p3) => {
@@ -149144,9 +141081,9 @@ var init_reels2 = __esm({
     router7.get("/reels/collaborators", requireAuth2, async (req, res) => {
       try {
         const userId = req.session.userId;
-        const rows = await db.select().from(reelCollaboratorsTable).where(eq2(reelCollaboratorsTable.ownerId, userId)).orderBy(desc2(reelCollaboratorsTable.createdAt));
+        const rows = await db.select().from(reelCollaboratorsTable).where(eq(reelCollaboratorsTable.ownerId, userId)).orderBy(desc(reelCollaboratorsTable.createdAt));
         const handles = rows.map((r5) => r5.inviteeHandle);
-        const invitees = handles.length > 0 ? await db.select().from(usersTable).where(inArray2(usersTable.username, handles)) : [];
+        const invitees = handles.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.username, handles)) : [];
         const inviteeMap = new Map(invitees.map((u) => [u.username, u]));
         res.json(rows.map((r5) => {
           const invitee = inviteeMap.get(r5.inviteeHandle);
@@ -149176,7 +141113,7 @@ var init_reels2 = __esm({
           res.status(400).json({ error: "inviteeHandle talab qilinadi" });
           return;
         }
-        const [invitee] = await db.select().from(usersTable).where(eq2(usersTable.username, handle));
+        const [invitee] = await db.select().from(usersTable).where(eq(usersTable.username, handle));
         if (!invitee) {
           res.status(404).json({ error: "Foydalanuvchi topilmadi" });
           return;
@@ -149200,7 +141137,7 @@ var init_reels2 = __esm({
       try {
         const userId = req.session.userId;
         const id = Number(req.params.id);
-        const [row] = await db.select({ ownerId: reelCollaboratorsTable.ownerId }).from(reelCollaboratorsTable).where(eq2(reelCollaboratorsTable.id, id));
+        const [row] = await db.select({ ownerId: reelCollaboratorsTable.ownerId }).from(reelCollaboratorsTable).where(eq(reelCollaboratorsTable.id, id));
         if (!row) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -149209,7 +141146,7 @@ var init_reels2 = __esm({
           res.status(403).json({ error: "Forbidden" });
           return;
         }
-        await db.delete(reelCollaboratorsTable).where(eq2(reelCollaboratorsTable.id, id));
+        await db.delete(reelCollaboratorsTable).where(eq(reelCollaboratorsTable.id, id));
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);
@@ -149227,8 +141164,8 @@ var init_reels2 = __esm({
           return;
         }
         await cacheSet(viewKey, "1", 3600);
-        await db.update(reelsTable).set({ viewsCount: sql2`${reelsTable.viewsCount} + 1` }).where(eq2(reelsTable.id, reelId));
-        const [reel] = await db.select({ authorId: reelsTable.authorId }).from(reelsTable).where(eq2(reelsTable.id, reelId)).limit(1);
+        await db.update(reelsTable).set({ viewsCount: sql`${reelsTable.viewsCount} + 1` }).where(eq(reelsTable.id, reelId));
+        const [reel] = await db.select({ authorId: reelsTable.authorId }).from(reelsTable).where(eq(reelsTable.id, reelId)).limit(1);
         if (reel?.authorId) {
           void accumulateViewEarning("reel", reelId, reel.authorId);
         }
@@ -149242,14 +141179,14 @@ var init_reels2 = __esm({
     router7.get("/reels/:id/comments", async (req, res) => {
       try {
         const reelId = Number(req.params.id);
-        const comments = await db.select().from(reelCommentsTable).where(eq2(reelCommentsTable.reelId, reelId)).orderBy(desc2(reelCommentsTable.createdAt));
+        const comments = await db.select().from(reelCommentsTable).where(eq(reelCommentsTable.reelId, reelId)).orderBy(desc(reelCommentsTable.createdAt));
         if (comments.length === 0) {
           res.json([]);
           return;
         }
         const authorIds = [...new Set(comments.map((c5) => c5.authorId).filter(Boolean))];
         const viewerId = req.session?.userId;
-        const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray2(usersTable.id, authorIds)) : [];
+        const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
         const authorMap = new Map(authors.map((a5) => [a5.id, a5]));
         const statsMap = await getUserStatsMap(authorIds, viewerId);
         res.json(comments.map((c5) => {
@@ -149286,8 +141223,8 @@ var init_reels2 = __esm({
           return;
         }
         const [comment] = await db.insert(reelCommentsTable).values({ reelId, authorId: userId, content }).returning();
-        await db.update(reelsTable).set({ commentsCount: sql2`${reelsTable.commentsCount} + 1` }).where(eq2(reelsTable.id, reelId));
-        const [author] = await db.select().from(usersTable).where(eq2(usersTable.id, userId));
+        await db.update(reelsTable).set({ commentsCount: sql`${reelsTable.commentsCount} + 1` }).where(eq(reelsTable.id, reelId));
+        const [author] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
         const stats = await getUserStats(userId, userId);
         res.status(201).json({
           ...comment,
@@ -149304,9 +141241,9 @@ var init_reels2 = __esm({
           try {
             const scan = await scanContentAsync(content);
             if (scan.autoBlock) {
-              await db.delete(reelCommentsTable).where(eq2(reelCommentsTable.id, comment.id)).catch(() => {
+              await db.delete(reelCommentsTable).where(eq(reelCommentsTable.id, comment.id)).catch(() => {
               });
-              await db.update(reelsTable).set({ commentsCount: sql2`GREATEST(0, ${reelsTable.commentsCount} - 1)` }).where(eq2(reelsTable.id, reelId)).catch(() => {
+              await db.update(reelsTable).set({ commentsCount: sql`GREATEST(0, ${reelsTable.commentsCount} - 1)` }).where(eq(reelsTable.id, reelId)).catch(() => {
               });
             }
           } catch {
@@ -149330,7 +141267,7 @@ var init_reels2 = __esm({
           res.status(400).json({ error: "Minimal miqdor 100 so'm" });
           return;
         }
-        const [reel] = await db.select({ authorId: reelsTable.authorId }).from(reelsTable).where(eq2(reelsTable.id, reelId));
+        const [reel] = await db.select({ authorId: reelsTable.authorId }).from(reelsTable).where(eq(reelsTable.id, reelId));
         if (!reel) {
           res.status(404).json({ error: "Video topilmadi" });
           return;
@@ -149339,7 +141276,7 @@ var init_reels2 = __esm({
           res.status(400).json({ error: "O'z videongizga sovg'a yubora olmaysiz" });
           return;
         }
-        let senderWallet = await db.query.walletsTable.findFirst({ where: eq2(walletsTable.userId, userId) });
+        let senderWallet = await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, userId) });
         if (!senderWallet) {
           const [w] = await db.insert(walletsTable).values({ userId }).returning();
           senderWallet = w;
@@ -149348,13 +141285,13 @@ var init_reels2 = __esm({
           res.status(400).json({ error: "Hamyonda mablag' yetarli emas", balance: senderWallet.balance, required: amount });
           return;
         }
-        let receiverWallet = reel.authorId ? await db.query.walletsTable.findFirst({ where: eq2(walletsTable.userId, reel.authorId) }) : null;
+        let receiverWallet = reel.authorId ? await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, reel.authorId) }) : null;
         if (!receiverWallet && reel.authorId) {
           const [w] = await db.insert(walletsTable).values({ userId: reel.authorId }).returning();
           receiverWallet = w;
         }
         const newBal = senderWallet.balance - amount;
-        await db.update(walletsTable).set({ balance: newBal, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, senderWallet.id));
+        await db.update(walletsTable).set({ balance: newBal, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, senderWallet.id));
         await db.insert(transactionsTable).values({
           userId,
           walletId: senderWallet.id,
@@ -149366,7 +141303,7 @@ var init_reels2 = __esm({
           description: `\u2B50 Video uchun sovg'a yuborildi (reel #${reelId})`
         });
         if (receiverWallet && reel.authorId) {
-          await db.update(walletsTable).set({ earningsBalance: receiverWallet.earningsBalance + amount, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, receiverWallet.id));
+          await db.update(walletsTable).set({ earningsBalance: receiverWallet.earningsBalance + amount, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, receiverWallet.id));
           await db.insert(transactionsTable).values({
             userId: reel.authorId,
             walletId: receiverWallet.id,
@@ -149388,7 +141325,7 @@ var init_reels2 = __esm({
       const reelId = Number(req.params.id);
       try {
         const result = await db.execute(
-          sql2`SELECT rv.*, u.username, u.display_name AS "displayName", u.avatar_url AS "avatarUrl"
+          sql`SELECT rv.*, u.username, u.display_name AS "displayName", u.avatar_url AS "avatarUrl"
           FROM reel_versions rv
           JOIN users u ON u.id = rv.editor_id
           WHERE rv.reel_id = ${reelId}
@@ -149405,13 +141342,13 @@ var init_reels2 = __esm({
       const reelId = Number(req.params.id);
       const { note } = req.body;
       try {
-        const reel = await db.query.reelsTable.findFirst({ where: eq2(reelsTable.id, reelId) });
+        const reel = await db.query.reelsTable.findFirst({ where: eq(reelsTable.id, reelId) });
         if (!reel) {
           res.status(404).json({ error: "Video topilmadi" });
           return;
         }
         const result = await db.execute(
-          sql2`INSERT INTO reel_versions (reel_id, editor_id, caption, tags, note)
+          sql`INSERT INTO reel_versions (reel_id, editor_id, caption, tags, note)
           VALUES (${reelId}, ${req.session.userId}, ${reel.caption ?? null}, ${reel.tags ?? null}, ${note ?? null})
           RETURNING *`
         );
@@ -149462,20 +141399,20 @@ var init_stories2 = __esm({
     import_express8 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_aiFilter();
     init_userStats();
-    init_cache3();
+    init_cache2();
     router8 = (0, import_express8.Router)();
     router8.get("/stories", async (req, res) => {
       try {
         const viewerId = req.session?.userId;
         const enriched = await cacheAside("stories", `list:${viewerId ?? 0}`, async () => {
           const now = /* @__PURE__ */ new Date();
-          const stories = await db.select().from(storiesTable).where(gt2(storiesTable.expiresAt, now));
+          const stories = await db.select().from(storiesTable).where(gt(storiesTable.expiresAt, now));
           const authorIds = [...new Set(stories.map((s) => s.authorId))];
           const statsMap = await getUserStatsMap(authorIds, viewerId);
-          const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray2(usersTable.id, authorIds)) : [];
+          const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
           const authorMap = new Map(authors.map((a5) => [a5.id, a5]));
           return stories.map((s) => {
             const author = authorMap.get(s.authorId);
@@ -149523,7 +141460,7 @@ var init_stories2 = __esm({
           });
         }
         cacheDelPattern("stories:list:");
-        const [author] = await db.select().from(usersTable).where(eq2(usersTable.id, story.authorId));
+        const [author] = await db.select().from(usersTable).where(eq(usersTable.id, story.authorId));
         const stats = await getUserStats(story.authorId, authorId);
         res.status(201).json({ ...story, author: { ...author || {}, ...stats }, isViewed: false });
       } catch (err) {
@@ -149539,7 +141476,7 @@ var init_stories2 = __esm({
           res.status(401).json({ error: "Login kerak" });
           return;
         }
-        const [story] = await db.select({ id: storiesTable.id, authorId: storiesTable.authorId }).from(storiesTable).where(eq2(storiesTable.id, storyId)).limit(1);
+        const [story] = await db.select({ id: storiesTable.id, authorId: storiesTable.authorId }).from(storiesTable).where(eq(storiesTable.id, storyId)).limit(1);
         if (!story) {
           res.status(404).json({ error: "Story topilmadi" });
           return;
@@ -149548,7 +141485,7 @@ var init_stories2 = __esm({
           res.status(403).json({ error: "Ruxsat yo'q" });
           return;
         }
-        await db.delete(storiesTable).where(eq2(storiesTable.id, storyId));
+        await db.delete(storiesTable).where(eq(storiesTable.id, storyId));
         cacheDelPattern("stories:list:");
         res.json({ deleted: true });
       } catch (err) {
@@ -149564,12 +141501,12 @@ var init_stories2 = __esm({
           res.status(401).json({ error: "Kirish talab qilinadi" });
           return;
         }
-        const existing = await db.select({ id: storyViewsTable.id }).from(storyViewsTable).where(and2(eq2(storyViewsTable.storyId, storyId), eq2(storyViewsTable.userId, userId))).limit(1);
+        const existing = await db.select({ id: storyViewsTable.id }).from(storyViewsTable).where(and(eq(storyViewsTable.storyId, storyId), eq(storyViewsTable.userId, userId))).limit(1);
         if (existing.length === 0) {
           await db.insert(storyViewsTable).values({ storyId, userId });
-          await db.update(storiesTable).set({ viewsCount: sql2`${storiesTable.viewsCount} + 1` }).where(eq2(storiesTable.id, storyId));
+          await db.update(storiesTable).set({ viewsCount: sql`${storiesTable.viewsCount} + 1` }).where(eq(storiesTable.id, storyId));
         }
-        const [story] = await db.select({ viewsCount: storiesTable.viewsCount }).from(storiesTable).where(eq2(storiesTable.id, storyId)).limit(1);
+        const [story] = await db.select({ viewsCount: storiesTable.viewsCount }).from(storiesTable).where(eq(storiesTable.id, storyId)).limit(1);
         res.json({ viewed: true, viewsCount: story?.viewsCount || 0 });
       } catch (err) {
         req.log.error(err);
@@ -149608,21 +141545,21 @@ function requireAuth3(req, res) {
   return userId;
 }
 async function isParticipant(conversationId, userId) {
-  const [row] = await db.select().from(chatParticipantsTable).where(and2(eq2(chatParticipantsTable.conversationId, conversationId), eq2(chatParticipantsTable.userId, userId)));
+  const [row] = await db.select().from(chatParticipantsTable).where(and(eq(chatParticipantsTable.conversationId, conversationId), eq(chatParticipantsTable.userId, userId)));
   return !!row;
 }
 async function finalizeDueScheduledMessages(conversationId) {
   const now = /* @__PURE__ */ new Date();
-  const [conv] = await db.select().from(chatConversationsTable).where(eq2(chatConversationsTable.id, conversationId));
+  const [conv] = await db.select().from(chatConversationsTable).where(eq(chatConversationsTable.id, conversationId));
   if (!conv) return;
-  const [dueMsg] = await db.select().from(chatMessagesTable).where(and2(
-    eq2(chatMessagesTable.conversationId, conversationId),
-    lte2(chatMessagesTable.scheduledAt, now)
-  )).orderBy(desc2(chatMessagesTable.scheduledAt)).limit(1);
+  const [dueMsg] = await db.select().from(chatMessagesTable).where(and(
+    eq(chatMessagesTable.conversationId, conversationId),
+    lte(chatMessagesTable.scheduledAt, now)
+  )).orderBy(desc(chatMessagesTable.scheduledAt)).limit(1);
   if (!dueMsg || !dueMsg.scheduledAt) return;
   if (dueMsg.scheduledAt <= conv.updatedAt) return;
-  await db.update(chatConversationsTable).set({ lastMessage: dueMsg.content, updatedAt: now }).where(eq2(chatConversationsTable.id, conversationId));
-  const parts = await db.select().from(chatParticipantsTable).where(eq2(chatParticipantsTable.conversationId, conversationId));
+  await db.update(chatConversationsTable).set({ lastMessage: dueMsg.content, updatedAt: now }).where(eq(chatConversationsTable.id, conversationId));
+  const parts = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.conversationId, conversationId));
   for (const p3 of parts) {
     if (p3.userId !== dueMsg.senderId) {
       await notifyGo(p3.userId, "dm_message", { conversationId, message: dueMsg });
@@ -149636,7 +141573,7 @@ var init_messages4 = __esm({
     import_express9 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_aiFilter();
     init_aiAutopilot();
     init_userStats();
@@ -149648,18 +141585,18 @@ var init_messages4 = __esm({
       const userId = requireAuth3(req, res);
       if (!userId) return;
       try {
-        const myRows = await db.select().from(chatParticipantsTable).where(eq2(chatParticipantsTable.userId, userId));
+        const myRows = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.userId, userId));
         const myConvIds = myRows.map((r5) => r5.conversationId);
         if (myConvIds.length === 0) {
           res.json([]);
           return;
         }
         await Promise.all(myConvIds.map((id) => finalizeDueScheduledMessages(id)));
-        const convs = await db.select().from(chatConversationsTable).where(inArray2(chatConversationsTable.id, myConvIds)).orderBy(desc2(chatConversationsTable.updatedAt)).limit(50);
-        const allParticipantRows = await db.select().from(chatParticipantsTable).where(inArray2(chatParticipantsTable.conversationId, myConvIds));
+        const convs = await db.select().from(chatConversationsTable).where(inArray(chatConversationsTable.id, myConvIds)).orderBy(desc(chatConversationsTable.updatedAt)).limit(50);
+        const allParticipantRows = await db.select().from(chatParticipantsTable).where(inArray(chatParticipantsTable.conversationId, myConvIds));
         const allParticipantIds = [...new Set(allParticipantRows.map((r5) => r5.userId))];
         const statsMap = await getUserStatsMap(allParticipantIds, userId);
-        const users = await db.select().from(usersTable).where(inArray2(usersTable.id, allParticipantIds));
+        const users = await db.select().from(usersTable).where(inArray(usersTable.id, allParticipantIds));
         const userMap = new Map(users.map((u) => [u.id, { ...u, ...statsMap.get(u.id) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false } }]));
         const enriched = convs.map((c5) => {
           const parts = allParticipantRows.filter((r5) => r5.conversationId === c5.id);
@@ -149684,7 +141621,7 @@ var init_messages4 = __esm({
           (pid) => db.insert(chatParticipantsTable).values({ conversationId: conv.id, userId: pid })
         ));
         const statsMap = await getUserStatsMap(ids, userId);
-        const userRows = await db.select().from(usersTable).where(inArray2(usersTable.id, ids));
+        const userRows = await db.select().from(usersTable).where(inArray(usersTable.id, ids));
         const userMap = new Map(userRows.map((u) => [u.id, u]));
         const participants = ids.map((pid) => {
           const u = userMap.get(pid);
@@ -149707,14 +141644,14 @@ var init_messages4 = __esm({
         }
         await finalizeDueScheduledMessages(id);
         const now = /* @__PURE__ */ new Date();
-        const msgs = await db.select().from(chatMessagesTable).where(and2(
-          eq2(chatMessagesTable.conversationId, id),
-          or2(
-            isNull2(chatMessagesTable.scheduledAt),
-            lte2(chatMessagesTable.scheduledAt, now),
-            eq2(chatMessagesTable.senderId, userId)
+        const msgs = await db.select().from(chatMessagesTable).where(and(
+          eq(chatMessagesTable.conversationId, id),
+          or(
+            isNull(chatMessagesTable.scheduledAt),
+            lte(chatMessagesTable.scheduledAt, now),
+            eq(chatMessagesTable.senderId, userId)
           )
-        )).orderBy(desc2(chatMessagesTable.createdAt)).limit(50);
+        )).orderBy(desc(chatMessagesTable.createdAt)).limit(50);
         const withPending = msgs.map((m3) => ({
           ...m3,
           isPending: !!m3.scheduledAt && m3.scheduledAt > now
@@ -149755,12 +141692,12 @@ var init_messages4 = __esm({
           return;
         }
         if (!isFutureScheduled) {
-          await db.update(chatConversationsTable).set({ lastMessage: content, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(chatConversationsTable.id, conversationId));
-          const parts = await db.select().from(chatParticipantsTable).where(eq2(chatParticipantsTable.conversationId, conversationId));
+          await db.update(chatConversationsTable).set({ lastMessage: content, updatedAt: /* @__PURE__ */ new Date() }).where(eq(chatConversationsTable.id, conversationId));
+          const parts = await db.select().from(chatParticipantsTable).where(eq(chatParticipantsTable.conversationId, conversationId));
           const recipientIds = parts.map((p3) => p3.userId).filter((id) => id !== senderId);
-          const recipients = recipientIds.length ? await db.select({ id: usersTable.id, focusShield: usersTable.focusShield }).from(usersTable).where(inArray2(usersTable.id, recipientIds)) : [];
+          const recipients = recipientIds.length ? await db.select({ id: usersTable.id, focusShield: usersTable.focusShield }).from(usersTable).where(inArray(usersTable.id, recipientIds)) : [];
           const focusShieldById = new Map(recipients.map((r5) => [r5.id, r5.focusShield]));
-          const [sender] = await db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq2(usersTable.id, senderId)).limit(1);
+          const [sender] = await db.select({ displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, senderId)).limit(1);
           const senderName = sender?.displayName ?? "Kimdir";
           for (const p3 of parts) {
             if (p3.userId !== senderId) {
@@ -149805,10 +141742,10 @@ var init_messages4 = __esm({
           res.status(403).json({ error: "Ruxsat yo'q" });
           return;
         }
-        await db.delete(chatMessagesTable).where(and2(
-          eq2(chatMessagesTable.id, msgId),
-          eq2(chatMessagesTable.conversationId, conversationId),
-          eq2(chatMessagesTable.senderId, userId)
+        await db.delete(chatMessagesTable).where(and(
+          eq(chatMessagesTable.id, msgId),
+          eq(chatMessagesTable.conversationId, conversationId),
+          eq(chatMessagesTable.senderId, userId)
         ));
         res.status(204).end();
       } catch (err) {
@@ -149825,9 +141762,9 @@ var init_messages4 = __esm({
           res.status(403).json({ error: "Ruxsat yo'q" });
           return;
         }
-        await db.delete(chatMessagesTable).where(eq2(chatMessagesTable.conversationId, id));
-        await db.delete(chatParticipantsTable).where(eq2(chatParticipantsTable.conversationId, id));
-        await db.delete(chatConversationsTable).where(eq2(chatConversationsTable.id, id));
+        await db.delete(chatMessagesTable).where(eq(chatMessagesTable.conversationId, id));
+        await db.delete(chatParticipantsTable).where(eq(chatParticipantsTable.conversationId, id));
+        await db.delete(chatConversationsTable).where(eq(chatConversationsTable.id, id));
         res.status(204).end();
       } catch (err) {
         req.log.error(err);
@@ -149847,7 +141784,7 @@ var init_groups4 = __esm({
     import_express10 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router10 = (0, import_express10.Router)();
     router10.get("/groups", async (req, res) => {
       try {
@@ -149855,14 +141792,14 @@ var init_groups4 = __esm({
         const limit2 = Math.min(Number(req.query.limit) || 20, 100);
         let groups;
         if (search) {
-          groups = await db.select().from(groupsTable).where(ilike2(groupsTable.name, `%${search}%`)).limit(limit2);
+          groups = await db.select().from(groupsTable).where(ilike(groupsTable.name, `%${search}%`)).limit(limit2);
         } else {
-          groups = await db.select().from(groupsTable).orderBy(desc2(groupsTable.createdAt)).limit(limit2);
+          groups = await db.select().from(groupsTable).orderBy(desc(groupsTable.createdAt)).limit(limit2);
         }
         const userId = req.session?.userId;
         let memberIds = /* @__PURE__ */ new Set();
         if (userId) {
-          const memberships = await db.select({ groupId: groupMembersTable.groupId }).from(groupMembersTable).where(eq2(groupMembersTable.userId, userId));
+          const memberships = await db.select({ groupId: groupMembersTable.groupId }).from(groupMembersTable).where(eq(groupMembersTable.userId, userId));
           memberships.forEach((m3) => memberIds.add(m3.groupId));
         }
         res.json(groups.map((g5) => ({ ...g5, isMember: memberIds.has(g5.id) })));
@@ -149878,7 +141815,7 @@ var init_groups4 = __esm({
           res.status(400).json({ error: "Invalid id" });
           return;
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, id));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, id));
         if (!group4) {
           res.status(404).json({ error: "Group not found" });
           return;
@@ -149887,7 +141824,7 @@ var init_groups4 = __esm({
         let isMember = false;
         let memberRole = "member";
         if (userId) {
-          const [mem] = await db.select().from(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, id), eq2(groupMembersTable.userId, userId)));
+          const [mem] = await db.select().from(groupMembersTable).where(and(eq(groupMembersTable.groupId, id), eq(groupMembersTable.userId, userId)));
           isMember = !!mem;
           memberRole = mem?.role ?? "member";
         }
@@ -149941,7 +141878,7 @@ var init_groups4 = __esm({
         }).returning();
         if (userId) {
           await db.insert(groupMembersTable).values({ groupId: group4.id, userId, role: "admin" });
-          await db.update(groupsTable).set({ membersCount: 1 }).where(eq2(groupsTable.id, group4.id));
+          await db.update(groupsTable).set({ membersCount: 1 }).where(eq(groupsTable.id, group4.id));
         }
         res.status(201).json({ ...group4, isMember: true, memberRole: "admin" });
       } catch (err) {
@@ -149961,7 +141898,7 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, id));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, id));
         if (!group4) {
           res.status(404).json({ error: "Group not found" });
           return;
@@ -149996,8 +141933,8 @@ var init_groups4 = __esm({
           updateData.privacyLevel = privacyLevel;
           updateData.isPrivate = privacyLevel !== "public";
         }
-        const [updated] = await db.update(groupsTable).set(updateData).where(eq2(groupsTable.id, id)).returning();
-        const [mem] = await db.select().from(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, id), eq2(groupMembersTable.userId, userId)));
+        const [updated] = await db.update(groupsTable).set(updateData).where(eq(groupsTable.id, id)).returning();
+        const [mem] = await db.select().from(groupMembersTable).where(and(eq(groupMembersTable.groupId, id), eq(groupMembersTable.userId, userId)));
         res.json({ ...updated, isMember: !!mem, memberRole: mem?.role ?? "member" });
       } catch (err) {
         req.log.error(err);
@@ -150016,7 +141953,7 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, id));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, id));
         if (!group4) {
           res.status(404).json({ error: "Group not found" });
           return;
@@ -150025,9 +141962,9 @@ var init_groups4 = __esm({
           res.status(403).json({ error: "Only the group creator can delete the group" });
           return;
         }
-        await db.delete(groupMembersTable).where(eq2(groupMembersTable.groupId, id));
-        await db.delete(groupPostsTable).where(eq2(groupPostsTable.groupId, id));
-        await db.delete(groupsTable).where(eq2(groupsTable.id, id));
+        await db.delete(groupMembersTable).where(eq(groupMembersTable.groupId, id));
+        await db.delete(groupPostsTable).where(eq(groupPostsTable.groupId, id));
+        await db.delete(groupsTable).where(eq(groupsTable.id, id));
         res.json({ success: true });
       } catch (err) {
         req.log.error(err);
@@ -150052,7 +141989,7 @@ var init_groups4 = __esm({
           role: groupMembersTable.role,
           isMuted: groupMembersTable.isMuted,
           joinedAt: groupMembersTable.joinedAt
-        }).from(groupMembersTable).innerJoin(usersTable, eq2(groupMembersTable.userId, usersTable.id)).where(eq2(groupMembersTable.groupId, groupId)).orderBy(desc2(groupMembersTable.joinedAt)).limit(limit2);
+        }).from(groupMembersTable).innerJoin(usersTable, eq(groupMembersTable.userId, usersTable.id)).where(eq(groupMembersTable.groupId, groupId)).orderBy(desc(groupMembersTable.joinedAt)).limit(limit2);
         res.json(members);
       } catch (err) {
         req.log.error(err);
@@ -150068,12 +142005,12 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, groupId));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, groupId));
         if (!group4) {
           res.status(404).json({ error: "Group not found" });
           return;
         }
-        const [requesterMem] = await db.select().from(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, requesterId)));
+        const [requesterMem] = await db.select().from(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, requesterId)));
         if (group4.creatorId !== requesterId && requesterMem?.role !== "admin") {
           res.status(403).json({ error: "No permission" });
           return;
@@ -150082,8 +142019,8 @@ var init_groups4 = __esm({
           res.status(403).json({ error: "Cannot kick the creator" });
           return;
         }
-        await db.delete(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, targetUserId)));
-        await db.update(groupsTable).set({ membersCount: sql2`GREATEST(${groupsTable.membersCount} - 1, 0)` }).where(eq2(groupsTable.id, groupId));
+        await db.delete(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, targetUserId)));
+        await db.update(groupsTable).set({ membersCount: sql`GREATEST(${groupsTable.membersCount} - 1, 0)` }).where(eq(groupsTable.id, groupId));
         res.json({ success: true });
       } catch (err) {
         req.log.error(err);
@@ -150099,7 +142036,7 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, groupId));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, groupId));
         if (!group4 || group4.creatorId !== requesterId) {
           res.status(403).json({ error: "Only creator can change roles" });
           return;
@@ -150109,7 +142046,7 @@ var init_groups4 = __esm({
           res.status(400).json({ error: "Invalid role" });
           return;
         }
-        await db.update(groupMembersTable).set({ role }).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, targetUserId)));
+        await db.update(groupMembersTable).set({ role }).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, targetUserId)));
         res.json({ success: true, role });
       } catch (err) {
         req.log.error(err);
@@ -150125,14 +142062,14 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [mem] = await db.select().from(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, requesterId)));
+        const [mem] = await db.select().from(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, requesterId)));
         if (!mem || mem.role !== "admin" && mem.role !== "moderator") {
           res.status(403).json({ error: "No permission" });
           return;
         }
-        const [target] = await db.select().from(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, targetUserId)));
+        const [target] = await db.select().from(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, targetUserId)));
         const newMuted = !target?.isMuted;
-        await db.update(groupMembersTable).set({ isMuted: newMuted }).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, targetUserId)));
+        await db.update(groupMembersTable).set({ isMuted: newMuted }).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, targetUserId)));
         res.json({ muted: newMuted });
       } catch (err) {
         req.log.error(err);
@@ -150166,9 +142103,9 @@ var init_groups4 = __esm({
           authorUsername: usersTable.username,
           authorDisplayName: usersTable.displayName,
           authorAvatarUrl: usersTable.avatarUrl
-        }).from(groupPostsTable).innerJoin(usersTable, eq2(groupPostsTable.authorId, usersTable.id)).where(eq2(groupPostsTable.groupId, groupId)).$dynamic();
+        }).from(groupPostsTable).innerJoin(usersTable, eq(groupPostsTable.authorId, usersTable.id)).where(eq(groupPostsTable.groupId, groupId)).$dynamic();
         let posts = await query.orderBy(
-          sortBy === "popular" ? desc2(groupPostsTable.reactionsCount) : desc2(groupPostsTable.createdAt)
+          sortBy === "popular" ? desc(groupPostsTable.reactionsCount) : desc(groupPostsTable.createdAt)
         ).limit(limit2);
         if (filterType === "media") posts = posts.filter((p3) => !!p3.mediaUrl);
         if (filterType === "polls") posts = posts.filter((p3) => p3.postType === "poll");
@@ -150177,9 +142114,9 @@ var init_groups4 = __esm({
         let bookmarkedIds = /* @__PURE__ */ new Set();
         if (userId && posts.length > 0) {
           const [likes, reactions, bookmarks] = await Promise.all([
-            db.select({ postId: groupPostLikesTable.postId }).from(groupPostLikesTable).where(eq2(groupPostLikesTable.userId, userId)),
-            db.select({ postId: groupPostReactionsTable.postId, reactionType: groupPostReactionsTable.reactionType }).from(groupPostReactionsTable).where(eq2(groupPostReactionsTable.userId, userId)),
-            db.select({ postId: groupPostBookmarksTable.postId }).from(groupPostBookmarksTable).where(eq2(groupPostBookmarksTable.userId, userId))
+            db.select({ postId: groupPostLikesTable.postId }).from(groupPostLikesTable).where(eq(groupPostLikesTable.userId, userId)),
+            db.select({ postId: groupPostReactionsTable.postId, reactionType: groupPostReactionsTable.reactionType }).from(groupPostReactionsTable).where(eq(groupPostReactionsTable.userId, userId)),
+            db.select({ postId: groupPostBookmarksTable.postId }).from(groupPostBookmarksTable).where(eq(groupPostBookmarksTable.userId, userId))
           ]);
           likes.forEach((l3) => likedIds.add(l3.postId));
           reactions.forEach((r5) => reactedMap.set(r5.postId, r5.reactionType));
@@ -150214,7 +142151,7 @@ var init_groups4 = __esm({
           res.status(400).json({ error: "content is required" });
           return;
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, groupId));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, groupId));
         if (!group4) {
           res.status(404).json({ error: "Group not found" });
           return;
@@ -150226,12 +142163,12 @@ var init_groups4 = __esm({
           mediaUrl: mediaUrl || null,
           postType: postType || "text"
         }).returning();
-        await db.update(groupsTable).set({ postsCount: sql2`${groupsTable.postsCount} + 1` }).where(eq2(groupsTable.id, groupId));
+        await db.update(groupsTable).set({ postsCount: sql`${groupsTable.postsCount} + 1` }).where(eq(groupsTable.id, groupId));
         const [author] = await db.select({
           username: usersTable.username,
           displayName: usersTable.displayName,
           avatarUrl: usersTable.avatarUrl
-        }).from(usersTable).where(eq2(usersTable.id, userId));
+        }).from(usersTable).where(eq(usersTable.id, userId));
         res.status(201).json({
           ...post,
           isLikedByMe: false,
@@ -150259,13 +142196,13 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [post] = await db.select().from(groupPostsTable).where(eq2(groupPostsTable.id, postId));
+        const [post] = await db.select().from(groupPostsTable).where(eq(groupPostsTable.id, postId));
         if (!post) {
           res.status(404).json({ error: "Post not found" });
           return;
         }
-        const [group4] = await db.select({ creatorId: groupsTable.creatorId }).from(groupsTable).where(eq2(groupsTable.id, groupId));
-        const [mem] = await db.select({ role: groupMembersTable.role }).from(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, userId)));
+        const [group4] = await db.select({ creatorId: groupsTable.creatorId }).from(groupsTable).where(eq(groupsTable.id, groupId));
+        const [mem] = await db.select({ role: groupMembersTable.role }).from(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, userId)));
         const isAuthor = post.authorId === userId;
         const isGroupCreator = group4?.creatorId === userId;
         const isAdmin = mem?.role === "admin" || mem?.role === "moderator";
@@ -150273,8 +142210,8 @@ var init_groups4 = __esm({
           res.status(403).json({ error: "No permission to delete this post" });
           return;
         }
-        await db.delete(groupPostsTable).where(eq2(groupPostsTable.id, postId));
-        await db.update(groupsTable).set({ postsCount: sql2`GREATEST(${groupsTable.postsCount} - 1, 0)` }).where(eq2(groupsTable.id, groupId));
+        await db.delete(groupPostsTable).where(eq(groupPostsTable.id, postId));
+        await db.update(groupsTable).set({ postsCount: sql`GREATEST(${groupsTable.postsCount} - 1, 0)` }).where(eq(groupsTable.id, groupId));
         res.json({ success: true });
       } catch (err) {
         req.log.error(err);
@@ -150290,21 +142227,21 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, groupId));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, groupId));
         if (!group4) {
           res.status(404).json({ error: "Not found" });
           return;
         }
-        const [mem] = await db.select({ role: groupMembersTable.role }).from(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, userId)));
+        const [mem] = await db.select({ role: groupMembersTable.role }).from(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, userId)));
         if (group4.creatorId !== userId && mem?.role !== "admin" && mem?.role !== "moderator") {
           res.status(403).json({ error: "No permission" });
           return;
         }
-        const [post] = await db.select({ isPinned: groupPostsTable.isPinned }).from(groupPostsTable).where(eq2(groupPostsTable.id, postId));
+        const [post] = await db.select({ isPinned: groupPostsTable.isPinned }).from(groupPostsTable).where(eq(groupPostsTable.id, postId));
         const newPinned = !post?.isPinned;
-        await db.update(groupPostsTable).set({ isPinned: false }).where(eq2(groupPostsTable.groupId, groupId));
+        await db.update(groupPostsTable).set({ isPinned: false }).where(eq(groupPostsTable.groupId, groupId));
         if (newPinned) {
-          await db.update(groupPostsTable).set({ isPinned: true }).where(eq2(groupPostsTable.id, postId));
+          await db.update(groupPostsTable).set({ isPinned: true }).where(eq(groupPostsTable.id, postId));
         }
         res.json({ pinned: newPinned });
       } catch (err) {
@@ -150324,18 +142261,18 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [existing] = await db.select().from(groupPostLikesTable).where(and2(eq2(groupPostLikesTable.postId, postId), eq2(groupPostLikesTable.userId, userId)));
+        const [existing] = await db.select().from(groupPostLikesTable).where(and(eq(groupPostLikesTable.postId, postId), eq(groupPostLikesTable.userId, userId)));
         let liked;
         if (existing) {
-          await db.delete(groupPostLikesTable).where(and2(eq2(groupPostLikesTable.postId, postId), eq2(groupPostLikesTable.userId, userId)));
-          await db.update(groupPostsTable).set({ likesCount: sql2`GREATEST(${groupPostsTable.likesCount} - 1, 0)` }).where(eq2(groupPostsTable.id, postId));
+          await db.delete(groupPostLikesTable).where(and(eq(groupPostLikesTable.postId, postId), eq(groupPostLikesTable.userId, userId)));
+          await db.update(groupPostsTable).set({ likesCount: sql`GREATEST(${groupPostsTable.likesCount} - 1, 0)` }).where(eq(groupPostsTable.id, postId));
           liked = false;
         } else {
           await db.insert(groupPostLikesTable).values({ postId, userId });
-          await db.update(groupPostsTable).set({ likesCount: sql2`${groupPostsTable.likesCount} + 1` }).where(eq2(groupPostsTable.id, postId));
+          await db.update(groupPostsTable).set({ likesCount: sql`${groupPostsTable.likesCount} + 1` }).where(eq(groupPostsTable.id, postId));
           liked = true;
         }
-        const [updated] = await db.select({ likesCount: groupPostsTable.likesCount }).from(groupPostsTable).where(eq2(groupPostsTable.id, postId));
+        const [updated] = await db.select({ likesCount: groupPostsTable.likesCount }).from(groupPostsTable).where(eq(groupPostsTable.id, postId));
         res.json({ liked, likesCount: updated?.likesCount ?? 0 });
       } catch (err) {
         req.log.error(err);
@@ -150356,24 +142293,24 @@ var init_groups4 = __esm({
           res.status(400).json({ error: "Invalid reaction type" });
           return;
         }
-        const [existing] = await db.select().from(groupPostReactionsTable).where(and2(eq2(groupPostReactionsTable.postId, postId), eq2(groupPostReactionsTable.userId, userId)));
+        const [existing] = await db.select().from(groupPostReactionsTable).where(and(eq(groupPostReactionsTable.postId, postId), eq(groupPostReactionsTable.userId, userId)));
         let myReaction;
         if (existing) {
           if (existing.reactionType === reactionType) {
-            await db.delete(groupPostReactionsTable).where(and2(eq2(groupPostReactionsTable.postId, postId), eq2(groupPostReactionsTable.userId, userId)));
-            await db.update(groupPostsTable).set({ reactionsCount: sql2`GREATEST(${groupPostsTable.reactionsCount} - 1, 0)` }).where(eq2(groupPostsTable.id, postId));
+            await db.delete(groupPostReactionsTable).where(and(eq(groupPostReactionsTable.postId, postId), eq(groupPostReactionsTable.userId, userId)));
+            await db.update(groupPostsTable).set({ reactionsCount: sql`GREATEST(${groupPostsTable.reactionsCount} - 1, 0)` }).where(eq(groupPostsTable.id, postId));
             myReaction = null;
           } else {
-            await db.update(groupPostReactionsTable).set({ reactionType }).where(and2(eq2(groupPostReactionsTable.postId, postId), eq2(groupPostReactionsTable.userId, userId)));
+            await db.update(groupPostReactionsTable).set({ reactionType }).where(and(eq(groupPostReactionsTable.postId, postId), eq(groupPostReactionsTable.userId, userId)));
             myReaction = reactionType;
           }
         } else {
           await db.insert(groupPostReactionsTable).values({ postId, userId, reactionType });
-          await db.update(groupPostsTable).set({ reactionsCount: sql2`${groupPostsTable.reactionsCount} + 1` }).where(eq2(groupPostsTable.id, postId));
+          await db.update(groupPostsTable).set({ reactionsCount: sql`${groupPostsTable.reactionsCount} + 1` }).where(eq(groupPostsTable.id, postId));
           myReaction = reactionType;
         }
-        const [updated] = await db.select({ reactionsCount: groupPostsTable.reactionsCount }).from(groupPostsTable).where(eq2(groupPostsTable.id, postId));
-        const reactionCounts = await db.select({ reactionType: groupPostReactionsTable.reactionType, count: sql2`count(*)` }).from(groupPostReactionsTable).where(eq2(groupPostReactionsTable.postId, postId)).groupBy(groupPostReactionsTable.reactionType);
+        const [updated] = await db.select({ reactionsCount: groupPostsTable.reactionsCount }).from(groupPostsTable).where(eq(groupPostsTable.id, postId));
+        const reactionCounts = await db.select({ reactionType: groupPostReactionsTable.reactionType, count: sql`count(*)` }).from(groupPostReactionsTable).where(eq(groupPostReactionsTable.postId, postId)).groupBy(groupPostReactionsTable.reactionType);
         res.json({ myReaction, reactionsCount: updated?.reactionsCount ?? 0, reactionCounts });
       } catch (err) {
         req.log.error(err);
@@ -150383,7 +142320,7 @@ var init_groups4 = __esm({
     router10.get("/groups/:id/posts/:postId/reactions", async (req, res) => {
       try {
         const postId = Number(req.params.postId);
-        const reactionCounts = await db.select({ reactionType: groupPostReactionsTable.reactionType, count: sql2`count(*)` }).from(groupPostReactionsTable).where(eq2(groupPostReactionsTable.postId, postId)).groupBy(groupPostReactionsTable.reactionType);
+        const reactionCounts = await db.select({ reactionType: groupPostReactionsTable.reactionType, count: sql`count(*)` }).from(groupPostReactionsTable).where(eq(groupPostReactionsTable.postId, postId)).groupBy(groupPostReactionsTable.reactionType);
         res.json(reactionCounts);
       } catch (err) {
         req.log.error(err);
@@ -150406,10 +142343,10 @@ var init_groups4 = __esm({
           authorUsername: usersTable.username,
           authorDisplayName: usersTable.displayName,
           authorAvatarUrl: usersTable.avatarUrl
-        }).from(groupPostCommentsTable).innerJoin(usersTable, eq2(groupPostCommentsTable.authorId, usersTable.id)).where(eq2(groupPostCommentsTable.postId, postId)).orderBy(desc2(groupPostCommentsTable.createdAt)).limit(limit2);
+        }).from(groupPostCommentsTable).innerJoin(usersTable, eq(groupPostCommentsTable.authorId, usersTable.id)).where(eq(groupPostCommentsTable.postId, postId)).orderBy(desc(groupPostCommentsTable.createdAt)).limit(limit2);
         let likedCommentIds = /* @__PURE__ */ new Set();
         if (userId && comments.length > 0) {
-          const likes = await db.select({ commentId: groupPostCommentLikesTable.commentId }).from(groupPostCommentLikesTable).where(eq2(groupPostCommentLikesTable.userId, userId));
+          const likes = await db.select({ commentId: groupPostCommentLikesTable.commentId }).from(groupPostCommentLikesTable).where(eq(groupPostCommentLikesTable.userId, userId));
           likes.forEach((l3) => likedCommentIds.add(l3.commentId));
         }
         res.json(comments.map((c5) => ({ ...c5, isLikedByMe: likedCommentIds.has(c5.id) })));
@@ -150437,12 +142374,12 @@ var init_groups4 = __esm({
           content: content.trim(),
           parentId: parentId ?? null
         }).returning();
-        await db.update(groupPostsTable).set({ commentsCount: sql2`${groupPostsTable.commentsCount} + 1` }).where(eq2(groupPostsTable.id, postId));
+        await db.update(groupPostsTable).set({ commentsCount: sql`${groupPostsTable.commentsCount} + 1` }).where(eq(groupPostsTable.id, postId));
         const [author] = await db.select({
           username: usersTable.username,
           displayName: usersTable.displayName,
           avatarUrl: usersTable.avatarUrl
-        }).from(usersTable).where(eq2(usersTable.id, userId));
+        }).from(usersTable).where(eq(usersTable.id, userId));
         res.status(201).json({
           ...comment,
           isLikedByMe: false,
@@ -150464,13 +142401,13 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [comment] = await db.select().from(groupPostCommentsTable).where(eq2(groupPostCommentsTable.id, commentId));
+        const [comment] = await db.select().from(groupPostCommentsTable).where(eq(groupPostCommentsTable.id, commentId));
         if (!comment || comment.authorId !== userId) {
           res.status(403).json({ error: "No permission" });
           return;
         }
-        await db.delete(groupPostCommentsTable).where(eq2(groupPostCommentsTable.id, commentId));
-        await db.update(groupPostsTable).set({ commentsCount: sql2`GREATEST(${groupPostsTable.commentsCount} - 1, 0)` }).where(eq2(groupPostsTable.id, postId));
+        await db.delete(groupPostCommentsTable).where(eq(groupPostCommentsTable.id, commentId));
+        await db.update(groupPostsTable).set({ commentsCount: sql`GREATEST(${groupPostsTable.commentsCount} - 1, 0)` }).where(eq(groupPostsTable.id, postId));
         res.json({ success: true });
       } catch (err) {
         req.log.error(err);
@@ -150485,18 +142422,18 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [existing] = await db.select().from(groupPostCommentLikesTable).where(and2(eq2(groupPostCommentLikesTable.commentId, commentId), eq2(groupPostCommentLikesTable.userId, userId)));
+        const [existing] = await db.select().from(groupPostCommentLikesTable).where(and(eq(groupPostCommentLikesTable.commentId, commentId), eq(groupPostCommentLikesTable.userId, userId)));
         let liked;
         if (existing) {
-          await db.delete(groupPostCommentLikesTable).where(and2(eq2(groupPostCommentLikesTable.commentId, commentId), eq2(groupPostCommentLikesTable.userId, userId)));
-          await db.update(groupPostCommentsTable).set({ likesCount: sql2`GREATEST(${groupPostCommentsTable.likesCount} - 1, 0)` }).where(eq2(groupPostCommentsTable.id, commentId));
+          await db.delete(groupPostCommentLikesTable).where(and(eq(groupPostCommentLikesTable.commentId, commentId), eq(groupPostCommentLikesTable.userId, userId)));
+          await db.update(groupPostCommentsTable).set({ likesCount: sql`GREATEST(${groupPostCommentsTable.likesCount} - 1, 0)` }).where(eq(groupPostCommentsTable.id, commentId));
           liked = false;
         } else {
           await db.insert(groupPostCommentLikesTable).values({ commentId, userId });
-          await db.update(groupPostCommentsTable).set({ likesCount: sql2`${groupPostCommentsTable.likesCount} + 1` }).where(eq2(groupPostCommentsTable.id, commentId));
+          await db.update(groupPostCommentsTable).set({ likesCount: sql`${groupPostCommentsTable.likesCount} + 1` }).where(eq(groupPostCommentsTable.id, commentId));
           liked = true;
         }
-        const [updated] = await db.select({ likesCount: groupPostCommentsTable.likesCount }).from(groupPostCommentsTable).where(eq2(groupPostCommentsTable.id, commentId));
+        const [updated] = await db.select({ likesCount: groupPostCommentsTable.likesCount }).from(groupPostCommentsTable).where(eq(groupPostCommentsTable.id, commentId));
         res.json({ liked, likesCount: updated?.likesCount ?? 0 });
       } catch (err) {
         req.log.error(err);
@@ -150507,9 +142444,9 @@ var init_groups4 = __esm({
       try {
         const groupId = Number(req.params.id);
         const userId = req.session?.userId;
-        const polls = await db.select().from(groupPollsTable).where(eq2(groupPollsTable.groupId, groupId)).orderBy(desc2(groupPollsTable.createdAt)).limit(20);
+        const polls = await db.select().from(groupPollsTable).where(eq(groupPollsTable.groupId, groupId)).orderBy(desc(groupPollsTable.createdAt)).limit(20);
         const enriched = await Promise.all(polls.map(async (poll) => {
-          const votes = await db.select().from(groupPollVotesTable).where(eq2(groupPollVotesTable.pollId, poll.id));
+          const votes = await db.select().from(groupPollVotesTable).where(eq(groupPollVotesTable.pollId, poll.id));
           const myVote = userId ? votes.find((v) => v.userId === userId) : null;
           const voteCounts = poll.options.map(
             (_, i5) => votes.filter((v) => v.optionIndex === i5).length
@@ -150563,14 +142500,14 @@ var init_groups4 = __esm({
           res.status(400).json({ error: "optionIndex required" });
           return;
         }
-        const [existing] = await db.select().from(groupPollVotesTable).where(and2(eq2(groupPollVotesTable.pollId, pollId), eq2(groupPollVotesTable.userId, userId)));
+        const [existing] = await db.select().from(groupPollVotesTable).where(and(eq(groupPollVotesTable.pollId, pollId), eq(groupPollVotesTable.userId, userId)));
         if (existing) {
-          await db.update(groupPollVotesTable).set({ optionIndex }).where(and2(eq2(groupPollVotesTable.pollId, pollId), eq2(groupPollVotesTable.userId, userId)));
+          await db.update(groupPollVotesTable).set({ optionIndex }).where(and(eq(groupPollVotesTable.pollId, pollId), eq(groupPollVotesTable.userId, userId)));
         } else {
           await db.insert(groupPollVotesTable).values({ pollId, userId, optionIndex });
         }
-        const [poll] = await db.select().from(groupPollsTable).where(eq2(groupPollsTable.id, pollId));
-        const votes = await db.select().from(groupPollVotesTable).where(eq2(groupPollVotesTable.pollId, pollId));
+        const [poll] = await db.select().from(groupPollsTable).where(eq(groupPollsTable.id, pollId));
+        const votes = await db.select().from(groupPollVotesTable).where(eq(groupPollVotesTable.pollId, pollId));
         const voteCounts = poll.options.map(
           (_, i5) => votes.filter((v) => v.optionIndex === i5).length
         );
@@ -150588,15 +142525,15 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [existing] = await db.select().from(groupPostBookmarksTable).where(and2(eq2(groupPostBookmarksTable.postId, postId), eq2(groupPostBookmarksTable.userId, userId)));
+        const [existing] = await db.select().from(groupPostBookmarksTable).where(and(eq(groupPostBookmarksTable.postId, postId), eq(groupPostBookmarksTable.userId, userId)));
         let bookmarked;
         if (existing) {
-          await db.delete(groupPostBookmarksTable).where(and2(eq2(groupPostBookmarksTable.postId, postId), eq2(groupPostBookmarksTable.userId, userId)));
-          await db.update(groupPostsTable).set({ bookmarksCount: sql2`GREATEST(${groupPostsTable.bookmarksCount} - 1, 0)` }).where(eq2(groupPostsTable.id, postId));
+          await db.delete(groupPostBookmarksTable).where(and(eq(groupPostBookmarksTable.postId, postId), eq(groupPostBookmarksTable.userId, userId)));
+          await db.update(groupPostsTable).set({ bookmarksCount: sql`GREATEST(${groupPostsTable.bookmarksCount} - 1, 0)` }).where(eq(groupPostsTable.id, postId));
           bookmarked = false;
         } else {
           await db.insert(groupPostBookmarksTable).values({ postId, userId });
-          await db.update(groupPostsTable).set({ bookmarksCount: sql2`${groupPostsTable.bookmarksCount} + 1` }).where(eq2(groupPostsTable.id, postId));
+          await db.update(groupPostsTable).set({ bookmarksCount: sql`${groupPostsTable.bookmarksCount} + 1` }).where(eq(groupPostsTable.id, postId));
           bookmarked = true;
         }
         res.json({ bookmarked });
@@ -150625,10 +142562,10 @@ var init_groups4 = __esm({
           authorDisplayName: usersTable.displayName,
           authorAvatarUrl: usersTable.avatarUrl,
           savedAt: groupPostBookmarksTable.createdAt
-        }).from(groupPostBookmarksTable).innerJoin(groupPostsTable, eq2(groupPostBookmarksTable.postId, groupPostsTable.id)).innerJoin(usersTable, eq2(groupPostsTable.authorId, usersTable.id)).where(and2(
-          eq2(groupPostBookmarksTable.userId, userId),
-          eq2(groupPostsTable.groupId, groupId)
-        )).orderBy(desc2(groupPostBookmarksTable.createdAt)).limit(50);
+        }).from(groupPostBookmarksTable).innerJoin(groupPostsTable, eq(groupPostBookmarksTable.postId, groupPostsTable.id)).innerJoin(usersTable, eq(groupPostsTable.authorId, usersTable.id)).where(and(
+          eq(groupPostBookmarksTable.userId, userId),
+          eq(groupPostsTable.groupId, groupId)
+        )).orderBy(desc(groupPostBookmarksTable.createdAt)).limit(50);
         res.json(bookmarks);
       } catch (err) {
         req.log.error(err);
@@ -150648,7 +142585,7 @@ var init_groups4 = __esm({
           res.status(400).json({ error: "reason required" });
           return;
         }
-        const [existing] = await db.select().from(groupPostReportsTable).where(and2(eq2(groupPostReportsTable.postId, postId), eq2(groupPostReportsTable.reporterId, userId)));
+        const [existing] = await db.select().from(groupPostReportsTable).where(and(eq(groupPostReportsTable.postId, postId), eq(groupPostReportsTable.reporterId, userId)));
         if (existing) {
           res.json({ already: true });
           return;
@@ -150668,15 +142605,15 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, groupId));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, groupId));
         if (!group4 || group4.creatorId !== userId) {
           res.status(403).json({ error: "No permission" });
           return;
         }
-        const [postCount] = await db.select({ count: sql2`count(*)` }).from(groupPostsTable).where(eq2(groupPostsTable.groupId, groupId));
-        const [memberCount] = await db.select({ count: sql2`count(*)` }).from(groupMembersTable).where(eq2(groupMembersTable.groupId, groupId));
-        const [likeCount] = await db.select({ total: sql2`COALESCE(SUM(likes_count),0)` }).from(groupPostsTable).where(eq2(groupPostsTable.groupId, groupId));
-        const [commentCount] = await db.select({ total: sql2`COALESCE(SUM(comments_count),0)` }).from(groupPostsTable).where(eq2(groupPostsTable.groupId, groupId));
+        const [postCount] = await db.select({ count: sql`count(*)` }).from(groupPostsTable).where(eq(groupPostsTable.groupId, groupId));
+        const [memberCount] = await db.select({ count: sql`count(*)` }).from(groupMembersTable).where(eq(groupMembersTable.groupId, groupId));
+        const [likeCount] = await db.select({ total: sql`COALESCE(SUM(likes_count),0)` }).from(groupPostsTable).where(eq(groupPostsTable.groupId, groupId));
+        const [commentCount] = await db.select({ total: sql`COALESCE(SUM(comments_count),0)` }).from(groupPostsTable).where(eq(groupPostsTable.groupId, groupId));
         res.json({
           posts: Number(postCount?.count ?? 0),
           members: Number(memberCount?.count ?? 0),
@@ -150696,7 +142633,7 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [group4] = await db.select({ inviteCode: groupsTable.inviteCode, creatorId: groupsTable.creatorId }).from(groupsTable).where(eq2(groupsTable.id, id));
+        const [group4] = await db.select({ inviteCode: groupsTable.inviteCode, creatorId: groupsTable.creatorId }).from(groupsTable).where(eq(groupsTable.id, id));
         if (!group4) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -150704,7 +142641,7 @@ var init_groups4 = __esm({
         let code = group4.inviteCode;
         if (!code) {
           code = randomBytes2(6).toString("hex");
-          await db.update(groupsTable).set({ inviteCode: code }).where(eq2(groupsTable.id, id));
+          await db.update(groupsTable).set({ inviteCode: code }).where(eq(groupsTable.id, id));
         }
         res.json({ code, link: `${req.headers.origin ?? ""}/groups?invite=${code}` });
       } catch (err) {
@@ -150720,13 +142657,13 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, id));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, id));
         if (!group4 || group4.creatorId !== userId) {
           res.status(403).json({ error: "No permission" });
           return;
         }
         const code = randomBytes2(6).toString("hex");
-        await db.update(groupsTable).set({ inviteCode: code }).where(eq2(groupsTable.id, id));
+        await db.update(groupsTable).set({ inviteCode: code }).where(eq(groupsTable.id, id));
         res.json({ code, link: `${req.headers.origin ?? ""}/groups?invite=${code}` });
       } catch (err) {
         req.log.error(err);
@@ -150745,15 +142682,15 @@ var init_groups4 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const existing = await db.select().from(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, userId)));
+        const existing = await db.select().from(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, userId)));
         if (existing.length > 0) {
-          await db.delete(groupMembersTable).where(and2(eq2(groupMembersTable.groupId, groupId), eq2(groupMembersTable.userId, userId)));
-          await db.update(groupsTable).set({ membersCount: sql2`GREATEST(${groupsTable.membersCount} - 1, 0)` }).where(eq2(groupsTable.id, groupId));
+          await db.delete(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, userId)));
+          await db.update(groupsTable).set({ membersCount: sql`GREATEST(${groupsTable.membersCount} - 1, 0)` }).where(eq(groupsTable.id, groupId));
         } else {
           await db.insert(groupMembersTable).values({ groupId, userId, role: "member" });
-          await db.update(groupsTable).set({ membersCount: sql2`${groupsTable.membersCount} + 1` }).where(eq2(groupsTable.id, groupId));
+          await db.update(groupsTable).set({ membersCount: sql`${groupsTable.membersCount} + 1` }).where(eq(groupsTable.id, groupId));
         }
-        const [group4] = await db.select().from(groupsTable).where(eq2(groupsTable.id, groupId));
+        const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, groupId));
         res.json({ joined: existing.length === 0, membersCount: group4?.membersCount || 0 });
       } catch (err) {
         req.log.error(err);
@@ -150772,8 +142709,8 @@ var init_notifications2 = __esm({
     import_express11 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
-    init_cache3();
+    init_drizzle_orm();
+    init_cache2();
     router11 = (0, import_express11.Router)();
     router11.get("/notifications", async (req, res) => {
       try {
@@ -150781,9 +142718,9 @@ var init_notifications2 = __esm({
         const userId = req.session?.userId ?? 0;
         const notifs = await cacheAside("notifs", `${userId}:${unread}`, async () => {
           if (unread) {
-            return db.select().from(notificationsTable).where(eq2(notificationsTable.isRead, false)).orderBy(desc2(notificationsTable.createdAt)).limit(50);
+            return db.select().from(notificationsTable).where(eq(notificationsTable.isRead, false)).orderBy(desc(notificationsTable.createdAt)).limit(50);
           }
-          return db.select().from(notificationsTable).orderBy(desc2(notificationsTable.createdAt)).limit(50);
+          return db.select().from(notificationsTable).orderBy(desc(notificationsTable.createdAt)).limit(50);
         }, 10);
         res.json(notifs);
       } catch (err) {
@@ -150793,7 +142730,7 @@ var init_notifications2 = __esm({
     });
     router11.post("/notifications/read-all", async (req, res) => {
       try {
-        const result = await db.update(notificationsTable).set({ isRead: true }).where(eq2(notificationsTable.isRead, false)).returning();
+        const result = await db.update(notificationsTable).set({ isRead: true }).where(eq(notificationsTable.isRead, false)).returning();
         cacheDelPattern("notifs:");
         res.json({ updated: result.length });
       } catch (err) {
@@ -150838,9 +142775,9 @@ var init_notifications2 = __esm({
         }
         const { token } = req.body ?? {};
         if (token) {
-          await db.delete(pushTokensTable).where(eq2(pushTokensTable.token, token));
+          await db.delete(pushTokensTable).where(eq(pushTokensTable.token, token));
         } else {
-          await db.delete(pushTokensTable).where(eq2(pushTokensTable.userId, userId));
+          await db.delete(pushTokensTable).where(eq(pushTokensTable.userId, userId));
         }
         res.json({ ok: true });
       } catch (err) {
@@ -150851,7 +142788,7 @@ var init_notifications2 = __esm({
     router11.delete("/notifications/:id", async (req, res) => {
       try {
         const id = Number(req.params.id);
-        await db.delete(notificationsTable).where(eq2(notificationsTable.id, id));
+        await db.delete(notificationsTable).where(eq(notificationsTable.id, id));
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);
@@ -150861,7 +142798,7 @@ var init_notifications2 = __esm({
     router11.post("/notifications/:id/read", async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const [notif] = await db.update(notificationsTable).set({ isRead: true }).where(eq2(notificationsTable.id, id)).returning();
+        const [notif] = await db.update(notificationsTable).set({ isRead: true }).where(eq(notificationsTable.id, id)).returning();
         if (!notif) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -150882,7 +142819,7 @@ async function checkAIAccess(userId) {
     isPremium: usersTable.isPremium,
     aiUsageCount: usersTable.aiUsageCount,
     aiUsageResetAt: usersTable.aiUsageResetAt
-  }).from(usersTable).where(eq2(usersTable.id, userId));
+  }).from(usersTable).where(eq(usersTable.id, userId));
   if (!user) return { allowed: false, isPremium: false, used: 0, remaining: 0, limit: AI_FREE_LIMIT };
   if (user.isPremium) {
     return { allowed: true, isPremium: true, used: user.aiUsageCount, remaining: -1, limit: AI_FREE_LIMIT };
@@ -150891,21 +142828,21 @@ async function checkAIAccess(userId) {
   const resetAt = user.aiUsageResetAt ?? today;
   let used = user.aiUsageCount;
   if (today > resetAt) {
-    await db.update(usersTable).set({ aiUsageCount: 0, aiUsageResetAt: sql2`CURRENT_DATE` }).where(eq2(usersTable.id, userId));
+    await db.update(usersTable).set({ aiUsageCount: 0, aiUsageResetAt: sql`CURRENT_DATE` }).where(eq(usersTable.id, userId));
     used = 0;
   }
   const remaining = Math.max(0, AI_FREE_LIMIT - used);
   return { allowed: remaining > 0, isPremium: false, used, remaining, limit: AI_FREE_LIMIT };
 }
 async function incrementAIUsage(userId) {
-  await db.update(usersTable).set({ aiUsageCount: sql2`${usersTable.aiUsageCount} + 1` }).where(eq2(usersTable.id, userId));
+  await db.update(usersTable).set({ aiUsageCount: sql`${usersTable.aiUsageCount} + 1` }).where(eq(usersTable.id, userId));
 }
 var AI_FREE_LIMIT;
 var init_aiAccess = __esm({
   "src/lib/aiAccess.ts"() {
     "use strict";
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     AI_FREE_LIMIT = 100;
   }
 });
@@ -150921,7 +142858,7 @@ var init_ai = __esm({
     import_express12 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_src3();
     init_aiAccess();
     init_midnightVisibility();
@@ -150940,11 +142877,11 @@ var init_ai = __esm({
         const userId = req.session?.userId;
         const tagScores = {};
         if (userId) {
-          const interactions = await db.select().from(userInteractionsTable).where(eq2(userInteractionsTable.userId, userId)).orderBy(desc2(userInteractionsTable.createdAt)).limit(120);
+          const interactions = await db.select().from(userInteractionsTable).where(eq(userInteractionsTable.userId, userId)).orderBy(desc(userInteractionsTable.createdAt)).limit(120);
           const postIds = [...new Set(interactions.filter((i5) => i5.contentType === "post").map((i5) => i5.contentId))];
           const reelIds = [...new Set(interactions.filter((i5) => i5.contentType === "reel").map((i5) => i5.contentId))];
-          const interactedPosts = postIds.length > 0 ? await db.select().from(postsTable).where(inArray2(postsTable.id, postIds)) : [];
-          const interactedReels = reelIds.length > 0 ? await db.select().from(reelsTable).where(inArray2(reelsTable.id, reelIds)) : [];
+          const interactedPosts = postIds.length > 0 ? await db.select().from(postsTable).where(inArray(postsTable.id, postIds)) : [];
+          const interactedReels = reelIds.length > 0 ? await db.select().from(reelsTable).where(inArray(reelsTable.id, reelIds)) : [];
           const postTagMap = new Map(interactedPosts.map((p3) => [p3.id, p3.tags ?? []]));
           const reelTagMap = new Map(interactedReels.map((r5) => [r5.id, r5.tags ?? []]));
           for (const interaction of interactions) {
@@ -150963,22 +142900,22 @@ var init_ai = __esm({
         }
         const midnightCond = await midnightVisibilityConditionForReq(req);
         const [posts, reels] = await Promise.all([
-          db.select().from(postsTable).where(midnightCond).orderBy(desc2(postsTable.createdAt)).limit(30),
-          db.select().from(reelsTable).orderBy(desc2(reelsTable.viewsCount)).limit(10)
+          db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.createdAt)).limit(30),
+          db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(10)
         ]);
         const allAuthorIds = [...new Set([
           ...posts.map((p3) => p3.authorId),
           ...reels.map((r5) => r5.authorId)
         ].filter(Boolean))];
-        const authors = allAuthorIds.length > 0 ? await db.select().from(usersTable).where(inArray2(usersTable.id, allAuthorIds)) : [];
+        const authors = allAuthorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, allAuthorIds)) : [];
         const authorMap = new Map(authors.map((a5) => [a5.id, a5]));
         const statsMap = await getUserStatsMap(allAuthorIds, userId);
         const viewerId = userId;
         let likedPostIds = /* @__PURE__ */ new Set();
         if (viewerId && posts.length > 0) {
-          const liked = await db.select({ postId: postLikesTable.postId }).from(postLikesTable).where(and2(
-            inArray2(postLikesTable.postId, posts.map((p3) => p3.id)),
-            eq2(postLikesTable.userId, viewerId)
+          const liked = await db.select({ postId: postLikesTable.postId }).from(postLikesTable).where(and(
+            inArray(postLikesTable.postId, posts.map((p3) => p3.id)),
+            eq(postLikesTable.userId, viewerId)
           ));
           likedPostIds = new Set(liked.map((l3) => l3.postId));
         }
@@ -151062,9 +142999,9 @@ var init_ai = __esm({
       const { type, id } = req.params;
       try {
         const [analysis] = await db.select().from(contentAnalysisTable).where(
-          and2(
-            eq2(contentAnalysisTable.contentType, type),
-            eq2(contentAnalysisTable.contentId, Number(id))
+          and(
+            eq(contentAnalysisTable.contentType, type),
+            eq(contentAnalysisTable.contentId, Number(id))
           )
         );
         if (!analysis) {
@@ -151090,9 +143027,9 @@ var init_ai = __esm({
       }
       try {
         const [existing] = await db.select().from(contentAnalysisTable).where(
-          and2(
-            eq2(contentAnalysisTable.contentType, contentType),
-            eq2(contentAnalysisTable.contentId, Number(contentId))
+          and(
+            eq(contentAnalysisTable.contentType, contentType),
+            eq(contentAnalysisTable.contentId, Number(contentId))
           )
         );
         if (existing) {
@@ -151246,9 +143183,9 @@ Tags: 3-6 relevant hashtags without #.`
           max_tokens: 200,
           temperature: 0.8
         });
-        const text3 = completion.choices[0]?.message?.content?.trim() ?? "";
+        const text2 = completion.choices[0]?.message?.content?.trim() ?? "";
         await incrementAIUsage(userId);
-        res.json({ text: text3 });
+        res.json({ text: text2 });
       } catch (err) {
         req.log.error(err);
         res.status(500).json({ error: "AI xizmati hozir mavjud emas" });
@@ -151308,11 +143245,11 @@ async function creditTreasury(opts) {
     const { amount, source, description, reference } = opts;
     if (amount <= 0) return;
     const col = source === "premium" ? "premium_revenue" : source === "marketplace" ? "marketplace_revenue" : source === "gift" ? "gift_revenue" : "other_revenue";
-    await db.execute(sql2`
+    await db.execute(sql`
       UPDATE platform_treasury
       SET total_revenue = total_revenue + ${amount},
           available_balance = available_balance + ${amount},
-          ${sql2.raw(col)} = ${sql2.raw(col)} + ${amount},
+          ${sql.raw(col)} = ${sql.raw(col)} + ${amount},
           updated_at = NOW()
       WHERE id = 1
     `);
@@ -151334,35 +143271,35 @@ var init_treasury = __esm({
     import_express13 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
-    init_pg_core2();
+    init_drizzle_orm();
+    init_pg_core();
     router13 = (0, import_express13.Router)();
-    treasuryTable = pgTable2("platform_treasury", {
-      id: serial2("id").primaryKey(),
-      totalRevenue: bigint5("total_revenue", { mode: "number" }).notNull().default(0),
-      availableBalance: bigint5("available_balance", { mode: "number" }).notNull().default(0),
-      totalWithdrawn: bigint5("total_withdrawn", { mode: "number" }).notNull().default(0),
-      premiumRevenue: bigint5("premium_revenue", { mode: "number" }).notNull().default(0),
-      marketplaceRevenue: bigint5("marketplace_revenue", { mode: "number" }).notNull().default(0),
-      giftRevenue: bigint5("gift_revenue", { mode: "number" }).notNull().default(0),
-      otherRevenue: bigint5("other_revenue", { mode: "number" }).notNull().default(0),
-      updatedAt: timestamp2("updated_at").notNull().defaultNow()
+    treasuryTable = pgTable("platform_treasury", {
+      id: serial("id").primaryKey(),
+      totalRevenue: bigint("total_revenue", { mode: "number" }).notNull().default(0),
+      availableBalance: bigint("available_balance", { mode: "number" }).notNull().default(0),
+      totalWithdrawn: bigint("total_withdrawn", { mode: "number" }).notNull().default(0),
+      premiumRevenue: bigint("premium_revenue", { mode: "number" }).notNull().default(0),
+      marketplaceRevenue: bigint("marketplace_revenue", { mode: "number" }).notNull().default(0),
+      giftRevenue: bigint("gift_revenue", { mode: "number" }).notNull().default(0),
+      otherRevenue: bigint("other_revenue", { mode: "number" }).notNull().default(0),
+      updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
-    treasuryTxTable = pgTable2("treasury_transactions", {
-      id: serial2("id").primaryKey(),
-      type: text2("type").notNull(),
-      amount: bigint5("amount", { mode: "number" }).notNull(),
-      source: text2("source").notNull(),
-      description: text2("description"),
-      reference: text2("reference"),
-      createdAt: timestamp2("created_at").notNull().defaultNow()
+    treasuryTxTable = pgTable("treasury_transactions", {
+      id: serial("id").primaryKey(),
+      type: text("type").notNull(),
+      amount: bigint("amount", { mode: "number" }).notNull(),
+      source: text("source").notNull(),
+      description: text("description"),
+      reference: text("reference"),
+      createdAt: timestamp("created_at").notNull().defaultNow()
     });
     requireAdmin2 = async (req, res, next) => {
       if (!req.session?.userId) {
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
-      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, req.session.userId));
+      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, req.session.userId));
       if (!u?.isAdmin) {
         res.status(403).json({ error: "Forbidden" });
         return;
@@ -151371,17 +143308,17 @@ var init_treasury = __esm({
     };
     router13.get("/admin/treasury", requireAdmin2, async (req, res) => {
       try {
-        const [treasury] = await db.select().from(treasuryTable).where(sql2`id = 1`);
-        const recentTx = await db.select().from(treasuryTxTable).orderBy(desc2(treasuryTxTable.createdAt)).limit(50);
-        const todayRes = await db.execute(sql2`
+        const [treasury] = await db.select().from(treasuryTable).where(sql`id = 1`);
+        const recentTx = await db.select().from(treasuryTxTable).orderBy(desc(treasuryTxTable.createdAt)).limit(50);
+        const todayRes = await db.execute(sql`
       SELECT COALESCE(SUM(amount), 0)::bigint as rev
       FROM treasury_transactions WHERE type = 'credit' AND created_at >= CURRENT_DATE
     `);
-        const weekRes = await db.execute(sql2`
+        const weekRes = await db.execute(sql`
       SELECT COALESCE(SUM(amount), 0)::bigint as rev
       FROM treasury_transactions WHERE type = 'credit' AND created_at >= NOW() - INTERVAL '7 days'
     `);
-        const monthRes = await db.execute(sql2`
+        const monthRes = await db.execute(sql`
       SELECT COALESCE(SUM(amount), 0)::bigint as rev
       FROM treasury_transactions WHERE type = 'credit' AND created_at >= NOW() - INTERVAL '30 days'
     `);
@@ -151419,7 +143356,7 @@ var init_treasury = __esm({
           res.status(400).json({ error: "To'lov usuli kerak" });
           return;
         }
-        const treasuryRes = await db.execute(sql2`
+        const treasuryRes = await db.execute(sql`
       SELECT available_balance as available FROM platform_treasury WHERE id = 1
     `);
         const treasuryRow = treasuryRes.rows?.[0] ?? (Array.isArray(treasuryRes) ? treasuryRes[0] : {});
@@ -151428,7 +143365,7 @@ var init_treasury = __esm({
           res.status(400).json({ error: "Yetarli mablag' yo'q", available });
           return;
         }
-        await db.execute(sql2`
+        await db.execute(sql`
       UPDATE platform_treasury
       SET available_balance = available_balance - ${amount},
           total_withdrawn = total_withdrawn + ${amount},
@@ -151453,7 +143390,7 @@ var init_treasury = __esm({
       try {
         const limit2 = Math.min(Number(req.query["limit"] ?? 100), 200);
         const offset = Number(req.query["offset"] ?? 0);
-        const txs = await db.select().from(treasuryTxTable).orderBy(desc2(treasuryTxTable.createdAt)).limit(limit2).offset(offset);
+        const txs = await db.select().from(treasuryTxTable).orderBy(desc(treasuryTxTable.createdAt)).limit(limit2).offset(offset);
         res.json({ transactions: txs, limit: limit2, offset });
       } catch (err) {
         req.log.error(err);
@@ -151466,24 +143403,24 @@ var init_treasury = __esm({
 
 // src/lib/commission.ts
 async function getCommissionRate() {
-  const [row] = await db.select({ value: platformSettingsTable.value }).from(platformSettingsTable).where(eq2(platformSettingsTable.key, "commission_rate"));
+  const [row] = await db.select({ value: platformSettingsTable.value }).from(platformSettingsTable).where(eq(platformSettingsTable.key, "commission_rate"));
   if (!row) return DEFAULT_COMMISSION_RATE;
   const parsed = parseFloat(row.value);
   return isNaN(parsed) ? DEFAULT_COMMISSION_RATE : Math.max(0, Math.min(100, parsed));
 }
 async function setCommissionRate(rate) {
   const clamped = Math.max(0, Math.min(100, rate));
-  const existing = await db.select({ id: platformSettingsTable.id }).from(platformSettingsTable).where(eq2(platformSettingsTable.key, "commission_rate"));
+  const existing = await db.select({ id: platformSettingsTable.id }).from(platformSettingsTable).where(eq(platformSettingsTable.key, "commission_rate"));
   if (existing.length > 0) {
-    await db.update(platformSettingsTable).set({ value: String(clamped), updatedAt: /* @__PURE__ */ new Date() }).where(eq2(platformSettingsTable.key, "commission_rate"));
+    await db.update(platformSettingsTable).set({ value: String(clamped), updatedAt: /* @__PURE__ */ new Date() }).where(eq(platformSettingsTable.key, "commission_rate"));
   } else {
     await db.insert(platformSettingsTable).values({ key: "commission_rate", value: String(clamped) });
   }
 }
 async function getAdminWallet() {
-  const [admin] = await db.select({ id: usersTable.id }).from(usersTable).where(eq2(usersTable.isAdmin, true)).limit(1);
+  const [admin] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.isAdmin, true)).limit(1);
   if (!admin) return null;
-  const existing = await db.select({ id: walletsTable.id, userId: walletsTable.userId, earningsBalance: walletsTable.earningsBalance }).from(walletsTable).where(eq2(walletsTable.userId, admin.id)).limit(1);
+  const existing = await db.select({ id: walletsTable.id, userId: walletsTable.userId, earningsBalance: walletsTable.earningsBalance }).from(walletsTable).where(eq(walletsTable.userId, admin.id)).limit(1);
   if (existing.length > 0) return existing[0];
   const [created] = await db.insert(walletsTable).values({ userId: admin.id }).returning({ id: walletsTable.id, userId: walletsTable.userId, earningsBalance: walletsTable.earningsBalance });
   return created;
@@ -151496,7 +143433,7 @@ async function applyCommission(fromUserId, grossAmount, type, ref) {
     if (commission <= 0) return 0;
     const adminWallet = await getAdminWallet();
     if (!adminWallet) return 0;
-    await db.update(walletsTable).set({ earningsBalance: adminWallet.earningsBalance + commission, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, adminWallet.id));
+    await db.update(walletsTable).set({ earningsBalance: adminWallet.earningsBalance + commission, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, adminWallet.id));
     await db.insert(transactionsTable).values({
       userId: adminWallet.userId,
       walletId: adminWallet.id,
@@ -151524,7 +143461,7 @@ var init_commission = __esm({
     "use strict";
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_treasury();
     DEFAULT_COMMISSION_RATE = 10;
   }
@@ -151916,7 +143853,7 @@ function normalizeHeaders(obj) {
   }, {});
 }
 function normalizeHeader(header) {
-  return header.split("-").map((text3) => text3.charAt(0).toUpperCase() + text3.substr(1).toLowerCase()).join("-");
+  return header.split("-").map((text2) => text2.charAt(0).toUpperCase() + text2.substr(1).toLowerCase()).join("-");
 }
 function pascalToCamelCase(name2) {
   if (name2 === "OAuth") {
@@ -152025,7 +143962,7 @@ function attachCallSiteToError(err, callSiteStack) {
 ${callerFrames}`;
 }
 var makeURLInterpolator, AI_AGENTS, CALL_SITE_MARKER;
-var init_utils15 = __esm({
+var init_utils11 = __esm({
   "../../node_modules/.pnpm/stripe@22.2.0_@types+node@25.6.2/node_modules/stripe/esm/utils.js"() {
     init_Types();
     makeURLInterpolator = /* @__PURE__ */ (() => {
@@ -152072,7 +144009,7 @@ var init_RequestSender = __esm({
   "../../node_modules/.pnpm/stripe@22.2.0_@types+node@25.6.2/node_modules/stripe/esm/RequestSender.js"() {
     init_Error();
     init_HttpClient();
-    init_utils15();
+    init_utils11();
     MAX_RETRY_AFTER_WAIT = 60;
     RequestSender = class _RequestSender {
       constructor(stripe, maxBufferedRequestMetric) {
@@ -153378,7 +145315,7 @@ function wrapAsyncIteratorWithCallback(asyncIteratorNext, onItem) {
 var V1Iterator, V1ListIterator, V1SearchIterator, V2ListIterator, makeAutoPaginationMethods, makeAutoPaginationMethodsFromIterator;
 var init_autoPagination = __esm({
   "../../node_modules/.pnpm/stripe@22.2.0_@types+node@25.6.2/node_modules/stripe/esm/autoPagination.js"() {
-    init_utils15();
+    init_utils11();
     V1Iterator = class {
       constructor(firstPagePromise, params, options, method, path3, spec, stripeResource) {
         this.index = 0;
@@ -153532,7 +145469,7 @@ var init_autoPagination = __esm({
 var StripeResource;
 var init_StripeResource = __esm({
   "../../node_modules/.pnpm/stripe@22.2.0_@types+node@25.6.2/node_modules/stripe/esm/StripeResource.js"() {
-    init_utils15();
+    init_utils11();
     init_V2Coercion();
     init_autoPagination();
     StripeResource = class {
@@ -153836,7 +145773,7 @@ var init_NodeHttpClient = __esm({
 var FetchHttpClient, FetchHttpClientResponse;
 var init_FetchHttpClient = __esm({
   "../../node_modules/.pnpm/stripe@22.2.0_@types+node@25.6.2/node_modules/stripe/esm/net/FetchHttpClient.js"() {
-    init_utils15();
+    init_utils11();
     init_HttpClient();
     FetchHttpClient = class _FetchHttpClient extends HttpClient2 {
       constructor(fetchFn) {
@@ -153929,12 +145866,12 @@ var init_FetchHttpClient = __esm({
         return this._res.body;
       }
       toJSON() {
-        return this._res.text().then((text3) => {
+        return this._res.text().then((text2) => {
           try {
-            return JSON.parse(text3);
+            return JSON.parse(text2);
           } catch (e5) {
             if (e5 instanceof Error) {
-              e5.rawBody = text3;
+              e5.rawBody = text2;
             }
             throw e5;
           }
@@ -154121,7 +146058,7 @@ var init_NodePlatformFunctions = __esm({
     init_NodeHttpClient();
     init_PlatformFunctions();
     init_Error();
-    init_utils15();
+    init_utils11();
     StreamProcessingError = class extends StripeError {
     };
     NodePlatformFunctions = class extends PlatformFunctions {
@@ -154181,8 +146118,8 @@ var init_NodePlatformFunctions = __esm({
         }
         const bufferArray = [];
         return new Promise((resolve, reject) => {
-          data.file.data.on("data", (line3) => {
-            bufferArray.push(line3);
+          data.file.data.on("data", (line2) => {
+            bufferArray.push(line2);
           }).once("end", () => {
             const bufferData = Object.assign({}, data);
             bufferData.file.data = concat(bufferArray);
@@ -154304,14 +146241,14 @@ function createWebhooks(platformFunctions) {
       });
     }
     const suspectPayloadType = typeof encodedPayload != "string" && !(encodedPayload instanceof Uint8Array);
-    const textDecoder3 = new TextDecoder("utf8");
-    const decodedPayload = encodedPayload instanceof Uint8Array ? textDecoder3.decode(encodedPayload) : encodedPayload;
+    const textDecoder2 = new TextDecoder("utf8");
+    const decodedPayload = encodedPayload instanceof Uint8Array ? textDecoder2.decode(encodedPayload) : encodedPayload;
     if (encodedHeader == null || encodedHeader == "") {
       throw new StripeSignatureVerificationError(encodedHeader, encodedPayload, {
         message: "No stripe-signature header value was provided."
       });
     }
-    const decodedHeader = encodedHeader instanceof Uint8Array ? textDecoder3.decode(encodedHeader) : encodedHeader;
+    const decodedHeader = encodedHeader instanceof Uint8Array ? textDecoder2.decode(encodedHeader) : encodedHeader;
     const details = parseHeader(decodedHeader, expectedScheme);
     if (!details || details.timestamp === -1) {
       throw new StripeSignatureVerificationError(decodedHeader, decodedPayload, {
@@ -154384,16 +146321,16 @@ function createWebhooks(platformFunctions) {
         message: "Options are required"
       });
     }
-    const timestamp3 = opts.timestamp && Math.floor(opts.timestamp) || Math.floor(Date.now() / 1e3);
+    const timestamp2 = opts.timestamp && Math.floor(opts.timestamp) || Math.floor(Date.now() / 1e3);
     const scheme = opts.scheme || signature.EXPECTED_SCHEME;
     const cryptoProvider = opts.cryptoProvider || getCryptoProvider();
-    const payloadString = `${timestamp3}.${opts.payload}`;
+    const payloadString = `${timestamp2}.${opts.payload}`;
     const generateHeaderString = (signature2) => {
-      return `t=${timestamp3},${scheme}=${signature2}`;
+      return `t=${timestamp2},${scheme}=${signature2}`;
     };
     return {
       ...opts,
-      timestamp: timestamp3,
+      timestamp: timestamp2,
       scheme,
       cryptoProvider,
       payloadString,
@@ -163210,7 +155147,7 @@ function multipartRequestDataProcessor(method, data, headers, callback) {
 var multipartDataGenerator;
 var init_multipart = __esm({
   "../../node_modules/.pnpm/stripe@22.2.0_@types+node@25.6.2/node_modules/stripe/esm/multipart.js"() {
-    init_utils15();
+    init_utils11();
     multipartDataGenerator = (method, data, headers) => {
       const segno = (Math.round(Math.random() * 1e16) + Math.round(Math.random() * 1e16)).toString();
       headers["Content-Type"] = `multipart/form-data; boundary=${segno}`;
@@ -164429,7 +156366,7 @@ var init_OAuth = __esm({
   "../../node_modules/.pnpm/stripe@22.2.0_@types+node@25.6.2/node_modules/stripe/esm/resources/OAuth.js"() {
     "use strict";
     init_StripeResource();
-    init_utils15();
+    init_utils11();
     OAuthResource = class extends StripeResource {
       constructor() {
         super(...arguments);
@@ -169779,7 +161716,7 @@ var init_stripe_esm_node = __esm({
     init_CryptoProvider();
     init_HttpClient();
     init_resources2();
-    init_utils15();
+    init_utils11();
     init_shared2();
     init_Accounts3();
     init_AccountLinks2();
@@ -170399,7 +162336,7 @@ var init_admin2 = __esm({
     import_express14 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_commission();
     init_stripeClient();
     init_userStats();
@@ -170410,7 +162347,7 @@ var init_admin2 = __esm({
         res.status(401).json({ error: "Kirish talab qilinadi" });
         return;
       }
-      const [user] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, userId));
+      const [user] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, userId));
       if (!user?.isAdmin) {
         res.status(403).json({ error: "Admin huquqi talab qilinadi" });
         return;
@@ -170420,15 +162357,15 @@ var init_admin2 = __esm({
     router14.use("/admin", requireAdmin3);
     router14.get("/admin/dashboard", async (req, res) => {
       try {
-        const [users] = await db.select({ count: sql2`count(*)::int` }).from(usersTable);
-        const [posts] = await db.select({ count: sql2`count(*)::int` }).from(postsTable);
-        const [reels] = await db.select({ count: sql2`count(*)::int` }).from(reelsTable);
-        const [stories] = await db.select({ count: sql2`count(*)::int` }).from(storiesTable);
-        const [groups] = await db.select({ count: sql2`count(*)::int` }).from(groupsTable);
-        const [flagged] = await db.select({ count: sql2`count(*)::int` }).from(moderationQueueTable).where(eq2(moderationQueueTable.status, "pending"));
-        const [newToday] = await db.select({ count: sql2`count(*)::int` }).from(usersTable).where(sql2`${usersTable.createdAt} >= current_date`);
-        const regions = await db.select({ region: usersTable.country, count: sql2`count(*)::int` }).from(usersTable).groupBy(usersTable.country).orderBy(desc2(sql2`count(*)`)).limit(5);
-        const activeRes = await db.execute(sql2`SELECT count(*)::int as count FROM user_sessions WHERE expire > now()`);
+        const [users] = await db.select({ count: sql`count(*)::int` }).from(usersTable);
+        const [posts] = await db.select({ count: sql`count(*)::int` }).from(postsTable);
+        const [reels] = await db.select({ count: sql`count(*)::int` }).from(reelsTable);
+        const [stories] = await db.select({ count: sql`count(*)::int` }).from(storiesTable);
+        const [groups] = await db.select({ count: sql`count(*)::int` }).from(groupsTable);
+        const [flagged] = await db.select({ count: sql`count(*)::int` }).from(moderationQueueTable).where(eq(moderationQueueTable.status, "pending"));
+        const [newToday] = await db.select({ count: sql`count(*)::int` }).from(usersTable).where(sql`${usersTable.createdAt} >= current_date`);
+        const regions = await db.select({ region: usersTable.country, count: sql`count(*)::int` }).from(usersTable).groupBy(usersTable.country).orderBy(desc(sql`count(*)`)).limit(5);
+        const activeRes = await db.execute(sql`SELECT count(*)::int as count FROM user_sessions WHERE expire > now()`);
         const rows = (r5) => r5?.rows ?? [];
         const activeNow = rows(activeRes)[0]?.count ?? 0;
         const totalUsers = users.count;
@@ -170457,7 +162394,7 @@ var init_admin2 = __esm({
         const offset = Number(req.query.offset) || 0;
         let users;
         if (status && status !== "all") {
-          users = await db.select().from(usersTable).where(eq2(usersTable.status, status)).limit(limit2).offset(offset);
+          users = await db.select().from(usersTable).where(eq(usersTable.status, status)).limit(limit2).offset(offset);
         } else {
           users = await db.select().from(usersTable).limit(limit2).offset(offset);
         }
@@ -170472,7 +162409,7 @@ var init_admin2 = __esm({
       try {
         const id = Number(req.params.id);
         const { suspend } = req.body;
-        const [user] = await db.update(usersTable).set({ status: suspend ? "suspended" : "active" }).where(eq2(usersTable.id, id)).returning();
+        const [user] = await db.update(usersTable).set({ status: suspend ? "suspended" : "active" }).where(eq(usersTable.id, id)).returning();
         if (!user) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -170490,12 +162427,12 @@ var init_admin2 = __esm({
         const limit2 = Math.min(Number(req.query.limit) || 50, 200);
         let posts;
         if (flagged) {
-          posts = await db.select().from(postsTable).where(eq2(postsTable.isFlagged, true)).orderBy(desc2(postsTable.createdAt)).limit(limit2);
+          posts = await db.select().from(postsTable).where(eq(postsTable.isFlagged, true)).orderBy(desc(postsTable.createdAt)).limit(limit2);
         } else {
-          posts = await db.select().from(postsTable).orderBy(desc2(postsTable.createdAt)).limit(limit2);
+          posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit2);
         }
         const enriched = await Promise.all(posts.map(async (p3) => {
-          const [author] = await db.select().from(usersTable).where(eq2(usersTable.id, p3.authorId));
+          const [author] = await db.select().from(usersTable).where(eq(usersTable.id, p3.authorId));
           return {
             id: p3.id,
             type: "post",
@@ -170521,30 +162458,30 @@ var init_admin2 = __esm({
         const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
         const rows = (r5) => r5?.rows ?? [];
         const [userRes, postRes, reelRes, storyRes] = await Promise.all([
-          db.execute(sql2`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM users WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
-          db.execute(sql2`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM posts WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
-          db.execute(sql2`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM reels WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
-          db.execute(sql2`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM stories WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`)
+          db.execute(sql`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM users WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
+          db.execute(sql`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM posts WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
+          db.execute(sql`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM reels WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`),
+          db.execute(sql`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count FROM stories WHERE created_at >= now() - make_interval(days => ${days}) GROUP BY date`)
         ]);
         const toMap = (r5) => new Map(rows(r5).map((row) => [row.date, row.count]));
         const userMap = toMap(userRes), postMap = toMap(postRes), reelMap = toMap(reelRes), storyMap = toMap(storyRes);
         const userGrowth = [];
         const contentGrowth = [];
         for (let i5 = days - 1; i5 >= 0; i5--) {
-          const date8 = new Date(Date.now() - i5 * 864e5).toISOString().split("T")[0];
-          userGrowth.push({ date: date8, count: userMap.get(date8) ?? 0 });
-          contentGrowth.push({ date: date8, posts: postMap.get(date8) ?? 0, reels: reelMap.get(date8) ?? 0, stories: storyMap.get(date8) ?? 0 });
+          const date7 = new Date(Date.now() - i5 * 864e5).toISOString().split("T")[0];
+          userGrowth.push({ date: date7, count: userMap.get(date7) ?? 0 });
+          contentGrowth.push({ date: date7, posts: postMap.get(date7) ?? 0, reels: reelMap.get(date7) ?? 0, stories: storyMap.get(date7) ?? 0 });
         }
         const [postStats] = await db.select({
-          totalPosts: sql2`count(*)::int`,
-          totalLikes: sql2`coalesce(sum(${postsTable.likesCount}),0)::int`
-        }).from(postsTable).where(sql2`${postsTable.createdAt} >= now() - make_interval(days => ${days})`);
-        const [commentStats] = await db.select({ totalComments: sql2`count(*)::int` }).from(commentsTable).where(sql2`${commentsTable.createdAt} >= now() - make_interval(days => ${days})`);
+          totalPosts: sql`count(*)::int`,
+          totalLikes: sql`coalesce(sum(${postsTable.likesCount}),0)::int`
+        }).from(postsTable).where(sql`${postsTable.createdAt} >= now() - make_interval(days => ${days})`);
+        const [commentStats] = await db.select({ totalComments: sql`count(*)::int` }).from(commentsTable).where(sql`${commentsTable.createdAt} >= now() - make_interval(days => ${days})`);
         const engagementRate = postStats.totalPosts > 0 ? Math.round((postStats.totalLikes + commentStats.totalComments) / postStats.totalPosts * 10) / 10 : 0;
-        const topPosts = await db.select().from(postsTable).orderBy(desc2(postsTable.likesCount)).limit(5);
+        const topPosts = await db.select().from(postsTable).orderBy(desc(postsTable.likesCount)).limit(5);
         const authorIds = [...new Set(topPosts.map((p3) => p3.authorId).filter(Boolean))];
         const statsMap = await getUserStatsMap(authorIds);
-        const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray2(usersTable.id, authorIds)) : [];
+        const authors = authorIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds)) : [];
         const authorMap = new Map(authors.map((a5) => [a5.id, a5]));
         const enrichedTop = topPosts.map((p3) => {
           const author = authorMap.get(p3.authorId);
@@ -170561,21 +162498,21 @@ var init_admin2 = __esm({
       try {
         const rows = (r5) => r5?.rows ?? [];
         const [modStats] = await db.select({
-          total: sql2`count(*)::int`,
-          pending: sql2`count(*) filter (where ${moderationQueueTable.status} = 'pending')::int`,
-          autoBlocked: sql2`count(*) filter (where ${moderationQueueTable.autoBlocked} = true)::int`,
-          avgScore: sql2`coalesce(avg(${moderationQueueTable.aiScore}), 0)::float`
+          total: sql`count(*)::int`,
+          pending: sql`count(*) filter (where ${moderationQueueTable.status} = 'pending')::int`,
+          autoBlocked: sql`count(*) filter (where ${moderationQueueTable.autoBlocked} = true)::int`,
+          avgScore: sql`coalesce(avg(${moderationQueueTable.aiScore}), 0)::float`
         }).from(moderationQueueTable);
-        const [lastMod] = await db.select({ createdAt: moderationQueueTable.createdAt }).from(moderationQueueTable).orderBy(desc2(moderationQueueTable.createdAt)).limit(1);
-        const volRes = await db.execute(sql2`
+        const [lastMod] = await db.select({ createdAt: moderationQueueTable.createdAt }).from(moderationQueueTable).orderBy(desc(moderationQueueTable.createdAt)).limit(1);
+        const volRes = await db.execute(sql`
       SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as date, count(*)::int as count
       FROM moderation_queue WHERE created_at >= now() - interval '7 days' GROUP BY date
     `);
         const volMap = new Map(rows(volRes).map((row) => [row.date, row.count]));
         const volumeHistory = [];
         for (let i5 = 6; i5 >= 0; i5--) {
-          const date8 = new Date(Date.now() - i5 * 864e5).toISOString().split("T")[0];
-          volumeHistory.push({ date: date8, count: volMap.get(date8) ?? 0 });
+          const date7 = new Date(Date.now() - i5 * 864e5).toISOString().split("T")[0];
+          volumeHistory.push({ date: date7, count: volMap.get(date7) ?? 0 });
         }
         res.json({
           version: "NEXUS-AI v1.0.0",
@@ -170599,22 +162536,22 @@ var init_admin2 = __esm({
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        const [admin] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, userId));
+        const [admin] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, userId));
         if (!admin?.isAdmin) {
           res.status(403).json({ error: "Forbidden" });
           return;
         }
-        const [totalUsers] = await db.select({ count: sql2`count(*)::int` }).from(usersTable);
-        const [premiumUsers] = await db.select({ count: sql2`count(*)::int` }).from(usersTable).where(eq2(usersTable.isPremium, true));
-        const [freeAtLimit] = await db.select({ count: sql2`count(*)::int` }).from(usersTable).where(and2(eq2(usersTable.isPremium, false), sql2`${usersTable.aiUsageCount} >= 5`));
-        const [totalAiCalls] = await db.select({ total: sql2`COALESCE(SUM(ai_usage_count), 0)::int` }).from(usersTable);
+        const [totalUsers] = await db.select({ count: sql`count(*)::int` }).from(usersTable);
+        const [premiumUsers] = await db.select({ count: sql`count(*)::int` }).from(usersTable).where(eq(usersTable.isPremium, true));
+        const [freeAtLimit] = await db.select({ count: sql`count(*)::int` }).from(usersTable).where(and(eq(usersTable.isPremium, false), sql`${usersTable.aiUsageCount} >= 5`));
+        const [totalAiCalls] = await db.select({ total: sql`COALESCE(SUM(ai_usage_count), 0)::int` }).from(usersTable);
         const topUsers = await db.select({
           id: usersTable.id,
           username: usersTable.username,
           displayName: usersTable.displayName,
           isPremium: usersTable.isPremium,
           aiUsageCount: usersTable.aiUsageCount
-        }).from(usersTable).orderBy(desc2(usersTable.aiUsageCount)).limit(10);
+        }).from(usersTable).orderBy(desc(usersTable.aiUsageCount)).limit(10);
         res.json({
           totalUsers: totalUsers?.count ?? 0,
           premiumUsers: premiumUsers?.count ?? 0,
@@ -170631,12 +162568,12 @@ var init_admin2 = __esm({
     router14.patch("/admin/users/:id/toggle-premium", async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const [existing] = await db.select({ isPremium: usersTable.isPremium }).from(usersTable).where(eq2(usersTable.id, id));
+        const [existing] = await db.select({ isPremium: usersTable.isPremium }).from(usersTable).where(eq(usersTable.id, id));
         if (!existing) {
           res.status(404).json({ error: "Foydalanuvchi topilmadi" });
           return;
         }
-        const [user] = await db.update(usersTable).set({ isPremium: !existing.isPremium }).where(eq2(usersTable.id, id)).returning();
+        const [user] = await db.update(usersTable).set({ isPremium: !existing.isPremium }).where(eq(usersTable.id, id)).returning();
         const stats = await getUserStats(id);
         res.json({ ...user, ...stats, lastSeen: user.createdAt.toISOString() });
       } catch (err) {
@@ -170647,12 +162584,12 @@ var init_admin2 = __esm({
     router14.patch("/admin/users/:id/verify", async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const [existing] = await db.select({ isVerified: usersTable.isVerified }).from(usersTable).where(eq2(usersTable.id, id));
+        const [existing] = await db.select({ isVerified: usersTable.isVerified }).from(usersTable).where(eq(usersTable.id, id));
         if (!existing) {
           res.status(404).json({ error: "Foydalanuvchi topilmadi" });
           return;
         }
-        const [user] = await db.update(usersTable).set({ isVerified: !existing.isVerified }).where(eq2(usersTable.id, id)).returning();
+        const [user] = await db.update(usersTable).set({ isVerified: !existing.isVerified }).where(eq(usersTable.id, id)).returning();
         const stats = await getUserStats(id);
         res.json({ ...user, ...stats, lastSeen: user.createdAt.toISOString() });
       } catch (err) {
@@ -170667,12 +162604,12 @@ var init_admin2 = __esm({
           res.status(400).json({ error: "O'zingizning admin huquqingizni olmaysiz" });
           return;
         }
-        const [existing] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, id));
+        const [existing] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, id));
         if (!existing) {
           res.status(404).json({ error: "Foydalanuvchi topilmadi" });
           return;
         }
-        const [user] = await db.update(usersTable).set({ isAdmin: !existing.isAdmin }).where(eq2(usersTable.id, id)).returning();
+        const [user] = await db.update(usersTable).set({ isAdmin: !existing.isAdmin }).where(eq(usersTable.id, id)).returning();
         const stats = await getUserStats(id);
         res.json({ ...user, ...stats, lastSeen: user.createdAt.toISOString() });
       } catch (err) {
@@ -170683,7 +162620,7 @@ var init_admin2 = __esm({
     router14.delete("/admin/posts/:id", async (req, res) => {
       try {
         const id = Number(req.params.id);
-        await db.delete(postsTable).where(eq2(postsTable.id, id));
+        await db.delete(postsTable).where(eq(postsTable.id, id));
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);
@@ -170700,16 +162637,16 @@ var init_admin2 = __esm({
           displayName: usersTable.displayName,
           username: usersTable.username,
           email: usersTable.email
-        }).from(walletsTable).leftJoin(usersTable, eq2(walletsTable.userId, usersTable.id)).orderBy(desc2(walletsTable.balance)).limit(50);
+        }).from(walletsTable).leftJoin(usersTable, eq(walletsTable.userId, usersTable.id)).orderBy(desc(walletsTable.balance)).limit(50);
         const [totals] = await db.select({
-          totalBalance: sql2`coalesce(sum(balance),0)::int`,
-          totalEarnings: sql2`coalesce(sum(earnings_balance),0)::int`,
-          totalAdRevenue: sql2`coalesce(sum(ad_revenue_balance),0)::int`
+          totalBalance: sql`coalesce(sum(balance),0)::int`,
+          totalEarnings: sql`coalesce(sum(earnings_balance),0)::int`,
+          totalAdRevenue: sql`coalesce(sum(ad_revenue_balance),0)::int`
         }).from(walletsTable);
-        const recentTxs = await db.select().from(transactionsTable).orderBy(desc2(transactionsTable.createdAt)).limit(20);
-        const [txCount] = await db.select({ count: sql2`count(*)::int` }).from(transactionsTable);
-        const deposits = await db.select({ total: sql2`coalesce(sum(amount),0)::int` }).from(transactionsTable).where(eq2(transactionsTable.type, "deposit"));
-        const withdrawals = await db.select({ total: sql2`coalesce(sum(abs(amount)),0)::int` }).from(transactionsTable).where(eq2(transactionsTable.type, "withdrawal"));
+        const recentTxs = await db.select().from(transactionsTable).orderBy(desc(transactionsTable.createdAt)).limit(20);
+        const [txCount] = await db.select({ count: sql`count(*)::int` }).from(transactionsTable);
+        const deposits = await db.select({ total: sql`coalesce(sum(amount),0)::int` }).from(transactionsTable).where(eq(transactionsTable.type, "deposit"));
+        const withdrawals = await db.select({ total: sql`coalesce(sum(abs(amount)),0)::int` }).from(transactionsTable).where(eq(transactionsTable.type, "withdrawal"));
         res.json({
           wallets,
           totals: { ...totals, totalAll: totals.totalBalance + totals.totalEarnings + totals.totalAdRevenue },
@@ -170728,7 +162665,7 @@ var init_admin2 = __esm({
     router14.get("/admin/wallet/withdrawals", async (req, res) => {
       try {
         const status = req.query.status || "pending";
-        const whereClause = status === "all" ? eq2(transactionsTable.type, "withdrawal") : and2(eq2(transactionsTable.type, "withdrawal"), eq2(transactionsTable.status, status));
+        const whereClause = status === "all" ? eq(transactionsTable.type, "withdrawal") : and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, status));
         const rows = await db.select({
           id: transactionsTable.id,
           userId: transactionsTable.userId,
@@ -170741,7 +162678,7 @@ var init_admin2 = __esm({
           createdAt: transactionsTable.createdAt,
           displayName: usersTable.displayName,
           username: usersTable.username
-        }).from(transactionsTable).leftJoin(usersTable, eq2(transactionsTable.userId, usersTable.id)).where(whereClause).orderBy(desc2(transactionsTable.createdAt)).limit(100);
+        }).from(transactionsTable).leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id)).where(whereClause).orderBy(desc(transactionsTable.createdAt)).limit(100);
         res.json({ withdrawals: rows });
       } catch (err) {
         req.log.error(err);
@@ -170756,7 +162693,7 @@ var init_admin2 = __esm({
           res.status(400).json({ error: "action 'approve' yoki 'reject' bo'lishi kerak" });
           return;
         }
-        const [tx] = await db.select().from(transactionsTable).where(and2(eq2(transactionsTable.id, id), eq2(transactionsTable.type, "withdrawal")));
+        const [tx] = await db.select().from(transactionsTable).where(and(eq(transactionsTable.id, id), eq(transactionsTable.type, "withdrawal")));
         if (!tx) {
           res.status(404).json({ error: "So'rov topilmadi" });
           return;
@@ -170766,7 +162703,7 @@ var init_admin2 = __esm({
           return;
         }
         if (action === "approve") {
-          const [updatedTx2] = await db.update(transactionsTable).set({ status: "completed", description: `${tx.description ?? ""} \u2014 admin tomonidan tasdiqlandi${adminNote ? `: ${adminNote}` : ""}` }).where(and2(eq2(transactionsTable.id, tx.id), eq2(transactionsTable.status, "pending"))).returning();
+          const [updatedTx2] = await db.update(transactionsTable).set({ status: "completed", description: `${tx.description ?? ""} \u2014 admin tomonidan tasdiqlandi${adminNote ? `: ${adminNote}` : ""}` }).where(and(eq(transactionsTable.id, tx.id), eq(transactionsTable.status, "pending"))).returning();
           if (!updatedTx2) {
             res.status(409).json({ error: "So'rov holati o'zgargan, qayta urinib ko'ring" });
             return;
@@ -170782,14 +162719,14 @@ var init_admin2 = __esm({
         } catch {
           meta = {};
         }
-        const wallet = await db.query.walletsTable.findFirst({ where: eq2(walletsTable.userId, tx.userId) }) ?? (await db.insert(walletsTable).values({ userId: tx.userId }).returning())[0];
+        const wallet = await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, tx.userId) }) ?? (await db.insert(walletsTable).values({ userId: tx.userId }).returning())[0];
         const [updatedWallet] = await db.update(walletsTable).set({
           balance: wallet.balance + (meta.fromPersonal ?? 0),
           earningsBalance: wallet.earningsBalance + (meta.fromEarnings ?? 0),
           adRevenueBalance: wallet.adRevenueBalance + (meta.fromAdRevenue ?? 0),
           updatedAt: /* @__PURE__ */ new Date()
-        }).where(eq2(walletsTable.id, wallet.id)).returning();
-        const [updatedTx] = await db.update(transactionsTable).set({ status: "cancelled", description: `${tx.description ?? ""} \u2014 admin tomonidan rad etildi va mablag' qaytarildi${adminNote ? `: ${adminNote}` : ""}` }).where(and2(eq2(transactionsTable.id, tx.id), eq2(transactionsTable.status, "pending"))).returning();
+        }).where(eq(walletsTable.id, wallet.id)).returning();
+        const [updatedTx] = await db.update(transactionsTable).set({ status: "cancelled", description: `${tx.description ?? ""} \u2014 admin tomonidan rad etildi va mablag' qaytarildi${adminNote ? `: ${adminNote}` : ""}` }).where(and(eq(transactionsTable.id, tx.id), eq(transactionsTable.status, "pending"))).returning();
         if (!updatedTx) {
           res.status(409).json({ error: "So'rov holati o'zgargan, qayta urinib ko'ring" });
           return;
@@ -170811,7 +162748,7 @@ var init_admin2 = __esm({
         if (targetUserIds && targetUserIds.length > 0) {
           userIds = targetUserIds;
         } else {
-          const allUsers = await db.select({ id: usersTable.id }).from(usersTable).where(eq2(usersTable.status, "active"));
+          const allUsers = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.status, "active"));
           userIds = allUsers.map((u) => u.id);
         }
         const notifications = userIds.map((userId) => ({
@@ -170857,21 +162794,21 @@ var init_admin2 = __esm({
     router14.get("/admin/commission/stats", async (req, res) => {
       try {
         const { usersTable: ut, walletsTable: wt, transactionsTable: tt } = await Promise.resolve().then(() => (init_src2(), src_exports));
-        const [admin] = await db.select({ id: ut.id }).from(ut).where(eq2(ut.isAdmin, true)).limit(1);
+        const [admin] = await db.select({ id: ut.id }).from(ut).where(eq(ut.isAdmin, true)).limit(1);
         if (!admin) {
           res.json({ totalCommission: 0, adminBalance: 0, adminEarnings: 0, monthlyCommission: 0, txCount: 0 });
           return;
         }
-        const [adminWallet] = await db.select({ balance: wt.balance, earningsBalance: wt.earningsBalance, adRevenueBalance: wt.adRevenueBalance, id: wt.id }).from(wt).where(eq2(wt.userId, admin.id)).limit(1);
+        const [adminWallet] = await db.select({ balance: wt.balance, earningsBalance: wt.earningsBalance, adRevenueBalance: wt.adRevenueBalance, id: wt.id }).from(wt).where(eq(wt.userId, admin.id)).limit(1);
         if (!adminWallet) {
           res.json({ totalCommission: 0, adminBalance: 0, adminEarnings: 0, monthlyCommission: 0, txCount: 0 });
           return;
         }
-        const [total] = await db.select({ total: sql2`coalesce(sum(amount),0)::int`, count: sql2`count(*)::int` }).from(tt).where(eq2(tt.walletId, adminWallet.id));
+        const [total] = await db.select({ total: sql`coalesce(sum(amount),0)::int`, count: sql`count(*)::int` }).from(tt).where(eq(tt.walletId, adminWallet.id));
         const monthStart = /* @__PURE__ */ new Date();
         monthStart.setDate(1);
         monthStart.setHours(0, 0, 0, 0);
-        const [monthly] = await db.select({ total: sql2`coalesce(sum(amount),0)::int` }).from(tt).where(sql2`${tt.walletId} = ${adminWallet.id} AND ${tt.createdAt} >= ${monthStart}`);
+        const [monthly] = await db.select({ total: sql`coalesce(sum(amount),0)::int` }).from(tt).where(sql`${tt.walletId} = ${adminWallet.id} AND ${tt.createdAt} >= ${monthStart}`);
         res.json({
           totalCommission: total?.total ?? 0,
           txCount: total?.count ?? 0,
@@ -170905,11 +162842,11 @@ var init_admin2 = __esm({
     });
     router14.get("/admin/premium-config", async (req, res) => {
       try {
-        const rows = await db.select().from(premiumConfigTable).where(eq2(premiumConfigTable.id, 1));
+        const rows = await db.select().from(premiumConfigTable).where(eq(premiumConfigTable.id, 1));
         let config2 = rows[0];
         if (!config2) {
           await db.insert(premiumConfigTable).values({ id: 1, monthlyPriceCents: 999, yearlyDiscountPercent: 20 }).onConflictDoNothing();
-          const r22 = await db.select().from(premiumConfigTable).where(eq2(premiumConfigTable.id, 1));
+          const r22 = await db.select().from(premiumConfigTable).where(eq(premiumConfigTable.id, 1));
           config2 = r22[0];
         }
         const monthly = config2.monthlyPriceCents;
@@ -170931,7 +162868,7 @@ var init_admin2 = __esm({
           res.status(400).json({ error: "yearlyDiscountPercent 0\u201390 orasida bo'lishi kerak" });
           return;
         }
-        const rows = await db.select().from(premiumConfigTable).where(eq2(premiumConfigTable.id, 1));
+        const rows = await db.select().from(premiumConfigTable).where(eq(premiumConfigTable.id, 1));
         const current = rows[0] ?? { monthlyPriceCents: 999, yearlyDiscountPercent: 20, monthlyStripePriceId: null, yearlyStripePriceId: null, stripeProductId: null };
         const newMonthly = monthlyPriceCents ?? current.monthlyPriceCents;
         const newDiscount = yearlyDiscountPercent ?? current.yearlyDiscountPercent;
@@ -171030,7 +162967,7 @@ var init_storage2 = __esm({
     "use strict";
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_stripeClient();
     Storage2 = class {
       async listProductsWithPrices() {
@@ -171108,11 +163045,11 @@ var init_storage2 = __esm({
         }
       }
       async getUser(id) {
-        const [user] = await db.select().from(usersTable).where(eq2(usersTable.id, id));
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
         return user;
       }
       async updateUserStripeInfo(userId, stripeInfo) {
-        const [user] = await db.update(usersTable).set(stripeInfo).where(eq2(usersTable.id, userId)).returning();
+        const [user] = await db.update(usersTable).set(stripeInfo).where(eq(usersTable.id, userId)).returning();
         return user;
       }
     };
@@ -171466,7 +163403,7 @@ var init_moderation2 = __esm({
     import_express16 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_aiFilter();
     router16 = (0, import_express16.Router)();
     requireAuth5 = (req, res, next) => {
@@ -171481,7 +163418,7 @@ var init_moderation2 = __esm({
         res.status(401).json({ error: "Kirish talab qilinadi" });
         return;
       }
-      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, req.session.userId));
+      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, req.session.userId));
       if (!u?.isAdmin) {
         res.status(403).json({ error: "Admin huquqi kerak" });
         return;
@@ -171489,12 +163426,12 @@ var init_moderation2 = __esm({
       next();
     };
     router16.post("/moderation/scan", requireAdmin4, async (req, res) => {
-      const { text: text3 } = req.body;
-      if (!text3) {
+      const { text: text2 } = req.body;
+      if (!text2) {
         res.status(400).json({ error: "text talab qilinadi" });
         return;
       }
-      const result = await scanContentAsync(text3);
+      const result = await scanContentAsync(text2);
       res.json(result);
     });
     router16.post("/moderation/report", requireAuth5, async (req, res) => {
@@ -171511,13 +163448,13 @@ var init_moderation2 = __esm({
           reason,
           description
         }).returning();
-        const existing = await db.select().from(moderationQueueTable).where(and2(eq2(moderationQueueTable.contentType, contentType), eq2(moderationQueueTable.contentId, contentId)));
+        const existing = await db.select().from(moderationQueueTable).where(and(eq(moderationQueueTable.contentType, contentType), eq(moderationQueueTable.contentId, contentId)));
         if (existing.length > 0) {
-          await db.update(moderationQueueTable).set({ reportCount: sql2`${moderationQueueTable.reportCount} + 1` }).where(eq2(moderationQueueTable.id, existing[0].id));
+          await db.update(moderationQueueTable).set({ reportCount: sql`${moderationQueueTable.reportCount} + 1` }).where(eq(moderationQueueTable.id, existing[0].id));
         } else {
           let contentText = "";
           if (contentType === "post") {
-            const [post] = await db.select().from(postsTable).where(eq2(postsTable.id, contentId));
+            const [post] = await db.select().from(postsTable).where(eq(postsTable.id, contentId));
             contentText = post?.content ?? "";
           }
           const scan = scanContent(contentText);
@@ -171543,7 +163480,7 @@ var init_moderation2 = __esm({
         const status = req.query.status || "pending";
         const limit2 = Math.min(Number(req.query.limit) || 30, 100);
         const offset = Number(req.query.offset) || 0;
-        const items = await db.select().from(moderationQueueTable).where(status === "all" ? void 0 : eq2(moderationQueueTable.status, status)).orderBy(desc2(moderationQueueTable.createdAt)).limit(limit2).offset(offset);
+        const items = await db.select().from(moderationQueueTable).where(status === "all" ? void 0 : eq(moderationQueueTable.status, status)).orderBy(desc(moderationQueueTable.createdAt)).limit(limit2).offset(offset);
         res.json({ items, total: items.length });
       } catch (err) {
         req.log.error(err);
@@ -171552,12 +163489,12 @@ var init_moderation2 = __esm({
     });
     router16.get("/admin/moderation/stats", requireAdmin4, async (req, res) => {
       try {
-        const [total] = await db.select({ count: sql2`count(*)::int` }).from(moderationQueueTable);
-        const [pending] = await db.select({ count: sql2`count(*)::int` }).from(moderationQueueTable).where(eq2(moderationQueueTable.status, "pending"));
-        const [approved] = await db.select({ count: sql2`count(*)::int` }).from(moderationQueueTable).where(eq2(moderationQueueTable.status, "approved"));
-        const [rejected] = await db.select({ count: sql2`count(*)::int` }).from(moderationQueueTable).where(eq2(moderationQueueTable.status, "rejected"));
-        const [autoBlocked] = await db.select({ count: sql2`count(*)::int` }).from(moderationQueueTable).where(eq2(moderationQueueTable.autoBlocked, true));
-        const [reports] = await db.select({ count: sql2`count(*)::int` }).from(contentReportsTable);
+        const [total] = await db.select({ count: sql`count(*)::int` }).from(moderationQueueTable);
+        const [pending] = await db.select({ count: sql`count(*)::int` }).from(moderationQueueTable).where(eq(moderationQueueTable.status, "pending"));
+        const [approved] = await db.select({ count: sql`count(*)::int` }).from(moderationQueueTable).where(eq(moderationQueueTable.status, "approved"));
+        const [rejected] = await db.select({ count: sql`count(*)::int` }).from(moderationQueueTable).where(eq(moderationQueueTable.status, "rejected"));
+        const [autoBlocked] = await db.select({ count: sql`count(*)::int` }).from(moderationQueueTable).where(eq(moderationQueueTable.autoBlocked, true));
+        const [reports] = await db.select({ count: sql`count(*)::int` }).from(contentReportsTable);
         res.json({
           total: total.count,
           pending: pending.count,
@@ -171579,7 +163516,7 @@ var init_moderation2 = __esm({
           res.status(400).json({ error: "action: approved | rejected | escalated bo'lishi kerak" });
           return;
         }
-        const [item] = await db.select().from(moderationQueueTable).where(eq2(moderationQueueTable.id, id));
+        const [item] = await db.select().from(moderationQueueTable).where(eq(moderationQueueTable.id, id));
         if (!item) {
           res.status(404).json({ error: "Topilmadi" });
           return;
@@ -171589,9 +163526,9 @@ var init_moderation2 = __esm({
           moderatorId: req.session.userId,
           moderatorNote: note ?? null,
           resolvedAt: /* @__PURE__ */ new Date()
-        }).where(eq2(moderationQueueTable.id, id));
+        }).where(eq(moderationQueueTable.id, id));
         if (action === "rejected" && item.contentType === "post") {
-          await db.update(postsTable).set({ isFlagged: true }).where(eq2(postsTable.id, item.contentId));
+          await db.update(postsTable).set({ isFlagged: true }).where(eq(postsTable.id, item.contentId));
         }
         res.json({ ok: true });
       } catch (err) {
@@ -171602,7 +163539,7 @@ var init_moderation2 = __esm({
     router16.post("/admin/moderation/:id/rescan", requireAdmin4, async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const [item] = await db.select().from(moderationQueueTable).where(eq2(moderationQueueTable.id, id));
+        const [item] = await db.select().from(moderationQueueTable).where(eq(moderationQueueTable.id, id));
         if (!item) {
           res.status(404).json({ error: "Topilmadi" });
           return;
@@ -171612,7 +163549,7 @@ var init_moderation2 = __esm({
           aiScore: scan.score,
           aiCategories: scan.categories,
           aiVerdict: scan.verdict
-        }).where(eq2(moderationQueueTable.id, id));
+        }).where(eq(moderationQueueTable.id, id));
         res.json({ ok: true, scan });
       } catch (err) {
         req.log.error(err);
@@ -171622,15 +163559,15 @@ var init_moderation2 = __esm({
     router16.delete("/admin/moderation/:id/delete-content", requireAdmin4, async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const [item] = await db.select().from(moderationQueueTable).where(eq2(moderationQueueTable.id, id));
+        const [item] = await db.select().from(moderationQueueTable).where(eq(moderationQueueTable.id, id));
         if (!item) {
           res.status(404).json({ error: "Topilmadi" });
           return;
         }
         if (item.contentType === "post") {
-          await db.delete(postsTable).where(eq2(postsTable.id, item.contentId));
+          await db.delete(postsTable).where(eq(postsTable.id, item.contentId));
         }
-        await db.update(moderationQueueTable).set({ status: "rejected", resolvedAt: /* @__PURE__ */ new Date() }).where(eq2(moderationQueueTable.id, id));
+        await db.update(moderationQueueTable).set({ status: "rejected", resolvedAt: /* @__PURE__ */ new Date() }).where(eq(moderationQueueTable.id, id));
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);
@@ -171762,7 +163699,7 @@ var init_media = __esm({
     "use strict";
     import_express18 = __toESM(require_express2(), 1);
     init_mediaHasher();
-    init_cache3();
+    init_cache2();
     init_objectStorage();
     router18 = (0, import_express18.Router)();
     objectStorageService2 = new ObjectStorageService();
@@ -171932,7 +163869,7 @@ var init_media = __esm({
 // src/routes/wallet.ts
 async function getOrCreateWallet(userId) {
   const existing = await db.query.walletsTable.findFirst({
-    where: eq2(walletsTable.userId, userId)
+    where: eq(walletsTable.userId, userId)
   });
   if (existing) return existing;
   const [created] = await db.insert(walletsTable).values({ userId }).returning();
@@ -171945,7 +163882,7 @@ var init_wallet2 = __esm({
     import_express19 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_zod();
     init_commission();
     init_currency();
@@ -171982,7 +163919,7 @@ var init_wallet2 = __esm({
     router19.get("/wallet/transactions", requireAuth6, async (req, res) => {
       try {
         const wallet = await getOrCreateWallet(req.session.userId);
-        const txs = await db.select().from(transactionsTable).where(eq2(transactionsTable.walletId, wallet.id)).orderBy(desc2(transactionsTable.createdAt)).limit(50);
+        const txs = await db.select().from(transactionsTable).where(eq(transactionsTable.walletId, wallet.id)).orderBy(desc(transactionsTable.createdAt)).limit(50);
         res.json({ transactions: txs });
       } catch (err) {
         req.log.error(err);
@@ -172060,7 +163997,7 @@ var init_wallet2 = __esm({
           res.status(400).json({ error: "sessionId talab qilinadi" });
           return;
         }
-        const [tx] = await db.select().from(transactionsTable).where(and2(eq2(transactionsTable.reference, sessionId), eq2(transactionsTable.userId, req.session.userId)));
+        const [tx] = await db.select().from(transactionsTable).where(and(eq(transactionsTable.reference, sessionId), eq(transactionsTable.userId, req.session.userId)));
         if (!tx) {
           res.status(404).json({ error: "Tranzaksiya topilmadi" });
           return;
@@ -172083,14 +164020,14 @@ var init_wallet2 = __esm({
           status: "completed",
           amount: netAmount,
           description: `${tx.paymentMethod?.toUpperCase()} orqali to'ldirish (komissiya ${commissionRate}% = ${(commission / 100).toFixed(0)} UZS)`
-        }).where(and2(eq2(transactionsTable.id, tx.id), eq2(transactionsTable.status, "pending"))).returning();
+        }).where(and(eq(transactionsTable.id, tx.id), eq(transactionsTable.status, "pending"))).returning();
         if (!updatedTx) {
           const wallet2 = await getOrCreateWallet(req.session.userId);
           res.json({ wallet: wallet2, transaction: tx, alreadyConfirmed: true });
           return;
         }
         const wallet = await getOrCreateWallet(req.session.userId);
-        const [updatedWallet] = await db.update(walletsTable).set({ balance: wallet.balance + netAmount, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, wallet.id)).returning();
+        const [updatedWallet] = await db.update(walletsTable).set({ balance: wallet.balance + netAmount, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, wallet.id)).returning();
         await applyCommission(req.session.userId, tx.amount, "deposit", sessionId);
         res.json({ wallet: updatedWallet, transaction: updatedTx, commission, commissionRate });
       } catch (err) {
@@ -172150,7 +164087,7 @@ var init_wallet2 = __esm({
           fromAdRevenue = remaining;
           newAdRevenue -= remaining;
         }
-        const [updatedWallet] = await db.update(walletsTable).set({ balance: newBalance, earningsBalance: newEarnings, adRevenueBalance: newAdRevenue, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, wallet.id)).returning();
+        const [updatedWallet] = await db.update(walletsTable).set({ balance: newBalance, earningsBalance: newEarnings, adRevenueBalance: newAdRevenue, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, wallet.id)).returning();
         const ref = `WIT-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
         const [tx] = await db.insert(transactionsTable).values({
           userId: req.session.userId,
@@ -172197,8 +164134,8 @@ var init_wallet2 = __esm({
           return;
         }
         const toWallet = await getOrCreateWallet(toUserId);
-        const [updatedFrom] = await db.update(walletsTable).set({ balance: fromWallet.balance - totalNeeded, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, fromWallet.id)).returning();
-        await db.update(walletsTable).set({ balance: toWallet.balance + amount, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, toWallet.id));
+        const [updatedFrom] = await db.update(walletsTable).set({ balance: fromWallet.balance - totalNeeded, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, fromWallet.id)).returning();
+        await db.update(walletsTable).set({ balance: toWallet.balance + amount, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, toWallet.id));
         const ref = `TRF-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
         await db.insert(transactionsTable).values([
           {
@@ -172231,7 +164168,7 @@ var init_wallet2 = __esm({
     });
     router19.get("/wallet/payment-methods", requireAuth6, async (req, res) => {
       try {
-        const methods = await db.select().from(paymentMethodsTable).where(eq2(paymentMethodsTable.userId, req.session.userId)).orderBy(desc2(paymentMethodsTable.createdAt));
+        const methods = await db.select().from(paymentMethodsTable).where(eq(paymentMethodsTable.userId, req.session.userId)).orderBy(desc(paymentMethodsTable.createdAt));
         res.json({ paymentMethods: methods });
       } catch (err) {
         req.log.error(err);
@@ -172255,7 +164192,7 @@ var init_wallet2 = __esm({
         }
         const data = parsed.data;
         if (data.isDefault) {
-          await db.update(paymentMethodsTable).set({ isDefault: false }).where(eq2(paymentMethodsTable.userId, req.session.userId));
+          await db.update(paymentMethodsTable).set({ isDefault: false }).where(eq(paymentMethodsTable.userId, req.session.userId));
         }
         const [method] = await db.insert(paymentMethodsTable).values({
           userId: req.session.userId,
@@ -172275,7 +164212,7 @@ var init_wallet2 = __esm({
     router19.delete("/wallet/payment-methods/:id", requireAuth6, async (req, res) => {
       try {
         const id = parseInt(req.params.id);
-        await db.delete(paymentMethodsTable).where(and2(eq2(paymentMethodsTable.id, id), eq2(paymentMethodsTable.userId, req.session.userId)));
+        await db.delete(paymentMethodsTable).where(and(eq(paymentMethodsTable.id, id), eq(paymentMethodsTable.userId, req.session.userId)));
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);
@@ -172301,7 +164238,7 @@ var init_wallet2 = __esm({
           return;
         }
         const toWallet = await getOrCreateWallet(data.toUserId);
-        await db.update(walletsTable).set({ balance: fromWallet.balance - data.amount, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, fromWallet.id));
+        await db.update(walletsTable).set({ balance: fromWallet.balance - data.amount, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, fromWallet.id));
         await db.insert(transactionsTable).values({
           userId: req.session.userId,
           walletId: fromWallet.id,
@@ -172312,7 +164249,7 @@ var init_wallet2 = __esm({
           description: data.message ?? "Kreatorga sovg'a",
           reference: `TIP-${Date.now()}`
         });
-        await db.update(walletsTable).set({ earningsBalance: toWallet.earningsBalance + data.amount, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, toWallet.id));
+        await db.update(walletsTable).set({ earningsBalance: toWallet.earningsBalance + data.amount, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, toWallet.id));
         await db.insert(transactionsTable).values({
           userId: data.toUserId,
           walletId: toWallet.id,
@@ -172336,7 +164273,7 @@ var init_wallet2 = __esm({
     });
     router19.post("/admin/wallet/bonus", requireAuth6, async (req, res) => {
       try {
-        const [adminUser] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, req.session.userId)).limit(1);
+        const [adminUser] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
         if (!adminUser?.isAdmin) {
           res.status(403).json({ error: "Admin huquqi talab qilinadi" });
           return;
@@ -172347,14 +164284,14 @@ var init_wallet2 = __esm({
           return;
         }
         const { userId, amount, reason } = parsed.data;
-        const [targetUser] = await db.select({ id: usersTable.id, displayName: usersTable.displayName }).from(usersTable).where(eq2(usersTable.id, userId)).limit(1);
+        const [targetUser] = await db.select({ id: usersTable.id, displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
         if (!targetUser) {
           res.status(404).json({ error: "Foydalanuvchi topilmadi" });
           return;
         }
         const wallet = await getOrCreateWallet(userId);
         const newBalance = wallet.balance + amount;
-        await db.update(walletsTable).set({ balance: newBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, wallet.id));
+        await db.update(walletsTable).set({ balance: newBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, wallet.id));
         const ref = `BONUS-${Date.now()}-${userId}`;
         await db.insert(transactionsTable).values({
           userId,
@@ -172392,7 +164329,7 @@ var init_live2 = __esm({
     import_express20 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router20 = (0, import_express20.Router)();
     requireAuth7 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -172408,13 +164345,13 @@ var init_live2 = __esm({
           res.status(400).json({ error: "Title required" });
           return;
         }
-        const existing = await db.select({ id: liveStreamsTable.id }).from(liveStreamsTable).where(and2(eq2(liveStreamsTable.hostId, req.session.userId), eq2(liveStreamsTable.status, "active")));
+        const existing = await db.select({ id: liveStreamsTable.id }).from(liveStreamsTable).where(and(eq(liveStreamsTable.hostId, req.session.userId), eq(liveStreamsTable.status, "active")));
         if (existing.length > 0) {
           res.status(409).json({ error: "Already live", liveId: existing[0].id });
           return;
         }
         const [stream] = await db.insert(liveStreamsTable).values({ hostId: req.session.userId, title: title.trim(), thumbnailUrl: thumbnailUrl ?? null }).returning();
-        const [host] = await db.select().from(usersTable).where(eq2(usersTable.id, req.session.userId));
+        const [host] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId));
         res.status(201).json({ ...stream, host: { id: host.id, username: host.username, displayName: host.displayName, avatarUrl: host.avatarUrl, isVerified: host.isVerified } });
       } catch (err) {
         req.log.error(err);
@@ -172424,7 +164361,7 @@ var init_live2 = __esm({
     router20.patch("/live/:id/end", requireAuth7, async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const [stream] = await db.select().from(liveStreamsTable).where(eq2(liveStreamsTable.id, id));
+        const [stream] = await db.select().from(liveStreamsTable).where(eq(liveStreamsTable.id, id));
         if (!stream) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -172433,7 +164370,7 @@ var init_live2 = __esm({
           res.status(403).json({ error: "Forbidden" });
           return;
         }
-        const [updated] = await db.update(liveStreamsTable).set({ status: "ended", endedAt: /* @__PURE__ */ new Date() }).where(eq2(liveStreamsTable.id, id)).returning();
+        const [updated] = await db.update(liveStreamsTable).set({ status: "ended", endedAt: /* @__PURE__ */ new Date() }).where(eq(liveStreamsTable.id, id)).returning();
         res.json(updated);
       } catch (err) {
         req.log.error(err);
@@ -172442,10 +164379,10 @@ var init_live2 = __esm({
     });
     router20.get("/live/active", async (req, res) => {
       try {
-        const streams = await db.select().from(liveStreamsTable).where(eq2(liveStreamsTable.status, "active")).orderBy(liveStreamsTable.startedAt);
+        const streams = await db.select().from(liveStreamsTable).where(eq(liveStreamsTable.status, "active")).orderBy(liveStreamsTable.startedAt);
         const enriched = await Promise.all(
           streams.map(async (s) => {
-            const [host] = await db.select().from(usersTable).where(eq2(usersTable.id, s.hostId));
+            const [host] = await db.select().from(usersTable).where(eq(usersTable.id, s.hostId));
             return { ...s, host: host ? { id: host.id, username: host.username, displayName: host.displayName, avatarUrl: host.avatarUrl, isVerified: host.isVerified } : null };
           })
         );
@@ -172458,12 +164395,12 @@ var init_live2 = __esm({
     router20.get("/live/:id", async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const [stream] = await db.select().from(liveStreamsTable).where(eq2(liveStreamsTable.id, id));
+        const [stream] = await db.select().from(liveStreamsTable).where(eq(liveStreamsTable.id, id));
         if (!stream) {
           res.status(404).json({ error: "Not found" });
           return;
         }
-        const [host] = await db.select().from(usersTable).where(eq2(usersTable.id, stream.hostId));
+        const [host] = await db.select().from(usersTable).where(eq(usersTable.id, stream.hostId));
         res.json({ ...stream, host: host ? { id: host.id, username: host.username, displayName: host.displayName, avatarUrl: host.avatarUrl, isVerified: host.isVerified } : null });
       } catch (err) {
         req.log.error(err);
@@ -172474,13 +164411,13 @@ var init_live2 = __esm({
       try {
         const id = Number(req.params.id);
         const { delta } = req.body;
-        const [stream] = await db.select({ viewerCount: liveStreamsTable.viewerCount }).from(liveStreamsTable).where(eq2(liveStreamsTable.id, id));
+        const [stream] = await db.select({ viewerCount: liveStreamsTable.viewerCount }).from(liveStreamsTable).where(eq(liveStreamsTable.id, id));
         if (!stream) {
           res.status(404).json({ error: "Not found" });
           return;
         }
         const newCount = Math.max(0, (stream.viewerCount ?? 0) + delta);
-        await db.update(liveStreamsTable).set({ viewerCount: newCount }).where(eq2(liveStreamsTable.id, id));
+        await db.update(liveStreamsTable).set({ viewerCount: newCount }).where(eq(liveStreamsTable.id, id));
         res.json({ ok: true, viewerCount: newCount });
       } catch (err) {
         req.log.error(err);
@@ -172493,7 +164430,7 @@ var init_live2 = __esm({
 
 // src/routes/gifts.ts
 async function getOrCreateWallet2(userId) {
-  const existing = await db.query.walletsTable.findFirst({ where: eq2(walletsTable.userId, userId) });
+  const existing = await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, userId) });
   if (existing) return existing;
   const [w] = await db.insert(walletsTable).values({ userId }).returning();
   return w;
@@ -172505,7 +164442,7 @@ var init_gifts2 = __esm({
     import_express21 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router21 = (0, import_express21.Router)();
     requireAuth8 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -172535,7 +164472,7 @@ var init_gifts2 = __esm({
           res.status(400).json({ error: "Noma'lum sovg'a turi" });
           return;
         }
-        const [stream] = await db.select().from(liveStreamsTable).where(eq2(liveStreamsTable.id, liveId));
+        const [stream] = await db.select().from(liveStreamsTable).where(eq(liveStreamsTable.id, liveId));
         if (!stream || stream.status !== "active") {
           res.status(404).json({ error: "Efir topilmadi" });
           return;
@@ -172550,7 +164487,7 @@ var init_gifts2 = __esm({
           return;
         }
         const receiverWallet = await getOrCreateWallet2(stream.hostId);
-        await db.update(walletsTable).set({ balance: senderWallet.balance - gift.value, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, senderWallet.id));
+        await db.update(walletsTable).set({ balance: senderWallet.balance - gift.value, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, senderWallet.id));
         await db.insert(transactionsTable).values({
           userId: req.session.userId,
           walletId: senderWallet.id,
@@ -172561,7 +164498,7 @@ var init_gifts2 = __esm({
           paymentMethod: "internal",
           description: `${gift.emoji} ${gift.label} sovg'asi yuborildi`
         });
-        await db.update(walletsTable).set({ earningsBalance: receiverWallet.earningsBalance + gift.value, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, receiverWallet.id));
+        await db.update(walletsTable).set({ earningsBalance: receiverWallet.earningsBalance + gift.value, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, receiverWallet.id));
         await db.insert(transactionsTable).values({
           userId: stream.hostId,
           walletId: receiverWallet.id,
@@ -172580,7 +164517,7 @@ var init_gifts2 = __esm({
           giftEmoji: gift.emoji,
           coinValue: gift.value
         }).returning();
-        const [sender] = await db.select({ displayName: usersTable.displayName, username: usersTable.username }).from(usersTable).where(eq2(usersTable.id, req.session.userId));
+        const [sender] = await db.select({ displayName: usersTable.displayName, username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.session.userId));
         try {
           await fetch(`http://localhost:8099/go/notify`, {
             method: "POST",
@@ -172609,7 +164546,7 @@ var init_gifts2 = __esm({
     router21.get("/live/:id/gifts", async (req, res) => {
       try {
         const liveId = Number(req.params.id);
-        const gifts = await db.select().from(liveGiftsTable).where(eq2(liveGiftsTable.liveStreamId, liveId));
+        const gifts = await db.select().from(liveGiftsTable).where(eq(liveGiftsTable.liveStreamId, liveId));
         const bySender = /* @__PURE__ */ new Map();
         for (const g5 of gifts) {
           const prev = bySender.get(g5.senderId) ?? { senderId: g5.senderId, total: 0, count: 0, gifts: [] };
@@ -172628,7 +164565,7 @@ var init_gifts2 = __esm({
 
 // src/routes/creator.ts
 async function getOrCreateWallet3(userId) {
-  const existing = await db.query.walletsTable.findFirst({ where: eq2(walletsTable.userId, userId) });
+  const existing = await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, userId) });
   if (existing) return existing;
   const [w] = await db.insert(walletsTable).values({ userId }).returning();
   return w;
@@ -172640,7 +164577,7 @@ var init_creator = __esm({
     import_express22 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router22 = (0, import_express22.Router)();
     requireAuth9 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -172672,7 +164609,7 @@ var init_creator = __esm({
     router22.get("/creator/plans/:creatorId", async (req, res) => {
       try {
         const creatorId = Number(req.params.creatorId);
-        const plans = await db.select().from(creatorPlansTable).where(and2(eq2(creatorPlansTable.creatorId, creatorId), eq2(creatorPlansTable.isActive, true)));
+        const plans = await db.select().from(creatorPlansTable).where(and(eq(creatorPlansTable.creatorId, creatorId), eq(creatorPlansTable.isActive, true)));
         res.json(plans.map((p3) => ({ ...p3, perks: p3.perks ? JSON.parse(p3.perks) : [] })));
       } catch (err) {
         req.log.error(err);
@@ -172682,7 +164619,7 @@ var init_creator = __esm({
     router22.post("/creator/subscribe/:planId", requireAuth9, async (req, res) => {
       try {
         const planId = Number(req.params.planId);
-        const [plan] = await db.select().from(creatorPlansTable).where(eq2(creatorPlansTable.id, planId));
+        const [plan] = await db.select().from(creatorPlansTable).where(eq(creatorPlansTable.id, planId));
         if (!plan || !plan.isActive) {
           res.status(404).json({ error: "Reja topilmadi" });
           return;
@@ -172691,7 +164628,7 @@ var init_creator = __esm({
           res.status(400).json({ error: "O'z rejangga obuna bo'la olmaysiz" });
           return;
         }
-        const existing = await db.select().from(creatorSubscriptionsTable).where(and2(eq2(creatorSubscriptionsTable.subscriberId, req.session.userId), eq2(creatorSubscriptionsTable.planId, planId), eq2(creatorSubscriptionsTable.status, "active")));
+        const existing = await db.select().from(creatorSubscriptionsTable).where(and(eq(creatorSubscriptionsTable.subscriberId, req.session.userId), eq(creatorSubscriptionsTable.planId, planId), eq(creatorSubscriptionsTable.status, "active")));
         if (existing.length > 0) {
           res.status(409).json({ error: "Allaqachon obuna bo'lgansiz" });
           return;
@@ -172704,7 +164641,7 @@ var init_creator = __esm({
         const creatorWallet = await getOrCreateWallet3(plan.creatorId);
         const now = /* @__PURE__ */ new Date();
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-        await db.update(walletsTable).set({ balance: subscriberWallet.balance - plan.price, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, subscriberWallet.id));
+        await db.update(walletsTable).set({ balance: subscriberWallet.balance - plan.price, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, subscriberWallet.id));
         await db.insert(transactionsTable).values({
           userId: req.session.userId,
           walletId: subscriberWallet.id,
@@ -172715,7 +164652,7 @@ var init_creator = __esm({
           paymentMethod: "internal",
           description: `"${plan.name}" rejasiga obuna`
         });
-        await db.update(walletsTable).set({ earningsBalance: creatorWallet.earningsBalance + plan.price, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, creatorWallet.id));
+        await db.update(walletsTable).set({ earningsBalance: creatorWallet.earningsBalance + plan.price, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, creatorWallet.id));
         await db.insert(transactionsTable).values({
           userId: plan.creatorId,
           walletId: creatorWallet.id,
@@ -172733,7 +164670,7 @@ var init_creator = __esm({
           expiresAt: nextMonth,
           nextPaymentAt: nextMonth
         }).returning();
-        await db.update(creatorPlansTable).set({ subscriberCount: sql2`${creatorPlansTable.subscriberCount} + 1` }).where(eq2(creatorPlansTable.id, planId));
+        await db.update(creatorPlansTable).set({ subscriberCount: sql`${creatorPlansTable.subscriberCount} + 1` }).where(eq(creatorPlansTable.id, planId));
         res.status(201).json({ subscription: sub, newBalance: subscriberWallet.balance - plan.price });
       } catch (err) {
         req.log.error(err);
@@ -172743,8 +164680,8 @@ var init_creator = __esm({
     router22.delete("/creator/subscribe/:planId", requireAuth9, async (req, res) => {
       try {
         const planId = Number(req.params.planId);
-        await db.update(creatorSubscriptionsTable).set({ status: "cancelled" }).where(and2(eq2(creatorSubscriptionsTable.subscriberId, req.session.userId), eq2(creatorSubscriptionsTable.planId, planId)));
-        await db.update(creatorPlansTable).set({ subscriberCount: sql2`GREATEST(${creatorPlansTable.subscriberCount} - 1, 0)` }).where(eq2(creatorPlansTable.id, planId));
+        await db.update(creatorSubscriptionsTable).set({ status: "cancelled" }).where(and(eq(creatorSubscriptionsTable.subscriberId, req.session.userId), eq(creatorSubscriptionsTable.planId, planId)));
+        await db.update(creatorPlansTable).set({ subscriberCount: sql`GREATEST(${creatorPlansTable.subscriberCount} - 1, 0)` }).where(eq(creatorPlansTable.id, planId));
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);
@@ -172753,10 +164690,10 @@ var init_creator = __esm({
     });
     router22.get("/creator/subscriptions", requireAuth9, async (req, res) => {
       try {
-        const subs = await db.select().from(creatorSubscriptionsTable).where(and2(eq2(creatorSubscriptionsTable.subscriberId, req.session.userId), eq2(creatorSubscriptionsTable.status, "active")));
+        const subs = await db.select().from(creatorSubscriptionsTable).where(and(eq(creatorSubscriptionsTable.subscriberId, req.session.userId), eq(creatorSubscriptionsTable.status, "active")));
         const enriched = await Promise.all(subs.map(async (s) => {
-          const [plan] = await db.select().from(creatorPlansTable).where(eq2(creatorPlansTable.id, s.planId));
-          const [creator] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq2(usersTable.id, s.creatorId));
+          const [plan] = await db.select().from(creatorPlansTable).where(eq(creatorPlansTable.id, s.planId));
+          const [creator] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, s.creatorId));
           return { ...s, plan: { ...plan, perks: plan?.perks ? JSON.parse(plan.perks) : [] }, creator };
         }));
         res.json(enriched);
@@ -172767,10 +164704,10 @@ var init_creator = __esm({
     });
     router22.get("/creator/subscribers", requireAuth9, async (req, res) => {
       try {
-        const subs = await db.select().from(creatorSubscriptionsTable).where(and2(eq2(creatorSubscriptionsTable.creatorId, req.session.userId), eq2(creatorSubscriptionsTable.status, "active")));
+        const subs = await db.select().from(creatorSubscriptionsTable).where(and(eq(creatorSubscriptionsTable.creatorId, req.session.userId), eq(creatorSubscriptionsTable.status, "active")));
         const enriched = await Promise.all(subs.map(async (s) => {
-          const [subscriber] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq2(usersTable.id, s.subscriberId));
-          const [plan] = await db.select({ id: creatorPlansTable.id, name: creatorPlansTable.name, price: creatorPlansTable.price }).from(creatorPlansTable).where(eq2(creatorPlansTable.id, s.planId));
+          const [subscriber] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, s.subscriberId));
+          const [plan] = await db.select({ id: creatorPlansTable.id, name: creatorPlansTable.name, price: creatorPlansTable.price }).from(creatorPlansTable).where(eq(creatorPlansTable.id, s.planId));
           return { ...s, subscriber, plan };
         }));
         res.json({ subscribers: enriched, count: enriched.length });
@@ -172782,7 +164719,7 @@ var init_creator = __esm({
     router22.get("/creator/check-subscription/:creatorId", requireAuth9, async (req, res) => {
       try {
         const creatorId = Number(req.params.creatorId);
-        const active = await db.select().from(creatorSubscriptionsTable).where(and2(eq2(creatorSubscriptionsTable.subscriberId, req.session.userId), eq2(creatorSubscriptionsTable.creatorId, creatorId), eq2(creatorSubscriptionsTable.status, "active")));
+        const active = await db.select().from(creatorSubscriptionsTable).where(and(eq(creatorSubscriptionsTable.subscriberId, req.session.userId), eq(creatorSubscriptionsTable.creatorId, creatorId), eq(creatorSubscriptionsTable.status, "active")));
         res.json({ isSubscribed: active.length > 0, subscription: active[0] ?? null });
       } catch (err) {
         req.log.error(err);
@@ -172801,9 +164738,9 @@ var init_search = __esm({
     import_express23 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_midnightVisibility();
-    init_cache3();
+    init_cache2();
     router23 = (0, import_express23.Router)();
     LIMIT = 20;
     router23.get("/search", async (req, res) => {
@@ -172815,7 +164752,7 @@ var init_search = __esm({
           res.json({ users: [], posts: [], reels: [], products: [], query: q2 });
           return;
         }
-        const like3 = `%${q2}%`;
+        const like2 = `%${q2}%`;
         const myId = req.session?.userId;
         const cacheKey = `${q2}:${type}:${limit2}:${myId ?? 0}`;
         const result = await cacheAside("search", cacheKey, async () => {
@@ -172829,9 +164766,9 @@ var init_search = __esm({
               isVerified: usersTable.isVerified,
               bio: usersTable.bio
             }).from(usersTable).where(
-              and2(
-                or2(ilike2(usersTable.username, like3), ilike2(usersTable.displayName, like3), ilike2(usersTable.bio, like3)),
-                myId ? ne2(usersTable.id, myId) : void 0
+              and(
+                or(ilike(usersTable.username, like2), ilike(usersTable.displayName, like2), ilike(usersTable.bio, like2)),
+                myId ? ne(usersTable.id, myId) : void 0
               )
             ).limit(limit2) : Promise.resolve([]),
             type === "all" || type === "posts" ? db.select({
@@ -172842,7 +164779,7 @@ var init_search = __esm({
               likesCount: postsTable.likesCount,
               commentsCount: postsTable.commentsCount,
               createdAt: postsTable.createdAt
-            }).from(postsTable).where(and2(ilike2(postsTable.content, like3), midnightCond)).limit(limit2) : Promise.resolve([]),
+            }).from(postsTable).where(and(ilike(postsTable.content, like2), midnightCond)).limit(limit2) : Promise.resolve([]),
             type === "all" || type === "reels" ? db.select({
               id: reelsTable.id,
               caption: reelsTable.caption,
@@ -172851,7 +164788,7 @@ var init_search = __esm({
               authorId: reelsTable.authorId,
               viewsCount: reelsTable.viewsCount,
               likesCount: reelsTable.likesCount
-            }).from(reelsTable).where(ilike2(reelsTable.caption, like3)).limit(limit2) : Promise.resolve([]),
+            }).from(reelsTable).where(ilike(reelsTable.caption, like2)).limit(limit2) : Promise.resolve([]),
             type === "all" || type === "products" ? db.select({
               id: productsTable.id,
               title: productsTable.title,
@@ -172864,9 +164801,9 @@ var init_search = __esm({
               rating: productsTable.rating,
               status: productsTable.status
             }).from(productsTable).where(
-              and2(
-                or2(ilike2(productsTable.title, like3), ilike2(productsTable.description, like3)),
-                eq2(productsTable.status, "active")
+              and(
+                or(ilike(productsTable.title, like2), ilike(productsTable.description, like2)),
+                eq(productsTable.status, "active")
               )
             ).limit(limit2) : Promise.resolve([])
           ]);
@@ -172884,7 +164821,7 @@ var init_search = __esm({
 
 // src/routes/marketplace.ts
 async function getOrCreateWallet4(userId) {
-  const e5 = await db.query.walletsTable.findFirst({ where: eq2(walletsTable.userId, userId) });
+  const e5 = await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, userId) });
   if (e5) return e5;
   const [w] = await db.insert(walletsTable).values({ userId }).returning();
   return w;
@@ -172896,7 +164833,7 @@ var init_marketplace2 = __esm({
     import_express24 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router24 = (0, import_express24.Router)();
     requireAuth10 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -172927,21 +164864,21 @@ var init_marketplace2 = __esm({
         const { q: q2, category, condition, minPrice, maxPrice, sellerId, sort = "newest" } = req.query;
         const limit2 = Math.min(Number(req.query.limit ?? 24), 60);
         const offset = Number(req.query.offset ?? 0);
-        const conditions = [eq2(productsTable.status, "active")];
-        if (q2) conditions.push(or2(ilike2(productsTable.title, `%${q2}%`), ilike2(productsTable.description, `%${q2}%`)));
-        if (category) conditions.push(eq2(productsTable.category, category));
-        if (condition) conditions.push(eq2(productsTable.condition, condition));
-        if (minPrice) conditions.push(gte2(productsTable.price, Number(minPrice)));
-        if (maxPrice) conditions.push(lte2(productsTable.price, Number(maxPrice)));
-        if (sellerId) conditions.push(eq2(productsTable.sellerId, Number(sellerId)));
-        const where = and2(...conditions);
-        const order = sort === "price_asc" ? asc2(productsTable.price) : sort === "price_desc" ? desc2(productsTable.price) : sort === "popular" ? desc2(productsTable.viewsCount) : desc2(productsTable.createdAt);
+        const conditions = [eq(productsTable.status, "active")];
+        if (q2) conditions.push(or(ilike(productsTable.title, `%${q2}%`), ilike(productsTable.description, `%${q2}%`)));
+        if (category) conditions.push(eq(productsTable.category, category));
+        if (condition) conditions.push(eq(productsTable.condition, condition));
+        if (minPrice) conditions.push(gte(productsTable.price, Number(minPrice)));
+        if (maxPrice) conditions.push(lte(productsTable.price, Number(maxPrice)));
+        if (sellerId) conditions.push(eq(productsTable.sellerId, Number(sellerId)));
+        const where = and(...conditions);
+        const order = sort === "price_asc" ? asc(productsTable.price) : sort === "price_desc" ? desc(productsTable.price) : sort === "popular" ? desc(productsTable.viewsCount) : desc(productsTable.createdAt);
         const [[{ total }], rows] = await Promise.all([
-          db.select({ total: sql2`count(*)::int` }).from(productsTable).where(where),
+          db.select({ total: sql`count(*)::int` }).from(productsTable).where(where),
           db.select().from(productsTable).where(where).orderBy(order).limit(limit2).offset(offset)
         ]);
         const sellerIds = [...new Set(rows.map((p3) => p3.sellerId))];
-        const sellers = sellerIds.length ? await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray2(usersTable.id, sellerIds)) : [];
+        const sellers = sellerIds.length ? await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, sellerIds)) : [];
         const sellerMap = new Map(sellers.map((s) => [s.id, s]));
         const enriched = rows.map((p3) => ({
           ...p3,
@@ -172984,7 +164921,7 @@ var init_marketplace2 = __esm({
     });
     router24.get("/marketplace/products/my", requireAuth10, async (req, res) => {
       try {
-        const rows = await db.select().from(productsTable).where(and2(eq2(productsTable.sellerId, req.session.userId), ne2(productsTable.status, "deleted"))).orderBy(desc2(productsTable.createdAt));
+        const rows = await db.select().from(productsTable).where(and(eq(productsTable.sellerId, req.session.userId), ne(productsTable.status, "deleted"))).orderBy(desc(productsTable.createdAt));
         res.json(rows.map((p3) => ({ ...p3, mediaUrls: p3.mediaUrls ? JSON.parse(p3.mediaUrls) : [], tags: p3.tags ? JSON.parse(p3.tags) : [] })));
       } catch (err) {
         req.log.error(err);
@@ -172993,13 +164930,13 @@ var init_marketplace2 = __esm({
     });
     router24.get("/marketplace/products/:id", async (req, res) => {
       try {
-        const [product] = await db.select().from(productsTable).where(eq2(productsTable.id, Number(req.params.id)));
+        const [product] = await db.select().from(productsTable).where(eq(productsTable.id, Number(req.params.id)));
         if (!product) {
           res.status(404).json({ error: "Topilmadi" });
           return;
         }
-        const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified }).from(usersTable).where(eq2(usersTable.id, product.sellerId));
-        await db.update(productsTable).set({ viewsCount: sql2`${productsTable.viewsCount} + 1` }).where(eq2(productsTable.id, product.id));
+        const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified }).from(usersTable).where(eq(usersTable.id, product.sellerId));
+        await db.update(productsTable).set({ viewsCount: sql`${productsTable.viewsCount} + 1` }).where(eq(productsTable.id, product.id));
         res.json({ ...product, mediaUrls: product.mediaUrls ? JSON.parse(product.mediaUrls) : [], tags: product.tags ? JSON.parse(product.tags) : [], seller });
       } catch (err) {
         req.log.error(err);
@@ -173008,7 +164945,7 @@ var init_marketplace2 = __esm({
     });
     router24.patch("/marketplace/products/:id", requireAuth10, async (req, res) => {
       try {
-        const [product] = await db.select().from(productsTable).where(and2(eq2(productsTable.id, Number(req.params.id)), eq2(productsTable.sellerId, req.session.userId)));
+        const [product] = await db.select().from(productsTable).where(and(eq(productsTable.id, Number(req.params.id)), eq(productsTable.sellerId, req.session.userId)));
         if (!product) {
           res.status(404).json({ error: "Topilmadi yoki ruxsat yo'q" });
           return;
@@ -173026,7 +164963,7 @@ var init_marketplace2 = __esm({
           ...mediaUrls && { mediaUrls: JSON.stringify(mediaUrls), thumbnailUrl: thumbnailUrl ?? mediaUrls[0] },
           ...tags && { tags: JSON.stringify(tags) },
           updatedAt: /* @__PURE__ */ new Date()
-        }).where(eq2(productsTable.id, product.id)).returning();
+        }).where(eq(productsTable.id, product.id)).returning();
         res.json({ ...updated, mediaUrls: updated.mediaUrls ? JSON.parse(updated.mediaUrls) : [] });
       } catch (err) {
         req.log.error(err);
@@ -173036,15 +164973,15 @@ var init_marketplace2 = __esm({
     router24.delete("/marketplace/products/:id", requireAuth10, async (req, res) => {
       try {
         const productId = Number(req.params.id);
-        const [product] = await db.select().from(productsTable).where(and2(eq2(productsTable.id, productId), eq2(productsTable.sellerId, req.session.userId)));
+        const [product] = await db.select().from(productsTable).where(and(eq(productsTable.id, productId), eq(productsTable.sellerId, req.session.userId)));
         if (!product) {
           res.status(404).json({ error: "Mahsulot topilmadi yoki ruxsat yo'q" });
           return;
         }
         if (product.ordersCount > 0) {
-          await db.update(productsTable).set({ status: "deleted", updatedAt: /* @__PURE__ */ new Date() }).where(eq2(productsTable.id, productId));
+          await db.update(productsTable).set({ status: "deleted", updatedAt: /* @__PURE__ */ new Date() }).where(eq(productsTable.id, productId));
         } else {
-          await db.delete(productsTable).where(eq2(productsTable.id, productId));
+          await db.delete(productsTable).where(eq(productsTable.id, productId));
         }
         res.json({ ok: true });
       } catch (err) {
@@ -173057,7 +164994,7 @@ var init_marketplace2 = __esm({
         const productId = Number(req.params.id);
         const { quantity = 1, deliveryMethod = "pickup", deliveryAddress, notes } = req.body;
         const qty = Number(quantity);
-        const [product] = await db.select().from(productsTable).where(eq2(productsTable.id, productId));
+        const [product] = await db.select().from(productsTable).where(eq(productsTable.id, productId));
         if (!product || product.status !== "active") {
           res.status(404).json({ error: "Mahsulot topilmadi" });
           return;
@@ -173077,16 +165014,16 @@ var init_marketplace2 = __esm({
           return;
         }
         const sellerWallet = await getOrCreateWallet4(product.sellerId);
-        await db.update(walletsTable).set({ balance: buyerWallet.balance - totalPrice, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, buyerWallet.id));
+        await db.update(walletsTable).set({ balance: buyerWallet.balance - totalPrice, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, buyerWallet.id));
         await db.insert(transactionsTable).values({ userId: req.session.userId, walletId: buyerWallet.id, type: "transfer_out", amount: totalPrice, currency: "UZS", status: "completed", paymentMethod: "internal", description: `"${product.title}" sotib olindi` });
-        await db.update(walletsTable).set({ earningsBalance: sellerWallet.earningsBalance + totalPrice, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, sellerWallet.id));
+        await db.update(walletsTable).set({ earningsBalance: sellerWallet.earningsBalance + totalPrice, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, sellerWallet.id));
         await db.insert(transactionsTable).values({ userId: product.sellerId, walletId: sellerWallet.id, type: "content_revenue", amount: totalPrice, currency: "UZS", status: "completed", paymentMethod: "internal", description: `"${product.title}" sotildi` });
         const newStock = product.stock - qty;
         await db.update(productsTable).set({
           stock: newStock,
           status: newStock <= 0 ? "sold" : "active",
-          ordersCount: sql2`${productsTable.ordersCount} + ${qty}`
-        }).where(eq2(productsTable.id, productId));
+          ordersCount: sql`${productsTable.ordersCount} + ${qty}`
+        }).where(eq(productsTable.id, productId));
         const [order] = await db.insert(productOrdersTable).values({
           buyerId: req.session.userId,
           sellerId: product.sellerId,
@@ -173108,7 +165045,7 @@ var init_marketplace2 = __esm({
       try {
         const role = req.query.role ?? "buyer";
         const myId = req.session.userId;
-        const orders = role === "seller" ? await db.select().from(productOrdersTable).where(eq2(productOrdersTable.sellerId, myId)).orderBy(desc2(productOrdersTable.createdAt)) : await db.select().from(productOrdersTable).where(eq2(productOrdersTable.buyerId, myId)).orderBy(desc2(productOrdersTable.createdAt));
+        const orders = role === "seller" ? await db.select().from(productOrdersTable).where(eq(productOrdersTable.sellerId, myId)).orderBy(desc(productOrdersTable.createdAt)) : await db.select().from(productOrdersTable).where(eq(productOrdersTable.buyerId, myId)).orderBy(desc(productOrdersTable.createdAt));
         if (orders.length === 0) {
           res.json([]);
           return;
@@ -173116,8 +165053,8 @@ var init_marketplace2 = __esm({
         const productIds = [...new Set(orders.map((o3) => o3.productId))];
         const otherUserIds = [...new Set(orders.map((o3) => role === "seller" ? o3.buyerId : o3.sellerId))];
         const [products, otherUsers] = await Promise.all([
-          db.select({ id: productsTable.id, title: productsTable.title, thumbnailUrl: productsTable.thumbnailUrl }).from(productsTable).where(inArray2(productsTable.id, productIds)),
-          db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray2(usersTable.id, otherUserIds))
+          db.select({ id: productsTable.id, title: productsTable.title, thumbnailUrl: productsTable.thumbnailUrl }).from(productsTable).where(inArray(productsTable.id, productIds)),
+          db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, otherUserIds))
         ]);
         const productMap = new Map(products.map((p3) => [p3.id, p3]));
         const userMap = new Map(otherUsers.map((u) => [u.id, u]));
@@ -173136,7 +165073,7 @@ var init_marketplace2 = __esm({
       try {
         const { status } = req.body;
         const orderId = Number(req.params.id);
-        const [order] = await db.select().from(productOrdersTable).where(eq2(productOrdersTable.id, orderId));
+        const [order] = await db.select().from(productOrdersTable).where(eq(productOrdersTable.id, orderId));
         if (!order) {
           res.status(404).json({ error: "Buyurtma topilmadi" });
           return;
@@ -173145,7 +165082,7 @@ var init_marketplace2 = __esm({
           res.status(403).json({ error: "Ruxsat yo'q" });
           return;
         }
-        const [updated] = await db.update(productOrdersTable).set({ status, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(productOrdersTable.id, orderId)).returning();
+        const [updated] = await db.update(productOrdersTable).set({ status, updatedAt: /* @__PURE__ */ new Date() }).where(eq(productOrdersTable.id, orderId)).returning();
         res.json(updated);
       } catch (err) {
         req.log.error(err);
@@ -173154,13 +165091,13 @@ var init_marketplace2 = __esm({
     });
     router24.get("/marketplace/products/:id/reviews", async (req, res) => {
       try {
-        const reviews = await db.select().from(productReviewsTable).where(eq2(productReviewsTable.productId, Number(req.params.id))).orderBy(desc2(productReviewsTable.createdAt));
+        const reviews = await db.select().from(productReviewsTable).where(eq(productReviewsTable.productId, Number(req.params.id))).orderBy(desc(productReviewsTable.createdAt));
         if (reviews.length === 0) {
           res.json([]);
           return;
         }
         const reviewerIds = [...new Set(reviews.map((r5) => r5.reviewerId))];
-        const reviewers = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray2(usersTable.id, reviewerIds));
+        const reviewers = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, reviewerIds));
         const reviewerMap = new Map(reviewers.map((u) => [u.id, u]));
         const enriched = reviews.map((r5) => ({ ...r5, reviewer: reviewerMap.get(r5.reviewerId) }));
         res.json(enriched);
@@ -173172,9 +165109,9 @@ var init_marketplace2 = __esm({
     router24.get("/marketplace/stats", async (req, res) => {
       try {
         const [[{ totalProducts }], [{ totalSellers }], [{ totalOrders }]] = await Promise.all([
-          db.select({ totalProducts: sql2`count(*)::int` }).from(productsTable).where(eq2(productsTable.status, "active")),
-          db.select({ totalSellers: sql2`count(distinct ${productsTable.sellerId})::int` }).from(productsTable).where(eq2(productsTable.status, "active")),
-          db.select({ totalOrders: sql2`count(*)::int` }).from(productOrdersTable).where(ne2(productOrdersTable.status, "cancelled"))
+          db.select({ totalProducts: sql`count(*)::int` }).from(productsTable).where(eq(productsTable.status, "active")),
+          db.select({ totalSellers: sql`count(distinct ${productsTable.sellerId})::int` }).from(productsTable).where(eq(productsTable.status, "active")),
+          db.select({ totalOrders: sql`count(*)::int` }).from(productOrdersTable).where(ne(productOrdersTable.status, "cancelled"))
         ]);
         res.json({ totalProducts, totalSellers, totalOrders });
       } catch (err) {
@@ -173184,15 +165121,15 @@ var init_marketplace2 = __esm({
     });
     router24.get("/marketplace/featured", async (req, res) => {
       try {
-        const activeStatus = eq2(productsTable.status, "active");
+        const activeStatus = eq(productsTable.status, "active");
         const [hotDeals, newArrivals, popular] = await Promise.all([
-          db.select().from(productsTable).where(and2(activeStatus, isNotNull2(productsTable.originalPrice), gt2(productsTable.originalPrice, productsTable.price))).orderBy(desc2(sql2`(1.0 - ${productsTable.price}::float8 / ${productsTable.originalPrice}::float8)`)).limit(10),
-          db.select().from(productsTable).where(activeStatus).orderBy(desc2(productsTable.createdAt)).limit(10),
-          db.select().from(productsTable).where(activeStatus).orderBy(desc2(productsTable.viewsCount)).limit(8)
+          db.select().from(productsTable).where(and(activeStatus, isNotNull(productsTable.originalPrice), gt(productsTable.originalPrice, productsTable.price))).orderBy(desc(sql`(1.0 - ${productsTable.price}::float8 / ${productsTable.originalPrice}::float8)`)).limit(10),
+          db.select().from(productsTable).where(activeStatus).orderBy(desc(productsTable.createdAt)).limit(10),
+          db.select().from(productsTable).where(activeStatus).orderBy(desc(productsTable.viewsCount)).limit(8)
         ]);
         const allRows = [...hotDeals, ...newArrivals, ...popular];
         const sellerIds = [...new Set(allRows.map((p3) => p3.sellerId))];
-        const sellers = sellerIds.length ? await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray2(usersTable.id, sellerIds)) : [];
+        const sellers = sellerIds.length ? await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, sellerIds)) : [];
         const sellerMap = new Map(sellers.map((s) => [s.id, s]));
         const enrich = (p3) => ({
           ...p3,
@@ -173209,14 +165146,14 @@ var init_marketplace2 = __esm({
     router24.get("/marketplace/seller/:id", async (req, res) => {
       try {
         const sellerId = Number(req.params.id);
-        const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified, createdAt: usersTable.createdAt }).from(usersTable).where(eq2(usersTable.id, sellerId));
+        const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl, isVerified: usersTable.isVerified, createdAt: usersTable.createdAt }).from(usersTable).where(eq(usersTable.id, sellerId));
         if (!seller) {
           res.status(404).json({ error: "Sotuvchi topilmadi" });
           return;
         }
-        const products = await db.select().from(productsTable).where(and2(eq2(productsTable.sellerId, sellerId), eq2(productsTable.status, "active"))).orderBy(desc2(productsTable.createdAt));
+        const products = await db.select().from(productsTable).where(and(eq(productsTable.sellerId, sellerId), eq(productsTable.status, "active"))).orderBy(desc(productsTable.createdAt));
         const enriched = products.map((p3) => ({ ...p3, mediaUrls: p3.mediaUrls ? JSON.parse(p3.mediaUrls) : [], tags: p3.tags ? JSON.parse(p3.tags) : [] }));
-        const totalOrders = await db.select({ id: productOrdersTable.id }).from(productOrdersTable).where(and2(eq2(productOrdersTable.sellerId, sellerId), ne2(productOrdersTable.status, "cancelled")));
+        const totalOrders = await db.select({ id: productOrdersTable.id }).from(productOrdersTable).where(and(eq(productOrdersTable.sellerId, sellerId), ne(productOrdersTable.status, "cancelled")));
         const avgRating = products.length > 0 ? Math.round(products.reduce((s, p3) => s + p3.rating, 0) / products.length) : 0;
         res.json({ seller, products: enriched, stats: { totalProducts: products.length, totalOrders: totalOrders.length, avgRating } });
       } catch (err) {
@@ -173233,9 +165170,9 @@ var init_marketplace2 = __esm({
           return;
         }
         const [review] = await db.insert(productReviewsTable).values({ reviewerId: req.session.userId, productId, orderId: orderId ?? null, rating, comment: comment?.trim() ?? null }).returning();
-        const allReviews = await db.select({ rating: productReviewsTable.rating }).from(productReviewsTable).where(eq2(productReviewsTable.productId, productId));
+        const allReviews = await db.select({ rating: productReviewsTable.rating }).from(productReviewsTable).where(eq(productReviewsTable.productId, productId));
         const avgRating = Math.round(allReviews.reduce((s, r5) => s + r5.rating, 0) / allReviews.length * 100);
-        await db.update(productsTable).set({ rating: avgRating, reviewsCount: allReviews.length }).where(eq2(productsTable.id, productId));
+        await db.update(productsTable).set({ rating: avgRating, reviewsCount: allReviews.length }).where(eq(productsTable.id, productId));
         res.status(201).json(review);
       } catch (err) {
         req.log.error(err);
@@ -173254,7 +165191,7 @@ var init_openai_chat = __esm({
     import_express25 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_src3();
     init_aiAccess();
     router25 = (0, import_express25.Router)();
@@ -173282,7 +165219,7 @@ var init_openai_chat = __esm({
         return;
       }
       try {
-        const list2 = await db.select().from(aiConversations).where(eq2(aiConversations.userId, req.session.userId)).orderBy(aiConversations.createdAt);
+        const list2 = await db.select().from(aiConversations).where(eq(aiConversations.userId, req.session.userId)).orderBy(aiConversations.createdAt);
         res.json(list2);
       } catch (err) {
         req.log.error(err);
@@ -173314,12 +165251,12 @@ var init_openai_chat = __esm({
       }
       const id = Number(req.params.id);
       try {
-        const [conv] = await db.select().from(aiConversations).where(and2(eq2(aiConversations.id, id), eq2(aiConversations.userId, req.session.userId)));
+        const [conv] = await db.select().from(aiConversations).where(and(eq(aiConversations.id, id), eq(aiConversations.userId, req.session.userId)));
         if (!conv) {
           res.status(404).json({ error: "Not found" });
           return;
         }
-        const msgs = await db.select().from(aiMessages).where(eq2(aiMessages.conversationId, id)).orderBy(aiMessages.createdAt);
+        const msgs = await db.select().from(aiMessages).where(eq(aiMessages.conversationId, id)).orderBy(aiMessages.createdAt);
         res.json({ ...conv, messages: msgs });
       } catch (err) {
         req.log.error(err);
@@ -173333,7 +165270,7 @@ var init_openai_chat = __esm({
       }
       const id = Number(req.params.id);
       try {
-        await db.delete(aiConversations).where(and2(eq2(aiConversations.id, id), eq2(aiConversations.userId, req.session.userId)));
+        await db.delete(aiConversations).where(and(eq(aiConversations.id, id), eq(aiConversations.userId, req.session.userId)));
         res.status(204).end();
       } catch (err) {
         req.log.error(err);
@@ -173347,12 +165284,12 @@ var init_openai_chat = __esm({
       }
       const id = Number(req.params.id);
       try {
-        const [conv] = await db.select().from(aiConversations).where(and2(eq2(aiConversations.id, id), eq2(aiConversations.userId, req.session.userId)));
+        const [conv] = await db.select().from(aiConversations).where(and(eq(aiConversations.id, id), eq(aiConversations.userId, req.session.userId)));
         if (!conv) {
           res.status(404).json({ error: "Not found" });
           return;
         }
-        const msgs = await db.select().from(aiMessages).where(eq2(aiMessages.conversationId, id)).orderBy(aiMessages.createdAt);
+        const msgs = await db.select().from(aiMessages).where(eq(aiMessages.conversationId, id)).orderBy(aiMessages.createdAt);
         res.json(msgs);
       } catch (err) {
         req.log.error(err);
@@ -173381,13 +165318,13 @@ var init_openai_chat = __esm({
           });
           return;
         }
-        const [conv] = await db.select().from(aiConversations).where(and2(eq2(aiConversations.id, convId), eq2(aiConversations.userId, req.session.userId)));
+        const [conv] = await db.select().from(aiConversations).where(and(eq(aiConversations.id, convId), eq(aiConversations.userId, req.session.userId)));
         if (!conv) {
           res.status(404).json({ error: "Not found" });
           return;
         }
         await db.insert(aiMessages).values({ conversationId: convId, role: "user", content });
-        const history = await db.select().from(aiMessages).where(eq2(aiMessages.conversationId, convId)).orderBy(aiMessages.createdAt).limit(200);
+        const history = await db.select().from(aiMessages).where(eq(aiMessages.conversationId, convId)).orderBy(aiMessages.createdAt).limit(200);
         const recentHistory = history.slice(-6);
         const chatMessages = recentHistory.map((m3) => ({ role: m3.role, content: m3.content }));
         res.setHeader("Content-Type", "text/event-stream");
@@ -173626,7 +165563,7 @@ var init_library2 = __esm({
     import_express26 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_src3();
     router26 = (0, import_express26.Router)();
     router26.get("/library/books", async (req, res) => {
@@ -173635,7 +165572,7 @@ var init_library2 = __esm({
         return;
       }
       try {
-        const books = await db.select().from(userBooksTable).where(eq2(userBooksTable.userId, req.session.userId)).orderBy(userBooksTable.addedAt);
+        const books = await db.select().from(userBooksTable).where(eq(userBooksTable.userId, req.session.userId)).orderBy(userBooksTable.addedAt);
         res.json(books);
       } catch (err) {
         req.log.error(err);
@@ -173653,7 +165590,7 @@ var init_library2 = __esm({
         return;
       }
       try {
-        const existing = await db.select({ id: userBooksTable.id }).from(userBooksTable).where(and2(eq2(userBooksTable.userId, req.session.userId), eq2(userBooksTable.googleBookId, googleBookId)));
+        const existing = await db.select({ id: userBooksTable.id }).from(userBooksTable).where(and(eq(userBooksTable.userId, req.session.userId), eq(userBooksTable.googleBookId, googleBookId)));
         if (existing.length > 0) {
           res.status(409).json({ error: "Kitob allaqachon kutubxonangizda" });
           return;
@@ -173685,7 +165622,7 @@ var init_library2 = __esm({
       const id = Number(req.params.id);
       const { status, currentPage, rating, review, isFavorite } = req.body;
       try {
-        const [existing] = await db.select().from(userBooksTable).where(and2(eq2(userBooksTable.id, id), eq2(userBooksTable.userId, req.session.userId)));
+        const [existing] = await db.select().from(userBooksTable).where(and(eq(userBooksTable.id, id), eq(userBooksTable.userId, req.session.userId)));
         if (!existing) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -173696,7 +165633,7 @@ var init_library2 = __esm({
         if (rating !== void 0) updates.rating = rating;
         if (review !== void 0) updates.review = review;
         if (isFavorite !== void 0) updates.isFavorite = isFavorite;
-        const [updated] = await db.update(userBooksTable).set(updates).where(eq2(userBooksTable.id, id)).returning();
+        const [updated] = await db.update(userBooksTable).set(updates).where(eq(userBooksTable.id, id)).returning();
         res.json(updated);
       } catch (err) {
         req.log.error(err);
@@ -173710,7 +165647,7 @@ var init_library2 = __esm({
       }
       const id = Number(req.params.id);
       try {
-        await db.delete(userBooksTable).where(and2(eq2(userBooksTable.id, id), eq2(userBooksTable.userId, req.session.userId)));
+        await db.delete(userBooksTable).where(and(eq(userBooksTable.id, id), eq(userBooksTable.userId, req.session.userId)));
         res.status(204).end();
       } catch (err) {
         req.log.error(err);
@@ -173890,7 +165827,7 @@ async function enrichVoiceComment(vc) {
     displayName: usersTable.displayName,
     avatarUrl: usersTable.avatarUrl,
     isVerified: usersTable.isVerified
-  }).from(usersTable).where(eq2(usersTable.id, vc.authorId));
+  }).from(usersTable).where(eq(usersTable.id, vc.authorId));
   return { ...vc, author: author ?? null };
 }
 var import_express27, router27, requireAuth11, voiceComments_default;
@@ -173900,7 +165837,7 @@ var init_voiceComments2 = __esm({
     import_express27 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_r2Storage();
     router27 = (0, import_express27.Router)();
     requireAuth11 = (req, res, next) => {
@@ -173936,7 +165873,7 @@ var init_voiceComments2 = __esm({
           res.status(400).json({ error: "Noto'g'ri post ID" });
           return;
         }
-        const rows = await db.select().from(voiceCommentsTable).where(eq2(voiceCommentsTable.postId, postId)).orderBy(desc2(voiceCommentsTable.createdAt));
+        const rows = await db.select().from(voiceCommentsTable).where(eq(voiceCommentsTable.postId, postId)).orderBy(desc(voiceCommentsTable.createdAt));
         const enriched = await Promise.all(rows.map(enrichVoiceComment));
         res.json(enriched);
       } catch (err) {
@@ -173956,7 +165893,7 @@ var init_voiceComments2 = __esm({
           res.status(400).json({ error: "audioUrl talab qilinadi" });
           return;
         }
-        const [post] = await db.select({ id: postsTable.id }).from(postsTable).where(eq2(postsTable.id, postId));
+        const [post] = await db.select({ id: postsTable.id }).from(postsTable).where(eq(postsTable.id, postId));
         if (!post) {
           res.status(404).json({ error: "Post topilmadi" });
           return;
@@ -173977,7 +165914,7 @@ var init_voiceComments2 = __esm({
     router27.delete("/posts/:postId/voice-comments/:id", requireAuth11, async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const [vc] = await db.select().from(voiceCommentsTable).where(eq2(voiceCommentsTable.id, id));
+        const [vc] = await db.select().from(voiceCommentsTable).where(eq(voiceCommentsTable.id, id));
         if (!vc) {
           res.status(404).json({ error: "Topilmadi" });
           return;
@@ -173986,7 +165923,7 @@ var init_voiceComments2 = __esm({
           res.status(403).json({ error: "Ruxsat yo'q" });
           return;
         }
-        await db.delete(voiceCommentsTable).where(eq2(voiceCommentsTable.id, id));
+        await db.delete(voiceCommentsTable).where(eq(voiceCommentsTable.id, id));
         res.status(204).end();
       } catch (err) {
         req.log.error(err);
@@ -174002,7 +165939,7 @@ function todayDate2() {
   return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
 }
 async function getOrCreateCoins2(userId) {
-  const existing = await db.query.userCoinsTable.findFirst({ where: eq2(userCoinsTable.userId, userId) });
+  const existing = await db.query.userCoinsTable.findFirst({ where: eq(userCoinsTable.userId, userId) });
   if (existing) return existing;
   const [created] = await db.insert(userCoinsTable).values({ userId }).returning();
   return created;
@@ -174019,14 +165956,14 @@ async function checkAndGrantTitle2(userId, totalEarned) {
   const newTitle = earned[earned.length - 1]?.title;
   if (!newTitle) return;
   const existing = await db.select().from(userTitlesTable).where(
-    and2(eq2(userTitlesTable.userId, userId), eq2(userTitlesTable.title, newTitle))
+    and(eq(userTitlesTable.userId, userId), eq(userTitlesTable.title, newTitle))
   );
   if (existing.length === 0) {
     await db.insert(userTitlesTable).values({ userId, title: newTitle });
   }
 }
 async function getOrCreateStreak(userId) {
-  const existing = await db.query.userStreaksTable.findFirst({ where: eq2(userStreaksTable.userId, userId) });
+  const existing = await db.query.userStreaksTable.findFirst({ where: eq(userStreaksTable.userId, userId) });
   if (existing) return existing;
   const [created] = await db.insert(userStreaksTable).values({ userId }).returning();
   return created;
@@ -174038,7 +165975,7 @@ var init_gamification2 = __esm({
     import_express28 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_trackQuest();
     router28 = (0, import_express28.Router)();
     requireAuth12 = (req, res, next) => {
@@ -174051,7 +165988,7 @@ var init_gamification2 = __esm({
     router28.get("/gamification/balance", requireAuth12, async (req, res) => {
       try {
         const coins = await getOrCreateCoins2(req.session.userId);
-        const titles = await db.select().from(userTitlesTable).where(eq2(userTitlesTable.userId, req.session.userId));
+        const titles = await db.select().from(userTitlesTable).where(eq(userTitlesTable.userId, req.session.userId));
         res.json({ ...coins, titles });
       } catch (err) {
         req.log.error(err);
@@ -174061,8 +165998,8 @@ var init_gamification2 = __esm({
     router28.get("/gamification/quests", requireAuth12, async (req, res) => {
       try {
         const today = todayDate2();
-        const quests = await db.select().from(dailyQuestsTable).where(eq2(dailyQuestsTable.isActive, true));
-        const progress = await db.select().from(questProgressTable).where(and2(eq2(questProgressTable.userId, req.session.userId), eq2(questProgressTable.date, today)));
+        const quests = await db.select().from(dailyQuestsTable).where(eq(dailyQuestsTable.isActive, true));
+        const progress = await db.select().from(questProgressTable).where(and(eq(questProgressTable.userId, req.session.userId), eq(questProgressTable.date, today)));
         const progressMap = new Map(progress.map((p3) => [p3.questKey, p3]));
         const enriched = quests.sort((a5, b5) => a5.sortOrder - b5.sortOrder).map((q2) => ({
           ...q2,
@@ -174080,13 +166017,13 @@ var init_gamification2 = __esm({
       try {
         const { key } = req.params;
         const today = todayDate2();
-        const quest = await db.query.dailyQuestsTable.findFirst({ where: eq2(dailyQuestsTable.key, key) });
+        const quest = await db.query.dailyQuestsTable.findFirst({ where: eq(dailyQuestsTable.key, key) });
         if (!quest) {
           res.status(404).json({ error: "Quest not found" });
           return;
         }
         const existing = await db.query.questProgressTable.findFirst({
-          where: and2(eq2(questProgressTable.userId, req.session.userId), eq2(questProgressTable.questKey, key), eq2(questProgressTable.date, today))
+          where: and(eq(questProgressTable.userId, req.session.userId), eq(questProgressTable.questKey, key), eq(questProgressTable.date, today))
         });
         if (existing?.completedAt) {
           res.json({ ...existing, quest });
@@ -174095,7 +166032,7 @@ var init_gamification2 = __esm({
         const newProgress = Math.min((existing?.progress ?? 0) + 1, quest.target);
         const completedAt = newProgress >= quest.target ? /* @__PURE__ */ new Date() : null;
         if (existing) {
-          const [updated] = await db.update(questProgressTable).set({ progress: newProgress, completedAt }).where(eq2(questProgressTable.id, existing.id)).returning();
+          const [updated] = await db.update(questProgressTable).set({ progress: newProgress, completedAt }).where(eq(questProgressTable.id, existing.id)).returning();
           res.json({ ...updated, quest });
         } else {
           const [created] = await db.insert(questProgressTable).values({ userId: req.session.userId, questKey: key, progress: newProgress, completedAt, date: today }).returning();
@@ -174110,13 +166047,13 @@ var init_gamification2 = __esm({
       try {
         const { key } = req.params;
         const today = todayDate2();
-        const quest = await db.query.dailyQuestsTable.findFirst({ where: eq2(dailyQuestsTable.key, key) });
+        const quest = await db.query.dailyQuestsTable.findFirst({ where: eq(dailyQuestsTable.key, key) });
         if (!quest) {
           res.status(404).json({ error: "Quest not found" });
           return;
         }
         const progress = await db.query.questProgressTable.findFirst({
-          where: and2(eq2(questProgressTable.userId, req.session.userId), eq2(questProgressTable.questKey, key), eq2(questProgressTable.date, today))
+          where: and(eq(questProgressTable.userId, req.session.userId), eq(questProgressTable.questKey, key), eq(questProgressTable.date, today))
         });
         if (!progress?.completedAt) {
           res.status(400).json({ error: "Quest not completed" });
@@ -174126,11 +166063,11 @@ var init_gamification2 = __esm({
           res.status(400).json({ error: "Already claimed" });
           return;
         }
-        await db.update(questProgressTable).set({ claimedAt: /* @__PURE__ */ new Date() }).where(eq2(questProgressTable.id, progress.id));
+        await db.update(questProgressTable).set({ claimedAt: /* @__PURE__ */ new Date() }).where(eq(questProgressTable.id, progress.id));
         const coins = await getOrCreateCoins2(req.session.userId);
         const newBalance = coins.balance + quest.reward;
         const newTotal = coins.totalEarned + quest.reward;
-        const [updated] = await db.update(userCoinsTable).set({ balance: newBalance, totalEarned: newTotal, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(userCoinsTable.userId, req.session.userId)).returning();
+        const [updated] = await db.update(userCoinsTable).set({ balance: newBalance, totalEarned: newTotal, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userCoinsTable.userId, req.session.userId)).returning();
         await checkAndGrantTitle2(req.session.userId, newTotal);
         res.json({ coins: updated, reward: quest.reward });
       } catch (err) {
@@ -174172,7 +166109,7 @@ var init_gamification2 = __esm({
         const newCurrent = isConsecutive ? streak.currentStreak + 1 : 1;
         const newLongest = Math.max(streak.longestStreak, newCurrent);
         const xpGain = 10 + Math.min(40, newCurrent * 2);
-        const [updated] = await db.update(userStreaksTable).set({ currentStreak: newCurrent, longestStreak: newLongest, lastActiveDate: today, xp: streak.xp + xpGain, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(userStreaksTable.userId, req.session.userId)).returning();
+        const [updated] = await db.update(userStreaksTable).set({ currentStreak: newCurrent, longestStreak: newLongest, lastActiveDate: today, xp: streak.xp + xpGain, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userStreaksTable.userId, req.session.userId)).returning();
         res.json({
           currentStreak: updated.currentStreak,
           longestStreak: updated.longestStreak,
@@ -174199,7 +166136,7 @@ var init_coview2 = __esm({
     import_express29 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router29 = (0, import_express29.Router)();
     requireAuth13 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -174231,7 +166168,7 @@ var init_coview2 = __esm({
     });
     router29.get("/coview/rooms/:code", requireAuth13, async (req, res) => {
       try {
-        const [room] = await db.select().from(coViewRoomsTable).where(eq2(coViewRoomsTable.inviteCode, req.params.code.toUpperCase()));
+        const [room] = await db.select().from(coViewRoomsTable).where(eq(coViewRoomsTable.inviteCode, req.params.code.toUpperCase()));
         if (!room) {
           res.status(404).json({ error: "Xona topilmadi" });
           return;
@@ -174242,7 +166179,7 @@ var init_coview2 = __esm({
           displayName: usersTable.displayName,
           avatarUrl: usersTable.avatarUrl,
           isVerified: usersTable.isVerified
-        }).from(coViewMembersTable).innerJoin(usersTable, eq2(coViewMembersTable.userId, usersTable.id)).where(eq2(coViewMembersTable.roomId, room.id));
+        }).from(coViewMembersTable).innerJoin(usersTable, eq(coViewMembersTable.userId, usersTable.id)).where(eq(coViewMembersTable.roomId, room.id));
         let content = null;
         try {
           if (room.contentType === "reel") {
@@ -174250,13 +166187,13 @@ var init_coview2 = __esm({
               videoUrl: reelsTable.videoUrl,
               thumbnailUrl: reelsTable.thumbnailUrl,
               caption: reelsTable.caption
-            }).from(reelsTable).where(eq2(reelsTable.id, room.contentId)).limit(1);
+            }).from(reelsTable).where(eq(reelsTable.id, room.contentId)).limit(1);
             content = reel ?? null;
           } else if (room.contentType === "post") {
             const [post] = await db.select({
               thumbnailUrl: postsTable.mediaUrl,
               title: postsTable.content
-            }).from(postsTable).where(eq2(postsTable.id, room.contentId)).limit(1);
+            }).from(postsTable).where(eq(postsTable.id, room.contentId)).limit(1);
             content = post ?? null;
           }
         } catch {
@@ -174269,7 +166206,7 @@ var init_coview2 = __esm({
     });
     router29.post("/coview/rooms/:code/join", requireAuth13, async (req, res) => {
       try {
-        const [room] = await db.select().from(coViewRoomsTable).where(eq2(coViewRoomsTable.inviteCode, req.params.code.toUpperCase()));
+        const [room] = await db.select().from(coViewRoomsTable).where(eq(coViewRoomsTable.inviteCode, req.params.code.toUpperCase()));
         if (!room) {
           res.status(404).json({ error: "Xona topilmadi" });
           return;
@@ -174278,10 +166215,10 @@ var init_coview2 = __esm({
           res.status(400).json({ error: "Xona tugagan" });
           return;
         }
-        const existing = await db.select().from(coViewMembersTable).where(eq2(coViewMembersTable.roomId, room.id));
+        const existing = await db.select().from(coViewMembersTable).where(eq(coViewMembersTable.roomId, room.id));
         if (!existing.find((m3) => m3.userId === req.session.userId)) {
           await db.insert(coViewMembersTable).values({ roomId: room.id, userId: req.session.userId });
-          await db.update(coViewRoomsTable).set({ memberCount: room.memberCount + 1 }).where(eq2(coViewRoomsTable.id, room.id));
+          await db.update(coViewRoomsTable).set({ memberCount: room.memberCount + 1 }).where(eq(coViewRoomsTable.id, room.id));
         }
         res.json({ success: true, roomId: room.id, inviteCode: room.inviteCode, contentType: room.contentType, contentId: room.contentId });
       } catch (err) {
@@ -174291,14 +166228,14 @@ var init_coview2 = __esm({
     });
     router29.delete("/coview/rooms/:code/leave", requireAuth13, async (req, res) => {
       try {
-        const [room] = await db.select().from(coViewRoomsTable).where(eq2(coViewRoomsTable.inviteCode, req.params.code.toUpperCase()));
+        const [room] = await db.select().from(coViewRoomsTable).where(eq(coViewRoomsTable.inviteCode, req.params.code.toUpperCase()));
         if (!room) {
           res.status(404).json({ error: "Xona topilmadi" });
           return;
         }
-        await db.delete(coViewMembersTable).where(eq2(coViewMembersTable.roomId, room.id));
+        await db.delete(coViewMembersTable).where(eq(coViewMembersTable.roomId, room.id));
         if (room.hostId === req.session.userId) {
-          await db.update(coViewRoomsTable).set({ status: "ended", endedAt: /* @__PURE__ */ new Date() }).where(eq2(coViewRoomsTable.id, room.id));
+          await db.update(coViewRoomsTable).set({ status: "ended", endedAt: /* @__PURE__ */ new Date() }).where(eq(coViewRoomsTable.id, room.id));
         }
         res.json({ success: true });
       } catch (err) {
@@ -174318,7 +166255,7 @@ var init_anon = __esm({
     import_express30 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router30 = (0, import_express30.Router)();
     requireAuth14 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -174329,7 +166266,7 @@ var init_anon = __esm({
     };
     router30.get("/anon/zones", requireAuth14, async (req, res) => {
       try {
-        const zones = await db.select().from(anonZonesTable).where(eq2(anonZonesTable.isActive, true)).orderBy(desc2(anonZonesTable.postCount));
+        const zones = await db.select().from(anonZonesTable).where(eq(anonZonesTable.isActive, true)).orderBy(desc(anonZonesTable.postCount));
         res.json(zones);
       } catch (err) {
         req.log.error(err);
@@ -174343,7 +166280,7 @@ var init_anon = __esm({
           res.status(400).json({ error: "Noto'g'ri ID" });
           return;
         }
-        const posts = await db.select().from(anonPostsTable).where(eq2(anonPostsTable.zoneId, zoneId)).orderBy(desc2(anonPostsTable.createdAt)).limit(50);
+        const posts = await db.select().from(anonPostsTable).where(eq(anonPostsTable.zoneId, zoneId)).orderBy(desc(anonPostsTable.createdAt)).limit(50);
         res.json(posts);
       } catch (err) {
         req.log.error(err);
@@ -174362,13 +166299,13 @@ var init_anon = __esm({
           res.status(400).json({ error: "Kontent 1-500 belgi bo'lishi kerak" });
           return;
         }
-        const zone = await db.query.anonZonesTable.findFirst({ where: eq2(anonZonesTable.id, zoneId) });
+        const zone = await db.query.anonZonesTable.findFirst({ where: eq(anonZonesTable.id, zoneId) });
         if (!zone) {
           res.status(404).json({ error: "Zona topilmadi" });
           return;
         }
         const [post] = await db.insert(anonPostsTable).values({ zoneId, content: content.trim() }).returning();
-        await db.update(anonZonesTable).set({ postCount: zone.postCount + 1 }).where(eq2(anonZonesTable.id, zoneId));
+        await db.update(anonZonesTable).set({ postCount: zone.postCount + 1 }).where(eq(anonZonesTable.id, zoneId));
         res.status(201).json(post);
       } catch (err) {
         req.log.error(err);
@@ -174382,12 +166319,12 @@ var init_anon = __esm({
           res.status(400).json({ error: "Noto'g'ri ID" });
           return;
         }
-        const [post] = await db.select().from(anonPostsTable).where(eq2(anonPostsTable.id, postId));
+        const [post] = await db.select().from(anonPostsTable).where(eq(anonPostsTable.id, postId));
         if (!post) {
           res.status(404).json({ error: "Post topilmadi" });
           return;
         }
-        const [updated] = await db.update(anonPostsTable).set({ likes: post.likes + 1 }).where(eq2(anonPostsTable.id, postId)).returning();
+        const [updated] = await db.update(anonPostsTable).set({ likes: post.likes + 1 }).where(eq(anonPostsTable.id, postId)).returning();
         res.json(updated);
       } catch (err) {
         req.log.error(err);
@@ -174406,7 +166343,7 @@ var init_scenarios2 = __esm({
     import_express31 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router31 = (0, import_express31.Router)();
     requireAuth15 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -174417,7 +166354,7 @@ var init_scenarios2 = __esm({
     };
     router31.get("/scenarios", async (req, res) => {
       try {
-        const rows = await db.select().from(scenariosTable).where(eq2(scenariosTable.isPublished, true)).orderBy(desc2(scenariosTable.createdAt)).limit(30);
+        const rows = await db.select().from(scenariosTable).where(eq(scenariosTable.isPublished, true)).orderBy(desc(scenariosTable.createdAt)).limit(30);
         res.json(rows);
       } catch (err) {
         req.log.error(err);
@@ -174426,7 +166363,7 @@ var init_scenarios2 = __esm({
     });
     router31.get("/scenarios/mine", requireAuth15, async (req, res) => {
       try {
-        const rows = await db.select().from(scenariosTable).where(eq2(scenariosTable.creatorId, req.session.userId)).orderBy(desc2(scenariosTable.createdAt));
+        const rows = await db.select().from(scenariosTable).where(eq(scenariosTable.creatorId, req.session.userId)).orderBy(desc(scenariosTable.createdAt));
         res.json(rows);
       } catch (err) {
         req.log.error(err);
@@ -174450,13 +166387,13 @@ var init_scenarios2 = __esm({
     router31.get("/scenarios/:id", async (req, res) => {
       try {
         const id = parseInt(req.params.id);
-        const [sc] = await db.select().from(scenariosTable).where(eq2(scenariosTable.id, id));
+        const [sc] = await db.select().from(scenariosTable).where(eq(scenariosTable.id, id));
         if (!sc) {
           res.status(404).json({ error: "Topilmadi" });
           return;
         }
-        const branches = await db.select().from(scenarioBranchesTable).where(eq2(scenarioBranchesTable.scenarioId, id)).orderBy(scenarioBranchesTable.orderIndex);
-        await db.update(scenariosTable).set({ viewCount: sc.viewCount + 1 }).where(eq2(scenariosTable.id, id));
+        const branches = await db.select().from(scenarioBranchesTable).where(eq(scenarioBranchesTable.scenarioId, id)).orderBy(scenarioBranchesTable.orderIndex);
+        await db.update(scenariosTable).set({ viewCount: sc.viewCount + 1 }).where(eq(scenariosTable.id, id));
         res.json({ ...sc, branches });
       } catch (err) {
         req.log.error(err);
@@ -174466,7 +166403,7 @@ var init_scenarios2 = __esm({
     router31.post("/scenarios/:id/branches", requireAuth15, async (req, res) => {
       try {
         const scenarioId = parseInt(req.params.id);
-        const [sc] = await db.select().from(scenariosTable).where(eq2(scenariosTable.id, scenarioId));
+        const [sc] = await db.select().from(scenariosTable).where(eq(scenariosTable.id, scenarioId));
         if (!sc || sc.creatorId !== req.session.userId) {
           res.status(403).json({ error: "Ruxsat yo'q" });
           return;
@@ -174482,12 +166419,12 @@ var init_scenarios2 = __esm({
     router31.patch("/scenarios/:id/publish", requireAuth15, async (req, res) => {
       try {
         const id = parseInt(req.params.id);
-        const [sc] = await db.select().from(scenariosTable).where(eq2(scenariosTable.id, id));
+        const [sc] = await db.select().from(scenariosTable).where(eq(scenariosTable.id, id));
         if (!sc || sc.creatorId !== req.session.userId) {
           res.status(403).json({ error: "Ruxsat yo'q" });
           return;
         }
-        const [updated] = await db.update(scenariosTable).set({ isPublished: true }).where(eq2(scenariosTable.id, id)).returning();
+        const [updated] = await db.update(scenariosTable).set({ isPublished: true }).where(eq(scenariosTable.id, id)).returning();
         res.json(updated);
       } catch (err) {
         req.log.error(err);
@@ -174506,7 +166443,7 @@ var init_mood = __esm({
     import_express32 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router32 = (0, import_express32.Router)();
     requireAuth16 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -174533,7 +166470,7 @@ var init_mood = __esm({
     });
     router32.get("/mood/following/energy", requireAuth16, async (req, res) => {
       try {
-        const follows = await db.select({ id: followsTable.followingId }).from(followsTable).where(eq2(followsTable.followerId, req.session.userId));
+        const follows = await db.select({ id: followsTable.followingId }).from(followsTable).where(eq(followsTable.followerId, req.session.userId));
         const followeeIds = follows.map((f5) => f5.id);
         if (followeeIds.length === 0) {
           res.json([]);
@@ -174547,11 +166484,11 @@ var init_mood = __esm({
           mood: userMoodsTable.mood,
           energyLevel: userMoodsTable.energyLevel,
           createdAt: userMoodsTable.createdAt
-        }).from(userMoodsTable).innerJoin(usersTable, eq2(userMoodsTable.userId, usersTable.id)).where(and2(
-          inArray2(userMoodsTable.userId, followeeIds),
-          eq2(userMoodsTable.isPublic, true),
-          gt2(userMoodsTable.expiresAt, /* @__PURE__ */ new Date())
-        )).orderBy(desc2(userMoodsTable.createdAt));
+        }).from(userMoodsTable).innerJoin(usersTable, eq(userMoodsTable.userId, usersTable.id)).where(and(
+          inArray(userMoodsTable.userId, followeeIds),
+          eq(userMoodsTable.isPublic, true),
+          gt(userMoodsTable.expiresAt, /* @__PURE__ */ new Date())
+        )).orderBy(desc(userMoodsTable.createdAt));
         const seen = /* @__PURE__ */ new Set();
         const latest = rows.filter((r5) => {
           if (seen.has(r5.userId)) return false;
@@ -174566,7 +166503,7 @@ var init_mood = __esm({
     });
     router32.get("/mood/my", requireAuth16, async (req, res) => {
       try {
-        const [latest] = await db.select().from(userMoodsTable).where(and2(eq2(userMoodsTable.userId, req.session.userId), gt2(userMoodsTable.expiresAt, /* @__PURE__ */ new Date()))).orderBy(desc2(userMoodsTable.createdAt)).limit(1);
+        const [latest] = await db.select().from(userMoodsTable).where(and(eq(userMoodsTable.userId, req.session.userId), gt(userMoodsTable.expiresAt, /* @__PURE__ */ new Date()))).orderBy(desc(userMoodsTable.createdAt)).limit(1);
         res.json(latest ?? null);
       } catch (err) {
         req.log.error(err);
@@ -174586,7 +166523,7 @@ var init_mood = __esm({
           username: usersTable.username,
           displayName: usersTable.displayName,
           avatar: usersTable.avatarUrl
-        }).from(userMoodsTable).innerJoin(usersTable, eq2(userMoodsTable.userId, usersTable.id)).where(and2(eq2(userMoodsTable.isPublic, true), gt2(userMoodsTable.createdAt, since))).orderBy(desc2(userMoodsTable.createdAt)).limit(100);
+        }).from(userMoodsTable).innerJoin(usersTable, eq(userMoodsTable.userId, usersTable.id)).where(and(eq(userMoodsTable.isPublic, true), gt(userMoodsTable.createdAt, since))).orderBy(desc(userMoodsTable.createdAt)).limit(100);
         res.json(rows);
       } catch (err) {
         req.log.error(err);
@@ -174605,7 +166542,7 @@ var init_aiTwin2 = __esm({
     import_express33 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_src3();
     init_aiAccess();
     router33 = (0, import_express33.Router)();
@@ -174618,7 +166555,7 @@ var init_aiTwin2 = __esm({
     };
     router33.get("/twin/config", requireAuth17, async (req, res) => {
       try {
-        const [cfg] = await db.select().from(aiTwinConfigTable).where(eq2(aiTwinConfigTable.userId, req.session.userId));
+        const [cfg] = await db.select().from(aiTwinConfigTable).where(eq(aiTwinConfigTable.userId, req.session.userId));
         res.json(cfg ?? null);
       } catch (err) {
         req.log.error(err);
@@ -174628,9 +166565,9 @@ var init_aiTwin2 = __esm({
     router33.post("/twin/config", requireAuth17, async (req, res) => {
       try {
         const { isEnabled, personality, topics, bio } = req.body;
-        const existing = await db.select().from(aiTwinConfigTable).where(eq2(aiTwinConfigTable.userId, req.session.userId));
+        const existing = await db.select().from(aiTwinConfigTable).where(eq(aiTwinConfigTable.userId, req.session.userId));
         if (existing.length > 0) {
-          const [updated] = await db.update(aiTwinConfigTable).set({ isEnabled: isEnabled ?? existing[0].isEnabled, personality, topics, bio }).where(eq2(aiTwinConfigTable.userId, req.session.userId)).returning();
+          const [updated] = await db.update(aiTwinConfigTable).set({ isEnabled: isEnabled ?? existing[0].isEnabled, personality, topics, bio }).where(eq(aiTwinConfigTable.userId, req.session.userId)).returning();
           res.json(updated);
         } else {
           const [created] = await db.insert(aiTwinConfigTable).values({ userId: req.session.userId, isEnabled: isEnabled ?? false, personality, topics, bio }).returning();
@@ -174645,19 +166582,19 @@ var init_aiTwin2 = __esm({
       try {
         const userRef = req.params.userRef;
         const asId = parseInt(userRef);
-        const { eq: eqOp } = await Promise.resolve().then(() => (init_drizzle_orm2(), drizzle_orm_exports));
+        const { eq: eqOp } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
         let user;
         if (!isNaN(asId)) {
-          [user] = await db.select().from(usersTable).where(eq2(usersTable.id, asId));
+          [user] = await db.select().from(usersTable).where(eq(usersTable.id, asId));
         }
         if (!user) {
-          [user] = await db.select().from(usersTable).where(eq2(usersTable.username, userRef));
+          [user] = await db.select().from(usersTable).where(eq(usersTable.username, userRef));
         }
         if (!user) {
           res.status(404).json({ error: "Foydalanuvchi topilmadi" });
           return;
         }
-        const [cfg] = await db.select().from(aiTwinConfigTable).where(eq2(aiTwinConfigTable.userId, user.id));
+        const [cfg] = await db.select().from(aiTwinConfigTable).where(eq(aiTwinConfigTable.userId, user.id));
         if (!cfg?.isEnabled) {
           res.status(404).json({ error: "Bu foydalanuvchining AI egizagi faol emas" });
           return;
@@ -174677,8 +166614,8 @@ var init_aiTwin2 = __esm({
           res.status(400).json({ error: "Xabar majburiy" });
           return;
         }
-        const [owner] = await db.select().from(usersTable).where(eq2(usersTable.id, twinOwnerId));
-        const [cfg] = await db.select().from(aiTwinConfigTable).where(eq2(aiTwinConfigTable.userId, twinOwnerId));
+        const [owner] = await db.select().from(usersTable).where(eq(usersTable.id, twinOwnerId));
+        const [cfg] = await db.select().from(aiTwinConfigTable).where(eq(aiTwinConfigTable.userId, twinOwnerId));
         if (!cfg?.isEnabled) {
           res.status(403).json({ error: "AI egizak faol emas" });
           return;
@@ -174692,10 +166629,10 @@ var init_aiTwin2 = __esm({
         if (!currentChatId) {
           const [chat] = await db.insert(aiTwinChatsTable).values({ twinOwnerId, visitorId }).returning();
           currentChatId = chat.id;
-          await db.update(aiTwinConfigTable).set({ totalChats: cfg.totalChats + 1 }).where(eq2(aiTwinConfigTable.userId, twinOwnerId));
+          await db.update(aiTwinConfigTable).set({ totalChats: cfg.totalChats + 1 }).where(eq(aiTwinConfigTable.userId, twinOwnerId));
         }
         await db.insert(aiTwinMessagesTable).values({ chatId: currentChatId, role: "user", content: message.trim() });
-        const history = await db.select().from(aiTwinMessagesTable).where(eq2(aiTwinMessagesTable.chatId, currentChatId)).orderBy(aiTwinMessagesTable.createdAt).limit(20);
+        const history = await db.select().from(aiTwinMessagesTable).where(eq(aiTwinMessagesTable.chatId, currentChatId)).orderBy(aiTwinMessagesTable.createdAt).limit(20);
         const systemPrompt = `Siz ${owner.displayName} (@${owner.username}) nomli shaxsning AI egizagisiz.
 ${cfg.bio ? `Bio: ${cfg.bio}` : ""}
 ${cfg.personality ? `Shaxsiyat: ${cfg.personality}` : ""}
@@ -174712,7 +166649,7 @@ Xuddi o'sha odam kabi muloyim, samimiy va qisqa javob bering.`;
         });
         const reply = completion.choices[0]?.message?.content ?? "...";
         await db.insert(aiTwinMessagesTable).values({ chatId: currentChatId, role: "assistant", content: reply });
-        await db.update(aiTwinConfigTable).set({ lastActiveAt: /* @__PURE__ */ new Date() }).where(eq2(aiTwinConfigTable.userId, twinOwnerId));
+        await db.update(aiTwinConfigTable).set({ lastActiveAt: /* @__PURE__ */ new Date() }).where(eq(aiTwinConfigTable.userId, twinOwnerId));
         await incrementAIUsage(visitorId);
         const newAccess = await checkAIAccess(visitorId);
         res.json({ chatId: currentChatId, reply, usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium } });
@@ -174725,13 +166662,13 @@ Xuddi o'sha odam kabi muloyim, samimiy va qisqa javob bering.`;
       try {
         const twinOwnerId = parseInt(req.params.userId);
         const visitorId = req.session.userId;
-        const chats = await db.select().from(aiTwinChatsTable).where(eq2(aiTwinChatsTable.twinOwnerId, twinOwnerId)).orderBy(desc2(aiTwinChatsTable.createdAt));
+        const chats = await db.select().from(aiTwinChatsTable).where(eq(aiTwinChatsTable.twinOwnerId, twinOwnerId)).orderBy(desc(aiTwinChatsTable.createdAt));
         const myChat = chats.find((c5) => c5.visitorId === visitorId);
         if (!myChat) {
           res.json({ chatId: null, messages: [] });
           return;
         }
-        const messages = await db.select().from(aiTwinMessagesTable).where(eq2(aiTwinMessagesTable.chatId, myChat.id)).orderBy(aiTwinMessagesTable.createdAt);
+        const messages = await db.select().from(aiTwinMessagesTable).where(eq(aiTwinMessagesTable.chatId, myChat.id)).orderBy(aiTwinMessagesTable.createdAt);
         res.json({ chatId: myChat.id, messages });
       } catch (err) {
         req.log.error(err);
@@ -174744,7 +166681,7 @@ Xuddi o'sha odam kabi muloyim, samimiy va qisqa javob bering.`;
 
 // src/routes/factCheck.ts
 async function getOrCreateCredibility(userId) {
-  const [existing] = await db.select().from(credibilityScoresTable).where(eq2(credibilityScoresTable.userId, userId));
+  const [existing] = await db.select().from(credibilityScoresTable).where(eq(credibilityScoresTable.userId, userId));
   if (existing) return existing;
   const [created] = await db.insert(credibilityScoresTable).values({ userId }).returning();
   return created;
@@ -174756,7 +166693,7 @@ var init_factCheck2 = __esm({
     import_express34 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_src3();
     router34 = (0, import_express34.Router)();
     requireAuth18 = (req, res, next) => {
@@ -174769,7 +166706,7 @@ var init_factCheck2 = __esm({
     router34.get("/factcheck/:postId", async (req, res) => {
       try {
         const postId = parseInt(req.params.postId);
-        const [fc] = await db.select().from(factChecksTable).where(eq2(factChecksTable.postId, postId));
+        const [fc] = await db.select().from(factChecksTable).where(eq(factChecksTable.postId, postId));
         res.json(fc ?? null);
       } catch (err) {
         req.log.error(err);
@@ -174779,12 +166716,12 @@ var init_factCheck2 = __esm({
     router34.post("/factcheck/:postId", requireAuth18, async (req, res) => {
       try {
         const postId = parseInt(req.params.postId);
-        const existing = await db.select().from(factChecksTable).where(eq2(factChecksTable.postId, postId));
+        const existing = await db.select().from(factChecksTable).where(eq(factChecksTable.postId, postId));
         if (existing.length > 0) {
           res.json(existing[0]);
           return;
         }
-        const [post] = await db.select().from(postsTable).where(eq2(postsTable.id, postId));
+        const [post] = await db.select().from(postsTable).where(eq(postsTable.id, postId));
         if (!post) {
           res.status(404).json({ error: "Post topilmadi" });
           return;
@@ -174816,7 +166753,7 @@ Respond in JSON format:
           explanation: parsed.explanation ?? "",
           sources: parsed.sources ?? ""
         }).returning();
-        const [postUser] = await db.select().from(usersTable).where(eq2(usersTable.id, post.authorId));
+        const [postUser] = await db.select().from(usersTable).where(eq(usersTable.id, post.authorId));
         if (postUser) {
           const cred = await getOrCreateCredibility(postUser.id);
           const isTrue = parsed.verdict === "true";
@@ -174825,7 +166762,7 @@ Respond in JSON format:
           const newTrue = cred.trueCount + (isTrue ? 1 : 0);
           const newFalse = cred.falseCount + (isFalse ? 1 : 0);
           const newScore = Math.max(0, Math.min(100, 50 + (newTrue - newFalse) * 5));
-          await db.update(credibilityScoresTable).set({ totalChecked: newTotal, trueCount: newTrue, falseCount: newFalse, score: newScore, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(credibilityScoresTable.userId, postUser.id));
+          await db.update(credibilityScoresTable).set({ totalChecked: newTotal, trueCount: newTrue, falseCount: newFalse, score: newScore, updatedAt: /* @__PURE__ */ new Date() }).where(eq(credibilityScoresTable.userId, postUser.id));
         }
         res.json(fc);
       } catch (err) {
@@ -174844,7 +166781,7 @@ Respond in JSON format:
           username: usersTable.username,
           displayName: usersTable.displayName,
           avatar: usersTable.avatarUrl
-        }).from(credibilityScoresTable).innerJoin(usersTable, eq2(credibilityScoresTable.userId, usersTable.id)).orderBy(desc2(credibilityScoresTable.score)).limit(50);
+        }).from(credibilityScoresTable).innerJoin(usersTable, eq(credibilityScoresTable.userId, usersTable.id)).orderBy(desc(credibilityScoresTable.score)).limit(50);
         res.json(rows);
       } catch (err) {
         req.log.error(err);
@@ -174877,7 +166814,7 @@ var init_coSpaces2 = __esm({
     import_express35 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router35 = (0, import_express35.Router)();
     requireAuth19 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -174901,8 +166838,8 @@ var init_coSpaces2 = __esm({
           creatorUsername: usersTable.username,
           creatorName: usersTable.displayName,
           creatorAvatar: usersTable.avatarUrl
-        }).from(coSpacesTable).innerJoin(usersTable, eq2(coSpacesTable.creatorId, usersTable.id));
-        const rows = await q2.orderBy(desc2(coSpacesTable.createdAt)).limit(50);
+        }).from(coSpacesTable).innerJoin(usersTable, eq(coSpacesTable.creatorId, usersTable.id));
+        const rows = await q2.orderBy(desc(coSpacesTable.createdAt)).limit(50);
         const filtered = category ? rows.filter((r5) => r5.category === category) : rows;
         res.json(filtered);
       } catch (err) {
@@ -174928,13 +166865,13 @@ var init_coSpaces2 = __esm({
     router35.get("/spaces/:id", async (req, res) => {
       try {
         const id = parseInt(req.params.id);
-        const [space] = await db.select().from(coSpacesTable).where(eq2(coSpacesTable.id, id));
+        const [space] = await db.select().from(coSpacesTable).where(eq(coSpacesTable.id, id));
         if (!space) {
           res.status(404).json({ error: "Topilmadi" });
           return;
         }
-        const members = await db.select({ id: coSpaceMembersTable.id, role: coSpaceMembersTable.role, contribution: coSpaceMembersTable.contribution, joinedAt: coSpaceMembersTable.joinedAt, userId: usersTable.id, username: usersTable.username, displayName: usersTable.displayName, avatar: usersTable.avatarUrl }).from(coSpaceMembersTable).innerJoin(usersTable, eq2(coSpaceMembersTable.userId, usersTable.id)).where(eq2(coSpaceMembersTable.spaceId, id));
-        const tasks = await db.select().from(coSpaceTasksTable).where(eq2(coSpaceTasksTable.spaceId, id)).orderBy(coSpaceTasksTable.createdAt);
+        const members = await db.select({ id: coSpaceMembersTable.id, role: coSpaceMembersTable.role, contribution: coSpaceMembersTable.contribution, joinedAt: coSpaceMembersTable.joinedAt, userId: usersTable.id, username: usersTable.username, displayName: usersTable.displayName, avatar: usersTable.avatarUrl }).from(coSpaceMembersTable).innerJoin(usersTable, eq(coSpaceMembersTable.userId, usersTable.id)).where(eq(coSpaceMembersTable.spaceId, id));
+        const tasks = await db.select().from(coSpaceTasksTable).where(eq(coSpaceTasksTable.spaceId, id)).orderBy(coSpaceTasksTable.createdAt);
         res.json({ ...space, members, tasks });
       } catch (err) {
         req.log.error(err);
@@ -174945,13 +166882,13 @@ var init_coSpaces2 = __esm({
       try {
         const spaceId = parseInt(req.params.id);
         const userId = req.session.userId;
-        const already = await db.select().from(coSpaceMembersTable).where(and2(eq2(coSpaceMembersTable.spaceId, spaceId), eq2(coSpaceMembersTable.userId, userId)));
+        const already = await db.select().from(coSpaceMembersTable).where(and(eq(coSpaceMembersTable.spaceId, spaceId), eq(coSpaceMembersTable.userId, userId)));
         if (already.length > 0) {
           res.json({ already: true });
           return;
         }
         const [member2] = await db.insert(coSpaceMembersTable).values({ spaceId, userId }).returning();
-        await db.update(coSpacesTable).set({ memberCount: (await db.select().from(coSpaceMembersTable).where(eq2(coSpaceMembersTable.spaceId, spaceId))).length }).where(eq2(coSpacesTable.id, spaceId));
+        await db.update(coSpacesTable).set({ memberCount: (await db.select().from(coSpaceMembersTable).where(eq(coSpaceMembersTable.spaceId, spaceId))).length }).where(eq(coSpacesTable.id, spaceId));
         res.json(member2);
       } catch (err) {
         req.log.error(err);
@@ -174967,9 +166904,9 @@ var init_coSpaces2 = __esm({
           return;
         }
         const [task] = await db.insert(coSpaceTasksTable).values({ spaceId, title: title.trim(), description, assigneeId, priority: priority ?? "medium" }).returning();
-        const member2 = await db.select().from(coSpaceMembersTable).where(and2(eq2(coSpaceMembersTable.spaceId, spaceId), eq2(coSpaceMembersTable.userId, req.session.userId)));
+        const member2 = await db.select().from(coSpaceMembersTable).where(and(eq(coSpaceMembersTable.spaceId, spaceId), eq(coSpaceMembersTable.userId, req.session.userId)));
         if (member2.length > 0) {
-          await db.update(coSpaceMembersTable).set({ contribution: member2[0].contribution + 1 }).where(eq2(coSpaceMembersTable.id, member2[0].id));
+          await db.update(coSpaceMembersTable).set({ contribution: member2[0].contribution + 1 }).where(eq(coSpaceMembersTable.id, member2[0].id));
         }
         res.json(task);
       } catch (err) {
@@ -174981,7 +166918,7 @@ var init_coSpaces2 = __esm({
       try {
         const taskId = parseInt(req.params.taskId);
         const { status, assigneeId } = req.body;
-        const [task] = await db.update(coSpaceTasksTable).set({ ...status && { status }, ...assigneeId !== void 0 && { assigneeId } }).where(eq2(coSpaceTasksTable.id, taskId)).returning();
+        const [task] = await db.update(coSpaceTasksTable).set({ ...status && { status }, ...assigneeId !== void 0 && { assigneeId } }).where(eq(coSpaceTasksTable.id, taskId)).returning();
         res.json(task);
       } catch (err) {
         req.log.error(err);
@@ -174992,7 +166929,7 @@ var init_coSpaces2 = __esm({
       try {
         const id = parseInt(req.params.id);
         const { canvas } = req.body;
-        const [space] = await db.update(coSpacesTable).set({ canvas }).where(eq2(coSpacesTable.id, id)).returning();
+        const [space] = await db.update(coSpacesTable).set({ canvas }).where(eq(coSpacesTable.id, id)).returning();
         res.json(space);
       } catch (err) {
         req.log.error(err);
@@ -175038,7 +166975,7 @@ var init_translate = __esm({
     "use strict";
     import_express36 = __toESM(require_express2(), 1);
     init_src3();
-    init_cache3();
+    init_cache2();
     router36 = (0, import_express36.Router)();
     LANG_NAMES = {
       uz: "Uzbek",
@@ -175195,8 +167132,8 @@ var init_translate = __esm({
     });
     router36.post("/translate", async (req, res) => {
       try {
-        const { text: text3, targetLang } = req.body;
-        if (!text3?.trim()) return res.status(400).json({ error: "text is required" });
+        const { text: text2, targetLang } = req.body;
+        if (!text2?.trim()) return res.status(400).json({ error: "text is required" });
         if (!targetLang) return res.status(400).json({ error: "targetLang is required" });
         const langName = LANG_NAMES[targetLang] ?? targetLang;
         const completion = await openai.chat.completions.create({
@@ -175208,7 +167145,7 @@ var init_translate = __esm({
 Return ONLY valid JSON in this exact shape: {"translation":"<translated text>","detectedLang":"<ISO 639-1 source language code>"}
 Preserve all emoji, punctuation, line breaks, and casual tone. Do not explain or add anything extra.`
             },
-            { role: "user", content: text3 }
+            { role: "user", content: text2 }
           ],
           response_format: { type: "json_object" },
           max_tokens: 1500,
@@ -175222,7 +167159,7 @@ Preserve all emoji, punctuation, line breaks, and casual tone. Do not explain or
           parsed = {};
         }
         return res.json({
-          translation: parsed.translation ?? text3,
+          translation: parsed.translation ?? text2,
           detectedLang: parsed.detectedLang ?? "unknown"
         });
       } catch (err) {
@@ -175507,8 +167444,8 @@ Rules:
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
-      const { text: text3, targetLang = "en", voice = "alloy" } = req.body;
-      if (!text3?.trim()) {
+      const { text: text2, targetLang = "en", voice = "alloy" } = req.body;
+      if (!text2?.trim()) {
         res.status(400).json({ error: "text required" });
         return;
       }
@@ -175539,7 +167476,7 @@ Rules:
             max_completion_tokens: 400,
             messages: [
               { role: "system", content: `Translate to ${targetLangName}. Return only the translation, nothing else.` },
-              { role: "user", content: text3 }
+              { role: "user", content: text2 }
             ]
           })
         ]);
@@ -175552,7 +167489,7 @@ Rules:
         });
         const audioBuffer = Buffer.from(await ttsRes.arrayBuffer());
         res.json({
-          originalText: text3,
+          originalText: text2,
           translatedText: translated,
           audioBase64: audioBuffer.toString("base64"),
           targetLang
@@ -175763,7 +167700,7 @@ var init_platformCosts2 = __esm({
     import_express40 = __toESM(require_express2(), 1);
     init_src2();
     init_schema2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router40 = (0, import_express40.Router)();
     adminOnly = (req, res, next) => {
       if (!req.session?.userId) {
@@ -175778,7 +167715,7 @@ var init_platformCosts2 = __esm({
     };
     router40.get("/admin/platform-expenses", adminOnly, async (req, res) => {
       try {
-        const expenses = await db.select().from(platformExpensesTable).orderBy(desc2(platformExpensesTable.createdAt));
+        const expenses = await db.select().from(platformExpensesTable).orderBy(desc(platformExpensesTable.createdAt));
         res.json({ expenses });
       } catch (err) {
         req.log.error(err);
@@ -175812,7 +167749,7 @@ var init_platformCosts2 = __esm({
           ...description !== void 0 && { description },
           ...isActive !== void 0 && { isActive },
           updatedAt: /* @__PURE__ */ new Date()
-        }).where(eq2(platformExpensesTable.id, id)).returning();
+        }).where(eq(platformExpensesTable.id, id)).returning();
         if (!updated) {
           res.status(404).json({ error: "Xarajat topilmadi" });
           return;
@@ -175826,7 +167763,7 @@ var init_platformCosts2 = __esm({
     router40.delete("/admin/platform-expenses/:id", adminOnly, async (req, res) => {
       try {
         const id = parseInt(req.params.id);
-        await db.delete(platformExpensesTable).where(eq2(platformExpensesTable.id, id));
+        await db.delete(platformExpensesTable).where(eq(platformExpensesTable.id, id));
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);
@@ -175835,15 +167772,15 @@ var init_platformCosts2 = __esm({
     });
     router40.get("/admin/platform-expenses/summary", adminOnly, async (req, res) => {
       try {
-        const [adminWallet] = await db.select().from(walletsTable).where(eq2(walletsTable.userId, 1));
+        const [adminWallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, 1));
         const grossRevenueCents = adminWallet?.earningsBalance ?? 0;
-        const expenses = await db.select().from(platformExpensesTable).where(eq2(platformExpensesTable.isActive, true));
+        const expenses = await db.select().from(platformExpensesTable).where(eq(platformExpensesTable.isActive, true));
         const monthlyExpenseCents = expenses.filter((e5) => e5.period === "monthly").reduce((sum3, e5) => sum3 + e5.amountCents, 0);
         const annualExpenseCents = expenses.filter((e5) => e5.period === "annual").reduce((sum3, e5) => sum3 + Math.round(e5.amountCents / 12), 0);
         const oneTimeCents = expenses.filter((e5) => e5.period === "one_time").reduce((sum3, e5) => sum3 + e5.amountCents, 0);
         const totalMonthlyExpenseCents = monthlyExpenseCents + annualExpenseCents;
         const netProfitCents = grossRevenueCents - totalMonthlyExpenseCents;
-        const recentRequests = await db.select().from(expenseDeductionRequestsTable).orderBy(desc2(expenseDeductionRequestsTable.createdAt)).limit(10);
+        const recentRequests = await db.select().from(expenseDeductionRequestsTable).orderBy(desc(expenseDeductionRequestsTable.createdAt)).limit(10);
         res.json({
           grossRevenueCents,
           totalMonthlyExpenseCents,
@@ -175860,9 +167797,9 @@ var init_platformCosts2 = __esm({
     });
     router40.post("/admin/platform-expenses/deduction-request", adminOnly, async (req, res) => {
       try {
-        const [adminWallet] = await db.select().from(walletsTable).where(eq2(walletsTable.userId, 1));
+        const [adminWallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, 1));
         const grossRevenueCents = adminWallet?.earningsBalance ?? 0;
-        const expenses = await db.select().from(platformExpensesTable).where(eq2(platformExpensesTable.isActive, true));
+        const expenses = await db.select().from(platformExpensesTable).where(eq(platformExpensesTable.isActive, true));
         const totalExpenseCents = expenses.filter((e5) => e5.period !== "one_time").reduce((sum3, e5) => {
           const monthly = e5.period === "annual" ? Math.round(e5.amountCents / 12) : e5.amountCents;
           return sum3 + monthly;
@@ -175893,7 +167830,7 @@ var init_platformCosts2 = __esm({
     });
     router40.get("/admin/platform-expenses/deduction-requests", adminOnly, async (req, res) => {
       try {
-        const requests = await db.select().from(expenseDeductionRequestsTable).orderBy(desc2(expenseDeductionRequestsTable.createdAt)).limit(20);
+        const requests = await db.select().from(expenseDeductionRequestsTable).orderBy(desc(expenseDeductionRequestsTable.createdAt)).limit(20);
         res.json({ requests });
       } catch (err) {
         req.log.error(err);
@@ -175903,7 +167840,7 @@ var init_platformCosts2 = __esm({
     router40.post("/admin/platform-expenses/deduction-requests/:id/approve", adminOnly, async (req, res) => {
       try {
         const id = parseInt(req.params.id);
-        const [req_] = await db.select().from(expenseDeductionRequestsTable).where(eq2(expenseDeductionRequestsTable.id, id));
+        const [req_] = await db.select().from(expenseDeductionRequestsTable).where(eq(expenseDeductionRequestsTable.id, id));
         if (!req_) {
           res.status(404).json({ error: "So'rov topilmadi" });
           return;
@@ -175912,7 +167849,7 @@ var init_platformCosts2 = __esm({
           res.status(400).json({ error: "Faqat pending so'rovlar tasdiqlanishi mumkin" });
           return;
         }
-        const [adminWallet] = await db.select().from(walletsTable).where(eq2(walletsTable.userId, 1));
+        const [adminWallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, 1));
         if (!adminWallet) {
           res.status(400).json({ error: "Admin hamyon topilmadi" });
           return;
@@ -175924,12 +167861,12 @@ var init_platformCosts2 = __esm({
         await db.update(walletsTable).set({
           earningsBalance: adminWallet.earningsBalance - req_.totalExpenseCents,
           updatedAt: /* @__PURE__ */ new Date()
-        }).where(eq2(walletsTable.userId, 1));
+        }).where(eq(walletsTable.userId, 1));
         const [updated] = await db.update(expenseDeductionRequestsTable).set({
           status: "approved",
           approvedBy: req.session.userId,
           approvedAt: /* @__PURE__ */ new Date()
-        }).where(eq2(expenseDeductionRequestsTable.id, id)).returning();
+        }).where(eq(expenseDeductionRequestsTable.id, id)).returning();
         res.json({ request: updated });
       } catch (err) {
         req.log.error(err);
@@ -175939,9 +167876,9 @@ var init_platformCosts2 = __esm({
     router40.post("/admin/platform-expenses/deduction-requests/:id/reject", adminOnly, async (req, res) => {
       try {
         const id = parseInt(req.params.id);
-        const [updated] = await db.update(expenseDeductionRequestsTable).set({ status: "rejected", notes: req.body.notes ?? null }).where(and2(
-          eq2(expenseDeductionRequestsTable.id, id),
-          eq2(expenseDeductionRequestsTable.status, "pending")
+        const [updated] = await db.update(expenseDeductionRequestsTable).set({ status: "rejected", notes: req.body.notes ?? null }).where(and(
+          eq(expenseDeductionRequestsTable.id, id),
+          eq(expenseDeductionRequestsTable.status, "pending")
         )).returning();
         if (!updated) {
           res.status(404).json({ error: "So'rov topilmadi yoki allaqachon ko'rib chiqilgan" });
@@ -176106,7 +168043,7 @@ var init_aiAutopilot2 = __esm({
     import_express41 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_aiAutopilot();
     init_aiAutoScale();
     router41 = (0, import_express41.Router)();
@@ -176115,7 +168052,7 @@ var init_aiAutopilot2 = __esm({
         res.status(401).json({ error: "Kirish talab qilinadi" });
         return;
       }
-      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, req.session.userId));
+      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, req.session.userId));
       if (!u?.isAdmin) {
         res.status(403).json({ error: "Admin huquqi kerak" });
         return;
@@ -176158,7 +168095,7 @@ var init_aiAutopilot2 = __esm({
     });
     router41.get("/admin/ai/banned-users", requireAdmin6, async (_req, res) => {
       try {
-        const rows = await db.execute(sql2`
+        const rows = await db.execute(sql`
       SELECT id, username, display_name, warning_count, banned_at, banned_reason
       FROM users WHERE is_banned = true ORDER BY banned_at DESC LIMIT 50
     `);
@@ -176170,7 +168107,7 @@ var init_aiAutopilot2 = __esm({
     router41.post("/admin/ai/unban/:userId", requireAdmin6, async (req, res) => {
       try {
         const userId = Number(req.params["userId"]);
-        await db.execute(sql2`
+        await db.execute(sql`
       UPDATE users SET is_banned = false, banned_at = null, banned_reason = null, warning_count = 0
       WHERE id = ${userId}
     `);
@@ -176181,7 +168118,7 @@ var init_aiAutopilot2 = __esm({
     });
     router41.get("/admin/ai/warned-users", requireAdmin6, async (_req, res) => {
       try {
-        const rows = await db.execute(sql2`
+        const rows = await db.execute(sql`
       SELECT id, username, display_name, warning_count
       FROM users WHERE warning_count > 0 AND is_banned = false
       ORDER BY warning_count DESC LIMIT 50
@@ -176194,7 +168131,7 @@ var init_aiAutopilot2 = __esm({
     router41.post("/admin/ai/reset-warnings/:userId", requireAdmin6, async (req, res) => {
       try {
         const userId = Number(req.params["userId"]);
-        await db.execute(sql2`UPDATE users SET warning_count = 0 WHERE id = ${userId}`);
+        await db.execute(sql`UPDATE users SET warning_count = 0 WHERE id = ${userId}`);
         res.json({ ok: true });
       } catch {
         res.status(500).json({ error: "Server xatosi" });
@@ -176294,26 +168231,26 @@ var init_aiAdminActions = __esm({
     import_express43 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
-    init_pg_core2();
+    init_drizzle_orm();
+    init_pg_core();
     router43 = (0, import_express43.Router)();
-    aiActionsTable = pgTable2("ai_admin_actions", {
-      id: serial2("id").primaryKey(),
-      actionType: text2("action_type").notNull(),
-      targetType: text2("target_type").notNull(),
-      targetId: integer4("target_id"),
-      reason: text2("reason"),
-      details: jsonb2("details").notNull().default({}),
-      aiConfidence: real2("ai_confidence").notNull().default(0),
-      status: text2("status").notNull().default("executed"),
-      executedAt: timestamp2("executed_at").notNull().defaultNow()
+    aiActionsTable = pgTable("ai_admin_actions", {
+      id: serial("id").primaryKey(),
+      actionType: text("action_type").notNull(),
+      targetType: text("target_type").notNull(),
+      targetId: integer("target_id"),
+      reason: text("reason"),
+      details: jsonb("details").notNull().default({}),
+      aiConfidence: real("ai_confidence").notNull().default(0),
+      status: text("status").notNull().default("executed"),
+      executedAt: timestamp("executed_at").notNull().defaultNow()
     });
     requireAdmin7 = async (req, res, next) => {
       if (!req.session?.userId) {
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
-      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, req.session.userId));
+      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, req.session.userId));
       if (!u?.isAdmin) {
         res.status(403).json({ error: "Forbidden" });
         return;
@@ -176325,11 +168262,11 @@ var init_aiAdminActions = __esm({
         const limit2 = Math.min(Number(req.query["limit"] ?? 50), 200);
         const offset = Number(req.query["offset"] ?? 0);
         const type = req.query["type"];
-        let q2 = db.select().from(aiActionsTable).orderBy(desc2(aiActionsTable.executedAt));
+        let q2 = db.select().from(aiActionsTable).orderBy(desc(aiActionsTable.executedAt));
         const actions = await q2.limit(limit2).offset(offset);
-        const totalRes = await db.execute(sql2`SELECT count(*)::int as count FROM ai_admin_actions`);
-        const todayRes = await db.execute(sql2`SELECT count(*)::int as count FROM ai_admin_actions WHERE executed_at >= CURRENT_DATE`);
-        const byTypeRes = await db.execute(sql2`
+        const totalRes = await db.execute(sql`SELECT count(*)::int as count FROM ai_admin_actions`);
+        const todayRes = await db.execute(sql`SELECT count(*)::int as count FROM ai_admin_actions WHERE executed_at >= CURRENT_DATE`);
+        const byTypeRes = await db.execute(sql`
       SELECT action_type, count(*)::int as count
       FROM ai_admin_actions
       GROUP BY action_type ORDER BY count DESC
@@ -176350,7 +168287,7 @@ var init_aiAdminActions = __esm({
     router43.post("/admin/ai-actions/run", requireAdmin7, async (req, res) => {
       try {
         const results = [];
-        const flaggedPosts = await db.execute(sql2`
+        const flaggedPosts = await db.execute(sql`
       SELECT id, content, author_id FROM posts
       WHERE is_flagged = true AND created_at < NOW() - INTERVAL '24 hours'
       LIMIT 20
@@ -176366,14 +168303,14 @@ var init_aiAdminActions = __esm({
           });
         }
         if (flagged.length > 0) results.push(`${flagged.length} ta flaglangan post olib tashlandi`);
-        const warnedUsers = await db.execute(sql2`
+        const warnedUsers = await db.execute(sql`
       SELECT id, username FROM users
       WHERE warning_count >= 3 AND is_banned = false AND is_admin = false
       LIMIT 10
     `);
         const warned = Array.isArray(warnedUsers) ? warnedUsers : warnedUsers?.rows ?? [];
         for (const user of warned) {
-          await db.execute(sql2`
+          await db.execute(sql`
         UPDATE users SET
           is_banned = true,
           banned_at = NOW(),
@@ -176390,7 +168327,7 @@ var init_aiAdminActions = __esm({
           });
         }
         if (warned.length > 0) results.push(`${warned.length} ta foydalanuvchi bloklandi`);
-        const cleanupResult = await db.execute(sql2`
+        const cleanupResult = await db.execute(sql`
       DELETE FROM stories WHERE expires_at < NOW() RETURNING id
     `);
         const cleaned = Array.isArray(cleanupResult) ? cleanupResult.length : 0;
@@ -176405,14 +168342,14 @@ var init_aiAdminActions = __esm({
         }
         let staleCount = 0;
         try {
-          const staleProdResult = await db.execute(sql2`
+          const staleProdResult = await db.execute(sql`
         SELECT id FROM marketplace_listings
         WHERE view_count = 0 AND created_at < NOW() - INTERVAL '30 days' AND is_active = true
         LIMIT 10
       `);
           const staleProds = staleProdResult?.rows ?? (Array.isArray(staleProdResult) ? staleProdResult : []);
           for (const prod of staleProds) {
-            await db.execute(sql2`UPDATE marketplace_listings SET is_active = false WHERE id = ${prod.id}`);
+            await db.execute(sql`UPDATE marketplace_listings SET is_active = false WHERE id = ${prod.id}`);
             await logAiAction({
               actionType: "deactivate_listing",
               targetType: "product",
@@ -176438,15 +168375,15 @@ var init_aiAdminActions = __esm({
     });
     router43.get("/admin/ai-actions/stats", requireAdmin7, async (req, res) => {
       try {
-        const rows = await db.execute(sql2`
+        const rows = await db.execute(sql`
       SELECT action_type, count(*)::int as count
       FROM ai_admin_actions
       WHERE executed_at >= NOW() - INTERVAL '30 days'
       GROUP BY action_type ORDER BY count DESC
     `);
         const stats = Array.isArray(rows) ? rows : rows?.rows ?? [];
-        const totRes = await db.execute(sql2`SELECT count(*)::int as c FROM ai_admin_actions`);
-        const todRes = await db.execute(sql2`SELECT count(*)::int as c FROM ai_admin_actions WHERE executed_at >= CURRENT_DATE`);
+        const totRes = await db.execute(sql`SELECT count(*)::int as c FROM ai_admin_actions`);
+        const todRes = await db.execute(sql`SELECT count(*)::int as c FROM ai_admin_actions WHERE executed_at >= CURRENT_DATE`);
         const exRow = (r5) => r5?.rows?.[0] ?? (Array.isArray(r5) ? r5[0] : {});
         res.json({
           total: Number(exRow(totRes)?.c ?? 0),
@@ -176465,7 +168402,7 @@ var init_aiAdminActions = __esm({
       try {
         const id = Number(req.params["id"]);
         const { note } = req.body;
-        await db.update(aiActionsTable).set({ status: "overridden", details: sql2`details || ${JSON.stringify({ overrideNote: note, overriddenBy: req.session.userId, overriddenAt: (/* @__PURE__ */ new Date()).toISOString() })}::jsonb` }).where(eq2(aiActionsTable.id, id));
+        await db.update(aiActionsTable).set({ status: "overridden", details: sql`details || ${JSON.stringify({ overrideNote: note, overriddenBy: req.session.userId, overriddenAt: (/* @__PURE__ */ new Date()).toISOString() })}::jsonb` }).where(eq(aiActionsTable.id, id));
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);
@@ -176479,7 +168416,7 @@ var init_aiAdminActions = __esm({
 // src/middlewares/securityShield.ts
 async function ensureTables() {
   try {
-    await db.execute(sql2`
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS banned_ips (
         id SERIAL PRIMARY KEY,
         ip TEXT NOT NULL UNIQUE,
@@ -176490,7 +168427,7 @@ async function ensureTables() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    await db.execute(sql2`
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS security_events (
         id SERIAL PRIMARY KEY,
         ip TEXT NOT NULL,
@@ -176503,9 +168440,9 @@ async function ensureTables() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    await db.execute(sql2`CREATE INDEX IF NOT EXISTS idx_banned_ips_ip ON banned_ips(ip)`);
-    await db.execute(sql2`CREATE INDEX IF NOT EXISTS idx_security_events_ip ON security_events(ip)`);
-    await db.execute(sql2`CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(event_type)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_banned_ips_ip ON banned_ips(ip)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_security_events_ip ON security_events(ip)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(event_type)`);
   } catch {
   }
 }
@@ -176528,7 +168465,7 @@ async function banIp(ip, reason, durationMs, extraStrikes = 1) {
   const currentStrikes = strikeCache.get(ip) ?? 0;
   const newStrikes = currentStrikes + extraStrikes;
   try {
-    await db.execute(sql2`
+    await db.execute(sql`
       INSERT INTO banned_ips (ip, reason, strikes, permanent, expires_at)
       VALUES (${ip}, ${reason}, ${newStrikes}, ${permanent}, ${expiresAt})
       ON CONFLICT (ip) DO UPDATE SET
@@ -176630,7 +168567,7 @@ async function strike(ip, reason, path3, severity, payload, ua, userId) {
   } else {
     strikeCache.set(ip, newStrikes);
     try {
-      await db.execute(sql2`
+      await db.execute(sql`
         INSERT INTO banned_ips (ip, reason, strikes, permanent)
         VALUES (${ip}, ${reason}, ${newStrikes}, false)
         ON CONFLICT (ip) DO UPDATE SET strikes = banned_ips.strikes + 1
@@ -176721,8 +168658,8 @@ async function securityShield(req, res, next) {
 async function getSecurityStats() {
   try {
     const [events, bans] = await Promise.all([
-      db.select().from(securityEventsTable).orderBy(sql2`created_at DESC`).limit(50),
-      db.select().from(bannedIpsTable).orderBy(sql2`created_at DESC`).limit(100)
+      db.select().from(securityEventsTable).orderBy(sql`created_at DESC`).limit(50),
+      db.select().from(bannedIpsTable).orderBy(sql`created_at DESC`).limit(100)
     ]);
     return { events, bans };
   } catch {
@@ -176731,7 +168668,7 @@ async function getSecurityStats() {
 }
 async function unbanIp(ip) {
   try {
-    await db.execute(sql2`DELETE FROM banned_ips WHERE ip = ${ip}`);
+    await db.execute(sql`DELETE FROM banned_ips WHERE ip = ${ip}`);
     memBanCache.delete(ip);
     strikeCache.delete(ip);
     return true;
@@ -176741,7 +168678,7 @@ async function unbanIp(ip) {
 }
 async function runAdaptiveSweep() {
   try {
-    const hotIps = await db.execute(sql2`
+    const hotIps = await db.execute(sql`
       SELECT ip, COUNT(*) as event_count, MAX(severity) as max_severity,
              array_agg(DISTINCT event_type) as attack_types
       FROM security_events
@@ -176767,11 +168704,11 @@ async function runAdaptiveSweep() {
         logger.info({ ip: row.ip, count: count2 }, "Adaptive AI Shield: 1h ban applied");
       }
     }
-    await db.execute(sql2`
+    await db.execute(sql`
       DELETE FROM banned_ips
       WHERE permanent = false AND expires_at < NOW()
     `);
-    await db.execute(sql2`
+    await db.execute(sql`
       DELETE FROM security_events
       WHERE created_at < NOW() - INTERVAL '30 days'
     `);
@@ -176787,29 +168724,29 @@ var init_securityShield = __esm({
   "src/middlewares/securityShield.ts"() {
     "use strict";
     init_src2();
-    init_pg_core2();
-    init_drizzle_orm2();
+    init_pg_core();
+    init_drizzle_orm();
     init_logger();
-    bannedIpsTable = pgTable2("banned_ips", {
-      id: serial2("id").primaryKey(),
-      ip: text2("ip").notNull().unique(),
-      reason: text2("reason").notNull(),
-      strikes: integer4("strikes").notNull().default(1),
-      permanent: boolean8("permanent").notNull().default(false),
-      expiresAt: timestamp2("expires_at"),
-      createdAt: timestamp2("created_at").defaultNow()
+    bannedIpsTable = pgTable("banned_ips", {
+      id: serial("id").primaryKey(),
+      ip: text("ip").notNull().unique(),
+      reason: text("reason").notNull(),
+      strikes: integer("strikes").notNull().default(1),
+      permanent: boolean("permanent").notNull().default(false),
+      expiresAt: timestamp("expires_at"),
+      createdAt: timestamp("created_at").defaultNow()
     });
-    securityEventsTable = pgTable2("security_events", {
-      id: serial2("id").primaryKey(),
-      ip: text2("ip").notNull(),
-      eventType: text2("event_type").notNull(),
-      path: text2("path"),
-      payload: text2("payload"),
-      userAgent: text2("user_agent"),
-      userId: integer4("user_id"),
-      severity: text2("severity").notNull().default("medium"),
+    securityEventsTable = pgTable("security_events", {
+      id: serial("id").primaryKey(),
+      ip: text("ip").notNull(),
+      eventType: text("event_type").notNull(),
+      path: text("path"),
+      payload: text("payload"),
+      userAgent: text("user_agent"),
+      userId: integer("user_id"),
+      severity: text("severity").notNull().default("medium"),
       // low | medium | high | critical
-      createdAt: timestamp2("created_at").defaultNow()
+      createdAt: timestamp("created_at").defaultNow()
     });
     ensureTables().catch(() => {
     });
@@ -176915,9 +168852,9 @@ var init_security2 = __esm({
     import_express44 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_securityShield();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router44 = (0, import_express44.Router)();
     requireAdmin8 = async (req, res, next) => {
       const userId = req.session?.userId;
@@ -176925,7 +168862,7 @@ var init_security2 = __esm({
         res.status(401).json({ error: "Kirish talab qilinadi" });
         return;
       }
-      const [user] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, userId));
+      const [user] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, userId));
       if (!user?.isAdmin) {
         res.status(403).json({ error: "Admin huquqi talab qilinadi" });
         return;
@@ -176936,22 +168873,22 @@ var init_security2 = __esm({
     router44.get("/admin/security", async (req, res) => {
       try {
         const stats = await getSecurityStats();
-        const criticalRes = await db.execute(sql2`
+        const criticalRes = await db.execute(sql`
       SELECT COUNT(*)::int as count FROM security_events WHERE severity = 'critical' AND created_at > NOW() - INTERVAL '24 hours'
     `);
-        const bannedRes = await db.execute(sql2`
+        const bannedRes = await db.execute(sql`
       SELECT COUNT(*)::int as count FROM banned_ips WHERE permanent = true OR expires_at > NOW()
     `);
-        const todayRes = await db.execute(sql2`
+        const todayRes = await db.execute(sql`
       SELECT COUNT(*)::int as count FROM security_events WHERE created_at > NOW() - INTERVAL '24 hours'
     `);
-        const topAttackersRes = await db.execute(sql2`
+        const topAttackersRes = await db.execute(sql`
       SELECT ip, COUNT(*)::int as attacks, MAX(severity) as max_severity
       FROM security_events
       WHERE created_at > NOW() - INTERVAL '7 days'
       GROUP BY ip ORDER BY attacks DESC LIMIT 10
     `);
-        const attackTypesRes = await db.execute(sql2`
+        const attackTypesRes = await db.execute(sql`
       SELECT event_type, COUNT(*)::int as count
       FROM security_events
       WHERE created_at > NOW() - INTERVAL '7 days'
@@ -176995,7 +168932,7 @@ var init_security2 = __esm({
           res.status(400).json({ error: "Noto'g'ri IP format" });
           return;
         }
-        await db.execute(sql2`
+        await db.execute(sql`
       INSERT INTO banned_ips (ip, reason, strikes, permanent, expires_at)
       VALUES (${ip}, ${reason ?? "manual_ban"}, 10, ${permanent ?? false}, ${permanent ? null : new Date(Date.now() + 24 * 60 * 6e4)})
       ON CONFLICT (ip) DO UPDATE SET
@@ -177015,7 +168952,7 @@ var init_security2 = __esm({
 
 // src/routes/infraCosts.ts
 async function ensureTables2() {
-  await db.execute(sql2`
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS infra_costs (
       id SERIAL PRIMARY KEY,
       provider TEXT NOT NULL,
@@ -177032,7 +168969,7 @@ async function ensureTables2() {
     )
   `).catch(() => {
   });
-  await db.execute(sql2`
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS infra_payments (
       id SERIAL PRIMARY KEY,
       cost_id INTEGER NOT NULL,
@@ -177046,10 +168983,10 @@ async function ensureTables2() {
     )
   `).catch(() => {
   });
-  const existing = await db.execute(sql2`SELECT COUNT(*) as cnt FROM infra_costs`);
+  const existing = await db.execute(sql`SELECT COUNT(*) as cnt FROM infra_costs`);
   const cnt = existing?.rows?.[0]?.cnt ?? 0;
   if (Number(cnt) === 0) {
-    await db.execute(sql2`
+    await db.execute(sql`
       INSERT INTO infra_costs (provider, service_name, amount_cents, billing_cycle, auto_pay_enabled, next_due_at, notes) VALUES
       ('replit', 'Replit Core Plan (Compute Units)', 2000, 'monthly', true, NOW() + INTERVAL '30 days', 'Replit compute hosting'),
       ('replit', 'Replit PostgreSQL Database', 1000, 'monthly', true, NOW() + INTERVAL '30 days', 'Managed Postgres on Replit'),
@@ -177066,7 +169003,7 @@ async function autoPayDueCosts() {
   const paid = [];
   let totalCents = 0;
   try {
-    const due = await db.execute(sql2`
+    const due = await db.execute(sql`
       SELECT * FROM infra_costs
       WHERE auto_pay_enabled = true
         AND billing_cycle = 'monthly'
@@ -177076,18 +169013,18 @@ async function autoPayDueCosts() {
     const rows = due?.rows ?? [];
     for (const cost of rows) {
       try {
-        await db.execute(sql2`
+        await db.execute(sql`
           UPDATE platform_treasury SET
             available_balance = available_balance - ${cost.amount_cents},
             updated_at = NOW()
           WHERE id = 1
         `);
-        await db.execute(sql2`
+        await db.execute(sql`
           INSERT INTO infra_payments (cost_id, provider, service_name, amount_cents, status, paid_from, notes)
           VALUES (${cost.id}, ${cost.provider}, ${cost.service_name}, ${cost.amount_cents}, 'paid', 'treasury', 'Auto-paid by system')
         `);
         const nextDue = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1e3);
-        await db.execute(sql2`
+        await db.execute(sql`
           UPDATE infra_costs SET last_paid_at = NOW(), next_due_at = ${nextDue}, updated_at = NOW()
           WHERE id = ${cost.id}
         `);
@@ -177109,37 +169046,37 @@ var init_infraCosts = __esm({
     import_express45 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
-    init_pg_core2();
+    init_drizzle_orm();
+    init_pg_core();
     init_logger();
     router45 = (0, import_express45.Router)();
-    infraCostsTable = pgTable2("infra_costs", {
-      id: serial2("id").primaryKey(),
-      provider: text2("provider").notNull(),
+    infraCostsTable = pgTable("infra_costs", {
+      id: serial("id").primaryKey(),
+      provider: text("provider").notNull(),
       // "replit" | "stripe" | "openai" | "other"
-      serviceName: text2("service_name").notNull(),
-      amountCents: integer4("amount_cents").notNull(),
-      currency: text2("currency").notNull().default("USD"),
-      billingCycle: text2("billing_cycle").notNull().default("monthly"),
+      serviceName: text("service_name").notNull(),
+      amountCents: integer("amount_cents").notNull(),
+      currency: text("currency").notNull().default("USD"),
+      billingCycle: text("billing_cycle").notNull().default("monthly"),
       // monthly | yearly | usage
-      autoPayEnabled: boolean8("auto_pay_enabled").notNull().default(true),
-      lastPaidAt: timestamp2("last_paid_at"),
-      nextDueAt: timestamp2("next_due_at"),
-      notes: text2("notes"),
-      createdAt: timestamp2("created_at").defaultNow(),
-      updatedAt: timestamp2("updated_at").defaultNow()
+      autoPayEnabled: boolean("auto_pay_enabled").notNull().default(true),
+      lastPaidAt: timestamp("last_paid_at"),
+      nextDueAt: timestamp("next_due_at"),
+      notes: text("notes"),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
     });
-    infraPaymentsTable = pgTable2("infra_payments", {
-      id: serial2("id").primaryKey(),
-      costId: integer4("cost_id").notNull(),
-      provider: text2("provider").notNull(),
-      serviceName: text2("service_name").notNull(),
-      amountCents: integer4("amount_cents").notNull(),
-      status: text2("status").notNull().default("paid"),
+    infraPaymentsTable = pgTable("infra_payments", {
+      id: serial("id").primaryKey(),
+      costId: integer("cost_id").notNull(),
+      provider: text("provider").notNull(),
+      serviceName: text("service_name").notNull(),
+      amountCents: integer("amount_cents").notNull(),
+      status: text("status").notNull().default("paid"),
       // paid | failed | pending
-      paidFrom: text2("paid_from").notNull().default("treasury"),
-      notes: text2("notes"),
-      paidAt: timestamp2("paid_at").defaultNow()
+      paidFrom: text("paid_from").notNull().default("treasury"),
+      notes: text("notes"),
+      paidAt: timestamp("paid_at").defaultNow()
     });
     ensureTables2().catch(() => {
     });
@@ -177148,7 +169085,7 @@ var init_infraCosts = __esm({
         res.status(401).json({ error: "Kirish talab qilinadi" });
         return;
       }
-      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq2(usersTable.id, req.session.userId));
+      const [u] = await db.select({ isAdmin: usersTable.isAdmin }).from(usersTable).where(eq(usersTable.id, req.session.userId));
       if (!u?.isAdmin) {
         res.status(403).json({ error: "Admin huquqi talab qilinadi" });
         return;
@@ -177168,10 +169105,10 @@ var init_infraCosts = __esm({
     router45.get("/admin/infra-costs", async (req, res) => {
       try {
         const [costs, payments, totalPaidRes, nextDueRes] = await Promise.all([
-          db.execute(sql2`SELECT * FROM infra_costs ORDER BY provider, service_name`),
-          db.execute(sql2`SELECT * FROM infra_payments ORDER BY paid_at DESC LIMIT 20`),
-          db.execute(sql2`SELECT COALESCE(SUM(amount_cents), 0)::int as total FROM infra_payments WHERE status='paid' AND paid_at > NOW() - INTERVAL '30 days'`),
-          db.execute(sql2`SELECT MIN(next_due_at) as next_due FROM infra_costs WHERE auto_pay_enabled=true AND billing_cycle='monthly' AND amount_cents > 0`)
+          db.execute(sql`SELECT * FROM infra_costs ORDER BY provider, service_name`),
+          db.execute(sql`SELECT * FROM infra_payments ORDER BY paid_at DESC LIMIT 20`),
+          db.execute(sql`SELECT COALESCE(SUM(amount_cents), 0)::int as total FROM infra_payments WHERE status='paid' AND paid_at > NOW() - INTERVAL '30 days'`),
+          db.execute(sql`SELECT MIN(next_due_at) as next_due FROM infra_costs WHERE auto_pay_enabled=true AND billing_cycle='monthly' AND amount_cents > 0`)
         ]);
         const r5 = (x) => x?.rows ?? [];
         const monthlyEst = r5(costs).filter((c5) => c5.billing_cycle === "monthly").reduce((sum3, c5) => sum3 + c5.amount_cents, 0);
@@ -177203,7 +169140,7 @@ var init_infraCosts = __esm({
       try {
         const id = parseInt(req.params.id);
         const { amountCents, autoPayEnabled, notes } = req.body;
-        await db.execute(sql2`
+        await db.execute(sql`
       UPDATE infra_costs SET
         amount_cents = COALESCE(${amountCents ?? null}, amount_cents),
         auto_pay_enabled = COALESCE(${autoPayEnabled ?? null}, auto_pay_enabled),
@@ -177220,7 +169157,7 @@ var init_infraCosts = __esm({
     router45.post("/admin/infra-costs", async (req, res) => {
       try {
         const { provider, serviceName, amountCents, billingCycle, notes } = req.body;
-        await db.execute(sql2`
+        await db.execute(sql`
       INSERT INTO infra_costs (provider, service_name, amount_cents, billing_cycle, auto_pay_enabled, next_due_at, notes)
       VALUES (${provider}, ${serviceName}, ${amountCents}, ${billingCycle ?? "monthly"}, true, NOW() + INTERVAL '30 days', ${notes ?? null})
     `);
@@ -177260,7 +169197,7 @@ var init_anonInbox2 = __esm({
     import_express46 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     init_aiFilter();
     init_aiAutopilot();
     router46 = (0, import_express46.Router)();
@@ -177285,7 +169222,7 @@ var init_anonInbox2 = __esm({
           res.status(400).json({ error: "Savol 1-500 belgi bo'lishi kerak" });
           return;
         }
-        const [recipient] = await db.select().from(usersTable).where(eq2(usersTable.id, recipientId));
+        const [recipient] = await db.select().from(usersTable).where(eq(usersTable.id, recipientId));
         if (!recipient) {
           res.status(404).json({ error: "Foydalanuvchi topilmadi" });
           return;
@@ -177313,7 +169250,7 @@ var init_anonInbox2 = __esm({
       const userId = requireAuth20(req, res);
       if (!userId) return;
       try {
-        const questions = await db.select().from(anonQuestionsTable).where(eq2(anonQuestionsTable.recipientId, userId)).orderBy(desc2(anonQuestionsTable.createdAt)).limit(100);
+        const questions = await db.select().from(anonQuestionsTable).where(eq(anonQuestionsTable.recipientId, userId)).orderBy(desc(anonQuestionsTable.createdAt)).limit(100);
         res.json(questions);
       } catch (err) {
         req.log.error(err);
@@ -177331,12 +169268,12 @@ var init_anonInbox2 = __esm({
           res.status(400).json({ error: "Javob 1-1000 belgi bo'lishi kerak" });
           return;
         }
-        const [question] = await db.select().from(anonQuestionsTable).where(and2(eq2(anonQuestionsTable.id, id), eq2(anonQuestionsTable.recipientId, userId)));
+        const [question] = await db.select().from(anonQuestionsTable).where(and(eq(anonQuestionsTable.id, id), eq(anonQuestionsTable.recipientId, userId)));
         if (!question) {
           res.status(404).json({ error: "Savol topilmadi" });
           return;
         }
-        const [updated] = await db.update(anonQuestionsTable).set({ answer: trimmed, answeredAt: /* @__PURE__ */ new Date() }).where(eq2(anonQuestionsTable.id, id)).returning();
+        const [updated] = await db.update(anonQuestionsTable).set({ answer: trimmed, answeredAt: /* @__PURE__ */ new Date() }).where(eq(anonQuestionsTable.id, id)).returning();
         res.json(updated);
       } catch (err) {
         req.log.error(err);
@@ -177355,7 +169292,7 @@ var init_ghost = __esm({
     import_express47 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router47 = (0, import_express47.Router)();
     GO_SERVICE3 = process.env.GO_SERVICE_URL ?? "http://localhost:8099";
     GHOST_DURATION_MS = 60 * 60 * 1e3;
@@ -177370,7 +169307,7 @@ var init_ghost = __esm({
       try {
         const enable = !!req.body?.enable;
         const ghostUntil = enable ? new Date(Date.now() + GHOST_DURATION_MS) : null;
-        await db.update(usersTable).set({ ghostUntil }).where(eq2(usersTable.id, req.session.userId));
+        await db.update(usersTable).set({ ghostUntil }).where(eq(usersTable.id, req.session.userId));
         res.json({ active: enable, ghostUntil });
       } catch (err) {
         req.log.error(err);
@@ -177379,7 +169316,7 @@ var init_ghost = __esm({
     });
     router47.get("/ghost/my", requireAuth21, async (req, res) => {
       try {
-        const [user] = await db.select({ ghostUntil: usersTable.ghostUntil }).from(usersTable).where(eq2(usersTable.id, req.session.userId));
+        const [user] = await db.select({ ghostUntil: usersTable.ghostUntil }).from(usersTable).where(eq(usersTable.id, req.session.userId));
         const active = !!user?.ghostUntil && user.ghostUntil > /* @__PURE__ */ new Date();
         res.json({ active, ghostUntil: active ? user.ghostUntil : null });
       } catch (err) {
@@ -177399,7 +169336,7 @@ var init_ghost = __esm({
           id: usersTable.id,
           ghostUntil: usersTable.ghostUntil,
           privacySettings: usersTable.privacySettings
-        }).from(usersTable).where(inArray2(usersTable.id, ids));
+        }).from(usersTable).where(inArray(usersTable.id, ids));
         let goPresence = {};
         try {
           const r5 = await fetch(`${GO_SERVICE3}/go/presence?ids=${ids.join(",")}`);
@@ -177439,7 +169376,7 @@ var init_focusShield = __esm({
     import_express48 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router48 = (0, import_express48.Router)();
     requireAuth22 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -177450,7 +169387,7 @@ var init_focusShield = __esm({
     };
     router48.get("/focus-shield/my", requireAuth22, async (req, res) => {
       try {
-        const [user] = await db.select({ focusShield: usersTable.focusShield }).from(usersTable).where(eq2(usersTable.id, req.session.userId));
+        const [user] = await db.select({ focusShield: usersTable.focusShield }).from(usersTable).where(eq(usersTable.id, req.session.userId));
         res.json(user?.focusShield ?? DEFAULT_FOCUS_SHIELD);
       } catch (err) {
         req.log.error(err);
@@ -177459,9 +169396,9 @@ var init_focusShield = __esm({
     });
     router48.put("/focus-shield", requireAuth22, async (req, res) => {
       try {
-        const [existing] = await db.select({ focusShield: usersTable.focusShield }).from(usersTable).where(eq2(usersTable.id, req.session.userId));
+        const [existing] = await db.select({ focusShield: usersTable.focusShield }).from(usersTable).where(eq(usersTable.id, req.session.userId));
         const merged = normalize({ ...existing?.focusShield ?? DEFAULT_FOCUS_SHIELD, ...req.body });
-        await db.update(usersTable).set({ focusShield: merged }).where(eq2(usersTable.id, req.session.userId));
+        await db.update(usersTable).set({ focusShield: merged }).where(eq(usersTable.id, req.session.userId));
         res.json(merged);
       } catch (err) {
         req.log.error(err);
@@ -177478,9 +169415,9 @@ async function enrichChallenges(rows, viewerId) {
   const creatorIds = [...new Set(rows.map((r5) => r5.creatorId))];
   const challengeIds = rows.map((r5) => r5.id);
   const [creators, counts, joined] = await Promise.all([
-    db.select().from(usersTable).where(sql2`${usersTable.id} IN ${creatorIds}`),
-    db.select({ challengeId: challengeParticipantsTable.challengeId, n: count() }).from(challengeParticipantsTable).where(sql2`${challengeParticipantsTable.challengeId} IN ${challengeIds}`).groupBy(challengeParticipantsTable.challengeId),
-    viewerId ? db.select({ challengeId: challengeParticipantsTable.challengeId }).from(challengeParticipantsTable).where(and2(sql2`${challengeParticipantsTable.challengeId} IN ${challengeIds}`, eq2(challengeParticipantsTable.userId, viewerId))) : Promise.resolve([])
+    db.select().from(usersTable).where(sql`${usersTable.id} IN ${creatorIds}`),
+    db.select({ challengeId: challengeParticipantsTable.challengeId, n: count() }).from(challengeParticipantsTable).where(sql`${challengeParticipantsTable.challengeId} IN ${challengeIds}`).groupBy(challengeParticipantsTable.challengeId),
+    viewerId ? db.select({ challengeId: challengeParticipantsTable.challengeId }).from(challengeParticipantsTable).where(and(sql`${challengeParticipantsTable.challengeId} IN ${challengeIds}`, eq(challengeParticipantsTable.userId, viewerId))) : Promise.resolve([])
   ]);
   const creatorMap = new Map(creators.map((c5) => [c5.id, c5]));
   const countMap = new Map(counts.map((c5) => [c5.challengeId, Number(c5.n)]));
@@ -177508,7 +169445,7 @@ var init_challenges2 = __esm({
     import_express49 = __toESM(require_express2(), 1);
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router49 = (0, import_express49.Router)();
     requireAuth23 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -177521,7 +169458,7 @@ var init_challenges2 = __esm({
       try {
         const viewerId = req.session?.userId;
         const creatorId = req.query.creatorId ? Number(req.query.creatorId) : null;
-        const rows = await (creatorId ? db.select().from(challengesTable).where(eq2(challengesTable.creatorId, creatorId)).orderBy(desc2(challengesTable.createdAt)) : db.select().from(challengesTable).where(eq2(challengesTable.status, "active")).orderBy(desc2(challengesTable.createdAt)));
+        const rows = await (creatorId ? db.select().from(challengesTable).where(eq(challengesTable.creatorId, creatorId)).orderBy(desc(challengesTable.createdAt)) : db.select().from(challengesTable).where(eq(challengesTable.status, "active")).orderBy(desc(challengesTable.createdAt)));
         res.json(await enrichChallenges(rows, viewerId));
       } catch (err) {
         req.log.error(err);
@@ -177532,7 +169469,7 @@ var init_challenges2 = __esm({
       try {
         const id = Number(req.params.id);
         const viewerId = req.session?.userId;
-        const [row] = await db.select().from(challengesTable).where(eq2(challengesTable.id, id));
+        const [row] = await db.select().from(challengesTable).where(eq(challengesTable.id, id));
         if (!row) {
           res.status(404).json({ error: "Not found" });
           return;
@@ -177554,12 +169491,12 @@ var init_challenges2 = __esm({
         }
         const pool2 = Math.max(0, Number(prizePool) || 0);
         if (pool2 > 0) {
-          const wallet = await db.query.walletsTable.findFirst({ where: eq2(walletsTable.userId, userId) });
+          const wallet = await db.query.walletsTable.findFirst({ where: eq(walletsTable.userId, userId) });
           if (!wallet || wallet.balance < pool2) {
             res.status(400).json({ error: "Mukofot puli uchun hamyonda mablag' yetarli emas", balance: wallet?.balance ?? 0, required: pool2 });
             return;
           }
-          await db.update(walletsTable).set({ balance: wallet.balance - pool2, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(walletsTable.id, wallet.id));
+          await db.update(walletsTable).set({ balance: wallet.balance - pool2, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, wallet.id));
           await db.insert(transactionsTable).values({
             userId,
             walletId: wallet.id,
@@ -177598,7 +169535,7 @@ var init_challenges2 = __esm({
         const challengeId = Number(req.params.id);
         const userId = req.session.userId;
         const { reelId } = req.body;
-        const [challenge] = await db.select().from(challengesTable).where(eq2(challengesTable.id, challengeId));
+        const [challenge] = await db.select().from(challengesTable).where(eq(challengesTable.id, challengeId));
         if (!challenge) {
           res.status(404).json({ error: "Challenge topilmadi" });
           return;
@@ -177608,7 +169545,7 @@ var init_challenges2 = __esm({
           return;
         }
         if (reelId) {
-          const [reel] = await db.select({ authorId: reelsTable.authorId }).from(reelsTable).where(eq2(reelsTable.id, reelId));
+          const [reel] = await db.select({ authorId: reelsTable.authorId }).from(reelsTable).where(eq(reelsTable.id, reelId));
           if (!reel || reel.authorId !== userId) {
             res.status(403).json({ error: "Bu video sizga tegishli emas" });
             return;
@@ -177671,7 +169608,7 @@ var init_otubeAi = __esm({
     init_src3();
     init_aiAccess();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router50 = (0, import_express50.Router)();
     requireAuth24 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -177779,18 +169716,18 @@ var init_otubeAi = __esm({
     router50.post("/otube/ai/best-time", requireAuth24, async (req, res) => {
       try {
         const userId = req.session.userId;
-        const myReels = await db.select({ id: reelsTable.id }).from(reelsTable).where(eq2(reelsTable.authorId, userId));
+        const myReels = await db.select({ id: reelsTable.id }).from(reelsTable).where(eq(reelsTable.authorId, userId));
         const reelIds = myReels.map((r5) => r5.id);
         if (reelIds.length === 0) {
           res.json({ time: "19:00\u201321:00", reason: "Hali yetarli tomosha tarixi yo'q \u2014 umumiy platforma cho'qqisi bo'yicha tavsiya.", sampleSize: 0 });
           return;
         }
-        const rows = await db.execute(sql2`
+        const rows = await db.execute(sql`
       SELECT EXTRACT(HOUR FROM ${userInteractionsTable.createdAt}) AS hour, COUNT(*) AS n
       FROM ${userInteractionsTable}
       WHERE ${userInteractionsTable.contentType} = 'reel'
         AND ${userInteractionsTable.interactionType} = 'view'
-        AND ${userInteractionsTable.contentId} IN (${sql2.join(reelIds.map((id) => sql2`${id}`), sql2`, `)})
+        AND ${userInteractionsTable.contentId} IN (${sql.join(reelIds.map((id) => sql`${id}`), sql`, `)})
       GROUP BY hour
       ORDER BY n DESC
       LIMIT 3
@@ -177849,9 +169786,9 @@ var init_otubeAi = __esm({
           file: file2,
           response_format: "verbose_json"
         });
-        const text3 = transcription.text?.trim() ?? "";
+        const text2 = transcription.text?.trim() ?? "";
         await incrementAIUsage(req.session.userId);
-        res.json({ text: text3 });
+        res.json({ text: text2 });
       } catch (err) {
         req.log.error(err);
         res.status(500).json({ error: "Ovozni tanib olishda xato" });
@@ -177906,7 +169843,7 @@ var init_growTogether = __esm({
     "use strict";
     import_express51 = __toESM(require_express2(), 1);
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router51 = (0, import_express51.Router)();
     requireAuth25 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -177918,7 +169855,7 @@ var init_growTogether = __esm({
     router51.get("/grow-together/goal", requireAuth25, async (req, res) => {
       try {
         const result = await db.execute(
-          sql2`SELECT * FROM grow_together_goals WHERE user_id = ${req.session.userId} ORDER BY created_at DESC LIMIT 1`
+          sql`SELECT * FROM grow_together_goals WHERE user_id = ${req.session.userId} ORDER BY created_at DESC LIMIT 1`
         );
         res.json(result.rows?.[0] ?? null);
       } catch (err) {
@@ -177934,10 +169871,10 @@ var init_growTogether = __esm({
       }
       try {
         await db.execute(
-          sql2`DELETE FROM grow_together_goals WHERE user_id = ${req.session.userId}`
+          sql`DELETE FROM grow_together_goals WHERE user_id = ${req.session.userId}`
         );
         const result = await db.execute(
-          sql2`INSERT INTO grow_together_goals (user_id, goal_text, category)
+          sql`INSERT INTO grow_together_goals (user_id, goal_text, category)
           VALUES (${req.session.userId}, ${goalText.trim()}, ${category})
           RETURNING *`
         );
@@ -177950,14 +169887,14 @@ var init_growTogether = __esm({
     router51.get("/grow-together/matches", requireAuth25, async (req, res) => {
       try {
         const myGoal = await db.execute(
-          sql2`SELECT * FROM grow_together_goals WHERE user_id = ${req.session.userId} LIMIT 1`
+          sql`SELECT * FROM grow_together_goals WHERE user_id = ${req.session.userId} LIMIT 1`
         );
         const myGoalRow = myGoal.rows?.[0];
         if (!myGoalRow) {
           res.json([]);
           return;
         }
-        const result = await db.execute(sql2`
+        const result = await db.execute(sql`
       SELECT g.*, u.username, u.display_name AS "displayName", u.avatar_url AS "avatarUrl"
       FROM grow_together_goals g
       JOIN users u ON u.id = g.user_id
@@ -177985,10 +169922,10 @@ var init_growTogether = __esm({
       }
       try {
         const myGoal = await db.execute(
-          sql2`SELECT goal_text FROM grow_together_goals WHERE user_id = ${req.session.userId} LIMIT 1`
+          sql`SELECT goal_text FROM grow_together_goals WHERE user_id = ${req.session.userId} LIMIT 1`
         );
         const goalText = myGoal.rows?.[0]?.goal_text ?? "Birga o'sish";
-        const result = await db.execute(sql2`
+        const result = await db.execute(sql`
       INSERT INTO grow_together_connections (user1_id, user2_id, goal_text)
       VALUES (${req.session.userId}, ${partnerId}, ${goalText})
       ON CONFLICT (user1_id, user2_id) DO UPDATE SET status = 'active'
@@ -178002,7 +169939,7 @@ var init_growTogether = __esm({
     });
     router51.get("/grow-together/connections", requireAuth25, async (req, res) => {
       try {
-        const result = await db.execute(sql2`
+        const result = await db.execute(sql`
       SELECT c.*,
         u.username, u.display_name AS "displayName", u.avatar_url AS "avatarUrl"
       FROM grow_together_connections c
@@ -178022,7 +169959,7 @@ var init_growTogether = __esm({
     router51.delete("/grow-together/connect/:partnerId", requireAuth25, async (req, res) => {
       const partnerId = Number(req.params.partnerId);
       try {
-        await db.execute(sql2`
+        await db.execute(sql`
       DELETE FROM grow_together_connections
       WHERE (user1_id = ${req.session.userId} AND user2_id = ${partnerId})
          OR (user1_id = ${partnerId} AND user2_id = ${req.session.userId})
@@ -178048,7 +169985,7 @@ function scoreToColor(score) {
   return { color: "#778899", label: "Kulrang Aura", gradient: "linear-gradient(135deg,#778899,#445566)" };
 }
 async function computeAura(userId) {
-  const result = await db.execute(sql2`
+  const result = await db.execute(sql`
     SELECT
       (SELECT COUNT(*) FROM posts WHERE author_id = ${userId} AND created_at > NOW() - INTERVAL '30 days') AS posts30,
       (SELECT COUNT(*) FROM post_likes pl JOIN posts p ON p.id = pl.post_id WHERE p.author_id = ${userId} AND pl.created_at > NOW() - INTERVAL '30 days') AS likes_received,
@@ -178073,7 +170010,7 @@ var init_socialAura = __esm({
     "use strict";
     import_express52 = __toESM(require_express2(), 1);
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     router52 = (0, import_express52.Router)();
     requireAuth26 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -178085,7 +170022,7 @@ var init_socialAura = __esm({
     router52.get("/users/aura", requireAuth26, async (req, res) => {
       try {
         const aura = await computeAura(req.session.userId);
-        await db.execute(sql2`UPDATE users SET aura_color = ${aura.color} WHERE id = ${req.session.userId}`);
+        await db.execute(sql`UPDATE users SET aura_color = ${aura.color} WHERE id = ${req.session.userId}`);
         res.json(aura);
       } catch (err) {
         req.log.error(err);
@@ -178236,7 +170173,7 @@ var init_webhookHandlers = __esm({
     init_stripeClient();
     init_src2();
     init_src2();
-    init_drizzle_orm2();
+    init_drizzle_orm();
     WebhookHandlers = class {
       static async processWebhook(payload, signature) {
         if (!Buffer.isBuffer(payload)) {
@@ -178256,13 +170193,13 @@ var init_webhookHandlers = __esm({
             const sub = event.data.object;
             const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
             const isActive = sub.status === "active" || sub.status === "trialing";
-            await db.update(usersTable).set({ stripeSubscriptionId: sub.id, isPremium: isActive }).where(eq2(usersTable.stripeCustomerId, customerId));
+            await db.update(usersTable).set({ stripeSubscriptionId: sub.id, isPremium: isActive }).where(eq(usersTable.stripeCustomerId, customerId));
             break;
           }
           case "customer.subscription.deleted": {
             const sub = event.data.object;
             const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
-            await db.update(usersTable).set({ stripeSubscriptionId: null, isPremium: false }).where(eq2(usersTable.stripeCustomerId, customerId));
+            await db.update(usersTable).set({ stripeSubscriptionId: null, isPremium: false }).where(eq(usersTable.stripeCustomerId, customerId));
             break;
           }
           case "checkout.session.completed": {
@@ -178271,7 +170208,7 @@ var init_webhookHandlers = __esm({
               const customerId = typeof session2.customer === "string" ? session2.customer : session2.customer?.id;
               const subscriptionId = typeof session2.subscription === "string" ? session2.subscription : session2.subscription.id;
               if (customerId) {
-                await db.update(usersTable).set({ stripeSubscriptionId: subscriptionId, isPremium: true }).where(eq2(usersTable.stripeCustomerId, customerId));
+                await db.update(usersTable).set({ stripeSubscriptionId: subscriptionId, isPremium: true }).where(eq(usersTable.stripeCustomerId, customerId));
               }
             }
             break;
@@ -178469,13 +170406,13 @@ var require_ipv4 = __commonJS({
     "use strict";
     var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o3, m3, k5, k22) {
       if (k22 === void 0) k22 = k5;
-      var desc4 = Object.getOwnPropertyDescriptor(m3, k5);
-      if (!desc4 || ("get" in desc4 ? !m3.__esModule : desc4.writable || desc4.configurable)) {
-        desc4 = { enumerable: true, get: function() {
+      var desc3 = Object.getOwnPropertyDescriptor(m3, k5);
+      if (!desc3 || ("get" in desc3 ? !m3.__esModule : desc3.writable || desc3.configurable)) {
+        desc3 = { enumerable: true, get: function() {
           return m3[k5];
         } };
       }
-      Object.defineProperty(o3, k22, desc4);
+      Object.defineProperty(o3, k22, desc3);
     }) : (function(o3, m3, k5, k22) {
       if (k22 === void 0) k22 = k5;
       o3[k22] = m3[k5];
@@ -178652,11 +170589,11 @@ var require_ipv4 = __commonJS({
        * @param {integer} integer - a number to convert
        * @returns {Address4}
        */
-      static fromInteger(integer5) {
-        if (!Number.isInteger(integer5) || integer5 < 0 || integer5 > 4294967295) {
+      static fromInteger(integer4) {
+        if (!Number.isInteger(integer4) || integer4 < 0 || integer4 > 4294967295) {
           throw new address_error_1.AddressError("IPv4 integer must be in the range 0 to 2**32 - 1");
         }
-        return _Address4.fromHex(integer5.toString(16).padStart(8, "0"));
+        return _Address4.fromHex(integer4.toString(16).padStart(8, "0"));
       }
       /**
        * Return an address from in-addr.arpa form
@@ -179041,13 +170978,13 @@ var require_regular_expressions = __commonJS({
     "use strict";
     var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o3, m3, k5, k22) {
       if (k22 === void 0) k22 = k5;
-      var desc4 = Object.getOwnPropertyDescriptor(m3, k5);
-      if (!desc4 || ("get" in desc4 ? !m3.__esModule : desc4.writable || desc4.configurable)) {
-        desc4 = { enumerable: true, get: function() {
+      var desc3 = Object.getOwnPropertyDescriptor(m3, k5);
+      if (!desc3 || ("get" in desc3 ? !m3.__esModule : desc3.writable || desc3.configurable)) {
+        desc3 = { enumerable: true, get: function() {
           return m3[k5];
         } };
       }
-      Object.defineProperty(o3, k22, desc4);
+      Object.defineProperty(o3, k22, desc3);
     }) : (function(o3, m3, k5, k22) {
       if (k22 === void 0) k22 = k5;
       o3[k22] = m3[k5];
@@ -179133,13 +171070,13 @@ var require_ipv6 = __commonJS({
     "use strict";
     var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o3, m3, k5, k22) {
       if (k22 === void 0) k22 = k5;
-      var desc4 = Object.getOwnPropertyDescriptor(m3, k5);
-      if (!desc4 || ("get" in desc4 ? !m3.__esModule : desc4.writable || desc4.configurable)) {
-        desc4 = { enumerable: true, get: function() {
+      var desc3 = Object.getOwnPropertyDescriptor(m3, k5);
+      if (!desc3 || ("get" in desc3 ? !m3.__esModule : desc3.writable || desc3.configurable)) {
+        desc3 = { enumerable: true, get: function() {
           return m3[k5];
         } };
       }
-      Object.defineProperty(o3, k22, desc4);
+      Object.defineProperty(o3, k22, desc3);
     }) : (function(o3, m3, k5, k22) {
       if (k22 === void 0) k22 = k5;
       o3[k22] = m3[k5];
@@ -180350,13 +172287,13 @@ var require_ip_address = __commonJS({
     "use strict";
     var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o3, m3, k5, k22) {
       if (k22 === void 0) k22 = k5;
-      var desc4 = Object.getOwnPropertyDescriptor(m3, k5);
-      if (!desc4 || ("get" in desc4 ? !m3.__esModule : desc4.writable || desc4.configurable)) {
-        desc4 = { enumerable: true, get: function() {
+      var desc3 = Object.getOwnPropertyDescriptor(m3, k5);
+      if (!desc3 || ("get" in desc3 ? !m3.__esModule : desc3.writable || desc3.configurable)) {
+        desc3 = { enumerable: true, get: function() {
           return m3[k5];
         } };
       }
-      Object.defineProperty(o3, k22, desc4);
+      Object.defineProperty(o3, k22, desc3);
     }) : (function(o3, m3, k5, k22) {
       if (k22 === void 0) k22 = k5;
       o3[k22] = m3[k5];
@@ -180862,9 +172799,9 @@ var init_dist2 = __esm({
        *
        * @returns {void}
        */
-      headersDraftVersion(version5) {
-        if (typeof version5 !== "string" || // @ts-expect-error This is fine. If version is not in the array, it will just return false.
-        !SUPPORTED_DRAFT_VERSIONS.includes(version5)) {
+      headersDraftVersion(version4) {
+        if (typeof version4 !== "string" || // @ts-expect-error This is fine. If version is not in the array, it will just return false.
+        !SUPPORTED_DRAFT_VERSIONS.includes(version4)) {
           const versionString = SUPPORTED_DRAFT_VERSIONS.join(", ");
           throw new ValidationError(
             "ERR_ERL_HEADERS_UNSUPPORTED_DRAFT_VERSION",
@@ -181448,7 +173385,7 @@ function stripPasswordHash(value, depth = 0) {
   }
   return out;
 }
-var import_express54, import_cors, import_compression, import_express_session, import_connect_pg_simple, import_pino_http, app, ALLOWED_ORIGINS, isProd, PgSession3, app_default;
+var import_express54, import_cors, import_compression, import_express_session, import_connect_pg_simple, import_pino_http, app, ALLOWED_ORIGINS, isProd, PgSession2, app_default;
 var init_app = __esm({
   "src/app.ts"() {
     "use strict";
@@ -181577,9 +173514,9 @@ var init_app = __esm({
     });
     app.use(import_express54.default.urlencoded({ extended: true, limit: "2mb" }));
     isProd = process.env["NODE_ENV"] === "production" || !!process.env["RENDER"];
-    PgSession3 = (0, import_connect_pg_simple.default)(import_express_session.default);
+    PgSession2 = (0, import_connect_pg_simple.default)(import_express_session.default);
     app.use((0, import_express_session.default)({
-      store: new PgSession3({
+      store: new PgSession2({
         pool,
         // share the main pg.Pool — avoids stale connections on Render free tier
         tableName: "user_sessions",

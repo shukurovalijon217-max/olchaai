@@ -38,9 +38,6 @@ if (IS_BUNDLED) {
   if (fs.existsSync(apiEntry)) {
     console.log(`[nexus] Starting bundled API on port ${apiPort}…`);
     const apiEnv = { ...process.env, PORT: apiPort, SINGLE_PROCESS: "1" };
-    const api = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
-      env: apiEnv, stdio: "inherit",
-    });
     const spawnApi = () => {
       const child = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
         env: apiEnv, stdio: "inherit",
@@ -50,7 +47,7 @@ if (IS_BUNDLED) {
         setTimeout(spawnApi, 3000);
       });
     };
-    spawnApi();
+    spawnApi(); // single controlled spawn with auto-restart
   } else {
     console.warn(`[nexus] Bundled API entry not found at ${apiEntry} — running proxy-only`);
   }

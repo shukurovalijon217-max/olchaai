@@ -12,6 +12,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { resolveApiUrl } from "@/lib/utils";
 
 /* ────────────────────────────────────────────────────────────
    Reusable horizontal scroll strip with arrow buttons
@@ -316,7 +317,7 @@ export default function ExplorePage() {
                         display: "flex", alignItems: "center", justifyContent: "center",
                       }}>
                         {u.avatarUrl ? (
-                          <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
+                          <img loading="lazy" decoding="async" src={resolveApiUrl(u.avatarUrl)} alt="" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                             style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
                           <span style={{ fontSize: 22, fontWeight: 800, color: "#8b5cf6" }}>
@@ -403,7 +404,7 @@ export default function ExplorePage() {
                       <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden",
                         background: "var(--card)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {u.avatarUrl ? (
-                          <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
+                          <img loading="lazy" decoding="async" src={resolveApiUrl(u.avatarUrl)} alt="" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                             style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
                           <span style={{ fontSize: 22, fontWeight: 800, color: "#8b5cf6" }}>
@@ -482,7 +483,7 @@ export default function ExplorePage() {
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
                       {u.avatarUrl ? (
-                        <img loading="lazy" decoding="async" src={u.avatarUrl} alt=""
+                        <img loading="lazy" decoding="async" src={resolveApiUrl(u.avatarUrl)} alt="" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : (
                         <span style={{ fontSize: 16, fontWeight: 800, color: "#8b5cf6" }}>
@@ -561,8 +562,9 @@ export default function ExplorePage() {
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
                       {group.avatarUrl ? (
-                        <img loading="lazy" decoding="async" src={group.avatarUrl} alt=""
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img loading="lazy" decoding="async" src={resolveApiUrl(group.avatarUrl)} alt=""
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                       ) : (
                         <span style={{ fontSize: 18, fontWeight: 800, color: "white" }}>{group.name[0]}</span>
                       )}

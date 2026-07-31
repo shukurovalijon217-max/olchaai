@@ -23,6 +23,20 @@ import { toast } from "@/hooks/use-toast";
 
 const API = (import.meta.env.VITE_API_BASE_URL || "");
 
+/* ── Resolve relative API URLs → absolute ─── */
+function resolveUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) return url;
+  return `${API}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
+/* ── True when URL points to a video file ─── */
+function isVideoUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const u = url.split("?")[0].toLowerCase();
+  return u.endsWith(".mp4") || u.endsWith(".webm") || u.endsWith(".mov") || u.endsWith(".ogg");
+}
+
 /* ── Upload cover image ─────────────────────────────────────── */
 async function uploadFile(file: File): Promise<string> {
   const r = await fetch(`${API}/api/storage/uploads/request-url`, {
@@ -1374,7 +1388,7 @@ export default function GroupsPage() {
                 </div>
               )}
             </div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden"
+            <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden"
               onChange={e => { const f2 = e.target.files?.[0]; if (f2) handleFileChange(f2); }} />
             {form.coverPreview && (
               <button onClick={() => { f("coverPreview", ""); f("coverFile", null); f("coverUrl", ""); }}
@@ -1721,7 +1735,9 @@ export default function GroupsPage() {
                 className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/20 transition-colors cursor-pointer">
                 <div className={`h-24 bg-gradient-to-br ${COLORS_CARD[i % COLORS_CARD.length]} flex items-center justify-center relative overflow-hidden`}>
                   {group.coverUrl
-                    ? <img src={group.coverUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                    ? isVideoUrl(group.coverUrl)
+                      ? <video src={resolveUrl(group.coverUrl)} className="w-full h-full object-cover" muted playsInline autoPlay loop />
+                      : <img src={resolveUrl(group.coverUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                     : <span className="text-4xl font-black text-white/20">{group.name[0]}</span>}
                   {group.isPrivate && (
                     <div className="absolute top-2 right-2 bg-black/50 rounded-lg px-2 py-1 flex items-center gap-1">
@@ -1774,12 +1790,14 @@ export default function GroupsPage() {
                 className={`h-48 w-full bg-gradient-to-br ${COLORS_CARD[selectedGroup.id % COLORS_CARD.length]} relative flex items-center justify-center overflow-hidden`}
               >
                 {selectedGroup.coverUrl ? (
-                  <img
-                    src={selectedGroup.coverUrl}
-                    alt=""
-                    className="w-full h-full object-cover absolute inset-0"
-                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
+                  isVideoUrl(selectedGroup.coverUrl)
+                    ? <video src={resolveUrl(selectedGroup.coverUrl)} className="w-full h-full object-cover absolute inset-0" muted playsInline autoPlay loop />
+                    : <img
+                        src={resolveUrl(selectedGroup.coverUrl)}
+                        alt=""
+                        className="w-full h-full object-cover absolute inset-0"
+                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
                 ) : null}
                 <span className="text-8xl font-black text-white/10 select-none absolute">
                   {selectedGroup.name[0]}
@@ -2497,7 +2515,7 @@ export default function GroupsPage() {
                             className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/50 transition-colors">
                             <div className="w-11 h-11 rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground">
                               {member.avatarUrl
-                                ? <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                                ? <img src={resolveUrl(member.avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                                 : <span className="font-bold text-base">{member.displayName[0]?.toUpperCase()}</span>}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -2622,7 +2640,7 @@ export default function GroupsPage() {
       </AnimatePresence>
 
       {/* ── Settings Cover File Input ──────────────────────────── */}
-      <input ref={settingsCoverRef} type="file" accept="image/*" className="hidden"
+      <input ref={settingsCoverRef} type="file" accept="image/*,video/*" className="hidden"
         onChange={e => { const f = e.target.files?.[0]; if (f) handleSettingsCoverChange(f); e.target.value = ""; }} />
 
       {/* ── Group Settings Overlay ─────────────────────────────── */}
@@ -2664,11 +2682,13 @@ export default function GroupsPage() {
                   onClick={() => settingsCoverRef.current?.click()}
                 >
                   {(settingsForm.coverPreview || settingsForm.coverUrl) ? (
-                    <img
-                      src={settingsForm.coverPreview || settingsForm.coverUrl}
-                      alt="" className="w-full h-full object-cover absolute inset-0"
-                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                    />
+                    isVideoUrl(settingsForm.coverPreview || settingsForm.coverUrl)
+                      ? <video src={resolveUrl(settingsForm.coverPreview || settingsForm.coverUrl)} className="w-full h-full object-cover absolute inset-0" muted playsInline autoPlay loop />
+                      : <img
+                          src={resolveUrl(settingsForm.coverPreview || settingsForm.coverUrl)}
+                          alt="" className="w-full h-full object-cover absolute inset-0"
+                          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
                   ) : null}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-black/60 rounded-xl px-3 py-1.5 text-white text-xs font-semibold">

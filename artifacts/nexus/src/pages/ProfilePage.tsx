@@ -708,6 +708,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [, navigate] = useLocation();
+  const [coverBroken, setCoverBroken] = useState(false);
 
   const [showLive, setShowLive] = useState(false);
   const [showSub, setShowSub] = useState(false);
@@ -844,10 +845,11 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
       {/* ══ Cover ══════════════════════════════════════════════════ */}
       <div className="h-40 overflow-hidden relative group/cover rounded-b-3xl z-10">
         <AnimatePresence mode="wait">
-          {user.coverUrl ? (
+          {user.coverUrl && !coverBroken ? (
             <motion.img key="ci" src={resolveApiUrl(user.coverUrl)} alt=""
               initial={{ scale: 1.06, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.55 }}
-              className="absolute inset-0 w-full h-full object-cover" />
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={() => setCoverBroken(true)} />
           ) : (
             <motion.div key="cd" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[#07050f] overflow-hidden">
               {/* Aurora blobs */}
@@ -889,8 +891,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
         {isOwner && (
           <>
-            <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
-              onChange={e => { const f = e.target.files?.[0]; if (f) upCover(f); e.target.value = ""; }} />
+            <input ref={coverInputRef} type="file" accept="image/*,video/*" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) { setCoverBroken(false); upCover(f); } e.target.value = ""; }} />
             <AnimatePresence>
               {coverUploading && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

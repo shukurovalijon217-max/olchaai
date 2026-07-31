@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, integer, timestamp, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, integer, timestamp, real, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -44,14 +44,24 @@ export const postsTable = pgTable("posts", {
   collabCanvasEnabled: boolean("collab_canvas_enabled").default(false),
   collabCanvasId: text("collab_canvas_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("posts_author_id_idx").on(t.authorId),
+  index("posts_author_created_idx").on(t.authorId, t.createdAt),
+  index("posts_created_at_idx").on(t.createdAt),
+  index("posts_type_created_idx").on(t.type, t.createdAt),
+  index("posts_flagged_idx").on(t.isFlagged),
+]);
 
 export const postLikesTable = pgTable("post_likes", {
   id: serial("id").primaryKey(),
   postId: integer("post_id").notNull().references(() => postsTable.id),
   userId: integer("user_id").notNull().references(() => usersTable.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("post_likes_post_id_idx").on(t.postId),
+  index("post_likes_user_id_idx").on(t.userId),
+  index("post_likes_unique_idx").on(t.postId, t.userId),
+]);
 
 export const commentsTable = pgTable("comments", {
   id: serial("id").primaryKey(),
@@ -60,7 +70,10 @@ export const commentsTable = pgTable("comments", {
   content: text("content").notNull(),
   likesCount: integer("likes_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("comments_post_id_idx").on(t.postId),
+  index("comments_author_id_idx").on(t.authorId),
+]);
 
 export const commentLikesTable = pgTable("comment_likes", {
   id: serial("id").primaryKey(),

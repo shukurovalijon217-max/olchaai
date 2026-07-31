@@ -14,6 +14,7 @@ import { systemMonitor, normalisePath } from "./lib/systemMonitor";
 import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 import { securityShield } from "./middlewares/securityShield";
 import { resilienceMiddleware } from "./middlewares/resilience";
+import { authRateLimit, aiRateLimit, uploadRateLimit, standardRateLimit } from "./middlewares/rateLimiter";
 
 const app: Express = express();
 
@@ -236,9 +237,22 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-/* ── IP-based rate limiting — olib tashlandi ─────────────────────
-   Railway proxy orqali barcha foydalanuvchilar bir IP ko'rinadi.
-   Login brute-force himoyasi (15 urinish → 3 daqiqa) routes/auth.ts da. */
+/* ── Rate limiting — session-keyed so Railway proxy doesn't flatten everyone ──
+   Auth/register:  10 req/min  — brute-force & spam account protection
+   AI endpoints:   20 req/min  — OpenAI cost-drain prevention
+   Uploads:        30 req/min  — media spam prevention
+   Everything else:120 req/min — generous for legitimate heavy users        */
+app.use("/api/auth/login",    authRateLimit);
+app.use("/api/auth/register", authRateLimit);
+app.use("/api/openai-chat",   aiRateLimit);
+app.use("/api/ai",            aiRateLimit);
+app.use("/api/twin",          aiRateLimit);
+app.use("/api/muni",          aiRateLimit);
+app.use("/api/fact-check",    aiRateLimit);
+app.use("/api/storage/uploads", uploadRateLimit);
+app.use("/api/media/optimize-video", uploadRateLimit);
+// General standard limit — applied after the tighter route-specific ones above
+app.use("/api", standardRateLimit);
 
 /* ── AI Auto-Scale: rate limiting + memory pressure management ─── */
 /* Auth routes are always exempt — never block login/register/logout */

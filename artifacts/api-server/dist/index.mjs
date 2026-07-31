@@ -77401,7 +77401,13 @@ var init_marketplace = __esm({
       reviewsCount: integer("reviews_count").notNull().default(0),
       createdAt: timestamp("created_at").notNull().defaultNow(),
       updatedAt: timestamp("updated_at").notNull().defaultNow()
-    });
+    }, (t) => [
+      index("products_status_created_idx").on(t.status, t.createdAt),
+      index("products_seller_id_idx").on(t.sellerId),
+      index("products_status_views_idx").on(t.status, t.viewsCount),
+      index("products_status_price_idx").on(t.status, t.price),
+      index("products_category_status_idx").on(t.category, t.status)
+    ]);
     productOrdersTable = pgTable("product_orders", {
       id: serial("id").primaryKey(),
       buyerId: integer("buyer_id").notNull().references(() => usersTable.id),
@@ -77934,7 +77940,11 @@ var init_chat = __esm({
       id: serial("id").primaryKey(),
       conversationId: integer("conversation_id").notNull().references(() => chatConversationsTable.id, { onDelete: "cascade" }),
       userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" })
-    });
+    }, (t) => [
+      index("chat_participants_user_id_idx").on(t.userId),
+      index("chat_participants_conversation_id_idx").on(t.conversationId),
+      index("chat_participants_conv_user_idx").on(t.conversationId, t.userId)
+    ]);
     chatMessagesTable = pgTable("chat_messages", {
       id: serial("id").primaryKey(),
       conversationId: integer("conversation_id").notNull().references(() => chatConversationsTable.id, { onDelete: "cascade" }),
@@ -77943,7 +77953,11 @@ var init_chat = __esm({
       mediaUrl: text("media_url"),
       scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
       createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
-    });
+    }, (t) => [
+      index("chat_messages_conversation_id_idx").on(t.conversationId),
+      index("chat_messages_conv_created_idx").on(t.conversationId, t.createdAt),
+      index("chat_messages_sender_id_idx").on(t.senderId)
+    ]);
     insertChatMessageSchema = createInsertSchema(chatMessagesTable).omit({
       id: true,
       createdAt: true
@@ -136285,10 +136299,12 @@ var init_messages4 = __esm({
           (pid) => db.insert(chatParticipantsTable).values({ conversationId: conv.id, userId: pid })
         ));
         const statsMap = await getUserStatsMap(ids, userId);
-        const participants = await Promise.all(ids.map(async (pid) => {
-          const [u] = await db.select().from(usersTable).where(eq(usersTable.id, pid));
+        const userRows = await db.select().from(usersTable).where(inArray(usersTable.id, ids));
+        const userMap = new Map(userRows.map((u) => [u.id, u]));
+        const participants = ids.map((pid) => {
+          const u = userMap.get(pid);
           return u ? { ...u, ...statsMap.get(pid) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false } } : null;
-        }));
+        });
         res.status(201).json({ ...conv, participants: participants.filter(Boolean) });
       } catch (err) {
         req.log.error(err);
@@ -158432,7 +158448,7 @@ var init_media = __esm({
       const cached2 = cacheGet(cacheKey);
       if (cached2) {
         res.setHeader("Content-Type", "image/webp");
-        res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+        res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=2592000");
         res.setHeader("X-Cache", "HIT");
         res.end(cached2);
         return;
@@ -158440,9 +158456,9 @@ var init_media = __esm({
       try {
         const raw = await fetchRemote(decoded);
         const webp = await sharp(raw).resize({ width, withoutEnlargement: true }).webp({ quality, effort: 4 }).toBuffer();
-        cacheSet(cacheKey, webp, 60 * 60 * 1e3);
+        cacheSet(cacheKey, webp, 24 * 60 * 60 * 1e3);
         res.setHeader("Content-Type", "image/webp");
-        res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+        res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=2592000");
         res.setHeader("X-Cache", "MISS");
         res.end(webp);
       } catch (err) {
@@ -159526,22 +159542,27 @@ var init_marketplace2 = __esm({
         const { q: q2, category, condition, minPrice, maxPrice, sellerId, sort = "newest" } = req.query;
         const limit2 = Math.min(Number(req.query.limit ?? 24), 60);
         const offset = Number(req.query.offset ?? 0);
-        let rows = await db.select().from(productsTable).where(eq(productsTable.status, "active"));
-        if (q2) rows = rows.filter((p3) => p3.title.toLowerCase().includes(q2.toLowerCase()) || p3.description?.toLowerCase().includes(q2.toLowerCase()));
-        if (category) rows = rows.filter((p3) => p3.category === category);
-        if (condition) rows = rows.filter((p3) => p3.condition === condition);
-        if (minPrice) rows = rows.filter((p3) => p3.price >= Number(minPrice));
-        if (maxPrice) rows = rows.filter((p3) => p3.price <= Number(maxPrice));
-        if (sellerId) rows = rows.filter((p3) => p3.sellerId === Number(sellerId));
-        if (sort === "price_asc") rows.sort((a5, b5) => a5.price - b5.price);
-        else if (sort === "price_desc") rows.sort((a5, b5) => b5.price - a5.price);
-        else if (sort === "popular") rows.sort((a5, b5) => b5.viewsCount - a5.viewsCount);
-        else rows.sort((a5, b5) => new Date(b5.createdAt).getTime() - new Date(a5.createdAt).getTime());
-        const total = rows.length;
-        const paginated = rows.slice(offset, offset + limit2);
-        const enriched = await Promise.all(paginated.map(async (p3) => {
-          const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, p3.sellerId));
-          return { ...p3, mediaUrls: p3.mediaUrls ? JSON.parse(p3.mediaUrls) : [], tags: p3.tags ? JSON.parse(p3.tags) : [], seller };
+        const conditions = [eq(productsTable.status, "active")];
+        if (q2) conditions.push(or(ilike(productsTable.title, `%${q2}%`), ilike(productsTable.description, `%${q2}%`)));
+        if (category) conditions.push(eq(productsTable.category, category));
+        if (condition) conditions.push(eq(productsTable.condition, condition));
+        if (minPrice) conditions.push(gte(productsTable.price, Number(minPrice)));
+        if (maxPrice) conditions.push(lte(productsTable.price, Number(maxPrice)));
+        if (sellerId) conditions.push(eq(productsTable.sellerId, Number(sellerId)));
+        const where = and(...conditions);
+        const order = sort === "price_asc" ? asc(productsTable.price) : sort === "price_desc" ? desc(productsTable.price) : sort === "popular" ? desc(productsTable.viewsCount) : desc(productsTable.createdAt);
+        const [[{ total }], rows] = await Promise.all([
+          db.select({ total: sql`count(*)::int` }).from(productsTable).where(where),
+          db.select().from(productsTable).where(where).orderBy(order).limit(limit2).offset(offset)
+        ]);
+        const sellerIds = [...new Set(rows.map((p3) => p3.sellerId))];
+        const sellers = sellerIds.length ? await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, sellerIds)) : [];
+        const sellerMap = new Map(sellers.map((s) => [s.id, s]));
+        const enriched = rows.map((p3) => ({
+          ...p3,
+          mediaUrls: p3.mediaUrls ? JSON.parse(p3.mediaUrls) : [],
+          tags: p3.tags ? JSON.parse(p3.tags) : [],
+          seller: sellerMap.get(p3.sellerId)
         }));
         res.json({ products: enriched, total, offset, limit: limit2 });
       } catch (err) {
@@ -159703,11 +159724,22 @@ var init_marketplace2 = __esm({
         const role = req.query.role ?? "buyer";
         const myId = req.session.userId;
         const orders = role === "seller" ? await db.select().from(productOrdersTable).where(eq(productOrdersTable.sellerId, myId)).orderBy(desc(productOrdersTable.createdAt)) : await db.select().from(productOrdersTable).where(eq(productOrdersTable.buyerId, myId)).orderBy(desc(productOrdersTable.createdAt));
-        const enriched = await Promise.all(orders.map(async (o3) => {
-          const [product] = await db.select({ id: productsTable.id, title: productsTable.title, thumbnailUrl: productsTable.thumbnailUrl }).from(productsTable).where(eq(productsTable.id, o3.productId));
-          const otherId = role === "seller" ? o3.buyerId : o3.sellerId;
-          const [other] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, otherId));
-          return { ...o3, product, [role === "seller" ? "buyer" : "seller"]: other };
+        if (orders.length === 0) {
+          res.json([]);
+          return;
+        }
+        const productIds = [...new Set(orders.map((o3) => o3.productId))];
+        const otherUserIds = [...new Set(orders.map((o3) => role === "seller" ? o3.buyerId : o3.sellerId))];
+        const [products, otherUsers] = await Promise.all([
+          db.select({ id: productsTable.id, title: productsTable.title, thumbnailUrl: productsTable.thumbnailUrl }).from(productsTable).where(inArray(productsTable.id, productIds)),
+          db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, otherUserIds))
+        ]);
+        const productMap = new Map(products.map((p3) => [p3.id, p3]));
+        const userMap = new Map(otherUsers.map((u) => [u.id, u]));
+        const enriched = orders.map((o3) => ({
+          ...o3,
+          product: productMap.get(o3.productId),
+          [role === "seller" ? "buyer" : "seller"]: userMap.get(role === "seller" ? o3.buyerId : o3.sellerId)
         }));
         res.json(enriched);
       } catch (err) {
@@ -159738,10 +159770,14 @@ var init_marketplace2 = __esm({
     router24.get("/marketplace/products/:id/reviews", async (req, res) => {
       try {
         const reviews = await db.select().from(productReviewsTable).where(eq(productReviewsTable.productId, Number(req.params.id))).orderBy(desc(productReviewsTable.createdAt));
-        const enriched = await Promise.all(reviews.map(async (r5) => {
-          const [reviewer] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, r5.reviewerId));
-          return { ...r5, reviewer };
-        }));
+        if (reviews.length === 0) {
+          res.json([]);
+          return;
+        }
+        const reviewerIds = [...new Set(reviews.map((r5) => r5.reviewerId))];
+        const reviewers = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, reviewerIds));
+        const reviewerMap = new Map(reviewers.map((u) => [u.id, u]));
+        const enriched = reviews.map((r5) => ({ ...r5, reviewer: reviewerMap.get(r5.reviewerId) }));
         res.json(enriched);
       } catch (err) {
         req.log.error(err);
@@ -159750,11 +159786,12 @@ var init_marketplace2 = __esm({
     });
     router24.get("/marketplace/stats", async (req, res) => {
       try {
-        const allActive = await db.select({ id: productsTable.id, sellerId: productsTable.sellerId }).from(productsTable).where(eq(productsTable.status, "active"));
-        const totalProducts = allActive.length;
-        const totalSellers = new Set(allActive.map((p3) => p3.sellerId)).size;
-        const orders = await db.select({ id: productOrdersTable.id }).from(productOrdersTable).where(ne(productOrdersTable.status, "cancelled"));
-        res.json({ totalProducts, totalSellers, totalOrders: orders.length });
+        const [[{ totalProducts }], [{ totalSellers }], [{ totalOrders }]] = await Promise.all([
+          db.select({ totalProducts: sql`count(*)::int` }).from(productsTable).where(eq(productsTable.status, "active")),
+          db.select({ totalSellers: sql`count(distinct ${productsTable.sellerId})::int` }).from(productsTable).where(eq(productsTable.status, "active")),
+          db.select({ totalOrders: sql`count(*)::int` }).from(productOrdersTable).where(ne(productOrdersTable.status, "cancelled"))
+        ]);
+        res.json({ totalProducts, totalSellers, totalOrders });
       } catch (err) {
         req.log.error(err);
         res.status(500).json({ error: "Statistika olishda xato" });
@@ -159762,24 +159799,23 @@ var init_marketplace2 = __esm({
     });
     router24.get("/marketplace/featured", async (req, res) => {
       try {
-        const all = await db.select().from(productsTable).where(eq(productsTable.status, "active"));
-        const hotDeals = all.filter((p3) => p3.originalPrice && p3.originalPrice > p3.price).sort((a5, b5) => {
-          const da = 1 - a5.price / (a5.originalPrice ?? a5.price);
-          const db2 = 1 - b5.price / (b5.originalPrice ?? b5.price);
-          return db2 - da;
-        }).slice(0, 10);
-        const newArrivals = [...all].sort((a5, b5) => new Date(b5.createdAt).getTime() - new Date(a5.createdAt).getTime()).slice(0, 10);
-        const popular = [...all].sort((a5, b5) => b5.viewsCount - a5.viewsCount).slice(0, 8);
-        const enrich = async (p3) => {
-          const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, p3.sellerId));
-          return { ...p3, mediaUrls: p3.mediaUrls ? JSON.parse(p3.mediaUrls) : [], tags: p3.tags ? JSON.parse(p3.tags) : [], seller };
-        };
-        const [enrichedHot, enrichedNew, enrichedPopular] = await Promise.all([
-          Promise.all(hotDeals.map(enrich)),
-          Promise.all(newArrivals.map(enrich)),
-          Promise.all(popular.map(enrich))
+        const activeStatus = eq(productsTable.status, "active");
+        const [hotDeals, newArrivals, popular] = await Promise.all([
+          db.select().from(productsTable).where(and(activeStatus, isNotNull(productsTable.originalPrice), gt(productsTable.originalPrice, productsTable.price))).orderBy(desc(sql`(1.0 - ${productsTable.price}::float8 / ${productsTable.originalPrice}::float8)`)).limit(10),
+          db.select().from(productsTable).where(activeStatus).orderBy(desc(productsTable.createdAt)).limit(10),
+          db.select().from(productsTable).where(activeStatus).orderBy(desc(productsTable.viewsCount)).limit(8)
         ]);
-        res.json({ hotDeals: enrichedHot, newArrivals: enrichedNew, popular: enrichedPopular });
+        const allRows = [...hotDeals, ...newArrivals, ...popular];
+        const sellerIds = [...new Set(allRows.map((p3) => p3.sellerId))];
+        const sellers = sellerIds.length ? await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, sellerIds)) : [];
+        const sellerMap = new Map(sellers.map((s) => [s.id, s]));
+        const enrich = (p3) => ({
+          ...p3,
+          mediaUrls: p3.mediaUrls ? JSON.parse(p3.mediaUrls) : [],
+          tags: p3.tags ? JSON.parse(p3.tags) : [],
+          seller: sellerMap.get(p3.sellerId)
+        });
+        res.json({ hotDeals: hotDeals.map(enrich), newArrivals: newArrivals.map(enrich), popular: popular.map(enrich) });
       } catch (err) {
         req.log.error(err);
         res.status(500).json({ error: "Featured olishda xato" });

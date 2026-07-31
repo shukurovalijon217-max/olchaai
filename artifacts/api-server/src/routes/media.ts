@@ -106,7 +106,7 @@ router.get("/img", async (req: Request, res: Response) => {
   const cached = cacheGet<Buffer>(cacheKey);
   if (cached) {
     res.setHeader("Content-Type", "image/webp");
-    res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=2592000"); // 7d / 30d SWR
     res.setHeader("X-Cache", "HIT");
     res.end(cached);
     return;
@@ -119,10 +119,10 @@ router.get("/img", async (req: Request, res: Response) => {
       .webp({ quality, effort: 4 })
       .toBuffer();
 
-    cacheSet(cacheKey, webp, 60 * 60 * 1000); // 1h
+    cacheSet(cacheKey, webp, 24 * 60 * 60 * 1000); // 24h in-memory (was 1h)
 
     res.setHeader("Content-Type", "image/webp");
-    res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=2592000"); // 7d / 30d SWR
     res.setHeader("X-Cache", "MISS");
     res.end(webp);
   } catch (err) {

@@ -1,5 +1,5 @@
 - [OlCha platform stack](olcha-stack.md) — Go real-time (:8099/go/*), Express API (:8080/api/*), Nexus web (/), Expo mobile; always rebuild Go binary after changes.
-- [Bundled API spawn via server.js](bundled-api-spawn.md) — spawn Express API from server.js not start.sh; start.sh layer sticks in Docker cache; Railway variable spaces silently break sh case matches.
+- [Bundled API spawn via server.js](bundled-api-spawn.md) — spawn Express API from server.js not start.sh; start.sh layer sticks in Docker cache; Railway variable spaces silently break sh case matches. Single spawnApi() with exit handler only — two spawns cause EADDRINUSE on :3001.
 - [Frontend API base URL must be empty](frontend-api-base-url.md) — VITE_API_BASE_URL must bake in "" not an absolute URL; absolute URL bypasses Nexus proxy, returns undefined data, causes JS crashes in minified bundle.
 - [Orval codegen conflict fix](orval-codegen-conflict.md) — inline OpenAPI request body schemas cause duplicate type exports; always use $ref to component schemas for request bodies.
 - [Nexus frontend import conventions](nexus-imports.md) — Nexus pages must import hooks from @workspace/api-client-react and user from useAuth(), not api-zod or useCurrentUser.

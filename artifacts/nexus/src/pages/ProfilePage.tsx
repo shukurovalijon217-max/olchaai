@@ -21,6 +21,7 @@ import { useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
 import { resolveApiUrl } from "@/lib/utils";
 import ProfileOrb from "@/components/ProfileOrb";
+import CreatorAnalyticsDashboard from "@/components/CreatorAnalyticsDashboard";
 
 interface ProfilePageProps { userId: number; }
 
@@ -645,33 +646,6 @@ function BigStatNode({ value, label, accent, onClick }: {
     </motion.div>
   );
 }
-
-/* ─── Micro Stat Card (analytics) ────────────────────────────── */
-function MicroStat({ icon: Icon, label, value, color, glow, delay }: {
-  icon: ElementType; label: string; value: string; color: string; glow: string; delay: number;
-}) {
-  return (
-    <motion.div initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay, type: "spring", stiffness: 260, damping: 22 }}
-      whileHover={{ scale: 1.04, y: -2 }}
-      className="rounded-xl p-2.5 relative overflow-hidden cursor-default"
-      style={{ background: `linear-gradient(145deg, ${glow.replace("0.5", "0.1")}, ${glow.replace("0.5", "0.04")})`, border: `1px solid ${glow.replace("0.5", "0.18")}` }}>
-      <motion.div animate={{ opacity: [0.2, 0.45, 0.2] }} transition={{ duration: 3, repeat: Infinity, delay }}
-        className="absolute inset-0 pointer-events-none rounded-xl"
-        style={{ background: `radial-gradient(circle at 20% 20%, ${glow.replace("0.5", "0.2")}, transparent 65%)` }} />
-      <div className="flex items-center gap-2 relative z-10">
-        <div className="w-7 h-7 rounded-lg bg-black/20 flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 8px ${glow.replace("0.5", "0.25")}` }}>
-          <Icon className="w-3.5 h-3.5" style={{ color, filter: `drop-shadow(0 0 3px ${glow})` }} />
-        </div>
-        <div>
-          <p className="text-sm font-black leading-tight" style={{ color }}>{value}</p>
-          <p className="text-[9px] text-muted-foreground font-semibold leading-tight">{label}</p>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─── Tab Button ──────────────────────────────────────────────── */
 function TabBtn({ active, icon: Icon, label, onClick }: { active: boolean; icon: ElementType; label: string; onClick: () => void }) {
   return (
     <motion.button onClick={onClick} whileTap={{ scale: 0.94 }}
@@ -815,12 +789,6 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const myPosts = posts.filter(p => p.author.id === userId);
 
   /* Analytics calculations */
-  const totalLikes = myPosts.reduce((s, p) => s + (p.likesCount ?? 0), 0) + reels.reduce((s, r) => s + (r.likesCount ?? 0), 0);
-  const totalComments = myPosts.reduce((s, p) => s + (p.commentsCount ?? 0), 0);
-  const totalViews = reels.reduce((s, r) => s + (r.viewsCount ?? 0), 0);
-  const totalShares = myPosts.reduce((s, p) => s + ((p as any).sharesCount ?? 0), 0);
-  const totalContent = myPosts.length + reels.length;
-  const avgEng = totalContent > 0 ? Math.round((totalLikes + totalComments) / totalContent * 10) / 10 : 0;
   const topPost = [...myPosts].sort((a, b) => ((b.likesCount ?? 0) + (b.commentsCount ?? 0)) - ((a.likesCount ?? 0) + (a.commentsCount ?? 0)))[0];
   const topReel = [...reels].sort((a, b) => (b.viewsCount ?? 0) - (a.viewsCount ?? 0))[0];
 
@@ -1213,67 +1181,9 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
           )
         )}
 
-        {/* ── Analytics Tab (compact) ──────────────────────────── */}
+        {/* ── Analytics Tab ─────────────────────────────────────── */}
         {tab === "analytics" && isOwner && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 pb-4">
-
-            {/* Micro stats 3×2 grid */}
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { icon: Heart, label: t("profile.total_likes"), value: totalLikes >= 1000 ? `${(totalLikes / 1000).toFixed(1)}K` : String(totalLikes), color: "#f472b6", glow: "rgba(244,114,182,0.5)", delay: 0 },
-                { icon: Eye, label: t("profile.total_views"), value: totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}K` : String(totalViews), color: "#c084fc", glow: "rgba(192,132,252,0.5)", delay: 0.05 },
-                { icon: MessageCircle, label: t("profile.total_comments"), value: String(totalComments), color: "#60a5fa", glow: "rgba(96,165,250,0.5)", delay: 0.1 },
-                { icon: Share2, label: t("profile.total_shares"), value: String(totalShares), color: "#34d399", glow: "rgba(52,211,153,0.5)", delay: 0.15 },
-                { icon: TrendingUp, label: t("profile.avg_engagement"), value: String(avgEng), color: "#fbbf24", glow: "rgba(251,191,36,0.5)", delay: 0.2 },
-                { icon: BarChart2, label: t("profile.total_content"), value: String(totalContent), color: "#67e8f9", glow: "rgba(103,232,249,0.5)", delay: 0.25 },
-              ].map(props => <MicroStat key={props.label} {...props} />)}
-            </div>
-
-            {/* Top content: post + reel side by side */}
-            {(topPost || topReel) && (
-              <div className="grid grid-cols-2 gap-2">
-                {topPost && (
-                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}
-                    className="rounded-xl border border-amber-500/18 p-2.5"
-                    style={{ background: "linear-gradient(135deg, rgba(234,179,8,0.07), rgba(249,115,22,0.03))" }}>
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <Star className="w-3 h-3 text-amber-400 shrink-0" />
-                      <span className="text-[10px] font-bold text-foreground truncate">{t("profile.top_post")}</span>
-                    </div>
-                    <p className="text-[10px] text-foreground/75 line-clamp-2 mb-1.5 leading-relaxed">{topPost.content}</p>
-                    <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
-                      <span className="flex items-center gap-0.5"><Heart className="w-2.5 h-2.5 text-pink-400" />{topPost.likesCount ?? 0}</span>
-                      <span className="flex items-center gap-0.5"><MessageCircle className="w-2.5 h-2.5 text-blue-400" />{topPost.commentsCount ?? 0}</span>
-                    </div>
-                  </motion.div>
-                )}
-                {topReel && (
-                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}
-                    className="rounded-xl border border-violet-500/18 p-2.5"
-                    style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.07), rgba(59,130,246,0.03))" }}>
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <Play className="w-3 h-3 text-violet-400 fill-violet-400 shrink-0" />
-                      <span className="text-[10px] font-bold text-foreground truncate">{t("profile.top_reel")}</span>
-                    </div>
-                    <p className="text-[10px] text-foreground/75 line-clamp-2 mb-1.5 leading-relaxed">{topReel.caption ?? "Reel"}</p>
-                    <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
-                      <span className="flex items-center gap-0.5"><Eye className="w-2.5 h-2.5 text-violet-400" />{(topReel.viewsCount ?? 0).toLocaleString()}</span>
-                      <span className="flex items-center gap-0.5"><Heart className="w-2.5 h-2.5 text-pink-400" />{topReel.likesCount ?? 0}</span>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            )}
-
-            {totalContent === 0 && (
-              <div className="text-center py-10 text-muted-foreground">
-                <motion.div animate={{ y: [-3, 3, -3] }} transition={{ duration: 3, repeat: Infinity }}>
-                  <BarChart2 className="w-7 h-7 mx-auto mb-2 opacity-25" />
-                </motion.div>
-                <p className="text-sm">{t("profile.no_content")}</p>
-              </div>
-            )}
-          </motion.div>
+          <CreatorAnalyticsDashboard userId={userId} />
         )}
       </div>
 

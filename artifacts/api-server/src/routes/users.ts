@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { usersTable, followsTable, postsTable } from "@workspace/db";
-import { eq, ilike, sql, and, desc, inArray } from "drizzle-orm";
+import { usersTable, followsTable, postsTable, reelsTable, userInteractionsTable } from "@workspace/db";
+import { eq, ilike, sql, and, desc, inArray, gte } from "drizzle-orm";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheAside, cacheDelPattern } from "../lib/cache";
@@ -181,6 +181,167 @@ router.get("/users/:id/followers", async (req, res) => {
       };
     });
     res.json(enriched);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── GET /users/:id/creator-analytics?period=7|30 ────────────── */
+router.get("/users/:id/creator-analytics", async (req: any, res) => {
+  try {
+    const id = Number(req.params.id);
+    const period = Number(req.query.period) || 30;
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    // Only the owner may view their own analytics
+    const callerId = req.session?.userId as number | undefined;
+    if (!callerId) { res.status(401).json({ error: "Unauthenticated" }); return; }
+    if (callerId !== id) { res.status(403).json({ error: "Forbidden" }); return; }
+
+    const since = new Date();
+    since.setDate(since.getDate() - period);
+    since.setHours(0, 0, 0, 0);
+
+    /* ── 1. Daily views from user_interactions ─────────────────── */
+    const postIds = await db
+      .select({ id: postsTable.id })
+      .from(postsTable)
+      .where(eq(postsTable.authorId, id));
+    const reelIds = await db
+      .select({ id: reelsTable.id })
+      .from(reelsTable)
+      .where(eq(reelsTable.authorId, id));
+
+    const allPostIds = postIds.map(p => p.id);
+    const allReelIds = reelIds.map(r => r.id);
+
+    // daily views: posts
+    const postViews = allPostIds.length > 0
+      ? await db.execute(sql`
+          SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS n
+          FROM user_interactions
+          WHERE content_type = 'post' AND interaction_type = 'view'
+            AND content_id = ANY(ARRAY[${sql.join(allPostIds.map(i => sql`${i}`), sql`, `)}]::int[])
+            AND created_at >= ${since}
+          GROUP BY 1 ORDER BY 1`)
+      : { rows: [] };
+
+    // daily views: reels
+    const reelViews = allReelIds.length > 0
+      ? await db.execute(sql`
+          SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS n
+          FROM user_interactions
+          WHERE content_type = 'reel' AND interaction_type = 'view'
+            AND content_id = ANY(ARRAY[${sql.join(allReelIds.map(i => sql`${i}`), sql`, `)}]::int[])
+            AND created_at >= ${since}
+          GROUP BY 1 ORDER BY 1`)
+      : { rows: [] };
+
+    // daily likes
+    const likesRows = (allPostIds.length > 0 || allReelIds.length > 0)
+      ? await db.execute(sql`
+          SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS n
+          FROM user_interactions
+          WHERE interaction_type = 'like'
+            AND (
+              (content_type = 'post'  AND content_id = ANY(ARRAY[${allPostIds.length > 0 ? sql.join(allPostIds.map(i => sql`${i}`), sql`, `) : sql`NULL`}]::int[]))
+              OR
+              (content_type = 'reel'  AND content_id = ANY(ARRAY[${allReelIds.length > 0 ? sql.join(allReelIds.map(i => sql`${i}`), sql`, `) : sql`NULL`}]::int[]))
+            )
+            AND created_at >= ${since}
+          GROUP BY 1 ORDER BY 1`)
+      : { rows: [] };
+
+    /* ── 2. Follower growth ─────────────────────────────────────── */
+    const followerGrowth = await db.execute(sql`
+      SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS new_followers
+      FROM follows
+      WHERE following_id = ${id} AND created_at >= ${since}
+      GROUP BY 1 ORDER BY 1`);
+
+    // Total followers before the window (baseline)
+    const [baselineRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(followsTable)
+      .where(and(eq(followsTable.followingId, id), sql`created_at < ${since}`));
+    const followerBaseline = baselineRow?.count ?? 0;
+
+    /* ── 3. Top posts & reels ───────────────────────────────────── */
+    const topPosts = allPostIds.length > 0
+      ? await db
+          .select({ id: postsTable.id, content: postsTable.content, likesCount: postsTable.likesCount, commentsCount: postsTable.commentsCount, sharesCount: postsTable.sharesCount, createdAt: postsTable.createdAt })
+          .from(postsTable)
+          .where(eq(postsTable.authorId, id))
+          .orderBy(desc(sql`${postsTable.likesCount} + ${postsTable.commentsCount}`))
+          .limit(5)
+      : [];
+
+    const topReels = allReelIds.length > 0
+      ? await db
+          .select({ id: reelsTable.id, caption: reelsTable.caption, viewsCount: reelsTable.viewsCount, likesCount: reelsTable.likesCount, createdAt: reelsTable.createdAt })
+          .from(reelsTable)
+          .where(eq(reelsTable.authorId, id))
+          .orderBy(desc(reelsTable.viewsCount))
+          .limit(5)
+      : [];
+
+    /* ── 4. Build day-by-day timeline (since → today inclusive) ─── */
+    const dayMap: Record<string, { date: string; postViews: number; reelViews: number; likes: number; newFollowers: number }> = {};
+    for (let d = 0; d <= period; d++) {
+      const dt = new Date(since);
+      dt.setDate(dt.getDate() + d);
+      const key = dt.toISOString().slice(0, 10);
+      dayMap[key] = { date: key, postViews: 0, reelViews: 0, likes: 0, newFollowers: 0 };
+    }
+
+    for (const row of (postViews as any).rows) {
+      const k = String(row.day).slice(0, 10);
+      if (dayMap[k]) dayMap[k].postViews += Number(row.n);
+    }
+    for (const row of (reelViews as any).rows) {
+      const k = String(row.day).slice(0, 10);
+      if (dayMap[k]) dayMap[k].reelViews += Number(row.n);
+    }
+    for (const row of (likesRows as any).rows) {
+      const k = String(row.day).slice(0, 10);
+      if (dayMap[k]) dayMap[k].likes += Number(row.n);
+    }
+    for (const row of (followerGrowth as any).rows) {
+      const k = String(row.day).slice(0, 10);
+      if (dayMap[k]) dayMap[k].newFollowers += Number(row.new_followers);
+    }
+
+    const timeline = Object.values(dayMap);
+
+    // Cumulative follower count per day
+    let cumFollowers = followerBaseline;
+    const timelineWithFollowers = timeline.map(d => {
+      cumFollowers += d.newFollowers;
+      return { ...d, followers: cumFollowers };
+    });
+
+    /* ── 5. Summary totals ─────────────────────────────────────── */
+    const totalViews = timeline.reduce((s, d) => s + d.postViews + d.reelViews, 0);
+    const totalLikes = timeline.reduce((s, d) => s + d.likes, 0);
+    const totalNewFollowers = timeline.reduce((s, d) => s + d.newFollowers, 0);
+    const currentFollowers = cumFollowers;
+    const totalContent = allPostIds.length + allReelIds.length;
+    const engagementRate = totalViews > 0 ? Math.round((totalLikes / totalViews) * 1000) / 10 : 0;
+
+    res.json({
+      timeline: timelineWithFollowers,
+      topPosts,
+      topReels,
+      summary: {
+        totalViews,
+        totalLikes,
+        totalNewFollowers,
+        currentFollowers,
+        totalContent,
+        engagementRate,
+      },
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

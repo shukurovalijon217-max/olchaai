@@ -78306,8 +78306,8 @@ var init_src2 = __esm({
       process.env.DATABASE_URL = process.env.NEON_DATABASE_URL;
     }
     if (!process.env.DATABASE_URL) {
-      throw new Error(
-        "DATABASE_URL must be set. Did you forget to provision a database?"
+      console.error(
+        "[db] FATAL: DATABASE_URL is not set \u2014 all database operations will fail. Add DATABASE_URL (or NEON_DATABASE_URL) to the service environment variables."
       );
     }
     pool = new Pool3({

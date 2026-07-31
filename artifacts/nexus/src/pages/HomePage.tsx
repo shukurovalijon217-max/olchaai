@@ -14,6 +14,7 @@ import FeedCard from "@/components/FeedCard";
 
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
+import StoriesBar from "@/components/StoriesBar";
 import { getFeaturePref } from "@/lib/sounds";
 import { usePip } from "@/context/PipContext";
 
@@ -606,6 +607,14 @@ export default function HomePage() {
           </div>
         ) : (
           <>
+            {/* ── STORIES BAR ── */}
+            <div style={{ scrollSnapAlign: "none" }}>
+              <StoriesBar
+                onCreateStory={() => handleSelect("story")}
+                onAvatarClick={(authorId, rect) => openStoryForAuthor(authorId, rect)}
+              />
+            </div>
+
             {/* ── POSTS ── */}
             {displayPosts.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f", scrollSnapAlign: "start" }}>

@@ -1,8 +1,7 @@
 ### Nexus + bundled API — Railway deploy
 ### Build context: REPO ROOT
-### Uses pre-built dists committed to git.
-### Installs real AWS SDK (R2 uploads) + sharp (image resize).
-### Stubs @google-cloud/storage (Replit object storage, not critical for R2).
+### Pre-built dists from git + one pure-JS npm install + file-based stubs.
+### No pnpm, no multi-stage, no binary downloads → fast reliable build.
 
 FROM node:24-slim
 
@@ -15,52 +14,18 @@ COPY artifacts/nexus/server.js ./server.js
 # ── API server bundle (pre-built with esbuild, committed to git) ──
 COPY artifacts/api-server/dist/ /app/api/dist/
 
-# ── Install real packages the API bundle imports at load-time ─────
-# @aws-sdk/s3-request-presigner → R2 presigned upload/download URLs
-# sharp                         → image resize/optimisation
-# Both have small installs / prebuilt binaries; no compilation needed.
+# ── Real package: @aws-sdk/s3-request-presigner ───────────────────
+# Pure JavaScript, no native compilation, no binary download.
+# Required for R2 presigned upload/download URLs.
 RUN cd /app/api \
  && npm init -y --quiet \
- && npm install --no-save --loglevel=error \
-      @aws-sdk/s3-request-presigner \
-      sharp
+ && npm install --no-save --loglevel=error @aws-sdk/s3-request-presigner
 
-# ── Stub @google-cloud/storage (only used for Replit object storage) ─
-# Not needed for R2 media uploads; stub prevents import crash at startup.
-RUN node -e "
-const fs = require('fs');
-const dir = '/app/api/node_modules/@google-cloud/storage';
-fs.mkdirSync(dir, { recursive: true });
-fs.writeFileSync(dir + '/index.js', \`
-'use strict';
-class GCSFile {
-  save() { return Promise.resolve(); }
-  exists() { return Promise.resolve([false]); }
-  getMetadata() { return Promise.resolve([{}]); }
-  delete() { return Promise.resolve(); }
-  createReadStream() {
-    const { Readable } = require('stream');
-    return new Readable({ read() { this.push(null); } });
-  }
-  createWriteStream() {
-    const { Writable } = require('stream');
-    return new Writable({ write(_c, _e, cb) { cb(); } });
-  }
-}
-class GCSBucket {
-  file() { return new GCSFile(); }
-  getFiles() { return Promise.resolve([[]]); }
-}
-class Storage {
-  bucket() { return new GCSBucket(); }
-}
-module.exports = { Storage };
-\`);
-fs.writeFileSync(dir + '/package.json', JSON.stringify({
-  name: '@google-cloud/storage', version: '0.0.1', main: 'index.js'
-}));
-console.log('GCS stub written');
-"
+# ── File-based stubs (committed to git, zero network calls) ───────
+# @google-cloud/storage  → Replit object storage (not used for R2 media)
+# sharp                  → image resize (graceful no-op stub)
+COPY stubs/@google-cloud/storage/ /app/api/node_modules/@google-cloud/storage/
+COPY stubs/sharp/                 /app/api/node_modules/sharp/
 
 ENV NODE_ENV=production
 ENV PORT=3000

@@ -31,26 +31,30 @@ process.on("uncaughtException", (err) => {
    When API_TARGET points to localhost (bundled mode), spawn the Express API
    as a child process. This runs regardless of what start.sh does, so it is
    immune to Docker layer-cache issues with the start script.          ── */
-const IS_BUNDLED = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(API_TARGET);
+/* If the bundled API entry exists on disk, always start it on :3001
+   regardless of API_TARGET env var (which might be overridden in Railway
+   Variables to point to the old dead external service).                  */
+const BUNDLED_API_PORT = "3001";
+const apiEntry = path.join(__dirname, "api", "dist", "index.mjs");
+const IS_BUNDLED = fs.existsSync(apiEntry);
+
 if (IS_BUNDLED) {
-  const apiPort = API_TARGET.replace(/^https?:\/\/[^:]+:?/, "").replace(/\/.*$/, "") || "3001";
-  const apiEntry = path.join(__dirname, "api", "dist", "index.mjs");
-  if (fs.existsSync(apiEntry)) {
-    console.log(`[nexus] Starting bundled API on port ${apiPort}…`);
-    const apiEnv = { ...process.env, PORT: apiPort, SINGLE_PROCESS: "1" };
-    const spawnApi = () => {
-      const child = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
-        env: apiEnv, stdio: "inherit",
-      });
-      child.on("exit", (code) => {
-        console.error(`[nexus] Bundled API exited (code=${code}) — restarting in 3s`);
-        setTimeout(spawnApi, 3000);
-      });
-    };
-    spawnApi(); // single controlled spawn with auto-restart
-  } else {
-    console.warn(`[nexus] Bundled API entry not found at ${apiEntry} — running proxy-only`);
-  }
+  /* Force API_TARGET to localhost so the proxy always routes internally */
+  process.env.API_TARGET = `http://localhost:${BUNDLED_API_PORT}`;
+  console.log(`[nexus] Bundled API found — overriding API_TARGET to http://localhost:${BUNDLED_API_PORT}`);
+  const apiEnv = { ...process.env, PORT: BUNDLED_API_PORT, SINGLE_PROCESS: "1" };
+  const spawnApi = () => {
+    const child = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
+      env: apiEnv, stdio: "inherit",
+    });
+    child.on("exit", (code) => {
+      console.error(`[nexus] Bundled API exited (code=${code}) — restarting in 3s`);
+      setTimeout(spawnApi, 3000);
+    });
+  };
+  spawnApi(); // single controlled spawn with auto-restart
+} else {
+  console.warn(`[nexus] Bundled API entry not found at ${apiEntry} — proxy-only mode (API_TARGET=${API_TARGET})`);
 }
 
 

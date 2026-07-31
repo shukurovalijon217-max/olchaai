@@ -519,6 +519,20 @@ func (cv *CoViewHub) broadcastRoom(hub *Hub, code string, msg []byte, excludeID 
 
 // ─── WebSocket Upgrade ────────────────────────────────────────────────────────
 
+// broadcastPresence emits a presence_update event to ALL connected clients so
+// they can update their online/offline indicators without polling.
+func broadcastPresence(hub *Hub, userID int, online bool) {
+	msg, _ := json.Marshal(map[string]any{
+		"event": "presence_update",
+		"payload": map[string]any{
+			"userId": userID,
+			"online": online,
+		},
+		"ts": time.Now().UnixMilli(),
+	})
+	hub.broadcastAll(msg)
+}
+
 var upgrader = websocket.Upgrader{
         CheckOrigin:     func(r *http.Request) bool { return true },
         ReadBufferSize:  4096,
@@ -537,6 +551,14 @@ func serveWS(hub *Hub, liveHub *LiveHub, coViewHub *CoViewHub, w http.ResponseWr
 
         c := &Client{userID: userID, conn: conn, send: make(chan []byte, 128)}
         hub.register(c)
+
+        // Notify all clients this user came online (only on first connection from this user)
+        hub.mu.RLock()
+        firstConn := len(hub.clients[userID]) == 1
+        hub.mu.RUnlock()
+        if firstConn {
+                go broadcastPresence(hub, userID, true)
+        }
 
         go func() {
                 ticker := time.NewTicker(30 * time.Second)
@@ -561,7 +583,16 @@ func serveWS(hub *Hub, liveHub *LiveHub, coViewHub *CoViewHub, w http.ResponseWr
                 }
         }()
 
-        defer hub.unregister(c)
+        defer func() {
+                hub.unregister(c)
+                // Notify others this user went offline (only if they have no remaining connections)
+                hub.mu.RLock()
+                remaining := len(hub.clients[userID])
+                hub.mu.RUnlock()
+                if remaining == 0 {
+                        go broadcastPresence(hub, userID, false)
+                }
+        }()
         conn.SetReadLimit(32768)
         conn.SetReadDeadline(time.Now().Add(60 * time.Second))
         conn.SetPongHandler(func(string) error {

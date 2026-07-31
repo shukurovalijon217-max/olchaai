@@ -1236,7 +1236,8 @@
     "user": "User",
     "video": "Video",
     "voice_msgs": "Voice messages",
-    "voice_recording": "Voice recording"
+    "voice_recording": "Voice recording",
+    "reconnecting": "Reconnecting..."
   },
   "notif": {
     "title": "Notifications",

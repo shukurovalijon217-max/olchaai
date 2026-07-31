@@ -1248,7 +1248,8 @@
     "user": "Foydalanuvchi",
     "video": "Video",
     "voice_msgs": "Ovozli xabarlar",
-    "voice_recording": "Ovozli yozuv"
+    "voice_recording": "Ovozli yozuv",
+    "reconnecting": "Qayta ulanmoqda..."
   },
   "notif": {
     "title": "Bildirishnomalar",

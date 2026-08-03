@@ -6704,7 +6704,6 @@ function OTubeMusicOrb() {
   const [shuffleOn, setShuffleOn]   = useState(false);
   const [repeatOne, setRepeatOne]   = useState(false);
   const [liked, setLiked]           = useState(false);
-  const [downloading, setDownloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const track = tracks[idx];
@@ -6805,7 +6804,7 @@ function OTubeMusicOrb() {
   };
 
   const handleDownload = async () => {
-    if (!track || downloading) return;
+    if (!track) return;
     /* Extract the raw Audius track ID from the preview URL path
        preview = "/api/music/stream/<audiusId>" or "au_<audiusId>" */
     const audiusId = track.id.startsWith("au_")
@@ -6815,7 +6814,6 @@ function OTubeMusicOrb() {
     const title  = encodeURIComponent(track.title || track.name || "track");
     const url = `${API_BASE}/api/music/download/${audiusId}?artist=${artist}&title=${title}`;
 
-    setDownloading(true);
     try {
       const resp = await fetch(url, { credentials: "include" });
       const ct = resp.headers.get("content-type") ?? "";
@@ -6845,8 +6843,6 @@ function OTubeMusicOrb() {
         description: "Tarmoq xatosi yuz berdi. Internetni tekshiring va qayta urinib ko'ring.",
         variant: "destructive",
       });
-    } finally {
-      setDownloading(false);
     }
   };
 
@@ -6984,10 +6980,7 @@ function OTubeMusicOrb() {
                   act:() => setLiked(l => !l),
                 },
                 {
-                  icon: downloading
-                    ? <RefreshCw style={{ width:15,height:15,color:"#a855f7",
-                        animation:"spin 1s linear infinite" }}/>
-                    : <Download style={{ width:15,height:15,color:"rgba(255,255,255,0.45)" }}/>,
+                  icon: <Download style={{ width:15,height:15,color:"rgba(255,255,255,0.45)" }}/>,
                   label:"Yuklab", active:false,
                   act: handleDownload,
                 },

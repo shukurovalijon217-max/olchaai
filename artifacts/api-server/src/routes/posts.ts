@@ -133,11 +133,6 @@ router.get("/music/stream/:id", async (req: any, res) => {
     const id = String(req.params.id ?? "").replace(/[^a-zA-Z0-9_-]/g, "");
     if (!id) { res.status(400).end(); return; }
 
-    /* optional download mode: adds Content-Disposition so browser saves the file */
-    const forDownload = !!req.query.dl;
-    const rawFilename = String(req.query.fn ?? `track_${id}.mp3`)
-      .replace(/[^\w\s.\-()]/g, "").slice(0, 120);
-
     const { Readable } = await import("stream");
     const upstream = await audiusStream(id);
     if (upstream?.body) {
@@ -147,7 +142,6 @@ router.get("/music/stream/:id", async (req: any, res) => {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Cache-Control", "public, max-age=3600");
       if (cl) res.setHeader("Content-Length", cl);
-      if (forDownload) res.setHeader("Content-Disposition", `attachment; filename="${rawFilename}"`);
       Readable.fromWeb(upstream.body as any).pipe(res);
       return;
     }

@@ -10,13 +10,22 @@ import { useGetLive, useEndLive, useSendLiveGift } from "@workspace/api-client-r
 import { useLocation } from "wouter";
 
 const API = (import.meta.env.VITE_API_BASE_URL || "");
-const STUN = [
+// Public fallback ICE servers — replaced at runtime by /api/webrtc/ice-servers
+const DEFAULT_ICE: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
   { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
 ];
+
+async function fetchIce(): Promise<RTCIceServer[]> {
+  try {
+    const res = await fetch(`${API}/api/webrtc/ice-servers`, { credentials: "include" });
+    if (res.ok) { const d = await res.json(); return d.iceServers ?? DEFAULT_ICE; }
+  } catch { /* fallback */ }
+  return DEFAULT_ICE;
+}
 
 function buildWsUrl(userId: number) {
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
@@ -96,8 +105,9 @@ export default function LivePage({ liveId }: LivePageProps) {
     setTimeout(() => setGiftAnimations(prev => prev.filter(g => g.id !== id)), 3500);
   };
 
-  const createPeer = useCallback((peerId: number): RTCPeerConnection => {
-    const pc = new RTCPeerConnection({ iceServers: STUN });
+  const createPeer = useCallback(async (peerId: number): Promise<RTCPeerConnection> => {
+    const iceServers = await fetchIce();
+    const pc = new RTCPeerConnection({ iceServers });
     peersRef.current.set(peerId, pc);
     pc.onicecandidate = ({ candidate }) => {
       if (!candidate || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -126,7 +136,7 @@ export default function LivePage({ liveId }: LivePageProps) {
         setViewers(msg.viewers ?? 0);
         if (isHost && localStreamRef.current) {
           const viewerId: number = msg.viewerId;
-          const pc = createPeer(viewerId);
+          const pc = await createPeer(viewerId);
           localStreamRef.current.getTracks().forEach(t => pc.addTrack(t, localStreamRef.current!));
           const offer = await pc.createOffer({ offerToReceiveAudio: false, offerToReceiveVideo: false });
           await pc.setLocalDescription(offer);
@@ -138,7 +148,7 @@ export default function LivePage({ liveId }: LivePageProps) {
       case "live_offer":
         if (!isHost) {
           const hostId: number = msg.fromId;
-          const pc = createPeer(hostId);
+          const pc = await createPeer(hostId);
           pc.ontrack = (e) => { if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0]; };
           await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
           await drainIceQueue(pc, hostId);

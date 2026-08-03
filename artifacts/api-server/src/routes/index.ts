@@ -51,6 +51,7 @@ import challengesRouter from "./challenges";
 import otubeAiRouter from "./otubeAi";
 import growTogetherRouter from "./growTogether";
 import socialAuraRouter from "./socialAura";
+import webrtcRouter from "./webrtc";
 
 const router: IRouter = Router();
 
@@ -106,5 +107,6 @@ router.use(focusShieldRouter);
 router.use(challengesRouter);
 router.use(otubeAiRouter);
 router.use(growTogetherRouter);
+router.use("/webrtc", webrtcRouter);
 
 export default router;

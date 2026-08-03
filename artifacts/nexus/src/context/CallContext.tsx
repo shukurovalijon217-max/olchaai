@@ -6,15 +6,36 @@ import { playCallRingtone, getFeaturePref } from "@/lib/sounds";
 import CallUI, { type CallPhase } from "@/components/CallUI";
 import { toast } from "@/hooks/use-toast";
 
-const STUN = [
+// Default ICE servers (public fallback). Overridden at runtime by
+// /api/webrtc/ice-servers which returns private Metered TURN credentials.
+const DEFAULT_ICE: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
-  // TURN relay fallback — without this, calls fail to connect across most
-  // mobile-carrier/symmetric NATs since direct P2P (STUN-only) can't traverse them.
   { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
   { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
 ];
+
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "");
+
+let cachedIce: RTCIceServer[] | null = null;
+let iceExpiry = 0;
+
+async function getIceServers(): Promise<RTCIceServer[]> {
+  if (cachedIce && Date.now() < iceExpiry) return cachedIce;
+  try {
+    const res = await fetch(`${API_BASE}/api/webrtc/ice-servers`, { credentials: "include" });
+    if (res.ok) {
+      const data = await res.json();
+      cachedIce = data.iceServers ?? DEFAULT_ICE;
+      iceExpiry = Date.now() + 50_000;
+      return cachedIce!;
+    }
+  } catch {
+    // non-fatal — fall back to public STUN/TURN
+  }
+  return DEFAULT_ICE;
+}
 
 const RING_TIMEOUT_MS = 45000;
 
@@ -83,8 +104,9 @@ export function CallProvider({ children }: { children: ReactNode }) {
     send({ type, toId, payload: payload ?? {} });
   }, [send]);
 
-  const ensurePeer = useCallback((toId: number) => {
-    const pc = new RTCPeerConnection({ iceServers: STUN });
+  const ensurePeer = useCallback(async (toId: number) => {
+    const iceServers = await getIceServers();
+    const pc = new RTCPeerConnection({ iceServers });
     pc.onicecandidate = ({ candidate }) => {
       if (!candidate) return;
       sendCallMsg("call_ice", toId, candidate.toJSON());
@@ -206,7 +228,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         setState({ ...s, phase: "connecting" });
         try {
           const stream = await getMedia(s.type);
-          const pc = ensurePeer(s.peer.id);
+          const pc = await ensurePeer(s.peer.id);
           stream.getTracks().forEach(t => pc.addTrack(t, stream));
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
@@ -221,7 +243,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         const s = stateRef.current;
         if (!s || s.peer.id !== msg.fromId) return;
         try {
-          const pc = ensurePeer(s.peer.id);
+          const pc = await ensurePeer(s.peer.id);
           localStreamRef.current?.getTracks().forEach(t => pc.addTrack(t, localStreamRef.current!));
           await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
           await drainIce(pc);

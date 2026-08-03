@@ -4,8 +4,11 @@
 package main
 
 import (
+        "context"
+        "crypto/rand"
         "database/sql"
         "encoding/json"
+        "fmt"
         "math"
         "net/http"
         "os"
@@ -17,10 +20,101 @@ import (
 
         "github.com/gorilla/websocket"
         _ "github.com/lib/pq"
+        "github.com/redis/go-redis/v9"
         "github.com/rs/cors"
         "github.com/rs/zerolog"
         "github.com/rs/zerolog/log"
 )
+
+// ─── Redis Pub/Sub (multi-instance message bus) ───────────────────────────────
+// When UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set, every
+// hub.deliver() call also publishes to Redis so other Go instances forward the
+// message to their local clients.  Falls back to single-node mode silently.
+
+var (
+        rdb    *redis.Client
+        nodeID string
+)
+
+const redisChan = "gilos:ws:v1"
+
+type rEnvelope struct {
+        Node string `json:"n"`
+        To   int    `json:"t"` // -1 = broadcastAll
+        Data []byte `json:"d"`
+}
+
+func newNodeID() string {
+        b := make([]byte, 4)
+        rand.Read(b)
+        return fmt.Sprintf("%x", b)
+}
+
+func initRedis() {
+        restURL := os.Getenv("UPSTASH_REDIS_REST_URL")
+        token := os.Getenv("UPSTASH_REDIS_REST_TOKEN")
+        if restURL == "" || token == "" {
+                log.Warn().Msg("redis:no credentials — single-node WebSocket mode")
+                return
+        }
+        host := strings.TrimPrefix(strings.TrimPrefix(restURL, "https://"), "http://")
+        opt, err := redis.ParseURL(fmt.Sprintf("rediss://default:%s@%s:6380", token, host))
+        if err != nil {
+                log.Warn().Err(err).Msg("redis:parse error — single-node mode")
+                return
+        }
+        rdb = redis.NewClient(opt)
+        ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+        defer cancel()
+        if err := rdb.Ping(ctx).Err(); err != nil {
+                log.Warn().Err(err).Msg("redis:ping failed — single-node mode")
+                rdb = nil
+                return
+        }
+        nodeID = newNodeID()
+        log.Info().Str("node", nodeID).Msg("redis:connected — multi-node pub/sub active")
+}
+
+func rPublish(toUser int, data []byte) {
+        if rdb == nil {
+                return
+        }
+        env, _ := json.Marshal(rEnvelope{Node: nodeID, To: toUser, Data: data})
+        ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+        defer cancel()
+        if err := rdb.Publish(ctx, redisChan, env).Err(); err != nil {
+                log.Warn().Err(err).Msg("redis:publish error")
+        }
+}
+
+func startRedisSub(hub *Hub) {
+        if rdb == nil {
+                return
+        }
+        go func() {
+                for {
+                        sub := rdb.Subscribe(context.Background(), redisChan)
+                        log.Info().Msg("redis:subscriber ready")
+                        for raw := range sub.Channel() {
+                                var env rEnvelope
+                                if json.Unmarshal([]byte(raw.Payload), &env) != nil {
+                                        continue
+                                }
+                                if env.Node == nodeID {
+                                        continue // already delivered locally
+                                }
+                                if env.To == -1 {
+                                        hub.localBroadcastAll(env.Data)
+                                } else {
+                                        hub.localSendTo(env.To, env.Data)
+                                }
+                        }
+                        sub.Close()
+                        log.Warn().Msg("redis:subscriber dropped — reconnecting in 2s")
+                        time.Sleep(2 * time.Second)
+                }
+        }()
+}
 
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────
 
@@ -69,7 +163,9 @@ func (h *Hub) count() int {
         return total
 }
 
-func (h *Hub) sendTo(userID int, msg []byte) {
+// localSendTo delivers to clients on THIS instance only (no Redis).
+// Used by the Redis subscriber to avoid re-publishing (infinite loop).
+func (h *Hub) localSendTo(userID int, msg []byte) {
         h.mu.RLock()
         targets := h.clients[userID]
         h.mu.RUnlock()
@@ -81,11 +177,8 @@ func (h *Hub) sendTo(userID int, msg []byte) {
         }
 }
 
-func (h *Hub) broadcast(userID int, msg []byte) {
-        h.sendTo(userID, msg)
-}
-
-func (h *Hub) broadcastAll(msg []byte) {
+// localBroadcastAll delivers to all local clients only (no Redis).
+func (h *Hub) localBroadcastAll(msg []byte) {
         h.mu.RLock()
         defer h.mu.RUnlock()
         for _, list := range h.clients {
@@ -96,6 +189,22 @@ func (h *Hub) broadcastAll(msg []byte) {
                         }
                 }
         }
+}
+
+// sendTo delivers locally AND publishes to other instances via Redis.
+func (h *Hub) sendTo(userID int, msg []byte) {
+        h.localSendTo(userID, msg)
+        rPublish(userID, msg)
+}
+
+func (h *Hub) broadcast(userID int, msg []byte) {
+        h.sendTo(userID, msg)
+}
+
+// broadcastAll delivers locally AND notifies other instances via Redis.
+func (h *Hub) broadcastAll(msg []byte) {
+        h.localBroadcastAll(msg)
+        rPublish(-1, msg)
 }
 
 // ─── Live Room Management ─────────────────────────────────────────────────────
@@ -851,9 +960,12 @@ func main() {
                 log.Warn().Msg("DATABASE_URL not set — running without DB")
         }
 
+        // ── Multi-node pub/sub ─────────────────────────────────────
+        initRedis()
         hub := newHub()
         liveHub := newLiveHub()
         coViewHub := newCoViewHub()
+        startRedisSub(hub)
         mux := http.NewServeMux()
 
         healthHandler := func(w http.ResponseWriter, r *http.Request) {

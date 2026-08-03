@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import NexusLogo from "@/components/NexusLogo";
 import FloatingAvatar from "@/components/FloatingAvatar";
+import { NetworkBanner } from "@/components/NetworkBanner";
 import { useDockedState } from "@/hooks/useDockedState";
 import { useAuth } from "@/context/AuthContext";
 import { usePip } from "@/context/PipContext";
@@ -677,6 +678,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="bg-background min-h-screen">
+      {/* ── Network status banner (offline / reconnected) ── */}
+      <NetworkBanner />
 
       {/* ── DESKTOP FLOATING SIDEBAR ── */}
       <div className="hidden md:block">

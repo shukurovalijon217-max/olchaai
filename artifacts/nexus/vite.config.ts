@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { VitePWA } from "vite-plugin-pwa";
 
 const rawPort = process.env.PORT;
 const isBuild = process.argv.includes("build");
@@ -35,6 +36,57 @@ export default defineConfig({
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
+    /* ── PWA / Service Worker ────────────────────────────────────────
+       • Precaches every JS/CSS chunk so the app shell loads instantly
+         on repeat visits and works offline.
+       • NetworkFirst for /api/* so API calls always try the network
+         first but fall back to cache on failure.
+       • CacheFirst for static assets (chunks, fonts, images) with a
+         1-year TTL — safe because Vite hashes every filename.
+    ────────────────────────────────────────────────────────────────── */
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "favicon.png", "apple-touch-icon.png", "olcha-logo.png"],
+      manifest: false, // use existing public/manifest.json
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,woff,woff2,ttf,svg,png,jpg,webp}"],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+        runtimeCaching: [
+          {
+            // API calls — NetworkFirst: try live, fall back to cache
+            urlPattern: /^https?:\/\/.*\/api\//,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "gilos-api-v1",
+              networkTimeoutSeconds: 8,
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 }, // 1 hour
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // R2 / CDN media — CacheFirst: image won't change once uploaded
+            urlPattern: /^https:\/\/media\.olchaai\.com\//,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "gilos-media-v1",
+              expiration: { maxEntries: 500, maxAgeSeconds: 30 * 24 * 60 * 60 }, // 30 days
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Google Fonts / any external font
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\//,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "gilos-fonts-v1",
+              expiration: { maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 }, // 1 year
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+      devOptions: { enabled: false }, // never register SW in dev
+    }),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [

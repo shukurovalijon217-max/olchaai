@@ -19,6 +19,7 @@
     },
     "android": {
       "package": "com.olcha.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#000008"

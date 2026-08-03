@@ -27,7 +27,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "ai-universal-platform.replit.app"
+        "EXPO_PUBLIC_DOMAIN": "olchaai.up.railway.app"
       }
     }
   },

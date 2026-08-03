@@ -69,8 +69,15 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
     return `${cloudinaryMatch[1]}w_${w},q_${q},f_auto/${cloudinaryMatch[2]}`;
   }
 
-  // Route all image URLs (including absolute CDN/R2/GCS) through the WebP proxy.
-  // The proxy resizes + converts to WebP and caches for 7 days.
+  // R2 / Cloudflare CDN URLs — already served via Cloudflare edge, no proxy needed.
+  // Sending these through /api/media/img adds a round-trip failure point with no benefit.
+  const isR2 = /r2\.dev|cloudflarestorage\.com|pub\.r2/i.test(url);
+  const isCdnDomain = /olchaai\.com|gilosai\.com/i.test(url);
+  if ((url.startsWith("https://") || url.startsWith("http://")) && (isR2 || isCdnDomain)) {
+    return url;
+  }
+
+  // Route remaining image URLs through the WebP proxy (resizes + converts to WebP, caches 7 days).
   // On proxy failure the route redirects to the original URL (graceful fallback).
   const resolved = resolveApiUrl(url);
   const base = (import.meta.env.VITE_API_BASE_URL || "");

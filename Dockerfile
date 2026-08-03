@@ -33,6 +33,12 @@ COPY artifacts/api-server/package.json                     artifacts/api-server/
 # Install all workspace dependencies (honours the lock file for reproducibility)
 RUN pnpm install --frozen-lockfile
 
+# Copy root tsconfig files — nexus and api-server both extend tsconfig.base.json
+# at the repo root via "../../tsconfig.base.json". Without these the Vite/tsc
+# build fails with "parseConfigJsonFile: file not found" in the builder stage.
+COPY tsconfig.json      ./
+COPY tsconfig.base.json ./
+
 # Copy source for the packages we actually need to build
 COPY lib/           lib/
 COPY scripts/       scripts/

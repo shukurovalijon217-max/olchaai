@@ -6,7 +6,7 @@ import {
 import { motion } from "framer-motion";
 import {
   Eye, Heart, Users, TrendingUp, BarChart2, Star, Play,
-  MessageCircle, Flame, Calendar,
+  MessageCircle, Flame, Calendar, Download,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -63,6 +63,48 @@ function fmt(n: number): string {
 function shortDay(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString("en", { month: "short", day: "numeric" });
+}
+
+/* ─── CSV Export ────────────────────────────────────────── */
+function exportAnalyticsCSV(timeline: DayData[], summary: AnalyticsSummary, period: number) {
+  const headers = ["Date", "Post Views", "Reel Views", "Total Views", "Likes", "New Followers", "Cumulative Followers"];
+  const rows = timeline.map(d => [
+    d.date,
+    d.postViews,
+    d.reelViews,
+    d.postViews + d.reelViews,
+    d.likes,
+    d.newFollowers,
+    d.followers,
+  ]);
+
+  // Summary row
+  const totalViews = timeline.reduce((s, d) => s + d.postViews + d.reelViews, 0);
+  const totalPostViews = timeline.reduce((s, d) => s + d.postViews, 0);
+  const totalReelViews = timeline.reduce((s, d) => s + d.reelViews, 0);
+  const totalLikes = timeline.reduce((s, d) => s + d.likes, 0);
+  const totalNewFollowers = timeline.reduce((s, d) => s + d.newFollowers, 0);
+  rows.push([
+    `TOTAL (${period}d)`,
+    totalPostViews,
+    totalReelViews,
+    totalViews,
+    totalLikes,
+    totalNewFollowers,
+    summary.currentFollowers,
+  ]);
+
+  const csv = [headers, ...rows]
+    .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `analytics-${period}d-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /* ─── Custom Tooltip ────────────────────────────────────── */
@@ -205,6 +247,14 @@ export default function CreatorAnalyticsDashboard({ userId }: { userId: number }
           ))}
         </div>
         <span className="text-[10px] text-muted-foreground ml-auto">{t("analytics.period_label", { defaultValue: "Last {{n}} days", n: period })}</span>
+        <button
+          onClick={() => exportAnalyticsCSV(timeline, summary, period)}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-xl border border-white/10 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-violet-500/50 hover:bg-violet-500/10 transition-all"
+          title={t("analytics.export_csv", { defaultValue: "Export CSV" })}
+        >
+          <Download className="w-3 h-3" />
+          {t("analytics.export_csv", { defaultValue: "Export CSV" })}
+        </button>
       </div>
 
       {/* Summary stat cards */}

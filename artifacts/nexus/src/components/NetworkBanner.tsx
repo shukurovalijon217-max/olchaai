@@ -1,49 +1,59 @@
 /**
- * NetworkBanner
- * Floating top banner that appears when the user goes offline and
- * auto-dismisses 3 s after reconnection.
- *
- * Usage: mount once near the root of the app (e.g. inside Layout).
+ * NetworkBanner — floating offline/reconnect notification
+ * Shows a red banner when offline, green flash on reconnect.
  */
-import { AnimatePresence, motion } from "framer-motion";
-import { Wifi, WifiOff } from "lucide-react";
-import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useEffect, useState } from "react";
+
+function useNetworkStatus() {
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const on  = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online",  on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
+  return online;
+}
 
 export function NetworkBanner() {
-  const { isOnline, justReconnected } = useNetworkStatus();
+  const online  = useNetworkStatus();
+  const [show, setShow]   = useState(false);
+  const [wasOffline, setWasOffline] = useState(false);
 
-  const show = !isOnline || justReconnected;
+  useEffect(() => {
+    if (!online) {
+      setWasOffline(true);
+      setShow(true);
+    } else if (wasOffline) {
+      // show green "reconnected" briefly
+      setShow(true);
+      const t = setTimeout(() => setShow(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [online]); // eslint-disable-line
+
+  if (!show) return null;
 
   return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          key="network-banner"
-          initial={{ y: -60, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -60, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 420, damping: 28 }}
-          className="fixed top-0 inset-x-0 z-[9999] flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold shadow-xl select-none"
-          style={{
-            background: isOnline
-              ? "linear-gradient(90deg, #064e3b, #065f46)"
-              : "linear-gradient(90deg, #7f1d1d, #991b1b)",
-            color: "#fff",
-          }}
-        >
-          {isOnline ? (
-            <>
-              <Wifi className="w-4 h-4 flex-shrink-0" />
-              Internet aloqasi tiklandi ✓
-            </>
-          ) : (
-            <>
-              <WifiOff className="w-4 h-4 flex-shrink-0" />
-              Internet aloqasi yo&apos;q — sahifa keshlangan ma&apos;lumotlarni ko&apos;rsatmoqda
-            </>
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        padding: "10px 16px",
+        textAlign: "center",
+        fontSize: 14,
+        fontWeight: 600,
+        color: "#fff",
+        background: online ? "#16a34a" : "#dc2626",
+        transition: "background 0.4s",
+        letterSpacing: 0.3,
+      }}
+    >
+      {online ? "✅ Internet qayta ulandi" : "⚠️ Internet yo'q — Offline rejim"}
+    </div>
   );
 }

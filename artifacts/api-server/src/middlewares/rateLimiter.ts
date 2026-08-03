@@ -23,20 +23,20 @@ function sessionKey(req: Request): string {
   return `ip:${ip}`;
 }
 
-function makeLimit(options: Partial<Options> & { windowMs: number; max: number }) {
+function makeLimit({ windowMs, max, ...rest }: Partial<Options> & { windowMs: number; max: number }) {
   return rateLimit({
-    windowMs: options.windowMs,
-    max: options.max,
+    windowMs,
+    max,
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: sessionKey,
     handler: (_req: Request, res: Response) => {
       res.status(429).json({
         error: "Juda ko'p so'rov yubordi — biroz kutib uring",
-        retryAfterMs: options.windowMs,
+        retryAfterMs: windowMs,
       });
     },
-    ...options,
+    ...rest,
   });
 }
 

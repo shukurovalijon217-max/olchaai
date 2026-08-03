@@ -24956,27 +24956,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router54;
+    module.exports = Router55;
     module.exports.Route = Route;
-    function Router54(options) {
-      if (!(this instanceof Router54)) {
-        return new Router54(options);
+    function Router55(options) {
+      if (!(this instanceof Router55)) {
+        return new Router55(options);
       }
       const opts = options || {};
-      function router54(req, res, next) {
-        router54.handle(req, res, next);
+      function router55(req, res, next) {
+        router55.handle(req, res, next);
       }
-      Object.setPrototypeOf(router54, this);
-      router54.caseSensitive = opts.caseSensitive;
-      router54.mergeParams = opts.mergeParams;
-      router54.params = {};
-      router54.strict = opts.strict;
-      router54.stack = [];
-      return router54;
+      Object.setPrototypeOf(router55, this);
+      router55.caseSensitive = opts.caseSensitive;
+      router55.mergeParams = opts.mergeParams;
+      router55.params = {};
+      router55.strict = opts.strict;
+      router55.stack = [];
+      return router55;
     }
-    Router54.prototype = function() {
+    Router55.prototype = function() {
     };
-    Router54.prototype.param = function param2(name2, fn) {
+    Router55.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -24996,7 +24996,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router54.prototype.handle = function handle(req, res, callback) {
+    Router55.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -25123,7 +25123,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router54.prototype.use = function use(handler) {
+    Router55.prototype.use = function use(handler) {
       let offset = 0;
       let path3 = "/";
       if (typeof handler !== "function") {
@@ -25156,7 +25156,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router54.prototype.route = function route(path3) {
+    Router55.prototype.route = function route(path3) {
       const route2 = new Route(path3);
       const layer = new Layer(path3, {
         sensitive: this.caseSensitive,
@@ -25171,7 +25171,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router54.prototype[method] = function(path3) {
+      Router55.prototype[method] = function(path3) {
         const route = this.route(path3);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -25354,13 +25354,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router54 = require_router();
+    var Router55 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router54 = null;
+      var router55 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -25369,13 +25369,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router54 === null) {
-            router54 = new Router54({
+          if (router55 === null) {
+            router55 = new Router55({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router54;
+          return router55;
         }
       });
     };
@@ -25446,15 +25446,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router54 = this.router;
+      var router55 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router54.use(path3, fn2);
+          return router55.use(path3, fn2);
         }
         debug(".use app under %s", path3);
         fn2.mountpath = path3;
         fn2.parent = this;
-        router54.use(path3, function mounted_app(req, res, next) {
+        router55.use(path3, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -28027,7 +28027,7 @@ var require_express = __commonJS({
     var EventEmitter2 = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router54 = require_router();
+    var Router55 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -28049,8 +28049,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router54.Route;
-    exports.Router = Router54;
+    exports.Route = Router55.Route;
+    exports.Router = Router55;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -170458,12 +170458,71 @@ var init_socialAura = __esm({
   }
 });
 
+// src/routes/webrtc.ts
+async function fetchMeteredIce() {
+  const apiKey = process.env.METERED_API_KEY;
+  if (!apiKey) return PUBLIC_FALLBACK;
+  if (cachedIce && Date.now() < cacheExpiresAt) return cachedIce;
+  try {
+    const res = await fetch(
+      `https://gilosai.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`,
+      { signal: AbortSignal.timeout(4e3) }
+    );
+    if (!res.ok) throw new Error(`Metered API ${res.status}`);
+    const servers = await res.json();
+    cachedIce = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      ...servers
+    ];
+    cacheExpiresAt = Date.now() + 55e3;
+    return cachedIce;
+  } catch (err) {
+    console.warn("[webrtc] Metered TURN fetch failed, using fallback:", err.message);
+    return PUBLIC_FALLBACK;
+  }
+}
+var import_express53, requireAuth27, router53, cachedIce, cacheExpiresAt, PUBLIC_FALLBACK, webrtc_default;
+var init_webrtc = __esm({
+  "src/routes/webrtc.ts"() {
+    "use strict";
+    import_express53 = __toESM(require_express2(), 1);
+    requireAuth27 = (req, res, next) => {
+      if (!req.session?.userId && !req.session?.user?.id) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+      next();
+    };
+    router53 = (0, import_express53.Router)();
+    cachedIce = null;
+    cacheExpiresAt = 0;
+    PUBLIC_FALLBACK = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+    ];
+    router53.get("/ice-servers", requireAuth27, async (_req, res) => {
+      try {
+        const iceServers = await fetchMeteredIce();
+        res.setHeader("Cache-Control", "private, max-age=50");
+        res.json({ iceServers });
+      } catch (err) {
+        res.status(500).json({ error: "Failed to get ICE servers" });
+      }
+    });
+    webrtc_default = router53;
+  }
+});
+
 // src/routes/index.ts
-var import_express53, router53, routes_default;
+var import_express54, router54, routes_default;
 var init_routes = __esm({
   "src/routes/index.ts"() {
     "use strict";
-    import_express53 = __toESM(require_express2(), 1);
+    import_express54 = __toESM(require_express2(), 1);
     init_health();
     init_storage();
     init_auth();
@@ -170516,60 +170575,62 @@ var init_routes = __esm({
     init_otubeAi();
     init_growTogether();
     init_socialAura();
-    router53 = (0, import_express53.Router)();
-    router53.use(health_default);
-    router53.use(storage_default);
-    router53.use(auth_default);
-    router53.use(socialAura_default);
-    router53.use(users_default);
-    router53.use(posts_default);
-    router53.use(reels_default);
-    router53.use(stories_default);
-    router53.use(messages_default);
-    router53.use(groups_default);
-    router53.use(notifications_default);
-    router53.use(ai_default);
-    router53.use(admin_default);
-    router53.use(stripe_default);
-    router53.use(moderation_default);
-    router53.use("/go", go_default);
-    router53.use("/media", media_default);
-    router53.use(wallet_default);
-    router53.use(live_default);
-    router53.use(gifts_default);
-    router53.use(creator_default);
-    router53.use(search_default);
-    router53.use(marketplace_default);
-    router53.use(openai_chat_default);
-    router53.use(library_default);
-    router53.use(voiceComments_default);
-    router53.use(gamification_default);
-    router53.use(coview_default);
-    router53.use(anon_default);
-    router53.use(scenarios_default);
-    router53.use(mood_default);
-    router53.use(aiTwin_default);
-    router53.use(factCheck_default);
-    router53.use(coSpaces_default);
-    router53.use(translate_default);
-    router53.use(muniAi_default);
-    router53.use(voiceTranslate_default);
-    router53.use(nexusCore_default);
-    router53.use(platformCosts_default);
-    router53.use(aiAutopilot_default);
-    router53.use(monetization_default);
-    router53.use(gifs_default);
-    router53.use(treasury_default);
-    router53.use(aiAdminActions_default);
-    router53.use(security_default);
-    router53.use(infraCosts_default);
-    router53.use(anonInbox_default);
-    router53.use(ghost_default);
-    router53.use(focusShield_default);
-    router53.use(challenges_default);
-    router53.use(otubeAi_default);
-    router53.use(growTogether_default);
-    routes_default = router53;
+    init_webrtc();
+    router54 = (0, import_express54.Router)();
+    router54.use(health_default);
+    router54.use(storage_default);
+    router54.use(auth_default);
+    router54.use(socialAura_default);
+    router54.use(users_default);
+    router54.use(posts_default);
+    router54.use(reels_default);
+    router54.use(stories_default);
+    router54.use(messages_default);
+    router54.use(groups_default);
+    router54.use(notifications_default);
+    router54.use(ai_default);
+    router54.use(admin_default);
+    router54.use(stripe_default);
+    router54.use(moderation_default);
+    router54.use("/go", go_default);
+    router54.use("/media", media_default);
+    router54.use(wallet_default);
+    router54.use(live_default);
+    router54.use(gifts_default);
+    router54.use(creator_default);
+    router54.use(search_default);
+    router54.use(marketplace_default);
+    router54.use(openai_chat_default);
+    router54.use(library_default);
+    router54.use(voiceComments_default);
+    router54.use(gamification_default);
+    router54.use(coview_default);
+    router54.use(anon_default);
+    router54.use(scenarios_default);
+    router54.use(mood_default);
+    router54.use(aiTwin_default);
+    router54.use(factCheck_default);
+    router54.use(coSpaces_default);
+    router54.use(translate_default);
+    router54.use(muniAi_default);
+    router54.use(voiceTranslate_default);
+    router54.use(nexusCore_default);
+    router54.use(platformCosts_default);
+    router54.use(aiAutopilot_default);
+    router54.use(monetization_default);
+    router54.use(gifs_default);
+    router54.use(treasury_default);
+    router54.use(aiAdminActions_default);
+    router54.use(security_default);
+    router54.use(infraCosts_default);
+    router54.use(anonInbox_default);
+    router54.use(ghost_default);
+    router54.use(focusShield_default);
+    router54.use(challenges_default);
+    router54.use(otubeAi_default);
+    router54.use(growTogether_default);
+    router54.use("/webrtc", webrtc_default);
+    routes_default = router54;
   }
 });
 
@@ -173866,11 +173927,11 @@ function stripPasswordHash(value, depth = 0) {
   }
   return out;
 }
-var import_express54, import_cors, import_compression, import_express_session, import_connect_pg_simple, import_pino_http, app, ALLOWED_ORIGINS, isProd, PgSession2, app_default;
+var import_express55, import_cors, import_compression, import_express_session, import_connect_pg_simple, import_pino_http, app, ALLOWED_ORIGINS, isProd, PgSession2, app_default;
 var init_app = __esm({
   "src/app.ts"() {
     "use strict";
-    import_express54 = __toESM(require_express2(), 1);
+    import_express55 = __toESM(require_express2(), 1);
     import_cors = __toESM(require_lib3(), 1);
     init_helmet();
     import_compression = __toESM(require_compression(), 1);
@@ -173889,7 +173950,7 @@ var init_app = __esm({
     init_rateLimiter();
     init_auditLog();
     init_health();
-    app = (0, import_express54.default)();
+    app = (0, import_express55.default)();
     app.set("trust proxy", 1);
     app.use((0, import_compression.default)({
       level: 6,
@@ -173952,7 +174013,7 @@ var init_app = __esm({
     });
     app.post(
       "/api/stripe/webhook",
-      import_express54.default.raw({ type: "application/json" }),
+      import_express55.default.raw({ type: "application/json" }),
       async (req, res) => {
         const signature = req.headers["stripe-signature"];
         if (!signature) {
@@ -173993,9 +174054,9 @@ var init_app = __esm({
         return next();
       }
       const isMediaUpload = req.path.includes("/upload") || req.path.includes("/media") || req.path.includes("/voice-comments");
-      import_express54.default.json({ limit: isMediaUpload ? "20mb" : "2mb" })(req, res, next);
+      import_express55.default.json({ limit: isMediaUpload ? "20mb" : "2mb" })(req, res, next);
     });
-    app.use(import_express54.default.urlencoded({ extended: true, limit: "2mb" }));
+    app.use(import_express55.default.urlencoded({ extended: true, limit: "2mb" }));
     isProd = process.env["NODE_ENV"] === "production" || !!process.env["RENDER"];
     PgSession2 = (0, import_connect_pg_simple.default)(import_express_session.default);
     app.use((0, import_express_session.default)({

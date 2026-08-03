@@ -21,6 +21,7 @@
     "@workspace/db": "workspace:*",
     "@workspace/integrations-openai-ai-server": "workspace:*",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^6.0.5",
     "cloudinary": "^2.10.0",
     "compression": "^1.8.1",
     "connect-pg-simple": "^10.0.0",

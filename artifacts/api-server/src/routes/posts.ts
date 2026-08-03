@@ -199,6 +199,43 @@ router.get("/music/stream/:id", async (req: any, res) => {
   }
 });
 
+/* ── GET /music/download/:id — Audius track download (Content-Disposition: attachment) ── */
+router.get("/music/download/:id", async (req: any, res) => {
+  try {
+    const id = String(req.params.id ?? "").replace(/[^a-zA-Z0-9_-]/g, "");
+    if (!id) { res.status(400).end(); return; }
+
+    const artist = String(req.query.artist ?? "Unknown").replace(/[^\w\s.\-()]/g, "").slice(0, 80);
+    const title  = String(req.query.title  ?? `track_${id}`).replace(/[^\w\s.\-()]/g, "").slice(0, 80);
+    const filename = `${artist} - ${title}.mp3`;
+
+    const { Readable } = await import("stream");
+    for (const host of AUDIUS_HOSTS) {
+      try {
+        const upstream = await fetch(
+          `${host}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
+          { signal: AbortSignal.timeout(20000), redirect: "follow" }
+        );
+        if (!upstream.ok || !upstream.body) continue;
+        const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
+        if (ct.includes("text/html")) continue;
+        const cl = upstream.headers.get("content-length");
+        res.setHeader("Content-Type", ct);
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cache-Control", "public, max-age=3600");
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        if (cl) res.setHeader("Content-Length", cl);
+        Readable.fromWeb(upstream.body as any).pipe(res);
+        return;
+      } catch { /* try next host */ }
+    }
+    res.status(502).json({ error: "audio unavailable" });
+  } catch (err) {
+    req.log.warn(err, "music download failed");
+    if (!res.headersSent) res.status(502).end();
+  }
+});
+
 /* ── GET /music/proxy — stream iTunes preview audio (avoids iOS CORS) ── */
 router.get("/music/proxy", async (req: any, res) => {
   try {

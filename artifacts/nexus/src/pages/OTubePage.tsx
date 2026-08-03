@@ -6803,18 +6803,17 @@ function OTubeMusicOrb() {
 
   const handleDownload = () => {
     if (!track) return;
-    const fname = encodeURIComponent(
-      `${track.artist} - ${track.title || track.name}.mp3`
-    );
-    /* Use stream endpoint with ?dl=1 — server sets Content-Disposition so
-       the browser saves the file directly without buffering the whole track */
-    const url = `${track.preview}?dl=1&fn=${fname}`;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${track.artist} - ${track.title || track.name}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    /* Extract the raw Audius track ID from the preview URL path
+       preview = "/api/music/stream/<audiusId>" or "au_<audiusId>" */
+    const audiusId = track.id.startsWith("au_")
+      ? track.id.slice(3)
+      : track.preview.split("/stream/")[1]?.split("?")[0] ?? track.id;
+    const artist = encodeURIComponent(track.artist || "Unknown");
+    const title  = encodeURIComponent(track.title || track.name || "track");
+    /* Open the dedicated download endpoint in a new tab — the browser streams
+       directly to disk via Content-Disposition: attachment, no memory buffering */
+    const url = `${API_BASE}/api/music/download/${audiusId}?artist=${artist}&title=${title}`;
+    window.open(url, "_blank", "noopener,noreferrer");
     toast({ title: "✓ Yuklab boshlandi", description: track.title || track.name });
   };
 

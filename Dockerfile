@@ -1,4 +1,6 @@
-### Nexus + bundled API — Railway deploy
+### AUTHORITATIVE RAILWAY DEPLOY FILE — do not create a second Dockerfile.
+### Railway is configured to use THIS file (repo root). artifacts/nexus/Dockerfile
+### was a duplicate and has been removed to prevent divergence and deploy breaks.
 ### Build context: REPO ROOT
 ### Pre-built dists from git + one pure-JS npm install + file-based stubs.
 ### No pnpm, no multi-stage, no binary downloads → fast reliable build.

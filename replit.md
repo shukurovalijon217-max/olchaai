@@ -68,6 +68,10 @@ GilosAI is a full social feed platform (posts, reels, stories, live, marketplace
 - User communicates in Uzbek; keep responses in Uzbek — plain, structured, non-technical where possible.
 - `uz` is the source-of-truth language for all UI copy; write `en` by hand alongside it, let other languages auto-translate with fallback.
 
+## Deployment
+
+- **Railway uses the `Dockerfile` at the repo root** — this is the single authoritative build file. `artifacts/nexus/Dockerfile` was a duplicate that caused deploy breaks when they diverged and has been permanently removed. Never add a second Dockerfile for this service.
+
 ## Gotchas
 
 - `drizzle-kit push` / `push --force` hang on a TTY prompt in this sandbox — use a targeted `psql "$DATABASE_URL" -c "ALTER TABLE ..."` instead for one-off column additions, then keep `lib/db/src/schema` in sync by hand.

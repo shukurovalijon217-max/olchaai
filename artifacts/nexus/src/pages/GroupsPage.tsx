@@ -815,6 +815,10 @@ export default function GroupsPage() {
   }, []);
 
   const handlePostImageChange = useCallback(async (file: File) => {
+    if (file.size > 20 * 1024 * 1024) {
+      showToast(t("groups.toast.file_too_large"));
+      return;
+    }
     setPostImagePreview(URL.createObjectURL(file));
     setPostImageFile(file);
   }, []);
@@ -976,7 +980,7 @@ export default function GroupsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ content, mediaUrl, postType: hasAudio ? "voice" : "text" }),
+        body: JSON.stringify({ content, mediaUrl, postType: hasAudio ? "voice" : (postImageFile?.type.startsWith("video/") ? "video" : "text") }),
       });
       if (r.ok) {
         const newPost: GroupPost = await r.json();
@@ -1915,10 +1919,14 @@ export default function GroupsPage() {
                         </button>
                       </div>
                     )}
-                    {/* Image preview in composer */}
+                    {/* Image/video preview in composer */}
                     {postImagePreview && (
                       <div className="relative mt-2 mb-1">
-                        <img src={postImagePreview} alt="" className="rounded-xl w-full max-h-48 object-cover" loading="lazy" decoding="async" />
+                        {postImageFile?.type.startsWith("video/") ? (
+                          <video src={postImagePreview} className="rounded-xl w-full max-h-48 object-cover" controls muted playsInline />
+                        ) : (
+                          <img src={postImagePreview} alt="" className="rounded-xl w-full max-h-48 object-cover" loading="lazy" decoding="async" />
+                        )}
                         <button
                           onClick={() => { setPostImageFile(null); setPostImagePreview(""); }}
                           className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80"
@@ -1930,6 +1938,7 @@ export default function GroupsPage() {
                             <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           </div>
                         )}
+                        <span className="absolute bottom-2 left-2 text-[10px] text-white/70 bg-black/40 rounded px-1.5 py-0.5">{t("groups.detail.max_20mb")}</span>
                       </div>
                     )}
                     {/* Audio preview */}
@@ -1989,7 +1998,7 @@ export default function GroupsPage() {
                     <input
                       ref={postFileRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/*,video/*"
                       className="hidden"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handlePostImageChange(f); e.target.value = ""; }}
                     />
@@ -2289,6 +2298,17 @@ export default function GroupsPage() {
                                 <div className="mt-3 flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2">
                                   <Volume2 className="w-4 h-4 text-primary flex-shrink-0" />
                                   <audio src={post.mediaUrl} controls className="flex-1 h-8" style={{ minWidth: 0 }} />
+                                </div>
+                              ) : post.mediaUrl && (post.postType === "video" || isVideoUrl(post.mediaUrl)) ? (
+                                <div className="mt-3 w-full rounded-xl overflow-hidden bg-black">
+                                  <video
+                                    src={resolveUrl(post.mediaUrl)}
+                                    className="w-full max-h-72 object-contain"
+                                    controls
+                                    playsInline
+                                    preload="metadata"
+                                    onError={e => { (e.target as HTMLVideoElement).style.display = "none"; }}
+                                  />
                                 </div>
                               ) : post.mediaUrl ? (
                                 <button onClick={() => setLightboxUrl(post.mediaUrl)} className="mt-3 w-full block">

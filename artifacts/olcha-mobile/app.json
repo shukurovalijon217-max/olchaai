@@ -41,6 +41,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8b06bf20-8b47-415a-a2cd-0277d358a15a"
+      }
+    },
+    "owner": "alijon_shukurov"
   }
 }

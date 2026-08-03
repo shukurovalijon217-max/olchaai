@@ -85,9 +85,13 @@ export async function cacheAside<T>(
   if (ttlSec <= 0) return fn();
   const full = `${namespace}:${key}`;
   const cached = await cacheGetAsync<T>(full);
-  if (cached !== null) return cached;
+  if (cached !== null && cached !== undefined) return cached;
   const data = await fn();
-  await cacheSetAsync(full, data, ttlSec * 1000);
+  // Never cache null/undefined — a missing record today may exist tomorrow
+  // (e.g. user created just after a failed lookup, or a transient DB error)
+  if (data !== null && data !== undefined) {
+    await cacheSetAsync(full, data, ttlSec * 1000);
+  }
   return data;
 }
 

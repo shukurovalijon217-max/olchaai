@@ -127201,9 +127201,11 @@ async function cacheAside(namespace, key, fn, ttlSec = 30) {
   if (ttlSec <= 0) return fn();
   const full = `${namespace}:${key}`;
   const cached2 = await cacheGetAsync(full);
-  if (cached2 !== null) return cached2;
+  if (cached2 !== null && cached2 !== void 0) return cached2;
   const data = await fn();
-  await cacheSetAsync(full, data, ttlSec * 1e3);
+  if (data !== null && data !== void 0) {
+    await cacheSetAsync(full, data, ttlSec * 1e3);
+  }
   return data;
 }
 function cacheGet(key) {

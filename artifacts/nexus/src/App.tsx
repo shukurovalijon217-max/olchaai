@@ -112,6 +112,13 @@ class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNod
   }
 }
 
+/* Reads own userId from auth — avoids stale closure over Router's `user` */
+function MyProfileRoute() {
+  const { user } = useAuth();
+  if (!user) return null; // ProtectedRoute already handles redirect
+  return <ProtectedRoute><Layout><ProfilePage userId={user.id} /></Layout></ProtectedRoute>;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -187,9 +194,7 @@ function Router() {
         <Route path="/profile/:id" component={({ params }) => (
           <ProtectedRoute><Layout><ProfilePage userId={Number(params.id)} /></Layout></ProtectedRoute>
         )} />
-        <Route path="/profile" component={() => (
-          <ProtectedRoute><Layout><ProfilePage userId={user?.id ?? 1} /></Layout></ProtectedRoute>
-        )} />
+        <Route path="/profile" component={MyProfileRoute} />
         <Route path="/notifications" component={() => (
           <ProtectedRoute><Layout><NotificationsPage /></Layout></ProtectedRoute>
         )} />

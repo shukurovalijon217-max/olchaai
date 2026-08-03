@@ -86,15 +86,48 @@ function Orb({
 }) {
   return (
     <motion.button
-      whileTap={{ scale: 0.68 }}
+      whileTap={{ scale: 0.72 }}
+      whileHover={{ scale: 1.08 }}
       onClick={onClick}
-      className="flex flex-col items-center gap-[4px]"
-      style={{ filter: "drop-shadow(0 1px 6px rgba(0,0,0,0.7))" }}
+      className="flex flex-col items-center gap-[5px] relative"
+      style={{ WebkitTapHighlightColor: "transparent" }}
     >
-      {icon}
+      {/* Glass circle */}
+      <motion.div
+        animate={active
+          ? { boxShadow: `0 0 0 1.5px ${activeColor}88, 0 0 18px ${activeColor}55, 0 4px 20px rgba(0,0,0,0.55)` }
+          : { boxShadow: "0 0 0 1px rgba(255,255,255,0.14), 0 4px 16px rgba(0,0,0,0.5)" }
+        }
+        transition={{ duration: 0.25 }}
+        className="flex items-center justify-center"
+        style={{
+          width: 50,
+          height: 50,
+          borderRadius: "50%",
+          background: active
+            ? `radial-gradient(circle at 35% 35%, ${activeColor}28 0%, rgba(0,0,0,0.52) 100%)`
+            : "radial-gradient(circle at 35% 35%, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.48) 100%)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: active
+            ? `1.5px solid ${activeColor}66`
+            : "1.5px solid rgba(255,255,255,0.18)",
+        }}
+      >
+        {icon}
+      </motion.div>
+
+      {/* Count label */}
       {count !== undefined && count > 0 && (
-        <span className="text-[10px] font-black tabular-nums leading-none"
-          style={{ color: active ? activeColor : "rgba(255,255,255,0.75)", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>
+        <span
+          className="text-[11px] font-black tabular-nums leading-none"
+          style={{
+            color: active ? activeColor : "rgba(255,255,255,0.82)",
+            textShadow: active
+              ? `0 0 10px ${activeColor}cc, 0 1px 4px rgba(0,0,0,0.9)`
+              : "0 1px 5px rgba(0,0,0,0.95)",
+          }}
+        >
           {fmt(count)}
         </span>
       )}
@@ -929,61 +962,137 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
 
       </div>
 
-      {/* ═══ LAYER 20: RIGHT ORB COLUMN — always visible ═══ */}
+      {/* ═══ LAYER 20: RIGHT ACTION COLUMN — bottom-right TikTok style ═══ */}
       <div
-        className="absolute right-3 flex flex-col items-center gap-2"
-        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 14px)", pointerEvents: commentOpen ? "none" : "auto" }}
+        className="absolute right-3 flex flex-col items-center gap-3"
+        style={{
+          zIndex: 20,
+          bottom: commentOpen ? 300 : 110,
+          transition: "bottom 0.3s cubic-bezier(0.16,1,0.3,1)",
+          pointerEvents: commentOpen ? "none" : "auto",
+        }}
         onPointerDown={e => e.stopPropagation()}
       >
-        {/* Like */}
+        {/* Volume (video or audio) — top of column */}
+        {(isVideo || hasAudio) && (
+          <Orb
+            icon={muted
+              ? <VolumeX className="w-[20px] h-[20px]" style={{ color: "rgba(255,255,255,0.55)" }} />
+              : <Volume2 className="w-[20px] h-[20px]" style={{ color: "rgba(255,255,255,0.9)" }} />
+            }
+            active={!muted} activeColor={accent} inView={isInView}
+            onClick={() => setMuted(m => !m)}
+          />
+        )}
+
+        {/* ── LIKE ── */}
         <div className="relative">
           <Orb
-            icon={<Heart className="w-[17px] h-[17px]"
-              style={{ color: liked ? "#f87171" : "rgba(255,255,255,0.75)",
-                fill: liked ? "#f87171" : "none", transition: "all 0.18s" }} />}
-            count={likes} active={liked} activeColor="#f87171" inView={isInView}
+            icon={
+              <motion.div
+                animate={liked ? { scale: [1, 1.35, 0.9, 1.12, 1] } : { scale: 1 }}
+                transition={{ duration: 0.45, ease: "easeOut" }}
+              >
+                <Heart
+                  className="w-[22px] h-[22px]"
+                  style={{
+                    color: liked ? "#ff4d6d" : "rgba(255,255,255,0.88)",
+                    fill: liked ? "#ff4d6d" : "none",
+                    filter: liked ? "drop-shadow(0 0 6px #ff4d6daa)" : "none",
+                    transition: "all 0.2s",
+                  }}
+                />
+              </motion.div>
+            }
+            count={likes} active={liked} activeColor="#ff4d6d" inView={isInView}
             onClick={handleLike}
           />
-          {/* Floating number on like */}
+          {/* Plasma burst rings on like */}
+          <AnimatePresence>
+            {liked && (
+              <>
+                {[0, 1, 2].map(i => (
+                  <motion.div key={`ring-${i}`}
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{ border: "1.5px solid #ff4d6d", borderRadius: "50%", top: "4px", left: "1px", width: 48, height: 48 }}
+                    initial={{ scale: 0.8, opacity: 0.7 }}
+                    animate={{ scale: 1.8 + i * 0.4, opacity: 0 }}
+                    exit={{}}
+                    transition={{ duration: 0.55 + i * 0.12, delay: i * 0.07, ease: "easeOut" }}
+                  />
+                ))}
+              </>
+            )}
+          </AnimatePresence>
+          {/* Floating +1 */}
           <AnimatePresence>
             {likeFloat && (
               <motion.span key={likeFloat.key}
-                initial={{ opacity: 1, y: 0, x: -8 }} animate={{ opacity: 0, y: -38 }}
-                exit={{}} transition={{ duration: 0.75, ease: "easeOut" }}
-                className="absolute text-[13px] font-black pointer-events-none select-none"
-                style={{ color: "#f87171", bottom: "100%", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
-                +1 ❤️
+                initial={{ opacity: 1, y: 0, x: -6, scale: 1 }}
+                animate={{ opacity: 0, y: -44, scale: 1.2 }}
+                exit={{}}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="absolute text-[14px] font-black pointer-events-none select-none"
+                style={{ color: "#ff4d6d", bottom: "100%", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap",
+                  textShadow: "0 0 12px #ff4d6d, 0 2px 8px rgba(0,0,0,0.9)" }}>
+                +1
               </motion.span>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Comment */}
+        {/* ── COMMENT ── */}
         <Orb
-          icon={<MessageCircle className="w-[17px] h-[17px]" style={{ color: commentOpen ? "#22d3ee" : "rgba(255,255,255,0.75)" }} />}
+          icon={
+            <MessageCircle
+              className="w-[22px] h-[22px]"
+              style={{
+                color: commentOpen ? "#22d3ee" : "rgba(255,255,255,0.88)",
+                filter: commentOpen ? "drop-shadow(0 0 6px #22d3eeaa)" : "none",
+                transition: "all 0.2s",
+              }}
+            />
+          }
           count={commentsCount} active={commentOpen} activeColor="#22d3ee" inView={isInView}
           onClick={() => { setCommentOpen(o => !o); setShareOpen(false); setMenuOpen(false); }}
         />
 
-        {/* Share */}
+        {/* ── SHARE ── */}
         <Orb
-          icon={<Share2 className="w-[17px] h-[17px]" style={{ color: shareOpen ? "#34d399" : copied ? "#34d399" : "rgba(255,255,255,0.75)" }} />}
+          icon={
+            <Share2
+              className="w-[22px] h-[22px]"
+              style={{
+                color: shareOpen || copied ? "#34d399" : "rgba(255,255,255,0.88)",
+                filter: shareOpen || copied ? "drop-shadow(0 0 6px #34d399aa)" : "none",
+                transition: "all 0.2s",
+              }}
+            />
+          }
           count={shares} active={shareOpen || copied} activeColor="#34d399" inView={isInView}
           onClick={() => { setShareOpen(o => !o); setCommentOpen(false); setMenuOpen(false); }}
         />
 
-        {/* AI / Sparkles */}
+        {/* ── AI SPARK ── */}
         <Orb
-          icon={<Sparkles className="w-[17px] h-[17px]" style={{ color: "rgba(192,132,252,0.85)" }} />}
-          active={false} activeColor="#c084fc"
+          icon={
+            <motion.div
+              animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.08, 1] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Sparkles className="w-[22px] h-[22px]" style={{ color: "#c084fc",
+                filter: "drop-shadow(0 0 5px #c084fc88)" }} />
+            </motion.div>
+          }
+          active={false} activeColor="#c084fc" inView={isInView}
           onClick={() => {}}
         />
 
-        {/* More/Delete */}
+        {/* ── MORE / DELETE ── */}
         <Orb
           icon={isOwner
-            ? <Trash2 className="w-[17px] h-[17px]" style={{ color: "rgba(248,113,113,0.8)" }} />
-            : <MoreHorizontal className="w-[17px] h-[17px]" style={{ color: "rgba(255,255,255,0.65)" }} />
+            ? <Trash2 className="w-[20px] h-[20px]" style={{ color: "rgba(248,113,113,0.85)" }} />
+            : <MoreHorizontal className="w-[20px] h-[20px]" style={{ color: "rgba(255,255,255,0.75)" }} />
           }
           active={menuOpen} activeColor={isOwner ? "#f87171" : "#818cf8"} inView={isInView}
           onClick={() => {
@@ -991,18 +1100,6 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
             else { setMenuOpen(o => !o); setCommentOpen(false); setShareOpen(false); }
           }}
         />
-
-        {/* Volume (video or audio) */}
-        {(isVideo || hasAudio) && (
-          <Orb
-            icon={muted
-              ? <VolumeX className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.45)" }} />
-              : <Volume2 className="w-[16px] h-[16px]" style={{ color: "rgba(255,255,255,0.85)" }} />
-            }
-            active={!muted} activeColor={accent} inView={isInView}
-            onClick={() => setMuted(m => !m)}
-          />
-        )}
       </div>
 
       {/* ═══ LAYER 18: CAPTION + MOOD + POLL + TAGS (bottom-left) ═══ */}

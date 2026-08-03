@@ -336,11 +336,13 @@ export default function HomePage() {
 
   /* ── Story timer (pause-on-hold) ── */
   const STORY_DURATION = 5;
-  const [storyPaused,   setStoryPaused]   = useState(false);
-  const [storyElapsed,  setStoryElapsed]  = useState(0);
-  const [storyMenuOpen, setStoryMenuOpen] = useState(false);
-  const storyTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const goNextRef     = useRef<() => void>(() => {});
+  const [storyPaused,     setStoryPaused]     = useState(false);
+  const [storyElapsed,    setStoryElapsed]    = useState(0);
+  const [storyMenuOpen,   setStoryMenuOpen]   = useState(false);
+  const [storyViewCounts, setStoryViewCounts] = useState<Record<number, number>>({});
+  const viewCalledRef  = useRef<Set<number>>(new Set());
+  const storyTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const goNextRef      = useRef<() => void>(() => {});
   /* swipe-between-groups tracking */
   const svTouchX = useRef(0);
 
@@ -418,6 +420,27 @@ export default function HomePage() {
     setStoryPaused(false);
     setStoryImgLoaded(false);
   }, [viewerStoryIdx, viewerGroupIdx]);
+
+  /* Record a view after 1 s of display (dedup: skip if already called for this story) */
+  useEffect(() => {
+    if (!activeStory) return;
+    const storyId = (activeStory as any).id as number;
+    if (viewCalledRef.current.has(storyId)) return;
+    const timer = setTimeout(async () => {
+      if (viewCalledRef.current.has(storyId)) return;
+      viewCalledRef.current.add(storyId);
+      try {
+        const res = await fetch(`${API}/api/stories/${storyId}/view`, {
+          method: "POST", credentials: "include",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStoryViewCounts(prev => ({ ...prev, [storyId]: data.viewsCount }));
+        }
+      } catch { /* silent — view tracking is non-critical */ }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [activeStory]);
 
   /* Preload current + next story images so viewer opens instantly */
   useEffect(() => {
@@ -799,11 +822,16 @@ export default function HomePage() {
                       whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
                       {activeGroup[0]?.author?.displayName || activeGroup[0]?.author?.username}
                     </div>
-                    {activeGroup.length > 1 && (
-                      <div style={{ fontSize:10, color:"rgba(255,255,255,0.5)", marginTop:1 }}>
-                        {viewerStoryIdx + 1} / {activeGroup.length}
-                      </div>
-                    )}
+                    <div style={{ fontSize:10, color:"rgba(255,255,255,0.5)", marginTop:1, display:"flex", alignItems:"center", gap:6 }}>
+                      {activeGroup.length > 1 && (
+                        <span>{viewerStoryIdx + 1} / {activeGroup.length}</span>
+                      )}
+                      {(() => {
+                        const sid = (activeStory as any)?.id as number;
+                        const count = storyViewCounts[sid] ?? (activeStory as any)?.viewsCount ?? 0;
+                        return count > 0 ? <span>👁 {count}</span> : null;
+                      })()}
+                    </div>
                   </div>
 
                   {/* ⋯ Menu button — THE only action button */}

@@ -6700,6 +6700,7 @@ function OTubeMusicOrb() {
   const [searchQ, setSearchQ]       = useState("");
   const [genre, setGenre]           = useState("pop hits 2024");
   const [loadingApi, setLoadingApi] = useState(false);
+  const [noResults, setNoResults]   = useState(false);
   const [shuffleOn, setShuffleOn]   = useState(false);
   const [repeatOne, setRepeatOne]   = useState(false);
   const [liked, setLiked]           = useState(false);
@@ -6712,18 +6713,20 @@ function OTubeMusicOrb() {
   const fetchMusic = useCallback((q: string, g: string) => {
     const query = q.trim() || g || "top hits";
     setLoadingApi(true);
+    setNoResults(false);
     fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`)
       .then(r => r.json())
       .then((d: { results?: MusicTrack[] }) => {
-        const tracks = (d.results ?? [])
+        const found = (d.results ?? [])
           .filter(t => t.preview && t.full !== false)
           .map(t => ({
             ...t,
             preview: t.preview.startsWith("/") ? `${API_BASE}${t.preview}` : t.preview,
           }));
-        if (tracks.length) { setTracks(tracks); setIdx(0); }
+        if (found.length) { setTracks(found); setIdx(0); setNoResults(false); }
+        else setNoResults(true);
       })
-      .catch(() => {})
+      .catch(() => setNoResults(true))
       .finally(() => setLoadingApi(false));
   }, []);
 
@@ -7010,11 +7013,20 @@ function OTubeMusicOrb() {
               ))}
             </div>
 
+            {/* No results */}
+            {noResults && !loadingApi && (
+              <div style={{ padding:"0 13px 8px", textAlign:"center" }}>
+                <span style={{ fontSize:10, color:"rgba(168,85,247,0.55)" }}>
+                  🔍 Natija topilmadi — boshqa kalit so'z kiriting
+                </span>
+              </div>
+            )}
+
             {/* Search */}
             <form onSubmit={handleSearch} style={{ display:"flex", gap:6, padding:"0 13px 12px" }}>
               <input
                 value={searchQ}
-                onChange={e => setSearchQ(e.target.value)}
+                onChange={e => { setSearchQ(e.target.value); setNoResults(false); }}
                 placeholder="🔍 Qo'shiq yoki artist..."
                 style={{
                   flex:1, background:"rgba(168,85,247,0.09)",
@@ -7030,7 +7042,10 @@ function OTubeMusicOrb() {
                 padding:"0 11px", cursor:"pointer",
                 color:"#fff", fontSize:12, fontWeight:800,
                 opacity: loadingApi ? 0.5 : 1,
-              }}>→</button>
+                minWidth:32,
+              }}>
+                {loadingApi ? "…" : "→"}
+              </button>
             </form>
           </motion.div>
         )}

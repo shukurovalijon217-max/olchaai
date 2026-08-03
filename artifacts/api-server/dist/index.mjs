@@ -139589,7 +139589,7 @@ async function audiusSearch(q2, limit2 = 40) {
     try {
       const r5 = await fetch(
         `${host}/v1/tracks/search?query=${encodeURIComponent(q2)}&limit=${limit2}&app_name=${AUDIUS_APP}`,
-        { signal: AbortSignal.timeout(8e3) }
+        { signal: AbortSignal.timeout(1e4), redirect: "follow" }
       );
       if (!r5.ok) continue;
       const d5 = await r5.json();
@@ -139651,9 +139651,13 @@ var init_posts2 = __esm({
       }
     });
     AUDIUS_HOSTS = [
+      "https://api.audius.co",
+      // auto-selects a live node via redirect
       "https://discoveryprovider.audius.co",
       "https://discoveryprovider2.audius.co",
-      "https://discoveryprovider3.audius.co"
+      "https://discoveryprovider3.audius.co",
+      "https://dn1.monophonic.digital",
+      "https://dn2.monophonic.digital"
     ];
     AUDIUS_APP = "olchaai";
     router5.get("/music/search", async (req, res) => {

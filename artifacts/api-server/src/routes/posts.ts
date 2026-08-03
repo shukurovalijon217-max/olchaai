@@ -105,9 +105,12 @@ router.get("/posts", async (req, res) => {
 
 /* ── GET /music/search — Audius full tracks only (no 30s previews) ── */
 const AUDIUS_HOSTS = [
+  "https://api.audius.co",           // auto-selects a live node via redirect
   "https://discoveryprovider.audius.co",
   "https://discoveryprovider2.audius.co",
   "https://discoveryprovider3.audius.co",
+  "https://dn1.monophonic.digital",
+  "https://dn2.monophonic.digital",
 ];
 const AUDIUS_APP  = "olchaai";
 
@@ -116,7 +119,7 @@ async function audiusSearch(q: string, limit = 40): Promise<any[]> {
     try {
       const r = await fetch(
         `${host}/v1/tracks/search?query=${encodeURIComponent(q)}&limit=${limit}&app_name=${AUDIUS_APP}`,
-        { signal: AbortSignal.timeout(8000) }
+        { signal: AbortSignal.timeout(10000), redirect: "follow" }
       );
       if (!r.ok) continue;
       const d = await r.json() as { data?: any[] };

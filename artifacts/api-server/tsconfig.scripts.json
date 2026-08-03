@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist-scripts",
+    "rootDir": ".",
+    "types": ["node"],
+    "moduleResolution": "node16",
+    "module": "node16"
+  },
+  "include": ["scripts", "src"],
+  "references": [
+    { "path": "../../lib/db" }
+  ]
+}

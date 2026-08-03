@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, bigint, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, bigint, text, boolean, timestamp, index } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 export const productsTable = pgTable("products", {
@@ -22,7 +22,13 @@ export const productsTable = pgTable("products", {
   reviewsCount: integer("reviews_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("products_status_created_idx").on(t.status, t.createdAt),
+  index("products_seller_id_idx").on(t.sellerId),
+  index("products_status_views_idx").on(t.status, t.viewsCount),
+  index("products_status_price_idx").on(t.status, t.price),
+  index("products_category_status_idx").on(t.category, t.status),
+]);
 
 export const productOrdersTable = pgTable("product_orders", {
   id: serial("id").primaryKey(),

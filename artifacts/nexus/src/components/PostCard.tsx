@@ -1,13 +1,14 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Flag, X,
   AlertTriangle, Trash2, Music, Sparkles, Brain, Tag, Loader2, Check, Download,
-  Mic, Gift, Tv2, StopCircle,
+  Mic, Gift, Tv2, StopCircle, ChevronDown,
 } from "lucide-react";
 import { useLikePost, useDeletePost, getListPostsQueryKey, getGetTrendingPostsQueryKey } from "@workspace/api-client-react";
 import { FastImage, FastVideo } from "@/components/FastMedia";
+import { imgOptUrl } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Post } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
@@ -30,7 +31,7 @@ const SENTIMENT_COLOR: Record<string, string> = {
   negative: "text-red-400",
 };
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API = (import.meta.env.VITE_API_BASE_URL || "");
 
 interface Analysis {
   tags?: string[];
@@ -39,7 +40,7 @@ interface Analysis {
   sentiment?: string;
 }
 
-export default function PostCard({ post, index = 0 }: PostCardProps) {
+function PostCard({ post, index = 0 }: PostCardProps) {
   const { t } = useTranslation();
   const REPORT_REASONS = [
     { value: "spam", label: t("post.reason_spam") },
@@ -79,8 +80,23 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
   const chunksRef = useRef<Blob[]>([]);
   const recordingStartRef = useRef<number>(0);
   const [sendingVoice, setSendingVoice] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const voiceErrorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showVoiceError = (msg: string) => {
+    setVoiceError(msg);
+    if (voiceErrorTimerRef.current) clearTimeout(voiceErrorTimerRef.current);
+    voiceErrorTimerRef.current = setTimeout(() => setVoiceError(null), 4000);
+  };
   /* Delete confirm */
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  /* Song download toast */
+  const [dlSong, setDlSong] = useState<string | null>(null);
+  const dlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerDlToast = (name: string) => {
+    setDlSong(name);
+    if (dlTimerRef.current) clearTimeout(dlTimerRef.current);
+    dlTimerRef.current = setTimeout(() => setDlSong(null), 3200);
+  };
   /* Tip */
   const [tipOpen, setTipOpen] = useState(false);
   const [tipAmount, setTipAmount] = useState(5000);
@@ -248,7 +264,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ contentType: "audio/webm" }),
           });
-          if (!urlRes.ok) return;
+          if (!urlRes.ok) { showVoiceError(t("voice.upload_error")); return; }
           const { uploadURL, audioUrl } = await urlRes.json();
 
           // Step 2: upload audio blob directly to R2
@@ -257,7 +273,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
             headers: { "Content-Type": "audio/webm" },
             body: blob,
           });
-          if (!uploadRes.ok) return;
+          if (!uploadRes.ok) { showVoiceError(t("voice.upload_error")); return; }
 
           // Step 3: save voice comment record with the R2 URL
           const res = await fetch(`${API}/api/posts/${post.id}/voice-comments`, {
@@ -270,7 +286,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
             const data = await res.json();
             setVoiceComments(prev => [...prev, data]);
           }
-        } catch { /* silent */ }
+        } catch { showVoiceError(t("voice.upload_error")); }
         finally { setSendingVoice(false); }
       };
       recorderRef.current = mr;
@@ -349,7 +365,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
           <Link href={`/profile/${post.author.id}`}>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center flex-shrink-0 cursor-pointer overflow-hidden">
               {post.author.avatarUrl
-                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                ? <img src={imgOptUrl(post.author.avatarUrl, 48)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 : <span className="text-sm font-bold text-primary">{post.author.displayName?.[0]?.toUpperCase()}</span>
               }
             </div>
@@ -429,15 +445,16 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
               <a href={url} download
                 className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
                 style={{ background: "rgba(251,191,36,0.12)", color: "#fbbf24" }}
-                title="Yuklab olish" onClick={e => e.stopPropagation()}>
+                title="Yuklab olish"
+                onClick={e => { e.stopPropagation(); triggerDlToast(post.content?.slice(0, 28) ?? "Qo'shiq"); }}>
                 <Download className="w-4 h-4" />
               </a>
             </div>
           );
 
           if (isVideo) return (
-            <div className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden`}>
-              <FastVideo src={url} className="absolute inset-0 w-full h-full" />
+            <div className={`relative w-full bg-black overflow-hidden`} style={{ maxHeight: 520 }}>
+              <FastVideo src={url} className="w-full h-full object-contain" style={{ maxHeight: 520 }} />
             </div>
           );
 
@@ -446,15 +463,16 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
           return (
             <div className="relative w-full">
               <div
-                className={`relative w-full aspect-video bg-gradient-to-br ${grad} overflow-hidden cursor-zoom-in`}
+                className={`relative w-full bg-gradient-to-br ${grad} overflow-hidden cursor-zoom-in flex items-center justify-center`}
+                style={{ minHeight: 180, maxHeight: 560 }}
                 onClick={() => { setLightboxIdx(cur); setLightboxUrl(allMedia[cur]); }}
               >
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div key={cur}
                     initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.18 }}
-                    className="absolute inset-0">
-                    <FastImage src={allMedia[cur]} className="absolute inset-0 w-full h-full object-cover" />
+                    className="w-full flex items-center justify-center">
+                    <FastImage src={imgOptUrl(allMedia[cur], 640)} className="w-full object-contain" style={{ maxHeight: 560 }} />
                   </motion.div>
                 </AnimatePresence>
 
@@ -548,81 +566,70 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         </AnimatePresence>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 px-3 pb-3 pt-1">
-          {/* Like */}
-          <motion.button whileTap={{ scale: 0.85 }} onClick={handleLike}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              liked ? "text-pink-400 bg-pink-400/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}>
-            <Heart className={`w-4 h-4 transition-transform ${liked ? "fill-current scale-110" : ""}`} />
-            <span>{count}</span>
+        <div className="flex items-center px-3 pb-3 pt-2 gap-3">
+          {/* Left — social counts */}
+          <motion.button whileTap={{ scale: 0.82 }} onClick={handleLike}
+            className={`flex items-center gap-1.5 transition-colors ${liked ? "text-pink-400" : "text-muted-foreground hover:text-pink-400"}`}>
+            <Heart className={`w-[18px] h-[18px] transition-transform ${liked ? "fill-current scale-110" : ""}`} />
+            <span className="text-xs font-semibold tabular-nums">{count}</span>
           </motion.button>
 
-          {/* Comment */}
           <Link href={`/post/${post.id}`}>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <MessageCircle className="w-4 h-4" />
-              <span>{post.commentsCount}</span>
+            <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+              <MessageCircle className="w-[18px] h-[18px]" />
+              <span className="text-xs font-semibold tabular-nums">{post.commentsCount}</span>
             </button>
           </Link>
 
-          {/* Share */}
-          <motion.button whileTap={{ scale: 0.85 }} onClick={handleShare}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              shared ? "text-emerald-400 bg-emerald-400/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}>
-            {shared ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-            <span>{shared ? t("common.copied") : (post.sharesCount ?? 0)}</span>
+          <motion.button whileTap={{ scale: 0.82 }} onClick={handleShare}
+            className={`flex items-center gap-1.5 transition-colors ${shared ? "text-emerald-400" : "text-muted-foreground hover:text-emerald-400"}`}>
+            {shared ? <Check className="w-[18px] h-[18px]" /> : <Share2 className="w-[18px] h-[18px]" />}
+            <span className="text-xs font-semibold tabular-nums">{shared ? "✓" : (post.sharesCount ?? 0)}</span>
           </motion.button>
 
-          {/* AI Analyze */}
-          <motion.button whileTap={{ scale: 0.85 }} onClick={handleAnalyze} disabled={analyzing}
-            title={t("post.ai_analysis")}
-            className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              showAnalysis ? "text-violet-400 bg-violet-400/10" : "text-muted-foreground hover:text-violet-400 hover:bg-violet-400/10"
-            }`}>
-            {analyzing
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Sparkles className="w-4 h-4" />
-            }
-            <span className="hidden sm:inline">AI</span>
-          </motion.button>
-
-          {/* Share Card */}
-          <motion.button whileTap={{ scale: 0.85 }} onClick={handleShareCard} disabled={sharing}
-            title={t("post.download_card")}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-amber-400 hover:bg-amber-400/10 disabled:opacity-50">
-            {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-          </motion.button>
-
-          {/* Voice Comments */}
-          {user && (
-            <motion.button whileTap={{ scale: 0.85 }} onClick={loadVoiceComments}
-              title={t("voice.title")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                voiceOpen ? "text-rose-400 bg-rose-400/10" : "text-muted-foreground hover:text-rose-400 hover:bg-rose-400/10"
-              }`}>
-              <Mic className="w-4 h-4" />
+          {/* Right — icon-only pill */}
+          <div className="ml-auto flex items-center gap-0.5 bg-muted/60 rounded-full px-1.5 py-1 border border-border/40">
+            {/* AI Analyze */}
+            <motion.button whileTap={{ scale: 0.8 }} onClick={handleAnalyze} disabled={analyzing}
+              title={t("post.ai_analysis")}
+              className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${showAnalysis ? "bg-violet-500/20 text-violet-400" : "text-muted-foreground hover:text-violet-400 hover:bg-violet-500/10"}`}>
+              {analyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
             </motion.button>
-          )}
 
-          {/* Tip */}
-          {user && user.id !== post.author.id && (
-            <motion.button whileTap={{ scale: 0.85 }} onClick={() => setTipOpen(true)}
-              title={t("tip.title")}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-yellow-400 hover:bg-yellow-400/10">
-              <Gift className="w-4 h-4" />
+            {/* Share Card */}
+            <motion.button whileTap={{ scale: 0.8 }} onClick={handleShareCard} disabled={sharing}
+              title={t("post.download_card")}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-amber-400 hover:bg-amber-400/10 transition-colors disabled:opacity-40">
+              {sharing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
             </motion.button>
-          )}
 
-          {/* CoView */}
-          {user && (
-            <motion.button whileTap={{ scale: 0.85 }} onClick={handleCoView}
-              title={t("coview.watch_together")}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-blue-400 hover:bg-blue-400/10">
-              <Tv2 className="w-4 h-4" />
-            </motion.button>
-          )}
+            {/* Voice Comments */}
+            {user && (
+              <motion.button whileTap={{ scale: 0.8 }} onClick={loadVoiceComments}
+                title={t("voice.title")}
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${voiceOpen ? "bg-rose-500/20 text-rose-400" : "text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"}`}>
+                <Mic className="w-3.5 h-3.5" />
+              </motion.button>
+            )}
+
+            {/* Tip */}
+            {user && user.id !== post.author.id && (
+              <motion.button whileTap={{ scale: 0.8 }} onClick={() => setTipOpen(true)}
+                title={t("tip.title")}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-yellow-400 hover:bg-yellow-400/10 transition-colors">
+                <Gift className="w-3.5 h-3.5" />
+              </motion.button>
+            )}
+
+            {/* CoView */}
+            {user && (
+              <motion.button whileTap={{ scale: 0.8 }} onClick={handleCoView}
+                title={t("coview.watch_together")}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-blue-400 hover:bg-blue-400/10 transition-colors">
+                <Tv2 className="w-3.5 h-3.5" />
+              </motion.button>
+            )}
+          </div>
         </div>
 
         {/* Voice Comments Panel */}
@@ -648,6 +655,20 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                       : <><Mic className="w-3 h-3" />{t("voice.record")}</>}
                   </motion.button>
                 </div>
+                <AnimatePresence>
+                  {voiceError && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-destructive/10 border border-destructive/20 overflow-hidden"
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
+                      <span className="text-xs text-destructive font-medium">{voiceError}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 {voiceComments.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-2">{t("voice.no_voices")}</p>
                 ) : (
@@ -781,6 +802,37 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
         )}
       </AnimatePresence>
 
+      {/* ── Song download toast (slides in from right → exits left) ── */}
+      <AnimatePresence>
+        {dlSong && (
+          <motion.div
+            initial={{ x: "110%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "-110%", opacity: 0 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+            className="fixed bottom-20 right-4 z-[9990] flex items-center gap-2.5 px-4 py-2.5 rounded-2xl shadow-xl border border-amber-400/30"
+            style={{ background: "linear-gradient(135deg,#1a1200cc,#2a1900ee)", backdropFilter: "blur(14px)" }}
+          >
+            <motion.div
+              animate={{ rotate: [0, 15, -10, 8, 0] }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="w-8 h-8 rounded-xl bg-amber-400/20 flex items-center justify-center flex-shrink-0">
+              <Music className="w-4 h-4 text-amber-400" />
+            </motion.div>
+            <div className="min-w-0">
+              <p className="text-[11px] text-amber-300/70 font-medium">Yuklanmoqda...</p>
+              <p className="text-xs text-amber-100 font-semibold truncate max-w-[160px]">{dlSong}</p>
+            </div>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 3.0, ease: "linear" }}
+              className="absolute bottom-0 left-0 h-0.5 rounded-full bg-amber-400/60"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Lightbox ──────────────────────────────────────────────── */}
       <AnimatePresence>
         {lightboxUrl && (() => {
@@ -843,3 +895,16 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
     </>
   );
 }
+
+function postCardEqual(prev: PostCardProps, next: PostCardProps): boolean {
+  return (
+    prev.post.id === next.post.id &&
+    prev.post.likesCount === next.post.likesCount &&
+    prev.post.isLiked === next.post.isLiked &&
+    prev.post.commentsCount === next.post.commentsCount &&
+    (prev.post as any).sharesCount === (next.post as any).sharesCount &&
+    prev.index === next.index
+  );
+}
+
+export default memo(PostCard, postCardEqual);

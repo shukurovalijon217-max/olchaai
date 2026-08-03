@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, MoreHorizontal, ChevronDown, X, Radio,
   PenLine, BookOpen, Film, MonitorPlay, Trophy, Trash2,
+  Heart, Share2, Flag, MoreVertical, MessageCircle,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
@@ -10,13 +11,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useListPosts, useGetAiFeed, useListStories, getListStoriesQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
 import FeedCard from "@/components/FeedCard";
-import StoriesBar from "@/components/StoriesBar";
+
 import CreateContentModal from "@/components/CreateContentModal";
 import TunnelFeed from "@/components/TunnelFeed";
+import StoriesBar from "@/components/StoriesBar";
 import { getFeaturePref } from "@/lib/sounds";
 import { usePip } from "@/context/PipContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API = (import.meta.env.VITE_API_BASE_URL || "");
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 
@@ -334,10 +336,13 @@ export default function HomePage() {
 
   /* ── Story timer (pause-on-hold) ── */
   const STORY_DURATION = 5;
-  const [storyPaused,  setStoryPaused]  = useState(false);
-  const [storyElapsed, setStoryElapsed] = useState(0);
+  const [storyPaused,   setStoryPaused]   = useState(false);
+  const [storyElapsed,  setStoryElapsed]  = useState(0);
+  const [storyMenuOpen, setStoryMenuOpen] = useState(false);
   const storyTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const goNextRef     = useRef<() => void>(() => {});
+  /* swipe-between-groups tracking */
+  const svTouchX = useRef(0);
 
   /* Group stories by author (one circle per author) */
   const storyGroups = useMemo(() => {
@@ -582,7 +587,7 @@ export default function HomePage() {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{
-          height: "100dvh",
+          height: "calc(100dvh - 88px)",
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
           scrollBehavior: "smooth",
@@ -602,6 +607,14 @@ export default function HomePage() {
           </div>
         ) : (
           <>
+            {/* ── STORIES BAR ── */}
+            <div style={{ scrollSnapAlign: "none" }}>
+              <StoriesBar
+                onCreateStory={() => handleSelect("story")}
+                onAvatarClick={(authorId, rect) => openStoryForAuthor(authorId, rect)}
+              />
+            </div>
+
             {/* ── POSTS ── */}
             {displayPosts.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-6" style={{ height: "100dvh", background: "#06060f", scrollSnapAlign: "start" }}>
@@ -635,117 +648,284 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* ── STORY VIEWER ── */}
+      {/* ── STORY VIEWER — NEXUS PULSE ── */}
       <AnimatePresence>
         {activeStory && activeGroup && viewerGroupIdx !== null && (
           <motion.div
-            key={`viewer-${viewerGroupIdx}`}
+            key="sv-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-0 z-[200] flex flex-col"
-            style={{ background: "#000", touchAction: "none" }}
-            onPointerDown={(e) => { if ((e.target as HTMLElement).closest("button")) return; setStoryPaused(true); }}
-            onPointerUp={() => setStoryPaused(false)}
-            onPointerLeave={() => setStoryPaused(false)}
-            onPointerCancel={() => setStoryPaused(false)}
+            transition={{ duration: 0.22 }}
+            style={{
+              position: "fixed", inset: 0, zIndex: 200,
+              background: "#000",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              touchAction: "none",
+            }}
+            onTouchStart={(e) => { svTouchX.current = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              const dx = e.changedTouches[0].clientX - svTouchX.current;
+              if (Math.abs(dx) > 55) {
+                if (dx < 0 && viewerGroupIdx < storyGroups.length - 1) {
+                  setViewerGroupIdx(i => (i ?? 0) + 1); setViewerStoryIdx(0);
+                } else if (dx > 0 && viewerGroupIdx > 0) {
+                  setViewerGroupIdx(i => (i ?? 1) - 1); setViewerStoryIdx(0);
+                } else if (dx > 0 && viewerGroupIdx === 0) {
+                  closeViewer();
+                }
+              }
+            }}
+            onClick={(e) => {
+              if (storyMenuOpen && !(e.target as HTMLElement).closest("[data-story-menu]")) {
+                setStoryMenuOpen(false);
+              }
+            }}
           >
-            {/* Media crossfade */}
+            {/* Ambient blurred background */}
+            {activeStory.mediaUrl && (
+              <div style={{
+                position: "absolute", inset: 0, zIndex: 0,
+                backgroundImage: `url(${activeStory.mediaUrl})`,
+                backgroundSize: "cover", backgroundPosition: "center",
+                filter: "blur(48px) brightness(0.22) saturate(1.8)",
+                transform: "scale(1.15)",
+                pointerEvents: "none",
+              }}/>
+            )}
+            {!activeStory.mediaUrl && (
+              <div style={{
+                position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
+                background: "radial-gradient(ellipse at 40% 30%, rgba(120,0,200,0.35) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(0,80,200,0.25) 0%, transparent 60%)",
+              }}/>
+            )}
+
+            {/* Floating story card */}
             <AnimatePresence mode="wait">
               <motion.div
-                key={`${viewerGroupIdx}-${viewerStoryIdx}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-                className="absolute inset-0"
+                key={`card-${viewerGroupIdx}-${viewerStoryIdx}`}
+                initial={{ opacity: 0, scale: 0.97, x: 24 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.97, x: -24 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                style={{
+                  position: "relative", zIndex: 1,
+                  width: "calc(100% - 20px)",
+                  height: "calc(100dvh - 20px)",
+                  borderRadius: 22,
+                  overflow: "hidden",
+                  boxShadow: "0 24px 80px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.07)",
+                }}
+                onPointerDown={(e) => { if ((e.target as HTMLElement).closest("button,[data-story-menu]")) return; setStoryPaused(true); }}
+                onPointerUp={() => setStoryPaused(false)}
+                onPointerLeave={() => setStoryPaused(false)}
+                onPointerCancel={() => setStoryPaused(false)}
               >
+                {/* ── Media layer ── */}
                 {activeStory.mediaUrl ? (
                   <>
-                    {/* Loading placeholder shown until image is ready */}
                     {!storyImgLoaded && (
-                      <div
-                        className="absolute inset-0 z-10"
-                        style={{ background: "linear-gradient(160deg,#1a0830 0%,#0a1020 100%)" }}
-                      />
+                      <div style={{ position:"absolute", inset:0, background:"linear-gradient(160deg,#1a0830,#0a1020)", zIndex:1 }}/>
                     )}
                     <img
-                      src={activeStory.mediaUrl}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      fetchPriority="high"
-                      decoding="async"
+                      src={activeStory.mediaUrl} alt=""
+                      style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+                      fetchPriority="high" decoding="async"
                       onLoad={() => setStoryImgLoaded(true)}
-                      onError={(e) => {
-                        setStoryImgLoaded(true);
-                        const el = e.currentTarget as HTMLImageElement;
-                        el.style.display = "none";
-                        const fb = el.nextElementSibling as HTMLElement | null;
-                        if (fb) { fb.style.display = "flex"; }
-                      }}
                     />
-                    <div
-                      className="w-full h-full items-center justify-center px-10"
-                      style={{ display: "none", background: "linear-gradient(160deg,#2a0845,#0d1a44)" }}
-                    >
-                      <p className="text-white text-xl font-bold text-center">{activeStory.caption || "✨"}</p>
-                    </div>
                   </>
                 ) : (
-                  <div
-                    className="w-full h-full flex items-center justify-center px-10"
-                    style={{ background: "linear-gradient(160deg,#2e0a55 0%,#0f1f50 50%,#1a0535 100%)" }}
-                  >
-                    <p className="text-white text-2xl font-bold text-center leading-snug drop-shadow-lg">
+                  <div style={{
+                    width:"100%", height:"100%",
+                    background:"linear-gradient(160deg,#2e0a55 0%,#0f1f50 50%,#1a0535 100%)",
+                    display:"flex", alignItems:"center", justifyContent:"center", padding:"0 44px",
+                  }}>
+                    <p style={{ color:"#fff", fontSize:24, fontWeight:800, textAlign:"center", lineHeight:1.4 }}>
                       {activeStory.caption || "✨"}
                     </p>
                   </div>
                 )}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ background: "linear-gradient(to bottom,rgba(0,0,0,0.6) 0%,transparent 25%,transparent 65%,rgba(0,0,0,0.7) 100%)" }}
+
+                {/* Gradient veil */}
+                <div style={{
+                  position:"absolute", inset:0, pointerEvents:"none",
+                  background:"linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, transparent 22%, transparent 60%, rgba(0,0,0,0.78) 100%)",
+                }}/>
+
+                {/* ── Progress bars ── */}
+                <div style={{
+                  position:"absolute", top:14, left:14, right:14,
+                  display:"flex", gap:4, zIndex:10,
+                }}>
+                  {activeGroup.map((_:any, si:number) => (
+                    <div key={si} style={{
+                      flex:1, height:2.5, borderRadius:2,
+                      background:"rgba(255,255,255,0.22)", overflow:"hidden",
+                    }}>
+                      <div style={{
+                        height:"100%", borderRadius:2, background:"#fff",
+                        width: si < viewerStoryIdx ? "100%"
+                          : si === viewerStoryIdx ? `${(storyElapsed / STORY_DURATION) * 100}%`
+                          : "0%",
+                      }}/>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ── Author row ── */}
+                <div style={{
+                  position:"absolute", top:28, left:14, right:14,
+                  display:"flex", alignItems:"center", gap:9, zIndex:10,
+                }}>
+                  <div style={{
+                    width:36, height:36, borderRadius:"50%", overflow:"hidden", flexShrink:0,
+                    border:"2px solid rgba(255,255,255,0.75)",
+                  }}>
+                    {activeGroup[0]?.author?.avatarUrl ? (
+                      <img src={activeGroup[0].author.avatarUrl} alt=""
+                        style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+                    ) : (
+                      <div style={{ width:"100%", height:"100%",
+                        background:"linear-gradient(135deg,#a855f7,#6366f1)",
+                        display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <span style={{ fontSize:15, fontWeight:800, color:"#fff" }}>
+                          {(activeGroup[0]?.author?.displayName || activeGroup[0]?.author?.username || "?")[0]}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:"#fff",
+                      whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                      {activeGroup[0]?.author?.displayName || activeGroup[0]?.author?.username}
+                    </div>
+                    {activeGroup.length > 1 && (
+                      <div style={{ fontSize:10, color:"rgba(255,255,255,0.5)", marginTop:1 }}>
+                        {viewerStoryIdx + 1} / {activeGroup.length}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ⋯ Menu button — THE only action button */}
+                  <div data-story-menu style={{ position:"relative" }}>
+                    <button
+                      data-story-menu
+                      onClick={(e) => { e.stopPropagation(); setStoryMenuOpen(v => !v); setStoryPaused(true); }}
+                      style={{
+                        width:34, height:34, borderRadius:"50%",
+                        background:"rgba(0,0,0,0.45)",
+                        border:"1px solid rgba(255,255,255,0.18)",
+                        backdropFilter:"blur(10px)",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        cursor:"pointer", flexShrink:0,
+                      }}
+                    >
+                      <MoreVertical style={{ width:17, height:17, color:"rgba(255,255,255,0.9)" }}/>
+                    </button>
+
+                    {/* Dropdown — iOS-style, no circles around icons */}
+                    <AnimatePresence>
+                      {storyMenuOpen && (
+                        <motion.div
+                          data-story-menu
+                          initial={{ opacity:0, y:-10, scale:0.92 }}
+                          animate={{ opacity:1, y:0, scale:1 }}
+                          exit={{ opacity:0, y:-10, scale:0.92 }}
+                          transition={{ duration:0.16, ease:"easeOut" }}
+                          style={{
+                            position:"absolute", top:40, right:0,
+                            background:"rgba(12,0,28,0.96)",
+                            border:"1px solid rgba(255,255,255,0.1)",
+                            borderRadius:18,
+                            backdropFilter:"blur(28px)",
+                            minWidth:170,
+                            overflow:"hidden",
+                            zIndex:20,
+                            boxShadow:"0 16px 48px rgba(0,0,0,0.8)",
+                          }}
+                        >
+                          {([
+                            { icon:<Heart style={{width:16,height:16}}/>,         label:"Yoqdi",        act:()=>{}  },
+                            { icon:<MessageCircle style={{width:16,height:16}}/>, label:"Javob berish",  act:()=>{}  },
+                            { icon:<Share2 style={{width:16,height:16}}/>,        label:"Ulashish",     act:()=>{}  },
+                            ...(user && (activeStory as any)?.authorId === user.id
+                              ? [{ icon:<Trash2 style={{width:16,height:16,color:"#f87171"}}/>, label:"O'chirish", danger:true, act:deleteActiveStory }]
+                              : [{ icon:<Flag style={{width:16,height:16}}/>, label:"Shikoyat", danger:false, act:()=>{} }]
+                            ),
+                            { icon:<X style={{width:16,height:16}}/>,             label:"Yopish",       act:closeViewer },
+                          ] as {icon:React.ReactNode;label:string;danger?:boolean;act:()=>void}[]).map((item, mi) => (
+                            <button
+                              key={mi}
+                              data-story-menu
+                              onClick={(e) => { e.stopPropagation(); setStoryMenuOpen(false); setStoryPaused(false); item.act(); }}
+                              style={{
+                                display:"flex", alignItems:"center", gap:12,
+                                width:"100%", padding:"13px 18px",
+                                background:"none",
+                                borderBottom: mi < 4 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                                cursor:"pointer", textAlign:"left",
+                                color: item.danger ? "#f87171" : "rgba(255,255,255,0.88)",
+                                border: "none",
+                              }}
+                            >
+                              {item.icon}
+                              <span style={{ fontSize:13, fontWeight:500 }}>{item.label}</span>
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {/* ── Caption ── */}
+                {activeStory.caption && (
+                  <div style={{
+                    position:"absolute", bottom:22, left:14, right:14, zIndex:10,
+                  }}>
+                    <div style={{
+                      background:"rgba(0,0,0,0.52)",
+                      backdropFilter:"blur(14px)",
+                      borderRadius:16,
+                      padding:"10px 15px",
+                      border:"1px solid rgba(255,255,255,0.07)",
+                    }}>
+                      <p style={{ fontSize:14, color:"rgba(255,255,255,0.92)", lineHeight:1.55, margin:0 }}>
+                        {activeStory.caption}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tap zones — prev (left 38%) / next (right 38%) */}
+                <button
+                  style={{ position:"absolute", left:0, top:0, width:"38%", height:"100%", zIndex:8, background:"none", border:"none" }}
+                  onClick={goPrevInGroup}
+                />
+                <button
+                  style={{ position:"absolute", right:0, top:0, width:"38%", height:"100%", zIndex:8, background:"none", border:"none" }}
+                  onClick={goNextInGroup}
                 />
               </motion.div>
             </AnimatePresence>
 
-            {/* Close button — minimal, top-right */}
-            <button
-              onClick={closeViewer}
-              className="absolute top-10 right-4 z-30 p-2 rounded-full"
-              style={{ background: "rgba(0,0,0,0.28)", backdropFilter: "blur(8px)" }}
-            >
-              <X className="w-5 h-5 text-white/60" />
-            </button>
-
-            {/* Delete button — only visible to story owner */}
-            {user && (activeStory as any)?.authorId === user.id && (
-              <button
-                onClick={deleteActiveStory}
-                className="absolute top-10 right-16 z-30 p-2 rounded-full"
-                style={{ background: "rgba(180,0,0,0.32)", backdropFilter: "blur(8px)" }}
-              >
-                <Trash2 className="w-5 h-5 text-red-400" />
-              </button>
-            )}
-
-            {/* Caption — ultra-minimal, bottom float */}
-            {activeStory.caption && (
-              <div className="absolute bottom-0 left-0 right-0 z-10 px-6 pb-12 pt-16"
-                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)" }}
-              >
-                <p
-                  className="text-white/90 text-[15px] font-light leading-relaxed tracking-wide"
-                  style={{ textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}
-                >
-                  {activeStory.caption}
-                </p>
+            {/* Group dots — bottom center */}
+            {storyGroups.length > 1 && (
+              <div style={{
+                position:"absolute", bottom:8, left:0, right:0, zIndex:2,
+                display:"flex", justifyContent:"center", gap:5,
+                pointerEvents:"none",
+              }}>
+                {storyGroups.map((_:any, gi:number) => (
+                  <div key={gi} style={{
+                    width: gi === viewerGroupIdx ? 16 : 5,
+                    height:5, borderRadius:3,
+                    background: gi === viewerGroupIdx ? "#fff" : "rgba(255,255,255,0.3)",
+                    transition:"all 0.3s",
+                  }}/>
+                ))}
               </div>
             )}
-
-            {/* Tap zones for prev/next */}
-            <button className="absolute left-0 top-0 w-1/3 h-full z-20" onClick={goPrevInGroup} />
-            <button className="absolute right-0 top-0 w-1/3 h-full z-20" onClick={goNextInGroup} />
           </motion.div>
         )}
       </AnimatePresence>

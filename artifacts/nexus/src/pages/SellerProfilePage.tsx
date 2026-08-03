@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API = (import.meta.env.VITE_API_BASE_URL || "");
 
 async function fetchSeller(id: number) {
   const r = await fetch(`${API}/api/marketplace/seller/${id}`, { credentials: "include" });

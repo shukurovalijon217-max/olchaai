@@ -31,24 +31,62 @@ process.on("uncaughtException", (err) => {
    When API_TARGET points to localhost (bundled mode), spawn the Express API
    as a child process. This runs regardless of what start.sh does, so it is
    immune to Docker layer-cache issues with the start script.          ── */
-const IS_BUNDLED = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(API_TARGET);
+/* If the bundled API entry exists on disk, always start it on :3001
+   regardless of API_TARGET env var (which might be overridden in Railway
+   Variables to point to the old dead external service).                  */
+const BUNDLED_API_PORT = "3001";
+const apiEntry = path.join(__dirname, "api", "dist", "index.mjs");
+const IS_BUNDLED = fs.existsSync(apiEntry);
+
+/* Track child process globally so SIGTERM handler can clean it up */
+let apiChild = null;
+let apiReady = false;
+
 if (IS_BUNDLED) {
-  const apiPort = API_TARGET.replace(/^https?:\/\/[^:]+:?/, "").replace(/\/.*$/, "") || "3001";
-  const apiEntry = path.join(__dirname, "api", "dist", "index.mjs");
-  if (fs.existsSync(apiEntry)) {
-    console.log(`[nexus] Starting bundled API on port ${apiPort}…`);
-    const apiEnv = { ...process.env, PORT: apiPort, SINGLE_PROCESS: "1" };
-    const api = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
+  /* Force API_TARGET to localhost so the proxy always routes internally */
+  process.env.API_TARGET = `http://localhost:${BUNDLED_API_PORT}`;
+  console.log(`[nexus] Bundled API found — overriding API_TARGET to http://localhost:${BUNDLED_API_PORT}`);
+  const apiEnv = { ...process.env, PORT: BUNDLED_API_PORT, SINGLE_PROCESS: "1" };
+  const spawnApi = () => {
+    apiReady = false;
+    const child = spawn(process.execPath, ["--enable-source-maps", apiEntry], {
       env: apiEnv, stdio: "inherit",
     });
-    api.on("exit", (code) => {
-      console.error(`[nexus] Bundled API exited (code=${code}) — restarting server`);
-      process.exit(1); // Railway will restart the container
+    apiChild = child;
+    /* Poll until API responds, then mark ready */
+    const pollReady = () => {
+      fetch(`http://localhost:${BUNDLED_API_PORT}/api/health`).then(() => {
+        apiReady = true;
+        console.log("[nexus] Bundled API is ready");
+      }).catch(() => {
+        if (apiChild === child) setTimeout(pollReady, 1000);
+      });
+    };
+    setTimeout(pollReady, 2000);
+    child.on("exit", (code) => {
+      apiReady = false;
+      console.error(`[nexus] Bundled API exited (code=${code}) — restarting in 3s`);
+      if (apiChild === child) setTimeout(spawnApi, 3000);
     });
-  } else {
-    console.warn(`[nexus] Bundled API entry not found at ${apiEntry} — running proxy-only`);
-  }
+  };
+  spawnApi(); // single controlled spawn with auto-restart
+} else {
+  apiReady = true; // external API — assume alive
+  console.warn(`[nexus] Bundled API entry not found at ${apiEntry} — proxy-only mode (API_TARGET=${API_TARGET})`);
 }
+
+/* ── Graceful shutdown: let Railway SIGTERM kill the child cleanly ── */
+function gracefulShutdown(signal) {
+  console.log(`[nexus] Received ${signal} — shutting down gracefully`);
+  if (apiChild) {
+    apiChild.kill("SIGTERM");
+    apiChild = null;
+  }
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 5000); // force exit after 5s
+}
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT",  () => gracefulShutdown("SIGINT"));
 
 
 const MIME = {
@@ -191,8 +229,24 @@ function proxyWebSocket(req, clientSocket, head, target) {
 
 const server = http.createServer((req, res) => {
   if (req.url === "/healthz") {
+    const bundleExists = fs.existsSync(path.join(__dirname, "api", "dist", "index.mjs"));
     res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ ok: true, build: BUILD_ID, nexusPort: PORT, apiTarget: API_TARGET }));
+    return res.end(JSON.stringify({
+      ok: true,
+      build: BUILD_ID,
+      nexusPort: PORT,
+      apiTarget: process.env.API_TARGET || API_TARGET,
+      bundleExists,
+      isBundledMode: IS_BUNDLED,
+      apiReady,
+      nodeVer: process.version,
+    }));
+  }
+
+  /* ── API health probe — 503 while bundled API is still warming up ── */
+  if (req.url === "/api-status") {
+    res.writeHead(apiReady ? 200 : 503, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ ready: apiReady, isBundledMode: IS_BUNDLED }));
   }
 
 

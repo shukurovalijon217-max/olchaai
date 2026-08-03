@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API = (import.meta.env.VITE_API_BASE_URL || "");
 const WS_URL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/go/ws`;
 
 interface Member {
@@ -64,18 +64,21 @@ export default function CoViewPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const isHost = room?.hostId === user?.id;
 
-  const connect = (roomCode: string) => {
+  const connect = (roomCode: string, roomData: Room) => {
     if (!user?.id) return;
+    // Capture host status from the freshly-fetched room data — not from React state
+    // (state update from setRoom is async, so room?.hostId would still be null here)
+    const amHost = roomData.hostId === user.id;
     const ws = new WebSocket(`${WS_URL}?userId=${user.id}`);
     ws.onopen = () => {
       setWsConnected(true);
       // isHost va hostId yuboramiz — Go server restart bo'lganda ham host to'g'ri qoladi
       ws.send(JSON.stringify({
         type: "coview_join", roomId: roomCode,
-        payload: { isHost: room?.hostId === user?.id, hostId: room?.hostId ?? 0 },
+        payload: { isHost: amHost, hostId: roomData.hostId },
       }));
       // Host: xona holatini yangi a'zolarga yuborish uchun pozitsiyani e'lon qil
-      if (videoRef.current) {
+      if (amHost && videoRef.current) {
         ws.send(JSON.stringify({
           type: "coview_sync", roomId: roomCode,
           payload: { playing: !videoRef.current.paused, time: videoRef.current.currentTime },
@@ -90,14 +93,28 @@ export default function CoViewPage() {
           setMessages(prev => [...prev, { fromId: msg.fromId, text: msg.payload?.text ?? "", ts: msg.ts, displayName: msg.payload?.displayName }]);
           setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
         }
+        // Server sends back current room state on join — sync video for non-hosts
+        if (msg.type === "coview_joined") {
+          const playing = msg.isPlaying ?? false;
+          const syncT = msg.syncTime ?? 0;
+          setSyncTime(syncT);
+          setIsPlaying(playing);
+          if (videoRef.current && !amHost) {
+            if (Math.abs(videoRef.current.currentTime - syncT) > 0.5) {
+              videoRef.current.currentTime = syncT;
+            }
+            if (playing) { videoRef.current.play().catch(() => {}); }
+            else { videoRef.current.pause(); }
+          }
+        }
         if (msg.type === "coview_sync") {
-          const t = msg.payload?.time ?? 0;
+          const syncT = msg.payload?.time ?? 0;
           const playing = msg.payload?.playing ?? false;
-          setSyncTime(t);
+          setSyncTime(syncT);
           setIsPlaying(playing);
           if (videoRef.current) {
-            if (Math.abs(videoRef.current.currentTime - t) > 1.5) {
-              videoRef.current.currentTime = t;
+            if (Math.abs(videoRef.current.currentTime - syncT) > 2.0) {
+              videoRef.current.currentTime = syncT;
             }
             if (playing) { videoRef.current.play().catch(() => {}); }
             else { videoRef.current.pause(); }
@@ -115,7 +132,7 @@ export default function CoViewPage() {
       if (!res.ok) { setError(t("coview.not_found")); return; }
       const data = await res.json();
       setRoom(data);
-      connect(roomCode);
+      connect(roomCode, data);
     } catch { setError(t("coview.error")); }
     finally { setLoading(false); }
   };
@@ -131,6 +148,23 @@ export default function CoViewPage() {
       wsRef.current?.close();
     };
   }, [code]);
+
+  // Host heartbeat: broadcast coview_sync every 5 s while playing so viewers
+  // who joined late or reconnected stay in lockstep (drift > 2 s auto-corrected
+  // by the coview_sync handler above).
+  useEffect(() => {
+    if (!isHost || !wsConnected || !isPlaying) return;
+    const interval = setInterval(() => {
+      if (wsRef.current?.readyState === 1 && videoRef.current) {
+        wsRef.current.send(JSON.stringify({
+          type: "coview_sync",
+          roomId: code,
+          payload: { playing: !videoRef.current.paused, time: videoRef.current.currentTime },
+        }));
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isHost, wsConnected, isPlaying, code]);
 
   const handleJoin = async () => {
     if (!joinCode.trim()) return;

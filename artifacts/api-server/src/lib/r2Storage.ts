@@ -64,6 +64,10 @@ export async function r2GetPresignedUploadUrl(
     Bucket: getBucketName(),
     Key: key,
     ContentType: contentType,
+    // NOTE: Do NOT add CacheControl here — it becomes part of the presigned
+    // signature and the browser PUT must then send that exact header, which
+    // our XHR/fetch upload code does not. Cloudflare edge caching is
+    // configured at the bucket/zone level instead.
   });
 
   const uploadURL = await getSignedUrl(client, command, { expiresIn: ttlSec });
@@ -108,6 +112,32 @@ export async function r2ObjectExists(objectPath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Upload a raw Buffer directly to R2 (server-side upload).
+ * Returns the public CDN URL for the uploaded object.
+ *
+ * @param buffer      File content as a Buffer
+ * @param key         R2 object key (e.g. "voice-comments/42.webm")
+ * @param contentType MIME type of the file
+ */
+export async function r2UploadBuffer(
+  buffer: Buffer,
+  key: string,
+  contentType: string
+): Promise<string> {
+  const client = getR2Client();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: getBucketName(),
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+      ContentLength: buffer.length,
+    })
+  );
+  return getPublicUrl(key);
 }
 
 function contentTypeToExt(contentType: string): string {

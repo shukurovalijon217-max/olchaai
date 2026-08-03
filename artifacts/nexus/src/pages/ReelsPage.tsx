@@ -45,7 +45,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { resolveApiUrl } from "@/lib/utils";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API = (import.meta.env.VITE_API_BASE_URL || "");
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface FeedItem {
@@ -503,7 +503,7 @@ function AuroraBorder({ color }: { color: string }) {
   );
 }
 
-/* ─── Left Action Orb ────────────────────────────────────────── */
+/* ─── Left Action Orb — icon only, no circle (#user-request) ─── */
 function LeftOrb({
   icon, count, active, activeColor, onClick,
 }: {
@@ -512,23 +512,18 @@ function LeftOrb({
 }) {
   return (
     <motion.button whileTap={{ scale: 0.68 }} onClick={onClick}
-      className="flex flex-col items-center gap-1">
-      <div className="w-[44px] h-[44px] rounded-full flex items-center justify-center relative"
-        style={{
-          background: active ? `${activeColor}28` : "transparent",
-          border: active ? `1.5px solid ${activeColor}55` : "none",
-          boxShadow: active ? `0 0 22px ${activeColor}44` : "none",
-        }}>
+      className="flex flex-col items-center gap-0.5">
+      <div className="w-[36px] h-[36px] flex items-center justify-center relative">
         {active && (
           <motion.div className="absolute inset-0 rounded-full pointer-events-none"
-            animate={{ opacity: [0.2, 0.55, 0.2] }} transition={{ duration: 2.2, repeat: Infinity }}
-            style={{ background: `radial-gradient(circle, ${activeColor}30 0%, transparent 70%)` }} />
+            animate={{ opacity: [0, 0.45, 0] }} transition={{ duration: 2.2, repeat: Infinity }}
+            style={{ background: `radial-gradient(circle, ${activeColor}40 0%, transparent 70%)` }} />
         )}
         {icon}
       </div>
       {count !== undefined && count > 0 && (
-        <span className="text-[9px] font-black tabular-nums leading-none"
-          style={{ color: active ? activeColor : "rgba(255,255,255,0.45)" }}>
+        <span className="text-[10px] font-black tabular-nums leading-none"
+          style={{ color: active ? activeColor : "rgba(255,255,255,0.55)" }}>
           {fmt(count)}
         </span>
       )}

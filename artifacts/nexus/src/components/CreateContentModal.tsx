@@ -24,7 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { getFeaturePref } from "@/lib/sounds";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API = (import.meta.env.VITE_API_BASE_URL || "");
 
 type TabType = "post" | "reel" | "story" | "otube" | "challenge";
 type Permission = "everyone" | "followers" | "friends" | "none";
@@ -286,7 +286,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
           xhr.send(pending.file);
         });
 
-        const serveUrl = `${API}/api/storage${objectPath}`;
+        // When R2 is active, objectPath is already a full CDN URL — don't wrap it again
+        const serveUrl = objectPath.startsWith("http") ? objectPath : `${API}/api/storage${objectPath}`;
 
         /* Step 3 — for videos, ask the server to transcode/compress in place
            before marking the item done. Best-effort: any failure here just

@@ -5,7 +5,7 @@ import { LANGUAGES } from "@/lib/i18n";
 import { useTranslation } from "react-i18next";
 import AIPaywall from "@/components/AIPaywall";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API = (import.meta.env.VITE_API_BASE_URL || "");
 
 type TtsVoice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 

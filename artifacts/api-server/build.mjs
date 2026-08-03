@@ -60,7 +60,7 @@ async function buildAll() {
       "@mikro-orm/*",
       "@grpc/*",
       "@swc/*",
-      "@aws-sdk/*",
+      // "@aws-sdk/*",  // bundled — only s3-request-presigner is used, pure JS
       "@azure/*",
       "@opentelemetry/*",
       "@google-cloud/*",

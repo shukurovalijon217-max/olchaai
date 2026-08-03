@@ -13,7 +13,7 @@
  * ─────────────────────────────────────────────────────────────────
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { imgOptUrl, resolveApiUrl } from "../lib/utils";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
@@ -34,7 +34,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePip } from "@/context/PipContext";
 import { toast } from "@/hooks/use-toast";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "");
 
 /* ─── Accent palette (per post index) ───────────────────────── */
 const ACCENTS = [
@@ -88,33 +88,13 @@ function Orb({
     <motion.button
       whileTap={{ scale: 0.68 }}
       onClick={onClick}
-      className="flex flex-col items-center gap-[3px]"
+      className="flex flex-col items-center gap-[4px]"
+      style={{ filter: "drop-shadow(0 1px 6px rgba(0,0,0,0.7))" }}
     >
-      <div
-        className="w-[42px] h-[42px] rounded-full flex items-center justify-center relative overflow-hidden"
-        style={{
-          background: active ? `${activeColor}28` : "rgba(6,4,16,0.58)",
-          border: `1.5px solid ${active ? activeColor + "55" : "rgba(255,255,255,0.12)"}`,
-          backdropFilter: "blur(24px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.8)",
-          boxShadow: active
-            ? `0 0 20px ${activeColor}44, inset 0 1px 0 rgba(255,255,255,0.14)`
-            : "0 2px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
-        }}
-      >
-        {active && inView && (
-          <motion.div
-            className="absolute inset-0 rounded-full pointer-events-none"
-            animate={{ opacity: [0.2, 0.5, 0.2] }}
-            transition={{ duration: 2.2, repeat: Infinity }}
-            style={{ background: `radial-gradient(circle, ${activeColor}30 0%, transparent 70%)` }}
-          />
-        )}
-        {icon}
-      </div>
+      {icon}
       {count !== undefined && count > 0 && (
-        <span className="text-[9px] font-black tabular-nums leading-none"
-          style={{ color: active ? activeColor : "rgba(255,255,255,0.45)" }}>
+        <span className="text-[10px] font-black tabular-nums leading-none"
+          style={{ color: active ? activeColor : "rgba(255,255,255,0.75)", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>
           {fmt(count)}
         </span>
       )}
@@ -237,7 +217,7 @@ interface FeedCardProps {
   onOpenStory?: (rect: DOMRect) => void;
 }
 
-export default function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps) {
+function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps) {
   const accent   = ACCENTS[index % ACCENTS.length];
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -321,46 +301,33 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
     overlayHideTimer.current = setTimeout(() => setOverlayVisible(false), 3200);
   }, []);
 
-  /* Avatar double-tap → live story bubble → tap again → fullscreen story */
-  const [liveStoryMode, setLiveStoryMode] = useState(false);
+  /* Avatar: single tap → profile, double-tap → open story directly */
   const lastAvatarTap = useRef(0);
   const avatarTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const liveModeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleAvatarClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-
-    if (liveStoryMode) {
-      if (liveModeTimer.current) clearTimeout(liveModeTimer.current);
-      setLiveStoryMode(false);
-      if (hasStory && onOpenStory) onOpenStory(rect);
-      return;
-    }
-
     const now = Date.now();
-    const isDoubleTap = now - lastAvatarTap.current < 320;
+    const isDoubleTap = now - lastAvatarTap.current < 340;
     lastAvatarTap.current = now;
 
     if (avatarTapTimer.current) { clearTimeout(avatarTapTimer.current); avatarTapTimer.current = null; }
 
-    if (isDoubleTap && hasStory) {
-      setLiveStoryMode(true);
-      if (liveModeTimer.current) clearTimeout(liveModeTimer.current);
-      liveModeTimer.current = setTimeout(() => setLiveStoryMode(false), 4500);
+    if (isDoubleTap && hasStory && onOpenStory) {
+      onOpenStory(rect);
       return;
     }
 
-    avatarTapTimer.current = setTimeout(() => {
-      post.author?.id && navigate(`/profile/${post.author.id}`);
-    }, isDoubleTap ? 0 : 260);
-  }, [liveStoryMode, hasStory, onOpenStory, post.author?.id, navigate]);
+    if (!isDoubleTap) {
+      avatarTapTimer.current = setTimeout(() => {
+        post.author?.id && navigate(`/profile/${post.author.id}`);
+      }, 260);
+    }
+  }, [hasStory, onOpenStory, post.author?.id, navigate]);
 
   useEffect(() => {
-    return () => {
-      if (avatarTapTimer.current) clearTimeout(avatarTapTimer.current);
-      if (liveModeTimer.current) clearTimeout(liveModeTimer.current);
-    };
+    return () => { if (avatarTapTimer.current) clearTimeout(avatarTapTimer.current); };
   }, []);
 
   /* Album carousel */
@@ -376,6 +343,8 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   /* Floating like number */
   const [likeFloat, setLikeFloat] = useState<{ key: number; delta: number } | null>(null);
   let floatKey = useRef(0);
+  /* Debounce: prevent duplicate like on rapid double-tap (#12) */
+  const lastLikeMs = useRef(0);
 
   /* ── Refs ── */
   const cardRef    = useRef<HTMLDivElement>(null);
@@ -496,6 +465,9 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
   /* ── Handlers ── */
   const handleLike = () => {
     if (!user) return;
+    const now = Date.now();
+    if (now - lastLikeMs.current < 600) return; // 600 ms debounce — no duplicate credits
+    lastLikeMs.current = now;
     const next = !liked;
     setLiked(next);
     setLikes(l => next ? l + 1 : Math.max(0, l - 1));
@@ -629,7 +601,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
       ref={cardRef}
       className="relative w-full flex-shrink-0 select-none overflow-hidden"
       style={{
-        height: "100dvh",
+        height: "calc(100dvh - 88px)",
         scrollSnapAlign: "start",
         background: isVideo ? "#060308" : isPhoto ? "#040810" : "#04040e",
       }}
@@ -831,54 +803,41 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
         >
           <div
             className="relative cursor-pointer"
-            style={{ width: 40, height: 40 }}
+            style={{ width: 44, height: 44 }}
             onClick={handleAvatarClick}
           >
-            <div className="absolute inset-[-2px] rounded-full pointer-events-none"
-              style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
+            {/* Story ring — pulsing glow when author has a story */}
+            {hasStory ? (
+              <motion.div
+                className="absolute inset-[-3px] rounded-full pointer-events-none"
+                animate={{
+                  boxShadow: [
+                    "0 0 0 2.5px #a855f7, 0 0 12px rgba(168,85,247,0.7)",
+                    "0 0 0 2.5px #ec4899, 0 0 20px rgba(236,72,153,0.8)",
+                    "0 0 0 2.5px #a855f7, 0 0 12px rgba(168,85,247,0.7)",
+                  ],
+                }}
+                transition={{ duration: 2.2, repeat: Infinity }}
+                style={{ borderRadius: "50%", zIndex: 8 }}
+              />
+            ) : (
+              <div className="absolute inset-[-2px] rounded-full pointer-events-none"
+                style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}44)` }} />
+            )}
             <div className="absolute inset-[2.5px] rounded-full overflow-hidden z-10 flex items-center justify-center"
               style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
               {post.author?.avatarUrl
-                ? <img src={resolveApiUrl(post.author.avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                ? <img src={imgOptUrl(post.author.avatarUrl, 48)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
               }
             </div>
-
-            {/* ── Live story bubble — appears on avatar double-tap, tap again → fullscreen story ── */}
-            <AnimatePresence>
-              {liveStoryMode && (
-                <motion.div
-                  key="live-story-ring"
-                  initial={{ opacity: 0, scale: 0.55 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.55 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
-                  className="absolute inset-[-6px] rounded-full"
-                  style={{ zIndex: 25 }}
-                >
-                  <motion.div
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    animate={{
-                      boxShadow: [
-                        "0 0 0 3px rgba(236,72,153,0.95), 0 0 22px rgba(236,72,153,0.65)",
-                        "0 0 0 3px rgba(139,92,246,0.95), 0 0 26px rgba(139,92,246,0.65)",
-                        "0 0 0 3px rgba(236,72,153,0.95), 0 0 22px rgba(236,72,153,0.65)",
-                      ],
-                    }}
-                    transition={{ duration: 1.1, repeat: Infinity }}
-                  />
-                  <motion.div
-                    className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-[3px] rounded-full pointer-events-none"
-                    style={{ background: "linear-gradient(135deg,#ec4899,#7c3aed)", boxShadow: "0 0 10px rgba(236,72,153,0.85)" }}
-                    animate={{ scale: [1, 1.18, 1] }}
-                    transition={{ duration: 0.85, repeat: Infinity }}
-                  >
-                    <span className="w-1 h-1 rounded-full bg-white" />
-                    <span className="text-[6.5px] font-black text-white tracking-wider">LIVE</span>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Story tap hint */}
+            {hasStory && (
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full z-20 flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)", boxShadow: "0 0 8px rgba(168,85,247,0.8)" }}>
+                <span className="text-[7px] font-black text-white">▶</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -968,13 +927,11 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
 
       </div>
 
-      {/* ═══ LAYER 20: RIGHT ORB COLUMN — tap to show ═══ */}
-      <motion.div
-        className="absolute right-3 flex flex-col items-center gap-2 scale-90 origin-top-right"
-        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 48px)", pointerEvents: (overlayVisible && !commentOpen) ? "auto" : "none" }}
-        animate={{ opacity: (overlayVisible && !commentOpen) ? 1 : 0, x: (overlayVisible && !commentOpen) ? 0 : 10 }}
-        transition={{ duration: 0.22, ease: "easeOut" }}
-        onPointerDown={e => { e.stopPropagation(); showOverlayBriefly(); }}
+      {/* ═══ LAYER 20: RIGHT ORB COLUMN — always visible ═══ */}
+      <div
+        className="absolute right-3 flex flex-col items-center gap-2"
+        style={{ zIndex: 20, top: "calc(env(safe-area-inset-top, 0px) + 14px)", pointerEvents: commentOpen ? "none" : "auto" }}
+        onPointerDown={e => e.stopPropagation()}
       >
         {/* Like */}
         <div className="relative">
@@ -1044,7 +1001,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
             onClick={() => setMuted(m => !m)}
           />
         )}
-      </motion.div>
+      </div>
 
       {/* ═══ LAYER 18: CAPTION + MOOD + POLL + TAGS (bottom-left) ═══ */}
       <motion.div
@@ -1413,3 +1370,21 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
     </div>
   );
 }
+
+function feedCardEqual(
+  prev: FeedCardProps,
+  next: FeedCardProps,
+): boolean {
+  return (
+    prev.post.id === next.post.id &&
+    prev.post.likesCount === next.post.likesCount &&
+    prev.post.isLiked === next.post.isLiked &&
+    prev.post.commentsCount === next.post.commentsCount &&
+    (prev.post as any).sharesCount === (next.post as any).sharesCount &&
+    prev.index === next.index &&
+    prev.hasStory === next.hasStory &&
+    prev.onOpenStory === next.onOpenStory
+  );
+}
+
+export default memo(FeedCard, feedCardEqual);

@@ -35,7 +35,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCall } from "@/context/CallContext";
 import { useRealtime } from "@/context/RealtimeContext";
 
-const API = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+const API = (import.meta.env.VITE_API_BASE_URL || "");
 
 /* ── Types ──────────────────────────────────────────────────── */
 type MsgType = "text" | "image" | "voice" | "video_note" | "file" | "sticker" | "poll" | "drawing";
@@ -944,7 +944,7 @@ export default function MessagesPage() {
   const [scheduleMode, setScheduleMode] = useState(false);
   const [scheduleTime, setScheduleTime] = useState("");
   const { startCall } = useCall();
-  const { subscribe, send: sendRealtime } = useRealtime();
+  const { subscribe, send: sendRealtime, connected: wsConnected } = useRealtime();
   const [forwardMsgId, setForwardMsgId] = useState<string|null>(null);
   const [showPollCreator, setShowPollCreator] = useState(false);
   const [selectedMsgs, setSelectedMsgs] = useState<Set<string>>(new Set());
@@ -1093,16 +1093,42 @@ export default function MessagesPage() {
     });
   },[subscribe,activeId]);
 
-  // Real-time incoming DM messages — refresh conversation list + open thread
+  // Real-time incoming DM messages — update cache directly (< 100ms, no round-trip)
   useEffect(()=>{
     return subscribe("dm_message", (msg)=>{
       const p = msg.payload ?? {};
-      const convIdFromMsg = p.conversationId;
-      if(convIdFromMsg) qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convIdFromMsg)});
+      const convIdFromMsg = p.conversationId as number;
+      const newMsg = p.message;
+
+      if(convIdFromMsg && newMsg) {
+        // Directly append to the cached message list — no HTTP refetch needed
+        qc.setQueryData(
+          getGetConversationMessagesQueryKey(convIdFromMsg),
+          (old: any[] = []) => {
+            // Deduplicate: skip if this message id is already in cache
+            if(old.some((m: any) => m.id === newMsg.id)) return old;
+            return [...old, { ...newMsg, isPending: false }];
+          }
+        );
+      } else if(convIdFromMsg) {
+        // Fallback: payload missing message body — do a full refetch
+        qc.invalidateQueries({queryKey:getGetConversationMessagesQueryKey(convIdFromMsg)});
+      }
+      // Always refresh the conversations list (preview text + unread count)
       qc.invalidateQueries({queryKey:getListConversationsQueryKey()});
       if(getFeaturePref("sound_notif",true) && convIdFromMsg!==activeId) playMessageSound();
     });
   },[subscribe,qc,activeId]);
+
+  // Real-time presence updates — instantly reflect online/offline without waiting for poll
+  useEffect(()=>{
+    return subscribe("presence_update", (msg)=>{
+      const p = msg.payload ?? {};
+      if(typeof p.userId === "number" && typeof p.online === "boolean") {
+        setPresence(prev=>({ ...prev, [p.userId]: p.online }));
+      }
+    });
+  },[subscribe]);
 
   // 🔔 Sound: play message ping when new messages from others arrive
   const lastMsgCountRef = useRef(0);
@@ -1290,7 +1316,15 @@ export default function MessagesPage() {
         <div className="px-4 border-b border-border flex-shrink-0"
           style={{paddingTop:"calc(env(safe-area-inset-top,0px) + 12px)",paddingBottom:12}}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-foreground">{t("msg.title")}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-foreground">{t("msg.title")}</h2>
+              {!wsConnected && (
+                <span className="flex items-center gap-1 text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"/>
+                  {t("msg.reconnecting") || "Reconnecting..."}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-1">
               {selectedMsgs.size>0&&(
                 <button onClick={()=>setSelectedMsgs(new Set())}

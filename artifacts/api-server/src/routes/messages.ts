@@ -131,10 +131,12 @@ router.post("/conversations", async (req, res) => {
       db.insert(chatParticipantsTable).values({ conversationId: conv.id, userId: pid })
     ));
     const statsMap = await getUserStatsMap(ids, userId);
-    const participants = await Promise.all(ids.map(async (pid: number) => {
-      const [u] = await db.select().from(usersTable).where(eq(usersTable.id, pid));
+    const userRows = await db.select().from(usersTable).where(inArray(usersTable.id, ids));
+    const userMap = new Map(userRows.map(u => [u.id, u]));
+    const participants = ids.map((pid: number) => {
+      const u = userMap.get(pid);
       return u ? { ...u, ...(statsMap.get(pid) || { followersCount: 0, followingCount: 0, postsCount: 0, isFollowing: false }) } : null;
-    }));
+    });
     res.status(201).json({ ...conv, participants: participants.filter(Boolean) });
   } catch (err) {
     req.log.error(err);

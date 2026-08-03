@@ -26,8 +26,9 @@ export default defineConfig({
   define: {
     /* Ensure the production API base URL is always baked into the bundle
        even when VITE_API_BASE_URL env-var is missing or empty at build time. */
+    /* Empty string → relative /api/* paths → Nexus proxy → bundled Express API */
     "import.meta.env.VITE_API_BASE_URL": JSON.stringify(
-      process.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app"
+      process.env.VITE_API_BASE_URL || ""
     ),
   },
   plugins: [
@@ -74,7 +75,7 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 300,
   },
   server: {
     port,

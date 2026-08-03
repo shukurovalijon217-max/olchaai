@@ -1248,7 +1248,8 @@
     "user": "Foydalanuvchi",
     "video": "Video",
     "voice_msgs": "Ovozli xabarlar",
-    "voice_recording": "Ovozli yozuv"
+    "voice_recording": "Ovozli yozuv",
+    "reconnecting": "Qayta ulanmoqda..."
   },
   "notif": {
     "title": "Bildirishnomalar",
@@ -1828,7 +1829,8 @@
     "seconds": "soniya",
     "mic_denied": "Mikrofon ruxsati yo'q",
     "close": "Yopish",
-    "record_title": "Ovozli izoh (10 sek)"
+    "record_title": "Ovozli izoh (10 sek)",
+    "upload_error": "Ovoz yuklash imkonsiz, qayta urinib ko'ring"
   },
   "coview": {
     "title": "Birga Ko'rish",

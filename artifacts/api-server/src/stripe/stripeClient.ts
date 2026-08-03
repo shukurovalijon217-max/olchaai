@@ -54,3 +54,15 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
   const { secretKey } = await getStripeCredentials();
   return new Stripe(secretKey);
 }
+
+/** Returns "live" | "test" | "unknown" based on the current secret key prefix. */
+export async function getStripeMode(): Promise<"live" | "test" | "unknown"> {
+  try {
+    const { secretKey } = await getStripeCredentials();
+    if (secretKey.startsWith("sk_live_")) return "live";
+    if (secretKey.startsWith("sk_test_")) return "test";
+    return "unknown";
+  } catch {
+    return "unknown";
+  }
+}

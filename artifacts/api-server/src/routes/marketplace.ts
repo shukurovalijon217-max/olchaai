@@ -4,7 +4,7 @@ import {
   productsTable, productOrdersTable, productReviewsTable,
   walletsTable, transactionsTable, usersTable,
 } from "@workspace/db";
-import { eq, and, or, ilike, desc, sql, ne } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, sql, ne, gte, lte, inArray, isNotNull, gt } from "drizzle-orm";
 
 const router = Router();
 
@@ -40,26 +40,39 @@ router.get("/marketplace/products", async (req: any, res) => {
     const limit = Math.min(Number(req.query.limit ?? 24), 60);
     const offset = Number(req.query.offset ?? 0);
 
-    let rows = await db.select().from(productsTable).where(eq(productsTable.status, "active"));
+    // Build SQL WHERE conditions — no in-memory filtering
+    const conditions: any[] = [eq(productsTable.status, "active")];
+    if (q) conditions.push(or(ilike(productsTable.title, `%${q}%`), ilike(productsTable.description, `%${q}%`)));
+    if (category) conditions.push(eq(productsTable.category, category));
+    if (condition) conditions.push(eq(productsTable.condition, condition));
+    if (minPrice) conditions.push(gte(productsTable.price, Number(minPrice)));
+    if (maxPrice) conditions.push(lte(productsTable.price, Number(maxPrice)));
+    if (sellerId) conditions.push(eq(productsTable.sellerId, Number(sellerId)));
+    const where = and(...conditions);
 
-    if (q) rows = rows.filter(p => p.title.toLowerCase().includes(q.toLowerCase()) || p.description?.toLowerCase().includes(q.toLowerCase()));
-    if (category) rows = rows.filter(p => p.category === category);
-    if (condition) rows = rows.filter(p => p.condition === condition);
-    if (minPrice) rows = rows.filter(p => p.price >= Number(minPrice));
-    if (maxPrice) rows = rows.filter(p => p.price <= Number(maxPrice));
-    if (sellerId) rows = rows.filter(p => p.sellerId === Number(sellerId));
+    const order = sort === "price_asc" ? asc(productsTable.price)
+      : sort === "price_desc" ? desc(productsTable.price)
+      : sort === "popular" ? desc(productsTable.viewsCount)
+      : desc(productsTable.createdAt);
 
-    if (sort === "price_asc") rows.sort((a, b) => a.price - b.price);
-    else if (sort === "price_desc") rows.sort((a, b) => b.price - a.price);
-    else if (sort === "popular") rows.sort((a, b) => b.viewsCount - a.viewsCount);
-    else rows.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Count + paginated data in parallel — single round-trip for each
+    const [[{ total }], rows] = await Promise.all([
+      db.select({ total: sql<number>`count(*)::int` }).from(productsTable).where(where),
+      db.select().from(productsTable).where(where).orderBy(order).limit(limit).offset(offset),
+    ]);
 
-    const total = rows.length;
-    const paginated = rows.slice(offset, offset + limit);
+    // Batch-enrich sellers — 1 query instead of N
+    const sellerIds = [...new Set(rows.map(p => p.sellerId))];
+    const sellers = sellerIds.length
+      ? await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, sellerIds))
+      : [];
+    const sellerMap = new Map(sellers.map(s => [s.id, s]));
 
-    const enriched = await Promise.all(paginated.map(async p => {
-      const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, p.sellerId));
-      return { ...p, mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [], tags: p.tags ? JSON.parse(p.tags) : [], seller };
+    const enriched = rows.map(p => ({
+      ...p,
+      mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [],
+      tags: p.tags ? JSON.parse(p.tags) : [],
+      seller: sellerMap.get(p.sellerId),
     }));
 
     res.json({ products: enriched, total, offset, limit });
@@ -193,11 +206,22 @@ router.get("/marketplace/orders", requireAuth, async (req: any, res) => {
       ? await db.select().from(productOrdersTable).where(eq(productOrdersTable.sellerId, myId)).orderBy(desc(productOrdersTable.createdAt))
       : await db.select().from(productOrdersTable).where(eq(productOrdersTable.buyerId, myId)).orderBy(desc(productOrdersTable.createdAt));
 
-    const enriched = await Promise.all(orders.map(async o => {
-      const [product] = await db.select({ id: productsTable.id, title: productsTable.title, thumbnailUrl: productsTable.thumbnailUrl }).from(productsTable).where(eq(productsTable.id, o.productId));
-      const otherId = role === "seller" ? o.buyerId : o.sellerId;
-      const [other] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, otherId));
-      return { ...o, product, [role === "seller" ? "buyer" : "seller"]: other };
+    if (orders.length === 0) { res.json([]); return; }
+
+    // Batch-enrich products + other users in 2 parallel queries
+    const productIds = [...new Set(orders.map(o => o.productId))];
+    const otherUserIds = [...new Set(orders.map(o => role === "seller" ? o.buyerId : o.sellerId))];
+    const [products, otherUsers] = await Promise.all([
+      db.select({ id: productsTable.id, title: productsTable.title, thumbnailUrl: productsTable.thumbnailUrl }).from(productsTable).where(inArray(productsTable.id, productIds)),
+      db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, otherUserIds)),
+    ]);
+    const productMap = new Map(products.map(p => [p.id, p]));
+    const userMap = new Map(otherUsers.map(u => [u.id, u]));
+
+    const enriched = orders.map(o => ({
+      ...o,
+      product: productMap.get(o.productId),
+      [role === "seller" ? "buyer" : "seller"]: userMap.get(role === "seller" ? o.buyerId : o.sellerId),
     }));
 
     res.json(enriched);
@@ -221,10 +245,12 @@ router.patch("/marketplace/orders/:id/status", requireAuth, async (req: any, res
 router.get("/marketplace/products/:id/reviews", async (req: any, res) => {
   try {
     const reviews = await db.select().from(productReviewsTable).where(eq(productReviewsTable.productId, Number(req.params.id))).orderBy(desc(productReviewsTable.createdAt));
-    const enriched = await Promise.all(reviews.map(async r => {
-      const [reviewer] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, r.reviewerId));
-      return { ...r, reviewer };
-    }));
+    if (reviews.length === 0) { res.json([]); return; }
+    // Batch-fetch all reviewers in 1 query instead of N
+    const reviewerIds = [...new Set(reviews.map(r => r.reviewerId))];
+    const reviewers = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, reviewerIds));
+    const reviewerMap = new Map(reviewers.map(u => [u.id, u]));
+    const enriched = reviews.map(r => ({ ...r, reviewer: reviewerMap.get(r.reviewerId) }));
     res.json(enriched);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Sharhlarni olishda xato" }); }
 });
@@ -232,49 +258,53 @@ router.get("/marketplace/products/:id/reviews", async (req: any, res) => {
 // GET /marketplace/stats
 router.get("/marketplace/stats", async (req: any, res) => {
   try {
-    const allActive = await db.select({ id: productsTable.id, sellerId: productsTable.sellerId })
-      .from(productsTable).where(eq(productsTable.status, "active"));
-    const totalProducts = allActive.length;
-    const totalSellers = new Set(allActive.map(p => p.sellerId)).size;
-    const orders = await db.select({ id: productOrdersTable.id }).from(productOrdersTable).where(ne(productOrdersTable.status, "cancelled"));
-    res.json({ totalProducts, totalSellers, totalOrders: orders.length });
+    // 3 parallel COUNT queries — no full table scans into memory
+    const [[{ totalProducts }], [{ totalSellers }], [{ totalOrders }]] = await Promise.all([
+      db.select({ totalProducts: sql<number>`count(*)::int` }).from(productsTable).where(eq(productsTable.status, "active")),
+      db.select({ totalSellers: sql<number>`count(distinct ${productsTable.sellerId})::int` }).from(productsTable).where(eq(productsTable.status, "active")),
+      db.select({ totalOrders: sql<number>`count(*)::int` }).from(productOrdersTable).where(ne(productOrdersTable.status, "cancelled")),
+    ]);
+    res.json({ totalProducts, totalSellers, totalOrders });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Statistika olishda xato" }); }
 });
 
 // GET /marketplace/featured — hot deals + new arrivals
 router.get("/marketplace/featured", async (req: any, res) => {
   try {
-    const all = await db.select().from(productsTable).where(eq(productsTable.status, "active"));
+    const activeStatus = eq(productsTable.status, "active");
 
-    const hotDeals = all
-      .filter(p => p.originalPrice && p.originalPrice > p.price)
-      .sort((a, b) => {
-        const da = 1 - a.price / (a.originalPrice ?? a.price);
-        const db2 = 1 - b.price / (b.originalPrice ?? b.price);
-        return db2 - da;
-      })
-      .slice(0, 10);
-
-    const newArrivals = [...all]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 10);
-
-    const popular = [...all]
-      .sort((a, b) => b.viewsCount - a.viewsCount)
-      .slice(0, 8);
-
-    const enrich = async (p: typeof all[0]) => {
-      const [seller] = await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(eq(usersTable.id, p.sellerId));
-      return { ...p, mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [], tags: p.tags ? JSON.parse(p.tags) : [], seller };
-    };
-
-    const [enrichedHot, enrichedNew, enrichedPopular] = await Promise.all([
-      Promise.all(hotDeals.map(enrich)),
-      Promise.all(newArrivals.map(enrich)),
-      Promise.all(popular.map(enrich)),
+    // 3 targeted SQL queries in parallel — no full table load
+    const [hotDeals, newArrivals, popular] = await Promise.all([
+      db.select().from(productsTable)
+        .where(and(activeStatus, isNotNull(productsTable.originalPrice), gt(productsTable.originalPrice, productsTable.price)))
+        .orderBy(desc(sql`(1.0 - ${productsTable.price}::float8 / ${productsTable.originalPrice}::float8)`))
+        .limit(10),
+      db.select().from(productsTable)
+        .where(activeStatus)
+        .orderBy(desc(productsTable.createdAt))
+        .limit(10),
+      db.select().from(productsTable)
+        .where(activeStatus)
+        .orderBy(desc(productsTable.viewsCount))
+        .limit(8),
     ]);
 
-    res.json({ hotDeals: enrichedHot, newArrivals: enrichedNew, popular: enrichedPopular });
+    // Batch-enrich all sellers in 1 query
+    const allRows = [...hotDeals, ...newArrivals, ...popular];
+    const sellerIds = [...new Set(allRows.map(p => p.sellerId))];
+    const sellers = sellerIds.length
+      ? await db.select({ id: usersTable.id, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl }).from(usersTable).where(inArray(usersTable.id, sellerIds))
+      : [];
+    const sellerMap = new Map(sellers.map(s => [s.id, s]));
+
+    const enrich = (p: typeof allRows[0]) => ({
+      ...p,
+      mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [],
+      tags: p.tags ? JSON.parse(p.tags) : [],
+      seller: sellerMap.get(p.sellerId),
+    });
+
+    res.json({ hotDeals: hotDeals.map(enrich), newArrivals: newArrivals.map(enrich), popular: popular.map(enrich) });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Featured olishda xato" }); }
 });
 

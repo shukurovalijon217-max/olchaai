@@ -67,7 +67,7 @@ router.post("/compare", (req: Request, res: Response) => {
  * Fetches a remote image, converts to WebP, caches 1h in-memory.
  * Used by the frontend to serve feed/profile images as WebP.
  */
-const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com)$/i;
+const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com|r2\.dev|r2\.cloudflarestorage\.com|railway\.app)$/i;
 
 function fetchRemote(url: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -106,7 +106,7 @@ router.get("/img", async (req: Request, res: Response) => {
   const cached = cacheGet<Buffer>(cacheKey);
   if (cached) {
     res.setHeader("Content-Type", "image/webp");
-    res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=2592000"); // 7d / 30d SWR
     res.setHeader("X-Cache", "HIT");
     res.end(cached);
     return;
@@ -119,10 +119,10 @@ router.get("/img", async (req: Request, res: Response) => {
       .webp({ quality, effort: 4 })
       .toBuffer();
 
-    cacheSet(cacheKey, webp, 60 * 60 * 1000); // 1h
+    cacheSet(cacheKey, webp, 24 * 60 * 60 * 1000); // 24h in-memory (was 1h)
 
     res.setHeader("Content-Type", "image/webp");
-    res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=2592000"); // 7d / 30d SWR
     res.setHeader("X-Cache", "MISS");
     res.end(webp);
   } catch (err) {

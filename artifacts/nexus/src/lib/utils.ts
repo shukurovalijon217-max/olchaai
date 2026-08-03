@@ -33,7 +33,7 @@ export function getNetworkTier(): NetworkTier {
  */
 /**
  * Resolves a URL that may be a relative `/api/...` path stored in the DB.
- * In production, VITE_API_BASE_URL is set to https://olchaai-api.onrender.com
+ * In production, VITE_API_BASE_URL is set to https://olchaai-api-production.up.railway.app
  * so relative paths are prefixed with it. Already-absolute URLs pass through.
  */
 export function resolveApiUrl(url: string | null | undefined): string {
@@ -41,7 +41,7 @@ export function resolveApiUrl(url: string | null | undefined): string {
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
     return url;
   }
-  const base = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
+  const base = (import.meta.env.VITE_API_BASE_URL || "");
   return `${base}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
@@ -69,6 +69,10 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
     return `${cloudinaryMatch[1]}w_${w},q_${q},f_auto/${cloudinaryMatch[2]}`;
   }
 
-  const base = (import.meta.env.VITE_API_BASE_URL || "https://olchaai-api-production.up.railway.app");
-  return `${base}/api/media/img?url=${encodeURIComponent(resolveApiUrl(url))}&w=${w}&q=${q}`;
+  // Route all image URLs (including absolute CDN/R2/GCS) through the WebP proxy.
+  // The proxy resizes + converts to WebP and caches for 7 days.
+  // On proxy failure the route redirects to the original URL (graceful fallback).
+  const resolved = resolveApiUrl(url);
+  const base = (import.meta.env.VITE_API_BASE_URL || "");
+  return `${base}/api/media/img?url=${encodeURIComponent(resolved)}&w=${w}&q=${q}&fmt=webp`;
 }

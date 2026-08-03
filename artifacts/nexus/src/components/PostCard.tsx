@@ -87,6 +87,8 @@ function PostCard({ post, index = 0 }: PostCardProps) {
     if (voiceErrorTimerRef.current) clearTimeout(voiceErrorTimerRef.current);
     voiceErrorTimerRef.current = setTimeout(() => setVoiceError(null), 4000);
   };
+  /* Media error — hide entire media block when image/video fails to load */
+  const [mediaError, setMediaError] = useState(false);
   /* Delete confirm */
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   /* Song download toast */
@@ -439,7 +441,7 @@ function PostCard({ post, index = 0 }: PostCardProps) {
             ? rawUrls
             : post.mediaUrl ? [post.mediaUrl] : [];
 
-          if (allMedia.length === 0) return null;
+          if (allMedia.length === 0 || mediaError) return null;
 
           const url = allMedia[0];
           const isAudio = url.match(/\.(mp3|wav|ogg|aac|m4a)(\?|$)/i) !== null;
@@ -481,7 +483,7 @@ function PostCard({ post, index = 0 }: PostCardProps) {
                     initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.18 }}
                     className="w-full flex items-center justify-center">
-                    <FastImage src={imgOptUrl(allMedia[cur], 640)} className="w-full object-contain" style={{ maxHeight: 560 }} />
+                    <FastImage src={imgOptUrl(allMedia[cur], 640)} className="w-full object-contain" style={{ maxHeight: 560 }} onError={() => setMediaError(true)} />
                   </motion.div>
                 </AnimatePresence>
 

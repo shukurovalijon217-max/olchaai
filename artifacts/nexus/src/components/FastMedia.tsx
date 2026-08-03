@@ -53,6 +53,8 @@ export interface FastImageProps {
   /** Load immediately without waiting for viewport proximity */
   priority?: boolean;
   objectFit?: "cover" | "contain" | "fill";
+  /** Called when the image fails to load (404, CORS, etc.) */
+  onError?: () => void;
 }
 
 export function FastImage({
@@ -62,8 +64,10 @@ export function FastImage({
   style,
   priority = false,
   objectFit = "cover",
+  onError: onErrorProp,
 }: FastImageProps) {
   const [loaded, setLoaded] = useState(false);
+  const [broken, setBroken] = useState(false);
   const { ref, inView } = useInView("300px");
   const shouldLoad = priority || inView;
 
@@ -75,6 +79,15 @@ export function FastImage({
     []
   );
 
+  const handleError = useCallback(() => {
+    setLoaded(true);
+    setBroken(true);
+    onErrorProp?.();
+  }, [onErrorProp]);
+
+  // Broken image: render nothing — let the parent decide how to fill the space
+  if (broken) return null;
+
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`} style={style}>
       {!loaded && <Shimmer />}
@@ -83,7 +96,7 @@ export function FastImage({
           src={src}
           alt={alt}
           onLoad={onLoad}
-          onError={() => setLoaded(true)}
+          onError={handleError}
           style={{
             width: "100%",
             height: "100%",

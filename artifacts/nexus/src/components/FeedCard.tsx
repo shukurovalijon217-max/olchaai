@@ -685,24 +685,18 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
               ))}
             </div>
           </div>
-        ) : isVideo && post.mediaUrl ? (
+        ) : isVideo && post.mediaUrl && !mediaError ? (
           <video ref={videoRef} src={resolveApiUrl(post.mediaUrl)} muted={muted} loop playsInline
-            className="w-full h-full object-cover" />
+            className="w-full h-full object-cover"
+            onError={() => setMediaError(true)} />
         ) : isPhoto && post.mediaUrl && !mediaError ? (
           <img src={imgOptUrl(post.mediaUrl, 900)} alt={post.content}
             loading="lazy" decoding="async"
             className={`w-full h-full ${photoFit} cursor-pointer`}
             onClick={showSubscribeBriefly}
             onError={() => setMediaError(true)} />
-        ) : isPhoto && (!post.mediaUrl || mediaError) ? (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2"
-            style={{ background: "linear-gradient(145deg, rgba(20,16,40,0.9), rgba(8,6,20,0.95))" }}>
-            <ImageOff className="w-9 h-9" style={{ color: "rgba(255,255,255,0.28)" }} />
-            <span className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.32)" }}>
-              {t("feed_card.media_unavailable")}
-            </span>
-          </div>
         ) : (
+          /* TEXT POST — also used as graceful fallback when media fails to load */
           /* TEXT POST */
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
             <motion.p

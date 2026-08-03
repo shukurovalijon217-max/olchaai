@@ -140226,7 +140226,14 @@ var init_posts2 = __esm({
           res.json({ results: [], source: "empty" });
           return;
         }
-        const { results, source } = await searchMusic(q2);
+        const cacheKey = q2.toLowerCase();
+        const { results, source } = await cacheAside(
+          "music:search",
+          cacheKey,
+          () => searchMusic(q2),
+          300
+          // 5 min TTL
+        );
         res.setHeader("X-Music-Source", source);
         res.json({ results, source });
       } catch (err) {

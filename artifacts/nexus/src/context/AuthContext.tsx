@@ -133,8 +133,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         if (res.status === 403) return { error: "Kirish taqiqlangan — keyinroq urinib ko'ring" };
         if (res.status === 502 || res.status === 503 || res.status === 504) {
-          if (attempt === 0) { await new Promise(r => setTimeout(r, 3000)); continue; }
-          return { error: "Server yuklanmoqda — qayta urinib ko'ring" };
+          // Signal to caller: server is restarting; caller handles countdown + retry
+          return { error: "__server_loading__" };
         }
         let data: any = {};
         try {

@@ -598,6 +598,7 @@ export default function LoginPage() {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
   const [showConsent, setShowConsent] = useState(false);
   const [, setLocation] = useLocation();
   const { login, register } = useAuth();
@@ -673,13 +674,34 @@ export default function LoginPage() {
     setError("");
     if (tab === "login") {
       setLoading(true);
-      try {
+      setRetryCountdown(null);
+      const MAX_RETRIES = 3;
+      const COUNTDOWN_SEC = 5;
+      let done = false;
+      for (let attempt = 0; attempt <= MAX_RETRIES && !done; attempt++) {
         const res = await login(form.email, form.password);
-        if (res.error) { setError(res.error); return; }
-        setLocation("/");
-      } finally {
-        setLoading(false);
+        if (res.error !== "__server_loading__") {
+          if (res.error) setError(res.error);
+          else setLocation("/");
+          done = true;
+          break;
+        }
+        // Server is restarting
+        if (attempt < MAX_RETRIES) {
+          // Countdown then retry
+          for (let cd = COUNTDOWN_SEC; cd > 0; cd--) {
+            setRetryCountdown(cd);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+          setRetryCountdown(null);
+        } else {
+          // All retries exhausted
+          setError("Server yuklanmoqda — qayta urinib ko'ring");
+          done = true;
+        }
       }
+      setLoading(false);
+      setRetryCountdown(null);
     } else {
       if (!form.username.trim()) { setError(t("auth.username_req")); return; }
       if (!form.displayName.trim()) { setError(t("auth.name_req")); return; }
@@ -990,7 +1012,30 @@ export default function LoginPage() {
               </div>
 
               <AnimatePresence>
-                {error && (
+                {retryCountdown !== null && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg"
+                    style={{ background: "rgba(120,60,0,0.18)", border: "1px solid rgba(180,100,20,0.35)" }}
+                  >
+                    <motion.span
+                      key={retryCountdown}
+                      initial={{ scale: 1.4, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.25 }}
+                      className="text-base font-bold shrink-0 w-5 text-center"
+                      style={{ color: "#e8a040" }}
+                    >
+                      {retryCountdown}
+                    </motion.span>
+                    <span className="text-xs" style={{ color: "#c8802a" }}>
+                      {retryCountdown} soniyada qayta urinib ko'rilmoqda…
+                    </span>
+                  </motion.div>
+                )}
+                {error && retryCountdown === null && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}

@@ -42093,6 +42093,14 @@ var init_nodejs = __esm({
 });
 
 // src/lib/cache.ts
+function stripQuotes(s) {
+  if (!s) return s;
+  const trimmed = s.trim();
+  if (trimmed.startsWith('"') && trimmed.endsWith('"') || trimmed.startsWith("'") && trimmed.endsWith("'")) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
 async function cacheGetAsync(key) {
   if (redis) {
     try {
@@ -42170,12 +42178,16 @@ var init_cache = __esm({
   "src/lib/cache.ts"() {
     "use strict";
     init_nodejs();
-    UPSTASH_URL = process.env["UPSTASH_REDIS_REST_URL"];
-    UPSTASH_TOKEN = process.env["UPSTASH_REDIS_REST_TOKEN"];
+    UPSTASH_URL = stripQuotes(process.env["UPSTASH_REDIS_REST_URL"]);
+    UPSTASH_TOKEN = stripQuotes(process.env["UPSTASH_REDIS_REST_TOKEN"]);
     redis = null;
     if (UPSTASH_URL && UPSTASH_TOKEN) {
-      redis = new Redis2({ url: UPSTASH_URL, token: UPSTASH_TOKEN });
-      console.log("[cache] Redis mode active (Upstash)");
+      try {
+        redis = new Redis2({ url: UPSTASH_URL, token: UPSTASH_TOKEN });
+        console.log("[cache] Redis mode active (Upstash)");
+      } catch (err) {
+        console.error("[cache] Failed to initialize Redis \u2014 falling back to in-memory:", err);
+      }
     } else {
       console.log("[cache] In-memory mode (set UPSTASH_REDIS_REST_URL to enable Redis)");
     }

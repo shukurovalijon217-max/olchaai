@@ -13,13 +13,29 @@
 import { Redis } from "@upstash/redis";
 
 // ── Redis client (lazy, only if env vars present) ────────────────────────────
-const UPSTASH_URL   = process.env["UPSTASH_REDIS_REST_URL"];
-const UPSTASH_TOKEN = process.env["UPSTASH_REDIS_REST_TOKEN"];
+// Strip accidental surrounding quotes that Railway sometimes adds to variable values
+// e.g. `"https://..."` → `https://...`
+function stripQuotes(s: string | undefined): string | undefined {
+  if (!s) return s;
+  const trimmed = s.trim();
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
+
+const UPSTASH_URL   = stripQuotes(process.env["UPSTASH_REDIS_REST_URL"]);
+const UPSTASH_TOKEN = stripQuotes(process.env["UPSTASH_REDIS_REST_TOKEN"]);
 
 let redis: Redis | null = null;
 if (UPSTASH_URL && UPSTASH_TOKEN) {
-  redis = new Redis({ url: UPSTASH_URL, token: UPSTASH_TOKEN });
-  console.log("[cache] Redis mode active (Upstash)");
+  try {
+    redis = new Redis({ url: UPSTASH_URL, token: UPSTASH_TOKEN });
+    console.log("[cache] Redis mode active (Upstash)");
+  } catch (err) {
+    console.error("[cache] Failed to initialize Redis — falling back to in-memory:", err);
+  }
 } else {
   console.log("[cache] In-memory mode (set UPSTASH_REDIS_REST_URL to enable Redis)");
 }

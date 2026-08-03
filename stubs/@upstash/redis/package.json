@@ -1,0 +1,12 @@
+{
+  "name": "@upstash/redis",
+  "version": "0.0.1",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./cloudflare": "./cloudflare.js",
+    "./cloudflare.js": "./cloudflare.js",
+    "./cloudflare.mjs": "./cloudflare.js",
+    "./node": "./index.js"
+  }
+}

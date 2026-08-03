@@ -20,9 +20,10 @@ COPY artifacts/api-server/dist/ /app/api/dist/
 # @google-cloud/storage  → not used for R2 media; graceful no-op stub
 # sharp                  → image resize; graceful no-op stub
 # @aws-sdk/s3-request-presigner is now bundled by esbuild — no npm install needed
-RUN mkdir -p /app/api/node_modules/@google-cloud /app/api/node_modules
+RUN mkdir -p /app/api/node_modules/@google-cloud /app/api/node_modules/@upstash
 COPY stubs/@google-cloud/storage/ /app/api/node_modules/@google-cloud/storage/
 COPY stubs/sharp/                 /app/api/node_modules/sharp/
+COPY stubs/@upstash/redis/        /app/api/node_modules/@upstash/redis/
 
 ENV NODE_ENV=production
 ENV PORT=3000

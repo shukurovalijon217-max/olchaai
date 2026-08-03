@@ -286,6 +286,14 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleted,       setDeleted]       = useState(false);
   const [deleting,      setDeleting]      = useState(false);
+  /* Song download toast */
+  const [dlToast, setDlToast] = useState<string | null>(null);
+  const dlTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerDlToast = (name: string) => {
+    setDlToast(name);
+    if (dlTimer.current) clearTimeout(dlTimer.current);
+    dlTimer.current = setTimeout(() => setDlToast(null), 3200);
+  };
 
   const [menuOpen,  setMenuOpen]  = useState(false);
   const [reported,  setReported]  = useState(false);
@@ -387,7 +395,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
   const hasAudio = !!(post as any).audioUrl;
   const audioName = (post as any).audioName as string | undefined;
   const audioUrl  = (post as any).audioUrl  as string | undefined;
-  const displayFormat = (post as any).displayFormat ?? "cover";
+  const displayFormat = (post as any).displayFormat ?? "contain";
   const photoFit  = displayFormat === "contain" ? "object-contain" : "object-cover";
 
   /* ── Effects ── */
@@ -1014,7 +1022,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
         {audioName && audioUrl && (
           <a href={resolveApiUrl(audioUrl)} download={audioName}
             className="inline-flex items-center gap-1.5 mb-2 cursor-pointer"
-            onClick={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); triggerDlToast(audioName); }}
             style={{ textDecoration: "none" }}>
             <span className="music-note-bounce text-white select-none" style={{ fontSize: 14, textShadow: `0 0 12px ${accent}` }}>♪</span>
             <span className="text-[12px] font-bold text-white truncate max-w-[160px]"
@@ -1353,6 +1361,48 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
                 }
               </motion.button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ Song download toast (right → left slide) ═══ */}
+      <AnimatePresence>
+        {dlToast && (
+          <motion.div
+            initial={{ x: "110%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "-110%", opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 28 }}
+            className="absolute left-4 right-16 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl overflow-hidden"
+            style={{
+              bottom: "calc(env(safe-area-inset-bottom,0px) + 96px)",
+              zIndex: 60,
+              background: "linear-gradient(135deg,rgba(20,10,0,0.88),rgba(30,16,0,0.92))",
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${accent}33`,
+              boxShadow: `0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px ${accent}18`,
+            }}
+            onPointerDown={e => e.stopPropagation()}
+          >
+            <motion.div
+              animate={{ rotate: [0, 15, -10, 8, 0] }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: `${accent}22` }}>
+              <Music className="w-4 h-4" style={{ color: accent }} />
+            </motion.div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold" style={{ color: `${accent}99` }}>Yuklanmoqda...</p>
+              <p className="text-[12px] font-bold text-white truncate">{dlToast}</p>
+            </div>
+            {/* Progress bar */}
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 3.0, ease: "linear" }}
+              className="absolute bottom-0 left-0 h-[2px] w-full origin-left rounded-full"
+              style={{ background: `linear-gradient(90deg, ${accent}cc, ${accent}44)` }}
+            />
           </motion.div>
         )}
       </AnimatePresence>

@@ -113,7 +113,7 @@ export default function CoViewPage() {
           setSyncTime(syncT);
           setIsPlaying(playing);
           if (videoRef.current) {
-            if (Math.abs(videoRef.current.currentTime - syncT) > 1.5) {
+            if (Math.abs(videoRef.current.currentTime - syncT) > 2.0) {
               videoRef.current.currentTime = syncT;
             }
             if (playing) { videoRef.current.play().catch(() => {}); }
@@ -148,6 +148,23 @@ export default function CoViewPage() {
       wsRef.current?.close();
     };
   }, [code]);
+
+  // Host heartbeat: broadcast coview_sync every 5 s while playing so viewers
+  // who joined late or reconnected stay in lockstep (drift > 2 s auto-corrected
+  // by the coview_sync handler above).
+  useEffect(() => {
+    if (!isHost || !wsConnected || !isPlaying) return;
+    const interval = setInterval(() => {
+      if (wsRef.current?.readyState === 1 && videoRef.current) {
+        wsRef.current.send(JSON.stringify({
+          type: "coview_sync",
+          roomId: code,
+          payload: { playing: !videoRef.current.paused, time: videoRef.current.currentTime },
+        }));
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isHost, wsConnected, isPlaying, code]);
 
   const handleJoin = async () => {
     if (!joinCode.trim()) return;

@@ -6708,20 +6708,20 @@ function OTubeMusicOrb() {
 
   const track = tracks[idx];
 
-  /* fetch — Audius full tracks first, iTunes 30s as fallback */
+  /* fetch — Audius full tracks only (no 30s previews) */
   const fetchMusic = useCallback((q: string, g: string) => {
     const query = q.trim() || g || "top hits";
     setLoadingApi(true);
     fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`)
       .then(r => r.json())
       .then((d: { results?: MusicTrack[] }) => {
-        const all = (d.results ?? []).filter(t => t.preview).map(t => ({
-          ...t,
-          preview: t.preview.startsWith("/") ? `${API_BASE}${t.preview}` : t.preview,
-        }));
-        /* sort: Audius full tracks before iTunes 30s previews */
-        const sorted = [...all.filter(t => t.full !== false), ...all.filter(t => t.full === false)];
-        if (sorted.length) { setTracks(sorted); setIdx(0); }
+        const tracks = (d.results ?? [])
+          .filter(t => t.preview && t.full !== false)
+          .map(t => ({
+            ...t,
+            preview: t.preview.startsWith("/") ? `${API_BASE}${t.preview}` : t.preview,
+          }));
+        if (tracks.length) { setTracks(tracks); setIdx(0); }
       })
       .catch(() => {})
       .finally(() => setLoadingApi(false));
@@ -6878,18 +6878,6 @@ function OTubeMusicOrb() {
                     whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",flex:1 }}>
                     {track?.artist ?? ""}
                   </span>
-                  {track?.full && (
-                    <span style={{ fontSize:7,fontWeight:800,color:"#00e5ff",
-                      background:"rgba(0,229,255,0.12)",padding:"1px 4px",borderRadius:4,flexShrink:0 }}>
-                      FULL
-                    </span>
-                  )}
-                  {track?.full === false && (
-                    <span style={{ fontSize:7,fontWeight:800,color:"#ff8c00",
-                      background:"rgba(255,140,0,0.12)",padding:"1px 4px",borderRadius:4,flexShrink:0 }}>
-                      30s
-                    </span>
-                  )}
                 </div>
               </div>
             </div>

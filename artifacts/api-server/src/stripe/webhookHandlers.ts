@@ -65,6 +65,31 @@ export class WebhookHandlers {
         }
         break;
       }
+      case "charge.refunded": {
+        // A charge was refunded — revoke Premium access for the associated customer.
+        const charge = event.data.object as Stripe.Charge;
+        const customerId = typeof charge.customer === "string" ? charge.customer : charge.customer?.id;
+        if (customerId) {
+          await db.update(usersTable)
+            .set({ isPremium: false })
+            .where(eq(usersTable.stripeCustomerId as any, customerId));
+        }
+        break;
+      }
+      case "charge.dispute.created": {
+        // A payment was disputed (chargeback) — revoke Premium immediately while dispute is open.
+        const dispute = event.data.object as Stripe.Dispute;
+        // dispute.charge is the charge ID; retrieve it to get the customer.
+        const chargeId = typeof dispute.charge === "string" ? dispute.charge : dispute.charge.id;
+        const charge = await stripe.charges.retrieve(chargeId);
+        const customerId = typeof charge.customer === "string" ? charge.customer : charge.customer?.id;
+        if (customerId) {
+          await db.update(usersTable)
+            .set({ isPremium: false })
+            .where(eq(usersTable.stripeCustomerId as any, customerId));
+        }
+        break;
+      }
       default:
         break;
     }

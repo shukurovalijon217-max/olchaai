@@ -165840,9 +165840,9 @@ var init_marketplace2 = __esm({
         }
         const products = await db.select().from(productsTable).where(and(eq(productsTable.sellerId, sellerId), eq(productsTable.status, "active"))).orderBy(desc(productsTable.createdAt));
         const enriched = products.map((p3) => ({ ...p3, mediaUrls: p3.mediaUrls ? JSON.parse(p3.mediaUrls) : [], tags: p3.tags ? JSON.parse(p3.tags) : [] }));
-        const totalOrders = await db.select({ id: productOrdersTable.id }).from(productOrdersTable).where(and(eq(productOrdersTable.sellerId, sellerId), ne(productOrdersTable.status, "cancelled")));
+        const [{ count: totalOrders }] = await db.select({ count: sql`COUNT(*)::int` }).from(productOrdersTable).where(and(eq(productOrdersTable.sellerId, sellerId), ne(productOrdersTable.status, "cancelled")));
         const avgRating = products.length > 0 ? Math.round(products.reduce((s, p3) => s + p3.rating, 0) / products.length) : 0;
-        res.json({ seller, products: enriched, stats: { totalProducts: products.length, totalOrders: totalOrders.length, avgRating } });
+        res.json({ seller, products: enriched, stats: { totalProducts: products.length, totalOrders, avgRating } });
       } catch (err) {
         req.log.error(err);
         res.status(500).json({ error: "Sotuvchi ma'lumotini olishda xato" });
@@ -173949,20 +173949,20 @@ function sessionKey(req) {
   const ip = (typeof xff === "string" ? xff.split(",")[0] : void 0) ?? req.socket?.remoteAddress ?? "unknown";
   return `ip:${ip}`;
 }
-function makeLimit(options) {
+function makeLimit({ windowMs, max: max2, ...rest }) {
   return rate_limit_default({
-    windowMs: options.windowMs,
-    max: options.max,
+    windowMs,
+    max: max2,
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: sessionKey,
     handler: (_req, res) => {
       res.status(429).json({
         error: "Juda ko'p so'rov yubordi \u2014 biroz kutib uring",
-        retryAfterMs: options.windowMs
+        retryAfterMs: windowMs
       });
     },
-    ...options
+    ...rest
   });
 }
 var authRateLimit, aiRateLimit, uploadRateLimit, standardRateLimit;

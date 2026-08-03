@@ -318,10 +318,10 @@ router.get("/marketplace/seller/:id", async (req: any, res) => {
     const products = await db.select().from(productsTable).where(and(eq(productsTable.sellerId, sellerId), eq(productsTable.status, "active"))).orderBy(desc(productsTable.createdAt));
     const enriched = products.map(p => ({ ...p, mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : [], tags: p.tags ? JSON.parse(p.tags) : [] }));
 
-    const totalOrders = await db.select({ id: productOrdersTable.id }).from(productOrdersTable).where(and(eq(productOrdersTable.sellerId, sellerId), ne(productOrdersTable.status, "cancelled")));
+    const [{ count: totalOrders }] = await db.select({ count: sql<number>`COUNT(*)::int` }).from(productOrdersTable).where(and(eq(productOrdersTable.sellerId, sellerId), ne(productOrdersTable.status, "cancelled")));
     const avgRating = products.length > 0 ? Math.round(products.reduce((s, p) => s + p.rating, 0) / products.length) : 0;
 
-    res.json({ seller, products: enriched, stats: { totalProducts: products.length, totalOrders: totalOrders.length, avgRating } });
+    res.json({ seller, products: enriched, stats: { totalProducts: products.length, totalOrders, avgRating } });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Sotuvchi ma'lumotini olishda xato" }); }
 });
 

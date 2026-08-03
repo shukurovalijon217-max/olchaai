@@ -921,6 +921,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   const [storyPreview,      setStoryPreview]       = useState("");
   const [storyCaption,      setStoryCaption]       = useState("");
   const [storyUploadResult, setStoryUploadResult] = useState<{ serveUrl: string } | null>(null);
+  const [storyTextOnly,     setStoryTextOnly]      = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [emotionCheck, setEmotionCheck] = useState<{ postId: number } | null>(null);
@@ -1030,13 +1031,13 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
         });
         qc.invalidateQueries({ queryKey: getListReelsQueryKey() });
       } else if (tab === "story") {
-        if (!storyUploadResult) return;
+        if (!storyUploadResult && !storyTextOnly) return;
         const mediaType = storyFile?.type.startsWith("video") ? "video" : "photo";
         await createStory.mutateAsync({
           data: {
             authorId: user.id,
-            mediaUrl: storyUploadResult.serveUrl,
-            mediaType,
+            mediaUrl: storyUploadResult ? storyUploadResult.serveUrl : "",
+            mediaType: storyUploadResult ? mediaType : "photo",
             caption: storyCaption || undefined,
           },
         });
@@ -1114,7 +1115,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
     setReelFile(null); setReelPreview(""); setReelCaption(""); setReelAudio("");
     setReelAudioFile(null); setReelAudioPreview(""); setReelUploadResult(null); setReelAudioUploadResult(null);
     setReelCommentPerm("everyone"); setReelSharePerm("everyone");
-    setStoryFile(null); setStoryPreview(""); setStoryCaption(""); setStoryUploadResult(null);
+    setStoryFile(null); setStoryPreview(""); setStoryCaption(""); setStoryUploadResult(null); setStoryTextOnly(false);
     setOtubeFile(null); setOtubePreview(""); setOtubeTitle(""); setOtubeDesc(""); setOtubeTags([]); setOtubeTagInput("");
     setOtubeUploadResult(null); setOtubeUploadProg(0);
     setOtubeCategory(""); setOtubeVisibility("public"); setOtubeThumbnail(""); setOtubeThumbnailFile(null);
@@ -1133,7 +1134,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   const canSubmit = !submitting && !upReelBusy && !upStoryBusy && !upReelAudioBusy && !upOtubeBusy && (
     (tab === "post" && queueAllDone && (postContent.trim() || mediaQueue.some(m => m.status === "done"))) ||
     (tab === "reel" && !!reelUploadResult && reelCaption.trim()) ||
-    (tab === "story" && !!storyUploadResult) ||
+    (tab === "story" && (!!storyUploadResult || (storyTextOnly && storyCaption.trim().length > 0))) ||
     (tab === "otube" && !!otubeUploadResult && otubeTitle.trim().length > 0) ||
     (tab === "challenge" && chalName.trim().length > 0 && chalHashtag.trim().length > 1)
   );
@@ -3180,7 +3181,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           const active = btn.id === "story-img-input" ? storyFile?.type.startsWith("image") : storyFile?.type.startsWith("video");
                           return (
                             <button key={btn.id}
-                              onClick={() => document.getElementById(btn.id)?.click()}
+                              onClick={() => { setStoryTextOnly(false); document.getElementById(btn.id)?.click(); }}
                               className="flex-1 flex flex-col items-center gap-2 py-6 rounded-2xl border-2 border-dashed transition-all"
                               style={{
                                 borderColor: active ? `${btn.color}77` : "rgba(255,255,255,0.1)",
@@ -3195,7 +3196,30 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                             </button>
                           );
                         })}
+                        {/* Text only button */}
+                        <button
+                          onClick={() => { setStoryTextOnly(true); setStoryFile(null); setStoryPreview(""); setStoryUploadResult(null); }}
+                          className="flex-1 flex flex-col items-center gap-2 py-6 rounded-2xl border-2 border-dashed transition-all"
+                          style={{
+                            borderColor: storyTextOnly ? "#f59e0b77" : "rgba(255,255,255,0.1)",
+                            background: storyTextOnly ? "#f59e0b10" : "rgba(255,255,255,0.02)",
+                          }}>
+                          <FileText className="w-6 h-6" style={{ color: storyTextOnly ? "#f59e0b" : "rgba(255,255,255,0.35)" }} />
+                          <span className="text-xs font-bold" style={{ color: storyTextOnly ? "#f59e0b" : "rgba(255,255,255,0.35)" }}>
+                            {t("create.story_text_only", "Faqat matn")}
+                          </span>
+                        </button>
                       </div>
+
+                      {storyTextOnly && !storyFile && (
+                        <div className="rounded-2xl flex items-center justify-center py-10 px-6 text-center"
+                          style={{ background: "linear-gradient(135deg,rgba(245,158,11,0.12),rgba(124,58,237,0.12))", border: "1px dashed rgba(245,158,11,0.35)" }}>
+                          <div>
+                            <FileText className="w-8 h-8 mx-auto mb-2" style={{ color: "#f59e0b" }} />
+                            <p className="text-xs font-semibold text-white/60">{t("create.story_text_only_hint", "Quyida matn yozing — u gradient fonida ko'rinadi")}</p>
+                          </div>
+                        </div>
+                      )}
 
                       {storyFile && (
                         <div className="relative rounded-2xl overflow-hidden" style={{ minHeight: 200 }}>

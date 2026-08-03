@@ -6873,7 +6873,7 @@ function OTubeMusicOrb() {
               <div style={{ flex:1, overflow:"hidden" }}>
                 <div style={{ fontSize:11,fontWeight:700,color:"#fff",
                   whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
-                  {loadingApi ? "Qidirilmoqda…" : (track?.title || track?.name || "—")}
+                  {loadingApi ? "Qidirilmoqda…" : noResults ? "Natija topilmadi" : (track?.title || track?.name || "—")}
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:2 }}>
                   <span style={{ fontSize:9,color:"rgba(168,85,247,0.7)",

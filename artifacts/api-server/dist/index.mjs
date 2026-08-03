@@ -162432,6 +162432,16 @@ async function getUncachableStripeClient() {
   const { secretKey } = await getStripeCredentials();
   return new stripe_esm_node_default(secretKey);
 }
+async function getStripeMode() {
+  try {
+    const { secretKey } = await getStripeCredentials();
+    if (secretKey.startsWith("sk_live_")) return "live";
+    if (secretKey.startsWith("sk_test_")) return "test";
+    return "unknown";
+  } catch {
+    return "unknown";
+  }
+}
 var init_stripeClient = __esm({
   "src/stripe/stripeClient.ts"() {
     "use strict";
@@ -163384,6 +163394,7 @@ var init_stripe = __esm({
     import_express15 = __toESM(require_express2(), 1);
     init_storage2();
     init_stripeService();
+    init_stripeClient();
     init_currency();
     router15 = (0, import_express15.Router)();
     requireAuth4 = (req, res, next) => {
@@ -163393,6 +163404,18 @@ var init_stripe = __esm({
       }
       next();
     };
+    router15.get("/stripe/mode", requireAuth4, async (req, res) => {
+      try {
+        const mode = await getStripeMode();
+        const webhookConfigured = !!process.env.STRIPE_WEBHOOK_SECRET;
+        const baseUrl = process.env.FRONTEND_URL?.replace(/\/$/, "") || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0].trim()}` : null) || `https://${req.get("host")}`;
+        const webhookUrl = `${baseUrl}/api/stripe/webhook`;
+        res.json({ mode, webhookConfigured, webhookUrl });
+      } catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Stripe rejimini aniqlab bo'lmadi" });
+      }
+    });
     router15.get("/stripe/products", async (req, res) => {
       try {
         const rows = await storage.listProductsWithPrices();
@@ -170294,6 +170317,9 @@ var init_webhookHandlers = __esm({
         }
         const webhookSecret = await getWebhookSecret();
         if (!webhookSecret) {
+          console.warn(
+            "[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not set \u2014 webhook signature verification is skipped and events are not processed. Register the webhook endpoint in the Stripe Dashboard and set STRIPE_WEBHOOK_SECRET."
+          );
           return;
         }
         const stripe = await getUncachableStripeClient();

@@ -20,6 +20,13 @@ export class WebhookHandlers {
 
     const webhookSecret = await getWebhookSecret();
     if (!webhookSecret) {
+      // In production without a webhook secret, events are unverified and ignored.
+      // Set STRIPE_WEBHOOK_SECRET to enable subscription activation via webhooks.
+      console.warn(
+        "[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not set — " +
+        "webhook signature verification is skipped and events are not processed. " +
+        "Register the webhook endpoint in the Stripe Dashboard and set STRIPE_WEBHOOK_SECRET."
+      );
       return;
     }
 

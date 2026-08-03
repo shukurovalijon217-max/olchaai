@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { storage } from "../stripe/storage";
 import { stripeService } from "../stripe/stripeService";
+import { getStripeMode } from "../stripe/stripeClient";
 import {
   currencyFromAcceptLanguage,
   usdCentsToSubunits,
@@ -16,6 +17,23 @@ const requireAuth = (req: any, res: any, next: any) => {
   }
   next();
 };
+
+// GET /api/stripe/mode — admin endpoint: shows live vs test mode and webhook status
+router.get("/stripe/mode", requireAuth, async (req: any, res) => {
+  try {
+    const mode = await getStripeMode();
+    const webhookConfigured = !!process.env.STRIPE_WEBHOOK_SECRET;
+    const baseUrl =
+      process.env.FRONTEND_URL?.replace(/\/$/, "") ||
+      (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0].trim()}` : null) ||
+      `https://${req.get("host")}`;
+    const webhookUrl = `${baseUrl}/api/stripe/webhook`;
+    res.json({ mode, webhookConfigured, webhookUrl });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Stripe rejimini aniqlab bo'lmadi" });
+  }
+});
 
 router.get("/stripe/products", async (req, res) => {
   try {

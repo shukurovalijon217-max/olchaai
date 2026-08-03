@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { storage } from "../stripe/storage";
 import { stripeService } from "../stripe/stripeService";
-import { getStripeMode } from "../stripe/stripeClient";
+import { getStripeMode, getStripeHealth } from "../stripe/stripeClient";
 import {
   currencyFromAcceptLanguage,
   usdCentsToSubunits,
@@ -18,17 +18,31 @@ const requireAuth = (req: any, res: any, next: any) => {
   next();
 };
 
-// GET /api/stripe/mode — admin endpoint: shows live vs test mode and webhook status
+// GET /api/stripe/mode — admin endpoint: shows live vs test mode, webhook status, and health
 router.get("/stripe/mode", requireAuth, async (req: any, res) => {
   try {
-    const mode = await getStripeMode();
-    const webhookConfigured = !!process.env.STRIPE_WEBHOOK_SECRET;
+    const health = getStripeHealth();
     const baseUrl =
       process.env.FRONTEND_URL?.replace(/\/$/, "") ||
       (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0].trim()}` : null) ||
       `https://${req.get("host")}`;
     const webhookUrl = `${baseUrl}/api/stripe/webhook`;
-    res.json({ mode, webhookConfigured, webhookUrl });
+    const webhookConfigured = !!process.env.STRIPE_WEBHOOK_SECRET;
+
+    // If startup validation already detected a problem, report it immediately
+    if (health && !health.ok) {
+      res.json({
+        mode: "error" as const,
+        reason: health.reason ?? "Stripe key validation failed",
+        webhookConfigured,
+        webhookUrl,
+        checkedAt: health.checkedAt,
+      });
+      return;
+    }
+
+    const mode = await getStripeMode();
+    res.json({ mode, webhookConfigured, webhookUrl, checkedAt: health?.checkedAt ?? null });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Stripe rejimini aniqlab bo'lmadi" });

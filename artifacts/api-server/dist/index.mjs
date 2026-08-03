@@ -163099,6 +163099,13 @@ var init_stripe_esm_node = __esm({
 });
 
 // src/stripe/stripeClient.ts
+var stripeClient_exports = {};
+__export(stripeClient_exports, {
+  getStripeHealth: () => getStripeHealth,
+  getStripeMode: () => getStripeMode,
+  getUncachableStripeClient: () => getUncachableStripeClient,
+  validateStripeKey: () => validateStripeKey
+});
 async function getStripeCredentials() {
   if (process.env.STRIPE_SECRET_KEY) {
     return {
@@ -163149,10 +163156,34 @@ async function getStripeMode() {
     return "unknown";
   }
 }
+function getStripeHealth() {
+  return _stripeHealth;
+}
+async function validateStripeKey() {
+  const checkedAt = (/* @__PURE__ */ new Date()).toISOString();
+  try {
+    const { secretKey } = await getStripeCredentials();
+    const stripe = new stripe_esm_node_default(secretKey);
+    await stripe.products.list({ limit: 1 });
+    _stripeHealth = { ok: true, checkedAt };
+    const mode = secretKey.startsWith("sk_live_") ? "live" : secretKey.startsWith("sk_test_") ? "test" : "unknown";
+    logger.info({ mode }, "\u2705 Stripe key validated successfully");
+  } catch (err) {
+    const reason = err?.raw?.message ?? err?.message ?? "Unknown Stripe error";
+    _stripeHealth = { ok: false, reason, checkedAt };
+    logger.warn(
+      { reason },
+      `\u26A0\uFE0F  STRIPE MISCONFIGURATION \u2014 Stripe key is invalid or unreachable. Premium purchases will fail until this is resolved. Reason: ${reason}`
+    );
+  }
+}
+var _stripeHealth;
 var init_stripeClient = __esm({
   "src/stripe/stripeClient.ts"() {
     "use strict";
     init_stripe_esm_node();
+    init_logger();
+    _stripeHealth = null;
   }
 });
 
@@ -164113,11 +164144,22 @@ var init_stripe = __esm({
     };
     router15.get("/stripe/mode", requireAuth4, async (req, res) => {
       try {
-        const mode = await getStripeMode();
-        const webhookConfigured = !!process.env.STRIPE_WEBHOOK_SECRET;
+        const health = getStripeHealth();
         const baseUrl = process.env.FRONTEND_URL?.replace(/\/$/, "") || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0].trim()}` : null) || `https://${req.get("host")}`;
         const webhookUrl = `${baseUrl}/api/stripe/webhook`;
-        res.json({ mode, webhookConfigured, webhookUrl });
+        const webhookConfigured = !!process.env.STRIPE_WEBHOOK_SECRET;
+        if (health && !health.ok) {
+          res.json({
+            mode: "error",
+            reason: health.reason ?? "Stripe key validation failed",
+            webhookConfigured,
+            webhookUrl,
+            checkedAt: health.checkedAt
+          });
+          return;
+        }
+        const mode = await getStripeMode();
+        res.json({ mode, webhookConfigured, webhookUrl, checkedAt: health?.checkedAt ?? null });
       } catch (err) {
         req.log.error(err);
         res.status(500).json({ error: "Stripe rejimini aniqlab bo'lmadi" });
@@ -174661,7 +174703,11 @@ async function runServer() {
       resolve();
     });
   });
-  logger.info("Stripe ready (direct API mode)");
+  Promise.resolve().then(() => (init_stripeClient(), stripeClient_exports)).then(({ validateStripeKey: validateStripeKey2 }) => {
+    validateStripeKey2().catch(
+      (err) => logger.warn({ err }, "Stripe startup validation unexpectedly threw")
+    );
+  }).catch((err) => logger.warn({ err }, "Could not import stripeClient for startup check"));
   try {
     const { initTFEngine: initTFEngine2 } = await Promise.resolve().then(() => (init_tfEngine(), tfEngine_exports));
     initTFEngine2().then(() => logger.info("TensorFlow.js engine ready")).catch((err) => logger.warn({ err }, "TF engine unavailable \u2014 using rule-based only"));

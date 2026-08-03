@@ -3233,6 +3233,7 @@ export default function AdminPage() {
   const { status: aiCore, events: aiCoreEvents, online: aiCoreOnline, lastRefresh: aiCoreRefresh } = useAiCore();
   const [aiUsageStats, setAiUsageStats] = useState<any>(null);
   const [aiUsageLoading, setAiUsageLoading] = useState(false);
+  const [stripeMode, setStripeMode] = useState<{ mode: string; reason?: string; webhookConfigured?: boolean; checkedAt?: string | null } | null>(null);
   const suspend = useSuspendUser();
   const togglePremium = useTogglePremium();
   const qc = useQueryClient();
@@ -3244,6 +3245,15 @@ export default function AdminPage() {
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d) setAiUsageStats(d); })
         .finally(() => setAiUsageLoading(false));
+    }
+  }, [openPanel]);
+
+  useEffect(() => {
+    if (openPanel === "ai-integrations") {
+      fetch(`${API}/api/stripe/mode`, { credentials: "include" })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setStripeMode(d); })
+        .catch(() => setStripeMode({ mode: "error", reason: "Could not reach Stripe API" }));
     }
   }, [openPanel]);
 
@@ -3846,7 +3856,6 @@ export default function AdminPage() {
                     { name: "DALL-E 3",          status: "active",  icon: "🎨", desc: t("admin.ai_integrations_list.dalle_desc"),      model: "dall-e-3",          color: "border-violet-500/25 bg-violet-500/5",  badge: "bg-violet-400/15 text-violet-400"  },
                     { name: "Google Books",      status: "active",  icon: "📚", desc: t("admin.ai_integrations_list.google_books_desc"),    model: "Google Books v1",   color: "border-blue-500/25 bg-blue-500/5",      badge: "bg-blue-400/15 text-blue-400"      },
                     { name: "TensorFlow.js",     status: "active",  icon: "🧠", desc: t("admin.ai_integrations_list.tensorflow_desc"),            model: "tfjs v4",           color: "border-orange-500/25 bg-orange-500/5",  badge: "bg-orange-400/15 text-orange-400"  },
-                    { name: "Stripe",            status: "active",  icon: "💳", desc: t("admin.ai_integrations_list.stripe_desc"),                      model: "Stripe API v3",     color: "border-indigo-500/25 bg-indigo-500/5",  badge: "bg-indigo-400/15 text-indigo-400"  },
                     { name: "Anthropic Claude",  status: "planned", icon: "🔮", desc: t("admin.ai_integrations_list.anthropic_desc"),              model: "claude-3-opus",     color: "border-white/8 bg-white/[0.02]",        badge: "bg-amber-400/15 text-amber-400"    },
                   ].map(item => (
                     <AdminSF key={item.name}>
@@ -3873,6 +3882,61 @@ export default function AdminPage() {
                       </div>
                     </AdminSF>
                   ))}
+
+                  {/* ── Stripe card — live health status ── */}
+                  <AdminSF key="Stripe">
+                    {(() => {
+                      const isError = stripeMode?.mode === "error";
+                      const isLive  = stripeMode?.mode === "live";
+                      const isTest  = stripeMode?.mode === "test";
+                      const cardColor = isError
+                        ? "border-red-500/40 bg-red-500/5"
+                        : "border-indigo-500/25 bg-indigo-500/5";
+                      const badgeColor = isError
+                        ? "bg-red-500/20 text-red-400"
+                        : "bg-indigo-400/15 text-indigo-400";
+                      const badgeLabel = isError
+                        ? "error"
+                        : isLive ? "live" : isTest ? "test" : t("admin.ai_integrations_list.active");
+                      return (
+                        <div className={`rounded-2xl border p-4 ${cardColor}`}>
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2.5">
+                              <span className="text-xl">💳</span>
+                              <div>
+                                <p className="font-bold text-white text-xs">Stripe</p>
+                                <p className="text-[10px] text-white/40 font-mono">Stripe API v3</p>
+                              </div>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeColor}`}>
+                              {badgeLabel}
+                            </span>
+                          </div>
+                          <p className="text-xs text-white/40 leading-relaxed">{t("admin.ai_integrations_list.stripe_desc")}</p>
+                          {isError ? (
+                            <div className="mt-2.5 space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <AlertTriangle className="w-3 h-3 text-red-400 flex-shrink-0" />
+                                <span className="text-[10px] text-red-400 font-semibold">Misconfigured — purchases will fail</span>
+                              </div>
+                              {stripeMode?.reason && (
+                                <p className="text-[10px] text-red-400/70 font-mono leading-tight pl-4.5 break-all">{stripeMode.reason}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="mt-2.5 flex items-center gap-1.5">
+                              <div className={`w-1.5 h-1.5 rounded-full ${stripeMode ? "bg-emerald-400 animate-pulse" : "bg-white/20"}`} />
+                              <span className={`text-[10px] font-semibold ${stripeMode ? "text-emerald-400" : "text-white/30"}`}>
+                                {stripeMode ? t("admin.ai_integrations_list.connected") : "Checking…"}
+                              </span>
+                              {isLive && <span className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-400">LIVE</span>}
+                              {isTest && <span className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-400">TEST</span>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </AdminSF>
                 </div>
                 <AdminSF>
                   <div className="rounded-2xl p-4 border border-white/8 bg-white/[0.025]">

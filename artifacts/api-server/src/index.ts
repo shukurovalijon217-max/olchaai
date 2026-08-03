@@ -23,7 +23,12 @@ async function runServer() {
   });
 
   // ── Background tasks (non-blocking) ────────────────────────────
-  logger.info("Stripe ready (direct API mode)");
+  // Validate Stripe key on startup so misconfiguration is caught early
+  import("./stripe/stripeClient.js").then(({ validateStripeKey }) => {
+    validateStripeKey().catch((err) =>
+      logger.warn({ err }, "Stripe startup validation unexpectedly threw")
+    );
+  }).catch((err) => logger.warn({ err }, "Could not import stripeClient for startup check"));
 
   try {
     const { initTFEngine } = await import("./moderation/tfEngine.js");

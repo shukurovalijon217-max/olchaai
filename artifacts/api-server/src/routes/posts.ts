@@ -111,7 +111,14 @@ router.get("/music/search", async (req: any, res) => {
     const q = String(req.query.q ?? "").trim();
     if (!q) { res.json({ results: [], source: "empty" }); return; }
 
-    const { results, source } = await searchMusic(q);
+    // Cache per normalised query for 5 minutes to reduce Audius round-trips
+    const cacheKey = q.toLowerCase();
+    const { results, source } = await cacheAside(
+      "music:search",
+      cacheKey,
+      () => searchMusic(q),
+      300, // 5 min TTL
+    );
     res.setHeader("X-Music-Source", source);
     res.json({ results, source });
   } catch (err) {

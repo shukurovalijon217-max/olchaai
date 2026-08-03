@@ -127378,6 +127378,7 @@ var init_users2 = __esm({
           res.status(404).json({ error: "Not found" });
           return;
         }
+        res.setHeader("Cache-Control", "private, max-age=60, stale-while-revalidate=300");
         res.json(result);
       } catch (err) {
         req.log.error(err);
@@ -139637,7 +139638,12 @@ var init_posts2 = __esm({
           }
           return batchEnrichPosts(posts, viewerId);
         }, cacheKey ? 15 : 0);
-        if (cacheKey) res.setHeader("X-Cache", "HIT");
+        if (cacheKey) {
+          res.setHeader("X-Cache", "HIT");
+          res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
+        } else {
+          res.setHeader("Cache-Control", "private, no-store");
+        }
         res.json(enriched);
       } catch (err) {
         req.log.error(err);
@@ -140089,6 +140095,11 @@ var init_posts2 = __esm({
         const viewerId = req.session?.userId;
         const midnightCond = await midnightVisibilityConditionForReq(req);
         const posts = await db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.likesCount)).limit(10);
+        if (!viewerId) {
+          res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
+        } else {
+          res.setHeader("Cache-Control", "private, no-store");
+        }
         res.json(await batchEnrichPosts(posts, viewerId));
       } catch (err) {
         req.log.error(err);
@@ -163910,7 +163921,7 @@ var init_media = __esm({
         engine: "GILOS-MediaHasher-v1"
       });
     });
-    ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com)$/i;
+    ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com|r2\.dev|r2\.cloudflarestorage\.com|railway\.app)$/i;
     router18.get("/img", async (req, res) => {
       const rawUrl = req.query["url"];
       const width = Math.min(Math.max(Number(req.query["w"]) || 800, 40), 1920);

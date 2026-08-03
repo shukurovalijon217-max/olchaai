@@ -81,6 +81,7 @@ router.get("/users/:id", async (req, res) => {
       return { ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: (followCheck as { id: number }[]).length > 0 };
     }, 30);
     if (!result) { res.status(404).json({ error: "Not found" }); return; }
+    res.setHeader("Cache-Control", "private, max-age=60, stale-while-revalidate=300");
     res.json(result);
   } catch (err) {
     req.log.error(err);

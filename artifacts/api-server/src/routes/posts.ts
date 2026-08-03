@@ -90,7 +90,12 @@ router.get("/posts", async (req, res) => {
       return batchEnrichPosts(posts, viewerId);
     }, cacheKey ? 15 : 0);
 
-    if (cacheKey) res.setHeader("X-Cache", "HIT");
+    if (cacheKey) {
+      res.setHeader("X-Cache", "HIT");
+      res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
+    } else {
+      res.setHeader("Cache-Control", "private, no-store");
+    }
     res.json(enriched);
   } catch (err) {
     req.log.error(err);
@@ -552,6 +557,13 @@ router.get("/posts/trending", async (req, res) => {
     const viewerId = (req.session as any)?.userId as number | undefined;
     const midnightCond = await midnightVisibilityConditionForReq(req);
     const posts = await db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.likesCount)).limit(10);
+    // Only cache for anonymous requests — authenticated responses include
+    // viewer-specific isLiked / isFollowing fields that must not be shared.
+    if (!viewerId) {
+      res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
+    } else {
+      res.setHeader("Cache-Control", "private, no-store");
+    }
     res.json(await batchEnrichPosts(posts, viewerId));
   } catch (err) {
     req.log.error(err);

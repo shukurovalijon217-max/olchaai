@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useLikePost, useDeletePost, getListPostsQueryKey, getGetTrendingPostsQueryKey } from "@workspace/api-client-react";
 import { FastImage, FastVideo } from "@/components/FastMedia";
+import { imgOptUrl } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Post } from "@workspace/api-client-react";
 import { useAuth } from "@/context/AuthContext";
@@ -39,7 +40,7 @@ interface Analysis {
   sentiment?: string;
 }
 
-export default function PostCard({ post, index = 0 }: PostCardProps) {
+function PostCard({ post, index = 0 }: PostCardProps) {
   const { t } = useTranslation();
   const REPORT_REASONS = [
     { value: "spam", label: t("post.reason_spam") },
@@ -364,7 +365,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
           <Link href={`/profile/${post.author.id}`}>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center flex-shrink-0 cursor-pointer overflow-hidden">
               {post.author.avatarUrl
-                ? <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                ? <img src={imgOptUrl(post.author.avatarUrl, 48)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 : <span className="text-sm font-bold text-primary">{post.author.displayName?.[0]?.toUpperCase()}</span>
               }
             </div>
@@ -471,7 +472,7 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
                     initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.18 }}
                     className="w-full flex items-center justify-center">
-                    <FastImage src={allMedia[cur]} className="w-full object-contain" style={{ maxHeight: 560 }} />
+                    <FastImage src={imgOptUrl(allMedia[cur], 640)} className="w-full object-contain" style={{ maxHeight: 560 }} />
                   </motion.div>
                 </AnimatePresence>
 
@@ -894,3 +895,16 @@ export default function PostCard({ post, index = 0 }: PostCardProps) {
     </>
   );
 }
+
+function postCardEqual(prev: PostCardProps, next: PostCardProps): boolean {
+  return (
+    prev.post.id === next.post.id &&
+    prev.post.likesCount === next.post.likesCount &&
+    prev.post.isLiked === next.post.isLiked &&
+    prev.post.commentsCount === next.post.commentsCount &&
+    (prev.post as any).sharesCount === (next.post as any).sharesCount &&
+    prev.index === next.index
+  );
+}
+
+export default memo(PostCard, postCardEqual);

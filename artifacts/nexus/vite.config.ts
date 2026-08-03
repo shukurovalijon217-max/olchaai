@@ -75,7 +75,7 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 300,
   },
   server: {
     port,

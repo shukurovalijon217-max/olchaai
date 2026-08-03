@@ -13,7 +13,7 @@
  * ─────────────────────────────────────────────────────────────────
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { imgOptUrl, resolveApiUrl } from "../lib/utils";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
@@ -217,7 +217,7 @@ interface FeedCardProps {
   onOpenStory?: (rect: DOMRect) => void;
 }
 
-export default function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps) {
+function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps) {
   const accent   = ACCENTS[index % ACCENTS.length];
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -827,7 +827,7 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
             <div className="absolute inset-[2.5px] rounded-full overflow-hidden z-10 flex items-center justify-center"
               style={{ background: "linear-gradient(135deg,#1a0838,#0d1a3a)" }}>
               {post.author?.avatarUrl
-                ? <img src={resolveApiUrl(post.author.avatarUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                ? <img src={imgOptUrl(post.author.avatarUrl, 48)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 : <span className="text-[11px] font-black text-white select-none">{initials(post.author?.displayName)}</span>
               }
             </div>
@@ -1370,3 +1370,21 @@ export default function FeedCard({ post, index, hasStory = false, onOpenStory }:
     </div>
   );
 }
+
+function feedCardEqual(
+  prev: FeedCardProps,
+  next: FeedCardProps,
+): boolean {
+  return (
+    prev.post.id === next.post.id &&
+    prev.post.likesCount === next.post.likesCount &&
+    prev.post.isLiked === next.post.isLiked &&
+    prev.post.commentsCount === next.post.commentsCount &&
+    (prev.post as any).sharesCount === (next.post as any).sharesCount &&
+    prev.index === next.index &&
+    prev.hasStory === next.hasStory &&
+    prev.onOpenStory === next.onOpenStory
+  );
+}
+
+export default memo(FeedCard, feedCardEqual);

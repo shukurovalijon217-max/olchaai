@@ -69,13 +69,10 @@ export function imgOptUrl(url: string | null | undefined, width = 800, quality =
     return `${cloudinaryMatch[1]}w_${w},q_${q},f_auto/${cloudinaryMatch[2]}`;
   }
 
-  // Absolute CDN/R2/GCS URLs — load directly; the sharp-based proxy requires a
-  // native module that may not work in all server environments (e.g. Alpine Linux).
+  // Route all image URLs (including absolute CDN/R2/GCS) through the WebP proxy.
+  // The proxy resizes + converts to WebP and caches for 7 days.
+  // On proxy failure the route redirects to the original URL (graceful fallback).
   const resolved = resolveApiUrl(url);
-  if (resolved.startsWith("http://") || resolved.startsWith("https://")) {
-    return resolved;
-  }
-
   const base = (import.meta.env.VITE_API_BASE_URL || "");
-  return `${base}/api/media/img?url=${encodeURIComponent(resolved)}&w=${w}&q=${q}`;
+  return `${base}/api/media/img?url=${encodeURIComponent(resolved)}&w=${w}&q=${q}&fmt=webp`;
 }

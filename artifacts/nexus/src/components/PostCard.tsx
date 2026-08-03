@@ -97,6 +97,8 @@ function PostCard({ post, index = 0 }: PostCardProps) {
     if (dlTimerRef.current) clearTimeout(dlTimerRef.current);
     dlTimerRef.current = setTimeout(() => setDlSong(null), 3200);
   };
+  /* CoView */
+  const [coviewing, setCoviewing] = useState(false);
   /* Tip */
   const [tipOpen, setTipOpen] = useState(false);
   const [tipAmount, setTipAmount] = useState(5000);
@@ -317,13 +319,20 @@ function PostCard({ post, index = 0 }: PostCardProps) {
 
   /* ── CoView ── */
   const handleCoView = async () => {
+    if (coviewing) return;
+    setCoviewing(true);
     try {
       const res = await fetch(`${API}/api/coview/rooms`, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contentType: "post", contentId: post.id }),
       });
-      if (res.ok) { const data = await res.json(); navigate(`/coview/${data.room?.inviteCode ?? data.inviteCode}`); }
+      if (res.ok) {
+        const data = await res.json();
+        const code = data.inviteCode ?? data.room?.inviteCode;
+        if (code) navigate(`/coview/${code}`);
+      }
     } catch { /* silent */ }
+    finally { setCoviewing(false); }
   };
 
   /* ── Report ── */
@@ -623,10 +632,10 @@ function PostCard({ post, index = 0 }: PostCardProps) {
 
             {/* CoView */}
             {user && (
-              <motion.button whileTap={{ scale: 0.8 }} onClick={handleCoView}
+              <motion.button whileTap={{ scale: 0.8 }} onClick={handleCoView} disabled={coviewing}
                 title={t("coview.watch_together")}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-blue-400 hover:bg-blue-400/10 transition-colors">
-                <Tv2 className="w-3.5 h-3.5" />
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors disabled:opacity-60 ${coviewing ? "bg-blue-500/20 text-blue-400" : "text-muted-foreground hover:text-blue-400 hover:bg-blue-400/10"}`}>
+                {coviewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Tv2 className="w-3.5 h-3.5" />}
               </motion.button>
             )}
           </div>

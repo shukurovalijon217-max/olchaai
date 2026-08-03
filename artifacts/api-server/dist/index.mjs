@@ -170984,6 +170984,24 @@ var init_webhookHandlers = __esm({
             }
             break;
           }
+          case "charge.refunded": {
+            const charge = event.data.object;
+            const customerId = typeof charge.customer === "string" ? charge.customer : charge.customer?.id;
+            if (customerId) {
+              await db.update(usersTable).set({ isPremium: false }).where(eq(usersTable.stripeCustomerId, customerId));
+            }
+            break;
+          }
+          case "charge.dispute.created": {
+            const dispute = event.data.object;
+            const chargeId = typeof dispute.charge === "string" ? dispute.charge : dispute.charge.id;
+            const charge = await stripe.charges.retrieve(chargeId);
+            const customerId = typeof charge.customer === "string" ? charge.customer : charge.customer?.id;
+            if (customerId) {
+              await db.update(usersTable).set({ isPremium: false }).where(eq(usersTable.stripeCustomerId, customerId));
+            }
+            break;
+          }
           default:
             break;
         }

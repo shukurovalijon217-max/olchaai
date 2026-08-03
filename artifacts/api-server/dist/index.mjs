@@ -111716,7 +111716,7 @@ var require_dist_cjs16 = __commonJS({
     };
     var CompleteMultipartUploadCommand = class extends command5(_ep05, _mw1, "CompleteMultipartUpload", CompleteMultipartUpload$) {
     };
-    var CopyObjectCommand = class extends command5(_ep1, _mw1, "CopyObject", CopyObject$) {
+    var CopyObjectCommand2 = class extends command5(_ep1, _mw1, "CopyObject", CopyObject$) {
     };
     var CreateBucketCommand = class extends command5(_ep2, _mw2, "CreateBucket", CreateBucket$) {
     };
@@ -112032,7 +112032,7 @@ var require_dist_cjs16 = __commonJS({
     var commands5 = {
       AbortMultipartUploadCommand,
       CompleteMultipartUploadCommand,
-      CopyObjectCommand,
+      CopyObjectCommand: CopyObjectCommand2,
       CreateBucketCommand,
       CreateBucketMetadataConfigurationCommand,
       CreateBucketMetadataTableConfigurationCommand,
@@ -112647,7 +112647,7 @@ var require_dist_cjs16 = __commonJS({
     exports.Condition$ = Condition$;
     exports.ContinuationEvent$ = ContinuationEvent$;
     exports.CopyObject$ = CopyObject$;
-    exports.CopyObjectCommand = CopyObjectCommand;
+    exports.CopyObjectCommand = CopyObjectCommand2;
     exports.CopyObjectOutput$ = CopyObjectOutput$;
     exports.CopyObjectRequest$ = CopyObjectRequest$;
     exports.CopyObjectResult$ = CopyObjectResult$;
@@ -113458,6 +113458,29 @@ async function r2GetPresignedUploadUrl(contentType, ttlSec = 900) {
   const publicUrl = getPublicUrl(key);
   return { uploadURL, objectPath: publicUrl, publicUrl };
 }
+async function r2FinalizeUpload(publicUrl) {
+  const base2 = (process.env.R2_PUBLIC_URL || "").replace(/\/$/, "");
+  if (!base2 || !publicUrl.startsWith(base2 + "/")) {
+    throw new Error(`publicUrl does not match R2_PUBLIC_URL base: ${publicUrl}`);
+  }
+  const key = publicUrl.slice(base2.length + 1);
+  const bucket = getBucketName();
+  const client = getR2Client();
+  const head = await client.send(
+    new import_client_s3.HeadObjectCommand({ Bucket: bucket, Key: key })
+  );
+  const contentType = head.ContentType ?? "application/octet-stream";
+  await client.send(
+    new import_client_s3.CopyObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      CopySource: `${bucket}/${key}`,
+      MetadataDirective: "REPLACE",
+      ContentType: contentType,
+      CacheControl: "public, max-age=31536000, immutable"
+    })
+  );
+}
 function contentTypeToExt(contentType) {
   const map4 = {
     "video/mp4": ".mp4",
@@ -113550,6 +113573,29 @@ var init_storage = __esm({
       } catch (error41) {
         req.log.error({ err: error41 }, "Error generating upload URL");
         res.status(500).json({ error: "Failed to generate upload URL" });
+      }
+    });
+    router2.post("/storage/uploads/finalize", async (req, res) => {
+      if (!isR2Enabled()) {
+        res.json({ ok: true, skipped: true });
+        return;
+      }
+      const { publicUrl } = req.body;
+      if (!publicUrl || typeof publicUrl !== "string") {
+        res.status(400).json({ error: "publicUrl is required" });
+        return;
+      }
+      const r2Base = (process.env.R2_PUBLIC_URL || "").replace(/\/$/, "");
+      if (!r2Base || !publicUrl.startsWith(r2Base + "/")) {
+        res.status(400).json({ error: "publicUrl does not belong to this R2 bucket" });
+        return;
+      }
+      try {
+        await r2FinalizeUpload(publicUrl);
+        res.json({ ok: true });
+      } catch (error41) {
+        req.log.error({ err: error41 }, "r2FinalizeUpload failed");
+        res.status(500).json({ error: "Failed to finalize upload cache headers" });
       }
     });
     router2.get("/storage/cloudinary-check", async (req, res) => {

@@ -195,11 +195,10 @@ router.get("/users/:id/followers", async (req, res) => {
   }
 });
 
-/* ── GET /users/:id/creator-analytics?period=7|30 ────────────── */
+/* ── GET /users/:id/creator-analytics?period=7|30|all ────────── */
 router.get("/users/:id/creator-analytics", async (req: any, res) => {
   try {
     const id = Number(req.params.id);
-    const period = Number(req.query.period) || 30;
     if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
     // Only the owner may view their own analytics
@@ -207,9 +206,17 @@ router.get("/users/:id/creator-analytics", async (req: any, res) => {
     if (!callerId) { res.status(401).json({ error: "Unauthenticated" }); return; }
     if (callerId !== id) { res.status(403).json({ error: "Forbidden" }); return; }
 
-    const since = new Date();
-    since.setDate(since.getDate() - period);
-    since.setHours(0, 0, 0, 0);
+    const periodParam = req.query.period;
+    const allTime = periodParam === "all";
+    const period = allTime ? null : (Number(periodParam) || 30);
+
+    // For timed periods, set a `since` cutoff; for all-time, since is null (no filter)
+    let since: Date | null = null;
+    if (!allTime && period !== null) {
+      since = new Date();
+      since.setDate(since.getDate() - period);
+      since.setHours(0, 0, 0, 0);
+    }
 
     /* ── 1. Daily views from user_interactions ─────────────────── */
     const postIds = await db
@@ -224,6 +231,8 @@ router.get("/users/:id/creator-analytics", async (req: any, res) => {
     const allPostIds = postIds.map(p => p.id);
     const allReelIds = reelIds.map(r => r.id);
 
+    const sinceClause = since ? sql`AND created_at >= ${since}` : sql``;
+
     // daily views: posts
     const postViews = allPostIds.length > 0
       ? await db.execute(sql`
@@ -231,7 +240,7 @@ router.get("/users/:id/creator-analytics", async (req: any, res) => {
           FROM user_interactions
           WHERE content_type = 'post' AND interaction_type = 'view'
             AND content_id = ANY(ARRAY[${sql.join(allPostIds.map(i => sql`${i}`), sql`, `)}]::int[])
-            AND created_at >= ${since}
+            ${sinceClause}
           GROUP BY 1 ORDER BY 1`)
       : { rows: [] };
 
@@ -242,7 +251,7 @@ router.get("/users/:id/creator-analytics", async (req: any, res) => {
           FROM user_interactions
           WHERE content_type = 'reel' AND interaction_type = 'view'
             AND content_id = ANY(ARRAY[${sql.join(allReelIds.map(i => sql`${i}`), sql`, `)}]::int[])
-            AND created_at >= ${since}
+            ${sinceClause}
           GROUP BY 1 ORDER BY 1`)
       : { rows: [] };
 
@@ -257,23 +266,30 @@ router.get("/users/:id/creator-analytics", async (req: any, res) => {
               OR
               (content_type = 'reel'  AND content_id = ANY(ARRAY[${allReelIds.length > 0 ? sql.join(allReelIds.map(i => sql`${i}`), sql`, `) : sql`NULL`}]::int[]))
             )
-            AND created_at >= ${since}
+            ${sinceClause}
           GROUP BY 1 ORDER BY 1`)
       : { rows: [] };
 
     /* ── 2. Follower growth ─────────────────────────────────────── */
-    const followerGrowth = await db.execute(sql`
-      SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS new_followers
-      FROM follows
-      WHERE following_id = ${id} AND created_at >= ${since}
-      GROUP BY 1 ORDER BY 1`);
+    const followerGrowth = since
+      ? await db.execute(sql`
+          SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS new_followers
+          FROM follows
+          WHERE following_id = ${id} AND created_at >= ${since}
+          GROUP BY 1 ORDER BY 1`)
+      : await db.execute(sql`
+          SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS new_followers
+          FROM follows
+          WHERE following_id = ${id}
+          GROUP BY 1 ORDER BY 1`);
 
-    // Total followers before the window (baseline)
-    const [baselineRow] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(followsTable)
-      .where(and(eq(followsTable.followingId, id), sql`created_at < ${since}`));
-    const followerBaseline = baselineRow?.count ?? 0;
+    // Total followers before the window (baseline); for all-time, baseline is 0
+    const followerBaseline = since
+      ? (await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(followsTable)
+          .where(and(eq(followsTable.followingId, id), sql`created_at < ${since}`)))[0]?.count ?? 0
+      : 0;
 
     /* ── 3. Top posts & reels ───────────────────────────────────── */
     const topPosts = allPostIds.length > 0
@@ -294,11 +310,35 @@ router.get("/users/:id/creator-analytics", async (req: any, res) => {
           .limit(5)
       : [];
 
-    /* ── 4. Build day-by-day timeline (since → today inclusive) ─── */
+    /* ── 4. Build day-by-day timeline ───────────────────────────── */
+    // Collect all days with activity to determine the earliest date for all-time
+    const allActivityDays = [
+      ...(postViews as any).rows,
+      ...(reelViews as any).rows,
+      ...(likesRows as any).rows,
+      ...(followerGrowth as any).rows,
+    ].map((r: any) => String(r.day).slice(0, 10));
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let timelineStart: Date;
+    if (since) {
+      timelineStart = since;
+    } else if (allActivityDays.length > 0) {
+      timelineStart = new Date(allActivityDays.reduce((a, b) => (a < b ? a : b)));
+    } else {
+      // No activity at all — use 30-day window as default
+      timelineStart = new Date();
+      timelineStart.setDate(timelineStart.getDate() - 30);
+      timelineStart.setHours(0, 0, 0, 0);
+    }
+
     const dayMap: Record<string, { date: string; postViews: number; reelViews: number; likes: number; newFollowers: number }> = {};
-    for (let d = 0; d <= period; d++) {
-      const dt = new Date(since);
-      dt.setDate(dt.getDate() + d);
+    const msPerDay = 86400000;
+    const totalDays = Math.round((today.getTime() - timelineStart.getTime()) / msPerDay);
+    for (let d = 0; d <= totalDays; d++) {
+      const dt = new Date(timelineStart.getTime() + d * msPerDay);
       const key = dt.toISOString().slice(0, 10);
       dayMap[key] = { date: key, postViews: 0, reelViews: 0, likes: 0, newFollowers: 0 };
     }

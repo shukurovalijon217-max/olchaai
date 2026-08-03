@@ -66,7 +66,7 @@ function shortDay(iso: string): string {
 }
 
 /* ─── CSV Export ────────────────────────────────────────── */
-function exportAnalyticsCSV(timeline: DayData[], summary: AnalyticsSummary, period: number) {
+function exportAnalyticsCSV(timeline: DayData[], summary: AnalyticsSummary, period: number | "all") {
   const headers = ["Date", "Post Views", "Reel Views", "Total Views", "Likes", "New Followers", "Cumulative Followers"];
   const rows = timeline.map(d => [
     d.date,
@@ -84,8 +84,9 @@ function exportAnalyticsCSV(timeline: DayData[], summary: AnalyticsSummary, peri
   const totalReelViews = timeline.reduce((s, d) => s + d.reelViews, 0);
   const totalLikes = timeline.reduce((s, d) => s + d.likes, 0);
   const totalNewFollowers = timeline.reduce((s, d) => s + d.newFollowers, 0);
+  const periodLabel = period === "all" ? "all-time" : `${period}d`;
   rows.push([
-    `TOTAL (${period}d)`,
+    `TOTAL (${periodLabel})`,
     totalPostViews,
     totalReelViews,
     totalViews,
@@ -102,7 +103,7 @@ function exportAnalyticsCSV(timeline: DayData[], summary: AnalyticsSummary, peri
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `analytics-${period}d-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `analytics-${periodLabel}-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -165,7 +166,7 @@ function StatCard({ icon: Icon, label, value, color, glow, delay = 0 }: {
 /* ─── Main Component ─────────────────────────────────────── */
 export default function CreatorAnalyticsDashboard({ userId }: { userId: number }) {
   const { t } = useTranslation();
-  const [period, setPeriod] = useState<7 | 30>(30);
+  const [period, setPeriod] = useState<7 | 30 | "all">(30);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -175,7 +176,8 @@ export default function CreatorAnalyticsDashboard({ userId }: { userId: number }
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`${base}/api/users/${userId}/creator-analytics?period=${period}`, { credentials: "include" })
+    const periodParam = period === "all" ? "all" : period;
+    fetch(`${base}/api/users/${userId}/creator-analytics?period=${periodParam}`, { credentials: "include" })
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(setData)
       .catch(() => setError("Failed to load analytics"))
@@ -211,9 +213,9 @@ export default function CreatorAnalyticsDashboard({ userId }: { userId: number }
     views: d.postViews + d.reelViews,
   }));
 
-  const tickInterval = period === 30 ? 4 : 1;
+  const tickInterval = period === "all" ? Math.max(1, Math.floor(timeline.length / 6)) : period === 30 ? 4 : 1;
 
-  /* ── No content state ── */
+  /* ── No content state (never posted anything) ── */
   if (totalContent === 0 && summary.totalViews === 0 && summary.currentFollowers === 0) {
     return (
       <div className="text-center py-10 text-muted-foreground">
@@ -225,6 +227,14 @@ export default function CreatorAnalyticsDashboard({ userId }: { userId: number }
     );
   }
 
+  /* ── Zero-activity state for this period ── */
+  const periodActivityTotal = timeline.reduce(
+    (sum, d) => sum + d.postViews + d.reelViews + d.likes + d.newFollowers,
+    0,
+  );
+  const isZeroActivity = periodActivityTotal === 0;
+  const isTimedPeriod = period !== "all";
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pb-6">
 
@@ -232,7 +242,7 @@ export default function CreatorAnalyticsDashboard({ userId }: { userId: number }
       <div className="flex items-center gap-2">
         <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
         <div className="flex rounded-xl border border-white/10 overflow-hidden">
-          {([7, 30] as const).map(p => (
+          {([7, 30, "all"] as const).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
@@ -242,11 +252,17 @@ export default function CreatorAnalyticsDashboard({ userId }: { userId: number }
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {p}{t("analytics.days", { defaultValue: "d" })}
+              {p === "all"
+                ? t("analytics.all_time", { defaultValue: "All" })
+                : `${p}${t("analytics.days", { defaultValue: "d" })}`}
             </button>
           ))}
         </div>
-        <span className="text-[10px] text-muted-foreground ml-auto">{t("analytics.period_label", { defaultValue: "Last {{n}} days", n: period })}</span>
+        <span className="text-[10px] text-muted-foreground ml-auto">
+          {period === "all"
+            ? t("analytics.period_all_time", { defaultValue: "All time" })
+            : t("analytics.period_label", { defaultValue: "Last {{n}} days", n: period })}
+        </span>
         <button
           onClick={() => exportAnalyticsCSV(timeline, summary, period)}
           className="flex items-center gap-1 px-2.5 py-1 rounded-xl border border-white/10 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-violet-500/50 hover:bg-violet-500/10 transition-all"
@@ -256,6 +272,35 @@ export default function CreatorAnalyticsDashboard({ userId }: { userId: number }
           {t("analytics.export_csv", { defaultValue: "Export CSV" })}
         </button>
       </div>
+
+      {/* Zero-activity empty state */}
+      {isZeroActivity && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-white/8 p-5 text-center"
+          style={{ background: "linear-gradient(145deg, rgba(124,58,237,0.06), rgba(99,102,241,0.02))" }}
+        >
+          <motion.div animate={{ y: [-3, 3, -3] }} transition={{ duration: 3, repeat: Infinity }}>
+            <BarChart2 className="w-7 h-7 mx-auto mb-2 opacity-30 text-violet-400" />
+          </motion.div>
+          <p className="text-sm font-semibold text-foreground/70">
+            {isTimedPeriod
+              ? t("analytics.no_activity_period", {
+                  defaultValue: "No activity in the last {{n}} days",
+                  n: period,
+                })
+              : t("analytics.no_activity_all", { defaultValue: "No activity yet" })}
+          </p>
+          {isTimedPeriod && (
+            <button
+              onClick={() => setPeriod("all")}
+              className="mt-2 text-xs font-bold text-violet-400 hover:text-violet-300 transition-colors underline underline-offset-2"
+            >
+              {t("analytics.try_all_time", { defaultValue: "Try switching to all-time" })}
+            </button>
+          )}
+        </motion.div>
+      )}
 
       {/* Summary stat cards */}
       <div className="grid grid-cols-2 gap-2">

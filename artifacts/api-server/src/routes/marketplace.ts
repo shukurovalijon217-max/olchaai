@@ -5,6 +5,7 @@ import {
   walletsTable, transactionsTable, usersTable,
 } from "@workspace/db";
 import { eq, and, or, ilike, desc, asc, sql, ne, gte, lte, inArray, isNotNull, gt } from "drizzle-orm";
+import { cacheDelAsync, cacheDelPatternAsync } from "../lib/cache";
 
 const router = Router();
 
@@ -135,6 +136,11 @@ router.patch("/marketplace/products/:id", requireAuth, async (req: any, res) => 
       ...(tags && { tags: JSON.stringify(tags) }),
       updatedAt: new Date(),
     }).where(eq(productsTable.id, product.id)).returning();
+    /* Invalidate product caches so updated listing appears immediately */
+    await Promise.all([
+      cacheDelAsync(`marketplace:product:${product.id}`),
+      cacheDelPatternAsync("marketplace:products:"),
+    ]);
     res.json({ ...updated, mediaUrls: updated.mediaUrls ? JSON.parse(updated.mediaUrls) : [] });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Yangilashda xato" }); }
 });
@@ -151,6 +157,11 @@ router.delete("/marketplace/products/:id", requireAuth, async (req: any, res) =>
     } else {
       await db.delete(productsTable).where(eq(productsTable.id, productId));
     }
+    /* Invalidate product caches so deleted listing disappears immediately */
+    await Promise.all([
+      cacheDelAsync(`marketplace:product:${productId}`),
+      cacheDelPatternAsync("marketplace:products:"),
+    ]);
     res.json({ ok: true });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "O'chirishda xato" }); }
 });

@@ -6,7 +6,7 @@ import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server"
 import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { trackQuestAction } from "../lib/trackQuest";
-import { cacheAside, cacheDel, cacheDelPattern, cacheDelAsync } from "../lib/cache";
+import { cacheAside, cacheDelPatternAsync, cacheDelAsync } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { searchMusic, audiusStream, AUDIUS_HOSTS } from "../lib/music";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
@@ -441,7 +441,7 @@ router.post("/posts", async (req: any, res) => {
     res.status(201).json(enriched);
 
     /* Invalidate feed caches so new post appears immediately */
-    void cacheDelPattern("posts:list:");
+    await cacheDelPatternAsync("posts:list:");
 
     /* Quest tracker — fire-and-forget */
     void trackQuestAction(authorId, "create_post");
@@ -552,8 +552,8 @@ router.delete("/posts/:id", async (req, res) => {
     ]);
     await db.delete(postsTable).where(eq(postsTable.id, id));
     /* Invalidate feed + single post caches */
-    void Promise.all([
-      cacheDelPattern("posts:list:"),
+    await Promise.all([
+      cacheDelPatternAsync("posts:list:"),
       cacheDelAsync(`posts:post:${id}`),
     ]);
     res.status(204).send();

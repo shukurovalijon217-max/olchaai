@@ -76,7 +76,10 @@ export async function cacheSetAsync<T>(key: string, data: T, ttlMs: number): Pro
 }
 
 export async function cacheDelAsync(key: string): Promise<void> {
-  if (redis) { try { await redis.del(key); } catch {} }
+  if (redis) {
+    try { await redis.del(key); }
+    catch (err) { console.warn("[cache] Redis DEL failed, key:", key, err); }
+  }
   store.delete(key);
 }
 
@@ -85,7 +88,7 @@ export async function cacheDelPatternAsync(pattern: string): Promise<void> {
     try {
       const keys = await redis.keys(`${pattern}*`);
       if (keys.length) await redis.del(...keys);
-    } catch {}
+    } catch (err) { console.warn("[cache] Redis DEL pattern failed, pattern:", pattern, err); }
   }
   for (const key of store.keys()) {
     if (key.startsWith(pattern)) store.delete(key);

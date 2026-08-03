@@ -3,7 +3,7 @@ import {
   BadgeCheck, Settings, UserPlus, UserCheck, Grid3X3, Play, BookmarkIcon,
   Camera, Loader2, Radio, Bell, BellOff, Star, Check, X, Sparkles,
   ChevronRight, Pencil, Shield, HelpCircle, Globe, Users, Plus, Zap,
-  Heart, MessageCircle, BarChart2, TrendingUp, Eye, Share2,
+  Heart, MessageCircle, BarChart2, TrendingUp, Eye, Share2, Bookmark,
   Lock, Palette, Languages, DollarSign, ArrowUpRight,
 } from "lucide-react";
 import { Link } from "wouter";
@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { resolveApiUrl } from "@/lib/utils";
 import ProfileOrb from "@/components/ProfileOrb";
 import CreatorAnalyticsDashboard from "@/components/CreatorAnalyticsDashboard";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProfilePageProps { userId: number; }
 
@@ -84,6 +85,126 @@ function BottomSheet({ open, onClose, children, maxH = "70vh" }: {
         </div>
       )}
     </AnimatePresence>
+  );
+}
+
+/* ─── Post Stats Drawer ───────────────────────────────────────── */
+type StatsTarget = { id: number; type: "post" | "reel" };
+
+function StatRow({ icon: Icon, label, value, color }: {
+  icon: React.ElementType; label: string; value: number; color: string;
+}) {
+  const fmt = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
+  return (
+    <div className="flex items-center gap-3 py-3 border-b border-white/6 last:border-0">
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
+        <Icon className="w-4 h-4" style={{ color }} />
+      </div>
+      <span className="flex-1 text-sm text-muted-foreground font-medium">{label}</span>
+      <span className="text-base font-black" style={{ color, textShadow: `0 0 18px ${color}66` }}>{fmt(value)}</span>
+    </div>
+  );
+}
+
+function PostStatsDrawer({ open, onClose, target, userId }: {
+  open: boolean; onClose: () => void; target: StatsTarget | null; userId: number;
+}) {
+  const { t } = useTranslation();
+  const { data, isLoading } = useQuery({
+    queryKey: ["post-stats", target?.type, target?.id],
+    enabled: open && target !== null,
+    queryFn: async () => {
+      if (!target) return null;
+      const url = resolveApiUrl(
+        target.type === "post"
+          ? `/api/users/${userId}/posts/${target.id}/stats`
+          : `/api/users/${userId}/reels/${target.id}/stats`
+      );
+      const r = await fetch(url, { credentials: "include" });
+      if (!r.ok) throw new Error("Failed to load stats");
+      return r.json();
+    },
+  });
+
+  const isPost = target?.type === "post";
+  const label = isPost ? t("profile.post_stats_title") ?? "Post Stats" : t("profile.reel_stats_title") ?? "Reel Stats";
+
+  return (
+    <BottomSheet open={open} onClose={onClose} maxH="72vh">
+      {/* Header */}
+      <div className="px-5 pt-1 pb-3 flex items-center justify-between border-b border-white/6">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-xl flex items-center justify-center"
+            style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}>
+            <BarChart2 className="w-3.5 h-3.5 text-violet-400" />
+          </div>
+          <h2 className="text-sm font-bold">{label}</h2>
+        </div>
+        <motion.button whileTap={{ scale: 0.88, rotate: 90 }} onClick={onClose}
+          className="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-muted-foreground">
+          <X className="w-4 h-4" />
+        </motion.button>
+      </div>
+
+      <div className="px-5 pb-6 overflow-y-auto" style={{ maxHeight: "calc(72vh - 70px)" }}>
+        {isLoading || !data ? (
+          <div className="py-10 flex flex-col items-center gap-3">
+            <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+            <p className="text-xs text-muted-foreground">{t("profile.loading_stats") ?? "Loading stats…"}</p>
+          </div>
+        ) : (
+          <>
+            {/* Thumbnail preview */}
+            {(data.mediaUrl || data.thumbnailUrl || data.videoUrl) && (
+              <div className="mt-3 mb-4 h-24 rounded-2xl overflow-hidden relative"
+                style={{ border: "1px solid rgba(124,58,237,0.2)" }}>
+                {data.videoUrl || (data.mediaUrl && data.type === "video") ? (
+                  <video src={resolveApiUrl(data.videoUrl ?? data.mediaUrl)} className="w-full h-full object-cover" muted preload="none" />
+                ) : (
+                  <img src={resolveApiUrl(data.mediaUrl ?? data.thumbnailUrl)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                {(data.content || data.caption) && (
+                  <div className="absolute bottom-0 left-0 right-0 px-3 py-2">
+                    <p className="text-[10px] text-white/80 font-medium line-clamp-2 leading-snug">{data.content ?? data.caption}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {!data.mediaUrl && !data.thumbnailUrl && !data.videoUrl && (data.content || data.caption) && (
+              <div className="mt-3 mb-4 rounded-2xl p-3 text-center"
+                style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.08))", border: "1px solid rgba(124,58,237,0.18)" }}>
+                <p className="text-xs text-foreground/80 font-medium line-clamp-3 leading-relaxed">{data.content ?? data.caption}</p>
+              </div>
+            )}
+
+            {/* Stats rows */}
+            <div className="mt-1">
+              <StatRow icon={Eye} label={t("analytics.views") ?? "Views"} value={data.views} color="#06b6d4" />
+              <StatRow icon={Heart} label={t("analytics.likes") ?? "Likes"} value={data.likes} color="#ec4899" />
+              {isPost && <StatRow icon={MessageCircle} label={t("analytics.comments") ?? "Comments"} value={data.comments} color="#f59e0b" />}
+              <StatRow icon={Share2} label={t("analytics.shares") ?? "Shares"} value={data.shares} color="#10b981" />
+              <StatRow icon={Bookmark} label={t("analytics.saves") ?? "Saves"} value={data.saves} color="#8b5cf6" />
+            </div>
+
+            {/* Engagement summary */}
+            {data.views > 0 && (
+              <div className="mt-4 rounded-2xl p-3 flex items-center gap-3"
+                style={{ background: "rgba(124,58,237,0.07)", border: "1px solid rgba(124,58,237,0.16)" }}>
+                <TrendingUp className="w-4 h-4 text-violet-400 shrink-0" />
+                <div>
+                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">{t("analytics.engagement") ?? "Engagement"}</p>
+                  <p className="text-sm font-black text-violet-300">
+                    {(((data.likes + (data.comments ?? 0)) / data.views) * 100).toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </BottomSheet>
   );
 }
 
@@ -687,6 +808,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const [showLive, setShowLive] = useState(false);
   const [showSub, setShowSub] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [statsTarget, setStatsTarget] = useState<StatsTarget | null>(null);
   const [liveTitle, setLiveTitle] = useState("");
   const [liveStarting, setLiveStarting] = useState(false);
   const [newPlanName, setNewPlanName] = useState("");
@@ -1052,6 +1174,17 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                       <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
                       <span className="text-[10px] font-black text-white tracking-wide">{t("profile.top_post")}</span>
                     </div>
+                    {/* Analytics button for owner */}
+                    {isOwner && (
+                      <motion.button
+                        whileTap={{ scale: 0.88 }}
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); setStatsTarget({ id: topPost.id, type: "post" }); }}
+                        className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full opacity-0 group-hover/hero:opacity-100 transition-opacity"
+                        style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(8px)" }}>
+                        <BarChart2 className="w-3.5 h-3.5 text-violet-300" />
+                        <span className="text-[10px] font-bold text-white">Stats</span>
+                      </motion.button>
+                    )}
                     <div className="absolute bottom-0 left-0 right-0 px-4 py-3 opacity-0 group-hover/hero:opacity-100 transition-all">
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1.5 text-white">
@@ -1094,13 +1227,24 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                             <p className="text-[10px] text-foreground/75 line-clamp-4 text-center leading-relaxed">{post.content}</p>
                           </div>
                       }
-                      <motion.div className="absolute inset-0 bg-black/60 opacity-0 group-hover/post:opacity-100 transition-opacity flex items-center justify-center gap-2.5">
-                        <div className="flex items-center gap-1 text-white">
-                          <Heart className="w-3.5 h-3.5 fill-white" /><span className="text-xs font-bold">{post.likesCount ?? 0}</span>
+                      <motion.div className="absolute inset-0 bg-black/60 opacity-0 group-hover/post:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 text-white">
+                            <Heart className="w-3.5 h-3.5 fill-white" /><span className="text-xs font-bold">{post.likesCount ?? 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-white">
+                            <MessageCircle className="w-3.5 h-3.5 fill-white" /><span className="text-xs font-bold">{post.commentsCount ?? 0}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 text-white">
-                          <MessageCircle className="w-3.5 h-3.5 fill-white" /><span className="text-xs font-bold">{post.commentsCount ?? 0}</span>
-                        </div>
+                        {isOwner && (
+                          <motion.button
+                            whileTap={{ scale: 0.88 }}
+                            onClick={e => { e.preventDefault(); e.stopPropagation(); setStatsTarget({ id: post.id, type: "post" }); }}
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-white"
+                            style={{ background: "rgba(124,58,237,0.6)", border: "1px solid rgba(124,58,237,0.5)" }}>
+                            <BarChart2 className="w-3 h-3" /> Stats
+                          </motion.button>
+                        )}
                       </motion.div>
                       {post.type === "video" && (
                         <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-md bg-black/55 flex items-center justify-center">
@@ -1155,10 +1299,19 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                         </div>
                       )}
                       {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/reel:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/reel:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                         <div className="w-9 h-9 rounded-full bg-white/20 border border-white/28 flex items-center justify-center backdrop-blur-sm">
                           <Play className="w-4 h-4 text-white fill-white ml-0.5" />
                         </div>
+                        {isOwner && (
+                          <motion.button
+                            whileTap={{ scale: 0.88 }}
+                            onClick={e => { e.preventDefault(); e.stopPropagation(); setStatsTarget({ id: reel.id, type: "reel" }); }}
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-white"
+                            style={{ background: "rgba(124,58,237,0.6)", border: "1px solid rgba(124,58,237,0.5)" }}>
+                            <BarChart2 className="w-3 h-3" /> Stats
+                          </motion.button>
+                        )}
                       </div>
                       {/* Stats bar */}
                       <div className="absolute bottom-0 left-0 right-0 px-1.5 py-1 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between">
@@ -1208,6 +1361,12 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
         onAvatarClick={() => avatarInputRef.current?.click()}
         onCoverClick={() => { setShowSettings(false); coverInputRef.current?.click(); }}
         onOpenSubscription={() => setShowSub(true)} />
+
+      <PostStatsDrawer
+        open={statsTarget !== null}
+        onClose={() => setStatsTarget(null)}
+        target={statsTarget}
+        userId={userId} />
 
       <ProfileOrb
         targetUser={{ displayName: user.displayName, username: user.username, avatarUrl: user.avatarUrl }}

@@ -356,4 +356,109 @@ router.get("/users/:id/creator-analytics", async (req: any, res) => {
   }
 });
 
+/* ── GET /users/:userId/posts/:postId/stats ───────────────────── */
+router.get("/users/:userId/posts/:postId/stats", async (req: any, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const postId = Number(req.params.postId);
+    if (isNaN(userId) || isNaN(postId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const callerId = req.session?.userId as number | undefined;
+    if (!callerId) { res.status(401).json({ error: "Unauthenticated" }); return; }
+    if (callerId !== userId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+    const [post] = await db.select({
+      id: postsTable.id,
+      content: postsTable.content,
+      mediaUrl: postsTable.mediaUrl,
+      type: postsTable.type,
+      likesCount: postsTable.likesCount,
+      commentsCount: postsTable.commentsCount,
+      sharesCount: postsTable.sharesCount,
+      createdAt: postsTable.createdAt,
+    }).from(postsTable).where(and(eq(postsTable.id, postId), eq(postsTable.authorId, userId)));
+
+    if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+
+    const viewsResult = await db.execute(sql`
+      SELECT COUNT(*)::int AS views
+      FROM user_interactions
+      WHERE content_type = 'post' AND content_id = ${postId} AND interaction_type = 'view'`);
+
+    const savesResult = await db.execute(sql`
+      SELECT COUNT(*)::int AS saves
+      FROM user_interactions
+      WHERE content_type = 'post' AND content_id = ${postId} AND interaction_type = 'save'`);
+
+    res.json({
+      id: post.id,
+      content: post.content,
+      mediaUrl: post.mediaUrl,
+      type: post.type,
+      createdAt: post.createdAt,
+      views: Number((viewsResult as any).rows?.[0]?.views ?? 0),
+      likes: post.likesCount ?? 0,
+      comments: post.commentsCount ?? 0,
+      shares: post.sharesCount ?? 0,
+      saves: Number((savesResult as any).rows?.[0]?.saves ?? 0),
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── GET /users/:userId/reels/:reelId/stats ───────────────────── */
+router.get("/users/:userId/reels/:reelId/stats", async (req: any, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const reelId = Number(req.params.reelId);
+    if (isNaN(userId) || isNaN(reelId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const callerId = req.session?.userId as number | undefined;
+    if (!callerId) { res.status(401).json({ error: "Unauthenticated" }); return; }
+    if (callerId !== userId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+    const [reel] = await db.select({
+      id: reelsTable.id,
+      caption: reelsTable.caption,
+      videoUrl: reelsTable.videoUrl,
+      thumbnailUrl: reelsTable.thumbnailUrl,
+      viewsCount: reelsTable.viewsCount,
+      likesCount: reelsTable.likesCount,
+      createdAt: reelsTable.createdAt,
+    }).from(reelsTable).where(and(eq(reelsTable.id, reelId), eq(reelsTable.authorId, userId)));
+
+    if (!reel) { res.status(404).json({ error: "Reel not found" }); return; }
+
+    const savesResult = await db.execute(sql`
+      SELECT COUNT(*)::int AS saves
+      FROM user_interactions
+      WHERE content_type = 'reel' AND content_id = ${reelId} AND interaction_type = 'save'`);
+
+    const interactionViewsResult = await db.execute(sql`
+      SELECT COUNT(*)::int AS views
+      FROM user_interactions
+      WHERE content_type = 'reel' AND content_id = ${reelId} AND interaction_type = 'view'`);
+
+    const interactionViews = Number((interactionViewsResult as any).rows?.[0]?.views ?? 0);
+    const storedViews = reel.viewsCount ?? 0;
+
+    res.json({
+      id: reel.id,
+      caption: reel.caption,
+      videoUrl: reel.videoUrl,
+      thumbnailUrl: reel.thumbnailUrl,
+      createdAt: reel.createdAt,
+      views: Math.max(storedViews, interactionViews),
+      likes: reel.likesCount ?? 0,
+      shares: 0,
+      saves: Number((savesResult as any).rows?.[0]?.saves ?? 0),
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

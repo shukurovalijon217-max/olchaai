@@ -6804,8 +6804,8 @@ function OTubeMusicOrb() {
     audio.currentTime = ratio * audio.duration;
   };
 
-  const handleDownload = () => {
-    if (!track) return;
+  const handleDownload = async () => {
+    if (!track || downloading) return;
     /* Extract the raw Audius track ID from the preview URL path
        preview = "/api/music/stream/<audiusId>" or "au_<audiusId>" */
     const audiusId = track.id.startsWith("au_")
@@ -6813,11 +6813,41 @@ function OTubeMusicOrb() {
       : track.preview.split("/stream/")[1]?.split("?")[0] ?? track.id;
     const artist = encodeURIComponent(track.artist || "Unknown");
     const title  = encodeURIComponent(track.title || track.name || "track");
-    /* Open the dedicated download endpoint in a new tab — the browser streams
-       directly to disk via Content-Disposition: attachment, no memory buffering */
     const url = `${API_BASE}/api/music/download/${audiusId}?artist=${artist}&title=${title}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-    toast({ title: "✓ Yuklab boshlandi", description: track.title || track.name });
+
+    setDownloading(true);
+    try {
+      const resp = await fetch(url, { credentials: "include" });
+      const ct = resp.headers.get("content-type") ?? "";
+      if (!resp.ok || !ct.startsWith("audio/")) {
+        /* Server returned a JSON error — surface it clearly */
+        toast({
+          title: "Yuklab bo'lmadi",
+          description: "Track mavjud emas yoki vaqtincha ishlamayapti. Keyinroq urinib ko'ring.",
+          variant: "destructive",
+        });
+        return;
+      }
+      /* Stream the blob and trigger a real file download */
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${(track.artist || "Unknown").replace(/[^\w\s.\-()]/g, "")} - ${(track.title || track.name || "track").replace(/[^\w\s.\-()]/g, "")}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+      toast({ title: "✓ Yuklab olindi", description: track.title || track.name });
+    } catch {
+      toast({
+        title: "Yuklab bo'lmadi",
+        description: "Tarmoq xatosi yuz berdi. Internetni tekshiring va qayta urinib ko'ring.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const fmtTime = (s: number) => {

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -21,6 +21,17 @@ export const storyViewsTable = pgTable("story_views", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const storyReactionsTable = pgTable("story_reactions", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").notNull().references(() => storiesTable.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  emoji: text("emoji").notNull().default("❤️"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("story_reactions_story_user_uniq").on(t.storyId, t.userId),
+]);
+
 export const insertStorySchema = createInsertSchema(storiesTable).omit({ id: true, createdAt: true, viewsCount: true });
 export type InsertStory = z.infer<typeof insertStorySchema>;
 export type Story = typeof storiesTable.$inferSelect;
+export type StoryReaction = typeof storyReactionsTable.$inferSelect;

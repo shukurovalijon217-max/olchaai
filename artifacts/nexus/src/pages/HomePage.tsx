@@ -340,6 +340,11 @@ export default function HomePage() {
   const [storyElapsed,    setStoryElapsed]    = useState(0);
   const [storyMenuOpen,   setStoryMenuOpen]   = useState(false);
   const [storyViewCounts, setStoryViewCounts] = useState<Record<number, number>>({});
+  const [storyEmojiOpen,  setStoryEmojiOpen]  = useState(false);
+  const [storyReplyOpen,  setStoryReplyOpen]  = useState(false);
+  const [storyReplyText,  setStoryReplyText]  = useState("");
+  const [storyReplyState, setStoryReplyState] = useState<"idle"|"sending"|"sent"|"error">("idle");
+  const [reactedEmoji,    setReactedEmoji]    = useState<Record<number, string>>({});
   const viewCalledRef  = useRef<Set<number>>(new Set());
   const storyTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const goNextRef      = useRef<() => void>(() => {});
@@ -487,6 +492,66 @@ export default function HomePage() {
       setViewerStoryIdx(0);
     }
   }, [viewerStoryIdx, viewerGroupIdx]);
+
+  /* ── Story actions ── */
+  const handleStoryReact = useCallback(async (emoji: string) => {
+    if (!activeStory) return;
+    const storyId = (activeStory as any).id as number;
+    try {
+      const res = await fetch(`${API}/api/stories/${storyId}/react`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+      });
+      if (res.ok) {
+        setReactedEmoji(prev => ({ ...prev, [storyId]: emoji }));
+      }
+    } catch { /* silent */ }
+    setStoryEmojiOpen(false);
+    setStoryPaused(false);
+  }, [activeStory]);
+
+  const handleStoryReply = useCallback(async () => {
+    if (!activeStory || !storyReplyText.trim()) return;
+    const storyId = (activeStory as any).id as number;
+    setStoryReplyState("sending");
+    try {
+      const res = await fetch(`${API}/api/stories/${storyId}/reply`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: storyReplyText.trim() }),
+      });
+      if (res.ok) {
+        setStoryReplyState("sent");
+        setStoryReplyText("");
+        setTimeout(() => { setStoryReplyOpen(false); setStoryReplyState("idle"); setStoryPaused(false); }, 1400);
+      } else {
+        setStoryReplyState("error");
+        setTimeout(() => setStoryReplyState("idle"), 2000);
+      }
+    } catch {
+      setStoryReplyState("error");
+      setTimeout(() => setStoryReplyState("idle"), 2000);
+    }
+  }, [activeStory, storyReplyText]);
+
+  const handleStoryShare = useCallback(async () => {
+    if (!activeStory) return;
+    const storyId = (activeStory as any).id as number;
+    const authorName = activeGroup?.[0]?.author?.username ?? "gilosai";
+    const url = `${window.location.origin}/story/${storyId}`;
+    const text = `@${authorName} — GilosAI story`;
+    if (navigator.share) {
+      try { await navigator.share({ title: "GilosAI Story", text, url }); } catch { /* user cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        // Brief visual feedback via toast-like mechanism is handled by reactedEmoji state repurposing
+      } catch { /* silent */ }
+    }
+  }, [activeStory, activeGroup]);
 
   /* Double-tap avatar inside the strip → hologram */
   const handleAvatarDoubleTap = useCallback((e: React.MouseEvent, user: HoloUser) => {
@@ -873,9 +938,9 @@ export default function HomePage() {
                           }}
                         >
                           {([
-                            { icon:<Heart style={{width:16,height:16}}/>,         label:"Yoqdi",        act:()=>{}  },
-                            { icon:<MessageCircle style={{width:16,height:16}}/>, label:"Javob berish",  act:()=>{}  },
-                            { icon:<Share2 style={{width:16,height:16}}/>,        label:"Ulashish",     act:()=>{}  },
+                            { icon:<Heart style={{width:16,height:16,color:activeStory && reactedEmoji[(activeStory as any).id] ? "#f87171" : undefined}}/>, label: activeStory && reactedEmoji[(activeStory as any).id] ? `${reactedEmoji[(activeStory as any).id]} Reaktsiya` : "Yoqdi", act:()=>{ setStoryMenuOpen(false); setStoryEmojiOpen(true); setStoryPaused(true); } },
+                            { icon:<MessageCircle style={{width:16,height:16}}/>, label:"Javob berish",  act:()=>{ setStoryMenuOpen(false); setStoryReplyOpen(true); setStoryPaused(true); } },
+                            { icon:<Share2 style={{width:16,height:16}}/>,        label:"Ulashish",     act:()=>{ setStoryMenuOpen(false); handleStoryShare(); } },
                             ...(user && (activeStory as any)?.authorId === user.id
                               ? [{ icon:<Trash2 style={{width:16,height:16,color:"#f87171"}}/>, label:"O'chirish", danger:true, act:deleteActiveStory }]
                               : [{ icon:<Flag style={{width:16,height:16}}/>, label:"Shikoyat", danger:false, act:()=>{} }]
@@ -955,6 +1020,169 @@ export default function HomePage() {
               </div>
             )}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── STORY EMOJI PICKER ── */}
+      <AnimatePresence>
+        {storyEmojiOpen && activeStory && (
+          <>
+            <motion.div
+              key="emoji-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { setStoryEmojiOpen(false); setStoryPaused(false); }}
+              style={{ position:"fixed", inset:0, zIndex:210 }}
+            />
+            <motion.div
+              key="emoji-picker"
+              initial={{ opacity: 0, scale: 0.88, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.88, y: 20 }}
+              transition={{ type:"spring", stiffness:400, damping:30 }}
+              style={{
+                position:"fixed",
+                bottom:"calc(env(safe-area-inset-bottom, 0px) + 32px)",
+                left:"50%", transform:"translateX(-50%)",
+                zIndex:211,
+                background:"rgba(12,0,28,0.97)",
+                border:"1px solid rgba(255,255,255,0.1)",
+                borderRadius:24,
+                backdropFilter:"blur(28px)",
+                padding:"14px 18px",
+                boxShadow:"0 16px 48px rgba(0,0,0,0.8)",
+              }}
+            >
+              <div style={{ fontSize:11, color:"rgba(255,255,255,0.45)", marginBottom:10, textAlign:"center", letterSpacing:"0.03em" }}>
+                Reaktsiya tanlang
+              </div>
+              <div style={{ display:"flex", gap:8 }}>
+                {["❤️","😍","🔥","😂","😮","👏","💯","✨"].map(emoji => (
+                  <motion.button
+                    key={emoji}
+                    whileTap={{ scale: 0.78 }}
+                    whileHover={{ scale: 1.18 }}
+                    onClick={() => handleStoryReact(emoji)}
+                    style={{
+                      fontSize:26, lineHeight:1, padding:"4px 2px",
+                      background:"none", border:"none", cursor:"pointer",
+                      borderRadius:10,
+                      outline: reactedEmoji[(activeStory as any).id] === emoji ? "2px solid rgba(167,139,250,0.7)" : "none",
+                    }}
+                  >
+                    {emoji}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── STORY REPLY SHEET ── */}
+      <AnimatePresence>
+        {storyReplyOpen && activeStory && (
+          <>
+            <motion.div
+              key="reply-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { if (storyReplyState !== "sending") { setStoryReplyOpen(false); setStoryReplyText(""); setStoryReplyState("idle"); setStoryPaused(false); } }}
+              style={{ position:"fixed", inset:0, zIndex:210, background:"rgba(0,0,0,0.45)" }}
+            />
+            <motion.div
+              key="reply-sheet"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type:"spring", stiffness:420, damping:36 }}
+              style={{
+                position:"fixed",
+                bottom:0, left:0, right:0,
+                zIndex:211,
+                background:"rgba(10,4,28,0.98)",
+                border:"1px solid rgba(255,255,255,0.07)",
+                borderBottom:"none",
+                borderRadius:"24px 24px 0 0",
+                backdropFilter:"blur(28px)",
+                padding:"20px 18px",
+                paddingBottom:"calc(env(safe-area-inset-bottom, 0px) + 20px)",
+                boxShadow:"0 -12px 60px rgba(0,0,0,0.8)",
+              }}
+            >
+              {/* Handle */}
+              <div style={{ display:"flex", justifyContent:"center", marginBottom:14 }}>
+                <div style={{ width:32, height:4, borderRadius:2, background:"rgba(255,255,255,0.2)" }}/>
+              </div>
+
+              {/* Story preview chip */}
+              <div style={{
+                display:"flex", alignItems:"center", gap:10,
+                background:"rgba(255,255,255,0.05)",
+                border:"1px solid rgba(255,255,255,0.08)",
+                borderRadius:14, padding:"8px 12px", marginBottom:14,
+              }}>
+                {activeGroup?.[0]?.author?.avatarUrl ? (
+                  <img src={activeGroup[0].author.avatarUrl} alt="" style={{ width:28, height:28, borderRadius:"50%", objectFit:"cover", flexShrink:0 }} />
+                ) : (
+                  <div style={{ width:28, height:28, borderRadius:"50%", background:"linear-gradient(135deg,#a855f7,#6366f1)", flexShrink:0 }} />
+                )}
+                <span style={{ fontSize:12, color:"rgba(255,255,255,0.6)" }}>
+                  <span style={{ color:"rgba(255,255,255,0.9)", fontWeight:600 }}>
+                    {activeGroup?.[0]?.author?.displayName || activeGroup?.[0]?.author?.username}
+                  </span> storyga javob
+                </span>
+              </div>
+
+              {/* Input row */}
+              <div style={{ display:"flex", gap:10, alignItems:"flex-end" }}>
+                <textarea
+                  autoFocus
+                  value={storyReplyText}
+                  onChange={e => setStoryReplyText(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleStoryReply(); } }}
+                  placeholder="Xabar yozing…"
+                  rows={2}
+                  style={{
+                    flex:1, resize:"none",
+                    background:"rgba(255,255,255,0.07)",
+                    border:"1px solid rgba(255,255,255,0.1)",
+                    borderRadius:16, padding:"10px 14px",
+                    color:"#fff", fontSize:14,
+                    outline:"none",
+                    fontFamily:"inherit",
+                  }}
+                />
+                <motion.button
+                  whileTap={{ scale: 0.88 }}
+                  disabled={!storyReplyText.trim() || storyReplyState === "sending"}
+                  onClick={handleStoryReply}
+                  style={{
+                    width:44, height:44, borderRadius:14, flexShrink:0,
+                    background: storyReplyState === "sent" ? "rgba(34,197,94,0.8)"
+                              : storyReplyState === "error" ? "rgba(239,68,68,0.8)"
+                              : "linear-gradient(135deg,#7c3aed,#ec4899)",
+                    border:"none", cursor:"pointer",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    opacity: !storyReplyText.trim() || storyReplyState === "sending" ? 0.45 : 1,
+                    fontSize: storyReplyState === "sent" ? 20 : 14,
+                  }}
+                >
+                  {storyReplyState === "sending" ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration:1, repeat:Infinity, ease:"linear" }}
+                      style={{ width:16, height:16, borderRadius:"50%", border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff" }}
+                    />
+                  ) : storyReplyState === "sent" ? "✓" : storyReplyState === "error" ? "!" : (
+                    <MessageCircle style={{ width:18, height:18, color:"#fff" }} />
+                  )}
+                </motion.button>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

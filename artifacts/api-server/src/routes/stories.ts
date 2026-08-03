@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { storiesTable, storyViewsTable, usersTable, moderationQueueTable } from "@workspace/db";
+import { storiesTable, storyViewsTable, storyReactionsTable, usersTable, moderationQueueTable, chatConversationsTable, chatParticipantsTable, chatMessagesTable } from "@workspace/db";
 import { eq, sql, gt, and, inArray } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
@@ -112,6 +112,154 @@ router.post("/stories/:id/view", async (req, res) => {
     const [story] = await db.select({ viewsCount: storiesTable.viewsCount })
       .from(storiesTable).where(eq(storiesTable.id, storyId)).limit(1);
     res.json({ viewed: true, viewsCount: story?.viewsCount || 0 });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ─── POST /stories/:id/react — send an emoji reaction to a story ─── */
+router.post("/stories/:id/react", async (req, res) => {
+  try {
+    const storyId = Number(req.params.id);
+    const userId  = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+
+    const emoji: string = req.body.emoji || "❤️";
+
+    const [story] = await db.select({ id: storiesTable.id, authorId: storiesTable.authorId })
+      .from(storiesTable).where(eq(storiesTable.id, storyId)).limit(1);
+    if (!story) { res.status(404).json({ error: "Story topilmadi" }); return; }
+
+    /* Atomic upsert via ON CONFLICT — safe against concurrent requests */
+    await db.insert(storyReactionsTable)
+      .values({ storyId, userId, emoji })
+      .onConflictDoUpdate({
+        target: [storyReactionsTable.storyId, storyReactionsTable.userId],
+        set: { emoji },
+      });
+
+    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(storyReactionsTable).where(eq(storyReactionsTable.storyId, storyId));
+
+    res.json({ reacted: true, emoji, reactionsCount: count });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ─── GET /stories/:id/reactions — fetch reactions for a story (author only) ─── */
+router.get("/stories/:id/reactions", async (req, res) => {
+  try {
+    const storyId = Number(req.params.id);
+    const userId  = (req.session as any)?.userId as number | undefined;
+    if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+
+    const [story] = await db.select({ authorId: storiesTable.authorId })
+      .from(storiesTable).where(eq(storiesTable.id, storyId)).limit(1);
+    if (!story) { res.status(404).json({ error: "Story topilmadi" }); return; }
+    if (story.authorId !== userId) { res.status(403).json({ error: "Faqat muallif ko'ra oladi" }); return; }
+
+    const reactions = await db.select({
+      id: storyReactionsTable.id,
+      emoji: storyReactionsTable.emoji,
+      createdAt: storyReactionsTable.createdAt,
+      userId: storyReactionsTable.userId,
+    }).from(storyReactionsTable).where(eq(storyReactionsTable.storyId, storyId));
+
+    const userIds = [...new Set(reactions.map(r => r.userId))];
+    const users = userIds.length > 0
+      ? await db.select({ id: usersTable.id, username: usersTable.username, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl })
+          .from(usersTable).where(inArray(usersTable.id, userIds))
+      : [];
+    const userMap = new Map(users.map(u => [u.id, u]));
+
+    const enriched = reactions.map(r => ({ ...r, user: userMap.get(r.userId) }));
+    res.json(enriched);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ─── POST /stories/:id/reply — DM the story author with a reply ─── */
+router.post("/stories/:id/reply", async (req, res) => {
+  try {
+    const storyId  = Number(req.params.id);
+    const senderId = (req.session as any)?.userId as number | undefined;
+    if (!senderId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+
+    const message: string = (req.body.message || "").trim();
+    if (!message) { res.status(400).json({ error: "Xabar bo'sh bo'lishi mumkin emas" }); return; }
+
+    const [story] = await db.select({ id: storiesTable.id, authorId: storiesTable.authorId })
+      .from(storiesTable).where(eq(storiesTable.id, storyId)).limit(1);
+    if (!story) { res.status(404).json({ error: "Story topilmadi" }); return; }
+
+    const recipientId = story.authorId;
+    if (recipientId === senderId) {
+      res.status(400).json({ error: "O'z storyingizga javob bera olmaysiz" }); return;
+    }
+
+    /* Find existing true 1-on-1 conversation between sender and recipient.
+       A 1-on-1 has exactly 2 participants, so we:
+       1. Find conversations where sender is a participant.
+       2. Intersect with conversations where recipient is a participant.
+       3. Keep only those whose total participant count is exactly 2. */
+    const senderConvs = await db.select({ conversationId: chatParticipantsTable.conversationId })
+      .from(chatParticipantsTable).where(eq(chatParticipantsTable.userId, senderId));
+    const senderConvIds = senderConvs.map(r => r.conversationId);
+
+    let conversationId: number | null = null;
+    if (senderConvIds.length > 0) {
+      const sharedConvs = await db.select({ conversationId: chatParticipantsTable.conversationId })
+        .from(chatParticipantsTable)
+        .where(and(
+          eq(chatParticipantsTable.userId, recipientId),
+          inArray(chatParticipantsTable.conversationId, senderConvIds),
+        ));
+      const sharedIds = sharedConvs.map(r => r.conversationId);
+
+      /* Among the shared conversations, find one that has exactly 2 participants */
+      if (sharedIds.length > 0) {
+        const countRows = await db.select({
+          conversationId: chatParticipantsTable.conversationId,
+          cnt: sql<number>`count(*)::int`,
+        })
+          .from(chatParticipantsTable)
+          .where(inArray(chatParticipantsTable.conversationId, sharedIds))
+          .groupBy(chatParticipantsTable.conversationId);
+
+        const dmRow = countRows.find(r => r.cnt === 2);
+        if (dmRow) conversationId = dmRow.conversationId;
+      }
+    }
+
+    /* Create conversation if none exists */
+    if (!conversationId) {
+      const [conv] = await db.insert(chatConversationsTable)
+        .values({ lastMessage: message })
+        .returning({ id: chatConversationsTable.id });
+      conversationId = conv.id;
+      await db.insert(chatParticipantsTable).values([
+        { conversationId, userId: senderId },
+        { conversationId, userId: recipientId },
+      ]);
+    }
+
+    /* Insert the message */
+    await db.insert(chatMessagesTable).values({
+      conversationId,
+      senderId,
+      content: message,
+    });
+
+    await db.update(chatConversationsTable)
+      .set({ lastMessage: message, updatedAt: new Date() })
+      .where(eq(chatConversationsTable.id, conversationId));
+
+    res.json({ sent: true, conversationId });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

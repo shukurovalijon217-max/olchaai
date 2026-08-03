@@ -127801,7 +127801,6 @@ var init_users2 = __esm({
     router4.get("/users/:id/creator-analytics", async (req, res) => {
       try {
         const id = Number(req.params.id);
-        const period = Number(req.query.period) || 30;
         if (isNaN(id)) {
           res.status(400).json({ error: "Invalid id" });
           return;
@@ -127815,26 +127814,33 @@ var init_users2 = __esm({
           res.status(403).json({ error: "Forbidden" });
           return;
         }
-        const since = /* @__PURE__ */ new Date();
-        since.setDate(since.getDate() - period);
-        since.setHours(0, 0, 0, 0);
+        const periodParam = req.query.period;
+        const allTime = periodParam === "all";
+        const period = allTime ? null : Number(periodParam) || 30;
+        let since = null;
+        if (!allTime && period !== null) {
+          since = /* @__PURE__ */ new Date();
+          since.setDate(since.getDate() - period);
+          since.setHours(0, 0, 0, 0);
+        }
         const postIds = await db.select({ id: postsTable.id }).from(postsTable).where(eq(postsTable.authorId, id));
         const reelIds = await db.select({ id: reelsTable.id }).from(reelsTable).where(eq(reelsTable.authorId, id));
         const allPostIds = postIds.map((p3) => p3.id);
         const allReelIds = reelIds.map((r5) => r5.id);
+        const sinceClause = since ? sql`AND created_at >= ${since}` : sql``;
         const postViews = allPostIds.length > 0 ? await db.execute(sql`
           SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS n
           FROM user_interactions
           WHERE content_type = 'post' AND interaction_type = 'view'
             AND content_id = ANY(ARRAY[${sql.join(allPostIds.map((i5) => sql`${i5}`), sql`, `)}]::int[])
-            AND created_at >= ${since}
+            ${sinceClause}
           GROUP BY 1 ORDER BY 1`) : { rows: [] };
         const reelViews = allReelIds.length > 0 ? await db.execute(sql`
           SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS n
           FROM user_interactions
           WHERE content_type = 'reel' AND interaction_type = 'view'
             AND content_id = ANY(ARRAY[${sql.join(allReelIds.map((i5) => sql`${i5}`), sql`, `)}]::int[])
-            AND created_at >= ${since}
+            ${sinceClause}
           GROUP BY 1 ORDER BY 1`) : { rows: [] };
         const likesRows = allPostIds.length > 0 || allReelIds.length > 0 ? await db.execute(sql`
           SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS n
@@ -127845,21 +127851,43 @@ var init_users2 = __esm({
               OR
               (content_type = 'reel'  AND content_id = ANY(ARRAY[${allReelIds.length > 0 ? sql.join(allReelIds.map((i5) => sql`${i5}`), sql`, `) : sql`NULL`}]::int[]))
             )
-            AND created_at >= ${since}
+            ${sinceClause}
           GROUP BY 1 ORDER BY 1`) : { rows: [] };
-        const followerGrowth = await db.execute(sql`
-      SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS new_followers
-      FROM follows
-      WHERE following_id = ${id} AND created_at >= ${since}
-      GROUP BY 1 ORDER BY 1`);
-        const [baselineRow] = await db.select({ count: sql`count(*)::int` }).from(followsTable).where(and(eq(followsTable.followingId, id), sql`created_at < ${since}`));
-        const followerBaseline = baselineRow?.count ?? 0;
+        const followerGrowth = since ? await db.execute(sql`
+          SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS new_followers
+          FROM follows
+          WHERE following_id = ${id} AND created_at >= ${since}
+          GROUP BY 1 ORDER BY 1`) : await db.execute(sql`
+          SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS new_followers
+          FROM follows
+          WHERE following_id = ${id}
+          GROUP BY 1 ORDER BY 1`);
+        const followerBaseline = since ? (await db.select({ count: sql`count(*)::int` }).from(followsTable).where(and(eq(followsTable.followingId, id), sql`created_at < ${since}`)))[0]?.count ?? 0 : 0;
         const topPosts = allPostIds.length > 0 ? await db.select({ id: postsTable.id, content: postsTable.content, likesCount: postsTable.likesCount, commentsCount: postsTable.commentsCount, sharesCount: postsTable.sharesCount, createdAt: postsTable.createdAt }).from(postsTable).where(eq(postsTable.authorId, id)).orderBy(desc(sql`${postsTable.likesCount} + ${postsTable.commentsCount}`)).limit(5) : [];
         const topReels = allReelIds.length > 0 ? await db.select({ id: reelsTable.id, caption: reelsTable.caption, viewsCount: reelsTable.viewsCount, likesCount: reelsTable.likesCount, createdAt: reelsTable.createdAt }).from(reelsTable).where(eq(reelsTable.authorId, id)).orderBy(desc(reelsTable.viewsCount)).limit(5) : [];
+        const allActivityDays = [
+          ...postViews.rows,
+          ...reelViews.rows,
+          ...likesRows.rows,
+          ...followerGrowth.rows
+        ].map((r5) => String(r5.day).slice(0, 10));
+        const today = /* @__PURE__ */ new Date();
+        today.setHours(0, 0, 0, 0);
+        let timelineStart;
+        if (since) {
+          timelineStart = since;
+        } else if (allActivityDays.length > 0) {
+          timelineStart = new Date(allActivityDays.reduce((a5, b5) => a5 < b5 ? a5 : b5));
+        } else {
+          timelineStart = /* @__PURE__ */ new Date();
+          timelineStart.setDate(timelineStart.getDate() - 30);
+          timelineStart.setHours(0, 0, 0, 0);
+        }
         const dayMap = {};
-        for (let d5 = 0; d5 <= period; d5++) {
-          const dt = new Date(since);
-          dt.setDate(dt.getDate() + d5);
+        const msPerDay = 864e5;
+        const totalDays = Math.round((today.getTime() - timelineStart.getTime()) / msPerDay);
+        for (let d5 = 0; d5 <= totalDays; d5++) {
+          const dt = new Date(timelineStart.getTime() + d5 * msPerDay);
           const key = dt.toISOString().slice(0, 10);
           dayMap[key] = { date: key, postViews: 0, reelViews: 0, likes: 0, newFollowers: 0 };
         }

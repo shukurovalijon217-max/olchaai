@@ -1,6 +1,29 @@
-**
-!Dockerfile
-!artifacts/nexus/dist/**
-!artifacts/nexus/server.js
-!artifacts/api-server/dist/**
-!stubs/**
+# ── Heavy directories that must never enter the build context ─────────────────
+**/node_modules
+
+# Git history
+.git
+**/.git
+
+# ── Replit workspace files (not needed in Docker) ─────────────────────────────
+.replit
+.local
+.agents
+attached_assets
+
+# ── Artifacts not involved in the Docker build ────────────────────────────────
+artifacts/olcha-mobile/
+artifacts/spatial-ar/
+artifacts/ai-core/
+artifacts/mockup-sandbox/
+artifacts/olcha-go/
+
+# ── Stale committed build outputs — the builder stage regenerates these ────────
+# (Excluding them from the context prevents the old dist from being sent to
+#  Docker, making the build context smaller and the intent explicit.)
+artifacts/nexus/dist/
+artifacts/api-server/dist/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+**/*.log
+**/.DS_Store

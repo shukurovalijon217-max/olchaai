@@ -12,6 +12,7 @@ import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheGet, cacheSet, cacheAside, cacheDelPattern } from "../lib/cache";
 import { transcodeReelToHLS, parseGcsPath } from "../lib/hlsTranscode";
 import { objectStorageClient } from "../lib/objectStorage";
+import { assertMediaUrl } from "../lib/assertMediaUrl";
 
 const router = Router();
 
@@ -170,6 +171,9 @@ router.post("/reels", async (req, res) => {
     const { videoUrl, thumbnailUrl, caption, audioTrack, duration, tags } = req.body;
     const authorId = viewerId ?? Number(req.body.authorId);
     if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
+
+    assertMediaUrl(videoUrl, "videoUrl");
+    assertMediaUrl(thumbnailUrl, "thumbnailUrl");
 
     const [reel] = await db
       .insert(reelsTable)

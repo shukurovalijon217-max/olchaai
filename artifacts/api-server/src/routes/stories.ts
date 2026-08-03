@@ -5,6 +5,7 @@ import { eq, sql, gt, and, inArray } from "drizzle-orm";
 import { scanContentAsync } from "../moderation/aiFilter";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { cacheAside, cacheDelPattern } from "../lib/cache";
+import { assertMediaUrl } from "../lib/assertMediaUrl";
 
 const router = Router();
 
@@ -36,6 +37,8 @@ router.post("/stories", async (req, res) => {
     const { mediaUrl, mediaType, caption } = req.body;
     const authorId = (req.session as any)?.userId ?? Number(req.body.authorId);
     if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
+
+    assertMediaUrl(mediaUrl, "mediaUrl");
 
     // AI scan caption before saving
     const scan = await scanContentAsync(caption ?? "");

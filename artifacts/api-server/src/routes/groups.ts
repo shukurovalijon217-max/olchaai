@@ -8,6 +8,7 @@ import {
 } from "@workspace/db";
 import { eq, sql, ilike, and, desc, ne } from "drizzle-orm";
 import { randomBytes } from "crypto";
+import { assertMediaUrl } from "../lib/assertMediaUrl";
 
 const router = Router();
 
@@ -394,6 +395,8 @@ router.post("/groups/:id/posts", async (req: Request, res: Response): Promise<vo
 
     const { content, mediaUrl, postType } = req.body;
     if (!content?.trim()) { res.status(400).json({ error: "content is required" }); return; }
+
+    assertMediaUrl(mediaUrl, "mediaUrl");
 
     const [group] = await db.select().from(groupsTable).where(eq(groupsTable.id, groupId));
     if (!group) { res.status(404).json({ error: "Group not found" }); return; }

@@ -12,6 +12,7 @@ import { searchMusic, audiusStream, AUDIUS_HOSTS } from "../lib/music";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { notifyComment, notifyLike } from "../lib/emailNotify";
 import { sendNotification } from "../lib/pushNotifications";
+import { assertMediaUrl, assertMediaUrls } from "../lib/assertMediaUrl";
 
 const router = Router();
 
@@ -412,6 +413,10 @@ router.post("/posts", async (req: any, res) => {
     const sessionUserId: number | undefined = req.session?.userId;
     const authorId = sessionUserId ?? Number(req.body.authorId);
     if (!authorId) { res.status(401).json({ error: "Login kerak" }); return; }
+
+    assertMediaUrl(mediaUrl, "mediaUrl");
+    assertMediaUrls(mediaUrls, "mediaUrls");
+    assertMediaUrl(audioUrl, "audioUrl");
 
     const [post] = await db
       .insert(postsTable)

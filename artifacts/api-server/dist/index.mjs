@@ -139931,6 +139931,28 @@ var init_pushNotifications = __esm({
   }
 });
 
+// src/lib/assertMediaUrl.ts
+function assertMediaUrl(url2, field = "mediaUrl") {
+  if (url2 == null || url2 === "") return;
+  if (typeof url2 !== "string" || !url2.startsWith("https://")) {
+    throw new Error(
+      `[assertMediaUrl] Invalid ${field}: expected a full HTTPS URL, got "${String(url2).slice(0, 120)}". This is a server-side bug \u2014 the upload pipeline returned a non-absolute URL.`
+    );
+  }
+}
+function assertMediaUrls(urls, field = "mediaUrls") {
+  if (urls == null) return;
+  if (!Array.isArray(urls)) {
+    throw new Error(`[assertMediaUrl] ${field} must be an array, got ${typeof urls}`);
+  }
+  urls.forEach((u, i5) => assertMediaUrl(u, `${field}[${i5}]`));
+}
+var init_assertMediaUrl = __esm({
+  "src/lib/assertMediaUrl.ts"() {
+    "use strict";
+  }
+});
+
 // src/routes/posts.ts
 async function batchEnrichPosts(posts, viewerId = 0) {
   if (posts.length === 0) return [];
@@ -139982,6 +140004,7 @@ var init_posts2 = __esm({
     init_userStats();
     init_emailNotify();
     init_pushNotifications();
+    init_assertMediaUrl();
     router5 = (0, import_express5.Router)();
     router5.get("/posts", async (req, res) => {
       try {
@@ -140328,6 +140351,9 @@ var init_posts2 = __esm({
           res.status(401).json({ error: "Login kerak" });
           return;
         }
+        assertMediaUrl(mediaUrl, "mediaUrl");
+        assertMediaUrls(mediaUrls, "mediaUrls");
+        assertMediaUrl(audioUrl, "audioUrl");
         const [post] = await db.insert(postsTable).values({
           authorId,
           content,
@@ -141357,6 +141383,7 @@ var init_reels2 = __esm({
     init_cache();
     init_hlsTranscode();
     init_objectStorage();
+    init_assertMediaUrl();
     router7 = (0, import_express7.Router)();
     requireAuth2 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -141413,6 +141440,8 @@ var init_reels2 = __esm({
           res.status(401).json({ error: "Login kerak" });
           return;
         }
+        assertMediaUrl(videoUrl, "videoUrl");
+        assertMediaUrl(thumbnailUrl, "thumbnailUrl");
         const [reel] = await db.insert(reelsTable).values({ authorId, videoUrl, thumbnailUrl, caption, audioTrack, duration: duration3, tags }).returning();
         const [enriched] = await batchEnrichReels([reel], viewerId);
         cacheDelPattern("reels:list");
@@ -141889,6 +141918,7 @@ var init_stories2 = __esm({
     init_aiFilter();
     init_userStats();
     init_cache();
+    init_assertMediaUrl();
     router8 = (0, import_express8.Router)();
     router8.get("/stories", async (req, res) => {
       try {
@@ -141920,6 +141950,7 @@ var init_stories2 = __esm({
           res.status(401).json({ error: "Login kerak" });
           return;
         }
+        assertMediaUrl(mediaUrl, "mediaUrl");
         const scan = await scanContentAsync(caption ?? "");
         if (scan.autoBlock) {
           res.status(422).json({
@@ -142271,6 +142302,7 @@ var init_groups4 = __esm({
     init_src();
     init_src();
     init_drizzle_orm();
+    init_assertMediaUrl();
     router10 = (0, import_express10.Router)();
     router10.get("/groups", async (req, res) => {
       try {
@@ -142637,6 +142669,7 @@ var init_groups4 = __esm({
           res.status(400).json({ error: "content is required" });
           return;
         }
+        assertMediaUrl(mediaUrl, "mediaUrl");
         const [group4] = await db.select().from(groupsTable).where(eq(groupsTable.id, groupId));
         if (!group4) {
           res.status(404).json({ error: "Group not found" });

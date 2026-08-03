@@ -75,6 +75,10 @@ router.post("/posts/:id/voice-comments", requireAuth, async (req: any, res) => {
 
     const { audioUrl, durationMs, waveformData } = req.body;
     if (!audioUrl) { res.status(400).json({ error: "audioUrl talab qilinadi" }); return; }
+    if (typeof audioUrl === "string" && audioUrl.startsWith("data:")) {
+      res.status(400).json({ error: "Base64 audio qabul qilinmaydi. Faylni avval presigned-upload orqali R2 ga yuklang va qaytarilgan URL ni yuboring." });
+      return;
+    }
 
     const [post] = await db.select({ id: postsTable.id }).from(postsTable).where(eq(postsTable.id, postId));
     if (!post) { res.status(404).json({ error: "Post topilmadi" }); return; }

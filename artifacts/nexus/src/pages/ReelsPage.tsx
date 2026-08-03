@@ -353,7 +353,7 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
   isActive: boolean; muted: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>; onPlayState: (p: boolean) => void;
 }) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(false);
   const hlsRef = useRef<Hls | null>(null);
 
@@ -365,6 +365,7 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
     // Destroy previous HLS instance if any
     hlsRef.current?.destroy();
     hlsRef.current = null;
+    setError(false);
 
     const src = hlsUrl ?? videoUrl;
     if (!src) return;
@@ -383,9 +384,14 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         v.muted = muted;
       });
+      hls.on(Hls.Events.ERROR, (_evt, data) => {
+        if (data.fatal) { setError(true); setLoading(false); }
+      });
     } else {
       // Safari native HLS or direct video
+      // Must call v.load() after setting src for iOS Safari to pick up the new source
       v.src = src;
+      v.load();
     }
 
     return () => {
@@ -398,7 +404,10 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
   useEffect(() => {
     const v = videoRef.current; if (!v) return;
     if (isActive) {
-      v.currentTime = 0; setError(false); setLoading(v.readyState < 3);
+      v.currentTime = 0;
+      setError(false);
+      // readyState 0/1 = no data yet → show spinner; 2+ = enough to play
+      setLoading(v.readyState < 2);
       v.play().catch(() => onPlayState(true));
     } else { v.pause(); v.currentTime = 0; }
   }, [isActive, videoRef, onPlayState]);
@@ -427,9 +436,9 @@ function ReelVideoEl({ videoUrl, hlsUrl, thumbnailUrl, isActive, muted, videoRef
         onPlaying={() => { setLoading(false); onPlayState(false); }}
         onPause={() => onPlayState(true)}
         onError={() => { setError(true); setLoading(false); }}
-        style={{ opacity: loading && !thumbnailUrl ? 0 : 1, transition: "opacity 100ms ease" }}
+        style={{ opacity: 1 }}
       />
-      {loading && !error && !thumbnailUrl && (
+      {loading && !error && (
         <div className="absolute inset-0 flex items-center justify-center z-[3] pointer-events-none">
           <div className="relative">
             <div className="w-11 h-11 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin" />

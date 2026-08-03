@@ -331,6 +331,7 @@ export default function HomePage() {
   const [viewerStoryIdx, setViewerStoryIdx] = useState(0);
   const [portalOrigin,   setPortalOrigin]   = useState<{ x: number; y: number } | null>(null);
   const [storyImgLoaded, setStoryImgLoaded] = useState(false);
+  const [storyImgError,  setStoryImgError]  = useState(false);
   const [holoUser,       setHoloUser]       = useState<HoloUser | null>(null);
   const lastTapRef = useRef<Record<number, number>>({});
 
@@ -424,6 +425,7 @@ export default function HomePage() {
     setStoryElapsed(0);
     setStoryPaused(false);
     setStoryImgLoaded(false);
+    setStoryImgError(false);
   }, [viewerStoryIdx, viewerGroupIdx]);
 
   /* Record a view after 1 s of display (dedup: skip if already called for this story) */
@@ -771,7 +773,7 @@ export default function HomePage() {
             }}
           >
             {/* Ambient blurred background */}
-            {activeStory.mediaUrl && (
+            {activeStory.mediaUrl && !storyImgError ? (
               <div style={{
                 position: "absolute", inset: 0, zIndex: 0,
                 backgroundImage: `url(${activeStory.mediaUrl})`,
@@ -780,11 +782,11 @@ export default function HomePage() {
                 transform: "scale(1.15)",
                 pointerEvents: "none",
               }}/>
-            )}
-            {!activeStory.mediaUrl && (
+            ) : (
               <div style={{
                 position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
-                background: "radial-gradient(ellipse at 40% 30%, rgba(120,0,200,0.35) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(0,80,200,0.25) 0%, transparent 60%)",
+                background: (activeStory as any).gradientBg
+                  || "radial-gradient(ellipse at 40% 30%, rgba(120,0,200,0.35) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(0,80,200,0.25) 0%, transparent 60%)",
               }}/>
             )}
 
@@ -810,7 +812,7 @@ export default function HomePage() {
                 onPointerCancel={() => setStoryPaused(false)}
               >
                 {/* ── Media layer ── */}
-                {activeStory.mediaUrl ? (
+                {activeStory.mediaUrl && !storyImgError ? (
                   <>
                     {!storyImgLoaded && (
                       <div style={{ position:"absolute", inset:0, background:"linear-gradient(160deg,#1a0830,#0a1020)", zIndex:1 }}/>
@@ -820,17 +822,23 @@ export default function HomePage() {
                       style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
                       fetchPriority="high" decoding="async"
                       onLoad={() => setStoryImgLoaded(true)}
+                      onError={() => { setStoryImgError(true); setStoryImgLoaded(false); }}
                     />
                   </>
                 ) : (
                   <div style={{
                     width:"100%", height:"100%",
-                    background:"linear-gradient(160deg,#2e0a55 0%,#0f1f50 50%,#1a0535 100%)",
+                    background: (activeStory as any).gradientBg
+                      || "linear-gradient(160deg,#2e0a55 0%,#0f1f50 50%,#1a0535 100%)",
                     display:"flex", alignItems:"center", justifyContent:"center", padding:"0 44px",
                   }}>
-                    <p style={{ color:"#fff", fontSize:24, fontWeight:800, textAlign:"center", lineHeight:1.4 }}>
-                      {activeStory.caption || "✨"}
-                    </p>
+                    {(activeStory as any).textContent || activeStory.caption ? (
+                      <p style={{ color:"#fff", fontSize:24, fontWeight:800, textAlign:"center", lineHeight:1.4 }}>
+                        {(activeStory as any).textContent || activeStory.caption}
+                      </p>
+                    ) : (
+                      <p style={{ color:"rgba(255,255,255,0.35)", fontSize:40 }}>✨</p>
+                    )}
                   </div>
                 )}
 

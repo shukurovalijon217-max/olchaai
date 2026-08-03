@@ -67,7 +67,13 @@ router.post("/compare", (req: Request, res: Response) => {
  * Fetches a remote image, converts to WebP, caches 1h in-memory.
  * Used by the frontend to serve feed/profile images as WebP.
  */
-const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com|r2\.dev|r2\.cloudflarestorage\.com|railway\.app)$/i;
+const ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com|gilosai\.com|r2\.dev|r2\.cloudflarestorage\.com|railway\.app)$/i;
+
+// Also allow the hostname from R2_PUBLIC_URL at runtime (covers custom domains that don't match the static regex above).
+const r2PublicHostname = (() => {
+  const raw = process.env.R2_PUBLIC_URL || "";
+  try { return new URL(raw).hostname; } catch { return ""; }
+})();
 
 function fetchRemote(url: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -98,7 +104,7 @@ router.get("/img", async (req: Request, res: Response) => {
   try { hostname = new URL(decoded).hostname; } catch {
     res.status(400).json({ error: "invalid url" }); return;
   }
-  if (!ALLOWED_HOSTS.test(hostname)) {
+  if (!ALLOWED_HOSTS.test(hostname) && hostname !== r2PublicHostname) {
     res.status(403).json({ error: "host not allowed" }); return;
   }
 

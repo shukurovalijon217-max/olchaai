@@ -42131,10 +42131,24 @@ async function cacheDelAsync(key) {
   if (redis) {
     try {
       await redis.del(key);
-    } catch {
+    } catch (err) {
+      console.warn("[cache] Redis DEL failed, key:", key, err);
     }
   }
   store.delete(key);
+}
+async function cacheDelPatternAsync(pattern) {
+  if (redis) {
+    try {
+      const keys = await redis.keys(`${pattern}*`);
+      if (keys.length) await redis.del(...keys);
+    } catch (err) {
+      console.warn("[cache] Redis DEL pattern failed, pattern:", pattern, err);
+    }
+  }
+  for (const key of store.keys()) {
+    if (key.startsWith(pattern)) store.delete(key);
+  }
 }
 async function cacheAside(namespace, key, fn, ttlSec = 30) {
   if (ttlSec <= 0) return fn();
@@ -127315,7 +127329,7 @@ var init_auth = __esm({
           return;
         }
         const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
-        void cacheDelPattern(`users:profile:${userId}:`);
+        await cacheDelPatternAsync(`users:profile:${userId}:`);
         const { passwordHash: _, ...safeUser } = updated;
         res.json(safeUser);
       } catch (err) {
@@ -127382,7 +127396,7 @@ var init_auth = __esm({
           return;
         }
         const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
-        void cacheDelPattern(`users:profile:${userId}:`);
+        await cacheDelPatternAsync(`users:profile:${userId}:`);
         const { passwordHash: _, ...safeUser } = updated;
         res.json(safeUser);
       } catch (err) {
@@ -140413,7 +140427,7 @@ var init_posts2 = __esm({
         }).returning();
         const [enriched] = await batchEnrichPosts([post], sessionUserId);
         res.status(201).json(enriched);
-        void cacheDelPattern("posts:list:");
+        await cacheDelPatternAsync("posts:list:");
         void trackQuestAction(authorId, "create_post");
         void (async () => {
           try {
@@ -140511,8 +140525,8 @@ var init_posts2 = __esm({
           db.delete(moderationQueueTable).where(and(eq(moderationQueueTable.contentType, "post"), eq(moderationQueueTable.contentId, id)))
         ]);
         await db.delete(postsTable).where(eq(postsTable.id, id));
-        void Promise.all([
-          cacheDelPattern("posts:list:"),
+        await Promise.all([
+          cacheDelPatternAsync("posts:list:"),
           cacheDelAsync(`posts:post:${id}`)
         ]);
         res.status(204).send();
@@ -165521,6 +165535,7 @@ var init_marketplace2 = __esm({
     init_src();
     init_src();
     init_drizzle_orm();
+    init_cache();
     router24 = (0, import_express24.Router)();
     requireAuth10 = (req, res, next) => {
       if (!req.session?.userId) {
@@ -165651,6 +165666,10 @@ var init_marketplace2 = __esm({
           ...tags && { tags: JSON.stringify(tags) },
           updatedAt: /* @__PURE__ */ new Date()
         }).where(eq(productsTable.id, product.id)).returning();
+        await Promise.all([
+          cacheDelAsync(`marketplace:product:${product.id}`),
+          cacheDelPatternAsync("marketplace:products:")
+        ]);
         res.json({ ...updated, mediaUrls: updated.mediaUrls ? JSON.parse(updated.mediaUrls) : [] });
       } catch (err) {
         req.log.error(err);
@@ -165670,6 +165689,10 @@ var init_marketplace2 = __esm({
         } else {
           await db.delete(productsTable).where(eq(productsTable.id, productId));
         }
+        await Promise.all([
+          cacheDelAsync(`marketplace:product:${productId}`),
+          cacheDelPatternAsync("marketplace:products:")
+        ]);
         res.json({ ok: true });
       } catch (err) {
         req.log.error(err);

@@ -28,20 +28,31 @@ const DEFAULT_PRIVACY: PrivacySettings = {
 };
 
 /* ─── Appearance state stored in localStorage ─────────────── */
-function getAppearance() {
+type AppearanceState = { darkMode: boolean; lightMode: boolean; animations: boolean; compactMode: boolean };
+function getAppearance(): AppearanceState {
   try {
     const raw = localStorage.getItem("olcha_appearance");
-    if (raw) return JSON.parse(raw) as { darkMode: boolean; animations: boolean; compactMode: boolean };
+    if (raw) {
+      const p = JSON.parse(raw);
+      return { darkMode: p.darkMode ?? true, lightMode: p.lightMode ?? false, animations: p.animations ?? true, compactMode: p.compactMode ?? false };
+    }
   } catch { /* ignore */ }
-  return { darkMode: true, animations: true, compactMode: false };
+  return { darkMode: true, lightMode: false, animations: true, compactMode: false };
 }
-function saveAppearance(val: { darkMode: boolean; animations: boolean; compactMode: boolean }) {
+function saveAppearance(val: AppearanceState) {
   localStorage.setItem("olcha_appearance", JSON.stringify(val));
   const html = document.documentElement;
   if (!val.animations) html.classList.add("no-animations");
   else html.classList.remove("no-animations");
   if (val.compactMode) html.classList.add("compact-mode");
   else html.classList.remove("compact-mode");
+  if (val.lightMode) {
+    html.classList.add("light-mode");
+    document.body.style.backgroundColor = "#f0f2f5";
+  } else {
+    html.classList.remove("light-mode");
+    document.body.style.backgroundColor = "#060d1a";
+  }
 }
 /* Apply stored appearance on module load */
 (function applyStoredAppearance() {
@@ -49,6 +60,10 @@ function saveAppearance(val: { darkMode: boolean; animations: boolean; compactMo
   const html = document.documentElement;
   if (!a.animations) html.classList.add("no-animations");
   if (a.compactMode) html.classList.add("compact-mode");
+  if (a.lightMode) {
+    html.classList.add("light-mode");
+    document.body.style.backgroundColor = "#f0f2f5";
+  }
 })();
 
 /* ─── Panel color tokens ──────────────────────────────────── */
@@ -413,9 +428,14 @@ function AppearanceContent() {
     <div className="space-y-4">
       <SF>
         <div className="rounded-xl border border-white/8 bg-white/3 divide-y divide-white/6 overflow-hidden">
-          <ToggleRow color="rose" label={t("settings.dark_mode")} description={t("settings.dark_mode_desc")} on={app.darkMode} onChange={v => update("darkMode", v)} />
-          <ToggleRow color="rose" label={t("settings.animations")} description={t("settings.animations_desc")} on={app.animations} onChange={v => update("animations", v)} />
-          <ToggleRow color="rose" label={t("settings.compact_mode")} description={t("settings.compact_mode_desc")} on={app.compactMode} onChange={v => update("compactMode", v)} />
+          <ToggleRow color="rose"    label={t("settings.dark_mode")}    description={t("settings.dark_mode_desc")}    on={app.darkMode}    onChange={v => update("darkMode", v)} />
+          <ToggleRow color="amber"  label="Light Mode"                   description="Yorqin, kunduzgi interfeys rejimi"  on={app.lightMode}   onChange={v => {
+            // light and dark are mutually exclusive
+            const next: AppearanceState = { ...app, lightMode: v, darkMode: v ? false : app.darkMode };
+            setApp(next); saveAppearance(next);
+          }} />
+          <ToggleRow color="rose"   label={t("settings.animations")}    description={t("settings.animations_desc")}    on={app.animations}  onChange={v => update("animations", v)} />
+          <ToggleRow color="rose"   label={t("settings.compact_mode")}  description={t("settings.compact_mode_desc")}  on={app.compactMode} onChange={v => update("compactMode", v)} />
         </div>
       </SF>
       <SF>

@@ -10,6 +10,51 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   LIGHT MODE — full override via .light-mode on <html>/<body>
+   Activates when user picks "light" in Settings → Appearance
+══════════════════════════════════════════════════════════════ */
+.light-mode {
+  background-color: #f0f2f5 !important;
+  color-scheme: light;
+}
+.light-mode body,
+.light-mode #root {
+  background-color: #f0f2f5 !important;
+  color: #0a0a0a !important;
+}
+/* Sidebar / nav backgrounds */
+.light-mode .bg-background { background-color: #ffffff !important; }
+.light-mode .bg-card       { background-color: #ffffff !important; border: 1px solid #e2e6ea; }
+.light-mode .bg-muted      { background-color: #f0f2f5 !important; }
+.light-mode .bg-muted\/60  { background-color: rgba(240,242,245,0.8) !important; }
+.light-mode .border-border { border-color: #d1d9e0 !important; }
+/* Text */
+.light-mode .text-foreground      { color: #0d1117 !important; }
+.light-mode .text-muted-foreground{ color: #57606a !important; }
+/* Feed cards */
+.light-mode .FeedCard,
+.light-mode [class*="PostCard"]  {
+  background: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+/* Input fields */
+.light-mode input,
+.light-mode textarea {
+  background: #f6f8fa !important;
+  border-color: #d0d7de !important;
+  color: #0d1117 !important;
+}
+.light-mode input::placeholder,
+.light-mode textarea::placeholder { color: #8c959f !important; }
+/* Buttons inherit brand colors, no override needed */
+/* Nav active items */
+.light-mode .bg-primary\/10 { background-color: rgba(124,58,237,0.1) !important; }
+.light-mode .text-primary    { color: #7c3aed !important; }
+/* Scrollbar */
+.light-mode ::-webkit-scrollbar-track { background: #f0f2f5; }
+.light-mode ::-webkit-scrollbar-thumb { background: #c1c9d2; border-radius: 4px; }
+
 /* ── Appearance: no-animations mode ── */
 .no-animations *, .no-animations *::before, .no-animations *::after {
   animation-duration: 0.001ms !important;

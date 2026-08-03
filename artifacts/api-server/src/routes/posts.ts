@@ -6,8 +6,9 @@ import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server"
 import { scanContentAsync } from "../moderation/aiFilter";
 import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { trackQuestAction } from "../lib/trackQuest";
-import { cacheAside, cacheDel, cacheDelPattern } from "../lib/cache";
+import { cacheAside, cacheDel, cacheDelPattern, cacheDelAsync } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
+import { searchMusic, audiusStream, AUDIUS_HOSTS } from "../lib/music";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { notifyComment, notifyLike } from "../lib/emailNotify";
 import { sendNotification } from "../lib/pushNotifications";
@@ -103,65 +104,18 @@ router.get("/posts", async (req, res) => {
   }
 });
 
-/* ── GET /music/search — Audius full tracks only (no 30s previews) ── */
-const AUDIUS_HOSTS = [
-  "https://api.audius.co",           // auto-selects a live node via redirect
-  "https://discoveryprovider.audius.co",
-  "https://discoveryprovider2.audius.co",
-  "https://discoveryprovider3.audius.co",
-  "https://dn1.monophonic.digital",
-  "https://dn2.monophonic.digital",
-];
-const AUDIUS_APP  = "olchaai";
-
-async function audiusSearch(q: string, limit = 40): Promise<any[]> {
-  for (const host of AUDIUS_HOSTS) {
-    try {
-      const r = await fetch(
-        `${host}/v1/tracks/search?query=${encodeURIComponent(q)}&limit=${limit}&app_name=${AUDIUS_APP}`,
-        { signal: AbortSignal.timeout(10000), redirect: "follow" }
-      );
-      if (!r.ok) continue;
-      const d = await r.json() as { data?: any[] };
-      if ((d.data ?? []).length > 0) return d.data!;
-    } catch { /* try next host */ }
-  }
-  return [];
-}
-
+/* ── GET /music/search — Audius (primary) + Jamendo (fallback) ── */
 router.get("/music/search", async (req: any, res) => {
   try {
     const q = String(req.query.q ?? "").trim();
-    if (!q) { res.json({ results: [] }); return; }
+    if (!q) { res.json({ results: [], source: "empty" }); return; }
 
-    const tracks = await audiusSearch(q);
-    const seen   = new Set<string>();
-    const results: any[] = [];
-
-    for (const t of tracks) {
-      if (!t.id) continue;
-      const key = `${t.user?.name ?? ""}|${t.title}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const artObj  = t.artwork ?? {};
-      const artwork = artObj["150x150"] ?? artObj["480x480"] ?? artObj["_150x150"] ?? "";
-      results.push({
-        id:       `au_${t.id}`,
-        name:     `${t.user?.name ?? "Unknown"} — ${t.title}`,
-        artist:   t.user?.name ?? "Unknown",
-        title:    t.title ?? "",
-        album:    "",
-        artwork,
-        preview:  `/api/music/stream/${t.id}`,
-        duration: t.duration ?? 0,
-        full:     true,
-      });
-    }
-
-    res.json({ results });
+    const { results, source } = await searchMusic(q);
+    res.setHeader("X-Music-Source", source);
+    res.json({ results, source });
   } catch (err) {
     req.log.warn(err, "music search failed");
-    res.json({ results: [] });
+    res.json({ results: [], source: "error" });
   }
 });
 
@@ -176,29 +130,18 @@ router.get("/music/stream/:id", async (req: any, res) => {
     const rawFilename = String(req.query.fn ?? `track_${id}.mp3`)
       .replace(/[^\w\s.\-()]/g, "").slice(0, 120);
 
-    /* try each discovery provider in order until one gives us audio */
     const { Readable } = await import("stream");
-    for (const host of AUDIUS_HOSTS) {
-      try {
-        const upstream = await fetch(
-          `${host}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
-          { signal: AbortSignal.timeout(20000), redirect: "follow" }
-        );
-        if (!upstream.ok || !upstream.body) continue;
-        const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
-        /* reject HTML — means we hit a dead content node */
-        if (ct.includes("text/html")) continue;
-        const cl = upstream.headers.get("content-length");
-        res.setHeader("Content-Type", ct);
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=3600");
-        if (cl) res.setHeader("Content-Length", cl);
-        if (forDownload) {
-          res.setHeader("Content-Disposition", `attachment; filename="${rawFilename}"`);
-        }
-        Readable.fromWeb(upstream.body as any).pipe(res);
-        return;
-      } catch { /* try next host */ }
+    const upstream = await audiusStream(id);
+    if (upstream?.body) {
+      const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
+      const cl = upstream.headers.get("content-length");
+      res.setHeader("Content-Type", ct);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      if (cl) res.setHeader("Content-Length", cl);
+      if (forDownload) res.setHeader("Content-Disposition", `attachment; filename="${rawFilename}"`);
+      Readable.fromWeb(upstream.body as any).pipe(res);
+      return;
     }
     res.status(502).json({ error: "audio unavailable" });
   } catch (err) {
@@ -218,24 +161,17 @@ router.get("/music/download/:id", async (req: any, res) => {
     const filename = `${artist} - ${title}.mp3`;
 
     const { Readable } = await import("stream");
-    for (const host of AUDIUS_HOSTS) {
-      try {
-        const upstream = await fetch(
-          `${host}/v1/tracks/${id}/stream?app_name=${AUDIUS_APP}`,
-          { signal: AbortSignal.timeout(20000), redirect: "follow" }
-        );
-        if (!upstream.ok || !upstream.body) continue;
-        const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
-        if (ct.includes("text/html")) continue;
-        const cl = upstream.headers.get("content-length");
-        res.setHeader("Content-Type", ct);
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=3600");
-        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-        if (cl) res.setHeader("Content-Length", cl);
-        Readable.fromWeb(upstream.body as any).pipe(res);
-        return;
-      } catch { /* try next host */ }
+    const upstream = await audiusStream(id);
+    if (upstream?.body) {
+      const ct = upstream.headers.get("content-type") ?? "audio/mpeg";
+      const cl = upstream.headers.get("content-length");
+      res.setHeader("Content-Type", ct);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      if (cl) res.setHeader("Content-Length", cl);
+      Readable.fromWeb(upstream.body as any).pipe(res);
+      return;
     }
     res.status(502).json({ error: "audio unavailable" });
   } catch (err) {
@@ -499,6 +435,9 @@ router.post("/posts", async (req: any, res) => {
     const [enriched] = await batchEnrichPosts([post], sessionUserId);
     res.status(201).json(enriched);
 
+    /* Invalidate feed caches so new post appears immediately */
+    void cacheDelPattern("posts:list:");
+
     /* Quest tracker — fire-and-forget */
     void trackQuestAction(authorId, "create_post");
 
@@ -607,6 +546,11 @@ router.delete("/posts/:id", async (req, res) => {
       db.delete(moderationQueueTable).where(and(eq(moderationQueueTable.contentType, "post"), eq(moderationQueueTable.contentId, id))),
     ]);
     await db.delete(postsTable).where(eq(postsTable.id, id));
+    /* Invalidate feed + single post caches */
+    void Promise.all([
+      cacheDelPattern("posts:list:"),
+      cacheDelAsync(`posts:post:${id}`),
+    ]);
     res.status(204).send();
   } catch (err) {
     req.log.error(err);

@@ -15,6 +15,7 @@ import { aiAutoScaleMiddleware } from "./middlewares/aiAutoScale.js";
 import { securityShield } from "./middlewares/securityShield";
 import { resilienceMiddleware } from "./middlewares/resilience";
 import { authRateLimit, aiRateLimit, uploadRateLimit, standardRateLimit } from "./middlewares/rateLimiter";
+import { auditLogMiddleware } from "./middlewares/auditLog";
 
 const app: Express = express();
 
@@ -223,6 +224,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+/* ── Enterprise Audit Log — all mutations logged ─────────────── */
+app.use("/api", auditLogMiddleware);
+
 /* ── NEXUS Security Shield — Pentagon-grade auto-defense ─────── */
 app.use(securityShield);
 
@@ -310,10 +314,10 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
 
 app.use("/api", router);
 
-/* ── Railway healthcheck — must respond at bare /healthz ───────────
-   Railway checks this path before routing traffic to the new container.
-   Without it IS_API_SERVICE=1 containers fail healthcheck and Railway
-   falls back to the previous deployment.  ─────────────────────────── */
+/* ── Health + metrics endpoint (rich) ───────────────────────────── */
+import healthRouter from "./routes/health";
+app.use("/api/health", healthRouter);
+/* Railway bare healthcheck — fast ping only */
 app.get("/healthz", (_req: Request, res: Response) => {
   res.json({ ok: true, service: "api" });
 });

@@ -4,7 +4,7 @@ import { usersTable, followsTable, postsTable, reelsTable, userInteractionsTable
 import { eq, ilike, sql, and, desc, inArray, gte } from "drizzle-orm";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
-import { cacheAside, cacheDelPattern } from "../lib/cache";
+import { cacheAside, cacheDelPattern, cacheDelAsync } from "../lib/cache";
 import { notifyFollow } from "../lib/emailNotify";
 
 const router = Router();
@@ -117,6 +117,8 @@ router.patch("/users/:id", async (req, res) => {
       db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followerId, id)),
       db.select({ count: sql<number>`count(*)::int` }).from(postsTable).where(eq(postsTable.authorId, id)),
     ]);
+    /* Invalidate profile cache so updated info shows immediately */
+    void cacheDelPattern(`users:profile:${id}:`);
     const { passwordHash: _, ...safeUser } = user;
     res.json({ ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: false });
   } catch (err) {
@@ -138,6 +140,11 @@ router.post("/users/:id/follow", async (req, res) => {
       await db.insert(followsTable).values({ followerId, followingId });
     }
     const [followers] = await db.select({ count: sql<number>`count(*)::int` }).from(followsTable).where(eq(followsTable.followingId, followingId));
+    /* Invalidate both users' profile caches (follower counts changed) */
+    void Promise.all([
+      cacheDelPattern(`users:profile:${followingId}:`),
+      cacheDelPattern(`users:profile:${followerId}:`),
+    ]);
     res.json({ following: !isFollowing, followersCount: followers.count });
 
     // Email: yangi follower bo'lganda xabar

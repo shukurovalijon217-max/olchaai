@@ -12,6 +12,7 @@ export interface EndpointStats {
   avgLatencyMs: number;
   maxLatencyMs: number;
   p95LatencyMs: number;
+  p99LatencyMs: number;
   circuitState: "closed" | "open" | "half-open";
   circuitOpenAt?: number;
   lastErrorMsg?: string;
@@ -141,6 +142,7 @@ class SystemMonitorImpl {
       const s = [...r.latencies].sort((a, b) => a - b);
       const avg = s.length ? s.reduce((a, b) => a + b, 0) / s.length : 0;
       const p95 = s[Math.floor(s.length * 0.95)] ?? 0;
+      const p99 = s[Math.floor(s.length * 0.99)] ?? s[s.length - 1] ?? 0;
       if (r.circuit === "open" && r.circuitOpenAt &&
           now - r.circuitOpenAt >= CIRCUIT_HALF_OPEN_MS) {
         r.circuit = "half-open";
@@ -148,7 +150,8 @@ class SystemMonitorImpl {
       return {
         endpoint: ep, totalRequests: r.total, errorCount: r.errors,
         recentErrors: r.recentErrorTimes.filter(t => t > now - CIRCUIT_WINDOW_MS).length,
-        avgLatencyMs: Math.round(avg), maxLatencyMs: s[s.length - 1] ?? 0, p95LatencyMs: p95,
+        avgLatencyMs: Math.round(avg), maxLatencyMs: s[s.length - 1] ?? 0,
+        p95LatencyMs: p95, p99LatencyMs: p99,
         circuitState: r.circuit, circuitOpenAt: r.circuitOpenAt,
         lastErrorMsg: r.lastErrorMsg, lastErrorAt: r.lastErrorAt,
       };

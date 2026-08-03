@@ -32,7 +32,7 @@ import {
   Type, Smile, Music, ChevronLeft, Camera, Mic2, ImagePlus,
   Wand2, AlignCenter, FastForward, Palette, SlidersHorizontal,
   PictureInPicture2, MoreVertical, Trash2,
-  Download, Shuffle, Repeat, Heart,
+  Download, Shuffle, Repeat,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────── */

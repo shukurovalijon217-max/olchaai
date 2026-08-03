@@ -7,6 +7,7 @@ import type { NotifPrefs, PrivacySettings } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
 import { checkLoginBruteForce, recordLoginFailure, clearLoginAttempts, sanitizeInput, signMobileToken, checkEndpointRateLimit } from "../lib/security";
+import { cacheDelPattern } from "../lib/cache";
 
 const getResend = () => {
   const key = process.env.RESEND_API_KEY;
@@ -274,6 +275,8 @@ router.patch("/auth/profile", async (req, res) => {
     }
 
     const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
+    /* Invalidate profile cache so updated info appears immediately */
+    void cacheDelPattern(`users:profile:${userId}:`);
     const { passwordHash: _, ...safeUser } = updated;
     res.json(safeUser);
   } catch (err) {
@@ -338,6 +341,8 @@ router.patch("/auth/preferences", async (req, res) => {
     }
 
     const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
+    /* Invalidate profile cache after preferences update */
+    void cacheDelPattern(`users:profile:${userId}:`);
     const { passwordHash: _, ...safeUser } = updated;
     res.json(safeUser);
   } catch (err) {

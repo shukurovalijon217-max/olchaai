@@ -140248,8 +140248,6 @@ var init_posts2 = __esm({
           res.status(400).end();
           return;
         }
-        const forDownload = !!req.query.dl;
-        const rawFilename = String(req.query.fn ?? `track_${id}.mp3`).replace(/[^\w\s.\-()]/g, "").slice(0, 120);
         const { Readable: Readable10 } = await import("stream");
         const upstream = await audiusStream(id);
         if (upstream?.body) {
@@ -140259,7 +140257,6 @@ var init_posts2 = __esm({
           res.setHeader("Access-Control-Allow-Origin", "*");
           res.setHeader("Cache-Control", "public, max-age=3600");
           if (cl) res.setHeader("Content-Length", cl);
-          if (forDownload) res.setHeader("Content-Disposition", `attachment; filename="${rawFilename}"`);
           Readable10.fromWeb(upstream.body).pipe(res);
           return;
         }

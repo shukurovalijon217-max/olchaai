@@ -6,6 +6,7 @@
 import {
   S3Client,
   PutObjectCommand,
+  CopyObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
@@ -118,6 +119,9 @@ export async function r2ObjectExists(objectPath: string): Promise<boolean> {
  * Upload a raw Buffer directly to R2 (server-side upload).
  * Returns the public CDN URL for the uploaded object.
  *
+ * CacheControl is set here directly because the server controls the PUT —
+ * no presigned-URL header-echo problem.
+ *
  * @param buffer      File content as a Buffer
  * @param key         R2 object key (e.g. "voice-comments/42.webm")
  * @param contentType MIME type of the file
@@ -135,9 +139,48 @@ export async function r2UploadBuffer(
       Body: buffer,
       ContentType: contentType,
       ContentLength: buffer.length,
+      CacheControl: "public, max-age=31536000, immutable",
     })
   );
   return getPublicUrl(key);
+}
+
+/**
+ * Finalize a client-side presigned upload by copying the object in-place
+ * with the correct Cache-Control metadata so Cloudflare edge-caches it.
+ *
+ * R2 does not allow PATCH of metadata, so the only way to set it after a
+ * presigned PUT is a server-side copy-in-place (same source and destination).
+ *
+ * @param publicUrl  The public CDN URL returned by r2GetPresignedUploadUrl
+ *                   (e.g. "https://media.olchaai.com/uploads/<uuid>.mp4")
+ */
+export async function r2FinalizeUpload(publicUrl: string): Promise<void> {
+  const base = (process.env.R2_PUBLIC_URL || "").replace(/\/$/, "");
+  if (!base || !publicUrl.startsWith(base + "/")) {
+    throw new Error(`publicUrl does not match R2_PUBLIC_URL base: ${publicUrl}`);
+  }
+  const key = publicUrl.slice(base.length + 1); // strip leading "/"
+  const bucket = getBucketName();
+  const client = getR2Client();
+
+  // HeadObject to read the existing ContentType before the copy, because
+  // MetadataDirective=REPLACE resets ALL metadata including Content-Type.
+  const head = await client.send(
+    new HeadObjectCommand({ Bucket: bucket, Key: key })
+  );
+  const contentType = head.ContentType ?? "application/octet-stream";
+
+  await client.send(
+    new CopyObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      CopySource: `${bucket}/${key}`,
+      MetadataDirective: "REPLACE",
+      ContentType: contentType,
+      CacheControl: "public, max-age=31536000, immutable",
+    })
+  );
 }
 
 function contentTypeToExt(contentType: string): string {

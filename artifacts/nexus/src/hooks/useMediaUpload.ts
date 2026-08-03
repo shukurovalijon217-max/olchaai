@@ -61,6 +61,20 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
         } catch {}
         throw new Error(errMsg);
       }
+      setProgress(90);
+
+      // After the presigned PUT, ask the server to copy-in-place with
+      // Cache-Control headers so Cloudflare edge-caches the object.
+      // This is fire-and-forget: a failure here is non-fatal.
+      if (uploadURL && objectPath && objectPath.startsWith("http")) {
+        fetch(`${API}/api/storage/uploads/finalize`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ publicUrl: objectPath }),
+        }).catch(() => {/* non-fatal — CDN header will be missing for this upload only */});
+      }
+
       setProgress(100);
 
       let serveUrl = `${API}/api/storage${objectPath}`;

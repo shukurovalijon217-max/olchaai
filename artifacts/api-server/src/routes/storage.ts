@@ -16,6 +16,7 @@ import {
 import {
   isR2Enabled,
   r2GetPresignedUploadUrl,
+  r2FinalizeUpload,
 } from "../lib/r2Storage";
 
 const router: IRouter = Router();
@@ -91,6 +92,43 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
   } catch (error) {
     req.log.error({ err: error }, "Error generating upload URL");
     res.status(500).json({ error: "Failed to generate upload URL" });
+  }
+});
+
+/**
+ * POST /storage/uploads/finalize
+ *
+ * Called by the client after a presigned PUT upload to R2 completes.
+ * Copies the object in-place server-side to attach the correct
+ * Cache-Control metadata so Cloudflare edge-caches it on subsequent requests.
+ *
+ * Body: { publicUrl: string }  — the CDN URL returned by /request-url
+ */
+router.post("/storage/uploads/finalize", async (req: Request, res: Response) => {
+  if (!isR2Enabled()) {
+    // Nothing to do for non-R2 storage paths
+    res.json({ ok: true, skipped: true });
+    return;
+  }
+
+  const { publicUrl } = req.body as { publicUrl?: string };
+  if (!publicUrl || typeof publicUrl !== "string") {
+    res.status(400).json({ error: "publicUrl is required" });
+    return;
+  }
+
+  const r2Base = (process.env.R2_PUBLIC_URL || "").replace(/\/$/, "");
+  if (!r2Base || !publicUrl.startsWith(r2Base + "/")) {
+    res.status(400).json({ error: "publicUrl does not belong to this R2 bucket" });
+    return;
+  }
+
+  try {
+    await r2FinalizeUpload(publicUrl);
+    res.json({ ok: true });
+  } catch (error) {
+    req.log.error({ err: error }, "r2FinalizeUpload failed");
+    res.status(500).json({ error: "Failed to finalize upload cache headers" });
   }
 });
 

@@ -166,6 +166,24 @@ export default function CoViewPage() {
     return () => clearInterval(interval);
   }, [isHost, wsConnected, isPlaying, code]);
 
+  // When the host's tab returns from the background (browsers throttle/suspend
+  // setInterval while the tab is hidden), send an immediate sync so viewers
+  // don't drift during the gap.
+  useEffect(() => {
+    if (!isHost) return;
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && wsRef.current?.readyState === 1 && videoRef.current) {
+        wsRef.current.send(JSON.stringify({
+          type: "coview_sync",
+          roomId: code,
+          payload: { playing: !videoRef.current.paused, time: videoRef.current.currentTime },
+        }));
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [isHost, code]);
+
   const handleJoin = async () => {
     if (!joinCode.trim()) return;
     setJoining(true);

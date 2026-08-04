@@ -12,27 +12,26 @@
  *   pnpm tsx artifacts/api-server/scripts/setup-cf-cache-rule.ts
  *
  * Required env vars (already in Replit Secrets):
- *   CLOUDFLARE_API_TOKEN   — zone-edit permission
- *   CLOUDFLARE_ZONE_ID     — the zone that hosts the R2 public domain
+ *   CLOUDFLARE_API_TOKEN   — must have: Zone.Transform Rules: Edit + Zone.Zone: Read
+ *   CLOUDFLARE_ZONE_ID     — (optional) the zone that hosts the R2 public domain;
+ *                            auto-discovered from R2_PUBLIC_URL hostname if missing/wrong
  *   R2_PUBLIC_URL          — e.g. https://media.olchaai.com
  */
 
 const CF_API = "https://api.cloudflare.com/client/v4";
 
 const token = process.env.CLOUDFLARE_API_TOKEN;
-const zoneId = process.env.CLOUDFLARE_ZONE_ID;
+const configuredZoneId = process.env.CLOUDFLARE_ZONE_ID;
 const r2PublicUrl = process.env.R2_PUBLIC_URL;
 
-if (!token || !zoneId || !r2PublicUrl) {
-  console.error(
-    "Missing env vars: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ZONE_ID, R2_PUBLIC_URL"
-  );
+if (!token || !r2PublicUrl) {
+  console.error("Missing env vars: CLOUDFLARE_API_TOKEN, R2_PUBLIC_URL");
   process.exit(1);
 }
 
 const mediaHostname = new URL(r2PublicUrl).hostname; // e.g. media.olchaai.com
 
-// ── Cloudflare Ruleset helpers ──────────────────────────────────────────────
+// ── Cloudflare API helpers ──────────────────────────────────────────────────
 
 async function cfFetch(path: string, opts: RequestInit = {}) {
   const resp = await fetch(`${CF_API}${path}`, {
@@ -52,7 +51,47 @@ async function cfFetch(path: string, opts: RequestInit = {}) {
   return body.result;
 }
 
-async function getOrCreateHttpResponseHeadersRuleset() {
+/**
+ * Resolve the correct zone ID.
+ * - If CLOUDFLARE_ZONE_ID is set and valid for this zone, use it.
+ * - Otherwise, list all zones the token can see and find the one whose
+ *   name is a suffix of the media hostname (e.g. "olchaai.com").
+ */
+async function resolveZoneId(): Promise<string> {
+  // Try the configured zone ID first
+  if (configuredZoneId) {
+    try {
+      const zone = await cfFetch(`/zones/${configuredZoneId}`) as { name: string };
+      if (mediaHostname.endsWith(zone.name)) {
+        console.log(`Using configured zone: ${configuredZoneId} (${zone.name})`);
+        return configuredZoneId;
+      }
+      console.warn(
+        `CLOUDFLARE_ZONE_ID ${configuredZoneId} maps to zone "${zone.name}" ` +
+        `which does not match media hostname "${mediaHostname}" — auto-discovering…`
+      );
+    } catch (e) {
+      console.warn(`CLOUDFLARE_ZONE_ID ${configuredZoneId} is invalid — auto-discovering…`);
+    }
+  }
+
+  // Auto-discover: find the zone whose name is a suffix of the media hostname
+  const zones = await cfFetch(`/zones`) as Array<{ id: string; name: string }>;
+  // Sort by zone name length descending so the most-specific match wins
+  const sorted = [...zones].sort((a, b) => b.name.length - a.name.length);
+  const match = sorted.find((z) => mediaHostname === z.name || mediaHostname.endsWith(`.${z.name}`));
+  if (!match) {
+    throw new Error(
+      `No accessible zone found for hostname "${mediaHostname}". ` +
+      `Zones visible to this token: ${zones.map((z) => z.name).join(", ")}`
+    );
+  }
+  console.log(`Auto-discovered zone: ${match.id} (${match.name})`);
+  console.log(`Tip: set CLOUDFLARE_ZONE_ID=${match.id} to skip auto-discovery next time.`);
+  return match.id;
+}
+
+async function getOrCreateHttpResponseHeadersRuleset(zoneId: string) {
   // List existing rulesets for this zone
   const rulesets = (await cfFetch(
     `/zones/${zoneId}/rulesets`
@@ -84,7 +123,13 @@ async function getOrCreateHttpResponseHeadersRuleset() {
 async function main() {
   console.log(`Setting up Cloudflare Cache-Control rule for: ${mediaHostname}`);
 
-  const rulesetId = await getOrCreateHttpResponseHeadersRuleset();
+  // Verify token
+  const verify = await cfFetch("/user/tokens/verify") as { status: string };
+  console.log(`Token status: ${verify.status}`);
+
+  const zoneId = await resolveZoneId();
+
+  const rulesetId = await getOrCreateHttpResponseHeadersRuleset(zoneId);
 
   // Fetch current rules to check for an existing rule we manage
   const ruleset = (await cfFetch(
@@ -133,6 +178,25 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Failed:", err);
+  console.error("\nFailed:", err.message);
+  if (String(err.message).includes("not authorized")) {
+    console.error(`
+The token lacks write permission for Transform Rules.
+To fix, create a new API token in the Cloudflare dashboard:
+
+  1. Go to https://dash.cloudflare.com/profile/api-tokens
+  2. Click "Create Token" → "Create Custom Token"
+  3. Name it something like "GilosAI Deploy"
+  4. Under "Permissions", add:
+       Zone  |  Transform Rules  |  Edit
+       Zone  |  Zone             |  Read
+  5. Under "Zone Resources", choose:
+       Include → Specific zone → olchaai.com
+  6. Click "Continue to summary" → "Create Token"
+  7. Copy the token and save it as the CLOUDFLARE_API_TOKEN Replit Secret
+
+Then re-run this script.
+`);
+  }
   process.exit(1);
 });

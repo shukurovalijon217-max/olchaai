@@ -655,13 +655,9 @@ const BEAUTY_OPTIONS: { id: string; emoji: string; label: string; min: number; m
   { id:"blush",      emoji:"🌸", label:"Yonoq qizarish",   min:0, max:100, step:5 },
 ];
 
-export const TRENDING_CHALLENGES = [
-  "#GilosChallenge 🔥", "#DanceOff 💃", "#GlowUp ✨", "#SilhouetteChallenge 🌟",
-  "#TrendingNow 📈", "#ViralDance 🎵", "#FoodChallenge 🍔", "#FitnessChallenge 💪",
-  "#BeautyHacks 💄", "#LifeHacks 🛠", "#PetChallenge 🐾", "#ArtChallenge 🎨",
-  "#Transition 🔄", "#LipSync 🎤", "#CommentChallenge 💬", "#OutfitOfTheDay 👗",
-  "#MorningRoutine ☀️", "#NightRoutine 🌙", "#CookingChallenge 👨‍🍳", "#StudyWith 📚",
-];
+// Re-exported from the lightweight constants module so consumers can import
+// it independently without pulling in the full MediaEditor bundle.
+export { TRENDING_CHALLENGES } from "@/components/media-editor-constants";
 
 type StylePreset = {
   id:string; label:string; cardGrad:string;

@@ -118,12 +118,16 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          "v2-react":    ["react", "react-dom"],
-          "v2-motion":   ["framer-motion"],
-          "v2-query":    ["@tanstack/react-query"],
-          "v2-icons":    ["lucide-react"],
-          "v2-i18n":     ["i18next", "react-i18next"],
-          "v2-router":   ["wouter"],
+          "v2-react":      ["react", "react-dom"],
+          "v2-motion":     ["framer-motion"],
+          "v2-query":      ["@tanstack/react-query"],
+          "v2-icons":      ["lucide-react"],
+          "v2-i18n":       ["i18next", "react-i18next"],
+          "v2-router":     ["wouter"],
+          // Vendor chunks extracted to stay under the 300 KB warning limit
+          "v2-charts":     ["recharts"],
+          "v2-hls":        ["hls.js"],
+          "v2-emoji":      ["emoji-mart", "@emoji-mart/react", "@emoji-mart/data"],
         },
       },
     },

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,8 +10,13 @@ import {
   Target, Clock, Tag, UserPlus, Heart, Shield, Repeat2, MapPin,
   Tv, Trophy, Scissors, LayoutTemplate, Award, Zap, Star, Flame,
 } from "lucide-react";
-import MediaEditor, { type TextOverlay, TRENDING_CHALLENGES } from "@/components/MediaEditor";
-import DragMediaCanvas, { type CanvasLayer } from "@/components/DragMediaCanvas";
+import type { TextOverlay } from "@/components/MediaEditor";
+import type { CanvasLayer } from "@/components/DragMediaCanvas";
+import { TRENDING_CHALLENGES } from "@/components/media-editor-constants";
+
+// Lazy-loaded to keep the CreateContentModal chunk under the 300 KB limit.
+const MediaEditor = lazy(() => import("@/components/MediaEditor"));
+const DragMediaCanvas = lazy(() => import("@/components/DragMediaCanvas"));
 import {
   useCreatePost, useCreateReel, useCreateStory,
   getListPostsQueryKey, getListReelsQueryKey, getListStoriesQueryKey,
@@ -1153,14 +1158,16 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
     {/* ── Media Editor (full-screen, shown on top when editing) ── */}
     <AnimatePresence>
       {editorOpen && (
-        <MediaEditor
-          files={editorFiles}
-          previews={editorPreviews}
-          initialOverlays={postOverlays}
-          initialAudioName={postAudioName}
-          onDone={handleEditorDone}
-          onClose={() => setEditorOpen(false)}
-        />
+        <Suspense fallback={null}>
+          <MediaEditor
+            files={editorFiles}
+            previews={editorPreviews}
+            initialOverlays={postOverlays}
+            initialAudioName={postAudioName}
+            onDone={handleEditorDone}
+            onClose={() => setEditorOpen(false)}
+          />
+        </Suspense>
       )}
     </AnimatePresence>
 
@@ -1348,7 +1355,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <AnimatePresence>
                           {canvasOpen && (
                             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 overflow-hidden">
-                              <DragMediaCanvas layers={canvasLayers} onChange={setCanvasLayers} canvasW={248} canvasH={380}/>
+                              <Suspense fallback={null}><DragMediaCanvas layers={canvasLayers} onChange={setCanvasLayers} canvasW={248} canvasH={380}/></Suspense>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -2815,7 +2822,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <AnimatePresence>
                           {reelEditOpen && (
                             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 overflow-hidden">
-                              <DragMediaCanvas layers={canvasLayers} onChange={setCanvasLayers} canvasW={240} canvasH={360}/>
+                              <Suspense fallback={null}><DragMediaCanvas layers={canvasLayers} onChange={setCanvasLayers} canvasW={240} canvasH={360}/></Suspense>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -3357,7 +3364,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                         <AnimatePresence>
                           {storyCanvasOpen && (
                             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="mt-2 overflow-hidden">
-                              <DragMediaCanvas layers={storyCanvasLayers} onChange={setStoryCanvasLayers} canvasW={240} canvasH={400}/>
+                              <Suspense fallback={null}><DragMediaCanvas layers={storyCanvasLayers} onChange={setStoryCanvasLayers} canvasW={240} canvasH={400}/></Suspense>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -4095,7 +4102,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           </button>
                           {otubeCanvasLayers.length>=0 && otubePreview && (
                             <div className="mt-2">
-                              <DragMediaCanvas layers={otubeCanvasLayers} onChange={setOtubeCanvasLayers}/>
+                              <Suspense fallback={null}><DragMediaCanvas layers={otubeCanvasLayers} onChange={setOtubeCanvasLayers}/></Suspense>
                             </div>
                           )}
                         </div>

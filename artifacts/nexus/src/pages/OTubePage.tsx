@@ -6698,8 +6698,20 @@ function OTubeMusicOrb() {
   const [progress, setProgress]     = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration]     = useState(0);
-  const [searchQ, setSearchQ]       = useState("");
-  const [genre, setGenre]           = useState("pop hits 2024");
+  const [searchQ, setSearchQ]       = useState(() => {
+    try {
+      const raw = localStorage.getItem("otube_music_state");
+      if (raw) return JSON.parse(raw).searchQ || "";
+    } catch {}
+    return "";
+  });
+  const [genre, setGenre]           = useState(() => {
+    try {
+      const raw = localStorage.getItem("otube_music_state");
+      if (raw) return JSON.parse(raw).genre || "pop hits 2024";
+    } catch {}
+    return "pop hits 2024";
+  });
   const [loadingApi, setLoadingApi] = useState(false);
   const [noResults, setNoResults]   = useState(false);
   const [shuffleOn, setShuffleOn]   = useState(false);
@@ -6709,8 +6721,22 @@ function OTubeMusicOrb() {
   const [retryFailed, setRetryFailed] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  /* Saved state to rehydrate on the first successful fetch */
+  const restoredRef = useRef<{ genre: string; searchQ: string; trackId: string } | null>(
+    (() => {
+      try {
+        const raw = localStorage.getItem("otube_music_state");
+        if (raw) return JSON.parse(raw) as { genre: string; searchQ: string; trackId: string };
+      } catch {}
+      return null;
+    })()
+  );
+
+  /* Capture the mount-time query context so the initial fetch uses saved state */
+  const initialQueryRef = useRef({ q: searchQ, g: genre });
+
   /* last search params so retry can replay them */
-  const lastQueryRef = useRef<{ q: string; g: string }>({ q: "", g: "pop hits 2024" });
+  const lastQueryRef = useRef<{ q: string; g: string }>({ q: "", g: genre });
 
   /* ref mirror of `playing` so fetchMusic (stable deps) can read current state */
   const playingRef = useRef(false);
@@ -6721,6 +6747,18 @@ function OTubeMusicOrb() {
 
   /* keep playingRef in sync so fetchMusic (stable deps []) can read it */
   useEffect(() => { playingRef.current = playing; }, [playing]);
+
+  /* Persist the current track so the player resumes after a page reload */
+  useEffect(() => {
+    if (!track || track.id.startsWith("fb")) return; // skip fallback tracks
+    try {
+      localStorage.setItem("otube_music_state", JSON.stringify({
+        genre,
+        searchQ,
+        trackId: track.id,
+      }));
+    } catch {}
+  }, [track?.id, genre, searchQ]);
 
   /* apply a queued playlist — called on track-end or explicit "switch now" */
   const applyPending = useCallback(() => {
@@ -6776,9 +6814,17 @@ function OTubeMusicOrb() {
               ),
             });
           } else {
-            /* Nothing playing — switch immediately */
-            setTracks(found);
-            setIdx(0);
+            /* Nothing playing — switch immediately, restoring saved track if available */
+            const restored = restoredRef.current;
+            if (restored) {
+              restoredRef.current = null; // consume — only rehydrate once on mount
+              const savedIdx = found.findIndex(t => t.id === restored.trackId);
+              setTracks(found);
+              setIdx(savedIdx >= 0 ? savedIdx : 0); // fall back to 0 if track not found
+            } else {
+              setTracks(found);
+              setIdx(0);
+            }
           }
         } else {
           setNoResults(true);
@@ -6798,7 +6844,12 @@ function OTubeMusicOrb() {
     fetchMusic(q, g, { retry: true });
   }, [fetchMusic]);
 
-  useEffect(() => { fetchMusic("", genre); }, [fetchMusic]);
+  /* On mount, re-fetch using the saved query context (search term or genre);
+     initialQueryRef is captured once so this effect stays stable */
+  useEffect(() => {
+    const { q, g } = initialQueryRef.current;
+    fetchMusic(q, g || "pop hits 2024");
+  }, [fetchMusic]);
 
   /* load audio when track changes */
   useEffect(() => {

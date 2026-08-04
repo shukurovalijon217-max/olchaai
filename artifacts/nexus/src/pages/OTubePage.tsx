@@ -16,6 +16,7 @@ import type { Reel, UploadUrlRequest, Notification, ContinueWatchingItem, Streak
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { usePip } from "@/context/PipContext";
 import { useDockedState } from "@/hooks/useDockedState";
 import {
@@ -6711,7 +6712,25 @@ function OTubeMusicOrb() {
   /* last search params so retry can replay them */
   const lastQueryRef = useRef<{ q: string; g: string }>({ q: "", g: "pop hits 2024" });
 
+  /* ref mirror of `playing` so fetchMusic (stable deps) can read current state */
+  const playingRef = useRef(false);
+  /* pending playlist — queued up while a song is playing; applied on track end */
+  const pendingTracksRef = useRef<MusicTrack[] | null>(null);
+
   const track = tracks[idx];
+
+  /* keep playingRef in sync so fetchMusic (stable deps []) can read it */
+  useEffect(() => { playingRef.current = playing; }, [playing]);
+
+  /* apply a queued playlist — called on track-end or explicit "switch now" */
+  const applyPending = useCallback(() => {
+    if (!pendingTracksRef.current) return;
+    setTracks(pendingTracksRef.current);
+    setIdx(0);
+    setNoResults(false);
+    setRetryFailed(false);
+    pendingTracksRef.current = null;
+  }, []);
 
   /* fetch — Audius full tracks only (no 30s previews) */
   const fetchMusic = useCallback((q: string, g: string, options?: { retry?: boolean }) => {
@@ -6734,8 +6753,34 @@ function OTubeMusicOrb() {
             ...t,
             preview: t.preview.startsWith("/") ? `${API_BASE}${t.preview}` : t.preview,
           }));
-        if (found.length) { setTracks(found); setIdx(0); setNoResults(false); setRetryFailed(false); }
-        else {
+        if (found.length) {
+          setNoResults(false);
+          setRetryFailed(false);
+          if (playingRef.current) {
+            /* A song is currently playing — queue the new playlist and offer
+               the user a non-intrusive toast to switch immediately */
+            pendingTracksRef.current = found;
+            toast({
+              title: "Yangi playlist tayyor",
+              description: "Joriy qo'shiq tugagach almashtiriladi",
+              action: (
+                <ToastAction
+                  altText="Hozir almashtirish"
+                  onClick={() => {
+                    pendingTracksRef.current = found;
+                    applyPending();
+                  }}
+                >
+                  Hozir
+                </ToastAction>
+              ),
+            });
+          } else {
+            /* Nothing playing — switch immediately */
+            setTracks(found);
+            setIdx(0);
+          }
+        } else {
           setNoResults(true);
           if (options?.retry) setRetryFailed(true);
         }
@@ -6745,7 +6790,7 @@ function OTubeMusicOrb() {
         if (options?.retry) setRetryFailed(true);
       })
       .finally(() => { setLoadingApi(false); setRetrying(false); });
-  }, []);
+  }, [applyPending]);
 
   /* retry with freshly-fetched Audius host list */
   const handleRetry = useCallback(() => {
@@ -6775,6 +6820,10 @@ function OTubeMusicOrb() {
     else audio.pause();
   }, [playing]);
 
+  /* stable ref to applyPending so the audio effect can call it without re-subscribing */
+  const applyPendingRef = useRef(applyPending);
+  useEffect(() => { applyPendingRef.current = applyPending; }, [applyPending]);
+
   /* progress + auto-next / repeat / shuffle */
   useEffect(() => {
     const audio = audioRef.current;
@@ -6785,6 +6834,11 @@ function OTubeMusicOrb() {
       setProgress(audio.duration ? audio.currentTime / audio.duration : 0);
     };
     const onEnd = () => {
+      /* If a genre switch was queued while this song played, apply it now */
+      if (pendingTracksRef.current) {
+        applyPendingRef.current();
+        return;
+      }
       if (repeatOne) { audio.currentTime = 0; audio.play().catch(() => {}); return; }
       if (shuffleOn && tracks.length > 1) {
         setIdx(i => { let n = i; while (n === i) n = Math.floor(Math.random() * tracks.length); return n; });

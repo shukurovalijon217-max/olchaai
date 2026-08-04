@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "VNLlqjtvdbDbAXIwp7izt"
@@ -18,3 +17,17 @@ id = "IPtgPdeG-ghHYe6eAFX8A"
 uri = "file://artifacts/olcha-mobile/assets/images/placeholder.png"
 type = "image"
 title = "olcha-placeholder"
+
+[[outputs]]
+id = "10ou62aybl3Fej2gehV6_"
+uri = "file://attached_assets/gilos_play_logo_512.png"
+type = "image"
+title = "GILOS logo — 512×512"
+description = "Google Play developer profil logotipi (PNG, непрозрачный, <1MB)"
+
+[[outputs]]
+id = "JVqbh_O-DYyRcfA2IR4OA"
+uri = "file://attached_assets/gilos_play_cover_4096x2304.jpg"
+type = "image"
+title = "GILOS cover — 4096×2304"
+description = "Google Play developer profil muqovasi (Обложка, <1MB)"

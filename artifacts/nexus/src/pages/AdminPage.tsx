@@ -11,7 +11,8 @@ import {
   Bot, BrainCircuit, Gauge, MemoryStick, Radio, UserCheck, ShieldX,
   PlayCircle, Film, Music, TrendingDown as TDown, Check, ChevronDown,
   CircleDollarSign, Banknote, ArrowRightLeft, BarChart2, Landmark,
-  Server, Cloud, CreditCard, CalendarClock, Gift, Loader2
+  Server, Cloud, CreditCard, CalendarClock, Gift, Loader2,
+  ScrollText, ChevronLeft, ChevronRight, Filter
 } from "lucide-react";
 import {
   useGetAdminDashboard, useAdminListUsers, useAdminListContent,
@@ -25,7 +26,7 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar
 } from "recharts";
 
-type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "nexus-shield" | "finance" | "monetization" | "notify" | "settings" | "nexus-core" | "ai-autopilot";
+type AdminTab = "dashboard" | "users" | "content" | "analytics" | "ai" | "ai-integrations" | "safeguard" | "nexus-shield" | "finance" | "monetization" | "notify" | "settings" | "nexus-core" | "ai-autopilot" | "audit-log";
 
 const TABS: { id: AdminTab; key: string; icon: React.ElementType }[] = [
   { id: "dashboard", key: "admin.dashboard", icon: BarChart3 },
@@ -4014,8 +4015,299 @@ export default function AdminPage() {
             </AdminPanel>
           </motion.div>
 
+          {/* ── AUDIT LOG ─────────────────────────────── */}
+          <motion.div variants={aPE}>
+            <AdminPanel color="amber" icon={ScrollText} label="Audit Log"
+              preview="Who did what and when"
+              isOpen={openPanel === "audit-log"} onToggle={() => toggle("audit-log")}>
+              <AuditLogTab />
+            </AdminPanel>
+          </motion.div>
+
         </motion.div>
       </div>
     </div>
+  );
+}
+
+/* ─── Audit Log Tab ──────────────────────────────────────────── */
+function AuditLogTab() {
+  const API_BASE = (import.meta.env.VITE_API_BASE_URL || "");
+  const PAGE_SIZE = 50;
+
+  const [items, setItems] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Filters
+  const [filterUserId, setFilterUserId] = useState("");
+  const [filterPath, setFilterPath] = useState("");
+  const [filterStatusMin, setFilterStatusMin] = useState("");
+  const [filterStatusMax, setFilterStatusMax] = useState("");
+  const [applied, setApplied] = useState({ userId: "", path: "", statusMin: "", statusMax: "" });
+
+  const load = async (pg: number, filters: typeof applied) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        offset: String(pg * PAGE_SIZE),
+      });
+      if (filters.userId)    params.set("userId",    filters.userId);
+      if (filters.path)      params.set("path",      filters.path);
+      if (filters.statusMin) params.set("statusMin", filters.statusMin);
+      if (filters.statusMax) params.set("statusMax", filters.statusMax);
+
+      const r = await fetch(`${API_BASE}/api/admin/audit-logs?${params}`, { credentials: "include" });
+      if (r.ok) {
+        const data = await r.json();
+        setItems(data.items ?? []);
+        setTotal(data.total ?? 0);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(0, applied); }, []);
+
+  const applyFilters = () => {
+    const f = { userId: filterUserId, path: filterPath, statusMin: filterStatusMin, statusMax: filterStatusMax };
+    setApplied(f);
+    setPage(0);
+    load(0, f);
+  };
+
+  const goPage = (p: number) => {
+    setPage(p);
+    load(p, applied);
+  };
+
+  const statusColor = (code: number) => {
+    if (!code) return "text-muted-foreground";
+    if (code < 300) return "text-emerald-400";
+    if (code < 400) return "text-blue-400";
+    if (code < 500) return "text-amber-400";
+    return "text-destructive";
+  };
+
+  const methodColor = (method: string) => {
+    switch (method) {
+      case "POST":   return "bg-emerald-500/15 text-emerald-400";
+      case "PUT":    return "bg-amber-500/15 text-amber-400";
+      case "PATCH":  return "bg-amber-500/15 text-amber-400";
+      case "DELETE": return "bg-destructive/15 text-destructive";
+      default:       return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+            <ScrollText className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Audit Log</h2>
+            <p className="text-xs text-muted-foreground">
+              {total.toLocaleString()} ta yozuv • Kim nima qildi va qachon
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => load(page, applied)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <RefreshCw className="w-3.5 h-3.5" /> Yangilash
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <Filter className="w-3.5 h-3.5" /> Filtrlar
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <p className="text-[11px] text-muted-foreground mb-1">Foydalanuvchi ID</p>
+            <input
+              type="number" value={filterUserId}
+              onChange={e => setFilterUserId(e.target.value)}
+              placeholder="masalan: 42"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+          <div>
+            <p className="text-[11px] text-muted-foreground mb-1">Yo'l prefiksi</p>
+            <input
+              type="text" value={filterPath}
+              onChange={e => setFilterPath(e.target.value)}
+              placeholder="masalan: /api/posts"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+          <div>
+            <p className="text-[11px] text-muted-foreground mb-1">Status min</p>
+            <input
+              type="number" value={filterStatusMin}
+              onChange={e => setFilterStatusMin(e.target.value)}
+              placeholder="masalan: 400"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+          <div>
+            <p className="text-[11px] text-muted-foreground mb-1">Status max</p>
+            <input
+              type="number" value={filterStatusMax}
+              onChange={e => setFilterStatusMax(e.target.value)}
+              placeholder="masalan: 499"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={applyFilters}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-colors"
+          >
+            <Filter className="w-3.5 h-3.5" /> Qo'llash
+          </button>
+          {(applied.userId || applied.path || applied.statusMin || applied.statusMax) && (
+            <button
+              onClick={() => {
+                setFilterUserId(""); setFilterPath(""); setFilterStatusMin(""); setFilterStatusMax("");
+                const empty = { userId: "", path: "", statusMin: "", statusMax: "" };
+                setApplied(empty); setPage(0); load(0, empty);
+              }}
+              className="px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              Tozalash
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-7 h-7 text-primary animate-spin" />
+        </div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <ScrollText className="w-10 h-10 mx-auto mb-3 opacity-25" />
+          <p className="text-sm">Yozuv topilmadi</p>
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Vaqt", "Foydalanuvchi", "IP", "Amal", "Status", "Davomiylik"].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, i) => (
+                  <tr
+                    key={item.id}
+                    className={`border-b border-border/50 last:border-0 transition-colors hover:bg-muted/30 ${i % 2 === 0 ? "" : "bg-muted/10"}`}
+                  >
+                    {/* Timestamp */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="font-medium text-foreground">
+                        {new Date(item.createdAt).toLocaleDateString("uz-UZ")}
+                      </div>
+                      <div className="text-muted-foreground text-[10px]">
+                        {new Date(item.createdAt).toLocaleTimeString("uz-UZ")}
+                      </div>
+                    </td>
+
+                    {/* User */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {item.userId ? (
+                        <div>
+                          <div className="font-medium text-foreground">{item.displayName ?? item.username ?? `#${item.userId}`}</div>
+                          <div className="text-muted-foreground text-[10px]">ID {item.userId}{item.username ? ` · @${item.username}` : ""}</div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground italic">Mehmon</span>
+                      )}
+                    </td>
+
+                    {/* IP */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="font-mono text-muted-foreground">{item.ip}</span>
+                    </td>
+
+                    {/* Method + Path */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex-shrink-0 ${methodColor(item.method)}`}>
+                          {item.method}
+                        </span>
+                        <span className="font-mono text-foreground truncate max-w-[200px]" title={item.path}>
+                          {item.path}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`font-bold ${statusColor(item.statusCode)}`}>
+                        {item.statusCode ?? "—"}
+                      </span>
+                    </td>
+
+                    {/* Duration */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {item.durationMs !== null ? (
+                        <span className={item.durationMs > 1000 ? "text-amber-400 font-semibold" : "text-muted-foreground"}>
+                          {item.durationMs}ms
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+              <p className="text-xs text-muted-foreground">
+                {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} / {total.toLocaleString()}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => goPage(page - 1)} disabled={page === 0}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs text-muted-foreground">{page + 1} / {totalPages}</span>
+                <button
+                  onClick={() => goPage(page + 1)} disabled={page >= totalPages - 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </motion.div>
   );
 }

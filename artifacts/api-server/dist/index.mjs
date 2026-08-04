@@ -163808,6 +163808,66 @@ var init_admin2 = __esm({
         res.status(500).json({ error: "Narxlarni yangilashda xato" });
       }
     });
+    router14.get("/admin/audit-logs", async (req, res) => {
+      try {
+        const limit2 = Math.min(Number(req.query.limit) || 50, 200);
+        const offset = Number(req.query.offset) || 0;
+        const filterUserId = req.query.userId ? Number(req.query.userId) : null;
+        const pathPrefix = typeof req.query.path === "string" && req.query.path ? req.query.path : null;
+        const statusMin = req.query.statusMin ? Number(req.query.statusMin) : null;
+        const statusMax = req.query.statusMax ? Number(req.query.statusMax) : null;
+        let baseQuery = sql`
+      SELECT a.id, a.user_id, a.ip, a.method, a.path, a.status_code, a.duration_ms, a.body_size, a.user_agent, a.created_at,
+             u.display_name, u.username
+      FROM audit_logs a
+      LEFT JOIN users u ON u.id = a.user_id
+      WHERE 1=1
+    `;
+        let countQuery2 = sql`SELECT count(*)::int as count FROM audit_logs a WHERE 1=1`;
+        if (filterUserId !== null && !isNaN(filterUserId)) {
+          baseQuery = sql`${baseQuery}  AND a.user_id = ${filterUserId}`;
+          countQuery2 = sql`${countQuery2} AND a.user_id = ${filterUserId}`;
+        }
+        if (pathPrefix) {
+          const pattern = pathPrefix + "%";
+          baseQuery = sql`${baseQuery}  AND a.path LIKE ${pattern}`;
+          countQuery2 = sql`${countQuery2} AND a.path LIKE ${pattern}`;
+        }
+        if (statusMin !== null && !isNaN(statusMin)) {
+          baseQuery = sql`${baseQuery}  AND a.status_code >= ${statusMin}`;
+          countQuery2 = sql`${countQuery2} AND a.status_code >= ${statusMin}`;
+        }
+        if (statusMax !== null && !isNaN(statusMax)) {
+          baseQuery = sql`${baseQuery}  AND a.status_code <= ${statusMax}`;
+          countQuery2 = sql`${countQuery2} AND a.status_code <= ${statusMax}`;
+        }
+        baseQuery = sql`${baseQuery} ORDER BY a.created_at DESC LIMIT ${limit2} OFFSET ${offset}`;
+        const [queryRows, countRows] = await Promise.all([
+          db.execute(baseQuery),
+          db.execute(countQuery2)
+        ]);
+        const rows = (r5) => r5?.rows ?? [];
+        const items = rows(queryRows).map((row) => ({
+          id: row.id,
+          userId: row.user_id,
+          displayName: row.display_name ?? null,
+          username: row.username ?? null,
+          ip: row.ip,
+          method: row.method,
+          path: row.path,
+          statusCode: row.status_code,
+          durationMs: row.duration_ms,
+          bodySize: row.body_size,
+          userAgent: row.user_agent,
+          createdAt: row.created_at
+        }));
+        const total = rows(countRows)[0]?.count ?? 0;
+        res.json({ items, total, limit: limit2, offset });
+      } catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Xato" });
+      }
+    });
     router14.post("/admin/stripe/seed", async (req, res) => {
       try {
         const stripe = await getUncachableStripeClient();

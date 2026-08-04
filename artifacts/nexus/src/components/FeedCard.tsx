@@ -651,7 +651,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
 
       {/* ═══ LAYER 0: Blurred background for photo ═══ */}
       {isPhoto && post.mediaUrl && !mediaError && (
-        <img src={resolveApiUrl(post.mediaUrl)} alt="" aria-hidden loading="lazy" decoding="async"
+        <img src={imgOptUrl(post.mediaUrl, 200)} alt="" aria-hidden loading="lazy" decoding="async"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{ filter: "blur(32px) saturate(1.4) brightness(0.28)", transform: "scale(1.18)", zIndex: 0 }}
           onError={e => { e.currentTarget.style.display = "none"; }}
@@ -704,7 +704,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
                   : <img src={allMedia[slideIdx]} alt={post.content} className={`w-full h-full ${photoFit}`} loading="lazy" decoding="async" />
                 }
                 <div className="absolute inset-0 -z-10">
-                  <img src={allMedia[slideIdx]} alt="" aria-hidden className="w-full h-full object-cover"
+                  <img src={imgOptUrl(allMedia[slideIdx], 200)} alt="" aria-hidden className="w-full h-full object-cover"
                     style={{ filter: "blur(28px) saturate(1.4) brightness(0.28)", transform: "scale(1.18)" }} />
                 </div>
               </motion.div>

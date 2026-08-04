@@ -101,6 +101,8 @@ function PostCard({ post, index = 0 }: PostCardProps) {
   };
   /* CoView */
   const [coviewing, setCoviewing] = useState(false);
+  const [coviewCode, setCoviewCode] = useState<string | null>(null);
+  const [coviewLinkCopied, setCoviewLinkCopied] = useState(false);
   /* Tip */
   const [tipOpen, setTipOpen] = useState(false);
   const [tipAmount, setTipAmount] = useState(5000);
@@ -331,10 +333,39 @@ function PostCard({ post, index = 0 }: PostCardProps) {
       if (res.ok) {
         const data = await res.json();
         const code = data.inviteCode ?? data.room?.inviteCode;
-        if (code) navigate(`/coview/${code}`);
+        if (code) setCoviewCode(code);
       }
     } catch { /* silent */ }
     finally { setCoviewing(false); }
+  };
+
+  const handleCoViewLeave = async () => {
+    if (coviewCode) {
+      try {
+        await fetch(`${API}/api/coview/rooms/${coviewCode}/leave`, {
+          method: "DELETE", credentials: "include",
+        });
+      } catch { /* silent */ }
+    }
+    setCoviewCode(null);
+    setCoviewLinkCopied(false);
+  };
+
+  const handleCoViewStart = () => {
+    const code = coviewCode;
+    setCoviewCode(null);
+    setCoviewLinkCopied(false);
+    if (code) navigate(`/coview/${code}`);
+  };
+
+  const handleCopyCoViewLink = async () => {
+    if (!coviewCode) return;
+    const link = `${window.location.origin}/coview/${coviewCode}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCoviewLinkCopied(true);
+      setTimeout(() => setCoviewLinkCopied(false), 2500);
+    } catch { /* silent */ }
   };
 
   /* ── Report ── */
@@ -840,6 +871,55 @@ function PostCard({ post, index = 0 }: PostCardProps) {
               transition={{ duration: 3.0, ease: "linear" }}
               className="absolute bottom-0 left-0 h-0.5 rounded-full bg-amber-400/60"
             />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── CoView invite sheet ───────────────────────────────────── */}
+      <AnimatePresence>
+        {coviewCode && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={e => { if (e.target === e.currentTarget) handleCoViewLeave(); }}>
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 24 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 24 }} transition={{ duration: 0.2 }}
+              className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm shadow-2xl">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Tv2 className="w-4 h-4 text-blue-400" />
+                  <h3 className="font-semibold text-foreground">{t("coview.watch_together")}</h3>
+                </div>
+                <button onClick={handleCoViewLeave} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Invite code */}
+              <p className="text-xs text-muted-foreground mb-2">{t("coview.invite_hint")}</p>
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/60 border border-border/60 mb-4">
+                <span className="flex-1 font-mono text-sm font-bold text-foreground tracking-widest select-all">{coviewCode}</span>
+              </div>
+
+              {/* Copy link */}
+              <button onClick={handleCopyCoViewLink}
+                className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors mb-2 ${
+                  coviewLinkCopied
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-400/30"
+                    : "bg-muted text-muted-foreground hover:text-foreground border border-border/60"
+                }`}>
+                {coviewLinkCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                {coviewLinkCopied ? t("coview.link_copied") : t("coview.copy_link")}
+              </button>
+
+              {/* Start watching */}
+              <button onClick={handleCoViewStart}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-colors">
+                <Tv2 className="w-4 h-4" />
+                {t("coview.start_watching")}
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

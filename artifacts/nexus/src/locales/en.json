@@ -1851,7 +1851,10 @@
     "content_label": "Content",
     "not_found": "Room not found",
     "error": "An error occurred",
-    "watch_together": "Watch Together"
+    "watch_together": "Watch Together",
+    "invite_hint": "Share this code or link with friends before you start.",
+    "link_copied": "Link copied!",
+    "start_watching": "Start Watching"
   },
   "anon": {
     "title": "Anon Zones",

@@ -1853,7 +1853,10 @@
     "content_label": "Kontent",
     "not_found": "Xona topilmadi",
     "error": "Xatoga yo'l qo'yildi",
-    "watch_together": "Birga ko'rish"
+    "watch_together": "Birga ko'rish",
+    "invite_hint": "Do'stlaringizga ushbu kod yoki havolani yuboring.",
+    "link_copied": "Havola nusxalandi!",
+    "start_watching": "Ko'rishni boshlash"
   },
   "anon": {
     "title": "Anonim Zonalar",

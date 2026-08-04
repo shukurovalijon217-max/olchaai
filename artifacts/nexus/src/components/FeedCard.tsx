@@ -261,7 +261,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
   const [likes,         setLikes]         = useState(post.likesCount ?? 0);
   const [shares,        setShares]        = useState(post.sharesCount ?? 0);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount ?? 0);
-  const [muted,    setMuted]    = useState(true);
+  const [muted,    setMuted]    = useState(false);
   const [copied,   setCopied]   = useState(false);
   const [subscribed,    setSubscribed]    = useState<boolean>(post.author?.isFollowing ?? false);
   const [showSubscribe, setShowSubscribe] = useState(false);
@@ -964,10 +964,10 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
 
       {/* ═══ LAYER 20: RIGHT ACTION COLUMN — bottom-right TikTok style ═══ */}
       <div
-        className="absolute right-3 flex flex-col items-center gap-3"
+        className="absolute right-3 flex flex-col items-center gap-[14px]"
         style={{
           zIndex: 20,
-          bottom: commentOpen ? 300 : 110,
+          bottom: commentOpen ? 300 : 96,
           transition: "bottom 0.3s cubic-bezier(0.16,1,0.3,1)",
           pointerEvents: commentOpen ? "none" : "auto",
         }}

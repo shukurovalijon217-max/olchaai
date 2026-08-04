@@ -951,8 +951,22 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     if (!audio || !audioUploadUrl) return;
     if (audioPlaying) { audio.pause(); setAudioPlaying(false); }
     else {
+      // Re-set src if not loaded yet (fixes silent failures on first tap)
+      if (!audio.src || audio.src !== audioUploadUrl) {
+        audio.src = audioUploadUrl;
+        audio.load();
+      }
       audio.currentTime = audioTrimStart;
-      audio.play().then(() => setAudioPlaying(true)).catch(() => {});
+      audio.play()
+        .then(() => setAudioPlaying(true))
+        .catch(() => {
+          // Retry once after a short delay (handles browser autoplay timing)
+          setTimeout(() => {
+            audio.play().then(() => setAudioPlaying(true)).catch(() => {
+              setAudioPlaying(false);
+            });
+          }, 200);
+        });
     }
   };
 
@@ -2010,7 +2024,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
       </AnimatePresence>
 
       {/* hidden audio element */}
-      <audio ref={audioPreviewRef} style={{ display:"none" }} />
+      <audio ref={audioPreviewRef} preload="auto" crossOrigin="anonymous" style={{ display:"none" }} />
 
       {/* ── Music panel (STUDIO WAVE — revolutionary) ── */}
       <AnimatePresence>

@@ -103,6 +103,13 @@ function PostCard({ post, index = 0 }: PostCardProps) {
   const [coviewing, setCoviewing] = useState(false);
   const [coviewCode, setCoviewCode] = useState<string | null>(null);
   const [coviewLinkCopied, setCoviewLinkCopied] = useState(false);
+  const [coviewError, setCoviewError] = useState<string | null>(null);
+  const coviewErrorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showCoviewError = (msg: string) => {
+    setCoviewError(msg);
+    if (coviewErrorTimerRef.current) clearTimeout(coviewErrorTimerRef.current);
+    coviewErrorTimerRef.current = setTimeout(() => setCoviewError(null), 4000);
+  };
   /* Tip */
   const [tipOpen, setTipOpen] = useState(false);
   const [tipAmount, setTipAmount] = useState(5000);
@@ -324,6 +331,7 @@ function PostCard({ post, index = 0 }: PostCardProps) {
   /* ── CoView ── */
   const handleCoView = async () => {
     if (coviewing) return;
+    if (!user) { showCoviewError(t("coview.login_required")); return; }
     setCoviewing(true);
     try {
       const res = await fetch(`${API}/api/coview/rooms`, {
@@ -334,9 +342,16 @@ function PostCard({ post, index = 0 }: PostCardProps) {
         const data = await res.json();
         const code = data.inviteCode ?? data.room?.inviteCode;
         if (code) setCoviewCode(code);
+      } else if (res.status === 401) {
+        showCoviewError(t("coview.login_required"));
+      } else {
+        showCoviewError(t("coview.create_error"));
       }
-    } catch { /* silent */ }
-    finally { setCoviewing(false); }
+    } catch {
+      showCoviewError(t("coview.create_error"));
+    } finally {
+      setCoviewing(false);
+    }
   };
 
   const handleCoViewLeave = async () => {
@@ -673,6 +688,27 @@ function PostCard({ post, index = 0 }: PostCardProps) {
             )}
           </div>
         </div>
+
+        {/* CoView error toast */}
+        <AnimatePresence>
+          {coviewError && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.15 }}
+              className="mx-4 mb-2 overflow-hidden"
+            >
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-destructive/10 border border-destructive/20">
+                <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
+                <span className="text-xs text-destructive font-medium flex-1">{coviewError}</span>
+                <button onClick={() => setCoviewError(null)} className="text-destructive/60 hover:text-destructive transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Voice Comments Panel */}
         <AnimatePresence>

@@ -1852,6 +1852,8 @@
     "not_found": "Room not found",
     "error": "An error occurred",
     "watch_together": "Watch Together",
+    "create_error": "Could not create room — please try again",
+    "login_required": "Please log in to use Watch Together",
     "invite_hint": "Share this code or link with friends before you start.",
     "link_copied": "Link copied!",
     "start_watching": "Start Watching"

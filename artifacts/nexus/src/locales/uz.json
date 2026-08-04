@@ -1854,6 +1854,8 @@
     "not_found": "Xona topilmadi",
     "error": "Xatoga yo'l qo'yildi",
     "watch_together": "Birga ko'rish",
+    "create_error": "Xona yaratib bo'lmadi — qayta urinib ko'ring",
+    "login_required": "Birga ko'rish uchun tizimga kiring",
     "invite_hint": "Do'stlaringizga ushbu kod yoki havolani yuboring.",
     "link_copied": "Havola nusxalandi!",
     "start_watching": "Ko'rishni boshlash"

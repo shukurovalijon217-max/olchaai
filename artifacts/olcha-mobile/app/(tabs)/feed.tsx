@@ -107,6 +107,9 @@ export default function FeedScreen() {
             </View>
           </View>
           <View style={s.headerActions}>
+            <Pressable onPress={() => router.push("/coview/new" as never)} style={s.headerBtn}>
+              <Feather name="tv" size={21} color={colors.textSecondary ?? colors.text} />
+            </Pressable>
             <Pressable onPress={() => router.push("/search" as never)} style={s.headerBtn}>
               <Feather name="search" size={21} color={colors.textSecondary ?? colors.text} />
             </Pressable>

@@ -66,6 +66,7 @@ export default function RootLayout() {
               <Stack.Screen name="create/post" options={{ headerShown: false }} />
               <Stack.Screen name="create/story" options={{ headerShown: false }} />
               <Stack.Screen name="create/reel" options={{ headerShown: false }} />
+              <Stack.Screen name="coview/[code]" options={{ headerShown: false }} />
             </Stack>
           </SafeAreaProvider>
         </AuthProvider>

@@ -164580,7 +164580,7 @@ function fetchRemote(url2) {
     }).on("error", reject);
   });
 }
-var import_express18, router18, objectStorageService2, ALLOWED_HOSTS, media_default;
+var import_express18, router18, objectStorageService2, ALLOWED_HOSTS, r2PublicHostname, media_default;
 var init_media = __esm({
   "src/routes/media.ts"() {
     "use strict";
@@ -164626,7 +164626,15 @@ var init_media = __esm({
         engine: "GILOS-MediaHasher-v1"
       });
     });
-    ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com|r2\.dev|r2\.cloudflarestorage\.com|railway\.app)$/i;
+    ALLOWED_HOSTS = /\.(googleusercontent\.com|googleapis\.com|gcs\.olchaai\.com|replit\.com|replit\.app|storage\.googleapis\.com|cloudinary\.com|onrender\.com|olchaai\.com|gilosai\.com|r2\.dev|r2\.cloudflarestorage\.com|railway\.app)$/i;
+    r2PublicHostname = (() => {
+      const raw = process.env.R2_PUBLIC_URL || "";
+      try {
+        return new URL(raw).hostname;
+      } catch {
+        return "";
+      }
+    })();
     router18.get("/img", async (req, res) => {
       const rawUrl = req.query["url"];
       const width = Math.min(Math.max(Number(req.query["w"]) || 800, 40), 1920);
@@ -164649,7 +164657,7 @@ var init_media = __esm({
         res.status(400).json({ error: "invalid url" });
         return;
       }
-      if (!ALLOWED_HOSTS.test(hostname2)) {
+      if (!ALLOWED_HOSTS.test(hostname2) && hostname2 !== r2PublicHostname) {
         res.status(403).json({ error: "host not allowed" });
         return;
       }

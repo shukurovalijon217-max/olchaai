@@ -139925,8 +139925,20 @@ var init_trackQuest = __esm({
 });
 
 // src/lib/music.ts
-async function audiusSearch(q2, limit2 = 40) {
-  for (const host of AUDIUS_HOSTS) {
+async function fetchAudiusHosts() {
+  try {
+    const r5 = await fetch("https://api.audius.co", { signal: AbortSignal.timeout(8e3) });
+    if (!r5.ok) return AUDIUS_HOSTS;
+    const d5 = await r5.json();
+    const hosts = (d5.data ?? []).filter((h5) => typeof h5 === "string" && h5.startsWith("https://"));
+    return hosts.length > 0 ? hosts : AUDIUS_HOSTS;
+  } catch {
+    return AUDIUS_HOSTS;
+  }
+}
+async function audiusSearch(q2, limit2 = 40, hosts) {
+  const searchHosts = hosts ?? AUDIUS_HOSTS;
+  for (const host of searchHosts) {
     try {
       const r5 = await fetch(
         `${host}/v1/tracks/search?query=${encodeURIComponent(q2)}&limit=${limit2}&app_name=${AUDIUS_APP}`,
@@ -139987,8 +139999,8 @@ async function jamendoSearch(q2, limit2 = 40) {
     return [];
   }
 }
-async function searchMusic(q2, limit2 = 40) {
-  const audiusTracks = await audiusSearch(q2, limit2);
+async function searchMusic(q2, limit2 = 40, hosts) {
+  const audiusTracks = await audiusSearch(q2, limit2, hosts);
   if (audiusTracks.length > 0) {
     const results = audiusTracks.filter((t) => t.id).map((t) => {
       const artObj = t.artwork ?? {};
@@ -140224,6 +140236,15 @@ var init_posts2 = __esm({
         const q2 = String(req.query.q ?? "").trim();
         if (!q2) {
           res.json({ results: [], source: "empty" });
+          return;
+        }
+        const isRetry = req.query.retry === "1";
+        if (isRetry) {
+          const freshHosts = await fetchAudiusHosts();
+          const { results: results2, source: source2 } = await searchMusic(q2, 40, freshHosts);
+          res.setHeader("X-Music-Source", source2);
+          res.setHeader("X-Audius-Hosts-Count", String(freshHosts.length));
+          res.json({ results: results2, source: source2 });
           return;
         }
         const cacheKey = q2.toLowerCase();

@@ -8,7 +8,7 @@ import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { trackQuestAction } from "../lib/trackQuest";
 import { cacheAside, cacheDelPatternAsync, cacheDelAsync } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
-import { searchMusic, audiusStream, AUDIUS_HOSTS } from "../lib/music";
+import { searchMusic, audiusStream, AUDIUS_HOSTS, fetchAudiusHosts } from "../lib/music";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { notifyComment, notifyLike } from "../lib/emailNotify";
 import { sendNotification } from "../lib/pushNotifications";
@@ -110,6 +110,17 @@ router.get("/music/search", async (req: any, res) => {
   try {
     const q = String(req.query.q ?? "").trim();
     if (!q) { res.json({ results: [], source: "empty" }); return; }
+
+    // ?retry=1 — bypass cache and fetch a fresh Audius node list before searching
+    const isRetry = req.query.retry === "1";
+    if (isRetry) {
+      const freshHosts = await fetchAudiusHosts();
+      const { results, source } = await searchMusic(q, 40, freshHosts);
+      res.setHeader("X-Music-Source", source);
+      res.setHeader("X-Audius-Hosts-Count", String(freshHosts.length));
+      res.json({ results, source });
+      return;
+    }
 
     // Cache per normalised query for 5 minutes to reduce Audius round-trips
     const cacheKey = q.toLowerCase();

@@ -33,8 +33,26 @@ export const AUDIUS_HOSTS = [
 ];
 const AUDIUS_APP = "gilosai";
 
-export async function audiusSearch(q: string, limit = 40): Promise<any[]> {
-  for (const host of AUDIUS_HOSTS) {
+/**
+ * Fetch a fresh list of live Audius discovery nodes from the registry.
+ * https://api.audius.co returns { "data": ["https://...", ...] }
+ * Falls back to the static AUDIUS_HOSTS list if the registry is unreachable.
+ */
+export async function fetchAudiusHosts(): Promise<string[]> {
+  try {
+    const r = await fetch("https://api.audius.co", { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return AUDIUS_HOSTS;
+    const d = await r.json() as { data?: string[] };
+    const hosts = (d.data ?? []).filter((h: string) => typeof h === "string" && h.startsWith("https://"));
+    return hosts.length > 0 ? hosts : AUDIUS_HOSTS;
+  } catch {
+    return AUDIUS_HOSTS;
+  }
+}
+
+export async function audiusSearch(q: string, limit = 40, hosts?: string[]): Promise<any[]> {
+  const searchHosts = hosts ?? AUDIUS_HOSTS;
+  for (const host of searchHosts) {
     try {
       const r = await fetch(
         `${host}/v1/tracks/search?query=${encodeURIComponent(q)}&limit=${limit}&app_name=${AUDIUS_APP}`,
@@ -101,12 +119,12 @@ export async function jamendoSearch(q: string, limit = 40): Promise<MusicResult[
 }
 
 /* ─── Unified search (Audius → Jamendo fallback) ─────────────── */
-export async function searchMusic(q: string, limit = 40): Promise<{
+export async function searchMusic(q: string, limit = 40, hosts?: string[]): Promise<{
   results: MusicResult[];
   source: "audius" | "jamendo" | "empty";
 }> {
   // 1. Try Audius
-  const audiusTracks = await audiusSearch(q, limit);
+  const audiusTracks = await audiusSearch(q, limit, hosts);
   if (audiusTracks.length > 0) {
     const results = audiusTracks
       .filter(t => t.id)

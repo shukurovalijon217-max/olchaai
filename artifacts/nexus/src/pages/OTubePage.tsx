@@ -6704,16 +6704,28 @@ function OTubeMusicOrb() {
   const [shuffleOn, setShuffleOn]   = useState(false);
   const [repeatOne, setRepeatOne]   = useState(false);
   const [liked, setLiked]           = useState(false);
+  const [retrying, setRetrying]     = useState(false);
+  const [retryFailed, setRetryFailed] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  /* last search params so retry can replay them */
+  const lastQueryRef = useRef<{ q: string; g: string }>({ q: "", g: "pop hits 2024" });
 
   const track = tracks[idx];
 
   /* fetch — Audius full tracks only (no 30s previews) */
-  const fetchMusic = useCallback((q: string, g: string) => {
+  const fetchMusic = useCallback((q: string, g: string, options?: { retry?: boolean }) => {
     const query = q.trim() || g || "top hits";
-    setLoadingApi(true);
+    lastQueryRef.current = { q, g };
+    if (options?.retry) {
+      setRetrying(true);
+    } else {
+      setLoadingApi(true);
+    }
     setNoResults(false);
-    fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`)
+    setRetryFailed(false);
+    const url = `${API_BASE}/api/music/search?q=${encodeURIComponent(query)}${options?.retry ? "&retry=1" : ""}`;
+    fetch(url)
       .then(r => r.json())
       .then((d: { results?: MusicTrack[] }) => {
         const found = (d.results ?? [])
@@ -6722,12 +6734,24 @@ function OTubeMusicOrb() {
             ...t,
             preview: t.preview.startsWith("/") ? `${API_BASE}${t.preview}` : t.preview,
           }));
-        if (found.length) { setTracks(found); setIdx(0); setNoResults(false); }
-        else setNoResults(true);
+        if (found.length) { setTracks(found); setIdx(0); setNoResults(false); setRetryFailed(false); }
+        else {
+          setNoResults(true);
+          if (options?.retry) setRetryFailed(true);
+        }
       })
-      .catch(() => setNoResults(true))
-      .finally(() => setLoadingApi(false));
+      .catch(() => {
+        setNoResults(true);
+        if (options?.retry) setRetryFailed(true);
+      })
+      .finally(() => { setLoadingApi(false); setRetrying(false); });
   }, []);
+
+  /* retry with freshly-fetched Audius host list */
+  const handleRetry = useCallback(() => {
+    const { q, g } = lastQueryRef.current;
+    fetchMusic(q, g, { retry: true });
+  }, [fetchMusic]);
 
   useEffect(() => { fetchMusic("", genre); }, [fetchMusic]);
 
@@ -7036,11 +7060,46 @@ function OTubeMusicOrb() {
               ))}
             </div>
 
-            {/* No results */}
-            {noResults && !loadingApi && (
-              <div style={{ padding:"0 13px 8px", textAlign:"center" }}>
-                <span style={{ fontSize:10, color:"rgba(168,85,247,0.55)" }}>
-                  🔍 Natija topilmadi — boshqa kalit so'z kiriting
+            {/* No results / retry */}
+            {noResults && !loadingApi && !retrying && (
+              <div style={{ padding:"0 13px 10px", textAlign:"center" }}>
+                {retryFailed ? (
+                  <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:5 }}>
+                    <span style={{ fontSize:10, color:"rgba(255,100,100,0.8)", fontWeight:700 }}>
+                      ⚠️ Musiqa xizmati vaqtincha ishlamayapti
+                    </span>
+                    <span style={{ fontSize:9, color:"rgba(255,255,255,0.3)" }}>
+                      Keyinroq qayta urinib ko'ring
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+                    <span style={{ fontSize:10, color:"rgba(168,85,247,0.55)" }}>
+                      🔍 Natija topilmadi
+                    </span>
+                    <button
+                      onClick={handleRetry}
+                      style={{
+                        display:"flex", alignItems:"center", gap:5,
+                        background:"rgba(168,85,247,0.15)",
+                        border:"1px solid rgba(168,85,247,0.4)",
+                        borderRadius:10, padding:"5px 12px",
+                        cursor:"pointer", color:"#a855f7",
+                        fontSize:10, fontWeight:700,
+                      }}
+                    >
+                      <RefreshCw style={{ width:10, height:10 }}/>
+                      Boshqa server orqali qayta urinish
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Retry in progress */}
+            {retrying && (
+              <div style={{ padding:"0 13px 10px", textAlign:"center" }}>
+                <span style={{ fontSize:10, color:"rgba(168,85,247,0.7)" }}>
+                  🔄 Yangi server qidirilmoqda…
                 </span>
               </div>
             )}

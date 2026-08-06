@@ -873,6 +873,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [audioTrimStart, setAudioTrimStart] = useState(0);
   const [audioTrimEnd, setAudioTrimEnd]     = useState(30);
   const [audioPlaying, setAudioPlaying]     = useState(false);
+  const [audioError, setAudioError]         = useState("");
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [isRecording, setIsRecording]       = useState(false);
   const audioPreviewRef   = useRef<HTMLAudioElement|null>(null);
@@ -910,6 +911,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const loadAudioUrl = (url: string, name: string, isBlobUrl = false) => {
     const audio = audioPreviewRef.current;
     if (!audio) return;
+    setAudioError("");
     audio.src = url;
     audio.load();
     const onMeta = () => {
@@ -947,12 +949,14 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
     if (!audio || !audioUploadUrl) return;
     if (audioPlaying) { audio.pause(); setAudioPlaying(false); }
     else {
-      // Re-set src if not loaded yet (fixes silent failures on first tap)
-      if (!audio.src || audio.src !== audioUploadUrl) {
+      // audio.src is always absolute — compare against the resolved URL,
+      // otherwise every tap resets src and aborts the in-flight load.
+      const resolved = new URL(audioUploadUrl, window.location.href).href;
+      if (audio.src !== resolved) {
         audio.src = audioUploadUrl;
         audio.load();
       }
-      audio.currentTime = audioTrimStart;
+      try { audio.currentTime = audioTrimStart; } catch { /* metadata not ready yet */ }
       audio.play()
         .then(() => setAudioPlaying(true))
         .catch(() => {
@@ -960,8 +964,9 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
           setTimeout(() => {
             audio.play().then(() => setAudioPlaying(true)).catch(() => {
               setAudioPlaying(false);
+              setAudioError("Qo'shiq yuklab bo'lmadi — internet yoki manba xatosi");
             });
-          }, 200);
+          }, 300);
         });
     }
   };
@@ -2174,8 +2179,12 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                             setMusicQuery(name);
                             setMusicApiResults([]);
                             if (song.preview) {
-                              const proxyUrl = `${API_BASE}/api/music/proxy?url=${encodeURIComponent(song.preview)}`;
-                              loadAudioUrl(proxyUrl, name, false);
+                              // Server-relative previews (Audius stream) play directly;
+                              // only external absolute URLs need the CORS proxy.
+                              const playUrl = song.preview.startsWith("/")
+                                ? `${API_BASE}${song.preview}`
+                                : `${API_BASE}/api/music/proxy?url=${encodeURIComponent(song.preview)}`;
+                              loadAudioUrl(playUrl, name, false);
                             } else {
                               setAudioName(name);
                               setAudioUploadUrl("");
@@ -2221,7 +2230,26 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                       const countryFlag = SONGS_BY_COUNTRY.find(c => c.songs.includes(song))?.flag ?? "🎵";
                       return (
                         <button key={i}
-                          onClick={() => { setAudioName(song); setMusicQuery(song); setMusicApiResults([]); setAudioUploadUrl(""); }}
+                          onClick={async () => {
+                            setAudioName(song); setMusicQuery(song); setMusicApiResults([]); setAudioUploadUrl(""); setAudioError("");
+                            // Local catalog entries are names only — find a playable
+                            // stream for the same song so preview + feed playback work.
+                            try {
+                              const res = await fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(song)}`);
+                              const data = await res.json();
+                              const hit = (data.results ?? data ?? []).find((r: ApiSong) => r.preview);
+                              if (hit?.preview) {
+                                const playUrl = hit.preview.startsWith("/")
+                                  ? `${API_BASE}${hit.preview}`
+                                  : `${API_BASE}/api/music/proxy?url=${encodeURIComponent(hit.preview)}`;
+                                loadAudioUrl(playUrl, song, false);
+                              } else {
+                                setAudioError("Bu qo'shiq uchun audio topilmadi — nom sifatida qo'shiladi");
+                              }
+                            } catch {
+                              setAudioError("Bu qo'shiq uchun audio topilmadi — nom sifatida qo'shiladi");
+                            }
+                          }}
                           className="w-full flex items-center gap-3 px-4 py-2 transition-all"
                           style={{ background: isSelected ? "rgba(124,58,237,0.18)" : "transparent",
                             borderLeft: isSelected ? "2.5px solid #7c3aed" : "2.5px solid transparent" }}>
@@ -2337,6 +2365,12 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
             {/* ════════════ TRIM TAB ════════════ */}
             {musicTab === "trim" && (
               <div className="px-3 pt-3 space-y-3">
+                {audioError && (
+                  <p className="text-[11px] font-semibold text-center px-3 py-2 rounded-lg"
+                    style={{ color:"#fda4af", background:"rgba(244,63,94,0.12)", border:"1px solid rgba(244,63,94,0.3)" }}>
+                    ⚠️ {audioError}
+                  </p>
+                )}
                 {!audioUploadUrl ? (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"

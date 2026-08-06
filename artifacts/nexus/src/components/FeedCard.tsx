@@ -429,7 +429,10 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
   const audioName = (post as any).audioName as string | undefined;
   const audioUrl  = (post as any).audioUrl  as string | undefined;
   const displayFormat = (post as any).displayFormat ?? "cover";
-  const photoFit  = displayFormat === "contain" ? "object-contain" : "object-cover";
+  // Photos always show FULL image (object-contain) over a blurred backdrop —
+  // object-cover was cropping users' pictures to the viewport aspect ratio.
+  const photoFit  = "object-contain";
+  void displayFormat;
 
   /* ── Effects ── */
   /* Video auto-play */
@@ -723,11 +726,17 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
             className="w-full h-full object-cover"
             onError={() => setMediaError(true)} />
         ) : isPhoto && post.mediaUrl && !mediaError ? (
-          <img src={imgOptUrl(post.mediaUrl, 900)} alt={post.content}
-            loading="lazy" decoding="async"
-            className={`w-full h-full ${photoFit} cursor-pointer`}
-            onClick={showSubscribeBriefly}
-            onError={() => setMediaError(true)} />
+          <div className="absolute inset-0">
+            {/* Blurred backdrop fills the letterbox around the full image */}
+            <img src={imgOptUrl(post.mediaUrl, 200)} alt="" aria-hidden
+              className="w-full h-full object-cover"
+              style={{ filter: "blur(28px) saturate(1.4) brightness(0.3)", transform: "scale(1.15)" }} />
+            <img src={imgOptUrl(post.mediaUrl, 900)} alt={post.content}
+              loading="lazy" decoding="async"
+              className={`absolute inset-0 w-full h-full ${photoFit} cursor-pointer`}
+              onClick={showSubscribeBriefly}
+              onError={() => setMediaError(true)} />
+          </div>
         ) : (
           /* TEXT POST — also used as graceful fallback when media fails to load */
           /* TEXT POST */

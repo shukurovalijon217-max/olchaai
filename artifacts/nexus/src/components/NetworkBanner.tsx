@@ -31,6 +31,7 @@ export function NetworkBanner() {
       const t = setTimeout(() => setShow(false), 3000);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [online]); // eslint-disable-line
 
   if (!show) return null;

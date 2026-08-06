@@ -2808,7 +2808,9 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
       toast({ title: "Fayl juda katta", description: "Video hajmi 2GB dan oshmasligi kerak", variant: "destructive" });
       return;
     }
-    if (f.type && !f.type.startsWith("video/")) {
+    const VIDEO_EXTS = /\.(mp4|mov|avi|mkv|webm|m4v|3gp)$/i;
+    const isVideo = f.type ? f.type.startsWith("video/") : VIDEO_EXTS.test(f.name);
+    if (!isVideo) {
       toast({ title: "Noto'g'ri fayl", description: "Faqat video fayl yuklang (MP4, MOV, AVI, MKV)", variant: "destructive" });
       return;
     }

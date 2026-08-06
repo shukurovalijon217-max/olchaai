@@ -314,6 +314,15 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
         // When R2 is active, objectPath is already a full CDN URL — don't wrap it again
         const serveUrl = objectPath.startsWith("http") ? objectPath : `${API}/api/storage${objectPath}`;
 
+        if (!serveUrl.startsWith("https://")) {
+          toast({
+            title: "Media yuklanmadi",
+            description: "Fayl manzili yaratilmadi — qayta urinib ko'ring.",
+            variant: "destructive",
+          });
+          throw new Error("serveUrl https:// bilan boshlanmaydi");
+        }
+
         /* Step 3 — for videos, ask the server to transcode/compress in place
            before marking the item done. Best-effort: any failure here just
            falls back to the original upload, it never blocks publishing. */

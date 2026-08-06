@@ -86,6 +86,12 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
         }
       } catch {}
 
+      if (!serveUrl.startsWith("https://")) {
+        throw new Error(
+          "Media URL yaratilmadi — fayl to'g'ri yuklanmagan. Qayta urinib ko'ring."
+        );
+      }
+
       const result: UploadResult = {
         objectPath,
         serveUrl,

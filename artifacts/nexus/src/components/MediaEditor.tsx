@@ -874,6 +874,7 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
   const [audioTrimEnd, setAudioTrimEnd]     = useState(30);
   const [audioPlaying, setAudioPlaying]     = useState(false);
   const [audioError, setAudioError]         = useState("");
+  const localSongReqRef = useRef(0);   // guards against last-response-wins race on rapid taps
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [isRecording, setIsRecording]       = useState(false);
   const audioPreviewRef   = useRef<HTMLAudioElement|null>(null);
@@ -2234,9 +2235,11 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                             setAudioName(song); setMusicQuery(song); setMusicApiResults([]); setAudioUploadUrl(""); setAudioError("");
                             // Local catalog entries are names only — find a playable
                             // stream for the same song so preview + feed playback work.
+                            const reqId = ++localSongReqRef.current;
                             try {
                               const res = await fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(song)}`);
                               const data = await res.json();
+                              if (reqId !== localSongReqRef.current) return; // a newer tap superseded this one
                               const hit = (data.results ?? data ?? []).find((r: ApiSong) => r.preview);
                               if (hit?.preview) {
                                 const playUrl = hit.preview.startsWith("/")
@@ -2247,7 +2250,8 @@ export default function MediaEditor({ previews, files, initialOverlays = [], ini
                                 setAudioError("Bu qo'shiq uchun audio topilmadi — nom sifatida qo'shiladi");
                               }
                             } catch {
-                              setAudioError("Bu qo'shiq uchun audio topilmadi — nom sifatida qo'shiladi");
+                              if (reqId === localSongReqRef.current)
+                                setAudioError("Bu qo'shiq uchun audio topilmadi — nom sifatida qo'shiladi");
                             }
                           }}
                           className="w-full flex items-center gap-3 px-4 py-2 transition-all"

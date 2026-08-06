@@ -246,11 +246,11 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
 
   /* Hide global floating chrome (AI orb, dock tabs) while the modal is open —
      they can intercept taps on the modal's bottom buttons even with lower z-index */
-  const { setPlayerOpen } = usePip();
+  const { setCreateModalOpen } = usePip();
   useEffect(() => {
-    if (open) setPlayerOpen(true);
-    return () => setPlayerOpen(false);
-  }, [open, setPlayerOpen]);
+    if (open) setCreateModalOpen(true);
+    return () => setCreateModalOpen(false);
+  }, [open, setCreateModalOpen]);
 
   /* post state — multi-file queue */
   type MediaItem = { id: string; file: File; preview: string; status: "idle"|"uploading"|"optimizing"|"done"|"error"; progress: number; serveUrl?: string };

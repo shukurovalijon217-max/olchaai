@@ -30,6 +30,11 @@ interface PipCtx {
      can hide itself and avoid overlapping the keyboard/comment box. */
   commentPanelOpen: boolean;
   setCommentPanelOpen: (open: boolean) => void;
+  /* True while a full-screen content-creation modal (CreateContentModal) is
+     open. Separate from playerOpen so closing the modal never un-hides chrome
+     while a video player is still active underneath. */
+  createModalOpen: boolean;
+  setCreateModalOpen: (open: boolean) => void;
 }
 
 const PipContext = createContext<PipCtx>({
@@ -44,6 +49,8 @@ const PipContext = createContext<PipCtx>({
   setDockExpanded: () => {},
   commentPanelOpen: false,
   setCommentPanelOpen: () => {},
+  createModalOpen: false,
+  setCreateModalOpen: () => {},
 });
 
 export function usePip() { return useContext(PipContext); }
@@ -278,6 +285,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
   const [playerOpen,   setPlayerOpen]   = useState(false);
   const [dockExpanded, setDockExpanded] = useState(false);
   const [commentPanelOpen, setCommentPanelOpen] = useState(false);
+  const [createModalOpen,  setCreateModalOpen]  = useState(false);
 
   const openPip = useCallback((video: Reel, startTime: number) => {
     setPip({ video, startTime });
@@ -290,7 +298,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <PipContext.Provider value={{ pip, openPip, closePip, expandPip: expandFn, setExpandHandler, playerOpen, setPlayerOpen, dockExpanded, setDockExpanded, commentPanelOpen, setCommentPanelOpen }}>
+    <PipContext.Provider value={{ pip, openPip, closePip, expandPip: expandFn, setExpandHandler, playerOpen, setPlayerOpen, dockExpanded, setDockExpanded, commentPanelOpen, setCommentPanelOpen, createModalOpen, setCreateModalOpen }}>
       {children}
       <AnimatePresence>
         {pip && (

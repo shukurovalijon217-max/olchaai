@@ -579,7 +579,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { t } = useTranslation();
-  const { playerOpen, setDockExpanded, commentPanelOpen } = usePip();
+  const { playerOpen, setDockExpanded, commentPanelOpen, createModalOpen } = usePip();
+  const chromeSuppressed = playerOpen || commentPanelOpen || createModalOpen;
   const isImmersive = location === "/" || location === "/reels" || location === "/otube";
   const [isOpen, setIsOpen] = useState(loadOpen);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -1238,14 +1239,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* ── FLOATING USER AVATAR BUBBLE ── */}
-      {!isImmersive && !playerOpen && !commentPanelOpen && <FloatingAvatar />}
+      {!isImmersive && !chromeSuppressed && <FloatingAvatar />}
 
       {/* ── MUNI FLOATING AI ── */}
-      {location !== "/reels" && !playerOpen && !commentPanelOpen && <MuniPanel />}
+      {location !== "/reels" && !chromeSuppressed && <MuniPanel />}
 
-      {/* ── DOCK EDGE TABS — hidden while a full-screen player or comment panel is open ── */}
-      {!playerOpen && !commentPanelOpen && <DockEdgeTab side="right" />}
-      {!playerOpen && !commentPanelOpen && <DockEdgeTab side="left" />}
+      {/* ── DOCK EDGE TABS — hidden while a full-screen player, comment panel or create modal is open ── */}
+      {!chromeSuppressed && <DockEdgeTab side="right" />}
+      {!chromeSuppressed && <DockEdgeTab side="left" />}
 
       {/* ══ FLOATING BACK BUTTON — tap to show, mobile only ════ */}
       <AnimatePresence>

@@ -26,6 +26,8 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { usePip } from "@/context/PipContext";
+import { toast } from "@/hooks/use-toast";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { getFeaturePref } from "@/lib/sounds";
 
@@ -241,6 +243,14 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
   useEffect(() => {
     if (open) { setTab(defaultTab); setDone(false); }
   }, [open, defaultTab]);
+
+  /* Hide global floating chrome (AI orb, dock tabs) while the modal is open —
+     they can intercept taps on the modal's bottom buttons even with lower z-index */
+  const { setPlayerOpen } = usePip();
+  useEffect(() => {
+    if (open) setPlayerOpen(true);
+    return () => setPlayerOpen(false);
+  }, [open, setPlayerOpen]);
 
   /* post state — multi-file queue */
   type MediaItem = { id: string; file: File; preview: string; status: "idle"|"uploading"|"optimizing"|"done"|"error"; progress: number; serveUrl?: string };
@@ -1012,6 +1022,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
             collabCanvasId: collabCanvas ? (Math.random().toString(36).slice(2) + Date.now().toString(36)) : undefined,
           }),
         });
+        if (!postRes.ok) throw new Error(`Post yaratilmadi (HTTP ${postRes.status})`);
         qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
 
         const createdPost = await postRes.json().catch(() => null);
@@ -1078,7 +1089,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
           prize2: chalPrize2,
           prize3: chalPrize3,
         });
-        await fetch(`${API}/api/posts`, {
+        const chalRes = await fetch(`${API}/api/posts`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -1089,11 +1100,15 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
             tags: ["_type:challenge", `_meta:${challengeMeta}`],
           }),
         });
+        if (!chalRes.ok) throw new Error(`Challenge yaratilmadi (HTTP ${chalRes.status})`);
         qc.invalidateQueries({ queryKey: getListPostsQueryKey() });
       }
       setDone(true);
       setTimeout(() => handleClose(), 1500);
-    } catch { /* handled by mutation */ } finally {
+    } catch (e: unknown) {
+      const msg = e instanceof Error && e.message ? e.message : "Server xatosi — qayta urinib ko'ring";
+      toast({ title: "E'lon qilinmadi", description: msg, variant: "destructive" });
+    } finally {
       setSubmitting(false);
     }
   };

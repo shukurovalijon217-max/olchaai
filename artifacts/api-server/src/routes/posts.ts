@@ -8,7 +8,7 @@ import { applyAutopilotDecision } from "../moderation/aiAutopilot.js";
 import { trackQuestAction } from "../lib/trackQuest";
 import { cacheAside, cacheDelPatternAsync, cacheDelAsync } from "../lib/cache";
 import { midnightVisibilityConditionForReq } from "../lib/midnightVisibility";
-import { searchMusic, audiusStream, AUDIUS_HOSTS, fetchAudiusHosts } from "../lib/music";
+import { searchMusic, jamendoSearch, audiusStream, AUDIUS_HOSTS, fetchAudiusHosts } from "../lib/music";
 import { getUserStats, getUserStatsMap } from "../lib/userStats";
 import { notifyComment, notifyLike } from "../lib/emailNotify";
 import { sendNotification } from "../lib/pushNotifications";
@@ -110,6 +110,15 @@ router.get("/music/search", async (req: any, res) => {
   try {
     const q = String(req.query.q ?? "").trim();
     if (!q) { res.json({ results: [], source: "empty" }); return; }
+
+    // ?provider=jamendo — bypass Audius and query Jamendo directly (useful for testing fallback)
+    if (req.query.provider === "jamendo") {
+      const results = await jamendoSearch(q, 40);
+      const source = results.length > 0 ? "jamendo" : "empty";
+      res.setHeader("X-Music-Source", source);
+      res.json({ results, source });
+      return;
+    }
 
     // ?retry=1 — bypass cache and fetch a fresh Audius node list before searching
     const isRetry = req.query.retry === "1";

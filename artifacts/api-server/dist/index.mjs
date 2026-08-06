@@ -140238,6 +140238,13 @@ var init_posts2 = __esm({
           res.json({ results: [], source: "empty" });
           return;
         }
+        if (req.query.provider === "jamendo") {
+          const results2 = await jamendoSearch(q2, 40);
+          const source2 = results2.length > 0 ? "jamendo" : "empty";
+          res.setHeader("X-Music-Source", source2);
+          res.json({ results: results2, source: source2 });
+          return;
+        }
         const isRetry = req.query.retry === "1";
         if (isRetry) {
           const freshHosts = await fetchAudiusHosts();

@@ -2802,7 +2802,18 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
     }
   });
 
-  const handleFile = (f: File) => { setFile(f); setTitle(f.name.replace(/\.[^.]+$/,"").slice(0,60)); setStep(1); };
+  const MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024; // 2GB
+  const handleFile = (f: File) => {
+    if (f.size > MAX_VIDEO_BYTES) {
+      toast({ title: "Fayl juda katta", description: "Video hajmi 2GB dan oshmasligi kerak", variant: "destructive" });
+      return;
+    }
+    if (f.type && !f.type.startsWith("video/")) {
+      toast({ title: "Noto'g'ri fayl", description: "Faqat video fayl yuklang (MP4, MOV, AVI, MKV)", variant: "destructive" });
+      return;
+    }
+    setFile(f); setTitle(f.name.replace(/\.[^.]+$/,"").slice(0,60)); setStep(1);
+  };
   const handleThumb = (f: File) => { setThumbFile(f); setThumbSrc(URL.createObjectURL(f)); };
   const addTag = (t: string) => { const v=t.trim().replace(/^#/,""); if(v&&!tagList.includes(v)) setTagList(p=>[...p,v]); setTagInput(""); };
   const aiSuggest = async () => {
@@ -2826,16 +2837,26 @@ function UploadModal({ onClose }: { onClose: ()=>void }) {
   const handleSubmit = async () => {
     if (!file||!title.trim()||!user) return;
     setPhase("uploading"); setProgress(0); setErrMsg("");
-    try {
-      const req: UploadUrlRequest = {name:file.name,size:file.size,contentType:file.type};
-      const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
+    const putFile = (uploadURL: string) => new Promise<void>((res,rej)=>{
       const xhr = new XMLHttpRequest();
       xhr.upload.onprogress = (e) => { if(e.lengthComputable) setProgress(Math.round(e.loaded/e.total*88)); };
-      await new Promise<void>((res,rej)=>{
-        xhr.open("PUT",uploadURL); xhr.setRequestHeader("Content-Type",file.type);
-        xhr.onload=()=>xhr.status<300?res():rej(new Error("Upload failed"));
-        xhr.onerror=()=>rej(new Error("Network error")); xhr.send(file);
-      });
+      xhr.open("PUT",uploadURL); xhr.setRequestHeader("Content-Type",file.type);
+      xhr.onload=()=>xhr.status<300?res():rej(new Error(`Yuklash xatosi (HTTP ${xhr.status})`));
+      xhr.onerror=()=>rej(new Error("Tarmoq xatosi — internet aloqasini tekshiring"));
+      xhr.onabort=()=>rej(new Error("Yuklash bekor qilindi"));
+      xhr.send(file);
+    });
+    try {
+      const req: UploadUrlRequest = {name:file.name,size:file.size,contentType:file.type};
+      let {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
+      try {
+        await putFile(uploadURL);
+      } catch {
+        // Retry once with a FRESH presigned URL (old one may have expired mid-upload)
+        setProgress(0);
+        ({uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req}));
+        await putFile(uploadURL);
+      }
       setProgress(95); setPhase("creating");
       // objectPath is a full CDN URL when R2 is active, otherwise a /objects/... path
       const resolvedVideoUrl = objectPath.startsWith("http") ? objectPath : `${API_BASE}/api/storage${objectPath}`;
@@ -3972,7 +3993,7 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
   const createMut    = useCreateReel({
     mutation: {
       onSuccess: () => { qc.invalidateQueries({queryKey:["/api/reels"]}); setPublished(true); setPublishing(false); },
-      onError:   () => setPublishing(false),
+      onError:   (err: Error) => { setPublishing(false); toast({ title: "Video chiqarilmadi", description: err?.message || "Server xatosi", variant: "destructive" }); },
     }
   });
 
@@ -4082,9 +4103,14 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
     setPublishing(true);
     try {
       const req: UploadUrlRequest = {name:file.name,size:file.size,contentType:file.type};
-      const {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
-      const res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file});
-      if (!res.ok) throw new Error("Upload failed");
+      let {uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req});
+      let res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file}).catch(()=>null);
+      if (!res || !res.ok) {
+        // Retry once with a fresh presigned URL
+        ({uploadURL,objectPath} = await uploadUrlMut.mutateAsync({data:req}));
+        res = await fetch(uploadURL,{method:"PUT",headers:{"Content-Type":file.type},body:file});
+        if (!res.ok) throw new Error(`Yuklash xatosi (HTTP ${res.status})`);
+      }
       const resolvedVideoUrl2 = objectPath.startsWith("http") ? objectPath : `${API_BASE}/api/storage${objectPath}`;
       createMut.mutate({data:{
         authorId:user.id,
@@ -4094,7 +4120,10 @@ function CipCatModal({ onClose }: { onClose: ()=>void }) {
         tags:["otube-studio","olcha","studio"],
         duration:0,
       }});
-    } catch { setPublishing(false); }
+    } catch(e:unknown) {
+      setPublishing(false);
+      toast({ title: "Video chiqarilmadi", description: e instanceof Error ? e.message : "Yuklashda xato — qayta urinib ko'ring", variant: "destructive" });
+    }
   };
 
   const TABS = [

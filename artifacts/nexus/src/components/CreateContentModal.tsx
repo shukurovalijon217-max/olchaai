@@ -259,8 +259,8 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
     setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, status: "uploading", progress: 5 } : m));
 
     (async () => {
-      try {
-        /* Step 1 — request presigned PUT URL */
+      /* Step 1 — request presigned PUT URL */
+      const requestUrl = async () => {
         const urlRes = await fetch(`${API}/api/storage/uploads/request-url`, {
           method: "POST",
           credentials: "include",
@@ -272,24 +272,34 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
           }),
         });
         if (!urlRes.ok) throw new Error("URL xatosi");
-        const { uploadURL, objectPath } = await urlRes.json() as { uploadURL: string; objectPath: string };
+        return await urlRes.json() as { uploadURL: string; objectPath: string };
+      };
+      /* Step 2 — PUT file with XHR for progress */
+      const putFile = (uploadURL: string) => new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadURL);
+        xhr.setRequestHeader("Content-Type", pending.file.type || "application/octet-stream");
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable)
+            setMediaQueue(q => q.map(m => m.id === pending.id
+              ? { ...m, progress: 30 + Math.round((e.loaded / e.total) * 65) }
+              : m));
+        };
+        xhr.onload = () => xhr.status < 300 ? resolve() : reject(new Error(`PUT xatosi ${xhr.status}`));
+        xhr.onerror = () => reject(new Error("Tarmoq xatosi"));
+        xhr.send(pending.file);
+      });
+      try {
+        let { uploadURL, objectPath } = await requestUrl();
         setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, progress: 30 } : m));
-
-        /* Step 2 — PUT file with XHR for progress */
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("PUT", uploadURL);
-          xhr.setRequestHeader("Content-Type", pending.file.type || "application/octet-stream");
-          xhr.upload.onprogress = e => {
-            if (e.lengthComputable)
-              setMediaQueue(q => q.map(m => m.id === pending.id
-                ? { ...m, progress: 30 + Math.round((e.loaded / e.total) * 65) }
-                : m));
-          };
-          xhr.onload = () => xhr.status < 300 ? resolve() : reject(new Error(`PUT xatosi ${xhr.status}`));
-          xhr.onerror = () => reject(new Error("Tarmoq xatosi"));
-          xhr.send(pending.file);
-        });
+        try {
+          await putFile(uploadURL);
+        } catch {
+          /* retry once with a fresh presigned URL (old one may have expired) */
+          setMediaQueue(q => q.map(m => m.id === pending.id ? { ...m, progress: 30 } : m));
+          ({ uploadURL, objectPath } = await requestUrl());
+          await putFile(uploadURL);
+        }
 
         // When R2 is active, objectPath is already a full CDN URL — don't wrap it again
         const serveUrl = objectPath.startsWith("http") ? objectPath : `${API}/api/storage${objectPath}`;

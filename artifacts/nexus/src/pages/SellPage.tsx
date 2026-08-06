@@ -55,7 +55,7 @@ export default function SellPage() {
       for (const file of Array.from(files)) {
         const uploadData = await requestUpload({ data: { name: file.name, size: file.size, contentType: file.type } });
         await fetch(uploadData.uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-        const publicUrl = `${API}/api/storage${uploadData.objectPath}`;
+        const publicUrl = uploadData.objectPath.startsWith("http") ? uploadData.objectPath : `${API}/api/storage${uploadData.objectPath}`;
         setMediaUrls(prev => [...prev, publicUrl]);
       }
     } catch {

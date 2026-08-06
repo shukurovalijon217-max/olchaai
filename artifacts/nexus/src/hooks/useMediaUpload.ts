@@ -77,7 +77,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
 
       setProgress(100);
 
-      let serveUrl = `${API}/api/storage${objectPath}`;
+      // objectPath is a full CDN URL when R2 is active — never double-prefix it
+      let serveUrl = objectPath.startsWith("http") ? objectPath : `${API}/api/storage${objectPath}`;
       try {
         const putBody = await putRes.clone().json();
         if (putBody?.url && typeof putBody.url === "string") {

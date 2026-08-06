@@ -108,7 +108,7 @@ async function uploadBlob(blob: Blob, name: string, mime: string): Promise<strin
   fd.append("contentType", mime);
   const r = await fetch(`${API}/api/storage/objects`, { method: "POST", body: fd });
   const j = await r.json();
-  return `${API}/api/storage${j.objectPath}`;
+  return typeof j.objectPath === "string" && j.objectPath.startsWith("http") ? j.objectPath : `${API}/api/storage${j.objectPath}`;
 }
 
 /* ── EmojiPicker (bottom-sheet modal) ──────────────────────── */

@@ -10,6 +10,29 @@ import { spawn } from "child_process";
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/* ── Startup guard: VITE_API_BASE_URL must be empty in production ──────────
+   If this variable is set to a non-empty string the Vite build bakes an
+   absolute URL into every API call.  That absolute URL bypasses the Nexus
+   proxy entirely, returns undefined data in the minified bundle, and causes
+   silent JS crashes.  The only correct value is "" (empty / not set).
+   Fail fast here so a misconfigured Railway deploy is caught at boot, before
+   any traffic is served.                                                   ── */
+const VITE_API_BASE_URL = process.env.VITE_API_BASE_URL;
+if (VITE_API_BASE_URL && VITE_API_BASE_URL.trim() !== "") {
+  console.error(
+    "[nexus] FATAL: VITE_API_BASE_URL is set to a non-empty value:",
+    JSON.stringify(VITE_API_BASE_URL)
+  );
+  console.error(
+    "[nexus] VITE_API_BASE_URL must be empty (\"\") or unset. " +
+    "Setting it to an absolute URL bakes that URL into the frontend bundle, " +
+    "bypasses the Nexus proxy, and causes broken API calls in production. " +
+    "Remove the variable from your Railway environment and redeploy."
+  );
+  process.exit(1);
+}
+
 const PORT       = parseInt(process.env.PORT || "3000", 10);
 /* olchaai-api is a SEPARATE Railway service — proxy directly, no loop */
 const API_TARGET = (process.env.API_TARGET || "https://olchaai-api-production.up.railway.app").trim();

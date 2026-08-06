@@ -163897,6 +163897,65 @@ var init_admin2 = __esm({
         res.status(500).json({ error: "Xato" });
       }
     });
+    router14.get("/admin/media-audit", async (req, res) => {
+      try {
+        const rows = (r5) => r5?.rows ?? [];
+        const [postRes, reelRes, storyRes, groupPostRes] = await Promise.all([
+          db.execute(sql`
+        SELECT id, author_id AS "authorId", media_url AS "mediaUrl", created_at AS "createdAt"
+        FROM posts
+        WHERE media_url IS NOT NULL AND media_url != '' AND media_url NOT LIKE 'https://%'
+        ORDER BY created_at DESC
+        LIMIT 100
+      `),
+          db.execute(sql`
+        SELECT id, author_id AS "authorId", media_url AS "mediaUrl", created_at AS "createdAt"
+        FROM reels
+        WHERE media_url IS NOT NULL AND media_url != '' AND media_url NOT LIKE 'https://%'
+        ORDER BY created_at DESC
+        LIMIT 100
+      `),
+          db.execute(sql`
+        SELECT id, author_id AS "authorId", media_url AS "mediaUrl", created_at AS "createdAt"
+        FROM stories
+        WHERE media_url IS NOT NULL AND media_url != '' AND media_url NOT LIKE 'https://%'
+        ORDER BY created_at DESC
+        LIMIT 100
+      `),
+          db.execute(sql`
+        SELECT id, author_id AS "authorId", media_url AS "mediaUrl", created_at AS "createdAt"
+        FROM group_posts
+        WHERE media_url IS NOT NULL AND media_url != '' AND media_url NOT LIKE 'https://%'
+        ORDER BY created_at DESC
+        LIMIT 100
+      `)
+        ]);
+        const postRows = rows(postRes);
+        const reelRows = rows(reelRes);
+        const storyRows = rows(storyRes);
+        const groupPostRows = rows(groupPostRes);
+        const totalBroken = postRows.length + reelRows.length + storyRows.length + groupPostRows.length;
+        req.log.warn({ totalBroken, posts: postRows.length, reels: reelRows.length, stories: storyRows.length, groupPosts: groupPostRows.length }, "Media URL audit: broken URL counts");
+        res.json({
+          summary: {
+            totalBroken,
+            posts: postRows.length,
+            reels: reelRows.length,
+            stories: storyRows.length,
+            groupPosts: groupPostRows.length
+          },
+          rows: {
+            posts: postRows,
+            reels: reelRows,
+            stories: storyRows,
+            groupPosts: groupPostRows
+          }
+        });
+      } catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Media audit xatosi" });
+      }
+    });
     router14.post("/admin/stripe/seed", async (req, res) => {
       try {
         const stripe = await getUncachableStripeClient();

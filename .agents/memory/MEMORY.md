@@ -41,4 +41,5 @@
 - [BullMQ queue setup](bullmq-queue.md) — queue.ts has 3 BullMQ queues (notifications/analytics/moderation); native Redis URL constructed from UPSTASH_REST creds; falls back to setImmediate in dev; queues NOT yet wired into route handlers — still use inline sendNotification().
 - [Story viewer broken media fallback](story-viewer-media-fallback.md) — storyImgError state gates mediaUrl display; broken URL doesn't trigger !mediaUrl fallback; must track onError explicitly.
 - [Cloudflare token limits & R2 caching](cloudflare-token-limits.md) — CF token is read-only for rules; Cache Rules don't affect R2 custom domains, only Transform Rules do; media cache rule is live.
+- [Upstash NOPERM for KEYS](upstash-noperm-keys.md) — prod Redis user can't run KEYS; pattern cache invalidation silently fails, feeds stay stale until TTL; use SCAN/tracked sets.
 - [iOS Safari video must call v.load()](ios-safari-video-load.md) — setting v.src programmatically without v.load() silently prevents iOS Safari from loading video; always call v.load() after v.src = src.

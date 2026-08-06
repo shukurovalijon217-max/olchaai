@@ -24956,27 +24956,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router55;
+    module.exports = Router56;
     module.exports.Route = Route;
-    function Router55(options) {
-      if (!(this instanceof Router55)) {
-        return new Router55(options);
+    function Router56(options) {
+      if (!(this instanceof Router56)) {
+        return new Router56(options);
       }
       const opts = options || {};
-      function router55(req, res, next) {
-        router55.handle(req, res, next);
+      function router56(req, res, next) {
+        router56.handle(req, res, next);
       }
-      Object.setPrototypeOf(router55, this);
-      router55.caseSensitive = opts.caseSensitive;
-      router55.mergeParams = opts.mergeParams;
-      router55.params = {};
-      router55.strict = opts.strict;
-      router55.stack = [];
-      return router55;
+      Object.setPrototypeOf(router56, this);
+      router56.caseSensitive = opts.caseSensitive;
+      router56.mergeParams = opts.mergeParams;
+      router56.params = {};
+      router56.strict = opts.strict;
+      router56.stack = [];
+      return router56;
     }
-    Router55.prototype = function() {
+    Router56.prototype = function() {
     };
-    Router55.prototype.param = function param2(name2, fn) {
+    Router56.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -24996,7 +24996,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router55.prototype.handle = function handle(req, res, callback) {
+    Router56.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -25123,7 +25123,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router55.prototype.use = function use(handler) {
+    Router56.prototype.use = function use(handler) {
       let offset = 0;
       let path3 = "/";
       if (typeof handler !== "function") {
@@ -25156,7 +25156,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router55.prototype.route = function route(path3) {
+    Router56.prototype.route = function route(path3) {
       const route2 = new Route(path3);
       const layer = new Layer(path3, {
         sensitive: this.caseSensitive,
@@ -25171,7 +25171,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router55.prototype[method] = function(path3) {
+      Router56.prototype[method] = function(path3) {
         const route = this.route(path3);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -25313,12 +25313,12 @@ var require_router = __commonJS({
       for (let i5 = 0; i5 < methods2.length; i5++) {
         options[methods2[i5]] = true;
       }
-      const allow = Object.keys(options).sort().join(", ");
-      res.setHeader("Allow", allow);
-      res.setHeader("Content-Length", Buffer.byteLength(allow));
+      const allow2 = Object.keys(options).sort().join(", ");
+      res.setHeader("Allow", allow2);
+      res.setHeader("Content-Length", Buffer.byteLength(allow2));
       res.setHeader("Content-Type", "text/plain");
       res.setHeader("X-Content-Type-Options", "nosniff");
-      res.end(allow);
+      res.end(allow2);
     }
     function trySendOptionsResponse(res, methods2, next) {
       try {
@@ -25354,13 +25354,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router55 = require_router();
+    var Router56 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router55 = null;
+      var router56 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -25369,13 +25369,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router55 === null) {
-            router55 = new Router55({
+          if (router56 === null) {
+            router56 = new Router56({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router55;
+          return router56;
         }
       });
     };
@@ -25446,15 +25446,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router55 = this.router;
+      var router56 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router55.use(path3, fn2);
+          return router56.use(path3, fn2);
         }
         debug(".use app under %s", path3);
         fn2.mountpath = path3;
         fn2.parent = this;
-        router55.use(path3, function mounted_app(req, res, next) {
+        router56.use(path3, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -28027,7 +28027,7 @@ var require_express = __commonJS({
     var EventEmitter2 = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router55 = require_router();
+    var Router56 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -28049,8 +28049,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router55.Route;
-    exports.Router = Router55;
+    exports.Route = Router56.Route;
+    exports.Router = Router56;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -64062,6 +64062,25 @@ var init_pushTokens = __esm({
   }
 });
 
+// ../../lib/db/src/schema/clientErrors.ts
+var clientErrors;
+var init_clientErrors = __esm({
+  "../../lib/db/src/schema/clientErrors.ts"() {
+    "use strict";
+    init_pg_core();
+    clientErrors = pgTable("client_errors", {
+      id: serial("id").primaryKey(),
+      message: text("message").notNull(),
+      stack: text("stack"),
+      url: text("url"),
+      userAgent: text("user_agent"),
+      userId: integer("user_id"),
+      count: integer("count").notNull().default(1),
+      createdAt: timestamp("created_at").notNull().defaultNow()
+    });
+  }
+});
+
 // ../../lib/db/src/schema/index.ts
 var schema_exports = {};
 __export(schema_exports, {
@@ -64082,6 +64101,7 @@ __export(schema_exports, {
   chatConversationsTable: () => chatConversationsTable,
   chatMessagesTable: () => chatMessagesTable,
   chatParticipantsTable: () => chatParticipantsTable,
+  clientErrors: () => clientErrors,
   coSpaceMembersTable: () => coSpaceMembersTable,
   coSpaceTasksTable: () => coSpaceTasksTable,
   coSpacesTable: () => coSpacesTable,
@@ -64199,6 +64219,7 @@ var init_schema2 = __esm({
     init_uploadSessions();
     init_challenges();
     init_pushTokens();
+    init_clientErrors();
   }
 });
 
@@ -64222,6 +64243,7 @@ __export(src_exports, {
   chatConversationsTable: () => chatConversationsTable,
   chatMessagesTable: () => chatMessagesTable,
   chatParticipantsTable: () => chatParticipantsTable,
+  clientErrors: () => clientErrors,
   coSpaceMembersTable: () => coSpaceMembersTable,
   coSpaceTasksTable: () => coSpaceTasksTable,
   coSpacesTable: () => coSpacesTable,
@@ -130743,7 +130765,7 @@ var init_parser2 = __esm({
     };
     MalformedJSON = class extends Error {
     };
-    _parseJSON = (jsonString, allow) => {
+    _parseJSON = (jsonString, allow2) => {
       const length = jsonString.length;
       let index2 = 0;
       const markPartialJSON = (msg) => {
@@ -130762,27 +130784,27 @@ var init_parser2 = __esm({
           return parseObj();
         if (jsonString[index2] === "[")
           return parseArr();
-        if (jsonString.substring(index2, index2 + 4) === "null" || Allow.NULL & allow && length - index2 < 4 && "null".startsWith(jsonString.substring(index2))) {
+        if (jsonString.substring(index2, index2 + 4) === "null" || Allow.NULL & allow2 && length - index2 < 4 && "null".startsWith(jsonString.substring(index2))) {
           index2 += 4;
           return null;
         }
-        if (jsonString.substring(index2, index2 + 4) === "true" || Allow.BOOL & allow && length - index2 < 4 && "true".startsWith(jsonString.substring(index2))) {
+        if (jsonString.substring(index2, index2 + 4) === "true" || Allow.BOOL & allow2 && length - index2 < 4 && "true".startsWith(jsonString.substring(index2))) {
           index2 += 4;
           return true;
         }
-        if (jsonString.substring(index2, index2 + 5) === "false" || Allow.BOOL & allow && length - index2 < 5 && "false".startsWith(jsonString.substring(index2))) {
+        if (jsonString.substring(index2, index2 + 5) === "false" || Allow.BOOL & allow2 && length - index2 < 5 && "false".startsWith(jsonString.substring(index2))) {
           index2 += 5;
           return false;
         }
-        if (jsonString.substring(index2, index2 + 8) === "Infinity" || Allow.INFINITY & allow && length - index2 < 8 && "Infinity".startsWith(jsonString.substring(index2))) {
+        if (jsonString.substring(index2, index2 + 8) === "Infinity" || Allow.INFINITY & allow2 && length - index2 < 8 && "Infinity".startsWith(jsonString.substring(index2))) {
           index2 += 8;
           return Infinity;
         }
-        if (jsonString.substring(index2, index2 + 9) === "-Infinity" || Allow.MINUS_INFINITY & allow && 1 < length - index2 && length - index2 < 9 && "-Infinity".startsWith(jsonString.substring(index2))) {
+        if (jsonString.substring(index2, index2 + 9) === "-Infinity" || Allow.MINUS_INFINITY & allow2 && 1 < length - index2 && length - index2 < 9 && "-Infinity".startsWith(jsonString.substring(index2))) {
           index2 += 9;
           return -Infinity;
         }
-        if (jsonString.substring(index2, index2 + 3) === "NaN" || Allow.NAN & allow && length - index2 < 3 && "NaN".startsWith(jsonString.substring(index2))) {
+        if (jsonString.substring(index2, index2 + 3) === "NaN" || Allow.NAN & allow2 && length - index2 < 3 && "NaN".startsWith(jsonString.substring(index2))) {
           index2 += 3;
           return NaN;
         }
@@ -130802,7 +130824,7 @@ var init_parser2 = __esm({
           } catch (e5) {
             throwMalformedError(String(e5));
           }
-        } else if (Allow.STR & allow) {
+        } else if (Allow.STR & allow2) {
           try {
             return JSON.parse(jsonString.substring(start, index2 - Number(escape2)) + '"');
           } catch (e5) {
@@ -130818,7 +130840,7 @@ var init_parser2 = __esm({
         try {
           while (jsonString[index2] !== "}") {
             skipBlank();
-            if (index2 >= length && Allow.OBJ & allow)
+            if (index2 >= length && Allow.OBJ & allow2)
               return obj;
             const key = parseStr();
             skipBlank();
@@ -130827,7 +130849,7 @@ var init_parser2 = __esm({
               const value = parseAny();
               Object.defineProperty(obj, key, { value, writable: true, enumerable: true, configurable: true });
             } catch (e5) {
-              if (Allow.OBJ & allow)
+              if (Allow.OBJ & allow2)
                 return obj;
               else
                 throw e5;
@@ -130837,7 +130859,7 @@ var init_parser2 = __esm({
               index2++;
           }
         } catch (e5) {
-          if (Allow.OBJ & allow)
+          if (Allow.OBJ & allow2)
             return obj;
           else
             markPartialJSON("Expected '}' at end of object");
@@ -130857,7 +130879,7 @@ var init_parser2 = __esm({
             }
           }
         } catch (e5) {
-          if (Allow.ARR & allow) {
+          if (Allow.ARR & allow2) {
             return arr;
           }
           markPartialJSON("Expected ']' at end of array");
@@ -130867,12 +130889,12 @@ var init_parser2 = __esm({
       };
       const parseNum = () => {
         if (index2 === 0) {
-          if (jsonString === "-" && Allow.NUM & allow)
+          if (jsonString === "-" && Allow.NUM & allow2)
             markPartialJSON("Not sure what '-' is");
           try {
             return JSON.parse(jsonString);
           } catch (e5) {
-            if (Allow.NUM & allow) {
+            if (Allow.NUM & allow2) {
               try {
                 if ("." === jsonString[jsonString.length - 1])
                   return JSON.parse(jsonString.substring(0, jsonString.lastIndexOf(".")));
@@ -130888,12 +130910,12 @@ var init_parser2 = __esm({
           index2++;
         while (jsonString[index2] && !",]}".includes(jsonString[index2]))
           index2++;
-        if (index2 == length && !(Allow.NUM & allow))
+        if (index2 == length && !(Allow.NUM & allow2))
           markPartialJSON("Unterminated number literal");
         try {
           return JSON.parse(jsonString.substring(start, index2));
         } catch (e5) {
-          if (jsonString.substring(start, index2) === "-" && Allow.NUM & allow)
+          if (jsonString.substring(start, index2) === "-" && Allow.NUM & allow2)
             markPartialJSON("Not sure what '-' is");
           try {
             return JSON.parse(jsonString.substring(start, jsonString.lastIndexOf("e")));
@@ -170955,12 +170977,75 @@ var init_webrtc = __esm({
   }
 });
 
+// src/routes/clientErrors.ts
+function allow(ip) {
+  const now = Date.now();
+  const h5 = hits.get(ip);
+  if (!h5 || now > h5.resetAt) {
+    hits.set(ip, { count: 1, resetAt: now + 6e4 });
+    return true;
+  }
+  h5.count++;
+  return h5.count <= 20;
+}
+var import_express54, router54, hits, clientErrors_default;
+var init_clientErrors2 = __esm({
+  "src/routes/clientErrors.ts"() {
+    "use strict";
+    import_express54 = __toESM(require_express2(), 1);
+    init_src();
+    init_drizzle_orm();
+    init_logger();
+    router54 = (0, import_express54.Router)();
+    hits = /* @__PURE__ */ new Map();
+    setInterval(() => {
+      const now = Date.now();
+      for (const [k5, v] of hits) if (now > v.resetAt) hits.delete(k5);
+    }, 12e4).unref();
+    router54.post("/client-errors", async (req, res) => {
+      const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || "?";
+      if (!allow(ip)) return res.status(429).json({ ok: false });
+      const { message, stack, url: url2 } = req.body ?? {};
+      if (typeof message !== "string" || !message.trim()) return res.status(400).json({ ok: false });
+      const msg = message.slice(0, 500);
+      const stk = typeof stack === "string" ? stack.slice(0, 3e3) : null;
+      const pageUrl = typeof url2 === "string" ? url2.slice(0, 500) : null;
+      const ua = (req.headers["user-agent"] || "").slice(0, 300);
+      const userId = req.session?.userId ?? null;
+      logger.error({ clientError: msg, url: pageUrl, userId }, "[client-error]");
+      try {
+        const updated = await db.execute(sql`
+      UPDATE client_errors SET count = count + 1
+      WHERE id = (
+        SELECT id FROM client_errors
+        WHERE message = ${msg} AND created_at > now() - interval '10 minutes'
+        ORDER BY id DESC LIMIT 1
+      ) RETURNING id`);
+        const rows = updated.rows ?? [];
+        if (!rows.length) {
+          await db.insert(clientErrors).values({ message: msg, stack: stk, url: pageUrl, userAgent: ua, userId });
+        }
+      } catch (e5) {
+        logger.warn({ err: e5 }, "[client-error] failed to persist");
+      }
+      return res.json({ ok: true });
+    });
+    router54.get("/admin/client-errors", async (req, res) => {
+      const role = req.session?.role;
+      if (role !== "admin") return res.status(403).json({ error: "Forbidden" });
+      const rows = await db.select().from(clientErrors).orderBy(desc(clientErrors.id)).limit(100);
+      return res.json(rows);
+    });
+    clientErrors_default = router54;
+  }
+});
+
 // src/routes/index.ts
-var import_express54, router54, routes_default;
+var import_express55, router55, routes_default;
 var init_routes = __esm({
   "src/routes/index.ts"() {
     "use strict";
-    import_express54 = __toESM(require_express2(), 1);
+    import_express55 = __toESM(require_express2(), 1);
     init_health();
     init_storage();
     init_auth();
@@ -171014,61 +171099,63 @@ var init_routes = __esm({
     init_growTogether();
     init_socialAura();
     init_webrtc();
-    router54 = (0, import_express54.Router)();
-    router54.use(health_default);
-    router54.use(storage_default);
-    router54.use(auth_default);
-    router54.use(socialAura_default);
-    router54.use(users_default);
-    router54.use(posts_default);
-    router54.use(reels_default);
-    router54.use(stories_default);
-    router54.use(messages_default);
-    router54.use(groups_default);
-    router54.use(notifications_default);
-    router54.use(ai_default);
-    router54.use(admin_default);
-    router54.use(stripe_default);
-    router54.use(moderation_default);
-    router54.use("/go", go_default);
-    router54.use("/media", media_default);
-    router54.use(wallet_default);
-    router54.use(live_default);
-    router54.use(gifts_default);
-    router54.use(creator_default);
-    router54.use(search_default);
-    router54.use(marketplace_default);
-    router54.use(openai_chat_default);
-    router54.use(library_default);
-    router54.use(voiceComments_default);
-    router54.use(gamification_default);
-    router54.use(coview_default);
-    router54.use(anon_default);
-    router54.use(scenarios_default);
-    router54.use(mood_default);
-    router54.use(aiTwin_default);
-    router54.use(factCheck_default);
-    router54.use(coSpaces_default);
-    router54.use(translate_default);
-    router54.use(muniAi_default);
-    router54.use(voiceTranslate_default);
-    router54.use(nexusCore_default);
-    router54.use(platformCosts_default);
-    router54.use(aiAutopilot_default);
-    router54.use(monetization_default);
-    router54.use(gifs_default);
-    router54.use(treasury_default);
-    router54.use(aiAdminActions_default);
-    router54.use(security_default);
-    router54.use(infraCosts_default);
-    router54.use(anonInbox_default);
-    router54.use(ghost_default);
-    router54.use(focusShield_default);
-    router54.use(challenges_default);
-    router54.use(otubeAi_default);
-    router54.use(growTogether_default);
-    router54.use("/webrtc", webrtc_default);
-    routes_default = router54;
+    init_clientErrors2();
+    router55 = (0, import_express55.Router)();
+    router55.use(health_default);
+    router55.use(clientErrors_default);
+    router55.use(storage_default);
+    router55.use(auth_default);
+    router55.use(socialAura_default);
+    router55.use(users_default);
+    router55.use(posts_default);
+    router55.use(reels_default);
+    router55.use(stories_default);
+    router55.use(messages_default);
+    router55.use(groups_default);
+    router55.use(notifications_default);
+    router55.use(ai_default);
+    router55.use(admin_default);
+    router55.use(stripe_default);
+    router55.use(moderation_default);
+    router55.use("/go", go_default);
+    router55.use("/media", media_default);
+    router55.use(wallet_default);
+    router55.use(live_default);
+    router55.use(gifts_default);
+    router55.use(creator_default);
+    router55.use(search_default);
+    router55.use(marketplace_default);
+    router55.use(openai_chat_default);
+    router55.use(library_default);
+    router55.use(voiceComments_default);
+    router55.use(gamification_default);
+    router55.use(coview_default);
+    router55.use(anon_default);
+    router55.use(scenarios_default);
+    router55.use(mood_default);
+    router55.use(aiTwin_default);
+    router55.use(factCheck_default);
+    router55.use(coSpaces_default);
+    router55.use(translate_default);
+    router55.use(muniAi_default);
+    router55.use(voiceTranslate_default);
+    router55.use(nexusCore_default);
+    router55.use(platformCosts_default);
+    router55.use(aiAutopilot_default);
+    router55.use(monetization_default);
+    router55.use(gifs_default);
+    router55.use(treasury_default);
+    router55.use(aiAdminActions_default);
+    router55.use(security_default);
+    router55.use(infraCosts_default);
+    router55.use(anonInbox_default);
+    router55.use(ghost_default);
+    router55.use(focusShield_default);
+    router55.use(challenges_default);
+    router55.use(otubeAi_default);
+    router55.use(growTogether_default);
+    router55.use("/webrtc", webrtc_default);
+    routes_default = router55;
   }
 });
 
@@ -173624,11 +173711,11 @@ var init_dist2 = __esm({
        *
        * @param hits {any} - The `totalHits` returned by the store.
        */
-      positiveHits(hits) {
-        if (typeof hits !== "number" || hits < 1 || hits !== Math.round(hits)) {
+      positiveHits(hits2) {
+        if (typeof hits2 !== "number" || hits2 < 1 || hits2 !== Math.round(hits2)) {
           throw new ValidationError(
             "ERR_ERL_INVALID_HITS",
-            `The totalHits value returned from the store must be a positive integer, got ${hits}`
+            `The totalHits value returned from the store must be a positive integer, got ${hits2}`
           );
         }
       },
@@ -174383,11 +174470,11 @@ function stripPasswordHash(value, depth = 0) {
   }
   return out;
 }
-var import_express55, import_cors, import_compression, import_express_session, import_connect_pg_simple, import_pino_http, app, ALLOWED_ORIGINS, isProd, PgSession2, app_default;
+var import_express56, import_cors, import_compression, import_express_session, import_connect_pg_simple, import_pino_http, app, ALLOWED_ORIGINS, isProd, PgSession2, app_default;
 var init_app = __esm({
   "src/app.ts"() {
     "use strict";
-    import_express55 = __toESM(require_express2(), 1);
+    import_express56 = __toESM(require_express2(), 1);
     import_cors = __toESM(require_lib3(), 1);
     init_helmet();
     import_compression = __toESM(require_compression(), 1);
@@ -174406,7 +174493,7 @@ var init_app = __esm({
     init_rateLimiter();
     init_auditLog();
     init_health();
-    app = (0, import_express55.default)();
+    app = (0, import_express56.default)();
     app.set("trust proxy", 1);
     app.use((0, import_compression.default)({
       level: 6,
@@ -174469,7 +174556,7 @@ var init_app = __esm({
     });
     app.post(
       "/api/stripe/webhook",
-      import_express55.default.raw({ type: "application/json" }),
+      import_express56.default.raw({ type: "application/json" }),
       async (req, res) => {
         const signature = req.headers["stripe-signature"];
         if (!signature) {
@@ -174510,9 +174597,9 @@ var init_app = __esm({
         return next();
       }
       const isMediaUpload = req.path.includes("/upload") || req.path.includes("/media") || req.path.includes("/voice-comments");
-      import_express55.default.json({ limit: isMediaUpload ? "20mb" : "2mb" })(req, res, next);
+      import_express56.default.json({ limit: isMediaUpload ? "20mb" : "2mb" })(req, res, next);
     });
-    app.use(import_express55.default.urlencoded({ extended: true, limit: "2mb" }));
+    app.use(import_express56.default.urlencoded({ extended: true, limit: "2mb" }));
     isProd = process.env["NODE_ENV"] === "production" || !!process.env["RENDER"];
     PgSession2 = (0, import_connect_pg_simple.default)(import_express_session.default);
     app.use((0, import_express_session.default)({

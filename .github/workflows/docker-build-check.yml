@@ -1,0 +1,47 @@
+name: Docker Build Check
+
+# Run on every push to main and on pull requests targeting main.
+# This catches Vite / esbuild compilation errors before Railway
+# even attempts a deploy — a broken build here means a broken deploy.
+
+on:
+  push:
+    branches: [main, replit-agent]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  docker-build:
+    name: Build multi-stage Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up Docker Buildx so we get better layer caching and build output.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build the full multi-stage image (builder + runtime) without using
+      # the local layer cache (--no-cache) so we always exercise the real
+      # install → compile → copy pipeline from a clean state.
+      # --load is NOT used — we only care that the build succeeds, not that
+      # the image is pushed or loaded into the local daemon.
+      - name: Build Docker image (builder + runtime stages)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          # Pass the same build args the builder stage expects.
+          build-args: |
+            VITE_API_BASE_URL=
+          # Cache from/to GitHub Actions cache to keep repeat runs fast
+          # while still validating the full pipeline on first hit.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Surface the build log in full so compilation errors are easy to read.
+          provenance: false

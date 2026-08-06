@@ -780,6 +780,74 @@ router.get("/admin/media-audit", async (req, res) => {
   }
 });
 
+// GET /admin/broken-media — count posts whose mediaUrl is known-broken
+// "Broken" means: non-null mediaUrl that is either (a) not an https:// URL, or
+// (b) points to a GCS / Firebase / old storage domain instead of the live R2 CDN.
+// This is a fast, DB-only check — no HEAD requests — designed for monitoring after
+// the fix-broken-media.mjs migration script has been run.
+router.get("/admin/broken-media", async (req, res) => {
+  try {
+    const r2Base = (process.env.R2_PUBLIC_URL || "").replace(/\/$/, "");
+
+    // Count posts with any non-null mediaUrl (total with media)
+    const [totalWithMedia] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(postsTable)
+      .where(sql`${postsTable.mediaUrl} IS NOT NULL AND ${postsTable.mediaUrl} <> ''`);
+
+    // Count posts whose mediaUrl is a known-broken or suspect pattern:
+    //   • not an https:// URL
+    //   • GCS (storage.googleapis.com)
+    //   • Firebase Storage (firebasestorage.googleapis.com)
+    //   • Old object-storage paths (storage.googleapis.com/*)
+    //   • Any URL that doesn't start with the live R2_PUBLIC_URL base (when set)
+    const suspectConditions = r2Base
+      ? sql`
+          ${postsTable.mediaUrl} IS NOT NULL
+          AND ${postsTable.mediaUrl} <> ''
+          AND (
+            ${postsTable.mediaUrl} NOT LIKE 'https://%'
+            OR ${postsTable.mediaUrl} LIKE '%storage.googleapis.com%'
+            OR ${postsTable.mediaUrl} LIKE '%firebasestorage.googleapis.com%'
+            OR (${postsTable.mediaUrl} LIKE 'https://%' AND ${postsTable.mediaUrl} NOT LIKE ${r2Base + "%"})
+          )
+        `
+      : sql`
+          ${postsTable.mediaUrl} IS NOT NULL
+          AND ${postsTable.mediaUrl} <> ''
+          AND (
+            ${postsTable.mediaUrl} NOT LIKE 'https://%'
+            OR ${postsTable.mediaUrl} LIKE '%storage.googleapis.com%'
+            OR ${postsTable.mediaUrl} LIKE '%firebasestorage.googleapis.com%'
+          )
+        `;
+
+    const [suspect] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(postsTable)
+      .where(suspectConditions);
+
+    // Sample up to 20 suspect rows for inspection
+    const samples = await db
+      .select({ id: postsTable.id, mediaUrl: postsTable.mediaUrl, createdAt: postsTable.createdAt })
+      .from(postsTable)
+      .where(suspectConditions)
+      .orderBy(desc(postsTable.createdAt))
+      .limit(20);
+
+    res.json({
+      postsWithMedia: totalWithMedia?.count ?? 0,
+      suspectCount: suspect?.count ?? 0,
+      r2Base: r2Base || null,
+      note: "Run scripts/fix-broken-media.mjs to HEAD-check every URL and null out broken ones.",
+      samples,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Broken media audit xatosi" });
+  }
+});
+
 router.post("/admin/stripe/seed", async (req, res) => {
   try {
     const stripe = await getUncachableStripeClient();

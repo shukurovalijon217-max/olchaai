@@ -32,13 +32,45 @@ let redis: Redis | null = null;
 if (UPSTASH_URL && UPSTASH_TOKEN) {
   try {
     redis = new Redis({ url: UPSTASH_URL, token: UPSTASH_TOKEN });
-    console.log("[cache] Redis mode active (Upstash)");
+    console.log("[cache] Redis client constructed — running startup ping...");
   } catch (err) {
     console.error("[cache] Failed to initialize Redis — falling back to in-memory:", err);
   }
 } else {
-  console.log("[cache] In-memory mode (set UPSTASH_REDIS_REST_URL to enable Redis)");
+  console.log("[cache] In-memory mode (set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to enable Redis)");
 }
+
+/**
+ * Boot-time connectivity check.
+ * Fires PING against Upstash and disables Redis on failure so the API
+ * never crashes due to a bad credential or quote-wrapped env var.
+ * Called immediately after module load (fire-and-forget).
+ */
+async function validateRedisConnection(): Promise<void> {
+  if (!redis) return;
+  try {
+    const pong = await redis.ping();
+    if (pong === "PONG") {
+      console.log("[cache] Redis ping OK — Upstash connection verified");
+    } else {
+      console.warn(`[cache] Redis ping returned unexpected value (${pong}) — staying in Redis mode`);
+    }
+  } catch (err) {
+    console.error(
+      "[cache] ⚠️  Redis startup ping FAILED — disabling Redis and falling back to in-memory cache.",
+      "\n         Check UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars.",
+      "\n         Error:", err,
+    );
+    redis = null;
+  }
+}
+
+// Run validation immediately; do not await — module load must stay synchronous.
+// Any Redis errors during the ping are caught inside validateRedisConnection().
+validateRedisConnection().catch((err) => {
+  console.error("[cache] Unexpected error in validateRedisConnection:", err);
+  redis = null;
+});
 
 // ── In-memory fallback ────────────────────────────────────────────────────────
 type CacheEntry<T> = { data: T; expiresAt: number };

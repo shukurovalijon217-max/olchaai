@@ -42101,6 +42101,25 @@ function stripQuotes(s) {
   }
   return trimmed;
 }
+async function validateRedisConnection() {
+  if (!redis) return;
+  try {
+    const pong = await redis.ping();
+    if (pong === "PONG") {
+      console.log("[cache] Redis ping OK \u2014 Upstash connection verified");
+    } else {
+      console.warn(`[cache] Redis ping returned unexpected value (${pong}) \u2014 staying in Redis mode`);
+    }
+  } catch (err) {
+    console.error(
+      "[cache] \u26A0\uFE0F  Redis startup ping FAILED \u2014 disabling Redis and falling back to in-memory cache.",
+      "\n         Check UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars.",
+      "\n         Error:",
+      err
+    );
+    redis = null;
+  }
+}
 async function cacheGetAsync(key) {
   if (redis) {
     try {
@@ -42198,13 +42217,17 @@ var init_cache = __esm({
     if (UPSTASH_URL && UPSTASH_TOKEN) {
       try {
         redis = new Redis2({ url: UPSTASH_URL, token: UPSTASH_TOKEN });
-        console.log("[cache] Redis mode active (Upstash)");
+        console.log("[cache] Redis client constructed \u2014 running startup ping...");
       } catch (err) {
         console.error("[cache] Failed to initialize Redis \u2014 falling back to in-memory:", err);
       }
     } else {
-      console.log("[cache] In-memory mode (set UPSTASH_REDIS_REST_URL to enable Redis)");
+      console.log("[cache] In-memory mode (set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to enable Redis)");
     }
+    validateRedisConnection().catch((err) => {
+      console.error("[cache] Unexpected error in validateRedisConnection:", err);
+      redis = null;
+    });
     store = /* @__PURE__ */ new Map();
     setInterval(() => {
       const now = Date.now();

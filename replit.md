@@ -72,6 +72,57 @@ GilosAI is a full social feed platform (posts, reels, stories, live, marketplace
 
 - **Railway uses the `Dockerfile` at the repo root** — this is the single authoritative build file. `artifacts/nexus/Dockerfile` was a duplicate that caused deploy breaks when they diverged and has been permanently removed. Never add a second Dockerfile for this service.
 
+### Syncing Replit secrets → Railway environment variables
+
+Railway and Replit have independent variable stores. To avoid manual copy-paste errors (which caused the Upstash production outage), use the sync script whenever secrets are added or rotated:
+
+```bash
+# Sync all mapped secrets to Railway production (no redeploy):
+node scripts/sync-railway-env.mjs
+
+# Sync AND trigger a Railway redeploy:
+node scripts/sync-railway-env.mjs --deploy
+```
+
+**Script:** `scripts/sync-railway-env.mjs`  
+**Railway project IDs:**
+- projectId: `a17d9014-283c-46ed-8246-57b905aba237`
+- environmentId (production): `3f9b1d72-2c6d-49db-b756-42ac52ba7aa0`
+- serviceId (olchaai-nexus): `6a712054-7af1-4910-a96e-9e0696490b44`
+
+**Replit secret → Railway variable mapping** (defined in `VARIABLE_MAP` inside the script):
+
+| Replit secret | Railway variable | Purpose |
+|---|---|---|
+| `NEON_DATABASE_URL` | `DATABASE_URL` | PostgreSQL connection string |
+| `NEON_API_KEY` | `NEON_API_KEY` | Neon DB management API |
+| `R2_ACCESS_KEY_ID` | `R2_ACCESS_KEY_ID` | Cloudflare R2 object storage |
+| `R2_SECRET_ACCESS_KEY` | `R2_SECRET_ACCESS_KEY` | Cloudflare R2 object storage |
+| `R2_BUCKET_NAME` | `R2_BUCKET_NAME` | Cloudflare R2 object storage |
+| `R2_ACCOUNT_ID` | `R2_ACCOUNT_ID` | Cloudflare R2 object storage |
+| `R2_PUBLIC_URL` | `R2_PUBLIC_URL` | Cloudflare R2 public CDN URL |
+| `CLOUDFLARE_API_TOKEN` | `CLOUDFLARE_API_TOKEN` | CF cache purging |
+| `CLOUDFLARE_ZONE_ID` | `CLOUDFLARE_ZONE_ID` | CF zone for cache rules |
+| `DEFAULT_OBJECT_STORAGE_BUCKET_ID` | `DEFAULT_OBJECT_STORAGE_BUCKET_ID` | Replit Object Storage |
+| `PRIVATE_OBJECT_DIR` | `PRIVATE_OBJECT_DIR` | Replit Object Storage |
+| `PUBLIC_OBJECT_SEARCH_PATHS` | `PUBLIC_OBJECT_SEARCH_PATHS` | Replit Object Storage |
+| `UPSTASH_REDIS_REST_URL` | `UPSTASH_REDIS_REST_URL` | Redis (BullMQ + caching) |
+| `UPSTASH_REDIS_REST_TOKEN` | `UPSTASH_REDIS_REST_TOKEN` | Redis (BullMQ + caching) |
+| `OPENAI_API_KEY` | `OPENAI_API_KEY` | OpenAI AI features |
+| `GROQ_API_KEY` | `GROQ_API_KEY` | Groq AI (fast inference) |
+| `STRIPE_SECRET_KEY` | `STRIPE_SECRET_KEY` | Stripe payments |
+| `STRIPE_WEBHOOK_SECRET` | `STRIPE_WEBHOOK_SECRET` | Stripe webhook verification |
+| `SESSION_SECRET` | `SESSION_SECRET` | Express session signing |
+| `VAPID_PRIVATE_KEY` | `VAPID_PRIVATE_KEY` | Web push notifications |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase push notifications |
+| `RESEND_API_KEY` | `RESEND_API_KEY` | Transactional email |
+| `JAMENDO_CLIENT_ID` | `JAMENDO_CLIENT_ID` | Music search |
+| `METERED_API_KEY` | `METERED_API_KEY` | WebRTC TURN server |
+
+**Secrets intentionally NOT synced to Railway:** `RAILWAY_TOKEN`, `EXPO_TOKEN`, `GITHUB_TOKEN`, `GITHUB_PERSONAL_ACCESS_TOKEN`, `SLACK_TEST_API_KEY` — these are only used by Replit CI/dev tooling.
+
+The script automatically strips surrounding double-quotes from values before pushing (the root cause of the Upstash crash).
+
 ## Gotchas
 
 - `drizzle-kit push` / `push --force` hang on a TTY prompt in this sandbox — use a targeted `psql "$DATABASE_URL" -c "ALTER TABLE ..."` instead for one-off column additions, then keep `lib/db/src/schema` in sync by hand.

@@ -101,8 +101,8 @@ function Orb({
         transition={{ duration: 0.25 }}
         className="flex items-center justify-center"
         style={{
-          width: 50,
-          height: 50,
+          width: 40,
+          height: 40,
           borderRadius: "50%",
           background: active
             ? `radial-gradient(circle at 35% 35%, ${activeColor}28 0%, rgba(0,0,0,0.52) 100%)`
@@ -964,7 +964,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
 
       {/* ═══ LAYER 20: RIGHT ACTION COLUMN — bottom-right TikTok style ═══ */}
       <div
-        className="absolute right-3 flex flex-col items-center gap-[14px]"
+        className="absolute right-2 flex flex-col items-center gap-[9px]"
         style={{
           zIndex: 20,
           bottom: commentOpen ? 300 : 96,
@@ -977,8 +977,8 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
         {(isVideo || hasAudio) && (
           <Orb
             icon={muted
-              ? <VolumeX className="w-[20px] h-[20px]" style={{ color: "rgba(255,255,255,0.55)" }} />
-              : <Volume2 className="w-[20px] h-[20px]" style={{ color: "rgba(255,255,255,0.9)" }} />
+              ? <VolumeX className="w-[17px] h-[17px]" style={{ color: "rgba(255,255,255,0.55)" }} />
+              : <Volume2 className="w-[17px] h-[17px]" style={{ color: "rgba(255,255,255,0.9)" }} />
             }
             active={!muted} activeColor={accent} inView={isInView}
             onClick={() => setMuted(m => !m)}
@@ -994,7 +994,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
                 transition={{ duration: 0.45, ease: "easeOut" }}
               >
                 <Heart
-                  className="w-[22px] h-[22px]"
+                  className="w-[18px] h-[18px]"
                   style={{
                     color: liked ? "#ff4d6d" : "rgba(255,255,255,0.88)",
                     fill: liked ? "#ff4d6d" : "none",
@@ -1045,7 +1045,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
         <Orb
           icon={
             <MessageCircle
-              className="w-[22px] h-[22px]"
+              className="w-[18px] h-[18px]"
               style={{
                 color: commentOpen ? "#22d3ee" : "rgba(255,255,255,0.88)",
                 filter: commentOpen ? "drop-shadow(0 0 6px #22d3eeaa)" : "none",
@@ -1061,7 +1061,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
         <Orb
           icon={
             <Share2
-              className="w-[22px] h-[22px]"
+              className="w-[18px] h-[18px]"
               style={{
                 color: shareOpen || copied ? "#34d399" : "rgba(255,255,255,0.88)",
                 filter: shareOpen || copied ? "drop-shadow(0 0 6px #34d399aa)" : "none",
@@ -1080,7 +1080,7 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
               animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.08, 1] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Sparkles className="w-[22px] h-[22px]" style={{ color: "#c084fc",
+              <Sparkles className="w-[18px] h-[18px]" style={{ color: "#c084fc",
                 filter: "drop-shadow(0 0 5px #c084fc88)" }} />
             </motion.div>
           }
@@ -1091,8 +1091,8 @@ function FeedCard({ post, index, hasStory = false, onOpenStory }: FeedCardProps)
         {/* ── MORE / DELETE ── */}
         <Orb
           icon={isOwner
-            ? <Trash2 className="w-[20px] h-[20px]" style={{ color: "rgba(248,113,113,0.85)" }} />
-            : <MoreHorizontal className="w-[20px] h-[20px]" style={{ color: "rgba(255,255,255,0.75)" }} />
+            ? <Trash2 className="w-[17px] h-[17px]" style={{ color: "rgba(248,113,113,0.85)" }} />
+            : <MoreHorizontal className="w-[17px] h-[17px]" style={{ color: "rgba(255,255,255,0.75)" }} />
           }
           active={menuOpen} activeColor={isOwner ? "#f87171" : "#818cf8"} inView={isInView}
           onClick={() => {

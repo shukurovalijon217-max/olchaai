@@ -31,3 +31,4 @@ export * from "./anonInbox";
 export * from "./uploadSessions";
 export * from "./challenges";
 export * from "./pushTokens";
+export * from "./clientErrors";

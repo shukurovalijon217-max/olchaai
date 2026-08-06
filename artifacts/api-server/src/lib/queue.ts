@@ -97,8 +97,7 @@ async function initBullMQ(): Promise<void> {
       const { event, userId, postId, durationMs } = job.data;
       logger.debug({ jobId: job.id, event }, "[queue:analytics] processing");
       if (event === "view" && postId) {
-        const { db } = await import("../db");
-        const { postsTable } = await import("../db/schema");
+        const { db, postsTable } = await import("@workspace/db");
         const { eq, sql } = await import("drizzle-orm");
         await db.update(postsTable)
           .set({ viewsCount: sql`coalesce(views_count,0) + 1` })

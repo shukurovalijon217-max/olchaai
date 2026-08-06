@@ -8,4 +8,7 @@ import { setBaseUrl } from "@workspace/api-client-react";
 // On Replit the variable is empty, so requests stay on the same origin via the proxy.
 setBaseUrl((import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "") || null);
 
+import { initErrorReporter } from "./lib/errorReporter";
+if (import.meta.env.PROD) initErrorReporter();
+
 createRoot(document.getElementById("root")!).render(<App />);

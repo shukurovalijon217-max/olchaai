@@ -52,10 +52,12 @@ import otubeAiRouter from "./otubeAi";
 import growTogetherRouter from "./growTogether";
 import socialAuraRouter from "./socialAura";
 import webrtcRouter from "./webrtc";
+import clientErrorsRouter from "./clientErrors";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(clientErrorsRouter);
 router.use(storageRouter);
 router.use(authRouter);
 router.use(socialAuraRouter);

@@ -19,8 +19,20 @@ artifacts/mockup-sandbox/
 artifacts/olcha-go/
 
 # ── Stale committed build outputs — the builder stage regenerates these ────────
-# (Excluding them from the context prevents the old dist from being sent to
-#  Docker, making the build context smaller and the intent explicit.)
+# Both dist/ directories are INTENTIONALLY excluded from the build context.
+# The "builder" stage in the Dockerfile compiles fresh output from source and
+# the "runtime" stage copies only that fresh output via COPY --from=builder.
+#
+# Why exclude here AND build from source?
+#   • Excluding from context ensures a stale local dist/ is never silently
+#     used even if the Dockerfile were modified to COPY from the working tree.
+#   • Building from source in the builder stage is the authoritative guard —
+#     the runtime stage cannot receive dist/ from anywhere other than builder.
+#   • Together they make it impossible for an outdated committed bundle to
+#     reach production.
+#
+# Do NOT remove these lines. If you need to iterate on the build output
+# locally, run:  pnpm --filter @workspace/<pkg> run build
 artifacts/nexus/dist/
 artifacts/api-server/dist/
 

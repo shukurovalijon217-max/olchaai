@@ -1,9 +1,28 @@
 ### AUTHORITATIVE RAILWAY DEPLOY FILE — do not create a second Dockerfile.
 ### Railway is configured to use THIS file (repo root). artifacts/nexus/Dockerfile
 ### was a duplicate and has been removed to prevent divergence and deploy breaks.
+###
 ### Build context: REPO ROOT
-### Multi-stage build: builder compiles frontend + API from source; runtime
-### copies only the built output — a stale committed dist/ can never reach prod.
+###
+### HOW THE BUILD WORKS (read before modifying)
+### ─────────────────────────────────────────────
+### Multi-stage build: "builder" compiles BOTH the Nexus frontend (Vite) and
+### the api-server bundle (esbuild) from source. "runtime" then copies ONLY the
+### built output from the builder stage — no git working-tree dist/ can ever
+### sneak in.
+###
+### dist/ directories are listed in .dockerignore so they are excluded from the
+### Docker build context entirely. Even if a developer forgets to clean them
+### locally, Docker never sends those directories to the daemon.
+###
+### IMPORTANT — do NOT skip the builder stage:
+###   docker build .                    ✔  full two-stage build (correct)
+###   docker build --target runtime .   ✗  UNSUPPORTED — will fail fast because
+###                                        the runtime stage COPYs a sentinel
+###                                        file that only exists in the builder.
+###                                        If you need a quick runtime-only test,
+###                                        run the builder first or use the full
+###                                        build command above.
 
 # ── Builder stage ─────────────────────────────────────────────────────────────
 FROM node:24-slim AS builder
@@ -54,10 +73,23 @@ RUN pnpm --filter @workspace/nexus run build
 # Build api-server bundle (esbuild, outputs to artifacts/api-server/dist/)
 RUN pnpm --filter @workspace/api-server run build
 
+# Sentinel: proves this builder stage actually ran and produced fresh output.
+# The runtime stage COPYs this file as its very first instruction — if someone
+# tries `docker build --target runtime .` (skipping the builder), or references
+# a builder cache that predates this file, the COPY fails immediately with a
+# clear "file not found in build stage" error before any other work is done.
+RUN touch /build/.builder-ran
+
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM node:24-slim
 
 WORKDIR /app
+
+# Guard: MUST be the first COPY in this stage.
+# If the builder stage was not run (e.g. --target runtime), Docker fails here
+# with "failed to copy files: failed to copy: .builder-ran: no such file or
+# directory" — making the misconfiguration unmistakable.
+COPY --from=builder /build/.builder-ran /app/.builder-ran
 
 # ── Nexus frontend — built from source, NOT from git working tree ─────────────
 COPY --from=builder /build/artifacts/nexus/dist/     ./dist/

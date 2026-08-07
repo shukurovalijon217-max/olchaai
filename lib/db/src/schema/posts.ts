@@ -25,6 +25,8 @@ export const postsTable = pgTable("posts", {
   sharesCount: integer("shares_count").notNull().default(0),
   isFlagged: boolean("is_flagged").notNull().default(false),
   midnightOnly: boolean("midnight_only").notNull().default(false),
+  // Media verification — false when the mediaUrl fails a HEAD check or is not an R2 URL
+  mediaVerified: boolean("media_verified").notNull().default(true),
   // Auto Self-Destruct
   destructAt: timestamp("destruct_at"),
   // Geo-Bloom

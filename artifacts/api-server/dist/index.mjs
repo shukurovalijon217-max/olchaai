@@ -62879,6 +62879,8 @@ var init_posts = __esm({
       sharesCount: integer("shares_count").notNull().default(0),
       isFlagged: boolean("is_flagged").notNull().default(false),
       midnightOnly: boolean("midnight_only").notNull().default(false),
+      // Media verification — false when the mediaUrl fails a HEAD check or is not an R2 URL
+      mediaVerified: boolean("media_verified").notNull().default(true),
       // Auto Self-Destruct
       destructAt: timestamp("destruct_at"),
       // Geo-Bloom
@@ -143795,7 +143797,7 @@ var init_ai = __esm({
         }
         const midnightCond = await midnightVisibilityConditionForReq(req);
         const [posts, reels] = await Promise.all([
-          db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.createdAt)).limit(30),
+          db.select().from(postsTable).where(and(midnightCond, eq(postsTable.mediaVerified, true))).orderBy(desc(postsTable.createdAt)).limit(30),
           db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(10)
         ]);
         const allAuthorIds = [...new Set([
@@ -174987,6 +174989,76 @@ var init_cleanupSeedData = __esm({
   }
 });
 
+// src/lib/mediaVerifier.ts
+var mediaVerifier_exports = {};
+__export(mediaVerifier_exports, {
+  verifyMediaUrls: () => verifyMediaUrls
+});
+async function verifyMediaUrls() {
+  try {
+    logger.info("[mediaVerifier] Starting media URL verification pass");
+    const nonR2Posts = await db.select({ id: postsTable.id, mediaUrl: postsTable.mediaUrl }).from(postsTable).where(
+      and(
+        isNotNull(postsTable.mediaUrl),
+        eq(postsTable.mediaVerified, true),
+        inArray(postsTable.type, [...MEDIA_TYPES])
+      )
+    ).limit(500);
+    const nonR2Ids = nonR2Posts.filter((p3) => p3.mediaUrl && !p3.mediaUrl.startsWith(R2_DOMAIN)).map((p3) => p3.id);
+    if (nonR2Ids.length > 0) {
+      logger.info(`[mediaVerifier] Marking ${nonR2Ids.length} non-R2 posts as unverified`);
+      for (let i5 = 0; i5 < nonR2Ids.length; i5 += BATCH) {
+        const batch = nonR2Ids.slice(i5, i5 + BATCH);
+        await db.update(postsTable).set({ mediaVerified: false }).where(inArray(postsTable.id, batch));
+      }
+    }
+    const r2Posts = await db.select({ id: postsTable.id, mediaUrl: postsTable.mediaUrl }).from(postsTable).where(
+      and(
+        isNotNull(postsTable.mediaUrl),
+        eq(postsTable.mediaVerified, true),
+        inArray(postsTable.type, [...MEDIA_TYPES])
+      )
+    ).limit(100);
+    const r2Candidates = r2Posts.filter(
+      (p3) => p3.mediaUrl && p3.mediaUrl.startsWith(R2_DOMAIN)
+    );
+    const broken = [];
+    await Promise.allSettled(
+      r2Candidates.map(async (p3) => {
+        try {
+          const res = await fetch(p3.mediaUrl, { method: "HEAD", signal: AbortSignal.timeout(5e3) });
+          if (!res.ok) broken.push(p3.id);
+        } catch {
+          broken.push(p3.id);
+        }
+      })
+    );
+    if (broken.length > 0) {
+      logger.info(`[mediaVerifier] Marking ${broken.length} unreachable R2 posts as unverified`);
+      for (let i5 = 0; i5 < broken.length; i5 += BATCH) {
+        const batch = broken.slice(i5, i5 + BATCH);
+        await db.update(postsTable).set({ mediaVerified: false }).where(inArray(postsTable.id, batch));
+      }
+    }
+    logger.info("[mediaVerifier] Media URL verification pass complete");
+  } catch (err) {
+    logger.warn({ err }, "[mediaVerifier] Verification pass errored (non-fatal)");
+  }
+}
+var R2_DOMAIN, MEDIA_TYPES, BATCH;
+var init_mediaVerifier = __esm({
+  "src/lib/mediaVerifier.ts"() {
+    "use strict";
+    init_src();
+    init_src();
+    init_drizzle_orm();
+    init_logger();
+    R2_DOMAIN = "https://media.olchaai.com/";
+    MEDIA_TYPES = ["photo", "video"];
+    BATCH = 50;
+  }
+});
+
 // src/index.ts
 init_logger();
 import cluster from "node:cluster";
@@ -175024,6 +175096,12 @@ async function runServer() {
     cleanupSeedData2().catch((err) => logger.warn({ err }, "Seed data cleanup errored (non-fatal)"));
   } catch (err) {
     logger.warn({ err }, "cleanupSeedData unavailable");
+  }
+  try {
+    const { verifyMediaUrls: verifyMediaUrls2 } = await Promise.resolve().then(() => (init_mediaVerifier(), mediaVerifier_exports));
+    verifyMediaUrls2().catch((err) => logger.warn({ err }, "Media URL verification errored (non-fatal)"));
+  } catch (err) {
+    logger.warn({ err }, "mediaVerifier unavailable");
   }
 }
 if (SINGLE_PROCESS) {

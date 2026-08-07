@@ -72,8 +72,13 @@ router.get("/ai/feed", async (req, res) => {
     }
 
     const midnightCond = await midnightVisibilityConditionForReq(req);
+
     const [posts, reels] = await Promise.all([
-      db.select().from(postsTable).where(midnightCond).orderBy(desc(postsTable.createdAt)).limit(30),
+      db.select().from(postsTable)
+        // Only include posts whose media has been verified (text posts default to true,
+        // photo/video posts with broken or non-R2 URLs are marked false by the verifier).
+        .where(and(midnightCond, eq(postsTable.mediaVerified, true)))
+        .orderBy(desc(postsTable.createdAt)).limit(30),
       db.select().from(reelsTable).orderBy(desc(reelsTable.viewsCount)).limit(10),
     ]);
 

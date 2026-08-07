@@ -45,6 +45,13 @@ async function runServer() {
   } catch (err) {
     logger.warn({ err }, "cleanupSeedData unavailable");
   }
+
+  try {
+    const { verifyMediaUrls } = await import("./lib/mediaVerifier.js");
+    verifyMediaUrls().catch((err) => logger.warn({ err }, "Media URL verification errored (non-fatal)"));
+  } catch (err) {
+    logger.warn({ err }, "mediaVerifier unavailable");
+  }
 }
 
 if (SINGLE_PROCESS) {

@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 import { usersTable } from "./users";
 
 export const reelsTable = pgTable("reels", {
+  type: text("type").default('reel').notNull(),
   id: serial("id").primaryKey(),
   authorId: integer("author_id").notNull().references(() => usersTable.id),
   videoUrl: text("video_url").notNull(),

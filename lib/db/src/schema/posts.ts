@@ -4,6 +4,9 @@ import { z } from "zod/v4";
 import { usersTable } from "./users";
 
 export const postsTable = pgTable("posts", {
+  scheduledAt: timestamp("scheduled_at"),
+  hotTake: boolean("hot_take").default(false),
+  auraScore: integer("aura_score").default(0),
   id: serial("id").primaryKey(),
   authorId: integer("author_id").notNull().references(() => usersTable.id),
   content: text("content").notNull(),

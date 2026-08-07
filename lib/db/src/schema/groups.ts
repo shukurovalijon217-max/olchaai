@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 import { usersTable } from "./users";
 
 export const groupsTable = pgTable("groups", {
+  rulesAcceptedCount: integer("rules_accepted_count").default(0).notNull(),
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),

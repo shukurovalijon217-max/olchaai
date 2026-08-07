@@ -1,0 +1,378 @@
+import { Router } from "express";
+import { db } from "@workspace/db";
+import { aiConversations as conversations, aiMessages as messages } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import { openai, AI_CHAT_MODEL } from "@workspace/integrations-openai-ai-server";
+import { checkAIAccess, incrementAIUsage, AI_FREE_LIMIT } from "../lib/aiAccess";
+const router = Router();
+/* ─── GET usage (for frontend badge) ─────────────────────────── */
+router.get("/ai/usage", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    try {
+        const access = await checkAIAccess(req.session.userId);
+        res.json({
+            used: access.used,
+            limit: access.limit,
+            remaining: access.remaining,
+            isPremium: access.isPremium,
+        });
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+router.get("/openai/conversations", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    try {
+        const list = await db
+            .select()
+            .from(conversations)
+            .where(eq(conversations.userId, req.session.userId))
+            .orderBy(conversations.createdAt);
+        res.json(list);
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+router.post("/openai/conversations", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    const { title } = req.body;
+    if (!title) {
+        res.status(400).json({ error: "title required" });
+        return;
+    }
+    try {
+        const [conv] = await db
+            .insert(conversations)
+            .values({ title, userId: req.session.userId })
+            .returning();
+        res.status(201).json(conv);
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+router.get("/openai/conversations/:id", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    const id = Number(req.params.id);
+    try {
+        const [conv] = await db
+            .select()
+            .from(conversations)
+            .where(and(eq(conversations.id, id), eq(conversations.userId, req.session.userId)));
+        if (!conv) {
+            res.status(404).json({ error: "Not found" });
+            return;
+        }
+        const msgs = await db
+            .select()
+            .from(messages)
+            .where(eq(messages.conversationId, id))
+            .orderBy(messages.createdAt);
+        res.json({ ...conv, messages: msgs });
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+router.delete("/openai/conversations/:id", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    const id = Number(req.params.id);
+    try {
+        await db
+            .delete(conversations)
+            .where(and(eq(conversations.id, id), eq(conversations.userId, req.session.userId)));
+        res.status(204).end();
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+router.get("/openai/conversations/:id/messages", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    const id = Number(req.params.id);
+    try {
+        const [conv] = await db
+            .select()
+            .from(conversations)
+            .where(and(eq(conversations.id, id), eq(conversations.userId, req.session.userId)));
+        if (!conv) {
+            res.status(404).json({ error: "Not found" });
+            return;
+        }
+        const msgs = await db
+            .select()
+            .from(messages)
+            .where(eq(messages.conversationId, id))
+            .orderBy(messages.createdAt);
+        res.json(msgs);
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+router.post("/openai/conversations/:id/messages", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    const convId = Number(req.params.id);
+    const { content } = req.body;
+    if (!content) {
+        res.status(400).json({ error: "content required" });
+        return;
+    }
+    try {
+        /* ── Free tier check BEFORE any DB writes or SSE headers ─── */
+        const access = await checkAIAccess(req.session.userId);
+        if (!access.allowed) {
+            res.status(402).json({
+                error: "AI_LIMIT_REACHED",
+                used: access.used,
+                limit: AI_FREE_LIMIT,
+                remaining: 0,
+            });
+            return;
+        }
+        const [conv] = await db
+            .select()
+            .from(conversations)
+            .where(and(eq(conversations.id, convId), eq(conversations.userId, req.session.userId)));
+        if (!conv) {
+            res.status(404).json({ error: "Not found" });
+            return;
+        }
+        await db.insert(messages).values({ conversationId: convId, role: "user", content });
+        const history = await db
+            .select()
+            .from(messages)
+            .where(eq(messages.conversationId, convId))
+            .orderBy(messages.createdAt)
+            .limit(200);
+        /* Cap context sent to OpenAI to the most recent 6 messages to keep
+           latency and token usage bounded on long-running conversations. */
+        const recentHistory = history.slice(-6);
+        const chatMessages = recentHistory.map(m => ({ role: m.role, content: m.content }));
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+        res.setHeader("X-Accel-Buffering", "no");
+        res.flushHeaders();
+        const stream = await openai.chat.completions.create({
+            model: AI_CHAT_MODEL,
+            max_completion_tokens: 800,
+            messages: [
+                { role: "system", content: "Siz GILOS platformasining yordamchisisiz. Foydalanuvchi qaysi tilda yozsa, o'sha tilda javob bering. Qisqa, aniq va foydali javoblar bering." },
+                ...chatMessages,
+            ],
+            stream: true,
+        });
+        let fullResponse = "";
+        for await (const chunk of stream) {
+            const c = chunk.choices[0]?.delta?.content;
+            if (c) {
+                fullResponse += c;
+                res.write(`data: ${JSON.stringify({ content: c })}\n\n`);
+            }
+        }
+        await db.insert(messages).values({ conversationId: convId, role: "assistant", content: fullResponse });
+        await incrementAIUsage(req.session.userId);
+        const newAccess = await checkAIAccess(req.session.userId);
+        res.write(`data: ${JSON.stringify({ done: true, usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium } })}\n\n`);
+        res.end();
+    }
+    catch (err) {
+        req.log.error(err);
+        res.write(`data: ${JSON.stringify({ error: "AI xatosi" })}\n\n`);
+        res.end();
+    }
+});
+router.post("/openai/generate-caption", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    const { topic, tone, platform } = req.body;
+    if (!topic) {
+        res.status(400).json({ error: "topic required" });
+        return;
+    }
+    try {
+        const access = await checkAIAccess(req.session.userId);
+        if (!access.allowed) {
+            res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: AI_FREE_LIMIT, remaining: 0 });
+            return;
+        }
+        const response = await openai.chat.completions.create({
+            model: AI_CHAT_MODEL,
+            max_completion_tokens: 500,
+            messages: [
+                {
+                    role: "system",
+                    content: "Siz ijtimoiy tarmoq uchun kontent yozuvchisisiz. O'zbek, rus yoki ingliz tilida (so'ralgandek) jozibali caption, hashtag va emoji yozasiz.",
+                },
+                {
+                    role: "user",
+                    content: `Mavzu: "${topic}"\nOhang: ${tone || "qiziqarli"}\nPlatforma: ${platform || "GILOS"}\n\nQisqa caption + hashtaglar yoz.`,
+                },
+            ],
+        });
+        const caption = response.choices[0]?.message?.content ?? "";
+        await incrementAIUsage(req.session.userId);
+        const newAccess = await checkAIAccess(req.session.userId);
+        res.json({ caption, usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium } });
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "AI xatosi" });
+    }
+});
+router.post("/openai/generate-image", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    const { prompt } = req.body;
+    if (!prompt) {
+        res.status(400).json({ error: "prompt required" });
+        return;
+    }
+    try {
+        const access = await checkAIAccess(req.session.userId);
+        if (!access.allowed) {
+            res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: AI_FREE_LIMIT, remaining: 0 });
+            return;
+        }
+        const { generateImageUrl } = await import("@workspace/integrations-openai-ai-server/image");
+        const url = await generateImageUrl(prompt, "1024x1024");
+        await incrementAIUsage(req.session.userId);
+        const newAccess = await checkAIAccess(req.session.userId);
+        res.json({ url, usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium } });
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Rasm yaratishda xato" });
+    }
+});
+router.post("/openai/moderate", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    const { content } = req.body;
+    if (!content) {
+        res.status(400).json({ error: "content required" });
+        return;
+    }
+    try {
+        const response = await openai.chat.completions.create({
+            model: AI_CHAT_MODEL,
+            max_completion_tokens: 200,
+            messages: [
+                {
+                    role: "system",
+                    content: 'Siz kontent moderatorisiz. Matnni tekshirib, JSON formatda qaytaring: {"safe": bool, "reason": string, "categories": ["spam"|"hate"|"violence"|"adult"|"other"]}',
+                },
+                { role: "user", content: `Matnni tekshir: "${content}"` },
+            ],
+        });
+        try {
+            const raw = response.choices[0]?.message?.content ?? "{}";
+            const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, ""));
+            res.json(result);
+        }
+        catch {
+            res.json({ safe: true, reason: "Tahlil qilinmadi", categories: [] });
+        }
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Moderatsiya xatosi" });
+    }
+});
+router.post("/openai/voice-chat", async (req, res) => {
+    if (!req.session.userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    const { audioBase64 } = req.body;
+    if (!audioBase64) {
+        res.status(400).json({ error: "audioBase64 required" });
+        return;
+    }
+    try {
+        const access = await checkAIAccess(req.session.userId);
+        if (!access.allowed) {
+            res.status(402).json({ error: "AI_LIMIT_REACHED", used: access.used, limit: AI_FREE_LIMIT, remaining: 0 });
+            return;
+        }
+        const buffer = Buffer.from(audioBase64, "base64");
+        const file = new File([buffer], "audio.webm", { type: "audio/webm" });
+        const transcription = await openai.audio.transcriptions.create({
+            model: "whisper-1",
+            file,
+        });
+        const transcript = transcription.text?.trim() ?? "";
+        if (!transcript) {
+            res.json({ transcript: "", response: "Ovoz aniqlanmadi. Iltimos qayta urinib ko'ring.", audioBase64: null });
+            return;
+        }
+        const chatResponse = await openai.chat.completions.create({
+            model: AI_CHAT_MODEL,
+            max_completion_tokens: 350,
+            messages: [
+                {
+                    role: "system",
+                    content: "Siz GILOS platformasining ovozli yordamchisisiz. Qisqa, aniq va foydali javoblar bering. Foydalanuvchi qaysi tilda gapirsa, o'sha tilda javob bering.",
+                },
+                { role: "user", content: transcript },
+            ],
+        });
+        const aiText = chatResponse.choices[0]?.message?.content ?? "Kechirasiz, javob bera olmadim.";
+        const ttsResponse = await openai.audio.speech.create({
+            model: "tts-1",
+            voice: "nova",
+            input: aiText,
+            response_format: "mp3",
+        });
+        const audioBuffer = Buffer.from(await ttsResponse.arrayBuffer());
+        await incrementAIUsage(req.session.userId);
+        const newAccess = await checkAIAccess(req.session.userId);
+        res.json({
+            transcript,
+            response: aiText,
+            audioBase64: audioBuffer.toString("base64"),
+            usage: { used: newAccess.used, remaining: newAccess.remaining, isPremium: newAccess.isPremium },
+        });
+    }
+    catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Ovozli suhbat xatosi" });
+    }
+});
+export default router;

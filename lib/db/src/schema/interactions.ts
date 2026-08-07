@@ -25,5 +25,5 @@ export const contentAnalysisTable = pgTable("content_analysis", {
   analyzedAt: timestamp("analyzed_at").defaultNow().notNull(),
 }, (t) => [
   index("content_analysis_content_idx").on(t.contentType, t.contentId),
-  unique("content_analysis_unique").on(t.contentType, t.contentId),
+  unique("content_analysis_unique").on(t.contentId, t.contentType),
 ]);

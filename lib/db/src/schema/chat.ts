@@ -1,4 +1,4 @@
-import { integer, pgTable, serial, text, timestamp, index } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text, timestamp, index, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -26,6 +26,9 @@ export const chatParticipantsTable = pgTable("chat_participants", {
 ]);
 
 export const chatMessagesTable = pgTable("chat_messages", {
+  type: text("type").default('text'),
+  isEncrypted: boolean("is_encrypted").default(false),
+  e2eNonce: text("e2e_nonce"),
   id: serial("id").primaryKey(),
   conversationId: integer("conversation_id")
     .notNull()

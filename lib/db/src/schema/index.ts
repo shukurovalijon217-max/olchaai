@@ -32,3 +32,4 @@ export * from "./uploadSessions";
 export * from "./challenges";
 export * from "./pushTokens";
 export * from "./clientErrors";
+export * from "./legacy";

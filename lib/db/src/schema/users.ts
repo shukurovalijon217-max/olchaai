@@ -43,6 +43,12 @@ export const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
 };
 
 export const usersTable = pgTable("users", {
+  warningCount: integer("warning_count").default(0).notNull(),
+  isBanned: boolean("is_banned").default(false).notNull(),
+  bannedAt: timestamp("banned_at"),
+  bannedReason: text("banned_reason"),
+  auraColor: text("aura_color"),
+  e2ePublicKey: text("e2e_public_key"),
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   displayName: text("display_name").notNull(),

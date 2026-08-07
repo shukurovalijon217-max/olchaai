@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useLocation, useParams } from "wouter";
+import { getRealtimeToken } from "@/lib/realtimeToken";
 import {
   Users, Link2, Copy, Check, Send, Play, Pause, X,
   MessageCircle, Tv2, ArrowLeft, UserCircle2, Wifi,
@@ -64,12 +65,14 @@ export default function CoViewPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const isHost = room?.hostId === user?.id;
 
-  const connect = (roomCode: string, roomData: Room) => {
+  const connect = async (roomCode: string, roomData: Room) => {
     if (!user?.id) return;
     // Capture host status from the freshly-fetched room data — not from React state
     // (state update from setRoom is async, so room?.hostId would still be null here)
     const amHost = roomData.hostId === user.id;
-    const ws = new WebSocket(`${WS_URL}?userId=${user.id}`);
+    const token = await getRealtimeToken(user.id);
+    if (!token) return;
+    const ws = new WebSocket(`${WS_URL}?userId=${user.id}&token=${encodeURIComponent(token)}`);
     ws.onopen = () => {
       setWsConnected(true);
       // isHost va hostId yuboramiz — Go server restart bo'lganda ham host to'g'ri qoladi

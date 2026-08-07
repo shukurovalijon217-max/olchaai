@@ -5,12 +5,16 @@ package main
 
 import (
         "context"
+        "crypto/hmac"
         "crypto/rand"
+        "crypto/sha256"
         "database/sql"
+        "encoding/hex"
         "encoding/json"
         "fmt"
         "math"
         "net/http"
+        "net/url"
         "os"
         "sort"
         "strconv"
@@ -642,15 +646,74 @@ func broadcastPresence(hub *Hub, userID int, online bool) {
 	hub.broadcastAll(msg)
 }
 
+// ─── WebSocket auth (HMAC token, mirrors api-server lib/security.ts) ─────────
+// Token format: "userId:hmac16" where hmac16 = hex(HMAC-SHA256(SESSION_SECRET, userId))[:16]
+
+var wsSecret = func() string {
+        s := os.Getenv("SESSION_SECRET")
+        if len(s) < 16 {
+                log.Warn().Msg("SESSION_SECRET not set or < 16 chars — using built-in fallback")
+                return "olchaai-railway-fallback-2024-secret-key"
+        }
+        return s
+}()
+
+// verifyWsToken returns the authenticated userID, or 0 if the token is invalid.
+func verifyWsToken(token string) int {
+        parts := strings.Split(token, ":")
+        if len(parts) != 2 {
+                return 0
+        }
+        mac := hmac.New(sha256.New, []byte(wsSecret))
+        mac.Write([]byte(parts[0]))
+        expected := hex.EncodeToString(mac.Sum(nil))[:16]
+        if !hmac.Equal([]byte(expected), []byte(parts[1])) {
+                return 0
+        }
+        uid, err := strconv.Atoi(parts[0])
+        if err != nil || uid <= 0 {
+                return 0
+        }
+        return uid
+}
+
+// originAllowed permits requests with no Origin header (native mobile apps) and
+// browser origins on our own domains only.
+func originAllowed(r *http.Request) bool {
+        o := r.Header.Get("Origin")
+        if o == "" {
+                return true
+        }
+        u, err := url.Parse(o)
+        if err != nil {
+                return false
+        }
+        h := u.Hostname()
+        switch h {
+        case "olchaai.com", "www.olchaai.com", "localhost", "127.0.0.1":
+                return true
+        }
+        if strings.HasSuffix(h, ".replit.dev") || strings.HasSuffix(h, ".up.railway.app") {
+                return true
+        }
+        return false
+}
+
 var upgrader = websocket.Upgrader{
-        CheckOrigin:     func(r *http.Request) bool { return true },
+        CheckOrigin:     originAllowed,
         ReadBufferSize:  4096,
         WriteBufferSize: 4096,
 }
 
 func serveWS(hub *Hub, liveHub *LiveHub, coViewHub *CoViewHub, w http.ResponseWriter, r *http.Request) {
-        userIDStr := r.URL.Query().Get("userId")
-        userID, _ := strconv.Atoi(userIDStr)
+        // Identity comes ONLY from the signed token — the legacy userId query
+        // param is ignored for authentication purposes.
+        userID := verifyWsToken(r.URL.Query().Get("token"))
+        if userID == 0 {
+                log.Warn().Str("ip", r.RemoteAddr).Msg("ws:auth rejected")
+                http.Error(w, "unauthorized", http.StatusUnauthorized)
+                return
+        }
 
         conn, err := upgrader.Upgrade(w, r, nil)
         if err != nil {

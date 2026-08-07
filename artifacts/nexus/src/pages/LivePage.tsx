@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
+import { getRealtimeToken } from "@/lib/realtimeToken";
 import { useGetLive, useEndLive, useSendLiveGift } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 
@@ -27,9 +28,9 @@ async function fetchIce(): Promise<RTCIceServer[]> {
   return DEFAULT_ICE;
 }
 
-function buildWsUrl(userId: number) {
+function buildWsUrl(userId: number, token: string) {
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
-  return `${proto}://${window.location.host}/go/ws?userId=${userId}`;
+  return `${proto}://${window.location.host}/go/ws?userId=${userId}&token=${encodeURIComponent(token)}`;
 }
 
 const GIFT_CATALOG = [
@@ -199,18 +200,27 @@ export default function LivePage({ liveId }: LivePageProps) {
   useEffect(() => {
     if (!me || !stream) return;
     if (stream.status === "ended") { setLiveEnded(true); return; }
-    const ws = new WebSocket(buildWsUrl(me.id));
-    wsRef.current = ws;
-    ws.onopen = () => {
-      setWsReady(true);
-      if (isHost) ws.send(JSON.stringify({ type: "live_start", payload: { roomId, title: stream.title } }));
-      else ws.send(JSON.stringify({ type: "live_join", roomId }));
-    };
-    ws.onmessage = (e) => handleMessage(e.data);
-    ws.onclose = () => setWsReady(false);
+    let cancelled = false;
+    let ws: WebSocket | null = null;
+    getRealtimeToken(me.id).then((token) => {
+      if (cancelled || !token) return;
+      const sock = new WebSocket(buildWsUrl(me.id, token));
+      ws = sock;
+      wsRef.current = sock;
+      sock.onopen = () => {
+        setWsReady(true);
+        if (isHost) sock.send(JSON.stringify({ type: "live_start", payload: { roomId, title: stream.title } }));
+        else sock.send(JSON.stringify({ type: "live_join", roomId }));
+      };
+      sock.onmessage = (e) => handleMessage(e.data);
+      sock.onclose = () => setWsReady(false);
+    });
     return () => {
-      if (!isHost && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "live_leave", roomId }));
-      ws.close();
+      cancelled = true;
+      if (ws) {
+        if (!isHost && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "live_leave", roomId }));
+        ws.close();
+      }
       peersRef.current.forEach(pc => pc.close());
       peersRef.current.clear();
       localStreamRef.current?.getTracks().forEach(t => t.stop());

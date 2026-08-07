@@ -1050,13 +1050,13 @@ var require_time = __commonJS({
       const secondsSinceEpoch = currentTimeNs / NS_PER_SEC;
       const nanosWithinSecond = currentTimeNs % NS_PER_SEC;
       const msSinceEpoch = Number(secondsSinceEpoch * 1000n + nanosWithinSecond / 1000000n);
-      const date7 = new Date(msSinceEpoch);
-      const year2 = date7.getUTCFullYear();
-      const month = (date7.getUTCMonth() + 1).toString().padStart(2, "0");
-      const day = date7.getUTCDate().toString().padStart(2, "0");
-      const hours = date7.getUTCHours().toString().padStart(2, "0");
-      const minutes = date7.getUTCMinutes().toString().padStart(2, "0");
-      const seconds = date7.getUTCSeconds().toString().padStart(2, "0");
+      const date8 = new Date(msSinceEpoch);
+      const year2 = date8.getUTCFullYear();
+      const month = (date8.getUTCMonth() + 1).toString().padStart(2, "0");
+      const day = date8.getUTCDate().toString().padStart(2, "0");
+      const hours = date8.getUTCHours().toString().padStart(2, "0");
+      const minutes = date8.getUTCMinutes().toString().padStart(2, "0");
+      const seconds = date8.getUTCSeconds().toString().padStart(2, "0");
       return `,"time":"${year2}-${month}-${day}T${hours}:${minutes}:${seconds}.${nanosWithinSecond.toString().padStart(9, "0")}Z"`;
     };
     module.exports = { nullTime, epochTime, unixTime, isoTime, isoTimeNano };
@@ -22160,8 +22160,8 @@ var require_stringify = __commonJS({
       formatter: formats.formatters[defaultFormat],
       // deprecated
       indices: false,
-      serializeDate: function serializeDate(date7) {
-        return toISO.call(date7);
+      serializeDate: function serializeDate(date8) {
+        return toISO.call(date8);
       },
       skipNulls: false,
       strictNullHandling: false
@@ -26237,8 +26237,8 @@ var require_fresh = __commonJS({
       }
       return true;
     }
-    function parseHttpDate(date7) {
-      var timestamp2 = date7 && Date.parse(date7);
+    function parseHttpDate(date8) {
+      var timestamp2 = date8 && Date.parse(date8);
       return typeof timestamp2 === "number" ? timestamp2 : NaN;
     }
     function parseTokenList(str2) {
@@ -27331,8 +27331,8 @@ var require_send = __commonJS({
       }
       return list2;
     }
-    function parseHttpDate(date7) {
-      var timestamp2 = date7 && Date.parse(date7);
+    function parseHttpDate(date8) {
+      var timestamp2 = date8 && Date.parse(date8);
       return typeof timestamp2 === "number" ? timestamp2 : NaN;
     }
     function parseTokenList(str2) {
@@ -30318,8 +30318,8 @@ var require_cookie2 = __commonJS({
        * @param {Date} date
        * @api public
        */
-      set expires(date7) {
-        this._expires = date7;
+      set expires(date8) {
+        this._expires = date8;
         this.originalMaxAge = this.maxAge;
       },
       /**
@@ -31126,23 +31126,23 @@ var require_postgres_date = __commonJS({
       var second = parseInt(matches[6], 10);
       var ms = matches[7];
       ms = ms ? 1e3 * parseFloat(ms) : 0;
-      var date7;
+      var date8;
       var offset = timeZoneOffset(isoDate);
       if (offset != null) {
-        date7 = new Date(Date.UTC(year2, month, day, hour, minute, second, ms));
+        date8 = new Date(Date.UTC(year2, month, day, hour, minute, second, ms));
         if (is0To99(year2)) {
-          date7.setUTCFullYear(year2);
+          date8.setUTCFullYear(year2);
         }
         if (offset !== 0) {
-          date7.setTime(date7.getTime() - offset);
+          date8.setTime(date8.getTime() - offset);
         }
       } else {
-        date7 = new Date(year2, month, day, hour, minute, second, ms);
+        date8 = new Date(year2, month, day, hour, minute, second, ms);
         if (is0To99(year2)) {
-          date7.setFullYear(year2);
+          date8.setFullYear(year2);
         }
       }
-      return date7;
+      return date8;
     };
     function getDate(isoDate) {
       var matches = DATE.exec(isoDate);
@@ -31156,11 +31156,11 @@ var require_postgres_date = __commonJS({
       }
       var month = parseInt(matches[2], 10) - 1;
       var day = matches[3];
-      var date7 = new Date(year2, month, day);
+      var date8 = new Date(year2, month, day);
       if (is0To99(year2)) {
-        date7.setFullYear(year2);
+        date8.setFullYear(year2);
       }
-      return date7;
+      return date8;
     }
     function timeZoneOffset(isoDate) {
       if (isoDate.endsWith("+00")) {
@@ -32066,12 +32066,12 @@ var require_utils4 = __commonJS({
       }
       return JSON.stringify(val);
     }
-    function dateToString(date7) {
-      let offset = -date7.getTimezoneOffset();
-      let year2 = date7.getFullYear();
+    function dateToString(date8) {
+      let offset = -date8.getTimezoneOffset();
+      let year2 = date8.getFullYear();
       const isBCYear = year2 < 1;
       if (isBCYear) year2 = Math.abs(year2) + 1;
-      let ret = String(year2).padStart(4, "0") + "-" + String(date7.getMonth() + 1).padStart(2, "0") + "-" + String(date7.getDate()).padStart(2, "0") + "T" + String(date7.getHours()).padStart(2, "0") + ":" + String(date7.getMinutes()).padStart(2, "0") + ":" + String(date7.getSeconds()).padStart(2, "0") + "." + String(date7.getMilliseconds()).padStart(3, "0");
+      let ret = String(year2).padStart(4, "0") + "-" + String(date8.getMonth() + 1).padStart(2, "0") + "-" + String(date8.getDate()).padStart(2, "0") + "T" + String(date8.getHours()).padStart(2, "0") + ":" + String(date8.getMinutes()).padStart(2, "0") + ":" + String(date8.getSeconds()).padStart(2, "0") + "." + String(date8.getMilliseconds()).padStart(3, "0");
       if (offset < 0) {
         ret += "-";
         offset *= -1;
@@ -32082,11 +32082,11 @@ var require_utils4 = __commonJS({
       if (isBCYear) ret += " BC";
       return ret;
     }
-    function dateToStringUTC(date7) {
-      let year2 = date7.getUTCFullYear();
+    function dateToStringUTC(date8) {
+      let year2 = date8.getUTCFullYear();
       const isBCYear = year2 < 1;
       if (isBCYear) year2 = Math.abs(year2) + 1;
-      let ret = String(year2).padStart(4, "0") + "-" + String(date7.getUTCMonth() + 1).padStart(2, "0") + "-" + String(date7.getUTCDate()).padStart(2, "0") + "T" + String(date7.getUTCHours()).padStart(2, "0") + ":" + String(date7.getUTCMinutes()).padStart(2, "0") + ":" + String(date7.getUTCSeconds()).padStart(2, "0") + "." + String(date7.getUTCMilliseconds()).padStart(3, "0");
+      let ret = String(year2).padStart(4, "0") + "-" + String(date8.getUTCMonth() + 1).padStart(2, "0") + "-" + String(date8.getUTCDate()).padStart(2, "0") + "T" + String(date8.getUTCHours()).padStart(2, "0") + ":" + String(date8.getUTCMinutes()).padStart(2, "0") + ":" + String(date8.getUTCSeconds()).padStart(2, "0") + "." + String(date8.getUTCMilliseconds()).padStart(3, "0");
       ret += "+00:00";
       if (isBCYear) ret += " BC";
       return ret;
@@ -42548,6 +42548,17 @@ var init_table_utils = __esm({
 });
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/foreign-keys.js
+function foreignKey(config2) {
+  function mappedConfig() {
+    const { name: name2, columns, foreignColumns } = config2;
+    return {
+      name: name2,
+      columns,
+      foreignColumns
+    };
+  }
+  return new ForeignKeyBuilder(mappedConfig);
+}
 var ForeignKeyBuilder, ForeignKey;
 var init_foreign_keys = __esm({
   "../../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+pg@8.20.0_@upstash+redis@1.38.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/foreign-keys.js"() {
@@ -62814,6 +62825,12 @@ var init_users = __esm({
       searchVisibility: true
     };
     usersTable = pgTable("users", {
+      warningCount: integer("warning_count").default(0).notNull(),
+      isBanned: boolean("is_banned").default(false).notNull(),
+      bannedAt: timestamp("banned_at"),
+      bannedReason: text("banned_reason"),
+      auraColor: text("aura_color"),
+      e2ePublicKey: text("e2e_public_key"),
       id: serial("id").primaryKey(),
       username: text("username").notNull().unique(),
       displayName: text("display_name").notNull(),
@@ -62858,6 +62875,9 @@ var init_posts = __esm({
     init_drizzle_zod();
     init_users();
     postsTable = pgTable("posts", {
+      scheduledAt: timestamp("scheduled_at"),
+      hotTake: boolean("hot_take").default(false),
+      auraScore: integer("aura_score").default(0),
       id: serial("id").primaryKey(),
       authorId: integer("author_id").notNull().references(() => usersTable.id),
       content: text("content").notNull(),
@@ -62947,6 +62967,7 @@ var init_reels = __esm({
     init_drizzle_zod();
     init_users();
     reelsTable = pgTable("reels", {
+      type: text("type").default("reel").notNull(),
       id: serial("id").primaryKey(),
       authorId: integer("author_id").notNull().references(() => usersTable.id),
       videoUrl: text("video_url").notNull(),
@@ -63090,6 +63111,7 @@ var init_groups = __esm({
     init_drizzle_zod();
     init_users();
     groupsTable = pgTable("groups", {
+      rulesAcceptedCount: integer("rules_accepted_count").default(0).notNull(),
       id: serial("id").primaryKey(),
       name: text("name").notNull(),
       description: text("description").notNull(),
@@ -63518,7 +63540,7 @@ var init_interactions = __esm({
       analyzedAt: timestamp("analyzed_at").defaultNow().notNull()
     }, (t) => [
       index("content_analysis_content_idx").on(t.contentType, t.contentId),
-      unique("content_analysis_unique").on(t.contentType, t.contentId)
+      unique("content_analysis_unique").on(t.contentId, t.contentType)
     ]);
   }
 });
@@ -63967,6 +63989,9 @@ var init_chat = __esm({
       index("chat_participants_conv_user_idx").on(t.conversationId, t.userId)
     ]);
     chatMessagesTable = pgTable("chat_messages", {
+      type: text("type").default("text"),
+      isEncrypted: boolean("is_encrypted").default(false),
+      e2eNonce: text("e2e_nonce"),
       id: serial("id").primaryKey(),
       conversationId: integer("conversation_id").notNull().references(() => chatConversationsTable.id, { onDelete: "cascade" }),
       senderId: integer("sender_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
@@ -64106,6 +64131,307 @@ var init_clientErrors = __esm({
   }
 });
 
+// ../../lib/db/src/schema/legacy.ts
+var userSessions, postVotes, hotTakeVotes, growTogetherGoals, growTogetherConnections, reelVersions, translationCache, postEmbeddings, userInterestProfiles, userBlocks, adminSettings, auditLogs, kiberQalqonBlocks, kiberQalqonEvents, aiModerationEvents, platformTreasury, treasuryTransactions, emailVerifications, securityEvents, infraCosts, infraPayments;
+var init_legacy = __esm({
+  "../../lib/db/src/schema/legacy.ts"() {
+    "use strict";
+    init_pg_core();
+    init_pg_core();
+    init_posts();
+    init_users();
+    init_reels();
+    userSessions = pgTable("user_sessions", {
+      sid: varchar().primaryKey().notNull(),
+      sess: json().notNull(),
+      expire: timestamp({ precision: 6, mode: "string" }).notNull()
+    }, (table) => [
+      index("IDX_session_expire").using("btree", table.expire.asc().nullsLast().op("timestamp_ops"))
+    ]);
+    postVotes = pgTable("post_votes", {
+      id: serial().primaryKey().notNull(),
+      postId: integer("post_id").notNull(),
+      userId: integer("user_id").notNull(),
+      optionIndex: integer("option_index").notNull(),
+      createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull()
+    }, (table) => [
+      foreignKey({
+        columns: [table.postId],
+        foreignColumns: [postsTable.id],
+        name: "post_votes_post_id_fkey"
+      }).onDelete("cascade"),
+      foreignKey({
+        columns: [table.userId],
+        foreignColumns: [usersTable.id],
+        name: "post_votes_user_id_fkey"
+      }).onDelete("cascade"),
+      unique("post_votes_post_id_user_id_key").on(table.postId, table.userId)
+    ]);
+    hotTakeVotes = pgTable("hot_take_votes", {
+      id: serial().primaryKey().notNull(),
+      postId: integer("post_id").notNull(),
+      userId: integer("user_id").notNull(),
+      vote: text().notNull(),
+      createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull()
+    }, (table) => [
+      foreignKey({
+        columns: [table.postId],
+        foreignColumns: [postsTable.id],
+        name: "hot_take_votes_post_id_fkey"
+      }).onDelete("cascade"),
+      foreignKey({
+        columns: [table.userId],
+        foreignColumns: [usersTable.id],
+        name: "hot_take_votes_user_id_fkey"
+      }).onDelete("cascade"),
+      unique("hot_take_votes_post_id_user_id_key").on(table.postId, table.userId)
+    ]);
+    growTogetherGoals = pgTable("grow_together_goals", {
+      id: serial().primaryKey().notNull(),
+      userId: integer("user_id").notNull(),
+      goalText: text("goal_text").notNull(),
+      category: text().default("general").notNull(),
+      createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull()
+    }, (table) => [
+      foreignKey({
+        columns: [table.userId],
+        foreignColumns: [usersTable.id],
+        name: "grow_together_goals_user_id_fkey"
+      }).onDelete("cascade")
+    ]);
+    growTogetherConnections = pgTable("grow_together_connections", {
+      id: serial().primaryKey().notNull(),
+      user1Id: integer("user1_id").notNull(),
+      user2Id: integer("user2_id").notNull(),
+      goalText: text("goal_text").notNull(),
+      status: text().default("active").notNull(),
+      createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull()
+    }, (table) => [
+      foreignKey({
+        columns: [table.user1Id],
+        foreignColumns: [usersTable.id],
+        name: "grow_together_connections_user1_id_fkey"
+      }).onDelete("cascade"),
+      foreignKey({
+        columns: [table.user2Id],
+        foreignColumns: [usersTable.id],
+        name: "grow_together_connections_user2_id_fkey"
+      }).onDelete("cascade"),
+      unique("grow_together_connections_user1_id_user2_id_key").on(table.user1Id, table.user2Id)
+    ]);
+    reelVersions = pgTable("reel_versions", {
+      id: serial().primaryKey().notNull(),
+      reelId: integer("reel_id").notNull(),
+      editorId: integer("editor_id").notNull(),
+      caption: text(),
+      tags: text().array(),
+      note: text(),
+      createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull()
+    }, (table) => [
+      foreignKey({
+        columns: [table.editorId],
+        foreignColumns: [usersTable.id],
+        name: "reel_versions_editor_id_fkey"
+      }),
+      foreignKey({
+        columns: [table.reelId],
+        foreignColumns: [reelsTable.id],
+        name: "reel_versions_reel_id_fkey"
+      }).onDelete("cascade")
+    ]);
+    translationCache = pgTable("translation_cache", {
+      cacheKey: text("cache_key").primaryKey().notNull(),
+      translated: jsonb().notNull(),
+      cachedAt: timestamp("cached_at", { withTimezone: true, mode: "string" }).defaultNow()
+    });
+    postEmbeddings = pgTable("post_embeddings", {
+      postId: integer("post_id").primaryKey().notNull(),
+      embedding: jsonb().notNull(),
+      contentHash: text("content_hash").notNull(),
+      createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow()
+    }, (table) => [
+      foreignKey({
+        columns: [table.postId],
+        foreignColumns: [postsTable.id],
+        name: "post_embeddings_post_id_fkey"
+      }).onDelete("cascade")
+    ]);
+    userInterestProfiles = pgTable("user_interest_profiles", {
+      userId: integer("user_id").primaryKey().notNull(),
+      embedding: jsonb().notNull(),
+      updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow()
+    }, (table) => [
+      foreignKey({
+        columns: [table.userId],
+        foreignColumns: [usersTable.id],
+        name: "user_interest_profiles_user_id_fkey"
+      }).onDelete("cascade")
+    ]);
+    userBlocks = pgTable("user_blocks", {
+      id: serial().primaryKey().notNull(),
+      blockerId: integer("blocker_id").notNull(),
+      blockedId: integer("blocked_id").notNull(),
+      createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull()
+    }, (table) => [
+      index("idx_user_blocks_blocked").using("btree", table.blockedId.asc().nullsLast().op("int4_ops")),
+      index("idx_user_blocks_blocker").using("btree", table.blockerId.asc().nullsLast().op("int4_ops")),
+      foreignKey({
+        columns: [table.blockedId],
+        foreignColumns: [usersTable.id],
+        name: "user_blocks_blocked_id_fkey"
+      }).onDelete("cascade"),
+      foreignKey({
+        columns: [table.blockerId],
+        foreignColumns: [usersTable.id],
+        name: "user_blocks_blocker_id_fkey"
+      }).onDelete("cascade"),
+      unique("user_blocks_blocker_id_blocked_id_key").on(table.blockerId, table.blockedId)
+    ]);
+    adminSettings = pgTable("admin_settings", {
+      id: integer().default(1).primaryKey().notNull(),
+      settings: jsonb().default({}).notNull(),
+      updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull()
+    });
+    auditLogs = pgTable("audit_logs", {
+      id: bigserial({ mode: "bigint" }).primaryKey().notNull(),
+      userId: integer("user_id"),
+      ip: text(),
+      method: text().notNull(),
+      path: text().notNull(),
+      statusCode: integer("status_code"),
+      durationMs: integer("duration_ms"),
+      bodySize: integer("body_size"),
+      userAgent: text("user_agent"),
+      createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow()
+    }, (table) => [
+      index("idx_audit_logs_created_at").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops")),
+      index("idx_audit_logs_user_id").using("btree", table.userId.asc().nullsLast().op("int4_ops"))
+    ]);
+    kiberQalqonBlocks = pgTable("kiber_qalqon_blocks", {
+      ip: text().primaryKey().notNull(),
+      reason: text().notNull(),
+      suspicion: integer().default(0).notNull(),
+      blockedAt: timestamp("blocked_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+      expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }),
+      permanent: boolean().default(false).notNull()
+    }, (table) => [
+      index("idx_kqb_expires").using("btree", table.expiresAt.asc().nullsLast().op("timestamptz_ops"))
+    ]);
+    kiberQalqonEvents = pgTable("kiber_qalqon_events", {
+      id: serial().primaryKey().notNull(),
+      ts: timestamp({ withTimezone: true, mode: "string" }).defaultNow().notNull(),
+      type: text().notNull(),
+      ip: text().notNull(),
+      detail: text(),
+      suspicion: integer()
+    }, (table) => [
+      index("idx_kqe_ip").using("btree", table.ip.asc().nullsLast().op("text_ops")),
+      index("idx_kqe_ts").using("btree", table.ts.desc().nullsFirst().op("timestamptz_ops"))
+    ]);
+    aiModerationEvents = pgTable("ai_moderation_events", {
+      id: serial().primaryKey().notNull(),
+      eventType: text("event_type").notNull(),
+      contentType: text("content_type").notNull(),
+      contentId: integer("content_id"),
+      contentPreview: text("content_preview"),
+      authorId: integer("author_id"),
+      aiScore: numeric("ai_score", { precision: 4, scale: 2 }).default("0").notNull(),
+      aiCategories: jsonb("ai_categories").default({}).notNull(),
+      aiVerdict: text("ai_verdict").default("clean").notNull(),
+      engine: text().default("hybrid").notNull(),
+      actionTaken: text("action_taken").default("none").notNull(),
+      warningCountAfter: integer("warning_count_after").default(0).notNull(),
+      createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull()
+    }, (table) => [
+      index("idx_ai_mod_events_author").using("btree", table.authorId.asc().nullsLast().op("int4_ops")),
+      index("idx_ai_mod_events_created").using("btree", table.createdAt.desc().nullsFirst().op("timestamp_ops")),
+      index("idx_ai_mod_events_verdict").using("btree", table.aiVerdict.asc().nullsLast().op("text_ops")),
+      foreignKey({
+        columns: [table.authorId],
+        foreignColumns: [usersTable.id],
+        name: "ai_moderation_events_author_id_fkey"
+      }).onDelete("set null")
+    ]);
+    platformTreasury = pgTable("platform_treasury", {
+      id: serial().primaryKey().notNull(),
+      // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+      totalRevenue: bigint("total_revenue", { mode: "number" }).default(0).notNull(),
+      // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+      availableBalance: bigint("available_balance", { mode: "number" }).default(0).notNull(),
+      // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+      totalWithdrawn: bigint("total_withdrawn", { mode: "number" }).default(0).notNull(),
+      // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+      premiumRevenue: bigint("premium_revenue", { mode: "number" }).default(0).notNull(),
+      // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+      marketplaceRevenue: bigint("marketplace_revenue", { mode: "number" }).default(0).notNull(),
+      // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+      giftRevenue: bigint("gift_revenue", { mode: "number" }).default(0).notNull(),
+      // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+      otherRevenue: bigint("other_revenue", { mode: "number" }).default(0).notNull(),
+      updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull()
+    });
+    treasuryTransactions = pgTable("treasury_transactions", {
+      id: serial().primaryKey().notNull(),
+      type: text().notNull(),
+      // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+      amount: bigint({ mode: "number" }).notNull(),
+      source: text().notNull(),
+      description: text(),
+      reference: text(),
+      createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull()
+    });
+    emailVerifications = pgTable("email_verifications", {
+      id: serial().primaryKey().notNull(),
+      email: text().notNull(),
+      otp: text().notNull(),
+      expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
+      verified: boolean().default(false),
+      createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow()
+    }, (table) => [
+      index("idx_ev_email").using("btree", table.email.asc().nullsLast().op("text_ops"))
+    ]);
+    securityEvents = pgTable("security_events", {
+      id: serial().primaryKey().notNull(),
+      ip: text().notNull(),
+      eventType: text("event_type").notNull(),
+      path: text(),
+      payload: text(),
+      userAgent: text("user_agent"),
+      userId: integer("user_id"),
+      severity: text().default("medium").notNull(),
+      createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow()
+    }, (table) => [
+      index("idx_security_events_ip").using("btree", table.ip.asc().nullsLast().op("text_ops")),
+      index("idx_security_events_type").using("btree", table.eventType.asc().nullsLast().op("text_ops"))
+    ]);
+    infraCosts = pgTable("infra_costs", {
+      id: serial().primaryKey().notNull(),
+      provider: text().notNull(),
+      serviceName: text("service_name").notNull(),
+      amountCents: integer("amount_cents").notNull(),
+      currency: text().default("USD").notNull(),
+      billingCycle: text("billing_cycle").default("monthly").notNull(),
+      autoPayEnabled: boolean("auto_pay_enabled").default(true).notNull(),
+      lastPaidAt: timestamp("last_paid_at", { withTimezone: true, mode: "string" }),
+      nextDueAt: timestamp("next_due_at", { withTimezone: true, mode: "string" }),
+      notes: text(),
+      createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
+      updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow()
+    });
+    infraPayments = pgTable("infra_payments", {
+      id: serial().primaryKey().notNull(),
+      costId: integer("cost_id").notNull(),
+      provider: text().notNull(),
+      serviceName: text("service_name").notNull(),
+      amountCents: integer("amount_cents").notNull(),
+      status: text().default("paid").notNull(),
+      paidFrom: text("paid_from").default("treasury").notNull(),
+      notes: text(),
+      paidAt: timestamp("paid_at", { withTimezone: true, mode: "string" }).defaultNow()
+    });
+  }
+});
+
 // ../../lib/db/src/schema/index.ts
 var schema_exports = {};
 __export(schema_exports, {
@@ -64113,14 +64439,17 @@ __export(schema_exports, {
   DEFAULT_NOTIF_PREFS: () => DEFAULT_NOTIF_PREFS,
   DEFAULT_PRIVACY_SETTINGS: () => DEFAULT_PRIVACY_SETTINGS,
   MOOD_TYPES: () => MOOD_TYPES,
+  adminSettings: () => adminSettings,
   aiConversations: () => aiConversations,
   aiMessages: () => aiMessages,
+  aiModerationEvents: () => aiModerationEvents,
   aiTwinChatsTable: () => aiTwinChatsTable,
   aiTwinConfigTable: () => aiTwinConfigTable,
   aiTwinMessagesTable: () => aiTwinMessagesTable,
   anonPostsTable: () => anonPostsTable,
   anonQuestionsTable: () => anonQuestionsTable,
   anonZonesTable: () => anonZonesTable,
+  auditLogs: () => auditLogs,
   challengeParticipantsTable: () => challengeParticipantsTable,
   challengesTable: () => challengesTable,
   chatConversationsTable: () => chatConversationsTable,
@@ -64142,6 +64471,7 @@ __export(schema_exports, {
   creatorSubscriptionsTable: () => creatorSubscriptionsTable,
   credibilityScoresTable: () => credibilityScoresTable,
   dailyQuestsTable: () => dailyQuestsTable,
+  emailVerifications: () => emailVerifications,
   expenseDeductionRequestsTable: () => expenseDeductionRequestsTable,
   factChecksTable: () => factChecksTable,
   followsTable: () => followsTable,
@@ -64156,6 +64486,11 @@ __export(schema_exports, {
   groupPostReportsTable: () => groupPostReportsTable,
   groupPostsTable: () => groupPostsTable,
   groupsTable: () => groupsTable,
+  growTogetherConnections: () => growTogetherConnections,
+  growTogetherGoals: () => growTogetherGoals,
+  hotTakeVotes: () => hotTakeVotes,
+  infraCosts: () => infraCosts,
+  infraPayments: () => infraPayments,
   insertAiConversationSchema: () => insertAiConversationSchema,
   insertAiMessageSchema: () => insertAiMessageSchema,
   insertAnonQuestionSchema: () => insertAnonQuestionSchema,
@@ -64169,6 +64504,8 @@ __export(schema_exports, {
   insertTransactionSchema: () => insertTransactionSchema,
   insertUserSchema: () => insertUserSchema,
   insertWalletSchema: () => insertWalletSchema,
+  kiberQalqonBlocks: () => kiberQalqonBlocks,
+  kiberQalqonEvents: () => kiberQalqonEvents,
   liveGiftsTable: () => liveGiftsTable,
   liveStreamsTable: () => liveStreamsTable,
   moderationQueueTable: () => moderationQueueTable,
@@ -64178,7 +64515,10 @@ __export(schema_exports, {
   payoutRequestsTable: () => payoutRequestsTable,
   platformExpensesTable: () => platformExpensesTable,
   platformSettingsTable: () => platformSettingsTable,
+  platformTreasury: () => platformTreasury,
+  postEmbeddings: () => postEmbeddings,
   postLikesTable: () => postLikesTable,
+  postVotes: () => postVotes,
   postsTable: () => postsTable,
   premiumConfigTable: () => premiumConfigTable,
   productOrdersTable: () => productOrdersTable,
@@ -64189,19 +64529,26 @@ __export(schema_exports, {
   reelCollaboratorsTable: () => reelCollaboratorsTable,
   reelCommentsTable: () => reelCommentsTable,
   reelLikesTable: () => reelLikesTable,
+  reelVersions: () => reelVersions,
   reelWatchProgressTable: () => reelWatchProgressTable,
   reelsTable: () => reelsTable,
   scenarioBranchesTable: () => scenarioBranchesTable,
   scenariosTable: () => scenariosTable,
+  securityEvents: () => securityEvents,
   storiesTable: () => storiesTable,
   storyReactionsTable: () => storyReactionsTable,
   storyViewsTable: () => storyViewsTable,
   transactionsTable: () => transactionsTable,
+  translationCache: () => translationCache,
+  treasuryTransactions: () => treasuryTransactions,
   uploadSessions: () => uploadSessions,
+  userBlocks: () => userBlocks,
   userBooksTable: () => userBooksTable,
   userCoinsTable: () => userCoinsTable,
   userInteractionsTable: () => userInteractionsTable,
+  userInterestProfiles: () => userInterestProfiles,
   userMoodsTable: () => userMoodsTable,
+  userSessions: () => userSessions,
   userStreaksTable: () => userStreaksTable,
   userTitlesTable: () => userTitlesTable,
   usersTable: () => usersTable,
@@ -64245,6 +64592,7 @@ var init_schema2 = __esm({
     init_challenges();
     init_pushTokens();
     init_clientErrors();
+    init_legacy();
   }
 });
 
@@ -64255,14 +64603,17 @@ __export(src_exports, {
   DEFAULT_NOTIF_PREFS: () => DEFAULT_NOTIF_PREFS,
   DEFAULT_PRIVACY_SETTINGS: () => DEFAULT_PRIVACY_SETTINGS,
   MOOD_TYPES: () => MOOD_TYPES,
+  adminSettings: () => adminSettings,
   aiConversations: () => aiConversations,
   aiMessages: () => aiMessages,
+  aiModerationEvents: () => aiModerationEvents,
   aiTwinChatsTable: () => aiTwinChatsTable,
   aiTwinConfigTable: () => aiTwinConfigTable,
   aiTwinMessagesTable: () => aiTwinMessagesTable,
   anonPostsTable: () => anonPostsTable,
   anonQuestionsTable: () => anonQuestionsTable,
   anonZonesTable: () => anonZonesTable,
+  auditLogs: () => auditLogs,
   challengeParticipantsTable: () => challengeParticipantsTable,
   challengesTable: () => challengesTable,
   chatConversationsTable: () => chatConversationsTable,
@@ -64285,6 +64636,7 @@ __export(src_exports, {
   credibilityScoresTable: () => credibilityScoresTable,
   dailyQuestsTable: () => dailyQuestsTable,
   db: () => db,
+  emailVerifications: () => emailVerifications,
   expenseDeductionRequestsTable: () => expenseDeductionRequestsTable,
   factChecksTable: () => factChecksTable,
   followsTable: () => followsTable,
@@ -64299,6 +64651,11 @@ __export(src_exports, {
   groupPostReportsTable: () => groupPostReportsTable,
   groupPostsTable: () => groupPostsTable,
   groupsTable: () => groupsTable,
+  growTogetherConnections: () => growTogetherConnections,
+  growTogetherGoals: () => growTogetherGoals,
+  hotTakeVotes: () => hotTakeVotes,
+  infraCosts: () => infraCosts,
+  infraPayments: () => infraPayments,
   insertAiConversationSchema: () => insertAiConversationSchema,
   insertAiMessageSchema: () => insertAiMessageSchema,
   insertAnonQuestionSchema: () => insertAnonQuestionSchema,
@@ -64312,6 +64669,8 @@ __export(src_exports, {
   insertTransactionSchema: () => insertTransactionSchema,
   insertUserSchema: () => insertUserSchema,
   insertWalletSchema: () => insertWalletSchema,
+  kiberQalqonBlocks: () => kiberQalqonBlocks,
+  kiberQalqonEvents: () => kiberQalqonEvents,
   liveGiftsTable: () => liveGiftsTable,
   liveStreamsTable: () => liveStreamsTable,
   moderationQueueTable: () => moderationQueueTable,
@@ -64321,8 +64680,11 @@ __export(src_exports, {
   payoutRequestsTable: () => payoutRequestsTable,
   platformExpensesTable: () => platformExpensesTable,
   platformSettingsTable: () => platformSettingsTable,
+  platformTreasury: () => platformTreasury,
   pool: () => pool,
+  postEmbeddings: () => postEmbeddings,
   postLikesTable: () => postLikesTable,
+  postVotes: () => postVotes,
   postsTable: () => postsTable,
   premiumConfigTable: () => premiumConfigTable,
   productOrdersTable: () => productOrdersTable,
@@ -64333,19 +64695,26 @@ __export(src_exports, {
   reelCollaboratorsTable: () => reelCollaboratorsTable,
   reelCommentsTable: () => reelCommentsTable,
   reelLikesTable: () => reelLikesTable,
+  reelVersions: () => reelVersions,
   reelWatchProgressTable: () => reelWatchProgressTable,
   reelsTable: () => reelsTable,
   scenarioBranchesTable: () => scenarioBranchesTable,
   scenariosTable: () => scenariosTable,
+  securityEvents: () => securityEvents,
   storiesTable: () => storiesTable,
   storyReactionsTable: () => storyReactionsTable,
   storyViewsTable: () => storyViewsTable,
   transactionsTable: () => transactionsTable,
+  translationCache: () => translationCache,
+  treasuryTransactions: () => treasuryTransactions,
   uploadSessions: () => uploadSessions,
+  userBlocks: () => userBlocks,
   userBooksTable: () => userBooksTable,
   userCoinsTable: () => userCoinsTable,
   userInteractionsTable: () => userInteractionsTable,
+  userInterestProfiles: () => userInterestProfiles,
   userMoodsTable: () => userMoodsTable,
+  userSessions: () => userSessions,
   userStreaksTable: () => userStreaksTable,
   userTitlesTable: () => userTitlesTable,
   usersTable: () => usersTable,
@@ -86605,7 +86974,7 @@ var init_ser_utils = __esm({
           return value;
       }
     };
-    serializeDateTime = (date7) => date7.toISOString().replace(".000Z", "Z");
+    serializeDateTime = (date8) => date8.toISOString().replace(".000Z", "Z");
   }
 });
 
@@ -87118,14 +87487,14 @@ var init_parse_utils = __esm({
 });
 
 // ../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js
-function dateToUtcString(date7) {
-  const year2 = date7.getUTCFullYear();
-  const month = date7.getUTCMonth();
-  const dayOfWeek = date7.getUTCDay();
-  const dayOfMonthInt = date7.getUTCDate();
-  const hoursInt = date7.getUTCHours();
-  const minutesInt = date7.getUTCMinutes();
-  const secondsInt = date7.getUTCSeconds();
+function dateToUtcString(date8) {
+  const year2 = date8.getUTCFullYear();
+  const month = date8.getUTCMonth();
+  const dayOfWeek = date8.getUTCDay();
+  const dayOfMonthInt = date8.getUTCDate();
+  const hoursInt = date8.getUTCHours();
+  const minutesInt = date8.getUTCMinutes();
+  const secondsInt = date8.getUTCSeconds();
   const dayOfMonthString = dayOfMonthInt < 10 ? `0${dayOfMonthInt}` : `${dayOfMonthInt}`;
   const hoursString = hoursInt < 10 ? `0${hoursInt}` : `${hoursInt}`;
   const minutesString = minutesInt < 10 ? `0${minutesInt}` : `${minutesInt}`;
@@ -87172,11 +87541,11 @@ var init_date_utils = __esm({
       const year2 = strictParseShort(stripLeadingZeroes(yearStr));
       const month = parseDateValue(monthStr, "month", 1, 12);
       const day = parseDateValue(dayStr, "day", 1, 31);
-      const date7 = buildDate(year2, month, day, { hours, minutes, seconds, fractionalMilliseconds });
+      const date8 = buildDate(year2, month, day, { hours, minutes, seconds, fractionalMilliseconds });
       if (offsetStr.toUpperCase() != "Z") {
-        date7.setTime(date7.getTime() - parseOffsetToMilliseconds(offsetStr));
+        date8.setTime(date8.getTime() - parseOffsetToMilliseconds(offsetStr));
       }
-      return date7;
+      return date8;
     };
     IMF_FIXDATE = new RegExp(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? GMT$/);
     RFC_850_DATE = new RegExp(/^(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\d{2})-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-(\d{2}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? GMT$/);
@@ -87358,17 +87727,17 @@ function range(v, min2, max2) {
     throw new Error(`Value ${_v} out of range [${min2}, ${max2}]`);
   }
 }
-var ddd, mmm, time4, date6, year, RFC3339_WITH_OFFSET2, IMF_FIXDATE2, RFC_850_DATE2, ASC_TIME2, months, _parseEpochTimestamp, _parseRfc3339DateTimeWithOffset, _parseRfc7231DateTime;
+var ddd, mmm, time4, date7, year, RFC3339_WITH_OFFSET2, IMF_FIXDATE2, RFC_850_DATE2, ASC_TIME2, months, _parseEpochTimestamp, _parseRfc3339DateTimeWithOffset, _parseRfc7231DateTime;
 var init_schema_date_utils = __esm({
   "../../node_modules/.pnpm/@smithy+core@3.29.3/node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js"() {
     ddd = `(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?:[ne|u?r]?s?day)?`;
     mmm = `(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)`;
     time4 = `(\\d?\\d):(\\d{2}):(\\d{2})(?:\\.(\\d+))?`;
-    date6 = `(\\d?\\d)`;
+    date7 = `(\\d?\\d)`;
     year = `(\\d{4})`;
     RFC3339_WITH_OFFSET2 = new RegExp(/^(\d{4})-(\d\d)-(\d\d)[tT](\d\d):(\d\d):(\d\d)(\.(\d+))?(([-+]\d\d:\d\d)|[zZ])$/);
-    IMF_FIXDATE2 = new RegExp(`^${ddd}, ${date6} ${mmm} ${year} ${time4} GMT$`);
-    RFC_850_DATE2 = new RegExp(`^${ddd}, ${date6}-${mmm}-(\\d\\d) ${time4} GMT$`);
+    IMF_FIXDATE2 = new RegExp(`^${ddd}, ${date7} ${mmm} ${year} ${time4} GMT$`);
+    RFC_850_DATE2 = new RegExp(`^${ddd}, ${date7}-${mmm}-(\\d\\d) ${time4} GMT$`);
     ASC_TIME2 = new RegExp(`^${ddd} ${mmm} ( [1-9]|\\d\\d) ${time4} ${year}$`);
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     _parseEpochTimestamp = (value) => {
@@ -87408,14 +87777,14 @@ var init_schema_date_utils = __esm({
       range(hours, 0, 23);
       range(minutes, 0, 59);
       range(seconds, 0, 60);
-      const date7 = new Date(Date.UTC(Number(yearStr), Number(monthStr) - 1, Number(dayStr), Number(hours), Number(minutes), Number(seconds), Number(ms) ? Math.round(parseFloat(`0.${ms}`) * 1e3) : 0));
-      date7.setUTCFullYear(Number(yearStr));
+      const date8 = new Date(Date.UTC(Number(yearStr), Number(monthStr) - 1, Number(dayStr), Number(hours), Number(minutes), Number(seconds), Number(ms) ? Math.round(parseFloat(`0.${ms}`) * 1e3) : 0));
+      date8.setUTCFullYear(Number(yearStr));
       if (offsetStr.toUpperCase() != "Z") {
         const [, sign3, offsetH, offsetM] = /([+-])(\d\d):(\d\d)/.exec(offsetStr) || [void 0, "+", 0, 0];
         const scalar = sign3 === "-" ? 1 : -1;
-        date7.setTime(date7.getTime() + scalar * (Number(offsetH) * 60 * 60 * 1e3 + Number(offsetM) * 60 * 1e3));
+        date8.setTime(date8.getTime() + scalar * (Number(offsetH) * 60 * 60 * 1e3 + Number(offsetM) * 60 * 1e3));
       }
-      return date7;
+      return date8;
     };
     _parseRfc7231DateTime = (value) => {
       if (value == null) {
@@ -87446,9 +87815,9 @@ var init_schema_date_utils = __esm({
         range(hour, 0, 23);
         range(minute, 0, 59);
         range(second, 0, 60);
-        const date7 = new Date(timestamp2);
-        date7.setUTCFullYear(Number(year2));
-        return date7;
+        const date8 = new Date(timestamp2);
+        date8.setUTCFullYear(Number(year2));
+        return date8;
       }
       throw new TypeError(`Invalid RFC7231 date-time value ${value}.`);
     };
@@ -94104,8 +94473,8 @@ function parseRetryAfterHeader(response, logger3) {
       let retryAfterSeconds = NaN;
       if (retryAfter.endsWith("GMT")) {
         try {
-          const date7 = parseRfc7231DateTime(retryAfter);
-          retryAfterSeconds = (date7.getTime() - Date.now()) / 1e3;
+          const date8 = parseRfc7231DateTime(retryAfter);
+          retryAfterSeconds = (date8.getTime() - Date.now()) / 1e3;
         } catch (e5) {
           logger3?.trace?.("Failed to parse retry-after header");
           logger3?.trace?.(e5);
@@ -124955,13 +125324,13 @@ var init_postal_mime = __esm({
         }
         let dateHeader = this.root.headers.find((line2) => line2.key === "date");
         if (dateHeader) {
-          let date7 = new Date(dateHeader.value);
-          if (date7.toString() === "Invalid Date") {
-            date7 = dateHeader.value;
+          let date8 = new Date(dateHeader.value);
+          if (date8.toString() === "Invalid Date") {
+            date8 = dateHeader.value;
           } else {
-            date7 = date7.toISOString();
+            date8 = date8.toISOString();
           }
-          message.date = date7;
+          message.date = date8;
         }
         if (this.textContent?.html) {
           message.html = this.textContent.html;
@@ -127122,7 +127491,7 @@ var init_security = __esm({
 });
 
 // src/routes/auth.ts
-var import_express3, getResend, emailVerifications, router3, auth_default;
+var import_express3, getResend, emailVerifications2, router3, auth_default;
 var init_auth = __esm({
   "src/routes/auth.ts"() {
     "use strict";
@@ -127140,7 +127509,7 @@ var init_auth = __esm({
       if (!key) throw new Error("RESEND_API_KEY muhit o'zgaruvchisi o'rnatilmagan");
       return new Resend(key);
     };
-    emailVerifications = pgTable("email_verifications", {
+    emailVerifications2 = pgTable("email_verifications", {
       id: serial("id").primaryKey(),
       email: text("email").notNull(),
       otp: text("otp").notNull(),
@@ -127157,15 +127526,15 @@ var init_auth = __esm({
           return;
         }
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1e3);
-        const recent = await db.select().from(emailVerifications).where(and(eq(emailVerifications.email, email3), gt(emailVerifications.createdAt, oneHourAgo)));
+        const recent = await db.select().from(emailVerifications2).where(and(eq(emailVerifications2.email, email3), gt(emailVerifications2.createdAt, oneHourAgo)));
         if (recent.length >= 3) {
           res.status(429).json({ error: "1 soat ichida ko'pi bilan 3 ta kod yuboriladi. Keyinroq urinib ko'ring." });
           return;
         }
-        await db.delete(emailVerifications).where(and(eq(emailVerifications.email, email3), eq(emailVerifications.verified, false)));
+        await db.delete(emailVerifications2).where(and(eq(emailVerifications2.email, email3), eq(emailVerifications2.verified, false)));
         const otp = String(Math.floor(1e5 + Math.random() * 9e5));
         const expiresAt = new Date(Date.now() + 10 * 60 * 1e3);
-        await db.insert(emailVerifications).values({ email: email3, otp, expiresAt });
+        await db.insert(emailVerifications2).values({ email: email3, otp, expiresAt });
         const emailHtml = `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0502;color:#c8a060;border-radius:16px">
           <div style="font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:8px">GILOS</div>
@@ -127205,17 +127574,17 @@ var init_auth = __esm({
           return;
         }
         const now = /* @__PURE__ */ new Date();
-        const [record2] = await db.select().from(emailVerifications).where(and(
-          eq(emailVerifications.email, email3),
-          eq(emailVerifications.otp, otp),
-          eq(emailVerifications.verified, false),
-          gt(emailVerifications.expiresAt, now)
+        const [record2] = await db.select().from(emailVerifications2).where(and(
+          eq(emailVerifications2.email, email3),
+          eq(emailVerifications2.otp, otp),
+          eq(emailVerifications2.verified, false),
+          gt(emailVerifications2.expiresAt, now)
         ));
         if (!record2) {
           res.status(400).json({ error: "Kod noto'g'ri yoki muddati o'tgan" });
           return;
         }
-        await db.update(emailVerifications).set({ verified: true }).where(eq(emailVerifications.id, record2.id));
+        await db.update(emailVerifications2).set({ verified: true }).where(eq(emailVerifications2.id, record2.id));
         res.json({ ok: true, verified: true });
       } catch (err) {
         req.log.error(err);
@@ -127417,6 +127786,14 @@ var init_auth = __esm({
         req.log.error(err);
         res.status(500).json({ error: "Server xatosi" });
       }
+    });
+    router3.get("/auth/realtime-token", (req, res) => {
+      const userId = req.session.userId;
+      if (!userId) {
+        res.status(401).json({ error: "Kirish talab qilinadi" });
+        return;
+      }
+      res.json({ token: signMobileToken(userId) });
     });
     router3.patch("/auth/preferences", async (req, res) => {
       try {
@@ -128985,8 +129362,8 @@ var init_stringify = __esm({
       formatter: default_formatter,
       /** @deprecated */
       indices: false,
-      serializeDate(date7) {
-        return (toISOString ?? (toISOString = Function.prototype.call.bind(Date.prototype.toISOString)))(date7);
+      serializeDate(date8) {
+        return (toISOString ?? (toISOString = Function.prototype.call.bind(Date.prototype.toISOString)))(date8);
       },
       skipNulls: false,
       strictNullHandling: false
@@ -163406,9 +163783,9 @@ var init_admin2 = __esm({
         const userGrowth = [];
         const contentGrowth = [];
         for (let i5 = days - 1; i5 >= 0; i5--) {
-          const date7 = new Date(Date.now() - i5 * 864e5).toISOString().split("T")[0];
-          userGrowth.push({ date: date7, count: userMap.get(date7) ?? 0 });
-          contentGrowth.push({ date: date7, posts: postMap.get(date7) ?? 0, reels: reelMap.get(date7) ?? 0, stories: storyMap.get(date7) ?? 0 });
+          const date8 = new Date(Date.now() - i5 * 864e5).toISOString().split("T")[0];
+          userGrowth.push({ date: date8, count: userMap.get(date8) ?? 0 });
+          contentGrowth.push({ date: date8, posts: postMap.get(date8) ?? 0, reels: reelMap.get(date8) ?? 0, stories: storyMap.get(date8) ?? 0 });
         }
         const [postStats] = await db.select({
           totalPosts: sql`count(*)::int`,
@@ -163449,8 +163826,8 @@ var init_admin2 = __esm({
         const volMap = new Map(rows(volRes).map((row) => [row.date, row.count]));
         const volumeHistory = [];
         for (let i5 = 6; i5 >= 0; i5--) {
-          const date7 = new Date(Date.now() - i5 * 864e5).toISOString().split("T")[0];
-          volumeHistory.push({ date: date7, count: volMap.get(date7) ?? 0 });
+          const date8 = new Date(Date.now() - i5 * 864e5).toISOString().split("T")[0];
+          volumeHistory.push({ date: date8, count: volMap.get(date8) ?? 0 });
         }
         res.json({
           version: "NEXUS-AI v1.0.0",

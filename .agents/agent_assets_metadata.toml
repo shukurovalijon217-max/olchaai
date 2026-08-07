@@ -31,3 +31,10 @@ uri = "file://attached_assets/gilos_play_cover_4096x2304.jpg"
 type = "image"
 title = "GILOS cover — 4096×2304"
 description = "Google Play developer profil muqovasi (Обложка, <1MB)"
+
+[[outputs]]
+id = "KkDiGwsgxKQIM611BtY2S"
+uri = "file://artifacts/gilos-video/public/audio/bg_music.mp3"
+type = "audio"
+title = "background music"
+description = "Generated music: Driving synthwave electronic instrumental background music scoring a tech social platform promo video. Analog synths, punchy drums, neon arpeggios, 120 BPM, confident futuristic mood…"

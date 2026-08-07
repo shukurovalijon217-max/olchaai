@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useCallback, useState, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { getRealtimeToken, clearRealtimeToken } from "@/lib/realtimeToken";
 
 type Handler = (msg: any) => void;
 
@@ -11,9 +12,9 @@ interface RealtimeContextValue {
 
 const RealtimeContext = createContext<RealtimeContextValue | null>(null);
 
-function buildWsUrl(userId: number) {
+function buildWsUrl(userId: number, token: string) {
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
-  return `${proto}://${window.location.host}/go/ws?userId=${userId}`;
+  return `${proto}://${window.location.host}/go/ws?userId=${userId}&token=${encodeURIComponent(token)}`;
 }
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
@@ -40,12 +41,20 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
     let closedByUs = false;
 
-    const connect = () => {
-      const ws = new WebSocket(buildWsUrl(userId));
+    const connect = async () => {
+      const token = await getRealtimeToken(userId);
+      if (closedByUs) return;
+      if (!token) {
+        // Session not ready yet — retry shortly
+        reconnectTimerRef.current = setTimeout(connect, 3000);
+        return;
+      }
+      const ws = new WebSocket(buildWsUrl(userId, token));
       wsRef.current = ws;
       ws.onopen = () => setConnected(true);
       ws.onclose = () => {
         setConnected(false);
+        clearRealtimeToken();
         if (!closedByUs) reconnectTimerRef.current = setTimeout(connect, 3000);
       };
       ws.onerror = () => { try { ws.close(); } catch {} };

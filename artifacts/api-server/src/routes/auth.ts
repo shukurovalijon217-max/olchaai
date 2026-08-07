@@ -315,6 +315,13 @@ router.patch("/auth/password", async (req, res) => {
   }
 });
 
+// Signed short token for authenticating to the Go real-time WebSocket service
+router.get("/auth/realtime-token", (req, res) => {
+  const userId = req.session.userId;
+  if (!userId) { res.status(401).json({ error: "Kirish talab qilinadi" }); return; }
+  res.json({ token: signMobileToken(userId) });
+});
+
 router.patch("/auth/preferences", async (req, res) => {
   try {
     const userId = req.session.userId;

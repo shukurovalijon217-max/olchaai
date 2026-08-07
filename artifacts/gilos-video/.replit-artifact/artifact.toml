@@ -1,0 +1,28 @@
+kind = "video"
+previewPath = "/gilos-video/"
+title = "GILOS Promo Video"
+description = "A 23-second animated promotional video for the GILOS super social platform (olchaai.com), in Uzbek, designed for TikTok/Reels/Shorts marketing. Neon-tech motion graphics ending with the GILOS wordmark."
+version = "1.0.0"
+id = "artifacts/gilos-video"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/gilos-video/" ]
+localPort = 24811
+
+[services.development]
+run = "pnpm --filter @workspace/gilos-video run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/gilos-video", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/gilos-video/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24811"
+BASE_PATH = "/gilos-video/"

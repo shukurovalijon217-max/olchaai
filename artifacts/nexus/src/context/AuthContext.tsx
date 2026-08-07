@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { clearRealtimeToken } from "@/lib/realtimeToken";
 
 export interface NotifPrefs {
   likes: boolean;
@@ -174,6 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
+    clearRealtimeToken();
     setUser(null);
     writeCachedUser(null);
   };

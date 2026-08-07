@@ -18,7 +18,7 @@ description: Admin revenue treasury — tables, routes, creditTreasury helper, d
 - Called automatically on: every marketplace commission, every Stripe checkout.session.completed / invoice.payment_succeeded webhook
 
 ## Admin credentials
-- Username: `nexusai`, Password: `Admin@OlCha2024!` (bcrypt hash set via SQL)
+- Admin username: `nexusai` (password set via bcrypt hash in SQL; not recorded here)
 - Username: `omen` (has bcrypt hash but common test passwords failed — hash: `$2b$12$G3O...`)
 
 ## db.execute() pattern (CRITICAL)

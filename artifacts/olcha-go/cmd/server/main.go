@@ -652,7 +652,10 @@ func broadcastPresence(hub *Hub, userID int, online bool) {
 var wsSecret = func() string {
         s := os.Getenv("SESSION_SECRET")
         if len(s) < 16 {
-                log.Warn().Msg("SESSION_SECRET not set or < 16 chars — using built-in fallback")
+                if os.Getenv("RAILWAY_ENVIRONMENT") != "" || os.Getenv("RAILWAY_ENVIRONMENT_NAME") != "" {
+                        log.Fatal().Msg("SESSION_SECRET not set or < 16 chars in production — refusing to start (fail closed)")
+                }
+                log.Warn().Msg("SESSION_SECRET not set or < 16 chars — using built-in dev fallback")
                 return "olchaai-railway-fallback-2024-secret-key"
         }
         return s

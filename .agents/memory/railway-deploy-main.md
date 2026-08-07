@@ -16,4 +16,6 @@ Railway (olchaai-nexus service) builds from the **`replit-agent`** branch of the
 3. Verify: query `deployments(first:1, ...)` and check `meta.branch` + `meta.commitHash` match what you pushed.
 4. Auto-deploy from GitHub is NOT active; every deploy must be triggered via API.
 
+**2026-08-07:** RAILWAY_TOKEN returned "Not Authorized" for ALL GraphQL queries (projects, project(id), environment, deployments, variables) in both Bearer and Project-Access-Token header modes — token likely rotated/expired. User must issue a fresh token before any deploy/variable work.
+
 IDs are in railway-env-var-quotes.md.

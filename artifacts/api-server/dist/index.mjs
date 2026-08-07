@@ -163979,6 +163979,42 @@ var init_admin2 = __esm({
         res.status(500).json({ error: "Media audit xatosi" });
       }
     });
+    router14.get("/admin/broken-media", async (req, res) => {
+      try {
+        const r2Base = (process.env.R2_PUBLIC_URL || "").replace(/\/$/, "");
+        const [totalWithMedia] = await db.select({ count: sql`count(*)::int` }).from(postsTable).where(sql`${postsTable.mediaUrl} IS NOT NULL AND ${postsTable.mediaUrl} <> ''`);
+        const suspectConditions = r2Base ? sql`
+          ${postsTable.mediaUrl} IS NOT NULL
+          AND ${postsTable.mediaUrl} <> ''
+          AND (
+            ${postsTable.mediaUrl} NOT LIKE 'https://%'
+            OR ${postsTable.mediaUrl} LIKE '%storage.googleapis.com%'
+            OR ${postsTable.mediaUrl} LIKE '%firebasestorage.googleapis.com%'
+            OR (${postsTable.mediaUrl} LIKE 'https://%' AND ${postsTable.mediaUrl} NOT LIKE ${r2Base + "%"})
+          )
+        ` : sql`
+          ${postsTable.mediaUrl} IS NOT NULL
+          AND ${postsTable.mediaUrl} <> ''
+          AND (
+            ${postsTable.mediaUrl} NOT LIKE 'https://%'
+            OR ${postsTable.mediaUrl} LIKE '%storage.googleapis.com%'
+            OR ${postsTable.mediaUrl} LIKE '%firebasestorage.googleapis.com%'
+          )
+        `;
+        const [suspect] = await db.select({ count: sql`count(*)::int` }).from(postsTable).where(suspectConditions);
+        const samples = await db.select({ id: postsTable.id, mediaUrl: postsTable.mediaUrl, createdAt: postsTable.createdAt }).from(postsTable).where(suspectConditions).orderBy(desc(postsTable.createdAt)).limit(20);
+        res.json({
+          postsWithMedia: totalWithMedia?.count ?? 0,
+          suspectCount: suspect?.count ?? 0,
+          r2Base: r2Base || null,
+          note: "Run scripts/fix-broken-media.mjs to HEAD-check every URL and null out broken ones.",
+          samples
+        });
+      } catch (err) {
+        req.log.error(err);
+        res.status(500).json({ error: "Broken media audit xatosi" });
+      }
+    });
     router14.post("/admin/stripe/seed", async (req, res) => {
       try {
         const stripe = await getUncachableStripeClient();

@@ -42156,11 +42156,19 @@ async function cacheDelAsync(key) {
   }
   store.delete(key);
 }
+async function redisDelPattern(pattern) {
+  if (!redis) return;
+  let cursor = "0";
+  do {
+    const [next, keys] = await redis.scan(cursor, { match: `${pattern}*`, count: 100 });
+    if (keys.length) await redis.del(...keys);
+    cursor = String(next);
+  } while (cursor !== "0");
+}
 async function cacheDelPatternAsync(pattern) {
   if (redis) {
     try {
-      const keys = await redis.keys(`${pattern}*`);
-      if (keys.length) await redis.del(...keys);
+      await redisDelPattern(pattern);
     } catch (err) {
       console.warn("[cache] Redis DEL pattern failed, pattern:", pattern, err);
     }
@@ -42199,10 +42207,7 @@ function cacheDelPattern(pattern) {
     if (key.startsWith(pattern)) store.delete(key);
   }
   if (redis) {
-    redis.keys(`${pattern}*`).then((keys) => {
-      if (keys.length) redis.del(...keys).catch(() => {
-      });
-    }).catch(() => {
+    redisDelPattern(pattern).catch(() => {
     });
   }
 }
@@ -128111,7 +128116,11 @@ var init_users2 = __esm({
           res.status(404).json({ error: "Not found" });
           return;
         }
-        res.setHeader("Cache-Control", "private, max-age=60, stale-while-revalidate=300");
+        if (viewerId === id) {
+          res.setHeader("Cache-Control", "no-store");
+        } else {
+          res.setHeader("Cache-Control", "private, max-age=30");
+        }
         res.json(result);
       } catch (err) {
         req.log.error(err);
@@ -128134,6 +128143,15 @@ var init_users2 = __esm({
     router4.patch("/users/:id", async (req, res) => {
       try {
         const id = Number(req.params.id);
+        const sessionUserId = req.session?.userId;
+        if (!sessionUserId) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+        if (sessionUserId !== id) {
+          res.status(403).json({ error: "Forbidden" });
+          return;
+        }
         const { displayName, bio, avatarUrl, coverUrl } = req.body;
         const [user] = await db.update(usersTable).set({ displayName, bio, avatarUrl, coverUrl }).where(eq(usersTable.id, id)).returning();
         if (!user) {

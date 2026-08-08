@@ -242,7 +242,7 @@ function ProfileContent() {
               className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center hover:bg-violet-400 transition">
               <Camera className="w-3 h-3 text-white" />
             </button>
-            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
+            <input ref={avatarInputRef} type="file" accept="image/*,video/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) upAvatar(f); e.target.value = ""; }} />
           </div>
           <div>
@@ -277,7 +277,7 @@ function ProfileContent() {
             className="px-3 py-2.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white/80 transition flex items-center gap-1.5 text-xs font-medium disabled:opacity-50">
             {coverUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
           </button>
-          <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
+          <input ref={coverInputRef} type="file" accept="image/*,video/*" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) upCover(f); e.target.value = ""; }} />
         </div>
       </Field>

@@ -81,7 +81,13 @@ router.get("/users/:id", async (req, res) => {
       return { ...safeUser, followersCount: followers.count, followingCount: following.count, postsCount: postsCount.count, isFollowing: (followCheck as { id: number }[]).length > 0 };
     }, 30);
     if (!result) { res.status(404).json({ error: "Not found" }); return; }
-    res.setHeader("Cache-Control", "private, max-age=60, stale-while-revalidate=300");
+    // Own profile must never be served stale from the browser cache —
+    // otherwise avatar/cover edits look like they "didn't apply".
+    if (viewerId === id) {
+      res.setHeader("Cache-Control", "no-store");
+    } else {
+      res.setHeader("Cache-Control", "private, max-age=30");
+    }
     res.json(result);
   } catch (err) {
     req.log.error(err);
@@ -109,6 +115,9 @@ router.get("/users/:id/posts", async (req, res) => {
 router.patch("/users/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const sessionUserId = (req.session as any)?.userId as number | undefined;
+    if (!sessionUserId) { res.status(401).json({ error: "Unauthorized" }); return; }
+    if (sessionUserId !== id) { res.status(403).json({ error: "Forbidden" }); return; }
     const { displayName, bio, avatarUrl, coverUrl } = req.body;
     const [user] = await db.update(usersTable).set({ displayName, bio, avatarUrl, coverUrl }).where(eq(usersTable.id, id)).returning();
     if (!user) { res.status(404).json({ error: "Not found" }); return; }

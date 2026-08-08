@@ -115,11 +115,24 @@ export async function cacheDelAsync(key: string): Promise<void> {
   store.delete(key);
 }
 
+/**
+ * SCAN-based pattern delete. Upstash prod users often lack permission for the
+ * KEYS command (NOPERM) — SCAN is allowed and non-blocking.
+ */
+async function redisDelPattern(pattern: string): Promise<void> {
+  if (!redis) return;
+  let cursor = "0";
+  do {
+    const [next, keys] = await redis.scan(cursor, { match: `${pattern}*`, count: 100 });
+    if (keys.length) await redis.del(...(keys as string[]));
+    cursor = String(next);
+  } while (cursor !== "0");
+}
+
 export async function cacheDelPatternAsync(pattern: string): Promise<void> {
   if (redis) {
     try {
-      const keys = await redis.keys(`${pattern}*`);
-      if (keys.length) await redis.del(...keys);
+      await redisDelPattern(pattern);
     } catch (err) { console.warn("[cache] Redis DEL pattern failed, pattern:", pattern, err); }
   }
   for (const key of store.keys()) {
@@ -170,9 +183,7 @@ export function cacheDelPattern(pattern: string): void {
     if (key.startsWith(pattern)) store.delete(key);
   }
   if (redis) {
-    redis.keys(`${pattern}*`).then(keys => {
-      if (keys.length) redis!.del(...keys).catch(() => {});
-    }).catch(() => {});
+    redisDelPattern(pattern).catch(() => {});
   }
 }
 

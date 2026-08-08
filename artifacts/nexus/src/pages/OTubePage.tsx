@@ -6801,7 +6801,7 @@ function OTubeMusicOrb() {
     pendingTracksRef.current = null;
   }, []);
 
-  /* fetch — Audius full tracks only (no 30s previews) */
+  /* fetch — worldwide catalog: iTunes (real songs, 30s preview) + Audius (full tracks) */
   const fetchMusic = useCallback((q: string, g: string, options?: { retry?: boolean }) => {
     const query = q.trim() || g || "top hits";
     lastQueryRef.current = { q, g };
@@ -6817,7 +6817,7 @@ function OTubeMusicOrb() {
       .then(r => r.json())
       .then((d: { results?: MusicTrack[] }) => {
         const found = (d.results ?? [])
-          .filter(t => t.preview && t.full !== false)
+          .filter(t => t.preview)
           .map(t => ({
             ...t,
             preview: t.preview.startsWith("/") ? `${API_BASE}${t.preview}` : t.preview,
@@ -6965,14 +6965,16 @@ function OTubeMusicOrb() {
 
   const handleDownload = async () => {
     if (!track) return;
-    /* Extract the raw Audius track ID from the preview URL path
-       preview = "/api/music/stream/<audiusId>" or "au_<audiusId>" */
+    /* iTunes tracks (30s preview) — download the preview audio directly */
+    const isItunes = track.id.startsWith("it_");
     const audiusId = track.id.startsWith("au_")
       ? track.id.slice(3)
       : track.preview.split("/stream/")[1]?.split("?")[0] ?? track.id;
     const artist = encodeURIComponent(track.artist || "Unknown");
     const title  = encodeURIComponent(track.title || track.name || "track");
-    const url = `${API_BASE}/api/music/download/${audiusId}?artist=${artist}&title=${title}`;
+    const url = isItunes
+      ? track.preview
+      : `${API_BASE}/api/music/download/${audiusId}?artist=${artist}&title=${title}`;
 
     try {
       const resp = await fetch(url, { credentials: "include" });

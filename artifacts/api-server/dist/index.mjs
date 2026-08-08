@@ -140423,25 +140423,58 @@ async function jamendoSearch(q2, limit2 = 40) {
     return [];
   }
 }
+async function itunesSearch(q2, limit2 = 25) {
+  try {
+    const url2 = new URL("https://itunes.apple.com/search");
+    url2.searchParams.set("term", q2);
+    url2.searchParams.set("media", "music");
+    url2.searchParams.set("entity", "song");
+    url2.searchParams.set("limit", String(limit2));
+    const r5 = await fetch(url2.toString(), { signal: AbortSignal.timeout(8e3) });
+    if (!r5.ok) return [];
+    const d5 = await r5.json();
+    return (d5.results ?? []).filter((t) => t.previewUrl && String(t.previewUrl).startsWith("https://")).map((t) => ({
+      id: `it_${t.trackId}`,
+      name: `${t.artistName} \u2014 ${t.trackName}`,
+      artist: t.artistName ?? "Unknown",
+      title: t.trackName ?? "",
+      album: t.collectionName ?? "",
+      artwork: (t.artworkUrl100 ?? t.artworkUrl60 ?? "").replace("100x100", "300x300"),
+      // proxied through our API to avoid iOS CORS issues
+      preview: `/api/music/proxy?url=${encodeURIComponent(t.previewUrl)}`,
+      duration: 30,
+      // iTunes previews are ~30 seconds
+      full: false,
+      source: "itunes"
+    }));
+  } catch {
+    return [];
+  }
+}
 async function searchMusic(q2, limit2 = 40, hosts) {
-  const audiusTracks = await audiusSearch(q2, limit2, hosts);
-  if (audiusTracks.length > 0) {
-    const results = audiusTracks.filter((t) => t.id).map((t) => {
-      const artObj = t.artwork ?? {};
-      return {
-        id: `au_${t.id}`,
-        name: `${t.user?.name ?? "Unknown"} \u2014 ${t.title}`,
-        artist: t.user?.name ?? "Unknown",
-        title: t.title ?? "",
-        album: "",
-        artwork: artObj["150x150"] ?? artObj["480x480"] ?? artObj["_150x150"] ?? "",
-        preview: `/api/music/stream/${t.id}`,
-        duration: t.duration ?? 0,
-        full: true,
-        source: "audius"
-      };
-    });
-    return { results, source: "audius" };
+  const [itunesResults, audiusTracks] = await Promise.all([
+    itunesSearch(q2, 25),
+    audiusSearch(q2, limit2, hosts)
+  ]);
+  const audiusResults = audiusTracks.filter((t) => t.id).map((t) => {
+    const artObj = t.artwork ?? {};
+    return {
+      id: `au_${t.id}`,
+      name: `${t.user?.name ?? "Unknown"} \u2014 ${t.title}`,
+      artist: t.user?.name ?? "Unknown",
+      title: t.title ?? "",
+      album: "",
+      artwork: artObj["150x150"] ?? artObj["480x480"] ?? artObj["_150x150"] ?? "",
+      preview: `/api/music/stream/${t.id}`,
+      duration: t.duration ?? 0,
+      full: true,
+      source: "audius"
+    };
+  });
+  if (itunesResults.length > 0 || audiusResults.length > 0) {
+    const results = [...itunesResults, ...audiusResults];
+    const source = itunesResults.length && audiusResults.length ? "mixed" : itunesResults.length ? "itunes" : "audius";
+    return { results, source };
   }
   const jamendoResults = await jamendoSearch(q2, limit2);
   if (jamendoResults.length > 0) {

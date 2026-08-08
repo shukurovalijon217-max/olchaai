@@ -42,7 +42,7 @@
 - [BullMQ queue setup](bullmq-queue.md) — queue.ts has 3 BullMQ queues (notifications/analytics/moderation); native Redis URL constructed from UPSTASH_REST creds; falls back to setImmediate in dev; queues NOT yet wired into route handlers — still use inline sendNotification().
 - [Story viewer broken media fallback](story-viewer-media-fallback.md) — storyImgError state gates mediaUrl display; broken URL doesn't trigger !mediaUrl fallback; must track onError explicitly.
 - [Cloudflare token limits & R2 caching](cloudflare-token-limits.md) — CF token is read-only for rules; Cache Rules don't affect R2 custom domains, only Transform Rules do; media cache rule is live.
-- [Upstash NOPERM for KEYS](upstash-noperm-keys.md) — prod Redis user can't run KEYS; pattern cache invalidation silently fails, feeds stay stale until TTL; use SCAN/tracked sets.
+- [Upstash NOPERM for KEYS](upstash-noperm-keys.md) — prod Redis can't run KEYS; cache.ts now uses SCAN for pattern deletes; own-profile GET is no-store (stale-while-revalidate hid avatar/cover edits).
 - [Jamendo music fallback](jamendo-fallback.md) — sandbox key b6747d04 is dead (silent empty results); Client ID is 8 chars not the 32-char secret; ?provider=jamendo forces the fallback path for testing.
 - [Drizzle push must stay non-interactive](drizzle-push-noninteractive.md) — post-merge runs push with stdin closed; keep schema/DB in exact sync (legacy.ts for inline tables, constraint names/column order) or merges fail.
 - [iOS Safari video must call v.load()](ios-safari-video-load.md) — setting v.src programmatically without v.load() silently prevents iOS Safari from loading video; always call v.load() after v.src = src.

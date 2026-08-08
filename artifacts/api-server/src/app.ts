@@ -236,7 +236,10 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   if (auth?.startsWith("Bearer ") && !req.session?.userId) {
     const { verifyMobileToken } = require("./lib/security");
     const uid = verifyMobileToken(auth.slice(7));
-    if (uid) req.session.userId = uid;
+    // Request-local auth only: non-enumerable so express-session's JSON hash
+    // never sees it — no session row is persisted and no Set-Cookie is emitted
+    // for Bearer-authenticated (mobile) requests.
+    if (uid) Object.defineProperty(req.session, "userId", { value: uid, enumerable: false, configurable: true, writable: true });
   }
   next();
 });

@@ -175198,7 +175198,7 @@ var init_app = __esm({
       if (auth?.startsWith("Bearer ") && !req.session?.userId) {
         const { verifyMobileToken: verifyMobileToken2 } = (init_security(), __toCommonJS(security_exports));
         const uid = verifyMobileToken2(auth.slice(7));
-        if (uid) req.session.userId = uid;
+        if (uid) Object.defineProperty(req.session, "userId", { value: uid, enumerable: false, configurable: true, writable: true });
       }
       next();
     });

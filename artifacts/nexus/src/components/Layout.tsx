@@ -885,7 +885,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* ── Plasma Core "Ko'proq" Button ─ */}
           <motion.button
-            onClick={() => { setNavExpanded(true); setMoreOpen(true); }}
+            onClick={() => { if (!navExpanded) setNavExpanded(true); else setMoreOpen(true); }}
             whileTap={{ scale: 0.78 }}
             className="relative flex items-center justify-center select-none flex-shrink-0"
             style={{ width: 36, height: 36 }}

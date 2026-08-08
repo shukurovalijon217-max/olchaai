@@ -689,7 +689,9 @@ function NexusPlayer({ video, onClose, settings, onPip, onNext, onPrev, hasNext,
       hls.loadSource(src);
       hls.attachMedia(v);
     } else {
+      /* iOS Safari plays .m3u8 natively and REQUIRES load() after programmatic src */
       v.src = src ?? "";
+      v.load();
     }
     return () => { hlsRef.current?.destroy(); hlsRef.current = null; };
   // eslint-disable-next-line react-hooks/exhaustive-deps

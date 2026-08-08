@@ -146,7 +146,7 @@ function PlayerView({ scenario, onBack }: { scenario: Scenario; onBack: () => vo
       <div className="flex-1 flex flex-col">
         <div className="relative flex-1 bg-black flex items-center justify-center min-h-[300px]">
           {current?.videoUrl ? (
-            <video ref={videoRef} src={current.videoUrl} controls autoPlay className="w-full h-full object-contain max-h-[50vh]" />
+            <video ref={videoRef} src={current.videoUrl} controls autoPlay playsInline className="w-full h-full object-contain max-h-[50vh]" />
           ) : (
             <div className="flex flex-col items-center gap-3 text-center p-8">
               <Film className="w-16 h-16 text-violet-400/40" />

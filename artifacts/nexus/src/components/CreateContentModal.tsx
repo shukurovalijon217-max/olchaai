@@ -1456,7 +1456,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                               >
                                 {/* Thumbnail */}
                                 {item.file.type.startsWith("video") ? (
-                                  <video src={item.preview} className="w-full h-full object-cover" muted />
+                                  <video src={item.preview} className="w-full h-full object-cover" muted playsInline />
                                 ) : (
                                   <img src={item.preview} alt="" className="w-full h-full object-cover" />
                                 )}
@@ -3275,7 +3275,7 @@ export default function CreateContentModal({ open, onClose, defaultTab = "post",
                           ) : storyFile.type.startsWith("image") ? (
                             <img src={storyPreview} alt="" className="w-full max-h-72 object-cover" />
                           ) : (
-                            <video src={storyPreview} className="w-full max-h-72 object-cover" controls muted />
+                            <video src={storyPreview} className="w-full max-h-72 object-cover" controls muted playsInline />
                           )}
                           {!upStoryBusy && (
                             <button onClick={() => { setStoryFile(null); setStoryPreview(""); setStoryUploadResult(null); }}
